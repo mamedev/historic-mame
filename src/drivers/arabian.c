@@ -251,7 +251,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_arabian =
 {
 	/* basic machine hardware */
 	{
@@ -303,7 +303,7 @@ ROM_START( arabian )
 	ROM_LOAD( "ic3rev2.89",       0x4000, 0x2000, 0x15145f23 )
 	ROM_LOAD( "ic4rev2.90",       0x6000, 0x2000, 0x32b77b44 )
 
-	ROM_REGION( 0x10000 ) /* graphics roms */
+	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -317,7 +317,7 @@ ROM_START( arabiana )
 	ROM_LOAD( "ic3.89",       0x4000, 0x2000, 0xb7b7faa0 )
 	ROM_LOAD( "ic4.90",       0x6000, 0x2000, 0xdbded961 )
 
-	ROM_REGION( 0x10000 ) /* graphics roms */
+	ROM_REGIONX( 0x10000, REGION_GFX1 ) /* graphics roms */
 	ROM_LOAD( "ic84.91",      0x0000, 0x2000, 0xc4637822 )	/* because of very rare way */
 	ROM_LOAD( "ic85.92",      0x2000, 0x2000, 0xf7c6866d )  /* CRT controller uses these roms */
 	ROM_LOAD( "ic86.93",      0x4000, 0x2000, 0x71acd48d )  /* there's no way, but to decode */
@@ -326,90 +326,5 @@ ROM_END
 
 
 
-static int arabian_hiload(void)
-{
-  unsigned char *RAM = memory_region(REGION_CPU1);
-  void *f;
-
-  /* Wait for hiscore table initialization to be done. */
-  if (memcmp(&RAM[0xd384], "\x00\x00\x00\x01\x00\x00", 6) != 0)
-    return 0;
-
-  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-    {
-      /* Load and set hiscore table. */
-      osd_fread(f,&RAM[0xd384],6*10);
-      osd_fclose(f);
-    }
-
-  return 1;
-}
-
-
-
-static void arabian_hisave(void)
-{
-  unsigned char *RAM = memory_region(REGION_CPU1);
-  void *f;
-
-  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-      /* Write hiscore table. */
-      osd_fwrite(f,&RAM[0xd384],6*10);
-      osd_fclose(f);
-    }
-}
-
-
-
-struct GameDriver driver_arabian =
-{
-	__FILE__,
-	0,
-	"arabian",
-	"Arabian",
-	"1983",
-	"Sun Electronics",
-	"Jarek Burczynski (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arabian,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arabian,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
-
-	arabian_hiload, arabian_hisave
-};
-
-struct GameDriver driver_arabiana =
-{
-	__FILE__,
-	&driver_arabian,
-	"arabiana",
-	"Arabian (Atari)",
-	"1983",
-	"[Sun Electronics] (Atari license)",
-	"Jarek Burczynski (MAME driver)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arabiana,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arabian,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
-
-	arabian_hiload, arabian_hisave
-};
+GAMEX( 1983, arabian,  ,        arabian, arabian, , ROT270, "Sun Electronics", "Arabian", GAME_IMPERFECT_COLORS )
+GAMEX( 1983, arabiana, arabian, arabian, arabian, , ROT270, "[Sun Electronics] (Atari license)", "Arabian (Atari)", GAME_IMPERFECT_COLORS )

@@ -253,7 +253,7 @@ static struct Samplesinterface samples_interface =
 
 #define MACHINE_DRIVER(GAMENAME, AUDIO_INTERFACES)   		\
 															\
-static struct MachineDriver GAMENAME##_machine_driver =		\
+static struct MachineDriver machine_driver_##GAMENAME =		\
 {															\
 	/* basic machine hardware */							\
 	{														\
@@ -423,134 +423,6 @@ ROM_END
 
 
 
-static int route16_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4032],0xff,9);	/* high score */
-		firsttime = 1;
-	}
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4032],"\x00\x00\x00\x00\x00\x00\x00\x00\x00",9) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4032],9);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void route16_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4032],9);
-		osd_fclose(f);
-	}
-}
-
-
-static int stratvox_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4010],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4010],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4010],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void stratvox_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4010],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int speakres_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime = 0;
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4001],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4001],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4001],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void speakres_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-//		osd_fwrite(f,&RAM[0x4000],0x3ff);
-		osd_fwrite(f,&RAM[0x4001],3);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_route16 =
 {
 	__FILE__,
@@ -561,7 +433,7 @@ struct GameDriver driver_route16 =
 	"Tehkan/Sun (Centuri license)",
 	"Zsolt Vasvari\nMike Balfour",
 	0,
-	&route16_machine_driver,
+	&machine_driver_route16,
 	route16_init_driver,
 
 	rom_route16,
@@ -572,9 +444,8 @@ struct GameDriver driver_route16 =
 	input_ports_route16,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	route16_hiload, route16_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_route16b =
@@ -587,7 +458,7 @@ struct GameDriver driver_route16b =
 	"bootleg",
 	"Zsolt Vasvari\nMike Balfour",
 	0,
-	&route16_machine_driver,
+	&machine_driver_route16,
 	route16b_init_driver,
 
 	rom_route16b,
@@ -598,9 +469,8 @@ struct GameDriver driver_route16b =
 	input_ports_route16,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	route16_hiload, route16_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_stratvox =
@@ -613,7 +483,7 @@ struct GameDriver driver_stratvox =
 	"Taito",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
 	rom_stratvox,
@@ -624,9 +494,8 @@ struct GameDriver driver_stratvox =
 	input_ports_stratvox,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	stratvox_hiload, stratvox_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_stratvxb =
@@ -639,7 +508,7 @@ struct GameDriver driver_stratvxb =
 	"bootleg",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
 	rom_stratvxb,
@@ -650,9 +519,8 @@ struct GameDriver driver_stratvxb =
 	input_ports_stratvox,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	stratvox_hiload, stratvox_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_speakres =
@@ -662,10 +530,10 @@ struct GameDriver driver_speakres =
 	"speakres",
 	"Speak & Rescue",
 	"????",
-	"?????",
+	"<unknown>",
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
-	&stratvox_machine_driver,
+	&machine_driver_stratvox,
 	stratvox_init_driver,
 
 	rom_speakres,
@@ -676,7 +544,6 @@ struct GameDriver driver_speakres =
 	input_ports_stratvox,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	speakres_hiload, speakres_hisave
+	ROT270,
+	0,0
 };

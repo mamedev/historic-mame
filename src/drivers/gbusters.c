@@ -456,16 +456,16 @@ struct GameDriver driver_gbusters =
 	"Manuel Abadia",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_gbusters,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gbusters,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_90,
+    ROT90,
 	0, 0
 };

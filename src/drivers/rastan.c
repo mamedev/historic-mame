@@ -560,51 +560,6 @@ ROM_END
 
 
 
-static int rastan_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-        if ((memcmp(&rastan_ram[0x140], "\x27\x31\x31\x00", 4) == 0) &&
-            (memcmp(&rastan_ram[0x162], "\x59\x47\x4e\x54", 4) == 0))
-        {
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&rastan_ram[0x140],38);
-                        WRITE_WORD(&rastan_spriteram[0xb4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x142]) & 0x000f)));
-                        WRITE_WORD(&rastan_spriteram[0xbc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x142]) & 0x00f0) >> 4));
-                        WRITE_WORD(&rastan_spriteram[0xc4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x0f00) >> 8));
-                        WRITE_WORD(&rastan_spriteram[0xcc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0xf000) >> 12));
-                        WRITE_WORD(&rastan_spriteram[0xd4], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x000f)));
-                        WRITE_WORD(&rastan_spriteram[0xdc], 0x2a +
-                                ((READ_WORD(&rastan_ram[0x144]) & 0x00f0) >> 4));
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void rastan_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&rastan_ram[0x140],38);
-                osd_fclose(f);
-        }
-}
-
-
-
 struct GameDriver driver_rastan =
 {
 	__FILE__,
@@ -626,8 +581,8 @@ struct GameDriver driver_rastan =
 	input_ports_rastan,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
 /* IDENTICAL to rastan, only differennce is copyright notice and Coin B coinage */
@@ -652,8 +607,8 @@ struct GameDriver driver_rastanu =
 	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rastanu2 =
@@ -677,8 +632,8 @@ struct GameDriver driver_rastanu2 =
 	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rastsaga =
@@ -702,8 +657,8 @@ struct GameDriver driver_rastsaga =
 	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	rastan_hiload, rastan_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -857,7 +812,7 @@ struct GameDriver driver_cymplay =
 	input_ports_ymcym,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1028,7 +983,7 @@ struct GameDriver driver_ymtest =
 	input_ports_ymcym,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 

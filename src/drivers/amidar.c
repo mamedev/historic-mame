@@ -553,8 +553,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &charlayout,     0, 8 },
+	{ REGION_GFX1, 0x0000, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -574,7 +574,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_amidar =
 {
 	/* basic machine hardware */
 	{
@@ -627,22 +627,41 @@ static struct MachineDriver machine_driver =
 
 ROM_START( amidar )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
+	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
+	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, 0x3656be6f )
+	ROM_LOAD( "amidar.2h",    0x3000, 0x1000, 0x1be170bd )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
+	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "amidar.5f",    0x0000, 0x0800, 0x5e51e84d )
+	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, 0x2f7f1c30 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+ROM_END
+
+ROM_START( amidaru )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, 0x951e0792 )
 	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, 0xa1a3a136 )
 	ROM_LOAD( "amidarus.2f",  0x2000, 0x1000, 0xa5121bf5 )
 	ROM_LOAD( "amidarus.2h",  0x3000, 0x1000, 0x051d1c7f )
 	ROM_LOAD( "amidarus.2j",  0x4000, 0x1000, 0x351f00d5 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
 	ROM_LOAD( "amidarus.5h",  0x0800, 0x0800, 0x57c4fd0d )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( amidaro )
@@ -653,35 +672,16 @@ ROM_START( amidaro )
 	ROM_LOAD( "110.2h",       0x3000, 0x1000, 0xba149a93 )
 	ROM_LOAD( "111.2j",       0x4000, 0x1000, 0x20d01c2e )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
 	ROM_LOAD( "113.5h",       0x0800, 0x0800, 0xbcdce168 )  /* The letter 'S' is slightly different */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
-ROM_END
-
-ROM_START( amidarjp )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
-	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
-	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, 0x3656be6f )
-	ROM_LOAD( "amidar.2h",    0x3000, 0x1000, 0x1be170bd )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "amidar.5f",    0x0000, 0x0800, 0x5e51e84d )
-	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, 0x2f7f1c30 )
-
-	ROM_REGIONX( 0x0020, REGION_PROMS )
-	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
-	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
 ROM_END
 
 ROM_START( amigo )
@@ -691,16 +691,16 @@ ROM_START( amigo )
 	ROM_LOAD( "2732.a3",      0x2000, 0x1000, 0xe9d3dc76 )
 	ROM_LOAD( "2732.a4",      0x3000, 0x1000, 0x4a4086c9 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2716.a6",      0x0000, 0x0800, 0x2082ad0a )
 	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
-	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( turtles )
@@ -711,16 +711,16 @@ ROM_START( turtles )
 	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
 	ROM_LOAD( "turt_vid.2j",  0x4000, 0x1000, 0xfcd49fef )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
 	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
-	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
 ROM_START( turpin )
@@ -731,16 +731,16 @@ ROM_START( turpin )
 	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
 	ROM_LOAD( "m5",           0x4000, 0x1000, 0x7d2600f2 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
 	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
-	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
 ROM_START( 600 )
@@ -751,292 +751,24 @@ ROM_START( 600 )
 	ROM_LOAD( "600_vid.2h",   0x3000, 0x1000, 0xa92ef056 )
 	ROM_LOAD( "600_vid.2j",   0x4000, 0x1000, 0x6dadd72d )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )
+	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, 0xa311b998 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "600_vid.5h",   0x0000, 0x0800, 0x006c3d56 )
 	ROM_LOAD( "600_vid.5f",   0x0800, 0x0800, 0x7dbc0426 )
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )
-	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, 0xa311b998 )
 ROM_END
 
 
 
-static int amidar_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8200],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x821b],"\x00\x00\x01",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8200],3*10);
-			RAM[0x80a8] = RAM[0x8200];
-			RAM[0x80a9] = RAM[0x8201];
-			RAM[0x80aa] = RAM[0x8202];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static int turtles_hiload(void) /* V.V */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* same as Amidar, but the high score table is initialized with zeros */
-	/* a working quick-and-dirty solution is to update the top high score */
-	/* and the whole table at different times */
-	/* further study of the game code may provide a cleaner solution */
-
-	static int first_pass = 0;
-	static unsigned char top_score[] = { 0, 0, 0 };
-
-	if (first_pass == 0)
-	{
-		void *f;
-
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-				osd_fread(f,top_score,3);
-				osd_fclose(f);
-			}
-		first_pass = 1;
-	}
-
-	if ((memcmp(&RAM[0x80A0],"\xc0\xc0\x00",3) == 0))
-	{
-		RAM[0x80a8] = top_score[0];
-		RAM[0x80a9] = top_score[1];
-		RAM[0x80aa] = top_score[2];
-		return 0;
-	} /* continuously updating top high score - really dirty solution */
-
-	else if (memcmp(&RAM[0x80A0],"\xc6\xc6\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8200],3*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void amidar_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8200],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_amidar =
-{
-	__FILE__,
-	0,
-	"amidar",
-	"Amidar",
-	"1981",
-	"Konami",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_amidarjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_amidarjp,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
-struct GameDriver driver_amidaru =
-{
-	__FILE__,
-	&driver_amidar,
-	"amidaru",
-	"Amidar (Stern)",
-	"1982",
-	"Konami (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_amidar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_amidar,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
-struct GameDriver driver_amidaro =
-{
-	__FILE__,
-	&driver_amidar,
-	"amidaro",
-	"Amidar (Olympia)",
-	"1982",
-	"Konami (Olympia license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_amidaro,
-	0, 0,
-	0,
-	0,
-
-	input_ports_amidaro,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
-struct GameDriver driver_amigo =
-{
-	__FILE__,
-	&driver_amidar,
-	"amigo",
-	"Amigo",
-	"1982",
-	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_amigo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_amidar,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
-struct GameDriver driver_turtles =
-{
-	__FILE__,
-	0,
-	"turtles",
-	"Turtles",
-	"1981",
-	"[Konami] (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_turtles,
-	0, 0,
-	0,
-	0,
-
-	input_ports_turtles,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	turtles_hiload, amidar_hisave
-};
-
-struct GameDriver driver_turpin =
-{
-	__FILE__,
-	&driver_turtles,
-	"turpin",
-	"Turpin",
-	"1981",
-	"[Konami] (Sega license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_turpin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_turpin,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	turtles_hiload, amidar_hisave
-};
-
-struct GameDriver driver_600 =
-{
-	__FILE__,
-	&driver_turtles,
-	"600",
-	"600",
-	"1981",
-	"Konami",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_600,
-	0, 0,
-	0,
-	0,
-
-	input_ports_600,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	turtles_hiload, amidar_hisave
-};
+GAME( 1981, amidar,  ,        amidar, amidarjp, , ROT90, "Konami", "Amidar" )
+GAME( 1982, amidaru, amidar,  amidar, amidar,   , ROT90, "Konami (Stern license)", "Amidar (Stern)" )
+GAME( 1982, amidaro, amidar,  amidar, amidaro,  , ROT90, "Konami (Olympia license)", "Amidar (Olympia)" )
+GAME( 1982, amigo,   amidar,  amidar, amidar,   , ROT90, "bootleg", "Amigo" )
+GAME( 1981, turtles, ,        amidar, turtles,  , ROT90, "[Konami] (Stern license)", "Turtles" )
+GAME( 1981, turpin,  turtles, amidar, turpin,   , ROT90, "[Konami] (Sega license)", "Turpin" )
+GAME( 1981, 600,     turtles, amidar, 600,      , ROT90, "Konami", "600" )

@@ -203,7 +203,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver suprloco_machine_driver =
+static struct MachineDriver machine_driver_suprloco =
 {
 	/* basic machine hardware */
 	{
@@ -256,7 +256,7 @@ static struct MachineDriver suprloco_machine_driver =
 ***************************************************************************/
 
 ROM_START( suprloco )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
 	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
 	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
@@ -319,39 +319,13 @@ void suprloco_unmangle(void)
 			}
 		}
 	}
+
+
+	/* decrypt program ROMs */
+	suprloco_decode();
 }
 
-/**** Super Locomotive high score save routine - RJF (April 5, 1999) ****/
-static int suprloco_hiload(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-        if (memcmp(&RAM[0xfd00],"\x02\x20\x00",3) == 0){
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f){
-
-			/* the game only show 6 of 10 entries */
-                        osd_fread(f,&RAM[0xfca0], 10*3);	/* initials */
-                        osd_fread(f,&RAM[0xfd00], 10*3);	/* values */
-			osd_fclose(f);
-
-                        /* copy the high score to ram */
-                        RAM[0xfc2c] = RAM[0xfd00];
-                        RAM[0xfc2d] = RAM[0xfd01];
-                        RAM[0xfc2e] = RAM[0xfd02];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void suprloco_hisave(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-                        osd_fwrite(f,&RAM[0xfca0],10*3);
-                        osd_fwrite(f,&RAM[0xfd00],10*3);
-			osd_fclose(f);
-}
 
 struct GameDriver driver_suprloco =
 {
@@ -363,17 +337,17 @@ struct GameDriver driver_suprloco =
 	"Sega",
 	"Zsolt Vasvari",
 	0,
-	&suprloco_machine_driver,
-	0,
+	&machine_driver_suprloco,
+	suprloco_unmangle,
 
 	rom_suprloco,
-	suprloco_unmangle, suprloco_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_suprloco,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	suprloco_hiload, suprloco_hisave
+	ROT0,
+	0,0
 };

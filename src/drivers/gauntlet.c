@@ -753,7 +753,9 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -1061,6 +1063,8 @@ static void gauntlet_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -1081,6 +1085,8 @@ static void gaunt2p_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -1101,6 +1107,8 @@ static void gauntlet2_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -1117,6 +1125,8 @@ static void vindctr2_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -1141,16 +1151,15 @@ struct GameDriver driver_gauntlet =
 	gauntlet_init,
 
 	rom_gauntlet,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1168,16 +1177,15 @@ struct GameDriver driver_gauntir1 =
 	gauntlet_init,
 
 	rom_gauntir1,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1195,16 +1203,15 @@ struct GameDriver driver_gauntir2 =
 	gauntlet_init,
 
 	rom_gauntir2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1222,16 +1229,15 @@ struct GameDriver driver_gaunt2p =
 	gaunt2p_init,
 
 	rom_gaunt2p,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1249,16 +1255,15 @@ struct GameDriver driver_gaunt2 =
 	gauntlet2_init,
 
 	rom_gaunt2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1276,14 +1281,13 @@ struct GameDriver driver_vindctr2 =
 	vindctr2_init,
 
 	rom_vindctr2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vindctr2,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-	atarigen_hiload, atarigen_hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };

@@ -8,13 +8,10 @@ Terra Force
 
 Crazy Climber 2
 (c)1988 Nichibutsu
-"cclimbr2" Driver Added by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 
 68000 + Z80
 
 ***********************************************************************/
-
-#define CREDITS "Carlos A. Lozano (cpu)\nPhil Stroffolino (gfx)\nNicola Salmoria (sound)"
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -532,10 +529,10 @@ static struct GfxLayout sprite_layout = {
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &char_layout,		 0*16,	32 },
-	{ 1, 0x08000, &tile_layout,		64*16,	32 },
-	{ 1, 0x28000, &tile_layout,		96*16,	32 },
-	{ 1, 0x48000, &sprite_layout,	32*16,	32 },
+	{ REGION_GFX1, 0, &char_layout,		 0*16,	32 },
+	{ REGION_GFX2, 0, &tile_layout,		64*16,	32 },
+	{ REGION_GFX3, 0, &tile_layout,		96*16,	32 },
+	{ REGION_GFX4, 0, &sprite_layout,	32*16,	32 },
 	{ -1 } /* end of array */
 };
 
@@ -566,7 +563,7 @@ static struct DACinterface cclimbr2_dac_interface =
 	{ 40, 40 },
 };
 
-static struct MachineDriver terraf_machine_driver =
+static struct MachineDriver machine_driver_terraf =
 {
 	{
 		{
@@ -612,7 +609,7 @@ static struct MachineDriver terraf_machine_driver =
 	}
 };
 
-static struct MachineDriver armedf_machine_driver =
+static struct MachineDriver machine_driver_armedf =
 {
 	{
 		{
@@ -658,7 +655,7 @@ static struct MachineDriver armedf_machine_driver =
 	}
 };
 
-static struct MachineDriver cclimbr2_machine_driver =
+static struct MachineDriver machine_driver_cclimbr2 =
 {
 	{
 		{
@@ -704,6 +701,8 @@ static struct MachineDriver cclimbr2_machine_driver =
 	}
 };
 
+
+
 ROM_START( terraf )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "terrafor.014", 0x00000, 0x10000, 0x8e5f557f )
@@ -713,23 +712,29 @@ ROM_START( terraf )
 	ROM_LOAD_EVEN( "terrafor.012", 0x40000, 0x08000, 0x4f0e1d76 )
 	ROM_LOAD_ODD(  "terrafor.009", 0x40000, 0x08000, 0xd1014280 )
 
-	ROM_REGION_DISPOSE( 0x88000 )
-	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
-	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
-	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
-	ROM_LOAD( "terrafor.004", 0x28000, 0x10000, 0x2144d8e0 ) /* background tiles */
-	ROM_LOAD( "terrafor.005", 0x38000, 0x10000, 0x744f5c9e )
-	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
-	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
-	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.006", 0x00000, 0x10000, 0x25d23dfd ) /* foreground tiles */
+	ROM_LOAD( "terrafor.007", 0x10000, 0x10000, 0xb9b0fe27 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.004", 0x00000, 0x10000, 0x2144d8e0 ) /* background tiles */
+	ROM_LOAD( "terrafor.005", 0x10000, 0x10000, 0x744f5c9e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
+	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
 
 	ROM_REGION(0x4000)	/* unknown */
 	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
 ROM_END
 
 ROM_START( terrafu )
@@ -741,23 +746,29 @@ ROM_START( terrafu )
 	ROM_LOAD_EVEN( "tf.6",         0x40000, 0x08000, 0xb91e9ba3 )
 	ROM_LOAD_ODD(  "tf.1",         0x40000, 0x08000, 0xd6e22375 )
 
-	ROM_REGION_DISPOSE(0x88000)
-	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
-	ROM_LOAD( "terrafor.006", 0x08000, 0x10000, 0x25d23dfd ) /* foreground tiles */
-	ROM_LOAD( "terrafor.007", 0x18000, 0x10000, 0xb9b0fe27 )
-	ROM_LOAD( "terrafor.004", 0x28000, 0x10000, 0x2144d8e0 ) /* background tiles */
-	ROM_LOAD( "terrafor.005", 0x38000, 0x10000, 0x744f5c9e )
-	ROM_LOAD( "terrafor.003", 0x48000, 0x10000, 0xd74085a1 ) /* sprites */
-	ROM_LOAD( "terrafor.002", 0x68000, 0x10000, 0x148aa0c5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 
-	ROM_REGIONX( 0x0100, REGION_PROMS )
-	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.008", 0x00000, 0x08000, 0xbc6f7cbc ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.006", 0x00000, 0x10000, 0x25d23dfd ) /* foreground tiles */
+	ROM_LOAD( "terrafor.007", 0x10000, 0x10000, 0xb9b0fe27 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.004", 0x00000, 0x10000, 0x2144d8e0 ) /* background tiles */
+	ROM_LOAD( "terrafor.005", 0x10000, 0x10000, 0x744f5c9e )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "terrafor.003", 0x00000, 0x10000, 0xd74085a1 ) /* sprites */
+	ROM_LOAD( "terrafor.002", 0x20000, 0x10000, 0x148aa0c5 )
 
 	ROM_REGION(0x4000)	/* unknown */
 	ROM_LOAD( "tf.10",        0x0000, 0x4000, 0xac705812 )	/* TEST DATA ? */
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "tf.clr",       0x0000, 0x0100, 0x81244757 )	/* ??? */
 ROM_END
 
 ROM_START( armedf )
@@ -769,17 +780,23 @@ ROM_START( armedf )
 	ROM_LOAD_EVEN( "af_08.rom", 0x40000, 0x10000, 0xd1d43600 )
 	ROM_LOAD_ODD(  "af_03.rom", 0x40000, 0x10000, 0xbbe1fe2d )
 
-	ROM_REGION_DISPOSE(0x88000)
-	ROM_LOAD( "af_09.rom", 0x00000, 0x08000, 0x7025e92d ) /* characters */
-	ROM_LOAD( "af_04.rom", 0x08000, 0x10000, 0x44d3af4f ) /* foreground tiles */
-	ROM_LOAD( "af_05.rom", 0x18000, 0x10000, 0x92076cab )
-	ROM_LOAD( "af_14.rom", 0x28000, 0x10000, 0x8c5dc5a7 ) /* background tiles */
-	ROM_LOAD( "af_13.rom", 0x38000, 0x10000, 0x136a58a3 )
-	ROM_LOAD( "af_11.rom", 0x48000, 0x20000, 0xb46c473c ) /* sprites */
-	ROM_LOAD( "af_12.rom", 0x68000, 0x20000, 0x23cb6bfe )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "af_10.rom", 0x00000, 0x10000, 0xc5eacb87 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_09.rom", 0x00000, 0x08000, 0x7025e92d ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_04.rom", 0x00000, 0x10000, 0x44d3af4f ) /* foreground tiles */
+	ROM_LOAD( "af_05.rom", 0x10000, 0x10000, 0x92076cab )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_14.rom", 0x00000, 0x10000, 0x8c5dc5a7 ) /* background tiles */
+	ROM_LOAD( "af_13.rom", 0x10000, 0x10000, 0x136a58a3 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "af_11.rom", 0x00000, 0x20000, 0xb46c473c ) /* sprites */
+	ROM_LOAD( "af_12.rom", 0x20000, 0x20000, 0x23cb6bfe )
 ROM_END
 
 ROM_START( cclimbr2 )
@@ -791,116 +808,34 @@ ROM_START( cclimbr2 )
 	ROM_LOAD_EVEN( "3.bin", 0x40000, 0x10000, 0x1fb110d6 )
 	ROM_LOAD_ODD(  "2.bin", 0x40000, 0x10000, 0x0024c15b )
 
-	ROM_REGION( 0x88000 )
-	ROM_LOAD( "10.bin", 0x00000, 0x08000, 0x7f475266 ) /* characters */
-	ROM_LOAD( "7.bin",  0x08000, 0x10000, 0xcbdd3906 ) /* foreground tiles */
-	ROM_LOAD( "8.bin",  0x18000, 0x10000, 0xb2a613c0 )
-	ROM_LOAD( "17.bin", 0x28000, 0x10000, 0xe24bb2d7 ) /* background tiles */
-	ROM_LOAD( "18.bin", 0x38000, 0x10000, 0x56834554 )
-	ROM_LOAD( "15.bin", 0x48000, 0x10000, 0x4bf838be ) /* sprites */
-	ROM_LOAD( "16.bin", 0x58000, 0x10000, 0x21a265c5 )
-	ROM_LOAD( "13.bin", 0x68000, 0x10000, 0x6b6ec999 )
-	ROM_LOAD( "14.bin", 0x78000, 0x10000, 0xf426a4ad )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Z80 code (sound) */
 	ROM_LOAD( "11.bin", 0x00000, 0x04000, 0xfe0175be )
 	ROM_LOAD( "12.bin", 0x04000, 0x08000, 0x5ddf18f2 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10.bin", 0x00000, 0x08000, 0x7f475266 ) /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "7.bin",  0x00000, 0x10000, 0xcbdd3906 ) /* foreground tiles */
+	ROM_LOAD( "8.bin",  0x10000, 0x10000, 0xb2a613c0 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "17.bin", 0x00000, 0x10000, 0xe24bb2d7 ) /* background tiles */
+	ROM_LOAD( "18.bin", 0x10000, 0x10000, 0x56834554 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15.bin", 0x00000, 0x10000, 0x4bf838be ) /* sprites */
+	ROM_LOAD( "16.bin", 0x10000, 0x10000, 0x21a265c5 )
+	ROM_LOAD( "13.bin", 0x20000, 0x10000, 0x6b6ec999 )
+	ROM_LOAD( "14.bin", 0x30000, 0x10000, 0xf426a4ad )
 
 	ROM_REGION(0x4000)	/* unknown */
 	ROM_LOAD( "9.bin",  0x0000, 0x4000, 0x740d260f )	// DATA ?
 ROM_END
 
-struct GameDriver driver_terraf =
-{
-	__FILE__,
-	0,
-	"terraf",
-	"Terra Force",
-	"1987",
-	"Nichibutsu",
-	CREDITS,
-	0,
-	&terraf_machine_driver,
-	0,
-	rom_terraf,
-	0,0,0,0,
-	input_ports_terraf,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
 
-struct GameDriver driver_terrafu =
-{
-	__FILE__,
-	&driver_terraf,
-	"terrafu",
-	"Terra Force (US)",
-	"1987",
-	"Nichibutsu USA",
-	CREDITS,
-	0,
-	&terraf_machine_driver,
-	0,
 
-	rom_terrafu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_terraf,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_armedf =
-{
-	__FILE__,
-	0,
-	"armedf",
-	"Armed Formation",
-	"1988",
-	"Nichibutsu",
-	CREDITS,
-	0,
-	&armedf_machine_driver,
-	0,
-
-	rom_armedf,
-	0, 0,
-	0,
-	0,
-
-	input_ports_armedf,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver driver_cclimbr2 =
-{
-	__FILE__,
-	0,
-	"cclimbr2",
-	"Crazy Climber 2 (Japan)",
-	"1988",
-	"Nichibutsu",
-	"Takahiro Nogi",
-	0,
-	&cclimbr2_machine_driver,
-	0,
-
-	rom_cclimbr2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cclimbr2,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1987, terraf,   ,       terraf,   terraf,   , ROT0,   "Nichibutsu", "Terra Force" )
+GAME( 1987, terrafu,  terraf, terraf,   terraf,   , ROT0,   "Nichibutsu USA", "Terra Force (US)" )
+GAME( 1988, armedf,   ,       armedf,   armedf,   , ROT270, "Nichibutsu", "Armed Formation" )
+GAME( 1988, cclimbr2, ,       cclimbr2, cclimbr2, , ROT0,   "Nichibutsu", "Crazy Climber 2 (Japan)" )

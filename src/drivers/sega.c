@@ -899,247 +899,6 @@ ROM_START( startrek )
 	ROM_LOAD ("1872",         0xd800, 0x1000, 0xebb5c3a9 )
 ROM_END
 
-/***************************************************************************
-
-  Hi Score Routines
-
-***************************************************************************/
-
-static int spacfury_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
-			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
-			osd_fread(f,&RAM[0xCFD2],3*10);   /* 3 letters * 10 scores */
-
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void spacfury_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
-		osd_fwrite(f,&RAM[0xCFD2],3*10);  /* 3 letters * 10 scores */
-		osd_fclose(f);
-	}
-}
-
-
-static int zektor_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
-			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores? */
-			osd_fread(f,&RAM[0xCFD2],3*5);   /* 3 letters * 5 scores */
-
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void zektor_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores? */
-		osd_fwrite(f,&RAM[0xCFD2],3*5);  /* 3 letters * 5 scores */
-		osd_fclose(f);
-	}
-}
-
-static int tacscan_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xCB44],"MCL",3) == 0) &&
-		(memcmp(&RAM[0xCB95],"\x02\x03\x00",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xCB44],3*5);  /* initials */
-			osd_fread(f,&RAM[0xCB95],3*5);  /* scores */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void tacscan_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xCB44],3*5);  /* initials */
-		osd_fwrite(f,&RAM[0xCB95],3*5);  /* scores */
-		osd_fclose(f);
-	}
-}
-
-
-static int elim2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xC99F],"\x0C\x0B\x07",3) == 0) &&
-			(memcmp(&RAM[0xC9BA],"\x0A\x08\x03",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
-			osd_fread(f,&RAM[0xC99F],3*10);  /* 3 letters * 10 scores */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void elim2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
-		osd_fwrite(f,&RAM[0xC99F],3*10); /* 3 letters * 10 scores */
-		osd_fclose(f);
-	}
-}
-
-static int elim4_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xCC4D],"\x0C\x0B\x07",3) == 0) &&
-			(memcmp(&RAM[0xCC68],"\x0A\x08\x03",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC928],2*30);  /* 2 bytes * 30 scores */
-			osd_fread(f,&RAM[0xCC4D],3*10);  /* 3 letters * 10 scores */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void elim4_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC928],2*30); /* 2 bytes * 30 scores */
-		osd_fwrite(f,&RAM[0xCC4D],3*10); /* 3 letters * 10 scores */
-		osd_fclose(f);
-	}
-}
-
-static int startrek_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xC98B],"SLP",3) == 0) &&
-			(memcmp(&RAM[0xC910],"\x25\x06\x09",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC98B],0x1B);
-			osd_fread(f,&RAM[0xC910],0x24);
-			// osd_fread(f,&RAM[0xC98B],0xF0); /* longer ? */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void startrek_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC98B],0x1B);
-		osd_fwrite(f,&RAM[0xC910],0x24);
-		osd_fclose(f);
-	}
-}
-
-
 
 
 /***************************************************************************
@@ -1201,7 +960,7 @@ static struct CustomSound_interface sega_custom_interface =
 	sega_sh_update
 };
 
-static struct MachineDriver spacfury_machine_driver =
+static struct MachineDriver machine_driver_spacfury =
 {
 	/* basic machine hardware */
 	{
@@ -1255,20 +1014,19 @@ struct GameDriver driver_spacfury =
 	"Sega",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&spacfury_machine_driver,
-	0,
+	&machine_driver_spacfury,
+	spacfury_decode,
 
 	rom_spacfury,
-	spacfury_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_spacfury,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-    spacfury_hiload, spacfury_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_spacfura =
@@ -1281,20 +1039,19 @@ struct GameDriver driver_spacfura =
 	"Sega",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&spacfury_machine_driver,
-	0,
+	&machine_driver_spacfury,
+	spacfury_decode,
 
 	rom_spacfura,
-	spacfury_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_spacfury,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	spacfury_hiload, spacfury_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************
@@ -1353,7 +1110,7 @@ static struct Samplesinterface zektor_samples_interface =
 
 
 
-static struct MachineDriver zektor_machine_driver =
+static struct MachineDriver machine_driver_zektor =
 {
 	/* basic machine hardware */
 	{
@@ -1408,20 +1165,19 @@ struct GameDriver driver_zektor =
 	"Sega",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&zektor_machine_driver,
-	0,
+	&machine_driver_zektor,
+	zektor_decode,
 
 	rom_zektor,
-	zektor_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_zektor,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	zektor_hiload, zektor_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************
@@ -1476,7 +1232,7 @@ static struct CustomSound_interface tacscan_custom_interface =
 
 
 
-static struct MachineDriver tacscan_machine_driver =
+static struct MachineDriver machine_driver_tacscan =
 {
 	/* basic machine hardware */
 	{
@@ -1529,20 +1285,19 @@ struct GameDriver driver_tacscan =
 	"Sega",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&tacscan_machine_driver,
-	0,
+	&machine_driver_tacscan,
+	tacscan_decode,
 
 	rom_tacscan,
-	tacscan_decode, 0,
+	0, 0,
 	0,
 	0,
 
         input_ports_tacscan,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tacscan_hiload, tacscan_hisave
+	ROT270,
+	0,0
 };
 
 /***************************************************************************
@@ -1578,7 +1333,7 @@ static struct Samplesinterface elim2_samples_interface =
 };
 
 
-static struct MachineDriver elim2_machine_driver =
+static struct MachineDriver machine_driver_elim2 =
 {
 	/* basic machine hardware */
 	{
@@ -1631,20 +1386,19 @@ struct GameDriver driver_elim2 =
 	"Gremlin",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&elim2_machine_driver,
-	0,
+	&machine_driver_elim2,
+	elim2_decode,
 
 	rom_elim2,
-	elim2_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_elim2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	elim2_hiload, elim2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_elim2a =
@@ -1657,24 +1411,23 @@ struct GameDriver driver_elim2a =
 	"Gremlin",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&elim2_machine_driver,
-	0,
+	&machine_driver_elim2,
+	elim2_decode,
 
 	rom_elim2a,
-	elim2_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_elim2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	elim2_hiload, elim2_hisave
+	ROT0,
+	0,0
 };
 
 
-static struct MachineDriver elim4_machine_driver =
+static struct MachineDriver machine_driver_elim4 =
 {
 	/* basic machine hardware */
 	{
@@ -1727,20 +1480,19 @@ struct GameDriver driver_elim4 =
 	"Gremlin",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&elim4_machine_driver,
-	0,
+	&machine_driver_elim4,
+	elim4_decode,
 
 	rom_elim4,
-	elim4_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_elim4,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	elim4_hiload, elim4_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************
@@ -1815,7 +1567,7 @@ static struct Samplesinterface startrek_samples_interface =
 	startrek_sample_names
 };
 
-static struct MachineDriver startrek_machine_driver =
+static struct MachineDriver machine_driver_startrek =
 {
 	/* basic machine hardware */
 	{
@@ -1868,18 +1620,17 @@ struct GameDriver driver_startrek =
 	"Sega",
         "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&startrek_machine_driver,
-	0,
+	&machine_driver_startrek,
+	startrek_decode,
 
 	rom_startrek,
-	startrek_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_startrek,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	startrek_hiload, startrek_hisave
+	ROT0,
+	0,0
 };

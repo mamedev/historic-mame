@@ -394,47 +394,6 @@ ROM_START( sidepckb )
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
-/***************************************************************************
-
-  High score save - DW 1/18/99
-
-***************************************************************************/
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if  (memcmp(&RAM[0x0A0E],"\x11\x00\x53",3) == 0 &&
-			memcmp(&RAM[0x0A3D],"\x54\x54\x54",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0A0E],50);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0A0E],50);
-		osd_fclose(f);
-	}
-}
-
 
 
 struct GameDriver driver_sidepckt =
@@ -458,9 +417,8 @@ struct GameDriver driver_sidepckt =
 	input_ports_sidepckt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS | GAME_NOT_WORKING,
-
-	hiload, hisave
+	ROT0 | GAME_WRONG_COLORS | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_sidepckb =
@@ -484,7 +442,6 @@ struct GameDriver driver_sidepckb =
 	input_ports_sidepckt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
-
-	hiload, hisave
+	ROT0 | GAME_WRONG_COLORS,
+	0,0
 };

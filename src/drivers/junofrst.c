@@ -84,48 +84,26 @@ Blitter source graphics
 #include "cpu/z80/z80.h"
 
 
+void konami1_decode(void);
+
 extern unsigned char *tutankhm_scrollx;
 
 void tutankhm_videoram_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
-
+void junofrst_blitter_w( int offset, int data );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-void junofrst_blitter_w( int offset, int data );
-
 void tutankhm_sh_irqtrigger_w(int offset,int data);
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 void junofrst_bankselect_w(int offset,int data)
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
-
-/*
-	This bank code SHOULD be this but it doesn't work because the opcodes
-   are encrypted
-
 	cpu_setbank(1,&RAM[bankaddress]);
-*/
-	memcpy(&RAM[0x9000],&RAM[bankaddress],0x1000);
-	memcpy(&ROM[0x9000],&ROM[bankaddress],0x1000);
-
-}
-
-static unsigned char JunoNibbleSwapTable[256];
-
-void junofrst_init_machine(void)
-{
-	int i;
-
-	for (i=0;i<256;i++) {
-		JunoNibbleSwapTable[i] = (i>>4) | ((i & 0xF) << 4);
-	}
 }
 
 
@@ -205,8 +183,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8028, 0x8028, input_port_3_r },	/* IN2: Player 2 I/O */
 	{ 0x802c, 0x802c, input_port_4_r },	/* DSW1 (inverted bits) */
 	{ 0x8100, 0x8fff, MRA_RAM },
-//	{ 0x9000, 0x9fff, MRA_BANK1 },
-	{ 0x9000, 0x9fff, MRA_ROM },
+	{ 0x9000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -224,7 +201,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8060, 0x8060, junofrst_bankselect_w },
 	{ 0x8070, 0x8073, junofrst_blitter_w },
 	{ 0x8100, 0x8fff, MWA_RAM },
-	{ 0xa000, 0xffff, MWA_ROM },
+	{ 0x9000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -417,7 +394,7 @@ static struct MachineDriver machine_driver =
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	junofrst_init_machine,				/* init machine routine */
+	0,				/* init machine routine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* not sure about the visible area */
@@ -448,7 +425,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( junofrst )
-	ROM_REGIONX( 0x22000, REGION_CPU1 )      /* 64k for M6809 CPU code + 64k for ROM banks */
+	ROM_REGIONX( 2*0x1c000, REGION_CPU1 )	/* code + space for decrypted opcodes */
 	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, 0xf5a7ab9d ) /* program ROMs */
 	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, 0xf20626e0 )
 	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, 0x1e7744a7 )
@@ -460,178 +437,18 @@ ROM_START( junofrst )
 	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
 	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
 
-	ROM_LOAD( "jfs3_c7.bin",  0x1c000, 0x2000, 0xaeacf6db )
-	ROM_LOAD( "jfs4_d7.bin",  0x1e000, 0x2000, 0x206d954c )
-	ROM_LOAD( "jfs5_e7.bin",  0x20000, 0x2000, 0x1eb87a6e )
-
-
-	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
 
 	ROM_REGIONX( 0x1000, REGION_CPU3 )	/* 8039 */
 	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 )	/* BLTROM, used at runtime */
+	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
+	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
+	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
 ROM_END
 
-
-
-static void junofrst_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x6000;A < 0x1c000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-/* Juno First Blitter Hardware emulation
-
-	Juno First can blit a 16x16 graphics which comes from un-memory mapped graphics roms
-
-	$8070->$8071 specifies the destination NIBBLE address
-	$8072->$8073 specifies the source NIBBLE address
-
-	Depending on bit 0 of the source address either the source pixels will be copied to
-	the destination address, or a zero will be written.
-	This allows the game to quickly clear the sprites from the screen
-
-	A lookup table is used to swap the source nibbles as they are the wrong way round in the
-	source data.
-
-	Bugs -
-
-		Currently only the even pixels will be written to. This is to speed up the blit routine
-		as it does not have to worry about shifting the source data.
-		This means that all destination X values will be rounded to even values.
-		In practice no one actaully notices this.
-
-		The clear works properly.
-*/
-
-void junofrst_blitter_w( int offset, int data )
-{
-	static unsigned char blitterdata[4];
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	blitterdata[offset] = data;
-
-	/* Blitter is triggered by $8073 */
-	if (offset==3)
-	{
-		int i;
-		unsigned long srcaddress;
-		unsigned long destaddress;
-		unsigned char srcflag;
-		unsigned char destflag;
-		unsigned char *JunoBLTRom = &RAM[0x1C000];
-
-		srcaddress = (blitterdata[0x2]<<8) | (blitterdata[0x3]);
-		srcflag = srcaddress & 1;
-		srcaddress >>= 1;
-		srcaddress &= 0x7FFE;
-		destaddress = (blitterdata[0x0]<<8)  | (blitterdata[0x1]);
-
-		destflag = destaddress & 1;
-
-		destaddress >>= 1;
-		destaddress &= 0x7fff;
-
-		if (srcflag) {
-			for (i=0;i<16;i++) {
-
-#define JUNOBLITPIXEL(x)															\
-					if (JunoBLTRom[srcaddress+x])									\
-						tutankhm_videoram_w( destaddress+x,						\
-									JunoNibbleSwapTable[								\
-										JunoBLTRom[srcaddress+x]					\
-									]);
-
-				JUNOBLITPIXEL(0);
-				JUNOBLITPIXEL(1);
-				JUNOBLITPIXEL(2);
-				JUNOBLITPIXEL(3);
-				JUNOBLITPIXEL(4);
-				JUNOBLITPIXEL(5);
-				JUNOBLITPIXEL(6);
-				JUNOBLITPIXEL(7);
-
-				destaddress += 128;
-				srcaddress += 8;
-			}
-		} else {
-			for (i=0;i<16;i++) {
-
-#define JUNOCLEARPIXEL(x) \
-					if ((JunoBLTRom[srcaddress+x] & 0xF0)) \
-						tutankhm_videoram_w( destaddress+x,						\
-							RAM[destaddress+x] & 0xF0);					\
-					if ((JunoBLTRom[srcaddress+x] & 0x0F)) \
-						tutankhm_videoram_w( destaddress+x,						\
-							RAM[destaddress+x] & 0x0F);
-
-				JUNOCLEARPIXEL(0);
-				JUNOCLEARPIXEL(1);
-				JUNOCLEARPIXEL(2);
-				JUNOCLEARPIXEL(3);
-				JUNOCLEARPIXEL(4);
-				JUNOCLEARPIXEL(5);
-				JUNOCLEARPIXEL(6);
-				JUNOCLEARPIXEL(7);
-				destaddress += 128;
-				srcaddress+= 8;
-			}
-		}
-	}
-
-}
-
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-
-	if (  (RAM[0x8100]==0x01)
-		&& (RAM[0x8101]==0x00)
-		&& (RAM[0x8102]==0x00)
-		&& (RAM[0x8103]==0x02)
-		&& (RAM[0x8104]==0x41)
-		&& (RAM[0x8105]==0x41)
-		&& (RAM[0x8106]==0x41)
-		)
-	{
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-
-				osd_fread(f,&RAM[0x8100],0x81a8-0x8100);
-				osd_fclose(f);
-			}
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8100],0x81a8-0x8100);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_junofrst =
@@ -645,17 +462,16 @@ struct GameDriver driver_junofrst =
 	"Chris Hardy (MAME driver)\nMirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_junofrst,
-	0, junofrst_decode,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
+	0, 0,
+	0,
 	0,
 
 	input_ports_junofrst,
 
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave		        /* High score load and save */
+	0, 0, 0,
+	ROT90,
+	0,0
 };

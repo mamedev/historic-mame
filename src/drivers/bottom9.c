@@ -2,11 +2,15 @@
 
 Bottom of the Ninth (c) 1989 Konami
 
+Similar to S.P.Y.
+
+driver by Nicola Salmoria
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/konami/konami.h"
+#include "cpu/m6809/m6809.h"
 #include "vidhrdw/konamiic.h"
 
 
@@ -18,15 +22,16 @@ void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static int zoomreadroms,K052109_selected;
-
 static int bottom9_interrupt(void)
 {
 	if (K052109_is_IRQ_enabled()) return interrupt();
 	else return ignore_interrupt();
 }
 
-static int bankedram1_r(int offset)
+
+static int zoomreadroms,K052109_selected;
+
+static int bottom9_bankedram1_r(int offset)
 {
 	if (K052109_selected)
 		return K052109_051960_r(offset);
@@ -39,19 +44,19 @@ static int bankedram1_r(int offset)
 	}
 }
 
-static void bankedram1_w(int offset,int data)
+static void bottom9_bankedram1_w(int offset,int data)
 {
 	if (K052109_selected) K052109_051960_w(offset,data);
 	else K051316_0_w(offset,data);
 }
 
-static int bankedram2_r(int offset)
+static int bottom9_bankedram2_r(int offset)
 {
 	if (K052109_selected) return K052109_051960_r(offset + 0x2000);
 	else return paletteram_r(offset);
 }
 
-static void bankedram2_w(int offset,int data)
+static void bottom9_bankedram2_w(int offset,int data)
 {
 	if (K052109_selected) K052109_051960_w(offset + 0x2000,data);
 	else paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -94,6 +99,7 @@ static void bottom9_sh_irqtrigger_w(int offset,int data)
 {
 	cpu_cause_interrupt(1,0xff);
 }
+
 static int nmienable;
 
 static int bottom9_sound_interrupt(void)
@@ -112,11 +118,11 @@ static void sound_bank_w(int offset, int data)
 	unsigned char *RAM;
 	int bank_A,bank_B;
 
-	RAM = memory_region(5);
+	RAM = memory_region(REGION_SOUND1);
 	bank_A = 0x20000 * ((data >> 0) & 0x03);
 	bank_B = 0x20000 * ((data >> 2) & 0x03);
 	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
-	RAM = memory_region(6);
+	RAM = memory_region(REGION_SOUND2);
 	bank_A = 0x20000 * ((data >> 4) & 0x03);
 	bank_B = 0x20000 * ((data >> 6) & 0x03);
 	K007232_bankswitch(1,RAM + bank_A,RAM + bank_B);
@@ -124,15 +130,15 @@ static void sound_bank_w(int offset, int data)
 
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress bottom9_readmem[] =
 {
-	{ 0x0000, 0x07ff, bankedram1_r },
+	{ 0x0000, 0x07ff, bottom9_bankedram1_r },
 	{ 0x1fd0, 0x1fd0, input_port_4_r },
 	{ 0x1fd1, 0x1fd1, input_port_0_r },
 	{ 0x1fd2, 0x1fd2, input_port_1_r },
 	{ 0x1fd3, 0x1fd3, input_port_2_r },
 	{ 0x1fe0, 0x1fe0, input_port_3_r },
-	{ 0x2000, 0x27ff, bankedram2_r },
+	{ 0x2000, 0x27ff, bottom9_bankedram2_r },
 	{ 0x0000, 0x3fff, K052109_051960_r },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x7fff, MRA_BANK1 },
@@ -140,16 +146,16 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress bottom9_writemem[] =
 {
-	{ 0x0000, 0x07ff, bankedram1_w },
+	{ 0x0000, 0x07ff, bottom9_bankedram1_w },
 	{ 0x1f80, 0x1f80, bankswitch_w },
 	{ 0x1f90, 0x1f90, bottom9_1f90_w },
-	{ 0x1fa0, 0x1fa0, MWA_NOP },//watchdog_reset_w },
+	{ 0x1fa0, 0x1fa0, watchdog_reset_w },
 	{ 0x1fb0, 0x1fb0, soundlatch_w },
 	{ 0x1fc0, 0x1fc0, bottom9_sh_irqtrigger_w },
 	{ 0x1ff0, 0x1fff, K051316_ctrl_0_w },
-	{ 0x2000, 0x27ff, bankedram2_w, &paletteram },
+	{ 0x2000, 0x27ff, bottom9_bankedram2_w, &paletteram },
 	{ 0x0000, 0x3fff, K052109_051960_w },
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x7fff, MWA_ROM },
@@ -157,7 +163,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress sound_readmem[] =
+static struct MemoryReadAddress bottom9_sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
@@ -167,7 +173,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress sound_writemem[] =
+static struct MemoryWriteAddress bottom9_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
@@ -295,7 +301,7 @@ static void volume_callback1(int v)
 static struct K007232_interface k007232_interface =
 {
 	2,			/* number of chips */
-	{ 5, 6 },	/* memory regions */
+	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
 	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER),
 			K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback0, volume_callback1 }	/* external port callback */
@@ -303,19 +309,19 @@ static struct K007232_interface k007232_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bottom9 =
 {
 	{
 		{
 			CPU_M6809,
 			2000000, /* ? */
-			readmem,writemem,0,0,
+			bottom9_readmem,bottom9_writemem,0,0,
 			bottom9_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3579545,
-			sound_readmem, sound_writemem,0,0,
+			bottom9_sound_readmem, bottom9_sound_writemem,0,0,
 			bottom9_sound_interrupt,8	/* irq is triggered by the main CPU */
 		}
 	},
@@ -346,7 +352,6 @@ static struct MachineDriver machine_driver =
 };
 
 
-
 /***************************************************************************
 
   Game ROMs
@@ -354,12 +359,15 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bottom9 )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891-t02.k15",  0x20000, 0x08000, 0x2c10ced2 )
     ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e10c", 0x00000, 0x10000, 0x209b0431 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "891e10a", 0x00000, 0x10000, 0x8020a9e8 )
 	ROM_LOAD_GFX_EVEN( "891e10d", 0x20000, 0x10000, 0x16d5fd7a )
@@ -369,7 +377,7 @@ ROM_START( bottom9 )
 	ROM_LOAD_GFX_EVEN( "891e09d", 0x60000, 0x10000, 0x4e1335e6 )
 	ROM_LOAD_GFX_ODD ( "891e09b", 0x60000, 0x10000, 0xb6f914fb )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e06e", 0x00000, 0x10000, 0x0b04db1c )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "891e06a", 0x00000, 0x10000, 0x5ee37327 )
 	ROM_LOAD_GFX_EVEN( "891e06f", 0x20000, 0x10000, 0xf9ada524 )
@@ -387,36 +395,36 @@ ROM_START( bottom9 )
 	ROM_LOAD_GFX_EVEN( "891e05h", 0xe0000, 0x10000, 0xb0aba53b )
 	ROM_LOAD_GFX_ODD ( "891e05d", 0xe0000, 0x10000, 0xf6d3f886 )
 
-	ROM_REGION( 0x020000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
-	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x40000 ) /* samples for 007232 #0 */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
 	ROM_LOAD( "891e08a",      0x00000, 0x10000, 0xcef667bf )
 	ROM_LOAD( "891e08b",      0x10000, 0x10000, 0xf7c14a7a )
 	ROM_LOAD( "891e08c",      0x20000, 0x10000, 0x756b7f3c )
 	ROM_LOAD( "891e08d",      0x30000, 0x10000, 0xcd0d7305 )
 
-	ROM_REGION( 0x40000 ) /* samples for 007232 #1 */
+	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
 	ROM_LOAD( "891e04a",      0x00000, 0x10000, 0xdaebbc74 )
 	ROM_LOAD( "891e04b",      0x10000, 0x10000, 0x5ffb9ad1 )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )
 	ROM_LOAD( "891e04d",      0x30000, 0x10000, 0x8b0cd2cc )
-
-	ROM_REGIONX( 0x0200, REGION_PROMS )
-	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( bottom9n )
-	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms + space for banked ram */
+	ROM_REGIONX( 0x28000, REGION_CPU1 ) /* code + banked roms */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891n02.k15",   0x20000, 0x08000, 0xd44d9ed4 )
     ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
+	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e10c", 0x00000, 0x10000, 0x209b0431 )	/* characters */
 	ROM_LOAD_GFX_ODD ( "891e10a", 0x00000, 0x10000, 0x8020a9e8 )
 	ROM_LOAD_GFX_EVEN( "891e10d", 0x20000, 0x10000, 0x16d5fd7a )
@@ -426,7 +434,7 @@ ROM_START( bottom9n )
 	ROM_LOAD_GFX_EVEN( "891e09d", 0x60000, 0x10000, 0x4e1335e6 )
 	ROM_LOAD_GFX_ODD ( "891e09b", 0x60000, 0x10000, 0xb6f914fb )
 
-	ROM_REGION( 0x100000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD_GFX_EVEN( "891e06e", 0x00000, 0x10000, 0x0b04db1c )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "891e06a", 0x00000, 0x10000, 0x5ee37327 )
 	ROM_LOAD_GFX_EVEN( "891e06f", 0x20000, 0x10000, 0xf9ada524 )
@@ -444,87 +452,35 @@ ROM_START( bottom9n )
 	ROM_LOAD_GFX_EVEN( "891e05h", 0xe0000, 0x10000, 0xb0aba53b )
 	ROM_LOAD_GFX_ODD ( "891e05d", 0xe0000, 0x10000, 0xf6d3f886 )
 
-	ROM_REGION( 0x020000 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGIONX( 0x020000, REGION_GFX3 ) /* graphics ( dont dispose as the program can read them ) */
 	ROM_LOAD( "891e07a",      0x00000, 0x10000, 0xb8d8b939 )	/* zoom/rotate */
 	ROM_LOAD( "891e07b",      0x10000, 0x10000, 0x83b2f92d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Z80 code */
-	ROM_LOAD( "891j01.g8",    0x0000, 0x8000, 0x31b0a0a8 )
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x40000 ) /* samples for 007232 #0 */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* samples for 007232 #0 */
 	ROM_LOAD( "891e08a",      0x00000, 0x10000, 0xcef667bf )
 	ROM_LOAD( "891e08b",      0x10000, 0x10000, 0xf7c14a7a )
 	ROM_LOAD( "891e08c",      0x20000, 0x10000, 0x756b7f3c )
 	ROM_LOAD( "891e08d",      0x30000, 0x10000, 0xcd0d7305 )
 
-	ROM_REGION( 0x40000 ) /* samples for 007232 #1 */
+	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* samples for 007232 #1 */
 	ROM_LOAD( "891e04a",      0x00000, 0x10000, 0xdaebbc74 )
 	ROM_LOAD( "891e04b",      0x10000, 0x10000, 0x5ffb9ad1 )
 	ROM_LOAD( "891e04c",      0x20000, 0x10000, 0x2dbbf16b )
 	ROM_LOAD( "891e04d",      0x30000, 0x10000, 0x8b0cd2cc )
-
-	ROM_REGIONX( 0x0200, REGION_PROMS )
-	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 ROM_END
 
 
 
-static void gfx_untangle(void)
+static void init_bottom9(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_bottom9 =
-{
-	__FILE__,
-	0,
-	"bottom9",
-	"Bottom of the Ninth (version T)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bottom9,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_bottom9,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_bottom9n =
-{
-	__FILE__,
-	&driver_bottom9,
-	"bottom9n",
-	"Bottom of the Ninth (version N)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bottom9n,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_bottom9,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-	0, 0
-};
+GAME( 1989, bottom9,  ,        bottom9, bottom9, bottom9, ROT0, "Konami", "Bottom of the Ninth (version T)" )
+GAME( 1989, bottom9n, bottom9, bottom9, bottom9, bottom9, ROT0, "Konami", "Bottom of the Ninth (version N)" )

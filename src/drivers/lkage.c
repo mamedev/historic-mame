@@ -416,73 +416,6 @@ ROM_START( lkageb )
 	ROM_REGION( 0x100 ) /* fake */
 ROM_END
 
-/****  Legend of Kage high score save routine - RJF (July 29, 1999)  ****/
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
-                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
-
-                        RAM[0xe188] = RAM[0xe260];      /* update high score */
-                        RAM[0xe189] = RAM[0xe261];      /* on top of screen */
-                        RAM[0xe18a] = RAM[0xe262];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe25f], 10*14);       /* HS whole table */
-		osd_fclose(f);
-	}
-}
-
-/** Legend of Kage (bootleg) high score save routine - RJF (July 30, 1999) **/
-static int lkageb_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe25f], 10*4);        /* HS values */
-                        osd_fread(f,&RAM[0xe287], 10*10);       /* HS initials */
-
-                        /* update high score on top of screen */
-
-                        RAM[0xe188] = RAM[0xe260] << 4;
-                        RAM[0xe189] = (RAM[0xe261] << 4) + (RAM[0xe260] >> 4);
-                        RAM[0xe18a] = (RAM[0xe262] << 4) + (RAM[0xe261] >> 4);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
 
 
 struct GameDriver driver_lkage = {
@@ -506,9 +439,8 @@ struct GameDriver driver_lkage = {
 	input_ports_lkage,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_lkageb = {
@@ -532,7 +464,6 @@ struct GameDriver driver_lkageb = {
 	input_ports_lkage,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	lkageb_hiload, hisave
+	ROT0,
+	0,0
 };

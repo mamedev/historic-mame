@@ -40,6 +40,24 @@ void starwars_control_w (int offset, int data);
 int  starwars_interrupt (void);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 void starwars_out_w (int offset, int data)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -225,7 +243,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
+	{ 0x4500, 0x45ff, MWA_RAM, &nvram, &nvram_size },		/* nov_ram */
 	{ 0x4600, 0x461f, avgdvg_go },
 	{ 0x4620, 0x463f, avgdvg_reset },
 	{ 0x4640, 0x465f, MWA_NOP },		/* (wdclr) Watchdog clear */
@@ -538,10 +556,12 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver esb_machine_driver =
+static struct MachineDriver machine_driver_esb =
 {
 	/* basic machine hardware */
 	{
@@ -698,34 +718,6 @@ ROM_START( esb )
 ROM_END
 
 
-/* NovRAM Load/Save.  In-game DIP switch setting, and Hi-scores */
-static int novram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x4500],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void novram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4500],256);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_starwars =
 {
@@ -738,19 +730,18 @@ struct GameDriver driver_starwars =
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
-	0,
+	translate_proms,
 
 	rom_starwars,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
+	0, 0,
+	0,
 	0,
 
 	input_ports_starwars,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_starwar1 =
@@ -764,19 +755,18 @@ struct GameDriver driver_starwar1 =
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
-	0,
+	translate_proms,
 
 	rom_starwar1,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
+	0, 0,
+	0,
 	0,
 
 	input_ports_starwars,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_esb =
@@ -789,19 +779,18 @@ struct GameDriver driver_esb =
 	"Atari Games",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
-	&esb_machine_driver,
-	0,
+	&machine_driver_esb,
+	translate_proms,
 
 	rom_esb,
-	translate_proms, 0,  /* ROM decryption, Opcode decryption */
-	0,     /* Sample Array (optional) */
+	0, 0,
+	0,
 	0,
 
 	input_ports_esb,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0 /* Highscore load, save */
+	ROT0,
+	0,0
 };
 

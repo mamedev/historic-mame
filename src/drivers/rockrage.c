@@ -401,7 +401,7 @@ struct GameDriver driver_rockrage =
 	input_ports_rockrage,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0,
 	0, 0
 };
 
@@ -426,6 +426,6 @@ struct GameDriver driver_rockragj =
 	input_ports_rockrage,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0,
 	0, 0
 };

@@ -179,7 +179,7 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < TOTAL_COLORS(3);i++)
 	{
-		COLOR(3,i) = 96 + i;
+		COLOR(3,i) = 96 + (i % (Machine->drv->total_colors - 96));
 	}
 }
 

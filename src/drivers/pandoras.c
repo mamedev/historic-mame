@@ -547,6 +547,6 @@ struct GameDriver driver_pandoras =
 	input_ports_pandoras,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_270,
+    ROT270,
 	0, 0
 };

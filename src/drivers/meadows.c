@@ -444,7 +444,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver deadeye_machine_driver =
+static struct MachineDriver machine_driver_deadeye =
 {
 	/* basic machine hardware */
 	{
@@ -493,7 +493,7 @@ static struct MachineDriver deadeye_machine_driver =
     }
 };
 
-static struct MachineDriver gypsyjug_machine_driver =
+static struct MachineDriver machine_driver_gypsyjug =
 {
 	/* basic machine hardware */
 	{
@@ -599,54 +599,6 @@ static unsigned char ball[16*2] = {
 		memcpy(&memory_region(1)[0x0c00+i], ball, sizeof(ball));
 }
 
-static int deadeye_hiload(void)
-{
-    static int resetcount =0;
-	static int firsttime =0 ;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (++resetcount < 30) return 0;
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) ==0)
-
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x0e00],6);
-            osd_fclose(f);
-			firsttime = 0;
-    		resetcount =0;
-	}
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void deadeye_hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-
-	if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) != 0 )
-	{
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0 )
-	    {
-        osd_fwrite(f,&RAM[0x0e00],6);
-        osd_fclose(f);
-
-	    }
-	}
-}
-
-
-
 
 
 struct GameDriver driver_deadeye =
@@ -659,7 +611,7 @@ struct GameDriver driver_deadeye =
 	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
-	&deadeye_machine_driver,
+	&machine_driver_deadeye,
 	0,
 
 	rom_deadeye,
@@ -671,9 +623,8 @@ struct GameDriver driver_deadeye =
 	input_ports_meadows,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	deadeye_hiload,deadeye_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gypsyjug =
@@ -686,19 +637,17 @@ struct GameDriver driver_gypsyjug =
 	"Meadows",
 	"Juergen Buchmueller\n",
 	0,
-	&gypsyjug_machine_driver,
-	0,
+	&machine_driver_gypsyjug,
+	gypsyjug_rom_decode,
 
 	rom_gypsyjug,
-	gypsyjug_rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_meadows,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	deadeye_hiload,deadeye_hisave
+	ROT0,
+	0,0
 };

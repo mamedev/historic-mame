@@ -22,6 +22,8 @@ MAIN BOARD:
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
+
 
 extern unsigned char *trackfld_scroll;
 extern unsigned char *trackfld_scroll2;
@@ -44,8 +46,6 @@ extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
 extern struct ADPCMinterface hyprolyb_adpcm_interface;
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
-
 
 
 /* handle fake button for speed cheat */
@@ -64,6 +64,80 @@ static int konami_IN1_r(int offset)
 		cheat = (++cheat)%4;
 	}
 	return res;
+}
+
+
+
+/*
+ Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
+*/
+static unsigned char *nvram;
+static int nvram_size;
+static int we_flipped_the_switch;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+	{
+		osd_fwrite(file,nvram,nvram_size);
+
+		if (we_flipped_the_switch)
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it */
+			/* back to off. */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == 0)
+						in->default_value = in->mask;
+					break;
+				}
+
+				in++;
+			}
+
+			we_flipped_the_switch = 0;
+		}
+	}
+	else
+	{
+		if (file)
+		{
+			osd_fread(file,nvram,nvram_size);
+			we_flipped_the_switch = 0;
+		}
+		else
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it on */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == in->mask)
+					{
+						in->default_value = 0;
+						we_flipped_the_switch = 1;
+					}
+					break;
+				}
+
+				in++;
+			}
+		}
+	}
 }
 
 
@@ -97,7 +171,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1840, 0x185f, MWA_RAM, &trackfld_scroll },  /* Scroll amount */
 	{ 0x1C00, 0x1c3f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1C40, 0x1C5f, MWA_RAM, &trackfld_scroll2 },  /* Scroll amount */
-	{ 0x2800, 0x2fff, MWA_RAM },
+	{ 0x2800, 0x2bff, MWA_RAM },
+	{ 0x2c00, 0x2fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x3000, 0x37ff, videoram_w, &videoram, &videoram_size },
 	{ 0x3800, 0x3fff, colorram_w, &colorram },
 	{ 0x6000, 0xffff, MWA_ROM },
@@ -369,12 +444,14 @@ static struct MachineDriver machine_driver =
 			SOUND_VLM5030,
 			&trackfld_vlm5030_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 /* same as the original, but uses ADPCM instead of VLM5030 */
 /* also different memory handlers do handle that */
-static struct MachineDriver hyprolyb_machine_driver =
+static struct MachineDriver machine_driver_hyprolyb =
 {
 	/* basic machine hardware */
 	{
@@ -422,7 +499,9 @@ static struct MachineDriver hyprolyb_machine_driver =
 			SOUND_ADPCM,
 			&hyprolyb_adpcm_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -434,7 +513,7 @@ static struct MachineDriver hyprolyb_machine_driver =
 ***************************************************************************/
 
 ROM_START( trackfld )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
 	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
 	ROM_LOAD( "a03_k03.bin",  0xA000, 0x2000, 0x6c0d1ee9 )
@@ -463,7 +542,7 @@ ROM_START( trackfld )
 ROM_END
 
 ROM_START( trackflc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
 	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
 	ROM_LOAD( "l03.3a",       0xA000, 0x2000, 0xfef4c0ea )
@@ -492,7 +571,7 @@ ROM_START( trackflc )
 ROM_END
 
 ROM_START( hyprolym )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0xe54cc960 )
@@ -521,7 +600,7 @@ ROM_START( hyprolym )
 ROM_END
 
 ROM_START( hyprolyb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x2d6fc308 )
@@ -556,107 +635,6 @@ ROM_END
 
 
 
-static void trackfld_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
-/*
- Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
- All we need to do is load it in. If the Dipswitch is set it will be erased
-*/
-static int we_flipped_the_switch;
-
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x2C00],0x3000-0x2c00);
-		osd_fclose(f);
-
-		we_flipped_the_switch = 0;
-	}
-	else
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it on */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == in->mask)
-				{
-					in->default_value = 0;
-					we_flipped_the_switch = 1;
-				}
-				break;
-			}
-
-			in++;
-		}
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2C00],0x400);
-		osd_fclose(f);
-	}
-
-	if (we_flipped_the_switch)
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it */
-		/* back to off. */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == 0)
-					in->default_value = in->mask;
-				break;
-			}
-
-			in++;
-		}
-
-		we_flipped_the_switch = 0;
-	}
-}
-
-
-
 struct GameDriver driver_trackfld =
 {
 	__FILE__,
@@ -668,10 +646,10 @@ struct GameDriver driver_trackfld =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_trackfld,
-	0, trackfld_decode,
+	0, 0,
 	0,
 
 	0,
@@ -679,9 +657,8 @@ struct GameDriver driver_trackfld =
 	input_ports_trackfld,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_trackflc =
@@ -695,10 +672,10 @@ struct GameDriver driver_trackflc =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_trackflc,
-	0, trackfld_decode,
+	0, 0,
 	0,
 
 	0,
@@ -706,9 +683,8 @@ struct GameDriver driver_trackflc =
 	input_ports_trackfld,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_hyprolym =
@@ -722,19 +698,18 @@ struct GameDriver driver_hyprolym =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_hyprolym,
-	0, trackfld_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_trackfld,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_hyprolyb =
@@ -747,18 +722,17 @@ struct GameDriver driver_hyprolyb =
 	"bootleg",
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&hyprolyb_machine_driver,
-	0,
+	&machine_driver_hyprolyb,
+	konami1_decode,
 
 	rom_hyprolyb,
-	0, trackfld_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_trackfld,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

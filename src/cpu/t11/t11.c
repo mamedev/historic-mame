@@ -239,14 +239,14 @@ unsigned t11_get_reg(int regnum)
 		case T11_IRQ1_STATE: return t11.irq_state[T11_IRQ1];
 		case T11_IRQ2_STATE: return t11.irq_state[T11_IRQ2];
 		case T11_IRQ3_STATE: return t11.irq_state[T11_IRQ3];
-		case T11_BANK0: return (unsigned)(t11.bank[0] - ROM);
-		case T11_BANK1: return (unsigned)(t11.bank[1] - ROM);
-		case T11_BANK2: return (unsigned)(t11.bank[2] - ROM);
-		case T11_BANK3: return (unsigned)(t11.bank[3] - ROM);
-		case T11_BANK4: return (unsigned)(t11.bank[4] - ROM);
-		case T11_BANK5: return (unsigned)(t11.bank[5] - ROM);
-		case T11_BANK6: return (unsigned)(t11.bank[6] - ROM);
-		case T11_BANK7: return (unsigned)(t11.bank[7] - ROM);
+		case T11_BANK0: return (unsigned)(t11.bank[0] - OP_RAM);
+		case T11_BANK1: return (unsigned)(t11.bank[1] - OP_RAM);
+		case T11_BANK2: return (unsigned)(t11.bank[2] - OP_RAM);
+		case T11_BANK3: return (unsigned)(t11.bank[3] - OP_RAM);
+		case T11_BANK4: return (unsigned)(t11.bank[4] - OP_RAM);
+		case T11_BANK5: return (unsigned)(t11.bank[5] - OP_RAM);
+		case T11_BANK6: return (unsigned)(t11.bank[6] - OP_RAM);
+		case T11_BANK7: return (unsigned)(t11.bank[7] - OP_RAM);
 		case REG_PREVIOUSPC: return t11.ppc.w.l;
 		default:
 			if( regnum <= REG_SP_CONTENTS )
@@ -279,14 +279,14 @@ void t11_set_reg(int regnum, unsigned val)
 		case T11_IRQ1_STATE: t11_set_irq_line(T11_IRQ1,val); break;
 		case T11_IRQ2_STATE: t11_set_irq_line(T11_IRQ2,val); break;
 		case T11_IRQ3_STATE: t11_set_irq_line(T11_IRQ3,val); break;
-		case T11_BANK0: t11.bank[0] = &ROM[val]; break;
-		case T11_BANK1: t11.bank[1] = &ROM[val]; break;
-		case T11_BANK2: t11.bank[2] = &ROM[val]; break;
-		case T11_BANK3: t11.bank[3] = &ROM[val]; break;
-		case T11_BANK4: t11.bank[4] = &ROM[val]; break;
-		case T11_BANK5: t11.bank[5] = &ROM[val]; break;
-		case T11_BANK6: t11.bank[6] = &ROM[val]; break;
-		case T11_BANK7: t11.bank[7] = &ROM[val]; break;
+		case T11_BANK0: t11.bank[0] = &OP_RAM[val]; break;
+		case T11_BANK1: t11.bank[1] = &OP_RAM[val]; break;
+		case T11_BANK2: t11.bank[2] = &OP_RAM[val]; break;
+		case T11_BANK3: t11.bank[3] = &OP_RAM[val]; break;
+		case T11_BANK4: t11.bank[4] = &OP_RAM[val]; break;
+		case T11_BANK5: t11.bank[5] = &OP_RAM[val]; break;
+		case T11_BANK6: t11.bank[6] = &OP_RAM[val]; break;
+		case T11_BANK7: t11.bank[7] = &OP_RAM[val]; break;
 		default:
 			if( regnum < REG_SP_CONTENTS )
 			{
@@ -309,7 +309,6 @@ void t11_SetBank(int offset, unsigned char *base)
 void t11_reset(void *param)
 {
 	int i;
-	extern unsigned char *RAM;
 
 	memset(&t11, 0, sizeof(t11));
 	SP = 0x0400;
@@ -317,7 +316,7 @@ void t11_reset(void *param)
 	PSW = 0xe0;
 
 	for (i = 0; i < 8; i++)
-		t11.bank[i] = &RAM[i * 0x2000];
+		t11.bank[i] = &OP_RAM[i * 0x2000];
 	for (i = 0; i < 4; i++)
 		t11.irq_state[i] = CLEAR_LINE;
 }
@@ -410,14 +409,14 @@ const char *t11_info( void *context, int regnum )
 		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[T11_IRQ1]); break;
 		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[T11_IRQ2]); break;
 		case CPU_INFO_REG+T11_IRQ3_STATE: sprintf(buffer[which], "IRQ3:%X", r->irq_state[T11_IRQ3]); break;
-		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "B0:%06X", (unsigned)(r->bank[0] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "B1:%06X", (unsigned)(r->bank[1] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "B2:%06X", (unsigned)(r->bank[2] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK3: sprintf(buffer[which], "B3:%06X", (unsigned)(r->bank[3] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK4: sprintf(buffer[which], "B4:%06X", (unsigned)(r->bank[4] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK5: sprintf(buffer[which], "B5:%06X", (unsigned)(r->bank[5] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK6: sprintf(buffer[which], "B6:%06X", (unsigned)(r->bank[6] - ROM)); break;
-		case CPU_INFO_REG+T11_BANK7: sprintf(buffer[which], "B7:%06X", (unsigned)(r->bank[7] - ROM)); break;
+		case CPU_INFO_REG+T11_BANK0: sprintf(buffer[which], "B0:%06X", (unsigned)(r->bank[0] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK1: sprintf(buffer[which], "B1:%06X", (unsigned)(r->bank[1] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK2: sprintf(buffer[which], "B2:%06X", (unsigned)(r->bank[2] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK3: sprintf(buffer[which], "B3:%06X", (unsigned)(r->bank[3] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK4: sprintf(buffer[which], "B4:%06X", (unsigned)(r->bank[4] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK5: sprintf(buffer[which], "B5:%06X", (unsigned)(r->bank[5] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK6: sprintf(buffer[which], "B6:%06X", (unsigned)(r->bank[6] - OP_RAM)); break;
+		case CPU_INFO_REG+T11_BANK7: sprintf(buffer[which], "B7:%06X", (unsigned)(r->bank[7] - OP_RAM)); break;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->psw.b.l & 0x80 ? '?':'.',

@@ -268,7 +268,7 @@ struct GameDriver driver_starcrus =
 	input_ports_starcrus,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

@@ -449,16 +449,16 @@ struct GameDriver driver_parodius =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_parodius,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_parodius,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0,
 	0, 0
 };

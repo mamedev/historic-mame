@@ -394,6 +394,7 @@ if (palette_recalc())
 	}
 
 	tecmo_draw_sprites( bitmap,1 );
+	tecmo_draw_sprites( bitmap,0 ); /* rhynos in Rygar */
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = tecmo_videoram2_size - 1;offs >= 0;offs--)
@@ -408,5 +409,4 @@ if (palette_recalc())
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-	tecmo_draw_sprites( bitmap,0 ); /* frontmost sprites - used? */
 }

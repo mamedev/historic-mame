@@ -255,7 +255,9 @@ static struct MachineDriver machine_driver =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO
+	JSA_I_STEREO,
+
+	atarigen_nvram_handler
 };
 
 
@@ -345,6 +347,6 @@ struct GameDriver driver_xybots =
 	input_ports_xybots,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

@@ -395,7 +395,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
 
@@ -522,9 +524,8 @@ struct GameDriver driver_tempest =
 	input_ports_tempest,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_tempest1 =
@@ -548,9 +549,8 @@ struct GameDriver driver_tempest1 =
 	input_ports_tempest,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_tempest2 =
@@ -574,9 +574,8 @@ struct GameDriver driver_tempest2 =
 	input_ports_tempest,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_temptube =
@@ -600,7 +599,6 @@ struct GameDriver driver_temptube =
 	input_ports_tempest,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
+	ROT0,
+	0,0
 };

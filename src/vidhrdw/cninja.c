@@ -485,49 +485,6 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,cninja_pf4_tilemap,TILEMAP_FRONT);
 	cninja_drawsprites(bitmap,1);
 	tilemap_draw(bitmap,cninja_pf1_tilemap,0);
-
-#if 0
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&cninja_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&cninja_control_0[i+8]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&cninja_control_1[i+0]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*8,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&cninja_control_1[i+8]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*9,0,TRANSPARENCY_NONE,0);
-}
-
-
-	Machine->orientation = trueorientation;
-
-}
-#endif
 }
 
 /******************************************************************************/

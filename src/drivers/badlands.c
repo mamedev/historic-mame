@@ -2,6 +2,8 @@
 
 	Badlands
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -223,8 +225,8 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &pflayout,    0, 8 },
-	{ 2, 0x60000, &molayout,  128, 8 },
+	{ REGION_GFX1, 0, &pflayout,    0, 8 },
+	{ REGION_GFX2, 0, &molayout,  128, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -236,7 +238,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_badlands =
 {
 	/* basic machine hardware */
 	{
@@ -266,7 +268,9 @@ static struct MachineDriver machine_driver =
 	badlands_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO
+	JSA_I_STEREO,
+
+	atarigen_nvram_handler
 };
 
 
@@ -281,8 +285,10 @@ static void rom_decode(void)
 {
 	int i;
 
-	for (i = 0; i < memory_region_length(2); i++)
-		memory_region(2)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 }
 
 
@@ -304,16 +310,18 @@ ROM_START( badlands )
 	ROM_LOAD( "1018.9c", 0x10000, 0x4000, 0xa05fd146 )
 	ROM_CONTINUE(        0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1012.4n",  0x000000, 0x10000, 0x5d124c6c ) /* playfield */
-	ROM_LOAD( "1013.2n",  0x010000, 0x10000, 0xb1ec90d6 ) /* playfield */
-	ROM_LOAD( "1014.4s",  0x020000, 0x10000, 0x248a6845 ) /* playfield */
-	ROM_LOAD( "1015.2s",  0x030000, 0x10000, 0x792296d8 ) /* playfield */
-	ROM_LOAD( "1016.4u",  0x040000, 0x10000, 0x878f7c66 ) /* playfield */
-	ROM_LOAD( "1017.2u",  0x050000, 0x10000, 0xad0071a3 ) /* playfield */
-	ROM_LOAD( "1010.14r", 0x060000, 0x10000, 0xc15f629e ) /* mo */
-	ROM_LOAD( "1011.10r", 0x070000, 0x10000, 0xfb0b6717 ) /* mo */
-	ROM_LOAD( "1019.14t", 0x080000, 0x10000, 0x0e26bff6 ) /* mo */
+	ROM_REGIONX( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1012.4n",  0x000000, 0x10000, 0x5d124c6c )	/* playfield */
+	ROM_LOAD( "1013.2n",  0x010000, 0x10000, 0xb1ec90d6 )
+	ROM_LOAD( "1014.4s",  0x020000, 0x10000, 0x248a6845 )
+	ROM_LOAD( "1015.2s",  0x030000, 0x10000, 0x792296d8 )
+	ROM_LOAD( "1016.4u",  0x040000, 0x10000, 0x878f7c66 )
+	ROM_LOAD( "1017.2u",  0x050000, 0x10000, 0xad0071a3 )
+
+	ROM_REGIONX( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1010.14r", 0x000000, 0x10000, 0xc15f629e )	/* mo */
+	ROM_LOAD( "1011.10r", 0x010000, 0x10000, 0xfb0b6717 )
+	ROM_LOAD( "1019.14t", 0x020000, 0x10000, 0x0e26bff6 )
 ROM_END
 
 
@@ -324,7 +332,7 @@ ROM_END
  *
  *************************************/
 
-static void badlands_init(void)
+static void init_badlands(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 3, 0, 0x0080);
@@ -334,6 +342,8 @@ static void badlands_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -344,28 +354,4 @@ static void badlands_init(void)
  *
  *************************************/
 
-struct GameDriver driver_badlands =
-{
-	__FILE__,
-	0,
-	"badlands",
-	"Bad Lands",
-	"1989",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	badlands_init,
-
-	rom_badlands,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_badlands,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1989, badlands, , badlands, badlands, badlands, ROT0, "Atari Games", "Bad Lands" )

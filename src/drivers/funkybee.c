@@ -340,7 +340,7 @@ struct GameDriver driver_funkybee =
 	input_ports_funkybee,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -366,7 +366,7 @@ struct GameDriver driver_skylancr =
 	input_ports_skylancr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

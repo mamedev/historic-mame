@@ -417,17 +417,17 @@ struct GameDriver driver_flstory =
 	"Chris Moore",
 	0,
 	&machine_driver,
-	0,
+	patch,
 
 	rom_flstory,
-	patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_flstory,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

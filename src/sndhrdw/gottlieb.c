@@ -162,25 +162,16 @@ void gottlieb_speech_clock_DAC_w(int offset, int data)
        128-bytes ram,
        either with the first 128 bytes of the page or the last 128 bytes */
 
+unsigned char *riot_ram;
+
 int riot_ram_r(int offset)
 {
-	extern unsigned char *RAM;
-
-
-    return RAM[offset&0x7f];
+    return riot_ram[offset&0x7f];
 }
 
 void riot_ram_w(int offset, int data)
 {
-	extern unsigned char *RAM;
-
-
-	/* pb is that M6502.c does some memory reads directly, so we
-	  repeat the writes */
-    RAM[offset&0x7F]=data;
-    RAM[0x80+(offset&0x7F)]=data;
-    RAM[0x100+(offset&0x7F)]=data;
-    RAM[0x180+(offset&0x7F)]=data;
+	riot_ram[offset&0x7f]=data;
 }
 
 static unsigned char riot_regs[32];

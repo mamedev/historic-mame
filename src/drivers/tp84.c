@@ -490,44 +490,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for hiscore table initialization to be done. */
-	if (memcmp(&RAM[0x57a0], "\x00\x02\x00\x47\x53\x58", 6) != 0)
-		return 0;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x57a0],5*6);
-		RAM[0x5737] = RAM[0x57a1];
-		RAM[0x5738] = RAM[0x57a2];
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-
-
-static void hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x57a0],5*6);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_tp84 =
 {
 	__FILE__,
@@ -549,9 +511,8 @@ struct GameDriver driver_tp84 =
 	input_ports_tp84,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_tp84a =
@@ -575,7 +536,6 @@ struct GameDriver driver_tp84a =
 	input_ports_tp84,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

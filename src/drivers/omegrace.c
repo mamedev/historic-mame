@@ -208,6 +208,24 @@ Sound Commands:
 #include "vidhrdw/avgdvg.h"
 
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
 static void omegrace_init_machine(void)
 {
 	/* Omega Race expects the vector processor to be ready. */
@@ -299,7 +317,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
-	{ 0x5c00, 0x5cff, MWA_RAM }, /* NVRAM */
+	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size }, /* NVRAM */
 	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
 	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
@@ -494,7 +512,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -518,34 +538,7 @@ ROM_START( omegrace )
 	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 
-static int hiload(void)
-{
-	/* no reason to check hiscore table. It's an NV_RAM! */
-	/* However, it does not work yet. Don't know why. BW */
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x5c00],0x100);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5c00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_omegrace =
 {
@@ -568,9 +561,8 @@ struct GameDriver driver_omegrace =
 	input_ports_omegrace,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 

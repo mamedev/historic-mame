@@ -347,7 +347,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 60 }
 };
 
-static struct MachineDriver toki_machine_driver =
+static struct MachineDriver machine_driver_toki =
 {
 	/* basic machine hardware */
 	{
@@ -397,7 +397,7 @@ static struct MachineDriver toki_machine_driver =
 	}
 };
 
-static struct MachineDriver tokib_machine_driver =
+static struct MachineDriver machine_driver_tokib =
 {
 	/* basic machine hardware */
 	{
@@ -603,37 +603,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&ram[0x6BB6],"D TA",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x6B66],180);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x6B66],180);
-		osd_fclose(f);
-	}
-}
-
-
 void tokib_rom_decode (void)
 {
 	unsigned char *temp = malloc (65536 * 2);
@@ -675,7 +644,7 @@ struct GameDriver driver_toki =
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
-	&toki_machine_driver,
+	&machine_driver_toki,
 	0,
 
 	rom_toki,
@@ -684,8 +653,8 @@ struct GameDriver driver_toki =
 	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	hiload, hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_toki2 =
@@ -698,7 +667,7 @@ struct GameDriver driver_toki2 =
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
-	&toki_machine_driver,
+	&machine_driver_toki,
 	0,
 
 	rom_toki2,
@@ -707,8 +676,8 @@ struct GameDriver driver_toki2 =
 	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	hiload, hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_toki3 =
@@ -721,7 +690,7 @@ struct GameDriver driver_toki3 =
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
-	&toki_machine_driver,
+	&machine_driver_toki,
 	0,
 
 	rom_toki3,
@@ -730,8 +699,8 @@ struct GameDriver driver_toki3 =
 	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	hiload, hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_tokiu =
@@ -744,7 +713,7 @@ struct GameDriver driver_tokiu =
 	"Tad (Fabtek license)",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
-	&toki_machine_driver,
+	&machine_driver_toki,
 	0,
 
 	rom_tokiu,
@@ -753,8 +722,8 @@ struct GameDriver driver_tokiu =
 	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	hiload, hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_tokib =
@@ -767,15 +736,15 @@ struct GameDriver driver_tokib =
 	"bootleg",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
-	&tokib_machine_driver,
-	0,
+	&machine_driver_tokib,
+	tokib_rom_decode,
 
 	rom_tokib,
-	tokib_rom_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };

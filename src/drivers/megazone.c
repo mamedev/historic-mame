@@ -10,6 +10,9 @@ Based on drivers from Juno First emulator by Chris Hardy (chris@junofirst.freese
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"
 
+
+void konami1_decode(void);
+
 extern unsigned char *megazone_scrollx;
 extern unsigned char *megazone_scrolly;
 
@@ -30,7 +33,6 @@ void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void megazone_sprite_bank_select_w(int offset, int data);
 void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 
 int megazone_portA_r(int offset)
@@ -414,7 +416,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( megazone )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "319i07.bin",    0x6000, 0x2000, 0x94b22ea8 )
 	ROM_LOAD( "319i06.bin",    0x8000, 0x2000, 0x0468b619 )
 	ROM_LOAD( "319i05.bin",    0xa000, 0x2000, 0xac59000c )
@@ -444,7 +446,7 @@ ROM_START( megazone )
 ROM_END
 
 ROM_START( megaznik )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic59_cpu.bin",  0x6000, 0x2000, 0xf41922a0 )
 	ROM_LOAD( "ic58_cpu.bin",  0x8000, 0x2000, 0x7fd7277b )
 	ROM_LOAD( "ic57_cpu.bin",  0xa000, 0x2000, 0xa4b33b51 )
@@ -475,66 +477,6 @@ ROM_END
 
 
 
-/****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x244a],"\x4b\x4f\x5a",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x2446], 9);   /* 1st value & name */
-                        osd_fread(f,&RAM[0x2466], 9);   /* 2nd value & name */
-                        osd_fread(f,&RAM[0x2486], 9);   /* 3rd value & name */
-                        osd_fread(f,&RAM[0x24a6], 9);   /* 4th value & name */
-                        osd_fread(f,&RAM[0x24c6], 9);   /* 5th value & name */
-
-                        RAM[0x3b08] = RAM[0x2446];      /* update high score */
-                        RAM[0x3b09] = RAM[0x2447];      /* on top of screen */
-                        RAM[0x3b0a] = RAM[0x2448];
-                        RAM[0x3b0b] = RAM[0x2449];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x2446], 9);   /* 1st value & name */
-                osd_fwrite(f,&RAM[0x2466], 9);   /* 2nd value & name */
-                osd_fwrite(f,&RAM[0x2486], 9);   /* 3rd value & name */
-                osd_fwrite(f,&RAM[0x24a6], 9);   /* 4th value & name */
-                osd_fwrite(f,&RAM[0x24c6], 9);   /* 5th value & name */
-		osd_fclose(f);
-	}
-}
-
-static void megazone_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
 struct GameDriver driver_megazone =
 {
 	__FILE__,
@@ -546,19 +488,18 @@ struct GameDriver driver_megazone =
 	"Chris Hardy",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_megazone,
-	0, megazone_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_megazone,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_megaznik =
@@ -572,17 +513,16 @@ struct GameDriver driver_megaznik =
 	"Chris Hardy",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_megaznik,
-	0, megazone_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_megazone,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -53,11 +53,11 @@ The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
 Missing in Action   GX808*1989   68000 052109 051962 051960 051937  PROM
 Missing in Action J GX808*1989 2x68000           TWIN16
 Crime Fighters      GX821*1989  052526 052109 051962 051960 051937  PROM
-Special Project Y   GX857-1989  should be similar to GX891 Bottom of the 9th
+Special Project Y   GX857*1989    6309 052109 051962 051960 051937  PROM  052591 (protection)
 '88 Games           GX861*1988  052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
 Final Round /       GX870*1988 1x68000           TWIN16?
   Hard Puncher
-Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 (palette) 052591
+Thunder Cross       GX873*1988  052001 052109 051962 051960 051937  PROM  007327 (palette) 052591 (protection)
 Aliens              GX875*1990  052526 052109 051962 051960 051937  PROM
 Gang Busters        GX878*1988  052526 052109 051962 051960 051937  PROM
 Devastators         GX890*1988    6309 052109 051962 051960 051937  PROM  007324 051733 (protection)
@@ -87,7 +87,7 @@ Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251 054000
 Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251 054000 (collision)
   Crime Fighters 2
 Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251 053936 (3D)
-Hexion              GX122+1992     Z80                                    052591 053252
+Hexion              GX122+1992     Z80                                    052591 (protection) 053252
 Entapous /          GX123+1993   68000 054157 054156 055673 053246        053252 054000 055555
   Gaiapolis
 Mystic Warrior      GX128 1993
@@ -118,6 +118,7 @@ Super Contra        pass
 The Main Event      pass
 Missing in Action   pass
 Crime Fighters      pass
+Special Project Y   pass
 Konami 88           pass
 Thunder Cross       pass
 Aliens              pass
@@ -223,16 +224,16 @@ address lines), and then reading it from the 051962.
   from the bank register. The top 2 bits of the register go to CAB1-CAB2.
   However, this DOES NOT WORK with Gradius III. "color" seems to pass through
   unaltered.
-- layer A horizontal scroll (ZA1H-ZA4H range 0..7)
-- layer B horizontal scroll (ZB1H-ZB4H range 0..7)
+- layer A horizontal scroll (ZA1H-ZA4H)
+- layer B horizontal scroll (ZB1H-ZB4H)
 - ????? (BEN)
 
 051962 inputs:
 - gfx data from the ROMs (VC0-VC31)
 - color code (COL0-COL7); only COL4-COL7 seem to really be used for color; COL0
   is tile flip X.
-- layer A horizontal scroll (ZA1H-ZA4H range 0..7)
-- layer B horizontal scroll (ZB1H-ZB4H range 0..7)
+- layer A horizontal scroll (ZA1H-ZA4H)
+- layer B horizontal scroll (ZB1H-ZB4H)
 - let main CPU read the gfx ROMs (RMRD)
 - address lines to be used with RMRD (AB0-AB1)
 - data lines to be used with RMRD (DB0-DB7)
@@ -272,7 +273,12 @@ address lines), and then reading it from the 051962.
 1d80     : ROM bank selector bits 0-3 = bank 0 bits 4-7 = bank 1
 1e00     : ROM subbank selector for ROM testing
 1e80     : bit 0 = flip screen (applies to tilemaps only, not sprites)
-         : bit 1 might enable interrupt generation, not sure
+         : bit 1 = set by crimfght, mainevt, surpratk, xmen, mia, punkshot, thndrx2, spy
+         :         it seems to enable tile flip X, however flip X is handled by the
+         :         051962 and it is not hardwired to a specific tile attribute.
+         :         Note that xmen, punkshot and thndrx2 set the bit but the current
+         :         drivers don't use flip X and seem to work fine.
+         : bit 2 = enables tile Y flip when bit 1 of the tile attribute is set
 1f00     : ROM bank selector bits 0-3 = bank 2 bits 4-7 = bank 3
 2000-27ff: layer FIX tilemap (code)
 2800-2fff: layer A tilemap (code)
@@ -1133,6 +1139,7 @@ static unsigned char *K052109_videoram_B,*K052109_videoram2_B,*K052109_colorram_
 static unsigned char K052109_charrombank[4];
 static int has_extra_video_ram;
 static int K052109_RMRD_line;
+static int K052109_tileflip_enable;
 static int K052109_irq_enabled;
 static unsigned char K052109_romsubbank,K052109_scrollctrl;
 static struct tilemap *K052109_tilemap[3];
@@ -1182,6 +1189,7 @@ static void tilemap2_preupdate(void)
 
 static void K052109_get_tile_info(int col,int row)
 {
+	int flipy = 0;
 	int tile_index = 64*row+col;
 	int code = videoram1[tile_index] + 256 * videoram2[tile_index];
 	int color = colorram[tile_index];
@@ -1190,9 +1198,19 @@ if (has_extra_video_ram) bank = (color & 0x0c) >> 2;	/* kludge for X-Men */
 	color = (color & 0xf3) | ((bank & 0x03) << 2);
 	bank >>= 2;
 
+	flipy = color & 0x02;
+
+	tile_info.flags = 0;
+
 	(*K052109_callback)(layer,bank,&code,&color);
 
 	SET_TILE_INFO(K052109_gfxnum,code,color);
+
+	/* if the callback set flip X but it is not enabled, turn it off */
+	if (!(K052109_tileflip_enable & 1)) tile_info.flags &= ~TILE_FLIPX;
+
+	/* if flip Y is enabled and the attribute but is set, turn it on */
+	if (flipy && (K052109_tileflip_enable & 2)) tile_info.flags |= TILE_FLIPY;
 }
 
 
@@ -1399,6 +1417,14 @@ if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: 052109 register 1e80 = %0
 			tilemap_set_flip(K052109_tilemap[0],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[1],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[2],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			if (K052109_tileflip_enable != ((data & 0x06) >> 1))
+			{
+				K052109_tileflip_enable = ((data & 0x06) >> 1);
+
+				tilemap_mark_all_tiles_dirty(K052109_tilemap[0]);
+				tilemap_mark_all_tiles_dirty(K052109_tilemap[1]);
+				tilemap_mark_all_tiles_dirty(K052109_tilemap[2]);
+			}
 		}
 		else if (offset == 0x1f00)
 		{
@@ -1415,11 +1441,9 @@ if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: 052109 register 1e80 = %0
 
 				for (i = 0;i < 0x1800;i++)
 				{
-					int bank = (K052109_ram[i]&0x0c) >> 2;
+					int bank = (K052109_ram[i] & 0x0c) >> 2;
 					if ((bank == 2 && (dirty & 1)) || (bank == 3 && dirty & 2))
-					{
 						tilemap_mark_tile_dirty(K052109_tilemap[(i&0x1fff)/0x800],i%64,(i%0x800)/64);
-					}
 				}
 			}
 		}

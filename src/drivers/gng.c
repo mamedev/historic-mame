@@ -798,95 +798,6 @@ ROM_END
 
 
 
-static int gng_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x152c],"\x00\x01\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x156b],"\x00\x01\x00\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int offs;
-
-
-			osd_fread(f,&RAM[0x1518],9*10);
-			offs = RAM[0x1518] * 256 + RAM[0x1519];
-			RAM[0x00d0] = RAM[offs];
-			RAM[0x00d1] = RAM[offs+1];
-			RAM[0x00d2] = RAM[offs+2];
-			RAM[0x00d3] = RAM[offs+3];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void gng_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1518],9*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int diamond_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* We're just going to blast the hi score table into ROM and be done with it */
-        if (memcmp(&RAM[0xC10E],"KLE",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC10E],0x80);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void diamond_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* The RAM location of the hi score table */
-		osd_fwrite(f,&RAM[0x1200],0x80);
-		osd_fclose(f);
-	}
-
-}
-
-
-
 struct GameDriver driver_gng =
 {
 	__FILE__,
@@ -908,9 +819,8 @@ struct GameDriver driver_gng =
 	input_ports_gng,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gnga =
@@ -934,9 +844,8 @@ struct GameDriver driver_gnga =
 	input_ports_gng,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gngt =
@@ -960,9 +869,8 @@ struct GameDriver driver_gngt =
 	input_ports_gng,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_makaimur =
@@ -986,9 +894,8 @@ struct GameDriver driver_makaimur =
 	input_ports_makaimur,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_makaimuc =
@@ -1012,9 +919,8 @@ struct GameDriver driver_makaimuc =
 	input_ports_makaimur,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_makaimug =
@@ -1038,9 +944,8 @@ struct GameDriver driver_makaimug =
 	input_ports_makaimur,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gng_hiload, gng_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_diamond =
@@ -1064,7 +969,6 @@ struct GameDriver driver_diamond =
 	input_ports_diamond,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	diamond_hiload, diamond_hisave
+	ROT0,
+	0,0
 };

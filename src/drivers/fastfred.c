@@ -452,7 +452,7 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 };
 
 
-static struct MachineDriver fastfred_machine_driver =
+static struct MachineDriver machine_driver_fastfred =
 {
 	/* basic machine hardware */
 	{
@@ -495,7 +495,7 @@ static struct MachineDriver fastfred_machine_driver =
 	}
 };
 
-static struct MachineDriver jumpcoas_machine_driver =
+static struct MachineDriver machine_driver_jumpcoas =
 {
 	/* basic machine hardware */
 	{
@@ -666,118 +666,6 @@ static void jumpcoas_driver_init(void)
 }
 
 
-static int fastfred_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc41c],"\x10",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x45);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void fastfred_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x45);
-		osd_fclose(f);
-	}
-}
-
-static int flyboy_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc41c],"\x50",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x94);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void flyboy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x94);
-		osd_fclose(f);
-	}
-}
-
-static int jumpcoas_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Note: the game doesn't seem to initialize the high score display
-	   at the top of the screen. Even without high score loading, the
-	   screen says that the high score is 0, even though the high score
-	   table shows all 5000's */
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0xc421] == 0x11)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc400],0x45);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void jumpcoas_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc400],0x45);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_flyboy =
 {
@@ -789,7 +677,7 @@ struct GameDriver driver_flyboy =
 	"Kaneko",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
 	0,
-	&fastfred_machine_driver,
+	&machine_driver_fastfred,
 	0,
 
 	rom_flyboy,
@@ -800,9 +688,8 @@ struct GameDriver driver_flyboy =
 	input_ports_flyboy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,	/* protection */
-
-	flyboy_hiload, flyboy_hisave
+	ROT90 | GAME_NOT_WORKING,	/* protection */
+	0,0
 };
 
 struct GameDriver driver_flyboyb =
@@ -815,7 +702,7 @@ struct GameDriver driver_flyboyb =
 	"Kaneko",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
 	0,
-	&fastfred_machine_driver,
+	&machine_driver_fastfred,
 	0,
 
 	rom_flyboyb,
@@ -826,9 +713,8 @@ struct GameDriver driver_flyboyb =
 	input_ports_flyboy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	flyboy_hiload, flyboy_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_fastfred =
@@ -841,7 +727,7 @@ struct GameDriver driver_fastfred =
 	"Atari",
 	"Zsolt Vasvari",
 	0,
-	&fastfred_machine_driver,
+	&machine_driver_fastfred,
 	fastfred_driver_init,
 
 	rom_fastfred,
@@ -852,9 +738,8 @@ struct GameDriver driver_fastfred =
 	input_ports_fastfred,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	fastfred_hiload, fastfred_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jumpcoas =
@@ -867,7 +752,7 @@ struct GameDriver driver_jumpcoas =
 	"Kaneko",
 	"Zsolt Vasvari",
 	0,
-	&jumpcoas_machine_driver,
+	&machine_driver_jumpcoas,
 	jumpcoas_driver_init,
 
 	rom_jumpcoas,
@@ -878,8 +763,7 @@ struct GameDriver driver_jumpcoas =
 	input_ports_jumpcoas,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpcoas_hiload, jumpcoas_hisave
+	ROT90,
+	0,0
 };
 

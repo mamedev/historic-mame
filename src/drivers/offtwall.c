@@ -350,7 +350,7 @@ INPUT_PORTS_START( offtwall )
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260020 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260022 */
@@ -358,7 +358,7 @@ INPUT_PORTS_START( offtwall )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260024 */
-    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER3, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL_V | IPF_PLAYER3 | IPF_REVERSE, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -425,7 +425,9 @@ static struct MachineDriver machine_driver =
 	offtwall_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_III_MONO_NO_SPEECH
+	JSA_III_MONO_NO_SPEECH,
+
+	atarigen_nvram_handler
 };
 
 
@@ -528,6 +530,8 @@ static void offtwall_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -547,6 +551,8 @@ static void offtwalc_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -570,16 +576,15 @@ struct GameDriver driver_offtwall =
 	offtwall_init,
 
 	rom_offtwall,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -597,14 +602,13 @@ struct GameDriver driver_offtwalc =
 	offtwalc_init,
 
 	rom_offtwalc,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

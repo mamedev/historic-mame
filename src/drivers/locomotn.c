@@ -386,7 +386,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 #define MACHINE_DRIVER(GAMENAME)   \
 																	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
+static struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                    \
 	{                                                               \
@@ -582,132 +582,6 @@ ROM_END
 
 
 
-static int locomotn_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9f00],"\x00\x00\x01",3) == 0 &&
-	    memcmp(&RAM[0x99c6],"\x00\x00\x01",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9f00],12*10);
-			RAM[0x99c6] = RAM[0x9f00];
-			RAM[0x99c7] = RAM[0x9f01];
-			RAM[0x99c8] = RAM[0x9f02];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void locomotn_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9f00],12*10);
-		osd_fclose(f);
-	}
-}
-
-static int jungler_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x991c],"\x00\x00\x02",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9940],16*10);
-			RAM[0x991c] = RAM[0x9940];
-			RAM[0x991d] = RAM[0x9941];
-			RAM[0x991e] = RAM[0x9942];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void jungler_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9940],16*10);
-		osd_fclose(f);
-	}
-}
-
-static int commsega_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (firsttime == 0)
-	{
-
-		memset(&RAM[0x9c6d],0xff,6);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9c6d],"\x00\x00\x00\x00\x00\x00",6) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9c6d],6);
-			osd_fclose(f);
-			firsttime =0;
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void commsega_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9c6d],6);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_locomotn =
 {
 	__FILE__,
@@ -718,7 +592,7 @@ struct GameDriver driver_locomotn =
 	"Konami (Centuri license)",
 	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
-	&locomotn_machine_driver,
+	&machine_driver_locomotn,
 	0,
 
 	rom_locomotn,
@@ -729,9 +603,8 @@ struct GameDriver driver_locomotn =
 	input_ports_locomotn,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_gutangtn =
@@ -744,7 +617,7 @@ struct GameDriver driver_gutangtn =
 	"Konami (Sega license)",
 	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
-	&locomotn_machine_driver,
+	&machine_driver_locomotn,
 	0,
 
 	rom_gutangtn,
@@ -755,9 +628,8 @@ struct GameDriver driver_gutangtn =
 	input_ports_locomotn,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_cottong =
@@ -770,7 +642,7 @@ struct GameDriver driver_cottong =
 	"bootleg",
 	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
-	&locomotn_machine_driver,
+	&machine_driver_locomotn,
 	0,
 
 	rom_cottong,
@@ -781,9 +653,8 @@ struct GameDriver driver_cottong =
 	input_ports_locomotn,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jungler =
@@ -796,7 +667,7 @@ struct GameDriver driver_jungler =
 	"Konami",
 	"Nicola Salmoria",
 	0,
-	&jungler_machine_driver,
+	&machine_driver_jungler,
 	jungler_init,
 
 	rom_jungler,
@@ -807,9 +678,8 @@ struct GameDriver driver_jungler =
 	input_ports_jungler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jungler_hiload, jungler_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_junglers =
@@ -822,7 +692,7 @@ struct GameDriver driver_junglers =
 	"[Konami] (Stern license)",
 	"Nicola Salmoria",
 	0,
-	&jungler_machine_driver,
+	&machine_driver_jungler,
 	jungler_init,
 
 	rom_junglers,
@@ -833,9 +703,8 @@ struct GameDriver driver_junglers =
 	input_ports_jungler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jungler_hiload, jungler_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_commsega =
@@ -848,7 +717,7 @@ struct GameDriver driver_commsega =
 	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
 	0,
-	&commsega_machine_driver,
+	&machine_driver_commsega,
 	0,
 
 	rom_commsega,
@@ -859,7 +728,6 @@ struct GameDriver driver_commsega =
 	input_ports_commsega,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	commsega_hiload, commsega_hisave
+	ROT90,
+	0,0
 };

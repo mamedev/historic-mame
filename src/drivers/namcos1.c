@@ -164,6 +164,27 @@ extern void namcos1_mcu_patch_w(int offset,int data);
 
 extern void namcos1_machine_init( void );
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+		{
+			usrintf_showmessage("F2 toggles test mode");
+			memset(nvram,0xff,nvram_size);
+		}
+	}
+}
+
+
 /************************************************************************************/
 
 static struct MemoryReadAddress main_readmem[] =
@@ -296,7 +317,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x4000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, namcos1_mcu_patch_w },
 	{ 0xc000, 0xc7ff, MWA_BANK3 },
-	{ 0xc800, 0xcfff, MWA_RAM }, /* EEPROM */
+	{ 0xc800, 0xcfff, MWA_RAM, &nvram, &nvram_size }, /* EEPROM */
 	{ 0xd000, 0xd000, dac0_w }, /* DAC0 */
 	{ 0xd400, 0xd400, dac1_w }, /* DAC1 */
 	{ 0xd800, 0xd800, namcos1_mcu_bankswitch_w }, /* BANK selector */
@@ -318,35 +339,7 @@ static struct IOReadPort mcu_readport[] =
 	{ -1 }	/* end of table */
 };
 
-static int namcos1_eeprom_load(void)
-{
-	void *f;
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&memory_region(REGION_CPU4)[0xc800],0x800);
-		osd_fclose(f);
-	}
-	else
-	{
-		usrintf_showmessage("F2 toggles test mode");
-		memset(&memory_region(REGION_CPU4)[0xc800],0xff,0x800);
-		memory_region(REGION_CPU4)[0xc856] = 0x00;
-	}
-
-	return 1;
-}
-
-static void namcos1_eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&memory_region(REGION_CPU4)[0xc800],0x800);
-		osd_fclose(f);
-	}
-}
 
 INPUT_PORTS_START( namcos1 )
 	PORT_START /* IN0 */
@@ -533,7 +526,9 @@ static struct MachineDriver machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -791,9 +786,8 @@ ROM_START( blazer )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGIONX( 0x3c000, REGION_CPU3 )     /* 192k for the sound cpu */
+	ROM_REGIONX( 0x1c000, REGION_CPU3 )     /* 192k for the sound cpu */
 	ROM_LOAD( "bz1_snd0.bin",	0x0c000, 0x10000, 0x6c3a580b )
-	ROM_LOAD( "bz1_voi4.bin",	0x1c000, 0x20000, 0xd206b1bd )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -812,12 +806,13 @@ ROM_START( blazer )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGIONX( 0x90000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_REGIONX( 0xb0000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "bz1_voi0.bin",0x10000, 0x10000, 0x3d09d32e )
 	ROM_LOAD( "bz1_voi1.bin",	0x30000, 0x20000, 0x2043b141 )
 	ROM_LOAD( "bz1_voi2.bin",	0x50000, 0x20000, 0x64143442 )
 	ROM_LOAD( "bz1_voi3.bin",	0x70000, 0x20000, 0x26cfc510 )
+	ROM_LOAD( "bz1_voi4.bin",	0x90000, 0x20000, 0xd206b1bd )
 ROM_END
 
 /* Pacmania */
@@ -927,6 +922,55 @@ ROM_START( galaga88 )
 	/* if you got a 64k one, reload it */
 	ROM_LOAD_HS( "g88_prg7.rom",0x000000, 0x10000, 0xdf75b7fc )	/* 8 * 8k banks */
 	ROM_LOAD_HS( "g88_prg6.rom",0x020000, 0x10000, 0x7e3471d3 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg5.rom",0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg1.rom",0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "g88_prg0.rom",0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
+
+	ROM_REGION( 0x14000 ) /* 80k for RAM */
+	/* 0x00000 - 0x08000 = RAM6 ( 4 * 8k ) */
+	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
+	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
+
+	ROM_REGIONX( 0xd0000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD_HS( "g88_vce0.rom",0x10000, 0x10000, 0x86921dd4 )
+	ROM_LOAD_HS( "g88_vce1.rom",0x30000, 0x10000, 0x9c300e16 )
+	ROM_LOAD_HS( "g88_vce2.rom",0x50000, 0x10000, 0x5316b4b0 )
+	ROM_LOAD_HS( "g88_vce3.rom",0x70000, 0x10000, 0xdc077af4 )
+	ROM_LOAD_HS( "g88_vce4.rom",0x90000, 0x10000, 0xac0279a7 )
+	ROM_LOAD_HS( "g88_vce5.rom",0xb0000, 0x10000, 0x014ddba1 )
+ROM_END
+
+ROM_START( galag88b )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+    ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g88_chr8.rom",	0x00000, 0x20000, 0x3862ed0a )	/* character mask */
+	ROM_LOAD( "g88_chr0.rom",	0x20000, 0x20000, 0x68559c78 )	/* characters */
+	ROM_LOAD( "g88_chr1.rom",	0x40000, 0x20000, 0x3dc0f93f )	/* characters */
+	ROM_LOAD( "g88_chr2.rom",	0x60000, 0x20000, 0xdbf26f1f )	/* characters */
+	ROM_LOAD( "g88_chr3.rom",	0x80000, 0x20000, 0xf5d6cac5 )	/* characters */
+
+	ROM_LOAD( "g88_obj0.rom",	0x120000, 0x20000, 0xd7112e3f )	/* sprites */
+	ROM_LOAD( "g88_obj1.rom",	0x140000, 0x20000, 0x680db8e7 )	/* sprites */
+	ROM_LOAD( "g88_obj2.rom",	0x160000, 0x20000, 0x13c97512 )	/* sprites */
+	ROM_LOAD( "g88_obj3.rom",	0x180000, 0x20000, 0x3ed3941b )	/* sprites */
+	ROM_LOAD( "g88_obj4.rom",	0x1a0000, 0x20000, 0x370ff4ad )	/* sprites */
+	ROM_LOAD( "g88_obj5.rom",	0x1c0000, 0x20000, 0xb0645169 )	/* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
+	ROM_LOAD( "g88_snd0.rom",	0x0c000, 0x10000, 0x164a3fdc )
+	ROM_LOAD( "g88_snd1.rom",	0x1c000, 0x10000, 0x16a4b784 )
+
+	ROM_REGION( 0x100000 ) /* 1m for ROMs */
+	/* PRGx ROMs go here - they can be 128k max. */
+	/* if you got a 64k one, reload it */
+	ROM_LOAD_HS( "g88_prg7.rom",0x000000, 0x10000, 0xdf75b7fc )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "prg6",        0x020000, 0x10000, 0x403d01c1 )	/* 8 * 8k banks */
 	ROM_LOAD_HS( "g88_prg5.rom",0x040000, 0x10000, 0x4fbd3f6c )	/* 8 * 8k banks */
 	ROM_LOAD_HS( "g88_prg1.rom",0x0c0000, 0x10000, 0xe68cb351 )	/* 8 * 8k banks */
 	ROM_LOAD_HS( "g88_prg0.rom",0x0e0000, 0x10000, 0x0f0778ca )	/* 8 * 8k banks */
@@ -1084,7 +1128,7 @@ ROM_START( mmaze )
 	/* 0x08000 - 0x0c000 = RAM1 ( 2 * 8k ) */
 	/* 0x0c000 - 0x14000 = RAM3 ( 3 * 8k ) */
 
-	ROM_REGIONX( 0x80000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD( "mm.v0",			0x10000, 0x20000, 0xee974cff )
 	ROM_LOAD( "mm.v1",			0x30000, 0x20000, 0xd09b5830 )
@@ -1103,6 +1147,8 @@ ROM_START( bakutotu )
 	ROM_LOAD( "bk-chr3.bin",	0x80000, 0x20000, 0x2b6120f4 )	/* characters */
 
 	ROM_LOAD( "bk-obj0.bin",	0x120000, 0x20000, 0x88c627c1 )	/* sprites */
+	/* obj1 */
+	/* obj2 */
 	ROM_LOAD( "bk-obj3.bin",	0x180000, 0x20000, 0xf7d1909a )	/* sprites */
 	ROM_LOAD( "bk-obj4.bin",	0x1a0000, 0x20000, 0x27ed1441 )	/* sprites */
 	ROM_LOAD( "bk-obj5.bin",	0x1c0000, 0x20000, 0x790560c0 )	/* sprites */
@@ -1124,8 +1170,8 @@ ROM_START( bakutotu )
 	ROM_LOAD_HS( "bk1-prg5.bin",0x040000, 0x10000, 0xdceed7cb )	/* 8 * 8k banks */
 	ROM_LOAD_HS( "bk1-prg4.bin",0x060000, 0x10000, 0x96446d48 )	/* 8 * 8k banks */
 	ROM_LOAD(    "bk1-prg3.bin",0x080000, 0x20000, 0xe608234f )	/* 8 * 8k banks */
-	ROM_LOAD_HS( "bk1-prg2.bin",0x090000, 0x10000, 0x7a686daa)	/* 8 * 8k banks */
-	ROM_LOAD_HS( "bk1-prg1.bin",0x0b0000, 0x10000, 0xd389d6d4 )	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg2.bin",0x0a0000, 0x10000, 0x7a686daa)	/* 8 * 8k banks */
+	ROM_LOAD_HS( "bk1-prg1.bin",0x0c0000, 0x10000, 0xd389d6d4 )	/* 8 * 8k banks */
 	ROM_LOAD(    "bk1-prg0.bin",0x0e0000, 0x20000, 0x4529c362 )	/* 8 * 8k banks */
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
@@ -1224,7 +1270,7 @@ ROM_START( splatter )
 
 	ROM_REGIONX( 0x90000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
-	ROM_LOAD( "voice0",   		0x20000, 0x20000, 0x2199cb66 )
+	ROM_LOAD( "voice0",   		0x10000, 0x20000, 0x2199cb66 )
 	ROM_LOAD( "voice1",   		0x30000, 0x20000, 0x9b6472af )
 	ROM_LOAD( "voice2",			0x50000, 0x20000, 0x25ea75b6 )
 	ROM_LOAD( "voice3",			0x70000, 0x20000, 0x5eebcdb4 )
@@ -1471,7 +1517,7 @@ ROM_START( soukobdx )
 
 	ROM_REGION( 0x14000 ) /* 80k for RAM */
 
-	ROM_REGIONX( 0x40000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_REGIONX( 0x30000, REGION_CPU4 ) /* the MCU & voice */
 	ROM_LOAD( "ns1-mcu.bin",	0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
 	ROM_LOAD_HS( "sb1-voi0.bin",0x10000, 0x10000, 0x63d9cedf )
 ROM_END
@@ -1483,7 +1529,45 @@ ROM_START( tankfrce )
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "tf1-chr8.bin",	0x00000, 0x20000, 0x7d53b31e )	/* character mask */
-	ROM_LOAD( "tf1-chr0.bin",	0x20000, 0x20000, 0x51fedc8c )	/* characters */
+	ROM_LOAD( "tf1-chr0.bin",	0x20000, 0x20000, 0x9e91794e )	/* characters */
+	ROM_LOAD( "tf1-chr1.bin",	0x40000, 0x20000, 0x76e1bc56 )	/* characters */
+	ROM_LOAD( "tf1-chr2.bin",	0x60000, 0x20000, 0xfcb645d9 )	/* characters */
+	ROM_LOAD( "tf1-chr3.bin",	0x80000, 0x20000, 0xa8dbf080 )	/* characters */
+	ROM_LOAD( "tf1-chr4.bin",	0xa0000, 0x20000, 0x51fedc8c )	/* characters */
+	ROM_LOAD( "tf1-chr5.bin",	0xc0000, 0x20000, 0xe6c6609a )	/* characters */
+
+	ROM_LOAD( "tf1-obj0.bin",	0x120000, 0x20000, 0x4bedd51a )	/* sprites */
+	ROM_LOAD( "tf1-obj1.bin",	0x140000, 0x20000, 0xdf674d6d )	/* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the sub cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGIONX( 0x2c000, REGION_CPU3 )     /* 192k for the sound cpu */
+	ROM_LOAD( "tf1-snd0.bin",	0x0c000, 0x20000, 0x4d9cf7aa )
+
+	ROM_REGION( 0x100000 ) /* 1m for ROMs */
+	/* PRGx ROMs go here - they can be 128k max. */
+	/* if you got a 64k one, reload it */
+	ROM_LOAD( "tf1prg7.bin",	0x010000, 0x10000, 0x2ec28a87 )	/* 8 * 8k banks */
+	ROM_CONTINUE(				0x000000, 0x10000 )
+	ROM_LOAD( "tf1-prg1.bin",	0x0c0000, 0x20000, 0x4a8bb251 )	/* 8 * 8k banks */
+	ROM_LOAD( "tf1-prg0.bin",	0x0e0000, 0x20000, 0x2ae4b9eb )	/* 8 * 8k banks */
+
+	ROM_REGION( 0x14000 ) /* 80k for RAM */
+
+	ROM_REGIONX( 0x50000, REGION_CPU4 ) /* the MCU & voice */
+	ROM_LOAD( "ns1-mcu.bin",    0x0f000, 0x01000, 0xffb5c0bd )	/* mcu 'kernel' code */
+	ROM_LOAD( "tf1-voi0.bin",	0x10000, 0x20000, 0xf542676a )
+	ROM_LOAD( "tf1-voi1.bin",	0x30000, 0x20000, 0x615d09cd )
+ROM_END
+
+ROM_START( tankfrcj )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for the main cpu */
+	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
+
+	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tf1-chr8.bin",	0x00000, 0x20000, 0x7d53b31e )	/* character mask */
+	ROM_LOAD( "tf1-chr0.bin",	0x20000, 0x20000, 0x9e91794e )	/* characters */
 	ROM_LOAD( "tf1-chr1.bin",	0x40000, 0x20000, 0x76e1bc56 )	/* characters */
 	ROM_LOAD( "tf1-chr2.bin",	0x60000, 0x20000, 0xfcb645d9 )	/* characters */
 	ROM_LOAD( "tf1-chr3.bin",	0x80000, 0x20000, 0xa8dbf080 )	/* characters */
@@ -1537,8 +1621,7 @@ struct GameDriver driver_##NAME = \
 	input_ports_namcos1,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	namcos1_eeprom_load, \
-	namcos1_eeprom_save  \
+	0,0\
 };
 
 #define CLONE_DRIVER(NAME,CLONE,YEAR,REALNAME,MANU,INIT_NAME,ORIENTATION) \
@@ -1562,34 +1645,35 @@ struct GameDriver driver_##NAME = \
 	input_ports_namcos1,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
-	namcos1_eeprom_load, \
-	namcos1_eeprom_save  \
+	0,0\
 };
 
-GAME_DRIVER (shadowld,         1987,"Shadow Land",                    "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-CLONE_DRIVER(youkaidk,shadowld,1987,"Yokai Douchuuki (Japan)",        "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-GAME_DRIVER (dspirit,          1987,"Dragon Spirit (new version)",    "Namco",dspirit, ORIENTATION_ROTATE_270)
-CLONE_DRIVER(dspirito,dspirit, 1987,"Dragon Spirit (old version)",    "Namco",dspirit, ORIENTATION_ROTATE_270)
-GAME_DRIVER (blazer,           1987,"Blazer (Japan)",                 "Namco",blazer,  ORIENTATION_ROTATE_270)
-//GAME_DRIVER (quester,        1987,"Quester",                        "Namco",quester, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-GAME_DRIVER (pacmania,         1987,"Pac-Mania",                      "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-CLONE_DRIVER(pacmanij,pacmania,1987,"Pac-Mania (Japan)",              "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-GAME_DRIVER (galaga88,         1987,"Galaga '88",                     "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-CLONE_DRIVER(galag88j,galaga88,1987,"Galaga '88 (Japan)",             "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-//GAME_DRIVER (wstadium,       1988,"World Stadium",                  "Namco",wstadium,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-GAME_DRIVER (berabohm,         1988,"Beraboh Man",                    "Namco",berabohm,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-//GAME_DRIVER (alice,          1988,"Alice In Wonderland",            "Namco",alice,   ORIENTATION_DEFAULT)
-GAME_DRIVER (mmaze,            1988,"Marchen Maze (Japan)",           "Namco",alice,   ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-GAME_DRIVER (bakutotu,         1988,"Bakutotsu Kijuutei",             "Namco",bakutotu,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-GAME_DRIVER (wldcourt,         1988,"World Court (Japan)",            "Namco",wldcourt,ORIENTATION_DEFAULT)
+GAME_DRIVER (shadowld,         1987,"Shadow Land",                    "Namco",shadowld,ROT0 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(youkaidk,shadowld,1987,"Yokai Douchuuki (Japan)",        "Namco",shadowld,ROT0 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (dspirit,          1987,"Dragon Spirit (new version)",    "Namco",dspirit, ROT270)
+CLONE_DRIVER(dspirito,dspirit, 1987,"Dragon Spirit (old version)",    "Namco",dspirit, ROT270)
+GAME_DRIVER (blazer,           1987,"Blazer (Japan)",                 "Namco",blazer,  ROT270)
+//GAME_DRIVER (quester,        1987,"Quester",                        "Namco",quester, ROT0 | GAME_NOT_WORKING)
+GAME_DRIVER (pacmania,         1987,"Pac-Mania",                      "Namco",pacmania,ROT270 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(pacmanij,pacmania,1987,"Pac-Mania (Japan)",              "Namco",pacmania,ROT270 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (galaga88,         1987,"Galaga '88 (set 1)",             "Namco",galaga88,ROT270 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(galag88b,galaga88,1987,"Galaga '88 (set 2)",             "Namco",galaga88,ROT270 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(galag88j,galaga88,1987,"Galaga '88 (Japan)",             "Namco",galaga88,ROT270 | GAME_REQUIRES_16BIT)
+//GAME_DRIVER (wstadium,       1988,"World Stadium",                  "Namco",wstadium,ROT0 | GAME_NOT_WORKING)
+GAME_DRIVER (berabohm,         1988,"Beraboh Man",                    "Namco",berabohm,ROT0 | GAME_NOT_WORKING)
+//GAME_DRIVER (alice,          1988,"Alice In Wonderland",            "Namco",alice,   ROT0)
+GAME_DRIVER (mmaze,            1988,"Marchen Maze (Japan)",           "Namco",alice,   ROT0 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (bakutotu,         1988,"Bakutotsu Kijuutei",             "Namco",bakutotu,ROT0 | GAME_NOT_WORKING)
+GAME_DRIVER (wldcourt,         1988,"World Court (Japan)",            "Namco",wldcourt,ROT0)
 /* in theory Splatterhouse could fit in 256 colors */
-GAME_DRIVER (splatter,         1988,"Splatter House (Japan)",         "Namco",splatter,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-//GAME_DRIVER (faceoff,        1988,"Face Off",                       "Namco",faceoff, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-GAME_DRIVER (rompers,          1989,"Rompers (Japan)",                "Namco",rompers, ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-GAME_DRIVER (blastoff,         1989,"Blast Off (Japan)",              "Namco",blastoff,ORIENTATION_ROTATE_270)
-//GAME_DRIVER (ws89,           1989,"World Stadium 89",               "Namco",ws89,    ORIENTATION_DEFAULT | GAME_NOT_WORKING)
-GAME_DRIVER (dangseed,         1989,"Dangerous Seed (Japan)",         "Namco",dangseed,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
-GAME_DRIVER (ws90,             1990,"World Stadium 90 (Japan)",       "Namco",ws90,    ORIENTATION_DEFAULT)
-GAME_DRIVER (pistoldm,         1990,"Pistol Daimyo no Bouken (Japan)","Namco",pistoldm,ORIENTATION_DEFAULT)
-GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
-GAME_DRIVER (tankfrce,         1991,"Tank Force (Japan)",             "Namco",tankfrce,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+GAME_DRIVER (splatter,         1988,"Splatter House (Japan)",         "Namco",splatter,ROT0 | GAME_REQUIRES_16BIT)
+//GAME_DRIVER (faceoff,        1988,"Face Off",                       "Namco",faceoff, ROT0 | GAME_NOT_WORKING)
+GAME_DRIVER (rompers,          1989,"Rompers (Japan)",                "Namco",rompers, ROT270 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (blastoff,         1989,"Blast Off (Japan)",              "Namco",blastoff,ROT270)
+//GAME_DRIVER (ws89,           1989,"World Stadium 89",               "Namco",ws89,    ROT0 | GAME_NOT_WORKING)
+GAME_DRIVER (dangseed,         1989,"Dangerous Seed (Japan)",         "Namco",dangseed,ROT270 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (ws90,             1990,"World Stadium 90 (Japan)",       "Namco",ws90,    ROT0)
+GAME_DRIVER (pistoldm,         1990,"Pistol Daimyo no Bouken (Japan)","Namco",pistoldm,ROT0)
+GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ROT0 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (tankfrce,         1991,"Tank Force (US)",                "Namco",tankfrce,ROT180)
+CLONE_DRIVER(tankfrcj,tankfrce,1991,"Tank Force (Japan)",             "Namco",tankfrce,ROT180)

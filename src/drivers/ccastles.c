@@ -96,6 +96,22 @@ void ccastles_bitmode_w(int offset, int data);
 void ccastles_flipscreen_w(int offset,int data);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
 
 static void ccastles_led_w(int offset,int data)
 {
@@ -119,9 +135,9 @@ static void ccastles_bankswitch_w(int offset, int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x0001, MRA_RAM },
 	{ 0x0002, 0x0002, ccastles_bitmode_r },
-	{ 0x0003, 0x90ff, MRA_RAM },	/* All RAM */
+	{ 0x0000, 0x8fff, MRA_RAM },
+	{ 0x9000, 0x90ff, MRA_RAM },
 	{ 0x9400, 0x9400, input_port_2_r },	/* trackball y - player 1 */
 	{ 0x9402, 0x9402, input_port_2_r },	/* trackball y - player 2 */
 	{ 0x9500, 0x9500, input_port_2_r },	/* trackball y - player 1 mirror */
@@ -145,7 +161,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x8dff, MWA_RAM },
 	{ 0x8e00, 0x8eff, MWA_RAM, &spriteram_2, &spriteram_size },
 	{ 0x8f00, 0x8fff, MWA_RAM, &spriteram },
-	{ 0x9000, 0x90ff, MWA_RAM },  /* NVRAM */
+	{ 0x9000, 0x90ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x9800, 0x980f, pokey1_w },
 	{ 0x9a00, 0x9a0f, pokey2_w },
 	{ 0x9c80, 0x9c80, MWA_RAM, &ccastles_scrollx },
@@ -207,7 +223,7 @@ static struct GfxLayout ccastles_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &ccastles_spritelayout,  0, 1 },
+	{ REGION_GFX1, 0x0000, &ccastles_spritelayout,  0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -236,7 +252,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_ccastles =
 {
 	/* basic machine hardware */
 	{
@@ -269,7 +285,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -288,7 +306,7 @@ ROM_START( ccastles )
      ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
      ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
-     ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics */
+     ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
      ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x39960b7d )
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
 ROM_END
@@ -301,94 +319,12 @@ ROM_START( ccastle2 )
      ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
      ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
-     ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics */
+     ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
      ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x39960b7d )
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	/* Read the NVRAM contents from disk */
-	/* No check necessary */
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x9000],0x100);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9000],0x100);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_ccastles =
-{
-	__FILE__,
-	0,
-	"ccastles",
-	"Crystal Castles (set 1)",
-	"1983",
-	"Atari",
-	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ccastles,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ccastles,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_ccastle2 =
-{
-	__FILE__,
-	&driver_ccastles,
-	"ccastle2",
-	"Crystal Castles (set 2)",
-	"1983",
-	"Atari",
-	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ccastle2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ccastles,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
+GAME( 1983, ccastles, ,         ccastles, ccastles, , ROT0, "Atari", "Crystal Castles (set 1)" )
+GAME( 1983, ccastle2, ccastles, ccastles, ccastles, , ROT0, "Atari", "Crystal Castles (set 2)" )

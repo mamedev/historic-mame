@@ -1323,7 +1323,7 @@ void wecleman_init_machine(void)
 }
 
 
-static struct MachineDriver wecleman_machine_driver =
+static struct MachineDriver machine_driver_wecleman =
 {
 	{
 		{
@@ -1393,7 +1393,7 @@ void hotchase_init_machine(void)		{						}
 int  hotchase_interrupt( void )			{return 4;				}
 int  hotchase_sound_interrupt(void)		{return M6809_INT_FIRQ;	}
 
-static struct MachineDriver hotchase_machine_driver =
+static struct MachineDriver machine_driver_hotchase =
 {
 	{
 		{
@@ -1599,18 +1599,18 @@ struct GameDriver driver_wecleman =
 	"Konami",
 	"Luca Elia\n",
 	0,
-	&wecleman_machine_driver,
-	0,
+	&machine_driver_wecleman,
+	wecleman_rom_decode,
 
 	rom_wecleman,
-	wecleman_rom_decode,0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_wecleman,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
+	ROT0 | GAME_WRONG_COLORS,
 
 	0,0
 };
@@ -1776,18 +1776,18 @@ struct GameDriver driver_hotchase =
 	"Konami",
 	"Luca Elia\n",
 	0,
-	&hotchase_machine_driver,
-	0,
+	&machine_driver_hotchase,
+	hotchase_rom_decode,
 
 	rom_hotchase,
-	hotchase_rom_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hotchase,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };

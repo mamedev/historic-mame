@@ -73,8 +73,8 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			bgoffs = base+16*(sy/2)+sx/2;
 
-			tilecode = memory_region(2)[bgoffs],
-			tileattribute = memory_region(2)[bgoffs + 0x100];
+			tilecode = memory_region(REGION_GFX4)[bgoffs],
+			tileattribute = memory_region(REGION_GFX4)[bgoffs + 0x100];
 		}
 		else
 		{

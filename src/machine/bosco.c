@@ -87,8 +87,7 @@ Scores should be reset to 0 on I/O controller command C1h.
 
 unsigned char *bosco_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-unsigned char bosco_hiscoreloaded;
-int		HiScore;
+static int		HiScore;
 int		Score,Score1,Score2;
 int		NextBonus,NextBonus1,NextBonus2;
 int		FirstBonus,IntervalBonus;
@@ -105,22 +104,12 @@ void bosco_halt_w(int offset,int data);
 void bosco_init_machine(void)
 {
 	credits = 0;
+	HiScore = 20000;
 	nmi_timer_1 = nmi_timer_2 = 0;
 	bosco_halt_w (0, 0);
 
 	memory_region(REGION_CPU1)[0x8c00] = 1;
 	memory_region(REGION_CPU1)[0x8c01] = 1;
-}
-
-
-int bosco_reset_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	bosco_hiscoreloaded = 0;
-
-	return RAM[offset];
 }
 
 

@@ -23,11 +23,7 @@ extern struct TMS5220interface atarijsa_tms5220_interface;
 extern struct YM2151interface atarijsa_ym2151_interface_mono;
 extern struct YM2151interface atarijsa_ym2151_interface_stereo;
 extern struct POKEYinterface atarijsa_pokey_interface;
-extern struct OKIM6295interface atarijsa_okim6295_interface_2;
-extern struct OKIM6295interface atarijsa_okim6295_interface_3;
-extern struct OKIM6295interface atarijsa_okim6295_interface_4;
-extern struct OKIM6295interface atarijsa_okim6295_interface_5;
-extern struct OKIM6295interface atarijsa_okim6295_interface_6;
+extern struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1;
 
 
 /* Used by Xybots, Blasteroids, Badlands(?) */

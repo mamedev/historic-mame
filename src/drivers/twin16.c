@@ -131,22 +131,16 @@ void battery_backed_ram_w( int offset, int data ){
 	COMBINE_WORD_MEM(&battery_backed_ram[offset],data);
 }
 
-static int cuebrick_hiload(void){
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	if( f ){
-		if( errorlog ) fprintf( errorlog, "loading bup_ram\n" );
-		osd_fread(f,battery_backed_ram,0x4000);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void cuebrick_hisave(void){
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-	if( f ){
-		if( errorlog ) fprintf( errorlog, "saving bup_ram\n" );
-		osd_fwrite(f,battery_backed_ram,0x4000);
-		osd_fclose(f);
+static void cuebrick_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,battery_backed_ram,0x4000);
+	else
+	{
+		if (file)
+			osd_fread(file,battery_backed_ram,0x4000);
+		else
+			memset(battery_backed_ram,0,0x4000);
 	}
 }
 
@@ -488,63 +482,68 @@ static struct MemoryWriteAddress fround_writemem[] = {
 
 /******************************************************************************************/
 
-static struct MachineDriver machine_driver =
-{
-	{
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			readmem_sub,writemem_sub,0,0,
-			CPUB_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			readmem,writemem,0,0,
-			CPUA_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* CPU slices */
-	0, /* init machine */
-
-	/* video hardware */
-	320, 256, { 0, 319, 0+16, 255-16 },
-	gfxdecodeinfo,
-	0x400,0x400,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	twin16_vh_start,
-	twin16_vh_stop,
-	twin16_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
+#define MACHINE_DRIVER(NAME,NVRAM)				\
+static struct MachineDriver machine_driver_##NAME =	\
+{	\
+	{	\
+		{	\
+			CPU_Z80 | CPU_AUDIO_CPU,	\
+			3579545,	\
+			readmem_sound,writemem_sound,0,0,	\
+			ignore_interrupt,1	\
+		},	\
+		{	\
+			CPU_M68000,	\
+			10000000,	\
+			readmem_sub,writemem_sub,0,0,	\
+			CPUB_interrupt,1	\
+		},	\
+		{	\
+			CPU_M68000,	\
+			10000000,	\
+			readmem,writemem,0,0,	\
+			CPUA_interrupt,1	\
+		},	\
+	},	\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	\
+	100, /* CPU slices */	\
+	0, /* init machine */	\
+	\
+	/* video hardware */	\
+	320, 256, { 0, 319, 0+16, 255-16 },	\
+	gfxdecodeinfo,	\
+	0x400,0x400,	\
+	0,	\
+	\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	\
+	0,	\
+	twin16_vh_start,	\
+	twin16_vh_stop,	\
+	twin16_vh_screenrefresh,	\
+	\
+	/* sound hardware */	\
+	SOUND_SUPPORTS_STEREO,0,0,0,	\
+	{	\
+		{	\
+			SOUND_YM2151,	\
+			&ym2151_interface	\
+		},	\
+		{	\
+			SOUND_K007232,	\
+			&k007232_interface,	\
+		},	\
+		{	\
+			SOUND_UPD7759,	\
+			&upd7759_interface	\
+		}	\
+	},	\
+	NVRAM	\
 };
 
-static struct MachineDriver heavysync_machine_driver =
+MACHINE_DRIVER(twin16,0)
+MACHINE_DRIVER(cuebrick,cuebrick_nvram_handler)
+
+static struct MachineDriver machine_driver_heavysync =
 {
 	{
 		{
@@ -600,7 +599,7 @@ static struct MachineDriver heavysync_machine_driver =
 	}
 };
 
-static struct MachineDriver fround_machine_driver =
+static struct MachineDriver machine_driver_fround =
 {
 	{
 		{
@@ -1518,18 +1517,18 @@ struct GameDriver driver_devilw =  {
 	"Konami",
 	CREDITS,
 	0,
-	&heavysync_machine_driver,
-	0,
-	rom_devilw,
+	&machine_driver_heavysync,
 	twin16_decode,
-	0,
+
+	rom_devilw,
+	0, 0,
 	0,
 	0,
 
 	input_ports_devilw,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1542,18 +1541,18 @@ struct GameDriver driver_majuu =  {
 	"Konami",
 	CREDITS,
 	0,
-	&heavysync_machine_driver,
-	0,
-	rom_majuu,
+	&machine_driver_heavysync,
 	twin16_decode,
-	0,
+
+	rom_majuu,
+	0, 0,
 	0,
 	0,
 
 	input_ports_devilw,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1566,18 +1565,18 @@ struct GameDriver driver_darkadv =  {
 	"Konami",
 	CREDITS,
 	0,
-	&heavysync_machine_driver,
-	0,
-	rom_darkadv,
+	&machine_driver_heavysync,
 	twin16_decode,
-	0,
+
+	rom_darkadv,
+	0, 0,
 	0,
 	0,
 
 	input_ports_devilw,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1590,18 +1589,18 @@ struct GameDriver driver_vulcan =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
-	rom_vulcan,
+	&machine_driver_twin16,
 	twin16_decode,
-	0,
+
+	rom_vulcan,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vulcan,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1614,18 +1613,18 @@ struct GameDriver driver_gradius2 =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
-	rom_gradius2,
+	&machine_driver_twin16,
 	twin16_decode,
-	0,
+
+	rom_gradius2,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gradius2,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1638,18 +1637,18 @@ struct GameDriver driver_grdius2a =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
-	rom_grdius2a,
+	&machine_driver_twin16,
 	twin16_decode,
-	0,
+
+	rom_grdius2a,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gradius2,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1662,18 +1661,18 @@ struct GameDriver driver_grdius2b =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
-	rom_grdius2b,
+	&machine_driver_twin16,
 	twin16_decode,
-	0,
+
+	rom_grdius2b,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gradius2,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1686,19 +1685,19 @@ struct GameDriver driver_cuebrick =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
-	rom_cuebrick,
+	&machine_driver_cuebrick,
 	twin16_decode,
-	0,
+
+	rom_cuebrick,
+	0, 0,
 	0,
 	0,
 
 	input_ports_twin16,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cuebrick_hiload,cuebrick_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_fround =  {
@@ -1710,17 +1709,18 @@ struct GameDriver driver_fround =  {
 	"Konami",
 	CREDITS,
 	0,
-	&fround_machine_driver,
-	0,
+	&machine_driver_fround,
+	fround_decode,
+
 	rom_fround,
-	fround_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_fround,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1733,17 +1733,18 @@ struct GameDriver driver_hpuncher =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
+	&machine_driver_twin16,
+	twin16_decode,
+
 	rom_hpuncher,
-	twin16_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_fround,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1757,16 +1758,17 @@ struct GameDriver driver_miaj =  {
 	"Konami",
 	CREDITS,
 	0,
-	&machine_driver,
-	0,
+	&machine_driver_twin16,
+	twin16_decode,
+
 	rom_miaj,
-	twin16_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_miaj,
 
 	0, 0, 0, /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

@@ -13,7 +13,6 @@
 
 unsigned char *xevious_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-/* static int    HiScore; */
 
 static unsigned char *rom2a;
 static unsigned char *rom2b;
@@ -27,16 +26,16 @@ void xevious_halt_w(int offset,int data);
 /* namco stick number array */
 /*
   Input bitmap
-    bit0 = UP    KEY
+    bit0 = UP	 KEY
     bit1 = RIGHT KEY
     bit2 = DOWN  KEY
     bit3 = LEFT  KEY
 
   Output direction
 	      0
-	    7   1
+	    7	1
 	  6   8   2
-	    5   3
+	    5	3
 	      4
  */
 unsigned char namco_key[16] =
@@ -45,13 +44,6 @@ unsigned char namco_key[16] =
 
 void xevious_init_machine(void)
 {
-	/* halt the slave CPUs until they're reset */
-	cpu_set_reset_line(1,ASSERT_LINE);
-	cpu_set_reset_line(2,ASSERT_LINE);
-
-	memory_region(REGION_CPU1)[0x8c00] = 1;
-	memory_region(REGION_CPU1)[0x8c01] = 1;
-
 	rom2a = memory_region(5);
 	rom2b = memory_region(5)+0x1000;
 	rom2c = memory_region(5)+0x3000;
@@ -59,14 +51,6 @@ void xevious_init_machine(void)
 	nmi_timer = 0;
 
 	xevious_halt_w (0, 0);
-
-#if 0		/* bypass initial rom & ram test , goto hot start(namco) */
-	memory_region(REGION_CPU1)[0x15f] = 0xc3;	/* check sum break */
-	memory_region(REGION_CPU1)[0x160] = 0xee;	/* check sum break */
-	memory_region(REGION_CPU1)[0x161] = 0x01;	/* check sum break */
-
-	memory_region(REGION_CPU1)[0x268] = 0xfe;	/* check sum break */
-#endif
 }
 
 /* emulation for schematic 9B */
@@ -323,7 +307,7 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 		case 0x10:
 			if (nmi_timer) timer_remove (nmi_timer);
 			nmi_timer = 0;
-			return;	/* nop */
+			return; /* nop */
 	}
 
 	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, xevious_nmi_generate);

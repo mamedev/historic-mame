@@ -195,46 +195,30 @@ void leland_battery_w(int offset, int data)
 	leland_battery_ram[offset]=data;
 }
 
-static void leland_hisave (void)
+static void nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
+	if (read_or_write)
 	{
 		/* Battery backed RAM */
-		osd_fwrite (f, leland_battery_ram, leland_battery_ram_size);
+		osd_fwrite (file, leland_battery_ram, leland_battery_ram_size);
 		/* EEPROM */
-		osd_fwrite_msbfirst (f, leland_eeprom, sizeof(leland_eeprom));
-		osd_fclose (f);
-	}
-}
-
-static int leland_hiload (void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		/* Battery backed RAM */
-		osd_fread (f, leland_battery_ram, leland_battery_ram_size);
-		/* EEPROM */
-		osd_fread_msbfirst (f, leland_eeprom, sizeof(leland_eeprom));
-		osd_fclose (f);
+		osd_fwrite_msbfirst (file, leland_eeprom, sizeof(leland_eeprom));
 	}
 	else
 	{
-		memset(leland_battery_ram, 0, leland_battery_ram_size);
-		memset(leland_eeprom, 0, sizeof(leland_eeprom));
+		if (file)
+		{
+			/* Battery backed RAM */
+			osd_fread (file, leland_battery_ram, leland_battery_ram_size);
+			/* EEPROM */
+			osd_fread_msbfirst (file, leland_eeprom, sizeof(leland_eeprom));
+		}
+		else
+		{
+			memset(leland_battery_ram, 0, leland_battery_ram_size);
+			memset(leland_eeprom, 0, sizeof(leland_eeprom));
+		}
 	}
-	/*
-	Clear down RAM.
-	*/
-	memset(&RAM[0xe000], 0, 0x1000);
-
-	return 1;
 }
 
 #ifdef MAME_DEBUG
@@ -333,7 +317,8 @@ static struct MachineDriver DRV =    \
 		{ SOUND_AY8910, &ay8910_interface }, \
         { SOUND_DAC,    &dac_interface },    \
 		{ SOUND_CUSTOM, &custom_interface }     \
-	}                 \
+	},                 \
+	nvram_handler	\
 }
 
 /*
@@ -373,7 +358,8 @@ static struct MachineDriver DRV =    \
 		{ SOUND_AY8910, &ay8910_interface }, \
         { SOUND_DAC,    &dac_interface },    \
 		{ SOUND_CUSTOM, &custom_interface },    \
-	}                 \
+	},                 \
+	nvram_handler	\
 }
 
 
@@ -1267,8 +1253,8 @@ struct GameDriver driver_strkzone =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-	leland_hiload,leland_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1375,8 +1361,8 @@ struct GameDriver driver_dblplay =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 /***************************************************************************
@@ -1520,8 +1506,8 @@ struct GameDriver driver_wseries =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-	leland_hiload,leland_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1629,8 +1615,8 @@ struct GameDriver driver_basebal2 =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-	leland_hiload,leland_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************
@@ -1759,8 +1745,8 @@ struct GameDriver driver_alleymas =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
-	leland_hiload,leland_hisave
+	ROT270,
+	0,0
 };
 
 /***************************************************************************
@@ -1875,8 +1861,8 @@ struct GameDriver driver_mayhem =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -2032,8 +2018,8 @@ struct GameDriver driver_cerberus =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -2251,8 +2237,8 @@ struct GameDriver driver_pigout =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 ROM_START( pigoutj )
@@ -2318,8 +2304,8 @@ struct GameDriver driver_pigoutj =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 /***************************************************************************
@@ -2470,8 +2456,8 @@ struct GameDriver driver_offroad =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 /***************************************************************************
@@ -2546,8 +2532,8 @@ struct GameDriver driver_offroadt =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -2705,8 +2691,8 @@ struct GameDriver driver_teamqb =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -2889,8 +2875,8 @@ struct GameDriver driver_redlin2p =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 /***************************************************************************
@@ -3034,8 +3020,8 @@ struct GameDriver driver_dangerz =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -3204,8 +3190,8 @@ struct GameDriver driver_viper =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -3355,8 +3341,8 @@ struct GameDriver driver_aafb =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -3422,8 +3408,8 @@ struct GameDriver driver_aafb2p =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 
@@ -3574,6 +3560,6 @@ struct GameDriver driver_aafbu =
 
 	0, 0, 0,
 
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-	leland_hiload,leland_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };

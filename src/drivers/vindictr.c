@@ -371,7 +371,9 @@ static struct MachineDriver machine_driver =
 	vindictr_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO_WITH_POKEY
+	JSA_I_STEREO_WITH_POKEY,
+
+	atarigen_nvram_handler
 };
 
 
@@ -447,6 +449,8 @@ static void vindictr_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -471,14 +475,13 @@ struct GameDriver driver_vindictr =
 	vindictr_init,
 
 	rom_vindictr,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vindictr,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

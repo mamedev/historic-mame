@@ -309,7 +309,9 @@ static struct MachineDriver machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -446,8 +448,8 @@ struct GameDriver driver_klax =
 	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -473,8 +475,8 @@ struct GameDriver driver_klax2 =
 	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -500,8 +502,8 @@ struct GameDriver driver_klax3 =
 	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -527,6 +529,6 @@ struct GameDriver driver_klaxj =
 	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

@@ -2,9 +2,6 @@
 #include "vidhrdw/konamiic.h"
 
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
 static int layer_colorbase[3],sprite_colorbase,bg_colorbase;
 static int priorityflag;
 
@@ -44,10 +41,7 @@ static int detatwin_rombank;
 
 static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
 {
-	/* flip Y? I sure hope this goes to some inverters on the ROM address lines, */
-	/* otherwise it would throw away all my understanding of the 051960 ;-) */
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPY : 0;
-
+	/* (color & 0x02) is flip y handled internally by the 052109 */
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x10) << 5) | ((*color & 0x0c) << 8)
 			| (bank << 12) | detatwin_rombank << 14;
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
@@ -123,9 +117,9 @@ int mia_vh_start(void)
 	layer_colorbase[1] = 32;
 	layer_colorbase[2] = 40;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,mia_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,mia_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,REVERSE_PLANE_ORDER,mia_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,mia_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -139,9 +133,9 @@ int tmnt_vh_start(void)
 	layer_colorbase[1] = 32;
 	layer_colorbase[2] = 40;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,REVERSE_PLANE_ORDER,tmnt_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,tmnt_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -151,9 +145,9 @@ int tmnt_vh_start(void)
 
 int punkshot_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,punkshot_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,punkshot_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -163,9 +157,9 @@ int punkshot_vh_start(void)
 
 int lgtnfght_vh_start(void)	/* also tmnt2, ssriders */
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -175,9 +169,9 @@ int lgtnfght_vh_start(void)	/* also tmnt2, ssriders */
 
 int detatwin_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,detatwin_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,detatwin_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,detatwin_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -187,9 +181,9 @@ int detatwin_vh_start(void)
 
 int glfgreat_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K053245_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,lgtnfght_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -199,9 +193,9 @@ int glfgreat_vh_start(void)
 
 int thndrx2_vh_start(void)
 {
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tmnt_tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tmnt_tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,thndrx2_sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,thndrx2_sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
@@ -626,6 +620,7 @@ void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_init_used_colors();
 	K051960_mark_sprites_colors();
+	palette_used_colors[16 * bg_colorbase] |= PALETTE_COLOR_VISIBLE;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 

@@ -1107,6 +1107,87 @@ INPUT_PORTS_START( swarm )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( streakng )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x40, "10000" )
+	PORT_DIPSETTING(    0x80, "15000" )
+	PORT_DIPSETTING(    0xc0, "20000" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( blkhole )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )	/* Bonus Life? */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -1290,7 +1371,7 @@ static struct AY8910interface checkmaj_ay8910_interface =
 
 #define MACHINE_DRIVER(NAME, INTERRUPT, MACHINEINIT, GFXDECODEINFO, VHSTART)	\
 																				\
-static struct MachineDriver NAME##_machine_driver =								\
+static struct MachineDriver machine_driver_##NAME =								\
 {																				\
 	/* basic machine hardware */												\
 	{																			\
@@ -1334,11 +1415,11 @@ MACHINE_DRIVER(warofbug, galaxian,  0,                     galaxian,  galaxian)
 MACHINE_DRIVER(galapx,   galaxian,  galapx_machine_init,   galaxian,  galaxian)
 MACHINE_DRIVER(pisces,   galaxian,  0,                     pisces,    pisces)
 MACHINE_DRIVER(mooncrgx, galaxian,  0,                     pisces,    mooncrgx)
-MACHINE_DRIVER(pacmanbl, galaxian,  0,                     pacmanbl,  pisces)
-MACHINE_DRIVER(devilfsg, devilfsg,  0,                     pacmanbl,  pisces)
+MACHINE_DRIVER(pacmanbl, galaxian,  0,                     pacmanbl,  galaxian)
+MACHINE_DRIVER(devilfsg, devilfsg,  0,                     pacmanbl,  galaxian)
 MACHINE_DRIVER(azurian,  galaxian,  0,                     scramble,  galaxian)
 
-static struct MachineDriver zigzag_machine_driver =
+static struct MachineDriver machine_driver_zigzag =
 {
 	/* basic machine hardware */
 	{
@@ -1375,7 +1456,7 @@ static struct MachineDriver zigzag_machine_driver =
 	}
 };
 
-static struct MachineDriver scramblb_machine_driver =
+static struct MachineDriver machine_driver_scramblb =
 {
 	/* basic machine hardware */
 	{
@@ -1412,7 +1493,7 @@ static struct MachineDriver scramblb_machine_driver =
 	}
 };
 
-static struct MachineDriver jumpbug_machine_driver =
+static struct MachineDriver machine_driver_jumpbug =
 {
 	/* basic machine hardware */
 	{
@@ -1449,7 +1530,7 @@ static struct MachineDriver jumpbug_machine_driver =
 	}
 };
 
-static struct MachineDriver checkmaj_machine_driver =
+static struct MachineDriver machine_driver_checkmaj =
 {
 	/* basic machine hardware */
 	{
@@ -1995,495 +2076,37 @@ ROM_START( checkmaj )
 	ROM_LOAD( "cm_4.bin",     0x0000, 0x1000, 0x923cffa1 )
 ROM_END
 
-
-
-static int galaxian_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* wait for the checkerboard pattern to be on screen */
-	if (memcmp(&RAM[0x5000],"\x30\x32",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x40a8],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void galaxian_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x40a8],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int pisces_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4021],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for the screen to initialize */
-	if (memcmp(&RAM[0x4021],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4021],3);
-			osd_fclose(f);
-		}
-		firsttime= 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void pisces_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4021],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int warofbug_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4034],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for memory to be set */
-	if (memcmp(&RAM[0x4034],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4034],3);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void warofbug_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4034],3);
-		osd_fclose(f);
-	}
-}
-
-
-static int pacmanbl_hiload(void)
-{
-	static int firsttime;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4288],0xff,3);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* Check for score to be initialised, and wait for "HIGH" to be on screen */
-
-	if (memcmp(&RAM[0x4288],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x5180],"\x40",1) == 0 && memcmp(&RAM[0x51a0],"\x40",1) == 0 &&
-		memcmp(&RAM[0x51c0],"\x40",1) == 0 && memcmp(&RAM[0x51e0],"\x40",1) == 0 &&
-		memcmp(&RAM[0x5200],"\x40",1) == 0 && memcmp(&RAM[0x5220],"\x40",1) == 0 &&
-		memcmp(&RAM[0x5240],"\x48",1) == 0 && memcmp(&RAM[0x5260],"\x47",1) == 0 &&
-		memcmp(&RAM[0x5280],"\x49",1) == 0 && memcmp(&RAM[0x52a0],"\x48",1) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int hi;
-			osd_fread(f,&RAM[0x4288],3);
-			osd_fclose(f);
-
-			hi = 	(RAM[0x4288] & 0x0f) +
-					(RAM[0x4288] >> 4) * 10 +
-					(RAM[0x4289] & 0x0f) * 100 +
-					(RAM[0x4289] >> 4) * 1000 +
-					(RAM[0x428a] & 0x0f) * 10000 +
-					(RAM[0x428a] >> 4) * 100000;
-
-			if (hi > 0)
-				RAM[0x5180] = RAM[0x4288] & 0x0F;
-			if (hi >= 10)
-				RAM[0x51A0] = RAM[0x4288] >> 4;
-			if (hi >= 100)
-				RAM[0x51C0] = RAM[0x4289] & 0x0F;
-			if (hi >= 1000)
-				RAM[0x51E0] = RAM[0x4289] >> 4;
-			if (hi >= 10000)
-				RAM[0x5200] = RAM[0x428a] & 0x0F;
-			if (hi >= 100000)
-				RAM[0x5220] = RAM[0x428a] >> 4;
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void pacmanbl_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4288],3);
-		osd_fclose(f);
-	}
-}
-
-static int zigzag_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-    /* wait for memory to be set */
-    if (memcmp(&RAM[0x5000],"\x10\x10\x10",3) == 0)
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            int hi;
-            osd_fread(f,&RAM[0x4280],3);
-            osd_fclose(f);
-
-            hi = (RAM[0x4280] & 0x0f) +
-                (RAM[0x4280] >> 4) * 10 +
-                (RAM[0x4281] & 0x0f) * 100 +
-                (RAM[0x4281] >> 4) * 1000 +
-                (RAM[0x4282] & 0x0f) * 10000 +
-                (RAM[0x4282] >> 4) * 100000;
-
-            if (hi > 0)
-                RAM[0x52d] = 0x30+(RAM[0x4280] & 0x0F);
-            if (hi >= 10)
-                RAM[0x52e] = 0x30+(RAM[0x4280] >> 4);
-            if (hi >= 100)
-                RAM[0x52f] = 0x30+(RAM[0x4281] & 0x0F);
-            if (hi >= 1000)
-                RAM[0x530] = 0x30+(RAM[0x4281] >> 4);
-            if (hi >= 10000)
-                RAM[0x531] = 0x30+(RAM[0x4282] & 0x0F);
-            if (hi >= 100000)
-                RAM[0x532] = 0x30+(RAM[0x4282] >> 4);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void zigzag_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x4280],3);
-        osd_fclose(f);
-    }
-}
-
-static int mooncrgx_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-    /* wait for memory to be set */
-    if (memcmp(&RAM[0x4042],"\x00\x50\x00",3) == 0)
-
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x4042],84);
-       		osd_fclose(f);
-
-
-        }
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void mooncrgx_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-	   osd_fwrite(f,&RAM[0x4042],84);
-	   osd_fclose(f);
-    }
-}
-
-static int scramble_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-    if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
-		(memcmp(&RAM[0x421B],"\x00\x00\x01",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4200],0x1E);
-			/* copy high score */
-			memcpy(&RAM[0x40A8],&RAM[0x4200],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void scramble_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4200],0x1E);
-		osd_fclose(f);
-	}
-
-}
-
-static int jumpbug_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x4208],"\x00\x00\x00\x05",4) == 0 &&
-		memcmp(&RAM[0x4233],"\x97\x97\x97\x97",4) ==0)
-
-	{
-
-			void *f;
-
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-					osd_fread(f,&RAM[0x4208],6);
-					osd_fread(f,&RAM[0x4222],3*7);
-					osd_fclose(f);
-			}
-			return 1;
-	}
-
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void jumpbug_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-			osd_fwrite(f,&RAM[0x4208],6);
-			osd_fwrite(f,&RAM[0x4222],3*7);
-			osd_fclose(f);
-	}
-}
-
-/****  Levers high score save routine - RJF (Oct 19, 1999)  ****/
-static int levers_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-                memset(&RAM[0x41cd], 0xff, 3);    /* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for the screen to initialize */
-        if (memcmp(&RAM[0x41cd], "\x00\x00\x00", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x41cd], 3);
-			osd_fclose(f);
-		}
-		firsttime= 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void levers_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x41cd], 3);
-		osd_fclose(f);
-	}
-}
-
-/****  Azurian Attack high score save routine - RJF (Nov 1, 1999)  ****/
-static int azurian_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-    /* wait for memory to be set */
-    if (memcmp(&RAM[0x40b3],"\x00\x50\x00",3) == 0)
-
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x40b3], 3);
-       		osd_fclose(f);
-
-
-        }
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void azurian_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-           osd_fwrite(f,&RAM[0x40b3], 3);
-	   osd_fclose(f);
-    }
-}
-
-/****  Orbitron high score save routine - RJF (Nov 3, 1999)  ****/
-static int orbitron_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-                memset(&RAM[0x404a], 0xff, 3);    /* high score */
-		firsttime = 1;
-	}
-
-
-	/* wait for the screen to initialize */
-        if (memcmp(&RAM[0x404a], "\x00\x00\x00", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x404a], 3);
-			osd_fclose(f);
-		}
-		firsttime= 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void orbitron_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x404a], 3);
-		osd_fclose(f);
-	}
-}
-
+ROM_START( streakng )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "sk1",          0x0000, 0x1000, 0xc8866ccb )
+	ROM_LOAD( "sk2",          0x1000, 0x1000, 0x7caea29b )
+	ROM_LOAD( "sk3",          0x2000, 0x1000, 0x7b4bfa76 )
+	ROM_LOAD( "sk4",          0x3000, 0x1000, 0x056fc921 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sk5",          0x0000, 0x1000, 0xd27f1e0c )
+	ROM_LOAD( "sk6",          0x1000, 0x1000, 0xa7089588 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "sk.bpr",       0x0000, 0x0020, 0xbce79607 )
+ROM_END
+
+ROM_START( blkhole )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "bh1",          0x0000, 0x0800, 0x64998819 )
+	ROM_LOAD( "bh2",          0x0800, 0x0800, 0x26f26ce4 )
+	ROM_LOAD( "bh3",          0x1000, 0x0800, 0x3418bc45 )
+	ROM_LOAD( "bh4",          0x1800, 0x0800, 0x735ff481 )
+	ROM_LOAD( "bh5",          0x2000, 0x0800, 0x3f657be9 )
+	ROM_LOAD( "bh6",          0x2800, 0x0800, 0xa057ab35 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bh7",          0x0000, 0x0800, 0x975ba821 )
+	ROM_LOAD( "bh8",          0x0800, 0x0800, 0x03d11020 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
 
 
 static void pisces_driver_init(void)
@@ -2508,7 +2131,7 @@ struct GameDriver driver_galaxian =
 	"Namco",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galaxian,
@@ -2519,9 +2142,8 @@ struct GameDriver driver_galaxian =
 	input_ports_galaxian,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galmidw =
@@ -2534,7 +2156,7 @@ struct GameDriver driver_galmidw =
 	"[Namco] (Midway license)",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galmidw,
@@ -2545,9 +2167,8 @@ struct GameDriver driver_galmidw =
 	input_ports_galaxian,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_superg =
@@ -2560,7 +2181,7 @@ struct GameDriver driver_superg =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_superg,
@@ -2571,9 +2192,8 @@ struct GameDriver driver_superg =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galaxb =
@@ -2586,7 +2206,7 @@ struct GameDriver driver_galaxb =
 	"bootleg",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galaxb,
@@ -2597,9 +2217,8 @@ struct GameDriver driver_galaxb =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galapx =
@@ -2612,7 +2231,7 @@ struct GameDriver driver_galapx =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galapx_machine_driver,
+	&machine_driver_galapx,
 	0,
 
 	rom_galapx,
@@ -2623,9 +2242,8 @@ struct GameDriver driver_galapx =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galap1 =
@@ -2638,7 +2256,7 @@ struct GameDriver driver_galap1 =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galap1,
@@ -2649,9 +2267,8 @@ struct GameDriver driver_galap1 =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galap4 =
@@ -2664,7 +2281,7 @@ struct GameDriver driver_galap4 =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galap4,
@@ -2675,9 +2292,8 @@ struct GameDriver driver_galap4 =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galturbo =
@@ -2690,7 +2306,7 @@ struct GameDriver driver_galturbo =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_galturbo,
@@ -2701,9 +2317,8 @@ struct GameDriver driver_galturbo =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 struct GameDriver driver_swarm =
 {
@@ -2715,7 +2330,7 @@ struct GameDriver driver_swarm =
 	"hack",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&galaxian_machine_driver,
+	&machine_driver_galaxian,
 	0,
 
 	rom_swarm,
@@ -2726,9 +2341,8 @@ struct GameDriver driver_swarm =
 	input_ports_swarm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_pisces =
@@ -2741,7 +2355,7 @@ struct GameDriver driver_pisces =
 	"<unknown>",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
 	rom_pisces,
@@ -2752,9 +2366,8 @@ struct GameDriver driver_pisces =
 	input_ports_pisces,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pisces_hiload, pisces_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_uniwars =
@@ -2767,7 +2380,7 @@ struct GameDriver driver_uniwars =
 	"Irem",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
 	rom_uniwars,
@@ -2778,9 +2391,8 @@ struct GameDriver driver_uniwars =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_gteikoku =
@@ -2793,7 +2405,7 @@ struct GameDriver driver_gteikoku =
 	"Irem",
 	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
 	rom_gteikoku,
@@ -2804,9 +2416,8 @@ struct GameDriver driver_gteikoku =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_spacbatt =
@@ -2819,7 +2430,7 @@ struct GameDriver driver_spacbatt =
 	"bootleg",
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
-	&pisces_machine_driver,
+	&machine_driver_pisces,
 	pisces_driver_init,
 
 	rom_spacbatt,
@@ -2830,9 +2441,8 @@ struct GameDriver driver_spacbatt =
 	input_ports_superg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_warofbug =
@@ -2845,7 +2455,7 @@ struct GameDriver driver_warofbug =
 	"Armenia",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&warofbug_machine_driver,
+	&machine_driver_warofbug,
 	0,
 
 	rom_warofbug,
@@ -2856,9 +2466,8 @@ struct GameDriver driver_warofbug =
 	input_ports_warofbug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	warofbug_hiload, warofbug_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_redufo =
@@ -2871,7 +2480,7 @@ struct GameDriver driver_redufo =
 	"Hara Industries??",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&warofbug_machine_driver,
+	&machine_driver_warofbug,
 	0,
 
 	rom_redufo,
@@ -2882,9 +2491,8 @@ struct GameDriver driver_redufo =
 	input_ports_redufo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaxian_hiload, galaxian_hisave
+	ROT90,
+	0,0
 };
 
 extern struct GameDriver driver_pacman;
@@ -2893,12 +2501,12 @@ struct GameDriver driver_pacmanbl =
 	__FILE__,
 	&driver_pacman,
 	"pacmanbl",
-	"Pac-Man (bootleg on Pisces hardware)",
+	"Pac-Man (bootleg on Galaxian hardware)",
 	"1981",
 	"bootleg",
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&pacmanbl_machine_driver,
+	&machine_driver_pacmanbl,
 	0,
 
 	rom_pacmanbl,
@@ -2909,9 +2517,8 @@ struct GameDriver driver_pacmanbl =
 	input_ports_pacmanbl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	pacmanbl_hiload, pacmanbl_hisave
+	ROT270,
+	0,0
 };
 
 extern struct GameDriver driver_devilfsh;
@@ -2925,7 +2532,7 @@ struct GameDriver driver_devilfsg =
 	"Vision / Artic",
 	"Chris Hardy",
 	0,
-	&devilfsg_machine_driver,
+	&machine_driver_devilfsg,
 	0,
 
 	rom_devilfsg,
@@ -2936,7 +2543,7 @@ struct GameDriver driver_devilfsg =
 	input_ports_devilfsg,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
         0, 0
 };
@@ -2951,7 +2558,7 @@ struct GameDriver driver_zigzag =
 	"LAX",
 	"Nicola Salmoria",
 	0,
-	&zigzag_machine_driver,
+	&machine_driver_zigzag,
 	0,
 
 	rom_zigzag,
@@ -2962,9 +2569,8 @@ struct GameDriver driver_zigzag =
 	input_ports_zigzag,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zigzag_hiload, zigzag_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_zigzag2 =
@@ -2977,7 +2583,7 @@ struct GameDriver driver_zigzag2 =
 	"LAX",
 	"Nicola Salmoria",
 	0,
-	&zigzag_machine_driver,
+	&machine_driver_zigzag,
 	0,
 
 	rom_zigzag2,
@@ -2988,9 +2594,8 @@ struct GameDriver driver_zigzag2 =
 	input_ports_zigzag,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zigzag_hiload, zigzag_hisave
+	ROT90,
+	0,0
 };
 
 extern struct GameDriver driver_mooncrst;
@@ -3004,7 +2609,7 @@ struct GameDriver driver_mooncrgx =
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrgx_machine_driver,
+	&machine_driver_mooncrgx,
 	0,
 
 	rom_mooncrgx,
@@ -3015,9 +2620,8 @@ struct GameDriver driver_mooncrgx =
 	input_ports_mooncrgx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	mooncrgx_hiload, mooncrgx_hisave
+	ROT270,
+	0,0
 };
 
 extern struct GameDriver driver_scramble;
@@ -3031,7 +2635,7 @@ struct GameDriver driver_scramblb =
 	"bootleg",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&scramblb_machine_driver,
+	&machine_driver_scramblb,
 	0,
 
 	rom_scramblb,
@@ -3042,9 +2646,8 @@ struct GameDriver driver_scramblb =
 	input_ports_scramblb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jumpbug =
@@ -3057,7 +2660,7 @@ struct GameDriver driver_jumpbug =
 	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
 	rom_jumpbug,
@@ -3068,9 +2671,8 @@ struct GameDriver driver_jumpbug =
 	input_ports_jumpbug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpbug_hiload, jumpbug_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jumpbugb =
@@ -3083,7 +2685,7 @@ struct GameDriver driver_jumpbugb =
 	"bootleg",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
 	rom_jumpbugb,
@@ -3094,9 +2696,8 @@ struct GameDriver driver_jumpbugb =
 	input_ports_jumpbug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jumpbug_hiload, jumpbug_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_levers =
@@ -3109,7 +2710,7 @@ struct GameDriver driver_levers =
 	"Rock-ola",
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili\nZsolt Vasvari",
 	0,
-	&jumpbug_machine_driver,
+	&machine_driver_jumpbug,
 	0,
 
 	rom_levers,
@@ -3121,9 +2722,8 @@ struct GameDriver driver_levers =
 	input_ports_levers,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	levers_hiload, levers_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_azurian =
@@ -3136,7 +2736,7 @@ struct GameDriver driver_azurian =
 	"Rait Electronics Ltd",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
-	&azurian_machine_driver,
+	&machine_driver_azurian,
 	0,
 
 	rom_azurian,
@@ -3147,9 +2747,8 @@ struct GameDriver driver_azurian =
 	input_ports_azurian,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	azurian_hiload, azurian_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_orbitron =
@@ -3162,7 +2761,7 @@ struct GameDriver driver_orbitron =
 	"Signatron USA",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
 	0,
-	&azurian_machine_driver,
+	&machine_driver_azurian,
 	0,
 
 	rom_orbitron,
@@ -3173,9 +2772,8 @@ struct GameDriver driver_orbitron =
 	input_ports_orbitron,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	orbitron_hiload, orbitron_hisave
+	ROT270,
+	0,0
 };
 
 extern struct GameDriver driver_checkman;
@@ -3189,7 +2787,7 @@ struct GameDriver driver_checkmaj =
 	"Jaleco",
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
 	0,
-	&checkmaj_machine_driver,
+	&machine_driver_checkmaj,
 	checkmaj_driver_init,
 
 	rom_checkmaj,
@@ -3200,7 +2798,57 @@ struct GameDriver driver_checkmaj =
 	input_ports_checkmaj,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
+};
+
+struct GameDriver driver_streakng =
+{
+	__FILE__,
+	0,
+	"streakng",
+	"Streaking",
+	"1980",
+	"Shoei",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&machine_driver_pacmanbl,
+	0,
+
+	rom_streakng,
+	0, 0,
+	0,
+	0,
+
+	input_ports_streakng,
+
+	0, 0, 0,
+	ROT90,
+	0,0
+};
+
+struct GameDriver driver_blkhole =
+{
+	__FILE__,
+	0,
+	"blkhole",
+	"Black Hole",
+	"????",
+	"<unknown>",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
+	0,
+	&machine_driver_galaxian,
+	0,
+
+	rom_blkhole,
+	0, 0,
+	0,
+	0,
+
+	input_ports_blkhole,
+
+	0, 0, 0,
+	ROT90,
+	0,0
 };

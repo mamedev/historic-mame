@@ -56,32 +56,16 @@ void foodf_nvram_w (int offset, int data)
 	nvram[(offset / 4) ^ 0x03] |= (data & 0x0f) << 2*(offset % 4);
 }
 
-int foodf_nvram_load(void)
+void foodf_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	if (read_or_write)
+		osd_fwrite(file,nvram,128);
+	else
 	{
-		osd_fread(f,nvram,128);
-		osd_fclose(f);
-	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(nvram,0xff,128);
-
-	return 1;
-}
-
-void foodf_nvram_save(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,nvram,128);
-		osd_fclose(f);
+		if (file)
+			osd_fread(file,nvram,128);
+		else
+			memset(nvram,0xff,128);
 	}
 }
 

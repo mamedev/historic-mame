@@ -447,20 +447,17 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 	/* [2] fix display orientation */
 
 	orientation = Machine->orientation;
-	if (orientation != ORIENTATION_DEFAULT)
+	if (orientation & ORIENTATION_SWAP_XY)
 	{
-		if (orientation & ORIENTATION_SWAP_XY)
-		{
-			int temp;
-			temp = x2;
-			x2 = y2;
-			y2 = temp;
-		}
-		if (orientation & ORIENTATION_FLIP_X)
-			x2 = ((vecwidth-1)<<16)-x2;
-		if (orientation & ORIENTATION_FLIP_Y)
-			y2 = ((vecheight-1)<<16)-y2;
+		int temp;
+		temp = x2;
+		x2 = y2;
+		y2 = temp;
 	}
+	if (orientation & ORIENTATION_FLIP_X)
+		x2 = ((vecwidth-1)<<16)-x2;
+	if (orientation & ORIENTATION_FLIP_Y)
+		y2 = ((vecheight-1)<<16)-y2;
 
 	/* [3] adjust cords if needed */
 
@@ -682,28 +679,25 @@ void vector_set_clip (int x1, int yy1, int x2, int y2)
 
 	/* fix orientation */
 	orientation = Machine->orientation;
-	if (orientation != ORIENTATION_DEFAULT)
+	/* swapping x/y coordinates will still have the minima in x1,yy1 */
+	if (orientation & ORIENTATION_SWAP_XY)
 	{
-		/* swapping x/y coordinates will still have the minima in x1,yy1 */
-		if (orientation & ORIENTATION_SWAP_XY)
-		{
-			tmp = x1; x1 = yy1; yy1 = tmp;
-			tmp = x2; x2 = y2; y2 = tmp;
-		}
-		/* don't forget to swap x1,x2, since x2 becomes the minimum */
-		if (orientation & ORIENTATION_FLIP_X)
-		{
-			x1 = ((vecwidth-1)<<16)-x1;
-			x2 = ((vecwidth-1)<<16)-x2;
-			tmp = x1; x1 = x2; x2 = tmp;
-		}
-		/* don't forget to swap yy1,y2, since y2 becomes the minimum */
-		if (orientation & ORIENTATION_FLIP_Y)
-		{
-			yy1 = ((vecheight-1)<<16)-yy1;
-			y2 = ((vecheight-1)<<16)-y2;
-			tmp = yy1; yy1 = y2; y2 = tmp;
-		}
+		tmp = x1; x1 = yy1; yy1 = tmp;
+		tmp = x2; x2 = y2; y2 = tmp;
+	}
+	/* don't forget to swap x1,x2, since x2 becomes the minimum */
+	if (orientation & ORIENTATION_FLIP_X)
+	{
+		x1 = ((vecwidth-1)<<16)-x1;
+		x2 = ((vecwidth-1)<<16)-x2;
+		tmp = x1; x1 = x2; x2 = tmp;
+	}
+	/* don't forget to swap yy1,y2, since y2 becomes the minimum */
+	if (orientation & ORIENTATION_FLIP_Y)
+	{
+		yy1 = ((vecheight-1)<<16)-yy1;
+		y2 = ((vecheight-1)<<16)-y2;
+		tmp = yy1; yy1 = y2; y2 = tmp;
 	}
 
 	xmin = x1 >> 16;

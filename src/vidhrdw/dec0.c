@@ -1053,66 +1053,6 @@ void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	dec0_pf2_draw(bitmap,0);
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
-
-
-
-#if 1
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*2,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*3,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*5,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*8,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*9,0,TRANSPARENCY_NONE,0);
-}
-{
-	sprintf(buf,"%04X",dec0_pri);
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j+10,8*11,0,TRANSPARENCY_NONE,0);
-}
-
-	Machine->orientation = trueorientation;
-
-}
-#endif
 }
 
 /******************************************************************************/

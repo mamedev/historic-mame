@@ -10,8 +10,6 @@
 #include "driver.h"
 
 
-#define MCU_DEBUG 0
-
 
 int arkanoid_paddle_select;
 
@@ -29,11 +27,6 @@ void arkanoid_init_machine (void)
 
 int arkanoid_Z80_mcu_r (int value)
 {
-#if MCU_DEBUG
-if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "Read: D00C = %02X (PC=%04X)\n", portA_out, cpu_get_pc());
-#endif
-
 	/* return the last value the 68705 wrote, and mark that we've read it */
 	m68705write = 0;
 	return toz80;
@@ -41,11 +34,6 @@ fprintf (thelog, "Read: D00C = %02X (PC=%04X)\n", portA_out, cpu_get_pc());
 
 void arkanoid_Z80_mcu_w(int offset,int data)
 {
-#if MCU_DEBUG
-if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "Write: D018 = %02X (PC=%04X)\n", data, cpu_get_pc());
-#endif
-
 	/* a write from the Z80 has occurred, mark it and remember the value */
 	z80write = 1;
 	fromz80 = data;
@@ -87,12 +75,6 @@ void arkanoid_68705_portC_w(int offset,int data)
 {
 	if ((ddrC & 0x04) && (~data & 0x04) && (portC_out & 0x04))
 	{
-#if MCU_DEBUG
-extern unsigned char *RAM;
-if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "*** MCU Read: %02X (PC=%04X, $15=%04X)\n", fromz80, cpu_get_pc(), (RAM[0x14] << 8) + RAM[0x13]);
-#endif
-
 		/* mark that the command has been seen */
 		cpu_trigger (700);
 
@@ -102,11 +84,6 @@ fprintf (thelog, "*** MCU Read: %02X (PC=%04X, $15=%04X)\n", fromz80, cpu_get_pc
 	}
 	if ((ddrC & 0x08) && (~data & 0x08) && (portC_out & 0x08))
 	{
-#if MCU_DEBUG
-if (!thelog) thelog = fopen ("ark.log", "w");
-fprintf (thelog, "*** MCU Write: %02X (PC=%04X)\n", portA_out, cpu_get_pc());
-#endif
-
 		/* a write from the 68705 to the Z80; remember its value */
 		m68705write = 1;
 		toz80 = portA_out;

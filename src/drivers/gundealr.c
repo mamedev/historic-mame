@@ -523,7 +523,7 @@ struct GameDriver driver_gundealr =
 	input_ports_gundealr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };
@@ -549,7 +549,7 @@ struct GameDriver driver_gundeala =
 	input_ports_gundealr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };
@@ -575,7 +575,7 @@ struct GameDriver driver_yamyam =
 	input_ports_yamyam,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -602,7 +602,7 @@ struct GameDriver driver_wiseguy =
 	input_ports_yamyam,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

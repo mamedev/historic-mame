@@ -107,8 +107,7 @@ void neogeo_sram_lock_w(int offset,int data);
 void neogeo_sram_unlock_w(int offset,int data);
 int neogeo_sram_r(int offset);
 void neogeo_sram_w(int offset,int data);
-int neogeo_sram_load(void);
-void neogeo_sram_save(void);
+void neogeo_nvram_handler(void *file,int read_or_write);
 
 extern int	memcard_status;
 int	neogeo_memcard_r(int offset);
@@ -151,7 +150,7 @@ void neo_unknown4(int offset, int data);
 
 /* from machine/neogeo.c */
 void neogeo_init_machine(void);
-void neogeo_onetime_init_machine(void);
+void init_neogeo(void);
 
 
 /******************************************************************************/
@@ -947,7 +946,7 @@ struct YM2610interface neogeo_ym2610_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver neogeo_machine_driver =
+static struct MachineDriver machine_driver_neogeo =
 {
 	{
 		{
@@ -987,10 +986,12 @@ static struct MachineDriver neogeo_machine_driver =
 			SOUND_YM2610,
 			&neogeo_ym2610_interface,
 		},
-	}
+	},
+
+	neogeo_nvram_handler
 };
 
-static struct MachineDriver neogeo_raster_machine_driver =
+static struct MachineDriver machine_driver_raster =
 {
 	{
 		{
@@ -1027,7 +1028,9 @@ static struct MachineDriver neogeo_raster_machine_driver =
 			SOUND_YM2610,
 			&neogeo_ym2610_interface,
 		},
-	}
+	},
+
+	neogeo_nvram_handler
 };
 
 /******************************************************************************/
@@ -1333,40 +1336,25 @@ ROM_END
 
 ROM_START( superspy )
 	ROM_REGIONX( 0x100000, REGION_CPU1 )
-	ROM_LOAD_ODD ( "n138001a.038", 0x000000, 0x040000, 0x2e949e32 )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "n138001a.03c", 0x080000, 0x040000, 0x54443d72 )
-	ROM_CONTINUE (                 0x080000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_WIDE_SWAP( "sspy_p1.rom", 0x000000, 0x080000, 0xc7f944b5 )
+	ROM_LOAD_WIDE_SWAP( "sspy_p2.rom", 0x080000, 0x020000, 0x811a4faf )
 
-	NEO_SFIX_128K( "n138001a.378", 0xec5fdb96 )
+	NEO_SFIX_128K( "sspy_s1.rom", 0xec5fdb96 )
 
-	NEO_BIOS_SOUND_64K( "n138001a.478", 0x64455806 )
+	NEO_BIOS_SOUND_128K( "sspy_m1.rom", 0xd59d5d12 )
 
-	ROM_REGION_OPTIONAL(0x180000) /* sound samples */
-	ROM_LOAD( "n138001a.178", 0x000000, 0x080000, 0xb993bc83 )
-	ROM_LOAD( "n138001a.17c", 0x080000, 0x080000, 0xd7a059b1 )
-	ROM_LOAD( "n138001b.178", 0x100000, 0x080000, 0x9f513d5a )
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "sspy_v11.rom", 0x000000, 0x100000, 0x5c674d5c )
+	ROM_LOAD( "sspy_v12.rom", 0x100000, 0x100000, 0x7df8898b )
 
-	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
-	ROM_LOAD( "n138001a.278", 0x000000, 0x080000, 0x426cd040 )
+	ROM_REGION_OPTIONAL(0x100000) /* sound samples */
+	ROM_LOAD( "sspy_v21.rom", 0x000000, 0x100000, 0x1ebe94c7 )
 
 	ROM_REGION( 0x400000 )
-	ROM_LOAD( "n138001a.538", 0x000000, 0x40000, 0x239f22c4 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x200000, 0x40000 )
-	ROM_LOAD( "n138001a.53c", 0x040000, 0x40000, 0xce80c326 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x240000, 0x40000 )
-	ROM_LOAD( "n138001b.538", 0x080000, 0x40000, 0x1edcf268 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x280000, 0x40000 )
-	ROM_LOAD( "n138001b.53c", 0x0c0000, 0x40000, 0xa41602a0 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x2c0000, 0x40000 )
-	ROM_LOAD( "n138001a.638", 0x100000, 0x40000, 0x5f2e5184 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x300000, 0x40000 )
-	ROM_LOAD( "n138001a.63c", 0x140000, 0x40000, 0x79b3e0b1 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x340000, 0x40000 )
-	ROM_LOAD( "n138001b.638", 0x180000, 0x40000, 0xb2afe822 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x380000, 0x40000 )
-	ROM_LOAD( "n138001b.63c", 0x1c0000, 0x40000, 0xd425f967 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x3c0000, 0x40000 )
+	ROM_LOAD_GFX_EVEN( "sspy_c1.rom", 0x000000, 0x100000, 0xcae7be57 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "sspy_c2.rom", 0x000000, 0x100000, 0x9e29d986 ) /* Plane 2,3 */
+	ROM_LOAD_GFX_EVEN( "sspy_c3.rom", 0x200000, 0x100000, 0x14832ff2 ) /* Plane 0,1 */
+	ROM_LOAD_GFX_ODD ( "sspy_c4.rom", 0x200000, 0x100000, 0xb7f63162 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( mutnat )
@@ -4440,10 +4428,13 @@ static void shuffle(unsigned char *buf,int len)
 	shuffle(buf + len,len);
 }
 
-void neogeo_mgd2_untangle(void)
+void init_mgd2(void)
 {
 	unsigned char *gfxdata = memory_region(MEM_GFX);
 	int len = memory_region_length(MEM_GFX);
+
+
+	init_neogeo();
 
 	/*
 		data is now in the order 0 4 8 12... 1 5 9 13... 2 6 10 14... 3 7 11 15...
@@ -4461,297 +4452,203 @@ void neogeo_mgd2_untangle(void)
 /******************************************************************************/
 
 
-#define NGCRED "The Shin Emu Keikaku team"
-
-/* Inspired by the CPS1 driver, compressed version of GameDrivers */
-#define NEODRIVER(NEO_NAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE,FLAGS) \
-struct GameDriver driver_##NEO_NAME  = \
-{                               \
-	__FILE__,                   \
-	&neogeo_bios,               \
-	#NEO_NAME,                  \
-	NEO_REALNAME,               \
-	NEO_YEAR,                   \
-	NEO_MANU,                   \
-	NGCRED,                     \
-	0,                          \
-	NEO_MACHINE,                \
-	neogeo_onetime_init_machine,\
-	rom_##NEO_NAME,             \
-	0, 0,                       \
-	0,                          \
-	0, 	    	                \
-	input_ports_neogeo,               \
-	0, 0, 0,                    \
-	ORIENTATION_DEFAULT | FLAGS,        \
-	neogeo_sram_load,neogeo_sram_save  \
-};
-
-#define NEODRIVERCLONE(NEO_NAME,NEO_CLONE,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE,FLAGS) \
-struct GameDriver driver_##NEO_NAME  = \
-{                               \
-	__FILE__,                   \
-	&driver_##NEO_CLONE,        \
-	#NEO_NAME,                  \
-	NEO_REALNAME,               \
-	NEO_YEAR,                   \
-	NEO_MANU,                   \
-	NGCRED,                     \
-	0,   	                   \
-	NEO_MACHINE,                \
-	neogeo_onetime_init_machine,\
-	rom_##NEO_NAME,             \
-	0, 0,                       \
-	0,                          \
-	0, 	    	                \
-	input_ports_neogeo,               \
-	0, 0, 0,                    \
-	ORIENTATION_DEFAULT | FLAGS,        \
-	neogeo_sram_load,neogeo_sram_save  \
-};
-
-#define NEODRIVERMGD2(NEO_NAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE,FLAGS) \
-struct GameDriver driver_##NEO_NAME  = \
-{                               \
-	__FILE__,                   \
-	&neogeo_bios,               \
-	#NEO_NAME,                  \
-	NEO_REALNAME,               \
-	NEO_YEAR,                   \
-	NEO_MANU,                   \
-	NGCRED,                     \
-	0,                          \
-	NEO_MACHINE,                \
-	neogeo_onetime_init_machine,\
-	rom_##NEO_NAME,             \
-	neogeo_mgd2_untangle, 0,    \
-	0,                          \
-	0, 	    	                \
-	input_ports_neogeo,               \
-	0, 0, 0,                    \
-	ORIENTATION_DEFAULT | FLAGS,      \
-	neogeo_sram_load,neogeo_sram_save  \
-};
-
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the neo-geo.rom file, so that we do not have to include */
 /* it in every zip file */
-struct GameDriver neogeo_bios =
+struct GameDriver driver_neogeo =
 {
 	__FILE__,
 	0,
 	"neogeo",
-	"NeoGeo BIOS - NOT A REAL DRIVER",
-	"19??",
-	"SNK",
-	"Do NOT link this from driver.c",
 	0,
-	&neogeo_machine_driver, /* Dummy */
-	neogeo_onetime_init_machine,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 
 	rom_bios,
 	0, 0,
 	0,
 	0,
-	input_ports_neogeo,
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	0,
+	0, 0, 0,
+	NOT_A_DRIVER,
 	0,0
 };
 
 /******************************************************************************/
 
+/*    YEAR  NAME      PARENT    MACHINE INPUT    INIT    MONITOR  */
+
 /* SNK */
-NEODRIVER(nam1975, "NAM-1975","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVER(bstars,  "Baseball Stars Professional","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVER(mahretsu,"Mahjong Kyoretsuden","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(ridhero, "Riding Hero","1990","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(alpham2, "Alpha Mission II / ASO II - Last Guardian","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(superspy,"The Super Spy","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(mutnat,  "Mutation Nation","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(kotm,    "King of the Monsters","1991","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(sengoku, "Sengoku / Sengoku Denshou (set 1)","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERCLONE(sengokh, sengoku, "Sengoku / Sengoku Denshou (set 2)","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(burningf,"Burning Fight (set 1)","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERCLONE(burningh,burningf,"Burning Fight (set 2)","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(lbowling,"League Bowling","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVER(gpilots, "Ghost Pilots","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK",&neogeo_machine_driver,0)
-NEODRIVER(quizdais,"Quiz Daisousa Sen - The Last Count Down","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(lresort, "Last Resort","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(eightman,"Eight Man","1991","SNK / Pallas",&neogeo_machine_driver,0)
-NEODRIVER(legendos,"Legend of Success Joe / Ashitano Joe Densetsu","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(2020bb,  "2020 Super Baseball (set 1)","1991","SNK / Pallas",&neogeo_machine_driver,0)
-NEODRIVERCLONE(2020bbh, 2020bb,  "2020 Super Baseball (set 2)","1991","SNK / Pallas",&neogeo_machine_driver,0)
-NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVER(roboarmy,"Robo Army","1991","SNK",&neogeo_machine_driver,0)
-NEODRIVERMGD2(fbfrenzy,"Football Frenzy","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(kotm2,   "King of the Monsters 2 - The Next Thing","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(sengoku2,"Sengoku 2 / Sengoku Denshou 2","1993","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(quizdai2,"Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(3countb, "3 Count Bout / Fire Suplex","1993","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(aof,     "Art of Fighting / Ryuuko no Ken","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(tophuntr,"Top Hunter - Roddy & Cathy","1994","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(fatfury2,"Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(ssideki, "Super Sidekicks / Tokuten Ou","1992","SNK",&neogeo_machine_driver,0)
-NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(aof2,    "Art of Fighting 2 / Ryuuko no Ken 2","1994","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(fatfursp,"Fatal Fury Special / Garou Densetsu Special","1993","SNK",&neogeo_machine_driver,0)
-NEODRIVER(savagere,"Savage Reign / Fu'un Mokushiroku - kakutou sousei","1995","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football","1994","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(samsho2, "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen","1994","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(fatfury3,"Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai","1995","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi","1995","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(samsho3, "Samurai Shodown III / Samurai Spirits - Zankurou Musouken","1995","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(rbff1,   "Real Bout Fatal Fury / Real Bout Garou Densetsu","1995","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(aof3,    "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden","1996","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(ssideki4,"The Ultimate 11 / Tokuten Ou - Honoo no Libero","1996","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(kizuna,  "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle","1996","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(samsho4, "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin","1996","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(rbffspec,"Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special","1996","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(lastblad,"The Last Blade / Bakumatsu Roman - Gekkano Kenshi","1997","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(rbff2,   "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers","1998","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(mslug2,  "Metal Slug 2 - Super Vehicle-001/II","1998","SNK",&neogeo_machine_driver,0)
-NEODRIVER(kof98,   "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends","1998","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(lastbld2,"The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi","1998","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(neocup98,"Neo-Geo Cup '98 - The Road to the Victory","1998","SNK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(mslugx,  "Metal Slug X - Super Vehicle-001","1999","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(kof99,   "The King of Fighters '99 - Millennium Battle","1999","SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1990, nam1975,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "NAM-1975" )
+GAME( 1990, bstars,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars Professional" )
+GAME( 1990, tpgolf,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Top Player's Golf" )
+GAME( 1990, mahretsu, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Mahjong Kyoretsuden" )
+GAME( 1990, ridhero,  neogeo,   raster, neogeo,  mgd2,   ROT0_16BIT, "SNK", "Riding Hero" )
+GAME( 1991, alpham2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Alpha Mission II / ASO II - Last Guardian" )
+GAME( 1990, cyberlip, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Cyber-Lip" )
+GAME( 1990, superspy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "The Super Spy" )
+GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "Mutation Nation" )
+GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  mgd2,   ROT0_16BIT, "SNK", "King of the Monsters" )
+GAME( 1991, sengoku,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 1)" )
+GAME( 1991, sengokh,  sengoku,  neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 2)" )
+GAME( 1991, burningf, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 1)" )
+GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 2)" )
+GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "League Bowling" )
+GAME( 1991, gpilots,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Ghost Pilots" )
+GAME( 1990, joyjoy,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Puzzled / Joy Joy Kid" )
+GAME( 1991, quizdais, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Daisousa Sen - The Last Count Down" )
+GAME( 1992, lresort,  neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "Last Resort" )
+GAME( 1991, eightman, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK / Pallas", "Eight Man" )
+GAME( 1991, legendos, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
+GAME( 1991, 2020bb,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 1)" )
+GAME( 1991, 2020bbh,  2020bb,   neogeo, neogeo,  neogeo, ROT0,       "SNK / Pallas", "2020 Super Baseball (set 2)" )
+GAME( 1991, socbrawl, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Soccer Brawl" )
+GAME( 1991, fatfury1, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
+GAME( 1991, roboarmy, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Robo Army" )
+GAME( 1992, fbfrenzy, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "Football Frenzy" )
+GAME( 1992, kotm2,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "King of the Monsters 2 - The Next Thing" )
+GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Sengoku 2 / Sengoku Denshou 2")
+GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Baseball Stars 2" )
+GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Meintantei Neo Geo - Quiz Daisousa Sen Part 2" )
+GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
+GAME( 1992, aof,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Art of Fighting / Ryuuko no Ken" )
+GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
+GAME( 1994, tophuntr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
+GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
+GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Super Sidekicks / Tokuten Ou" )
+GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
+GAME( 1994, aof2,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
+GAME( 1993, fatfursp, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury Special / Garou Densetsu Special" )
+GAME( 1995, savagere, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Savage Reign / Fu'un Mokushiroku - kakutou sousei" )
+GAME( 1994, ssideki2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
+GAME( 1994, samsho2,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
+GAME( 1995, fatfury3, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai" )
+GAME( 1995, ssideki3, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi" )
+GAME( 1995, kof95,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '95" )
+GAME( 1995, samsho3,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
+GAME( 1995, rbff1,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
+GAME( 1996, aof3,     neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
+GAME( 1996, kof96,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '96" )
+GAME( 1996, ssideki4, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Ultimate 11 / Tokuten Ou - Honoo no Libero" )
+GAME( 1996, kizuna,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
+GAME( 1996, samsho4,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
+GAME( 1996, rbffspec, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
+GAME( 1997, kof97,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '97" )
+GAME( 1997, lastblad, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade / Bakumatsu Roman - Gekkano Kenshi" )
+GAME( 1997, irrmaze,  neogeo,   neogeo, irrmaze, neogeo, ROT0,       "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou" )
+GAME( 1998, rbff2,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers" )
+GAME( 1998, mslug2,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Metal Slug 2 - Super Vehicle-001/II" )
+GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends" )
+GAME( 1998, lastbld2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekkano Kenshi" )
+GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
+GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Metal Slug X - Super Vehicle-001" )
+GAME( 1999, kof99,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '99 - Millennium Battle" )
 
 /* Alpha Denshi Co / ADK (changed name in 1993) */
-NEODRIVER(maglord, "Magician Lord (set 1)","1990","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVERCLONE(maglordh,maglord, "Magician Lord (set 2)","1990","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVER(ncombat, "Ninja Combat","1990","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVER(bjourney,"Blue's Journey / Raguy","1990","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVERMGD2(crsword, "Crossed Swords","1991","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVER(trally,  "Thrash Rally","1991","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVERMGD2(ncommand,"Ninja Commando","1992","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVER(wh1,     "World Heroes","1992","Alpha Denshi Co",&neogeo_machine_driver,0)
-NEODRIVER(wh2,     "World Heroes 2","1993","ADK",&neogeo_machine_driver,0)
-NEODRIVER(wh2j,    "World Heroes 2 Jet","1994","ADK / SNK",&neogeo_machine_driver,0)
-NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku","1994","ADK / SNK",&neogeo_machine_driver,0)
-NEODRIVER(whp,     "World Heroes Perfect","1995","ADK / SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(mosyougi,"Syougi No Tatsujin - Master of Syougi","1995","ADK / SNK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(overtop, "Over Top","1996","ADK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(ninjamas,"Ninja Master's - haoh-ninpo-cho","1996","ADK / SNK",&neogeo_machine_driver,0)
-NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Magician Lord (set 1)" )
+GAME( 1990, maglordh, maglord,  neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Magician Lord (set 2)" )
+GAME( 1990, ncombat,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Ninja Combat" )
+GAME( 1990, bjourney, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Blue's Journey / Raguy" )
+GAME( 1991, crsword,  neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Alpha Denshi Co", "Crossed Swords" )
+GAME( 1991, trally,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "Thrash Rally" )
+GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Alpha Denshi Co", "Ninja Commando" )
+GAME( 1992, wh1,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co", "World Heroes" )
+GAME( 1993, wh2,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK",             "World Heroes 2" )
+GAME( 1994, wh2j,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",       "World Heroes 2 Jet" )
+GAME( 1994, aodk,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",       "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
+GAME( 1995, whp,      neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",       "World Heroes Perfect" )
+GAME( 1995, mosyougi, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK / SNK",       "Syougi No Tatsujin - Master of Syougi" )
+GAME( 1996, overtop,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",             "Over Top" )
+GAME( 1996, ninjamas, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",       "Ninja Master's - haoh-ninpo-cho" )
+GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "ADK",             "Twinkle Star Sprites" )
 
 /* Aicom */
-NEODRIVER(janshin, "Jyanshin Densetsu - Quest of Jongmaster","1994","Aicom",&neogeo_machine_driver,0)
-NEODRIVER(pulstar, "Pulstar","1995","Aicom",&neogeo_machine_driver,0)
+GAME( 1994, janshin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
+GAME( 1995, pulstar,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Aicom", "Pulstar" )
 
 /* Data East Corporation */
-NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(wjammers,"Windjammers / Flying Power Disc","1994","Data East Corporation",&neogeo_machine_driver,0)
-NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(strhoop, "Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation",&neogeo_machine_driver,0)
-NEODRIVER(magdrop2,"Magical Drop II","1996","Data East Corporation",&neogeo_machine_driver,0)
-NEODRIVER(magdrop3,"Magical Drop III","1997","Data East Corporation",&neogeo_machine_driver,0)
+GAME( 1993, spinmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Spinmaster / Miracle Adventure" )
+GAME( 1994, wjammers, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Windjammers / Flying Power Disc" )
+GAME( 1994, karnovr,  neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Data East Corporation", "Karnov's Revenge / Fighter's History Dynamite" )
+GAME( 1994, strhoop,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Street Hoop / Street Slam / Dunk Dream" )
+GAME( 1996, magdrop2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop II" )
+GAME( 1997, magdrop3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Data East Corporation", "Magical Drop III" )
 
 /* Face */
-NEODRIVER(gururin, "Gururin","1994","Face",&neogeo_machine_driver,0)
-NEODRIVER(miexchng,"Money Puzzle Exchanger / Money Idol Exchanger","1997","Face",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1994, gururin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Face", "Gururin" )
+GAME( 1997, miexchng, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Face", "Money Puzzle Exchanger / Money Idol Exchanger" )
 
 /* Hudson Soft */
-NEODRIVER(panicbom,"Panic Bomber","1994","Eighting / Hudson",&neogeo_machine_driver,0)
-NEODRIVER(kabukikl,"Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden","1995","Hudson",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(neobombe,"Neo Bomberman","1997","Hudson",&neogeo_machine_driver,0)
+GAME( 1994, panicbom, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Eighting / Hudson", "Panic Bomber" )
+GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Hudson", "Kabuki Klash - Far East of Eden / Tengai Makyou Shinden - Far East of Eden" )
+GAME( 1997, neobombe, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Hudson", "Neo Bomberman" )
 
 /* Monolith Corp. */
-NEODRIVERMGD2(minasan, "Minnasanno Okagesamadesu","1990","Monolith Corp.",&neogeo_machine_driver,0)
-NEODRIVERMGD2(bakatono,"Bakatonosama Mahjong Manyuki","1991","Monolith Corp.",&neogeo_machine_driver,0)
+GAME( 1990, minasan,  neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Minnasanno Okagesamadesu" )
+GAME( 1991, bakatono, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
 
 /* Nazca */
-NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(mslug,   "Metal Slug - Super Vehicle-001","1996","Nazca",&neogeo_machine_driver,0)
+GAME( 1996, turfmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Nazca", "Neo Turf Masters / Big Tournament Golf" )
+GAME( 1996, mslug,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Nazca", "Metal Slug - Super Vehicle-001" )
 
 /* NMK */
-NEODRIVER(zedblade,"Zed Blade / Operation Ragnarok","1994","NMK",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1994, zedblade, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "NMK", "Zed Blade / Operation Ragnarok" )
 
 /* Sammy */
-NEODRIVER(viewpoin,"Viewpoint","1992","Sammy",&neogeo_machine_driver,0)
+GAME( 1992, viewpoin, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Sammy", "Viewpoint" )
 
 /* Saurus */
-NEODRIVER(quizkof, "Quiz King of Fighters","1995","Saurus",&neogeo_machine_driver,0)
-NEODRIVER(stakwin, "Stakes Winner / Stakes Winner - GI kinzen seihae no michi","1995","Saurus",&neogeo_machine_driver,0)
-NEODRIVER(ragnagrd,"Operation Ragnagard / Shin-Oh-Ken","1996","Saurus",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(pgoal,   "Pleasure Goal / Futsal - 5 on 5 Mini Soccer","1996","Saurus",&neogeo_machine_driver,0)
-NEODRIVER(stakwin2,"Stakes Winner 2","1996","Saurus",&neogeo_machine_driver,0)
-NEODRIVER(shocktro,"Shock Troopers","1997","Saurus",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(shocktr2,"Shock Troopers - 2nd Squad","1998","Saurus",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1995, quizkof,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Quiz King of Fighters" )
+GAME( 1995, stakwin,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
+GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Operation Ragnagard / Shin-Oh-Ken" )
+GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
+GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Saurus", "Stakes Winner 2" )
+GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers" )
+GAME( 1998, shocktr2, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Saurus", "Shock Troopers - 2nd Squad" )
 
 /* Sunsoft */
-NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1995, galaxyfg, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Galaxy Fight - Universal Warriors" )
+GAME( 1996, wakuwak7, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Sunsoft", "Waku Waku 7" )
 
 /* Taito */
-NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito",&neogeo_machine_driver,0)
-NEODRIVER(pbobbl2n,"Puzzle Bobble 2 / Bust-A-Move Again","1999","Taito (SNK license)",&neogeo_machine_driver,0)
+GAME( 1994, pbobble,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito", "Puzzle Bobble / Bust-A-Move" )
+GAME( 1999, pbobbl2n, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (SNK license)", "Puzzle Bobble 2 / Bust-A-Move Again" )
 
 /* Takara */
-NEODRIVER(marukodq,"Chibi Marukochan Deluxe Quiz","1995","Takara",&neogeo_machine_driver,0)
+GAME( 1995, marukodq, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Takara", "Chibi Marukochan Deluxe Quiz" )
 
 /* Technos */
-NEODRIVER(doubledr,"Double Dragon (Neo Geo)","1995","Technos",&neogeo_machine_driver,0)
-NEODRIVER(gowcaizr,"Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer","1995","Technos",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(sdodgeb, "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu","1996","Technos",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1995, doubledr, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Technos", "Double Dragon (Neo Geo)" )
+GAME( 1995, gowcaizr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer")
+GAME( 1996, sdodgeb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
 
 /* Tecmo */
-NEODRIVER(tws96,   "Tecmo World Soccer '96","1996","Tecmo",&neogeo_machine_driver,0)
+GAME( 1996, tws96,    neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Tecmo", "Tecmo World Soccer '96" )
 
 /* Yumekobo */
-NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1998, blazstar, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Yumekobo", "Blazing Star" )
 
 /* Viccom */
-NEODRIVER(fightfev,"Fight Fever / Crystal Legacy","1994","Viccom",&neogeo_machine_driver,0)
+GAME( 1994, fightfev, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Viccom", "Fight Fever / Crystal Legacy" )
 
 /* Video System Co. */
-NEODRIVER(pspikes2,"Power Spikes II","1994","Video System Co.",&neogeo_machine_driver,0)
-NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Video System Co.",&neogeo_machine_driver,0)
-NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.",&neogeo_machine_driver,0)
-NEODRIVER(popbounc,"Pop 'n Bounce / Gapporin","1997","Video System Co.",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
+GAME( 1994, pspikes2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Power Spikes II" )
+GAME( 1994, sonicwi2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
+GAME( 1995, sonicwi3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
+GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Pop 'n Bounce / Gapporin" )
 
 /* Visco */
-NEODRIVER(androdun,"Andro Dunos","1992","Visco",&neogeo_machine_driver,0)
-NEODRIVER(puzzledp,"Puzzle De Pon","1995","Taito (Visco license)",&neogeo_machine_driver,0)
-NEODRIVER(neomrdo, "Neo Mr. Do!","1996","Visco",&neogeo_machine_driver,0)
-NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_machine_driver,0)
-NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco",&neogeo_machine_driver,0)
-NEODRIVER(breakers,"Breakers","1996","Visco",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVERCLONE(puzzldpr,puzzledp,"Puzzle De Pon R","1997","Taito (Visco license)",&neogeo_machine_driver,0)
-NEODRIVERCLONE(breakrev,breakers,"Breakers Revenge","1998","Visco",&neogeo_machine_driver,GAME_REQUIRES_16BIT)
-NEODRIVER(flipshot,"Battle Flip Shot","1998","Visco",&neogeo_machine_driver,0)
-NEODRIVER(ctomaday,"Captain Tomaday","1999","Visco",&neogeo_machine_driver,0)
-
-
-/* Irritating Maze neds special treatment for the trackball */
-
-struct GameDriver driver_irrmaze  =
-{
-	__FILE__,
-	&neogeo_bios,
-	"irrmaze",
-	"The Irritating Maze / Ultra Denryu Iraira Bou",
-	"1997",
-	"SNK / Saurus",
-	NGCRED,
-	0,
-	&neogeo_machine_driver,
-	neogeo_onetime_init_machine,
-	rom_irrmaze,
-	0, 0,
-	0,
-	0,
-	input_ports_irrmaze,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	neogeo_sram_load,neogeo_sram_save
-};
+GAME( 1992, androdun, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Andro Dunos" )
+GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Taito (Visco license)", "Puzzle De Pon" )
+GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Mr. Do!" )
+GAME( 1995, goalx3,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Goal! Goal! Goal!" )
+GAME( 1996, neodrift, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Neo Drift Out - New Technology" )
+GAME( 1996, breakers, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers" )
+GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo, ROT0,       "Taito (Visco license)", "Puzzle De Pon R" )
+GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo, ROT0_16BIT, "Visco", "Breakers Revenge")
+GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Battle Flip Shot" )
+GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Visco", "Captain Tomaday" )

@@ -46,16 +46,6 @@ void jack_flipscreen_w(int offset, int data);
 
 static int timer_rate;
 
-static void jack_driver_init(void)
-{
-	timer_rate = 128;
-}
-
-static void zzyzzyxx_driver_init(void)
-{
-	timer_rate = 16;
-}
-
 static int timer_r(int offset)
 {
 	/* wrong! there should be no need for timer_rate, the same function */
@@ -499,7 +489,7 @@ ROM_START( jack3 )
 ROM_END
 
 ROM_START( treahunt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "thunt-1.f2",   0x0000, 0x1000, 0x0b35858c )
 	ROM_LOAD( "thunt-2.f3",   0x1000, 0x1000, 0x67305a51 )
 	ROM_LOAD( "thunt-3.4f",   0x2000, 0x1000, 0xd7a969c3 )
@@ -632,18 +622,22 @@ ROM_END
 static void treahunt_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 	int data;
+
+
+	memory_set_opcode_base(0,rom+diff);
 
 	/* Thanks to Mike Balfour for helping out with the decryption */
 	for (A = 0; A < 0x4000; A++)
 	{
-		data = RAM[A];
+		data = rom[A];
 
 		if (A & 0x1000)
 		{
 			/* unencrypted = D0 D2 D5 D1 D3 D6 D4 D7 */
-			ROM[A] =
+			rom[A+diff] =
 				 ((data & 0x01) << 7) |
 				 ((data & 0x02) << 3) |
 				 ((data & 0x04) << 4) |
@@ -654,95 +648,36 @@ static void treahunt_decode(void)
 
 			if ((A & 0x04) == 0)
 			/* unencrypted = !D0 D2 D5 D1 D3 D6 D4 !D7 */
-				ROM[A] ^= 0x81;
+				rom[A+diff] ^= 0x81;
 		}
 		else
 		{
 			/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
-			ROM[A] = (~data & 0x81) |
-					 ((data & 0x02) << 3) |
-					 ((data & 0x04) << 4) |
-					  (data & 0x28) |
-					 ((data & 0x10) >> 3) |
-					 ((data & 0x40) >> 4);
+			rom[A+diff] =
+					(~data & 0x81) |
+					((data & 0x02) << 3) |
+					((data & 0x04) << 4) |
+					 (data & 0x28) |
+					((data & 0x10) >> 3) |
+					((data & 0x40) >> 4);
 		}
 	}
 }
 
-
-
-static int jack_hiload(void)
+static void jack_driver_init(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x4500],"\x00\x00\x05",3) == 0 &&
-		memcmp(&RAM[0x4560],"\x41\x41\x41",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4500],9*11);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+	timer_rate = 128;
 }
 
-static void jack_hisave(void)
+static void treahunt_driver_init(void)
 {
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4500],9*11);
-		osd_fclose(f);
-	}
+	timer_rate = 128;
+	treahunt_decode();
 }
 
-static int zzyzzyxx_hiload(void)
+static void zzyzzyxx_driver_init(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x5100],"\x00\x01\x50",3) == 0 &&
-		memcmp(&RAM[0x541b],"\x91\x9d\xa3",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5100],4*10);
-			osd_fread(f,&RAM[0x5400],3*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void zzyzzyxx_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5100],4*10);
-		osd_fwrite(f,&RAM[0x5400],3*10);
-		osd_fclose(f);
-	}
+	timer_rate = 16;
 }
 
 
@@ -768,9 +703,8 @@ struct GameDriver driver_jack =
 	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jack2 =
@@ -794,9 +728,8 @@ struct GameDriver driver_jack2 =
 	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_jack3 =
@@ -820,9 +753,8 @@ struct GameDriver driver_jack3 =
 	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_treahunt =
@@ -836,19 +768,18 @@ struct GameDriver driver_treahunt =
 	"Brad Oliver\nMike Balfour",
 	0,
 	&machine_driver,
-	jack_driver_init,
+	treahunt_driver_init,
 
 	rom_treahunt,
-	0, treahunt_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	jack_hiload, jack_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_zzyzzyxx =
@@ -872,9 +803,8 @@ struct GameDriver driver_zzyzzyxx =
 	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_zzyzzyx2 =
@@ -898,9 +828,8 @@ struct GameDriver driver_zzyzzyx2 =
 	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_brix =
@@ -924,9 +853,8 @@ struct GameDriver driver_brix =
 	input_ports_zzyzzyxx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	zzyzzyxx_hiload, zzyzzyxx_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_freeze =
@@ -950,7 +878,7 @@ struct GameDriver driver_freeze =
 	input_ports_freeze,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -976,7 +904,7 @@ struct GameDriver driver_sucasino =
 	input_ports_jack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

@@ -2,6 +2,9 @@
 
 	Bally/Sente SAC-1 system
 
+    driver by Aaron Giles
+
+
 	Currently implemented:
 		* Chicken Shift
 		* Gimme a Break
@@ -229,6 +232,24 @@ static UINT8 spiker_expand_bits;
 
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 /*************************************
  *
  *	Interrupt handling
@@ -441,7 +462,7 @@ static void rombank2_select_w(int offset, int data)
 	int bank = data & 7;
 
 	/* top bit controls which half of the ROMs to use (Name that Tune only) */
-	if (memory_region_length(0) > 0x40000) bank |= (data >> 4) & 8;
+	if (memory_region_length(REGION_CPU1) > 0x40000) bank |= (data >> 4) & 8;
 
 //if (errorlog) fprintf(errorlog, "%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
@@ -1290,8 +1311,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x98e0, 0x98ff, watchdog_reset_w },
 	{ 0x9903, 0x9903, MWA_NOP },
 	{ 0x9a04, 0x9a05, m6850_w },
-	{ 0x9b00, 0x9bff, MWA_RAM },		/* system NOVRAM */
-	{ 0x9c00, 0x9cff, MWA_RAM },		/* cart NOVRAM */
+	{ 0x9b00, 0x9cff, MWA_RAM, &nvram, &nvram_size },		/* system NOVRAM + cart NOVRAM */
 	{ 0x9f00, 0x9f00, rombank2_select_w },
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -2397,7 +2417,7 @@ static struct cem3394_interface cem_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_balsente =
 {
 	/* basic machine hardware */
 	{
@@ -2437,41 +2457,10 @@ static struct MachineDriver machine_driver =
 			SOUND_CEM3394,
 			&cem_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
-
-
-
-/*************************************
- *
- *	High score save/load
- *
- *************************************/
-
-static int hiload(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name,0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread(f, &memory_region(REGION_CPU1)[0x9b00], 0x200);
-		osd_fclose(f);
-	}
-	else
-		memset(&memory_region(REGION_CPU1)[0x9b00], 0, 0x200);
-
-	return 1;
-}
-
-
-static void hisave(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite(f, &memory_region(REGION_CPU1)[0x9b00], 0x200);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -2498,7 +2487,7 @@ static void expand_roms(UINT8 cd_rom_mask)
 		UINT8 *rom = memory_region(REGION_CPU1);
 		UINT32 base;
 
-		for (base = 0x10000; base < memory_region_length(0); base += 0x30000)
+		for (base = 0x10000; base < memory_region_length(REGION_CPU1); base += 0x30000)
 		{
 			UINT8 *ab_base = &temp[0x00000];
 			UINT8 *cd_base = &temp[0x10000];
@@ -2551,42 +2540,39 @@ static void expand_roms(UINT8 cd_rom_mask)
 	}
 }
 
-static void sentetst_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void cshift_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void gghost_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void hattrick_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void otwalls_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
-static void snakepit_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void snakjack_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void stocker_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
-static void triviag1_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void triviag2_init(void)
+static void init_sentetst(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_cshift(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_gghost(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
+static void init_hattrick(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_otwalls(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
+static void init_snakepit(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
+static void init_snakjack(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
+static void init_stocker(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 0; }
+static void init_triviag1(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_triviag2(void)
 {
 	memcpy(&memory_region(REGION_CPU1)[0x20000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
-static void triviasp_init(void) { triviag2_init(); }
-static void triviayp_init(void) { triviag2_init(); }
-static void triviabb_init(void) { triviag2_init(); }
-static void gimeabrk_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
-static void minigolf_init(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
-static void minigol2_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
-static void toggle_init(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void nametune_init(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
-static void nstocker_init(void)
+static void init_gimeabrk(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; adc_shift = 1; }
+static void init_minigolf(void) { expand_roms(0x0c);        balsente_shooter = 0; adc_shift = 2; }
+static void init_minigol2(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; adc_shift = 2; }
+static void init_toggle(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static void init_nametune(void) { expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */ }
+static void init_nstocker(void)
 {
 	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; adc_shift = 1;
 }
-static void sfootbal_init(void) { expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 0; }
-static void spiker_init(void)
+static void init_sfootbal(void) { expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 0; }
+static void init_spiker(void)
 {
 	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
 	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 1;
 }
-static void rescraid_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
+static void init_rescraid(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
 
 
 
@@ -2603,7 +2589,7 @@ ROM_START( sentetst )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "sdiaggr0.bin", 0x00000, 0x2000, 0x5e0ff62a )
 ROM_END
 
@@ -2622,7 +2608,7 @@ ROM_START( cshift )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",   0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "cs-gr0.bin", 0x00000, 0x2000, 0x67f9d3b3 )
 	ROM_LOAD( "cs-gr1.bin", 0x02000, 0x2000, 0x78973d50 )
 	ROM_LOAD( "cs-gr2.bin", 0x04000, 0x2000, 0x1784f939 )
@@ -2645,7 +2631,7 @@ ROM_START( gghost )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "ggh-gr0.bin", 0x00000, 0x2000, 0x03515526 )
 	ROM_LOAD( "ggh-gr1.bin", 0x02000, 0x2000, 0xb4293435 )
 	ROM_LOAD( "ggh-gr2.bin", 0x04000, 0x2000, 0xece0cb97 )
@@ -2666,7 +2652,7 @@ ROM_START( hattrick )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x9f41baba )
 	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0x951f08c9 )
 ROM_END
@@ -2686,7 +2672,7 @@ ROM_START( otwalls )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "otw-gr0.bin", 0x00000, 0x2000, 0x210bad3c )
 	ROM_LOAD( "otw-gr1.bin", 0x02000, 0x2000, 0x13e6aaa5 )
 	ROM_LOAD( "otw-gr2.bin", 0x04000, 0x2000, 0x5cfefee5 )
@@ -2710,7 +2696,7 @@ ROM_START( snakepit )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "spit-gr0.bin", 0x00000, 0x2000, 0xf77fd85d )
 	ROM_LOAD( "spit-gr1.bin", 0x02000, 0x2000, 0x3ad10334 )
 	ROM_LOAD( "spit-gr2.bin", 0x04000, 0x2000, 0x24887703 )
@@ -2734,7 +2720,7 @@ ROM_START( snakjack )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "rom-gr0.u9b", 0x00000, 0x2000, 0x3e64b5d5 )
 	ROM_LOAD( "rom-gr1.u8b", 0x02000, 0x2000, 0xb3b8baee )
 	ROM_LOAD( "rom-gr2.u7b", 0x04000, 0x2000, 0xe9d89dac )
@@ -2756,7 +2742,7 @@ ROM_START( stocker )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "stkr-gr0.bin", 0x00000, 0x2000, 0x76d5694c )
 	ROM_LOAD( "stkr-gr1.bin", 0x02000, 0x2000, 0x4a5cc00b )
 	ROM_LOAD( "stkr-gr2.bin", 0x04000, 0x2000, 0x70002382 )
@@ -2778,7 +2764,7 @@ ROM_START( triviag1 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "tpg1-gr0.bin", 0x00000, 0x2000, 0x20c9217a )
 	ROM_LOAD( "tpg1-gr1.bin", 0x02000, 0x2000, 0xd7f44504 )
 	ROM_LOAD( "tpg1-gr2.bin", 0x04000, 0x2000, 0x4e59a15d )
@@ -2800,7 +2786,7 @@ ROM_START( triviag2 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin",  0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin",  0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin",  0x08000, 0x4000, 0x1e870293 )
@@ -2819,7 +2805,7 @@ ROM_START( triviasp )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",     0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin",    0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin",    0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "allsport.3b", 0x08000, 0x4000, 0x7415a7fc )
@@ -2838,7 +2824,7 @@ ROM_START( triviayp )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x1242033e )
@@ -2857,7 +2843,7 @@ ROM_START( triviabb )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.bin", 0x00000, 0x4000, 0x6829de8e )
 	ROM_LOAD( "gr23.bin", 0x04000, 0x4000, 0x89398700 )
 	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, 0x92fb6fb1 )
@@ -2874,7 +2860,7 @@ ROM_START( gimeabrk )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0xe3cdc476 )
 	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x0555d9c0 )
 ROM_END
@@ -2892,7 +2878,7 @@ ROM_START( minigolf )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u6b", 0x00000, 0x4000, 0x8e24d594 )
 	ROM_LOAD( "gr23.u5b", 0x04000, 0x4000, 0x3bf355ef )
 	ROM_LOAD( "gr45.u4b", 0x08000, 0x4000, 0x8eb14921 )
@@ -2907,7 +2893,7 @@ ROM_START( minigol2 )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "6b-ver2",  0x00000, 0x8000, 0x5988f4ba )
 	ROM_LOAD( "4b-ver2",  0x08000, 0x8000, 0x78a30e23 )
 ROM_END
@@ -2927,7 +2913,7 @@ ROM_START( toggle )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",    0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "tgle-gr0.bin", 0x00000, 0x2000, 0x0e0e5d0e )
 	ROM_LOAD( "tgle-gr1.bin", 0x02000, 0x2000, 0x3b141ad2 )
 ROM_END
@@ -2955,7 +2941,7 @@ ROM_START( nametune )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "nttgr0.bin",  0x00000, 0x8000, 0x6b75bb4b )
 ROM_END
 
@@ -2974,7 +2960,7 @@ ROM_START( nstocker )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0xfd0c38be )
 	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x35d4433e )
 	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x734b858a )
@@ -2992,7 +2978,7 @@ ROM_START( sfootbal )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "sfbgr01.bin", 0x00000, 0x4000, 0xe3108d35 )
 	ROM_LOAD( "sfbgr23.bin", 0x04000, 0x4000, 0x5c5af726 )
 	ROM_LOAD( "sfbgr45.bin", 0x08000, 0x4000, 0xe767251e )
@@ -3009,7 +2995,7 @@ ROM_START( spiker )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0x0caa6e3e )
 	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x970c81f6 )
 	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x90ddd737 )
@@ -3026,7 +3012,7 @@ ROM_START( rescraid )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
 	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
 
-	ROM_REGION(0x10000)		/* up to 64k of sprites */
+	ROM_REGIONX( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
 	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, 0xe0dfc133 )
 	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, 0x952ade30 )
 ROM_END
@@ -3039,80 +3025,25 @@ ROM_END
  *
  *************************************/
 
-#define BALSENTE_DRIVER(name,year,fullname) 	\
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		NULL,									\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Bally/Sente",							\
-		"Aaron Giles",							\
-		0,										\
-		&machine_driver,						\
-		name##_init,							\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##name,						\
-												\
-		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
-	};
-
-#define BALSENTE_CLONE_DRIVER(name,year,fullname,cloneof) \
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		&driver_##cloneof,						\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Bally/Sente",							\
-		"Aaron Giles",							\
-		0,										\
-		&machine_driver,						\
-		name##_init,							\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##name,						\
-												\
-		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
-	};
-
-
-BALSENTE_DRIVER      (sentetst, 1984, "Sente Diagnostic Cartridge")
-BALSENTE_DRIVER      (cshift,   1984, "Chicken Shift")
-BALSENTE_DRIVER      (gghost,   1984, "Goalie Ghost")
-BALSENTE_DRIVER      (hattrick, 1984, "Hat Trick")
-BALSENTE_DRIVER      (otwalls,  1984, "Off the Wall (Sente)")
-BALSENTE_DRIVER      (snakepit, 1984, "Snake Pit")
-BALSENTE_DRIVER      (snakjack, 1984, "Snacks'n Jaxson")
-BALSENTE_DRIVER      (stocker,  1984, "Stocker")
-BALSENTE_DRIVER      (triviag1, 1984, "Trivial Pursuit (Genus I)")
-BALSENTE_DRIVER      (triviag2, 1984, "Trivial Pursuit (Genus II)")
-BALSENTE_DRIVER      (triviasp, 1984, "Trivial Pursuit (All Star Sports Edition)")
-BALSENTE_DRIVER      (triviayp, 1984, "Trivial Pursuit (Young Players Edition)")
-BALSENTE_DRIVER      (triviabb, 1984, "Trivial Pursuit (Baby Boomer Edition)")
-BALSENTE_DRIVER      (gimeabrk, 1985, "Gimme A Break")
-BALSENTE_DRIVER      (minigolf, 1985, "Mini Golf (set 1)")
-BALSENTE_CLONE_DRIVER(minigol2, 1985, "Mini Golf (set 2)", minigolf)
-BALSENTE_DRIVER      (toggle,   1985, "Toggle")
-BALSENTE_DRIVER      (nametune, 1986, "Name That Tune")
-BALSENTE_DRIVER      (nstocker, 1986, "Night Stocker")
-BALSENTE_DRIVER      (sfootbal, 1986, "Street Football")
-BALSENTE_DRIVER      (spiker,   1986, "Spiker")
-BALSENTE_DRIVER      (rescraid, 1987, "Rescue Raider")
+GAME( 1984, sentetst, ,         balsente, sentetst, sentetst, ROT0, "Bally/Sente", "Sente Diagnostic Cartridge" )
+GAME( 1984, cshift,   ,         balsente, cshift,   cshift,   ROT0, "Bally/Sente", "Chicken Shift" )
+GAME( 1984, gghost,   ,         balsente, gghost,   gghost,   ROT0, "Bally/Sente", "Goalie Ghost" )
+GAME( 1984, hattrick, ,         balsente, hattrick, hattrick, ROT0, "Bally/Sente", "Hat Trick" )
+GAME( 1984, otwalls,  ,         balsente, otwalls,  otwalls,  ROT0, "Bally/Sente", "Off the Wall (Sente)" )
+GAME( 1984, snakepit, ,         balsente, snakepit, snakepit, ROT0, "Bally/Sente", "Snake Pit" )
+GAME( 1984, snakjack, ,         balsente, snakjack, snakjack, ROT0, "Bally/Sente", "Snacks'n Jaxson" )
+GAME( 1984, stocker,  ,         balsente, stocker,  stocker,  ROT0, "Bally/Sente", "Stocker" )
+GAME( 1984, triviag1, ,         balsente, triviag1, triviag1, ROT0, "Bally/Sente", "Trivial Pursuit (Genus I)" )
+GAME( 1984, triviag2, ,         balsente, triviag2, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Genus II)" )
+GAME( 1984, triviasp, ,         balsente, triviasp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (All Star Sports Edition)" )
+GAME( 1984, triviayp, ,         balsente, triviayp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Young Players Edition)" )
+GAME( 1984, triviabb, ,         balsente, triviabb, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Baby Boomer Edition)" )
+GAME( 1985, gimeabrk, ,         balsente, gimeabrk, gimeabrk, ROT0, "Bally/Sente", "Gimme A Break" )
+GAME( 1985, minigolf, ,         balsente, minigolf, minigolf, ROT0, "Bally/Sente", "Mini Golf (set 1)" )
+GAME( 1985, minigol2, minigolf, balsente, minigol2, minigol2, ROT0, "Bally/Sente", "Mini Golf (set 2)" )
+GAME( 1985, toggle,   ,         balsente, toggle,   toggle,   ROT0, "Bally/Sente", "Toggle" )
+GAME( 1986, nametune, ,         balsente, nametune, nametune, ROT0, "Bally/Sente", "Name That Tune" )
+GAME( 1986, nstocker, ,         balsente, nstocker, nstocker, ROT0, "Bally/Sente", "Night Stocker" )
+GAME( 1986, sfootbal, ,         balsente, sfootbal, sfootbal, ROT0, "Bally/Sente", "Street Football" )
+GAME( 1986, spiker,   ,         balsente, spiker,   spiker,   ROT0, "Bally/Sente", "Spiker" )
+GAME( 1987, rescraid, ,         balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider" )

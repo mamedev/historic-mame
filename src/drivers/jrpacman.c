@@ -381,76 +381,6 @@ static void jrpacman_decode(void)
 }
 
 
-static int hiload(void)
-{
-	static int resetcount;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
-
-	/* wait for "HIGH SCORE" to be on screen */
-	if ((memcmp(&RAM[0x476d],"\x40\x40\x40\x40",4) == 0) &&
-            (memcmp(&RAM[0x4751],"\x48\x47\x49\x48",4) == 0))
-	{
-		void *f;
-
-
-		resetcount = 0;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			char buf[10];
-			int hi;
-
-
-			osd_fread(f,&RAM[0x4e88],4);
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			hi = (RAM[0x4e88] & 0x0f) +
-			     (RAM[0x4e88] >> 4) * 10 +
-			     (RAM[0x4e89] & 0x0f) * 100 +
-			     (RAM[0x4e89] >> 4) * 1000 +
-			     (RAM[0x4e8a] & 0x0f) * 10000 +
-			     (RAM[0x4e8a] >> 4) * 100000 +
-			     (RAM[0x4e8b] & 0x0f) * 1000000 +
-			     (RAM[0x4e8b] >> 4) * 10000000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') jrpacman_videoram_w(0x0772,buf[2]-'0');
-				if (buf[3] != ' ') jrpacman_videoram_w(0x0771,buf[3]-'0');
-				if (buf[4] != ' ') jrpacman_videoram_w(0x0770,buf[4]-'0');
-				if (buf[5] != ' ') jrpacman_videoram_w(0x076f,buf[5]-'0');
-				if (buf[6] != ' ') jrpacman_videoram_w(0x076e,buf[6]-'0');
-				jrpacman_videoram_w(0x076d,buf[7]-'0');
-			}
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4e88],4);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_jrpacman =
 {
 	__FILE__,
@@ -462,17 +392,16 @@ struct GameDriver driver_jrpacman =
 	"David Caldwell\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	jrpacman_decode,
 
 	rom_jrpacman,
-	jrpacman_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_jrpacman,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

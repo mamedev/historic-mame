@@ -539,7 +539,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver sidearms_machine_driver =
+static struct MachineDriver machine_driver_sidearms =
 {
 	/* basic machine hardware */
 	{
@@ -590,7 +590,7 @@ static struct MachineDriver sidearms_machine_driver =
 	}
 };
 
-static struct MachineDriver turtship_machine_driver =
+static struct MachineDriver machine_driver_turtship =
 {
 	/* basic machine hardware */
 	{
@@ -799,46 +799,6 @@ ROM_START( dyger )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01\x00\x00\x00\x00",8) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe680],16*5);
-
-			memcpy(&RAM[0xe600], &RAM[0xe680], 8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe680],16*5);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_sidearms =
 {
@@ -850,7 +810,7 @@ struct GameDriver driver_sidearms =
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
 	rom_sidearms,
@@ -861,8 +821,8 @@ struct GameDriver driver_sidearms =
 	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_sidearmr =
@@ -875,7 +835,7 @@ struct GameDriver driver_sidearmr =
 	"Capcom (Romstar license)",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
 	rom_sidearmr,
@@ -886,8 +846,8 @@ struct GameDriver driver_sidearmr =
 	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_sidearjp =
@@ -900,7 +860,7 @@ struct GameDriver driver_sidearjp =
 	"Capcom",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&sidearms_machine_driver,
+	&machine_driver_sidearms,
 	0,
 
 	rom_sidearjp,
@@ -911,8 +871,8 @@ struct GameDriver driver_sidearjp =
 	input_ports_sidearms,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_turtship =
@@ -925,7 +885,7 @@ struct GameDriver driver_turtship =
 	"Philko",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
 	0,
-	&turtship_machine_driver,
+	&machine_driver_turtship,
 	0,
 
 	rom_turtship,
@@ -936,7 +896,7 @@ struct GameDriver driver_turtship =
 	input_ports_turtship,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -950,7 +910,7 @@ struct GameDriver driver_dyger =
 	"Philko",
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
 	0,
-	&turtship_machine_driver,
+	&machine_driver_turtship,
 	0,
 
 	rom_dyger,
@@ -961,6 +921,6 @@ struct GameDriver driver_dyger =
 	input_ports_dyger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };

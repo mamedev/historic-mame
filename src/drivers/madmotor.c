@@ -317,7 +317,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver madmotor_machine_driver =
+static struct MachineDriver machine_driver_madmotor =
 {
 	/* basic machine hardware */
 	{
@@ -439,6 +439,7 @@ static int cycle_r(int offset)
 static void memory_handler(void)
 {
 	install_mem_read_handler(0, 0x3e0000, 0x3e0001, cycle_r);
+	madmotor_decrypt();
 }
 
 /******************************************************************************/
@@ -453,17 +454,17 @@ struct GameDriver driver_madmotor =
 	"Mitchell",
 	"Bryan McPhail",
 	0,
-	&madmotor_machine_driver,
+	&machine_driver_madmotor,
 	memory_handler,
 
 	rom_madmotor,
-	madmotor_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_madmotor,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

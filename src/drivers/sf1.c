@@ -918,7 +918,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver us_machine_driver =
+static struct MachineDriver machine_driver_us =
 {
 	{
 		{
@@ -973,7 +973,7 @@ static struct MachineDriver us_machine_driver =
 	}
 };
 
-static struct MachineDriver jp_machine_driver =
+static struct MachineDriver machine_driver_jp =
 {
 	{
 		{
@@ -1206,7 +1206,7 @@ struct GameDriver driver_sf1 =
 	input_ports_sf1,
 
 	0,0,0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1220,7 +1220,7 @@ struct GameDriver driver_sf1us =
 	"Capcom",
 	"Olivier Galibert",
 	0,
-	&us_machine_driver,
+	&machine_driver_us,
 	0,
 
 	rom_sf1us,
@@ -1229,7 +1229,7 @@ struct GameDriver driver_sf1us =
 	input_ports_sf1us,
 
 	0,0,0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1243,7 +1243,7 @@ struct GameDriver driver_sf1jp =
 	"Capcom",
 	"Olivier Galibert",
 	0,
-	&jp_machine_driver,
+	&machine_driver_jp,
 	0,
 
 	rom_sf1jp,
@@ -1252,6 +1252,6 @@ struct GameDriver driver_sf1jp =
 	input_ports_sf1jp,
 
 	0,0,0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

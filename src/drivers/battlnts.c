@@ -329,8 +329,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0,	1 },	/* colors  0-15 */
-	{ 1, 0x040000, &spritelayout,4*16,	1 },	/* colors 64-79 */
+	{ REGION_GFX1, 0, &charlayout,      0, 1 },	/* colors  0-15 */
+	{ REGION_GFX2, 0, &spritelayout, 4*16, 1 },	/* colors 64-79 */
 	{ -1 } /* end of array */
 };
 
@@ -348,7 +348,7 @@ static struct YM3812interface ym3812_interface =
 	{ 0, 0 },
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_battlnts =
 {
 	/* basic machine hardware */
 	{
@@ -400,158 +400,67 @@ static struct MachineDriver machine_driver =
 
 ROM_START( battlnts )
 	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
-	ROM_LOAD( "g02.7e",     0x08000, 0x08000, 0xdbd8e17e )	/* fixed ROM */
-	ROM_LOAD( "g03.8e",     0x10000, 0x10000, 0x7bd44fef )	/* banked ROM */
+	ROM_LOAD( "g02.7e",      0x08000, 0x08000, 0xdbd8e17e )	/* fixed ROM */
+	ROM_LOAD( "g03.8e",      0x10000, 0x10000, 0x7bd44fef )	/* banked ROM */
 
-	ROM_REGION_DISPOSE( 0x080000 ) /* graphics (disposed after conversion) */
-	ROM_LOAD( "777c04.bin",	0x000000, 0x40000, 0x45d92347 )	/* tiles */
-	ROM_LOAD( "777c05.bin",	0x040000, 0x40000, 0xaeee778c )	/* sprites */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "777c01.bin",  0x00000, 0x08000, 0xc21206e9 )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "777c04.bin",	 0x00000, 0x40000, 0x45d92347 )	/* tiles */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "777c05.bin",	 0x00000, 0x40000, 0xaeee778c )	/* sprites */
 ROM_END
 
 ROM_START( battlntj )
 	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
-	ROM_LOAD( "777e02.bin", 0x08000, 0x08000, 0xd631cfcb )	/* fixed ROM */
-	ROM_LOAD( "777e03.bin", 0x10000, 0x10000, 0x5ef1f4ef )	/* banked ROM */
+	ROM_LOAD( "777e02.bin",  0x08000, 0x08000, 0xd631cfcb )	/* fixed ROM */
+	ROM_LOAD( "777e03.bin",  0x10000, 0x10000, 0x5ef1f4ef )	/* banked ROM */
 
-	ROM_REGION_DISPOSE( 0x080000 ) /* graphics (disposed after conversion) */
-	ROM_LOAD( "777c04.bin",	0x000000, 0x40000, 0x45d92347 )	/* tiles */
-	ROM_LOAD( "777c05.bin",	0x040000, 0x40000, 0xaeee778c )	/* sprites */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "777c01.bin",  0x00000, 0x08000, 0xc21206e9 )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "777c04.bin",	 0x00000, 0x40000, 0x45d92347 )	/* tiles */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "777c05.bin",	 0x00000, 0x40000, 0xaeee778c )	/* sprites */
 ROM_END
 
 ROM_START( thehustl )
 	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
-	ROM_LOAD( "765-m02.7e",     0x08000, 0x08000, 0x934807b9 )	/* fixed ROM */
-	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
+	ROM_LOAD( "765-m02.7e",  0x08000, 0x08000, 0x934807b9 )	/* fixed ROM */
+	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
 
-	ROM_REGION_DISPOSE( 0x080000 ) /* graphics (disposed after conversion) */
-	ROM_LOAD( "765-e04.13a",	0x000000, 0x40000, 0x08c2b72e )	/* tiles */
-	ROM_LOAD( "765-e05.13e",	0x040000, 0x40000, 0xef044655 )	/* sprites */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "765-j01.10a", 	0x00000, 0x08000, 0x77ae753e )
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765-e04.13a", 0x00000, 0x40000, 0x08c2b72e )	/* tiles */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765-e05.13e", 0x00000, 0x40000, 0xef044655 )	/* sprites */
 ROM_END
 
 ROM_START( thehustj )
 	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* code + banked roms */
-	ROM_LOAD( "765-j02.7e",     0x08000, 0x08000, 0x2ac14c75 )	/* fixed ROM */
-	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
+	ROM_LOAD( "765-j02.7e",  0x08000, 0x08000, 0x2ac14c75 )	/* fixed ROM */
+	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
 
-	ROM_REGION_DISPOSE( 0x080000 ) /* graphics (disposed after conversion) */
-	ROM_LOAD( "765-e04.13a",	0x000000, 0x40000, 0x08c2b72e )	/* tiles */
-	ROM_LOAD( "765-e05.13e",	0x040000, 0x40000, 0xef044655 )	/* sprites */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
 
-	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "765-j01.10a", 	0x00000, 0x08000, 0x77ae753e )
+	ROM_REGIONX( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765-e04.13a", 0x00000, 0x40000, 0x08c2b72e )	/* tiles */
+
+	ROM_REGIONX( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "765-e05.13e", 0x00000, 0x40000, 0xef044655 )	/* sprites */
 ROM_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
-
-struct GameDriver driver_battlnts =
-{
-	__FILE__,
-	0,
-	"battlnts",
-	"Battlantis",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_battlnts,
-	0, 0,
-	0,
-	0,
-
-	input_ports_battlnts,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90,
-	0, 0
-};
-
-struct GameDriver driver_battlntj =
-{
-	__FILE__,
-	&driver_battlnts,
-	"battlntj",
-	"Battlantis (Japan)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_battlntj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_battlnts,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90,
-	0, 0
-};
-
-struct GameDriver driver_thehustl =
-{
-	__FILE__,
-	0,
-	"thehustl",
-	"The Hustler (Japan version M)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_thehustl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thehustj,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90,
-	0, 0
-};
-
-struct GameDriver driver_thehustj =
-{
-	__FILE__,
-	&driver_thehustl,
-	"thehustj",
-	"The Hustler (Japan version J)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_thehustj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_thehustj,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90,
-	0, 0
-};
+GAME( 1987, battlnts, ,         battlnts, battlnts, , ROT90, "Konami", "Battlantis" )
+GAME( 1987, battlntj, battlnts, battlnts, battlnts, , ROT90, "Konami", "Battlantis (Japan)" )
+GAME( 1987, thehustl, ,         battlnts, thehustj, , ROT90, "Konami", "The Hustler (Japan version M)" )
+GAME( 1987, thehustj, thehustl, battlnts, thehustj, , ROT90, "Konami", "The Hustler (Japan version J)" )

@@ -565,7 +565,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /**************************************************************************/
 
-static struct MachineDriver ddragon3_machine_driver =
+static struct MachineDriver machine_driver_ddragon3 =
 {
 	{
 		{
@@ -612,7 +612,7 @@ static struct MachineDriver ddragon3_machine_driver =
 	}
 };
 
-static struct MachineDriver ddrago3b_machine_driver =
+static struct MachineDriver machine_driver_ddrago3b =
 {
 	{
 		{
@@ -659,7 +659,7 @@ static struct MachineDriver ddrago3b_machine_driver =
 	}
 };
 
-static struct MachineDriver ctribe_machine_driver =
+static struct MachineDriver machine_driver_ctribe =
 {
 	{
 		{
@@ -871,7 +871,7 @@ struct GameDriver driver_ddragon3 =
 	"Technos",
 	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
 	0,
-	&ddragon3_machine_driver,
+	&machine_driver_ddragon3,
 	0,
 
 	rom_ddragon3,
@@ -883,7 +883,7 @@ struct GameDriver driver_ddragon3 =
 
 	0,0,0,
 
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };
@@ -898,7 +898,7 @@ struct GameDriver driver_ddrago3b =
 	"bootleg",
 	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
 	0,
-	&ddrago3b_machine_driver,
+	&machine_driver_ddrago3b,
 	0,
 
 	rom_ddrago3b,
@@ -910,7 +910,7 @@ struct GameDriver driver_ddrago3b =
 
 	0,0,0,
 
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };
@@ -925,7 +925,7 @@ struct GameDriver driver_ctribe =
 	"Technos",
 	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
 	0,
-	&ctribe_machine_driver,
+	&machine_driver_ctribe,
 	0,
 
 	rom_ctribe,
@@ -937,7 +937,7 @@ struct GameDriver driver_ctribe =
 
 	0,0,0,
 
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };
@@ -952,7 +952,7 @@ struct GameDriver driver_ctribeb =
 	"bootleg",
 	"Carlos A. Lozano\nRichard Bush\nBryan McPhail",
 	0,
-	&ctribe_machine_driver,
+	&machine_driver_ctribe,
 	0,
 
 	rom_ctribeb,
@@ -964,7 +964,7 @@ struct GameDriver driver_ctribeb =
 
 	0,0,0,
 
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };

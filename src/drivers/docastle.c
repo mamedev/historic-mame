@@ -630,7 +630,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver docastle_machine_driver =
+static struct MachineDriver machine_driver_docastle =
 {
 	/* basic machine hardware */
 	{
@@ -673,7 +673,7 @@ static struct MachineDriver docastle_machine_driver =
 	}
 };
 
-static struct MachineDriver dorunrun_machine_driver =
+static struct MachineDriver machine_driver_dorunrun =
 {
 	/* basic machine hardware */
 	{
@@ -941,153 +941,6 @@ ROM_END
 
 
 
-static int docastle_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8020],"\x01\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x8068],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8020],10*8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void docastle_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8020],10*8);
-		osd_fclose(f);
-	}
-}
-
-static int dorunrun_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2010],"\x00\x10\x00",3) == 0 &&
-			memcmp(&RAM[0x2198],"\x00\x10\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2010],50*8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void dorunrun_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2010],50*8);
-		osd_fclose(f);
-	}
-}
-
-/* HSC 12/5/98 NOTE: spiero does NOT save a high score table like dorunrun does */
-/* it only keeps a top score */
-static int spiero_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2010],"\x00\x10\x00",3) == 0)
-
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2010],3);
-			osd_fclose(f);
-		}
-
-	return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void spiero_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2010],3);
-		osd_fclose(f);
-	}
-}
-
-static int dowild_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2020],"\x01\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x2068],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2020],10*8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void dowild_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2020],10*8);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_docastle =
 {
 	__FILE__,
@@ -1098,7 +951,7 @@ struct GameDriver driver_docastle =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
-	&docastle_machine_driver,
+	&machine_driver_docastle,
 	0,
 
 	rom_docastle,
@@ -1109,9 +962,8 @@ struct GameDriver driver_docastle =
 	input_ports_docastle,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	docastle_hiload, docastle_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_docastl2 =
@@ -1124,7 +976,7 @@ struct GameDriver driver_docastl2 =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
-	&docastle_machine_driver,
+	&machine_driver_docastle,
 	0,
 
 	rom_docastl2,
@@ -1135,9 +987,8 @@ struct GameDriver driver_docastl2 =
 	input_ports_docastle,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	docastle_hiload, docastle_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_dounicorn =
@@ -1150,7 +1001,7 @@ struct GameDriver driver_dounicorn =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nChad Hendrickson",
 	0,
-	&docastle_machine_driver,
+	&machine_driver_docastle,
 	0,
 
 	rom_dounicorn,
@@ -1161,9 +1012,8 @@ struct GameDriver driver_dounicorn =
 	input_ports_docastle,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	docastle_hiload, docastle_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_dorunrun =
@@ -1176,7 +1026,7 @@ struct GameDriver driver_dorunrun =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_dorunrun,
@@ -1187,9 +1037,8 @@ struct GameDriver driver_dorunrun =
 	input_ports_dorunrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	dorunrun_hiload, dorunrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_dorunru2 =
@@ -1202,7 +1051,7 @@ struct GameDriver driver_dorunru2 =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_dorunru2,
@@ -1213,9 +1062,8 @@ struct GameDriver driver_dorunru2 =
 	input_ports_dorunrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	dorunrun_hiload, dorunrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_dorunruc =
@@ -1228,7 +1076,7 @@ struct GameDriver driver_dorunruc =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&docastle_machine_driver,
+	&machine_driver_docastle,
 	0,
 
 	rom_dorunruc,
@@ -1239,9 +1087,8 @@ struct GameDriver driver_dorunruc =
 	input_ports_dorunrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	dorunrun_hiload, dorunrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_spiero =
@@ -1254,7 +1101,7 @@ struct GameDriver driver_spiero =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_spiero,
@@ -1265,9 +1112,8 @@ struct GameDriver driver_spiero =
 	input_ports_dorunrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	spiero_hiload, spiero_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_dowild =
@@ -1280,7 +1126,7 @@ struct GameDriver driver_dowild =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_dowild,
@@ -1291,9 +1137,8 @@ struct GameDriver driver_dowild =
 	input_ports_dowild,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	dowild_hiload, dowild_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_jjack =
@@ -1307,7 +1152,7 @@ struct GameDriver driver_jjack =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_jjack,
@@ -1318,9 +1163,8 @@ struct GameDriver driver_jjack =
 	input_ports_jjack,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	dowild_hiload, dowild_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_kickridr =
@@ -1333,7 +1177,7 @@ struct GameDriver driver_kickridr =
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili\nChad Hendrickson",
 	0,
-	&dorunrun_machine_driver,
+	&machine_driver_dorunrun,
 	0,
 
 	rom_kickridr,
@@ -1344,7 +1188,6 @@ struct GameDriver driver_kickridr =
 	input_ports_kickridr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	dowild_hiload, dowild_hisave
+	ROT0,
+	0,0
 };

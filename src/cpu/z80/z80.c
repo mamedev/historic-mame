@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator V2.4
+ *	 Portable Z80 emulator V2.5
  *
  *   Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.
  *
@@ -17,7 +17,14 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.4:
+ *	 Changes in 2.5:
+ *	  - Burning cycles always adjusts the ICount by a multiple of 4.
+ *	  - In REPEAT_AT_ONCE cases the R register wasn't incremented twice
+ *		per repetition as it should have been. Those repeated opcodes
+ *		could also underflow the ICount.
+ *	  - Simplified TIME_LOOP_HACKS for BC and added two more for DE + HL
+ *		timing loops. I think those hacks weren't endian safe before too.
+ *   Changes in 2.4:
  *	  - z80_reset zaps the entire context, sets IX and IY to 0xffff(!) and
  *		sets the Z flag. With these changes the Tehkan World Cup driver
  *		_seems_ to work again.
@@ -209,7 +216,7 @@ typedef struct {
 int z80_ICount;
 static Z80_Regs Z80;
 static UINT32 EA;
-static int after_EI;
+static int after_EI = 0;
 
 static UINT8 SZ[256];		/* zero and sign flags */
 static UINT8 SZ_BIT[256];	/* zero, sign and parity/overflow (=zero) flags for BIT opcode */
@@ -482,11 +489,6 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 #define CY(cycles) z80_ICount -= cycles
 
 /***************************************************************
- * increment R on every M-1 cycle
- ***************************************************************/
-#define R_INC _R++
-
-/***************************************************************
  * execute an opcode
  ***************************************************************/
 #define EXEC(prefix,opcode) 									\
@@ -580,7 +582,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 #define ENTER_HALT {											\
     _PC--;                                                      \
     _HALT = 1;                                                  \
-	if( after_EI == 0 ) 										\
+	if( !after_EI ) 											\
 		BURN( z80_ICount ); 									\
 }
 
@@ -735,7 +737,7 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( after_EI == 0 ) 									\
+		if( !after_EI ) 										\
 			BURNODD( z80_ICount, 1, 10 );						\
 	}															\
 	else														\
@@ -746,7 +748,7 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JP $-1 or EI - JP $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if (after_EI == 0 ) 							\
+				if( !after_EI ) 								\
 					BURNODD( z80_ICount-4, 2, 4+10 );			\
 			}													\
 		}														\
@@ -754,7 +756,7 @@ INLINE UINT32 ARG16(void)
 		/* LD SP,#xxxx - JP $-3 (Galaga) */ 					\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( after_EI == 0 ) 								\
+			if( !after_EI ) 									\
 				BURNODD( z80_ICount-10, 2, 10+10 ); 			\
 		}														\
 	}															\
@@ -793,7 +795,7 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( _PCD == oldpc ) 										\
 	{															\
-		if( after_EI == 0 ) 									\
+		if( !after_EI ) 										\
 			BURNODD( z80_ICount, 1, 12 );						\
 	}															\
 	else														\
@@ -804,7 +806,7 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JR $-1 or EI - JR $-1 */					\
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
-				if( after_EI == 0 ) 							\
+				if( !after_EI ) 								\
 					BURNODD( z80_ICount-4, 2, 4+12 );			\
 			}													\
 		}														\
@@ -812,7 +814,7 @@ INLINE UINT32 ARG16(void)
 		/* LD SP,#xxxx - JR $-3 */								\
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
-			if( after_EI == 0 ) 								\
+			if( !after_EI ) 									\
 				BURNODD( z80_ICount-12, 2, 10+12 ); 			\
 		}														\
     }                                                           \
@@ -868,7 +870,7 @@ INLINE UINT32 ARG16(void)
     RET(1);                                                     \
 	if( _IFF1 == 0 && _IFF2 == 1 )								\
 	{															\
-		_IFF1 = _IFF2;											\
+		_IFF1 = 1;												\
 		if( Z80.irq_state != CLEAR_LINE ||						\
 			Z80.request_irq >= 0 )								\
 		{														\
@@ -1904,17 +1906,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define LDIR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+	do															\
+	{															\
 		LDI;													\
 		if( _BC )												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
+			if( z80_ICount > 0 )								\
+			{													\
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+			else break; 										\
 		}														\
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -1930,17 +1937,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define CPIR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		CPI;													\
 		if( _BC && !(_F & ZF) ) 								\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -1956,17 +1968,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define INIR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		INI;													\
 		if( _B )												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -1982,17 +1999,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define OTIR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		OUTI;													\
-		if( _B )												\
+		if( _B	)												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -2008,17 +2030,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define LDDR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		LDD;													\
 		if( _BC )												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -2034,17 +2061,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define CPDR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		CPD;													\
 		if( _BC && !(_F & ZF) ) 								\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -2060,17 +2092,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define INDR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		IND;													\
 		if( _B )												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -2086,17 +2123,22 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define OTDR {                                                  \
 	CY(5);														\
 	_PC -= 2;													\
-	do {														\
+    do                                                          \
+	{															\
 		OUTD;													\
 		if( _B )												\
 		{														\
-			R_INC;												\
-			CY(21); 											\
-		}														\
+			if( z80_ICount > 0 )								\
+            {                                                   \
+				_R += 2;  /* increment R twice */				\
+				CY(21); 										\
+			}													\
+            else break;                                         \
+        }                                                       \
 		else													\
 		{														\
-			z80_ICount += 5;									\
-            _PC += 2;                                           \
+			_PC += 2;											\
+            z80_ICount += 5;                                    \
             break;                                              \
 		}														\
 	} while( z80_ICount > 0 );									\
@@ -2118,7 +2160,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
         _IFF1 = _IFF2 = 1;                                      \
         _PPC = _PCD;                                            \
         CALL_MAME_DEBUG;                                        \
-        R_INC;                                                  \
+		_R++;													\
 		if( Z80.irq_state != CLEAR_LINE ||						\
 			Z80.request_irq >= 0 )								\
 		{														\
@@ -3605,42 +3647,112 @@ OP(ed,fe) { illegal_2();											} /* DB   ED		  */
 OP(ed,ff) { illegal_2();											} /* DB   ED		  */
 
 #if TIME_LOOP_HACKS
-#define CHECK_BC_LOOP												\
-if( _BC > 1 ) { 													\
-	UINT32 opcodes = cpu_readop(_PCD) | (cpu_readop(_PCD+1) << 8) | \
-		(cpu_readop(_PCD+2) << 16) | (cpu_readop(_PCD+3) << 24);	\
-	/* after DEC BC opcode check for:	*/							\
-	/* LD A,B; OR  C; JR  NZ,$-5		*/							\
-	/* LD A,C; OR  B; JR  NZ,$-5		*/							\
-	if( opcodes == 0xfb20b178 || opcodes == 0xfb20b079 )			\
+
+#define CHECK_BC_LOOP                                               \
+if( _BC > 1 && _PCD < 0xfffc ) {									\
+	UINT8 op1 = cpu_readop(_PCD);									\
+	UINT8 op2 = cpu_readop(_PCD+1); 								\
+	if( (op1==0x78 && op2==0xb1) || (op1==0x79 && op2==0xb0) )		\
 	{																\
-		while( _BC > 0 && z80_ICount > 4+4+12+6 )					\
+		UINT8 op3 = cpu_readop(_PCD+2); 							\
+		UINT8 op4 = cpu_readop(_PCD+3); 							\
+		if( op3==0x20 && op4==0xfb )								\
 		{															\
-			BURNODD( 4+4+12+6, 4, 4+4+12+6 );						\
-			_BC--;													\
-		}															\
-	}																\
-	else															\
-	{																\
-		UINT32 address = cpu_readop_arg(_PCD+3) |					\
-						(cpu_readop_arg(_PCD+4) << 8);				\
-		opcodes &= 0x00ffffff;										\
-		/* after DEC BC opcode check for:	*/						\
-		/* LD A,B; OR  C; JP  NZ,<dec bc>	*/						\
-		/* LD A,C; OR  B; JP  NZ,<dec bc>	*/						\
-		if( address == (_PCD - 1) &&								\
-		   (opcodes == 0xc2b178 || opcodes == 0xc2b079) )			\
-		{															\
-			while( _BC > 0 && z80_ICount > 4+4+10+6 )				\
+			while( _BC > 0 && z80_ICount > 4+4+12+6 )				\
 			{														\
-				BURNODD( 4+4+10+6, 4, 4+4+10+6 );					\
+				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
 				_BC--;												\
 			}														\
-        }                                                           \
+		}															\
+		else														\
+		if( op3 == 0xc2 )											\
+		{															\
+			UINT8 ad1 = cpu_readop_arg(_PCD+3); 					\
+			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
+			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
+			{														\
+				while( _BC > 0 && z80_ICount > 4+4+10+6 )			\
+				{													\
+					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					_BC--;											\
+				}													\
+			}														\
+		}															\
 	}																\
 }
+
+#define CHECK_DE_LOOP                                               \
+if( _DE > 1 && _PCD < 0xfffc ) {                                    \
+	UINT8 op1 = cpu_readop(_PCD);									\
+	UINT8 op2 = cpu_readop(_PCD+1); 								\
+	if( (op1==0x7a && op2==0xb3) || (op1==0x7b && op2==0xb2) )		\
+	{																\
+		UINT8 op3 = cpu_readop(_PCD+2); 							\
+		UINT8 op4 = cpu_readop(_PCD+3); 							\
+		if( op3==0x20 && op4==0xfb )								\
+		{															\
+			while( _DE > 0 && z80_ICount > 4+4+12+6 )				\
+			{														\
+				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
+				_DE--;												\
+			}														\
+		}															\
+		else														\
+		if( op3==0xc2 ) 											\
+		{															\
+			UINT8 ad1 = cpu_readop_arg(_PCD+3); 					\
+			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
+			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
+			{														\
+				while( _DE > 0 && z80_ICount > 4+4+10+6 )			\
+				{													\
+					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					_DE--;											\
+				}													\
+			}														\
+		}															\
+	}																\
+}
+
+#define CHECK_HL_LOOP                                               \
+if( _HL > 1 && _PCD < 0xfffc ) {                                    \
+	UINT8 op1 = cpu_readop(_PCD);									\
+	UINT8 op2 = cpu_readop(_PCD+1); 								\
+	if( (op1==0x7c && op2==0xb5) || (op1==0x7d && op2==0xb4) )		\
+	{																\
+		UINT8 op3 = cpu_readop(_PCD+2); 							\
+		UINT8 op4 = cpu_readop(_PCD+3); 							\
+		if( op3==0x20 && op4==0xfb )								\
+		{															\
+			while( _HL > 0 && z80_ICount > 4+4+12+6 )				\
+			{														\
+				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
+				_HL--;												\
+			}														\
+		}															\
+		else														\
+		if( op3==0xc2 ) 											\
+		{															\
+			UINT8 ad1 = cpu_readop_arg(_PCD+3); 					\
+			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
+			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
+			{														\
+				while( _HL > 0 && z80_ICount > 4+4+10+6 )			\
+				{													\
+					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					_HL--;											\
+				}													\
+			}														\
+		}															\
+	}																\
+}
+
 #else
+
 #define CHECK_BC_LOOP
+#define CHECK_DE_LOOP
+#define CHECK_HL_LOOP
+
 #endif
 
 /**********************************************************
@@ -3676,7 +3788,7 @@ OP(op,17) { RLA;													} /* RLA			  */
 OP(op,18) { JR();													} /* JR   o 		  */
 OP(op,19) { ADD16(HL,DE);											} /* ADD  HL,DE 	  */
 OP(op,1a) { _A = RM(_DE);											} /* LD   A,(DE)	  */
-OP(op,1b) { _DE--;													} /* DEC  DE		  */
+OP(op,1b) { _DE--; CHECK_DE_LOOP;									} /* DEC  DE		  */
 OP(op,1c) { _E = INC(_E);											} /* INC  E 		  */
 OP(op,1d) { _E = DEC(_E);											} /* DEC  E 		  */
 OP(op,1e) { _E = ARG(); 											} /* LD   E,n		  */
@@ -3694,7 +3806,7 @@ OP(op,27) { DAA;													} /* DAA			  */
 OP(op,28) { JR_COND( _F & ZF ); 									} /* JR   Z,o		  */
 OP(op,29) { ADD16(HL,HL);											} /* ADD  HL,HL 	  */
 OP(op,2a) { EA = ARG16(); RM16( EA, &Z80.HL );						} /* LD   HL,(w)	  */
-OP(op,2b) { _HL--;													} /* DEC  HL		  */
+OP(op,2b) { _HL--; CHECK_HL_LOOP;									} /* DEC  HL		  */
 OP(op,2c) { _L = INC(_L);											} /* INC  L 		  */
 OP(op,2d) { _L = DEC(_L);											} /* DEC  L 		  */
 OP(op,2e) { _L = ARG(); 											} /* LD   L,n		  */
@@ -3875,7 +3987,7 @@ OP(op,c7) { RST(0x00);												} /* RST  0 		  */
 OP(op,c8) { RET( _F & ZF ); 										} /* RET  Z 		  */
 OP(op,c9) { RET(1); 												} /* RET			  */
 OP(op,ca) { JP_COND( _F & ZF ); 									} /* JP   Z,a		  */
-OP(op,cb) { R_INC; EXEC(cb,ROP());									} /* **** CB xx 	  */
+OP(op,cb) { _R++; EXEC(cb,ROP());									} /* **** CB xx 	  */
 OP(op,cc) { CALL( _F & ZF );										} /* CALL Z,a		  */
 OP(op,cd) { CALL(1);												} /* CALL a 		  */
 OP(op,ce) { ADC(ARG()); 											} /* ADC  A,n		  */
@@ -3895,7 +4007,7 @@ OP(op,d9) { EXX;													} /* EXX			  */
 OP(op,da) { JP_COND( _F & CF ); 									} /* JP   C,a		  */
 OP(op,db) { unsigned n = ARG() | (_A << 8); _A = IN( n );			} /* IN   A,(n) 	  */
 OP(op,dc) { CALL( _F & CF );										} /* CALL C,a		  */
-OP(op,dd) { R_INC; EXEC(dd,ROP());									} /* **** DD xx 	  */
+OP(op,dd) { _R++; EXEC(dd,ROP());									} /* **** DD xx 	  */
 OP(op,de) { SBC(ARG()); 											} /* SBC  A,n		  */
 OP(op,df) { RST(0x18);												} /* RST  3 		  */
 
@@ -3913,7 +4025,7 @@ OP(op,e9) { _PC = _HL; change_pc16(_PCD);							} /* JP   (HL)		  */
 OP(op,ea) { JP_COND( _F & PF ); 									} /* JP   PE,a		  */
 OP(op,eb) { EX_DE_HL;												} /* EX   DE,HL 	  */
 OP(op,ec) { CALL( _F & PF );										} /* CALL PE,a		  */
-OP(op,ed) { R_INC; EXEC(ed,ROP());									} /* **** ED xx 	  */
+OP(op,ed) { _R++; EXEC(ed,ROP());									} /* **** ED xx 	  */
 OP(op,ee) { XOR(ARG()); 											} /* XOR  n 		  */
 OP(op,ef) { RST(0x28);												} /* RST  5 		  */
 
@@ -3931,7 +4043,7 @@ OP(op,f9) { _SP = _HL;												} /* LD   SP,HL 	  */
 OP(op,fa) { JP_COND(_F & SF);										} /* JP   M,a		  */
 OP(op,fb) { EI; 													} /* EI 			  */
 OP(op,fc) { CALL(_F & SF);											} /* CALL M,a		  */
-OP(op,fd) { R_INC; EXEC(fd,ROP());									} /* **** FD xx 	  */
+OP(op,fd) { _R++; EXEC(fd,ROP());									} /* **** FD xx 	  */
 OP(op,fe) { CP(ARG());												} /* CP   n 		  */
 OP(op,ff) { RST(0x38);												} /* RST  7 		  */
 
@@ -4188,7 +4300,7 @@ int z80_execute(int cycles)
 	{
         _PPC = _PCD;
         CALL_MAME_DEBUG;
-        R_INC;
+		_R++;
         EXEC_INLINE(op,ROP());
 	} while( z80_ICount > 0 );
 
@@ -4209,9 +4321,10 @@ void z80_burn(int cycles)
 {
 	if( cycles > 0 )
 	{
-		/* (wrong) assumption: 4 cycles per average opcode */
-		_R += (cycles + 3) / 4;
-		z80_ICount -= cycles;
+		/* NOP takes 4 cycles per instruction */
+		int n = (cycles + 3) / 4;
+		_R += n;
+		z80_ICount -= 4 * n;
 	}
 }
 
@@ -4646,7 +4759,7 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_NAME: return "Z80";
 #endif
         case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "1.6";
+		case CPU_INFO_VERSION: return "2.5";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;

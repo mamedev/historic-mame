@@ -11,6 +11,7 @@
 
 #include "osdepend.h"
 
+static int trojan_vh_type;
 unsigned char *lwings_backgroundram;
 unsigned char *lwings_backgroundattribram;
 int lwings_backgroundram_size;
@@ -264,11 +265,10 @@ Extra scroll layer
 
 */
 
-
 int  trojan_vh_start(void)
 {
 	int i;
-
+	trojan_vh_type = 0;
 
 	if (generic_vh_start() != 0)
 		return 1;
@@ -338,6 +338,12 @@ int  trojan_vh_start(void)
 	return 0;
 }
 
+int avengers_vh_start( void ){
+	int result = trojan_vh_start();
+	trojan_vh_type = 1;
+	return result;
+}
+
 void trojan_vh_stop(void)
 {
         osd_free_bitmap(tmpbitmap3);
@@ -393,6 +399,47 @@ void trojan_render_foreground( struct osd_bitmap *bitmap, int scrollx, int scrol
 	}
 }
 
+static void trojan_draw_sprites( struct osd_bitmap *bitmap ){
+	const struct rectangle *clip = &Machine->drv->visible_area;
+	int offs;
+
+	for( offs = spriteram_size - 4;offs >= 0;offs -= 4 ){
+		int code = spriteram[offs];
+		int attrib = spriteram[offs + 1];
+		/*
+			0x80 Sprite code MSB
+			0x40 Sprite code MSB
+			0x20 Sprite code MSB
+			0x10 X flip
+			0x08 colour
+			0x04 colour
+			0x02 colour
+			0x01 X MSB
+		*/
+		int sy = spriteram[offs + 2];
+		int sx = spriteram[offs + 3] - 0x100 * (attrib & 0x01);
+		if( sx && sy ){
+			int flipx = attrib & 0x10;
+			int flipy = 1;
+
+			if( trojan_vh_type ){ /* avengers */
+				flipy = !flipx;
+				flipx = 0;
+			}
+
+			if( attrib&0x40 ) code += 256;
+			if( attrib&0x80 ) code += 256*4;
+			if( attrib&0x20 ) code += 256*2;
+
+			drawgfx( bitmap,Machine->gfx[2],
+				code,
+				(attrib & 0x0e) >> 1, /* color */
+				flipx, flipy,
+				sx,sy,
+				clip,TRANSPARENCY_PEN,15);
+		}
+	}
+}
 
 void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -452,56 +499,13 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
         trojan_render_foreground( bitmap, scrollx, scrolly, 0 );
 
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-                int code,attrib;
-
-		/*
-		Sprites
-		=======
-		0x80 Sprite code MSB
-		0x40 Sprite code MSB
-                0x20 Sprite code MSB
-                0x10 X flip
-		0x08 Colour
-                0x04 colour
-                0x02 colour
-		0x01 X MSB
-		*/
-
-                attrib = spriteram[offs + 1];
-                sx = spriteram[offs + 3] - 0x100 * (attrib & 0x01);
-		sy = spriteram[offs + 2];
-
-                if (sx && sy)
-                {
-                        code = spriteram[offs];
-
-
-                        if( attrib&0x40 ) code += 256;
-                        if( attrib&0x80 ) code += 256*4;
-                        if( attrib&0x20 ) code += 256*2;
-
-
-                        drawgfx(bitmap,Machine->gfx[2],
-				code,
-                                (attrib & 0x0e) >> 1,
-                                attrib & 0x10,1,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-                }
-	}
-
+	trojan_draw_sprites( bitmap );
 	trojan_render_foreground( bitmap, scrollx, scrolly, 1 );
 
-
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
+	for (offs = videoram_size - 1;offs >= 0;offs--){
 		sx = offs % 32;
 		sy = offs / 32;
-
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 4 * (colorram[offs] & 0xc0),
 				colorram[offs] & 0x0f,

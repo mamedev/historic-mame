@@ -816,7 +816,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver galivan_machine_driver =
+static struct MachineDriver machine_driver_galivan =
 {
 	/* basic machine hardware */
 	{
@@ -864,7 +864,7 @@ static struct MachineDriver galivan_machine_driver =
 	}
 };
 
-static struct MachineDriver ninjemak_machine_driver =
+static struct MachineDriver machine_driver_ninjemak =
 {
 	/* basic machine hardware */
 	{
@@ -1149,81 +1149,6 @@ ROM_END
 
 
 
-/* Ten entries, 13 bytes each:  3 bytes - score/10 (BCD)
-					 10 bytes - name (ASCII)		*/
-static int galivan_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the high scores table has already been initialized */
-	if ((memcmp(&RAM[0xe14f], "\x00\x01\x50\x4B", 4) == 0)&&
-	    (memcmp(&RAM[0xe1cd], "\x54\x45\x52\x20", 4) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xe14f], 13*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the high scores yet */
-}
-
-
-static void galivan_hisave(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xe14f], 13*10);
-		osd_fclose(f);
-	}
-}
-
-/****  Ufo Robo Dangar high score save routine - RJF (June 19, 1999)  ****/
-static int dangar_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe209], "\x00\x01\x50", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe209], 10*13);        /* HS table */
-
-                        RAM[0xe394] = RAM[0xe27e];      /* update high score */
-                        RAM[0xe395] = RAM[0xe27f];      /* on top of screen */
-                        RAM[0xe396] = RAM[0xe280];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void dangar_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f, &RAM[0xe209], 10*13);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_galivan =
 {
 	__FILE__,
@@ -1234,7 +1159,7 @@ struct GameDriver driver_galivan =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
 	0,
-	&galivan_machine_driver,
+	&machine_driver_galivan,
 	0,
 
 	rom_galivan,
@@ -1245,9 +1170,8 @@ struct GameDriver driver_galivan =
 	input_ports_galivan,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	galivan_hiload, galivan_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_galivan2 =
@@ -1260,7 +1184,7 @@ struct GameDriver driver_galivan2 =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert",
 	0,
-	&galivan_machine_driver,
+	&machine_driver_galivan,
 	0,
 
 	rom_galivan2,
@@ -1271,9 +1195,8 @@ struct GameDriver driver_galivan2 =
 	input_ports_galivan,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	galivan_hiload, galivan_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_dangar =
@@ -1286,7 +1209,7 @@ struct GameDriver driver_dangar =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
 	0,
-	&galivan_machine_driver,
+	&machine_driver_galivan,
 	0,
 
 	rom_dangar,
@@ -1297,9 +1220,8 @@ struct GameDriver driver_dangar =
 	input_ports_dangar,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-        dangar_hiload, dangar_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_dangar2 =
@@ -1312,7 +1234,7 @@ struct GameDriver driver_dangar2 =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
 	0,
-	&galivan_machine_driver,
+	&machine_driver_galivan,
 	0,
 
 	rom_dangar2,
@@ -1323,9 +1245,8 @@ struct GameDriver driver_dangar2 =
 	input_ports_dangar2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-        dangar_hiload, dangar_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_dangarb =
@@ -1338,7 +1259,7 @@ struct GameDriver driver_dangarb =
 	"bootleg",
 	"Luca Elia\nOlivier Galibert\nCarlos A. Lozano\nNicola Salmoria\n",
 	0,
-	&galivan_machine_driver,
+	&machine_driver_galivan,
 	0,
 
 	rom_dangarb,
@@ -1349,9 +1270,8 @@ struct GameDriver driver_dangarb =
 	input_ports_dangarb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-        dangar_hiload, dangar_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_ninjemak =
@@ -1364,7 +1284,7 @@ struct GameDriver driver_ninjemak =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nTakahiro Nogi",
 	0,
-	&ninjemak_machine_driver,
+	&machine_driver_ninjemak,
 	0,
 
 	rom_ninjemak,
@@ -1375,7 +1295,7 @@ struct GameDriver driver_ninjemak =
 	input_ports_ninjemak,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };
@@ -1390,7 +1310,7 @@ struct GameDriver driver_youma =
 	"Nichibutsu",
 	"Luca Elia\nOlivier Galibert\nTakahiro Nogi",
 	0,
-	&ninjemak_machine_driver,
+	&machine_driver_ninjemak,
 	0,
 
 	rom_youma,
@@ -1401,7 +1321,7 @@ struct GameDriver driver_youma =
 	input_ports_youma,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

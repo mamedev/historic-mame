@@ -702,7 +702,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver sasuke_machine_driver =
+static struct MachineDriver machine_driver_sasuke =
 {
 	/* basic machine hardware */
 	{
@@ -733,7 +733,7 @@ static struct MachineDriver sasuke_machine_driver =
 	0,0,0,0
 };
 
-static struct MachineDriver satansat_machine_driver =
+static struct MachineDriver machine_driver_satansat =
 {
 	/* basic machine hardware */
 	{
@@ -770,7 +770,7 @@ static struct MachineDriver satansat_machine_driver =
 	}
 };
 
-static struct MachineDriver vanguard_machine_driver =
+static struct MachineDriver machine_driver_vanguard =
 {
 	/* basic machine hardware */
 	{
@@ -807,7 +807,7 @@ static struct MachineDriver vanguard_machine_driver =
 	}
 };
 
-static struct MachineDriver fantasy_machine_driver =
+static struct MachineDriver machine_driver_fantasy =
 {
 	/* basic machine hardware */
 	{
@@ -845,7 +845,7 @@ static struct MachineDriver fantasy_machine_driver =
 };
 
 /* note that in this driver the visible area is different!!! */
-static struct MachineDriver pballoon_machine_driver =
+static struct MachineDriver machine_driver_pballoon =
 {
 	/* basic machine hardware */
 	{
@@ -1174,121 +1174,6 @@ ROM_END
 
 
 
-static int vanguard_hiload(void)     /* V.V */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0025],"\x00\x10",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0025],3);
-			osd_fread(f,&RAM[0x0220],112);
-			osd_fread(f,&RAM[0x02a0],16);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-
-}
-
-static void vanguard_hisave(void)    /* V.V */
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0025],3);
-		osd_fwrite(f,&RAM[0x0220],112);
-		osd_fwrite(f,&RAM[0x02a0],16);
-		osd_fclose(f);
-	}
-}
-
-static int fantasy_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0025],"\x00\x20\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0025],3);
-			osd_fread(f,&RAM[0x0220],3*16);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void fantasy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0025],3);
-		osd_fwrite(f,&RAM[0x0220],3*16);
-		osd_fclose(f);
-	}
-}
-
-static int nibbler_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0290],"\x00\x50\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x02b4],"\x00\x05\x00\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0290],4*10);
-			osd_fread(f,&RAM[0x02d0],3*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void nibbler_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0290],4*10);
-		osd_fwrite(f,&RAM[0x02d0],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_sasuke =
 {
 	__FILE__,
@@ -1299,7 +1184,7 @@ struct GameDriver driver_sasuke =
 	"SNK",
 	"Dan Boris\nTheo Philips",
 	0,
-	&sasuke_machine_driver,
+	&machine_driver_sasuke,
 	0,
 
 	rom_sasuke,
@@ -1310,7 +1195,7 @@ struct GameDriver driver_sasuke =
 	input_ports_sasuke,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
+	ROT90 | GAME_NO_SOUND,
 
 	0, 0
 };
@@ -1325,7 +1210,7 @@ struct GameDriver driver_satansat =
 	"SNK",
 	"Dan Boris\nTheo Philips",
 	0,
-	&satansat_machine_driver,
+	&machine_driver_satansat,
 	0,
 
 	rom_satansat,
@@ -1336,7 +1221,7 @@ struct GameDriver driver_satansat =
 	input_ports_satansat,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
+	ROT90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
@@ -1351,7 +1236,7 @@ struct GameDriver driver_zarzon =
 	"[SNK] (Taito America license)",
 	"Dan Boris\nTheo Philips",
 	0,
-	&satansat_machine_driver,
+	&machine_driver_satansat,
 	0,
 
 	rom_zarzon,
@@ -1362,7 +1247,7 @@ struct GameDriver driver_zarzon =
 	input_ports_satansat,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
+	ROT90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
@@ -1377,7 +1262,7 @@ struct GameDriver driver_vanguard =
 	"SNK",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
 	0,
-	&vanguard_machine_driver,
+	&machine_driver_vanguard,
 	0,
 
 	rom_vanguard,
@@ -1388,9 +1273,8 @@ struct GameDriver driver_vanguard =
 	input_ports_vanguard,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	vanguard_hiload, vanguard_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_vangrdce =
@@ -1403,7 +1287,7 @@ struct GameDriver driver_vangrdce =
 	"SNK (Centuri license)",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
 	0,
-	&vanguard_machine_driver,
+	&machine_driver_vanguard,
 	0,
 
 	rom_vangrdce,
@@ -1414,9 +1298,8 @@ struct GameDriver driver_vangrdce =
 	input_ports_vanguard,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	vanguard_hiload, vanguard_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_fantasy =
@@ -1429,7 +1312,7 @@ struct GameDriver driver_fantasy =
 	"[SNK] (Rock-ola license)",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
 	0,
-	&fantasy_machine_driver,
+	&machine_driver_fantasy,
 	0,
 
 	rom_fantasy,
@@ -1440,9 +1323,8 @@ struct GameDriver driver_fantasy =
 	input_ports_fantasy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	fantasy_hiload, fantasy_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_fantasyj =
@@ -1455,7 +1337,7 @@ struct GameDriver driver_fantasyj =
 	"SNK",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
 	0,
-	&fantasy_machine_driver,
+	&machine_driver_fantasy,
 	0,
 
 	rom_fantasyj,
@@ -1466,9 +1348,8 @@ struct GameDriver driver_fantasyj =
 	input_ports_fantasy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	fantasy_hiload, fantasy_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_pballoon =
@@ -1481,7 +1362,7 @@ struct GameDriver driver_pballoon =
 	"SNK",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
 	0,
-	&pballoon_machine_driver,
+	&machine_driver_pballoon,
 	0,
 
 	rom_pballoon,
@@ -1492,7 +1373,7 @@ struct GameDriver driver_pballoon =
 	input_ports_pballoon,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
+	ROT90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
@@ -1507,7 +1388,7 @@ struct GameDriver driver_nibbler =
 	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
-	&fantasy_machine_driver,
+	&machine_driver_fantasy,
 	0,
 
 	rom_nibbler,
@@ -1518,9 +1399,8 @@ struct GameDriver driver_nibbler =
 	input_ports_nibbler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	nibbler_hiload, nibbler_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_nibblera =
@@ -1533,7 +1413,7 @@ struct GameDriver driver_nibblera =
 	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
-	&fantasy_machine_driver,
+	&machine_driver_fantasy,
 	0,
 
 	rom_nibblera,
@@ -1544,7 +1424,6 @@ struct GameDriver driver_nibblera =
 	input_ports_nibbler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-
-	nibbler_hiload, nibbler_hisave
+	ROT90 | GAME_IMPERFECT_SOUND,
+	0,0
 };

@@ -9,7 +9,7 @@
 
 
 
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address )
+unsigned char decodebyte( unsigned char opcode, unsigned short address )
 {
 /*
 >
@@ -36,4 +36,31 @@ unsigned char KonamiDecode( unsigned char opcode, unsigned short address )
 	else xormask |= 0x02;
 
 	return opcode ^ xormask;
+}
+
+
+
+static void decode(int cpu)
+{
+	unsigned char *rom = memory_region(REGION_CPU1+cpu);
+	int diff = memory_region_length(REGION_CPU1+cpu) / 2;
+	int A;
+
+
+	memory_set_opcode_base(cpu,rom+diff);
+
+	for (A = 0;A < diff;A++)
+	{
+		rom[A+diff] = decodebyte(rom[A],A);
+	}
+}
+
+void konami1_decode(void)
+{
+	decode(0);
+}
+
+void konami1_decode_cpu4(void)
+{
+	decode(3);
 }

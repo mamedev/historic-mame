@@ -324,7 +324,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver darkseal_machine_driver =
+static struct MachineDriver machine_driver_darkseal =
 {
 	/* basic machine hardware */
 	{
@@ -543,39 +543,9 @@ static int darkseal_cycle_r(int offset)
 static void memory_patch(void)
 {
 	install_mem_read_handler(0, 0x100006, 0x100007, darkseal_cycle_r);
+	darkseal_decrypt();
 }
 
-/******************************************************************************/
-
-/* hi load / save added 12/02/98 HSC */
-static int hiload(void)
-{
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&darkseal_ram[0x3e00])==0x50 && READ_WORD(&darkseal_ram[0x3e04])==0x50 && READ_WORD(&darkseal_ram[0x3e32])==0x4800 && READ_WORD(&darkseal_ram[0x3e34])==0x462e)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread_msbfirst(f,&darkseal_ram[0x3e00],56);
-			osd_fclose(f);
-
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-				osd_fwrite_msbfirst(f,&darkseal_ram[0x3e00],56);
-				osd_fclose(f);
-        }
-}
 
 /******************************************************************************/
 
@@ -589,19 +559,19 @@ struct GameDriver driver_darkseal =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&darkseal_machine_driver,
+	&machine_driver_darkseal,
 	memory_patch,
 
 	rom_darkseal,
-	darkseal_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_darkseal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload , hisave  /* hsc 12/02/98 */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_darksea1 =
@@ -614,19 +584,19 @@ struct GameDriver driver_darksea1 =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&darkseal_machine_driver,
+	&machine_driver_darkseal,
 	memory_patch,
 
 	rom_darksea1,
-	darkseal_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_darkseal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload , hisave  /* hsc 12/02/98 */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_darkseaj =
@@ -639,19 +609,19 @@ struct GameDriver driver_darkseaj =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&darkseal_machine_driver,
+	&machine_driver_darkseal,
 	memory_patch,
 
 	rom_darkseaj,
-	darkseal_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_darkseal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload , hisave  /* hsc 12/02/98 */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gatedoom =
@@ -664,18 +634,18 @@ struct GameDriver driver_gatedoom =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&darkseal_machine_driver,
+	&machine_driver_darkseal,
 	memory_patch,
 
 	rom_gatedoom,
-	darkseal_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_darkseal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -689,17 +659,17 @@ struct GameDriver driver_gatedom1 =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&darkseal_machine_driver,
+	&machine_driver_darkseal,
 	memory_patch,
 
 	rom_gatedom1,
-	darkseal_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_darkseal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload , hisave /* hsc 12/02/98 */
+	ROT0,
+	0,0
 };

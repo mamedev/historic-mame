@@ -38,7 +38,7 @@ static void mainevt_tile_callback(int layer,int bank,int *code,int *color)
 
 static void dv_tile_callback(int layer,int bank,int *code,int *color)
 {
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPX : 0;
+	/* (color & 0x02) is flip y handled internally by the 052109 */
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x3c) << 7);
 	*color = layer_colorbase[layer] + ((*color & 0xc0) >> 6);
 }

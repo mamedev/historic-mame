@@ -230,7 +230,7 @@ struct GameDriver driver_dominos =
 	input_ports_dominos,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

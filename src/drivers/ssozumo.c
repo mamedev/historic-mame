@@ -284,7 +284,7 @@ ROM_START( ssozumo )
 ROM_END
 
 
-static struct MachineDriver ssozumo_machine_driver =
+static struct MachineDriver machine_driver_ssozumo =
 {
 	/* basic machine hardware */
 	{
@@ -342,7 +342,7 @@ struct GameDriver driver_ssozumo =
 	"Technos",
 	"Takahiro Nogi",
 	0,
-	&ssozumo_machine_driver,
+	&machine_driver_ssozumo,
 	0,
 
 	rom_ssozumo,
@@ -353,8 +353,6 @@ struct GameDriver driver_ssozumo =
 	input_ports_ssozumo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-//	ssozumo_hiload, ssozumo_hisave
-	0, 0
+	ROT270,
+	0,0
 };

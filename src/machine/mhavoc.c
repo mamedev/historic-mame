@@ -176,19 +176,3 @@ void mhavoc_out_1_w (int offset, int data)
 	osd_led_w (1, data & 0x01);
 	osd_led_w (0, (data & 0x02)>>1);
 }
-
-int mhavoc_gammaram_r (int offset)
-{
-	extern unsigned char *RAM;
-
-
-	return RAM[offset & 0x7ff];
-}
-
-void mhavoc_gammaram_w (int offset, int data)
-{
-	extern unsigned char *RAM;
-
-
-	RAM[offset & 0x7ff] = data;
-}

@@ -179,7 +179,7 @@ static struct IOWritePort writeport[] =
 	{ 0x04, 0x07, mcr_port_47_dispatch_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, mcr_unknown_w },
+	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
 	{ -1 }	/* end of table */
 };
@@ -497,11 +497,13 @@ static struct MachineDriver machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver journey_machine_driver =
+static struct MachineDriver machine_driver_journey =
 {
 	/* basic machine hardware */
 	{
@@ -534,7 +536,9 @@ static struct MachineDriver journey_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
@@ -868,8 +872,7 @@ ROM_END
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
 #define MCR2_CLONE_DRIVER(name,year,rotate,fullname,cloneof) \
@@ -896,19 +899,18 @@ ROM_END
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
 
-MCR2_DRIVER      (shollow,  1981, ORIENTATION_ROTATE_90, "Satan's Hollow (set 1)")
-MCR2_CLONE_DRIVER(shollow2, 1981, ORIENTATION_ROTATE_90, "Satan's Hollow (set 2)", shollow)
-MCR2_DRIVER      (tron,     1982, ORIENTATION_ROTATE_90, "Tron (set 1)")
-MCR2_CLONE_DRIVER(tron2,    1982, ORIENTATION_ROTATE_90, "Tron (set 2)", tron)
-MCR2_DRIVER      (kroozr,   1982, ORIENTATION_DEFAULT,   "Kozmik Kroozr")
-MCR2_DRIVER      (domino,   1982, ORIENTATION_DEFAULT,   "Domino Man")
-MCR2_DRIVER      (wacko,    1982, ORIENTATION_DEFAULT,   "Wacko")
-MCR2_DRIVER      (twotiger, 1984, ORIENTATION_DEFAULT,   "Two Tigers")
+MCR2_DRIVER      (shollow,  1981, ROT90, "Satan's Hollow (set 1)")
+MCR2_CLONE_DRIVER(shollow2, 1981, ROT90, "Satan's Hollow (set 2)", shollow)
+MCR2_DRIVER      (tron,     1982, ROT90, "Tron (set 1)")
+MCR2_CLONE_DRIVER(tron2,    1982, ROT90, "Tron (set 2)", tron)
+MCR2_DRIVER      (kroozr,   1982, ROT0,   "Kozmik Kroozr")
+MCR2_DRIVER      (domino,   1982, ROT0,   "Domino Man")
+MCR2_DRIVER      (wacko,    1982, ROT0,   "Wacko")
+MCR2_DRIVER      (twotiger, 1984, ROT0,   "Two Tigers")
 
 struct GameDriver driver_journey =
 {
@@ -921,7 +923,7 @@ struct GameDriver driver_journey =
 	"Christopher Kirmse\nAaron Giles\n"
 	"Nicola Salmoria\nBrad Oliver",
 	0,
-	&journey_machine_driver,
+	&machine_driver_journey,
 	journey_init,
 
 	rom_journey,
@@ -932,7 +934,6 @@ struct GameDriver driver_journey =
 	input_ports_domino,
 
 	0,0,0,
-	ORIENTATION_ROTATE_90,
-
-	mcr_hiload,mcr_hisave
+	ROT90,
+	0,0
 };

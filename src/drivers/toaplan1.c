@@ -50,18 +50,9 @@ void demonwld_dsp_out(int fnction,int data);
 void demonwld_dsp_w(int offset,int data);
 
 void toaplan1_init_machine(void);
-void rallybik_init_machine(void);
-void truxton_init_machine(void);
-void hellfire_init_machine(void);
-void zerowing_init_machine(void);
-void demonwld_init_machine(void);
-void outzone_init_machine(void);
-void vimana_init_machine(void);
 
 void rallybik_coin_w(int offset,int data);
 void toaplan1_coin_w(int offset,int data);
-int  toaplan1_hiload(void);
-void toaplan1_hisave(void);
 
 
 unsigned char *toaplan1_sharedram;
@@ -1404,7 +1395,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver rallybik_machine_driver =
+static struct MachineDriver machine_driver_rallybik =
 {
 	/* basic machine hardware */
 	{
@@ -1423,7 +1414,7 @@ static struct MachineDriver rallybik_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	rallybik_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
@@ -1447,7 +1438,7 @@ static struct MachineDriver rallybik_machine_driver =
 	}
 };
 
-static struct MachineDriver truxton_machine_driver =
+static struct MachineDriver machine_driver_truxton =
 {
 	/* basic machine hardware */
 	{
@@ -1466,7 +1457,7 @@ static struct MachineDriver truxton_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	truxton_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
@@ -1490,7 +1481,7 @@ static struct MachineDriver truxton_machine_driver =
 	}
 };
 
-static struct MachineDriver hf_machine_driver =
+static struct MachineDriver machine_driver_hf =
 {
 	/* basic machine hardware */
 	{
@@ -1509,7 +1500,7 @@ static struct MachineDriver hf_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	hellfire_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
@@ -1533,7 +1524,7 @@ static struct MachineDriver hf_machine_driver =
 	}
 };
 
-static struct MachineDriver zw_machine_driver =
+static struct MachineDriver machine_driver_zw =
 {
 	/* basic machine hardware */
 	{
@@ -1552,7 +1543,7 @@ static struct MachineDriver zw_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	zerowing_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
@@ -1576,7 +1567,7 @@ static struct MachineDriver zw_machine_driver =
 	}
 };
 
-static struct MachineDriver demonwld_machine_driver =
+static struct MachineDriver machine_driver_demonwld =
 {
 	/* basic machine hardware */
 	{
@@ -1601,7 +1592,7 @@ static struct MachineDriver demonwld_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	demonwld_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 256, { 0, 319, 16, 255 },
@@ -1625,7 +1616,7 @@ static struct MachineDriver demonwld_machine_driver =
 	}
 };
 
-static struct MachineDriver outzone_machine_driver =
+static struct MachineDriver machine_driver_outzone =
 {
 	/* basic machine hardware */
 	{
@@ -1644,7 +1635,7 @@ static struct MachineDriver outzone_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
-	outzone_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 240, {0, 319, 0, 239 },
@@ -1668,7 +1659,7 @@ static struct MachineDriver outzone_machine_driver =
 	}
 };
 
-static struct MachineDriver vm_machine_driver =
+static struct MachineDriver machine_driver_vm =
 {
 	/* basic machine hardware */
 	{
@@ -1681,7 +1672,7 @@ static struct MachineDriver vm_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	vimana_init_machine,
+	toaplan1_init_machine,
 
 	/* video hardware */
 	320, 240, { 0, 319, 0, 239 },
@@ -1979,7 +1970,7 @@ struct GameDriver driver_rallybik =
 	"[Toaplan] Taito Corporation",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&rallybik_machine_driver,
+	&machine_driver_rallybik,
 	0,
 
 	rom_rallybik,
@@ -1990,8 +1981,8 @@ struct GameDriver driver_rallybik =
 	input_ports_rallybik,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_truxton =
@@ -2004,7 +1995,7 @@ struct GameDriver driver_truxton =
 	"[Toaplan] Taito Corporation",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&truxton_machine_driver,
+	&machine_driver_truxton,
 	0,
 
 	rom_truxton,
@@ -2015,8 +2006,8 @@ struct GameDriver driver_truxton =
 	input_ports_truxton,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_hellfire =
@@ -2029,7 +2020,7 @@ struct GameDriver driver_hellfire =
 	"Toaplan (Taito license)",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&hf_machine_driver,
+	&machine_driver_hf,
 	0,
 
 	rom_hellfire,
@@ -2040,8 +2031,8 @@ struct GameDriver driver_hellfire =
 	input_ports_hellfire,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	toaplan1_hiload, toaplan1_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_zerowing =
@@ -2054,7 +2045,7 @@ struct GameDriver driver_zerowing =
 	"Toaplan",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&zw_machine_driver,
+	&machine_driver_zw,
 	0,
 
 	rom_zerowing,
@@ -2065,8 +2056,8 @@ struct GameDriver driver_zerowing =
 	input_ports_zerowing,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	toaplan1_hiload, toaplan1_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_demonwld =
@@ -2079,7 +2070,7 @@ struct GameDriver driver_demonwld =
 	"Toaplan (Taito license)",
 	"Darren Olafson (Mame Driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&demonwld_machine_driver,
+	&machine_driver_demonwld,
 	0,
 	rom_demonwld,
 	0, 0,
@@ -2089,8 +2080,8 @@ struct GameDriver driver_demonwld =
 	input_ports_demonwld,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	toaplan1_hiload, toaplan1_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_outzone =
@@ -2103,7 +2094,7 @@ struct GameDriver driver_outzone =
 	"Toaplan",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&outzone_machine_driver,
+	&machine_driver_outzone,
 	0,
 
 	rom_outzone,
@@ -2114,8 +2105,8 @@ struct GameDriver driver_outzone =
 	input_ports_outzone,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_outzonep =
@@ -2128,7 +2119,7 @@ struct GameDriver driver_outzonep =
 	"bootleg",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&outzone_machine_driver,
+	&machine_driver_outzone,
 	0,
 
 	rom_outzonep,
@@ -2139,8 +2130,8 @@ struct GameDriver driver_outzonep =
 	input_ports_outzone,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_vimana =
@@ -2153,7 +2144,7 @@ struct GameDriver driver_vimana =
 	"Toaplan",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&vm_machine_driver,
+	&machine_driver_vm,
 	0,
 
 	rom_vimana,
@@ -2164,8 +2155,8 @@ struct GameDriver driver_vimana =
 	input_ports_vimana,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270 | GAME_NO_SOUND,
+	0,0
 };
 
 struct GameDriver driver_vimana2 =
@@ -2178,7 +2169,7 @@ struct GameDriver driver_vimana2 =
 	"Toaplan",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&vm_machine_driver,
+	&machine_driver_vm,
 	0,
 
 	rom_vimana2,
@@ -2189,8 +2180,8 @@ struct GameDriver driver_vimana2 =
 	input_ports_vimana,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270 | GAME_NO_SOUND,
+	0,0
 };
 
 struct GameDriver driver_vimanan =
@@ -2203,7 +2194,7 @@ struct GameDriver driver_vimanan =
 	"Toaplan (Nova Apparate GMBH & Co license)",
 	"Darren Olafson (MAME driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
 	0,
-	&vm_machine_driver,
+	&machine_driver_vm,
 	0,
 
 	rom_vimanan,
@@ -2214,7 +2205,7 @@ struct GameDriver driver_vimanan =
 	input_ports_vimanan,
 
 	0, 0, 0,	/* colors, palette, colortable */
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-	toaplan1_hiload, toaplan1_hisave
+	ROT270 | GAME_NO_SOUND,
+	0,0
 };
 

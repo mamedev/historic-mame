@@ -25,8 +25,10 @@
 #define NESTYPES_H
 
 /* BOOLEAN CONSTANTS */
+#ifndef TRUE
 #define TRUE   1
 #define FALSE  0
+#endif
 
 /* REGULAR TYPE DEFINITIONS */
 typedef char          int8;

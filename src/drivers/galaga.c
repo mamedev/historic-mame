@@ -660,51 +660,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8a20],"\x00\x00\x00\x00\x02\x24",6) == 0 &&
-		memcmp(&RAM[0x8a4a],"\x18\x2a\x18",3) == 0 &&
-		memcmp(&RAM[0x83ed],"\x00\x00\x00\x00\x02\x24",6) == 0 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8A20],45);
-			osd_fclose(f);
-			/* V.V: copy top score to video RAM */
-			RAM[0x83ED]=RAM[0x8A20];
-			RAM[0x83EE]=RAM[0x8A21];
-			RAM[0x83EF]=RAM[0x8A22];
-			RAM[0x83F0]=RAM[0x8A23];
-			RAM[0x83F1]=RAM[0x8A24];
-			RAM[0x83F2]=RAM[0x8A25];
-
-		}
-		return 1;
-	}
-	else
-		return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8A20],45);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_galaga =
 {
 	__FILE__,
@@ -726,9 +681,8 @@ struct GameDriver driver_galaga =
 	input_ports_galaganm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galagamw =
@@ -752,9 +706,8 @@ struct GameDriver driver_galagamw =
 	input_ports_galaga,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galagads =
@@ -778,9 +731,8 @@ struct GameDriver driver_galagads =
 	input_ports_galaga,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_gallag =
@@ -804,9 +756,8 @@ struct GameDriver driver_gallag =
 	input_ports_galaganm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galagab2 =
@@ -830,9 +781,8 @@ struct GameDriver driver_galagab2 =
 	input_ports_galaganm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galaga84 =
@@ -856,9 +806,8 @@ struct GameDriver driver_galaga84 =
 	input_ports_galaganm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_nebulbee =
@@ -882,8 +831,7 @@ struct GameDriver driver_nebulbee =
 	input_ports_galaganm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 

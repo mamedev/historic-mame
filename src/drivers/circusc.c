@@ -9,6 +9,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
 
 extern unsigned char *circusc_spritebank;
 extern unsigned char *circusc_scroll;
@@ -17,8 +18,6 @@ void circusc_flipscreen_w(int offset,int data);
 void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void circusc_sprite_bank_select_w(int offset, int data);
 void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 
 
@@ -224,8 +223,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,       0, 16 },
-	{ 1, 0x4000, &spritelayout, 16*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,       0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -246,7 +245,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_circusc =
 {
 	/* basic machine hardware */
 	{
@@ -302,283 +301,133 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( circusc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
 	ROM_LOAD( "q03",          0xa000, 0x2000, 0xe90c0e86 )
 	ROM_LOAD( "q02",          0xc000, 0x2000, 0x4d847dc6 )
 	ROM_LOAD( "q01",          0xe000, 0x2000, 0x18c20adf )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
-	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
-	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
-	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
-	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
-	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
-	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0x6000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
-	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circusc2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
 	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
 	ROM_LOAD( "h05_n03.bin",  0xa000, 0x2000, 0x5ef5b3b5 )
 	ROM_LOAD( "h06_n02.bin",  0xc000, 0x2000, 0xa5a5e796 )
 	ROM_LOAD( "h07_n01.bin",  0xe000, 0x2000, 0x70d26721 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
-	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
-	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
-	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
-	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
-	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
-	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0x6000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
-	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circuscc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc_u05.h3",    0x6000, 0x2000, 0x964c035a )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
 	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
 	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
-	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
-	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
-	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
-	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
-	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
-	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0x6000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
-	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 ROM_START( circusce )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
 	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
 	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
 
-	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
+	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
+
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
-	ROM_LOAD( "e11_j06.bin",  0x4000, 0x2000, 0xdf0405c6 )
-	ROM_LOAD( "e12_j07.bin",  0x6000, 0x2000, 0x23dfe3a6 )
-	ROM_LOAD( "e13_j08.bin",  0x8000, 0x2000, 0x3ba95390 )
-	ROM_LOAD( "e14_j09.bin",  0xa000, 0x2000, 0xa9fba85a )
-	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
-	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
+	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
+	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
+	ROM_LOAD( "e14_j09.bin",  0x6000, 0x2000, 0xa9fba85a )
+	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
+	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
-	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
 
-static void circusc_decode(void)
+static void init_circusc(void)
 {
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
+	konami1_decode();
 }
 
 
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x2163],"CBR",3) == 0 &&
-		memcmp(&RAM[0x20A6],"\x01\x98\x30",3) == 0 &&
-		memcmp(&RAM[0x3627],"\x01",1) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2160],0x32);
-			RAM[0x20A6] = RAM[0x2160];
-			RAM[0x20A7] = RAM[0x2161];
-			RAM[0x20A8] = RAM[0x2162];
-
-			/* Copy high score to videoram */
-			RAM[0x35A7] = RAM[0x2162] & 0x0F;
-			RAM[0x35C7] = (RAM[0x2162] & 0xF0) >> 4;
-			RAM[0x35E7] = RAM[0x2161] & 0x0F;
-			RAM[0x3607] = (RAM[0x2161] & 0xF0) >> 4;
-			RAM[0x3627] = RAM[0x2160] & 0x0F;
-			if ((RAM[0x2160] & 0xF0) != 0)
-				RAM[0x3647] = (RAM[0x2160] & 0xF0) >> 4;
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2160],0x32);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_circusc =
-{
-	__FILE__,
-	0,
-	"circusc",
-	"Circus Charlie",
-	"1984",
-	"Konami",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_circusc,
-	0, circusc_decode,
-	0,
-	0,
-
-	input_ports_circusc,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_circusc2 =
-{
-	__FILE__,
-	&driver_circusc,
-	"circusc2",
-	"Circus Charlie (no level select)",
-	"1984",
-	"Konami",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_circusc2,
-	0, circusc_decode,
-	0,
-	0,
-
-	input_ports_circusc,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_circuscc =
-{
-	__FILE__,
-	&driver_circusc,
-	"circuscc",
-	"Circus Charlie (Centuri)",
-	"1984",
-	"Konami (Centuri licence)",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_circuscc,
-	0, circusc_decode,
-	0,
-	0,
-
-	input_ports_circusc,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_circusce =
-{
-	__FILE__,
-	&driver_circusc,
-	"circusce",
-	"Circus Charlie (Centuri, earlier)",
-	"1984",
-	"Konami (Centuri licence)",
-	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_circusce,
-	0, circusc_decode,
-	0,
-	0,
-
-	input_ports_circusc,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
+GAME( 1984, circusc,  ,        circusc, circusc, circusc, ROT90, "Konami", "Circus Charlie" )
+GAME( 1984, circusc2, circusc, circusc, circusc, circusc, ROT90, "Konami", "Circus Charlie (no level select)" )
+GAME( 1984, circuscc, circusc, circusc, circusc, circusc, ROT90, "Konami (Centuri licence)", "Circus Charlie (Centuri)" )
+GAME( 1984, circusce, circusc, circusc, circusc, circusc, ROT90, "Konami (Centuri licence)", "Circus Charlie (Centuri, earlier)" )

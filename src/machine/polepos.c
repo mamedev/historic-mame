@@ -35,7 +35,7 @@ static struct polepos_mcu_def
 
 /* Prototypes */
 static void z80_interrupt(int scanline);
-void polepos_sample_play(int start, int end); /* from sndhrdw */
+void polepos_sample_play(int sample); /* from sndhrdw */
 
 /*************************************************************************************/
 /* Interrupt handling                                                                */
@@ -353,15 +353,15 @@ void polepos_mcu_data_w(int offs, int data)
 			if ( offs == 0 ) {
 				switch( data ) {
 					case 0x01:
-						polepos_sample_play( 0x0020*2, 0x0c00*2 );
+						polepos_sample_play( 0 );
 					break;
 
 					case 0x02:
-						polepos_sample_play( 0x0c00*2, 0x1c00*2 );
+						polepos_sample_play( 1 );
 					break;
 
 					case 0x04:
-						polepos_sample_play( 0x1c00*2, 0x2000*2 );
+						polepos_sample_play( 2 );
 					break;
 
 					default:

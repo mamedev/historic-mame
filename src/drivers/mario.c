@@ -461,7 +461,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver masao_machine_driver =
+static struct MachineDriver machine_driver_masao =
 {
 	/* basic machine hardware */
 	{
@@ -587,51 +587,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
-	    memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6b00],34*5);	/* hi scores */
-			RAM[0x6823] = RAM[0x6b1f];
-			RAM[0x6824] = RAM[0x6b1e];
-			RAM[0x6825] = RAM[0x6b1d];
-			osd_fread(f,&RAM[0x6c00],0x3c);	/* distributions */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6b00],34*5);	/* hi scores */
-		osd_fwrite(f,&RAM[0x6c00],0x3c);	/* distributions */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_mario =
 {
 	__FILE__,
@@ -653,9 +608,8 @@ struct GameDriver driver_mario =
 	input_ports_mario,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	ROT180,
+	0,0
 };
 
 struct GameDriver driver_mariojp =
@@ -679,9 +633,8 @@ struct GameDriver driver_mariojp =
 	input_ports_mariojp,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	ROT180,
+	0,0
 };
 
 struct GameDriver driver_masao =
@@ -694,7 +647,7 @@ struct GameDriver driver_masao =
 	"bootleg",
 	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
 	0,
-	&masao_machine_driver,
+	&machine_driver_masao,
 	0,
 
 	rom_masao,
@@ -705,7 +658,6 @@ struct GameDriver driver_masao =
 	input_ports_mario,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	hiload, hisave
+	ROT180,
+	0,0
 };

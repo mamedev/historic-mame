@@ -855,7 +855,7 @@ static struct DACinterface targ_DAC_interface =
 
 
 
-static struct MachineDriver targ_machine_driver =
+static struct MachineDriver machine_driver_targ =
 {
 	/* basic machine hardware */
 	{
@@ -919,7 +919,7 @@ static struct CustomSound_interface exidy_custom_interface =
 	0
 };
 
-static struct MachineDriver mtrap_machine_driver =
+static struct MachineDriver machine_driver_mtrap =
 {
 	/* basic machine hardware */
 	{
@@ -979,7 +979,7 @@ static struct MachineDriver mtrap_machine_driver =
 };
 
 
-static struct MachineDriver venture_machine_driver =
+static struct MachineDriver machine_driver_venture =
 {
 	/* basic machine hardware */
 	{
@@ -1027,7 +1027,7 @@ static struct MachineDriver venture_machine_driver =
 };
 
 
-static struct MachineDriver pepper2_machine_driver =
+static struct MachineDriver machine_driver_pepper2 =
 {
 	/* basic machine hardware */
 	{
@@ -1076,7 +1076,7 @@ static struct MachineDriver pepper2_machine_driver =
 };
 
 
-static struct MachineDriver fax_machine_driver =
+static struct MachineDriver machine_driver_fax =
 {
 	/* basic machine hardware */
 	{
@@ -1416,254 +1416,6 @@ ROM_START( fax )
 ROM_END
 
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
-
-static int mtrap_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x0380],0xff,5+6*5);        /* high score */
-			firsttime = 1;
-		}
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
-		(memcmp(&RAM[0x03A0],"LWH",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0380],5+6*5);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void mtrap_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0380],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int venture_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
-		(memcmp(&RAM[0x03A0],"DJS",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0380],5+6*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void venture_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0380],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int pepper2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x0360],0xff,5+6*5);        /* high score */
-			firsttime = 1;
-		}
-
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0365],"\x00\x07\x65",3) == 0) &&
-		(memcmp(&RAM[0x0380],"\x15\x20\x11",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0360],5+6*5);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void pepper2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 5 bytes for score order, 6 bytes per score/initials */
-		osd_fwrite(f,&RAM[0x0360],5+6*5);
-		osd_fclose(f);
-	}
-
-}
-
-static int targ_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x00AE],"\x00\x10",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x00AE],2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void targ_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x00AE],2);
-		osd_fclose(f);
-	}
-}
-
-static int fax_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x02b4],0xff,7*50); /* high score */
-			firsttime = 1;
-		}
-
-
-
-	if (memcmp(&RAM[0x0360],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x040f],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x02B4],7*50);
-			osd_fclose(f);
-		}
-		firsttime =0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void fax_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* 7 characters per hi score, 50 hi scores */
-		osd_fwrite(f,&RAM[0x02B4],7*50);
-		osd_fclose(f);
-	}
-}
-
-static int sidetrac_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-		/* the high score table is intialized to all 0, so first of all */
-		/* we dirty it, then we wait for it to be cleared again */
-		if (firsttime == 0)
-		{
-			memset(&RAM[0x000a],0xff,8);    /* high score */
-			firsttime = 1;
-		}
-
-
-
-	/* Check for high score init. */
-	if (memcmp(&RAM[0x000f],"\x00\x00",2) == 0 && memcmp(&RAM[0x000a],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x000f],2);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void sidetrac_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x000f],2);
-		osd_fclose(f);
-	}
-}
-
-
-/***************************************************************************
-Game Driver
-***************************************************************************/
 
 struct GameDriver driver_sidetrac =
 {
@@ -1675,7 +1427,7 @@ struct GameDriver driver_sidetrac =
 	"Exidy",
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	sidetrac_driver_init,
 
 	rom_sidetrac,
@@ -1687,9 +1439,8 @@ struct GameDriver driver_sidetrac =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	sidetrac_hiload,sidetrac_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_targ =
@@ -1702,7 +1453,7 @@ struct GameDriver driver_targ =
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	targ_driver_init,
 
 	rom_targ,
@@ -1714,9 +1465,8 @@ struct GameDriver driver_targ =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_spectar =
@@ -1729,7 +1479,7 @@ struct GameDriver driver_spectar =
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	spectar_driver_init,
 
 	rom_spectar,
@@ -1741,9 +1491,8 @@ struct GameDriver driver_spectar =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_spectar1 =
@@ -1756,7 +1505,7 @@ struct GameDriver driver_spectar1 =
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
-	&targ_machine_driver,
+	&machine_driver_targ,
 	spectar_driver_init,
 
 	rom_spectar1,
@@ -1768,9 +1517,8 @@ struct GameDriver driver_spectar1 =
 
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
-
-	targ_hiload,targ_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mtrap =
@@ -1783,7 +1531,7 @@ struct GameDriver driver_mtrap =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
 	rom_mtrap,
@@ -1794,9 +1542,8 @@ struct GameDriver driver_mtrap =
 	input_ports_mtrap,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mtrap3 =
@@ -1809,7 +1556,7 @@ struct GameDriver driver_mtrap3 =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
 	rom_mtrap3,
@@ -1820,9 +1567,8 @@ struct GameDriver driver_mtrap3 =
 	input_ports_mtrap,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mtrap4 =
@@ -1835,7 +1581,7 @@ struct GameDriver driver_mtrap4 =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili\nDan Boris(Sound)\nAaron Giles(CVSD)",
 	0,
-	&mtrap_machine_driver,
+	&machine_driver_mtrap,
 	mtrap_driver_init,
 
 	rom_mtrap4,
@@ -1846,9 +1592,8 @@ struct GameDriver driver_mtrap4 =
 	input_ports_mtrap,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mtrap_hiload,mtrap_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_venture =
@@ -1861,7 +1606,7 @@ struct GameDriver driver_venture =
 	"Exidy",
     "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
 	rom_venture,
@@ -1872,9 +1617,8 @@ struct GameDriver driver_venture =
 	input_ports_venture,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_venture2 =
@@ -1887,7 +1631,7 @@ struct GameDriver driver_venture2 =
 	"Exidy",
     "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
 	rom_venture2,
@@ -1898,9 +1642,8 @@ struct GameDriver driver_venture2 =
 	input_ports_venture,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_venture4 =
@@ -1913,7 +1656,7 @@ struct GameDriver driver_venture4 =
 	"Exidy",
     "Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)\nDan Boris(Sound)",
 	0,
-	&venture_machine_driver,
+	&machine_driver_venture,
 	venture_driver_init,
 
 	rom_venture4,
@@ -1924,9 +1667,8 @@ struct GameDriver driver_venture4 =
 	input_ports_venture,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	venture_hiload,venture_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_pepper2 =
@@ -1939,7 +1681,7 @@ struct GameDriver driver_pepper2 =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&pepper2_machine_driver,
+	&machine_driver_pepper2,
 	pepper2_driver_init,
 
 	rom_pepper2,
@@ -1950,9 +1692,8 @@ struct GameDriver driver_pepper2 =
 	input_ports_pepper2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	pepper2_hiload,pepper2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_hardhat =
@@ -1965,7 +1706,7 @@ struct GameDriver driver_hardhat =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&pepper2_machine_driver,
+	&machine_driver_pepper2,
 	pepper2_driver_init,
 
 	rom_hardhat,
@@ -1976,9 +1717,8 @@ struct GameDriver driver_hardhat =
 	input_ports_pepper2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	pepper2_hiload,pepper2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_fax =
@@ -1991,7 +1731,7 @@ struct GameDriver driver_fax =
 	"Exidy",
     "Marc LaFontaine\nBrian Levine\nMike Balfour\nDan Boris(Sound)",
 	0,
-	&fax_machine_driver,
+	&machine_driver_fax,
 	fax_driver_init,
 
 	rom_fax,
@@ -2002,7 +1742,6 @@ struct GameDriver driver_fax =
 	input_ports_fax,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	fax_hiload,fax_hisave
+	ROT0,
+	0,0
 };

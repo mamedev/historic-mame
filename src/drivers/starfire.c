@@ -213,7 +213,7 @@ INPUT_PORTS_START( fireone )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
 INPUT_PORTS_END
 
-static struct MachineDriver starfire_machine_driver =
+static struct MachineDriver machine_driver_starfire =
 {
 	/* basic machine hardware */
 	{
@@ -247,7 +247,7 @@ static struct MachineDriver starfire_machine_driver =
     0
 };
 
-static struct MachineDriver fireone_machine_driver =
+static struct MachineDriver machine_driver_fireone =
 {
 	/* basic machine hardware */
 	{
@@ -331,7 +331,7 @@ struct GameDriver driver_starfire =
 	"Exidy",
 	"Daniel Boris\nOlivier Galibert",
 	0,
-	&starfire_machine_driver,
+	&machine_driver_starfire,
 	0,
 
 	rom_starfire,
@@ -342,7 +342,7 @@ struct GameDriver driver_starfire =
 	input_ports_starfire,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -356,7 +356,7 @@ struct GameDriver driver_fireone =
 	"Exidy",
 	"Daniel Boris\nOlivier Galibert",
 	0,
-	&fireone_machine_driver,
+	&machine_driver_fireone,
 	0,
 
 	rom_fireone,
@@ -367,7 +367,7 @@ struct GameDriver driver_fireone =
 	input_ports_fireone,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 

@@ -255,7 +255,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver popeyebl_machine_driver =
+static struct MachineDriver machine_driver_popeyebl =
 {
 	/* basic machine hardware */
 	{
@@ -368,67 +368,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8209],"\x00\x26\x03",3) == 0 &&
-			memcmp(&RAM[0x8221],"\x50\x11\x02",3) == 0 &&
-			memcmp(&RAM[0x8fed],"\x00\x26\x03",3) == 0)	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int i;
-
-
-			osd_fread(f,&RAM[0x8200],6+6*5);
-
-			i = RAM[0x8201];
-
-			RAM[0x8fed] = RAM[0x8200+i-2];
-			RAM[0x8fee] = RAM[0x8200+i-1];
-			RAM[0x8fef] = RAM[0x8200+i];
-
-
-			/* I think the first lValue of the next sentences *
-			 * is unnecessary. Please confirm if you know it  */
-			RAM[0x8f32] = RAM[0xA04F] = RAM[0x8200+i] >> 4;
-			RAM[0x8f33] = RAM[0xA050] = RAM[0x8200+i] & 0x0f;
-			RAM[0x8f34] = RAM[0xA051] = RAM[0x8200+i-1] >> 4;
-			RAM[0x8f35] = RAM[0xA052] = RAM[0x8200+i-1] & 0x0f;
-			RAM[0x8f36] = RAM[0xA053] = RAM[0x8200+i-2] >> 4;
-			RAM[0x8f37] = RAM[0xA054] = RAM[0x8200+i-2] & 0x0f;
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8200],6+6*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 /* The original doesn't work because the ROMs are encrypted. */
 /* The encryption is based on a custom ALU and seems to be dynamically evolving */
 /* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
@@ -443,7 +382,7 @@ struct GameDriver driver_popeye =
 	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
-	&popeyebl_machine_driver,
+	&machine_driver_popeyebl,
 	0,
 
 	rom_popeye,
@@ -454,9 +393,8 @@ struct GameDriver driver_popeye =
 	input_ports_popeye,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	hiload,hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_popeye2 =
@@ -469,7 +407,7 @@ struct GameDriver driver_popeye2 =
 	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
-	&popeyebl_machine_driver,
+	&machine_driver_popeyebl,
 	0,
 
 	rom_popeye2,
@@ -480,9 +418,8 @@ struct GameDriver driver_popeye2 =
 	input_ports_popeye,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	hiload,hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_popeyebl =
@@ -495,7 +432,7 @@ struct GameDriver driver_popeyebl =
 	"bootleg",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
-	&popeyebl_machine_driver,
+	&machine_driver_popeyebl,
 	0,
 
 	rom_popeyebl,
@@ -506,7 +443,6 @@ struct GameDriver driver_popeyebl =
 	input_ports_popeye,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };

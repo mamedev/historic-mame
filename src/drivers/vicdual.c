@@ -1046,7 +1046,7 @@ static struct Samplesinterface samples_interface =
 
 
 #define MACHINEDRIVER(NAME, MEM, PORT)				\
-static struct MachineDriver NAME##_machine_driver =	\
+static struct MachineDriver machine_driver_##NAME =	\
 {													\
 	/* basic machine hardware */					\
 	{												\
@@ -1083,9 +1083,9 @@ static struct MachineDriver NAME##_machine_driver =	\
 	}												\
 };
 
-MACHINEDRIVER( vicdual_2Aports, vicdual, 2ports )
-MACHINEDRIVER( vicdual_3ports,  vicdual, 3ports )
-MACHINEDRIVER( vicdual_4ports,  vicdual, 4ports )
+MACHINEDRIVER( 2ports, vicdual, 2ports )
+MACHINEDRIVER( 3ports, vicdual, 3ports )
+MACHINEDRIVER( 4ports, vicdual, 4ports )
 MACHINEDRIVER( safari,          safari,  safari )
 
 
@@ -1104,7 +1104,7 @@ static struct AY8910interface carnival_ay8910_interface =
 
 /* don't know if any of the other games use the 8048 music board */
 /* so, we won't burden those drivers with the extra music handling */
-static struct MachineDriver carnival_machine_driver =
+static struct MachineDriver machine_driver_carnival =
 {
 	/* basic machine hardware */
 	{
@@ -1583,58 +1583,14 @@ static void vicdual_decode(void)
 
 
 
-
-static int carnival_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xE397],"\x00\x00\x00",3) == 0 &&
-			memcmp(&RAM[0xE5A2],"   ",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* Read the scores */
-			osd_fread(f,&RAM[0xE397],2*30);
-			/* Read the initials */
-			osd_fread(f,&RAM[0xE5A2],9);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void carnival_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Save the scores */
-		osd_fwrite(f,&RAM[0xE397],2*30);
-		/* Save the initials */
-		osd_fwrite(f,&RAM[0xE5A2],9);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-static void nosamples_driver_init(void)
+static void init_nosamples(void)
 {
 	samples_interface.samplenames = 0;
+
+	vicdual_decode();
 }
 
-static void depthch_driver_init(void)
+static void init_depthch(void)
 {
 	install_port_read_handler(0, 0x08, 0x08, depthch_input_port_1_r);
 
@@ -1642,587 +1598,91 @@ static void depthch_driver_init(void)
 	install_port_write_handler(0, 0x04, 0x04, depthch_sh_port1_w);
 
 	samples_interface.samplenames = depthch_sample_names;
+
+	vicdual_decode();
 }
 
-static void samurai_driver_init(void)
+static void init_samurai(void)
 {
 	/* install protection handlers */
 	install_mem_write_handler(0, 0x7f00, 0x7f00, samurai_protection_w);
 	install_port_read_handler(0, 0x01, 0x03, samurai_input_r);
 
 	samples_interface.samplenames = 0;
+
+	vicdual_decode();
 }
 
-static void carnival_driver_init(void)
+static void init_carnival(void)
 {
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, carnival_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, carnival_sh_port2_w);
 
 	samples_interface.samplenames = carnival_sample_names;
+
+	vicdual_decode();
 }
 
-static void invinco_driver_init(void)
+static void init_invinco(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
 
 	samples_interface.samplenames = invinco_sample_names;
+
+	vicdual_decode();
 }
 
-static void invho2_driver_init(void)
+static void init_invho2(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
 
 	samples_interface.samplenames = invinco_sample_names;
+
+	vicdual_decode();
 }
 
-static void invds_driver_init(void)
+static void init_invds(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
 
 	samples_interface.samplenames = invinco_sample_names;
+
+	vicdual_decode();
 }
 
-static void pulsar_driver_init(void)
+static void init_pulsar(void)
 {
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
 
 	samples_interface.samplenames = pulsar_sample_names;
+
+	vicdual_decode();
 }
 
 
-struct GameDriver driver_depthch =
-{
-	__FILE__,
-	0,
-	"depthch",
-	"Depthcharge",
-	"1977",
-	"Gremlin",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_2Aports_machine_driver,
-	depthch_driver_init,
-
-	rom_depthch,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_depthch,
-
-	0, 0, 0,	/* b&w game, no color PROM */
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_safari =
-{
-	__FILE__,
-	0,
-	"safari",
-	"Safari",
-	"1977",
-	"Gremlin",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&safari_machine_driver,
-	nosamples_driver_init,
-
-	rom_safari,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_safari,
-
-	0, 0, 0,	/* b&w game, no color PROM */
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_frogs =
-{
-	__FILE__,
-	0,
-	"frogs",
-	"Frogs",
-	"1978",
-	"Gremlin",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_2Aports_machine_driver,
-	nosamples_driver_init,
-
-	rom_frogs,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_frogs,
-
-	0, 0, 0,	/* b&w game, no color PROM */
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_sspaceat =
-{
-	__FILE__,
-	0,
-	"sspaceat",
-	"Space Attack (Upright)",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_3ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_sspaceat,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_sspaceat,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_sspacatc =
-{
-	__FILE__,
-	&driver_sspaceat,
-	"sspacatc",
-	"Space Attack (Cocktail)",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_3ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_sspacatc,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_sspaceat,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_headon =
-{
-	__FILE__,
-	0,
-	"headon",
-	"Head On (2 players)",
-	"1979",
-	"Gremlin",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_2Aports_machine_driver,
-	nosamples_driver_init,
-
-	rom_headon,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_headon,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_headonb =
-{
-	__FILE__,
-	&driver_headon,
-	"headonb",
-	"Head On (1 player)",
-	"1979",
-	"Gremlin",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_2Aports_machine_driver,
-	nosamples_driver_init,
-
-	rom_headonb,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_headon,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_headon2 =
-{
-	__FILE__,
-	0,
-	"headon2",
-	"Head On 2",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_3ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_headon2,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_headon2,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
-
-	0, 0
-};
-
-/* No ROMs yet for the following one, but we have the color PROM. */
-#if 0
-static unsigned char ho2ds_color_prom[] =
-{
-	/* 316-283: palette */
-	0x31,0xB1,0x71,0x31,0x31,0x31,0x31,0x31,0x91,0xF1,0x31,0xF1,0x51,0xB1,0x91,0xB1,
-	0xF5,0x79,0x31,0xB9,0xF5,0xF5,0xB5,0x95,0x31,0x31,0x31,0x31,0x31,0x31,0x31,0x31
-};
-#endif
-//GAMEDRIVER( ho2ds,    "Head On 2 / Deep Scan", vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
-
-struct GameDriver driver_invho2 =
-{
-	__FILE__,
-	0,
-	"invho2",
-	"Invinco / Head On 2",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	invho2_driver_init,
-
-	rom_invho2,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_invho2,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_samurai =
-{
-	__FILE__,
-	0,
-	"samurai",
-	"Samurai (Sega)",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	samurai_driver_init,
-
-	rom_samurai,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_samurai,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_invinco =
-{
-	__FILE__,
-	0,
-	"invinco",
-	"Invinco",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_3ports_machine_driver,
-	invinco_driver_init,
-
-	rom_invinco,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_invinco,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_invds =
-{
-	__FILE__,
-	0,
-	"invds",
-	"Invinco / Deep Scan",
-	"1979",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	invds_driver_init,
-
-	rom_invds,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_invds,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_tranqgun =
-{
-	__FILE__,
-	0,
-	"tranqgun",
-	"Tranquilizer Gun",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_tranqgun,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_tranqgun,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_spacetrk =
-{
-	__FILE__,
-	0,
-	"spacetrk",
-	"Space Trek (Upright)",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_spacetrk,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_spacetrk,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_sptrekct =
-{
-	__FILE__,
-	&driver_spacetrk,
-	"sptrekct",
-	"Space Trek (Cocktail)",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_sptrekct,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_sptrekct,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_carnival =
-{
-	__FILE__,
-	0,
-	"carnival",
-	"Carnival (Upright)",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
-	0,
-	&carnival_machine_driver,
-	carnival_driver_init,
-
-	rom_carnival,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_carnival,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	carnival_hiload, carnival_hisave
-};
-
-struct GameDriver driver_carnvckt =
-{
-	__FILE__,
-	&driver_carnival,
-	"carnvckt",
-	"Carnival (Cocktail)",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
-	0,
-	&carnival_machine_driver,
-	carnival_driver_init,
-
-	rom_carnvckt,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_carnvckt,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	carnival_hiload, carnival_hisave
-};
-
-struct GameDriver driver_digger =
-{
-	__FILE__,
-	0,
-	"digger",
-	"Digger",
-	"1980",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_3ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_digger,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_digger,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
-
-struct GameDriver driver_pulsar =
-{
-	__FILE__,
-	0,
-	"pulsar",
-	"Pulsar",
-	"1981",
-	"Sega",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	pulsar_driver_init,
-
-	rom_pulsar,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_pulsar,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_heiankyo =
-{
-	__FILE__,
-	0,
-	"heiankyo",
-	"Heiankyo Alien",
-	"1979",
-	"Denki Onkyo",
-	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	0,
-	&vicdual_4ports_machine_driver,
-	nosamples_driver_init,
-
-	rom_heiankyo,
-	vicdual_decode, 0,
-	0,
-	0,
-
-	input_ports_heiankyo,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
-
-	0, 0
-};
+GAME( 1977, depthch,  ,         2ports,   depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
+GAMEX(1977, safari,   ,         safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
+GAMEX(1978, frogs,    ,         2ports,   frogs,    nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
+GAMEX(1979, sspaceat, ,         3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (Upright)", GAME_NO_SOUND )
+GAMEX(1979, sspacatc, sspaceat, 3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (Cocktail)", GAME_NO_SOUND )
+GAMEX(1979, headon,   ,         2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
+GAMEX(1979, headonb,  headon,   2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
+GAMEX(1979, headon2,  ,         3ports,   headon2,  nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
+GAME( 1979, invho2,   ,         4ports,   invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
+GAMEX(1980, samurai,  ,         4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
+GAME( 1979, invinco,  ,         3ports,   invinco,  invinco,   ROT270, "Sega", "Invinco" )
+GAME( 1979, invds,    ,         4ports,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
+GAMEX(1980, tranqgun, ,         4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
+GAMEX(1980, spacetrk, ,         4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (Upright)", GAME_NO_SOUND )
+GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "Space Trek (Cocktail)", GAME_NO_SOUND )
+GAME( 1980, carnival, ,         carnival, carnival, carnival,  ROT270, "Sega", "Carnival (Upright)" )
+GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (Cocktail)" )
+GAMEX(1980, digger,   ,         3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
+GAME( 1981, pulsar,   ,         4ports,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
+GAMEX(1979, heiankyo, ,         4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )

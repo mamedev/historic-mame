@@ -181,11 +181,12 @@ static struct GfxLayout bomb_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &charlayout,   0x00, 0x02 }, /* offset into colors, # of colors */
-    { 1, 0x0400, &motionlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
-    { 1, 0x0000, &bomb_layout,  0x00, 0x02 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout,   0, 2 },
+	{ REGION_GFX2, 0, &motionlayout, 0, 2 },
+	{ REGION_GFX1, 0, &bomb_layout,  0, 2 },
 	{ -1 } /* end of array */
 };
+
 
 static unsigned char palette[] =
 {
@@ -205,7 +206,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_canyon =
 {
 	/* basic machine hardware */
 	{
@@ -249,10 +250,12 @@ ROM_START( canyon )
 	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
-	ROM_REGION_DISPOSE( 0x600 )     /* 1.5k for graphics */
+	ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
+
+	ROM_REGIONX( 0x200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
 ROM_END
 
 
@@ -265,121 +268,15 @@ ROM_START( canbprot )
 	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, 0x94246a9a )
 	ROM_RELOAD_NIB_HIGH (             0xf800, 0x0800 ) /* for 6502 vectors */
 
-	ROM_REGION_DISPOSE( 0x600 )     /* 1.5k for graphics */
+	ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, 0x7449f754 )
-	ROM_LOAD( "9505-01.n5", 0x0400, 0x0100, 0x60507c07 )
-	ROM_LOAD( "9506-01.m5", 0x0500, 0x0100, 0x0d63396a )
+
+	ROM_REGIONX( 0x200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, 0x0d63396a )
 ROM_END
 
 
-/***************************************************************************
 
-  Hi Score Routines
-
-***************************************************************************/
-
-static int hiload(void)
-{
-
-      unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0037],0xff,4);
-		firsttime = 1;
-	}
-
-
-          if(memcmp(&RAM[0x0037],"\x00\x00\x00\x00",4) == 0)
-	{
-              void *f;
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                      osd_fread(f,&RAM[0x0037],4);
-                      osd_fclose(f);
-              }
-
-              return 1;
-    		  firsttime = 0;
-	}
-      else return 0;   /* we can't load the hi scores yet */
- }
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x0037],2*2);
-		osd_fclose(f);
-	}
-}
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_canyon =
-{
-	__FILE__,
-	0,
-    "canyon",
-    "Canyon Bomber",
-	"1977",
-	"Atari",
-    "Mike Balfour",
-	0,
-    &machine_driver,
-	0,
-
-    rom_canyon,
-	0, 0,
-	0,
-	0,
-
-    input_ports_canyon,
-
-    0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_canbprot =
-{
-	__FILE__,
-	&driver_canyon,
-    "canbprot",
-    "Canyon Bomber (prototype)",
-	"1977",
-	"Atari",
-    "Mike Balfour",
-	0,
-    &machine_driver,
-	0,
-
-    rom_canbprot,
-	0, 0,
-	0,
-	0,
-
-    input_ports_canyon,
-
-    0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
+GAME( 1977, canyon,   ,       canyon, canyon, , ROT0, "Atari", "Canyon Bomber" )
+GAME( 1977, canbprot, canyon, canyon, canyon, , ROT0, "Atari", "Canyon Bomber (prototype)" )

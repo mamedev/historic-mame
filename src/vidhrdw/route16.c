@@ -52,12 +52,15 @@ void route16b_init_driver(void)
 
 void route16_init_driver(void)
 {
-	/* patch the protection */
-	ROM[0x00e9] = 0x3a;
+	unsigned char *rom = memory_region(REGION_CPU1);
 
-	ROM[0x0754] = 0xc3;
-	ROM[0x0755] = 0x63;
-	ROM[0x0756] = 0x07;
+
+	/* patch the protection */
+	rom[0x00e9] = 0x3a;
+
+	rom[0x0754] = 0xc3;
+	rom[0x0755] = 0x63;
+	rom[0x0756] = 0x07;
 
 	route16b_init_driver();
 }

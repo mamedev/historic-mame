@@ -242,43 +242,6 @@ ROM_START( higemaru )
 	ROM_LOAD( "hgb1",         0x0120, 0x0100, 0x07c607ce )	/* sprite lookup table */
 ROM_END
 
-static int higemaru_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xee00],"\x00\x20\x00",3) == 0) &&
-            (memcmp(&RAM[0xee75],"\x00\x10\x00",3) == 0))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xee00],130);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0xee97] = RAM[0xee00];
-                        RAM[0xee98] = RAM[0xee01];
-                        RAM[0xee99] = RAM[0xee02];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void higemaru_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xee00],130);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_higemaru =
@@ -302,7 +265,6 @@ struct GameDriver driver_higemaru =
 	input_ports_higemaru,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	higemaru_hiload, higemaru_hisave
+	ROT0,
+	0,0
 };

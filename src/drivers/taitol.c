@@ -1567,7 +1567,7 @@ static struct YM2203interface ym2203_interface_double =
 
 
 #define MCH_SINGLE(name) \
-static struct MachineDriver name ## _machine_driver =	\
+static struct MachineDriver machine_driver_##name =	\
 {														\
 	{													\
 		{												\
@@ -1601,7 +1601,7 @@ static struct MachineDriver name ## _machine_driver =	\
 };
 
 #define MCH_DOUBLE(name) \
-static struct MachineDriver name ## _machine_driver =		\
+static struct MachineDriver machine_driver_##name =		\
 {															\
 	{														\
 		{													\
@@ -1811,7 +1811,7 @@ struct GameDriver driver_fhawk =
 	"Taito Corporation",
 	"",
 	0,
-	&fhawk_machine_driver,
+	&machine_driver_fhawk,
 	0,
 
 	rom_fhawk,
@@ -1820,7 +1820,7 @@ struct GameDriver driver_fhawk =
 	input_ports_fhawk,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0,0
 };
 
@@ -1834,7 +1834,7 @@ struct GameDriver driver_raimais =
 	"Taito Corporation",
 	"",
 	0,
-	&raimais_machine_driver,
+	&machine_driver_raimais,
 	0,
 
 	rom_raimais,
@@ -1843,7 +1843,7 @@ struct GameDriver driver_raimais =
 	input_ports_raimais,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0,0
 };
 
@@ -1857,7 +1857,7 @@ struct GameDriver driver_champwr =
 	"Taito Corporation Japan",
 	"",
 	0,
-	&champwr_machine_driver,
+	&machine_driver_champwr,
 	0,
 
 	rom_champwr,
@@ -1866,7 +1866,7 @@ struct GameDriver driver_champwr =
 	input_ports_champwr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1880,7 +1880,7 @@ struct GameDriver driver_puzznic =
 	"Taito Corporation",
 	"",
 	0,
-	&puzznic_machine_driver,
+	&machine_driver_puzznic,
 	0,
 
 	rom_puzznic,
@@ -1889,7 +1889,7 @@ struct GameDriver driver_puzznic =
 	input_ports_puzznic,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1903,17 +1903,17 @@ struct GameDriver driver_plotting =
 	"Taito Corporation Japan",
 	"",
 	0,
-	&plotting_machine_driver,
-	0,
+	&machine_driver_plotting,
+	plotting_decode,
 
 	rom_plotting,
-	plotting_decode,
+	0,
 	0, 0, 0,
 
 	input_ports_puzznic,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1928,7 +1928,7 @@ struct GameDriver driver_palamed =
 	"Taito Corporation",
 	"",
 	0,
-	&palamed_machine_driver,
+	&machine_driver_palamed,
 	0,
 
 	rom_palamed,
@@ -1937,7 +1937,7 @@ struct GameDriver driver_palamed =
 	input_ports_palamed,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -1951,7 +1951,7 @@ struct GameDriver driver_horshoes =
 	"Taito America Corporation",
 	"",
 	0,
-	&horshoes_machine_driver,
+	&machine_driver_horshoes,
 	0,
 
 	rom_horshoes,
@@ -1960,7 +1960,7 @@ struct GameDriver driver_horshoes =
 	input_ports_horshoes,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
+	ROT270 | GAME_NOT_WORKING,
 	0,0
 };
 
@@ -1974,7 +1974,7 @@ struct GameDriver driver_cachat =
 	"Taito Corporation",
 	"",
 	0,
-	&cachat_machine_driver,
+	&machine_driver_cachat,
 	0,
 
 	rom_cachat,
@@ -1983,6 +1983,6 @@ struct GameDriver driver_cachat =
 	input_ports_palamed,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

@@ -2,6 +2,8 @@
 
 Ambush Memory Map (preliminary)
 
+driver by Zsolt Vasvari
+
 
 Memory Mapped:
 
@@ -162,8 +164,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 128 },	/* I'm only using the first 64 colors */
-	{ 1, 0x0000, &spritelayout, 0, 128 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 128 },	/* I'm only using the first 64 colors */
+	{ REGION_GFX1, 0x0000, &spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -181,7 +183,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_ambush =
 {
 	/* basic machine hardware */
 	{
@@ -232,7 +234,7 @@ ROM_START( ambush )
 	ROM_LOAD( "ambush.f7",    0x4000, 0x2000, 0xd023ca29 )
 	ROM_LOAD( "ambush.e7",    0x6000, 0x2000, 0x6cc2d3ee )
 
-	ROM_REGION_DISPOSE(0x4000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ambush.n4",    0x0000, 0x2000, 0xecc0dc85 )
 	ROM_LOAD( "ambush.m4",    0x2000, 0x2000, 0xe86ca98a )
 
@@ -245,65 +247,5 @@ ROM_START( ambush )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
-	/* wait for the checkerboard pattern to be on screen */
-	if (memcmp(&RAM[0x8027],"\x00\x00\x05\x16\x1f\x0b\x3a\x3a\x3a\x3a\x3a\x3a",12) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x800f],0x24);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x800f],0x24);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver driver_ambush =
-{
-	__FILE__,
-	0,
-	"ambush",
-	"Ambush",
-	"1983",
-	"Nippon Amuse Co-Ltd",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rom_ambush,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_ambush,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
+GAME( 1983, ambush, , ambush, ambush, , ROT0, "Nippon Amuse Co-Ltd", "Ambush" )

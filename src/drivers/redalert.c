@@ -397,7 +397,7 @@ struct GameDriver driver_redalert =
 	input_ports_redalert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+	ROT270 | GAME_WRONG_COLORS,
 
 	0, 0
 };

@@ -896,7 +896,7 @@ static struct YM2610interface ym2610_interface =
 
 
 
-static struct MachineDriver liquidk_machine_driver =
+static struct MachineDriver machine_driver_liquidk =
 {
 	/* basic machine hardware */
 	{
@@ -940,7 +940,7 @@ static struct MachineDriver liquidk_machine_driver =
 	}
 };
 
-static struct MachineDriver finalb_machine_driver =
+static struct MachineDriver machine_driver_finalb =
 {
 	/* basic machine hardware */
 	{
@@ -984,7 +984,7 @@ static struct MachineDriver finalb_machine_driver =
 	}
 };
 
-static struct MachineDriver growl_machine_driver =
+static struct MachineDriver machine_driver_growl =
 {
 	/* basic machine hardware */
 	{
@@ -1028,7 +1028,7 @@ static struct MachineDriver growl_machine_driver =
 	}
 };
 
-static struct MachineDriver megab_machine_driver =
+static struct MachineDriver machine_driver_megab =
 {
 	/* basic machine hardware */
 	{
@@ -1140,34 +1140,7 @@ ROM_START( mizubaku )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-static int liquidk_hiload(void)
-{
-	void *f;
 
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&taitof2_ram[0xb102], "\x4b\x05\x4e\x41", 4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&taitof2_ram[0xb0fe],40);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void liquidk_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&taitof2_ram[0xb0fe],40);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_liquidk =
 {
@@ -1179,7 +1152,7 @@ struct GameDriver driver_liquidk =
 	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
 	rom_liquidk,
@@ -1190,8 +1163,8 @@ struct GameDriver driver_liquidk =
 	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
 struct GameDriver driver_liquidku =
@@ -1204,7 +1177,7 @@ struct GameDriver driver_liquidku =
 	"Taito America Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
 	rom_liquidku,
@@ -1215,8 +1188,8 @@ struct GameDriver driver_liquidku =
 	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
 struct GameDriver driver_mizubaku =
@@ -1229,7 +1202,7 @@ struct GameDriver driver_mizubaku =
 	"Taito Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&liquidk_machine_driver,
+	&machine_driver_liquidk,
 	0,
 
 	rom_mizubaku,
@@ -1240,8 +1213,8 @@ struct GameDriver driver_mizubaku =
 	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_180,
-	liquidk_hiload, liquidk_hisave
+	ROT180,
+	0,0
 };
 
 ROM_START( finalb )
@@ -1279,7 +1252,7 @@ struct GameDriver driver_finalb =
 	"Taito",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&finalb_machine_driver,
+	&machine_driver_finalb,
 	0,
 
 	rom_finalb,
@@ -1290,7 +1263,7 @@ struct GameDriver driver_finalb =
 	input_ports_finalb,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1364,35 +1337,6 @@ ROM_START( runark )
 ROM_END
 
 
-static int growl_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&taitof2_ram[0xe344], "\x2e\x54\x00\x53", 4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&taitof2_ram[0xe33a],266);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void growl_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&taitof2_ram[0xe33a],266);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_growl =
 {
 	__FILE__,
@@ -1403,7 +1347,7 @@ struct GameDriver driver_growl =
 	"Taito Corporation Japan",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&growl_machine_driver,
+	&machine_driver_growl,
 	0,
 
 	rom_growl,
@@ -1414,8 +1358,8 @@ struct GameDriver driver_growl =
 	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	growl_hiload, growl_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_growlu =
@@ -1428,7 +1372,7 @@ struct GameDriver driver_growlu =
 	"Taito America Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&growl_machine_driver,
+	&machine_driver_growl,
 	0,
 
 	rom_growlu,
@@ -1439,8 +1383,8 @@ struct GameDriver driver_growlu =
 	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	growl_hiload, growl_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_runark =
@@ -1453,7 +1397,7 @@ struct GameDriver driver_runark =
 	"Taito Corporation",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&growl_machine_driver,
+	&machine_driver_growl,
 	0,
 
 	rom_runark,
@@ -1464,8 +1408,8 @@ struct GameDriver driver_runark =
 	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	growl_hiload, growl_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -1503,7 +1447,7 @@ struct GameDriver driver_megab =
 	"Taito",
 	"Brad Oliver\nAndrew Prime\nErnesto Corvi (sound)",
 	0,
-	&megab_machine_driver,
+	&machine_driver_megab,
 	0,
 
 	rom_megab,
@@ -1514,6 +1458,6 @@ struct GameDriver driver_megab =
 	input_ports_megab,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

@@ -247,7 +247,7 @@ static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,3);
 
-static struct MachineDriver dcon_machine_driver =
+static struct MachineDriver machine_driver_dcon =
 {
 	/* basic machine hardware */
 	{
@@ -333,7 +333,7 @@ struct GameDriver driver_dcon =
 	"Success (Seibu hardware)",
 	"Bryan McPhail",
 	0,
-	&dcon_machine_driver,
+	&machine_driver_dcon,
 	memory_patch,
 
 	rom_dcon,
@@ -342,7 +342,7 @@ struct GameDriver driver_dcon =
 	input_ports_dcon,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -197,49 +197,6 @@ ROM_START( hexa )
 	ROM_LOAD( "hexa.002",     0x0200, 0x0100, 0xff15366c )
 ROM_END
 
-static int hexa_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime = 0;
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		RAM[0xc70a] = 1;
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0xc709],"\x00\x00",2) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc709],2);
-			osd_fclose(f);
-
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hexa_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc709],2);
-		osd_fclose(f);
-	}
-}
 
 
 static void hexa_patch(void)
@@ -268,18 +225,17 @@ struct GameDriver driver_hexa =
 	"Howie Cohen (driver)\nThierry Lescot (Technical Info) ",
 	0,
 	&machine_driver,
-	0,
+	hexa_patch,
 
 	rom_hexa,
-	hexa_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hexa,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hexa_hiload, hexa_hisave
+	ROT0,
+	0,0
 };
 

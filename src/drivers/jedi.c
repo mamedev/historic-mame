@@ -93,7 +93,6 @@ void jedi_hscroll_w(int offset,int data);
 extern unsigned char *jedi_PIXIRAM;
 extern unsigned char *jedi_backgroundram;
 extern int jedi_backgroundram_size;
-unsigned char *jedi_nvRAM;
 
 void jedi_soundlatch_w(int offset,int data);
 void jedi_soundacklatch_w(int offset, int data);
@@ -106,6 +105,24 @@ void jedi_control_w (int offset, int data);
 void jedi_alpha_banksel (int offset, int data);
 void jedi_sound_reset( int offset, int data);
 void jedi_rom_banksel( int offset, int data);
+
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
 
 
 
@@ -129,7 +146,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x07ff, MWA_RAM },
-    { 0x0800, 0x08ff, MWA_RAM, &jedi_nvRAM },
+    { 0x0800, 0x08ff, MWA_RAM, &nvram, &nvram_size },
     { 0x1C80, 0x1C82, jedi_control_w},
     { 0x1D80, 0x1D80, watchdog_reset_w },
     { 0x1E84, 0x1E84, jedi_alpha_banksel },
@@ -321,8 +338,9 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-    }
+    },
 
+	nvram_handler
 };
 
 
@@ -355,32 +373,6 @@ ROM_START( jedi )
 	ROM_LOAD( "01a_134.bin",  0xC000, 0x4000, 0x5e36c564 )
 ROM_END
 
-static int novram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-        osd_fread(f,&RAM[0x0800],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void novram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f,&RAM[0x0800],256);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_jedi =
@@ -404,7 +396,6 @@ struct GameDriver driver_jedi =
 	input_ports_jedi,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	novram_load, novram_save /* Highscore load, save */
+	ROT0,
+	0,0
 };

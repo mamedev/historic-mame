@@ -59,6 +59,9 @@ void namcos2_init_machine(void)
 
 	/* Initialise ROZ */
 	for(loop=0;loop<0x10;loop+=2) namcos2_68k_roz_ctrl_w(loop,0);
+
+	/* Initialise the Roadway generator */
+//	for(loop=0;loop<0x10;loop+=2) namcos2_68k_road_ctrl_w(loop,0);
 }
 
 
@@ -70,31 +73,16 @@ void namcos2_init_machine(void)
 unsigned char *namcos2_eeprom;
 int namcos2_eeprom_size;
 
-int namcos2_hiload(void)
+void namcos2_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f, namcos2_eeprom, namcos2_eeprom_size);
-		osd_fclose (f);
-	}
+	if (read_or_write)
+		osd_fwrite (file, namcos2_eeprom, namcos2_eeprom_size);
 	else
-		memset (namcos2_eeprom, 0xff, namcos2_eeprom_size);
-
-	return 1;
-}
-
-void namcos2_hisave(void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
 	{
-		osd_fwrite (f, namcos2_eeprom, namcos2_eeprom_size);
-		osd_fclose (f);
+		if (file)
+			osd_fread (file, namcos2_eeprom, namcos2_eeprom_size);
+		else
+			memset (namcos2_eeprom, 0xff, namcos2_eeprom_size);
 	}
 }
 
@@ -116,7 +104,8 @@ int namcos2_68k_eeprom_r( int offset )
 
 int namcos2_68k_data_rom_r(int offset)
 {
-	return READ_WORD(&memory_region(REGION_DATA)[offset]);
+	unsigned char *ROM=memory_region(REGION_DATA);
+	return READ_WORD(&ROM[offset]);
 }
 
 
@@ -508,6 +497,48 @@ void namcos2_68k_roz_ram_w( int offset, int data )
 int  namcos2_68k_roz_ram_r( int offset )
 {
 	return READ_WORD(&namcos2_68k_roz_ram[offset]);
+}
+
+
+
+/**************************************************************/
+/*                                                            */
+/*  Final Lap 1/2/3 Roadway generator function handlers       */
+/*                                                            */
+/**************************************************************/
+
+unsigned char *namcos2_68k_roadtile_ram=NULL;
+unsigned char *namcos2_68k_roadgfx_ram=NULL;
+int namcos2_68k_roadtile_ram_size=0;
+int namcos2_68k_roadgfx_ram_size=0;
+
+void namcos2_68k_roadtile_ram_w( int offset, int data )
+{
+	COMBINE_WORD_MEM(&namcos2_68k_roadtile_ram[offset],data);
+}
+
+int namcos2_68k_roadtile_ram_r( int offset )
+{
+	return READ_WORD(&namcos2_68k_roadtile_ram[offset]);
+}
+
+void namcos2_68k_roadgfx_ram_w( int offset, int data )
+{
+	COMBINE_WORD_MEM(&namcos2_68k_roadgfx_ram[offset],data);
+}
+
+int namcos2_68k_roadgfx_ram_r( int offset )
+{
+	return READ_WORD(&namcos2_68k_roadgfx_ram[offset]);
+}
+
+void namcos2_68k_road_ctrl_w( int offset, int data )
+{
+}
+
+int  namcos2_68k_road_ctrl_r( int offset )
+{
+	return 0;
 }
 
 

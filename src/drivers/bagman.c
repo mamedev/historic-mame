@@ -2,6 +2,9 @@
 
 Bagman memory map (preliminary)
 
+driver by Nicola Salmoria
+protection emulation by Jarek Burczynski and Andrew Deschenes
+
 0000-5fff ROM
 6000-67ff RAM
 9000-93ff Video RAM
@@ -365,9 +368,17 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 16 },	/* char set #1 */
-	{ 1, 0x2000, &charlayout,      0, 16 },	/* char set #2 */
-	{ 1, 0x0000, &spritelayout,    0, 16 },	/* sprites */
+	{ REGION_GFX1, 0, &charlayout,      0, 16 },	/* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,    0, 16 },	/* sprites */
+	{ REGION_GFX2, 0, &charlayout,      0, 16 },	/* char set #2 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo pickin_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,      0, 16 },	/* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,    0, 16 },	/* sprites */
+	/* no gfx2 */
 	{ -1 } /* end of array */
 };
 
@@ -387,7 +398,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bagman =
 {
 	/* basic machine hardware */
 	{
@@ -424,7 +435,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver pickin_machine_driver =
+static struct MachineDriver machine_driver_pickin =
 {
 	/* basic machine hardware */
 	{
@@ -441,7 +452,7 @@ static struct MachineDriver pickin_machine_driver =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
+	pickin_gfxdecodeinfo,
 	64,64,
 	bagman_vh_convert_color_prom,
 
@@ -477,17 +488,19 @@ ROM_START( bagman )
 	ROM_LOAD( "m9_b09s.bin",  0x4000, 0x1000, 0x68e83e4f )
 	ROM_LOAD( "n9_b10.bin",   0x5000, 0x1000, 0x1d6579f7 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
-	ROM_LOAD( "c1_b01.bin",   0x2000, 0x1000, 0x705193b2 )
-	ROM_LOAD( "f1_b03s.bin",  0x3000, 0x1000, 0xdba1eda7 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c1_b01.bin",   0x0000, 0x1000, 0x705193b2 )
+	ROM_LOAD( "f1_b03s.bin",  0x1000, 0x1000, 0xdba1eda7 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -501,17 +514,19 @@ ROM_START( bagnard )
 	ROM_LOAD( "bagnard.009",  0x4000, 0x1000, 0x4f0088ab )
 	ROM_LOAD( "bagnard.010",  0x5000, 0x1000, 0xcd2cac01 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
-	ROM_LOAD( "bagnard.001",  0x2000, 0x1000, 0x060b044c )
-	ROM_LOAD( "bagnard.003",  0x3000, 0x1000, 0x8043bc1a )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bagnard.001",  0x0000, 0x1000, 0x060b044c )
+	ROM_LOAD( "bagnard.003",  0x1000, 0x1000, 0x8043bc1a )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -525,17 +540,19 @@ ROM_START( bagmans )
 	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
 	ROM_LOAD( "a5-9n",        0x5000, 0x1000, 0x68e4b64d )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
-	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
-	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
+	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -549,17 +566,19 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
 	ROM_LOAD( "a4_9n.bin",    0x5000, 0x1000, 0x83fccb1c )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
-	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
-	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
+	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -583,17 +602,19 @@ ROM_START( sbagman )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
 	ROM_CONTINUE(             0xce00, 0x0200 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
 	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
-	ROM_LOAD( "1.1c",         0x2000, 0x1000, 0xa046ff44 )
-	ROM_LOAD( "3.1f",         0x3000, 0x1000, 0xa4422da4 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1.1c",         0x0000, 0x1000, 0xa046ff44 )
+	ROM_LOAD( "3.1f",         0x1000, 0x1000, 0xa4422da4 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -617,17 +638,19 @@ ROM_START( sbagmans )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
 	ROM_CONTINUE(             0xce00, 0x0200 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
 	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
-	ROM_LOAD( "sbag_1c.bin",  0x2000, 0x1000, 0x262f870a )
-	ROM_LOAD( "sbag_1f.bin",  0x3000, 0x1000, 0x350ed0fb )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sbag_1c.bin",  0x0000, 0x1000, 0x262f870a )
+	ROM_LOAD( "sbag_1f.bin",  0x1000, 0x1000, 0x350ed0fb )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
-	ROM_REGION( 0x2000 )	/* data for the TMS5110 speech chip */
+	ROM_REGIONX( 0x2000, REGION_SOUND1 )	/* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
@@ -641,10 +664,11 @@ ROM_START( pickin )
 	ROM_LOAD( "9m",           0x4000, 0x1000, 0x935a7248 )
 	ROM_LOAD( "9n",           0x5000, 0x1000, 0x52485d1d )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1f",           0x0000, 0x1000, 0xc5e96ac6 )
 	ROM_LOAD( "1j",           0x1000, 0x1000, 0x41c4ac1c )
-	/* 2000-3fff empty for my convenience */
+
+	/* no gfx2 */
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, 0xfac81668 )
@@ -653,274 +677,10 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-		/* wait for "HIGH SCORE" to be on screen */
-        if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x6217],"\x00\x42\x01",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        /* Bagman allows for 13 letters */
-						/* The rest only allow to enter three letters but
-                         * we could enter until thirteen by accesing to memory
-                         * directly. In Super Bagman the default high-score
-                         * names have more than three letters */
-                        osd_fread(f,&RAM[0x6217],5*16);
-
-
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-                osd_fwrite(f,&RAM[0x6217],5*16);
-				osd_fclose(f);
-				memset(&RAM[0x6217],0xff,5*16);
-	}
-}
-
-static int pickin_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-		/* wait for "HIGH SCORE" to be on screen */
-
-        if (memcmp(&RAM[0x71da],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x719a],"\x00\x42\x01",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        /* Bagman allows for 13 letters */
-						/* The rest only allow to enter three letters but
-                         * we could enter until thirteen by accesing to memory
-                         * directly. In Super Bagman the default high-score
-                         * names have more than three letters */
-                        osd_fread(f,&RAM[0x719a],80);
-
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void pickin_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-                osd_fwrite(f,&RAM[0x719a],80);
-				osd_fclose(f);
-				memset(&RAM[0x719a],0xff,80);
-	}
-}
-
-
-struct GameDriver driver_bagman =
-{
-	__FILE__,
-	0,
-	"bagman",
-	"Bagman",
-	"1982",
-	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bagman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bagman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_bagnard =
-{
-	__FILE__,
-	&driver_bagman,
-	"bagnard",
-	"Le Bagnard",
-	"1982",
-	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bagnard,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bagman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_bagmans =
-{
-	__FILE__,
-	&driver_bagman,
-	"bagmans",
-	"Bagman (Stern set 1)",
-	"1982",
-	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bagmans,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bagmans,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_bagmans2 =
-{
-	__FILE__,
-	&driver_bagman,
-	"bagmans2",
-	"Bagman (Stern set 2)",
-	"1982",
-	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bagmans2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bagman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_sbagman =
-{
-	__FILE__,
-	0,
-	"sbagman",
-	"Super Bagman",
-	"1984",
-	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sbagman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sbagman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_sbagmans =
-{
-	__FILE__,
-	&driver_sbagman,
-	"sbagmans",
-	"Super Bagman (Stern)",
-	"1984",
-	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_sbagmans,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sbagman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_pickin =
-{
-	__FILE__,
-	0,
-	"pickin",
-	"Pickin'",
-	"1983",
-	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)",
-	0,
-	&pickin_machine_driver,
-	0,
-
-	rom_pickin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pickin,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	pickin_hiload,pickin_hisave
-};
-
+GAME( 1982, bagman,   ,        bagman, bagman,  , ROT270, "Valadon Automation", "Bagman" )
+GAME( 1982, bagnard,  bagman,  bagman, bagman,  , ROT270, "Valadon Automation", "Le Bagnard" )
+GAME( 1982, bagmans,  bagman,  bagman, bagmans, , ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 1)" )
+GAME( 1982, bagmans2, bagman,  bagman, bagman,  , ROT270, "Valadon Automation (Stern license)", "Bagman (Stern set 2)" )
+GAME( 1984, sbagman,  ,        bagman, sbagman, , ROT270, "Valadon Automation", "Super Bagman" )
+GAME( 1984, sbagmans, sbagman, bagman, sbagman, , ROT270, "Valadon Automation (Stern license)", "Super Bagman (Stern)" )
+GAME( 1983, pickin,   ,        pickin, pickin,  , ROT270, "Valadon Automation", "Pickin'" )

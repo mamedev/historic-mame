@@ -556,9 +556,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,             0, 64 },
-	{ 1, 0x02000, &tilelayout,          64*4, 4*32 },
-	{ 1, 0x0e000, &spritelayout, 64*4+4*32*8, 16 },
+	{ REGION_GFX1, 0, &charlayout,             0, 64 },
+	{ REGION_GFX2, 0, &tilelayout,          64*4, 4*32 },
+	{ REGION_GFX3, 0, &spritelayout, 64*4+4*32*8, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -578,7 +578,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_1942 =
 {
 	/* basic machine hardware */
 	{
@@ -637,18 +637,25 @@ ROM_START( 1942 )
 	ROM_LOAD( "1-n6.bin",     0x14000, 0x2000, 0x821c6481 )
 	ROM_LOAD( "1-n7.bin",     0x18000, 0x4000, 0x5df525e1 )
 
-	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
-	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
-	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
-	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
-	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
-	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
-	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
-	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
-	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
-	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
-	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-f2.bin",     0x0000, 0x2000, 0x6ebca191 )	/* characters */
+
+	ROM_REGIONX( 0xc000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-a1.bin",     0x0000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x2000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x4000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x6000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x8000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0xa000, 0x2000, 0x658f02c4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-l1.bin",     0x00000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x04000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
 	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
@@ -657,9 +664,6 @@ ROM_START( 1942 )
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 ROM_START( 1942a )
@@ -670,18 +674,25 @@ ROM_START( 1942a )
 	ROM_LOAD( "1-n6.bin",     0x14000, 0x2000, 0x821c6481 )
 	ROM_LOAD( "1-n7.bin",     0x18000, 0x4000, 0x5df525e1 )
 
-	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
-	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
-	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
-	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
-	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
-	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
-	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
-	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
-	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
-	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
-	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-f2.bin",     0x0000, 0x2000, 0x6ebca191 )	/* characters */
+
+	ROM_REGIONX( 0xc000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-a1.bin",     0x0000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x2000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x4000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x6000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x8000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0xa000, 0x2000, 0x658f02c4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-l1.bin",     0x00000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x04000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
 	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
@@ -690,9 +701,6 @@ ROM_START( 1942a )
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 ROM_START( 1942b )
@@ -703,18 +711,25 @@ ROM_START( 1942b )
 	ROM_LOAD( "srb-06.n6",    0x14000, 0x2000, 0x466f8248 )
 	ROM_LOAD( "srb-07.n7",    0x18000, 0x4000, 0x0d31038c )
 
-	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
-	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
-	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
-	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
-	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
-	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
-	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
-	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
-	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
-	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
-	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1-f2.bin",     0x0000, 0x2000, 0x6ebca191 )	/* characters */
+
+	ROM_REGIONX( 0xc000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-a1.bin",     0x0000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x2000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x4000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x6000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x8000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0xa000, 0x2000, 0x658f02c4 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2-l1.bin",     0x00000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x04000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
 	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
@@ -723,149 +738,10 @@ ROM_START( 1942b )
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe801],"\x00\x04\x00\x00",4) == 0 &&
-			memcmp(&RAM[0xe981],"\x00\x00\x01\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int i;
-
-
-			osd_fread(f,&RAM[0xe800],16*25);
-			osd_fread(f,&RAM[0xe9c0],1);
-			/* find the high score */
-			for (i = 0;i < 16*25;i += 16)
-			{
-				if (RAM[0xe800 + i] == 0x00)
-				{
-					RAM[0xe040] = RAM[0xe801 + i] >> 4;
-					RAM[0xe041] = RAM[0xe801 + i] & 0x0f;
-					RAM[0xe042] = RAM[0xe802 + i] >> 4;
-					RAM[0xe043] = RAM[0xe802 + i] & 0x0f;
-					RAM[0xe044] = RAM[0xe803 + i] >> 4;
-					RAM[0xe045] = RAM[0xe803 + i] & 0x0f;
-					RAM[0xe046] = RAM[0xe804 + i] >> 4;
-					RAM[0xe047] = RAM[0xe804 + i] & 0x0f;
-
-					break;
-				}
-			}
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe800],16*25);
-		osd_fwrite(f,&RAM[0xe9c0],1);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_1942 =
-{
-	__FILE__,
-	0,
-	"1942",
-	"1942 (set 1)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_1942,
-	0, 0,
-	0,
-	0,
-
-	input_ports_1942,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_1942a =
-{
-	__FILE__,
-	&driver_1942,
-	"1942a",
-	"1942 (set 2)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_1942a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_1942,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_1942b =
-{
-	__FILE__,
-	&driver_1942,
-	"1942b",
-	"1942 (set 3)",
-	"1984",
-	"Capcom",
-	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_1942b,
-	0, 0,
-	0,
-	0,
-
-	input_ports_1942,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
-};
+GAME( 1984, 1942,  ,     1942, 1942, , ROT270, "Capcom", "1942 (set 1)" )
+GAME( 1984, 1942a, 1942, 1942, 1942, , ROT270, "Capcom", "1942 (set 2)" )
+GAME( 1984, 1942b, 1942, 1942, 1942, , ROT270, "Capcom", "1942 (set 3)" )

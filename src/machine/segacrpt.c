@@ -269,8 +269,11 @@ static void read_table_from_disk(unsigned char *xortable)
 static void sega_decode(const unsigned char xortable[32][4])
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -278,7 +281,7 @@ static void sega_decode(const unsigned char xortable[32][4])
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
 		row = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
@@ -289,20 +292,20 @@ static void sega_decode(const unsigned char xortable[32][4])
 		if (src & 0x80) col = 3 - col;
 
 		/* decode the opcodes */
-		ROM[A] = src ^ xortable[2*row][col];
+		rom[A + diff] = src ^ xortable[2*row][col];
 
 		/* decode the data */
-		RAM[A] = src ^ xortable[2*row+1][col];
+		rom[A] = src ^ xortable[2*row+1][col];
 
 		if (xortable[2*row][col] == 0xff)	/* table incomplete! (for development) */
-			ROM[A] = 0x00;
+			rom[A + diff] = 0x00;
 		if (xortable[2*row+1][col] == 0xff)	/* table incomplete! (for development) */
-			RAM[A] = 0xee;
+			rom[A] = 0xee;
 	}
 
 	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < 0x10000;A++)
-		ROM[A] = RAM[A];
+	for (A = 0x8000;A < diff;A++)
+		rom[A + diff] = rom[A];
 }
 
 
@@ -869,8 +872,11 @@ void fdwarrio_decode(void)
 		{ 0x00,0x11,0x05,0x14,0x50,0x41,0x55,0x44 }		/* extra line for data decode */
 	};
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -878,7 +884,7 @@ void fdwarrio_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bits 0, 3, 6, 9, 12 and 14 of the address */
 		row = (A & 1) + (((A >> 3) & 1) << 1) + (((A >> 6) & 1) << 2)
@@ -890,22 +896,22 @@ void fdwarrio_decode(void)
 		if (src & 0x40) col = 7 - col;
 
 		/* decode the opcodes */
-		ROM[A] = src ^ xortable[row >> 3][col] ^ 0x40;
-		if (row & 1) ROM[A] ^= 0x10;
-		if (row & 2) ROM[A] ^= 0x04;
-		if (row & 4) ROM[A] ^= 0x01;
+		rom[A + diff] = src ^ xortable[row >> 3][col] ^ 0x40;
+		if (row & 1) rom[A + diff] ^= 0x10;
+		if (row & 2) rom[A + diff] ^= 0x04;
+		if (row & 4) rom[A + diff] ^= 0x01;
 
 		/* decode the data */
 		row++;	/* the data XOR table is shifted by one position!!!! */
-		RAM[A] = src ^ xortable[row >> 3][col];
-		if (row & 1) RAM[A] ^= 0x10;
-		if (row & 2) RAM[A] ^= 0x04;
-		if (row & 4) RAM[A] ^= 0x01;
+		rom[A] = src ^ xortable[row >> 3][col];
+		if (row & 1) rom[A] ^= 0x10;
+		if (row & 2) rom[A] ^= 0x04;
+		if (row & 4) rom[A] ^= 0x01;
 	}
 
 	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < 0x10000;A++)
-		ROM[A] = RAM[A];
+	for (A = 0x8000;A < diff;A++)
+		rom[A + diff] = rom[A];
 }
 
 
@@ -1065,8 +1071,11 @@ void wboy4_decode(void)
 		{ 0x14,0x05,0x11,0x00,0x00,0x11,0x05,0x14 },	/* .1.1 ..1. .1.. 1..1 */
 	};
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -1074,7 +1083,7 @@ void wboy4_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bits 0, 3, 6, 9, 12 and 14 of the address */
 		row = (A & 1) + (((A >> 3) & 1) << 1) + (((A >> 6) & 1) << 2)
@@ -1086,15 +1095,15 @@ void wboy4_decode(void)
 		if (src & 0x40) col = 7 - col;
 
 		/* decode the opcodes */
-		ROM[A] = src ^ opcode_xortable[row][col] ^ 0x00;
+		rom[A + diff] = src ^ opcode_xortable[row][col] ^ 0x00;
 
 		/* decode the data */
-		RAM[A] = src ^ data_xortable[row][col];
+		rom[A] = src ^ data_xortable[row][col];
 	}
 
 	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < 0x10000;A++)
-		ROM[A] = RAM[A];
+	for (A = 0x8000;A < diff;A++)
+		rom[A + diff] = rom[A];
 }
 
 

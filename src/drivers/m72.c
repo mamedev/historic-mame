@@ -39,7 +39,7 @@ Samples are missing in Gallop. The NMI handler for the sound CPU is just RETN, s
 the hardware has to be different. I also can't make a good sample start offset
 table.
 
-Maybe there is a layer enalbe register, e.g. nspirit shows (for an instant)
+Maybe there is a layer enable register, e.g. nspirit shows (for an instant)
 incomplete screens with bad colors when you start a game.
 
 ***************************************************************************/
@@ -1939,7 +1939,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver rtype_machine_driver =
+static struct MachineDriver machine_driver_rtype =
 {
 	/* basic machine hardware */
 	{
@@ -1983,7 +1983,7 @@ static struct MachineDriver rtype_machine_driver =
 	}
 };
 
-static struct MachineDriver m72_machine_driver =
+static struct MachineDriver machine_driver_m72 =
 {
 	/* basic machine hardware */
 	{
@@ -2031,7 +2031,7 @@ static struct MachineDriver m72_machine_driver =
 	}
 };
 
-static struct MachineDriver xmultipl_machine_driver =
+static struct MachineDriver machine_driver_xmultipl =
 {
 	/* basic machine hardware */
 	{
@@ -2079,7 +2079,7 @@ static struct MachineDriver xmultipl_machine_driver =
 	}
 };
 
-static struct MachineDriver dbreed_machine_driver =
+static struct MachineDriver machine_driver_dbreed =
 {
 	/* basic machine hardware */
 	{
@@ -2127,7 +2127,7 @@ static struct MachineDriver dbreed_machine_driver =
 	}
 };
 
-static struct MachineDriver rtype2_machine_driver =
+static struct MachineDriver machine_driver_rtype2 =
 {
 	/* basic machine hardware */
 	{
@@ -2175,7 +2175,7 @@ static struct MachineDriver rtype2_machine_driver =
 	}
 };
 
-static struct MachineDriver majtitle_machine_driver =
+static struct MachineDriver machine_driver_majtitle =
 {
 	/* basic machine hardware */
 	{
@@ -2223,7 +2223,7 @@ static struct MachineDriver majtitle_machine_driver =
 	}
 };
 
-static struct MachineDriver hharry_machine_driver =
+static struct MachineDriver machine_driver_hharry =
 {
 	/* basic machine hardware */
 	{
@@ -2271,7 +2271,7 @@ static struct MachineDriver hharry_machine_driver =
 	}
 };
 
-static struct MachineDriver hharryu_machine_driver =
+static struct MachineDriver machine_driver_hharryu =
 {
 	/* basic machine hardware */
 	{
@@ -2319,7 +2319,7 @@ static struct MachineDriver hharryu_machine_driver =
 	}
 };
 
-static struct MachineDriver poundfor_machine_driver =
+static struct MachineDriver machine_driver_poundfor =
 {
 	/* basic machine hardware */
 	{
@@ -2991,7 +2991,7 @@ struct GameDriver driver_rtype =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&rtype_machine_driver,
+	&machine_driver_rtype,
 	0,
 
 	rom_rtype,
@@ -3002,7 +3002,7 @@ struct GameDriver driver_rtype =
 	input_ports_rtype,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3017,7 +3017,7 @@ struct GameDriver driver_rtypeu =
 	"Irem (Nintendo of America license)",
 	"Nicola Salmoria",
 	0,
-	&rtype_machine_driver,
+	&machine_driver_rtype,
 	0,
 
 	rom_rtypeu,
@@ -3028,7 +3028,7 @@ struct GameDriver driver_rtypeu =
 	input_ports_rtypeu,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3043,7 +3043,7 @@ struct GameDriver driver_rtypeb =
 	"bootleg",
 	"Nicola Salmoria",
 	0,
-	&rtype_machine_driver,
+	&machine_driver_rtype,
 	0,
 
 	rom_rtypeb,
@@ -3054,7 +3054,7 @@ struct GameDriver driver_rtypeb =
 	input_ports_rtypeu,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3069,7 +3069,7 @@ struct GameDriver driver_bchopper =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	bchopper_init,
 
 	rom_bchopper,
@@ -3080,7 +3080,7 @@ struct GameDriver driver_bchopper =
 	input_ports_bchopper,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3095,7 +3095,7 @@ struct GameDriver driver_mrheli =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	mrheli_init,
 
 	rom_mrheli,
@@ -3106,7 +3106,7 @@ struct GameDriver driver_mrheli =
 	input_ports_bchopper,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3121,7 +3121,7 @@ struct GameDriver driver_nspirit =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	nspirit_init,
 
 	rom_nspirit,
@@ -3132,7 +3132,7 @@ struct GameDriver driver_nspirit =
 	input_ports_nspirit,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3147,7 +3147,7 @@ struct GameDriver driver_nspiritj =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	nspiritj_init,
 
 	rom_nspiritj,
@@ -3158,7 +3158,7 @@ struct GameDriver driver_nspiritj =
 	input_ports_nspirit,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3173,7 +3173,7 @@ struct GameDriver driver_imgfight =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	imgfight_init,
 
 	rom_imgfight,
@@ -3184,7 +3184,7 @@ struct GameDriver driver_imgfight =
 	input_ports_imgfight,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };
@@ -3199,7 +3199,7 @@ struct GameDriver driver_loht =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	loht_init,
 
 	rom_loht,
@@ -3210,7 +3210,7 @@ struct GameDriver driver_loht =
 	input_ports_loht,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3225,7 +3225,7 @@ struct GameDriver driver_xmultipl =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&xmultipl_machine_driver,
+	&machine_driver_xmultipl,
 	xmultipl_init,
 
 	rom_xmultipl,
@@ -3236,7 +3236,7 @@ struct GameDriver driver_xmultipl =
 	input_ports_xmultipl,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3251,7 +3251,7 @@ struct GameDriver driver_dbreed =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&dbreed_machine_driver,
+	&machine_driver_dbreed,
 	dbreed_init,
 
 	rom_dbreed,
@@ -3262,7 +3262,7 @@ struct GameDriver driver_dbreed =
 	input_ports_dbreed,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3277,7 +3277,7 @@ struct GameDriver driver_rtype2 =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&rtype2_machine_driver,
+	&machine_driver_rtype2,
 	0,
 
 	rom_rtype2,
@@ -3288,7 +3288,7 @@ struct GameDriver driver_rtype2 =
 	input_ports_rtype2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3303,7 +3303,7 @@ struct GameDriver driver_rtype2j =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&rtype2_machine_driver,
+	&machine_driver_rtype2,
 	0,
 
 	rom_rtype2j,
@@ -3314,7 +3314,7 @@ struct GameDriver driver_rtype2j =
 	input_ports_rtype2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3329,7 +3329,7 @@ struct GameDriver driver_majtitle =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&majtitle_machine_driver,
+	&machine_driver_majtitle,
 	0,
 
 	rom_majtitle,
@@ -3340,7 +3340,7 @@ struct GameDriver driver_majtitle =
 	input_ports_rtype2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -3355,7 +3355,7 @@ struct GameDriver driver_hharry =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&hharry_machine_driver,
+	&machine_driver_hharry,
 	0,
 
 	rom_hharry,
@@ -3366,7 +3366,7 @@ struct GameDriver driver_hharry =
 	input_ports_hharry,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3381,7 +3381,7 @@ struct GameDriver driver_hharryu =
 	"Irem America",
 	"Nicola Salmoria",
 	0,
-	&hharryu_machine_driver,
+	&machine_driver_hharryu,
 	0,
 
 	rom_hharryu,
@@ -3392,7 +3392,7 @@ struct GameDriver driver_hharryu =
 	input_ports_hharry,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3407,7 +3407,7 @@ struct GameDriver driver_dkgensan =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&hharryu_machine_driver,
+	&machine_driver_hharryu,
 	0,
 
 	rom_dkgensan,
@@ -3418,7 +3418,7 @@ struct GameDriver driver_dkgensan =
 	input_ports_hharry,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -3433,7 +3433,7 @@ struct GameDriver driver_kengo =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&hharry_machine_driver,
+	&machine_driver_hharry,
 	0,
 
 	rom_kengo,
@@ -3444,7 +3444,7 @@ struct GameDriver driver_kengo =
 	input_ports_hharry,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -3459,7 +3459,7 @@ struct GameDriver driver_gallop =
 	"Irem",
 	"Nicola Salmoria",
 	0,
-	&m72_machine_driver,
+	&machine_driver_m72,
 	gallop_init,
 
 	rom_gallop,
@@ -3470,7 +3470,7 @@ struct GameDriver driver_gallop =
 	input_ports_gallop,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ROT0 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
@@ -3485,7 +3485,7 @@ struct GameDriver driver_poundfor =
 	"?????",
 	"Nicola Salmoria",
 	0,
-	&poundfor_machine_driver,
+	&machine_driver_poundfor,
 	0,
 
 	rom_poundfor,
@@ -3496,7 +3496,7 @@ struct GameDriver driver_poundfor =
 	input_ports_poundfor,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

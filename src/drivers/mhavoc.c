@@ -181,10 +181,38 @@ int mhavoc_port_0_r(int offset);
 int mhavoc_port_1_r(int offset);
 void mhavoc_out_0_w(int offset, int data);
 void mhavoc_out_1_w(int offset, int data);
-int mhavoc_gammaram_r(int offset);
-void mhavoc_gammaram_w(int offset, int data);
 void tempest_colorram_w(int offset, int data);
 
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
+static unsigned char *gammaram;
+
+static int mhavoc_gammaram_r (int offset)
+{
+	return gammaram[offset & 0x7ff];
+}
+
+static void mhavoc_gammaram_w (int offset, int data)
+{
+	gammaram[offset & 0x7ff] = data;
+}
 
 
 /* Main board Readmem */
@@ -247,12 +275,12 @@ static struct MemoryReadAddress gamma_readmem[] =
 static struct MemoryWriteAddress gamma_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },			/* Program RAM (2K)	*/
-	{ 0x0800, 0x1fff, mhavoc_gammaram_w },	/* wraps to 0x000-0x7ff */
+	{ 0x0800, 0x1fff, mhavoc_gammaram_w, &gammaram },	/* wraps to 0x000-0x7ff */
 	{ 0x2000, 0x203f, quad_pokey_w },		/* Quad Pokey write	*/
 	{ 0x4000, 0x4000, MWA_NOP },			/* IRQ Acknowledge	*/
 	{ 0x4800, 0x4800, mhavoc_out_1_w },		/* Coin Counters 	*/
 	{ 0x5000, 0x5000, mhavoc_alpha_w },		/* Alpha Comm. Write Port */
-	{ 0x6000, 0x61ff, MWA_RAM },			/* EEROM		*/
+	{ 0x6000, 0x61ff, MWA_RAM, &nvram, &nvram_size },	/* EEROM		*/
 	{ -1 }	/* end of table */
 };
 
@@ -463,7 +491,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -583,34 +613,6 @@ ROM_START( mhavocp )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = memory_region(2);
-
-	/* no reason to check hiscore table. It's an NV_RAM! */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-	        osd_fread(f,&RAM[0x6000],0x200);
-	        osd_fclose(f);
-	}
-	return 1;
-}
-
-void hisave(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU) */
-	unsigned char *RAM = memory_region(2);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	        osd_fwrite(f,&RAM[0x6000],0x200);
-	        osd_fclose(f);
-	}
-}
-
 
 #define CREDITS \
 	"Mike Appolo (MAME driver)\n" \
@@ -643,9 +645,8 @@ struct GameDriver driver_mhavoc =
 	input_ports_mhavoc,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mhavoc2 =
@@ -669,9 +670,8 @@ struct GameDriver driver_mhavoc2 =
 	input_ports_mhavoc,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mhavocrv =
@@ -695,9 +695,8 @@ struct GameDriver driver_mhavocrv =
 	input_ports_mhavoc,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mhavocp =
@@ -721,8 +720,7 @@ struct GameDriver driver_mhavocp =
 	input_ports_mhavocp,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 

@@ -343,7 +343,7 @@ static struct MachineDriver machine_driver =
 	0
 };
 
-static struct MachineDriver sprint1_machine_driver =
+static struct MachineDriver machine_driver_sprint1 =
 {
 	/* basic machine hardware */
 	{
@@ -420,56 +420,7 @@ ROM_START( sprint2 )
 	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
 ROM_END
 
-/***************************************************************************
 
-  Hi Score Routines
-
-***************************************************************************/
-
-static int sprint1_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0057],"000",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0057],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void sprint1_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0057],3);
-		osd_fclose(f);
-	}
-
-}
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
 
 struct GameDriver driver_sprint1 =
 {
@@ -481,7 +432,7 @@ struct GameDriver driver_sprint1 =
 	"Atari",
 	"Mike Balfour",
 	0,
-	&sprint1_machine_driver,
+	&machine_driver_sprint1,
 	0,
 
 	rom_sprint1,
@@ -492,9 +443,8 @@ struct GameDriver driver_sprint1 =
 	input_ports_sprint1,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	sprint1_hiload, sprint1_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_sprint2 =
@@ -518,7 +468,7 @@ struct GameDriver driver_sprint2 =
 	input_ports_sprint2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -41,22 +41,35 @@ void seicross_colorram_w(int offset,int data);
 void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
 static unsigned char *nvram;
 static int nvram_size;
+
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+		{
+			/* fill in the default values */
+			memset(nvram,0,nvram_size);
+			nvram[0x0d] = nvram[0x0f] = nvram[0x11] = nvram[0x13] = nvram[0x15] = nvram[0x19] = 1;
+			nvram[0x17] = 3;
+		}
+	}
+}
+
 
 
 static void friskyt_init_machine(void)
 {
 	/* start with the protection mcu halted */
 	cpu_set_halt_line(1, ASSERT_LINE);
-}
-
-static void no_nvram_init(void)
-{
-	/* Radical Radial and Seicross don't have NVRAM, only dip switches */
-	install_mem_read_handler(1, 0x1003, 0x1003, input_port_3_r );	/* DSW1 */
-	install_mem_read_handler(1, 0x1005, 0x1005, input_port_4_r );	/* DSW2 */
-	install_mem_read_handler(1, 0x1006, 0x1006, input_port_5_r );	/* DSW3 */
 }
 
 
@@ -145,7 +158,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress mcu_readmem[] =
+static struct MemoryReadAddress mcu_nvram_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x1000, 0x10ff, MRA_RAM },
@@ -154,10 +167,30 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress mcu_writemem[] =
+static struct MemoryReadAddress mcu_no_nvram_readmem[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x1003, 0x1003, input_port_3_r },	/* DSW1 */
+	{ 0x1005, 0x1005, input_port_4_r },	/* DSW2 */
+	{ 0x1006, 0x1006, input_port_5_r },	/* DSW3 */
+	{ 0x8000, 0xf7ff, MRA_ROM },
+	{ 0xf800, 0xffff, sharedram_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_nvram_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x2000, 0x2000, DAC_data_w },
+	{ 0x8000, 0xf7ff, MWA_ROM },
+	{ 0xf800, 0xffff, sharedram_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_no_nvram_writemem[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x2000, 0x2000, DAC_data_w },
 	{ 0x8000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, sharedram_w },
@@ -411,54 +444,60 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_NSC8105,
-			6000000/4,	/* ??? */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	20,	/* 20 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	friskyt_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 64,
-	seicross_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	seicross_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+#define MACHINE_DRIVER(NAME,NVRAM)														\
+static struct MachineDriver machine_driver_##NAME =										\
+{																						\
+	/* basic machine hardware */														\
+	{																					\
+		{																				\
+			CPU_Z80,																	\
+			3072000,	/* 3.072 MHz? */												\
+			readmem,writemem,readport,writeport,										\
+			interrupt,1																	\
+		},																				\
+		{																				\
+			CPU_NSC8105,																\
+			6000000/4,	/* ??? */														\
+			mcu_##NAME##_readmem,mcu_##NAME##_writemem,0,0,								\
+			ignore_interrupt,0															\
+		}																				\
+	},																					\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	20,	/* 20 CPU slices per frame - an high value to ensure proper */					\
+			/* synchronization of the CPUs */											\
+	friskyt_init_machine,																\
+																						\
+	/* video hardware */																\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },											\
+	gfxdecodeinfo,																		\
+	64, 64,																				\
+	seicross_vh_convert_color_prom,														\
+																						\
+	VIDEO_TYPE_RASTER,																	\
+	0,																					\
+	generic_vh_start,																	\
+	generic_vh_stop,																	\
+	seicross_vh_screenrefresh,															\
+																						\
+	/* sound hardware */																\
+	0,0,0,0,																			\
+	{																					\
+		{																				\
+			SOUND_AY8910,																\
+			&ay8910_interface															\
+		},																				\
+		{																				\
+			SOUND_DAC,																	\
+			&dac_interface																\
+		}																				\
+	},																					\
+																						\
+	NVRAM																				\
 };
 
+
+MACHINE_DRIVER(nvram,nvram_handler)
+MACHINE_DRIVER(no_nvram,0)
 
 
 /***************************************************************************
@@ -585,79 +624,6 @@ static void friskyt_decode(void)
 
 
 
-int friskyt_nvram_load(void)
-{
-	void *f;
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,nvram,nvram_size);
-		osd_fclose(f);
-	}
-	else
-	{
-		/* fill in the default values */
-		memset(nvram,0x00,nvram_size);
-		nvram[0x0d] = nvram[0x0f] = nvram[0x11] = nvram[0x13] = nvram[0x15] = nvram[0x19] = 1;
-		nvram[0x17] = 3;
-	}
-
-	return 1;
-}
-
-void friskyt_nvram_save(void)
-{
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,nvram,nvram_size);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int seicross_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x7ad4],"\x00\x50\x02",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-				osd_fread(f,&RAM[0x7ad4],6*5);
-				osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void seicross_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x7ad4],6*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_friskyt =
 {
 	__FILE__,
@@ -668,20 +634,19 @@ struct GameDriver driver_friskyt =
 	"Nichibutsu",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	0,
+	&machine_driver_nvram,
+	friskyt_decode,
 
 	rom_friskyt,
-	friskyt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_friskyt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	friskyt_nvram_load, friskyt_nvram_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_radrad =
@@ -694,18 +659,18 @@ struct GameDriver driver_radrad =
 	"Nichibutsu USA",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
 	rom_radrad,
-	friskyt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_radrad,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -720,20 +685,19 @@ struct GameDriver driver_seicross =
 	"Nichibutsu + Alice",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
 	rom_seicross,
-	friskyt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_seicross,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	seicross_hiload, seicross_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_sectrzon =
@@ -746,18 +710,17 @@ struct GameDriver driver_sectrzon =
 	"Nichibutsu + Alice",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&machine_driver,
-	no_nvram_init,
+	&machine_driver_no_nvram,
+	friskyt_decode,
 
 	rom_sectrzon,
-	friskyt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_seicross,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	seicross_hiload, seicross_hisave
+	ROT90,
+	0,0
 };

@@ -263,8 +263,8 @@ static struct GfxLayout gfx_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &gfx_layout, 0, 8*16 },
-	{ REGION_GFX2, 0x00000, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX1, 0, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX2, 0, &gfx_layout, 0, 8*16 },
 	{ -1 }
 };
 
@@ -280,7 +280,7 @@ static struct YM2151interface ym2151_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_contra =
 {
 	{
 		{
@@ -467,170 +467,8 @@ ROM_END
 
 
 
-static int contra_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x1125],"\x02\x58\x00",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x1120],64);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0x1118] = RAM[0x1124];
-                        RAM[0x1119] = RAM[0x1125];
-                        RAM[0x111a] = RAM[0x1126];
-                        RAM[0x111b] = RAM[0x1127];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void contra_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x1120],64);
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver driver_contra =
-{
-	__FILE__,
-	0,
-	"contra",
-	"Contra (US)",
-	"1987",
-	"Konami",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_contra,
-	0, 0,
-	0,
-	0,
-
-	input_ports_contra,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver driver_contrab =
-{
-	__FILE__,
-	&driver_contra,
-	"contrab",
-	"Contra (US bootleg)",
-	"1987",
-	"bootleg",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_contrab,
-	0, 0,
-	0,
-	0,
-
-	input_ports_contra,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver driver_contraj =
-{
-	__FILE__,
-	&driver_contra,
-	"contraj",
-	"Contra (Japan)",
-	"1987",
-	"Konami",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_contraj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_contra,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver driver_contrajb =
-{
-	__FILE__,
-	&driver_contra,
-	"contrajb",
-	"Contra (Japan bootleg)",
-	"1987",
-	"bootleg",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_contrajb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_contra,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
-
-struct GameDriver driver_gryzor =
-{
-	__FILE__,
-	&driver_contra,
-	"gryzor",
-	"Gryzor",
-	"1987",
-	"Konami",
-	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_gryzor,
-	0, 0,
-	0,
-	0,
-
-	input_ports_contra,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	contra_hiload, contra_hisave
-};
+GAME( 1987, contra,   ,       contra, contra, , ROT90, "Konami", "Contra (US)" )
+GAME( 1987, contrab,  contra, contra, contra, , ROT90, "bootleg", "Contra (US bootleg)" )
+GAME( 1987, contraj,  contra, contra, contra, , ROT90, "Konami", "Contra (Japan)" )
+GAME( 1987, contrajb, contra, contra, contra, , ROT90, "bootleg", "Contra (Japan bootleg)" )
+GAME( 1987, gryzor,   contra, contra, contra, , ROT90, "Konami", "Gryzor" )

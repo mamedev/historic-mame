@@ -470,46 +470,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        osd_fread(f,&RAM[0xe680],16*5);
-
-                        memcpy(&RAM[0xe600], &RAM[0xe680], 8);
-                        osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe680],16*5);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_gunsmoke =
 {
 	__FILE__,
@@ -531,9 +491,8 @@ struct GameDriver driver_gunsmoke =
 	input_ports_gunsmoke,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_gunsmrom =
@@ -557,9 +516,8 @@ struct GameDriver driver_gunsmrom =
 	input_ports_gunsmoke,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 /*
@@ -588,9 +546,8 @@ struct GameDriver driver_gunsmoka =
 	input_ports_gunsmoke,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload,hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_gunsmokj =
@@ -614,7 +571,6 @@ struct GameDriver driver_gunsmokj =
 	input_ports_gunsmoke,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

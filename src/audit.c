@@ -107,6 +107,9 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 		while (romp->length)
 		{
+			const struct GameDriver *drv;
+
+
 			if (romp->name == 0)
 				return 0;	/* ROM_CONTINUE not preceded by ROM_LOAD */
 			else if (romp->name == (char *)-1)
@@ -122,17 +125,12 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			count++;
 
 			/* obtain CRC-32 and length of ROM file */
-			err = osd_fchecksum (gamedrv->name, name, &aud->length, &aud->checksum);
-			if (err && gamedrv->clone_of)
+			drv = gamedrv;
+			do
 			{
-				/* if the game is a clone, try the parent */
-				err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->length, &aud->checksum);
-				if (err && gamedrv->clone_of->clone_of)
-				{
-					/* clone of a clone (for NeoGeo clones) */
-					err = osd_fchecksum (gamedrv->clone_of->clone_of->name, name, &aud->length, &aud->checksum);
-				}
-			}
+				err = osd_fchecksum (gamedrv->name, name, &aud->length, &aud->checksum);
+				drv = drv->clone_of;
+			} while (err && drv);
 
 			/* spin through ROM_CONTINUEs and ROM_RELOADs, totaling length */
 			do

@@ -8,32 +8,34 @@
 To enter service mode in some games hit 5+F3.
 
 
-Game						Year	System	Dumped by		Supported ?
+Game						Year	System	Dumped by			Supported ?
 ---------------------------------------------------------------------------
-64th Street  (World) /		1991	C		AraCORN 		Yes
- 64th Street (Japan)		1991	C		J-Rom	 		Yes
-Astyanax          (World) /	1989	A		?				Yes (encrypted)
- The Lord of King (Japan)	1989	A	 	J-Rom			Yes (encrypted)
-Avenging Spirit (World) /	1991	B		AraCORN 		Yes
- Phantasm       (Japan)		1990	A		J-Rom 			Yes (encrypted)
-Big Striker					1992	C		ShinobiZ & COY	Yes
-Chimera Beast				1993	C		J-Rom	 		Yes
-Cybattler					1993	C		AraCORN			Yes
-Earth Defense Force			1991	B		AraCORN			Yes
-Hachoo!						1989	A		AraCORN 		Yes (encrypted)
-Iga Ninjyutsuden (Japan)	1988	A		J-Rom			Yes (encrypted)
-Kick Off (Japan)			1988	A		AraCORN			Yes
-Legend of Makai (World) /	1988	Z		AraCORN			Yes
- Makai Densetsu (Japan)		1988	Z		-				Yes
-P-47  (World) /				1988	A	 	?				Yes
- P-47 (Japan)				1988	A		J-rom			Yes
-Peek-a-Boo!					1993	D		Bart			Yes
-Plus Alpha					1989	A		J-Rom 			Yes (encrypted)
-RodLand  (World) /			1990	A		AraCORN 		Yes (encrypted)
- RodLand (Japan)			1990	A		?				Yes
-Saint Dragon				1989	A		J-Rom 			Yes (encrypted)
-Soldam						?		?		-				-
----------------------------------------------------------------------------
+64th Street  (World) /		1991	C		AraCORN 		*	Yes
+ 64th Street (Japan)		1991	C		J-Rom	 		*	Yes
+Astyanax          (World) /	1989	A		-				*	Yes (encrypted)
+ The Lord of King (Japan)	1989	A	 	J-Rom			*	Yes (encrypted)
+Avenging Spirit (World) /	1991	B		AraCORN 		*	Yes
+ Phantasm       (Japan)		1990	A		J-Rom 			*	Yes (encrypted)
+Big Striker					1992	C		ShinobiZ & COY	*	Yes
+Chimera Beast				1993	C		J-Rom	 		*	Yes
+Cybattler					1993	C		AraCORN			*	Yes
+Earth Defense Force			1991	B		AraCORN			*	Yes
+Hachoo!						1989	A		AraCORN 		*	Yes (encrypted)
+Iga Ninjyutsuden (Japan)	1988	A		J-Rom			*	Yes (encrypted)
+Kick Off (Japan)			1988	A		AraCORN			*	Yes
+Legend of Makai (World) /	1988	Z		AraCORN				Yes
+ Makai Densetsu (Japan)		1988	Z		-					Yes
+P-47  (World) /				1988	A	 	-					Yes
+ P-47 (Japan)				1988	A		J-rom				Yes
+Peek-a-Boo!					1993	D		Bart				Yes
+Plus Alpha					1989	A		J-Rom 				Yes (encrypted)
+RodLand  (World) /			1990	A		AraCORN 		*	Yes (encrypted)
+ RodLand (Japan)			1990	A		-				*	Yes
+Saint Dragon				1989	A		J-Rom 				Yes (encrypted)
+Soldam (Japan)				1992	A		J-Rom			*	Yes (encrypted)
+------------------------------------------------------------^--------------
+															|
+							The Priority Prom is missing for these games !
 
 
 
@@ -81,23 +83,23 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 -----------------------------------------------------------------------------------
 
 
-									To Do
-									-----
+								Issues / To Do
+								--------------
 
-- There's a PROM in the video section (different for every game)
-  that controls the priorities. It's been dumped for only a few
-  games, so we have to fake their data. Most notable wrong
-  behaviours are stdargon and iganinju not showing some layers
-  in the title screens or intermission (respectively) because
-  those layers are *not enabled*
+- There's a 512 byte PROM in the video section (different for every game)
+  that controls the priorities. It's been dumped for only a few games, so
+  we have to fake their data.
+
+- Making the M6295 status register return 0 fixes the music tempo in
+  avspirit and 64street but makes most of the effects in hachoo disappear!
 
 - Sprite / Sprite and Sprite / Layers priorities must be made orthogonal
   (Hachoo! player passes over the portal at the end of level 2 otherwise)
 
+- VERY bad sprite lag in iganinju and plusalph
+
 - Understand an handful of unknown bits in video regs
 
-- Making the M6295 status register return 0 fixes the music tempo in
-  avspirit and 64street but makes most of the effects in hachoo disappear!
 
 ***************************************************************************/
 
@@ -109,12 +111,10 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 /* Variables only used here: */
 static int ip_select, ip_select_values[5];
 
-/* Variables that vidhrdw has access to: */
-int hardware_type;
-
 /* Variables defined in vidhrdw: */
 
 /* Functions defined in vidhrdw: */
+void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *prom);
 int  megasys1_vh_start(void);
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  megasys1_vregs_C_r(int offset);
@@ -172,33 +172,33 @@ int interrupt_A(void)
 
 
 #define MEMORYMAP_A(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress _shortname_##_readmem[] = \
+static struct MemoryReadAddress readmem_##_shortname_[] = \
 { \
-	{ 0x000000, 0x05ffff, MRA_ROM }, \
-	{ _ram_start_, _ram_end_, MRA_BANK1 }, \
-	{ 0x080000, 0x080001, coins_r }, \
-	{ 0x080002, 0x080003, player1_r }, \
-	{ 0x080004, 0x080005, player2_r }, \
-	{ 0x080006, 0x080007, dsw_r }, \
-	{ 0x080008, 0x080009, soundlatch2_r }, /* from sound cpu */ \
-	{ 0x084000, 0x084fff, MRA_BANK2 }, \
-	{ 0x088000, 0x0887ff, paletteram_word_r }, \
-	{ 0x08e000, 0x08ffff, MRA_BANK3 }, \
-	{ 0x090000, 0x093fff, megasys1_scrollram_0_r }, \
-	{ 0x094000, 0x097fff, megasys1_scrollram_1_r }, \
-	{ 0x098000, 0x09bfff, megasys1_scrollram_2_r }, \
+	{ 0x000000, 0x05ffff, MRA_ROM					}, \
+	{ _ram_start_, _ram_end_, MRA_BANK1				}, \
+	{ 0x080000, 0x080001, coins_r					}, \
+	{ 0x080002, 0x080003, player1_r					}, \
+	{ 0x080004, 0x080005, player2_r					}, \
+	{ 0x080006, 0x080007, dsw_r						}, \
+	{ 0x080008, 0x080009, soundlatch2_r				}, /* from sound cpu */ \
+	{ 0x084000, 0x084fff, MRA_BANK2					}, \
+	{ 0x088000, 0x0887ff, paletteram_word_r			}, \
+	{ 0x08e000, 0x08ffff, MRA_BANK3					}, \
+	{ 0x090000, 0x093fff, megasys1_scrollram_0_r	}, \
+	{ 0x094000, 0x097fff, megasys1_scrollram_1_r	}, \
+	{ 0x098000, 0x09bfff, megasys1_scrollram_2_r	}, \
 	{ -1 } \
 }; \
-static struct MemoryWriteAddress _shortname_##_writemem[] = \
+static struct MemoryWriteAddress writemem_##_shortname_[] = \
 { \
- 	{ 0x000000, 0x05ffff, MWA_ROM }, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram }, \
-	{ 0x084000, 0x0843ff, megasys1_vregs_A_w,		&megasys1_vregs }, \
-	{ 0x088000, 0x0887ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram }, \
-	{ 0x08e000, 0x08ffff, MWA_BANK3,				&megasys1_objectram }, \
-	{ 0x090000, 0x093fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0,0 }, \
-	{ 0x094000, 0x097fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1,0 }, \
-	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w,	&megasys1_scrollram_2,0 }, \
+ 	{ 0x000000, 0x05ffff, MWA_ROM											}, \
+	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
+	{ 0x084000, 0x0843ff, megasys1_vregs_A_w,		&megasys1_vregs			}, \
+	{ 0x088000, 0x0887ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	}, \
+	{ 0x08e000, 0x08ffff, MWA_BANK3,				&megasys1_objectram		}, \
+	{ 0x090000, 0x093fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0,0	}, \
+	{ 0x094000, 0x097fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1,0	}, \
+	{ 0x098000, 0x09bfff, megasys1_scrollram_2_w,	&megasys1_scrollram_2,0	}, \
 	{ -1 } \
 };
 
@@ -225,7 +225,7 @@ int interrupt_B(void)
 
 /*			 Read the input ports, through a protection device:
 
- ip_select_values must contains the 5 codes sent to the protection device
+ ip_select_values must contain the 5 codes sent to the protection device
  in order to obtain the status of the following 5 input ports:
 
 		 Coins	Player1		Player2		DSW1		DSW2
@@ -267,32 +267,32 @@ static void ip_select_w(int offset,int data)
 
 
 #define MEMORYMAP_B(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress _shortname_##_readmem[] =\
+static struct MemoryReadAddress readmem_##_shortname_[] = \
 {\
-	{ 0x000000, 0x03ffff, MRA_ROM },\
-	{ 0x080000, 0x0bffff, MRA_ROM },\
-	{ _ram_start_, _ram_end_,	MRA_BANK1 },\
-	{ 0x044000, 0x044fff, MRA_BANK2 },\
-	{ 0x048000, 0x0487ff, paletteram_word_r },\
-	{ 0x04e000, 0x04ffff, MRA_BANK3 },\
-	{ 0x050000, 0x053fff, megasys1_scrollram_0_r },\
-	{ 0x054000, 0x057fff, megasys1_scrollram_1_r },\
-	{ 0x058000, 0x05bfff, megasys1_scrollram_2_r },\
-	{ 0x0e0000, 0x0e0001, ip_select_r },\
+	{ 0x000000, 0x03ffff, MRA_ROM					},\
+	{ 0x080000, 0x0bffff, MRA_ROM					},\
+	{ _ram_start_, _ram_end_,	MRA_BANK1			},\
+	{ 0x044000, 0x044fff, MRA_BANK2					},\
+	{ 0x048000, 0x0487ff, paletteram_word_r			},\
+	{ 0x04e000, 0x04ffff, MRA_BANK3					},\
+	{ 0x050000, 0x053fff, megasys1_scrollram_0_r	},\
+	{ 0x054000, 0x057fff, megasys1_scrollram_1_r	},\
+	{ 0x058000, 0x05bfff, megasys1_scrollram_2_r	},\
+	{ 0x0e0000, 0x0e0001, ip_select_r				},\
 	{ -1 }\
 };\
-static struct MemoryWriteAddress _shortname_##_writemem[] =\
+static struct MemoryWriteAddress writemem_##_shortname_[] = \
 {\
- 	{ 0x000000, 0x03ffff, MWA_ROM },\
-	{ 0x080000, 0x0bffff, MWA_ROM },\
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram },\
-	{ 0x044000, 0x0443ff, megasys1_vregs_A_w,		&megasys1_vregs },\
-	{ 0x048000, 0x0487ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram },\
-	{ 0x04e000, 0x04ffff, MWA_BANK3,				&megasys1_objectram },\
-	{ 0x050000, 0x053fff, megasys1_scrollram_0_w ,	&megasys1_scrollram_0 },\
-	{ 0x054000, 0x057fff, megasys1_scrollram_1_w ,	&megasys1_scrollram_1 },\
-	{ 0x058000, 0x05bfff, megasys1_scrollram_2_w ,	&megasys1_scrollram_2 },\
-	{ 0x0e0000, 0x0e0001, ip_select_w },\
+ 	{ 0x000000, 0x03ffff, MWA_ROM											},\
+	{ 0x080000, 0x0bffff, MWA_ROM											},\
+	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			},\
+	{ 0x044000, 0x0443ff, megasys1_vregs_A_w,		&megasys1_vregs			},\
+	{ 0x048000, 0x0487ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	},\
+	{ 0x04e000, 0x04ffff, MWA_BANK3,				&megasys1_objectram		},\
+	{ 0x050000, 0x053fff, megasys1_scrollram_0_w ,	&megasys1_scrollram_0	},\
+	{ 0x054000, 0x057fff, megasys1_scrollram_1_w ,	&megasys1_scrollram_1	},\
+	{ 0x058000, 0x05bfff, megasys1_scrollram_2_w ,	&megasys1_scrollram_2	},\
+	{ 0x0e0000, 0x0e0001, ip_select_w										},\
 	{ -1 }\
 };\
 
@@ -307,30 +307,30 @@ static struct MemoryWriteAddress _shortname_##_writemem[] =\
 #define interrupt_C		interrupt_B
 
 #define MEMORYMAP_C(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress _shortname_##_readmem[] = \
+static struct MemoryReadAddress readmem_##_shortname_[] = \
 {\
-	{ 0x000000, 0x07ffff, MRA_ROM }, \
-	{ _ram_start_, _ram_end_, MRA_BANK1 }, \
-	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r }, \
-	{ 0x0d2000, 0x0d3fff, MRA_BANK3 }, \
-	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_r }, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_r }, \
-	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_r }, \
-	{ 0x0f8000, 0x0f87ff, paletteram_word_r }, \
-	{ 0x0d8000, 0x0d8001, ip_select_r }, \
+	{ 0x000000, 0x07ffff, MRA_ROM					}, \
+	{ _ram_start_, _ram_end_, MRA_BANK1				}, \
+	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_r		}, \
+	{ 0x0d2000, 0x0d3fff, MRA_BANK3					}, \
+	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_r	}, \
+	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_r	}, \
+	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_r	}, \
+	{ 0x0f8000, 0x0f87ff, paletteram_word_r			}, \
+	{ 0x0d8000, 0x0d8001, ip_select_r				}, \
 	{ -1 } \
 }; \
-static struct MemoryWriteAddress _shortname_##_writemem[] = \
+static struct MemoryWriteAddress writemem_##_shortname_[] = \
 { \
- 	{ 0x000000, 0x07ffff, MWA_ROM }, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram }, \
-	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_w,		&megasys1_vregs }, \
-	{ 0x0d2000, 0x0d3fff, MWA_BANK3,				&megasys1_objectram }, \
-	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0 }, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_w,	&megasys1_scrollram_1 }, \
-	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2 }, \
-	{ 0x0f8000, 0x0f87ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram }, \
-	{ 0x0d8000, 0x0d8001, ip_select_w }, \
+ 	{ 0x000000, 0x07ffff, MWA_ROM											}, \
+	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
+	{ 0x0c0000, 0x0cffff, megasys1_vregs_C_w,		&megasys1_vregs			}, \
+	{ 0x0d2000, 0x0d3fff, MWA_BANK3,				&megasys1_objectram		}, \
+	{ 0x0e0000, 0x0e3fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
+	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
+	{ 0x0f0000, 0x0f3fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
+	{ 0x0f8000, 0x0f87ff, paletteram_RRRRGGGGBBBBRGBx_word_w, &paletteram	}, \
+	{ 0x0d8000, 0x0d8001, ip_select_w										}, \
 	{ -1 } \
 };
 
@@ -348,36 +348,36 @@ int interrupt_D(void)
 }
 
 #define MEMORYMAP_D(_shortname_,_ram_start_,_ram_end_) \
-static struct MemoryReadAddress _shortname_##_readmem[] = \
+static struct MemoryReadAddress readmem_##_shortname_[] = \
 { \
-	{ 0x000000, 0x03ffff, MRA_ROM }, \
-	{ _ram_start_, _ram_end_, MRA_BANK1 }, \
-	{ 0x0c0000, 0x0c9fff, MRA_BANK2 }, \
-	{ 0x0ca000, 0x0cbfff, MRA_BANK3 }, \
-	{ 0x0d0000, 0x0d3fff, MRA_BANK4 }, \
-	{ 0x0d4000, 0x0d7fff, MRA_BANK5 }, \
-	{ 0x0d8000, 0x0d87ff, paletteram_word_r }, \
-	{ 0x0db000, 0x0db7ff, paletteram_word_r }, \
-	{ 0x0e0000, 0x0e0001, dsw_r }, \
-	{ 0x0e8000, 0x0ebfff, MRA_BANK7 }, \
-	{ 0x0f0000, 0x0f0001, coins_r }, /* Coins + P1&P2 Buttons */ \
-	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_r }, \
-	{ 0x100000, 0x100001, _shortname_##_protection_r }, /* Protection */ \
+	{ 0x000000, 0x03ffff, MRA_ROM						}, \
+	{ _ram_start_, _ram_end_, MRA_BANK1					}, \
+	{ 0x0c0000, 0x0c9fff, MRA_BANK2						}, \
+	{ 0x0ca000, 0x0cbfff, MRA_BANK3						}, \
+	{ 0x0d0000, 0x0d3fff, MRA_BANK4						}, \
+	{ 0x0d4000, 0x0d7fff, MRA_BANK5						}, \
+	{ 0x0d8000, 0x0d87ff, paletteram_word_r				}, \
+	{ 0x0db000, 0x0db7ff, paletteram_word_r				}, \
+	{ 0x0e0000, 0x0e0001, dsw_r							}, \
+	{ 0x0e8000, 0x0ebfff, MRA_BANK7						}, \
+	{ 0x0f0000, 0x0f0001, coins_r						}, /* Coins + P1&P2 Buttons */ \
+	{ 0x0f8000, 0x0f8001, OKIM6295_status_0_r			}, \
+	{ 0x100000, 0x100001, protection_##_shortname_##_r	}, /* Protection */ \
 	{ -1 } \
 }; \
-static struct MemoryWriteAddress _shortname_##_writemem[] = \
+static struct MemoryWriteAddress writemem_##_shortname_[] = \
 { \
- 	{ 0x000000, 0x03ffff, MWA_ROM }, \
-	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram }, \
-	{ 0x0c0000, 0x0c9fff, megasys1_vregs_D_w,		&megasys1_vregs }, \
-	{ 0x0ca000, 0x0cbfff, MWA_BANK3, 				&megasys1_objectram }, \
-	{ 0x0d0000, 0x0d3fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1 }, \
-	{ 0x0d4000, 0x0d7fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2 }, \
-	{ 0x0d8000, 0x0d87ff, paletteram_RRRRRGGGGGBBBBBx_word_w }, \
-	{ 0x0db000, 0x0db7ff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram }, \
-	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w,	&megasys1_scrollram_0 }, \
-	{ 0x0f8000, 0x0f8001, ms_OKIM6295_data_0_w }, \
-	{ 0x100000, 0x100001, _shortname_##_protection_w }, /* Protection */ \
+ 	{ 0x000000, 0x03ffff, MWA_ROM											}, \
+	{ _ram_start_, _ram_end_, MWA_BANK1,			&megasys1_ram			}, \
+	{ 0x0c0000, 0x0c9fff, megasys1_vregs_D_w,		&megasys1_vregs			}, \
+	{ 0x0ca000, 0x0cbfff, MWA_BANK3, 				&megasys1_objectram		}, \
+	{ 0x0d0000, 0x0d3fff, megasys1_scrollram_1_w,	&megasys1_scrollram_1	}, \
+	{ 0x0d4000, 0x0d7fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	}, \
+	{ 0x0d8000, 0x0d87ff, paletteram_RRRRRGGGGGBBBBBx_word_w				}, \
+	{ 0x0db000, 0x0db7ff, paletteram_RRRRRGGGGGBBBBBx_word_w, &paletteram	}, \
+	{ 0x0e8000, 0x0ebfff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	}, \
+	{ 0x0f8000, 0x0f8001, ms_OKIM6295_data_0_w								}, \
+	{ 0x100000, 0x100001, protection_##_shortname_##_w						}, /* Protection */ \
 	{ -1 } \
 };
 
@@ -436,53 +436,52 @@ static struct MemoryWriteAddress _shortname_##_writemem[] = \
 
 */
 
-/* See stdragon, not sure about the number of interrupts per frame */
-#define SOUND_INTERRUPT_NUM		16
+/* See stdragon, which is interrupt driven */
+#define SOUND_INTERRUPT_NUM		8
 static int sound_interrupt(void)
 {
 	return 4;
 }
 
 
-
-void ms_soundlatch2_w(int offset,int data)
-{
-	if ((data & 0x00ff0000) == 0)
-		soundlatch2_w(0,data & 0xff);
-	else
-if (errorlog) fprintf(errorlog,"%06x: write %02x to soundlatch2_w\n",cpu_get_pc(),data);
-}
-
 void ms_YM2151_register_port_0_w(int offset,int data)
 {
-	if ((data & 0x00ff0000) == 0)
-		YM2151_register_port_0_w(0,data & 0xff);
-	else
-if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
+	if ((data & 0x00ff0000) == 0)	YM2151_register_port_0_w(0,data & 0xff);
+	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
 }
 
 void ms_YM2151_data_port_0_w(int offset,int data)
 {
-	if ((data & 0x00ff0000) == 0)
-		YM2151_data_port_0_w(0,data & 0xff);
-	else
-if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
+	if ((data & 0x00ff0000) == 0)	YM2151_data_port_0_w(0,data & 0xff);
+	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
 }
 
 void ms_OKIM6295_data_0_w(int offset,int data)
 {
-	if ((data & 0x00ff0000) == 0)
-		OKIM6295_data_0_w(0,data & 0xff);
-	else
-if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
+	if ((data & 0x00ff0000) == 0)	OKIM6295_data_0_w(0,data & 0xff);
+	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
 }
 
 void ms_OKIM6295_data_1_w(int offset,int data)
 {
-	if ((data & 0x00ff0000) == 0)
-		OKIM6295_data_1_w(0,data & 0xff);
-	else
-if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
+	if ((data & 0x00ff0000) == 0)	OKIM6295_data_1_w(0,data & 0xff);
+	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
+}
+
+
+
+void ms_soundlatch_w(int offset,int data)
+{
+	static unsigned char val[2];
+	COMBINE_WORD_MEM(val,data);
+	soundlatch_w(0, READ_WORD(val) );
+}
+
+void ms_soundlatch2_w(int offset,int data)
+{
+	static unsigned char val[2];
+	COMBINE_WORD_MEM(val,data);
+	soundlatch2_w(0, READ_WORD(val) );
 }
 
 /***************************************************************************
@@ -492,24 +491,24 @@ if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_1_w\n",cpu_get
 
 static struct MemoryReadAddress sound_readmem_A[] =
 {
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x040000, 0x040001, soundlatch_r },
-	{ 0x080002, 0x080003, YM2151_status_port_0_r },
-	{ 0x0a0000, 0x0a0001, MRA_NOP /*OKIM6295_status_0_r*/ }, /* temporary - to fix sound */
-	{ 0x0c0000, 0x0c0001, MRA_NOP /*OKIM6295_status_1_r*/ }, /* temporary - to fix sound */
-	{ 0x0e0000, 0x0fffff, MRA_BANK8 },
+	{ 0x000000, 0x01ffff, MRA_ROM					},
+	{ 0x040000, 0x040001, soundlatch_r				},
+	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+	{ 0x0e0000, 0x0fffff, MRA_BANK8					},
 	{ -1 }
 };
 
 static struct MemoryWriteAddress sound_writemem_A[] =
 {
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x060000, 0x060001, ms_soundlatch2_w },	// to main cpu
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w },
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w },
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w },
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w },
-	{ 0x0e0000, 0x0fffff, MWA_BANK8 },
+	{ 0x000000, 0x01ffff, MWA_ROM						},
+	{ 0x060000, 0x060001, ms_soundlatch2_w				},	// to main cpu
+	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
+	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
+	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
+	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
+	{ 0x0e0000, 0x0fffff, MWA_BANK8						},
 	{ -1 }
 };
 
@@ -525,26 +524,26 @@ static struct MemoryWriteAddress sound_writemem_A[] =
 
 static struct MemoryReadAddress sound_readmem_B[] =
 {
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x040000, 0x040001, soundlatch_r },	/* from main cpu */
-	{ 0x060000, 0x060001, soundlatch_r },	/* from main cpu */
-	{ 0x080002, 0x080003, YM2151_status_port_0_r },
-	{ 0x0a0000, 0x0a0001, MRA_NOP /*OKIM6295_status_0_r*/ }, /* temporary - to fix sound */
-	{ 0x0c0000, 0x0c0001, MRA_NOP /*OKIM6295_status_1_r*/ }, /* temporary - to fix sound */
-	{ 0x0e0000, 0x0effff, MRA_BANK8 },
+	{ 0x000000, 0x01ffff, MRA_ROM					},
+	{ 0x040000, 0x040001, soundlatch_r				},	/* from main cpu */
+	{ 0x060000, 0x060001, soundlatch_r				},	/* from main cpu */
+	{ 0x080002, 0x080003, YM2151_status_port_0_r	},
+	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r		},
+	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r		},
+	{ 0x0e0000, 0x0effff, MRA_BANK8					},
 	{ -1 }
 };
 
 static struct MemoryWriteAddress sound_writemem_B[] =
 {
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x040000, 0x040001, ms_soundlatch2_w },	/* to main cpu */
-	{ 0x060000, 0x060001, ms_soundlatch2_w },	/* to main cpu */
-	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w },
-	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w },
-	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w },
-	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w },
-	{ 0x0e0000, 0x0effff, MWA_BANK8 },
+	{ 0x000000, 0x01ffff, MWA_ROM						},
+	{ 0x040000, 0x040001, ms_soundlatch2_w				},	/* to main cpu */
+	{ 0x060000, 0x060001, ms_soundlatch2_w				},	/* to main cpu */
+	{ 0x080000, 0x080001, ms_YM2151_register_port_0_w	},
+	{ 0x080002, 0x080003, ms_YM2151_data_port_0_w		},
+	{ 0x0a0000, 0x0a0003, ms_OKIM6295_data_0_w			},
+	{ 0x0c0000, 0x0c0003, ms_OKIM6295_data_1_w			},
+	{ 0x0e0000, 0x0effff, MWA_BANK8						},
 	{ -1 }
 };
 
@@ -564,31 +563,31 @@ static struct MemoryWriteAddress sound_writemem_B[] =
 
 static struct MemoryReadAddress sound_readmem_z80[] =
 {
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xe000, 0xe000, soundlatch_r },
+	{ 0x0000, 0x3fff, MRA_ROM		},
+	{ 0xc000, 0xc7ff, MRA_RAM		},
+	{ 0xe000, 0xe000, soundlatch_r	},
 	{ -1 }
 };
 
 static struct MemoryWriteAddress sound_writemem_z80[] =
 {
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, MWA_NOP }, /* ?? */
+	{ 0x0000, 0x3fff, MWA_ROM	},
+	{ 0xc000, 0xc7ff, MWA_RAM	},
+	{ 0xf000, 0xf000, MWA_NOP	}, /* ?? */
 	{ -1 }
 };
 
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x00, 0x00, YM2203_status_port_0_r },
+	{ 0x00, 0x00, YM2203_status_port_0_r	},
 	{ -1 }
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x00, 0x00, YM2203_control_port_0_w },
-	{ 0x01, 0x01, YM2203_write_port_0_w },
+	{ 0x00, 0x00, YM2203_control_port_0_w	},
+	{ 0x01, 0x01, YM2203_write_port_0_w		},
 	{ -1 }
 };
 
@@ -660,22 +659,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_D[] =
 ***************************************************************************/
 
 
-void driver_init_Z(void) {hardware_type = 'Z'; }
-void driver_init_A(void) {hardware_type = 'A'; }
-void driver_init_C(void) {hardware_type = 'C'; }
-void driver_init_D(void) {hardware_type = 'D'; }
-void driver_init_B(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* The ROM area is split in two parts: 000000-03ffff & 080000-0bffff */
-	memcpy(&RAM[0x80000], &RAM[0x40000], 0x40000);
-	memset(&RAM[0x40000], 0, 0x40000);
-
-	hardware_type = 'B' ;
-}
-
-
 #define MEGASYS1_CREDITS "Luca Elia\n"
 
 
@@ -690,7 +673,7 @@ void driver_init_B(void)
 #define MEGASYS1_MACHINE(	_type_, \
 							_shortname_,_main_clock_,_sound_clock_, \
 							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct YM2151interface _shortname_##_ym2151_interface = \
+static struct YM2151interface ym2151_interface_##_shortname_ = \
 { \
 	1, \
 	_fm_clock_, \
@@ -698,7 +681,7 @@ static struct YM2151interface _shortname_##_ym2151_interface = \
 	{ 0 } \
 }; \
  \
-static struct OKIM6295interface _shortname_##_okim6295_interface = \
+static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 { \
 	2, \
 	{_oki1_clock_, _oki2_clock_},\
@@ -706,13 +689,13 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 	{ 50, 50 } \
 }; \
  \
-static struct MachineDriver _shortname_##_machine_driver = \
+static struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{ \
 		{ \
 			CPU_M68000, \
 			_main_clock_, \
-			_shortname_##_readmem,_shortname_##_writemem,0,0, \
+			readmem_##_shortname_,writemem_##_shortname_,0,0, \
 			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
 		}, \
 		{ \
@@ -722,14 +705,14 @@ static struct MachineDriver _shortname_##_machine_driver = \
 			sound_interrupt,SOUND_INTERRUPT_NUM, \
 		}, \
 	}, \
-	60,DEFAULT_60HZ_VBLANK_DURATION, \
+	60, DEFAULT_60HZ_VBLANK_DURATION, \
 	1, \
 	megasys1_init_machine, \
 	/* video hardware */ \
 	256, 256,{ 0, 256-1, 0+16, 256-16-1 }, \
 	gfxdecodeinfo_##_type_, \
 	1024, 1024, \
-	0, \
+	megasys1_convert_prom, \
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
 	0, \
 	megasys1_vh_start, \
@@ -740,11 +723,11 @@ static struct MachineDriver _shortname_##_machine_driver = \
 	{ \
 		{ \
 			SOUND_YM2151, \
-			&_shortname_##_ym2151_interface \
+			&ym2151_interface_##_shortname_ \
 		},\
 		{\
 			SOUND_OKIM6295, \
-			&_shortname_##_okim6295_interface \
+			&okim6295_interface_##_shortname_ \
 		} \
 	} \
 };
@@ -766,7 +749,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 #define MEGASYS1_MACHINE_D(	_type_, \
 							_shortname_,_main_clock_,_sound_clock_, \
 							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct OKIM6295interface _shortname_##_okim6295_interface = \
+static struct OKIM6295interface okim6295_interface_##_shortname_ = \
 { \
 	1, \
 	{_oki1_clock_},\
@@ -774,13 +757,13 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 	{ 100 } \
 }; \
  \
-static struct MachineDriver _shortname_##_machine_driver = \
+static struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{\
 		{\
 			CPU_M68000,\
 			_main_clock_, \
-			_shortname_##_readmem,_shortname_##_writemem,0,0,\
+			readmem_##_shortname_,writemem_##_shortname_,0,0, \
 			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
 		} \
 	},\
@@ -791,7 +774,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 	256, 256,{ 0, 256-1, 0+16, 256-16-1 },\
 	gfxdecodeinfo_##_type_,\
 	1024, 1024,\
-	0,\
+	megasys1_convert_prom,\
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
 	0,\
 	megasys1_vh_start,\
@@ -802,7 +785,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 	{ \
 		{\
 			SOUND_OKIM6295, \
-			&_shortname_##_okim6295_interface \
+			&okim6295_interface_##_shortname_ \
 		} \
 	}\
 };
@@ -812,7 +795,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 
 /***************************************************************************
 
-						[  Mega System 1 D ]
+						[  Mega System 1 Z ]
 
 						 68000+Z80 1xYM2203
 
@@ -828,11 +811,11 @@ static void irq_handler(int irq)
 #define MEGASYS1_MACHINE_Z(	_type_, \
 							_shortname_,_main_clock_,_sound_clock_, \
 							_fm_clock_,_oki1_clock_,_oki2_clock_) \
-static struct YM2203interface _shortname_##_ym2203_interface = \
+static struct YM2203interface ym2203_interface_##_shortname_ = \
 { \
 	1, \
 	_fm_clock_, \
-	{ YM2203_VOL(25,25) }, \
+	{ YM2203_VOL(50,50) }, \
 	AY8910_DEFAULT_GAIN, \
 	{ 0 }, \
 	{ 0 }, \
@@ -841,13 +824,13 @@ static struct YM2203interface _shortname_##_ym2203_interface = \
 	{ irq_handler } \
 }; \
 \
-static struct MachineDriver _shortname_##_machine_driver = \
+static struct MachineDriver machine_driver_##_shortname_ = \
 {\
 	{\
 		{\
 			CPU_M68000,\
 			_main_clock_, \
-			_shortname_##_readmem,_shortname_##_writemem,0,0, \
+			readmem_##_shortname_,writemem_##_shortname_,0,0, \
 			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
 		},\
 		{\
@@ -864,7 +847,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 	256, 256,{ 0, 256-1, 0+16, 256-16-1 },\
 	gfxdecodeinfo_Z,\
 	256*3, 256*3,\
-	0,\
+	0	/*megasys1_convert_prom*/,\
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
 	0,\
 	megasys1_vh_start,\
@@ -873,9 +856,9 @@ static struct MachineDriver _shortname_##_machine_driver = \
 	/* sound hardware */ \
 	0,0,0,0,\
 	{\
-		{\
-			SOUND_YM2203,\
-			&_shortname_##_ym2203_interface \
+		{ \
+			SOUND_YM2203, \
+			&ym2203_interface_##_shortname_ \
 		},\
 	}\
 };
@@ -892,28 +875,20 @@ static struct MachineDriver _shortname_##_machine_driver = \
 
 /*
 
- This is a general purpose macro to define a game
+ This is a general purpose macro to define a game.
 
- The dirname can differ from the shortname:
- eg. shortname is street64 but dirname is 64street (<- can't be used as
- shortname since it starts with a digit).
-
- There is a different macro for clones too (defined below), but if the
- parent and clone game run on different hardwares, you can use this macro
- for the clone (to describe its hardware) and specify the parent's driver
- as a parameter
-
- Most games use the MEGASYS_GAME macro though (defined below) which is
- like this macro but with shortname equal to dirname and no parent
- (average situation)
+ There is a different macro for clones (defined below), but if the
+ parent and clone game run on different hardwares, you can use this
+ macro for the clone (to describe its hardware) and specify the
+ parent's driver as a parameter
 
 */
-#define MEGASYS1_GAME_EXT(_shortname_,_dirname_,_parent_driver_,_fullname_,_year_, \
-						  _orientation_, \
-						  _type_,_ram_start_, _ram_end_, \
-						  _main_clock_,_sound_clock_, \
-						  _fm_clock_,_oki1_clock_,_oki2_clock_, \
-						  _rom_decode_, _flags_) \
+#define MEGASYS1_GAME(_shortname_,_parent_driver_,_fullname_,_year_, \
+					  _flags_, \
+					  _type_,_ram_start_, _ram_end_, \
+					  _main_clock_,_sound_clock_, \
+					  _fm_clock_,_oki1_clock_,_oki2_clock_, \
+					  _rom_decode_) \
  \
 	MEMORYMAP_##_type_(_shortname_,_ram_start_,_ram_end_) \
  \
@@ -925,21 +900,21 @@ struct GameDriver driver_##_shortname_ = \
 { \
 	__FILE__, \
 	_parent_driver_, \
-	#_dirname_, \
+	#_shortname_, \
 	#_fullname_, \
 	#_year_, \
 	"Jaleco", \
 	MEGASYS1_CREDITS, \
-	_flags_, \
-	&_shortname_##_machine_driver, \
+	0, \
+	&machine_driver_##_shortname_, \
 	_rom_decode_, \
 	rom_##_shortname_, \
-	&driver_init_##_type_, 0, \
+	0, 0, \
 	0, \
 	0, \
 	input_ports_##_shortname_, \
 	0, 0, 0, \
-	_orientation_, \
+	_flags_, \
 	0,0 \
 };
 
@@ -947,74 +922,39 @@ struct GameDriver driver_##_shortname_ = \
 
 
 /*
-	General purpose macro to define a clone game:
+	General purpose macro to define a clone game.
+
 	It is for clones that run on the same hardware (average situation) so
 	input ports and machine driver will point to those of the parent game
-
-	Dirname and shortname can differ
 */
 
-#define MEGASYS1_GAME_CLONE_EXT(_shortname_,_dirname_,_parentname_,_fullname_,_year_, \
-								_orientation_, _type_,  \
-								_rom_decode_, _flags_ ) \
+#define MEGASYS1_GAME_CLONE(_shortname_,_parentname_,_fullname_,_year_, \
+							_flags_, _rom_decode_) \
+\
 struct GameDriver driver_##_shortname_ = \
 { \
 	__FILE__, \
 	&driver_##_parentname_, \
-	#_dirname_, \
+	#_shortname_, \
 	#_fullname_, \
 	#_year_, \
 	"Jaleco", \
 	MEGASYS1_CREDITS, \
-	_flags_, \
-	&_parentname_##_machine_driver, \
+	0, \
+	&machine_driver_##_parentname_, \
 	_rom_decode_, \
 	rom_##_shortname_, \
-	&driver_init_##_type_, 0, \
+	0, 0, \
 	0, \
 	0, \
 	input_ports_##_parentname_, \
 	0, 0, 0, \
-	_orientation_, \
+	_flags_, \
 	0,0 \
 };
 
 
-
-/*
-   Standard game definition:
-   shortname is equal to dirname, no parent
-*/
-
-#define MEGASYS1_GAME(_shortname_,_fullname_,_year_, \
-					  _orientation_, \
-					  _type_,_ram_start_, _ram_end_, \
-					  _main_clock_,_sound_clock_, \
-					  _fm_clock_,_oki1_clock_,_oki2_clock_, \
-					  _rom_decode_, _flags_) \
-MEGASYS1_GAME_EXT(_shortname_,_shortname_,0,_fullname_,_year_, \
-				  _orientation_, \
-				  _type_,_ram_start_, _ram_end_, \
-				  _main_clock_,_sound_clock_, \
-				  _fm_clock_,_oki1_clock_,_oki2_clock_, \
-				  _rom_decode_, _flags_)
-
-
-/*
-   Standard clone game definition:
-   shortname is equal to dirname
-*/
-#define MEGASYS1_GAME_CLONE(_shortname_,_parentname_,_fullname_,_year_, \
-							_orientation_, _type_,  \
-							_rom_decode_, _flags_ ) \
-MEGASYS1_GAME_CLONE_EXT(_shortname_,_shortname_,_parentname_,_fullname_,_year_, \
-						_orientation_, _type_,  \
-						_rom_decode_, _flags_ )
-
-
-
-
-/* Provided by Jim Hernandez */
+/* Provided by Jim Hernandez: 3.5MHz for FM, 30KHz (!) for ADPCM */
 #define STD_FM_CLOCK	3500000
 #define STD_OKI_CLOCK	  30000
 
@@ -1064,7 +1004,7 @@ ff9df8.w	*** level ***
 
 ***************************************************************************/
 
-#define STREET64_ROM_LOAD \
+#define ROM_LOAD_64STREET \
 	ROM_REGION(0x220000)	/* Region 1 - temporary for gfx roms */ \
 	ROM_LOAD( "64th_01.rom", 0x000000, 0x080000, 0x06222f90 ) \
 	ROM_LOAD( "64th_06.rom", 0x080000, 0x080000, 0x2bfcdc75 ) \
@@ -1082,30 +1022,30 @@ ff9df8.w	*** level ***
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */ \
 	ROM_LOAD( "64th_10.rom", 0x000000, 0x040000, 0xa3390561 ) \
 \
-	ROM_REGION(0x0200)		/* priority PROM */ \
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
 	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
 
 
-ROM_START( street64 )
+ROM_START( 64street )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "64th_03.rom", 0x000000, 0x040000, 0xed6c6942 )
 	ROM_LOAD_ODD(  "64th_02.rom", 0x000000, 0x040000, 0x0621ed1d )
 
-	STREET64_ROM_LOAD
+	ROM_LOAD_64STREET
 ROM_END
 
 
-ROM_START( streej64 )
+ROM_START( 64streej )
 	ROM_REGIONX( 0x80000, REGION_CPU1 )		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "91105-3.bin", 0x000000, 0x040000, 0xa211a83b )
 	ROM_LOAD_ODD(  "91105-2.bin", 0x000000, 0x040000, 0x27c1f436 )
 
-	STREET64_ROM_LOAD
+	ROM_LOAD_64STREET
 ROM_END
 
 
 
-INPUT_PORTS_START( street64 )
+INPUT_PORTS_START( 64street )
 	COINS
 //	fire	jump
 	JOY_2BUTTONS(IPF_PLAYER1)
@@ -1139,7 +1079,7 @@ INPUT_PORTS_START( street64 )
 
 INPUT_PORTS_END
 
-void street64_init(void)
+void init_64street(void)
 {
 //	unsigned char *RAM = memory_region(REGION_CPU1);
 //	WRITE_WORD (&RAM[0x006b8],0x6004);		// d8001 test
@@ -1153,13 +1093,13 @@ void street64_init(void)
 }
 
 /* OSC:	? (Main 12, Sound 10 MHz according to KLOV) */
-MEGASYS1_GAME_EXT(	street64, 64street, 0, 64th. Street - A Detective Story (World),1991, ORIENTATION_DEFAULT,
-					C,0xff0000,0xffffff,
-					12000000,10000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-					street64_init, 0 )
+MEGASYS1_GAME(	64street, 0, 64th. Street - A Detective Story (World),1991,
+				ROT0,C,0xff0000,0xffffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				init_64street )
 
-MEGASYS1_GAME_CLONE_EXT( streej64, 64streej, street64, 64th. Street - A Detective Story (Japan),1991,ORIENTATION_DEFAULT, C,
-						 street64_init, 0 )
+
+MEGASYS1_GAME_CLONE( 64streej, 64street, 64th. Street - A Detective Story (Japan), 1991, ROT0, init_64street )
 
 
 
@@ -1201,7 +1141,7 @@ interrupts:	1] 1aa	2] 1b4
 	ROM_LOAD( "astyan7.bin",  0x000000, 0x020000, 0x319418cc ) \
 	ROM_LOAD( "astyan8.bin",  0x020000, 0x020000, 0x5e5d2a22 ) \
 \
-	ROM_REGION(0x0200)		/* priority PROM */ \
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 
 
@@ -1229,10 +1169,10 @@ ROM_END
 
 INPUT_PORTS_START( astyanax )
 	COINS						/* IN0 0x80001.b */
-//	fire	jump
-	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+//	fire	jump	magic
+	JOY_3BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE						/* IN2 0x80004.b */
-	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
+	JOY_3BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -1277,10 +1217,10 @@ INPUT_PORTS_START( astyanax )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x40, 0x40, "Swap 1P/2P Controls" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1338,12 +1278,12 @@ void astyanax_init(void)
 
 
 /* OSC:	? */
-MEGASYS1_GAME(	astyanax,The Astyanax,1989,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	astyanax, 0, The Astyanax,1989,ROT0 | GAME_REQUIRES_16BIT,
 				A,0xff0000,0xffffff,
-				8000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				astyanax_init, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				astyanax_init )
 
-MEGASYS1_GAME_CLONE( lordofk, astyanax, The Lord of King (Japan),1989,ORIENTATION_DEFAULT,A,astyanax_init, 0 )
+MEGASYS1_GAME_CLONE( lordofk, astyanax, The Lord of King (Japan),1989,ROT0 | GAME_REQUIRES_16BIT,astyanax_init )
 
 
 
@@ -1385,8 +1325,10 @@ phntsm04.bin                                    NO MATCH
 
 ROM_START( avspirit )
 	ROM_REGIONX( 0xc0000, REGION_CPU1 )		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
-	ROM_LOAD_EVEN( "spirit05.rom",  0x000000, 0x040000, 0xb26a341a )
-	ROM_LOAD_ODD(  "spirit06.rom",  0x000000, 0x040000, 0x609f71fe )
+	ROM_LOAD_EVEN( "spirit05.rom",  0x000000, 0x020000, 0xb26a341a )
+	ROM_CONTINUE (                  0x080000 & ~1, 0x020000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_ODD(  "spirit06.rom",  0x000000, 0x020000, 0x609f71fe )
+	ROM_CONTINUE (                  0x080000 | 1, 0x020000 | ROMFLAG_ALTERNATE )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
 	ROM_LOAD( "spirit12.rom",  0x000000, 0x080000, 0x728335d4 )
@@ -1404,7 +1346,7 @@ ROM_START( avspirit )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "spirit13.rom",  0x000000, 0x040000, 0x05bc04d9 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1438,7 +1380,7 @@ ROM_START( phantasm )
 //	ROM_LOAD( "phntsm08.bin", 0x000000, 0x040000, 0x05bc04d9 )
 	ROM_LOAD( "spirit13.rom", 0x000000, 0x040000, 0x05bc04d9 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1539,17 +1481,17 @@ void phantasm_init(void)
 }
 
 /* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	avspirit, Avenging Spirit,1991,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	avspirit, 0, Avenging Spirit,1991,ROT0,
 				B,0x070000,0x07ffff,
 				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				avspirit_init, 0 )
+				avspirit_init )
 
 /* This is a clone of Avenging Spirit but runs on different hardware */
 /* OSC: same as avspirit(8,12,7 MHz)? (Music tempo driven by timers of the 2151) */
-MEGASYS1_GAME_EXT(	phantasm, phantasm, &driver_avspirit, Phantasm (Japan), 1990, ORIENTATION_DEFAULT,
-					A,0xff0000,0xffffff,
-					12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-					phantasm_init, 0)
+MEGASYS1_GAME(	phantasm, &driver_avspirit, Phantasm (Japan), 1990, ROT0,
+				A,0xff0000,0xffffff,
+				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				phantasm_init )
 
 
 
@@ -1590,7 +1532,7 @@ ROM_START( bigstrik )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "91105v10.10", 0x000000, 0x040000, BADCRC(0xe4f8fc8d) )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1643,10 +1585,10 @@ INPUT_PORTS_START( bigstrik )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x06, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(    0x02, "Easy"    )
+	PORT_DIPSETTING(    0x06, "Normal"  )
+	PORT_DIPSETTING(    0x04, "Hard"    )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x18, 0x18, "Time" )
 	PORT_DIPSETTING(    0x00, "Very Short" )
 	PORT_DIPSETTING(    0x10, "Short" )
@@ -1662,9 +1604,9 @@ INPUT_PORTS_START( bigstrik )
 
 INPUT_PORTS_END
 
-void bigstrik_sprites_w(int offset, int data)
+void bigstrik_spriteram_w(int offset, int data)
 {
-	WRITE_WORD(&spriteram[offset],data);
+	COMBINE_WORD_MEM(&spriteram[offset],data);
 }
 
 void bigstrik_init(void)
@@ -1675,14 +1617,14 @@ void bigstrik_init(void)
 	ip_select_values[3] = 0x56;
 	ip_select_values[4] = 0x57;
 
-	install_mem_write_handler(0, 0x1f8000, 0x1f87ff, bigstrik_sprites_w);
+	install_mem_write_handler(0, 0x1f8000, 0x1f87ff, bigstrik_spriteram_w);
 }
 
 /* OSC: 7.000 MHz + 24.000 MHz */
-MEGASYS1_GAME(	bigstrik,Big Striker,1992,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	bigstrik, 0, Big Striker,1992,ROT0,
 				C,0xff0000,0xffffff,
 				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				bigstrik_init, 0 )
+				bigstrik_init )
 
 
 
@@ -1721,14 +1663,14 @@ ROM_START( chimerab )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "voi10.bin", 0x000000, 0x040000, 0x67498914 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 INPUT_PORTS_START( chimerab )
 
 	COINS
-//	fire	jump	unused(shown in service mode, but not in instructions)
+//	fire	jump	unused?(shown in service mode, but not in instructions)
 	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE				// Unused
 	JOY_2BUTTONS(IPF_PLAYER2)
@@ -1772,10 +1714,10 @@ void chimerab_init(void)
 
 
 /* OSC:	? */
-MEGASYS1_GAME(	chimerab,Chimera Beast,1993,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	chimerab, 0, Chimera Beast,1993,ROT0,
 				C,0xff0000,0xffffff,
 				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				chimerab_init, 0 )
+				chimerab_init )
 
 
 /***************************************************************************
@@ -1830,7 +1772,7 @@ ROM_START( cybattlr )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "cb_10.rom", 0x000000, 0x040000, 0x8af95eed )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -1908,10 +1850,10 @@ void cybattlr_init(void)
 
 
 /* OSC:	? */
-MEGASYS1_GAME(	cybattlr,Cybattler,1993,ORIENTATION_ROTATE_90,
+MEGASYS1_GAME(	cybattlr, 0, Cybattler,1993,ROT90,
 				C,0x1f0000,0x01fffff,
 				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				cybattlr_init, 0 )
+				cybattlr_init )
 
 
 
@@ -1934,8 +1876,10 @@ fc0			(a7)+ -> 58000 (string)
 
 ROM_START( edf )
 	ROM_REGIONX( 0xc0000, REGION_CPU1 )		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
-	ROM_LOAD_EVEN( "edf_05.rom",  0x000000, 0x040000, 0x105094d1 )
-	ROM_LOAD_ODD(  "edf_06.rom",  0x000000, 0x040000, 0x94da2f0c )
+	ROM_LOAD_EVEN( "edf_05.rom",  0x000000, 0x020000, 0x105094d1 )
+	ROM_CONTINUE (                0x080000 & ~1, 0x020000 | ROMFLAG_ALTERNATE )
+	ROM_LOAD_ODD(  "edf_06.rom",  0x000000, 0x020000, 0x94da2f0c )
+	ROM_CONTINUE (                0x080000 | 1, 0x020000 | ROMFLAG_ALTERNATE )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
 	ROM_LOAD( "edf_m04.rom",  0x000000, 0x080000, 0x6744f406 )
@@ -1953,13 +1897,13 @@ ROM_START( edf )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "edf_m01.rom",  0x000000, 0x040000, 0x9149286b )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
 INPUT_PORTS_START( edf )
 	COINS
-//	fire	unfold weapons
+//	fire	unfold_weapons
 	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE
 	JOY_2BUTTONS(IPF_PLAYER2)
@@ -2009,10 +1953,10 @@ void edf_init(void)
 
 
 /* OSC:	8,12,7 MHz */
-MEGASYS1_GAME(	edf,Earth Defense Force,1991,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	edf, 0, Earth Defense Force,1991,ROT0,
 				B,0x060000,0x07ffff,
 				12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				edf_init, 0 )
+				edf_init )
 
 
 /***************************************************************************
@@ -2047,7 +1991,7 @@ MEGASYS1_GAME(	edf,Earth Defense Force,1991,ORIENTATION_DEFAULT,
 	ROM_LOAD( "hacho07.rom", 0x000000, 0x020000, 0x06e6ca7f ) \
 	ROM_LOAD( "hacho08.rom", 0x020000, 0x020000, 0x888a6df1 ) \
 \
-	ROM_REGION(0x0200)		/* priority PROM */ \
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */ \
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 
 
@@ -2114,10 +2058,10 @@ void hachoo_init(void)
 }
 
 /* OSC:	4,7,12 MHz */
-MEGASYS1_GAME(	hachoo,Hachoo!,1989,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	hachoo, 0, Hachoo!,1989,ROT0,
 				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				hachoo_init, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				hachoo_init )
 
 
 
@@ -2134,9 +2078,7 @@ ROM_START( hachoo1 )
 	HACHOO_ROM_LOAD
 ROM_END
 
-MEGASYS1_GAME_CLONE( hachoo1, hachoo, Hachoo! 1, 1989, ORIENTATION_DEFAULT,
-					 A,
-					 hachoo_init, 0 )
+MEGASYS1_GAME_CLONE( hachoo1, hachoo, Hachoo! 1, 1989, ROT0, hachoo_init )
 #endif
 
 
@@ -2179,7 +2121,7 @@ ROM_START( iganinju )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "iga_08.bin", 0x000000, 0x040000, 0x857dbf60 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -2241,10 +2183,10 @@ static void iganinju_init(void)
 }
 
 /* OSC:	? */
-MEGASYS1_GAME(	iganinju,Iga Ninjyutsuden (Japan),1988,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	iganinju, 0, Iga Ninjyutsuden (Japan),1988,ROT0,
 				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				iganinju_init, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				iganinju_init )
 
 
 
@@ -2300,7 +2242,7 @@ ROM_START( kickoff )
 	ROM_LOAD( "kioff20.rom", 0x000000, 0x020000, 0x5c28bd2d )
 	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -2365,10 +2307,10 @@ INPUT_PORTS_END
 
 
 /* OSC:	4, 7, 12 MHz */
-MEGASYS1_GAME(	kickoff,Kick Off (Japan),1988,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	kickoff, 0, Kick Off (Japan),1988,ROT0,
 				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				0, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				0 )
 
 
 
@@ -2391,7 +2333,7 @@ ROM_START( lomakai )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 2 - sound cpu code */
 	ROM_LOAD( "lom_01.rom",  0x0000, 0x10000, 0x46e85e90 )
 
-	ROM_REGION(0x0200)		/* PROMs (unknown) */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* unknown proms */
 	ROM_LOAD( "makaiden.9",  0x0000, 0x0100, 0x3567065d )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
@@ -2409,7 +2351,7 @@ ROM_START( makaiden )
 	ROM_REGIONX( 0x10000, REGION_CPU2 )		/* Region 2 - sound cpu code */
 	ROM_LOAD( "lom_01.rom",  0x0000, 0x10000, 0x46e85e90 )
 
-	ROM_REGION(0x0200)		/* PROMs (unknown) */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* unknown proms */
 	ROM_LOAD( "makaiden.9",  0x0000, 0x0100, 0x3567065d )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
@@ -2458,12 +2400,12 @@ INPUT_PORTS_END
 
 
 /* OSC:	5,12 MHz */
-MEGASYS1_GAME(	lomakai,Legend of Makai (World),1988,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	lomakai, 0, Legend of Makai (World),1988,ROT0,
 				Z,0x0f0000,0x0fffff,
-				6000000,3000000,	1200000,0,0,
-				0, 0 )
+				6000000,3000000,	1200000,0,0,	// no oki chips
+				0 )
 
-MEGASYS1_GAME_CLONE( makaiden,lomakai,Makai Densetsu (Japan),1988,ORIENTATION_DEFAULT, Z, 0, 0 )
+MEGASYS1_GAME_CLONE( makaiden,lomakai,Makai Densetsu (Japan),1988,ROT0, 0 )
 
 
 /***************************************************************************
@@ -2551,7 +2493,7 @@ ROM_START( p47 )
 	ROM_LOAD( "p47j_10.bin", 0x000000, 0x020000, 0xb9d79c1e )
 	ROM_LOAD( "p47j_11.bin", 0x020000, 0x020000, 0xfa0d1887 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -2586,7 +2528,7 @@ ROM_START( p47j )
 	ROM_LOAD( "p47j_10.bin", 0x000000, 0x020000, 0xb9d79c1e )
 	ROM_LOAD( "p47j_11.bin", 0x020000, 0x020000, 0xfa0d1887 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -2634,13 +2576,20 @@ INPUT_PORTS_START( p47 )
 INPUT_PORTS_END
 
 
-/* OSC:	? (YM2151 timers drive the music tempo) */
-MEGASYS1_GAME(	p47,P-47 - The Phantom Fighter (World),1988,ORIENTATION_DEFAULT,
-				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				0, 0 )
+/*
+ OSC:	? (YM2151 timers drive the music tempo)
 
-MEGASYS1_GAME_CLONE( p47j, p47, P-47 - The Freedom Fighter (Japan), 1988, ORIENTATION_DEFAULT, A, 0, 0 )
+ KLOV: This game is based on a standard Jaleco platform (using twin 68K CPU's) that is
+ used on a few other games (e.g. Astyanax). It is coded MB8842 with an MB8843 ROM
+ daughter card. Changing the ROM card changes the game.
+*/
+
+MEGASYS1_GAME(	p47, 0, P-47 - The Phantom Fighter (World),1988,ROT0,
+				A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				0 )
+
+MEGASYS1_GAME_CLONE( p47j, p47, P-47 - The Freedom Fighter (Japan), 1988, ROT0, 0 )
 
 
 
@@ -2748,7 +2697,7 @@ ROM_START( peekaboo )
 	ROM_LOAD( "peeksamp.124", 0x000000, 0x020000, 0xe1206fa8 )
 	ROM_CONTINUE(             0x040000, 0x0e0000             )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "priority.69",    0x000000, 0x200, 0xb40bff56 )
 
 ROM_END
@@ -2774,7 +2723,7 @@ INPUT_PORTS_START( peekaboo )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define PEEKABOO_PADDLE(_FLAG_)	\
- PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 100, 80, 1, 0x0008, 0x00f8 )
+	PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 100, 80, 1, 0x0008, 0x00f8 )
 
 	PORT_START      	/* IN1 - paddle p1 */
 	PEEKABOO_PADDLE(IPF_PLAYER1)
@@ -2818,39 +2767,39 @@ INPUT_PORTS_END
 
 
 
-int  peekaboo_protection_r(int offset);
-void peekaboo_protection_w(int offset,int data);
+int  protection_peekaboo_r(int offset);
+void protection_peekaboo_w(int offset,int data);
 
 
 /* OSC:	? */
 /* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
-MEGASYS1_GAME(	peekaboo,Peek-a-Boo!,1993,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	peekaboo, 0, Peek-a-Boo!,1993,ROT0,
 				D,0x1f0000,0x1fffff,
-				10000000,0,		0,12000,0,
-				0, 0 )
+				10000000,0,		0,12000,0,	// 1 cpu, no fm, 1 oki
+				0 )
 
-int peekaboo_protection;
+static int protection_val;
 
 /* Read the input ports, through a protection device */
-int  peekaboo_protection_r(int offset)
+int  protection_peekaboo_r(int offset)
 {
-	switch (peekaboo_protection)
+	switch (protection_val)
 	{
 		case 0x02:	return 0x03;
 		case 0x51:	return player1_r(0);
 		case 0x52:	return player2_r(0);
-		default:	return peekaboo_protection;
+		default:	return protection_val;
 	}
 }
-void peekaboo_protection_w(int offset,int data)
+void protection_peekaboo_w(int offset,int data)
 {
 	static int bank;
-	peekaboo_protection = data;
+	protection_val = data;
 
-	if ((peekaboo_protection & 0x90) == 0x90)
+	if ((protection_val & 0x90) == 0x90)
 	{
-		unsigned char *RAM = memory_region(peekaboo_okim6295_interface.region[0]);
-		int new_bank = (peekaboo_protection & 0x7) % 7;
+		unsigned char *RAM = memory_region(okim6295_interface_peekaboo.region[0]);
+		int new_bank = (protection_val & 0x7) % 7;
 
 		if (bank != new_bank)
 		{
@@ -2908,7 +2857,7 @@ ROM_START( plusalph )
 	ROM_LOAD( "pa-rom7.bin",  0x000000, 0x020000, 0x9f5d800e )
 	ROM_LOAD( "pa-rom8.bin",  0x020000, 0x020000, 0xae007750 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom.14m",     0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -2965,10 +2914,10 @@ void plusalph_init(void)
 }
 
 /* OSC:	? */
-MEGASYS1_GAME(	plusalph,Plus Alpha,1989,ORIENTATION_ROTATE_270,
+MEGASYS1_GAME(	plusalph, 0, Plus Alpha,1989,ROT270,
 				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				plusalph_init, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				plusalph_init )
 
 
 
@@ -3018,7 +2967,7 @@ ROM_START( rodland )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -3071,7 +3020,7 @@ ROM_START( rodlandj )
 	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
 	ROM_LOAD( "rl_10.rom", 0x000000, 0x040000, 0xe1d1cd99 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
@@ -3179,12 +3128,12 @@ void rodlandj_init(void)
 
 
 /* OSC:	4,12,7 MHz */
-MEGASYS1_GAME(	rodland,RodLand (World),1990,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	rodland, 0, RodLand (World),1990,ROT0,
 				A,0x0f0000,0x0fffff,
 				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				rodland_init, 0 )
+				rodland_init )
 
-MEGASYS1_GAME_CLONE( rodlandj, rodland, RodLand (Japan), 1990, ORIENTATION_DEFAULT, A, rodlandj_init, 0 )
+MEGASYS1_GAME_CLONE( rodlandj, rodland, RodLand (Japan), 1990, ROT0, rodlandj_init )
 
 
 
@@ -3231,7 +3180,7 @@ ROM_START( stdragon )
 	ROM_LOAD( "jsd-07.bin", 0x000000, 0x020000, 0x6a48e979 )
 	ROM_LOAD( "jsd-08.bin", 0x020000, 0x020000, 0x40704962 )
 
-	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
@@ -3288,7 +3237,115 @@ void stdragon_init(void)
 }
 
 /* OSC:	? */
-MEGASYS1_GAME(	stdragon,Saint Dragon,1989,ORIENTATION_DEFAULT,
+MEGASYS1_GAME(	stdragon, 0, Saint Dragon,1989,ROT0,
 				A,0x0f0000,0x0fffff,
-				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				stdragon_init, 0 )
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				stdragon_init )
+
+
+
+
+/***************************************************************************
+
+								[ Soldam ]
+
+(Japan version)
+f00c2.l	*** score/10 (BCD) ***
+
+The country code is at ROM address $3a9d, copied to RAM address
+f0025: 0 = japan, 1 = USA. Change f0025 to 1 to have all the
+text in english.
+
+***************************************************************************/
+
+ROM_START( soldamj )
+	ROM_REGIONX( 0x60000, REGION_CPU1 )		/* Region 0 - main cpu code */
+	ROM_LOAD_EVEN( "soldam2.bin", 0x000000, 0x020000, 0xc73d29e4 )
+	ROM_LOAD_ODD(  "soldam1.bin", 0x000000, 0x020000, 0xe7cb0c20 )
+	ROM_LOAD_EVEN( "soldam3.bin", 0x040000, 0x010000, 0xc5382a07 )
+	ROM_LOAD_ODD(  "soldam4.bin", 0x040000, 0x010000, 0x1df7816f )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "soldam14.bin", 0x000000, 0x080000, 0x26cea54a )	// scroll 0
+	ROM_LOAD( "soldam18.bin", 0x080000, 0x080000, 0x7d8e4712 )	// scroll 1
+	ROM_LOAD( "soldam19.bin", 0x100000, 0x020000, 0x38465da1 )	// scroll 2
+	ROM_LOAD( "soldam23.bin", 0x120000, 0x080000, 0x0ca09432 )	// sprites
+
+	ROM_REGIONX( 0x20000, REGION_CPU2 )		/* Region 2 - sound cpu code */
+	ROM_LOAD_EVEN( "soldam5.bin", 0x000000, 0x010000, 0xd1019a67 )
+	ROM_LOAD_ODD(  "soldam6.bin", 0x000000, 0x010000, 0x3ed219b4 )
+
+	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_LOAD( "soldam10.bin", 0x000000, 0x040000, 0x8d5613bf )
+
+	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_LOAD( "soldam8.bin",  0x000000, 0x040000, 0xfcd36019 )
+
+	ROM_REGIONX( 0x0200, REGION_PROMS )		/* priority prom */
+	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+ROM_END
+
+INPUT_PORTS_START( soldamj )
+	COINS						/* IN0 0x80001.b */
+	//	turn	turn	(3rd button is shown in service mode, but seems unused)
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
+
+	PORT_START			/* IN4 0x80006.b */
+	COINAGE_6BITS_2
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On )  )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START			/* IN5 0x80007.b */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy"   )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard"   )
+	PORT_DIPSETTING(    0x01, "Hadest" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Games To Play (Vs)" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x0c, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On )  )
+	PORT_DIPNAME( 0x20, 0x20, "Credits To Start (Vs)" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "Credits To Continue (Vs)" )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+
+INPUT_PORTS_END
+
+int  soldamj_spriteram_r(int offset)
+{
+	return READ_WORD(&spriteram[offset]);
+}
+void soldamj_spriteram_w(int offset, int data)
+{
+	if (offset < 0x800)	COMBINE_WORD_MEM(&spriteram[offset],data);
+}
+
+void soldam_init(void)
+{
+	astyanax_rom_decode(0);
+
+	/* Sprite RAM is mirrored. Why? */
+	install_mem_read_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram_r);
+	install_mem_write_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram_w);
+}
+
+
+/* OSC:	? */
+MEGASYS1_GAME(	soldamj, 0, Soldam (Japan),1992,ROT0,
+				A,0x0f0000,0x0fffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				soldam_init )

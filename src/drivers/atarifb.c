@@ -2,6 +2,8 @@
 
 Atari Football Driver
 
+Driver by Mike Balfour, Patrick Lawrence, Brad Oliver
+
 Memory Map:
 	0000-01FF	Working RAM
 	0200-025F	Playfield - Player 1
@@ -615,17 +617,17 @@ static struct GfxLayout spritemasklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0x00, 0x01 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &fieldlayout, 0x02, 0x01 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0, &charlayout,  0x00, 0x01 }, /* offset into colors, # of colors */
+	{ REGION_GFX2, 0, &fieldlayout, 0x02, 0x01 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,         0x00, 0x01 }, /* offset into colors, # of colors */
-	{ 1, 0x0800, &soccer_fieldlayout, 0x06, 0x01 }, /* offset into colors, # of colors */
-	{ 1, 0x0c00, &spritelayout,       0x02, 0x02 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &spritemasklayout,   0x06, 0x03 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0x0000, &charlayout,         0x00, 0x01 }, /* offset into colors, # of colors */
+	{ REGION_GFX3, 0x0400, &soccer_fieldlayout, 0x06, 0x01 }, /* offset into colors, # of colors */
+	{ REGION_GFX2, 0x0000, &spritelayout,       0x02, 0x02 }, /* offset into colors, # of colors */
+	{ REGION_GFX3, 0x0000, &spritemasklayout,   0x06, 0x03 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -658,7 +660,7 @@ static struct DACinterface dac_interface =
 	{ 50, 50, 50 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_atarifb =
 {
 	/* basic machine hardware */
 	{
@@ -696,7 +698,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver atarifb4_machine_driver =
+static struct MachineDriver machine_driver_atarifb4 =
 {
 	/* basic machine hardware */
 	{
@@ -734,7 +736,7 @@ static struct MachineDriver atarifb4_machine_driver =
 	}
 };
 
-static struct MachineDriver soccer_machine_driver =
+static struct MachineDriver machine_driver_soccer =
 {
 	/* basic machine hardware */
 	{
@@ -779,29 +781,20 @@ static struct MachineDriver soccer_machine_driver =
 
 ***************************************************************************/
 
-void atarifb_init (void)
-{
-	/* Tell the video code to draw the plays for this version */
-	atarifb_game = 1;
-}
+ROM_START( atarifb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, 0x352e35db )
+	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
+	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, 0xe7e916ae )
+	ROM_RELOAD( 			    0xf800, 0x0800 )
 
-void atarifb4_init(void)
-{
-	/* Tell the video code to draw the plays for this version */
-	atarifb_game = 2;
-}
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
 
-void abaseb_init(void)
-{
-	/* Tell the video code to draw the plays for this version */
-	atarifb_game = 3;
-}
-
-void soccer_init(void)
-{
-	/* Tell the video code to draw the plays for this version */
-	atarifb_game = 4;
-}
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
+ROM_END
 
 ROM_START( atarifb1 )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
@@ -810,23 +803,12 @@ ROM_START( atarifb1 )
 	ROM_LOAD( "03302701.n1", 0x7800, 0x0800, 0x7740be51 )
 	ROM_RELOAD( 			    0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x600)	  /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0400, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0400, 0x0200, 0x89d619b8 )
-ROM_END
 
-ROM_START( atarifb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, 0x352e35db )
-	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
-	ROM_LOAD( "03302702.n1", 0x7800, 0x0800, 0xe7e916ae )
-	ROM_RELOAD( 			    0xf800, 0x0800 )
-
-	ROM_REGION_DISPOSE(0x600)	  /* 2k for graphics */
-	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0400, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0600, 0x0200, 0x89d619b8 )
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
 ROM_END
 
 ROM_START( atarifb4 )
@@ -850,10 +832,28 @@ ROM_START( atarifb4 )
 	ROM_LOAD_NIB_HIGH( "34884.j2", 0x7c00, 0x0400, 0xaa699a3a )
 	ROM_RELOAD_NIB_HIGH(           0xfc00, 0x0400 ) /* for 6502 vectors */
 
-	ROM_REGION_DISPOSE(0x600)	  /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "033029.n7", 0x0000, 0x0400, 0x12f43dca )
-	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0400, 0x0200, 0xeac9ef90 )
-	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0400, 0x0200, 0x89d619b8 )
+
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
+	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
+ROM_END
+
+ROM_START( abaseb )
+	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
+	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, 0x7250863f )
+	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, 0x54854d7c )
+	ROM_LOAD( "34736-01.n1", 0x7800, 0x0800, 0xaf444eb0 )
+	ROM_RELOAD( 			 0xf800, 0x0800 )
+
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
+
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
+	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
 ROM_END
 
 ROM_START( abaseb2 )
@@ -877,24 +877,12 @@ ROM_START( abaseb2 )
 	ROM_LOAD_NIB_HIGH( "034714.f0", 0x7c00, 0x0400, 0x920979ea )
 	ROM_RELOAD_NIB_HIGH(            0xfc00, 0x0400 ) /* for 6502 vectors */
 
-	ROM_REGION_DISPOSE( 0x600 )	  /* 2k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
-	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0400, 0x0200, 0x8a0f971b )
-	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0400, 0x0200, 0x021d1067 )
-ROM_END
 
-ROM_START( abaseb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
-	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, 0x7250863f )
-	ROM_LOAD( "34735-01.p1", 0x7000, 0x0800, 0x54854d7c )
-	ROM_LOAD( "34736-01.n1", 0x7800, 0x0800, 0xaf444eb0 )
-	ROM_RELOAD( 			 0xf800, 0x0800 )
-
-	ROM_REGION_DISPOSE(0x600)	  /* 2k for graphics */
-	ROM_LOAD_NIB_LOW ( "034710.d5", 0x0000, 0x0400, 0x31275d86 )
-	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0400, 0x0200, 0x8a0f971b )
-	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0400, 0x0200, 0x021d1067 )
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
+	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
 ROM_END
 
 ROM_START( soccer )
@@ -919,166 +907,47 @@ ROM_START( soccer )
 	ROM_LOAD_NIB_HIGH( "035237.n2", 0x3c00, 0x0400, 0x1d01b054 )
 	ROM_RELOAD_NIB_HIGH(            0xfc00, 0x0400 ) /* for 6502 vectors */
 
-	ROM_REGION_DISPOSE(0x1000)	  /* 4k for graphics */
+	ROM_REGIONX( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_NIB_LOW ( "035250.r2", 0x0000, 0x0400, 0x12f43dca ) /* characters */
-	ROM_LOAD( "035246.r6", 0x0400, 0x0800, 0x4a996136 ) /* spritemask - playfield */
-	ROM_LOAD_NIB_LOW ( "035247.n7", 0x0c00, 0x0400, 0x3adb5f4e ) /* sprites */
-	ROM_LOAD_NIB_HIGH( "035248.m7", 0x0c00, 0x0400, 0xa890cd48 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "035247.n7", 0x0000, 0x0400, 0x3adb5f4e ) /* sprites */
+	ROM_LOAD_NIB_HIGH( "035248.m7", 0x0000, 0x0400, 0xa890cd48 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "035246.r6", 0x0000, 0x0800, 0x4a996136 ) /* spritemask - playfield */
 ROM_END
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_atarifb =
+void init_atarifb (void)
 {
-	__FILE__,
-	0,
-	"atarifb",
-	"Atari Football (revision 2)",
-	"1978",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&machine_driver,
-	0,
+	/* Tell the video code to draw the plays for this version */
+	atarifb_game = 1;
+}
 
-	rom_atarifb,
-	atarifb_init, 0,
-	0,
-	0,
-
-	input_ports_atarifb,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_atarifb1 =
+void init_atarifb4(void)
 {
-	__FILE__,
-	&driver_atarifb,
-	"atarifb1",
-	"Atari Football (revision 1)",
-	"1978",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&machine_driver,
-	0,
+	/* Tell the video code to draw the plays for this version */
+	atarifb_game = 2;
+}
 
-	rom_atarifb1,
-	atarifb_init, 0,
-	0,
-	0,
-
-	input_ports_atarifb,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_atarifb4 =
+void init_abaseb(void)
 {
-	__FILE__,
-	&driver_atarifb,
-	"atarifb4",
-	"Atari Football (4 players)",
-	"1979",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&atarifb4_machine_driver,
-	0,
+	/* Tell the video code to draw the plays for this version */
+	atarifb_game = 3;
+}
 
-	rom_atarifb4,
-	atarifb4_init, 0,
-	0,
-	0,
-
-	input_ports_atarifb4,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_abaseb =
+void init_soccer(void)
 {
-	__FILE__,
-	0,
-	"abaseb",
-	"Atari Baseball (set 1)",
-	"1979",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&machine_driver,
-	0,
+	/* Tell the video code to draw the plays for this version */
+	atarifb_game = 4;
+}
 
-	rom_abaseb,
-	abaseb_init, 0,
-	0,
-	0,
 
-	input_ports_abaseb,
 
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_abaseb2 =
-{
-	__FILE__,
-	&driver_abaseb,
-	"abaseb2",
-	"Atari Baseball (set 2)",
-	"1979",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_abaseb2,
-	abaseb_init, 0,
-	0,
-	0,
-
-	input_ports_abaseb,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_soccer =
-{
-	__FILE__,
-	0,
-	"soccer",
-	"Atari Soccer",
-	"197?",
-	"Atari",
-	"Mike Balfour (MAME driver)\nPatrick Lawrence\nBrad Oliver (additional code)",
-	0,
-	&soccer_machine_driver,
-	0,
-
-	rom_soccer,
-	soccer_init, 0,
-	0,
-	0,
-
-	input_ports_soccer,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1978, atarifb,  ,        atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)" )
+GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)" )
+GAME( 1979, atarifb4, atarifb, atarifb4, atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)" )
+GAME( 1979, abaseb,   ,        atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)" )
+GAME( 1979, abaseb2,  abaseb,  atarifb,  abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)" )
+GAME( 197?, soccer,   ,        soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer" )

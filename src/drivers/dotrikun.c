@@ -144,7 +144,7 @@ struct GameDriver driver_dotrikun =
 	input_ports_dotrikun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -171,7 +171,7 @@ struct GameDriver driver_dotriku2 =
 	input_ports_dotrikun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -23,32 +23,27 @@ unsigned char *senjyo_radarram;
 
 static struct tilemap *fg_tilemap,*bg1_tilemap,*bg2_tilemap,*bg3_tilemap;
 
-static int scrollhack,spriteskludge,fgtranshack,bg1colorkludge;
+static int senjyo, scrollhack;
 
 static struct osd_bitmap *bgbitmap;
 static int bgbitmap_dirty;
+static int flipscreen;
 
 
 void starforc_init(void)
 {
-	spriteskludge = 1;
+	senjyo = 0;
 	scrollhack = 1;
-	fgtranshack = 0;
-	bg1colorkludge = 1;
 }
 void starfore_init(void)
 {
-	spriteskludge = 1;
+	senjyo = 0;
 	scrollhack = 0;
-	fgtranshack = 0;
-	bg1colorkludge = 1;
 }
 void senjyo_init(void)
 {
-	spriteskludge = 0;
+	senjyo = 1;
 	scrollhack = 0;
-	fgtranshack = 1;
-	bg1colorkludge = 0;
 }
 
 
@@ -64,7 +59,7 @@ static void get_fg_tile_info(int col,int row)
 	unsigned char attr = senjyo_fgcolorram[tile_index];
 	SET_TILE_INFO(0,senjyo_fgvideoram[tile_index] + ((attr & 0x10) << 4),attr & 0x07)
 	tile_info.flags = (attr & 0x80) ? TILE_FLIPY : 0;
-	if (fgtranshack && col >= 32-8)
+	if (senjyo && col >= 32-8)
 		tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
 }
 
@@ -126,7 +121,7 @@ int senjyo_vh_start(void)
 	);
 
 	bg1_tilemap = tilemap_create(
-		bg1colorkludge ? starforc_get_bg1_tile_info : senjyo_get_bg1_tile_info,
+		senjyo ? senjyo_get_bg1_tile_info : starforc_get_bg1_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
 		16,32
@@ -136,14 +131,14 @@ int senjyo_vh_start(void)
 		get_bg2_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
-		16,48	/* only 16x32 used by Star Force */
+		16, senjyo ? 48 : 32	/* only 16x32 used by Star Force */
 	);
 
 	bg3_tilemap = tilemap_create(
 		get_bg3_tile_info,
 		TILEMAP_TRANSPARENT,
 		16,16,
-		16,56	/* only 16x32 used by Star Force */
+		16, senjyo ? 56 : 32	/* only 16x32 used by Star Force */
 	);
 
 
@@ -223,6 +218,11 @@ void senjyo_bgstripes_w(int offset,int data)
 	}
 }
 
+void senjyo_flipscreen_w(int offset,int data)
+{
+	flipscreen = data & 0x01;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPX | TILEMAP_FLIPX) : 0);
+}
 
 
 /***************************************************************************
@@ -253,9 +253,19 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap)
 
 		for (x = 0;x < 256;x++)
 		{
-			for (y = 0;y < 256;y++)
+			if (flipscreen)
 			{
-				plot_pixel(bgbitmap, x, y, Machine->pens[384 + pen]);
+				for (y = 0;y < 256;y++)
+				{
+					plot_pixel(bgbitmap, 255 - x, y, Machine->pens[384 + pen]);
+				}
+			}
+			else
+			{
+				for (y = 0;y < 256;y++)
+				{
+					plot_pixel(bgbitmap, x, y, Machine->pens[384 + pen]);
+				}
 			}
 
 			count += 0x10;
@@ -282,9 +292,19 @@ static void draw_radar(struct osd_bitmap *bitmap)
 			{
 				if (senjyo_radarram[offs] & (1 << x))
 				{
+					int sx, sy;
+
+					sx = (8 * (offs % 8) + x) + 256-64;
+					sy = ((offs & 0x1ff) / 8) + 96;
+
+					if (flipscreen)
+					{
+						sx = 255 - sx;
+						sy = 255 - sy;
+					}
+
 					plot_pixel(bitmap,
-							   (8 * (offs % 8) + x) + 256-64,
-							   ((offs & 0x1ff) / 8) + 96,
+							   sx, sy,
 							   Machine->pens[offs < 0x200 ? 400 : 401]);
 				}
 			}
@@ -304,7 +324,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 
 		if (((spriteram[offs+1] & 0x30) >> 4) == priority)
 		{
-			if (spriteskludge == 0)	/* Senjyo */
+			if (senjyo)	/* Senjyo */
 				big = (spriteram[offs] & 0x80);
 			else	/* Star Force */
 				big = ((spriteram[offs] & 0xc0) == 0xc0);
@@ -315,6 +335,24 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 				sy = 240-spriteram[offs+2];
 			flipx = spriteram[offs+1] & 0x40;
 			flipy = spriteram[offs+1] & 0x80;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+
+				if (big)
+				{
+					sx = 224 - sx;
+					sy = 226 - sy;
+				}
+				else
+				{
+					sx = 240 - sx;
+					sy = 242 - sy;
+				}
+			}
+
 
 			drawgfx(bitmap,Machine->gfx[big ? 5 : 4],
 					spriteram[offs],
@@ -330,6 +368,8 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
 
+
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* two colors for the radar dots (verified on the real board) */
 	palette_change_color(400,0xff,0x00,0x00);	/* red for enemies */
@@ -347,9 +387,12 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
 		scrollx = senjyo_scrollx2[0];
-		if (scrollhack)	/* Star Force, but NOT the encrypted version */
-			scrollx = senjyo_scrollx1[0];
 		scrolly = senjyo_scrolly2[0] + 256 * senjyo_scrolly2[1];
+		if (scrollhack)	/* Star Force, but NOT the encrypted version */
+		{
+			scrollx = senjyo_scrollx1[0];
+			scrolly = senjyo_scrolly1[0] + 256 * senjyo_scrolly1[1];
+		}
 		tilemap_set_scrollx(bg2_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg2_tilemap,0,scrolly);
 

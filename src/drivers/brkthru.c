@@ -1,6 +1,8 @@
 /***************************************************************************
 Break Thru Doc. Data East (1986)
 
+driver by Phil Stroffolino
+
 UNK-1.1    (16Kb)  Code (4000-7FFF)
 UNK-1.2    (32Kb)  Main 6809 (8000-FFFF)
 UNK-1.3    (32Kb)  Mapped (2000-3FFF)
@@ -364,16 +366,16 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,      0, 1 },
-	{ 1, 0x02000, &tilelayout1, 8+8*8, 16 },
-	{ 1, 0x03000, &tilelayout2, 8+8*8, 16 },
-	{ 1, 0x0a000, &tilelayout1, 8+8*8, 16 },
-	{ 1, 0x0b000, &tilelayout2, 8+8*8, 16 },
-	{ 1, 0x12000, &tilelayout1, 8+8*8, 16 },
-	{ 1, 0x13000, &tilelayout2, 8+8*8, 16 },
-	{ 1, 0x1a000, &tilelayout1, 8+8*8, 16 },
-	{ 1, 0x1b000, &tilelayout2, 8+8*8, 16 },
-	{ 1, 0x22000, &spritelayout,    8, 8 },
+	{ REGION_GFX1, 0x00000, &charlayout,      0, 1 },
+	{ REGION_GFX2, 0x00000, &tilelayout1, 8+8*8, 16 },
+	{ REGION_GFX2, 0x01000, &tilelayout2, 8+8*8, 16 },
+	{ REGION_GFX2, 0x08000, &tilelayout1, 8+8*8, 16 },
+	{ REGION_GFX2, 0x09000, &tilelayout2, 8+8*8, 16 },
+	{ REGION_GFX2, 0x10000, &tilelayout1, 8+8*8, 16 },
+	{ REGION_GFX2, 0x11000, &tilelayout2, 8+8*8, 16 },
+	{ REGION_GFX2, 0x18000, &tilelayout1, 8+8*8, 16 },
+	{ REGION_GFX2, 0x19000, &tilelayout2, 8+8*8, 16 },
+	{ REGION_GFX3, 0x00000, &spritelayout,    8, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -406,7 +408,7 @@ static struct YM3526interface ym3526_interface =
 
 
 
-static struct MachineDriver brkthru_machine_driver =
+static struct MachineDriver machine_driver_brkthru =
 {
 	/* basic machine hardware */
 	{
@@ -453,7 +455,7 @@ static struct MachineDriver brkthru_machine_driver =
 	}
 };
 
-static struct MachineDriver darwin_machine_driver =
+static struct MachineDriver machine_driver_darwin =
 {
 	/* basic machine hardware */
 	{
@@ -514,27 +516,30 @@ ROM_START( brkthru )
 	ROM_LOAD( "brkthru.4",    0x10000, 0x8000, 0x8cabf252 )
 	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
 
-	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "brkthru.12",   0x00000, 0x2000, 0x58c0b29b )	/* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "brkthru.6",    0x12000, 0x4000, 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "brkthru.8",    0x06000, 0x1000, 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(             0x08000, 0x1000 )
-	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(             0x10000, 0x1000 )
-	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(             0x18000, 0x1000 )
-	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(             0x20000, 0x1000 )
-	/* sprites */
-	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
-	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
-	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
+	ROM_LOAD( "brkthru.7",    0x00000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x4000 )				/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "brkthru.6",    0x10000, 0x4000, 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x4000 )				/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "brkthru.8",    0x04000, 0x1000, 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x06000, 0x1000 )
+	ROM_CONTINUE(             0x0c000, 0x1000 )				/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x0e000, 0x1000 )
+	ROM_CONTINUE(             0x14000, 0x1000 )				/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x16000, 0x1000 )
+	ROM_CONTINUE(             0x1c000, 0x1000 )				/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x1e000, 0x1000 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "brkthru.9",    0x00000, 0x8000, 0xf54e50a7 )	/* sprites */
+	ROM_LOAD( "brkthru.10",   0x08000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x10000, 0x8000, 0xc152a99b )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "brkthru.13",   0x0000, 0x0100, 0xaae44269 ) /* red and green component */
@@ -551,27 +556,30 @@ ROM_START( brkthruj )
 	ROM_LOAD( "4",            0x10000, 0x8000, 0xb42b3359 )
 	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
 
-	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "12",   0x00000, 0x2000, 0x3d9a7003 )	/* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "6",            0x12000, 0x4000, 0xcb47b395 )	/* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "8",            0x06000, 0x1000, 0x5e5a2cd7 )	/* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(             0x08000, 0x1000 )
-	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(             0x10000, 0x1000 )
-	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(             0x18000, 0x1000 )
-	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(             0x20000, 0x1000 )
-	/* sprites */
-	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
-	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
-	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
+	ROM_LOAD( "brkthru.7",    0x00000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x4000 )				/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "6",            0x10000, 0x4000, 0xcb47b395 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x4000 )				/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "8",            0x04000, 0x1000, 0x5e5a2cd7 )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x06000, 0x1000 )
+	ROM_CONTINUE(             0x0c000, 0x1000 )				/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x0e000, 0x1000 )
+	ROM_CONTINUE(             0x14000, 0x1000 )				/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x16000, 0x1000 )
+	ROM_CONTINUE(             0x1c000, 0x1000 )				/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x1e000, 0x1000 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "brkthru.9",    0x00000, 0x8000, 0xf54e50a7 )	/* sprites */
+	ROM_LOAD( "brkthru.10",   0x08000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x10000, 0x8000, 0xc152a99b )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "brkthru.13",   0x0000, 0x0100, 0xaae44269 ) /* red and green component */
@@ -588,27 +596,30 @@ ROM_START( darwin )
 	ROM_LOAD( "darw_07.rom",  0x10000, 0x8000, 0x97ac052c )
 	ROM_LOAD( "darw_06.rom",  0x18000, 0x8000, 0x2a9fb208 )
 
-	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "darw_09.rom",  0x00000, 0x2000, 0x067b4cf5 )   /* characters */
+
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x57d0350d )   /* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0x559a71ab )   /* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0x15a16973 )   /* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(             0x08000, 0x1000 )
-	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(             0x10000, 0x1000 )
-	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(             0x18000, 0x1000 )
-	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(             0x20000, 0x1000 )
-	/* sprites */
-	ROM_LOAD( "darw_10.rom",  0x22000, 0x8000, 0x487a014c )
-	ROM_LOAD( "darw_11.rom",  0x2a000, 0x8000, 0x548ce2d1 )
-	ROM_LOAD( "darw_12.rom",  0x32000, 0x8000, 0xfaba5fef )
+	ROM_LOAD( "darw_03.rom",  0x00000, 0x4000, 0x57d0350d )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x4000 )				/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "darw_02.rom",  0x10000, 0x4000, 0x559a71ab )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x4000 )				/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "darw_01.rom",  0x04000, 0x1000, 0x15a16973 )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x06000, 0x1000 )
+	ROM_CONTINUE(             0x0c000, 0x1000 )				/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x0e000, 0x1000 )
+	ROM_CONTINUE(             0x14000, 0x1000 )				/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x16000, 0x1000 )
+	ROM_CONTINUE(             0x1c000, 0x1000 )				/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x1e000, 0x1000 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "darw_10.rom",  0x00000, 0x8000, 0x487a014c )	/* sprites */
+	ROM_LOAD( "darw_11.rom",  0x08000, 0x8000, 0x548ce2d1 )
+	ROM_LOAD( "darw_12.rom",  0x10000, 0x8000, 0xfaba5fef )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "df.12",   0x0000, 0x0100, 0x89b952ef ) /* red and green component */
@@ -619,163 +630,7 @@ ROM_START( darwin )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-			osd_fread(f,&RAM[0x0531],4*5+3*5);
-
-			memcpy(&RAM[0x0402], &RAM[0x0531], 4);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0531],4*5+3*5);
-		osd_fclose(f);
-	}
-}
-
-static int darwin_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
-	    (memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-			osd_fread(f,&RAM[0x1b6c],0x10);
-			osd_fread(f,&RAM[0x1b93],0x09);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void darwin_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1b6c],0x10);
-		osd_fwrite(f,&RAM[0x1b93],0x09);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_brkthru =
-{
-	__FILE__,
-	0,
-	"brkthru",
-	"Break Thru (US)",
-	"1986",
-	"Data East USA",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
-	0,
-	&brkthru_machine_driver,
-	0,
-
-	rom_brkthru,
-	0, 0,
-	0,
-	0,
-
-	input_ports_brkthru,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_brkthruj =
-{
-	__FILE__,
-	&driver_brkthru,
-	"brkthruj",
-	"Kyohkoh-Toppa (Japan)",
-	"1986",
-	"Data East Corporation",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
-	0,
-	&brkthru_machine_driver,
-	0,
-
-	rom_brkthruj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_brkthru,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_darwin =
-{
-	__FILE__,
-	0,
-	"darwin",
-	"Darwin 4078 (Japan)",
-	"1986",
-	"Data East Corporation",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
-	0,
-	&darwin_machine_driver,
-	0,
-
-	rom_darwin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_darwin,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	darwin_hiload, darwin_hisave
-};
+GAME( 1986, brkthru,  ,        brkthru, brkthru, , ROT0,   "Data East USA", "Break Thru (US)" )
+GAME( 1986, brkthruj, brkthru, brkthru, brkthru, , ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
+GAME( 1986, darwin,   ,        darwin,  darwin,  , ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )

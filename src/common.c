@@ -134,35 +134,28 @@ int readroms(void)
 			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
                goto getout;
 
-			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
-			if (f == 0 && Machine->gamedrv->clone_of)
 			{
-				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+				const struct GameDriver *drv;
 
-				if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+				drv = Machine->gamedrv;
+				do
 				{
-					/* clone of a clone (for NeoGeo clones) */
-					f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,name,OSD_FILETYPE_ROM,0);
-				}
-			}
-			if (f == 0)
-			{
-				/* NS981003: support for "load by CRC" */
-				char crc[9];
+					f = osd_fopen(drv->name,name,OSD_FILETYPE_ROM,0);
+					drv = drv->clone_of;
+				} while (f == 0 && drv);
 
-				sprintf(crc,"%08x",romp->crc);
-				f = osd_fopen(Machine->gamedrv->name,crc,OSD_FILETYPE_ROM,0);
-				if (f == 0 && Machine->gamedrv->clone_of)
+				if (f == 0)
 				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+					/* NS981003: support for "load by CRC" */
+					char crc[9];
 
-					if (f == 0 && Machine->gamedrv->clone_of->clone_of)
+					sprintf(crc,"%08x",romp->crc);
+					drv = Machine->gamedrv;
+					do
 					{
-						/* clone of a clone (for NeoGeo clones) */
-						f = osd_fopen(Machine->gamedrv->clone_of->clone_of->name,crc,OSD_FILETYPE_ROM,0);
-					}
+						f = osd_fopen(drv->name,crc,OSD_FILETYPE_ROM,0);
+						drv = drv->clone_of;
+					} while (f == 0 && drv);
 				}
 			}
 

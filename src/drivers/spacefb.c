@@ -492,89 +492,6 @@ ROM_START( spacedem )
 ROM_END
 
 
-/* This only works for the basic Space Firebird. The rest of the games allow names to be entered */
-static int hiload(void)
-{
-	unsigned char *from, *to;
-	int i, j, digit, started;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0xc0db] == 0xc1 &&	/* check that the scores have been zeroed */
-		videoram[0x299] == 0x0f && /* and that the videoram has been 'cleared' */
-		videoram[0x29a] == 0x0f &&
-		videoram[0x29b] == 0x0f &&
-		videoram[0x299 + 47] == 0x0f &&	/* all the way down */
-		videoram[0x299 + 48] == 0x0f &&
-		videoram[0x299 + 49] == 0x0f &&
-		videoram[0x299 + 50] == 0x05 &&
-		videoram[0x299 + 59] == 0x05)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name, 0,
-						   OSD_FILETYPE_HIGHSCORE, 0)) != 0)
-		{
-			osd_fread(f, &RAM[0xc0a0], 3 * 10);
-			osd_fseek(f, 0, SEEK_SET);
-			osd_fread(f, &RAM[0xc0e0], 3);
-			osd_fclose(f);
-
-			from = &RAM[0xc0a0];
-			j = 0x299;
-
-			for (i = 0; i < 10; i++)
-			{
-				started = 0;
-
-				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ((*from   & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ( *from++ & 0x0f))       && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-
-				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
-				videoram[j++] = digit + 5;
-			}
-
-			from = &RAM[0xc0a0];
-			to = &RAM[0xc773];
-			j = 0x251;
-
-			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
-			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
-			videoram[j++] = *to++ = (((*from   & 0xf0) >> 4) + 5);
-			videoram[j++] = *to++ = (( *from++ & 0x0f)       + 5);
-			videoram[j++] = *to++ = (((*from++ & 0xf0) >> 4) + 5);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name, 0,
-					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
-    {
-		osd_fwrite(f, &RAM[0xc0a0], 3 * 10);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_spacefb =
 {
@@ -597,9 +514,8 @@ struct GameDriver driver_spacefb =
 	input_ports_spacefb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_spacefbg =
@@ -623,7 +539,7 @@ struct GameDriver driver_spacefbg =
 	input_ports_spacefb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
@@ -649,7 +565,7 @@ struct GameDriver driver_spacebrd =
 	input_ports_spacefb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
@@ -675,7 +591,7 @@ struct GameDriver driver_spacedem =
 	input_ports_spacedem,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };

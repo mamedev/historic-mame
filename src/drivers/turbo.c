@@ -689,6 +689,12 @@ static void init_turbo(void)
 	memcpy(memory_region(REGION_GFX4)+0x100, led_tach_data, sizeof(led_tach_data));
 }
 
+static void init_decode_turbo(void)
+{
+	init_turbo();
+	rom_decode();
+}
+
 
 /*********************************************************************
  * Game drivers
@@ -708,15 +714,14 @@ struct GameDriver driver_turbo =
 	init_turbo,
 
 	rom_turbo,
-	0,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_turbo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0,0
 };
@@ -732,18 +737,17 @@ struct GameDriver driver_turboa =
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo\nAaron Giles\nErnesto Corvi",
 	0,
 	&machine_driver,
-	init_turbo,
+	init_decode_turbo,
 
 	rom_turboa,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_turbo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0,0
 };
@@ -759,18 +763,17 @@ struct GameDriver driver_turbob =
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo\nAaron Giles\nErnesto Corvi",
 	0,
 	&machine_driver,
-	init_turbo,
+	init_decode_turbo,
 
 	rom_turbob,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_turbo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0,0
 };

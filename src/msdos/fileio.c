@@ -25,7 +25,7 @@ char *samples = NULL;
 char **samplepathv = NULL;
 int samplepathc = 0;
 
-char *cfgdir, *hidir, *inpdir, *stadir;
+char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
 char *memcarddir, *artworkdir, *screenshotdir;
 
 #ifdef MESS
@@ -705,6 +705,34 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 #endif	/* MESS */
 
 
+	case OSD_FILETYPE_NVRAM:
+		if( !found )
+		{
+			sprintf (name, "%s/%s.nv", nvdir, gamename);
+			f->type = kPlainFile;
+			f->file = fopen (name, _write ? "wb" : "rb");
+			found = f->file != 0;
+		}
+
+		if( !found )
+		{
+			/* try with a .zip directory (if ZipMagic is installed) */
+			sprintf (name, "%s.zip/%s.nv", nvdir, gamename);
+			f->type = kPlainFile;
+			f->file = fopen (name, _write ? "wb" : "rb");
+			found = f->file != 0;
+		}
+
+		if( !found )
+		{
+			/* try with a .zif directory (if ZipFolders is installed) */
+			sprintf (name, "%s.zif/%s.nv", nvdir, gamename);
+			f->type = kPlainFile;
+			f->file = fopen (name, _write ? "wb" : "rb");
+			found = f->file != 0;
+		}
+		break;
+
 	case OSD_FILETYPE_HIGHSCORE:
 		if( mame_highscore_enabled () )
 		{
@@ -839,7 +867,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		if( !found )
 		{
 			/* try with a .zip directory (if ZipMagic is installed) */
-			sprintf (name, "%s.zip/%s.cfg", artworkdir, filename);
+			sprintf (name, "%s.zip/%s.png", artworkdir, filename);
 			f->type = kPlainFile;
 			f->file = fopen (name, _write ? "wb" : "rb");
 			found = f->file != 0;
@@ -848,13 +876,13 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		if( !found )
 		{
 			/* try with a .zif directory (if ZipFolders is installed) */
-			sprintf (name, "%s.zif/%s.cfg", artworkdir, filename);
+			sprintf (name, "%s.zif/%s.png", artworkdir, filename);
 			f->type = kPlainFile;
 			f->file = fopen (name, _write ? "wb" : "rb");
 			found = f->file != 0;
         }
 
-        if( !_write )
+		if( !found )
 		{
 			char file[256], *extension;
 			sprintf(file, "%s", filename);
@@ -877,12 +905,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 			}
 			if( !found )
 			{
-				sprintf(name, "%s/%s", artworkdir, game);
-				extension = strrchr(name, '.');
-				if( extension )
-					strcpy (extension, ".zip");
-				else
-					strcat (name, ".zip");
+				sprintf(name, "%s/%s.zip", artworkdir, game);
 				LOG((errorlog, "Trying %s in %s\n", file, name));
 				if( cache_stat (name, &stat_buffer) == 0 )
 				{

@@ -264,6 +264,26 @@ int glad_cpu_sound_command_r(int offset)
 	return soundlatch_r(0);
 }
 
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
@@ -287,7 +307,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xdfff, videoram_w, &videoram },
 	{ 0xe000, 0xe7ff, colorram_w, &colorram },
 	{ 0xe800, 0xefff, MWA_RAM, &gladiator_text },
-	{ 0xf000, 0xf3ff, MWA_RAM }, /* battery backed RAM */
+	{ 0xf000, 0xf3ff, MWA_RAM, &nvram, &nvram_size }, /* battery backed RAM */
 	{ 0xf400, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -627,7 +647,9 @@ static struct MachineDriver machine_driver =
 			SOUND_MSM5205,
 			&msm5205_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 /***************************************************************************
@@ -737,35 +759,6 @@ ROM_END
 
 
 
-static int gladiatr_nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0xf000],0x400);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void gladiatr_nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xf000],0x400);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_gladiatr =
 {
 	__FILE__,
@@ -786,9 +779,8 @@ struct GameDriver driver_gladiatr =
 	input_ports_gladiatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gladiatr_nvram_load, gladiatr_nvram_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ogonsiro =
@@ -811,9 +803,8 @@ struct GameDriver driver_ogonsiro =
 	input_ports_gladiatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gladiatr_nvram_load, gladiatr_nvram_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gcastle =
@@ -836,7 +827,6 @@ struct GameDriver driver_gcastle =
 	input_ports_gladiatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gladiatr_nvram_load, gladiatr_nvram_save
+	ROT0,
+	0,0
 };

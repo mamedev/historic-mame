@@ -251,7 +251,7 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver prehisle_machine_driver =
+static struct MachineDriver machine_driver_prehisle =
 {
 	/* basic machine hardware */
 	{
@@ -433,7 +433,7 @@ struct GameDriver driver_prehisle =
 	"SNK",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	world_memory,
 
 	rom_prehisle,
@@ -444,7 +444,7 @@ struct GameDriver driver_prehisle =
 	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -458,7 +458,7 @@ struct GameDriver driver_prehislu =
 	"SNK of America",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	usa_memory,
 
 	rom_prehislu,
@@ -469,7 +469,7 @@ struct GameDriver driver_prehislu =
 	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -483,7 +483,7 @@ struct GameDriver driver_prehislj =
 	"SNK",
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
-	&prehisle_machine_driver,
+	&machine_driver_prehisle,
 	jap_memory,
 
 	rom_prehislj,
@@ -494,7 +494,7 @@ struct GameDriver driver_prehislj =
 	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 

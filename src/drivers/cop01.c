@@ -257,9 +257,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,            0, 16 },	/* ?? */
-	{ 1, 0x02000, &tilelayout,        16*16,  4 },
-	{ 1, 0x0a000, &spritelayout, 16*16+4*16, 16 },
+	{ REGION_GFX1, 0, &charlayout,            0, 16 },	/* ?? */
+	{ REGION_GFX2, 0, &tilelayout,        16*16,  4 },
+	{ REGION_GFX3, 0, &spritelayout, 16*16+4*16, 16 },
 	{ -1 }
 };
 
@@ -279,7 +279,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver cop01_machine_driver =
+static struct MachineDriver machine_driver_cop01 =
 {
 	/* basic machine hardware */
 	{
@@ -322,77 +322,6 @@ static struct MachineDriver cop01_machine_driver =
 	}
 };
 
-static int cop01_hiload(void)
-{
-
-      unsigned char *RAM = memory_region(REGION_CPU1);
-
-      if (memcmp(&RAM[0xC46E],"\x02\x50\x00",3) == 0 &&
-              memcmp(&RAM[0xC491],"\x52\x03\x59",3) == 0 )
-  {
-              void *f;
-
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                      osd_fread(f,&RAM[0xC46d],40);
-                      osd_fclose(f);
-              }
-
-              return 1;
-      }
-      else return 0;   /* we can't load the hi scores yet */
- }
-
-
-
-static void cop01_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xC46d],40);
-		osd_fclose(f);
-	}
-}
-
-static int cop01a_hiload(void)
-{
-
-      unsigned char *RAM = memory_region(REGION_CPU1);
-
-      if (memcmp(&RAM[0xC46F],"\x02\x50\x00",3) == 0 &&
-              memcmp(&RAM[0xC492],"\x52\x03\x59",3) == 0 )
-  {
-              void *f;
-
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                      osd_fread(f,&RAM[0xC46e],40);
-                      osd_fclose(f);
-              }
-
-              return 1;
-      }
-      else return 0;   /* we can't load the hi scores yet */
- }
-
-
-
-static void cop01a_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xC46e],40);
-		osd_fclose(f);
-	}
-}
 
 /***************************************************************************
 
@@ -407,18 +336,26 @@ ROM_START( cop01 )
 	ROM_LOAD( "cop02.4b",     0x4000, 0x4000, 0x9c7336ef )
 	ROM_LOAD( "cop03.5b",     0x8000, 0x4000, 0x2566c8bf )
 
-	ROM_REGION_DISPOSE(0x1a000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "cop15.17b",    0x0000, 0x4000, 0x6a5f08fa )
+	ROM_LOAD( "cop16.18b",    0x4000, 0x4000, 0x56bf6946 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop14.15g",    0x00000, 0x2000, 0x066d1c55 )	/* chars */
-	ROM_LOAD( "cop04.15c",    0x02000, 0x4000, 0x622d32e6 )	/* tiles */
-	ROM_LOAD( "cop05.16c",    0x06000, 0x4000, 0xc6ac5a35 )
-	ROM_LOAD( "cop10.3e",     0x0a000, 0x2000, 0x444cb19d )	/* sprites */
-	ROM_LOAD( "cop11.5e",     0x0c000, 0x2000, 0x9078bc04 )
-	ROM_LOAD( "cop12.6e",     0x0e000, 0x2000, 0x257a6706 )
-	ROM_LOAD( "cop13.8e",     0x10000, 0x2000, 0x07c4ea66 )
-	ROM_LOAD( "cop06.3g",     0x12000, 0x2000, 0xf1c1f4a5 )
-	ROM_LOAD( "cop07.5g",     0x14000, 0x2000, 0x11db7b72 )
-	ROM_LOAD( "cop08.6g",     0x16000, 0x2000, 0xa63ddda6 )
-	ROM_LOAD( "cop09.8g",     0x18000, 0x2000, 0x855a2ec3 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cop04.15c",    0x00000, 0x4000, 0x622d32e6 )	/* tiles */
+	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cop10.3e",     0x00000, 0x2000, 0x444cb19d )	/* sprites */
+	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
+	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
+	ROM_LOAD( "cop13.8e",     0x06000, 0x2000, 0x07c4ea66 )
+	ROM_LOAD( "cop06.3g",     0x08000, 0x2000, 0xf1c1f4a5 )
+	ROM_LOAD( "cop07.5g",     0x0a000, 0x2000, 0x11db7b72 )
+	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
+	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
@@ -426,10 +363,6 @@ ROM_START( cop01 )
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
 	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
-	ROM_LOAD( "cop15.17b",    0x0000, 0x4000, 0x6a5f08fa )
-	ROM_LOAD( "cop16.18b",    0x4000, 0x4000, 0x56bf6946 )
 ROM_END
 
 ROM_START( cop01a )
@@ -438,18 +371,26 @@ ROM_START( cop01a )
 	ROM_LOAD( "cop01alt.002", 0x4000, 0x4000, 0x20bad28e )
 	ROM_LOAD( "cop01alt.003", 0x8000, 0x4000, 0xa7e10b79 )
 
-	ROM_REGION_DISPOSE(0x1a000)
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_LOAD( "cop01alt.015", 0x0000, 0x4000, 0x95be9270 )
+	ROM_LOAD( "cop01alt.016", 0x4000, 0x4000, 0xc20bf649 )
+
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cop01alt.014", 0x00000, 0x2000, 0xedd8a474 )	/* chars */
-	ROM_LOAD( "cop04.15c",    0x02000, 0x4000, 0x622d32e6 )	/* tiles */
-	ROM_LOAD( "cop05.16c",    0x06000, 0x4000, 0xc6ac5a35 )
-	ROM_LOAD( "cop01alt.010", 0x0a000, 0x2000, 0x94aee9d6 )	/* sprites */
-	ROM_LOAD( "cop11.5e",     0x0c000, 0x2000, 0x9078bc04 )
-	ROM_LOAD( "cop12.6e",     0x0e000, 0x2000, 0x257a6706 )
-	ROM_LOAD( "cop13.8e",     0x10000, 0x2000, 0x07c4ea66 )
-	ROM_LOAD( "cop01alt.006", 0x12000, 0x2000, 0xcac7dac8 )
-	ROM_LOAD( "cop07.5g",     0x14000, 0x2000, 0x11db7b72 )
-	ROM_LOAD( "cop08.6g",     0x16000, 0x2000, 0xa63ddda6 )
-	ROM_LOAD( "cop09.8g",     0x18000, 0x2000, 0x855a2ec3 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cop04.15c",    0x00000, 0x4000, 0x622d32e6 )	/* tiles */
+	ROM_LOAD( "cop05.16c",    0x04000, 0x4000, 0xc6ac5a35 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cop01alt.010", 0x00000, 0x2000, 0x94aee9d6 )	/* sprites */
+	ROM_LOAD( "cop11.5e",     0x02000, 0x2000, 0x9078bc04 )
+	ROM_LOAD( "cop12.6e",     0x04000, 0x2000, 0x257a6706 )
+	ROM_LOAD( "cop13.8e",     0x06000, 0x2000, 0x07c4ea66 )
+	ROM_LOAD( "cop01alt.006", 0x08000, 0x2000, 0xcac7dac8 )
+	ROM_LOAD( "cop07.5g",     0x0a000, 0x2000, 0x11db7b72 )
+	ROM_LOAD( "cop08.6g",     0x0c000, 0x2000, 0xa63ddda6 )
+	ROM_LOAD( "cop09.8g",     0x0e000, 0x2000, 0x855a2ec3 )
 
 	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
@@ -457,62 +398,9 @@ ROM_START( cop01a )
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
 	ROM_LOAD( "coppromd.19d", 0x0300, 0x0100, 0x6a63dbb8 )	/* lookup table? (not implemented) */
 	ROM_LOAD( "copprome.2e",  0x0400, 0x0100, 0x214392fa )	/* sprite lookup table */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for code */
-	ROM_LOAD( "cop01alt.015", 0x0000, 0x4000, 0x95be9270 )
-	ROM_LOAD( "cop01alt.016", 0x4000, 0x4000, 0xc20bf649 )
 ROM_END
 
 
 
-struct GameDriver driver_cop01 =
-{
-	__FILE__,
-	0,
-	"cop01",
-	"Cop 01 (set 1)",
-	"1985",
-	"Nichibutsu",
-	"Carlos A. Lozano\n",
-	0,
-	&cop01_machine_driver,
-	0,
-
-	rom_cop01,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cop01,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	cop01_hiload, cop01_hisave
-};
-
-struct GameDriver driver_cop01a =
-{
-	__FILE__,
-	&driver_cop01,
-	"cop01a",
-	"Cop 01 (set 2)",
-	"1985",
-	"Nichibutsu",
-	"Carlos A. Lozano\n",
-	0,
-	&cop01_machine_driver,
-	0,
-
-	rom_cop01a,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cop01,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	cop01a_hiload, cop01a_hisave
-};
+GAMEX( 1985, cop01,  ,      cop01, cop01, , ROT0, "Nichibutsu", "Cop 01 (set 1)", GAME_IMPERFECT_COLORS )
+GAMEX( 1985, cop01a, cop01, cop01, cop01, , ROT0, "Nichibutsu", "Cop 01 (set 2)", GAME_IMPERFECT_COLORS )

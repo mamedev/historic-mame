@@ -3,15 +3,25 @@
 "Mitchell hardware". Actually used mostly by Capcom.
 
 All games run on the same hardware except mgakuen, which runs on an
-earlier version, without RAM banking and not encrypted (standard Z80).
+earlier version, without RAM banking, not encrypted (standard Z80)
+and without EEPROM.
 
 Other games that might run on this hardware:
 "Chi-toitsu"(YUGA 1988)-Another version of"Mahjong Gakuen"
 "MIRAGE -Youjyu mahjong den-"(MITCHELL 1994)
 
+Notes:
+- Super Pang has a protection which involves copying code stored in the
+  EEPROM to RAM and execute it from there. The first time the game is run,
+  you have to keep the player 1 start button pressed until the title screen
+  appears to force the game to initialize the EEPROM, otherwise it will not
+  work.
+  This is simultaed with a kluge in input_r.
 
 TODO:
 - understand what bits 0 and 3 of input port 0x05 are
+- ball speed is erratic in Block Block. It was not like this at one point.
+  This is probably related to interrupts and maybe to the above bits.
 
 ***************************************************************************/
 
@@ -58,6 +68,104 @@ extern unsigned char *pang_colorram;
 extern int pang_videoram_size;
 
 
+
+static void pang_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
+
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+
+
+/***************************************************************************
+
+  EEPROM
+
+***************************************************************************/
+
+static struct EEPROM_interface eeprom_interface =
+{
+	6,		/* address bits */
+	16,		/* data bits */
+	"0110",	/*  read command */
+	"0101",	/* write command */
+	"0111"	/* erase command */
+};
+
+static unsigned char *nvram;
+static int nvram_size;
+static int init_eeprom_count;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+	{
+		EEPROM_save(file);					/* EEPROM */
+		if (nvram_size)	/* Super Pang, Block Block */
+			osd_fwrite(file,nvram,nvram_size);	/* NVRAM */
+	}
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);					/* EEPROM */
+			if (nvram_size)	/* Super Pang, Block Block */
+			osd_fread(file,nvram,nvram_size);	/* NVRAM */
+		}
+		else
+			init_eeprom_count = 1000;	/* for Super Pang */
+	}
+}
+
+static int pang_port5_r(int offset)
+{
+	int bit;
+	extern struct GameDriver driver_mgakuen2;
+
+	bit = EEPROM_read_bit() << 7;
+
+	/* bits 0 and (sometimes) 3 are checked in the interrupt handler. */
+	/* Maybe they are vblank related, but I'm not sure. */
+	/* bit 3 is checked before updating the palette so it really seems to be vblank. */
+	/* Many games require two interrupts per frame and for these bits to toggle, */
+	/* otherwise music doesn't work. */
+	if (cpu_getiloops() & 1) bit |= 0x01;
+	else bit |= 0x08;
+if (Machine->gamedrv == &driver_mgakuen2)	/* hack... music doesn't work otherwise */
+	bit ^= 0x08;
+
+	return (input_port_0_r(0) & 0x76) | bit;
+}
+
+static void eeprom_cs_w(int offset,int data)
+{
+	EEPROM_set_cs_line(data ? CLEAR_LINE : ASSERT_LINE);
+}
+
+static void eeprom_clock_w(int offset,int data)
+{
+	EEPROM_set_clock_line(data ? CLEAR_LINE : ASSERT_LINE);
+}
+
+static void eeprom_serial_w(int offset,int data)
+{
+	EEPROM_write_bit(data);
+}
+
+
+
+/***************************************************************************
+
+  Input handling
+
+***************************************************************************/
 
 static int dial[2],dial_selected;
 
@@ -144,13 +252,23 @@ static int input_r(int offset)
 	{
 		case 0:
 		default:
-			return readinputport(2 + offset);
+			return readinputport(1 + offset);
 			break;
-		case 1:
-			return mahjong_input_r(offset);
+		case 1:	/* Mahjong games */
+			if (offset) return mahjong_input_r(offset-1);
+			else return readinputport(1);
 			break;
-		case 2:
-			return block_input_r(offset);
+		case 2:	/* Block Block - dial control */
+			if (offset) return block_input_r(offset);
+			else return readinputport(1);
+			break;
+		case 3:	/* Super Pang - simulate START 1 press to initialize EEPROM */
+			if (offset || init_eeprom_count == 0) return readinputport(1 + offset);
+			else
+			{
+				init_eeprom_count--;
+				return readinputport(1) & ~0x08;
+			}
 			break;
 	}
 }
@@ -172,182 +290,6 @@ if (errorlog) fprintf(errorlog,"PC %04x: write %02x to port 01\n",cpu_get_pc(),d
 	}
 }
 
-static void standard_init(void)
-{
-	input_type = 0;
-}
-static void mahjong_init(void)
-{
-	input_type = 1;
-}
-static void dial_init(void)
-{
-	input_type = 2;
-}
-
-
-/***************************************************************************
-
-  EEPROM
-
-***************************************************************************/
-
-static struct EEPROM_interface eeprom_interface =
-{
-	6,		/* address bits */
-	16,		/* data bits */
-	"0110",	/*  read command */
-	"0101",	/* write command */
-	"0111"	/* erase command */
-};
-
-static void eeprom_init(void)
-{
-	EEPROM_init(&eeprom_interface);
-}
-
-static int pang_port5_r(int offset)
-{
-	int bit;
-	extern struct GameDriver driver_mgakuen2;
-
-	bit = EEPROM_read_bit() << 7;
-
-	/* bits 0 and (sometimes) 3 are checked in the interrupt handler. */
-	/* Maybe they are vblank related, but I'm not sure. */
-	/* bit 3 is checked before updating the palette so it really seems to be vblank. */
-	/* Many games require two interrupts per frame and for these bits to toggle, */
-	/* otherwise music doesn't work. */
-	if (cpu_getiloops() & 1) bit |= 0x01;
-	else bit |= 0x08;
-if (Machine->gamedrv == &driver_mgakuen2)	/* hack... music doesn't work otherwise */
-	bit ^= 0x08;
-
-	return (input_port_1_r(0) & 0x76) | bit;
-}
-
-static void eeprom_cs_w(int offset,int data)
-{
-	EEPROM_set_cs_line(data ? CLEAR_LINE : ASSERT_LINE);
-}
-
-static void eeprom_clock_w(int offset,int data)
-{
-	EEPROM_set_clock_line(data ? CLEAR_LINE : ASSERT_LINE);
-}
-
-static void eeprom_serial_w(int offset,int data)
-{
-	EEPROM_write_bit(data);
-}
-
-static int nvram_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
-
-static int spang_nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);					/* EEPROM */
-		osd_fread(f,&RAM[0xe000],0x80);	/* NVRAM */
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void spang_nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);						/* EEPROM */
-		osd_fwrite(f,&RAM[0xe000],0x80);	/* NVRAM */
-		osd_fclose(f);
-	}
-}
-
-static int block_nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);					/* EEPROM */
-		osd_fread(f,&RAM[0xff80],0x80);	/* NVRAM */
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void block_nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);						/* EEPROM */
-		osd_fwrite(f,&RAM[0xff80],0x80);	/* NVRAM */
-		osd_fclose(f);
-	}
-}
-
-
-
-
-/***************************************************************************
-
- Horrible bankswitch routine. Need to be able to read decrypted opcodes
- from ROM. There must be a better way than this.
-
-***************************************************************************/
-
-static void pang_bankswitch_w(int offset,int data)
-{
-	static int olddata=-1;
-
-	if (data != olddata)
-	{
-		int bankaddress;
-		unsigned char *RAM = memory_region(REGION_CPU1);
-
-		bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-
-		memcpy(ROM+0x8000, ROM+bankaddress, 0x4000);
-		memcpy(RAM+0x8000, RAM+bankaddress, 0x4000);
-		olddata=data;
-	}
-}
-
 
 
 /***************************************************************************
@@ -358,7 +300,8 @@ static void pang_bankswitch_w(int offset,int data)
 
 static struct MemoryReadAddress mgakuen_readmem[] =
 {
-	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, mgakuen_paletteram_r },	/* palette RAM */
 	{ 0xc800, 0xcfff, pang_colorram_r },	/* Attribute RAM */
 	{ 0xd000, 0xdfff, mgakuen_videoram_r },	/* char RAM */
@@ -380,7 +323,8 @@ static struct MemoryWriteAddress mgakuen_writemem[] =
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, pang_paletteram_r },	/* Banked palette RAM */
 	{ 0xc800, 0xcfff, pang_colorram_r },	/* Attribute RAM */
 	{ 0xd000, 0xdfff, pang_videoram_r },	/* Banked char / OBJ RAM */
@@ -400,8 +344,8 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x00, input_port_0_r },
-	{ 0x01, 0x02, input_r },	/* the Mahjong games and Block Block need special treatment */
+	{ 0x00, 0x02, input_r },	/* Super Pang needs a kludge to initialize EEPROM;
+						the Mahjong games and Block Block need special input treatment */
 	{ 0x03, 0x03, input_port_12_r },	/* mgakuen only */
 	{ 0x04, 0x04, input_port_13_r },	/* mgakuen only */
 	{ 0x05, 0x05, pang_port5_r },
@@ -427,6 +371,14 @@ static struct IOWritePort writeport[] =
 
 
 INPUT_PORTS_START( mgakuen )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -436,14 +388,6 @@ INPUT_PORTS_START( mgakuen )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -595,6 +539,14 @@ INPUT_PORTS_START( mgakuen )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( marukin )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -604,14 +556,6 @@ INPUT_PORTS_START( marukin )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -715,6 +659,14 @@ INPUT_PORTS_START( marukin )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pkladies )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -724,14 +676,6 @@ INPUT_PORTS_START( pkladies )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -837,6 +781,14 @@ INPUT_PORTS_START( pkladies )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pang )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -846,14 +798,6 @@ INPUT_PORTS_START( pang )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -877,6 +821,14 @@ INPUT_PORTS_START( pang )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qtono1 )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -886,14 +838,6 @@ INPUT_PORTS_START( qtono1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -917,6 +861,14 @@ INPUT_PORTS_START( qtono1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( block )
+	PORT_START      /* DSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -926,14 +878,6 @@ INPUT_PORTS_START( block )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START      /* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BITX(0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
-	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1001,22 +945,22 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo mgakuen_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &marukin_charlayout, 0,  64 }, /* colors 0-1023 */
-	{ 1, 0x200000, &spritelayout,       0,  16 }, /* colors 0- 255 */
+	{ REGION_GFX1, 0, &marukin_charlayout, 0,  64 }, /* colors 0-1023 */
+	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo marukin_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &marukin_charlayout, 0, 128 }, /* colors 0-2047 */
-	{ 1, 0x200000, &spritelayout,       0,  16 }, /* colors 0- 255 */
+	{ REGION_GFX1, 0, &marukin_charlayout, 0, 128 }, /* colors 0-2047 */
+	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0, 128 }, /* colors 0-2047 */
-	{ 1, 0x100000, &spritelayout,   0,  16 }, /* colors 0- 255 */
+	{ REGION_GFX1, 0, &charlayout,     0, 128 }, /* colors 0-2047 */
+	{ REGION_GFX2, 0, &spritelayout,   0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
@@ -1033,13 +977,13 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
 	{ 8000 },	/* 8000Hz ??? */
-	{ 2 },		/* memory region 2 */
+	{ REGION_SOUND1 },		/* memory region 2 */
 	{ 50 }
 };
 
 
 
-static struct MachineDriver mgakuen_machine_driver =
+static struct MachineDriver machine_driver_mgakuen =
 {
 	{
 		{
@@ -1051,7 +995,7 @@ static struct MachineDriver mgakuen_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	eeprom_init,
+	0,
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	mgakuen_gfxdecodeinfo,
@@ -1073,9 +1017,11 @@ static struct MachineDriver mgakuen_machine_driver =
 			&ym2413_interface
 		},
 	}
+
+	/* no EEPROM */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pang =
 {
 	{
 		{
@@ -1087,7 +1033,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	eeprom_init,
+	0,
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
@@ -1108,10 +1054,12 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		},
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver marukin_machine_driver =
+static struct MachineDriver machine_driver_marukin =
 {
 	{
 		{
@@ -1123,7 +1071,7 @@ static struct MachineDriver marukin_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	eeprom_init,
+	0,
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
 	marukin_gfxdecodeinfo,
@@ -1144,178 +1092,187 @@ static struct MachineDriver marukin_machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		},
-	}
+	},
+
+	nvram_handler
 };
 
 
 
 ROM_START( mgakuen )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 192k for code */
 	ROM_LOAD( "mg-1.1j",      0x00000, 0x08000, 0xbf02ea6b )
 	ROM_LOAD( "mg-2.1l",      0x10000, 0x20000, 0x64141b0c )
 
-	ROM_REGION_DISPOSE(0x240000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mg-1.13h",     0x000000, 0x80000, 0xfd6a0805 )	/* chars */
 	ROM_LOAD( "mg-2.14h",     0x080000, 0x80000, 0xe26e871e )
 	ROM_LOAD( "mg-3.16h",     0x100000, 0x80000, 0xdd781d9a )
 	ROM_LOAD( "mg-4.17h",     0x180000, 0x80000, 0x97afcc79 )
-	ROM_LOAD( "mg-6.4l",      0x200000, 0x20000, 0x34594e62 )	/* sprites */
-	ROM_LOAD( "mg-7.6l",      0x220000, 0x20000, 0xf304c806 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg-6.4l",      0x000000, 0x20000, 0x34594e62 )	/* sprites */
+	ROM_LOAD( "mg-7.6l",      0x020000, 0x20000, 0xf304c806 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "mg-5.1c",      0x00000, 0x80000, 0x170332f1 )	/* banked */
 ROM_END
 
 ROM_START( mgakuen2 )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "mg2-xf.1j",    0x00000, 0x08000, 0xc8165d2d )
 	ROM_LOAD( "mg2-y.1l",     0x10000, 0x20000, 0x75bbcc14 )
 	ROM_LOAD( "mg2-z.3l",     0x30000, 0x20000, 0xbfdba961 )
 
-	ROM_REGION_DISPOSE(0x240000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mg2-a.13h",    0x000000, 0x80000, 0x31a0c55e )	/* chars */
 	ROM_LOAD( "mg2-b.14h",    0x080000, 0x80000, 0xc18488fa )
 	ROM_LOAD( "mg2-c.16h",    0x100000, 0x80000, 0x9425b364 )
 	ROM_LOAD( "mg2-d.17h",    0x180000, 0x80000, 0x6cc9eeba )
-	ROM_LOAD( "mg2-f.4l",     0x200000, 0x20000, 0x3172c9fe )	/* sprites */
-	ROM_LOAD( "mg2-g.6l",     0x220000, 0x20000, 0x19b8b61c )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg2-f.4l",     0x000000, 0x20000, 0x3172c9fe )	/* sprites */
+	ROM_LOAD( "mg2-g.6l",     0x020000, 0x20000, 0x19b8b61c )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "mg2-e.1c",     0x00000, 0x80000, 0x70fd0809 )	/* banked */
 ROM_END
 
 ROM_START( pkladies )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x20000, REGION_CPU1 )	/* 128k for code + 128k for decrypted opcodes */
 	ROM_LOAD( "pko-prg1.14f", 0x00000, 0x08000, 0x86585a94 )
 	ROM_LOAD( "pko-prg2.15f", 0x10000, 0x10000, 0x86cbe82d )
 
-	ROM_REGION_DISPOSE(0x240000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_GFX_EVEN( "pko-001.8h",   0x000000, 0x80000, 0x1ead5d9b )	/* chars */
 	ROM_LOAD_GFX_ODD ( "pko-003.8j",   0x000000, 0x80000, 0x339ab4e6 )
 	ROM_LOAD_GFX_EVEN( "pko-002.9h",   0x100000, 0x80000, 0x1cf02586 )
 	ROM_LOAD_GFX_ODD ( "pko-004.9j",   0x100000, 0x80000, 0x09ccb442 )
-	ROM_LOAD( "pko-chr1.2j",  0x200000, 0x20000, 0x31ce33cd )	/* sprites */
-	ROM_LOAD( "pko-chr2.3j",  0x220000, 0x20000, 0xad7e055f )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pko-chr1.2j",  0x000000, 0x20000, 0x31ce33cd )	/* sprites */
+	ROM_LOAD( "pko-chr2.3j",  0x020000, 0x20000, 0xad7e055f )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "pko-voi1.2d",  0x00000, 0x20000, 0x07e0f531 )
 	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
 ROM_END
 
 ROM_START( dokaben )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "db06.11h",     0x00000, 0x08000, 0x413e0886 )
 	ROM_LOAD( "db07.13h",     0x10000, 0x20000, 0x8bdcf49e )
 	ROM_LOAD( "db08.14h",     0x30000, 0x20000, 0x1643bdd9 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "db02.1e",      0x000000, 0x20000, 0x9aa8470c )	/* chars */
 	ROM_LOAD( "db03.2e",      0x020000, 0x20000, 0x3324e43d )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "db04.1g",      0x080000, 0x20000, 0xc0c5b6c2 )
 	ROM_LOAD( "db05.2g",      0x0a0000, 0x20000, 0xd2ab25f2 )
 	/* c0000-fffff empty */
-	ROM_LOAD( "db10.2k",      0x100000, 0x20000, 0x9e70f7ae )	/* sprites */
-	ROM_LOAD( "db09.1k",      0x120000, 0x20000, 0x2d9263f7 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "db10.2k",      0x000000, 0x20000, 0x9e70f7ae )	/* sprites */
+	ROM_LOAD( "db09.1k",      0x020000, 0x20000, 0x2d9263f7 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "db01.1d",      0x00000, 0x20000, 0x62fa6b81 )
 ROM_END
 
 ROM_START( pang )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x30000, REGION_CPU1 )	/* 192k for code + 192k for decrypted opcodes */
 	ROM_LOAD( "pang6.bin",    0x00000, 0x08000, 0x68be52cd )
 	ROM_LOAD( "pang7.bin",    0x10000, 0x20000, 0x4a2e70f6 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pang_09.bin",  0x000000, 0x20000, 0x3a5883f5 )	/* chars */
 	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "pang_11.bin",  0x080000, 0x20000, 0x166a16ae )
 	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
 	/* c0000-fffff empty */
-	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
-	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bb10.bin",     0x000000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x020000, 0x20000, 0x39f47a63 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( pangb )
-	ROM_REGIONX( 0x60000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x30000, REGION_CPU1 )	/* 192k for code + 192k for decrypted opcodes */
+	ROM_LOAD( "pang_04.bin",  0x30000, 0x08000, 0xf68f88a5 )   /* Decrypted opcode + data */
+	ROM_CONTINUE(             0x00000, 0x08000 )
+	ROM_LOAD( "pang_02.bin",  0x40000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
 	ROM_LOAD( "pang_03.bin",  0x10000, 0x20000, 0x0c8477ae )   /* Decrypted data */
-	ROM_LOAD( "pang_02.bin",  0x30000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
-	ROM_LOAD( "pang_04.bin",  0x50000, 0x10000, 0xf68f88a5 )   /* Decrypted opcode + data */
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pang_09.bin",  0x000000, 0x20000, 0x3a5883f5 )	/* chars */
 	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "pang_11.bin",  0x080000, 0x20000, 0x166a16ae )
 	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
 	/* c0000-fffff empty */
-	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
-	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bb10.bin",     0x000000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x020000, 0x20000, 0x39f47a63 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
-static void pangb_decode(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
-	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
-	memcpy(ROM+0x10000, RAM+0x30000, 0x20000);   /* OP codes */
-	memcpy(RAM, RAM+0x58000, 0x8000);   /* Data */
-}
-
 ROM_START( bbros )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x30000, REGION_CPU1 )	/* 192k for code + 192k for decrypted opcodes */
 	ROM_LOAD( "bb6.bin",      0x00000, 0x08000, 0xa3041ca4 )
 	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, 0x09231c68 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bb2.bin",      0x000000, 0x20000, 0x62f29992 )	/* chars */
 	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "bb4.bin",      0x080000, 0x20000, 0xf705aa89 )
 	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
 	/* c0000-fffff empty */
-	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
-	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bb10.bin",     0x000000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x020000, 0x20000, 0x39f47a63 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( pompingw )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x30000, REGION_CPU1 )	/* 192k for code + 192k for decrypted opcodes */
 	ROM_LOAD( "pwj_06.11h",   0x00000, 0x08000, 0x4a0a6426 )
 	ROM_LOAD( "pwj_07.13h",   0x10000, 0x20000, 0xa9402420 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pw_02.1e",     0x000000, 0x20000, 0x4b5992e4 )	/* chars */
 	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "pwj_04.1g",    0x080000, 0x20000, 0x01e49081 )
 	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
 	/* c0000-fffff empty */
-	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
-	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bb10.bin",     0x000000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x020000, 0x20000, 0x39f47a63 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
 ROM_START( cworld )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "cw05.bin",     0x00000, 0x08000, 0xd3c1723d )
 	ROM_LOAD( "cw06.bin",     0x10000, 0x20000, 0xd71ed4a3 )
 	ROM_LOAD( "cw07.bin",     0x30000, 0x20000, 0xd419ce08 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cw08.bin",     0x000000, 0x20000, 0x6c80da3c )	/* chars */
 	ROM_LOAD( "cw09.bin",     0x020000, 0x20000, 0x7607da71 )
 	ROM_LOAD( "cw10.bin",     0x040000, 0x20000, 0x6f0e639f )
@@ -1324,20 +1281,22 @@ ROM_START( cworld )
 	ROM_LOAD( "cw19.bin",     0x0a0000, 0x20000, 0x51fc5532 )
 	ROM_LOAD( "cw20.bin",     0x0c0000, 0x20000, 0x58381d58 )
 	ROM_LOAD( "cw21.bin",     0x0e0000, 0x20000, 0x910cc753 )
-	ROM_LOAD( "cw16.bin",     0x100000, 0x20000, 0xf90217d1 )	/* sprites */
-	ROM_LOAD( "cw17.bin",     0x120000, 0x20000, 0xc953c702 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cw16.bin",     0x000000, 0x20000, 0xf90217d1 )	/* sprites */
+	ROM_LOAD( "cw17.bin",     0x020000, 0x20000, 0xc953c702 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "cw01.bin",     0x00000, 0x20000, 0xf4368f5b )
 ROM_END
 
 ROM_START( hatena )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "q2-05.rom",    0x00000, 0x08000, 0x66c9e1da )
 	ROM_LOAD( "q2-06.rom",    0x10000, 0x20000, 0x5fc39916 )
 	ROM_LOAD( "q2-07.rom",    0x30000, 0x20000, 0xec6d5e5e )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "q2-08.rom",    0x000000, 0x20000, 0x6c80da3c )	/* chars */
 	ROM_LOAD( "q2-09.rom",    0x020000, 0x20000, 0xabe3e15c )
 	ROM_LOAD( "q2-10.rom",    0x040000, 0x20000, 0x6963450d )
@@ -1346,77 +1305,85 @@ ROM_START( hatena )
 	ROM_LOAD( "q2-19.rom",    0x0a0000, 0x20000, 0x70300445 )
 	ROM_LOAD( "q2-20.rom",    0x0c0000, 0x20000, 0x21a6ff42 )
 	ROM_LOAD( "q2-21.rom",    0x0e0000, 0x20000, 0x076280c9 )
-	ROM_LOAD( "q2-16.rom",    0x100000, 0x20000, 0xec19b2f0 )	/* sprites */
-	ROM_LOAD( "q2-17.rom",    0x120000, 0x20000, 0xecd69d92 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "q2-16.rom",    0x000000, 0x20000, 0xec19b2f0 )	/* sprites */
+	ROM_LOAD( "q2-17.rom",    0x020000, 0x20000, 0xecd69d92 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "q2-01.rom",    0x00000, 0x20000, 0x149e7a89 )
 ROM_END
 
 ROM_START( spang )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "spe_06.rom",   0x00000, 0x08000, 0x1af106fb )
 	ROM_LOAD( "spe_07.rom",   0x10000, 0x20000, 0x208b5f54 )
 	ROM_LOAD( "spe_08.rom",   0x30000, 0x20000, 0x2bc03ade )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "spe_02.rom",   0x000000, 0x20000, 0x63c9dfd2 )	/* chars */
 	ROM_LOAD( "03.f2",        0x020000, 0x20000, 0x3ae28bc1 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "spe_04.rom",   0x080000, 0x20000, 0x9d7b225b )
 	ROM_LOAD( "05.g2",        0x0a0000, 0x20000, 0x4a060884 )
 	/* c0000-fffff empty */
-	ROM_LOAD( "spe_10.rom",   0x100000, 0x20000, 0xeedd0ade )	/* sprites */
-	ROM_LOAD( "spe_09.rom",   0x120000, 0x20000, 0x04b41b75 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "spe_10.rom",   0x000000, 0x20000, 0xeedd0ade )	/* sprites */
+	ROM_LOAD( "spe_09.rom",   0x020000, 0x20000, 0x04b41b75 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "spe_01.rom",   0x00000, 0x20000, 0x2d19c133 )
 ROM_END
 
 ROM_START( sbbros )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "06.j12",       0x00000, 0x08000, 0x292eee6a )
 	ROM_LOAD( "07.j13",       0x10000, 0x20000, 0xf46b698d )
 	ROM_LOAD( "08.j14",       0x30000, 0x20000, 0xa75e7fbe )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "02.f1",        0x000000, 0x20000, 0x0c22ffc6 )	/* chars */
 	ROM_LOAD( "03.f2",        0x020000, 0x20000, 0x3ae28bc1 )
 	/* 40000-7ffff empty */
 	ROM_LOAD( "04.g2",        0x080000, 0x20000, 0xbb3dee5b )
 	ROM_LOAD( "05.g2",        0x0a0000, 0x20000, 0x4a060884 )
 	/* c0000-fffff empty */
-	ROM_LOAD( "10.l2",        0x100000, 0x20000, 0xd6675d8f )	/* sprites */
-	ROM_LOAD( "09.l1",        0x120000, 0x20000, 0x8f678bc8 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "10.l2",        0x000000, 0x20000, 0xd6675d8f )	/* sprites */
+	ROM_LOAD( "09.l1",        0x020000, 0x20000, 0x8f678bc8 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "01.d1",        0x00000, 0x20000, 0xb96ea126 )
 ROM_END
 
 ROM_START( marukin )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x30000, REGION_CPU1 )	/* 192k for code + 192k for decrypted opcodes */
 	ROM_LOAD( "mg3-01.9d",    0x00000, 0x08000, 0x04357973 )
 	ROM_LOAD( "mg3-02.10d",   0x10000, 0x20000, 0x50d08da0 )
 
-	ROM_REGION_DISPOSE(0x240000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mg3-a.3k",     0x000000, 0x80000, 0x420f1de7 )	/* chars */
 	ROM_LOAD( "mg3-b.4k",     0x080000, 0x80000, 0xd8de13fa )
 	ROM_LOAD( "mg3-c.6k",     0x100000, 0x80000, 0xfbeb66e8 )
 	ROM_LOAD( "mg3-d.7k",     0x180000, 0x80000, 0x8f6bd831 )
-	ROM_LOAD( "mg3-05.2g",    0x200000, 0x20000, 0x7a738d2d )	/* sprites */
-	ROM_LOAD( "mg3-04.1g",    0x220000, 0x20000, 0x56f30515 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mg3-05.2g",    0x000000, 0x20000, 0x7a738d2d )	/* sprites */
+	ROM_LOAD( "mg3-04.1g",    0x020000, 0x20000, 0x56f30515 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "mg3-e.1d",     0x00000, 0x80000, 0x106c2fa9 )	/* banked */
 ROM_END
 
 ROM_START( qtono1 )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, 0x1dd0a344 )
 	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0xbd6a2110 )
 	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, 0x61e53c4f )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "q3-08.rom",    0x000000, 0x20000, 0x1533b978 )	/* chars */
 	ROM_LOAD( "q3-09.rom",    0x020000, 0x20000, 0xa32db2f2 )
 	ROM_LOAD( "q3-10.rom",    0x040000, 0x20000, 0xed681aa8 )
@@ -1425,20 +1392,22 @@ ROM_START( qtono1 )
 	ROM_LOAD( "q3-19.rom",    0x0a0000, 0x20000, 0xb7f6d40f )
 	ROM_LOAD( "q3-20.rom",    0x0c0000, 0x20000, 0x6cd7f38d )
 	ROM_LOAD( "q3-21.rom",    0x0e0000, 0x20000, 0xb4aa6b4b )
-	ROM_LOAD( "q3-16.rom",    0x100000, 0x20000, 0x863d6836 )	/* sprites */
-	ROM_LOAD( "q3-17.rom",    0x120000, 0x20000, 0x459bf59c )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "q3-16.rom",    0x000000, 0x20000, 0x863d6836 )	/* sprites */
+	ROM_LOAD( "q3-17.rom",    0x020000, 0x20000, 0x459bf59c )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "q3-01.rom",    0x00000, 0x20000, 0x6c1be591 )
 ROM_END
 
 ROM_START( qsangoku )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "q4-05c.rom",   0x00000, 0x08000, 0xe1d010b4 )
 	ROM_LOAD( "q4-06.rom",    0x10000, 0x20000, 0xa0301849 )
 	ROM_LOAD( "q4-07.rom",    0x30000, 0x20000, 0x2941ef5b )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "q4-08.rom",    0x000000, 0x20000, 0xdc84c6cb )	/* chars */
 	ROM_LOAD( "q4-09.rom",    0x020000, 0x20000, 0xcbb6234c )
 	ROM_LOAD( "q4-10.rom",    0x040000, 0x20000, 0xc20a27a8 )
@@ -1447,20 +1416,22 @@ ROM_START( qsangoku )
 	ROM_LOAD( "q4-19.rom",    0x0a0000, 0x20000, 0x1fd92b7d )
 	ROM_LOAD( "q4-20.rom",    0x0c0000, 0x20000, 0xb02dc6a1 )
 	ROM_LOAD( "q4-21.rom",    0x0e0000, 0x20000, 0x432b1dc1 )
-	ROM_LOAD( "q4-16.rom",    0x100000, 0x20000, 0x77342320 )	/* sprites */
-	ROM_LOAD( "q4-17.rom",    0x120000, 0x20000, 0x1275c436 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "q4-16.rom",    0x000000, 0x20000, 0x77342320 )	/* sprites */
+	ROM_LOAD( "q4-17.rom",    0x020000, 0x20000, 0x1275c436 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "q4-01.rom",    0x00000, 0x20000, 0x5d0d07d8 )
 ROM_END
 
 ROM_START( block )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, 0xc12e7f4c )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, 0x1d114f13 )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, 0xaa0f4ff1 )	/* chars */
 	ROM_RELOAD(               0x040000, 0x20000 )
 	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, 0x6fa8c186 )
@@ -1469,20 +1440,22 @@ ROM_START( block )
 	ROM_RELOAD(               0x0c0000, 0x20000 )
 	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, 0x1ae942f5 )
 	ROM_RELOAD(               0x0e0000, 0x20000 )
-	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
-	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bl_16.rom",    0x000000, 0x20000, 0xfadcaff7 )	/* sprites */
+	ROM_LOAD( "bl_17.rom",    0x020000, 0x20000, 0x5f8cab42 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
 ROM_START( blockj )
-	ROM_REGIONX( 0x50000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "blj_05.rom",   0x00000, 0x08000, 0x3b55969a )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "blj_07.rom",   0x30000, 0x20000, 0x1723883c )
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, 0xaa0f4ff1 )	/* chars */
 	ROM_RELOAD(               0x040000, 0x20000 )
 	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, 0x6fa8c186 )
@@ -1491,20 +1464,24 @@ ROM_START( blockj )
 	ROM_RELOAD(               0x0c0000, 0x20000 )
 	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, 0x1ae942f5 )
 	ROM_RELOAD(               0x0e0000, 0x20000 )
-	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
-	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bl_16.rom",    0x000000, 0x20000, 0xfadcaff7 )	/* sprites */
+	ROM_LOAD( "bl_17.rom",    0x020000, 0x20000, 0x5f8cab42 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
 ROM_START( blockbl )
-	ROM_REGIONX( 0xa0000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x50000, REGION_CPU1 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_LOAD( "m7.l6",        0x50000, 0x08000, 0x3b576fd9 )   /* Decrypted opcode + data */
+	ROM_CONTINUE(             0x00000, 0x08000 )
+	ROM_LOAD( "m5.l3",        0x60000, 0x20000, 0x7c988bb7 )   /* Decrypted opcode + data */
+	ROM_CONTINUE(             0x10000, 0x20000 )
 	ROM_LOAD( "m6.l5",        0x30000, 0x20000, 0x5768d8eb )   /* Decrypted data */
-	ROM_LOAD( "m7.l6",        0x50000, 0x10000, 0x3b576fd9 )   /* Decrypted opcode + data */
-	ROM_LOAD( "m5.l3",        0x60000, 0x40000, 0x7c988bb7 )   /* Decrypted opcode + data */
 
-	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "m12.o10",      0x000000, 0x20000, 0x963154d9 )	/* chars */
 	ROM_RELOAD(               0x040000, 0x20000 )
 	ROM_LOAD( "m13.o14",      0x020000, 0x20000, 0x069480bb )
@@ -1513,517 +1490,132 @@ ROM_START( blockbl )
 	ROM_RELOAD(               0x0c0000, 0x20000 )
 	ROM_LOAD( "m3.j20",       0x0a0000, 0x20000, 0x629d58fe )
 	ROM_RELOAD(               0x0e0000, 0x20000 )
-	ROM_LOAD( "m11.o7",       0x100000, 0x10000, 0x255180a5 )	/* sprites */
-	ROM_LOAD( "m10.o5",       0x110000, 0x10000, 0x3201c088 )
-	ROM_LOAD( "m9.o3",        0x120000, 0x10000, 0x29357fe4 )
-	ROM_LOAD( "m8.o2",        0x130000, 0x10000, 0xabd665d1 )
 
-	ROM_REGION( 0x80000 )	/* OKIM */
+	ROM_REGIONX( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "m11.o7",       0x000000, 0x10000, 0x255180a5 )	/* sprites */
+	ROM_LOAD( "m10.o5",       0x010000, 0x10000, 0x3201c088 )
+	ROM_LOAD( "m9.o3",        0x020000, 0x10000, 0x29357fe4 )
+	ROM_LOAD( "m8.o2",        0x030000, 0x10000, 0xabd665d1 )
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
-static void blockbl_decode(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
-	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
-	memcpy(RAM, RAM+0x58000, 0x8000);   /* Data */
-	memcpy(ROM+0x10000, RAM+0x60000, 0x20000);   /* OP codes */
-	memcpy(RAM+0x10000, RAM+0x80000, 0x20000);   /* Data */
+static void bootleg_decode(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+
+	memory_set_opcode_base(0,rom+diff);
 }
 
 
 
-/****  Mahjong Gakuen high score save routine - RJF (Aug 5, 1999)  ****/
-static int mgakuen_hiload(void)
+static void init_dokaben(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe702],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe700], 32*5);        /* HS table */
-
-                        RAM[0xe622] = RAM[0xe702];      /* update high score */
-                        RAM[0xe623] = RAM[0xe703];      /* on top of screen */
-                        RAM[0xe624] = RAM[0xe704];
-                        RAM[0xe625] = RAM[0xe705];
-                        RAM[0xe626] = RAM[0xe706];
-                        RAM[0xe627] = RAM[0xe707];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+	input_type = 0;
+	nvram_size = 0;
+	mgakuen2_decode();
+}
+static void init_pang(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	pang_decode();
+}
+static void init_pangb(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	bootleg_decode();
+}
+static void init_cworld(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	cworld_decode();
+}
+static void init_hatena(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	hatena_decode();
+}
+static void init_spang(void)
+{
+	input_type = 3;
+	nvram_size = 0x80;
+	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
+	spang_decode();
+}
+static void init_sbbros(void)
+{
+	input_type = 3;
+	nvram_size = 0x80;
+	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
+	sbbros_decode();
+}
+static void init_qtono1(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	qtono1_decode();
+}
+static void init_qsangoku(void)
+{
+	input_type = 0;
+	nvram_size = 0;
+	qsangoku_decode();
+}
+static void init_mgakuen(void)
+{
+	input_type = 1;
+}
+static void init_mgakuen2(void)
+{
+	input_type = 1;
+	nvram_size = 0;
+	mgakuen2_decode();
+}
+static void init_marukin(void)
+{
+	input_type = 1;
+	nvram_size = 0;
+	marukin_decode();
+}
+static void init_block(void)
+{
+	input_type = 2;
+	nvram_size = 0x80;
+	nvram = &memory_region(REGION_CPU1)[0xff80];	/* NVRAM */
+	block_decode();
+}
+static void init_blockbl(void)
+{
+	input_type = 2;
+	nvram_size = 0x80;
+	nvram = &memory_region(REGION_CPU1)[0xff80];	/* NVRAM */
+	bootleg_decode();
 }
 
-static void mgakuen_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe700], 32*5);      /* HS whole table */
-		osd_fclose(f);
-	}
-}
 
-
-
-struct GameDriver driver_mgakuen =
-{
-	__FILE__,
-	0,
-	"mgakuen",
-	"Mahjong Gakuen",
-	"1988",
-	"Yuga",
-	"Paul Leaman",
-	0,
-	&mgakuen_machine_driver,
-	mahjong_init,
-
-	rom_mgakuen,
-	0, 0,	/* not encrypted */
-	0,
-	0,
-
-	input_ports_mgakuen,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	mgakuen_hiload, mgakuen_hisave    /* no EEPROM */
-};
-
-struct GameDriver driver_mgakuen2 =
-{
-	__FILE__,
-	0,
-	"mgakuen2",
-	"Mahjong Gakuen 2 Gakuen-chou no Fukushuu",
-	"1989",
-	"Face",
-	"Paul Leaman",
-	0,
-	&marukin_machine_driver,
-	mahjong_init,
-
-	rom_mgakuen2,
-	0, mgakuen2_decode,
-	0,
-	0,
-
-	input_ports_marukin,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_pkladies =
-{
-	__FILE__,
-	0,
-	"pkladies",
-	"Poker Ladies",
-	"1989",
-	"Mitchell",
-	"Paul Leaman",
-	0,
-	&marukin_machine_driver,
-	mahjong_init,
-
-	rom_pkladies,
-	0, mgakuen2_decode,
-	0,
-	0,
-
-	input_ports_pkladies,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_dokaben =
-{
-	__FILE__,
-	0,
-	"dokaben",
-	"Dokaben (Japan)",
-	"1989",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_dokaben,
-	0, mgakuen2_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_pang =
-{
-	__FILE__,
-	0,
-	"pang",
-	"Pang (World)",
-	"1989",
-	"Mitchell",
-	"Paul Leaman\nMario Silva",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_pang,
-	0, pang_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_pangb =
-{
-	__FILE__,
-	&driver_pang,
-	"pangb",
-	"Pang (bootleg)",
-	"1989",
-	"bootleg",
-	"Paul Leaman\nMario Silva",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_pangb,
-	0, pangb_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_bbros =
-{
-	__FILE__,
-	&driver_pang,
-	"bbros",
-	"Buster Bros (US)",
-	"1989",
-	"Capcom",
-	"Paul Leaman\nMario Silva",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_bbros,
-	0, pang_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_pompingw =
-{
-	__FILE__,
-	&driver_pang,
-	"pompingw",
-	"Pomping World (Japan)",
-	"1989",
-	"Mitchell",
-	"Paul Leaman\nMario Silva",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_pompingw,
-	0, pang_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_cworld =
-{
-	__FILE__,
-	0,
-	"cworld",
-	"Capcom World (Japan)",
-	"1989",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_cworld,
-	0, cworld_decode,
-	0,
-	0,
-
-	input_ports_qtono1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_hatena =
-{
-	__FILE__,
-	0,
-	"hatena",
-	"Adventure Quiz 2 Hatena Hatena no Dai-Bouken (Japan)",
-	"1990",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_hatena,
-	0, hatena_decode,
-	0,
-	0,
-
-	input_ports_qtono1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_spang =
-{
-	__FILE__,
-	0,
-	"spang",
-	"Super Pang (World)",
-	"1990",
-	"Mitchell",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_spang,
-	0, spang_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	spang_nvram_load, spang_nvram_save
-};
-
-struct GameDriver driver_sbbros =
-{
-	__FILE__,
-	&driver_spang,
-	"sbbros",
-	"Super Buster Bros (US)",
-	"1990",
-	"Mitchell + Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_sbbros,
-	0, sbbros_decode,
-	0,
-	0,
-
-	input_ports_pang,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	spang_nvram_load, spang_nvram_save
-};
-
-struct GameDriver driver_marukin =
-{
-	__FILE__,
-	0,
-	"marukin",
-	"Super Marukin-Ban",
-	"1990",
-	"Yuga",
-	"Paul Leaman",
-	0,
-	&marukin_machine_driver,
-	mahjong_init,
-
-	rom_marukin,
-	0, marukin_decode,
-	0,
-	0,
-
-	input_ports_marukin,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_qtono1 =
-{
-	__FILE__,
-	0,
-	"qtono1",
-	"Quiz Tonosama no Yabou (Japan)",
-	"1991",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_qtono1,
-	0, qtono1_decode,
-	0,
-	0,
-
-	input_ports_qtono1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_qsangoku =
-{
-	__FILE__,
-	0,
-	"qsangoku",
-	"Quiz Sangokushi (Japan)",
-	"1991",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	standard_init,
-
-	rom_qsangoku,
-	0, qsangoku_decode,
-	0,
-	0,
-
-	input_ports_qtono1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	nvram_load, nvram_save
-};
-
-struct GameDriver driver_block =
-{
-	__FILE__,
-	0,
-	"block",
-	"Block Block (World)",
-	"1991",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	dial_init,
-
-	rom_block,
-	0, block_decode,
-	0,
-	0,
-
-	input_ports_block,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	block_nvram_load, block_nvram_save
-};
-
-struct GameDriver driver_blockj =
-{
-	__FILE__,
-	&driver_block,
-	"blockj",
-	"Block Block (Japan)",
-	"1991",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	dial_init,
-
-	rom_blockj,
-	0, block_decode,
-	0,
-	0,
-
-	input_ports_block,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	block_nvram_load, block_nvram_save
-};
-
-struct GameDriver driver_blockbl =
-{
-	__FILE__,
-	&driver_block,
-	"blockbl",
-	"Block Block (bootleg)",
-	"1991",
-	"bootleg",
-	"Paul Leaman",
-	0,
-	&machine_driver,
-	dial_init,
-
-	rom_blockbl,
-	0, blockbl_decode,
-	0,
-	0,
-
-	input_ports_block,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	block_nvram_load, block_nvram_save
-};
+GAME( 1988, mgakuen,  ,      mgakuen, mgakuen,  mgakuen,  ROT0,   "Yuga", "Mahjong Gakuen" )
+GAME( 1989, mgakuen2, ,      marukin, marukin,  mgakuen2, ROT0,   "Face", "Mahjong Gakuen 2 Gakuen-chou no Fukushuu" )
+GAME( 1989, pkladies, ,      marukin, pkladies, mgakuen2, ROT0,   "Mitchell", "Poker Ladies" )
+GAME( 1989, dokaben,  ,      pang,    pang,     dokaben,  ROT0,   "Capcom", "Dokaben (Japan)" )
+GAME( 1989, pang,     ,      pang,    pang,     pang,     ROT0,   "Mitchell", "Pang (World)" )
+GAME( 1989, pangb,    pang,  pang,    pang,     pangb,    ROT0,   "bootleg", "Pang (bootleg)" )
+GAME( 1989, bbros,    pang,  pang,    pang,     pang,     ROT0,   "Capcom", "Buster Bros (US)" )
+GAME( 1989, pompingw, pang,  pang,    pang,     pang,     ROT0,   "Mitchell", "Pomping World (Japan)" )
+GAME( 1989, cworld,   ,      pang,    qtono1,   cworld,   ROT0,   "Capcom", "Capcom World (Japan)" )
+GAME( 1990, hatena,   ,      pang,    qtono1,   hatena,   ROT0,   "Capcom", "Adventure Quiz 2 Hatena Hatena no Dai-Bouken (Japan)" )
+GAME( 1990, spang,    ,      pang,    pang,     spang,    ROT0,   "Mitchell", "Super Pang (World)" )
+GAME( 1990, sbbros,   spang, pang,    pang,     sbbros,   ROT0,   "Mitchell + Capcom", "Super Buster Bros (US)" )
+GAME( 1990, marukin,  ,      marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban" )
+GAME( 1991, qtono1,   ,      pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)" )
+GAME( 1991, qsangoku, ,      pang,    qtono1,   qsangoku, ROT0,   "Capcom", "Quiz Sangokushi (Japan)" )
+GAME( 1991, block,    ,      pang,    block,    block,    ROT270, "Capcom", "Block Block (World)" )
+GAME( 1991, blockj,   block, pang,    block,    block,    ROT270, "Capcom", "Block Block (Japan)" )
+GAME( 1991, blockbl,  block, pang,    block,    blockbl,  ROT270, "bootleg", "Block Block (bootleg)" )

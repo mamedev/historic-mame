@@ -2,6 +2,9 @@
 
 Cops'n Robbers memory map (preliminary)
 
+driver by Zsolt Vasvari
+
+
 0000-00ff RAM
 0c00-0fff Video RAM
 1200-1fff ROM
@@ -181,9 +184,9 @@ static struct GfxLayout trucklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0, 3 }, /* offset into colors, # of colors */
-	{ 1, 0x0200, &carlayout,  0, 3 },
-	{ 1, 0x0a00, &trucklayout,0, 3 },
+	{ REGION_GFX1, 0, &charlayout,  0, 3 },
+	{ REGION_GFX2, 0, &carlayout,   0, 3 },
+	{ REGION_GFX3, 0, &trucklayout, 0, 3 },
 	{ -1 } /* end of array */
 };
 
@@ -207,7 +210,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 }
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_copsnrob =
 {
 	/* basic machine hardware */
 	{
@@ -257,15 +260,19 @@ ROM_START( copsnrob )
 	ROM_LOAD( "5773.e7",      0x1a00, 0x0200, 0xff7c95f4 )
 	ROM_LOAD( "5772.d7",      0x1c00, 0x0200, 0x8d26afdc )
 	ROM_LOAD( "5771.b7",      0x1e00, 0x0200, 0xd61758d6 )
-	ROM_RELOAD(          0xfe00, 0x0200 ) // For 6502 vectors
+	ROM_RELOAD(               0xfe00, 0x0200 ) // For 6502 vectors
 
-	ROM_REGION_DISPOSE(0x0b00)     /* 2.75k for graphics */
+	ROM_REGIONX( 0x0200, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5782.m3",      0x0000, 0x0200, 0x82b86852 )
-	ROM_LOAD( "5778.p1",      0x0200, 0x0200, 0x78bff86a )
-	ROM_LOAD( "5779.m1",      0x0400, 0x0200, 0x8b1d0d83 )
-	ROM_LOAD( "5780.l1",      0x0600, 0x0200, 0x6f4c6bab )
-	ROM_LOAD( "5781.j1",      0x0800, 0x0200, 0xc87f2f13 )
-	ROM_LOAD( "5770.m2",      0x0a00, 0x0100, 0xb00bbe77 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5778.p1",      0x0000, 0x0200, 0x78bff86a )
+	ROM_LOAD( "5779.m1",      0x0200, 0x0200, 0x8b1d0d83 )
+	ROM_LOAD( "5780.l1",      0x0400, 0x0200, 0x6f4c6bab )
+	ROM_LOAD( "5781.j1",      0x0600, 0x0200, 0xc87f2f13 )
+
+	ROM_REGIONX( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5770.m2",      0x0000, 0x0100, 0xb00bbe77 )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )	 /* misc. PROMs (timing?) */
 	ROM_LOAD( "5765.h8",      0x0000, 0x0020, 0x6cd58931 )
@@ -274,29 +281,4 @@ ROM_START( copsnrob )
 ROM_END
 
 
-struct GameDriver driver_copsnrob =
-{
-	__FILE__,
-	0,
-	"copsnrob",
-	"Cops'n Robbers",
-	"1976",
-	"Atari",
-	"Zsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rom_copsnrob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_copsnrob,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	// This game doesn't keep track of high scores
-	0, 0
-};
+GAME( 1976, copsnrob, , copsnrob, copsnrob, , ROT0, "Atari", "Cops'n Robbers" )

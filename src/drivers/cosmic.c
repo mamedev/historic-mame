@@ -2,6 +2,8 @@
 
 Space Panic memory map
 
+driver by Mike Coates
+
 0000-3FFF ROM
 4000-5BFF Video RAM (Bitmap)
 5C00-5FFF RAM
@@ -323,7 +325,7 @@ static struct Samplesinterface panic_samples_interface =
 	panic_sample_names
 };
 
-static struct MachineDriver panic_machine_driver =
+static struct MachineDriver machine_driver_panic =
 {
 	/* basic machine hardware */
 	{
@@ -365,45 +367,6 @@ static struct MachineDriver panic_machine_driver =
 };
 
 
-static int panic_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* wait for default to be copied */
-	if (RAM[0x40c1] == 0x00 && RAM[0x40c2] == 0x03 && RAM[0x40c3] == 0x04)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-        	RAM[0x4004] = 0x01;	/* Prevent program resetting high score */
-
-			osd_fread(f,&RAM[0x40C1],5);
-                osd_fread(f,&RAM[0x5C00],12);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void panic_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x40C1],5);
-        osd_fwrite(f,&RAM[0x5C00],12);
-		osd_fclose(f);
-	}
-}
 
 int panic_interrupt(void)
 {
@@ -430,147 +393,6 @@ int panic_interrupt(void)
     }
 }
 
-ROM_START( panic )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )         /* Code */
-	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
-	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, 0xfc27f4e5 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
-
-	ROM_REGIONX( 0x0820, REGION_PROMS )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
-	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
-ROM_END
-
-ROM_START( panica )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )         /* Code */
-	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
-	ROM_LOAD( "panica.7",     0x3000, 0x0800, 0x3641cb7f )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
-
-	ROM_REGIONX( 0x0820, REGION_PROMS )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
-	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
-ROM_END
-
-ROM_START( panicger )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )         /* Code */
-	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
-	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, 0xe1f36893 )
-	ROM_LOAD( "spacepan.004", 0x1800, 0x0800, 0x01be297c )
-	ROM_LOAD( "spacepan.005", 0x2000, 0x0800, 0xe0d54805 )
-	ROM_LOAD( "spacepan.006", 0x2800, 0x0800, 0xaae1458e )
-	ROM_LOAD( "spacepan.007", 0x3000, 0x0800, 0x14e46e70 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
-
-	ROM_REGIONX( 0x0820, REGION_PROMS )
-	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
-	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
-ROM_END
-
-
-struct GameDriver driver_panic =
-{
-	__FILE__,
-	0,
-	"panic",
-	"Space Panic (set 1)",
-	"1980",
-	"Universal",
-	"Mike Coates (MAME driver)\nMarco Cassili",
-	0,
-	&panic_machine_driver,
-	0,
-
-	rom_panic,
-	0, 0,
-	0,
-	0,
-
-	input_ports_panic,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	panic_hiload, panic_hisave
-};
-
-struct GameDriver driver_panica =
-{
-	__FILE__,
-	&driver_panic,
-	"panica",
-	"Space Panic (set 2)",
-	"1980",
-	"Universal",
-	"Mike Coates (MAME driver)\nMarco Cassili",
-	0,
-	&panic_machine_driver,
-	0,
-
-	rom_panica,
-	0, 0,
-	0,
-	0,
-
-	input_ports_panic,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	panic_hiload, panic_hisave
-};
-
-struct GameDriver driver_panicger =
-{
-	__FILE__,
-	&driver_panic,
-	"panicger",
-	"Space Panic (German)",
-	"1980",
-	"Universal (ADP Automaten license)",
-	"Mike Coates (MAME driver)\nMarco Cassili",
-	0,
-	&panic_machine_driver,
-	0,
-
-	rom_panicger,
-	0, 0,
-	0,
-	0,
-
-	input_ports_panic,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	panic_hiload, panic_hisave
-};
 
 
 /**************************************************/
@@ -622,7 +444,7 @@ static struct MemoryWriteAddress cosmicalien_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( cosmicalien )
+INPUT_PORTS_START( cosmica )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -706,51 +528,9 @@ static struct GfxDecodeInfo cosmicalien_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/* HSC 12/02/98 */
-static int cosmicalienhiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x400e],0xff,4);	/* high score */
-		firsttime = 1;
-	}
 
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x400e],"\x00\x00\x00",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread(f,&RAM[0x400e],3);
-			osd_fclose(f);
-        }
-
- 		firsttime = 0;
- 		return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void cosmicalienhisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-       osd_fwrite(f,&RAM[0x400e],3);
-	   osd_fclose(f);
-    }
-}
-
-static struct MachineDriver cosmicalien_machine_driver =
+static struct MachineDriver machine_driver_cosmica =
 {
 	/* basic machine hardware */
 	{
@@ -781,48 +561,7 @@ static struct MachineDriver cosmicalien_machine_driver =
 	0,0,0,0
 };
 
-ROM_START( cosmicalien )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "r1",           0x0000, 0x0800, 0x535ee0c5 )
-	ROM_LOAD( "r2",           0x0800, 0x0800, 0xed3cf8f7 )
-	ROM_LOAD( "r3",           0x1000, 0x0800, 0x6a111e5e )
-	ROM_LOAD( "r4",           0x1800, 0x0800, 0xc9b5ca2a )
-	ROM_LOAD( "r5",           0x2000, 0x0800, 0x43666d68 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "r6",           0x0000, 0x0800, 0x431e866c )
-	ROM_LOAD( "r7",           0x0800, 0x0800, 0xaa6c6079 )
-
-	ROM_REGIONX( 0x0420, REGION_PROMS )
-	ROM_LOAD( "bpr1",         0x0000, 0x0020, 0xdfb60f19 )
-	ROM_LOAD( "r9",           0x0020, 0x0400, 0xea4ee931 )
-ROM_END
-
-struct GameDriver driver_cosmica =
-{
-	__FILE__,
-	0,
-	"cosmica",
-	"Cosmic Alien",
-	"1980",
-	"Universal",
-	"Lee Taylor",
-	0,
-	&cosmicalien_machine_driver,
-	0,
-
-	rom_cosmicalien,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cosmicalien,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	cosmicalienhiload, cosmicalienhisave 	/* hsc 12/02/98 */
-};
 
 /*************************************************************************/
 /* Cosmic Guerilla specific routines                                     */
@@ -1078,7 +817,7 @@ int cosmicguerilla_interrupt(void)
 	return ignore_interrupt();
 }
 
-static void cosmicguerilla_decode(void)
+static void init_cosmicg(void)
 {
 	/* Roms have data pins connected different from normal */
 
@@ -1114,7 +853,7 @@ static void cosmicguerilla_decode(void)
 
 /* Offsets are in BYTES, so bits 0-7 are at offset 0 etc.   */
 
-INPUT_PORTS_START( cosmicguerilla )
+INPUT_PORTS_START( cosmicg )
 
 	PORT_START /* 4-7 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
@@ -1170,50 +909,7 @@ INPUT_PORTS_START( cosmicguerilla )
 
 INPUT_PORTS_END
 
-static int cosmicguerillahiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x3c10],0xff,4);	/* high score */
-		firsttime = 1;
-	}
-
-    /* check if the hi score table has already been initialized */
-
-    if (memcmp(&RAM[0x3c10],"\x00\x00\x00\x00",4) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread(f,&RAM[0x3c10],4);
-			osd_fclose(f);
-        }
-
- 		firsttime = 0;
- 		return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void cosmicguerillahisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-       osd_fwrite(f,&RAM[0x3c10],4);
-	   osd_fclose(f);
-    }
-}
 
 static const char *cosmicguerilla_sample_names[] =
 {
@@ -1243,7 +939,7 @@ static struct Samplesinterface cosmicguerilla_samples_interface =
 	cosmicguerilla_sample_names
 };
 
-static struct MachineDriver cosmicguerilla_machine_driver =
+static struct MachineDriver machine_driver_cosmicg =
 {
 	/* basic machine hardware */
 	{
@@ -1297,47 +993,6 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 #else
 	#define COSMICGUERILLA_ROM_LOAD ROM_LOAD_WIDE
 #endif
-
-ROM_START( cosmicguerilla )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 8k for code */
-	COSMICGUERILLA_ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg3.bin",  0x0800, 0x0400, 0x82a49b48 )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg4.bin",  0x0C00, 0x0400, 0x1c1c934c )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg5.bin",  0x1000, 0x0400, 0xb1c00fbf )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg6.bin",  0x1400, 0x0400, 0xf03454ce )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
-	COSMICGUERILLA_ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
-
-	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
-ROM_END
-
-struct GameDriver driver_cosmicg =
-{
-	__FILE__,
-	0,
-	"cosmicg",
-	"Cosmic Guerilla",
-	"1979",
-	"Universal",
-	"Andy Jones\nMike Coates",
-	0,
-    &cosmicguerilla_machine_driver,
-    0,
-
-	rom_cosmicguerilla,
-	cosmicguerilla_decode, 0,
-    0,
-	0,
-
-	input_ports_cosmicguerilla,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	cosmicguerillahiload, cosmicguerillahisave
-};
 
 /***************************************************************************
 
@@ -1492,7 +1147,7 @@ INPUT_PORTS_START( magspot2 )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
-static struct MachineDriver magspot2_machine_driver =
+static struct MachineDriver machine_driver_magspot2 =
 {
 	/* basic machine hardware */
 	{
@@ -1529,50 +1184,6 @@ static struct MachineDriver magspot2_machine_driver =
 	}
 };
 
-ROM_START( magspot2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "my1",  0x0000, 0x0800, 0xc0085ade )
-	ROM_LOAD( "my2",  0x0800, 0x0800, 0xd534a68b )
-	ROM_LOAD( "my3",  0x1000, 0x0800, 0x25513b2a )
-	ROM_LOAD( "my5",  0x1800, 0x0800, 0x8836bbc4 )
-	ROM_LOAD( "my4",  0x2000, 0x0800, 0x6a08ab94 )
-	ROM_LOAD( "my6",  0x2800, 0x0800, 0x77c6d109 )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "my7",  0x0000, 0x0800, 0x1ab338d3 )
-	ROM_LOAD( "my8",  0x0800, 0x0800, 0x9e1d63a2 )
-
-	ROM_REGIONX( 0x0420, REGION_PROMS )
-	ROM_LOAD( "m13",  0x0000, 0x0020, 0x36e2aa2a )
-	ROM_LOAD( "my9",  0x0020, 0x0400, 0x89f23ebd )
-ROM_END
-
-
-struct GameDriver driver_magspot2 =
-{
-	__FILE__,
-	0,
-	"magspot2",
-	"Magical Spot II",
-	"1980",
-	"Universal",
-	"Zsolt Vasvari",
-	0,
-	&magspot2_machine_driver,
-	0,
-
-	rom_magspot2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_magspot2,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
 
 /***************************************************************************
 
@@ -1609,7 +1220,7 @@ static struct MemoryWriteAddress devzone_writemem[] =
 };
 
 
-static struct MachineDriver devzone_machine_driver =
+static struct MachineDriver machine_driver_devzone =
 {
 	/* basic machine hardware */
 	{
@@ -1729,49 +1340,6 @@ INPUT_PORTS_START( devzone )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
-ROM_START( devzone )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "dv1.e3",  0x0000, 0x0800, 0xc70faf00 )
-	ROM_LOAD( "dv2.e4",  0x0800, 0x0800, 0xeacfed61 )
-	ROM_LOAD( "dv3.e5",  0x1000, 0x0800, 0x7973317e )
-	ROM_LOAD( "dv5.e7",  0x1800, 0x0800, 0xb71a3989 )
-	ROM_LOAD( "dv4.e6",  0x2000, 0x0800, 0xa58c5b8c )
-	ROM_LOAD( "dv6.e8",  0x2800, 0x0800, 0x3930fb67 )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dv7.n1",  0x0000, 0x0800, 0xe7562fcf )
-	ROM_LOAD( "dv8.n2",  0x0800, 0x0800, 0xda1cbec1 )
-
-	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "dz9.e2",  0x0000, 0x0400, 0x693855b6 )
-ROM_END
-
-struct GameDriver driver_devzone =
-{
-	__FILE__,
-	0,
-	"devzone",
-	"Devil Zone",
-	"1980",
-	"Universal",
-	"Zsolt Vasvari\nMike Coates",
-	0,
-	&devzone_machine_driver,
-	0,
-
-	rom_devzone,
-	0, 0,
-	0,
-	0,
-
-	input_ports_devzone,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
-
-	0, 0
-};
-
 /***************************************************************************
 
   No Mans Land
@@ -1883,47 +1451,8 @@ static struct MemoryWriteAddress nomanland_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-ROM_START( nomanland )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
-	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
-	ROM_LOAD( "3.bin",  0x1000, 0x0800, 0x7fc42724 )
-	ROM_LOAD( "5.bin",  0x1800, 0x0800, 0x9cc2f1d9 )
-	ROM_LOAD( "4.bin",  0x2000, 0x0800, 0x0e8cd46a )
-	ROM_LOAD( "6.bin",  0x2800, 0x0800, 0xba472ba5 )
 
-	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
-	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
-	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
-	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
-
-	ROM_REGIONX( 0x0420, REGION_PROMS )
-	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
-	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
-ROM_END
-
-ROM_START( nomanlandg )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
-	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )
-	ROM_LOAD( "nml3.e5",  0x1000, 0x0800, 0xd422fc8a )
-	ROM_LOAD( "nml5.e7",  0x1800, 0x0800, 0xd58952ac )
-	ROM_LOAD( "nml4.e6",  0x2000, 0x0800, 0x994c9afb )
-	ROM_LOAD( "nml6.e8",  0x2800, 0x0800, 0x01ed2d8c )
-
-	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
-	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
-	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
-	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
-
-	ROM_REGIONX( 0x0420, REGION_PROMS )
-	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
-	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
-ROM_END
-
-static struct MachineDriver nomanland_machine_driver =
+static struct MachineDriver machine_driver_nomnlnd =
 {
 	/* basic machine hardware */
 	{
@@ -1959,7 +1488,7 @@ static struct MachineDriver nomanland_machine_driver =
 	}
 };
 
-static struct MachineDriver nomanland2_machine_driver =
+static struct MachineDriver machine_driver_nomnlndg =
 {
 	/* basic machine hardware */
 	{
@@ -1995,7 +1524,7 @@ static struct MachineDriver nomanland2_machine_driver =
 	}
 };
 
-INPUT_PORTS_START( nomanland )
+INPUT_PORTS_START( nomnlnd )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -2066,7 +1595,7 @@ INPUT_PORTS_START( nomanland )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nomanland2 )
+INPUT_PORTS_START( nomnlndg )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -2112,55 +1641,187 @@ INPUT_PORTS_START( nomanland2 )
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
-struct GameDriver driver_nomnlnd =
-{
-	__FILE__,
-	0,
-	"nomnlnd",
-	"No Man's Land",
-	"1980?",
-	"Universal",
-	"Mike Coates",
-	0,
-	&nomanland_machine_driver,
-	0,
 
-	rom_nomanland,
-	0, 0,
-	0,
-	0,
 
-	input_ports_nomanland,
 
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+ROM_START( panic )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )         /* Code */
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
+	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, 0xfc27f4e5 )
 
-	0, 0
-};
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
-struct GameDriver driver_nomnlndg =
-{
-	__FILE__,
-	&driver_nomnlnd,
-	"nomnlndg",
-	"No Man's Land (Gottlieb)",
-	"1980?",
-	"Universal (Gottlieb license)",
-	"Mike Coates",
-	0,
-	&nomanland2_machine_driver,
-	0,
+	ROM_REGIONX( 0x0820, REGION_PROMS )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
+ROM_END
 
-	rom_nomanlandg,
-	0, 0,
-	0,
-	0,
+ROM_START( panica )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )         /* Code */
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
+	ROM_LOAD( "panica.7",     0x3000, 0x0800, 0x3641cb7f )
 
-	input_ports_nomanland2,
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+	ROM_REGIONX( 0x0820, REGION_PROMS )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
+ROM_END
 
-	0, 0
-};
+ROM_START( panicger )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )         /* Code */
+	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
+	ROM_LOAD( "spacepan.003", 0x1000, 0x0800, 0xe1f36893 )
+	ROM_LOAD( "spacepan.004", 0x1800, 0x0800, 0x01be297c )
+	ROM_LOAD( "spacepan.005", 0x2000, 0x0800, 0xe0d54805 )
+	ROM_LOAD( "spacepan.006", 0x2800, 0x0800, 0xaae1458e )
+	ROM_LOAD( "spacepan.007", 0x3000, 0x0800, 0x14e46e70 )
 
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
+
+	ROM_REGIONX( 0x0820, REGION_PROMS )
+	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
+	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
+ROM_END
+
+ROM_START( cosmica )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "r1",           0x0000, 0x0800, 0x535ee0c5 )
+	ROM_LOAD( "r2",           0x0800, 0x0800, 0xed3cf8f7 )
+	ROM_LOAD( "r3",           0x1000, 0x0800, 0x6a111e5e )
+	ROM_LOAD( "r4",           0x1800, 0x0800, 0xc9b5ca2a )
+	ROM_LOAD( "r5",           0x2000, 0x0800, 0x43666d68 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "r6",           0x0000, 0x0800, 0x431e866c )
+	ROM_LOAD( "r7",           0x0800, 0x0800, 0xaa6c6079 )
+
+	ROM_REGIONX( 0x0420, REGION_PROMS )
+	ROM_LOAD( "bpr1",         0x0000, 0x0020, 0xdfb60f19 )
+	ROM_LOAD( "r9",           0x0020, 0x0400, 0xea4ee931 )
+ROM_END
+
+ROM_START( cosmicg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )  /* 8k for code */
+	COSMICGUERILLA_ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg3.bin",  0x0800, 0x0400, 0x82a49b48 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg4.bin",  0x0C00, 0x0400, 0x1c1c934c )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg5.bin",  0x1000, 0x0400, 0xb1c00fbf )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg6.bin",  0x1400, 0x0400, 0xf03454ce )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
+	COSMICGUERILLA_ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
+ROM_END
+
+ROM_START( magspot2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "my1",  0x0000, 0x0800, 0xc0085ade )
+	ROM_LOAD( "my2",  0x0800, 0x0800, 0xd534a68b )
+	ROM_LOAD( "my3",  0x1000, 0x0800, 0x25513b2a )
+	ROM_LOAD( "my5",  0x1800, 0x0800, 0x8836bbc4 )
+	ROM_LOAD( "my4",  0x2000, 0x0800, 0x6a08ab94 )
+	ROM_LOAD( "my6",  0x2800, 0x0800, 0x77c6d109 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "my7",  0x0000, 0x0800, 0x1ab338d3 )
+	ROM_LOAD( "my8",  0x0800, 0x0800, 0x9e1d63a2 )
+
+	ROM_REGIONX( 0x0420, REGION_PROMS )
+	ROM_LOAD( "m13",  0x0000, 0x0020, 0x36e2aa2a )
+	ROM_LOAD( "my9",  0x0020, 0x0400, 0x89f23ebd )
+ROM_END
+
+ROM_START( devzone )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "dv1.e3",  0x0000, 0x0800, 0xc70faf00 )
+	ROM_LOAD( "dv2.e4",  0x0800, 0x0800, 0xeacfed61 )
+	ROM_LOAD( "dv3.e5",  0x1000, 0x0800, 0x7973317e )
+	ROM_LOAD( "dv5.e7",  0x1800, 0x0800, 0xb71a3989 )
+	ROM_LOAD( "dv4.e6",  0x2000, 0x0800, 0xa58c5b8c )
+	ROM_LOAD( "dv6.e8",  0x2800, 0x0800, 0x3930fb67 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dv7.n1",  0x0000, 0x0800, 0xe7562fcf )
+	ROM_LOAD( "dv8.n2",  0x0800, 0x0800, 0xda1cbec1 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_LOAD( "dz9.e2",  0x0000, 0x0400, 0x693855b6 )
+ROM_END
+
+ROM_START( nomnlnd )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
+	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
+	ROM_LOAD( "3.bin",  0x1000, 0x0800, 0x7fc42724 )
+	ROM_LOAD( "5.bin",  0x1800, 0x0800, 0x9cc2f1d9 )
+	ROM_LOAD( "4.bin",  0x2000, 0x0800, 0x0e8cd46a )
+	ROM_LOAD( "6.bin",  0x2800, 0x0800, 0xba472ba5 )
+
+	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
+	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
+	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
+	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
+
+	ROM_REGIONX( 0x0420, REGION_PROMS )
+	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
+ROM_END
+
+ROM_START( nomnlndg )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
+	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )
+	ROM_LOAD( "nml3.e5",  0x1000, 0x0800, 0xd422fc8a )
+	ROM_LOAD( "nml5.e7",  0x1800, 0x0800, 0xd58952ac )
+	ROM_LOAD( "nml4.e6",  0x2000, 0x0800, 0x994c9afb )
+	ROM_LOAD( "nml6.e8",  0x2800, 0x0800, 0x01ed2d8c )
+
+	ROM_REGION_DISPOSE(0x1800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nml7.n1",  0x0800, 0x0800, 0xd08ed22f )
+	ROM_LOAD( "nml8.n2",  0x0000, 0x0800, 0x739009b4 )
+	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
+	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
+
+	ROM_REGIONX( 0x0420, REGION_PROMS )
+	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
+	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
+ROM_END
+
+
+
+GAME( 1980, panic,    ,        panic,    panic,    ,        ROT270, "Universal", "Space Panic (set 1)" )
+GAME( 1980, panica,   panic,   panic,    panic,    ,        ROT270, "Universal", "Space Panic (set 2)" )
+GAME( 1980, panicger, panic,   panic,    panic,    ,        ROT270, "Universal (ADP Automaten license)", "Space Panic (German)" )
+GAME( 1980, cosmica,  ,        cosmica,  cosmica,  ,        ROT270, "Universal", "Cosmic Alien" )
+GAME( 1979, cosmicg,  ,        cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla" )
+GAME( 1980, magspot2, ,        magspot2, magspot2, ,        ROT270, "Universal", "Magical Spot II" )
+GAMEX(1980, devzone,  ,        devzone,  devzone,  ,        ROT270, "Universal", "Devil Zone", GAME_WRONG_COLORS )
+GAMEX(1980?,nomnlnd,  ,        nomnlnd,  nomnlnd,  ,        ROT270, "Universal", "No Man's Land", GAME_WRONG_COLORS )
+GAMEX(1980?,nomnlndg, nomnlnd, nomnlndg, nomnlndg, ,        ROT270, "Universal (Gottlieb license)", "No Man's Land (Gottlieb)", GAME_WRONG_COLORS )

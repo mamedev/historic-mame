@@ -56,9 +56,9 @@ static void crimfght_sh_irqtrigger_w(int offset, int data)
 
 static void crimfght_snd_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = memory_region(4);
-	/* b1: bank for chanel A */
-	/* b0: bank for chanel B */
+	unsigned char *RAM = memory_region(REGION_SOUND1);
+	/* b1: bank for channel A */
+	/* b0: bank for channel B */
 
 	int bank_A = 0x20000*((data >> 1) & 0x01);
 	int bank_B = 0x20000*((data) & 0x01);
@@ -407,14 +407,14 @@ static void volume_callback(int v)
 static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
-	{ 4 },	/* memory regions */
+	{ REGION_SOUND1 },	/* memory regions */
 	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_crimfght =
 {
 	/* basic machine hardware */
 	{
@@ -473,22 +473,22 @@ ROM_START( crimfght )
 	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, 0x588e7da6 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
-	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
-
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
-	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
 
-	ROM_REGION( 0x40000 )	/* data for the 007232 */
-	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* data for the 007232 */
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
 ROM_END
 
 ROM_START( crimfgtj )
@@ -496,22 +496,22 @@ ROM_START( crimfgtj )
 	ROM_LOAD( "821p02.bin", 0x10000, 0x18000, 0xf33fa2e1 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x080000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
-	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
-
-	ROM_REGION( 0x100000 ) /* graphics ( don't dispose as the program can read them ) */
-	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
-	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "821l01.h4",  0x0000, 0x8000, 0x0faca89e )
 
-	ROM_REGION( 0x40000 )	/* data for the 007232 */
-	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+	ROM_REGIONX( 0x080000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k06.k13", 0x000000, 0x040000, 0xa1eadb24 )	/* characters */
+	ROM_LOAD( "821k07.k19", 0x040000, 0x040000, 0x060019fa )
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_LOAD( "821k04.k2",  0x000000, 0x080000, 0x00e0291b )	/* sprites */
+	ROM_LOAD( "821k05.k8",  0x080000, 0x080000, 0xe09ea05d )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* data for the 007232 */
+	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
 ROM_END
 
 
@@ -547,60 +547,13 @@ static void crimfght_init_machine( void )
 	cpu_setbank( 1, &RAM[0x10000] );
 }
 
-static void gfx_untangle(void)
+static void init_crimfght(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_crimfght =
-{
-	__FILE__,
-	0,
-	"crimfght",
-	"Crime Fighters (US)",
-	"1989",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crimfght,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_crimfght,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_crimfgtj =
-{
-	__FILE__,
-	&driver_crimfght,
-	"crimfgtj",
-	"Crime Fighters (Japan)",
-	"1989",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crimfgtj,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_crimfgtj,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1989, crimfght, ,         crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US)" )
+GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan)" )

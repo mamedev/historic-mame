@@ -673,7 +673,7 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static struct MachineDriver silkworm_machine_driver =
+static struct MachineDriver machine_driver_silkworm =
 {
 	/* basic machine hardware */
 	{
@@ -721,7 +721,7 @@ static struct MachineDriver silkworm_machine_driver =
 	}
 };
 
-static struct MachineDriver rygar_machine_driver =
+static struct MachineDriver machine_driver_rygar =
 {
 	/* basic machine hardware */
 	{
@@ -769,7 +769,7 @@ static struct MachineDriver rygar_machine_driver =
 	}
 };
 
-static struct MachineDriver gemini_machine_driver =
+static struct MachineDriver machine_driver_gemini =
 {
 	/* basic machine hardware */
 	{
@@ -1002,143 +1002,6 @@ ROM_END
 
 
 
-static int rygar_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc984],"\x00\x03\x00\x00",4) == 0 &&
-			memcmp(&RAM[0xcb46],"\x00\x03\x00\x00",4) == 0 &&
-			memcmp(&RAM[0xc023],"\x00\x00\x03\x00",4) == 0)	/* high score */
-	{
-		void *f;
-		int p;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc983],9*50);
-			RAM[0xc023]=RAM[0xc987];
-			RAM[0xc024]=RAM[0xc986];
-			RAM[0xc025]=RAM[0xc985];
-			RAM[0xc026]=RAM[0xc984];
-			osd_fclose(f);
-
-			/* update the screen hi score (now or never) */
-
-			for (p=0;p<4;p++)
-			{
-				RAM[0xd06c+(p*2)]=0x60+(RAM[0xc984+p]/16);
-				RAM[0xd06d+(p*2)]=0x60+(RAM[0xc984+p]%16);
-			}
-			for (p=0;p<6;p++ )
-			{
-				if (RAM[0xd06c+p]==0x60)
-						RAM[0xd06c+p]=0x01;
-				else break;
-			}
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void rygar_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc983],9*50);
-		osd_fclose(f);
-	}
-}
-
-
-static int silkworm_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xd262],"\x00\x00\x03",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xd262],10*10);
-			osd_fread(f,&RAM[0xd54e],4);
-			osd_fread(f,&RAM[0xd572],4);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void silkworm_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xd262],10*10);
-		osd_fwrite(f,&RAM[0xd54e],4);
-		osd_fwrite(f,&RAM[0xd572],4);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int gemini_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc026],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc026],3);
-			osd_fread(f,&RAM[0xcf41],3*10+4*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void gemini_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc026],3);
-		osd_fwrite(f,&RAM[0xcf41],3*10+4*10);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_rygar =
 {
 	__FILE__,
@@ -1149,7 +1012,7 @@ struct GameDriver driver_rygar =
 	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
-	&rygar_machine_driver,
+	&machine_driver_rygar,
 	0,
 
 	rom_rygar,
@@ -1160,9 +1023,8 @@ struct GameDriver driver_rygar =
 	input_ports_rygar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rygar_hiload, rygar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rygar2 =
@@ -1175,7 +1037,7 @@ struct GameDriver driver_rygar2 =
 	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
-	&rygar_machine_driver,
+	&machine_driver_rygar,
 	0,
 
 	rom_rygar2,
@@ -1186,9 +1048,8 @@ struct GameDriver driver_rygar2 =
 	input_ports_rygar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rygar_hiload, rygar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rygarj =
@@ -1201,7 +1062,7 @@ struct GameDriver driver_rygarj =
 	"Tecmo",
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
-	&rygar_machine_driver,
+	&machine_driver_rygar,
 	0,
 
 	rom_rygarj,
@@ -1212,9 +1073,8 @@ struct GameDriver driver_rygarj =
 	input_ports_rygar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rygar_hiload, rygar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gemini =
@@ -1227,7 +1087,7 @@ struct GameDriver driver_gemini =
 	"Tecmo",
     "Nicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nMartin Binder (dip switches)",
 	0,
-	&gemini_machine_driver,
+	&machine_driver_gemini,
 	0,
 
 	rom_gemini,
@@ -1238,9 +1098,8 @@ struct GameDriver driver_gemini =
 	input_ports_gemini,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	gemini_hiload, gemini_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_silkworm =
@@ -1253,7 +1112,7 @@ struct GameDriver driver_silkworm =
 	"Tecmo",
 	"Nicola Salmoria",
 	0,
-	&silkworm_machine_driver,
+	&machine_driver_silkworm,
 	0,
 
 	rom_silkworm,
@@ -1264,9 +1123,8 @@ struct GameDriver driver_silkworm =
 	input_ports_silkworm,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	silkworm_hiload, silkworm_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_silkwrm2 =
@@ -1279,7 +1137,7 @@ struct GameDriver driver_silkwrm2 =
 	"Tecmo",
 	"Nicola Salmoria",
 	0,
-	&silkworm_machine_driver,
+	&machine_driver_silkworm,
 	0,
 
 	rom_silkwrm2,
@@ -1290,7 +1148,6 @@ struct GameDriver driver_silkwrm2 =
 	input_ports_silkworm,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	silkworm_hiload, silkworm_hisave
+	ROT0,
+	0,0
 };

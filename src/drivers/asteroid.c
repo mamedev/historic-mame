@@ -165,13 +165,27 @@ int llander_IN0_r(int offset);
 
 int asteroid_catch_busyloop(int offset);
 
-int llander_zeropage_r (int offset);
-void llander_zeropage_w (int offset, int data);
-
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int llander_start(void);
 void llander_stop(void);
 void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+
+/* Lunar Lander mirrors page 0 and page 1. */
+static unsigned char *llander_zeropage;
+
+static int llander_zeropage_r(int offset)
+{
+	return llander_zeropage[offset & 0xff];
+}
+
+static void llander_zeropage_w(int offset,int data)
+{
+	llander_zeropage[offset & 0xff] = data;
+}
+
+
 
 static struct MemoryReadAddress asteroid_readmem[] =
 {
@@ -236,14 +250,9 @@ static struct MemoryWriteAddress astdelux_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-/* Lunar Lander mirrors page 0 and page 1. Unfortunately,
-   the 6502 could only handle that with a severe performance hit.
-   It only seems to affect the selftest */
 static struct MemoryReadAddress llander_readmem[] =
 {
-/*	{ 0x0000, 0x01ff, MRA_RAM }, */
-	{ 0x0000, 0x00ff, llander_zeropage_r },
-	{ 0x0100, 0x01ff, MRA_RAM },
+	{ 0x0000, 0x01ff, llander_zeropage_r },
 	{ 0x2000, 0x2000, llander_IN0_r }, /* IN0 */
 	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
 	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
@@ -257,9 +266,7 @@ static struct MemoryReadAddress llander_readmem[] =
 
 static struct MemoryWriteAddress llander_writemem[] =
 {
-/*	{ 0x0000, 0x01ff, MWA_RAM }, */
-	{ 0x0000, 0x00ff, llander_zeropage_w },
-	{ 0x0100, 0x01ff, MWA_RAM },
+	{ 0x0000, 0x01ff, llander_zeropage_w, &llander_zeropage },
 	{ 0x3000, 0x3000, avgdvg_go },
 	{ 0x3200, 0x3200, llander_led_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
@@ -483,56 +490,6 @@ INPUT_PORTS_END
 
 
 
-static int asteroid1_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x001c],"\x00\x00",2) == 0 &&
-			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
-			memcmp(&RAM[0x0000],"\x10",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x001c],2*10+3*11);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int asteroid_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x001d],"\x00\x00",2) == 0 &&
-			memcmp(&RAM[0x0050],"\x00\x00",2) == 0 &&
-			memcmp(&RAM[0x0000],"\x10",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x001d],2*10+3*11);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
 static void asteroid1_hisave(void)
 {
 	void *f;
@@ -592,7 +549,7 @@ static struct Samplesinterface asteroid_samples_interface =
 	asteroid_sample_names
 };
 
-static struct MachineDriver asteroid_machine_driver =
+static struct MachineDriver machine_driver_asteroid =
 {
 	/* basic machine hardware */
 	{
@@ -669,7 +626,7 @@ static struct Samplesinterface astdelux_samples_interface =
 };
 
 
-static struct MachineDriver astdelux_machine_driver =
+static struct MachineDriver machine_driver_astdelux =
 {
 	/* basic machine hardware */
 	{
@@ -707,7 +664,9 @@ static struct MachineDriver astdelux_machine_driver =
 			SOUND_SAMPLES,
 			&astdelux_samples_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
 
@@ -719,7 +678,7 @@ static struct CustomSound_interface llander_custom_interface =
 };
 
 
-static struct MachineDriver llander_machine_driver =
+static struct MachineDriver machine_driver_llander =
 {
 	/* basic machine hardware */
 	{
@@ -782,60 +741,6 @@ ROM_START( asteroid )
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
 ROM_END
 
-
-
-struct GameDriver driver_asteroid =
-{
-	__FILE__,
-	0,
-	"asteroid",
-	"Asteroids (rev 2)",
-	"1979",
-	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
-	0,
-	&asteroid_machine_driver,
-	0,
-
-	rom_asteroid,
-	0, 0,
-	0,
-	0,
-
-	input_ports_asteroid,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	asteroid_hiload, asteroid_hisave
-};
-
-struct GameDriver driver_asteroi1 =
-{
-	__FILE__,
-	&driver_asteroid,
-	"asteroi1",
-	"Asteroids (rev 1)",
-	"1979",
-	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
-	0,
-	&asteroid_machine_driver,
-	0,
-
-	rom_asteroi1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_asteroid,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	asteroid1_hiload, asteroid1_hisave
-};
-
 ROM_START( astdelux )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "036430.02",    0x6000, 0x0800, 0xa4d7a525 )
@@ -859,61 +764,6 @@ ROM_START( astdelu1 )
 	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x3b597407 )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
-
-
-
-struct GameDriver driver_astdelux =
-{
-	__FILE__,
-	0,
-	"astdelux",
-	"Asteroids Deluxe (rev 2)",
-	"1980",
-	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM"Peter Hirschberg (backdrop)\nMathis Rosenhauer (backdrop support)",
-	0,
-	&astdelux_machine_driver,
-	0,
-
-	rom_astdelux,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astdelux,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver driver_astdelu1 =
-{
-	__FILE__,
-	&driver_astdelux,
-	"astdelu1",
-	"Asteroids Deluxe (rev 1)",
-	"1980",
-	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
-	0,
-	&astdelux_machine_driver,
-	0,
-
-	rom_astdelu1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_astdelux,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
 
 ROM_START( llander )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -945,55 +795,11 @@ ROM_START( llander1 )
 	ROM_LOAD( "034597.01",    0x5800, 0x0800, 0x00000000 )
 ROM_END
 
-struct GameDriver driver_llander =
-{
-	__FILE__,
-	0,
-	"llander",
-	"Lunar Lander (rev 2)",
-	"1979",
-	"Atari",
-	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
-	0,
-	&llander_machine_driver,
-	0,
 
-	rom_llander,
-	0, 0,
-	0,
-	0,
 
-	input_ports_llander,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_llander1 =
-{
-	__FILE__,
-	&driver_llander,
-	"llander1",
-	"Lunar Lander (rev 1)",
-	"1979",
-	"Atari",
-	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
-	0,
-	&llander_machine_driver,
-	0,
-
-	rom_llander1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_llander1,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
+GAME( 1979, asteroid, ,         asteroid, asteroid, , ROT0, "Atari", "Asteroids (rev 2)" )
+GAME( 1979, asteroi1, asteroid, asteroid, asteroid, , ROT0, "Atari", "Asteroids (rev 1)" )
+GAME( 1980, astdelux, ,         astdelux, astdelux, , ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
+GAME( 1980, astdelu1, astdelux, astdelux, astdelux, , ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
+GAME( 1979, llander,  ,         llander,  llander,  , ROT0, "Atari", "Lunar Lander (rev 2)" )
+GAME( 1979, llander1, llander,  llander,  llander1, , ROT0, "Atari", "Lunar Lander (rev 1)" )

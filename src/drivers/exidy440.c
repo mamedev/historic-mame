@@ -282,6 +282,27 @@ void exidy440_interrupt_clear_w(int offset, int data);
 
 /*************************************
  *
+ *	EEROM save/load
+ *
+ *************************************/
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		/* the EEROM lives in the uppermost 8k of the top bank */
+		osd_fwrite(file, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+	else
+	{
+		if (file)
+			osd_fread(file, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		else
+			memset(&memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
+	}
+}
+
+
+/*************************************
+ *
  *	Interrupt handling
  *
  *************************************/
@@ -1116,42 +1137,10 @@ static struct MachineDriver machine_driver =
 			SOUND_CUSTOM,
 			&custom_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
-
-
-
-/*************************************
- *
- *	High score save/load
- *
- *************************************/
-
-static int hiload(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name,0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fread(f, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
-		osd_fclose(f);
-	}
-	else
-		memset(&memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fwrite(f, &memory_region(REGION_CPU1)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -1790,9 +1779,8 @@ ROM_END
 		input_ports_##name,						\
 												\
 		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
+		ROT0,					\
+		0,0										\
 	};
 
 #define EXIDY440_CLONE_DRIVER(name,year,fullname,cloneof) \
@@ -1817,9 +1805,8 @@ ROM_END
 		input_ports_##cloneof,					\
 												\
 		0,0,0,									\
-		ORIENTATION_DEFAULT,					\
-												\
-		hiload,hisave							\
+		ROT0,					\
+		0,0										\
 	};
 
 EXIDY440_DRIVER      (crossbow, 1983, "Crossbow (version 2.0)")

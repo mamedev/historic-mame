@@ -78,8 +78,7 @@ void foodf_pokey1_w (int offset, int data);
 void foodf_pokey2_w (int offset, int data);
 void foodf_pokey3_w (int offset, int data);
 
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 int foodf_interrupt(void);
 
@@ -252,7 +251,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	foodf_nvram_handler
 };
 
 
@@ -303,6 +304,6 @@ struct GameDriver driver_foodf =
 	input_ports_foodf,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	foodf_nvram_load,foodf_nvram_save
+	ROT0,
+	0,0
 };

@@ -12,8 +12,6 @@ TODO:
 
 extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
-static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
-                              0x80, 0x90, 0xc0, 0xd0, 0xa0, 0xb0, 0xe0, 0xf0};
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -24,18 +22,7 @@ extern int shootout_vh_start( void );
 extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 unsigned char *shootout_textram;
 
-static void shootout_decode_bank (void) {
-	/*
-	*  Same as Bump'N Jump. The banked ROMs get decoded during the bankswitch.
-	*  Code taken from "Lock'n Chase" driver by Zsolt Vasvari. Seems faster than
-	*  the one in Bump 'N Jump.
-	*/
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    int A;
 
-    for (A = 0x4000;A < 0x8000;A++)
-        ROM[A] = (RAM[A] & 0x0f) | encrypttable[RAM[A] >> 4];
-}
 
 static void shootout_bankswitch_w( int offset, int v ) {
 	int bankaddress;
@@ -44,16 +31,7 @@ static void shootout_bankswitch_w( int offset, int v ) {
 	RAM = memory_region(REGION_CPU1);
 	bankaddress = 0x10000 + ( 0x4000 * v );
 
-	/*
-	 *	Erm, code gets executed from the banked ROMs, not to mention
-	 *	it is encrypted too. So basically what i do is update the main
-	 *	RAM and ROM pointers with the correct code. This is not good
-	 *	speed wise, but bank switching seem to only happen in between
-	 *	levels anyways. If you got a better way, id like to hear it.
-	 */
-
-	memcpy( &RAM[0x4000], &RAM[bankaddress], 0x4000 );
-	shootout_decode_bank();
+	cpu_setbank(1,&RAM[bankaddress]);
 }
 
 static void sound_cpu_command_w( int offset, int v ) {
@@ -74,7 +52,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2000, 0x27ff, MRA_RAM },	/* foreground */
 	{ 0x2800, 0x2bff, videoram_r }, /* background videoram */
 	{ 0x2c00, 0x2fff, colorram_r }, /* background colorram */
-	{ 0x4000, 0x7fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -92,8 +70,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2000, 0x27ff, MWA_RAM, &shootout_textram },
 	{ 0x2800, 0x2bff, videoram_w, &videoram, &videoram_size },
 	{ 0x2c00, 0x2fff, colorram_w, &colorram },
-	{ 0x4000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -284,7 +261,7 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( shootout )
-	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x20000, REGION_CPU1 )	/* 128k for code + 128k for decrypted opcodes */
 	ROM_LOAD( "cu00.b1",        0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
@@ -314,54 +291,21 @@ ROM_START( shootout )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0290],"\x31\x30\x47\x47\x47\x00\x25\x60",8) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0240],0x60);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0240],0x60);
-		osd_fclose(f);
-	}
-}
-
 
 static void shootout_decode (void)
 {
-	/*
-	 *  Same as Bump'N Jump. The banked ROMs get decoded during the bankswitch.
-	 *  Code taken from "Lock'n Chase" driver by Zsolt Vasvari. Seems faster than
-	 *  the one in Bump 'N Jump.
-	 */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    int A;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+	int A;
 
-    for (A = 0;A < 0x10000;A++)
-        ROM[A] = (RAM[A] & 0x0f) | encrypttable[RAM[A] >> 4];
+
+	memory_set_opcode_base(0,rom+diff);
+
+	for (A = 0;A < diff;A++)
+		rom[A+diff] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
 }
+
+
 
 struct GameDriver driver_shootout =
 {
@@ -374,17 +318,16 @@ struct GameDriver driver_shootout =
 	"Ernesto Corvi\nPhil Stroffolino\nZsolt Vasvari\nKevin Brisley\n",
 	0,
 	&machine_driver,
-	0,
+	shootout_decode,
 
 	rom_shootout,
-	0, shootout_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_shootout,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

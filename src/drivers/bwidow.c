@@ -10,6 +10,12 @@ Black Widow memory map (preliminary)
 2000-27ff Vector generator RAM
 5000-7fff ROM
 
+ * Black Widow cannot use the the earom routines
+ * She writes into some locations at $2fac-$2fd7, which is clearly
+ * the vector rom. Perhaps there is some address-logic that is not yet
+ * emulated
+
+
 BLACK WIDOW SWITCH SETTINGS (Atari, 1983)
 -----------------------------------------
 
@@ -614,7 +620,7 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static struct MachineDriver bwidow_machine_driver =
+static struct MachineDriver machine_driver_bwidow =
 {
 	/* basic machine hardware */
 	{
@@ -651,7 +657,7 @@ static struct MachineDriver bwidow_machine_driver =
 	}
 };
 
-static struct MachineDriver gravitar_machine_driver =
+static struct MachineDriver machine_driver_gravitar =
 {
 	/* basic machine hardware */
 	{
@@ -685,10 +691,12 @@ static struct MachineDriver gravitar_machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
-static struct MachineDriver spacduel_machine_driver =
+static struct MachineDriver machine_driver_spacduel =
 {
 	/* basic machine hardware */
 	{
@@ -722,7 +730,9 @@ static struct MachineDriver spacduel_machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
 
@@ -732,49 +742,6 @@ static struct MachineDriver spacduel_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-
-/* Black Widow cannot use the the earom routines
- * She writes into some locations at $2fac-$2fd7, which is clearly
- * the vector rom. Perhaps there is some address-logic that is not yet
- * emulated
- */
-
-static int bwidow_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0310],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x03a0],"\x01\x01\x11",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0310],7*21);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void bwidow_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0310],7*21);
-		osd_fclose(f);
-	}
-}
-
 
 ROM_START( bwidow )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -792,46 +759,6 @@ ROM_START( bwidow )
 	ROM_LOAD( "136017.106",   0xe000, 0x1000, 0x4dc28b22 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
-
-
-struct GameDriver driver_bwidow =
-{
-	__FILE__,
-	0,
-	"bwidow",
-	"Black Widow",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&bwidow_machine_driver,
-	0,
-
-	rom_bwidow,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bwidow,
-
-	0, 0,0,
-	ORIENTATION_DEFAULT,
-
-	bwidow_hiload, bwidow_hisave
-};
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Gravitar now uses the earom routines
- * However, we keep the highscore location, just in case
- *		osd_fwrite(f,&RAM[0x041e],3*16);
- */
 
 ROM_START( gravitar )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -867,71 +794,6 @@ ROM_START( gravitr2 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-
-struct GameDriver driver_gravitar =
-{
-	__FILE__,
-	0,
-	"gravitar",
-	"Gravitar (version 3)",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&gravitar_machine_driver,
-	0,
-
-	rom_gravitar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gravitar,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver driver_gravitr2 =
-{
-	__FILE__,
-	&driver_gravitar,
-	"gravitr2",
-	"Gravitar (version 2)",
-	"1982",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&gravitar_machine_driver,
-	0,
-
-	rom_gravitr2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_gravitar,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Space Duel now uses the earom routines
- * However, we keep the highscore location, just in case
- *	osd_fwrite(f,&RAM[0x00dd],3*20+3*25);
- */
-
 ROM_START( spacduel )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	/* Vector ROM */
@@ -952,28 +814,9 @@ ROM_START( spacduel )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-struct GameDriver driver_spacduel =
-{
-	__FILE__,
-	0,
-	"spacduel",
-	"Space Duel",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
-	0,
-	&spacduel_machine_driver,
-	0,
 
-	rom_spacduel,
-	0, 0,
-	0,
-	0,
 
-	input_ports_spacduel,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
+GAME( 1982, bwidow,   ,         bwidow,   bwidow,   , ROT0, "Atari", "Black Widow" )
+GAME( 1982, gravitar, ,         gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 3)" )
+GAME( 1982, gravitr2, gravitar, gravitar, gravitar, , ROT0, "Atari", "Gravitar (version 2)" )
+GAME( 1980, spacduel, ,         spacduel, spacduel, , ROT0, "Atari", "Space Duel" )

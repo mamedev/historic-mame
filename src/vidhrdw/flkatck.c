@@ -22,7 +22,8 @@ static int k007121_flip_screen = 0;
 
 ***************************************************************************/
 
-static void get_tile_info_A( int col, int row ){
+static void get_tile_info_A( int col, int row )
+{
 	int offs = row*32 + col;
 	int attr = k007121_ram[offs];
 	int code = k007121_ram[offs+0x400];
@@ -37,7 +38,8 @@ static void get_tile_info_A( int col, int row ){
 	SET_TILE_INFO(0, code | bank, (attr & 0x0f) + 16)
 }
 
-static void get_tile_info_B( int col, int row ){
+static void get_tile_info_B( int col, int row )
+{
 	int offs = (row*32 + col) + 0x800;
 	int attr = k007121_ram[offs];
 	int code = k007121_ram[offs+0x400];

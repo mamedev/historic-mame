@@ -211,11 +211,7 @@ static struct MachineDriver machine_driver =
 	pingpong_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-
+	0,0,0,0,
 	{
 		{
 			SOUND_SN76496,
@@ -223,54 +219,6 @@ static struct MachineDriver machine_driver =
 		}
 	}
 };
-
-
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x94B1],"\x02\x00\x00",3) == 0 &&
-	    memcmp(&RAM[0x94cc],"\x00\x20\x00",3) == 0 &&
-	    memcmp(&RAM[0x949e],"\x02\x00\x00",3) == 0 &&	/* high score */
-	    memcmp(&RAM[0x846E],"\x02\x00\x00",3) == 0)	/* high score in video RAM */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x94B1],6*10);
-
-			RAM[0x949E] = RAM[0x94B1];
-			RAM[0x949F] = RAM[0x94B2];
-			RAM[0x94A0] = RAM[0x94B3];
-
-			RAM[0x846D] = (RAM[0x94B1]>>4) ? RAM[0x94B1]>>4 : 0x10;
-			RAM[0x846E] = RAM[0x94B1] & 0xF;
-			RAM[0x846F] = RAM[0x94B2] >> 4;
-			RAM[0x8470] = RAM[0x94B2] & 0xF;
-			RAM[0x8471] = RAM[0x94B3] >> 4;
-			RAM[0x8472] = RAM[0x94B3] & 0xF;
-
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x94B1],6*10);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -317,7 +265,6 @@ struct GameDriver driver_pingpong =
 	input_ports_pingpong,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

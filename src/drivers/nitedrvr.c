@@ -253,7 +253,7 @@ struct GameDriver driver_nitedrvr =
 	input_ports_nitedrvr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

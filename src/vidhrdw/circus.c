@@ -196,7 +196,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					1,
+					0,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -219,7 +219,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* Draw the clown in white and afterwards compensate for the overlay */
 	drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
-			1,
+			0,
 			0,0,
 			clown_y,clown_x,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -275,7 +275,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					1,
+					0,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -315,7 +315,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
-			1,
+			0,
 			0,0,
 			clown_y+8,clown_x+8, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -369,7 +369,7 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					1,
+					0,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -379,7 +379,7 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw the Car */
     drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
-			1,
+			0,
 			0,0,
 			clown_y,clown_x, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

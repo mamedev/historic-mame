@@ -385,7 +385,7 @@ struct GameDriver driver_rainbow =
 	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -410,7 +410,7 @@ struct GameDriver driver_rainbowe =
 	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -564,7 +564,7 @@ static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 	{ -1 } 												/* end of array */
 };
 
-static struct MachineDriver jumping_machine_driver =
+static struct MachineDriver machine_driver_jumping =
 {
 	/* basic machine hardware */
 	{
@@ -645,17 +645,17 @@ struct GameDriver driver_jumping =
 	"bootleg",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
 	0,
-	&jumping_machine_driver,
-	0,
+	&machine_driver_jumping,
+	jumping_sprite_decode,
 
 	rom_jumping,
-	jumping_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_jumping,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
+	ROT0 | GAME_NO_SOUND,
 	0, 0
 };

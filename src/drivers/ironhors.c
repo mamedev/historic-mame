@@ -449,7 +449,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver ironhors_machine_driver =
+static struct MachineDriver machine_driver_ironhors =
 {
 	/* basic machine hardware */
 	{
@@ -492,7 +492,7 @@ static struct MachineDriver ironhors_machine_driver =
 	}
 };
 
-static struct MachineDriver farwest_machine_driver =
+static struct MachineDriver machine_driver_farwest =
 {
 	/* basic machine hardware */
 	{
@@ -614,44 +614,6 @@ ROM_END
 
 
 
-static int hiload(void) /* HSC 12/29/98 */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x3300],"\x23\x2c\x1f",3) == 0 && memcmp(&RAM[0x333d],"\x01\x00\x00",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-/* oddly enough the top score displays 2 numbers less then the hiscore table does */
-			osd_fread(f,&RAM[0x32f1],3);
-			osd_fread(f,&RAM[0x3300],64);
-			osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void) /* HSC 12/29/98 */
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x32f1],3);
-        osd_fwrite(f,&RAM[0x3300],64);
-        osd_fclose(f);
-    }
-}
-
-
 struct GameDriver driver_ironhors =
 {
 	__FILE__,
@@ -662,7 +624,7 @@ struct GameDriver driver_ironhors =
 	"Konami",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
 	0,
-	&ironhors_machine_driver,
+	&machine_driver_ironhors,
 	0,
 
 	rom_ironhors,
@@ -673,9 +635,8 @@ struct GameDriver driver_ironhors =
 	input_ports_ironhors,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_dairesya =
@@ -688,7 +649,7 @@ struct GameDriver driver_dairesya =
 	"[Konami] (Kawakusu license)",
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
 	0,
-	&ironhors_machine_driver,
+	&machine_driver_ironhors,
 	0,
 
 	rom_dairesya,
@@ -699,9 +660,8 @@ struct GameDriver driver_dairesya =
 	input_ports_dairesya,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_farwest =
@@ -714,7 +674,7 @@ struct GameDriver driver_farwest =
 	"bootleg?",
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
 	0,
-	&farwest_machine_driver,
+	&machine_driver_farwest,
 	0,
 
 	rom_farwest,
@@ -725,7 +685,6 @@ struct GameDriver driver_farwest =
 	input_ports_ironhors,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	hiload, hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };

@@ -16,8 +16,8 @@
 
 #define CREDITS ""
 
-extern void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source, const struct GfxElement *gfx );
-extern void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *source, const struct GfxElement *gfx );
+extern void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source );
+extern void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *source );
 
 static int scrollx_base; /* this is the only difference in video hardware found so far */
 
@@ -186,8 +186,8 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 
 	{
 		int bank = (attributes&0x40)?1:0;
-		tnk3_draw_text( bitmap, bank, &ram[0xf800], Machine->gfx[0] );
-		tnk3_draw_status( bitmap, bank, &ram[0xfc00], Machine->gfx[0] );
+		tnk3_draw_text( bitmap, bank, &ram[0xf800] );
+		tnk3_draw_status( bitmap, bank, &ram[0xfc00] );
 	}
 /*
 	{
@@ -261,7 +261,6 @@ static struct GfxDecodeInfo aso_gfxdecodeinfo[] = {
 #define SNK_NMI_PENDING	2
 
 static int snk_soundcommand = 0;
-static unsigned char *io_ram;
 static unsigned char *shared_ram, *shared_auxram;
 
 static int shared_auxram_r( int offset ){ return shared_auxram[offset]; }
@@ -316,7 +315,7 @@ static int CPUB_int_trigger_r( int offset ){
 }
 
 static void snk_soundcommand_w( int offset, int data ){
-	io_ram[offset] = snk_soundcommand = data;
+	snk_soundcommand = data;
 	cpu_cause_interrupt( 2, Z80_IRQ_INT );
 //	cpu_cause_interrupt(2, 0xff); old ASO
 }
@@ -491,7 +490,7 @@ static struct MemoryWriteAddress hal21_writemem_CPUB[] = {
 
 /**************************************************************************/
 
-static struct MachineDriver aso_machine_driver =
+static struct MachineDriver machine_driver_aso =
 {
 	{
 		{
@@ -540,7 +539,7 @@ static struct MachineDriver aso_machine_driver =
 	}
 };
 
-static struct MachineDriver hal21_machine_driver = {
+static struct MachineDriver machine_driver_hal21 = {
 	{
 		{
 			CPU_Z80,
@@ -855,37 +854,6 @@ INPUT_PORTS_START( aso )
 	PORT_DIPSETTING(    0x00, "4" )
 INPUT_PORTS_END
 
-/**************************************************************************/
-
-/****  Macro to save high scores  -  RJF (Apr 15, 1999)  ****/
-#define HI_SAVE(NAME,address,length) \
-static void NAME##_hisave(void){ \
-	void *f; \
-	unsigned char *RAM = memory_region(REGION_CPU1); \
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){ \
-		osd_fwrite(f,&RAM[address],length); \
-		osd_fclose(f); \
-	} \
-}
-HI_SAVE(aso, 0xd83b, 10*13)
-
-/****  ASO high score load routine  -  RJF (Apr 05, 1999)  ****/
-static int aso_hiload(void){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	if (memcmp(&RAM[0xd83b],"\x00\x50\x00",3) == 0){
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if( f ){
-			osd_fread(f,&RAM[0xd83b], 10*13);
-			osd_fclose(f);
-			/* copy the high score to ram */
-			RAM[0xe777] = RAM[0xd83d];
-			RAM[0xe778] = RAM[0xd83c];
-			RAM[0xe779] = RAM[0xd83b];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
 
 #if 0
 ROM_START( alphmiss ) /* BAD DUMP! */
@@ -934,7 +902,7 @@ struct GameDriver driver_aso =
 	"SNK",
 	CREDITS,
 	0,
-	&aso_machine_driver,
+	&machine_driver_aso,
 	0,
 
 	rom_aso,
@@ -943,9 +911,8 @@ struct GameDriver driver_aso =
 	input_ports_aso,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND/*?*/,
-
-	aso_hiload, aso_hisave
+	ROT270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND/*?*/,
+	0,0
 };
 
 struct GameDriver driver_hal21 =
@@ -958,13 +925,13 @@ struct GameDriver driver_hal21 =
 	"SNK",
 	CREDITS,
 	0,
-	&hal21_machine_driver,
+	&machine_driver_hal21,
 	0,
 	rom_hal21,
 	0,0,0,0,
 	input_ports_hal21,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_NO_SOUND | GAME_WRONG_COLORS,
+	ROT270 | GAME_REQUIRES_16BIT | GAME_NO_SOUND | GAME_WRONG_COLORS,
 	0,0
 };
 
@@ -978,12 +945,12 @@ struct GameDriver driver_hal21j =
 	"SNK",
 	CREDITS,
 	0,
-	&hal21_machine_driver,
+	&machine_driver_hal21,
 	0,
 	rom_hal21j,
 	0,0,0,0,
 	input_ports_hal21,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_NO_SOUND | GAME_WRONG_COLORS,
+	ROT270 | GAME_REQUIRES_16BIT | GAME_NO_SOUND | GAME_WRONG_COLORS,
 	0,0
 };

@@ -65,10 +65,10 @@ is not needed for music to work.
 #include "cpu/z80/z80.h"
 #include "cpu/m68000/m68000.h"
 
-unsigned char *splash_vregs;
-unsigned char *splash_videoram;
-unsigned char *splash_spriteram;
-unsigned char *splash_pixelram;
+extern unsigned char *splash_vregs;
+extern unsigned char *splash_videoram;
+extern unsigned char *splash_spriteram;
+extern unsigned char *splash_pixelram;
 
 /* from vidhrdw/gaelco.c */
 int splash_vram_r( int offset );
@@ -264,7 +264,7 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static struct MachineDriver splash_machine_driver =
+static struct MachineDriver machine_driver_splash =
 {
 	/* basic machine hardware */
 	{
@@ -340,7 +340,7 @@ struct GameDriver driver_splash =
 	"Gaelco",
 	"Manuel Abadia",
 	0,
-	&splash_machine_driver,
+	&machine_driver_splash,
 	0,
 
 	rom_splash,
@@ -352,6 +352,6 @@ struct GameDriver driver_splash =
 	input_ports_splash,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	ROT0 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	0, 0
 };

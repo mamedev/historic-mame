@@ -409,46 +409,6 @@ ROM_END
 
 
 
-static int hiload(void)     /* V.V */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8060],"\x00\x00\x00\x30\x40\x40\x40\x02",8) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x08060],8);
-			osd_fclose(f);
-			memset(&dirtybuffer[0x60],1,8);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-
-}
-
-
-static void hisave(void)    /* V.V */
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x08060],8);
-		osd_fclose(f);
-		memset(&dirtybuffer[0x60],1,8);
-	}
-}
-
-
-
 struct GameDriver driver_rallyx =
 {
 	__FILE__,
@@ -470,9 +430,8 @@ struct GameDriver driver_rallyx =
 	input_ports_rallyx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rallyxm =
@@ -496,9 +455,8 @@ struct GameDriver driver_rallyxm =
 	input_ports_rallyx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_nrallyx =
@@ -522,7 +480,6 @@ struct GameDriver driver_nrallyx =
 	input_ports_nrallyx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

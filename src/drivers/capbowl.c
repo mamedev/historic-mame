@@ -2,6 +2,8 @@
 
   Coors Light Bowling/Bowl-O-Rama memory map
 
+  driver by Zsolt Vasvari
+
   CPU Board:
 
   0000-3fff     3 Graphics ROMS mapped in using 0x4800 (Coors Light Bowling only)
@@ -100,6 +102,28 @@ int  bowlrama_turbo_r(int offset);
 
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+		{
+			/* invalidate nvram to make the game initialize it.
+			   A 0xff fill will cause the game to malfunction, so we use a
+			   0x01 fill which seems OK */
+			memset(nvram,0x01,nvram_size);
+		}
+	}
+}
+
+
 static void capbowl_sndcmd_w(int offset,int data)
 {
 	cpu_cause_interrupt(1, M6809_INT_IRQ);
@@ -157,7 +181,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x001f, bowlrama_turbo_w },	/* Bowl-O-Rama only */
 	{ 0x4000, 0x4000, MWA_RAM, &capbowl_rowaddress },
 	{ 0x4800, 0x4800, capbowl_rom_select_w },
-	{ 0x5000, 0x57ff, MWA_RAM },
+	{ 0x5000, 0x57ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x5800, 0x5fff, TMS34061_w },
 	{ 0x6000, 0x6000, capbowl_sndcmd_w },
 	{ 0x6800, 0x6800, watchdog_reset_w },
@@ -233,7 +257,7 @@ static struct DACinterface dac_interface =
 
 #define MACHINEDRIVER(NAME, VISIBLE_Y)						\
 															\
-static struct MachineDriver NAME##_machine_driver =			\
+static struct MachineDriver machine_driver_##NAME =			\
 {															\
 	/* basic machine hardware */   							\
 	{														\
@@ -277,7 +301,9 @@ static struct MachineDriver NAME##_machine_driver =			\
 			SOUND_DAC,										\
 			&dac_interface									\
 		}													\
-	}														\
+	},														\
+															\
+	nvram_handler											\
 };
 
 
@@ -314,10 +340,6 @@ ROM_START( capbowl2 )
 	ROM_LOAD( "gr1",          0x18000, 0x8000, 0x27ede6ce )
 	ROM_LOAD( "gr2",          0x20000, 0x8000, 0xe49238f4 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )   /* 64k for sound */
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
@@ -329,10 +351,6 @@ ROM_START( clbowl )
 	ROM_LOAD( "gr1.cl",       0x18000, 0x8000, 0x0ac0dc4c )
 	ROM_LOAD( "gr2.cl",       0x20000, 0x8000, 0x251f5da5 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )   /* 64k for sound */
 	ROM_LOAD( "sound.cl",     0x8000, 0x8000, 0x1eba501e )
 ROM_END
@@ -341,157 +359,16 @@ ROM_START( bowlrama )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )      /* 64k for code */
 	ROM_LOAD( "u6",           0x08000, 0x08000, 0x7103ad55 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound */
 	ROM_LOAD( "u30",          0x8000, 0x8000, 0xf3168834 )
 
-	ROM_REGION(0x40000)     /* 256K for Graphics */
+	ROM_REGIONX( 0x40000, REGION_GFX1 )     /* 256K for Graphics used at runtime */
 	ROM_LOAD( "ux7",          0x00000, 0x40000, 0x8727432a )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x5000],0x800);
-		osd_fclose(f);
-	}
-	else
-	{
-		/* Invalidate the static RAM to force reset to factory settings */
-		memset(&RAM[0x5000],0x01,0x800);
-	}
-
-	RAM[0x5725] = 0x01; // Otherwise Bowl-O-Rama won't start
-						// This location doesn't seem to be used by
-						// Capcom Bowling, so this should be Ok.
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5000],0x0800);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_capbowl =
-{
-	__FILE__,
-	0,
-	"capbowl",
-	"Capcom Bowling (set 1)",
-	"1988",
-	"Incredible Technologies",
-	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
-	&capbowl_machine_driver,
-	0,
-
-	rom_capbowl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_capbowl,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_capbowl2 =
-{
-	__FILE__,
-	&driver_capbowl,
-	"capbowl2",
-	"Capcom Bowling (set 2)",
-	"1988",
-	"Incredible Technologies",
-	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
-	&capbowl_machine_driver,
-	0,
-
-	rom_capbowl2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_capbowl,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_clbowl =
-{
-	__FILE__,
-	&driver_capbowl,
-	"clbowl",
-	"Coors Light Bowling",
-	"1989",
-	"Incredible Technologies",
-	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
-	&capbowl_machine_driver,
-	0,
-
-	rom_clbowl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_capbowl,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_bowlrama =
-{
-	__FILE__,
-	0,
-	"bowlrama",
-	"Bowl-O-Rama",
-	"1991",
-	"P & P Marketing",
-	"Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
-	0,
-	&bowlrama_machine_driver,
-	0,
-
-	rom_bowlrama,
-	0, 0,
-	0,
-	0,
-
-	input_ports_capbowl,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
-
-	hiload, hisave
-};
+GAME( 1988, capbowl,  ,        capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 1)" )
+GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 2)" )
+GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, , ROT270_16BIT, "Incredible Technologies", "Coors Light Bowling" )
+GAME( 1991, bowlrama, ,        bowlrama, capbowl, , ROT270_16BIT, "P & P Marketing", "Bowl-O-Rama" )

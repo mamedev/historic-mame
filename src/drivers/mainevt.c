@@ -681,7 +681,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver dv_machine_driver =
+static struct MachineDriver machine_driver_dv =
 {
 	/* basic machine hardware */
 	{
@@ -925,42 +925,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if  (memcmp(&RAM[0x415C],"\xFF\xAE\xCA",3) == 0 &&
-			memcmp(&RAM[0x419F],"\x00\x05\x77",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x415C],70);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x415C],70);
-		osd_fclose(f);
-	}
-}
-
-
-
 static void gfx_untangle(void)
 {
 	konami_rom_deinterleave_2(1);
@@ -980,19 +944,18 @@ struct GameDriver driver_mainevt =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_mainevt,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_mainevt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mainevt2 =
@@ -1006,19 +969,18 @@ struct GameDriver driver_mainevt2 =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_mainevt2,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_mainevt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ringohja =
@@ -1032,19 +994,18 @@ struct GameDriver driver_ringohja =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_ringohja,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ringohja,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_devstors =
@@ -1057,18 +1018,18 @@ struct GameDriver driver_devstors =
 	"Konami",
 	"Bryan McPhail",
 	0,
-	&dv_machine_driver,
-	0,
+	&machine_driver_dv,
+	gfx_untangle,
 
 	rom_devstors,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
@@ -1083,18 +1044,18 @@ struct GameDriver driver_devstor2 =
 	"Konami",
 	"Bryan McPhail",
 	0,
-	&dv_machine_driver,
-	0,
+	&machine_driver_dv,
+	gfx_untangle,
 
 	rom_devstor2,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
@@ -1109,18 +1070,18 @@ struct GameDriver driver_devstor3 =
 	"Konami",
 	"Bryan McPhail",
 	0,
-	&dv_machine_driver,
-	0,
+	&machine_driver_dv,
+	gfx_untangle,
 
 	rom_devstor3,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
@@ -1136,18 +1097,18 @@ struct GameDriver driver_garuka =
 	"Konami",
 	"Bryan McPhail",
 	0,
-	&dv_machine_driver,
-	0,
+	&machine_driver_dv,
+	gfx_untangle,
 
 	rom_garuka,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };

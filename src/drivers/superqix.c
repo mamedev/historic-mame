@@ -288,43 +288,6 @@ ROM_START( sqixbl )
 	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 ROM_END
 
-static int superqix_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xf4c0],"\x00\x00\x32",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xf4c0],40);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0xf8f4] = RAM[0xf4c0];
-                        RAM[0xf8f3] = RAM[0xf4c1];
-                        RAM[0xf8f2] = RAM[0xf4c2];
-                        RAM[0xf8f1] = RAM[0xf4c3];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void superqix_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xf4c0],40);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_superqix =
@@ -348,7 +311,7 @@ struct GameDriver driver_superqix =
 	input_ports_superqix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -374,7 +337,6 @@ struct GameDriver driver_sqixbl =
 	input_ports_superqix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	superqix_hiload, superqix_hisave
+	ROT90,
+	0,0
 };

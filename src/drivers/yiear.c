@@ -373,46 +373,6 @@ ROM_START( yiear2 )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
-		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* Read the scores */
-			osd_fread(f,&RAM[0x5520],14*10);
-			/* reset score at top */
-			memcpy(&RAM[0x521C],&RAM[0x5520],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Save the scores */
-		osd_fwrite(f,&RAM[0x5520],14*10);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_yiear =
 {
@@ -435,9 +395,8 @@ struct GameDriver driver_yiear =
 	input_ports_yiear,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_yiear2 =
@@ -461,8 +420,7 @@ struct GameDriver driver_yiear2 =
 	input_ports_yiear,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 

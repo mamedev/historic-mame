@@ -415,43 +415,6 @@ ROM_END
 
 
 
-static int sichuan2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xfcb0],"\x2b\x03\x0f",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xfcb0], 5*16);        /* HS table */
-
-                        RAM[0xfcae] = RAM[0xfcbd];      /* update high score */
-                        RAM[0xfcaf] = RAM[0xfcbe];      /* on top of screen */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void sichuan2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xfcb0], 5*16);       /* HS table */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_sichuan2 =
 {
 	__FILE__,
@@ -473,9 +436,8 @@ struct GameDriver driver_sichuan2 =
 	input_ports_shisen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	sichuan2_hiload, sichuan2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_sichuana =
@@ -499,9 +461,8 @@ struct GameDriver driver_sichuana =
 	input_ports_shisen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	sichuan2_hiload, sichuan2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_shisen =
@@ -525,7 +486,6 @@ struct GameDriver driver_shisen =
 	input_ports_shisen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	sichuan2_hiload, sichuan2_hisave
+	ROT0,
+	0,0
 };

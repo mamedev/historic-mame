@@ -693,8 +693,8 @@ layout16x16(spritelayout,0x100000)
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &tilelayout,   256*0, (256*2) / 16 }, // [0] Layers
-	{ 1, 0x080000, &spritelayout, 256*2, (256*1) / 16 }, // [1] Sprites
+	{ REGION_GFX1, 0, &tilelayout,   256*0, (256*2) / 16 }, // [0] Layers
+	{ REGION_GFX2, 0, &spritelayout, 256*2, (256*1) / 16 }, // [1] Sprites
 	{ -1 }
 };
 
@@ -717,12 +717,12 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,
 	{ 18000 },		/* ?? */
-	{ 4  },
+	{ REGION_SOUND1 },
 	{ 50 }
 };
 
 
-static struct MachineDriver airbustr_machine_driver =
+static struct MachineDriver machine_driver_airbustr =
 {
 	{
 		{
@@ -783,35 +783,39 @@ static struct MachineDriver airbustr_machine_driver =
 ***************************************************************************/
 
 ROM_START( airbustr )
-	ROM_REGIONX( 0x24000, REGION_CPU1 )				/* Region 0 - main cpu */
+	ROM_REGIONX( 0x24000, REGION_CPU1 )
 	ROM_LOAD( "pr-14j.bin", 0x00000, 0x0c000, 0x6b9805bd )
-	ROM_CONTINUE(           0x10000, 0x14000      )
+	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION_DISPOSE(0x180000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "pr-000.bin", 0x000000, 0x80000, 0x8ca68f0d ) // scrolling layers
-	ROM_LOAD( "pr-001.bin", 0x080000, 0x80000, 0x7e6cb377 ) // sprites
-	ROM_LOAD( "pr-02.bin",  0x100000, 0x10000, 0x6bbd5e46 )
-
-	ROM_REGIONX( 0x24000, REGION_CPU2 )				/* Region 2 - sub cpu */
+	ROM_REGIONX( 0x24000, REGION_CPU2 )
 	ROM_LOAD( "pr-11j.bin", 0x00000, 0x0c000, 0x85464124 )
-	ROM_CONTINUE(           0x10000, 0x14000      )
+	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGIONX( 0x24000, REGION_CPU3 )				/* Region 3 - sound cpu */
+	ROM_REGIONX( 0x24000, REGION_CPU3 )
 	ROM_LOAD( "pr-21.bin",  0x00000, 0x0c000, 0x6e0a5df0 )
-	ROM_CONTINUE(           0x10000, 0x14000      )
+	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION(0x40000)				/* Region 4 - OKI-M6295 samples */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pr-000.bin", 0x000000, 0x80000, 0x8ca68f0d ) // scrolling layers
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pr-001.bin", 0x000000, 0x80000, 0x7e6cb377 ) // sprites
+	ROM_LOAD( "pr-02.bin",  0x080000, 0x10000, 0x6bbd5e46 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* OKI-M6295 samples */
 	ROM_LOAD( "pr-200.bin", 0x00000, 0x40000, 0xa4dd3390 )
 ROM_END
 
-void airbustr_rom_decode(void)
+
+
+void init_airbustr(void)
 {
 int i;
 unsigned char *RAM;
 
 	/* One gfx rom seems to have scrambled data (bad read?): */
 	/* let's swap even and odd nibbles */
-	RAM = memory_region(1) + 0x000000;
+	RAM = memory_region(REGION_GFX1) + 0x000000;
 	for (i = 0; i < 0x80000; i ++)
 	{
 		RAM[i] = ((RAM[i] & 0xF0)>>4) + ((RAM[i] & 0x0F)<<4);
@@ -826,66 +830,6 @@ unsigned char *RAM;
 						// It's an hack to repair nested nmi troubles
 }
 
-/***********************************************************************
 
-  Air Buster high score save routine - RJF (May 12, 1999)
 
-***********************************************************************/
-
-static int airbustr_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe160],"\x01\x68\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe160], 8*8);        /* HS table */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void airbustr_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe160], 8*8);       /* HS table */
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver driver_airbustr =
-{
-	__FILE__,
-	0,
-	"airbustr",
-	"Air Buster (Japan)",
-	"1990",
-	"Kaneko (Namco license)",
-	"Luca Elia\n",
-	0,
-	&airbustr_machine_driver,
-	0,
-
-	rom_airbustr,
-	airbustr_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_airbustr,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	airbustr_hiload, airbustr_hisave
-};
+GAME( 1990, airbustr, , airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster (Japan)" )

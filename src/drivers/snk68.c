@@ -801,7 +801,7 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver ikari3_machine_driver =
+static struct MachineDriver machine_driver_ikari3 =
 {
 	/* basic machine hardware */
 	{
@@ -850,7 +850,7 @@ static struct MachineDriver ikari3_machine_driver =
 	}
 };
 
-static struct MachineDriver pow_machine_driver =
+static struct MachineDriver machine_driver_pow =
 {
 	/* basic machine hardware */
 	{
@@ -899,7 +899,7 @@ static struct MachineDriver pow_machine_driver =
 	}
 };
 
-static struct MachineDriver searchar_machine_driver =
+static struct MachineDriver machine_driver_searchar =
 {
 	/* basic machine hardware */
 	{
@@ -948,7 +948,7 @@ static struct MachineDriver searchar_machine_driver =
 	}
 };
 
-static struct MachineDriver streets2_machine_driver =
+static struct MachineDriver machine_driver_streets2 =
 {
 	/* basic machine hardware */
 	{
@@ -1281,6 +1281,7 @@ static void streetsm_patch(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	custom_memory();
 	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
@@ -1288,6 +1289,7 @@ static void streetsj_patch(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	custom_memory();
 	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
@@ -1303,7 +1305,7 @@ struct GameDriver driver_pow =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&pow_machine_driver,
+	&machine_driver_pow,
 	custom_memory,
 
 	rom_pow,
@@ -1314,7 +1316,7 @@ struct GameDriver driver_pow =
 	input_ports_pow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1328,7 +1330,7 @@ struct GameDriver driver_powj =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&pow_machine_driver,
+	&machine_driver_pow,
 	custom_memory,
 
 	rom_powj,
@@ -1339,7 +1341,7 @@ struct GameDriver driver_powj =
 	input_ports_powj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1353,7 +1355,7 @@ struct GameDriver driver_searchar =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
+	&machine_driver_searchar,
 	searchar_memory,
 
 	rom_searchar,
@@ -1364,7 +1366,7 @@ struct GameDriver driver_searchar =
 	input_ports_searchar,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -1378,7 +1380,7 @@ struct GameDriver driver_sercharu =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
+	&machine_driver_searchar,
 	searchar_memory,
 
 	rom_sercharu,
@@ -1389,7 +1391,7 @@ struct GameDriver driver_sercharu =
 	input_ports_searchar,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -1403,18 +1405,18 @@ struct GameDriver driver_streetsm =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
-	custom_memory,
+	&machine_driver_searchar,
+	streetsm_patch,
 
 	rom_streetsm,
-	streetsm_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1428,7 +1430,7 @@ struct GameDriver driver_streets2 =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&streets2_machine_driver,
+	&machine_driver_streets2,
 	custom_memory,
 
 	rom_streets2,
@@ -1439,7 +1441,7 @@ struct GameDriver driver_streets2 =
 	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1453,18 +1455,18 @@ struct GameDriver driver_streetsj =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&searchar_machine_driver,
-	custom_memory,
+	&machine_driver_searchar,
+	streetsj_patch,
 
 	rom_streetsj,
-	streetsj_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_streetsj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1478,7 +1480,7 @@ struct GameDriver driver_ikari3 =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&ikari3_machine_driver,
+	&machine_driver_ikari3,
 	searchar_memory,
 
 	rom_ikari3,
@@ -1489,6 +1491,6 @@ struct GameDriver driver_ikari3 =
 	input_ports_ikari3,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

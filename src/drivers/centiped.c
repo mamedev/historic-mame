@@ -413,9 +413,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   4, 4 },	/* 4 color codes to support midframe */
-										/* palette changes in test mode */
-	{ 1, 0x0000, &spritelayout, 0, 1 },
+	{ REGION_GFX1, 0, &charlayout,   4, 4 },	/* 4 color codes to support midframe */
+												/* palette changes in test mode */
+	{ REGION_GFX1, 0, &spritelayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -468,7 +468,7 @@ static struct AY8910interface centipb2_ay8910_interface =
 
 #define DRIVER(GAMENAME, SOUND_TYPE, SOUND_INTERFACE)							\
 																				\
-static struct MachineDriver GAMENAME##_machine_driver =							\
+static struct MachineDriver machine_driver_##GAMENAME =							\
 {																				\
 	/* basic machine hardware */												\
 	{																			\
@@ -502,7 +502,9 @@ static struct MachineDriver GAMENAME##_machine_driver =							\
 			SOUND_TYPE,															\
 			SOUND_INTERFACE,													\
 		}																		\
-	}																			\
+	},																			\
+																				\
+	atari_vg_earom_handler														\
 };
 
 
@@ -527,7 +529,7 @@ ROM_START( centiped )
 	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0x44e40fa4 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
@@ -540,7 +542,7 @@ ROM_START( centipd2 )
 	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0x93999153 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
@@ -553,7 +555,7 @@ ROM_START( centipdb )
 	ROM_LOAD( "olympia.c31",  0x3800, 0x0800, 0xcc529d6b )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, 0xd91b9724 )
 	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
 ROM_END
@@ -567,112 +569,13 @@ ROM_START( centipb2 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 	ROM_LOAD( "k1",  		  0x6000, 0x0800, 0xf1aa329b )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
 
-struct GameDriver driver_centiped =
-{
-	__FILE__,
-	0,
-	"centiped",
-	"Centipede (revision 3)",
-	"1980",
-	"Atari",
-	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&centiped_machine_driver,
-	0,
-
-	rom_centiped,
-	0, 0,
-	0,
-	0,
-
-	input_ports_centiped,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver driver_centipd2 =
-{
-	__FILE__,
-	&driver_centiped,
-	"centipd2",
-	"Centipede (revision 2)",
-	"1980",
-	"Atari",
-	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&centiped_machine_driver,
-	0,
-
-	rom_centipd2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_centiped,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver driver_centipdb =
-{
-	__FILE__,
-	&driver_centiped,
-	"centipdb",
-	"Centipede (bootleg set 1)",
-	"1980",
-	"bootleg",
-	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&centipdb_machine_driver,
-	0,
-
-	rom_centipdb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_centipdb,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
-struct GameDriver driver_centipb2 =
-{
-	__FILE__,
-	&driver_centiped,
-	"centipb2",
-	"Centipede (bootleg set 2)",
-	"1980",
-	"bootleg",
-	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
-	0,
-	&centipb2_machine_driver,
-	0,
-
-	rom_centipb2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_centiped,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
+GAME( 1980, centiped, ,         centiped, centiped, , ROT270, "Atari", "Centipede (revision 3)" )
+GAME( 1980, centipd2, centiped, centiped, centiped, , ROT270, "Atari", "Centipede (revision 2)" )
+GAME( 1980, centipdb, centiped, centipdb, centipdb, , ROT270, "bootleg", "Centipede (bootleg set 1)" )
+GAME( 1980, centipb2, centiped, centipb2, centiped, , ROT270, "bootleg", "Centipede (bootleg set 2)" )

@@ -277,14 +277,14 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 16 },
-	{ 1, 0x0800, &spritelayout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_crbaloon =
 {
 	/* basic machine hardware */
 	{
@@ -332,9 +332,11 @@ ROM_START( crbaloon )
 	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0xc8f1e2be )
 	ROM_LOAD( "cl06.bin",     0x2800, 0x0800, 0x7d465691 )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cl07.bin",     0x0000, 0x0800, 0x2c1fbea8 )
-	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cl08.bin",     0x0000, 0x0800, 0xba898659 )
 ROM_END
 
 ROM_START( crbalon2 )
@@ -346,109 +348,14 @@ ROM_START( crbalon2 )
 	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0xc8f1e2be )
 	ROM_LOAD( "crazybal.ep6", 0x2800, 0x0800, 0xfed6ff5c )
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cl07.bin",     0x0000, 0x0800, 0x2c1fbea8 )
-	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cl08.bin",     0x0000, 0x0800, 0xba898659 )
 ROM_END
 
-/* HSC 12/02/98 */
-static int hiload(void)
-{
-
-	static int firsttime =0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	if (firsttime == 0)
-		{
-			memset(&RAM[0x4014],0xff,5); /* hi score */
-			memset(&RAM[0x417d],0xff,12); /* name */
-			firsttime = 1;
-		}
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x4014],"\x00\x00\x00\x00\x00",5) == 0 &&
-		memcmp(&RAM[0x417f],"\x11\x12\x29\x1c\x0c\x18\x1b\x0e\x00\x00",10) == 0  )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x4014],5);
-			osd_fread(f,&RAM[0x417d],12);
-			osd_fclose(f);
-        }
-		firsttime = 0;
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-	 	osd_fwrite(f,&RAM[0x4014],5);
-		osd_fwrite(f,&RAM[0x417d],12);
-        osd_fclose(f);
-    	memset(&RAM[0x4014],0xff,5); /* hi score */
-		memset(&RAM[0x417d],0xff,12); /* name */
-
-	}
-}
-
-
-
-struct GameDriver driver_crbaloon =
-{
-	__FILE__,
-	0,
-	"crbaloon",
-	"Crazy Balloon (set 1)",
-	"1980",
-	"Taito Corporation",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crbaloon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_crbaloon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload,hisave /* hsc 12/02/98 */
-};
-
-struct GameDriver driver_crbalon2 =
-{
-	__FILE__,
-	&driver_crbaloon,
-	"crbalon2",
-	"Crazy Balloon (set 2)",
-	"1980",
-	"Taito Corporation",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crbalon2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_crbaloon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload , hisave /* hsc 12/02/98 */
-};
+GAME( 1980, crbaloon, ,         crbaloon, crbaloon, , ROT90, "Taito Corporation", "Crazy Balloon (set 1)" )
+GAME( 1980, crbalon2, crbaloon, crbaloon, crbaloon, , ROT90, "Taito Corporation", "Crazy Balloon (set 2)" )

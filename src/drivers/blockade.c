@@ -38,9 +38,6 @@ Notes:  Support is complete with the exception of the square wave generator
 
 /* in vidhrdw */
 void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void comotion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void blasto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void hustle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void blockade_coin_latch_w(int offset, int data);
 void blockade_sound_freq_w(int offset, int data);
@@ -52,46 +49,48 @@ void blockade_env_off_w(int offset, int data);
 static int coin_latch;  /* Active Low */
 static int just_been_reset;
 
-void blockade_init(void)
+void init_blockade(void)
 {
-    int i;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int i;
 
-    /* Merge nibble-wide roms together,
-       and load them into 0x0000-0x0400 */
+	/* Merge nibble-wide roms together,
+	   and load them into 0x0000-0x0400 */
 
-    for(i=0;i<0x0400;i++)
-    {
-        ROM[0x0000+i] = (ROM[0x1000+i]<<4)+ROM[0x1400+i];
-    }
+	for (i = 0;i < 0x0400;i++)
+	{
+		rom[0x0000+i] = (rom[0x1000+i]<<4)+rom[0x1400+i];
+	}
 
-    /* Initialize the coin latch state here */
-    coin_latch = 1;
-    just_been_reset = 0;
+	/* Initialize the coin latch state here */
+	coin_latch = 1;
+	just_been_reset = 0;
 }
 
-void comotion_init(void)
+void init_comotion(void)
 {
-    int i;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int i;
 
-    /* Merge nibble-wide roms together,
-       and load them into 0x0000-0x0800 */
+	/* Merge nibble-wide roms together,
+	   and load them into 0x0000-0x0800 */
 
-    for(i=0;i<0x0400;i++)
-    {
-        ROM[0x0000+i] = (ROM[0x1000+i]<<4)+ROM[0x1400+i];
-        ROM[0x0400+i] = (ROM[0x1800+i]<<4)+ROM[0x1c00+i];
-    }
+	for(i = 0;i < 0x0400;i++)
+	{
+		rom[0x0000+i] = (rom[0x1000+i]<<4)+rom[0x1400+i];
+		rom[0x0400+i] = (rom[0x1800+i]<<4)+rom[0x1c00+i];
+	}
 
-    /* They also need to show up here for comotion/blasto */
+	/* They also need to show up here for comotion/blasto */
 
-    for(i=0;i<2048;i++)
-    {
-        ROM[0x4000+i] = ROM[0x0000+i];
-    }
+	for(i = 0;i < 2048;i++)
+	{
+		rom[0x4000+i] = rom[0x0000+i];
+	}
 
-    /* Initialize the coin latch state here */
-    coin_latch = 1;
-    just_been_reset = 0;
+	/* Initialize the coin latch state here */
+	coin_latch = 1;
+	just_been_reset = 0;
 }
 
 /*************************************************************/
@@ -416,50 +415,56 @@ INPUT_PORTS_END
 
 static struct GfxLayout blockade_layout =
 {
-    8,8,    /* 8*8 characters */
-    32, /* 32 characters */
-    1,  /* 1 bit per pixel */
-    { 0 },  /* no separation in 1 bpp */
-    { 4,5,6,7,256*8+4,256*8+5,256*8+6,256*8+7 },    /* Merge nibble-wide roms */
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8 /* every char takes 8 consecutive bytes */
+	8,8,    /* 8*8 characters */
+	32, /* 32 characters */
+	1,  /* 1 bit per pixel */
+	{ 0 },  /* no separation in 1 bpp */
+	{ 4,5,6,7,256*8+4,256*8+5,256*8+6,256*8+7 },    /* Merge nibble-wide roms */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout blasto_layout =
 {
-    8,8,    /* 8*8 characters */
-    64, /* 64 characters */
-    1,  /* 1 bit per pixel */
-    { 0 },  /* no separation in 1 bpp */
-    { 4,5,6,7,512*8+4,512*8+5,512*8+6,512*8+7 },    /* Merge nibble-wide roms */
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8 /* every char takes 8 consecutive bytes */
+	8,8,    /* 8*8 characters */
+	64, /* 64 characters */
+	1,  /* 1 bit per pixel */
+	{ 0 },  /* no separation in 1 bpp */
+	{ 4,5,6,7,512*8+4,512*8+5,512*8+6,512*8+7 },    /* Merge nibble-wide roms */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &blockade_layout,   0, 2 },
-    { 1, 0x0000, &blasto_layout,     0, 2 },
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x0000, &blockade_layout, 0, 2 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo blasto_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &blasto_layout,   0, 2 },
+	{ -1 } /* end of array */
 };
 
 
-static unsigned char palette[] =
+static unsigned char gr_palette[] =
 {
 	0x00,0x00,0x00, /* BLACK */
 	0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade/Hustle) */
+};
+static unsigned char bw_palette[] =
+{
+	0x00,0x00,0x00, /* BLACK */
 	0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
-	0xff,0x00,0x00, /* RED */       /* for the disclaimer text */
 };
-static unsigned short colortable[] =
+static void init_palette_gr(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	0x00, 0x01,         /* green on black (Blockade/Hustle) */
-	0x00, 0x02,         /* white on black (Comotion/Blasto) */
-};
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+	memcpy(game_palette,gr_palette,sizeof(gr_palette));
+}
+static void init_palette_bw(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(game_palette,bw_palette,sizeof(bw_palette));
 }
 
 
@@ -480,7 +485,118 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver blockade_machine_driver =
+static struct MachineDriver machine_driver_blockade =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2079000,
+			readmem,writemem,readport,writeport,
+			blockade_interrupt,1
+		},
+	},
+		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+		1,
+	0,
+
+	/* video hardware */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	2, 2,
+	init_palette_gr,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	blockade_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_comotion =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2079000,
+			readmem,writemem,readport,writeport,
+			blockade_interrupt,1
+		},
+	},
+		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+		1,
+	0,
+
+	/* video hardware */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	2, 2,
+	init_palette_bw,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	blockade_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_blasto =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2079000,
+			readmem,writemem,readport,writeport,
+			blockade_interrupt,1
+		},
+	},
+		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+		1,
+	0,
+
+	/* video hardware */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	blasto_gfxdecodeinfo,
+	2, 2,
+	init_palette_bw,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	blockade_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_hustle =
 {
     /* basic machine hardware */
     {
@@ -497,126 +613,15 @@ static struct MachineDriver blockade_machine_driver =
 
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-    gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
+    blasto_gfxdecodeinfo,
+	2, 2,
+	init_palette_gr,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,
     generic_vh_start,
     generic_vh_stop,
     blockade_vh_screenrefresh,
-
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SAMPLES,
-            &samples_interface
-        }
-    }
-};
-
-static struct MachineDriver comotion_machine_driver =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_8080,
-            2079000,
-            readmem,writemem,readport,writeport,
-            blockade_interrupt,1
-        },
-    },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-        1,
-    0,
-
-    /* video hardware */
-    32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-    gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-    0,
-    generic_vh_start,
-    generic_vh_stop,
-    comotion_vh_screenrefresh,
-
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SAMPLES,
-            &samples_interface
-        }
-    }
-};
-
-static struct MachineDriver blasto_machine_driver =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_8080,
-            2079000,
-            readmem,writemem,readport,writeport,
-            blockade_interrupt,1
-        },
-    },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-        1,
-    0,
-
-    /* video hardware */
-    32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-    gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-    0,
-    generic_vh_start,
-    generic_vh_stop,
-    blasto_vh_screenrefresh,
-
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SAMPLES,
-            &samples_interface
-        }
-    }
-};
-
-static struct MachineDriver hustle_machine_driver =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_8080,
-            2079000,
-            readmem,writemem,readport,writeport,
-            blockade_interrupt,1
-        },
-    },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-        1,
-    0,
-
-    /* video hardware */
-    32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-    gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-    0,
-    generic_vh_start,
-    generic_vh_stop,
-    hustle_vh_screenrefresh,
 
     /* sound hardware */
     0,0,0,0,
@@ -643,7 +648,7 @@ ROM_START( blockade )
     ROM_LOAD( "316-04.u2", 0x1000, 0x0400, 0xa93833e9 )
     ROM_LOAD( "316-03.u3", 0x1400, 0x0400, 0x85960d3b )
 
-    ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x200, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "316-02.u29", 0x0000, 0x0100, 0x409f610f )
     ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x41a00b28 )
 ROM_END
@@ -659,7 +664,7 @@ ROM_START( comotion )
     ROM_LOAD( "316-09.u4", 0x1800, 0x0400, 0x2590f87c )
     ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, 0xfb49a69b )
 
-    ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x200, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "316-06.u43", 0x0000, 0x0100, 0x8f071297 )  /* Note: these are reversed */
     ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x53fb8821 )
 ROM_END
@@ -675,7 +680,7 @@ ROM_START( blasto )
     ROM_LOAD( "blasto.u4", 0x1800, 0x0400, 0x1c889993 )
     ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, 0xefb640cb )
 
-    ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0x4dd69499 )
     ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0x104051a4 )
 ROM_END
@@ -691,155 +696,14 @@ ROM_START( hustle )
     ROM_LOAD( "3160018.u4", 0x1800, 0x0400, 0xf599b9c0 )
     ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, 0x7794bc7e )
 
-    ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
+    ROM_REGIONX( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
     ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0x541d2c67 )
     ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0xb5083128 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score has already been initialized */
-    if (memcmp(&RAM[0xff3a],"\x30\x30\x30",3) == 0)
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0xff3a],5);
-			osd_fclose(f);
-
-        }
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-
-        osd_fwrite(f,&RAM[0xff3a],5);
-        osd_fclose(f);
-	}
-}
-
-
-struct GameDriver driver_blockade =
-{
-	__FILE__,
-	0,
-	"blockade",
-	"Blockade",
-	"1976",
-	"Gremlin",
-	"Frank Palazzolo",
-	0,
-	&blockade_machine_driver,
-	0,
-
-	rom_blockade,
-	blockade_init,
-	0,
-	0,
-	0,
-
-	input_ports_blockade,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_comotion =
-{
-	__FILE__,
-	0,
-	"comotion",
-	"Comotion",
-	"1976",
-	"Gremlin",
-	"Frank Palazzolo",
-	0,
-	&comotion_machine_driver,
-	0,
-
-	rom_comotion,
-	comotion_init,
-	0,
-	0,
-	0,
-
-	input_ports_comotion,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_blasto =
-{
-	__FILE__,
-	0,
-	"blasto",
-	"Blasto",
-	"1978",
-	"Gremlin",
-	"Frank Palazzolo\nJuergen Buchmueller",
-	0,
-	&blasto_machine_driver,
-	0,
-
-	rom_blasto,
-	comotion_init,
-	0,
-	0,
-	0,
-
-	input_ports_blasto,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver driver_hustle =
-{
-	__FILE__,
-	0,
-	"hustle",
-	"Hustle",
-	"1977",
-	"Gremlin",
-	"Frank Palazzolo",
-	0,
-	&hustle_machine_driver,
-	0,
-
-	rom_hustle,
-	comotion_init,
-	0,
-	0,
-	0,
-
-	input_ports_hustle,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
+GAME( 1976, blockade, , blockade, blockade, blockade, ROT0, "Gremlin", "Blockade" )
+GAME( 1976, comotion, , comotion, comotion, comotion, ROT0, "Gremlin", "Comotion" )
+GAME( 1978, blasto,   , blasto,   blasto,   comotion, ROT0, "Gremlin", "Blasto" )
+GAME( 1977, hustle,   , hustle,   hustle,   comotion, ROT0, "Gremlin", "Hustle" )

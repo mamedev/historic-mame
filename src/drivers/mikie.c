@@ -257,7 +257,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver mikie_machine_driver =
+static struct MachineDriver machine_driver_mikie =
 {
 	/* basic machine hardware */
 	{
@@ -383,53 +383,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x2a00],"\x1d\x2c\x1f\x00\x01",5) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-                        osd_fread(f,&RAM[0x2a00],9*5);
-
-				/* top score display */
-                        memcpy(&RAM[0x29f0], &RAM[0x2a05], 4);
-
-				/* 1p score display, which also displays the top score on startup */
-				memcpy(&RAM[0x297c], &RAM[0x2a05], 4);
-
-                        osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x2a00],9*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_mikie =
 {
 	__FILE__,
@@ -440,7 +393,7 @@ struct GameDriver driver_mikie =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
 	rom_mikie,
@@ -451,9 +404,8 @@ struct GameDriver driver_mikie =
 	input_ports_mikie,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_mikiej =
@@ -466,7 +418,7 @@ struct GameDriver driver_mikiej =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
 	rom_mikiej,
@@ -477,9 +429,8 @@ struct GameDriver driver_mikiej =
 	input_ports_mikie,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_mikiehs =
@@ -492,7 +443,7 @@ struct GameDriver driver_mikiehs =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
-	&mikie_machine_driver,
+	&machine_driver_mikie,
 	0,
 
 	rom_mikiehs,
@@ -503,7 +454,6 @@ struct GameDriver driver_mikiehs =
 	input_ports_mikie,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

@@ -452,49 +452,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xab09],"\x00\x00\x01",3) == 0 &&
-	    memcmp(&RAM[0xab29],"\x00\x43\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xab08],8*5);
-			RAM[0xa98b] = RAM[0xab09];
-			RAM[0xa98c] = RAM[0xab0a];
-			RAM[0xa98d] = RAM[0xab0b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xab08],8*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_timeplt =
 {
 	__FILE__,
@@ -516,9 +473,8 @@ struct GameDriver driver_timeplt =
 	input_ports_timeplt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_timepltc =
@@ -542,9 +498,8 @@ struct GameDriver driver_timepltc =
 	input_ports_timeplt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_spaceplt =
@@ -568,9 +523,8 @@ struct GameDriver driver_spaceplt =
 	input_ports_timeplt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_psurge =
@@ -580,7 +534,7 @@ struct GameDriver driver_psurge =
 	"psurge",
 	"Power Surge",
 	"1988",
-	"?????",
+	"<unknown>",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
@@ -594,7 +548,7 @@ struct GameDriver driver_psurge =
 	input_ports_psurge,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

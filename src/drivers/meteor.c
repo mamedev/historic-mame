@@ -329,7 +329,7 @@ struct GameDriver driver_meteor =
 	input_ports_meteor,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

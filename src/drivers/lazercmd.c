@@ -510,7 +510,7 @@ static struct DACinterface lazercmd_DAC_interface =
 	{ 255 }
 };
 
-static struct MachineDriver lazercmd_machine_driver =
+static struct MachineDriver machine_driver_lazercmd =
 {
 /* basic machine hardware */
 	{
@@ -555,7 +555,7 @@ static struct MachineDriver lazercmd_machine_driver =
 	}
 };
 
-static struct MachineDriver medlanes_machine_driver =
+static struct MachineDriver machine_driver_medlanes =
 {
 /* basic machine hardware */
 	{
@@ -721,19 +721,18 @@ struct GameDriver driver_lazercmd =
 	"Juergen Buchmueller",
 /*	"Malcolm Lear", */
 	0,
-	&lazercmd_machine_driver,
-	0,
+	&machine_driver_lazercmd,
+	lazercmd_rom_decode,
 
 	rom_lazercmd,
-	lazercmd_rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_lazercmd,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -749,19 +748,18 @@ struct GameDriver driver_medlanes =
 	"Juergen Buchmueller",
 /*	"Malcolm Lear", */
 	0,
-	&medlanes_machine_driver,
-	0,
+	&machine_driver_medlanes,
+	medlanes_rom_decode,
 
 	rom_medlanes,
-	medlanes_rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_medlanes,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

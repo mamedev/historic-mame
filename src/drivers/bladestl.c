@@ -451,12 +451,12 @@ static struct UPD7759_interface upd7759_interface =
 	2,							/* number of chips */
 	UPD7759_STANDARD_CLOCK,
 	{ 60, 50 },					/* volume */
-	{ 3, 4 },					/* memory regions */
+	{ REGION_SOUND1, REGION_SOUND2 },					/* memory regions */
 	UPD7759_STANDALONE_MODE,
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bladestl =
 {
 	/* basic machine hardware */
 	{
@@ -521,14 +521,14 @@ ROM_START( bladestl )
 	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
 	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
 
-	ROM_REGION( 0x80000 ) /* uPD7759 data (chip 1) */
-	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
-
-	ROM_REGION( 0x40000 ) /* uPD7759 data (chip 2) */
-	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
-
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e ) /* sprites lookup table */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 ) /* uPD7759 data (chip 1) */
+	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* uPD7759 data (chip 2) */
+	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
 ROM_END
 
 ROM_START( bladstle )
@@ -543,70 +543,17 @@ ROM_START( bladstle )
 	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
 	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
 
-	ROM_REGION( 0x80000 ) /* uPD7759 data (chip 1) */
-	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
-
-	ROM_REGION( 0x40000 ) /* uPD7759 data (chip 2) */
-	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
-
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e ) /* sprites lookup table */
+
+	ROM_REGIONX( 0x80000, REGION_SOUND1 ) /* uPD7759 data (chip 1) */
+	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND2 ) /* uPD7759 data (chip 2) */
+	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
 ROM_END
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-struct GameDriver driver_bladestl =
-{
-	__FILE__,
-	0,
-	"bladestl",
-	"Blades of Steel (version T)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bladestl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bladestl,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-	0, 0
-};
-
-struct GameDriver driver_bladstle =
-{
-	__FILE__,
-	&driver_bladestl,
-	"bladstle",
-	"Blades of Steel (version E)",
-	"1987",
-	"Konami",
-	"Manuel Abadia",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bladstle,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bladstle,
-
-	0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
-	0, 0
-};
+GAMEX( 1987, bladestl, ,         bladestl, bladestl, , ROT90, "Konami", "Blades of Steel (version T)", GAME_IMPERFECT_SOUND )
+GAMEX( 1987, bladstle, bladestl, bladestl, bladstle, , ROT90, "Konami", "Blades of Steel (version E)", GAME_IMPERFECT_SOUND )

@@ -3,6 +3,9 @@
 Bank Panic memory map (preliminary)
 Similar to Appoooh
 
+driver by Nicola Salmoria
+
+
 0000-dfff ROM
 e000-e7ff RAM
 f000-f3ff Video RAM #1
@@ -166,8 +169,8 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 32 },
-	{ 1, 0x4000, &charlayout2,  32*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,      0, 32 },
+	{ REGION_GFX2, 0, &charlayout2,  32*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -182,7 +185,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bankp =
 {
 	/* basic machine hardware */
 	{
@@ -234,15 +237,17 @@ ROM_START( bankp )
 	ROM_LOAD( "epr6173.bin",  0x8000, 0x4000, 0xb8405d38 )
 	ROM_LOAD( "epr6176.bin",  0xc000, 0x2000, 0xc98ac200 )
 
-	ROM_REGION_DISPOSE(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr6165.bin",  0x0000, 0x2000, 0xaef34a93 )	/* playfield #1 chars */
 	ROM_LOAD( "epr6166.bin",  0x2000, 0x2000, 0xca13cb11 )
-	ROM_LOAD( "epr6172.bin",  0x4000, 0x2000, 0xc4c4878b )	/* playfield #2 chars */
-	ROM_LOAD( "epr6171.bin",  0x6000, 0x2000, 0xa18165a1 )
-	ROM_LOAD( "epr6170.bin",  0x8000, 0x2000, 0xb58aa8fa )
-	ROM_LOAD( "epr6169.bin",  0xa000, 0x2000, 0x1aa37fce )
-	ROM_LOAD( "epr6168.bin",  0xc000, 0x2000, 0x05f3a867 )
-	ROM_LOAD( "epr6167.bin",  0xe000, 0x2000, 0x3fa337e1 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "epr6172.bin",  0x0000, 0x2000, 0xc4c4878b )	/* playfield #2 chars */
+	ROM_LOAD( "epr6171.bin",  0x2000, 0x2000, 0xa18165a1 )
+	ROM_LOAD( "epr6170.bin",  0x4000, 0x2000, 0xb58aa8fa )
+	ROM_LOAD( "epr6169.bin",  0x6000, 0x2000, 0x1aa37fce )
+	ROM_LOAD( "epr6168.bin",  0x8000, 0x2000, 0x05f3a867 )
+	ROM_LOAD( "epr6167.bin",  0xa000, 0x2000, 0x3fa337e1 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, 0xeb70c5ae ) 	/* palette */
@@ -252,81 +257,4 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0e590],0xff,16*10);
-		memset(&RAM[0xe018],0xff,7);	/* high score */
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0xe590],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
-			memcmp(&RAM[0xe620],"\x00\x00\x00\x00\x00\x00\x00",7) == 0 &&
-			memcmp(&RAM[0xe018],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe590],16*10);
-			memcpy(&RAM[0xe018],&RAM[0xe590],7);	/* copy high score */
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe590],16*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_bankp =
-{
-	__FILE__,
-	0,
-	"bankp",
-	"Bank Panic",
-	"1984",
-	"Sega",
-	"Nicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bankp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bankp,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
+GAME( 1984, bankp, , bankp, bankp, , ROT0, "Sega", "Bank Panic" )

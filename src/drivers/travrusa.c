@@ -410,47 +410,6 @@ void motorace_decode(void)
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe080],"\x49\x45\x4f",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe07c],74);
-			RAM[0xE008] = RAM[0xE07C];
-			RAM[0xE009] = RAM[0xE07D];
-			RAM[0xE00A] = RAM[0xE07E];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe07c],74);
-		osd_fclose(f);
-	}
-	memset(&RAM[0xe07c], 0, 74);	/* LT 13-11-97 */
-}
-
-
-
 struct GameDriver driver_travrusa =
 {
 	__FILE__,
@@ -472,9 +431,8 @@ struct GameDriver driver_travrusa =
 	input_ports_travrusa,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_motorace =
@@ -488,17 +446,16 @@ struct GameDriver driver_motorace =
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,
-	0,
+	motorace_decode,
 
 	rom_motorace,
-	motorace_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_motorace,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

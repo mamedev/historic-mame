@@ -2,6 +2,8 @@
 
 Block Hole (GX973) (c) 1989 Konami
 
+driver by Nicola Salmoria
+
 Notes:
 Quarth works, but Block Hole crashes when it reaches the title screen. An
 interrupt happens, and after rti the ROM bank is not the same as before so
@@ -234,7 +236,7 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_blockhl =
 {
 	/* basic machine hardware */
 	{
@@ -289,20 +291,20 @@ ROM_START( blockhl )
 	ROM_LOAD( "973l02.e21", 0x10000, 0x08000, 0xe14f849a )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD_GFX_EVEN( "973f07.k15", 0x00000, 0x08000, 0x1a8cd9b4 )	/* tiles */
 	ROM_LOAD_GFX_ODD ( "973f08.k18", 0x00000, 0x08000, 0x952b51a6 )
 	ROM_LOAD_GFX_EVEN( "973f09.k20", 0x10000, 0x08000, 0x77841594 )
 	ROM_LOAD_GFX_ODD ( "973f10.k23", 0x10000, 0x08000, 0x09039fab )
 
-	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_REGIONX( 0x20000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD_GFX_EVEN( "973f06.k12", 0x00000, 0x08000, 0x51acfdb6 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "973f05.k9",  0x00000, 0x08000, 0x4cfea298 )
 	ROM_LOAD_GFX_EVEN( "973f04.k7",  0x10000, 0x08000, 0x69ca41bd )
 	ROM_LOAD_GFX_ODD ( "973f03.k4",  0x10000, 0x08000, 0x21e98472 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )	/* PROMs */
 	ROM_LOAD( "973a11.h10", 0x0000, 0x0100, 0x46d28fe9 )	/* priority encoder (not used) */
@@ -313,20 +315,20 @@ ROM_START( quarth )
 	ROM_LOAD( "973j02.e21", 0x10000, 0x08000, 0x27a90118 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 
-	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD_GFX_EVEN( "973e07.k15", 0x00000, 0x08000, 0x0bd6b0f8 )	/* tiles */
 	ROM_LOAD_GFX_ODD ( "973e08.k18", 0x00000, 0x08000, 0x104d0d5f )
 	ROM_LOAD_GFX_EVEN( "973e09.k20", 0x10000, 0x08000, 0xbd3a6f24 )
 	ROM_LOAD_GFX_ODD ( "973e10.k23", 0x10000, 0x08000, 0xcf5e4b86 )
 
-	ROM_REGION( 0x20000 ) /* graphics (addressable by the main CPU) */
+	ROM_REGIONX( 0x20000, REGION_GFX2 ) /* graphics (addressable by the main CPU) */
 	ROM_LOAD_GFX_EVEN( "973e06.k12", 0x00000, 0x08000, 0x0d58af85 )	/* sprites */
 	ROM_LOAD_GFX_ODD ( "973e05.k9",  0x00000, 0x08000, 0x15d822cb )
 	ROM_LOAD_GFX_EVEN( "973e04.k7",  0x10000, 0x08000, 0xd70f4a2c )
 	ROM_LOAD_GFX_ODD ( "973e03.k4",  0x10000, 0x08000, 0x2c5a4b4b )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
-	ROM_LOAD( "973d01.g6",  0x0000, 0x8000, 0xeeee9d92 )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )	/* PROMs */
 	ROM_LOAD( "973a11.h10", 0x0000, 0x0100, 0x46d28fe9 )	/* priority encoder (not used) */
@@ -376,60 +378,13 @@ static void blockhl_init_machine( void )
 }
 
 
-static void gfx_untangle(void)
+static void init_blockhl(void)
 {
-	konami_rom_deinterleave_2(1);
-	konami_rom_deinterleave_2(2);
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
 
 
-struct GameDriver driver_blockhl =
-{
-	__FILE__,
-	0,
-	"blockhl",
-	"Block Hole",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_blockhl,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_blockhl,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_quarth =
-{
-	__FILE__,
-	&driver_blockhl,
-	"quarth",
-	"Quarth (Japan)",
-	"1989",
-	"Konami",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_quarth,
-	gfx_untangle, 0,
-	0,
-	0,
-
-	input_ports_blockhl,
-
-	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1989, blockhl, ,        blockhl, blockhl, blockhl, ROT0, "Konami", "Block Hole" )
+GAME( 1989, quarth,  blockhl, blockhl, blockhl, blockhl, ROT0, "Konami", "Quarth (Japan)" )

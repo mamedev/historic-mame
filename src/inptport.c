@@ -1202,8 +1202,12 @@ void update_analog_port(int port)
 	{
 		case IPT_PADDLE:
 			axis = X_AXIS; is_stick = 0; check_bounds = 1; break;
+		case IPT_PADDLE_V:
+			axis = Y_AXIS; is_stick = 0; check_bounds = 1; break;
 		case IPT_DIAL:
 			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
+		case IPT_DIAL_V:
+			axis = Y_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_X:
 			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_Y:

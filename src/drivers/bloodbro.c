@@ -3,6 +3,8 @@ Blood Bros, West Story.
 TAD Corporation 1990/Datsu 1991
 68000 + Z80 + YM3931 + YM3812
 
+driver by Carlos A. Lozano Baides
+
 TODO:
 
 (*) Global
@@ -301,11 +303,12 @@ static struct GfxLayout spritelayout = {
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo bloodbro_gfxdecodeinfo[] = {
-	{ 1,      0x00000, &textlayout,   0x70*16,  0x10 }, /* Text */
-	{ 3,      0x00000, &backlayout,   0x40*16,  0x10 }, /* Background */
-	{ 3,      0x80000, &backlayout,   0x50*16,  0x10 }, /* Foreground */
-	{ 4,      0x00000, &spritelayout, 0x00*16,  0x10 }, /* Sprites */
+static struct GfxDecodeInfo bloodbro_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x00000, &textlayout,   0x70*16,  0x10 }, /* Text */
+	{ REGION_GFX2, 0x00000, &backlayout,   0x40*16,  0x10 }, /* Background */
+	{ REGION_GFX2, 0x80000, &backlayout,   0x50*16,  0x10 }, /* Foreground */
+	{ REGION_GFX3, 0x00000, &spritelayout, 0x00*16,  0x10 }, /* Sprites */
 	{ -1 }
 };
 
@@ -345,20 +348,21 @@ static struct GfxLayout weststry_spritelayout = {
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo weststry_gfxdecodeinfo[] = {
-	{ 1,      0x00000, &weststry_textlayout,     16*16,  0x10 },
-	{ 3,      0x00000, &weststry_backlayout,     48*16,  0x10 },
-	{ 3,      0x80000, &weststry_backlayout,     32*16,  0x10 },
-	{ 4,      0x00000, &weststry_spritelayout,    0*16,  0x10 },
+static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x00000, &weststry_textlayout,     16*16,  0x10 },
+	{ REGION_GFX2, 0x00000, &weststry_backlayout,     48*16,  0x10 },
+	{ REGION_GFX2, 0x80000, &weststry_backlayout,     32*16,  0x10 },
+	{ REGION_GFX3, 0x00000, &weststry_spritelayout,    0*16,  0x10 },
 	{ -1 }
 };
 
 /**** Blood Bros Interrupt & Driver Machine  ****************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,5);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static struct MachineDriver bloodbro_machine_driver =
+static struct MachineDriver machine_driver_bloodbro =
 {
 	{
 		{
@@ -395,7 +399,7 @@ static struct MachineDriver bloodbro_machine_driver =
 	}
 };
 
-static struct MachineDriver weststry_machine_driver =
+static struct MachineDriver machine_driver_weststry =
 {
 	{
 		{
@@ -433,6 +437,8 @@ static struct MachineDriver weststry_machine_driver =
 	}
 };
 
+
+
 ROM_START( bloodbro )
 	ROM_REGIONX(0x90000, REGION_CPU1)
 	ROM_LOAD_ODD ( "bb_02.bin" ,   0x00000, 0x20000, 0xc0fdc3e4 )
@@ -440,21 +446,21 @@ ROM_START( bloodbro )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* characters */
-	ROM_LOAD( "bb_05.bin" ,   0x00000, 0x10000, 0x04ba6d19 )
-	ROM_LOAD( "bb_06.bin" ,   0x10000, 0x10000, 0x7092e35b )
-
 	ROM_REGIONX(0x18000, REGION_CPU2)
 	ROM_LOAD( "bb_07.bin" ,   0x000000, 0x08000, 0x411b94e8 )
 	ROM_CONTINUE(             0x010000, 0x08000 )
 
-	ROM_REGION_DISPOSE(0x100000) /* gfx */
-	ROM_LOAD( "bloodb.bk",   0x00000, 0x100000, 0x1aa87ee6 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bb_05.bin" ,   0x00000, 0x10000, 0x04ba6d19 )	/* characters */
+	ROM_LOAD( "bb_06.bin" ,   0x10000, 0x10000, 0x7092e35b )
 
-	ROM_REGION_DISPOSE(0x100000) /* sprites */
-	ROM_LOAD( "bloodb.obj",   0x00000, 0x100000, 0xd27c3952 )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bloodb.bk",   0x00000, 0x100000, 0x1aa87ee6 )	/* Background+Foreground */
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bloodb.obj",   0x00000, 0x100000, 0xd27c3952 )	/* sprites */
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "bb_08.bin" ,   0x00000, 0x20000, 0xdeb1b975 )
 ROM_END
 
@@ -465,50 +471,47 @@ ROM_START( weststry )
 	ROM_LOAD_ODD ( "bb_04.bin" ,   0x40000, 0x20000, 0xfd951c2c )
 	ROM_LOAD_EVEN( "bb_03.bin" ,   0x40000, 0x20000, 0x18d3c460 )
 
-	ROM_REGION_DISPOSE(0x20000)	/* characters */
-	ROM_LOAD ( "ws09.bin" ,   0x00000, 0x08000, 0xf05b2b3e )
-	ROM_CONTINUE ( 0x00000, 0x8000 )
-	ROM_LOAD ( "ws11.bin" ,   0x08000, 0x08000, 0x2b10e3d2 )
-	ROM_CONTINUE ( 0x08000, 0x8000 )
-	ROM_LOAD ( "ws10.bin" ,   0x10000, 0x08000, 0xefdf7c82 )
-	ROM_CONTINUE ( 0x10000, 0x8000 )
-	ROM_LOAD ( "ws12.bin" ,   0x18000, 0x08000, 0xaf993578 )
-	ROM_CONTINUE ( 0x18000, 0x8000 )
-
 	ROM_REGIONX(0x18000, REGION_CPU2)	/* 64k for sound cpu code */
 	ROM_LOAD( "ws17.bin" ,   0x000000, 0x08000, 0xe00a8f09 )
 	ROM_CONTINUE(            0x010000, 0x08000 )
 
-	ROM_REGION_DISPOSE(0x100000) /* gfx */
-	/* Background */
-	ROM_LOAD ( "ws05.bin" ,   0x00000, 0x20000, 0x007c8dc0 )
-	ROM_LOAD ( "ws07.bin" ,   0x20000, 0x20000, 0x0f0c8d9a )
-	ROM_LOAD ( "ws06.bin" ,   0x40000, 0x20000, 0x459d075e )
-	ROM_LOAD ( "ws08.bin" ,   0x60000, 0x20000, 0x4d6783b3 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ws09.bin" ,   0x00000, 0x08000, 0xf05b2b3e )	/* characters */
+	ROM_CONTINUE(            0x00000, 0x8000 )
+	ROM_LOAD( "ws11.bin" ,   0x08000, 0x08000, 0x2b10e3d2 )
+	ROM_CONTINUE(            0x08000, 0x8000 )
+	ROM_LOAD( "ws10.bin" ,   0x10000, 0x08000, 0xefdf7c82 )
+	ROM_CONTINUE(            0x10000, 0x8000 )
+	ROM_LOAD( "ws12.bin" ,   0x18000, 0x08000, 0xaf993578 )
+	ROM_CONTINUE(            0x18000, 0x8000 )
 
-	/* Foreground */
-	ROM_LOAD ( "ws01.bin" ,   0x80000, 0x20000, 0x32bda4bc )
-	ROM_LOAD ( "ws03.bin" ,   0xa0000, 0x20000, 0x046b51f8 )
-	ROM_LOAD ( "ws02.bin" ,   0xc0000, 0x20000, 0xed9d682e )
-	ROM_LOAD ( "ws04.bin" ,   0xe0000, 0x20000, 0x75f082e5 )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ws05.bin" ,   0x00000, 0x20000, 0x007c8dc0 )	/* Background */
+	ROM_LOAD( "ws07.bin" ,   0x20000, 0x20000, 0x0f0c8d9a )
+	ROM_LOAD( "ws06.bin" ,   0x40000, 0x20000, 0x459d075e )
+	ROM_LOAD( "ws08.bin" ,   0x60000, 0x20000, 0x4d6783b3 )
+	ROM_LOAD( "ws01.bin" ,   0x80000, 0x20000, 0x32bda4bc )	/* Foreground */
+	ROM_LOAD( "ws03.bin" ,   0xa0000, 0x20000, 0x046b51f8 )
+	ROM_LOAD( "ws02.bin" ,   0xc0000, 0x20000, 0xed9d682e )
+	ROM_LOAD( "ws04.bin" ,   0xe0000, 0x20000, 0x75f082e5 )
 
-	ROM_REGION_DISPOSE(0x100000) /* sprites */
-	ROM_LOAD ( "ws25.bin" ,   0x00000, 0x20000, 0x8092e8e9 )
-	ROM_LOAD ( "ws26.bin" ,   0x20000, 0x20000, 0xf6a1f42c )
-	ROM_LOAD ( "ws23.bin" ,   0x40000, 0x20000, 0x43d58e24 )
-	ROM_LOAD ( "ws24.bin" ,   0x60000, 0x20000, 0x20a867ea )
-	ROM_LOAD ( "ws21.bin" ,   0x80000, 0x20000, 0xe23d7296 )
-	ROM_LOAD ( "ws22.bin" ,   0xa0000, 0x20000, 0x7150a060 )
-	ROM_LOAD ( "ws19.bin" ,   0xc0000, 0x20000, 0xc5dd0a96 )
-	ROM_LOAD ( "ws20.bin" ,   0xe0000, 0x20000, 0xf1245c16 )
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ws25.bin" ,   0x00000, 0x20000, 0x8092e8e9 )	/* sprites */
+	ROM_LOAD( "ws26.bin" ,   0x20000, 0x20000, 0xf6a1f42c )
+	ROM_LOAD( "ws23.bin" ,   0x40000, 0x20000, 0x43d58e24 )
+	ROM_LOAD( "ws24.bin" ,   0x60000, 0x20000, 0x20a867ea )
+	ROM_LOAD( "ws21.bin" ,   0x80000, 0x20000, 0xe23d7296 )
+	ROM_LOAD( "ws22.bin" ,   0xa0000, 0x20000, 0x7150a060 )
+	ROM_LOAD( "ws19.bin" ,   0xc0000, 0x20000, 0xc5dd0a96 )
+	ROM_LOAD( "ws20.bin" ,   0xe0000, 0x20000, 0xf1245c16 )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "bb_08.bin" ,   0x00000, 0x20000, 0xdeb1b975 )
 ROM_END
 
 static void gfx_untangle( void )
 {
-	unsigned char *gfx = memory_region(4);
+	unsigned char *gfx = memory_region(REGION_GFX3);
 	int i;
 	for( i=0; i< 0x100000; i++ ){
 		gfx[i] = ~gfx[i];
@@ -517,61 +520,18 @@ static void gfx_untangle( void )
 
 /***************************************************************************/
 
-static void memory_patch(void)
+static void init_bloodbro(void)
 {
 	install_seibu_sound_speedup(1);
 }
 
+static void init_weststry(void)
+{
+	install_seibu_sound_speedup(1);
+	gfx_untangle();
+}
+
 /***************************************************************************/
 
-struct GameDriver driver_bloodbro =
-{
-	__FILE__,
-	0,
-	"bloodbro",
-	"Blood Bros.",
-	"1990",
-	"Tad",
-	"Carlos A. Lozano Baides\nRichard Bush\n",
-	0,
-	&bloodbro_machine_driver,
-	memory_patch,
-
-	rom_bloodbro,
-	0,0,
-	0,
-	0, /* sound_prom */
-
-	input_ports_bloodbro,
-
-	0,0,0,
-	ORIENTATION_DEFAULT,
-
-	0,0
-};
-
-struct GameDriver driver_weststry =
-{
-	__FILE__,
-	&driver_bloodbro,
-	"weststry",
-	"West Story",
-	"1990",
-	"bootleg",
-	"Carlos A. Lozano Baides\nRichard Bush\n",
-	0,
-	&weststry_machine_driver,
-	memory_patch,
-
-	rom_weststry,
-	gfx_untangle,0,
-	0,
-	0, /* sound_prom */
-
-	input_ports_weststry,
-
-	0,0,0,
-	ORIENTATION_DEFAULT,
-
-	0,0
-};
+GAME( 1990, bloodbro, ,         bloodbro, bloodbro, bloodbro, ROT0, "Tad", "Blood Bros." )
+GAME( 1990, weststry, bloodbro, weststry, weststry, weststry, ROT0, "bootleg", "West Story" )

@@ -333,7 +333,9 @@ static struct MachineDriver machine_driver =
 	skullxbo_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(2)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -359,7 +361,7 @@ ROM_START( skullxbo )
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
 	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
 	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
@@ -425,7 +427,7 @@ ROM_START( skullxb2 )
 	ROM_LOAD( "1149",      0x10000, 0x4000, 0x8d730e7a )
 	ROM_CONTINUE(          0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1145",      0x00000, 0x10000, 0xd9475d58 )
 	ROM_LOAD( "1146",      0x10000, 0x10000, 0x133e6aef )
 	ROM_LOAD( "1147",      0x20000, 0x10000, 0xba4d556e )
@@ -511,6 +513,8 @@ static void skullxbo_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -535,16 +539,15 @@ struct GameDriver driver_skullxbo =
 	skullxbo_init,
 
 	rom_skullxbo,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_skullxbo,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -562,14 +565,13 @@ struct GameDriver driver_skullxb2 =
 	skullxbo_init,
 
 	rom_skullxb2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_skullxbo,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

@@ -314,7 +314,7 @@ static void raiden_eof_callback(void)
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static struct MachineDriver raiden_machine_driver =
+static struct MachineDriver machine_driver_raiden =
 {
 	/* basic machine hardware */
 	{
@@ -357,7 +357,7 @@ static struct MachineDriver raiden_machine_driver =
 	}
 };
 
-static struct MachineDriver raidena_machine_driver =
+static struct MachineDriver machine_driver_raidena =
 {
 	/* basic machine hardware */
 	{
@@ -485,10 +485,49 @@ ROM_END
 
 /***************************************************************************/
 
+/* Spin the sub-cpu if it is waiting on the master cpu */
+static int sub_cpu_spin(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=raiden_shared_ram[0x8];
+
+	if (offset==1) return raiden_shared_ram[0x9];
+
+	if (pc==0xfcde6 && ret!=0x40)
+		cpu_spin();
+
+	return ret;
+}
+
+static int sub_cpu_spina(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=raiden_shared_ram[0x8];
+
+	if (offset==1) return raiden_shared_ram[0x9];
+
+	if (pc==0xfcde8 && ret!=0x40)
+		cpu_spin();
+
+	return ret;
+}
+
+static void memory_patch(void)
+{
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
+	install_seibu_sound_speedup(2);
+}
+
+static void memory_patcha(void)
+{
+	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina);
+	install_seibu_sound_speedup(2);
+}
+
 /* This is based on code by Niclas Karlsson Mate, who figured out the
 encryption method! The technique is a combination of a XOR table plus
 bit-swapping */
-static void raiden_decrypt(void)
+static void common_decrypt(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i,a;
@@ -545,50 +584,19 @@ static void raiden_decrypt(void)
 	}
 }
 
+static void raiden_decrypt(void)
+{
+	memory_patcha();
+	common_decrypt();
+}
+
 static void raidena_decrypt(void)
 {
-	raiden_decrypt();
+	memory_patcha();
+	common_decrypt();
 	seibu_sound_decrypt();
 }
 
-/* Spin the sub-cpu if it is waiting on the master cpu */
-static int sub_cpu_spin(int offset)
-{
-	int pc=cpu_get_pc();
-	int ret=raiden_shared_ram[0x8];
-
-	if (offset==1) return raiden_shared_ram[0x9];
-
-	if (pc==0xfcde6 && ret!=0x40)
-		cpu_spin();
-
-	return ret;
-}
-
-static int sub_cpu_spina(int offset)
-{
-	int pc=cpu_get_pc();
-	int ret=raiden_shared_ram[0x8];
-
-	if (offset==1) return raiden_shared_ram[0x9];
-
-	if (pc==0xfcde8 && ret!=0x40)
-		cpu_spin();
-
-	return ret;
-}
-
-static void memory_patch(void)
-{
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
-	install_seibu_sound_speedup(2);
-}
-
-static void memory_patcha(void)
-{
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina);
-	install_seibu_sound_speedup(2);
-}
 
 /***************************************************************************/
 
@@ -602,7 +610,7 @@ struct GameDriver driver_raiden =
 	"Seibu Kaihatsu",
 	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
 	0,
-	&raiden_machine_driver,
+	&machine_driver_raiden,
 	memory_patch,
 
 	rom_raiden,
@@ -611,7 +619,7 @@ struct GameDriver driver_raiden =
 	input_ports_raiden,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };
@@ -626,16 +634,16 @@ struct GameDriver driver_raidena =
 	"Seibu Kaihatsu",
 	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
 	0,
-	&raidena_machine_driver,
-	memory_patcha,
+	&machine_driver_raidena,
+	raidena_decrypt,
 
 	rom_raidena,
-	raidena_decrypt, 0,
+	0, 0,
 	0, 0,
 	input_ports_raiden,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
+	ROT270 | GAME_NO_SOUND,
 
 	0, 0
 };
@@ -650,16 +658,16 @@ struct GameDriver driver_raidenk =
 	"Seibu Kaihatsu (IBL Corporation license)",
 	"Oliver Bergmann\nBryan McPhail\nRandy Mongenel",
 	0,
-	&raidena_machine_driver,
-	memory_patcha,
+	&machine_driver_raidena,
+	raiden_decrypt,
 
 	rom_raidenk,
-	raiden_decrypt, 0,
+	0, 0,
 	0, 0,
 	input_ports_raiden,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

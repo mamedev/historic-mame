@@ -959,14 +959,11 @@ int cischeat_sound_interrupt(void)
 #define STD_FM_CLOCK	3000000
 #define STD_OKI_CLOCK	  12000
 
-#define CREDITS	"Luca Elia\n"
 
-
-#define GAME_DRIVER(_shortname_,_clone_driver_,_fullname_,_year_, \
+#define GAME_DRIVER(_shortname_, \
 					_cpu_1_clock_,_cpu_2_clock_,_cpu_3_clock_,_cpu_4_clock_, \
 					_fm_clock_,_oki1_clock_,_oki2_clock_, \
-					_visible_area_, _colors_num_, \
-					_rom_decode_, _flags_) \
+					_visible_area_, _colors_num_ ) \
 \
 static struct YM2151interface _shortname_##_ym2151_interface = \
 { \
@@ -984,7 +981,7 @@ static struct OKIM6295interface _shortname_##_okim6295_interface = \
 	{ 33, 33 } \
 }; \
 \
-static struct MachineDriver _shortname_##_machine_driver = \
+static struct MachineDriver machine_driver_##_shortname_ = \
 { \
 	{ \
 		{ \
@@ -1041,28 +1038,6 @@ static struct MachineDriver _shortname_##_machine_driver = \
 			&_shortname_##_okim6295_interface \
 		} \
 	} \
-}; \
-\
-struct GameDriver driver_##_shortname_ = \
-{ \
-	__FILE__, \
-	_clone_driver_, \
-	#_shortname_, \
-	#_fullname_, \
-	#_year_, \
-	"Jaleco", \
-	CREDITS, \
-	0, \
-	&_shortname_##_machine_driver, \
-	0, \
-	rom_##_shortname_, \
-	_rom_decode_, 0, \
-	0, \
-	0, \
-	input_ports_##_shortname_, \
-	0, 0, 0, \
-	_flags_, \
-	0,0 \
 };
 
 
@@ -1210,7 +1185,7 @@ ROM_END
 
 
 
-void cischeat_rom_decode(void)
+void init_cischeat(void)
 {
 unsigned char *RAM;
 
@@ -1261,17 +1236,13 @@ unsigned char *RAM;
 
 #define CISCHEAT_VISIBLE_AREA	{0,255,16,231}
 
-GAME_DRIVER(	cischeat,0,Cisco Heat,1990,
+GAME_DRIVER(	cischeat,
 				10000000,10000000,10000000,7000000,
 				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 				CISCHEAT_VISIBLE_AREA,
-				32*16 * 3 + 64*16 * 2 + 128*16,	/* scroll 0,1,2; road 0,1; sprites */
-				cischeat_rom_decode,
-				ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+				32*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
 
-
-
-
+GAME( 1990, cischeat, , cischeat, cischeat, cischeat, ROT0_16BIT, "Jaleco", "Cisco Heat" )
 
 
 
@@ -1478,7 +1449,7 @@ ROM_END
 
 
 
-void f1gpstar_rom_decode(void)
+void init_f1gpstar(void)
 {
 unsigned char *RAM;
 
@@ -1505,10 +1476,10 @@ unsigned char *RAM;
 #define F1GPSTAR_VISIBLE_AREA	{0,255,16,239}
 
 // The date is 1992 whenever the country (DSW) isn't set to Japan
-GAME_DRIVER(	f1gpstar,0,F1 Grand Prix Star,1991,
+GAME_DRIVER(	f1gpstar,
 				12000000,12000000,12000000,7000000,
 				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 				F1GPSTAR_VISIBLE_AREA,
-				16*16 * 3 + 64*16 * 2 + 128*16,	/* scroll 0,1,2; road 0,1; sprites */
-				f1gpstar_rom_decode,
-				ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+				16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+
+GAME( 1991, f1gpstar, , f1gpstar, f1gpstar, f1gpstar, ROT0_16BIT, "Jaleco", "F1 Grand Prix Star" )

@@ -229,7 +229,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver shaolins_machine_driver =
+static struct MachineDriver machine_driver_shaolins =
 {
 	/* basic machine hardware */
 	{
@@ -315,50 +315,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2b00],"\x1d\x2c\x1f\x01\x00",5) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2b00],0x40);
-
-			/* top score display */
-			memcpy(&RAM[0x2af0], &RAM[0x2b04], 4);
-
-			/* 1p score display, which also displays the top score on startup */
-			memcpy(&RAM[0x2a81], &RAM[0x2b04], 4);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2b00],0x40);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_kicker =
 {
 	__FILE__,
@@ -369,7 +325,7 @@ struct GameDriver driver_kicker =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
-	&shaolins_machine_driver,
+	&machine_driver_shaolins,
 	0,
 
 	rom_kicker,
@@ -380,9 +336,8 @@ struct GameDriver driver_kicker =
 	input_ports_shaolins,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_shaolins =
@@ -395,7 +350,7 @@ struct GameDriver driver_shaolins =
 	"Konami",
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
-	&shaolins_machine_driver,
+	&machine_driver_shaolins,
 	0,
 
 	rom_shaolins,
@@ -406,7 +361,6 @@ struct GameDriver driver_shaolins =
 	input_ports_shaolins,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

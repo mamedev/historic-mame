@@ -67,7 +67,7 @@ extern char *history_filename,*mameinfo_filename;
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
+extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
 #ifdef MESS
@@ -434,6 +434,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	resolution  = get_string ("config", "resolution", NULL, "auto");
 
 	/* set default subdirectories */
+	nvdir      = get_string ("directory", "nvram",   NULL, "NVRAM");
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
 	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");

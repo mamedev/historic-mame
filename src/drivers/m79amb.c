@@ -133,13 +133,14 @@ static int M79_interrupt(void)
 	return 0x00cf;  /* RST 08h */
 }
 
-static void m79_init(void)
+static void m79_decode(void)
 {
+	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* PROM data is active low */
- 	for(i=0; i<0x2000; i++)
-		ROM[i] = ~ROM[i];
+ 	for (i = 0;i < 0x2000;i++)
+		rom[i] = ~rom[i];
 }
 
 static struct MachineDriver machine_driver =
@@ -193,52 +194,8 @@ ROM_START( m79 )
 	ROM_LOAD( "m79.5u",       0x1a00, 0x0200, 0x251545e2 )
 	ROM_LOAD( "m79.4u",       0x1c00, 0x0200, 0xb5f55c75 )
 	ROM_LOAD( "m79.3u",       0x1e00, 0x0200, 0xe968691a )
- ROM_END
+ROM_END
 
-
-static int hiload(void)
-{
-	static int firsttime =0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4008],0xff,1);	/* high score */
-		firsttime = 1;
-	}
-
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x4008],"\x00",1) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-		osd_fread(f,&RAM[0x4008],1);
-		osd_fclose(f);
-		firsttime = 0;
-        }
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x4008],1);
-        osd_fclose(f);
-    }
-}
 
 
 struct GameDriver driver_m79amb =
@@ -252,18 +209,16 @@ struct GameDriver driver_m79amb =
 	"Space Invaders Team\n",
 	0,
 	&machine_driver,
-	0,
+	m79_decode,
 
 	rom_m79,
-	m79_init,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_m79,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
+	ROT0,
+	0,0
 };

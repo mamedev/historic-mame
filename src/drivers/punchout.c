@@ -120,6 +120,25 @@ void punchout_speech_reset(int offset,int data);
 void punchout_speech_st(int offset,int data);
 void punchout_speech_vcu(int offset,int data);
 
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 void punchout_2a03_reset_w(int offset,int data)
 {
 	if (data & 1)
@@ -355,6 +374,8 @@ static void spunchout_prot_f_w( int offset, int data ) {
 	spunchout_prot_w( 15, data );
 }
 
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -366,7 +387,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, MWA_RAM },
+	{ 0xc000, 0xc3ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xdff0, 0xdff7, MWA_RAM, &punchout_bigsprite1 },
 	{ 0xdff8, 0xdffc, MWA_RAM, &punchout_bigsprite2 },
@@ -713,7 +734,7 @@ static struct GfxLayout charlayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo punchout_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,                 0, 128 },
 	{ 1, 0x04000, &charlayout,             128*4, 128 },
@@ -764,147 +785,60 @@ static struct VLM5030interface vlm5030_interface =
 
 
 
-static struct MachineDriver punchout_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_N2A03 | CPU_AUDIO_CPU,
-			N2A03_DEFAULTCLOCK,
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
-	gfxdecodeinfo,
-	1024+1, 128*4+128*4+64*8+128*4,
-	punchout_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
-	0,
-	punchout_vh_start,
-	punchout_vh_stop,
-	punchout_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NES,
-			&nes_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
+#define MACHINE_DRIVER(NAME,GFX,COLORTABLE)											\
+static struct MachineDriver machine_driver_##NAME =									\
+{																					\
+	/* basic machine hardware */													\
+	{																				\
+		{																			\
+			CPU_Z80,																\
+			8000000/2,	/* 4 Mhz */													\
+			readmem,writemem,readport,writeport,									\
+			nmi_interrupt,1															\
+		},																			\
+		{																			\
+			CPU_N2A03 | CPU_AUDIO_CPU,												\
+			N2A03_DEFAULTCLOCK,														\
+			sound_readmem,sound_writemem,0,0,										\
+			nmi_interrupt,1															\
+		}																			\
+	},																				\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
+	0,																				\
+																					\
+	/* video hardware */															\
+	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },										\
+	GFX##_gfxdecodeinfo,															\
+	1024+1, COLORTABLE,																\
+	NAME##_vh_convert_color_prom,													\
+																					\
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,											\
+	0,																				\
+	GFX##_vh_start,																	\
+	punchout_vh_stop,																\
+	GFX##_vh_screenrefresh,															\
+																					\
+	/* sound hardware */															\
+	0,0,0,0,																		\
+	{																				\
+		{																			\
+			SOUND_NES,																\
+			&nes_interface															\
+		},																			\
+		{																			\
+			SOUND_VLM5030,															\
+			&vlm5030_interface														\
+		}																			\
+	},																				\
+																					\
+	nvram_handler																	\
 };
 
-/* same as Punch Out, different convert_color_prom */
-static struct MachineDriver spnchout_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_N2A03 | CPU_AUDIO_CPU,
-			N2A03_DEFAULTCLOCK,
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
-	/* video hardware */
-	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
-	gfxdecodeinfo,
-	1024+1, 128*4+128*4+64*8+128*4,
-	spnchout_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
-	0,
-	punchout_vh_start,
-	punchout_vh_stop,
-	punchout_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NES,
-			&nes_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
-
-static struct MachineDriver armwrest_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,	/* 4 Mhz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_N2A03 | CPU_AUDIO_CPU,
-			N2A03_DEFAULTCLOCK,
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 60*8, { 0*8, 32*8-1, 0*8, 60*8-1 },
-	armwrest_gfxdecodeinfo,
-	1024+1, 256*4+64*8+64*8+128*4,
-	armwrest_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
-	0,
-	armwrest_vh_start,
-	punchout_vh_stop,
-	armwrest_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NES,
-			&nes_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
+MACHINE_DRIVER( punchout, punchout, 128*4+128*4+64*8+128*4 )
+MACHINE_DRIVER( spnchout, punchout, 128*4+128*4+64*8+128*4 )
+MACHINE_DRIVER( armwrest, armwrest, 256*4+64*8+64*8+128*4 )
 
 
 
@@ -1091,6 +1025,8 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-c.6p",    0x0000, 0x4000, 0x31b52896 )
 ROM_END
 
+
+
 static void punchout_decode(void)
 {
 	unsigned char *RAM;
@@ -1119,37 +1055,6 @@ static void armwrest_decode(void)
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0xc000],0x400);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc000],0x400);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_punchout =
 {
 	__FILE__,
@@ -1160,20 +1065,20 @@ struct GameDriver driver_punchout =
 	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&punchout_machine_driver,
-	0,
+	&machine_driver_punchout,
+	punchout_decode,
 
 	rom_punchout,
-	punchout_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_punchout,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
-	hiload, hisave
+	0,0
 };
 
 struct GameDriver driver_spnchout =
@@ -1186,20 +1091,20 @@ struct GameDriver driver_spnchout =
 	"Nintendo",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh (protection)\nErnesto Corvi (protection)",
 	0,
-	&spnchout_machine_driver,
-	0,
+	&machine_driver_spnchout,
+	punchout_decode,
 
 	rom_spnchout,
-	punchout_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_spnchout,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
-	hiload, hisave
+	0,0
 };
 
 struct GameDriver driver_armwrest =
@@ -1212,18 +1117,18 @@ struct GameDriver driver_armwrest =
 	"Nintendo",
 	"Nicola Salmoria",
 	0,
-	&armwrest_machine_driver,
-	0,
+	&machine_driver_armwrest,
+	armwrest_decode,
 
 	rom_armwrest,
-	armwrest_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_armwrest,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
-	hiload, hisave
+	0,0
 };

@@ -474,7 +474,7 @@ static struct MachineDriver machine_driver =
 };
 
 /* identical but different gfxdecode */
-static struct MachineDriver topgunbl_machine_driver =
+static struct MachineDriver machine_driver_topgunbl =
 {
 	/* basic machine hardware */
 	{
@@ -517,61 +517,6 @@ static struct MachineDriver topgunbl_machine_driver =
 	}
 };
 
-
-
-static int hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x12F8],"\x00\x02\x00\x00\x1D\x0D\x1F\x00\x00\x01\x50\x00\x18\x0D\x1F\x00",16) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			// High score table.
-			osd_fread(f,&RAM[0x12F8],0x38);
-
-			// High score.
-			osd_fread(f,&RAM[0x1340],4);
-
-			// High score screen.
-			osd_fread(f,&RAM[0x00C8],0x38);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		// High score table.
-		osd_fwrite(f,&RAM[0x12F8],0x38);
-
-		// High score.
-		osd_fwrite(f,&RAM[0x1340],4);
-
-		// High score screen.
-		osd_fwrite(f,&RAM[0x00C8],0x38);
-
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -696,9 +641,8 @@ struct GameDriver driver_jackal =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_topgunr =
@@ -722,9 +666,8 @@ struct GameDriver driver_topgunr =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_jackalj =
@@ -748,9 +691,8 @@ struct GameDriver driver_jackalj =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_topgunbl =
@@ -763,7 +705,7 @@ struct GameDriver driver_topgunbl =
 	"bootleg",
 	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
 	0,
-	&topgunbl_machine_driver,
+	&machine_driver_topgunbl,
 	0,
 
 	rom_topgunbl,
@@ -774,7 +716,6 @@ struct GameDriver driver_topgunbl =
 	input_ports_jackal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };

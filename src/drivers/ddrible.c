@@ -396,7 +396,7 @@ static struct VLM5030interface vlm5030_interface =
 	0           /* VCU pin level (default) */
 };
 
-static struct MachineDriver ddrible_machine_driver =
+static struct MachineDriver machine_driver_ddrible =
 {
 	/* basic machine hardware  */
 	{
@@ -477,52 +477,6 @@ ROM_START( ddrible )
 ROM_END
 
 
-/****************************************************************
-
-  Double Dribble high score save routine - RJF (April 17, 1999)
-
-*****************************************************************/
-
-static int ddribble_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x4800],"\x1d\x0a\x19",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        /*  4800-4817 (initials)
-                            4818-4827 (birthday)
-                            4828-4837 (pts)
-                            4838-4847 (fgx)
-                            4848-4857 (ftx)
-                            4858-485f (reb)
-                            4860-4867 (assist)
-                            4868-486f (pf)      */
-
-			osd_fread(f,&RAM[0x4800], 112);   /* whole HS table */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void ddribble_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4800], 112);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_ddrible =
 {
@@ -534,7 +488,7 @@ struct GameDriver driver_ddrible =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&ddrible_machine_driver,
+	&machine_driver_ddrible,
 	0,
 
 	rom_ddrible,
@@ -545,7 +499,6 @@ struct GameDriver driver_ddrible =
 	input_ports_ddrible,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ddribble_hiload, ddribble_hisave
+	ROT0,
+	0,0
 };

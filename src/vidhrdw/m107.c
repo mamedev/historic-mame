@@ -453,54 +453,6 @@ void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 
 	/* This hardware probably has more priority values - but I haven't found
 		any used yet */
-
-#if 0
-if (keyboard_pressed(KEYCODE_0))
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",m107_control[i] | (m107_control[i+1]<<8) );
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*12*i+12*j+128,15*5+128,0,TRANSPARENCY_NONE,0);
-}
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",m107_control[i+8] | (m107_control[i+9]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*12*i+12*j+128,15*6+128,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",m107_control[i+16] | (m107_control[i+17]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*12*i+12*j+128,15*7+128,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",m107_control[i+24] | (m107_control[i+25]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*12*i+12*j+128,15*8+128,0,TRANSPARENCY_NONE,0);
-}
-
-
-
-	Machine->orientation = trueorientation;
-
-
-}
-#endif
 }
 
 void m107_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line)

@@ -121,10 +121,9 @@ extern int namcos2_sprite_bank;
 /**************************************************************/
 #define NAMCOS2_68K_EEPROM_W    namcos2_68k_eeprom_w, &namcos2_eeprom, &namcos2_eeprom_size
 #define NAMCOS2_68K_EEPROM_R    namcos2_68k_eeprom_r
-int     namcos2_hiload(void);
-void    namcos2_hisave(void);
-void    namcos2_68k_eeprom_w( int offset, int data );
-int     namcos2_68k_eeprom_r( int offset );
+void	namcos2_nvram_handler(void *file, int read_or_write);
+void	namcos2_68k_eeprom_w( int offset, int data );
+int		namcos2_68k_eeprom_r( int offset );
 extern unsigned char *namcos2_eeprom;
 extern int namcos2_eeprom_size;
 
@@ -248,16 +247,6 @@ extern unsigned char *namcos2_68k_slave_ram;
 
 
 /**************************************************************/
-/* MYSTERY MEMORY BANK AT $880000 FOR FINAL LAP.....          */
-/**************************************************************/
-
-extern unsigned char *namcos2_68k_mystery_ram;
-
-#define NAMCOS2_68K_MYSTERY_RAM_W     MWA_BANK5, &namcos2_68k_mystery_ram
-#define NAMCOS2_68K_MYSTERY_RAM_R     MRA_BANK5
-
-
-/**************************************************************/
 /*  ROZ - Rotate & Zoom memory function handlers              */
 /**************************************************************/
 
@@ -269,6 +258,24 @@ void namcos2_68k_roz_ram_w( int offset, int data );
 int  namcos2_68k_roz_ram_r( int offset );
 extern int namcos2_68k_roz_ram_size;
 extern unsigned char *namcos2_68k_roz_ram;
+
+
+/**************************************************************/
+/* FINAL LAP road generator definitions.....                  */
+/**************************************************************/
+
+void namcos2_68k_roadtile_ram_w( int offset, int data );
+int  namcos2_68k_roadtile_ram_r( int offset );
+extern unsigned char *namcos2_68k_roadtile_ram;
+extern int namcos2_68k_roadtile_ram_size;
+
+void namcos2_68k_roadgfx_ram_w( int offset, int data );
+int  namcos2_68k_roadgfx_ram_r( int offset );
+extern unsigned char *namcos2_68k_roadgfx_ram;
+extern int namcos2_68k_roadgfx_ram_size;
+
+void namcos2_68k_road_ctrl_w( int offset, int data );
+int  namcos2_68k_road_ctrl_r( int offset );
 
 
 /**************************************************************/

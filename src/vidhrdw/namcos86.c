@@ -47,7 +47,8 @@ static const unsigned char *tile_address_prom;
   bit 0 -- 2.2kohm resistor  -- RED
 
 ***************************************************************************/
-void rthunder_vh_convert_color_prom( unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom )
+
+void namcos86_vh_convert_color_prom( unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom )
 {
 	int i;
 	int totcolors,totlookup;

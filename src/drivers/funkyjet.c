@@ -330,7 +330,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver funkyjet_machine_driver =
+static struct MachineDriver machine_driver_funkyjet =
 {
 	/* basic machine hardware */
 	{
@@ -409,7 +409,7 @@ struct GameDriver driver_funkyjet =
 	"[Data East] (Mitchell license)",
 	"Bryan McPhail",
 	0,
-	&funkyjet_machine_driver,
+	&machine_driver_funkyjet,
 	0,
 
 	rom_funkyjet,
@@ -420,6 +420,6 @@ struct GameDriver driver_funkyjet =
 	input_ports_funkyjet,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

@@ -487,7 +487,7 @@ static struct AY8910interface wanted_ay8910_interface =
 #define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
 #define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT)				\
-static struct MachineDriver NAME##_machine_driver =					\
+static struct MachineDriver machine_driver_##NAME =					\
 {																	\
 	/* basic machine hardware */									\
 	{																\
@@ -689,301 +689,6 @@ ROM_START( hopprobo )
 ROM_END
 
 
-/****  Marine Boy high score save routine - RJF (July 18, 1999)  ****/
-/* the stuff is stored in videoram */
-static int marineb_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x8979],"\x24\x18\x1b",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x8979], 6);        /* HS name */
-                        osd_fread(f,&RAM[0x8999], 6);        /* HS value */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void marineb_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x8979], 6);       /* HS name */
-                osd_fwrite(f,&RAM[0x8999], 6);       /* HS value */
-		osd_fclose(f);
-	}
-}
-
-/****  Changes high score save routine - RJF (July 18, 1999)  ****/
-/* this routine work properly but the game doesn't update the HS */
-/* the stuff is stored in videoram */
-static int changes_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x899a],"\x26\x18\x1b",3) == 0) &&
-	    (memcmp(&RAM[0x8aba],"\x00\x01\x00",3) == 0))
-
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x899a], 6);        /* HS name */
-                        osd_fread(f,&RAM[0x89ba], 6);        /* HS value */
-                        osd_fread(f,&RAM[0x8a1a], 6);        /* 2nd name */
-                        osd_fread(f,&RAM[0x8a3a], 6);        /* 2nd value */
-                        osd_fread(f,&RAM[0x8a9a], 6);        /* 3rd name */
-                        osd_fread(f,&RAM[0x8aba], 6);        /* 3rd value */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void changes_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x899a], 6);       /* HS name */
-                osd_fwrite(f,&RAM[0x89ba], 6);       /* HS value */
-                osd_fwrite(f,&RAM[0x8a1a], 6);       /* 2nd name */
-                osd_fwrite(f,&RAM[0x8a3a], 6);       /* 2nd value */
-                osd_fwrite(f,&RAM[0x8a9a], 6);       /* 3rd name */
-                osd_fwrite(f,&RAM[0x8aba], 6);       /* 3rd value */
-		osd_fclose(f);
-	}
-}
-
-/****  Springer high score save routine - RJF (July 18, 1999)  ****/
-/* the stuff is stored in videoram */
-static int springer_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x8b3a],"\x02\x1b\x02",3) == 0)
-
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x8afa], 5);        /* HS table */
-                        osd_fread(f,&RAM[0x8b1a], 5);
-                        osd_fread(f,&RAM[0x8b3a], 5);
-                        osd_fread(f,&RAM[0x8b5a], 5);
-                        osd_fread(f,&RAM[0x8b7a], 5);
-                        osd_fread(f,&RAM[0x8b9a], 5);
-                        osd_fread(f,&RAM[0x8bba], 5);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void springer_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8afa], 5);        /* HS table */
-                osd_fwrite(f,&RAM[0x8b1a], 5);
-                osd_fwrite(f,&RAM[0x8b3a], 5);
-                osd_fwrite(f,&RAM[0x8b5a], 5);
-                osd_fwrite(f,&RAM[0x8b7a], 5);
-                osd_fwrite(f,&RAM[0x8b9a], 5);
-                osd_fwrite(f,&RAM[0x8bba], 5);
-		osd_fclose(f);
-	}
-}
-
-/****  Hoccer (set 1) high score save routine - RJF (July 29, 1999)  ****/
-static int hoccer_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x8551],"\x02\x08\x05",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x8550], 10*5);        /* HS table */
-
-                        RAM[0x85ca] = RAM[0x8550];      /* update high score */
-                        RAM[0x85cb] = RAM[0x8551];      /* on top of screen */
-                        RAM[0x85cc] = RAM[0x8552];
-                        RAM[0x85cd] = RAM[0x8553];
-                        RAM[0x85ce] = RAM[0x8554];
-                        RAM[0x85cf] = RAM[0x8555];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hoccer_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x8550], 10*5);       /* HS table */
-		osd_fclose(f);
-	}
-}
-
-/****  Hoccer (set 2) high score save routine - RJF (July 29, 1999)  ****/
-/* different values and lenght, same offset */
-static int hoccer2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x8551],"\x05\x08\x05",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x8550], 9*5);        /* HS table */
-
-                        RAM[0x85ca] = RAM[0x8550];      /* update high score */
-                        RAM[0x85cb] = RAM[0x8551];      /* on top of screen */
-                        RAM[0x85cc] = RAM[0x8552];
-                        RAM[0x85cd] = RAM[0x8553];
-                        RAM[0x85ce] = RAM[0x8554];
-                        RAM[0x85cf] = RAM[0x8555];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hoccer2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x8550], 9*5);       /* HS table */
-		osd_fclose(f);
-	}
-}
-
-/****  Wanted high score save routine - RJF (May 2, 1999)  ****/
-static int wanted_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x81b4],"\x00\x03\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x81b4], 16*5);        /* HS table */
-
-			RAM[0x81b4] = RAM[0x81b4];      /* update high score */
-			RAM[0x81b5] = RAM[0x81b5];      /* on top of screen */
-			RAM[0x81b6] = RAM[0x81b6];
-			RAM[0x81b7] = RAM[0x81b7];
-			RAM[0x81b8] = RAM[0x81b8];
-			RAM[0x81b9] = RAM[0x81b9];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void wanted_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x81b4], 16*5);       /* HS table */
-		osd_fclose(f);
-	}
-}
-
-/****  Hopper Robo high score save routine - RJF (Aug 1, 1999)  ****/
-static int hopprobo_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x8060],"\x01\x06\x07",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x805f], 5*5);        /* HS values */
-                        osd_fread(f,&RAM[0x8078], 6*5);        /* HS names */
-
-                        RAM[0x89be] = RAM[0x805f];      /* update high score */
-                        RAM[0x89de] = RAM[0x8060];      /* on top of screen */
-                        RAM[0x89fe] = RAM[0x8061];
-                        RAM[0x8a1e] = RAM[0x8062];
-                        RAM[0x8a3e] = RAM[0x8063];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hopprobo_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x805f], 5*5);       /* HS values */
-                osd_fwrite(f,&RAM[0x8078], 6*5);       /* HS names */
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_marineb =
 {
@@ -995,7 +700,7 @@ struct GameDriver driver_marineb =
 	"Orca",
 	"Zsolt Vasvari",
 	0,
-	&marineb_machine_driver,
+	&machine_driver_marineb,
 	0,
 
 	rom_marineb,
@@ -1006,9 +711,8 @@ struct GameDriver driver_marineb =
 	input_ports_marineb,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	marineb_hiload, marineb_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_changes =
@@ -1021,7 +725,7 @@ struct GameDriver driver_changes =
 	"Orca",
 	"Zsolt Vasvari",
 	0,
-	&changes_machine_driver,
+	&machine_driver_changes,
 	0,
 
 	rom_changes,
@@ -1032,9 +736,8 @@ struct GameDriver driver_changes =
 	input_ports_changes,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	changes_hiload, changes_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_looper =
@@ -1047,7 +750,7 @@ struct GameDriver driver_looper =
 	"Orca",
 	"Zsolt Vasvari",
 	0,
-	&changes_machine_driver,
+	&machine_driver_changes,
 	0,
 
 	rom_looper,
@@ -1058,9 +761,8 @@ struct GameDriver driver_looper =
 	input_ports_changes,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	changes_hiload, changes_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_springer =
@@ -1073,7 +775,7 @@ struct GameDriver driver_springer =
 	"Orca",
 	"Zsolt Vasvari",
 	0,
-	&springer_machine_driver,
+	&machine_driver_springer,
 	0,
 
 	rom_springer,
@@ -1084,9 +786,8 @@ struct GameDriver driver_springer =
 	input_ports_marineb,  /* same as Marine Boy */
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	springer_hiload, springer_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_hoccer =
@@ -1099,7 +800,7 @@ struct GameDriver driver_hoccer =
 	"Eastern Micro Electronics, Inc.",
 	"Zsolt Vasvari",
 	0,
-	&hoccer_machine_driver,
+	&machine_driver_hoccer,
 	0,
 
 	rom_hoccer,
@@ -1110,9 +811,8 @@ struct GameDriver driver_hoccer =
 	input_ports_hoccer,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-        hoccer_hiload, hoccer_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_hoccer2 =
@@ -1125,7 +825,7 @@ struct GameDriver driver_hoccer2 =
 	"Eastern Micro Electronics, Inc.",
 	"Zsolt Vasvari",
 	0,
-	&hoccer_machine_driver,
+	&machine_driver_hoccer,
 	0,
 
 	rom_hoccer2,
@@ -1136,9 +836,8 @@ struct GameDriver driver_hoccer2 =
 	input_ports_hoccer,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-        hoccer2_hiload, hoccer2_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_wanted =
@@ -1151,7 +850,7 @@ struct GameDriver driver_wanted =
 	"Sigma Ent. Inc.",
 	"Zsolt Vasvari",
 	0,
-	&wanted_machine_driver,
+	&machine_driver_wanted,
 	0,
 
 	rom_wanted,
@@ -1162,9 +861,8 @@ struct GameDriver driver_wanted =
 	input_ports_wanted,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	wanted_hiload, wanted_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_hopprobo =
@@ -1177,7 +875,7 @@ struct GameDriver driver_hopprobo =
 	"Sega",
 	"Zsolt Vasvari",
 	0,
-	&hopprobo_machine_driver,
+	&machine_driver_hopprobo,
 	0,
 
 	rom_hopprobo,
@@ -1188,7 +886,6 @@ struct GameDriver driver_hopprobo =
 	input_ports_marineb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hopprobo_hiload, hopprobo_hisave
+	ROT90,
+	0,0
 };

@@ -2,6 +2,8 @@
 Cabal Bootleg
 (c)1998 Red Corp
 
+driver by Carlos A. Lozano Baides
+
 68000 + Z80
 
 The original uses 2xYM3931 for sound
@@ -382,7 +384,7 @@ static struct GfxDecodeInfo cabal_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct MachineDriver cabal_machine_driver =
+static struct MachineDriver machine_driver_cabal =
 {
 	{
 		{
@@ -419,7 +421,7 @@ static struct MachineDriver cabal_machine_driver =
 	0,0,0,0,
 };
 
-static struct MachineDriver cabalbl_machine_driver =
+static struct MachineDriver machine_driver_cabalbl =
 {
 	{
 		{
@@ -576,80 +578,6 @@ ROM_END
 
 
 
-struct GameDriver driver_cabal =
-{
-	__FILE__,
-	0,
-	"cabal",
-	"Cabal (US set 1)",
-	"1988",
-	"Tad (Fabtek license)",
-	"Carlos A. Lozano Baides\nPhil Stroffolino\nRichard Bush\nErnesto Corvi\n",
-	0,
-	&cabal_machine_driver,
-	0,
-
-	rom_cabal,
-	0,0,
-	0,
-	0,
-
-	input_ports_cabal,
-
-	0,0,0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	0,0
-};
-
-struct GameDriver driver_cabal2 =
-{
-	__FILE__,
-	&driver_cabal,
-	"cabal2",
-	"Cabal (US set 2)",
-	"1988",
-	"Tad (Fabtek license)",
-	"Carlos A. Lozano Baides\nPhil Stroffolino\nRichard Bush\nErnesto Corvi\n",
-	0,
-	&cabal_machine_driver,
-	0,
-
-	rom_cabal2,
-	0,0,
-	0,
-	0,
-
-	input_ports_cabal,
-
-	0,0,0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	0,0
-};
-
-struct GameDriver driver_cabalbl =
-{
-	__FILE__,
-	&driver_cabal,
-	"cabalbl",
-	"Cabal (bootleg)",
-	"1988",
-	"bootleg",
-	"Carlos A. Lozano Baides\nPhil Stroffolino\nRichard Bush\nErnesto Corvi\n",
-	0,
-	&cabalbl_machine_driver,
-	0,
-
-	rom_cabalbl,
-	0,0,
-	0,
-	0,
-
-	input_ports_cabal,
-
-	0,0,0,
-	ORIENTATION_DEFAULT,
-
-	0,0
-};
+GAMEX(1988, cabal,   ,      cabal,   cabal, , ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", GAME_NOT_WORKING )
+GAMEX(1988, cabal2,  cabal, cabal,   cabal, , ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", GAME_NOT_WORKING )
+GAME( 1988, cabalbl, cabal, cabalbl, cabal, , ROT0, "bootleg", "Cabal (bootleg)" )

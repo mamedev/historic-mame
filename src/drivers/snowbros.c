@@ -245,7 +245,7 @@ static void irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
-	3600000,	/* 3.6 MHz ? (hand tuned) */
+	3579545,	/* 3.579545 MHz ? (hand tuned) */
 	{ 100 },	/* volume */
 	{ irqhandler },
 };
@@ -366,39 +366,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x208]) == 0x4f)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x01C8],64);
-            osd_fread(f,&ram[0x14a2],80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x01C8],64);
-        osd_fwrite(f,&ram[0x14a2],80);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_snowbros =
 {
 	__FILE__,
@@ -420,8 +387,8 @@ struct GameDriver driver_snowbros =
 	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_snowbroa =
@@ -445,8 +412,8 @@ struct GameDriver driver_snowbroa =
 	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_snowbrob =
@@ -470,8 +437,8 @@ struct GameDriver driver_snowbrob =
 	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_snowbroj =
@@ -495,7 +462,7 @@ struct GameDriver driver_snowbroj =
 	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 

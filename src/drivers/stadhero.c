@@ -306,7 +306,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver stadhero_machine_driver =
+static struct MachineDriver machine_driver_stadhero =
 {
 	/* basic machine hardware */
 	{
@@ -401,7 +401,7 @@ struct GameDriver driver_stadhero =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&stadhero_machine_driver,
+	&machine_driver_stadhero,
 	0,
 
 	rom_stadhero,
@@ -412,6 +412,6 @@ struct GameDriver driver_stadhero =
 	input_ports_stadhero,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

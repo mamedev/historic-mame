@@ -372,41 +372,6 @@ ROM_END
 
 
 
-static int kangaroo_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xe1a3],"\x00\x50\x00",3) == 0 &&
-        memcmp(&RAM[0xe1d9],"\x00\x50\x00",3) == 0)
-    {
-        void *f;
-        if (( f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0xe1a0],6*10);
-            osd_fclose(f);
-        }
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void kangaroo_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0xe1a0],6*10);
-        osd_fclose(f);
-    }
-}
-
-
-
 struct GameDriver driver_kangaroo =
 {
     __FILE__,
@@ -428,9 +393,8 @@ struct GameDriver driver_kangaroo =
     input_ports_kangaroo,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_270,
-
-    kangaroo_hiload, kangaroo_hisave
+    ROT270,
+	0,0
 };
 
 struct GameDriver driver_kangarob =
@@ -454,7 +418,6 @@ struct GameDriver driver_kangarob =
     input_ports_kangaroo,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_270,
-
-    kangaroo_hiload, kangaroo_hisave
+    ROT270,
+	0,0
 };

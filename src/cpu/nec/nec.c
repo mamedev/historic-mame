@@ -749,7 +749,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			int i;
 	      	unsigned di = I.regs.w[IY];
 			unsigned si = I.regs.w[IX];
-			I.ZeroVal = 1;
+			I.ZeroVal = 0;
 			I.CarryVal = 0; // NOT ADC
 			for (i=0;i<count;i++) {
 				int v1,v2;
@@ -764,7 +764,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				result = result % 100;
 				v1 = ((result/10)<<4) | (result % 10);
 				PutMemB(ES, di,v1)
-				if (v1) I.ZeroVal = 0;
+				if (v1) I.ZeroVal = 1;
 				si++;
 				di++;
 			}
@@ -777,7 +777,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			int i;
 	      unsigned di = I.regs.w[IY];
 			unsigned si = I.regs.w[IX];
-			I.ZeroVal = 1;
+			I.ZeroVal = 0;
 			I.CarryVal = 0; // NOT ADC
 			for (i=0;i<count;i++) {
 				int v1,v2;
@@ -797,7 +797,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				}
 				v1 = ((result/10)<<4) | (result % 10);
 				PutMemB(ES, di,v1)
-				if (v1) I.ZeroVal = 0;
+				if (v1) I.ZeroVal = 1;
 				si++;
 				di++;
 			}
@@ -837,7 +837,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			int i;
 	        unsigned di = I.regs.w[IY];
 			unsigned si = I.regs.w[IX];
-			I.ZeroVal = 1;
+			I.ZeroVal = 0;
 			I.CarryVal = 0; // NOT ADC
 			for (i=0;i<count;i++) {
 				int v1,v2;
@@ -857,7 +857,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 				}
 				v1 = ((result/10)<<4) | (result % 10);
 //				PutMemB(ES, di,v1)	/* no store, only compare */
-				if (v1) I.ZeroVal = 0;
+				if (v1) I.ZeroVal = 1;
 				si++;
 				di++;
 			}

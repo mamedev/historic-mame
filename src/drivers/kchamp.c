@@ -479,7 +479,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver kchampvs_machine_driver =
+static struct MachineDriver machine_driver_kchampvs =
 {
 	/* basic machine hardware */
 	{
@@ -533,7 +533,7 @@ static struct MachineDriver kchampvs_machine_driver =
 * 1 Player Version  *
 ********************/
 
-static struct MachineDriver kchamp_machine_driver =
+static struct MachineDriver machine_driver_kchamp =
 {
 	/* basic machine hardware */
 	{
@@ -590,85 +590,6 @@ static struct MachineDriver kchamp_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( kchampvs )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "bs24", 0x0000, 0x2000, 0x829da69b )
-	ROM_LOAD( "bs23", 0x2000, 0x2000, 0x091f810e )
-	ROM_LOAD( "bs22", 0x4000, 0x2000, 0xd4df2a52 )
-	ROM_LOAD( "bs21", 0x6000, 0x2000, 0x3d4ef0da )
-	ROM_LOAD( "bs20", 0x8000, 0x2000, 0x623a467b )
-	ROM_LOAD( "bs19", 0xa000, 0x4000, 0x43e196c4 )
-
-	ROM_REGION_DISPOSE(0x20000)
-	ROM_LOAD( "bs00",     0x00000, 0x2000, 0x51eda56c )
-	ROM_LOAD( "bs06",     0x02000, 0x2000, 0x593264cf )
-	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
-	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
-	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
-	ROM_LOAD( "bs03",     0x0C000, 0x2000, 0x8dcd271a )
-	ROM_LOAD( "bs09",     0x0E000, 0x2000, 0x4ee1dba7 )
-	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
-	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
-	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
-	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
-	ROM_LOAD( "bs12",     0x18000, 0x2000, 0x4c574ecd )
-	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
-	ROM_LOAD( "bs14",     0x1C000, 0x2000, 0x9ad6227c )
-	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
-	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
-	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
-	ROM_LOAD( "bs18", 0x0000, 0x2000, 0xeaa646eb )
-	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
-	ROM_LOAD( "bs16", 0x4000, 0x2000, 0x6f811c43 ) /* adpcm */
-ROM_END
-
-ROM_START( karatevs )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "br24", 0x0000, 0x2000, 0xea9cda49 )
-	ROM_LOAD( "br23", 0x2000, 0x2000, 0x46074489 )
-	ROM_LOAD( "br22", 0x4000, 0x2000, 0x294f67ba )
-	ROM_LOAD( "br21", 0x6000, 0x2000, 0x934ea874 )
-	ROM_LOAD( "br20", 0x8000, 0x2000, 0x97d7816a )
-	ROM_LOAD( "br19", 0xa000, 0x4000, 0xdd2239d2 )
-
-	ROM_REGION_DISPOSE(0x20000)
-	ROM_LOAD( "br00",     0x00000, 0x2000, 0xc46a8b88 )
-	ROM_LOAD( "br06",     0x02000, 0x2000, 0xcf8982ff )
-	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
-	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
-	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
-	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
-	ROM_LOAD( "br03",     0x0C000, 0x2000, 0xbde8a52b )
-	ROM_LOAD( "br09",     0x0E000, 0x2000, 0xe9a5f945 )
-	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
-	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
-	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
-	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
-	ROM_LOAD( "br12",     0x18000, 0x2000, 0x9ed6f00d )
-	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
-	ROM_LOAD( "br14",     0x1C000, 0x2000, 0xfc399229 )
-	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
-
-	ROM_REGIONX( 0x0300, REGION_PROMS )
-	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
-	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
-	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
-	ROM_LOAD( "br18", 0x0000, 0x2000, 0x00ccb8ea )
-	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
-	ROM_LOAD( "br16", 0x4000, 0x2000, 0x2512d961 ) /* adpcm */
-ROM_END
-
-/********************
-* 1 Player Version  *
-********************/
 
 ROM_START( kchamp )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -750,123 +671,116 @@ ROM_START( karatedo )
 	ROM_LOAD( "be20", 0xc000, 0x2000, 0xcbe8a533 )
 ROM_END
 
-static void kchamp_decode( void ) {
-	/*
-		Encryption consists of data lines scrambling
-		bits have to be converted from 67852341 to 87654321
+ROM_START( kchampvs )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "bs24", 0x0000, 0x2000, 0x829da69b )
+	ROM_LOAD( "bs23", 0x2000, 0x2000, 0x091f810e )
+	ROM_LOAD( "bs22", 0x4000, 0x2000, 0xd4df2a52 )
+	ROM_LOAD( "bs21", 0x6000, 0x2000, 0x3d4ef0da )
+	ROM_LOAD( "bs20", 0x8000, 0x2000, 0x623a467b )
+	ROM_LOAD( "bs19", 0xa000, 0x2000, 0x43e196c4 )
+	ROM_CONTINUE(     0xe000, 0x2000 )
 
-		Notice that the very first 2 opcodes that the program
-		executes aint encrypted for some obscure reason.
-	*/
+	ROM_REGION_DISPOSE(0x20000)
+	ROM_LOAD( "bs00",     0x00000, 0x2000, 0x51eda56c )
+	ROM_LOAD( "bs06",     0x02000, 0x2000, 0x593264cf )
+	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
+	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
+	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
+	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
+	ROM_LOAD( "bs03",     0x0C000, 0x2000, 0x8dcd271a )
+	ROM_LOAD( "bs09",     0x0E000, 0x2000, 0x4ee1dba7 )
+	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
+	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
+	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
+	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
+	ROM_LOAD( "bs12",     0x18000, 0x2000, 0x4c574ecd )
+	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
+	ROM_LOAD( "bs14",     0x1C000, 0x2000, 0x9ad6227c )
+	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
 
-	static int encrypt_table_hi[] = {
-		0x00, 0x10, 0x80, 0x90, 0x40, 0x50, 0xC0, 0xD0,
-		0x20, 0x30, 0xA0, 0xB0, 0x60, 0x70, 0xE0, 0xF0
-	};
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
+	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
+	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
-	static int encrypt_table_lo[] = {
-		0x00, 0x01, 0x08, 0x09, 0x04, 0x05, 0x0C, 0x0D,
-		0x02, 0x03, 0x0A, 0x0B, 0x06, 0x07, 0x0E, 0x0F
-	};
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
+	ROM_LOAD( "bs18", 0x0000, 0x2000, 0xeaa646eb )
+	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
+	ROM_LOAD( "bs16", 0x4000, 0x2000, 0x6f811c43 ) /* adpcm */
+ROM_END
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
+ROM_START( karatevs )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "br24", 0x0000, 0x2000, 0xea9cda49 )
+	ROM_LOAD( "br23", 0x2000, 0x2000, 0x46074489 )
+	ROM_LOAD( "br22", 0x4000, 0x2000, 0x294f67ba )
+	ROM_LOAD( "br21", 0x6000, 0x2000, 0x934ea874 )
+	ROM_LOAD( "br20", 0x8000, 0x2000, 0x97d7816a )
+	ROM_LOAD( "br19", 0xa000, 0x2000, 0xdd2239d2 )
+	ROM_CONTINUE(     0xe000, 0x2000 )
+
+	ROM_REGION_DISPOSE(0x20000)
+	ROM_LOAD( "br00",     0x00000, 0x2000, 0xc46a8b88 )
+	ROM_LOAD( "br06",     0x02000, 0x2000, 0xcf8982ff )
+	ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* bs01 */
+	ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bs07 */
+	ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* bs02 */
+	ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bs08 */
+	ROM_LOAD( "br03",     0x0C000, 0x2000, 0xbde8a52b )
+	ROM_LOAD( "br09",     0x0E000, 0x2000, 0xe9a5f945 )
+	ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* bs04 */
+	ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bs10 */
+	ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* bs05 */
+	ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bs11 */
+	ROM_LOAD( "br12",     0x18000, 0x2000, 0x9ed6f00d )
+	ROM_LOAD( "bs13",     0x1A000, 0x2000, 0x750b66af )
+	ROM_LOAD( "br14",     0x1C000, 0x2000, 0xfc399229 )
+	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
+	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
+	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */ /* 64k for code */
+	ROM_LOAD( "br18", 0x0000, 0x2000, 0x00ccb8ea )
+	ROM_LOAD( "bs17", 0x2000, 0x2000, 0xd71031ad ) /* adpcm */
+	ROM_LOAD( "br16", 0x4000, 0x2000, 0x2512d961 ) /* adpcm */
+ROM_END
+
+
+
+static void kchampvs_decode( void )
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
 
-	for (A = 1;A < 0xE000;A++)
-		ROM[A] = ( encrypt_table_hi[RAM[A] >> 4] ) | encrypt_table_lo[RAM[A] & 0x0f];
 
-	/* Move the upper part of bs19 into $e000 */
-	for (A = 0xC000;A < 0xE000;A++) {
-		ROM[A+0x2000] = ( encrypt_table_hi[RAM[A] >> 4] ) | encrypt_table_lo[RAM[A] & 0x0f];
-		RAM[A+0x2000] = RAM[A];
-	}
-}
+	memory_set_opcode_base(0,rom+diff);
 
-static void kchampvs_decode( void ) {
+	for (A = 0;A < 0x10000;A++)
+		rom[A+diff] = (rom[A] & 0x55) | ((rom[A] & 0x88) >> 2) | ((rom[A] & 0x22) << 2);
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	ROM[0] = RAM[0];
-	RAM[1] = 0x6e;
-	RAM[2] = 0xb4;
-	kchamp_decode();
-}
-
-static void karatedo_decode( void ){
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	ROM[0] = RAM[0];
-	RAM[1] = 0x5f;
-	RAM[2] = 0xb4;
-	kchamp_decode();
-}
-
-static int kchampvs_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for hiscore table initialization to be done. */
-	if ( RAM[0xc0a8] != 0x2f )
-		return 0;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0) {
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0xc040],0x6f);
-		RAM[0xc0c0] = RAM[0xc040];
-		RAM[0xc0c1] = RAM[0xc041];
-		RAM[0xc0c2] = RAM[0xc042];
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void kchampvs_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0xc040],0x6f);
-		osd_fclose(f);
-	}
-}
-
-/********************
-* 1 Player Version  *
-********************/
-static int kchamp_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for hiscore table initialization to be done. */
-	if ( RAM[0xc0ab] != 0x01 )
-		return 0;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0) {
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0xc040],0x6c);
-		RAM[0xc0c0] = RAM[0xc040];
-		RAM[0xc0c1] = RAM[0xc041];
-		RAM[0xc0c2] = RAM[0xc042];
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void kchamp_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0xc040],0x6c);
-		osd_fclose(f);
-	}
+	/*
+		Note that the first 4 opcodes that the program
+		executes aren't encrypted for some obscure reason.
+		The address for the 2nd opcode (a jump) is encrypted too.
+		It's not clear what the 3rd and 4th opcode are supposed to do,
+		they just write to a RAM location. This write might be what
+		turns the encryption on, but this doesn't explain the
+		encrypted address for the jump.
+	 */
+	rom[0+diff] = rom[0];	/* this is a jump */
+	A = rom[1] + 256 * rom[2];
+	rom[A+diff] = rom[A];	/* fix opcode on first jump address (again, a jump) */
+	rom[A+1] ^= 0xee;		/* fix address of the second jump */
+	A = rom[A+1] + 256 * rom[A+2];
+	rom[A+diff] = rom[A];	/* fix third opcode (ld a,$xx) */
+	A += 2;
+	rom[A+diff] = rom[A];	/* fix fourth opcode (ld ($xxxx),a */
+	/* and from here on, opcodes are encrypted */
 }
 
 
@@ -881,7 +795,7 @@ struct GameDriver driver_kchamp =
 	"Data East USA",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
 	0,
-	&kchamp_machine_driver,
+	&machine_driver_kchamp,
 	0,
 
 	rom_kchamp,
@@ -892,9 +806,8 @@ struct GameDriver driver_kchamp =
 	input_ports_kchamp,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kchamp_hiload, kchamp_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_karatedo =
@@ -907,7 +820,7 @@ struct GameDriver driver_karatedo =
 	"Data East Corporation",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
 	0,
-	&kchamp_machine_driver,
+	&machine_driver_kchamp,
 	0,
 
 	rom_karatedo,
@@ -918,9 +831,8 @@ struct GameDriver driver_karatedo =
 	input_ports_kchamp,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kchamp_hiload, kchamp_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_kchampvs =
@@ -933,20 +845,19 @@ struct GameDriver driver_kchampvs =
 	"Data East USA",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
 	0,
-	&kchampvs_machine_driver,
-	0,
+	&machine_driver_kchampvs,
+	kchampvs_decode,
 
 	rom_kchampvs,
-	0, kchampvs_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_kchampvs,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kchampvs_hiload, kchampvs_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_karatevs =
@@ -959,18 +870,17 @@ struct GameDriver driver_karatevs =
 	"Data East Corporation",
 	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
 	0,
-	&kchampvs_machine_driver,
-	0,
+	&machine_driver_kchampvs,
+	kchampvs_decode,
 
 	rom_karatevs,
-	0, karatedo_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_kchampvs,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kchampvs_hiload, kchampvs_hisave
+	ROT90,
+	0,0
 };

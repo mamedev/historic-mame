@@ -3,6 +3,9 @@
 Paperboy (System 2) Memory Map
 ------------------------------
 
+driver by Aaron Giles
+
+
 PAPERBOY T11 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -1129,9 +1132,9 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x000000, &pflayout, 128, 8 },
-	{ 2, 0x080000, &molayout,   0, 4 },
-	{ 2, 0x180000, &anlayout,  64, 8 },
+	{ REGION_GFX1, 0, &pflayout, 128, 8 },
+	{ REGION_GFX2, 0, &molayout,   0, 4 },
+	{ REGION_GFX3, 0, &anlayout,  64, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -1147,7 +1150,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	7159160/2,	/* 3.58 MHZ ? */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -1188,7 +1191,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_paperboy =
 {
 	/* basic machine hardware */
 	{
@@ -1236,11 +1239,13 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
-static struct MachineDriver a720_machine_driver =
+static struct MachineDriver machine_driver_a720 =
 {
 	/* basic machine hardware */
 	{
@@ -1288,11 +1293,13 @@ static struct MachineDriver a720_machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
-static struct MachineDriver sprint_machine_driver =
+static struct MachineDriver machine_driver_sprint =
 {
 	/* basic machine hardware */
 	{
@@ -1336,7 +1343,9 @@ static struct MachineDriver sprint_machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -1352,8 +1361,8 @@ static void rom_decode(void)
 	int i;
 
 	/* invert the bits of the sprites */
-	for (i = 0x80000; i < 0x180000; i++)
-		memory_region(2)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 }
 
 
@@ -1364,7 +1373,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void paperboy_init(void)
+static void init_paperboy(void)
 {
 	static const UINT16 compressed_default_eeprom[] =
 	{
@@ -1418,10 +1427,12 @@ static void paperboy_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void a720_init(void)
+static void init_a720(void)
 {
 	atarigen_eeprom_default = NULL;
 	slapstic_init(107);
@@ -1436,10 +1447,12 @@ static void a720_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void ssprint_init(void)
+static void init_ssprint(void)
 {
 	static const UINT16 compressed_default_eeprom[] =
 	{
@@ -1487,10 +1500,12 @@ static void ssprint_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void csprint_init(void)
+static void init_csprint(void)
 {
 	static const UINT16 compressed_default_eeprom[] =
 	{
@@ -1541,10 +1556,12 @@ static void csprint_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void apb_init(void)
+static void init_apb(void)
 {
 	atarigen_eeprom_default = NULL;
 	slapstic_init(110);
@@ -1559,6 +1576,8 @@ static void apb_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -1587,22 +1606,24 @@ ROM_START( paperboy )
 	ROM_LOAD( "cpu_b02.bin",  0x08000, 0x04000, 0xe4e7a8b9 )
 	ROM_LOAD( "cpu_c02.bin",  0x0c000, 0x04000, 0xd44c2aa2 )
 
-	ROM_REGION_DISPOSE(0x184000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vid_a06.bin",  0x000000, 0x08000, 0xb32ffddf ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "vid_b06.bin",  0x00c000, 0x04000, 0x301b849d )
 	ROM_LOAD( "vid_c06.bin",  0x040000, 0x08000, 0x7bb59d68 ) 	/* playfield, planes 2/3 */
 	ROM_LOAD( "vid_d06.bin",  0x04c000, 0x04000, 0x1a1d4ba8 )
 
-	ROM_LOAD( "vid_l06.bin",  0x080000, 0x08000, 0x067ef202 )	/* motion objects, planes 0/1 */
-	ROM_LOAD( "vid_k06.bin",  0x088000, 0x08000, 0x76b977c4 )
-	ROM_LOAD( "vid_j06.bin",  0x090000, 0x08000, 0x2a3cc8d0 )
-	ROM_LOAD( "vid_h06.bin",  0x098000, 0x08000, 0x6763a321 )
-	ROM_LOAD( "vid_s06.bin",  0x100000, 0x08000, 0x0a321b7b )	/* motion objects, planes 2/3 */
-	ROM_LOAD( "vid_p06.bin",  0x108000, 0x08000, 0x5bd089ee )
-	ROM_LOAD( "vid_n06.bin",  0x110000, 0x08000, 0xc34a517d )
-	ROM_LOAD( "vid_m06.bin",  0x118000, 0x08000, 0xdf723956 )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_l06.bin",  0x000000, 0x08000, 0x067ef202 )	/* motion objects, planes 0/1 */
+	ROM_LOAD( "vid_k06.bin",  0x008000, 0x08000, 0x76b977c4 )
+	ROM_LOAD( "vid_j06.bin",  0x010000, 0x08000, 0x2a3cc8d0 )
+	ROM_LOAD( "vid_h06.bin",  0x018000, 0x08000, 0x6763a321 )
+	ROM_LOAD( "vid_s06.bin",  0x080000, 0x08000, 0x0a321b7b )	/* motion objects, planes 2/3 */
+	ROM_LOAD( "vid_p06.bin",  0x088000, 0x08000, 0x5bd089ee )
+	ROM_LOAD( "vid_n06.bin",  0x090000, 0x08000, 0xc34a517d )
+	ROM_LOAD( "vid_m06.bin",  0x098000, 0x08000, 0xdf723956 )
 
-	ROM_LOAD( "vid_t06.bin",  0x180000, 0x02000, 0x60d7aebb )	/* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vid_t06.bin",  0x000000, 0x02000, 0x60d7aebb )	/* alphanumerics */
 ROM_END
 
 
@@ -1622,7 +1643,7 @@ ROM_START( 720 )
 	ROM_LOAD( "1135.rom",     0x08000, 0x04000, 0xb1f157d0 )
 	ROM_LOAD( "1136.rom",     0x0c000, 0x04000, 0xdad40e6d )
 
-	ROM_REGION_DISPOSE(0x184000)
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1121.rom",     0x000000, 0x08000, 0x7adb5f9a ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "1122.rom",     0x008000, 0x08000, 0x41b60141 )
 	ROM_LOAD( "1123.rom",     0x010000, 0x08000, 0x501881d5 )
@@ -1632,40 +1653,42 @@ ROM_START( 720 )
 	ROM_LOAD( "1119.rom",     0x050000, 0x08000, 0x8f7b20e5 )
 	ROM_LOAD( "1120.rom",     0x058000, 0x08000, 0x46af6d35 )
 
-	ROM_LOAD( "1109.rom",     0x0a0000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1109.rom",     0x020000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
+	ROM_CONTINUE(             0x000000, 0x08000 )
+	ROM_LOAD( "1110.rom",     0x028000, 0x08000, 0x457d7e38 )
+	ROM_CONTINUE(             0x008000, 0x08000 )
+	ROM_LOAD( "1111.rom",     0x030000, 0x08000, 0xffad0a5b )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_LOAD( "1112.rom",     0x038000, 0x08000, 0x06664580 )
+	ROM_CONTINUE(             0x018000, 0x08000 )
+	ROM_LOAD( "1113.rom",     0x060000, 0x08000, 0x7445dc0f )
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	ROM_LOAD( "1114.rom",     0x068000, 0x08000, 0x23eaceb0 )
+	ROM_CONTINUE(             0x048000, 0x08000 )
+	ROM_LOAD( "1115.rom",     0x070000, 0x08000, 0x0cc8de53 )
+	ROM_CONTINUE(             0x050000, 0x08000 )
+	ROM_LOAD( "1116.rom",     0x078000, 0x08000, 0x2d8f1369 )
+	ROM_CONTINUE(             0x058000, 0x08000 )
+	ROM_LOAD( "1101.rom",     0x0a0000, 0x08000, 0x2ac77b80 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )
-	ROM_LOAD( "1110.rom",     0x0a8000, 0x08000, 0x457d7e38 )
+	ROM_LOAD( "1102.rom",     0x0a8000, 0x08000, 0xf19c3b06 )
 	ROM_CONTINUE(             0x088000, 0x08000 )
-	ROM_LOAD( "1111.rom",     0x0b0000, 0x08000, 0xffad0a5b )
+	ROM_LOAD( "1103.rom",     0x0b0000, 0x08000, 0x78f9ab90 )
 	ROM_CONTINUE(             0x090000, 0x08000 )
-	ROM_LOAD( "1112.rom",     0x0b8000, 0x08000, 0x06664580 )
+	ROM_LOAD( "1104.rom",     0x0b8000, 0x08000, 0x77ce4a7f )
 	ROM_CONTINUE(             0x098000, 0x08000 )
-	ROM_LOAD( "1113.rom",     0x0e0000, 0x08000, 0x7445dc0f )
+	ROM_LOAD( "1105.rom",     0x0e0000, 0x08000, 0xbef5a025 )
 	ROM_CONTINUE(             0x0c0000, 0x08000 )
-	ROM_LOAD( "1114.rom",     0x0e8000, 0x08000, 0x23eaceb0 )
+	ROM_LOAD( "1106.rom",     0x0e8000, 0x08000, 0x92a159c8 )
 	ROM_CONTINUE(             0x0c8000, 0x08000 )
-	ROM_LOAD( "1115.rom",     0x0f0000, 0x08000, 0x0cc8de53 )
+	ROM_LOAD( "1107.rom",     0x0f0000, 0x08000, 0x0a94a3ef )
 	ROM_CONTINUE(             0x0d0000, 0x08000 )
-	ROM_LOAD( "1116.rom",     0x0f8000, 0x08000, 0x2d8f1369 )
+	ROM_LOAD( "1108.rom",     0x0f8000, 0x08000, 0x9815eda6 )
 	ROM_CONTINUE(             0x0d8000, 0x08000 )
-	ROM_LOAD( "1101.rom",     0x120000, 0x08000, 0x2ac77b80 )	/* motion objects, planes 2/3 */
-	ROM_CONTINUE(             0x100000, 0x08000 )
-	ROM_LOAD( "1102.rom",     0x128000, 0x08000, 0xf19c3b06 )
-	ROM_CONTINUE(             0x108000, 0x08000 )
-	ROM_LOAD( "1103.rom",     0x130000, 0x08000, 0x78f9ab90 )
-	ROM_CONTINUE(             0x110000, 0x08000 )
-	ROM_LOAD( "1104.rom",     0x138000, 0x08000, 0x77ce4a7f )
-	ROM_CONTINUE(             0x118000, 0x08000 )
-	ROM_LOAD( "1105.rom",     0x160000, 0x08000, 0xbef5a025 )
-	ROM_CONTINUE(             0x140000, 0x08000 )
-	ROM_LOAD( "1106.rom",     0x168000, 0x08000, 0x92a159c8 )
-	ROM_CONTINUE(             0x148000, 0x08000 )
-	ROM_LOAD( "1107.rom",     0x170000, 0x08000, 0x0a94a3ef )
-	ROM_CONTINUE(             0x150000, 0x08000 )
-	ROM_LOAD( "1108.rom",     0x178000, 0x08000, 0x9815eda6 )
-	ROM_CONTINUE(             0x158000, 0x08000 )
 
-	ROM_LOAD( "1125.rom",     0x180000, 0x04000, 0x6b7e2328 )	/* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1125.rom",     0x000000, 0x04000, 0x6b7e2328 )	/* alphanumerics */
 ROM_END
 
 
@@ -1685,7 +1708,7 @@ ROM_START( 720b )
 	ROM_LOAD( "1135.rom",     0x08000, 0x04000, 0xb1f157d0 )
 	ROM_LOAD( "1136.rom",     0x0c000, 0x04000, 0xdad40e6d )
 
-	ROM_REGION_DISPOSE(0x184000)
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1121.rom",     0x000000, 0x08000, 0x7adb5f9a ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "1122.rom",     0x008000, 0x08000, 0x41b60141 )
 	ROM_LOAD( "1123.rom",     0x010000, 0x08000, 0x501881d5 )
@@ -1695,40 +1718,42 @@ ROM_START( 720b )
 	ROM_LOAD( "1119.rom",     0x050000, 0x08000, 0x8f7b20e5 )
 	ROM_LOAD( "1120.rom",     0x058000, 0x08000, 0x46af6d35 )
 
-	ROM_LOAD( "1109.rom",     0x0a0000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1109.rom",     0x020000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
+	ROM_CONTINUE(             0x000000, 0x08000 )
+	ROM_LOAD( "1110.rom",     0x028000, 0x08000, 0x457d7e38 )
+	ROM_CONTINUE(             0x008000, 0x08000 )
+	ROM_LOAD( "1111.rom",     0x030000, 0x08000, 0xffad0a5b )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_LOAD( "1112.rom",     0x038000, 0x08000, 0x06664580 )
+	ROM_CONTINUE(             0x018000, 0x08000 )
+	ROM_LOAD( "1113.rom",     0x060000, 0x08000, 0x7445dc0f )
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	ROM_LOAD( "1114.rom",     0x068000, 0x08000, 0x23eaceb0 )
+	ROM_CONTINUE(             0x048000, 0x08000 )
+	ROM_LOAD( "1115.rom",     0x070000, 0x08000, 0x0cc8de53 )
+	ROM_CONTINUE(             0x050000, 0x08000 )
+	ROM_LOAD( "1116.rom",     0x078000, 0x08000, 0x2d8f1369 )
+	ROM_CONTINUE(             0x058000, 0x08000 )
+	ROM_LOAD( "1101.rom",     0x0a0000, 0x08000, 0x2ac77b80 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )
-	ROM_LOAD( "1110.rom",     0x0a8000, 0x08000, 0x457d7e38 )
+	ROM_LOAD( "1102.rom",     0x0a8000, 0x08000, 0xf19c3b06 )
 	ROM_CONTINUE(             0x088000, 0x08000 )
-	ROM_LOAD( "1111.rom",     0x0b0000, 0x08000, 0xffad0a5b )
+	ROM_LOAD( "1103.rom",     0x0b0000, 0x08000, 0x78f9ab90 )
 	ROM_CONTINUE(             0x090000, 0x08000 )
-	ROM_LOAD( "1112.rom",     0x0b8000, 0x08000, 0x06664580 )
+	ROM_LOAD( "1104.rom",     0x0b8000, 0x08000, 0x77ce4a7f )
 	ROM_CONTINUE(             0x098000, 0x08000 )
-	ROM_LOAD( "1113.rom",     0x0e0000, 0x08000, 0x7445dc0f )
+	ROM_LOAD( "1105.rom",     0x0e0000, 0x08000, 0xbef5a025 )
 	ROM_CONTINUE(             0x0c0000, 0x08000 )
-	ROM_LOAD( "1114.rom",     0x0e8000, 0x08000, 0x23eaceb0 )
+	ROM_LOAD( "1106.rom",     0x0e8000, 0x08000, 0x92a159c8 )
 	ROM_CONTINUE(             0x0c8000, 0x08000 )
-	ROM_LOAD( "1115.rom",     0x0f0000, 0x08000, 0x0cc8de53 )
+	ROM_LOAD( "1107.rom",     0x0f0000, 0x08000, 0x0a94a3ef )
 	ROM_CONTINUE(             0x0d0000, 0x08000 )
-	ROM_LOAD( "1116.rom",     0x0f8000, 0x08000, 0x2d8f1369 )
+	ROM_LOAD( "1108.rom",     0x0f8000, 0x08000, 0x9815eda6 )
 	ROM_CONTINUE(             0x0d8000, 0x08000 )
-	ROM_LOAD( "1101.rom",     0x120000, 0x08000, 0x2ac77b80 )	/* motion objects, planes 2/3 */
-	ROM_CONTINUE(             0x100000, 0x08000 )
-	ROM_LOAD( "1102.rom",     0x128000, 0x08000, 0xf19c3b06 )
-	ROM_CONTINUE(             0x108000, 0x08000 )
-	ROM_LOAD( "1103.rom",     0x130000, 0x08000, 0x78f9ab90 )
-	ROM_CONTINUE(             0x110000, 0x08000 )
-	ROM_LOAD( "1104.rom",     0x138000, 0x08000, 0x77ce4a7f )
-	ROM_CONTINUE(             0x118000, 0x08000 )
-	ROM_LOAD( "1105.rom",     0x160000, 0x08000, 0xbef5a025 )
-	ROM_CONTINUE(             0x140000, 0x08000 )
-	ROM_LOAD( "1106.rom",     0x168000, 0x08000, 0x92a159c8 )
-	ROM_CONTINUE(             0x148000, 0x08000 )
-	ROM_LOAD( "1107.rom",     0x170000, 0x08000, 0x0a94a3ef )
-	ROM_CONTINUE(             0x150000, 0x08000 )
-	ROM_LOAD( "1108.rom",     0x178000, 0x08000, 0x9815eda6 )
-	ROM_CONTINUE(             0x158000, 0x08000 )
 
-	ROM_LOAD( "1125.rom",     0x180000, 0x04000, 0x6b7e2328 )	/* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1125.rom",     0x000000, 0x04000, 0x6b7e2328 )	/* alphanumerics */
 ROM_END
 
 
@@ -1747,7 +1772,7 @@ ROM_START( ssprint )
 	ROM_LOAD( "136042.419",   0x08000, 0x4000, 0xb277915a )
 	ROM_LOAD( "136042.420",   0x0c000, 0x4000, 0x170b2c53 )
 
-	ROM_REGION_DISPOSE(0x184000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136042.105",   0x020000, 0x08000, 0x911499fe ) 	/* playfield, planes 0/1 */
 	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD( "136042.106",   0x008000, 0x08000, 0xa39b25ed )
@@ -1761,16 +1786,18 @@ ROM_START( ssprint )
 	ROM_CONTINUE(             0x050000, 0x08000 )
 	ROM_LOAD( "136042.103",   0x058000, 0x08000, 0x64d473a8 )
 
-	ROM_LOAD( "136042.113",   0x080000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
-	ROM_LOAD( "136042.112",   0x088000, 0x08000, 0xabcbc114 )
-	ROM_LOAD( "136042.110",   0x090000, 0x08000, 0x9e91e734 )
-	ROM_LOAD( "136042.109",   0x098000, 0x08000, 0x3a051f36 )
-	ROM_LOAD( "136042.117",   0x100000, 0x08000, 0xb15c1b90 )	/* motion objects, planes 2/3 */
-	ROM_LOAD( "136042.116",   0x108000, 0x08000, 0x1dcdd5aa )
-	ROM_LOAD( "136042.115",   0x110000, 0x08000, 0xfb5677d9 )
-	ROM_LOAD( "136042.114",   0x118000, 0x08000, 0x35e70a8d )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136042.113",   0x000000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
+	ROM_LOAD( "136042.112",   0x008000, 0x08000, 0xabcbc114 )
+	ROM_LOAD( "136042.110",   0x010000, 0x08000, 0x9e91e734 )
+	ROM_LOAD( "136042.109",   0x018000, 0x08000, 0x3a051f36 )
+	ROM_LOAD( "136042.117",   0x080000, 0x08000, 0xb15c1b90 )	/* motion objects, planes 2/3 */
+	ROM_LOAD( "136042.116",   0x088000, 0x08000, 0x1dcdd5aa )
+	ROM_LOAD( "136042.115",   0x090000, 0x08000, 0xfb5677d9 )
+	ROM_LOAD( "136042.114",   0x098000, 0x08000, 0x35e70a8d )
 
-	ROM_LOAD( "136042.218",   0x180000, 0x04000, 0x8e500be1 )  /* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "136042.218",   0x000000, 0x04000, 0x8e500be1 )  /* alphanumerics */
 ROM_END
 
 
@@ -1789,7 +1816,7 @@ ROM_START( csprint )
 	ROM_LOAD( "045-1118.2bc", 0x08000, 0x4000, 0xeba41b2f )
 	ROM_LOAD( "045-1119.2d",  0x0c000, 0x4000, 0x9e49043a )
 
-	ROM_REGION_DISPOSE(0x184000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "045-1105.6a",  0x000000, 0x08000, 0x3773bfbb ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "045-1106.6b",  0x008000, 0x08000, 0x13a24886 )
 	ROM_LOAD( "045-1101.7a",  0x030000, 0x08000, 0x5a55f931 )
@@ -1801,16 +1828,18 @@ ROM_START( csprint )
 	ROM_CONTINUE(             0x050000, 0x08000 )
 	ROM_LOAD( "045-1103.7c",  0x058000, 0x08000, 0x8f8c9692 )
 
-	ROM_LOAD( "045-1112.6t",  0x080000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
-	ROM_LOAD( "045-1111.6s",  0x088000, 0x08000, 0xabcbc114 )
-	ROM_LOAD( "045-1110.6p",  0x090000, 0x08000, 0x9e91e734 )
-	ROM_LOAD( "045-1109.6n",  0x098000, 0x08000, 0x3a051f36 )
-	ROM_LOAD( "045-1116.5t",  0x100000, 0x08000, 0xb15c1b90 )	/* motion objects, planes 2/3 */
-	ROM_LOAD( "045-1115.5s",  0x108000, 0x08000, 0x1dcdd5aa )
-	ROM_LOAD( "045-1114.5p",  0x110000, 0x08000, 0xfb5677d9 )
-	ROM_LOAD( "045-1113.5n",  0x118000, 0x08000, 0x35e70a8d )
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "045-1112.6t",  0x000000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
+	ROM_LOAD( "045-1111.6s",  0x008000, 0x08000, 0xabcbc114 )
+	ROM_LOAD( "045-1110.6p",  0x010000, 0x08000, 0x9e91e734 )
+	ROM_LOAD( "045-1109.6n",  0x018000, 0x08000, 0x3a051f36 )
+	ROM_LOAD( "045-1116.5t",  0x080000, 0x08000, 0xb15c1b90 )	/* motion objects, planes 2/3 */
+	ROM_LOAD( "045-1115.5s",  0x088000, 0x08000, 0x1dcdd5aa )
+	ROM_LOAD( "045-1114.5p",  0x090000, 0x08000, 0xfb5677d9 )
+	ROM_LOAD( "045-1113.5n",  0x098000, 0x08000, 0x35e70a8d )
 
-	ROM_LOAD( "045-1117.4t",  0x180000, 0x04000, 0x82da786d )  /* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "045-1117.4t",  0x000000, 0x04000, 0x82da786d )  /* alphanumerics */
 ROM_END
 
 
@@ -1830,7 +1859,7 @@ ROM_START( apb )
 	ROM_LOAD( "4135",         0x08000, 0x04000, 0xb4ca24b2 )
 	ROM_LOAD( "4136",         0x0c000, 0x04000, 0x11efaabf )
 
-	ROM_REGION_DISPOSE(0x184000)
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1118",         0x000000, 0x08000, 0x93752c49 ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "1120",         0x028000, 0x08000, 0x043086f8 )
 	ROM_CONTINUE(             0x008000, 0x08000 )
@@ -1846,40 +1875,42 @@ ROM_START( apb )
 	ROM_LOAD( "1123",         0x078000, 0x08000, 0x3c96c848 )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 
-	ROM_LOAD( "1105",         0x0a0000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
+	ROM_REGIONX( 0x104000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1105",         0x020000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
+	ROM_CONTINUE(             0x000000, 0x08000 )
+	ROM_LOAD( "1106",         0x028000, 0x08000, 0x4787ff58 )
+	ROM_CONTINUE(             0x008000, 0x08000 )
+	ROM_LOAD( "1107",         0x030000, 0x08000, 0x0e85f2ac )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_LOAD( "1108",         0x038000, 0x08000, 0x70ff9308 )
+	ROM_CONTINUE(             0x018000, 0x08000 )
+	ROM_LOAD( "1113",         0x060000, 0x08000, 0x4a445356 )
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	ROM_LOAD( "1114",         0x068000, 0x08000, 0xb9b27f3c )
+	ROM_CONTINUE(             0x048000, 0x08000 )
+	ROM_LOAD( "1115",         0x060000, 0x08000, 0xa7671dd8 )
+	ROM_CONTINUE(             0x050000, 0x08000 )
+	ROM_LOAD( "1116",         0x068000, 0x08000, 0x879fc7de )
+	ROM_CONTINUE(             0x058000, 0x08000 )
+	ROM_LOAD( "1101",         0x0a0000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )
-	ROM_LOAD( "1106",         0x0a8000, 0x08000, 0x4787ff58 )
+	ROM_LOAD( "1102",         0x0a8000, 0x08000, 0x401e06fd )
 	ROM_CONTINUE(             0x088000, 0x08000 )
-	ROM_LOAD( "1107",         0x0b0000, 0x08000, 0x0e85f2ac )
+	ROM_LOAD( "1103",         0x0b0000, 0x08000, 0x50d820e8 )
 	ROM_CONTINUE(             0x090000, 0x08000 )
-	ROM_LOAD( "1108",         0x0b8000, 0x08000, 0x70ff9308 )
+	ROM_LOAD( "1104",         0x0b8000, 0x08000, 0x912d878f )
 	ROM_CONTINUE(             0x098000, 0x08000 )
-	ROM_LOAD( "1113",         0x0e0000, 0x08000, 0x4a445356 )
+	ROM_LOAD( "1109",         0x0e0000, 0x08000, 0x6716a408 )
 	ROM_CONTINUE(             0x0c0000, 0x08000 )
-	ROM_LOAD( "1114",         0x0e8000, 0x08000, 0xb9b27f3c )
+	ROM_LOAD( "1110",         0x0e8000, 0x08000, 0x7e184981 )
 	ROM_CONTINUE(             0x0c8000, 0x08000 )
-	ROM_LOAD( "1115",         0x0f0000, 0x08000, 0xa7671dd8 )
+	ROM_LOAD( "1111",         0x0f0000, 0x08000, 0x353a14fd )
 	ROM_CONTINUE(             0x0d0000, 0x08000 )
-	ROM_LOAD( "1116",         0x0f8000, 0x08000, 0x879fc7de )
+	ROM_LOAD( "1112",         0x0f8000, 0x08000, 0x3af7c50f )
 	ROM_CONTINUE(             0x0d8000, 0x08000 )
-	ROM_LOAD( "1101",         0x120000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
-	ROM_CONTINUE(             0x100000, 0x08000 )
-	ROM_LOAD( "1102",         0x128000, 0x08000, 0x401e06fd )
-	ROM_CONTINUE(             0x108000, 0x08000 )
-	ROM_LOAD( "1103",         0x130000, 0x08000, 0x50d820e8 )
-	ROM_CONTINUE(             0x110000, 0x08000 )
-	ROM_LOAD( "1104",         0x138000, 0x08000, 0x912d878f )
-	ROM_CONTINUE(             0x118000, 0x08000 )
-	ROM_LOAD( "1109",         0x160000, 0x08000, 0x6716a408 )
-	ROM_CONTINUE(             0x140000, 0x08000 )
-	ROM_LOAD( "1110",         0x168000, 0x08000, 0x7e184981 )
-	ROM_CONTINUE(             0x148000, 0x08000 )
-	ROM_LOAD( "1111",         0x170000, 0x08000, 0x353a14fd )
-	ROM_CONTINUE(             0x150000, 0x08000 )
-	ROM_LOAD( "1112",         0x178000, 0x08000, 0x3af7c50f )
-	ROM_CONTINUE(             0x158000, 0x08000 )
 
-	ROM_LOAD( "1125",         0x180000, 0x04000, 0x05a0341c )	/* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1125",         0x000000, 0x04000, 0x05a0341c )	/* alphanumerics */
 ROM_END
 
 
@@ -1899,7 +1930,7 @@ ROM_START( apb2 )
 	ROM_LOAD( "5135",         0x08000, 0x04000, 0xed6adb91 )
 	ROM_LOAD( "5136",         0x0c000, 0x04000, 0x341f8486 )
 
-	ROM_REGION_DISPOSE(0x184000)
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1118",         0x000000, 0x08000, 0x93752c49 ) 	/* playfield, planes 0/1 */
 	ROM_LOAD( "1120",         0x028000, 0x08000, 0x043086f8 )
 	ROM_CONTINUE(             0x008000, 0x08000 )
@@ -1915,40 +1946,42 @@ ROM_START( apb2 )
 	ROM_LOAD( "1123",         0x078000, 0x08000, 0x3c96c848 )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 
-	ROM_LOAD( "1105",         0x0a0000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
+	ROM_REGIONX( 0x104000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1105",         0x020000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
+	ROM_CONTINUE(             0x000000, 0x08000 )
+	ROM_LOAD( "1106",         0x028000, 0x08000, 0x4787ff58 )
+	ROM_CONTINUE(             0x008000, 0x08000 )
+	ROM_LOAD( "1107",         0x030000, 0x08000, 0x0e85f2ac )
+	ROM_CONTINUE(             0x010000, 0x08000 )
+	ROM_LOAD( "1108",         0x038000, 0x08000, 0x70ff9308 )
+	ROM_CONTINUE(             0x018000, 0x08000 )
+	ROM_LOAD( "1113",         0x060000, 0x08000, 0x4a445356 )
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	ROM_LOAD( "1114",         0x068000, 0x08000, 0xb9b27f3c )
+	ROM_CONTINUE(             0x048000, 0x08000 )
+	ROM_LOAD( "1115",         0x060000, 0x08000, 0xa7671dd8 )
+	ROM_CONTINUE(             0x050000, 0x08000 )
+	ROM_LOAD( "1116",         0x068000, 0x08000, 0x879fc7de )
+	ROM_CONTINUE(             0x058000, 0x08000 )
+	ROM_LOAD( "1101",         0x0a0000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
 	ROM_CONTINUE(             0x080000, 0x08000 )
-	ROM_LOAD( "1106",         0x0a8000, 0x08000, 0x4787ff58 )
+	ROM_LOAD( "1102",         0x0a8000, 0x08000, 0x401e06fd )
 	ROM_CONTINUE(             0x088000, 0x08000 )
-	ROM_LOAD( "1107",         0x0b0000, 0x08000, 0x0e85f2ac )
+	ROM_LOAD( "1103",         0x0b0000, 0x08000, 0x50d820e8 )
 	ROM_CONTINUE(             0x090000, 0x08000 )
-	ROM_LOAD( "1108",         0x0b8000, 0x08000, 0x70ff9308 )
+	ROM_LOAD( "1104",         0x0b8000, 0x08000, 0x912d878f )
 	ROM_CONTINUE(             0x098000, 0x08000 )
-	ROM_LOAD( "1113",         0x0e0000, 0x08000, 0x4a445356 )
+	ROM_LOAD( "1109",         0x0e0000, 0x08000, 0x6716a408 )
 	ROM_CONTINUE(             0x0c0000, 0x08000 )
-	ROM_LOAD( "1114",         0x0e8000, 0x08000, 0xb9b27f3c )
+	ROM_LOAD( "1110",         0x0e8000, 0x08000, 0x7e184981 )
 	ROM_CONTINUE(             0x0c8000, 0x08000 )
-	ROM_LOAD( "1115",         0x0f0000, 0x08000, 0xa7671dd8 )
+	ROM_LOAD( "1111",         0x0f0000, 0x08000, 0x353a14fd )
 	ROM_CONTINUE(             0x0d0000, 0x08000 )
-	ROM_LOAD( "1116",         0x0f8000, 0x08000, 0x879fc7de )
+	ROM_LOAD( "1112",         0x0f8000, 0x08000, 0x3af7c50f )
 	ROM_CONTINUE(             0x0d8000, 0x08000 )
-	ROM_LOAD( "1101",         0x120000, 0x08000, 0x0ef13513 )	/* motion objects, planes 2/3 */
-	ROM_CONTINUE(             0x100000, 0x08000 )
-	ROM_LOAD( "1102",         0x128000, 0x08000, 0x401e06fd )
-	ROM_CONTINUE(             0x108000, 0x08000 )
-	ROM_LOAD( "1103",         0x130000, 0x08000, 0x50d820e8 )
-	ROM_CONTINUE(             0x110000, 0x08000 )
-	ROM_LOAD( "1104",         0x138000, 0x08000, 0x912d878f )
-	ROM_CONTINUE(             0x118000, 0x08000 )
-	ROM_LOAD( "1109",         0x160000, 0x08000, 0x6716a408 )
-	ROM_CONTINUE(             0x140000, 0x08000 )
-	ROM_LOAD( "1110",         0x168000, 0x08000, 0x7e184981 )
-	ROM_CONTINUE(             0x148000, 0x08000 )
-	ROM_LOAD( "1111",         0x170000, 0x08000, 0x353a14fd )
-	ROM_CONTINUE(             0x150000, 0x08000 )
-	ROM_LOAD( "1112",         0x178000, 0x08000, 0x3af7c50f )
-	ROM_CONTINUE(             0x158000, 0x08000 )
 
-	ROM_LOAD( "1125",         0x180000, 0x04000, 0x05a0341c )	/* alphanumerics */
+	ROM_REGIONX( 0x004000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1125",         0x000000, 0x04000, 0x05a0341c )	/* alphanumerics */
 ROM_END
 
 
@@ -1959,190 +1992,10 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver driver_paperboy =
-{
-	__FILE__,
-	0,
-	"paperboy",
-	"Paperboy",
-	"1984",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&machine_driver,
-	paperboy_init,
-
-	rom_paperboy,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_paperboy,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_720 =
-{
-	__FILE__,
-	0,
-	"720",
-	"720 Degrees (set 1)",
-	"1986",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&a720_machine_driver,
-	a720_init,
-
-	rom_720,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_720,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_720b =
-{
-	__FILE__,
-	&driver_720,
-	"720b",
-	"720 Degrees (set 2)",
-	"1986",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&a720_machine_driver,
-	a720_init,
-
-	rom_720b,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_720,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_ssprint =
-{
-	__FILE__,
-	0,
-	"ssprint",
-	"Super Sprint",
-	"1986",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&sprint_machine_driver,
-	ssprint_init,
-
-	rom_ssprint,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_ssprint,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_csprint =
-{
-	__FILE__,
-	0,
-	"csprint",
-	"Championship Sprint",
-	"1986",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&sprint_machine_driver,
-	csprint_init,
-
-	rom_csprint,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_csprint,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_apb =
-{
-	__FILE__,
-	0,
-	"apb",
-	"APB (set 1)",
-	"1987",
-	"Atari Games",
-	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&machine_driver,
-	apb_init,
-
-	rom_apb,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_apb,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_apb2 =
-{
-	__FILE__,
-	&driver_apb,
-	"apb2",
-	"APB (set 2)",
-	"1987",
-	"Atari Games",
-	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
-	0,
-	&machine_driver,
-	apb_init,
-
-	rom_apb2,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_apb,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1984, paperboy, ,    paperboy, paperboy, paperboy, ROT0,   "Atari Games", "Paperboy" )
+GAME( 1986, 720,      ,    a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 1)" )
+GAME( 1986, 720b,     720, a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 2)" )
+GAME( 1986, ssprint,  ,    sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint" )
+GAME( 1986, csprint,  ,    sprint,   csprint,  csprint,  ROT0,   "Atari Games", "Championship Sprint" )
+GAME( 1987, apb,      ,    paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 1)" )
+GAME( 1987, apb2,     apb, paperboy, apb,      apb,      ROT270, "Atari Games", "APB (set 2)" )

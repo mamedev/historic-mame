@@ -284,50 +284,6 @@ ROM_END
 
 
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0012],"\x3C\xAA\x3C\xAA",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0022],0x3);
-			osd_fread(f,&RAM[0x0027],0x3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0022],0x3);
-		osd_fwrite(f,&RAM[0x0027],0x3);
-		osd_fclose(f);
-	}
-
-}
-
-
-
 struct GameDriver driver_sbrkout =
 {
 	__FILE__,
@@ -349,7 +305,6 @@ struct GameDriver driver_sbrkout =
 	input_ports_sbrkout,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

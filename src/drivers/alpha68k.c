@@ -1121,7 +1121,7 @@ static int kyros_interrupt(void)
 
 /******************************************************************************/
 
-static struct MachineDriver kyros_machine_driver =
+static struct MachineDriver machine_driver_kyros =
 {
 	/* basic machine hardware */
 	{
@@ -1166,7 +1166,7 @@ static struct MachineDriver kyros_machine_driver =
 	}
 };
 
-static struct MachineDriver alpha68k_I_machine_driver =
+static struct MachineDriver machine_driver_alpha68k_I =
 {
 	/* basic machine hardware */
 	{
@@ -1210,7 +1210,7 @@ static struct MachineDriver alpha68k_I_machine_driver =
 	}
 };
 
-static struct MachineDriver alpha68k_II_machine_driver =
+static struct MachineDriver machine_driver_alpha68k_II =
 {
 	/* basic machine hardware */
 	{
@@ -1263,7 +1263,7 @@ static struct MachineDriver alpha68k_II_machine_driver =
 	}
 };
 
-static struct MachineDriver alpha68k_V_machine_driver =
+static struct MachineDriver machine_driver_alpha68k_V =
 {
 	/* basic machine hardware */
 	{
@@ -1316,7 +1316,7 @@ static struct MachineDriver alpha68k_V_machine_driver =
 	}
 };
 
-static struct MachineDriver alpha68k_V_sb_machine_driver =
+static struct MachineDriver machine_driver_alpha68k_V_sb =
 {
 	/* basic machine hardware */
 	{
@@ -1849,30 +1849,6 @@ ROM_END
 
 /******************************************************************************/
 
-static void gangwarb_patch(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	WRITE_WORD(&RAM[0x98fa],0x4e71);	/* Alpha controller related? */
-	WRITE_WORD(&RAM[0xb76c],0x4e71);	/* Disable rom check */
-}
-
-static void gangwars_patch(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	WRITE_WORD(&RAM[0x98e6],0x4e71);	/* Alpha controller related? */
-	WRITE_WORD(&RAM[0xb758],0x4e71);	/* Disable rom check */
-}
-
-static void btl_patch(void)
-{
-//	unsigned char *RAM = memory_region(REGION_CPU1);
-//	WRITE_WORD(&RAM[0x9da8],0x4e73);
-//	WRITE_WORD(&RAM[0x9250],0x4240); /* Clear D0 */
-}
-
-
 static int timesold_cycle_r(int offset)
 {
 	int ret=READ_WORD(&timesold_ram[0x8]);
@@ -1929,6 +1905,31 @@ static void custom_memory(void)
 		cpu_setbank(8, memory_region(3));
 }
 
+static void gangwarb_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	custom_memory();
+	WRITE_WORD(&RAM[0x98fa],0x4e71);	/* Alpha controller related? */
+	WRITE_WORD(&RAM[0xb76c],0x4e71);	/* Disable rom check */
+}
+
+static void gangwars_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	custom_memory();
+	WRITE_WORD(&RAM[0x98e6],0x4e71);	/* Alpha controller related? */
+	WRITE_WORD(&RAM[0xb758],0x4e71);	/* Disable rom check */
+}
+
+static void btl_patch(void)
+{
+//	unsigned char *RAM = memory_region(REGION_CPU1);
+//	WRITE_WORD(&RAM[0x9da8],0x4e73);
+//	WRITE_WORD(&RAM[0x9250],0x4240); /* Clear D0 */
+}
+
 /******************************************************************************/
 
 struct GameDriver driver_kyros =
@@ -1941,7 +1942,7 @@ struct GameDriver driver_kyros =
 	"World Games Inc",
 	"Bryan McPhail",
 	0,
-	&kyros_machine_driver,
+	&machine_driver_kyros,
 	0,
 
 	rom_kyros,
@@ -1952,7 +1953,7 @@ struct GameDriver driver_kyros =
 	input_ports_timesold,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -1966,7 +1967,7 @@ struct GameDriver driver_sstingry =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&kyros_machine_driver,
+	&machine_driver_kyros,
 	0,
 
 	rom_sstingry,
@@ -1977,7 +1978,7 @@ struct GameDriver driver_sstingry =
 	input_ports_sstingry,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -1991,7 +1992,7 @@ struct GameDriver driver_paddlema =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&alpha68k_I_machine_driver,
+	&machine_driver_alpha68k_I,
 	0,
 
 	rom_paddlema,
@@ -2002,7 +2003,7 @@ struct GameDriver driver_paddlema =
 	input_ports_timesold,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2016,7 +2017,7 @@ struct GameDriver driver_timesold =
 	"SNK / Romstar",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
+	&machine_driver_alpha68k_II,
 	custom_memory,
 
 	rom_timesold,
@@ -2027,7 +2028,7 @@ struct GameDriver driver_timesold =
 	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -2041,7 +2042,7 @@ struct GameDriver driver_timesol2 =
 	"SNK / Romstar",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
+	&machine_driver_alpha68k_II,
 	0,
 
 	rom_timesol2,
@@ -2052,7 +2053,7 @@ struct GameDriver driver_timesol2 =
 	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2066,18 +2067,18 @@ struct GameDriver driver_btlfield =
 	"SNK / Romstar",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
-	0,
+	&machine_driver_alpha68k_II,
+	btl_patch,
 
 	rom_btlfield,
-	btl_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2091,7 +2092,7 @@ struct GameDriver driver_skysoldr =
 	"SNK / Romstar",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
+	&machine_driver_alpha68k_II,
 	custom_memory,
 
 	rom_skysoldr,
@@ -2102,7 +2103,7 @@ struct GameDriver driver_skysoldr =
 	input_ports_skysoldr,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -2116,7 +2117,7 @@ struct GameDriver driver_goldmedl =
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
+	&machine_driver_alpha68k_II,
 	custom_memory,
 
 	rom_goldmedl,
@@ -2127,7 +2128,7 @@ struct GameDriver driver_goldmedl =
 	input_ports_goldmedl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2141,7 +2142,7 @@ struct GameDriver driver_goldmedb =
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&alpha68k_II_machine_driver,
+	&machine_driver_alpha68k_II,
 	custom_memory,
 
 	rom_goldmedb,
@@ -2152,7 +2153,7 @@ struct GameDriver driver_goldmedb =
 	input_ports_goldmedl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2166,7 +2167,7 @@ struct GameDriver driver_skyadvnt =
 	"SNK of America (licensed from Alpha)",
 	"Bryan McPhail",
 	0,
-	&alpha68k_V_machine_driver,
+	&machine_driver_alpha68k_V,
 	custom_memory,
 
 	rom_skyadvnt,
@@ -2177,7 +2178,7 @@ struct GameDriver driver_skyadvnt =
 	input_ports_skyadvnt,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -2191,18 +2192,18 @@ struct GameDriver driver_gangwars =
 	"Alpha",
 	"Bryan McPhail",
 	0,
-	&alpha68k_V_machine_driver,
-	custom_memory,
+	&machine_driver_alpha68k_V,
+	gangwars_patch,
 
 	rom_gangwars,
-	gangwars_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gangwars,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
+	ROT0 | GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2216,18 +2217,18 @@ struct GameDriver driver_gangwarb =
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&alpha68k_V_machine_driver,
-	custom_memory,
+	&machine_driver_alpha68k_V,
+	gangwarb_patch,
 
 	rom_gangwarb,
-	gangwarb_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gangwars,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
+	ROT0 | GAME_REQUIRES_16BIT,
 	0, 0
 };
 
@@ -2241,7 +2242,7 @@ struct GameDriver driver_sbasebal =
 	"SNK of America (licensed from Alpha)",
 	"Bryan McPhail",
 	0,
-	&alpha68k_V_sb_machine_driver,
+	&machine_driver_alpha68k_V_sb,
 	custom_memory,
 
 	rom_sbasebal,
@@ -2252,6 +2253,6 @@ struct GameDriver driver_sbasebal =
 	input_ports_sbasebal,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

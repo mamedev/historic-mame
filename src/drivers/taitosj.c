@@ -1677,7 +1677,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_nomcu =
 {
 	/* basic machine hardware */
 	{
@@ -1731,7 +1731,7 @@ static struct MachineDriver machine_driver =
 };
 
 /* same as above, but with additional 68705 MCU */
-static struct MachineDriver mcu_machine_driver =
+static struct MachineDriver machine_driver_mcu =
 {
 	/* basic machine hardware */
 	{
@@ -1810,22 +1810,54 @@ ROM_START( spaceskr )
 	ROM_LOAD( "eb08",         0x7000, 0x1000, 0xf2e84015 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
-	ROM_LOAD( "eb09",         0x0000, 0x1000, 0x77af540e )
-	ROM_LOAD( "eb10",         0x1000, 0x1000, 0xb10073de )
-	ROM_LOAD( "eb11",         0x2000, 0x1000, 0xc7954bd1 )
-	ROM_LOAD( "eb12",         0x3000, 0x1000, 0xcd6c087b )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "eb13",         0x0000, 0x1000, 0x192f6536 )
 	ROM_LOAD( "eb14",         0x1000, 0x1000, 0xd04d0a21 )
 	ROM_LOAD( "eb15",         0x2000, 0x1000, 0x88194305 )
 
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_LOAD( "eb09",         0x0000, 0x1000, 0x77af540e )
+	ROM_LOAD( "eb10",         0x1000, 0x1000, 0xb10073de )
+	ROM_LOAD( "eb11",         0x2000, 0x1000, 0xc7954bd1 )
+	ROM_LOAD( "eb12",         0x3000, 0x1000, 0xcd6c087b )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( junglek )
+    ROM_REGIONX( 0x12000, REGION_CPU1 ) /* 64k for code */
+    ROM_LOAD( "kn21-1.bin",   0x00000, 0x1000, 0x45f55d30 )
+    ROM_LOAD( "kn22-1.bin",   0x01000, 0x1000, 0x07cc9a21 )
+    ROM_LOAD( "kn43.bin",     0x02000, 0x1000, 0xa20e5a48 )
+    ROM_LOAD( "kn24.bin",     0x03000, 0x1000, 0x19ea7f83 )
+    ROM_LOAD( "kn25.bin",     0x04000, 0x1000, 0x844365ea )
+    ROM_LOAD( "kn46.bin",     0x05000, 0x1000, 0x27a95fd5 )
+    ROM_LOAD( "kn47.bin",     0x06000, 0x1000, 0x5c3199e0 )
+    ROM_LOAD( "kn28.bin",     0x07000, 0x1000, 0x194a2d09 )
+    /* 10000-10fff space for another banked ROM (not used) */
+    ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 ) /* banked at 7000 */
+
+    ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+    ROM_LOAD( "kn37.bin",     0x0000, 0x1000, 0xdee7f5d4 )
+    ROM_LOAD( "kn38.bin",     0x1000, 0x1000, 0xbffd3d21 )
+    ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
+
+    ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+    ROM_LOAD( "kn29.bin",     0x0000, 0x1000, 0x8f83c290 )
+    ROM_LOAD( "kn30.bin",     0x1000, 0x1000, 0x89fd19f1 )
+    ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
+    ROM_LOAD( "kn52.bin",     0x3000, 0x1000, 0xbcbac1a3 )
+    ROM_LOAD( "kn53.bin",     0x4000, 0x1000, 0xb946c87d )
+    ROM_LOAD( "kn34.bin",     0x5000, 0x1000, 0x320db2e1 )
+    ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
+    ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
+    ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
+ROM_END
+
+ROM_START( junglkj2 )
 	ROM_REGIONX( 0x12000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "kn41.bin",     0x00000, 0x1000, 0x7e4cd631 )
 	ROM_LOAD( "kn42.bin",     0x01000, 0x1000, 0xbade53af )
@@ -1838,7 +1870,12 @@ ROM_START( junglek )
 	/* 10000-10fff space for another banked ROM (not used) */
 	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 )	/* banked at 7000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
+	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
+	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "kn49.bin",     0x0000, 0x1000, 0xfe275213 )
 	ROM_LOAD( "kn50.bin",     0x1000, 0x1000, 0xd9f93c55 )
 	ROM_LOAD( "kn51.bin",     0x2000, 0x1000, 0x70e8fc12 )
@@ -1848,12 +1885,7 @@ ROM_START( junglek )
 	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
 	ROM_LOAD( "kn56.bin",     0x7000, 0x1000, 0x932eb667 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
-	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
-	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1870,7 +1902,12 @@ ROM_START( jungleh )
 	/* 10000-10fff space for another banked ROM (not used) */
 	ROM_LOAD( "kn60.bin",     0x11000, 0x1000, 0x1a9c0a26 )	/* banked at 7000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
+	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
+	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "kn49a",        0x0000, 0x1000, 0xb139e792 )
 	ROM_LOAD( "kn50a",        0x1000, 0x1000, 0x1046019f )
 	ROM_LOAD( "kn51a",        0x2000, 0x1000, 0xda50c8a4 )
@@ -1880,12 +1917,7 @@ ROM_START( jungleh )
 	ROM_LOAD( "kn55.bin",     0x6000, 0x1000, 0x70aef58f )
 	ROM_LOAD( "kn56a",        0x7000, 0x1000, 0x679c1101 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "kn57-1.bin",   0x0000, 0x1000, 0x62f6763a )
-	ROM_LOAD( "kn58-1.bin",   0x1000, 0x1000, 0x9ef46c7f )
-	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1901,16 +1933,16 @@ ROM_START( alpine )
 	ROM_LOAD( "rh23.054",     0x7000, 0x1000, 0x77c25acf )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "rh24.001",     0x0000, 0x1000, 0x4b1d9455 )
 	ROM_LOAD( "rh25.002",     0x1000, 0x1000, 0xbf71e278 )
 	ROM_LOAD( "rh26.003",     0x2000, 0x1000, 0x13da2a9b )
 	ROM_LOAD( "rh27.004",     0x3000, 0x1000, 0x425b52b0 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1926,16 +1958,16 @@ ROM_START( alpinea )
 	ROM_LOAD( "rh08.54",      0x7000, 0x1000, 0xe0af9cb2 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "rh24.001",     0x0000, 0x1000, 0x4b1d9455 )
 	ROM_LOAD( "rh25.002",     0x1000, 0x1000, 0xbf71e278 )
 	ROM_LOAD( "rh26.003",     0x2000, 0x1000, 0x13da2a9b )
 	ROM_LOAD( "rh12.4",       0x3000, 0x1000, 0x0ff0d1fe )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "rh13.070",     0x0000, 0x1000, 0xdcad1794 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1952,7 +1984,10 @@ ROM_START( timetunl )
 	ROM_LOAD( "un09.53",      0x10000, 0x1000, 0x771d0fb0 )	/* banked at 6000 */
 	ROM_LOAD( "un10.52",      0x11000, 0x1000, 0x8b6afad2 )	/* banked at 7000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "un19.70",      0x0000, 0x1000, 0xdbf726c6 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "un11.1",       0x0000, 0x1000, 0x3be4fed6 )
 	ROM_LOAD( "un12.2",       0x1000, 0x1000, 0x2dee1cf3 )
 	ROM_LOAD( "un13.3",       0x2000, 0x1000, 0x72b491a8 )
@@ -1962,10 +1997,7 @@ ROM_START( timetunl )
 	ROM_LOAD( "un17.7",       0x6000, 0x1000, 0xd66025b8 )
 	ROM_LOAD( "un18.8",       0x7000, 0x1000, 0xe67ff377 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "un19.70",      0x0000, 0x1000, 0xdbf726c6 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -1980,7 +2012,10 @@ ROM_START( wwestern )
 	ROM_LOAD( "ww07.bin",     0x6000, 0x1000, 0x1937cc17 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "ww08.bin",     0x0000, 0x1000, 0x041a5a1c )
 	ROM_LOAD( "ww09.bin",     0x1000, 0x1000, 0x07982ac5 )
 	ROM_LOAD( "ww10.bin",     0x2000, 0x1000, 0xf32ae203 )
@@ -1988,10 +2023,7 @@ ROM_START( wwestern )
 	ROM_LOAD( "ww12.bin",     0x4000, 0x1000, 0xbe1b563a )
 	ROM_LOAD( "ww13.bin",     0x5000, 0x1000, 0x092cd9e5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "ww17",         0x0000, 0x0100, 0x93447d2b )
 ROM_END
 
@@ -2006,7 +2038,10 @@ ROM_START( wwester1 )
 	ROM_LOAD( "ww07.bin",     0x6000, 0x1000, 0x1937cc17 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "ww08.bin",     0x0000, 0x1000, 0x041a5a1c )
 	ROM_LOAD( "ww09.bin",     0x1000, 0x1000, 0x07982ac5 )
 	ROM_LOAD( "ww10.bin",     0x2000, 0x1000, 0xf32ae203 )
@@ -2014,10 +2049,7 @@ ROM_START( wwester1 )
 	ROM_LOAD( "ww12.bin",     0x4000, 0x1000, 0xbe1b563a )
 	ROM_LOAD( "ww13.bin",     0x5000, 0x1000, 0x092cd9e5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ww14.bin",     0x0000, 0x1000, 0x23776870 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "ww17",         0x0000, 0x0100, 0x93447d2b )
 ROM_END
 
@@ -2035,7 +2067,14 @@ ROM_START( frontlin )
 	ROM_LOAD( "fl53.u53",     0x10000, 0x1000, 0x67429975 )	/* banked at 6000 */
 	ROM_LOAD( "fl52.u52",     0x11000, 0x1000, 0xcb223d34 )	/* banked at 7000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "fl70.u70",     0x0000, 0x1000, 0x15f4ed8c )
+	ROM_LOAD( "fl71.u71",     0x1000, 0x1000, 0xc3eb38e7 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "aa1.13",       0x0000, 0x0800, 0x7e78bdd3 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "fl1.u1",       0x0000, 0x1000, 0xe82c9f46 )
 	ROM_LOAD( "fl2.u2",       0x1000, 0x1000, 0x123055d3 )
 	ROM_LOAD( "fl3.u3",       0x2000, 0x1000, 0x7ea46347 )
@@ -2045,15 +2084,8 @@ ROM_START( frontlin )
 	ROM_LOAD( "fl7.u7",       0x6000, 0x1000, 0x613682a3 )
 	ROM_LOAD( "fl8.u8",       0x7000, 0x1000, 0xf73b0d5e )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "fl70.u70",     0x0000, 0x1000, 0x15f4ed8c )
-	ROM_LOAD( "fl71.u71",     0x1000, 0x1000, 0xc3eb38e7 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "aa1.13",       0x0000, 0x0800, 0x7e78bdd3 )
 ROM_END
 
 ROM_START( elevator )
@@ -2068,7 +2100,14 @@ ROM_START( elevator )
 	ROM_LOAD( "ea-ic54.bin",  0x7000, 0x1000, 0xf4647b4f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
+	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "ba3.11",       0x0000, 0x0800, 0x9ce75afc )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "ea-ic1.bin",   0x0000, 0x1000, 0xbbbb3fba )
 	ROM_LOAD( "ea-ic2.bin",   0x1000, 0x1000, 0x639cc2fd )
 	ROM_LOAD( "ea-ic3.bin",   0x2000, 0x1000, 0x61317eea )
@@ -2078,15 +2117,8 @@ ROM_START( elevator )
 	ROM_LOAD( "ea-ic7.bin",   0x6000, 0x1000, 0x839112ec )
 	ROM_LOAD( "ea-ic8.bin",   0x7000, 0x1000, 0xdb7ff692 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
-	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "ba3.11",       0x0000, 0x0800, 0x9ce75afc )
 ROM_END
 
 ROM_START( elevatob )
@@ -2102,7 +2134,11 @@ ROM_START( elevatob )
 	/* 10000-10fff space for another banked ROM (not used) */
 	ROM_LOAD( "ea52.bin",     0x11000, 0x1000, 0x44b1314a )	/* protection crack, bank switched at 7000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
+	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "ea-ic1.bin",   0x0000, 0x1000, 0xbbbb3fba )
 	ROM_LOAD( "ea-ic2.bin",   0x1000, 0x1000, 0x639cc2fd )
 	ROM_LOAD( "ea-ic3.bin",   0x2000, 0x1000, 0x61317eea )
@@ -2112,11 +2148,7 @@ ROM_START( elevatob )
 	ROM_LOAD( "ea-ic7.bin",   0x6000, 0x1000, 0x839112ec )
 	ROM_LOAD( "ea08.bin",     0x7000, 0x1000, 0x67ebf7c1 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
-	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -2132,7 +2164,15 @@ ROM_START( tinstar )
 	ROM_LOAD( "ts.54",        0x7000, 0x1000, 0xb352360f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "ts.70",        0x0000, 0x1000, 0x4771838d )
+	ROM_LOAD( "ts.71",        0x1000, 0x1000, 0x03c91332 )
+	ROM_LOAD( "ts.72",        0x2000, 0x1000, 0xbeeed8f3 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "a10-12",       0x0000, 0x0800, 0x889eefc9 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "ts.1",         0x0000, 0x1000, 0xf1160718 )
 	ROM_LOAD( "ts.2",         0x1000, 0x1000, 0x39dc6dbb )
 	ROM_LOAD( "ts.3",         0x2000, 0x1000, 0x079df429 )
@@ -2142,16 +2182,8 @@ ROM_START( tinstar )
 	ROM_LOAD( "ts.7",         0x6000, 0x1000, 0x894f6332 )
 	ROM_LOAD( "ts.8",         0x7000, 0x1000, 0x519aed19 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "ts.70",        0x0000, 0x1000, 0x4771838d )
-	ROM_LOAD( "ts.71",        0x1000, 0x1000, 0x03c91332 )
-	ROM_LOAD( "ts.72",        0x2000, 0x1000, 0xbeeed8f3 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "a10-12",       0x0000, 0x0800, 0x889eefc9 )
 ROM_END
 
 ROM_START( waterski )
@@ -2165,18 +2197,18 @@ ROM_START( waterski )
 	ROM_LOAD( "a03-07",       0x6000, 0x1000, 0x8abc7522 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "a03-13",       0x0000, 0x1000, 0x78c7d37f )
+	ROM_LOAD( "a03-14",       0x1000, 0x1000, 0x31f991ca )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "a03-08",       0x0000, 0x1000, 0x00000000 )	/* minor bit rot */
 	ROM_LOAD( "a03-09",       0x1000, 0x1000, 0x48ac912a )
 	ROM_LOAD( "a03-10",       0x2000, 0x1000, 0x00000000 )	/* corrupt! */
 	ROM_LOAD( "a03-11",       0x3000, 0x1000, 0xf06cddd6 )
 	ROM_LOAD( "a03-12",       0x4000, 0x1000, 0x27dfd8c2 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "a03-13",       0x0000, 0x1000, 0x78c7d37f )
-	ROM_LOAD( "a03-14",       0x1000, 0x1000, 0x31f991ca )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -2192,7 +2224,10 @@ ROM_START( bioatack )
 	ROM_LOAD( "aa8-08.54",    0x7000, 0x1000, 0xdec5271f )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "aa8-17.70",    0x0000, 0x1000, 0x36eb95b5 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "aa8-09.1",     0x0000, 0x1000, 0x1fee5fd6 )
 	ROM_LOAD( "aa8-10.2",     0x1000, 0x1000, 0xe0133423 )
 	ROM_LOAD( "aa8-11.3",     0x2000, 0x1000, 0x0f5715c6 )
@@ -2202,10 +2237,7 @@ ROM_START( bioatack )
 	ROM_LOAD( "aa8-15.7",     0x6000, 0x1000, 0xff5aad4b )
 	ROM_LOAD( "aa8-16.8",     0x7000, 0x1000, 0xceba4036 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "aa8-17.70",    0x0000, 0x1000, 0x36eb95b5 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -2217,21 +2249,21 @@ ROM_START( sfposeid )
 	ROM_LOAD( "a14-04.6",     0x06000, 0x2000, 0x1db4bc02 )
 	ROM_LOAD( "a14-05.7",     0x10000, 0x2000, 0x95e2f903 )	/* banked at 6000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "a14-10.70",    0x0000, 0x1000, 0xf1365f35 )
+	ROM_LOAD( "a14-11.71",    0x1000, 0x1000, 0x74a12fe2 )
+
+	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_LOAD( "a14-12",       0x0000, 0x0800, 0x091beed8 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "a14-06.4",     0x0000, 0x2000, 0x9740493b )
 	ROM_LOAD( "a14-07.5",     0x2000, 0x2000, 0x1c93de97 )
 	ROM_LOAD( "a14-08.9",     0x4000, 0x2000, 0x4367e65a )
 	ROM_LOAD( "a14-09.10",    0x6000, 0x2000, 0x677cffd5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "a14-10.70",    0x0000, 0x1000, 0xf1365f35 )
-	ROM_LOAD( "a14-11.71",    0x1000, 0x1000, 0x74a12fe2 )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
-
-	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
-	ROM_LOAD( "a14-12",       0x0000, 0x0800, 0x091beed8 )
 ROM_END
 
 ROM_START( hwrace )
@@ -2246,7 +2278,11 @@ ROM_START( hwrace )
 	ROM_LOAD( "hw_race.08",   0x7000, 0x1000, 0xbdbc1208 )
 	/* 10000-11fff space for banked ROMs (not used) */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "hw_race.17",   0x0000, 0x1000, 0xafe24f3e )
+	ROM_LOAD( "hw_race.18",   0x1000, 0x1000, 0xdbec897d )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
 	ROM_LOAD( "hw_race.09",   0x0000, 0x1000, 0x345b9b88 )
 	ROM_LOAD( "hw_race.10",   0x1000, 0x1000, 0x598a3c3e )
 	ROM_LOAD( "hw_race.11",   0x2000, 0x1000, 0x3f436a7d )
@@ -2256,11 +2292,7 @@ ROM_START( hwrace )
 	ROM_LOAD( "hw_race.15",   0x6000, 0x1000, 0xe1057eb7 )
 	ROM_LOAD( "hw_race.16",   0x7000, 0x1000, 0xf7104668 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hw_race.17",   0x0000, 0x1000, 0xafe24f3e )
-	ROM_LOAD( "hw_race.18",   0x1000, 0x1000, 0xdbec897d )
-
-	ROM_REGION(0x0100)	/* layer PROM */
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
@@ -2272,191 +2304,34 @@ ROM_START( kikstart )
 	ROM_LOAD( "a20-04",       0x06000, 0x2000, 0x1f23c5d6 )
 	ROM_LOAD( "a20-05",       0x10000, 0x2000, 0x66e100aa )	/* banked at 6000 */
 
-	ROM_REGION( 0x8000 )	/* graphic ROMs */
-	ROM_LOAD( "a20-06",       0x0000, 0x2000, 0x6582fc89 )
-	ROM_LOAD( "a20-07",       0x2000, 0x2000, 0x8c0b76d2 )
-	ROM_LOAD( "a20-08",       0x4000, 0x2000, 0x0cca7a9d )
-	ROM_LOAD( "a20-09",       0x6000, 0x2000, 0xda625ccf )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "a20-10",       0x0000, 0x1000, 0xde4352a4 )
 	ROM_LOAD( "a20-11",       0x1000, 0x1000, 0x8db12dd9 )
 	ROM_LOAD( "a20-12",       0x2000, 0x1000, 0xe7eeb933 )
 
-	ROM_REGION(0x0100)	/* layer PROM */
-	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
-
 	ROM_REGIONX( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a20-13",       0x0000, 0x0800, 0x11e23c5c )
+
+	ROM_REGIONX( 0x8000, REGION_GFX1 )	/* graphic ROMs used at runtime */
+	ROM_LOAD( "a20-06",       0x0000, 0x2000, 0x6582fc89 )
+	ROM_LOAD( "a20-07",       0x2000, 0x2000, 0x8c0b76d2 )
+	ROM_LOAD( "a20-08",       0x4000, 0x2000, 0x0cca7a9d )
+	ROM_LOAD( "a20-09",       0x6000, 0x2000, 0xda625ccf )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )	/* layer PROM */
+	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 
 
-static int junglek_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x816B],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x816B],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void junglek_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x816B],3);
-		osd_fclose(f);
-	}
-
-}
-
-static int alpine_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8082],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8082],3);
-			osd_fclose(f);
-
-			/* WE MUST ALSO COPY THE SCORE TO THE SCREEN (skip leading zeros) */
-			if (RAM[0x8084] > 0xf)
-				RAM[0xc5be]=(RAM[0x8084] >> 4);
-			if (RAM[0x8084] != 0)
-				RAM[0xc5de]=(RAM[0x8084] & 0x0f);
-			RAM[0xc5fe]=(RAM[0x8083] >> 4);
-			RAM[0xc61e]=(RAM[0x8083] & 0x0f);
-			RAM[0xc63e]=(RAM[0x8082] >> 4);
-			RAM[0xc65e]=(RAM[0x8082] & 0x0f);
-		}
-
-		return 1;
-	 }
-	 else return 0; /* we can't load the hi scores yet */
-}
-
-static void alpine_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8082],3);
-		osd_fclose(f);
-	}
-}
-
-static int frontlin_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8640],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8640],3);
-			osd_fclose(f);
-
-			/* WE MUST ALSO COPY THE SCORE TO THE SCREEN*/
-			RAM[0xc5be]=(RAM[0x8640] >> 4);
-			RAM[0xc5de]=(RAM[0x8640] & 0x0f);
-			RAM[0xc5fe]=(RAM[0x8641] >> 4);
-			RAM[0xc61e]=(RAM[0x8641] & 0x0f);
-			RAM[0xc63e]=(RAM[0x8642] >> 4);
-			RAM[0xc65e]=(RAM[0x8642] & 0x0f);
-		}
-
-		return 1;
-	 }
-	 else return 0; /* we can't load the hi scores yet */
-}
-
-static void frontlin_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8640],3);
-		osd_fclose(f);
-	}
-}
-
-static int elevator_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* wait for the high score to initialize */
-	if (memcmp(&RAM[0x8350],"\x00\x00\x01",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8350],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void elevator_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8350],3);
-		osd_fclose(f);
-	}
-}
-
-
-static void alpine_init_driver(void)
+static void init_alpine(void)
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50f, 0xd50f, alpine_protection_w);
 }
 
-static void alpinea_init_driver(void)
+static void init_alpinea(void)
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
@@ -2464,447 +2339,22 @@ static void alpinea_init_driver(void)
 }
 
 
-#define BASE_CREDITS  "Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)"
 
-struct GameDriver driver_spaceskr =
-{
-	__FILE__,
-	0,
-	"spaceskr",
-	"Space Seeker",
-	"1981",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_spaceskr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_spaceskr,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	0, 0
-};
-
-struct GameDriver driver_junglek =
-{
-	__FILE__,
-	0,
-	"junglek",
-	"Jungle King (Japan?)",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS"\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_junglek,
-	0, 0,
-	0,
-	0,
-
-	input_ports_junglek,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	junglek_hiload, junglek_hisave
-};
-
-struct GameDriver driver_jungleh =
-{
-	__FILE__,
-	&driver_junglek,
-	"jungleh",
-	"Jungle Hunt (US)",
-	"1982",
-	"Taito America Corporation",
-	BASE_CREDITS"\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_jungleh,
-	0, 0,
-	0,
-	0,
-
-	input_ports_junglek,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	junglek_hiload, junglek_hisave
-};
-
-struct GameDriver driver_alpine =
-{
-	__FILE__,
-	0,
-	"alpine",
-	"Alpine Ski (set 1)",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS"\nJohn Butler (additional code)",
-	0,
-	&machine_driver,
-	alpine_init_driver,
-
-	rom_alpine,
-	0, 0,
-	0,
-	0,
-
-	input_ports_alpine,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	alpine_hiload, alpine_hisave
-};
-
-struct GameDriver driver_alpinea =
-{
-	__FILE__,
-	&driver_alpine,
-	"alpinea",
-	"Alpine Ski (set 2)",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS"\nJohn Butler (additional code)",
-	0,
-	&machine_driver,
-	alpinea_init_driver,
-
-	rom_alpinea,
-	0, 0,
-	0,
-	0,
-
-	input_ports_alpinea,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	alpine_hiload, alpine_hisave
-};
-
-struct GameDriver driver_timetunl =
-{
-	__FILE__,
-	0,
-	"timetunl",
-	"Time Tunnel",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_timetunl,
-	0, 0,
-	0,
-	0,
-
-	input_ports_timetunl,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_wwestern =
-{
-	__FILE__,
-	0,
-	"wwestern",
-	"Wild Western (set 1)",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_wwestern,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wwestern,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_wwester1 =
-{
-	__FILE__,
-	&driver_wwestern,
-	"wwester1",
-	"Wild Western (set 2)",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_wwester1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_wwestern,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_frontlin =
-{
-	__FILE__,
-	0,
-	"frontlin",
-	"Front Line",
-	"1982",
-	"Taito Corporation",
-	BASE_CREDITS"\nMarco Cassili",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_frontlin,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frontlin,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	frontlin_hiload, frontlin_hisave
-};
-
-struct GameDriver driver_elevator =
-{
-	__FILE__,
-	0,
-	"elevator",
-	"Elevator Action",
-	"1983",
-	"Taito Corporation",
-	BASE_CREDITS"\nMarco Cassili",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_elevator,
-	0, 0,
-	0,
-	0,
-
-	input_ports_elevator,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	elevator_hiload, elevator_hisave
-};
-
-struct GameDriver driver_elevatob =
-{
-	__FILE__,
-	&driver_elevator,
-	"elevatob",
-	"Elevator Action (bootleg)",
-	"1983",
-	"bootleg",
-	BASE_CREDITS"\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_elevatob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_elevator,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	elevator_hiload, elevator_hisave
-};
-
-struct GameDriver driver_tinstar =
-{
-	__FILE__,
-	0,
-	"tinstar",
-	"The Tin Star",
-	"1983",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_tinstar,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tinstar,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_waterski =
-{
-	__FILE__,
-	0,
-	"waterski",
-	"Water Ski",
-	"1983",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_waterski,
-	0, 0,
-	0,
-	0,
-
-	input_ports_waterski,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_bioatack =
-{
-	__FILE__,
-	0,
-	"bioatack",
-	"Bio Attack",
-	"1983",
-	"Taito Corporation (Fox Video Games license)",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_bioatack,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bioatack,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_sfposeid =
-{
-	__FILE__,
-	0,
-	"sfposeid",
-	"Sea Fighter Poseidon",
-	"1984",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_sfposeid,
-	0, 0,
-	0,
-	0,
-
-	input_ports_sfposeid,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver driver_hwrace =
-{
-	__FILE__,
-	0,
-	"hwrace",
-	"High Way Race",
-	"1983",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_hwrace,
-	0, 0,
-	0,
-	0,
-
-	input_ports_hwrace,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_kikstart =
-{
-	__FILE__,
-	0,
-	"kikstart",
-	"Kick Start Wheelie King",
-	"1984",
-	"Taito Corporation",
-	BASE_CREDITS,
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_kikstart,
-	0, 0,
-	0,
-	0,
-
-	input_ports_junglek,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	0, 0
-};
-
+GAME( 1981, spaceskr, ,         nomcu, spaceskr,   ,        ROT180, "Taito Corporation", "Space Seeker" )
+GAME( 1982, junglek,  ,         nomcu, junglek,    ,        ROT0,   "Taito Corporation", "Jungle King (Japan)" )
+GAME( 1982, junglkj2, junglek,  nomcu, junglek,    ,        ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
+GAME( 1982, jungleh,  junglek,  nomcu, junglek,    ,        ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )
+GAME( 1982, alpine,   ,         nomcu, alpine,     alpine,  ROT270, "Taito Corporation", "Alpine Ski (set 1)" )
+GAME( 1982, alpinea,  alpine,   nomcu, alpinea,    alpinea, ROT270, "Taito Corporation", "Alpine Ski (set 2)" )
+GAME( 1982, timetunl, ,         nomcu, timetunl,   ,        ROT0,   "Taito Corporation", "Time Tunnel" )
+GAME( 1982, wwestern, ,         nomcu, wwestern,   ,        ROT270, "Taito Corporation", "Wild Western (set 1)" )
+GAME( 1982, wwester1, wwestern, nomcu, wwestern,   ,        ROT270, "Taito Corporation", "Wild Western (set 2)" )
+GAME( 1982, frontlin, ,         mcu,   frontlin,   ,        ROT270, "Taito Corporation", "Front Line" )
+GAME( 1983, elevator, ,         mcu,   elevator,   ,        ROT0,   "Taito Corporation", "Elevator Action" )
+GAME( 1983, elevatob, elevator, nomcu, elevator,   ,        ROT0,   "bootleg", "Elevator Action (bootleg)" )
+GAME( 1983, tinstar,  ,         mcu,   tinstar,    ,        ROT0,   "Taito Corporation", "The Tin Star" )
+GAME( 1983, waterski, ,         nomcu, waterski,   ,        ROT270, "Taito Corporation", "Water Ski" )
+GAME( 1983, bioatack, ,         nomcu, bioatack,   ,        ROT270, "Taito Corporation (Fox Video Games license)", "Bio Attack" )
+GAME( 1984, sfposeid, ,         mcu,   sfposeid,   ,        ROT0,   "Taito Corporation", "Sea Fighter Poseidon" )
+GAME( 1983, hwrace,   ,         nomcu, hwrace,     ,        ROT270, "Taito Corporation", "High Way Race" )
+GAMEX(1984, kikstart, ,         mcu,   junglek,    ,        ROT0,   "Taito Corporation", "Kick Start Wheelie King", GAME_NOT_WORKING )

@@ -446,7 +446,9 @@ static struct MachineDriver machine_driver =
 	eprom_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO_WITH_SPEECH
+	JSA_I_STEREO_WITH_SPEECH,
+
+	atarigen_nvram_handler
 };
 
 
@@ -576,6 +578,8 @@ static void eprom_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -600,16 +604,15 @@ struct GameDriver driver_eprom =
 	eprom_init,
 
 	rom_eprom,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -627,14 +630,13 @@ struct GameDriver driver_eprom2 =
 	eprom_init,
 
 	rom_eprom2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

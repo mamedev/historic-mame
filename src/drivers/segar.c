@@ -1355,7 +1355,7 @@ ROM_END
 
 
 ROM_START( sindbadm )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "epr5393.new",  0x0000, 0x2000, 0x51f2e51e )
 	ROM_LOAD( "epr5394.new",  0x2000, 0x2000, 0xd39ce2ee )
 	ROM_LOAD( "epr5395.new",  0x4000, 0x2000, 0xb1d15c82 )
@@ -1412,294 +1412,7 @@ static void pignewt_decode(void)
 	sega_security(63);
 }
 
-/***************************************************************************
-  Hi Score Routines
-***************************************************************************/
 
-static int astrob_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xCC0E],"KUV",3) == 0) &&
-		(memcmp(&RAM[0xCC16],"PS\\",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xCB3F],0xDA);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void astrob_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* Hi score memory gets corrupted by the self test */
-	if (memcmp(&RAM[0xCB3F],"\xFF\xFF\xFF\xFF",4)==0)
-		return;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xCB3F],0xDA);
-		osd_fclose(f);
-	}
-
-}
-
-static int monsterb_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-		static int firsttime = 0;
-
-		if (firsttime == 0)
-		{
-			memset(&RAM[0xC913],0xff,7);
-			firsttime = 1;
-		}
-
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xc913],"\x00\x00\x00\x00\x00\x00\x00",7) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC913],7);
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-			return 1;
-	}
-		else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void monsterb_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Hi score memory gets corrupted by the self test */
-	if (memcmp(&RAM[0xC913],"\xFF\xFF\xFF\xFF",4)==0)
-		return;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC913],7);
-		osd_fclose(f);
-	}
-
-}
-
-static int s005_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-		static int firsttime = 0;
-
-		if (firsttime == 0)
-		{
-			memset(&RAM[0xC911],0xff,8);
-			firsttime = 1;
-		}
-
-
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xC911],"\x00\x00\x00\x00\x00\x00\x00\x00",8) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC911],8);
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-				return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void s005_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* Hi score memory gets corrupted by the self test */
-	if (memcmp(&RAM[0xC911],"\xFF\xFF\xFF\xFF",4)==0)
-		return;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC911],8);
-		osd_fclose(f);
-	}
-
-}
-
-static int spaceod_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xC8F1],"\xE2\x00\x04\x03",4) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xC906],4);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void spaceod_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* Hi score memory gets corrupted by the self test */
-	if (memcmp(&RAM[0xC906],"\xFF\xFF\xFF\xFF",4)==0)
-		return;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xC906],4);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int pignewt_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x12\x54\x83",3)==0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
- 						osd_fread(f,&RAM[0xCE0C],3*30); /* Top 30 hi scores? */
-			osd_fread(f,&RAM[0xCFD2],3*10); /* Top 10 initials */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int pignewta_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x02\x90\x00",3)==0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
- 						osd_fread(f,&RAM[0xCE0C],3*30); /* Top 30 hi scores? */
-			osd_fread(f,&RAM[0xCFD2],3*10); /* Top 10 initials */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void pignewt_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Hi score memory gets corrupted by the self test */
-	if (memcmp(&RAM[0xCE0C],"\xFF\xFF\xFF\xFF",4)==0)
-		return;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xCE0C],3*30);	/* Top 30 hi scores? */
-		osd_fwrite(f,&RAM[0xCFD2],3*10);	/* Top 10 initials */
-		osd_fclose(f);
-	}
-
-}
-
-/**** Sindbad Mystery high score save - RJF (April 02, 1999) ****/
-static int sindbadm_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if memory has already been initialized */
-	if (memcmp(&RAM[0xe3a3],"\x4e\x4f\x52",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe3a0], 10*6);
-			osd_fclose(f);
-
-			/* copy the high score to ram */
-			RAM[0xc90b] = RAM[0xe3a0];
-			RAM[0xc90c] = RAM[0xe3a1];
-			RAM[0xc90d] = RAM[0xe3a2];
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void sindbadm_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe3a0], 10*6);
-		osd_fclose(f);
-	}
-
-}
-
-
-/***************************************************************************
-  Game drivers
-***************************************************************************/
 
 static struct Samplesinterface astrob_samples_interface =
 {
@@ -1716,7 +1429,7 @@ static struct CustomSound_interface astrob_custom_interface =
 	astrob_speech_sh_update
 };
 
-static struct MachineDriver astrob_machine_driver =
+static struct MachineDriver machine_driver_astrob =
 {
 	/* basic machine hardware */
 	{
@@ -1770,7 +1483,7 @@ static struct Samplesinterface spaceod_samples_interface =
 	spaceod_sample_names
 };
 
-static struct MachineDriver spaceod_machine_driver =
+static struct MachineDriver machine_driver_spaceod =
 {
 	/* basic machine hardware */
 	{
@@ -1814,7 +1527,7 @@ static struct Samplesinterface s005_samples_interface =
 	s005_sample_names
 };
 
-static struct MachineDriver s005_machine_driver =
+static struct MachineDriver machine_driver_s005 =
 {
 	/* basic machine hardware */
 	{
@@ -1871,7 +1584,7 @@ static struct CustomSound_interface monsterb_custom_interface =
 	TMS3617_sh_update
 };
 
-static struct MachineDriver monsterb_machine_driver =
+static struct MachineDriver machine_driver_monsterb =
 {
 	/* basic machine hardware */
 	{
@@ -1922,7 +1635,7 @@ static struct MachineDriver monsterb_machine_driver =
 	}
 };
 
-static struct MachineDriver pignewt_machine_driver =
+static struct MachineDriver machine_driver_pignewt =
 {
 	/* basic machine hardware */
 	{
@@ -1961,7 +1674,7 @@ static struct SN76496interface sn76496_interface =
 	{ 100, 100 }
 };
 
-static struct MachineDriver sindbadm_machine_driver =
+static struct MachineDriver machine_driver_sindbadm =
 {
 	/* basic machine hardware */
 	{
@@ -2018,20 +1731,19 @@ struct GameDriver driver_astrob =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&astrob_machine_driver,
-	0,
+	&machine_driver_astrob,
+	astrob_decode,
 
 	rom_astrob,
-	astrob_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_astrob,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	astrob_hiload, astrob_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_astrob1 =
@@ -2044,20 +1756,19 @@ struct GameDriver driver_astrob1 =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&astrob_machine_driver,
-	0,
+	&machine_driver_astrob,
+	astrob_decode,
 
 	rom_astrob1,
-	astrob_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_astrob1,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	astrob_hiload, astrob_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_005 =
@@ -2070,20 +1781,19 @@ struct GameDriver driver_005 =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&s005_machine_driver,
-	0,
+	&machine_driver_s005,
+	s005_decode,
 
 	rom_005,
-	s005_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_005,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	s005_hiload, s005_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_monsterb =
@@ -2096,20 +1806,19 @@ struct GameDriver driver_monsterb =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&monsterb_machine_driver,
-	0,
+	&machine_driver_monsterb,
+	monsterb_decode,
 
 	rom_monsterb,
-	monsterb_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_monsterb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	monsterb_hiload, monsterb_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_spaceod =
@@ -2122,20 +1831,19 @@ struct GameDriver driver_spaceod =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&spaceod_machine_driver,
-	0,
+	&machine_driver_spaceod,
+	spaceod_decode,
 
 	rom_spaceod,
-	spaceod_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_spaceod,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	spaceod_hiload, spaceod_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_pignewt =
@@ -2148,20 +1856,19 @@ struct GameDriver driver_pignewt =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&pignewt_machine_driver,
-	0,
+	&machine_driver_pignewt,
+	pignewt_decode,
 
 	rom_pignewt,
-	pignewt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pignewt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	pignewt_hiload,pignewt_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_pignewta =
@@ -2174,20 +1881,19 @@ struct GameDriver driver_pignewta =
 	"Sega",
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
-	&pignewt_machine_driver,
-	0,
+	&machine_driver_pignewt,
+	pignewt_decode,
 
 	rom_pignewta,
-	pignewt_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pignewta,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	pignewta_hiload,pignewt_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_sindbadm =
@@ -2200,17 +1906,17 @@ struct GameDriver driver_sindbadm =
 	"Sega",
 	"Mike Balfour\nNicola Salmoria",
 	0,
-	&sindbadm_machine_driver,
-	0,
+	&machine_driver_sindbadm,
+	sindbadm_decode,
 
 	rom_sindbadm,
-	0, sindbadm_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_sindbadm,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	sindbadm_hiload, sindbadm_hisave
+	ROT270,
+	0,0
 };

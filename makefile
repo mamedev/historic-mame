@@ -47,6 +47,7 @@ else
 CPUS+=GENSYNC@
 CPUS+=Z80@
 #CPUS+=Z80_VM@
+#CPUS+=Z80GB@
 CPUS+=8080@
 CPUS+=8085A@
 CPUS+=M6502@
@@ -183,6 +184,13 @@ ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z80_VM=1
 CPUOBJS += obj/cpu/z80/z80_vm.o
 DBGOBJS += obj/cpu/z80/z80dasm.o
+endif
+
+CPU=$(strip $(findstring Z80GB@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_Z80GB=1
+CPUOBJS += obj/cpu/z80gb/z80gb.o
+DBGOBJS += obj/cpu/z80gb/z80gbd.o
 endif
 
 CPU=$(strip $(findstring 8080@,$(CPUS)))
@@ -1180,6 +1188,7 @@ obj/konami.a: \
          obj/vidhrdw/88games.o obj/drivers/88games.o \
          obj/vidhrdw/gbusters.o obj/drivers/gbusters.o \
          obj/vidhrdw/crimfght.o obj/drivers/crimfght.o \
+         obj/vidhrdw/spy.o obj/drivers/spy.o \
          obj/vidhrdw/bottom9.o obj/drivers/bottom9.o \
          obj/vidhrdw/blockhl.o obj/drivers/blockhl.o \
          obj/vidhrdw/aliens.o obj/drivers/aliens.o \
@@ -1342,6 +1351,7 @@ obj/jaleco.a: \
          obj/vidhrdw/exerion.o obj/drivers/exerion.o \
          obj/vidhrdw/aeroboto.o obj/drivers/aeroboto.o \
          obj/vidhrdw/citycon.o obj/drivers/citycon.o \
+		 obj/vidhrdw/pinbo.o obj/drivers/pinbo.o \
          obj/vidhrdw/psychic5.o obj/drivers/psychic5.o \
          obj/vidhrdw/ginganin.o obj/drivers/ginganin.o \
          obj/vidhrdw/megasys1.o obj/drivers/megasys1.o \
@@ -1399,7 +1409,6 @@ obj/other.a: \
          obj/vidhrdw/meteor.o obj/drivers/meteor.o \
          obj/vidhrdw/bjtwin.o obj/drivers/bjtwin.o \
          obj/vidhrdw/aztarac.o obj/sndhrdw/aztarac.o obj/drivers/aztarac.o \
-		 obj/vidhrdw/pinbo.o obj/drivers/pinbo.o \
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1432,6 +1441,7 @@ maketree:
 	md obj\cpu
 	md obj\cpu\gensync
 	md obj\cpu\z80
+	md obj\cpu\z80gb
 	md obj\cpu\m6502
 	md obj\cpu\h6280
 	md obj\cpu\i86
@@ -1471,6 +1481,7 @@ cleandebug:
 	del obj\cpu\z80\*.oa
 	del obj\cpu\z80\*.asm
 	del obj\cpu\z80\*.exe
+	del obj\cpu\z80gb\*.o
 	del obj\cpu\m6502\*.o
 	del obj\cpu\h6280\*.o
 	del obj\cpu\i86\*.o
@@ -1502,9 +1513,7 @@ cleandebug:
 	del $(EMULATOR_EXE)
 
 cleantiny:
-	del obj\mame.o
 	del obj\driver.o
 	del obj\usrintrf.o
 	del obj\cheat.o
-	del obj\msdos\fronthlp.o
 	del obj\vidhrdw\konamiic.o

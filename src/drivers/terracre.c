@@ -330,7 +330,7 @@ int terracre_interrupt(void)
 }
 
 
-static struct MachineDriver ym3526_machine_driver =
+static struct MachineDriver machine_driver_ym3526 =
 {
 	{
 		{
@@ -376,7 +376,7 @@ static struct MachineDriver ym3526_machine_driver =
 	}
 };
 
-static struct MachineDriver ym2203_machine_driver =
+static struct MachineDriver machine_driver_ym2203 =
 {
 	{
 		{
@@ -532,41 +532,6 @@ ROM_END
 
 
 
-static int terracre_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-		if (READ_WORD(&terrac_ram[0x004a]) == 0x330e && READ_WORD(&terrac_ram[0x004c]) == 0x2635 &&
-			READ_WORD(&terrac_ram[0x0082]) == 0x320e && READ_WORD(&terrac_ram[0x0084]) == 0x3921)
-        {
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&terrac_ram[0x46],14*5);
-                        memcpy(&terrac_ram[0x8c], &terrac_ram[0x46], 4);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void terracre_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&terrac_ram[0x46],14*5);
-                osd_fclose(f);
-        }
-}
-
-
-
 struct GameDriver driver_terracre =
 {
 	__FILE__,
@@ -577,7 +542,7 @@ struct GameDriver driver_terracre =
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym3526_machine_driver,
+	&machine_driver_ym3526,
 	0,
 
 	rom_terracre,
@@ -588,9 +553,8 @@ struct GameDriver driver_terracre =
 	input_ports_terracre,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_terracrb =
@@ -603,7 +567,7 @@ struct GameDriver driver_terracrb =
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym3526_machine_driver,
+	&machine_driver_ym3526,
 	0,
 
 	rom_terracrb,
@@ -614,9 +578,8 @@ struct GameDriver driver_terracrb =
 	input_ports_terracre,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	ROT270,
+	0,0
 };
 
 /**********************************************************/
@@ -633,7 +596,7 @@ struct GameDriver driver_terracra =
 	"Nichibutsu",
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
-	&ym2203_machine_driver,
+	&machine_driver_ym2203,
 	0,
 
 	rom_terracra,
@@ -644,7 +607,6 @@ struct GameDriver driver_terracra =
 	input_ports_terracre,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	terracre_hiload, terracre_hisave
+	ROT270,
+	0,0
 };

@@ -326,53 +326,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0300],"\x00\x01\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0320],"\x00\x01\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x00d8],"\x00\x01\x00\x00",4) == 0 &&	/* high score */
-			memcmp(&RAM[0x0328],"\x00\x02\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0358],"\x00\x02\x00\x00",4) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0300],8*5+12*5);
-			RAM[0x00d8] = RAM[0x0300];
-			RAM[0x00d9] = RAM[0x0301];
-			RAM[0x00da] = RAM[0x0302];
-			RAM[0x00db] = RAM[0x0303];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0300],8*5+12*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_sonson =
 {
 	__FILE__,
@@ -394,7 +347,6 @@ struct GameDriver driver_sonson =
 	input_ports_sonson,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

@@ -611,45 +611,7 @@ ROM_START( psychic5 )
 	ROM_LOAD( "p5a",          0x00000, 0x08000, 0x50060ecd )
 ROM_END
 
-static int hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	if (memcmp(&RAM[0xfc84],"\x00\x07\x53",3) == 0)
-	{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-			osd_fread(f,&RAM[0xfd00],49);
-			osd_fclose(f);
-
-			/* Copy the high score to the work ram as well */
-
-			RAM[0xfc84] = RAM[0xfd00];
-			RAM[0xfc85] = RAM[0xfd01];
-			RAM[0xfc86] = RAM[0xfd02];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-		osd_fwrite(f,&RAM[0xfd00],49);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_psychic5 =
 {
@@ -672,6 +634,6 @@ struct GameDriver driver_psychic5 =
 	input_ports_psychic5,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };

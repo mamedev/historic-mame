@@ -2,6 +2,8 @@
 
 	Arcade Classics (Prototype)
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 
@@ -294,7 +296,7 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &molayout,  256, 16 },		/* motion objects */
+	{ REGION_GFX1, 0, &molayout,  256, 16 },		/* motion objects */
 	{ -1 } /* end of array */
 };
 
@@ -310,7 +312,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,					/* 1 chip */
 	{ 7159160 / 1024 },	/* ~7000 Hz */
-	{ 2 },       		/* memory region 2 */
+	{ REGION_SOUND1 },       		/* memory region 2 */
 	{ 100 }
 };
 
@@ -322,7 +324,7 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_arcadecl =
 {
 	/* basic machine hardware */
 	{
@@ -356,30 +358,11 @@ static struct MachineDriver machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void arcadecl_rom_decode(void)
-{
-	int i;
-
-	for (i = 0; i < memory_region_length(1); i++)
-		memory_region(1)[i] ^= 0xff;
-}
-
-
-static void sparkz_rom_decode(void)
-{
-	memset(memory_region(1), 0, memory_region_length(1));
-}
 
 
 
@@ -394,10 +377,10 @@ ROM_START( arcadecl )
 	ROM_LOAD_EVEN( "pgm0",  0x00000, 0x80000, 0xb5b93623 )
 	ROM_LOAD_ODD ( "prog1", 0x00000, 0x80000, 0xe7efef85 )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "atcl_mob",   0x00000, 0x80000, 0x0e9b3930 )
 
-	ROM_REGION( 0x80000 )	/* ADPCM data */
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "adpcm",      0x00000, 0x80000, 0x03ca7f03 )
 ROM_END
 
@@ -407,9 +390,10 @@ ROM_START( sparkz )
 	ROM_LOAD_EVEN( "sparkzpg.0", 0x00000, 0x80000, 0xa75c331c )
 	ROM_LOAD_ODD ( "sparkzpg.1", 0x00000, 0x80000, 0x1af1fc04 )
 
-	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	/* empty */
 
-	ROM_REGION( 0x80000 )	/* ADPCM data */
+	ROM_REGIONX( 0x80000, REGION_SOUND1 )	/* ADPCM data */
 	ROM_LOAD( "sparkzsn",      0x00000, 0x80000, 0x87097ce2 )
 ROM_END
 
@@ -421,15 +405,21 @@ ROM_END
  *
  *************************************/
 
-static void arcadecl_init(void)
+static void init_arcadecl(void)
 {
+	int i;
+
 	atarigen_eeprom_default = NULL;
+
+	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 
-static void sparkz_init(void)
+static void init_sparkz(void)
 {
 	atarigen_eeprom_default = NULL;
+	memset(memory_region(REGION_GFX1), 0, memory_region_length(REGION_GFX1));
 }
 
 
@@ -440,55 +430,5 @@ static void sparkz_init(void)
  *
  *************************************/
 
-struct GameDriver driver_arcadecl =
-{
-	__FILE__,
-	0,
-	"arcadecl",
-	"Arcade Classics (prototype)",
-	"1992",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	arcadecl_init,
-
-	rom_arcadecl,
-	arcadecl_rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_arcadecl,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_sparkz =
-{
-	__FILE__,
-	0,
-	"sparkz",
-	"Sparkz (prototype)",
-	"1992",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	sparkz_init,
-
-	rom_sparkz,
-	sparkz_rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_sparkz,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1992, arcadecl, , arcadecl, arcadecl, arcadecl, ROT0_16BIT, "Atari Games", "Arcade Classics (prototype)" )
+GAME( 1992, sparkz,   , arcadecl, sparkz,   sparkz,   ROT0,       "Atari Games", "Sparkz (prototype)" )

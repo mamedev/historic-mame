@@ -258,9 +258,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &zaxxon_charlayout1,  0, 32 },	/* characters */
-	{ 1, 0x1800, &zaxxon_charlayout2,  0, 32 },	/* background tiles */
-	{ 1, 0x7800, &spritelayout, 0, 32 },		/* sprites */
+	{ REGION_GFX1, 0, &zaxxon_charlayout1,  0, 32 },	/* characters */
+	{ REGION_GFX2, 0, &zaxxon_charlayout2,  0, 32 },	/* background tiles */
+	{ REGION_GFX3, 0, &spritelayout,        0, 32 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -298,7 +298,7 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_congo =
 {
 	/* basic machine hardware */
 	{
@@ -360,20 +360,27 @@ ROM_START( congo )
 	ROM_LOAD( "congo3.bin",   0x4000, 0x2000, 0x5ee1132c )
 	ROM_LOAD( "congo4.bin",   0x6000, 0x2000, 0x5332b9bf )
 
-	ROM_REGION_DISPOSE(0x13800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
+	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
+
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "congo8.bin",   0x01800, 0x2000, 0xdb99a619 )	/* background tiles */
-	ROM_LOAD( "congo9.bin",   0x03800, 0x2000, 0x93e2309e )
-	ROM_LOAD( "congo10.bin",  0x05800, 0x2000, 0xf27a9407 )
-	ROM_LOAD( "congo12.bin",  0x07800, 0x2000, 0x15e3377a )	/* sprites */
-	ROM_LOAD( "congo13.bin",  0x09800, 0x2000, 0x1d1321c8 )
-	ROM_LOAD( "congo11.bin",  0x0b800, 0x2000, 0x73e2709f )
-	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
-	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
-	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
 
-	ROM_REGION(0x8000)      /* background data */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo9.bin",   0x02000, 0x2000, 0x93e2309e )
+	ROM_LOAD( "congo10.bin",  0x04000, 0x2000, 0xf27a9407 )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo13.bin",  0x02000, 0x2000, 0x1d1321c8 )
+	ROM_LOAD( "congo11.bin",  0x04000, 0x2000, 0x73e2709f )
+	ROM_LOAD( "congo14.bin",  0x06000, 0x2000, 0xbf9169fe )
+	ROM_LOAD( "congo16.bin",  0x08000, 0x2000, 0xcb6d5775 )
+	ROM_LOAD( "congo15.bin",  0x0a000, 0x2000, 0x7b15a7a4 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemap */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
@@ -381,9 +388,6 @@ ROM_START( congo )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
-	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
 ROM_START( tiptop )
@@ -393,20 +397,27 @@ ROM_START( tiptop )
 	ROM_LOAD( "tiptop3.bin",  0x4000, 0x2000, 0x1c94250b )
 	ROM_LOAD( "tiptop4.bin",  0x6000, 0x2000, 0x577b501b )
 
-	ROM_REGION_DISPOSE(0x13800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
+	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
+
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "congo8.bin",   0x01800, 0x2000, 0xdb99a619 )	/* background tiles */
-	ROM_LOAD( "congo9.bin",   0x03800, 0x2000, 0x93e2309e )
-	ROM_LOAD( "congo10.bin",  0x05800, 0x2000, 0xf27a9407 )
-	ROM_LOAD( "congo12.bin",  0x07800, 0x2000, 0x15e3377a )	/* sprites */
-	ROM_LOAD( "congo13.bin",  0x09800, 0x2000, 0x1d1321c8 )
-	ROM_LOAD( "congo11.bin",  0x0b800, 0x2000, 0x73e2709f )
-	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
-	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
-	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
 
-	ROM_REGION(0x8000)      /* background data */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "congo8.bin",   0x00000, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo9.bin",   0x02000, 0x2000, 0x93e2309e )
+	ROM_LOAD( "congo10.bin",  0x04000, 0x2000, 0xf27a9407 )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "congo12.bin",  0x00000, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo13.bin",  0x02000, 0x2000, 0x1d1321c8 )
+	ROM_LOAD( "congo11.bin",  0x04000, 0x2000, 0x73e2709f )
+	ROM_LOAD( "congo14.bin",  0x06000, 0x2000, 0xbf9169fe )
+	ROM_LOAD( "congo16.bin",  0x08000, 0x2000, 0xcb6d5775 )
+	ROM_LOAD( "congo15.bin",  0x0a000, 0x2000, 0x7b15a7a4 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemap */
 	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
@@ -414,107 +425,9 @@ ROM_START( tiptop )
 
 	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /*64K for the sound cpu*/
-	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8030],"\x00\x89\x00",3) == 0 &&
-	    memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8020],21*6);
-			RAM[0x80bd] = RAM[0x8030];
-			RAM[0x80be] = RAM[0x8031];
-			RAM[0x80bf] = RAM[0x8032];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-	/* make sure that the high score table is still valid (entering the */
-	/* test mode corrupts it) */
-	if (memcmp(&RAM[0x8030],"\x00\x00\x00",3) != 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-		{
-			osd_fwrite(f,&RAM[0x8020],21*6);
-			osd_fclose(f);
-		}
-	}
-}
-
-
-
-struct GameDriver driver_congo =
-{
-	__FILE__,
-	0,
-	"congo",
-	"Congo Bongo",
-	"1983",
-	"Sega",
-	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_congo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_congo,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_tiptop =
-{
-	__FILE__,
-	&driver_congo,
-	"tiptop",
-	"Tip Top",
-	"1983",
-	"Sega",
-	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_tiptop,
-	0, 0,
-	0,
-	0,
-
-	input_ports_congo,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
+GAME( 1983, congo,  ,      congo, congo, , ROT90, "Sega", "Congo Bongo" )
+GAME( 1983, tiptop, congo, congo, congo, , ROT90, "Sega", "Tip Top" )

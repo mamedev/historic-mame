@@ -70,8 +70,7 @@ void atarigen_video_int_ack_w(int offset, int data);
 		atarigen_eeprom_r - read handler for EEPROM data (low byte)
 		atarigen_eeprom_upper_r - read handler for EEPROM data (high byte)
 
-		atarigen_hiload - standard hi score load routine; loads EEPROM data
-		atarigen_hisave - standard hi score save routine; saves EEPROM data
+		atarigen_nvram_handler - load/save EEPROM data
 
 --------------------------------------------------------------------------*/
 extern const UINT16 *atarigen_eeprom_default;
@@ -85,7 +84,7 @@ void atarigen_eeprom_w(int offset, int data);
 int atarigen_eeprom_r(int offset);
 int atarigen_eeprom_upper_r(int offset);
 
-int atarigen_hiload(void);
+void atarigen_nvram_handler(void *file,int read_or_write);
 void atarigen_hisave(void);
 
 
@@ -380,6 +379,7 @@ struct atarigen_pf_desc
 {
 	int tilewidth, tileheight;              /* width/height of each tile */
 	int xtiles, ytiles;						/* number of tiles in each direction */
+	int noscroll;							/* non-scrolling? */
 };
 
 struct atarigen_pf_state

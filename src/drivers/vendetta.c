@@ -48,6 +48,24 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 1000;
+	}
+}
+
 static int vendetta_eeprom_r( int offset )
 {
 	int res;
@@ -373,7 +391,9 @@ static struct MachineDriver machine_driver =
 			SOUND_K053260,
 			&k053260_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 /***************************************************************************
@@ -478,41 +498,12 @@ static void vendetta_init_machine( void )
 	/* init banks */
 	cpu_setbank( 1, &memory_region(REGION_CPU1)[0x10000] );
 	vendetta_video_banking( 0 );
-
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
 }
 
 static void gfx_untangle(void)
 {
 	konami_rom_deinterleave_2(1);
 	konami_rom_deinterleave_4(2);
-}
-
-static int eeprom_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 1000;
-
-	return 1;
-}
-
-static void eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
 }
 
 
@@ -528,18 +519,18 @@ struct GameDriver driver_vendetta =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_vendetta,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_vendett2 =
@@ -553,18 +544,18 @@ struct GameDriver driver_vendett2 =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_vendett2,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_vendettj =
@@ -578,16 +569,16 @@ struct GameDriver driver_vendettj =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_vendettj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vendetta,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
+	ROT0,
+	0,0
 };

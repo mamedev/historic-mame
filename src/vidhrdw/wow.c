@@ -262,7 +262,7 @@ void wow_pattern_board_w(int offset,int data)
 	static int dest;
 	static int length;	/* row length */
 	static int loops;	/* rows to copy - 1 */
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	switch (offset)

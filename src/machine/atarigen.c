@@ -216,8 +216,7 @@ static void scanline_interrupt_callback(int param)
 		atarigen_eeprom_w - write handler for EEPROM data (low byte)
 		atarigen_eeprom_r - read handler for EEPROM data (low byte)
 
-		atarigen_hiload - standard hi score load routine; loads EEPROM data
-		atarigen_hisave - standard hi score save routine; saves EEPROM data
+		atarigen_nvram_handler - load/save EEPROM data
 
 --------------------------------------------------------------------------*/
 
@@ -306,56 +305,31 @@ int atarigen_eeprom_upper_r(int offset)
  *
  */
 
-int atarigen_hiload(void)
+void atarigen_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-	/* first try to read from the file */
-	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread(f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose(f);
-	}
-
-	/* if that doesn't work, initialize it */
+	if (read_or_write)
+		osd_fwrite(file, atarigen_eeprom, atarigen_eeprom_size);
 	else
 	{
-		/* all 0xff's work for most games */
-		memset(atarigen_eeprom, 0xff, atarigen_eeprom_size);
-
-		/* anything else must be decompressed */
-		if (atarigen_eeprom_default)
+		if (file)
+			osd_fread(file, atarigen_eeprom, atarigen_eeprom_size);
+		else
 		{
-			if (atarigen_eeprom_default[0] == 0)
-				decompress_eeprom_byte(atarigen_eeprom_default + 1);
-			else
-				decompress_eeprom_word(atarigen_eeprom_default + 1);
+			/* all 0xff's work for most games */
+			memset(atarigen_eeprom, 0xff, atarigen_eeprom_size);
+
+			/* anything else must be decompressed */
+			if (atarigen_eeprom_default)
+			{
+				if (atarigen_eeprom_default[0] == 0)
+					decompress_eeprom_byte(atarigen_eeprom_default + 1);
+				else
+					decompress_eeprom_word(atarigen_eeprom_default + 1);
+			}
 		}
 	}
-
-	return 1;
 }
 
-
-/*
- *	Standard high score save
- *
- *	Saves the EEPROM data as a "high score".
- *
- */
-
-void atarigen_hisave(void)
-{
-	void *f;
-
-	f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite(f, atarigen_eeprom, atarigen_eeprom_size);
-		osd_fclose(f);
-	}
-}
 
 
 /*
@@ -2716,9 +2690,14 @@ static int compute_mask(int count);
 static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc)
 {
 	/* allocate the bitmap */
-	pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
-								source_desc->tileheight * source_desc->ytiles,
-								Machine->scrbitmap->depth);
+	if (!source_desc->noscroll)
+		pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
+									source_desc->tileheight * source_desc->ytiles,
+									Machine->scrbitmap->depth);
+	else
+		pf->bitmap = osd_new_bitmap(Machine->drv->screen_width,
+									Machine->drv->screen_height,
+									Machine->scrbitmap->depth);
 	if (!pf->bitmap)
 		return 1;
 

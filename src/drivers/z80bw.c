@@ -45,7 +45,7 @@ void astinvad_sh_port_4_w(int offset,int data);
 void astinvad_sh_port_5_w(int offset,int data);
 void astinvad_sh_update(void);
 
-struct Samplesinterface astinvad_samples_interface;
+extern struct Samplesinterface astinvad_samples_interface;
 
 
 static struct MemoryReadAddress astinvad_readmem[] =
@@ -124,7 +124,7 @@ INPUT_PORTS_START( astinvad )
 INPUT_PORTS_END
 
 
-static struct MachineDriver astinvad_machine_driver = /* LT */
+static struct MachineDriver machine_driver_astinvad = /* LT */
 {
 	/* basic machine hardware */
 	{
@@ -195,44 +195,6 @@ ROM_START( kamikaze )
 ROM_END
 
 
-/*****************************************************************************/
-/* Highscore save and load HSC 11/04/98										 */
-
-
-static int astinvad_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x1cff],"\x08\x20\x03",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x1fc9],19);
-            osd_fclose(f);
-        }
-
-        return 1;
-    }
-
-    else
-    return 0;  /* we can't load the hi scores yet */
-}
-
-static void astinvad_hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x1fc9],19);
-        osd_fclose(f);
-    }
-}
 
 /* LT 20-3-1998 */
 struct GameDriver driver_astinvad =
@@ -245,7 +207,7 @@ struct GameDriver driver_astinvad =
 	"Stern",
 	"Lee Taylor",
 	0,
-	&astinvad_machine_driver,
+	&machine_driver_astinvad,
 	0,
 
 	rom_astinvad,
@@ -256,9 +218,8 @@ struct GameDriver driver_astinvad =
 	input_ports_astinvad,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	astinvad_hiload,astinvad_hisave
+	ROT270,
+	0,0
 };
 
 /* LT 20 - 3 19978 */
@@ -272,7 +233,7 @@ struct GameDriver driver_kamikaze =
 	"Leijac Corporation",
 	"Lee Taylor",
 	0,
-	&astinvad_machine_driver,
+	&machine_driver_astinvad,
 	0,
 
 	rom_kamikaze,
@@ -283,7 +244,7 @@ struct GameDriver driver_kamikaze =
 	input_ports_astinvad,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0,0
 };
@@ -386,7 +347,7 @@ INPUT_PORTS_START( spaceint )
 INPUT_PORTS_END
 
 
-static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
+static struct MachineDriver machine_driver_spaceint = /* 20-12-1998 LT */
 {
 	/* basic machine hardware */
 	{
@@ -450,7 +411,7 @@ struct GameDriver driver_spaceint =
 	"Shoei",
 	"Lee Taylor",
 	0,
-	&spaceint_machine_driver,
+	&machine_driver_spaceint,
 	0,
 
 	rom_spaceint,
@@ -461,7 +422,7 @@ struct GameDriver driver_spaceint =
 	input_ports_spaceint,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS | GAME_NO_SOUND,
+	ROT0 | GAME_WRONG_COLORS | GAME_NO_SOUND,
 
 	0, 0
 };

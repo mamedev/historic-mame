@@ -37,22 +37,13 @@ static int rambank;
 
 static void cbasebal_bankswitch_w(int offset,int data)
 {
-	static int olddata=-1;
-
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* bits 0-4 select ROM bank */
-	if ((data & 0x1f) != olddata)
-	{
-		int bankaddress;
-		unsigned char *RAM = memory_region(REGION_CPU1);
-
 //if (errorlog) fprintf(errorlog,"%04x: bankswitch %02x\n",cpu_get_pc(),data);
-		bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
-
-		memcpy(ROM+0x8000, ROM+bankaddress, 0x4000);
-		memcpy(RAM+0x8000, RAM+bankaddress, 0x4000);
-		olddata = data & 0x1f;
-	}
+	bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
 
 	/* bit 5 used but unknown */
 
@@ -115,9 +106,18 @@ static struct EEPROM_interface eeprom_interface =
 	"0111"	/* erase command */
 };
 
-static void eeprom_init(void)
+
+static void nvram_handler(void *file,int read_or_write)
 {
-	EEPROM_init(&eeprom_interface);
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+			EEPROM_load(file);
+	}
 }
 
 static int eeprom_r(int offset)
@@ -144,35 +144,12 @@ static void eeprom_serial_w(int offset,int data)
 	EEPROM_write_bit(data);
 }
 
-static int eeprom_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
-
 
 
 static struct MemoryReadAddress cbasebal_readmem[] =
 {
-	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xcfff, bankedram_r },
 	{ 0xe000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
@@ -311,7 +288,7 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static struct MachineDriver cbasebal_machine_driver =
+static struct MachineDriver machine_driver_cbasebal =
 {
 	{
 		{
@@ -323,7 +300,7 @@ static struct MachineDriver cbasebal_machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	eeprom_init,
+	0,
 
 	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	cbasebal_gfxdecodeinfo,
@@ -344,13 +321,15 @@ static struct MachineDriver cbasebal_machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		},
-	}
+	},
+
+	nvram_handler
 };
 
 
 
 ROM_START( cbasebal )
-	ROM_REGIONX( 0x90000, REGION_CPU1 )
+	ROM_REGIONX( 2*0x90000, REGION_CPU1 )	/* 576k for code + 576k for decrypted opcodes */
 	ROM_LOAD( "cbj10.11j",    0x00000, 0x08000, 0xbbff0acc )
 	ROM_LOAD( "cbj07.16f",    0x10000, 0x20000, 0x8111d13f )
 	ROM_LOAD( "cbj06.14f",    0x30000, 0x20000, 0x9aaa0e37 )
@@ -373,28 +352,10 @@ ROM_START( cbasebal )
 ROM_END
 
 
-
-struct GameDriver driver_cbasebal =
+void init_cbasebal(void)
 {
-	__FILE__,
-	0,
-	"cbasebal",
-	"Capcom Baseball (Japan)",
-	"1989",
-	"Capcom",
-	"Paul Leaman",
-	0,
-	&cbasebal_machine_driver,
-	0,
+	pang_decode();
+}
 
-	rom_cbasebal,
-	0, pang_decode,
-	0,
-	0,
 
-	input_ports_cbasebal,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	eeprom_load, eeprom_save
-};
+GAME( 1989, cbasebal, , cbasebal, cbasebal, cbasebal, ROT0, "Capcom", "Capcom Baseball (Japan)" )

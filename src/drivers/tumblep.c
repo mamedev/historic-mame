@@ -340,7 +340,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver tumblepop_machine_driver =
+static struct MachineDriver machine_driver_tumblepop =
 {
 	/* basic machine hardware */
 	{
@@ -388,7 +388,7 @@ static struct MachineDriver tumblepop_machine_driver =
 	}
 };
 
-static struct MachineDriver tumblepb_machine_driver =
+static struct MachineDriver machine_driver_tumblepb =
 {
 	/* basic machine hardware */
 	{
@@ -521,18 +521,18 @@ struct GameDriver driver_tumblep =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&tumblepop_machine_driver,
-	0,
+	&machine_driver_tumblepop,
+	t_patch,
 
 	rom_tumblepop,
-	t_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -546,18 +546,18 @@ struct GameDriver driver_tumblepb =
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&tumblepb_machine_driver,
-	0,
+	&machine_driver_tumblepb,
+	t_patch,
 
 	rom_tumblepb,
-	t_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ROT0 | GAME_IMPERFECT_SOUND,
 	0, 0
 };
 
@@ -571,17 +571,17 @@ struct GameDriver driver_tumblep2 =
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&tumblepb_machine_driver,
-	0,
+	&machine_driver_tumblepb,
+	t_patch,
 
 	rom_tumblepop2,
-	t_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ROT0 | GAME_IMPERFECT_SOUND,
 	0, 0
 };

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Senjyo / Star Force
+Senjyo / Star Force / Baluba-louk
 
 This board was obviously born to run Senjyo. Four scrolling layers, gradient
 background, sprite/background priorities, and even a small bitmap for the
@@ -32,7 +32,7 @@ write:
 9e28-9e29 background #? x position ??
 9e30-9e31 background #2 & #3 x position
 9e35      background #2 & #3 y position
-d000      ?? (before access paletteram data 0x00 )
+d000      flip screen
 d002      watchdog reset?
           IN0/IN1 latch ? ( write before read IN0/IN1 )
 d004      sound command ( pio-a )
@@ -86,6 +86,7 @@ void senjyo_bg1videoram_w(int offset,int data);
 void senjyo_bg2videoram_w(int offset,int data);
 void senjyo_bg3videoram_w(int offset,int data);
 void senjyo_bgstripes_w(int offset,int data);
+void senjyo_flipscreen_w(int offset,int data);
 
 void starforc_init(void);
 void starfore_init(void);
@@ -177,6 +178,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa800, 0xaaff, senjyo_bg2videoram_w, &senjyo_bg2videoram },
 	{ 0xb000, 0xb1ff, senjyo_bg1videoram_w, &senjyo_bg1videoram },
 	{ 0xb800, 0xbbff, MWA_RAM, &senjyo_radarram },
+	{ 0xd000, 0xd000, senjyo_flipscreen_w },
 	{ 0xd004, 0xd004, z80pioA_0_p_w },
 	{ -1 }  /* end of table */
 };
@@ -252,8 +254,8 @@ INPUT_PORTS_START( senjyo )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_START	/* DSW0 */
 
+	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
@@ -334,8 +336,8 @@ INPUT_PORTS_START( starforc )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_START	/* DSW0 */
 
+	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -368,7 +370,7 @@ INPUT_PORTS_START( starforc )
 	PORT_DIPSETTING(    0x05, "100000" )
 	PORT_DIPSETTING(    0x06, "200000" )
 	PORT_DIPSETTING(    0x07, "None" )
-	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x38, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easiest" )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
@@ -376,6 +378,88 @@ INPUT_PORTS_START( starforc )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x28, "Hardest" )
 	/* 0x30 and x038 are unused */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( baluba )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+/* coin input for both must be active between 2 and 9 frames to be consistently recognized */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30000 100000 200000" )
+	PORT_DIPSETTING(    0x01, "50000 200000 500000" )
+	PORT_DIPSETTING(    0x02, "30000 100000" )
+	PORT_DIPSETTING(    0x03, "50000 200000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x05, "100000" )
+	PORT_DIPSETTING(    0x06, "200000" )
+	PORT_DIPSETTING(    0x07, "None" )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x18, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x28, "5" )
+	PORT_DIPSETTING(    0x30, "6" )
+	PORT_DIPSETTING(    0x38, "7" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -449,19 +533,7 @@ static struct GfxLayout spritelayout2 =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo senjyo_gfxdecodeinfo[] =
-{
-	{ 1, 0x00000, &charlayout,       0, 8 },	/*   0- 63 characters */
-	{ 1, 0x03000, &tilelayout_128,  64, 8 },	/*  64-127 background #1 */
-	{ 1, 0x06000, &tilelayout_128, 128, 8 },	/* 128-191 background #2 */
-	{ 1, 0x09000, &tilelayout_128, 192, 8 },	/* 192-255 background #3 */
-	{ 1, 0x0c000, &spritelayout1,  320, 8 },	/* 320-383 normal sprites */
-	{ 1, 0x0c000, &spritelayout2,  320, 8 },	/* 320-383 large sprites */
-												/* 384-399 is background */
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo starforc_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,       0, 8 },	/*   0- 63 characters */
 	{ 1, 0x03000, &tilelayout_256,  64, 8 },	/*  64-127 background #1 */
@@ -500,57 +572,52 @@ static struct CustomSound_interface custom_interface =
 
 
 
-#define MACHINE_DRV(NAME)                                                 \
-static struct MachineDriver NAME##_machine_driver =                       \
-{                                                                         \
-	{                                                                     \
-		{                                                                 \
-			CPU_Z80,                                                      \
-			4000000,	/* 4 Mhz? */                                      \
-			readmem,writemem,0,0,                                         \
-			senjyo_interrupt,1                                            \
-		},                                                                \
-		{                                                                 \
-			CPU_Z80 | CPU_AUDIO_CPU,                                      \
-			2000000,	/* 2 Mhz? */                                      \
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,  \
-			0,0, /* interrupts are made by z80 daisy chain system */      \
-			0,0,daisy_chain                                               \
-		}                                                                 \
-	},                                                                    \
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */              \
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */  \
-	senjyo_init_machine,                                                  \
-                                                                          \
-	/* video hardware */                                                  \
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },                             \
-	NAME##_gfxdecodeinfo,                                                 \
-	402, 402,                                                             \
-	0,                                                                    \
-                                                                          \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                           \
-	0,                                                                    \
-	senjyo_vh_start,                                                      \
-	senjyo_vh_stop,                                                       \
-	senjyo_vh_screenrefresh,                                              \
-                                                                          \
-	/* sound hardware */                                                  \
-	0,0,0,0,                                                              \
-	{                                                                     \
-		{                                                                 \
-			SOUND_SN76496,                                                \
-			&sn76496_interface                                            \
-		},                                                                \
-		{                                                                 \
-			SOUND_CUSTOM,                                                 \
-			&custom_interface                                             \
-		}                                                                 \
-	}                                                                     \
-}
+static struct MachineDriver machine_driver =
+{
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz? */
+			readmem,writemem,0,0,
+			senjyo_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2000000,	/* 2 Mhz? */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			0,0, /* interrupts are made by z80 daisy chain system */
+			0,0,daisy_chain
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	senjyo_init_machine,
 
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	402, 402,
+	0,
 
-MACHINE_DRV(senjyo);
-MACHINE_DRV(starforc);
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	senjyo_vh_start,
+	senjyo_vh_stop,
+	senjyo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
 
 
 /***************************************************************************
@@ -566,22 +633,24 @@ ROM_START( senjyo )
 	ROM_LOAD( "08j_03t.bin", 0x4000, 0x2000, 0xc33aedee )
 	ROM_LOAD( "08f_02t.bin", 0x6000, 0x2000, 0x0ef4db9e )
 
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "08h_08b.bin", 0x00000, 0x1000, 0x0c875994 )	/* fg */
 	ROM_LOAD( "08f_07b.bin", 0x01000, 0x1000, 0x497bea8e )
 	ROM_LOAD( "08d_06b.bin", 0x02000, 0x1000, 0x4ef69b00 )
 	ROM_LOAD( "05n_16m.bin", 0x03000, 0x1000, 0x0d3e00fb )	/* bg1 */
-	ROM_LOAD( "05k_15m.bin", 0x04000, 0x2000, 0x93442213 )
-	ROM_LOAD( "07n_18m.bin", 0x06000, 0x1000, 0xd50fced3 )	/* bg2 */
-	ROM_LOAD( "07k_17m.bin", 0x07000, 0x2000, 0x10c3a5f0 )
-	ROM_LOAD( "09n_20m.bin", 0x09000, 0x1000, 0x54cb8126 )	/* bg3 */
-	ROM_LOAD( "09k_19m.bin", 0x0a000, 0x2000, 0x373e047c )
-	ROM_LOAD( "08p_13b.bin", 0x0c000, 0x2000, 0x40127efd )	/* sprites */
-	ROM_LOAD( "08s_14b.bin", 0x0e000, 0x2000, 0x42648ffa )
-	ROM_LOAD( "08m_11b.bin", 0x10000, 0x2000, 0xccc4680b )
-	ROM_LOAD( "08n_12b.bin", 0x12000, 0x2000, 0x742fafed )
-	ROM_LOAD( "08j_09b.bin", 0x14000, 0x2000, 0x1ee63b5c )
-	ROM_LOAD( "08k_10b.bin", 0x16000, 0x2000, 0xa9f41ec9 )
+	ROM_LOAD( "05k_15m.bin", 0x05000, 0x1000, 0x93442213 )
+	ROM_CONTINUE(			 0x07000, 0x1000             )
+	ROM_LOAD( "07n_18m.bin", 0x09000, 0x1000, 0xd50fced3 )	/* bg2 */
+	ROM_LOAD( "07k_17m.bin", 0x0b000, 0x1000, 0x10c3a5f0 )
+	ROM_CONTINUE(			 0x0d000, 0x1000             )
+	ROM_LOAD( "09n_20m.bin", 0x0f000, 0x1000, 0x54cb8126 )	/* bg3 */
+	ROM_LOAD( "09k_19m.bin", 0x10000, 0x2000, 0x373e047c )
+	ROM_LOAD( "08p_13b.bin", 0x12000, 0x2000, 0x40127efd )	/* sprites */
+	ROM_LOAD( "08s_14b.bin", 0x14000, 0x2000, 0x42648ffa )
+	ROM_LOAD( "08m_11b.bin", 0x16000, 0x2000, 0xccc4680b )
+	ROM_LOAD( "08n_12b.bin", 0x18000, 0x2000, 0x742fafed )
+	ROM_LOAD( "08j_09b.bin", 0x1a000, 0x2000, 0x1ee63b5c )
+	ROM_LOAD( "08k_10b.bin", 0x1c000, 0x2000, 0xa9f41ec9 )
 
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
 	ROM_LOAD( "02h_01t.bin", 0x0000, 0x2000, 0xc1c24455 )
@@ -620,7 +689,7 @@ ROM_START( starforc )
 ROM_END
 
 ROM_START( starfore )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "starfore.005", 0x0000, 0x2000, 0x825f7ebe )
 	ROM_LOAD( "starfore.004", 0x2000, 0x2000, 0xfbcecb65 )
 	ROM_LOAD( "starfore.003", 0x4000, 0x2000, 0x9f8013b9 )
@@ -679,78 +748,41 @@ ROM_START( megaforc )
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
 ROM_END
 
+ROM_START( baluba )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "0",   		  0x0000, 0x4000, 0x0e2ebe32 )
+	ROM_LOAD( "1",   		  0x4000, 0x4000, 0xcde97076 )
+
+	ROM_REGION_DISPOSE(0x1e000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "15",   		  0x00000, 0x1000, 0x3dda0d84 )	/* fg */
+	ROM_LOAD( "16",   		  0x01000, 0x1000, 0x3ebc79d8 )
+	ROM_LOAD( "17",   		  0x02000, 0x1000, 0xc4430deb )
+	ROM_LOAD( "9",  		  0x03000, 0x2000, 0x90f88c43 )	/* bg1 */
+	ROM_LOAD( "10",  		  0x05000, 0x2000, 0xab117070 )
+	ROM_LOAD( "11",  		  0x07000, 0x2000, 0xe13b44b0 )
+	ROM_LOAD( "12", 		  0x09000, 0x2000, 0xa6541c8d )	/* bg2 */
+	ROM_LOAD( "13", 		  0x0b000, 0x2000, 0xafccdd18 )
+	ROM_LOAD( "14", 		  0x0d000, 0x2000, 0x69542e65 )
+	ROM_LOAD( "8",  		  0x0f000, 0x1000, 0x31e97ef9 )	/* bg3 */
+	ROM_LOAD( "7",  		  0x10000, 0x1000, 0x5915c5e2 )
+	ROM_LOAD( "6",  		  0x11000, 0x1000, 0xad6881da )
+	ROM_LOAD( "5",  		  0x12000, 0x4000, 0x3b6b6e96 )	/* sprites */
+	ROM_LOAD( "4",  		  0x16000, 0x4000, 0xdd954124 )
+	ROM_LOAD( "3",  		  0x1a000, 0x4000, 0x7ac24983 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for sound board */
+	ROM_LOAD( "2",   		  0x0000, 0x2000, 0x441fbc64 )
+
+	ROM_REGION(0x0020)     /* PROMs */
+    ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
+ROM_END
 
 
-static int starforc_hiload(void)
+
+static void starfore_decode(void)
 {
-        unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-        if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
-        memcmp(&RAM[0x9181],"\x18",1) == 0 &&
-        memcmp(&RAM[0x91a1],"\x18",1) == 0 &&
-        memcmp(&RAM[0x91c1],"\x21",1) == 0 &&
-        memcmp(&RAM[0x91e1],"\x18",1) == 0 &&
-        memcmp(&RAM[0x9201],"\x1d",1) == 0)
-
-        {
-                void *f;
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        int p,temp;
-
-                        osd_fread(f,&RAM[0x8038],112);
-                        RAM[0x8348] = RAM[0x803d];
-                        RAM[0x8349] = RAM[0x803c];
-                        RAM[0x834a] = RAM[0x803b];
-                        RAM[0x834b] = RAM[0x803a];
-
-                        for (p=0;p<4;p++)
-                           {
-                            temp=0x18+(RAM[0x8348+p]%16);
-                            if (temp>=0x20) temp++;
-                            RAM[0x9181+(p*0x40)]=temp;
-                            temp=0x18+(RAM[0x8348+p]/16);
-                            if (temp>=0x20) temp++;
-                            RAM[0x91A1+(p*0x40)]=temp;
-                            }
-
-                        for (p=0;p<8;p++ )
-                        {
-                                if (RAM[0x9261-(p*0x20)]==0x18) RAM[0x9261-(p*0x20)]=0x23;
-                                else break;
-                        }
-
-                        osd_fclose(f);
-                }
-
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-
-}
-
-static void starforc_hisave(void)
-{
-        void *f;
-        int i;
-        unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-        /* Bug to solve the problem about resetting in the hi-score screen */
-        for (i = 0x8039; i < 0x80a0; i+=0x0b)
-                        if (RAM[i] == 0x02) RAM[i] = 0x01;
-
-        if ((RAM[0x8038] != 0) &&
-            ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0))
-
-
-        {
-                osd_fwrite(f,&RAM[0x8038],112);
-
-                osd_fclose(f);
-        }
+	starfore_init();
+	suprloco_decode();
 }
 
 
@@ -765,7 +797,7 @@ struct GameDriver driver_senjyo =
 	"Tehkan",
 	"Mirko Buffoni\nNicola Salmoria\n",
 	0,
-	&senjyo_machine_driver,
+	&machine_driver,
 	senjyo_init,
 
 	rom_senjyo,
@@ -776,7 +808,7 @@ struct GameDriver driver_senjyo =
 	input_ports_senjyo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -791,7 +823,7 @@ struct GameDriver driver_starforc =
 	"Tehkan",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&starforc_machine_driver,
+	&machine_driver,
 	starforc_init,
 
 	rom_starforc,
@@ -802,9 +834,9 @@ struct GameDriver driver_starforc =
 	input_ports_starforc,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
-	starforc_hiload, starforc_hisave
+	0,0
 };
 
 struct GameDriver driver_starfore =
@@ -817,20 +849,20 @@ struct GameDriver driver_starfore =
 	"Tehkan",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&starforc_machine_driver,
-	starfore_init,
+	&machine_driver,
+	starfore_decode,
 
 	rom_starfore,
-	0, suprloco_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_starforc,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
-	starforc_hiload, starforc_hisave
+	0,0
 };
 
 struct GameDriver driver_megaforc =
@@ -843,7 +875,7 @@ struct GameDriver driver_megaforc =
 	"Tehkan (Video Ware license)",
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
-	&starforc_machine_driver,
+	&machine_driver,
 	starforc_init,
 
 	rom_megaforc,
@@ -854,7 +886,33 @@ struct GameDriver driver_megaforc =
 	input_ports_starforc,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
-	starforc_hiload, starforc_hisave
+	0,0
+};
+
+struct GameDriver driver_baluba =
+{
+	__FILE__,
+	0,
+	"baluba",
+	"Baluba-louk no Densetsu",
+	"1986",
+	"Able Corp, Ltd.",
+	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&machine_driver,
+	starforc_init,
+
+	rom_baluba,
+	0, 0,
+	0,
+	0,
+
+	input_ports_baluba,
+
+	0, 0, 0,
+	ROT90,
+
+	0, 0
 };

@@ -10,9 +10,6 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-#define ZOOMROM_MEM_REGION 3
 
 unsigned char ajax_priority;
 static int layer_colorbase[3],sprite_colorbase,zoom_colorbase;
@@ -75,14 +72,14 @@ int ajax_vh_start( void )
 	layer_colorbase[2] = 32;
 	sprite_colorbase = 16;
 	zoom_colorbase = 6;	/* == 48 since it's 7-bit graphics */
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;
 	}
-	if (K051316_vh_start_0(ZOOMROM_MEM_REGION,7,zoom_callback))
+	if (K051316_vh_start_0(REGION_GFX3,7,zoom_callback))
 	{
 		K052109_vh_stop();
 		K051960_vh_stop();

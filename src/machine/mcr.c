@@ -369,21 +369,6 @@ void mcr_scroll_value_w(int offset, int data)
 }
 
 
-void mcr_unknown_w(int offset, int data)
-{
-	/*  A sequence of values gets written here at startup; we don't know why.
-		However, it does give us the opportunity to tweak the IX register before
-		it's checked in Tapper and Timber, thus eliminating the need for patches
-		The values 5 is written last; we key on that, and only modify IX if it is
-		currently 0; hopefully this is 99.9999% safe :-) */
-	if (data == 5)
-	{
-		if (cpu_get_reg(Z80_IX) == 0)
-			cpu_set_reg(Z80_IX, 1);
-	}
-}
-
-
 
 /*************************************
  *
@@ -404,48 +389,20 @@ int mcr_port_04_dispatch_r(int offset)
  *
  *************************************/
 
-int mcr_hiload(void)
+void mcr_nvram_handler(void *file,int read_or_write)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *ram = memory_region(REGION_CPU1);
 
-	/* don't bother if 0 length */
-	if (mcr_hiscore_length != 0)
+
+	if (read_or_write)
+		osd_fwrite(file, &ram[mcr_hiscore_start], mcr_hiscore_length);
+	else
 	{
-		void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-
-		/* read data if we succeed */
-		if (f)
-		{
-			osd_fread(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
-			osd_fclose(f);
-		}
-
+		if (file)
+			osd_fread(file, &ram[mcr_hiscore_start], mcr_hiscore_length);
 		/* copy data if we failed */
 		else if (mcr_hiscore_init && mcr_hiscore_init_length)
-		{
-			memcpy(&RAM[mcr_hiscore_start], mcr_hiscore_init, mcr_hiscore_init_length);
-		}
-	}
-
-	/* don't bother us anymore */
-	return 1;
-}
-
-
-void mcr_hisave(void)
-{
-	/* don't bother if 0 length */
-	if (mcr_hiscore_length != 0)
-	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
-		void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-
-		/* write data if we succeed */
-		if (f)
-		{
-			osd_fwrite(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
-			osd_fclose(f);
-		}
+			memcpy(&ram[mcr_hiscore_start], mcr_hiscore_init, mcr_hiscore_init_length);
 	}
 }
 

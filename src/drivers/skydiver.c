@@ -416,6 +416,6 @@ struct GameDriver driver_skydiver =
 	input_ports_skydiver,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

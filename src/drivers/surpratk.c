@@ -342,16 +342,16 @@ struct GameDriver driver_surpratk =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_surpratk,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_surpratk,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
+    ROT0,
 	0, 0
 };

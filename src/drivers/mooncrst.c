@@ -622,7 +622,7 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static struct MachineDriver mooncrst_machine_driver =
+static struct MachineDriver machine_driver_mooncrst =
 {
 	/* basic machine hardware */
 	{
@@ -660,7 +660,7 @@ static struct MachineDriver mooncrst_machine_driver =
 };
 
 /* identical to moooncrst, only difference is writemem */
-static struct MachineDriver moonal2_machine_driver =
+static struct MachineDriver machine_driver_moonal2 =
 {
 	/* basic machine hardware */
 	{
@@ -698,7 +698,7 @@ static struct MachineDriver moonal2_machine_driver =
 };
 
 /* identical to mooncrst, only difference is vh_start */
-static struct MachineDriver moonqsr_machine_driver =
+static struct MachineDriver machine_driver_moonqsr =
 {
 	/* basic machine hardware */
 	{
@@ -749,7 +749,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver checkman_machine_driver =
+static struct MachineDriver machine_driver_checkman =
 {
 	/* basic machine hardware */
 	{
@@ -802,7 +802,7 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static struct MachineDriver kingball_machine_driver =
+static struct MachineDriver machine_driver_kingball =
 {
 	/* basic machine hardware */
 	{
@@ -1047,7 +1047,7 @@ ROM_START( eagle2 )
 ROM_END
 
 ROM_START( moonqsr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 0x20000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "mq1",          0x0000, 0x0800, 0x132c13ec )
 	ROM_LOAD( "mq2",          0x0800, 0x0800, 0xc8eb74f1 )
 	ROM_LOAD( "mq3",          0x1000, 0x0800, 0x33965a89 )
@@ -1197,21 +1197,24 @@ static unsigned char decode(int data,int addr)
 static void mooncrst_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
-		RAM[A] = decode(RAM[A],A);
+		rom[A] = decode(rom[A],A);
 }
 
 static void moonqsr_decode(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0;A < 0x10000;A++)
-		ROM[A] = decode(RAM[A],A);
+		rom[A + diff] = decode(rom[A],A);
 }
 
 static void checkman_decode(void)
@@ -1253,205 +1256,23 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 */
 	int A;
 	int data_xor=0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x2800;A++)
 	{
 		switch (A & 0x07)
 		{
-			case 0: data_xor =  (RAM[A] & 0x40) >> 6; break;
-			case 1: data_xor =  (RAM[A] & 0x20) >> 4; break;
-			case 2: data_xor = ((RAM[A] & 0x10) >> 2) | ((RAM[A] & 0x40) >> 5); break;
-			case 3: data_xor = ((RAM[A] & 0x04) << 2) | ((RAM[A] & 0x20) >> 5); break;
-			case 4: data_xor = ((RAM[A] & 0x10) << 2) | ((RAM[A] & 0x02) << 4); break;
-			case 5: data_xor = ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x04) << 3); break;
-			case 6: data_xor =  (RAM[A] & 0x01) << 2; break;
-			case 7: data_xor =  (RAM[A] & 0x02) << 3; break;
+			case 0: data_xor =  (rom[A] & 0x40) >> 6; break;
+			case 1: data_xor =  (rom[A] & 0x20) >> 4; break;
+			case 2: data_xor = ((rom[A] & 0x10) >> 2) | ((rom[A] & 0x40) >> 5); break;
+			case 3: data_xor = ((rom[A] & 0x04) << 2) | ((rom[A] & 0x20) >> 5); break;
+			case 4: data_xor = ((rom[A] & 0x10) << 2) | ((rom[A] & 0x02) << 4); break;
+			case 5: data_xor = ((rom[A] & 0x01) << 6) | ((rom[A] & 0x04) << 3); break;
+			case 6: data_xor =  (rom[A] & 0x01) << 2; break;
+			case 7: data_xor =  (rom[A] & 0x02) << 3; break;
 		}
-		RAM[A] ^= data_xor;
-	}
-}
-
-
-
-static int mooncrst_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8042],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8042],17*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void mooncrst_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8042],17*5);
-		osd_fclose(f);
-	}
-}
-
-static int mooncrsg_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8045],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0x8051],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8045],17*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void mooncrsg_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8045],17*5);
-		osd_fclose(f);
-	}
-}
-
-static int moonqsr_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0 &&
-			memcmp(&RAM[0x805a],"\x00\x50\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x804e],10*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void moonqsr_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x804e],10*5);
-		osd_fclose(f);
-	}
-}
-
-static int checkman_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* Peek into videoram to see if the opening screen is drawn */
-	if (memcmp(&RAM[0x9382],"\x10\xA0\xA1",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8020],8*9);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void checkman_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8020],8*9);
-		osd_fclose(f);
-	}
-}
-
-static int kingball_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* Peek into videoram to see if HIGH SCORE is drawn */
-	if ((RAM[0x9280] == 0x11) && (RAM[0x9160] == 0x0e))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8305],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void kingball_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8305],3);
-		osd_fclose(f);
+		rom[A] ^= data_xor;
 	}
 }
 
@@ -1467,20 +1288,19 @@ struct GameDriver driver_mooncrst =
 	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
-	0,
+	&machine_driver_mooncrst,
+	mooncrst_decode,
 
 	rom_mooncrst,
-	mooncrst_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_mooncrsg =
@@ -1493,7 +1313,7 @@ struct GameDriver driver_mooncrsg =
 	"Gremlin",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_mooncrsg,
@@ -1504,9 +1324,8 @@ struct GameDriver driver_mooncrsg =
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrsg_hiload, mooncrsg_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_smooncrs =
@@ -1519,7 +1338,7 @@ struct GameDriver driver_smooncrs =
 	"Gremlin",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_smooncrs,
@@ -1530,9 +1349,8 @@ struct GameDriver driver_smooncrs =
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_mooncrsb =
@@ -1545,7 +1363,7 @@ struct GameDriver driver_mooncrsb =
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_mooncrsb,
@@ -1556,9 +1374,8 @@ struct GameDriver driver_mooncrsb =
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_mooncrs2 =
@@ -1571,7 +1388,7 @@ struct GameDriver driver_mooncrs2 =
 	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_mooncrs2,
@@ -1582,9 +1399,8 @@ struct GameDriver driver_mooncrs2 =
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_fantazia =
@@ -1597,7 +1413,7 @@ struct GameDriver driver_fantazia =
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_fantazia,
@@ -1608,9 +1424,8 @@ struct GameDriver driver_fantazia =
 	input_ports_mooncrst,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_eagle =
@@ -1623,7 +1438,7 @@ struct GameDriver driver_eagle =
 	"Centuri",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_eagle,
@@ -1634,9 +1449,8 @@ struct GameDriver driver_eagle =
 	input_ports_eagle,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_eagle2 =
@@ -1649,7 +1463,7 @@ struct GameDriver driver_eagle2 =
 	"Centuri",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&mooncrst_machine_driver,
+	&machine_driver_mooncrst,
 	0,
 
 	rom_eagle2,
@@ -1660,9 +1474,8 @@ struct GameDriver driver_eagle2 =
 	input_ports_eagle2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mooncrst_hiload, mooncrst_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_moonqsr =
@@ -1675,20 +1488,19 @@ struct GameDriver driver_moonqsr =
 	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
 	0,
-	&moonqsr_machine_driver,
-	0,
+	&machine_driver_moonqsr,
+	moonqsr_decode,
 
 	rom_moonqsr,
-	0, moonqsr_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_moonqsr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	moonqsr_hiload, moonqsr_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_checkman =
@@ -1701,20 +1513,19 @@ struct GameDriver driver_checkman =
 	"Zilec-Zenitone",
 	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
 	0,
-	&checkman_machine_driver,
-	0,
+	&machine_driver_checkman,
+	checkman_decode,
 
 	rom_checkman,
-	checkman_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_checkman,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	checkman_hiload, checkman_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_moonal2 =
@@ -1727,7 +1538,7 @@ struct GameDriver driver_moonal2 =
 	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
-	&moonal2_machine_driver,
+	&machine_driver_moonal2,
 	0,
 
 	rom_moonal2,
@@ -1738,7 +1549,7 @@ struct GameDriver driver_moonal2 =
 	input_ports_moonal2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -1753,7 +1564,7 @@ struct GameDriver driver_moonal2b =
 	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
-	&moonal2_machine_driver,
+	&machine_driver_moonal2,
 	0,
 
 	rom_moonal2b,
@@ -1764,7 +1575,7 @@ struct GameDriver driver_moonal2b =
 	input_ports_moonal2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -1779,7 +1590,7 @@ struct GameDriver driver_kingball =
 	"Namco",
 	"Brad Oliver",
 	0,
-	&kingball_machine_driver,
+	&machine_driver_kingball,
 	0,
 
 	rom_kingball,
@@ -1790,9 +1601,8 @@ struct GameDriver driver_kingball =
 	input_ports_kingball,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kingball_hiload, kingball_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_kingbalj =
@@ -1805,7 +1615,7 @@ struct GameDriver driver_kingbalj =
 	"Namco",
 	"Brad Oliver",
 	0,
-	&kingball_machine_driver,
+	&machine_driver_kingball,
 	0,
 
 	rom_kingbalj,
@@ -1816,7 +1626,6 @@ struct GameDriver driver_kingbalj =
 	input_ports_kingball,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kingball_hiload, kingball_hisave
+	ROT90,
+	0,0
 };

@@ -1566,7 +1566,9 @@ static void alexkidd_init_machine( void ){
 	sys16_update_proc = alexkidd_update_proc;
 }
 
-static void alexkidd_sprite_decode( void ){
+static void alexkidd_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -1604,38 +1606,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( alexkidd_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_alexkidd, \
 	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine,gfx8 )
-
-static int alexkidd_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3c30]) == 0x01 &&
-		READ_WORD(&sys16_workingram[0x3c32]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3c00],0x38);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void alexkidd_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3c00],0x38);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_alexkidd =
 {
@@ -1647,15 +1619,15 @@ struct GameDriver driver_alexkidd =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&alexkidd_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_alexkidd,
+	alexkidd_sprite_decode,
 	rom_alexkidd,
-	alexkidd_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_alexkidd,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -1669,16 +1641,16 @@ struct GameDriver driver_alexkida =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&alexkidd_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_alexkidd,
+	alexkidd_sprite_decode,
 	rom_alexkidda,
-	alexkidd_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_alexkidd,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	alexkidd_hiload, alexkidd_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -1836,9 +1808,11 @@ static void aliensyn_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x20000 );
 }
 
-static void aliensyn_onetime_init_machine( void ){
+static void aliensyn_onetime_init_machine( void )
+{
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
+	aliensyn_sprite_decode();
 }
 
 /***************************************************************************/
@@ -1887,40 +1861,8 @@ static struct UPD7759_interface aliensyn_upd7759_interface =
 
 /****************************************************************************/
 
-MACHINE_DRIVER_7759( aliensyn_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_aliensyn, \
 	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, gfx1, aliensyn_upd7759_interface )
-
-static int aliensyn_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3346]) == 0x03 &&
-		READ_WORD(&sys16_workingram[0x3348]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3300],0x50);
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void aliensyn_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3300],0x50);
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_aliensyn =
 {
@@ -1932,16 +1874,16 @@ struct GameDriver driver_aliensyn =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&aliensyn_machine_driver,
+	&machine_driver_aliensyn,
 	aliensyn_onetime_init_machine,
 	rom_aliensyn,
-	aliensyn_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_aliensyn,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	aliensyn_hiload, aliensyn_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_aliensya =
@@ -1954,15 +1896,15 @@ struct GameDriver driver_aliensya =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&aliensyn_machine_driver,
+	&machine_driver_aliensyn,
 	aliensyn_onetime_init_machine,
 	rom_aliensya,
-	aliensyn_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_aliensyn,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -1976,15 +1918,15 @@ struct GameDriver driver_aliensyb =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&aliensyn_machine_driver,
+	&machine_driver_aliensyn,
 	aliensyn_onetime_init_machine,
 	rom_aliensyb,
-	aliensyn_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_aliensyn,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2136,7 +2078,9 @@ static void altbeas2_init_machine( void ){
 	sys16_update_proc = altbeast_update_proc;
 }
 
-static void altbeast_sprite_decode( void ){
+static void altbeast_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 7,0x20000 );
 }
 
@@ -2174,40 +2118,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( altbeast_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_altbeast, \
 	altbeast_readmem,altbeast_writemem,altbeast_init_machine, gfx2,upd7759_interface )
-
-static int altbeast_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3c6a]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x3c6c]) == 0x4000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3c00],0x74);
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void altbeast_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3c00],0x74);
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_altbeast =
 {
@@ -2219,19 +2131,19 @@ struct GameDriver driver_altbeast =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&altbeast_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_altbeast,
+	altbeast_sprite_decode,
 	rom_altbeast,
-	altbeast_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_altbeast,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	altbeast_hiload, altbeast_hisave
+	ROT0,
+	0,0
 };
 
-MACHINE_DRIVER_7759( altbeas2_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_altbeas2, \
 	altbeast_readmem,altbeast_writemem,altbeas2_init_machine, gfx2,upd7759_interface )
 
 struct GameDriver driver_altbeas2 =
@@ -2244,16 +2156,16 @@ struct GameDriver driver_altbeas2 =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&altbeas2_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_altbeas2,
+	altbeast_sprite_decode,
 	rom_altbeas2,
-	altbeast_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_altbeast,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	altbeast_hiload, altbeast_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -2476,14 +2388,18 @@ static void astormbl_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x080000 );
 }
 
-static void astormbl_onetime_init_machine( void ){
+static void astormbl_onetime_init_machine( void )
+{
 	unsigned char *RAM= memory_region(3);
+
 	sys16_onetime_init_machine();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
+
+	astormbl_sprite_decode();
 }
 
 /***************************************************************************/
@@ -2559,37 +2475,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_18( astormbl_machine_driver, \
+MACHINE_DRIVER_18( machine_driver_astormbl, \
 	astormbl_readmem,astormbl_writemem,astormbl_init_machine, gfx4 )
-
-static int astorm_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3f48]) == 0x9999)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void astorm_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_astorm =
 {
@@ -2601,15 +2488,15 @@ struct GameDriver driver_astorm =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&astormbl_machine_driver,
+	&machine_driver_astormbl,
 	astormbl_onetime_init_machine,
 	rom_astorm,
-	astormbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_astormbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2623,16 +2510,16 @@ struct GameDriver driver_astormbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&astormbl_machine_driver,
+	&machine_driver_astormbl,
 	astormbl_onetime_init_machine,
 	rom_astormbl,
-	astormbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_astormbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	astorm_hiload, astorm_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -2720,7 +2607,9 @@ static void atomicp_init_machine( void ){
 	sys16_update_proc = atomicp_update_proc;
 }
 
-static void atomicp_sprite_decode( void ){
+static void atomicp_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 }
 
 /***************************************************************************/
@@ -2815,7 +2704,7 @@ static struct YM2413interface ym2413_interface=
     { 30 },
 };
 
-static struct MachineDriver atomicp_machine_driver =
+static struct MachineDriver machine_driver_atomicp =
 {
 	{
 		{
@@ -2846,36 +2735,6 @@ static struct MachineDriver atomicp_machine_driver =
 	}
 };
 
-static int atomicp_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x192e]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x1930]) == 0x1000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x1900],0x1f0);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void atomicp_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x1900],0x1f0);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_atomicp =
 {
 	__FILE__,
@@ -2886,16 +2745,16 @@ struct GameDriver driver_atomicp =
 	"Philko",
 	SYS16_CREDITS,
 	0,
-	&atomicp_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_atomicp,
+	atomicp_sprite_decode,
 	rom_atomicp,
-	atomicp_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_atomicp,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	atomicp_hiload, atomicp_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -2950,7 +2809,7 @@ ROM_START( auraila )
 // custom cpu 317-0168
 	ROM_LOAD_ODD ( "epr13468.a5", 0x000000, 0x20000, 0xce092218 )
 	ROM_LOAD_EVEN( "epr13469.a7", 0x000000, 0x20000, 0xc628b69d )
-	/* empty 0x40000 - 0x80000 */
+	/* 0x40000 - 0x80000 is empty, I will place decrypted opcodes here */
 	ROM_LOAD_ODD ( "13445", 0x080000, 0x20000, 0x28dfc3dd )
 	ROM_LOAD_EVEN( "13447", 0x080000, 0x20000, 0x70a52167 )
 
@@ -3059,17 +2918,28 @@ static void aurail_init_machine( void ){
 
 static void aurail_sprite_decode (void)
 {
+	sys16_onetime_init_machine();
 	sys16_sprite_decode (8,0x40000);
 }
 
 static void aurail_program_decode (void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	memcpy(ROM,RAM,0x40000);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = 0x40000;	/* place decrypted opcodes in a empty hole */
 
-	aurail_decode_data (RAM,RAM,0x10000);
-	aurail_decode_opcode1(ROM,ROM,0x10000);
-	aurail_decode_opcode2(ROM+0x10000,ROM+0x10000,0x10000);
+	memory_set_opcode_base(0,rom+diff);
+
+	memcpy(rom+diff,rom,0x40000);
+
+	aurail_decode_data(rom,rom,0x10000);
+	aurail_decode_opcode1(rom+diff,rom+diff,0x10000);
+	aurail_decode_opcode2(rom+diff+0x10000,rom+diff+0x10000,0x10000);
+}
+
+static void aurail_decode(void)
+{
+	aurail_sprite_decode();
+	aurail_program_decode();
 }
 
 /***************************************************************************/
@@ -3108,37 +2978,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( aurail_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_aurail, \
 	aurail_readmem,aurail_writemem,aurail_init_machine, gfx4,upd7759_interface )
-
-static int aurail_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3f00]) == 0x4155)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void aurail_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_aurail =
 {
@@ -3150,16 +2991,16 @@ struct GameDriver driver_aurail =
 	"Sega / Westone",
 	SYS16_CREDITS,
 	0,
-	&aurail_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_aurail,
+	aurail_sprite_decode,
 	rom_aurail,
-	aurail_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_aurail,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	aurail_hiload, aurail_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_auraila =
@@ -3172,16 +3013,16 @@ struct GameDriver driver_auraila =
 	"Sega / Westone",
 	SYS16_CREDITS,
 	0,
-	&aurail_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_aurail,
+	aurail_decode,
 	rom_auraila,
-	aurail_sprite_decode, aurail_program_decode,
+	0, 0,
 	0,
 	0,
 	input_ports_aurail,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	aurail_hiload, aurail_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -3359,16 +3200,24 @@ static void bayroute_init_machine( void ){
 	sys16_spritelist_end=0xc000;
 }
 
-static void bayroute_sprite_decode( void ){
+static void bayroute_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x20000 );
 }
 
-static void bayrouta_sprite_decode( void ){
+static void bayrouta_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 2,0x40000 );
 }
 
-static void bayrtbl1_sprite_decode( void ){
+static void bayrtbl1_sprite_decode( void )
+{
 	int i;
+
+
+	sys16_onetime_init_machine();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -3411,40 +3260,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( bayroute_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_bayroute, \
 	bayroute_readmem,bayroute_writemem,bayroute_init_machine, gfx1,upd7759_interface )
-
-static int bayroute_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram3[0x158]) == 0x0 &&
-		READ_WORD(&sys16_extraram3[0x15a]) == 0x1000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram3[0x100],0x70);
-			osd_fread(f,&sys16_extraram3[0x180],0x80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void bayroute_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram3[0x100],0x70);
-		osd_fwrite(f,&sys16_extraram3[0x180],0x80);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_bayroute =
 {
@@ -3456,16 +3273,16 @@ struct GameDriver driver_bayroute =
 	"Sunsoft / Sega",
 	SYS16_CREDITS,
 	0,
-	&bayroute_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_bayroute,
+	bayroute_sprite_decode,
 	rom_bayroute,
-	bayroute_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bayroute,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	bayroute_hiload, bayroute_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_bayrouta =
@@ -3478,15 +3295,15 @@ struct GameDriver driver_bayrouta =
 	"Sunsoft / Sega",
 	SYS16_CREDITS,
 	0,
-	&bayroute_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_bayroute,
+	bayrouta_sprite_decode,
 	rom_bayrouta,
-	bayrouta_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bayroute,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -3500,15 +3317,15 @@ struct GameDriver driver_bayrtbl1 =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&bayroute_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_bayroute,
+	bayrtbl1_sprite_decode,
 	rom_bayrtbl1,
-	bayrtbl1_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bayroute,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -3522,15 +3339,15 @@ struct GameDriver driver_bayrtbl2 =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&bayroute_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_bayroute,
+	bayrtbl1_sprite_decode,
 	rom_bayrtbl2,
-	bayrtbl1_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bayroute,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -3741,6 +3558,7 @@ static void bodyslam_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys16_bg1_trans=1;
 	sys16_custom_irq=bodyslam_irq_timer;
+	bodyslam_sprite_decode();
 }
 
 /***************************************************************************/
@@ -3781,38 +3599,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( bodyslam_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_bodyslam, \
 	bodyslam_readmem,bodyslam_writemem,bodyslam_init_machine, gfx8 )
-
-static int bodyslam_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3d06]) == 0x1 &&
-		READ_WORD(&sys16_workingram[0x3d08]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3cc0],0x50);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void bodyslam_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3cc0],0x50);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_bodyslam =
 {
@@ -3824,16 +3612,16 @@ struct GameDriver driver_bodyslam =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&bodyslam_machine_driver,
+	&machine_driver_bodyslam,
 	bodyslam_onetime_init_machine,
 	rom_bodyslam,
-	bodyslam_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bodyslam,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	bodyslam_hiload, bodyslam_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_dumpmtmt =
@@ -3846,16 +3634,16 @@ struct GameDriver driver_dumpmtmt =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&bodyslam_machine_driver,
+	&machine_driver_bodyslam,
 	bodyslam_onetime_init_machine,
 	rom_dumpmtmt,
-	bodyslam_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_bodyslam,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	bodyslam_hiload, bodyslam_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -3992,6 +3780,9 @@ static void dduxbl_sprite_decode (void)
 {
 	int i;
 
+
+	sys16_onetime_init_machine();
+
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(1)[i] ^= 0xff;
@@ -4033,41 +3824,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( dduxbl_machine_driver, \
+MACHINE_DRIVER( machine_driver_dduxbl, \
 	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine, gfx1)
-
-static int ddux_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3910]) == 0x1 &&
-		READ_WORD(&sys16_workingram[0x3912]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3880],0xb0);
-			osd_fread(f,&sys16_workingram[0x3a00],0x80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void ddux_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3880],0xb0);
-		osd_fwrite(f,&sys16_workingram[0x3a00],0x80);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_dduxbl =
 {
@@ -4079,16 +3837,16 @@ struct GameDriver driver_dduxbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&dduxbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_dduxbl,
+	dduxbl_sprite_decode,
 	rom_dduxbl,
-	dduxbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_dduxbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	ddux_hiload, ddux_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -4224,6 +3982,8 @@ static void eswatbl_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
+
+	eswatbl_sprite_decode();
 }
 
 /***************************************************************************/
@@ -4261,41 +4021,9 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( eswatbl_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_eswatbl, \
 	eswatbl_readmem,eswatbl_writemem,eswatbl_init_machine, gfx4,upd7759_interface )
 
-
-static int eswat_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x0c3c]) == 0x18 &&
-		READ_WORD(&sys16_workingram[0x0c3e]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x0c00],0x50);
-			osd_fread(f,&sys16_workingram[0x0000],0x80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void eswat_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x0c00],0x50);
-		osd_fwrite(f,&sys16_workingram[0x0000],0x80);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_eswat =
 {
@@ -4307,16 +4035,16 @@ struct GameDriver driver_eswat =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&eswatbl_machine_driver,
+	&machine_driver_eswatbl,
 	eswatbl_onetime_init_machine,
 	rom_eswat,
-	eswatbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_eswatbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	eswat_hiload, eswat_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_eswatbl =
@@ -4329,15 +4057,15 @@ struct GameDriver driver_eswatbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&eswatbl_machine_driver,
+	&machine_driver_eswatbl,
 	eswatbl_onetime_init_machine,
 	rom_eswatbl,
-	eswatbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_eswatbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -4463,7 +4191,9 @@ static void fantzone_init_machine( void ){
 	sys16_update_proc = fantzone_update_proc;
 }
 
-static void fantzone_sprite_decode( void ){
+static void fantzone_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 3,0x010000 );
 }
 /***************************************************************************/
@@ -4501,40 +4231,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( fantzone_machine_driver, \
+MACHINE_DRIVER( machine_driver_fantzone, \
 	fantzone_readmem,fantzone_writemem,fantzone_init_machine, gfx8 )
-
-static int fantzone_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3c30]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x3c32]) == 0x1000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3c00],0x38);
-			osd_fread(f,&sys16_workingram[0x022c],0x4);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void fantzone_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3c00],0x38);
-		osd_fwrite(f,&sys16_workingram[0x022c],0x4);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_fantzone =
 {
@@ -4546,16 +4244,16 @@ struct GameDriver driver_fantzone =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&fantzone_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_fantzone,
+	fantzone_sprite_decode,
 	rom_fantzone,
-	fantzone_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_fantzone,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	fantzone_hiload, fantzone_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -4679,12 +4377,16 @@ static void fpointbl_init_machine( void ){
 
 static void fpoint_sprite_decode (void)
 {
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 1,0x020000 );
 }
 
 static void fpointbl_sprite_decode (void)
 {
 	int i;
+
+
+	sys16_onetime_init_machine();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -4747,41 +4449,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( fpointbl_machine_driver, \
+MACHINE_DRIVER( machine_driver_fpointbl, \
 	fpointbl_readmem,fpointbl_writemem,fpointbl_init_machine, gfx1)
-
-// reset clears hi-scores
-static int fpoint_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x1c20]) == 0x4d49)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3000],0xf00);
-			osd_fread(f,&sys16_workingram[0x2c6e],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void fpoint_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3000],0xf00);
-		osd_fwrite(f,&sys16_workingram[0x2c6e],0x100);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_fpoint =
 {
@@ -4793,15 +4462,15 @@ struct GameDriver driver_fpoint =
 	"Sega",		//??
 	SYS16_CREDITS,
 	0,
-	&fpointbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_fpointbl,
+	fpoint_sprite_decode,
 	rom_fpoint,
-	fpoint_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_fpointbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -4815,16 +4484,16 @@ struct GameDriver driver_fpointbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&fpointbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_fpointbl,
+	fpointbl_sprite_decode,
 	rom_fpointbl,
-	fpointbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_fpointbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	fpoint_hiload, fpoint_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -4992,12 +4661,18 @@ static void goldnaxe_init_machine( void ){
 	sys16_update_proc = goldnaxe_update_proc;
 }
 
-static void goldnaxe_sprite_decode( void ){
+static void goldnaxe_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 3,0x80000 );
 }
 
-static void goldnabl_sprite_decode( void ){
+static void goldnabl_sprite_decode( void )
+{
 	int i;
+
+
+	sys16_onetime_init_machine();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x60000; i++)
@@ -5040,37 +4715,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( goldnaxe_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_goldnaxe, \
 	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine, gfx2,upd7759_interface )
-
-static int goldnaxe_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3f3a]) == 0xffff)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void goldnaxe_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_goldnaxe =
 {
@@ -5082,16 +4728,16 @@ struct GameDriver driver_goldnaxe =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&goldnaxe_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_goldnaxe,
+	goldnaxe_sprite_decode,
 	rom_goldnaxe,
-	goldnaxe_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_goldnaxe,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	goldnaxe_hiload, goldnaxe_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_goldnabl =
@@ -5104,15 +4750,15 @@ struct GameDriver driver_goldnabl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&goldnaxe_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_goldnaxe,
+	goldnabl_sprite_decode,
 	rom_goldnabl,
-	goldnabl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_goldnaxe,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -5307,7 +4953,7 @@ static void goldnaxa_init_machine( void ){
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( goldnaxa_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_goldnaxa, \
 	goldnaxa_readmem,goldnaxa_writemem,goldnaxa_init_machine, gfx2,upd7759_interface )
 
 struct GameDriver driver_goldnaxa =
@@ -5320,16 +4966,16 @@ struct GameDriver driver_goldnaxa =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&goldnaxa_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_goldnaxa,
+	goldnaxe_sprite_decode,
 	rom_goldnaxa,
-	goldnaxe_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_goldnaxe,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	goldnaxe_hiload, goldnaxe_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_goldnaxb =
@@ -5342,15 +4988,15 @@ struct GameDriver driver_goldnaxb =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&goldnaxa_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_goldnaxa,
+	goldnaxe_sprite_decode,
 	rom_goldnaxb,
-	goldnaxe_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_goldnaxe,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -5364,15 +5010,15 @@ struct GameDriver driver_goldnaxc =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&goldnaxa_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_goldnaxa,
+	goldnaxe_sprite_decode,
 	rom_goldnaxc,
-	goldnaxe_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_goldnaxe,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -5546,7 +5192,9 @@ static void hwchamp_init_machine( void ){
 	sys16_update_proc = hwchamp_update_proc;
 }
 
-static void hwchamp_sprite_decode( void ){
+static void hwchamp_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x040000 );
 }
 /***************************************************************************/
@@ -5597,40 +5245,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( hwchamp_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_hwchamp, \
 	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine, gfx4 ,upd7759_interface)
-
-static int hwchamp_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3478]) == 0x10 &&
-		READ_WORD(&sys16_workingram[0x347a]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3400],0x80);
-			osd_fread(f,&sys16_workingram[0x3b00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hwchamp_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3400],0x80);
-		osd_fwrite(f,&sys16_workingram[0x3b00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_hwchamp =
 {
@@ -5642,16 +5258,16 @@ struct GameDriver driver_hwchamp =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&hwchamp_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_hwchamp,
+	hwchamp_sprite_decode,
 	rom_hwchamp,
-	hwchamp_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_hwchamp,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hwchamp_hiload, hwchamp_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -5824,7 +5440,9 @@ static void mjleague_init_machine( void ){
 	sys16_update_proc = mjleague_update_proc;
 }
 
-static void mjleague_sprite_decode( void ){
+static void mjleague_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 5,0x010000 );
 }
 
@@ -5897,7 +5515,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( mjleague_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_mjleague, \
 	mjleague_readmem,mjleague_writemem,mjleague_init_machine, gfx1)
 
 struct GameDriver driver_mjleague =
@@ -5910,15 +5528,15 @@ struct GameDriver driver_mjleague =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&mjleague_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_mjleague,
+	mjleague_sprite_decode,
 	rom_mjleague,
-	mjleague_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_mjleague,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };
 
@@ -6125,6 +5743,8 @@ static void moonwlkb_onetime_init_machine( void ){
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
+
+	moonwlkb_sprite_decode();
 }
 
 /***************************************************************************/
@@ -6201,42 +5821,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_18( moonwlkb_machine_driver, \
+MACHINE_DRIVER_18( machine_driver_moonwlkb, \
 	moonwlkb_readmem,moonwlkb_writemem,moonwlkb_init_machine, gfx4 )
-
-static int moonwalk_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3c48]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x3c4a]) == 0x5000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3c00],0x50);
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void moonwalk_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3c00],0x50);
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_moonwalk =
 {
@@ -6248,15 +5834,15 @@ struct GameDriver driver_moonwalk =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&moonwlkb_machine_driver,
+	&machine_driver_moonwlkb,
 	moonwlkb_onetime_init_machine,
 	rom_moonwalk,
-	moonwlkb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_moonwlkb,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -6270,16 +5856,16 @@ struct GameDriver driver_moonwlkb =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&moonwlkb_machine_driver,
+	&machine_driver_moonwlkb,
 	moonwlkb_onetime_init_machine,
 	rom_moonwlkb,
-	moonwlkb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_moonwlkb,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	moonwalk_hiload, moonwalk_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -6392,7 +5978,9 @@ static void passshtb_init_machine( void ){
 	sys16_update_proc = passshtb_update_proc;
 }
 
-static void passshtb_sprite_decode( void ){
+static void passshtb_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 3,0x20000 );
 }
 /***************************************************************************/
@@ -6430,41 +6018,9 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( passshtb_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_passshtb, \
 	passshtb_readmem,passshtb_writemem,passshtb_init_machine, gfx1 ,upd7759_interface)
 
-
-static int passsht_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3396]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x3398]) == 0x0601)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x2e00],0x5a0);
-			osd_fread(f,&sys16_workingram[0x3800],0x80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void passsht_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x2e00],0x5a0);
-		osd_fwrite(f,&sys16_workingram[0x3800],0x80);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_passsht =
 {
@@ -6476,15 +6032,15 @@ struct GameDriver driver_passsht =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&passshtb_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_passshtb,
+	passshtb_sprite_decode,
 	rom_passsht,
-	passshtb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_passshtb,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
+	ROT270 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -6498,16 +6054,16 @@ struct GameDriver driver_passshtb =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&passshtb_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_passshtb,
+	passshtb_sprite_decode,
 	rom_passshtb,
-	passshtb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_passshtb,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	passsht_hiload, passsht_hisave
+	ROT270,
+	0,0
 };
 
 /***************************************************************************/
@@ -6628,7 +6184,9 @@ static void quartet_init_machine( void ){
 	sys16_update_proc = quartet_update_proc;
 }
 
-static void quartet_sprite_decode( void ){
+static void quartet_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -6706,39 +6264,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( quartet_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_quartet, \
 	quartet_readmem,quartet_writemem,quartet_init_machine, gfx8 )
-
-
-static int quartet_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x0710]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x0712]) == 0x0400)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x0400],0x320);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void quartet_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x0400],0x320);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_quartet =
@@ -6751,16 +6278,16 @@ struct GameDriver driver_quartet =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&quartet_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_quartet,
+	quartet_sprite_decode,
 	rom_quartet,
-	quartet_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_quartet,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	quartet_hiload, quartet_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -6873,7 +6400,9 @@ static void quartet2_init_machine( void ){
 	sys16_update_proc = quartet2_update_proc;
 }
 
-static void quartet2_sprite_decode( void ){
+static void quartet2_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 5,0x010000 );
 }
 /***************************************************************************/
@@ -6912,7 +6441,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( quartet2_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_quartet2, \
 	quartet2_readmem,quartet2_writemem,quartet2_init_machine, gfx8 )
 
 struct GameDriver driver_quartet2 =
@@ -6925,16 +6454,16 @@ struct GameDriver driver_quartet2 =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&quartet2_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_quartet2,
+	quartet2_sprite_decode,
 	rom_quartet2,
-	quartet2_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_quartet2,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	quartet_hiload, quartet_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************
@@ -7046,6 +6575,7 @@ static void riotcity_init_machine( void ){
 
 static void riotcity_sprite_decode (void)
 {
+	sys16_onetime_init_machine();
 	sys16_sprite_decode (3,0x80000);
 }
 
@@ -7084,41 +6614,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( riotcity_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_riotcity, \
 	riotcity_readmem,riotcity_writemem,riotcity_init_machine, gfx4,upd7759_interface )
-
-
-static int riotcity_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x0e38]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x0e3a]) == 0xc350)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x2d00],0x100);
-			osd_fread(f,&sys16_workingram[0x0e00],0x40);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void riotcity_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x2d00],0x100);
-		osd_fwrite(f,&sys16_workingram[0x0e00],0x40);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_riotcity =
@@ -7131,16 +6628,16 @@ struct GameDriver driver_riotcity =
 	"Sega / Westone",
 	SYS16_CREDITS,
 	0,
-	&riotcity_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_riotcity,
+	riotcity_sprite_decode,
 	rom_riotcity,
-	riotcity_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_riotcity,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	riotcity_hiload, riotcity_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -7258,6 +6755,8 @@ static void sdi_onetime_init_machine( void ){
 	sys16_onetime_init_machine();
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 	sys16_rowscroll_scroll=0xff00;
+
+	sdi_sprite_decode();
 }
 
 /***************************************************************************/
@@ -7326,39 +6825,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( sdi_machine_driver, \
+MACHINE_DRIVER( machine_driver_sdi, \
 	sdi_readmem,sdi_writemem,sdi_init_machine, gfx1)
-
-
-static int sdi_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3b18]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x3b1a]) == 0x0100)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3800],0x400);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void sdi_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3800],0x400);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_sdi =
@@ -7371,16 +6839,16 @@ struct GameDriver driver_sdi =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&sdi_machine_driver,
+	&machine_driver_sdi,
 	sdi_onetime_init_machine,
 	rom_sdi,
-	sdi_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sdi,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	sdi_hiload, sdi_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -7507,6 +6975,8 @@ static void shdancer_onetime_init_machine( void ){
 	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
+
+	shdancer_sprite_decode();
 }
 
 /***************************************************************************/
@@ -7561,38 +7031,9 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_18( shdancer_machine_driver, \
+MACHINE_DRIVER_18( machine_driver_shdancer, \
 	shdancer_readmem,shdancer_writemem,shdancer_init_machine, gfx4 )
 
-
-static int shdancer_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3400]) == 0x0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3400],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void shdancer_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3400],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_shdancer =
 {
@@ -7604,16 +7045,16 @@ struct GameDriver driver_shdancer =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shdancer_machine_driver,
+	&machine_driver_shdancer,
 	shdancer_onetime_init_machine,
 	rom_shdancer,
-	shdancer_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shdancer,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	shdancer_hiload, shdancer_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -7790,11 +7231,24 @@ static void shdancbl_sprite_decode( void ){
 	sys16_sprite_decode( 4,0x080000 );
 }
 
+static void shdancbl_onetime_init_machine( void ){
+	unsigned char *RAM= memory_region(3);
+	sys16_onetime_init_machine();
+	sys18_splittab_fg_x=&sys16_textram[0x0f80];
+	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
+	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip);
+	sys16_MaxShadowColors=0;		// doesn't seem to use transparent shadows
+
+	memcpy(RAM,&RAM[0x10000],0xa000);
+
+	shdancbl_sprite_decode();
+}
+
 /***************************************************************************/
 
 
 
-MACHINE_DRIVER_18( shdancbl_machine_driver, \
+MACHINE_DRIVER_18( machine_driver_shdancbl, \
 	shdancbl_readmem,shdancbl_writemem,shdancbl_init_machine, gfx4 )
 
 struct GameDriver driver_shdancbl =
@@ -7807,15 +7261,15 @@ struct GameDriver driver_shdancbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&shdancbl_machine_driver,
-	shdancer_onetime_init_machine,
+	&machine_driver_shdancbl,
+	shdancbl_onetime_init_machine,
 	rom_shdancbl,
-	shdancbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shdancer,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -7871,11 +7325,13 @@ static void shdancrj_onetime_init_machine( void ){
 	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancrj_skip);
 
 	memcpy(RAM,&RAM[0x10000],0xa000);
+
+	shdancer_sprite_decode();
 }
 
 /***************************************************************************/
 
-MACHINE_DRIVER_18( shdancrj_machine_driver, \
+MACHINE_DRIVER_18( machine_driver_shdancrj, \
 	shdancer_readmem,shdancer_writemem,shdancrj_init_machine, gfx4 )
 
 struct GameDriver driver_shdancrj =
@@ -7888,16 +7344,16 @@ struct GameDriver driver_shdancrj =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shdancrj_machine_driver,
+	&machine_driver_shdancrj,
 	shdancrj_onetime_init_machine,
 	rom_shdancrj,
-	shdancer_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shdancer,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	shdancer_hiload, shdancer_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -7994,7 +7450,9 @@ static void shinobi_init_machine( void ){
 	sys16_update_proc = shinobi_update_proc;
 }
 
-static void shinobi_sprite_decode( void ){
+static void shinobi_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x20000 );
 }
 
@@ -8034,39 +7492,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( shinobi_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_shinobi, \
 	shinobi_readmem,shinobi_writemem,shinobi_init_machine, gfx1,upd7759_interface )
-
-static int shinobi_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x3f46]) == 0x9999)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fread(f,&sys16_workingram[0x3c00],0x150);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void shinobi_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fwrite(f,&sys16_workingram[0x3c00],0x150);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_shinobi =
 {
@@ -8078,16 +7505,16 @@ struct GameDriver driver_shinobi =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shinobi_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_shinobi,
+	shinobi_sprite_decode,
 	rom_shinobi,
-	shinobi_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shinobi,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	shinobi_hiload, shinobi_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -8230,7 +7657,7 @@ static void shinobl_init_machine( void ){
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( shinobl_machine_driver, \
+MACHINE_DRIVER_7751( machine_driver_shinobl, \
 	shinobl_readmem,shinobl_writemem,shinobl_init_machine, gfx1)
 
 struct GameDriver driver_shinobia =
@@ -8243,15 +7670,15 @@ struct GameDriver driver_shinobia =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shinobl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_shinobl,
+	shinobi_sprite_decode,
 	rom_shinobia,
-	shinobi_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shinobi,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -8265,16 +7692,16 @@ struct GameDriver driver_shinobl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&shinobl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_shinobl,
+	shinobi_sprite_decode,
 	rom_shinobl,
-	shinobi_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shinobi,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	shinobi_hiload, shinobi_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -8379,11 +7806,15 @@ static void tetrisbl_init_machine( void ){
 	sys16_update_proc = tetrisbl_update_proc;
 }
 
-static void tetris_sprite_decode( void ){
+static void tetris_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 1,0x10000 );
 }
 
-static void tetrisbl_sprite_decode( void ){
+static void tetrisbl_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 1,0x20000 );
 }
 /***************************************************************************/
@@ -8421,40 +7852,9 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( tetrisbl_machine_driver, \
+MACHINE_DRIVER( machine_driver_tetrisbl, \
 	tetrisbl_readmem,tetrisbl_writemem,tetrisbl_init_machine, gfx1 )
 
-
-static int tetris_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x2860]) == 0x03e8)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x2800],0x80);
-			osd_fread(f,&sys16_workingram[0x1c00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void tetris_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x2800],0x80);
-		osd_fwrite(f,&sys16_workingram[0x1c00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_tetris =
 {
@@ -8466,15 +7866,15 @@ struct GameDriver driver_tetris =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&tetrisbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_tetrisbl,
+	tetris_sprite_decode,
 	rom_tetris,
-	tetris_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_tetrisbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -8488,16 +7888,16 @@ struct GameDriver driver_tetrisbl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&tetrisbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_tetrisbl,
+	tetrisbl_sprite_decode,
 	rom_tetrisbl,
-	tetrisbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_tetrisbl,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	tetris_hiload, tetris_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -8592,7 +7992,9 @@ static void timscanr_init_machine( void ){
 	sys16_update_proc = timscanr_update_proc;
 }
 
-static void timscanr_sprite_decode( void ){
+static void timscanr_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x10000 );
 }
 /***************************************************************************/
@@ -8664,40 +8066,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( timscanr_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_timscanr, \
 	timscanr_readmem,timscanr_writemem,timscanr_init_machine, gfx8,upd7759_interface )
-
-static int timscanr_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x378c]) == 0x0 &&
-		READ_WORD(&sys16_workingram[0x378e]) == 0x1000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3750],0x50);
-			osd_fread(f,&sys16_workingram[0x3f00],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void timscanr_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3750],0x50);
-		osd_fwrite(f,&sys16_workingram[0x3f00],0x100);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_timscanr =
 {
@@ -8709,16 +8079,16 @@ struct GameDriver driver_timscanr =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&timscanr_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_timscanr,
+	timscanr_sprite_decode,
 	rom_timscanr,
-	timscanr_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_timscanr,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	timscanr_hiload, timscanr_hisave
+	ROT270,
+	0,0
 };
 
 /***************************************************************************/
@@ -8848,6 +8218,7 @@ static void tturfu_init_machine( void ){
 
 static void tturf_sprite_decode (void)
 {
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x20000 );
 }
 /***************************************************************************/
@@ -8884,41 +8255,11 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( tturf_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_tturf, \
 	tturf_readmem,tturf_writemem,tturf_init_machine, gfx1,upd7759_interface )
 
-MACHINE_DRIVER_7759( tturfu_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_tturfu, \
 	tturf_readmem,tturf_writemem,tturfu_init_machine, gfx1,upd7759_interface )
-
-static int tturf_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram[0x1fc]) == 0x482e &&
-		READ_WORD(&sys16_extraram[0x1fe]) == 0x4600)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram[0x0],0x200);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void tturf_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram[0x0],0x200);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_tturf =
 {
@@ -8930,16 +8271,16 @@ struct GameDriver driver_tturf =
 	"Sega / Sunsoft",
 	SYS16_CREDITS,
 	0,
-	&tturf_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_tturf,
+	tturf_sprite_decode,
 	rom_tturf,
-	tturf_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_tturf,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	tturf_hiload, tturf_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_tturfu =
@@ -8952,16 +8293,16 @@ struct GameDriver driver_tturfu =
 	"Sega / Sunsoft",
 	SYS16_CREDITS,
 	0,
-	&tturfu_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_tturfu,
+	tturf_sprite_decode,
 	rom_tturfu,
-	tturf_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_tturf,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	tturf_hiload, tturf_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -9076,6 +8417,8 @@ static void tturfbl_sprite_decode (void)
 {
 	int i;
 
+	sys16_onetime_init_machine();
+
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(1)[i] ^= 0xff;
@@ -9084,7 +8427,7 @@ static void tturfbl_sprite_decode (void)
 }
 /***************************************************************************/
 // sound ??
-MACHINE_DRIVER_7759( tturfbl_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_tturfbl, \
 	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine, gfx1,upd7759_interface )
 
 struct GameDriver driver_tturfbl =
@@ -9097,16 +8440,16 @@ struct GameDriver driver_tturfbl =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&tturfbl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_tturfbl,
+	tturfbl_sprite_decode,
 	rom_tturfbl,
-	tturfbl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_tturf,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	tturf_hiload, tturf_hisave
+	ROT0,
+	0,0
 };
 
 /***************************************************************************/
@@ -9221,6 +8564,7 @@ static void wb3_init_machine( void ){
 
 static void wb3_sprite_decode (void)
 {
+	sys16_onetime_init_machine();
 	sys16_sprite_decode( 4,0x20000 );
 }
 
@@ -9261,39 +8605,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( wb3_machine_driver, \
+MACHINE_DRIVER( machine_driver_wb3, \
 	wb3_readmem,wb3_writemem,wb3_init_machine, gfx1 )
-
-static int wb3_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x08de]) == 0x3000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x08b8],0x28);
-			osd_fread(f,&sys16_workingram[0x1000],0x200);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void wb3_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x08b8],0x28);
-		osd_fwrite(f,&sys16_workingram[0x1000],0x200);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_wb3 =
 {
@@ -9305,16 +8618,16 @@ struct GameDriver driver_wb3 =
 	"Sega / Westone",
 	SYS16_CREDITS,
 	0,
-	&wb3_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_wb3,
+	wb3_sprite_decode,
 	rom_wb3,
-	wb3_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_wb3,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	wb3_hiload, wb3_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_wb3a =
@@ -9327,15 +8640,15 @@ struct GameDriver driver_wb3a =
 	"Sega / Westone",
 	SYS16_CREDITS,
 	0,
-	&wb3_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_wb3,
+	wb3_sprite_decode,
 	rom_wb3a,
-	wb3_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_wb3,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -9449,6 +8762,8 @@ static void wb3bl_sprite_decode (void)
 {
 	int i;
 
+	sys16_onetime_init_machine();
+
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(1)[i] ^= 0xff;
@@ -9458,7 +8773,7 @@ static void wb3bl_sprite_decode (void)
 
 /***************************************************************************/
 
-MACHINE_DRIVER( wb3bl_machine_driver, \
+MACHINE_DRIVER( machine_driver_wb3bl, \
 	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine, gfx1 )
 
 struct GameDriver driver_wb3bl =
@@ -9471,16 +8786,16 @@ struct GameDriver driver_wb3bl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&wb3bl_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_wb3bl,
+	wb3bl_sprite_decode,
 	rom_wb3bl,
-	wb3bl_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_wb3,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	wb3_hiload, wb3_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -9594,6 +8909,8 @@ static void wrestwar_onetime_init_machine( void ){
 	sys18_splittab_bg_y=&sys16_textram[0x0f40];
 	sys18_splittab_fg_y=&sys16_textram[0x0f00];
 	sys16_rowscroll_scroll=0x8000;
+
+	wrestwar_sprite_decode();
 }
 /***************************************************************************/
 
@@ -9631,40 +8948,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( wrestwar_machine_driver, \
+MACHINE_DRIVER_7759( machine_driver_wrestwar, \
 	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine, gfx2,upd7759_interface )
-
-static int wrestwar_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_workingram[0x38a0]) == 0xffff)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_workingram[0x3400],0x200);
-			osd_fread(f,&sys16_workingram[0x3800],0xa2);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void wrestwar_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_workingram[0x3400],0x200);
-		osd_fwrite(f,&sys16_workingram[0x3800],0xa2);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_wrestwar =
 {
@@ -9676,16 +8961,16 @@ struct GameDriver driver_wrestwar =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&wrestwar_machine_driver,
+	&machine_driver_wrestwar,
 	wrestwar_onetime_init_machine,
 	rom_wrestwar,
-	wrestwar_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_wrestwar,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	wrestwar_hiload, wrestwar_hisave
+	ROT270,
+	0,0
 };
 
 
@@ -9946,7 +9231,10 @@ static void hangon_init_machine( void ){
 
 
 
-static void hangon_sprite_decode( void ){
+static void hangon_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
+
 	sys16_sprite_decode( 8,0x010000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
@@ -10000,7 +9288,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static struct MachineDriver hangon_machine_driver =
+static struct MachineDriver machine_driver_hangon =
 {
 	{
 		{
@@ -10048,39 +9336,6 @@ static struct MachineDriver hangon_machine_driver =
 	}
 };
 
-static int hangon_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram[0x1c90]) == 0x2020)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram[0x1800],0x600);
-			osd_fread(f,&sys16_extraram[0x0000],0x80);
-			WRITE_WORD(&sys16_extraram[0x0050],0);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hangon_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram[0x1800],0x600);
-		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_hangon =
 {
 	__FILE__,
@@ -10091,16 +9346,16 @@ struct GameDriver driver_hangon =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&hangon_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_hangon,
+	hangon_sprite_decode,
 	rom_hangon,
-	hangon_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_hangon,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hangon_hiload, hangon_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -10385,6 +9640,8 @@ static void harrier_onetime_init_machine( void )
 	spaceharrier_patternoffsets[0x06f3] = 0; // missiles
 	spaceharrier_patternoffsets[0x0735] = 0;
 #endif
+
+	harrier_sprite_decode();
 }
 /***************************************************************************/
 
@@ -10439,7 +9696,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static struct MachineDriver harrier_machine_driver =
+static struct MachineDriver machine_driver_harrier =
 {
 	{
 		{
@@ -10487,38 +9744,6 @@ static struct MachineDriver harrier_machine_driver =
 	}
 };
 
-static int sharrier_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram[0x37da]) == 0x2020)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram[0x3400],0x600);
-			osd_fread(f,&sys16_extraram[0x0000],0x80);
-			WRITE_WORD(&sys16_extraram[0x0050],0);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void sharrier_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram[0x3400],0x600);
-		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_sharrier =
 {
 	__FILE__,
@@ -10529,16 +9754,16 @@ struct GameDriver driver_sharrier =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&harrier_machine_driver,
+	&machine_driver_harrier,
 	harrier_onetime_init_machine,
 	rom_harrier,
-	harrier_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_harrier,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	sharrier_hiload, sharrier_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -10795,7 +10020,10 @@ static void shangon_init_machine( void ){
 
 
 
-static void shangon_sprite_decode( void ){
+static void shangon_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
+
 	sys16_sprite_decode( 9,0x020000 );
 	generate_gr_screen(512,1024,0,0,4,0x8000);
 	//??
@@ -10803,7 +10031,10 @@ static void shangon_sprite_decode( void ){
 	patch_z80code( 0x1088, 0x01);
 }
 
-static void shangonb_sprite_decode( void ){
+static void shangonb_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
+
 	sys16_sprite_decode( 9,0x020000 );
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
@@ -10871,7 +10102,7 @@ PORT_START	/* Brake */
 INPUT_PORTS_END
 
 /***************************************************************************/
-static struct MachineDriver shangon_machine_driver =
+static struct MachineDriver machine_driver_shangon =
 {
 	{
 		{
@@ -10918,39 +10149,6 @@ static struct MachineDriver shangon_machine_driver =
 	}
 };
 
-static int shangon_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram5[0x15ac]) == 0x4b20)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram5[0x1400],0x200);
-			osd_fread(f,&sys16_extraram5[0x0000],0x80);
-			WRITE_WORD(&sys16_extraram[0x0050],0);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void shangon_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram5[0x1400],0x200);
-		osd_fwrite(f,&sys16_extraram5[0x0000],0x80);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_shangon =
 {
 	__FILE__,
@@ -10961,15 +10159,15 @@ struct GameDriver driver_shangon =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&shangon_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_shangon,
+	shangon_sprite_decode,
 	rom_shangon,
-	shangon_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shangon,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -10983,16 +10181,16 @@ struct GameDriver driver_shangonb =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&shangon_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_shangon,
+	shangonb_sprite_decode,
 	rom_shangonb,
-	shangonb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_shangon,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	shangon_hiload, shangon_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -11454,11 +10652,14 @@ static void outrunb_sprite_decode( void ){
 	sys16_sprite_decode2( 4,0x040000,0  );
 }
 
-static void outrun_onetime_init_machine( void ){
+static void outrun_onetime_init_machine( void )
+{
 	sys16_onetime_init_machine();
+	outrun_sprite_decode();
 }
 
-static void outrunb_onetime_init_machine( void ){
+static void outrunb_onetime_init_machine( void )
+{
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int i;
 	int odd,even,word;
@@ -11541,6 +10742,8 @@ static void outrunb_onetime_init_machine( void ){
 		if((RAM[i]&0x60) == 0x20 || (RAM[i]&0x60) == 0x40)
 			RAM[i]^=0x60;
 	}
+
+	outrunb_sprite_decode();
 }
 
 /***************************************************************************/
@@ -11666,40 +10869,8 @@ static struct MachineDriver GAMENAME = \
 	} \
 };
 
-MACHINE_DRIVER_OUTRUN(outrun_machine_driver,outrun_init_machine)
-MACHINE_DRIVER_OUTRUN(outruna_machine_driver,outruna_init_machine)
-
-static int outrun_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram5[0x0584]) == 0x2020)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram5[0x0460],0x200);
-			osd_fread(f,&sys16_extraram5[0x7800],0x100);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void outrun_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram5[0x0460],0x200);
-		osd_fwrite(f,&sys16_extraram5[0x7800],0x100);
-		osd_fclose(f);
-	}
-}
-
+MACHINE_DRIVER_OUTRUN(machine_driver_outrun,outrun_init_machine)
+MACHINE_DRIVER_OUTRUN(machine_driver_outruna,outruna_init_machine)
 
 struct GameDriver driver_outrun =
 {
@@ -11711,16 +10882,16 @@ struct GameDriver driver_outrun =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&outrun_machine_driver,
+	&machine_driver_outrun,
 	outrun_onetime_init_machine,
 	rom_outrun,
-	outrun_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_outrun,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	outrun_hiload, outrun_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -11734,16 +10905,16 @@ struct GameDriver driver_outruna =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&outruna_machine_driver,
+	&machine_driver_outruna,
 	outrun_onetime_init_machine,
 	rom_outruna,
-	outrun_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_outrun,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	outrun_hiload, outrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_outrunb =
@@ -11756,16 +10927,16 @@ struct GameDriver driver_outrunb =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&outruna_machine_driver,
+	&machine_driver_outruna,
 	outrunb_onetime_init_machine,
 	rom_outrunb,
-	outrunb_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_outrun,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	outrun_hiload, outrun_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -11848,7 +11019,7 @@ ROM_END
 
 
 ROM_START( endurobl )
-	ROM_REGIONX( 0x040000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGIONX( 0x040000+0x010000+0x040000, REGION_CPU1 ) /* 68000 code + space for RAM + space for decrypted opcodes */
 	ROM_LOAD_ODD ( "4.13h", 0x030000, 0x08000, 0x43bff873 )						// rom de-coded
 	ROM_CONTINUE (          0x000001, 0x08000 | ROMFLAG_ALTERNATE )		// data de-coded
 	ROM_LOAD_EVEN( "7.13j", 0x030000, 0x08000, 0xf1d6b4b7 )
@@ -11922,7 +11093,7 @@ ROM_START( endurobl )
 ROM_END
 
 ROM_START( endurob2 )
-	ROM_REGIONX( 0x040000, REGION_CPU1 ) /* 68000 code */
+	ROM_REGIONX( 0x040000+0x010000+0x040000, REGION_CPU1 ) /* 68000 code + space for RAM + space for decrypted opcodes */
 	ROM_LOAD_ODD ( "enduro.a04", 0x000000, 0x08000, 0xf584fbd9 )
 	ROM_LOAD_EVEN( "enduro.a07", 0x000000, 0x08000, 0x259069bc )
 	ROM_LOAD_ODD ( "enduro.a05", 0x010000, 0x08000, 0xa525dd57 )
@@ -12245,32 +11416,54 @@ static void endurob_sprite_decode( void ){
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
 
-static void endurora_opcode_decode( void ){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	memcpy(ROM+0x10000,RAM+0x10000,0x20000);
-	memcpy(ROM,RAM+0x30000,0x10000);
+static void endurora_opcode_decode( void )
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = 0x50000;	/* place decrypted opcodes in a hole after RAM */
 
+
+	memory_set_opcode_base(0,rom+diff);
+
+	memcpy(rom+diff+0x10000,rom+0x10000,0x20000);
+	memcpy(rom+diff,rom+0x30000,0x10000);
 
 	// patch code to force a reset on cpu2 when starting a new game.
 	// Undoubtly wrong, but something like it is needed for the game to work
-	WRITE_WORD(&ROM[0x1866],0x4a79);
-	WRITE_WORD(&ROM[0x1868],0x00e0);
-	WRITE_WORD(&ROM[0x186a],0x0000);
+	WRITE_WORD(&rom[0x1866 + diff],0x4a79);
+	WRITE_WORD(&rom[0x1868 + diff],0x00e0);
+	WRITE_WORD(&rom[0x186a + diff],0x0000);
 }
 
-static void endurob2_opcode_decode( void ){
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	memcpy(ROM,RAM,0x30000);
+static void endurobl_decode( void )
+{
+	endurob_sprite_decode();
+	endurora_opcode_decode();
+}
 
-	endurob2_decode_data (RAM,ROM,0x10000);
-	endurob2_decode_data2(RAM+0x10000,ROM+0x10000,0x10000);
+static void endurob2_opcode_decode( void )
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = 0x50000;	/* place decrypted opcodes in a hole after RAM */
+
+
+	memory_set_opcode_base(0,rom+diff);
+
+	memcpy(rom+diff,rom,0x30000);
+
+	endurob2_decode_data (rom,rom+diff,0x10000);
+	endurob2_decode_data2(rom+0x10000,rom+diff+0x10000,0x10000);
 
 	// patch code to force a reset on cpu2 when starting a new game.
 	// Undoubtly wrong, but something like it is needed for the game to work
-	WRITE_WORD(&ROM[0x1866],0x4a79);
-	WRITE_WORD(&ROM[0x1868],0x00e0);
-	WRITE_WORD(&ROM[0x186a],0x0000);
+	WRITE_WORD(&rom[0x1866 + diff],0x4a79);
+	WRITE_WORD(&rom[0x1868 + diff],0x00e0);
+	WRITE_WORD(&rom[0x186a + diff],0x0000);
+}
 
+static void endurob2_decode( void )
+{
+	endurob_sprite_decode();
+	endurob2_opcode_decode();
 }
 
 static void enduror_onetime_init_machine( void )
@@ -12279,7 +11472,28 @@ static void enduror_onetime_init_machine( void )
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 //	sys16_MaxShadowColors=0;
 
+	enduror_sprite_decode();
 }
+
+static void endurobl_onetime_init_machine( void )
+{
+	sys16_onetime_init_machine();
+	sys16_MaxShadowColors=NumOfShadowColors / 2;
+//	sys16_MaxShadowColors=0;
+
+	endurobl_decode();
+}
+
+static void endurob2_onetime_init_machine( void )
+{
+	sys16_onetime_init_machine();
+	sys16_MaxShadowColors=NumOfShadowColors / 2;
+//	sys16_MaxShadowColors=0;
+
+	endurob2_decode();
+}
+
+
 /***************************************************************************/
 
 INPUT_PORTS_START( enduror )
@@ -12333,7 +11547,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static struct MachineDriver enduror_machine_driver =
+static struct MachineDriver machine_driver_enduror =
 {
 	{
 		{
@@ -12380,7 +11594,7 @@ static struct MachineDriver enduror_machine_driver =
 	}
 };
 
-static struct MachineDriver enduror_b2_machine_driver =
+static struct MachineDriver machine_driver_enduror_b2 =
 {
 	{
 		{
@@ -12427,39 +11641,6 @@ static struct MachineDriver enduror_b2_machine_driver =
 	}
 };
 
-static int enduror_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&sys16_extraram[0x389e]) == 0x2020)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&sys16_extraram[0x3400],0x600);
-			osd_fread(f,&sys16_extraram[0x0000],0x80);
-			WRITE_WORD(&sys16_extraram[0x0050],0);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void enduror_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&sys16_extraram[0x3400],0x600);
-		osd_fwrite(f,&sys16_extraram[0x0000],0x80);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_enduror =
 {
 	__FILE__,
@@ -12470,15 +11651,15 @@ struct GameDriver driver_enduror =
 	"Sega",
 	SYS16_CREDITS,
 	0,
-	&enduror_machine_driver,
+	&machine_driver_enduror,
 	enduror_onetime_init_machine,
 	rom_enduror,
-	enduror_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_enduror,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12492,16 +11673,16 @@ struct GameDriver driver_endurobl =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&enduror_machine_driver,
-	enduror_onetime_init_machine,
+	&machine_driver_enduror,
+	endurobl_onetime_init_machine,
 	rom_endurobl,
-	endurob_sprite_decode, endurora_opcode_decode,
+	0, 0,
 	0,
 	0,
 	input_ports_enduror,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	enduror_hiload, enduror_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_endurob2 =
@@ -12514,16 +11695,16 @@ struct GameDriver driver_endurob2 =
 	"bootleg",
 	SYS16_CREDITS,
 	0,
-	&enduror_b2_machine_driver,
-	enduror_onetime_init_machine,
+	&machine_driver_enduror_b2,
+	endurob2_onetime_init_machine,
 	rom_endurob2,
-	endurob_sprite_decode, endurob2_opcode_decode,
+	0, 0,
 	0,
 	0,
 	input_ports_enduror,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	enduror_hiload, enduror_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -12559,7 +11740,9 @@ static void sys16_dummy_init_machine( void ){
 	sys16_obj_bank = bank;
 }
 
-static void sys16_dummy_sprite_decode( void ){
+static void sys16_dummy_sprite_decode( void )
+{
+	sys16_onetime_init_machine();
 //	sys16_sprite_decode( 4,0x040000 );
 }
 
@@ -12567,7 +11750,7 @@ INPUT_PORTS_START( sys16_dummy )
 INPUT_PORTS_END
 
 
-MACHINE_DRIVER( sys16_dummy_machine_driver, \
+MACHINE_DRIVER( machine_driver_sys16_dummy, \
 	sys16_dummy_readmem,sys16_dummy_writemem,sys16_dummy_init_machine, gfx8)
 
 
@@ -12617,15 +11800,15 @@ struct GameDriver driver_aceattac =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_aceattac,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12675,15 +11858,15 @@ struct GameDriver driver_aburner =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_aburner,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12745,15 +11928,15 @@ struct GameDriver driver_aburner2 =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_aburner2,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12789,15 +11972,15 @@ struct GameDriver driver_bloxeed =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_bloxeed,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12840,15 +12023,15 @@ struct GameDriver driver_cltchitr =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_cltchitr,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12904,15 +12087,15 @@ struct GameDriver driver_cotton =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_cotton,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -12966,15 +12149,15 @@ struct GameDriver driver_cottona =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_cottona,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13020,15 +12203,15 @@ struct GameDriver driver_ddcrew =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_ddcrew,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13076,15 +12259,15 @@ struct GameDriver driver_dunkshot =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_dunkshot,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13132,15 +12315,15 @@ struct GameDriver driver_lghost =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_lghost,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13201,15 +12384,15 @@ struct GameDriver driver_loffire =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_loffire,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13251,15 +12434,15 @@ struct GameDriver driver_mvp =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_mvp,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13326,15 +12509,15 @@ struct GameDriver driver_thndrbld =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_thndrbld,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13399,15 +12582,15 @@ struct GameDriver driver_thndrbdj =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_thndrbdj,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 /*****************************************************************************/
@@ -13478,15 +12661,15 @@ struct GameDriver driver_toutrun =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_toutrun,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13555,15 +12738,15 @@ struct GameDriver driver_toutruna =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_toutruna,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13614,15 +12797,15 @@ struct GameDriver driver_exctleag =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_exctleag,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -13672,14 +12855,14 @@ struct GameDriver driver_suprleag =
 	"????",
 	SYS16_CREDITS,
 	0,
-	&sys16_dummy_machine_driver,
-	sys16_onetime_init_machine,
+	&machine_driver_sys16_dummy,
+	sys16_dummy_sprite_decode,
 	rom_suprleag,
-	sys16_dummy_sprite_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_sys16_dummy,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

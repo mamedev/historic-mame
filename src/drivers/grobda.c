@@ -243,7 +243,7 @@ static struct DACinterface dac_interface =
 	{ 55 }
 };
 
-static struct MachineDriver grobda_machine_driver =
+static struct MachineDriver machine_driver_grobda =
 {
 	/* basic machine hardware  */
 	{
@@ -370,7 +370,7 @@ struct GameDriver driver_grobda =
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
 	rom_grobda,
@@ -381,7 +381,7 @@ struct GameDriver driver_grobda =
 	input_ports_grobda,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -396,7 +396,7 @@ struct GameDriver driver_grobda2 =
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
 	rom_grobda2,
@@ -407,7 +407,7 @@ struct GameDriver driver_grobda2 =
 	input_ports_grobda,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -422,7 +422,7 @@ struct GameDriver driver_grobda3 =
 	"Namco",
 	"Manuel Abadia\n",
 	0,
-	&grobda_machine_driver,
+	&machine_driver_grobda,
 	0,
 
 	rom_grobda3,
@@ -433,7 +433,7 @@ struct GameDriver driver_grobda3 =
 	input_ports_grobda,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

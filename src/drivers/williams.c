@@ -616,6 +616,23 @@ void williams2_bg_select_w(int offset, int data);
 
 
 
+static void nvram_handler(void *file,int read_or_write)
+{
+	UINT8 *ram = memory_region(REGION_CPU1);
+
+	if (read_or_write)
+		osd_fwrite(file,&ram[cmos_base],cmos_length);
+	else
+	{
+		if (file)
+			osd_fread(file,&ram[cmos_base],cmos_length);
+		else
+			memset(&ram[cmos_base],0,cmos_length);
+	}
+}
+
+
+
 /*************************************
  *
  *	Defender memory handlers
@@ -857,11 +874,6 @@ INPUT_PORTS_START( defender )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
 INPUT_PORTS_END
-
-
-#define input_ports_defndjeu input_ports_defender
-#define input_ports_mayday   input_ports_defender
-
 
 INPUT_PORTS_START( colony7 )
 	PORT_START	/* IN0 */
@@ -1316,7 +1328,7 @@ static struct hc55516_interface sinistar_cvsd_interface =
  *
  *************************************/
 
-static struct MachineDriver defender_machine_driver =
+static struct MachineDriver machine_driver_defender =
 {
 	/* basic machine hardware  */
 	{
@@ -1357,11 +1369,13 @@ static struct MachineDriver defender_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver williams_machine_driver =
+static struct MachineDriver machine_driver_williams =
 {
 	/* basic machine hardware  */
 	{
@@ -1402,11 +1416,13 @@ static struct MachineDriver williams_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver sinistar_machine_driver =
+static struct MachineDriver machine_driver_sinistar =
 {
 	/* basic machine hardware  */
 	{
@@ -1451,11 +1467,13 @@ static struct MachineDriver sinistar_machine_driver =
 			SOUND_HC55516,
 			&sinistar_cvsd_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver blaster_machine_driver =
+static struct MachineDriver machine_driver_blaster =
 {
 	/* basic machine hardware  */
 	{
@@ -1496,11 +1514,13 @@ static struct MachineDriver blaster_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver williams2_machine_driver =
+static struct MachineDriver machine_driver_williams2 =
 {
 	/* basic machine hardware  */
 	{
@@ -1541,11 +1561,13 @@ static struct MachineDriver williams2_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver joust2_machine_driver =
+static struct MachineDriver machine_driver_joust2 =
 {
 	/* basic machine hardware  */
 	{
@@ -1584,43 +1606,10 @@ static struct MachineDriver joust2_machine_driver =
 	0,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	nvram_handler
 };
-
-
-
-/*************************************
- *
- *	High score save/load
- *
- *************************************/
-
-static int cmos_load(void)
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-
-	if (f)
-	{
-		osd_fread(f, &RAM[cmos_base], cmos_length);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-
-static void cmos_save(void)
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-
-	if (f)
-	{
-		osd_fwrite(f, &RAM[cmos_base], cmos_length);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -1630,7 +1619,7 @@ static void cmos_save(void)
  *
  *************************************/
 
-static void defender_init(void)
+static void init_defender(void)
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
 	defender_bank_list = bank;
@@ -1643,7 +1632,7 @@ static void defender_init(void)
 }
 
 
-static void defndjeu_init(void)
+static void init_defndjeu(void)
 {
 /*
 	Note: Please do not remove these comments in BETA versions. They are
@@ -1688,8 +1677,8 @@ static void defndjeu_init(void)
 	}
 }
 
-
-static void defcmnd_init(void)
+#if 0
+static void init_defcmnd(void)
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
 	defender_bank_list = bank;
@@ -1700,9 +1689,9 @@ static void defcmnd_init(void)
 	/* PIA configuration */
 	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
 }
+#endif
 
-
-static void mayday_init(void)
+static void init_mayday(void)
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
 	defender_bank_list = bank;
@@ -1718,7 +1707,7 @@ static void mayday_init(void)
 }
 
 
-static void colony7_init(void)
+static void init_colony7(void)
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x0c000 };
 	defender_bank_list = bank;
@@ -1731,7 +1720,7 @@ static void colony7_init(void)
 }
 
 
-static void stargate_init(void)
+static void init_stargate(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1741,7 +1730,7 @@ static void stargate_init(void)
 }
 
 
-static void joust_init(void)
+static void init_joust(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1754,7 +1743,7 @@ static void joust_init(void)
 }
 
 
-static void robotron_init(void)
+static void init_robotron(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1767,7 +1756,7 @@ static void robotron_init(void)
 }
 
 
-static void bubbles_init(void)
+static void init_bubbles(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1780,7 +1769,7 @@ static void bubbles_init(void)
 }
 
 
-static void splat_init(void)
+static void init_splat(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1793,7 +1782,7 @@ static void splat_init(void)
 }
 
 
-static void sinistar_init(void)
+static void init_sinistar(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1810,7 +1799,7 @@ static void sinistar_init(void)
 }
 
 
-static void lottofun_init(void)
+static void init_lottofun(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1823,7 +1812,7 @@ static void lottofun_init(void)
 }
 
 
-static void blaster_init(void)
+static void init_blaster(void)
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -1836,7 +1825,7 @@ static void blaster_init(void)
 }
 
 
-static void tshoot_init(void)
+static void init_tshoot(void)
 {
 	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
 
@@ -1852,7 +1841,7 @@ static void tshoot_init(void)
 }
 
 
-static void joust2_init(void)
+static void init_joust2(void)
 {
 	static const UINT8 tilemap_colors[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -1876,7 +1865,7 @@ static void joust2_init(void)
 }
 
 
-static void mysticm_init(void)
+static void init_mysticm(void)
 {
 	static const UINT8 tilemap_colors[] = { 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -1896,7 +1885,7 @@ static void mysticm_init(void)
 }
 
 
-static void inferno_init(void)
+static void init_inferno(void)
 {
 	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
 
@@ -2556,105 +2545,42 @@ ROM_END
  *
  *************************************/
 
-#define EXTERNAL_DRIVER(name,machine,year,orientation,fullname,company) \
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		NULL,									\
-		#name,									\
-		fullname,								\
-		#year,									\
-		company,								\
-		"Marc Lafontaine\nSteven Hugg\n"		\
-		"Mirko Buffoni\nAaron Giles"			\
-		"Michael J. Soderstrom",				\
-		0,										\
-		&machine##_machine_driver,				\
-		name##_init,							\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##name,						\
-												\
-		0,0,0,									\
-		orientation,							\
-												\
-		cmos_load,cmos_save						\
-	};
+GAME( 1980, defender, ,         defender, defender, defender, ROT0,   "Williams", "Defender (Red label)" )
+GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (Green label)" )
+GAMEX(1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender ? (bootleg)", GAME_NOT_WORKING )
+GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
+GAMEX(1980, defcomnd, defender, defender, defender, defender, ROT0,   "<unknown>", "Defense Command (set 2)", GAME_NOT_WORKING )
+GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command" )
 
-#define EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,company,cloneof,initports) \
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		&driver_##cloneof,						\
-		#name,									\
-		fullname,								\
-		#year,									\
-		company,								\
-		"Marc Lafontaine\nSteven Hugg\n"		\
-		"Mirko Buffoni\nAaron Giles"			\
-		"Michael J. Soderstrom",				\
-		0,										\
-		&machine##_machine_driver,				\
-		initports##_init,						\
-												\
-		rom_##name,								\
-		0, 0,									\
-		0,										\
-		0,						\
-												\
-		input_ports_##initports,				\
-												\
-		0,0,0,									\
-		orientation,							\
-												\
-		cmos_load,cmos_save						\
-	};
+GAME( 1980, mayday,   ,         defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 1)" )
+GAME( 1980, maydaya,  mayday,   defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 2)" )
 
-#define WILLIAMS_DRIVER(name,machine,year,orientation,fullname) \
-	EXTERNAL_DRIVER(name,machine,year,orientation,fullname,"Williams")
-#define WILLIAMS_CLONE_DRIVER(name,machine,year,orientation,fullname,cloneof) \
-	EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,"Williams",cloneof,cloneof)
+GAME( 1981, colony7,  ,         defender, colony7,  colony7,  ROT270, "Taito", "Colony 7 (set 1)" )
+GAME( 1981, colony7a, colony7,  defender, colony7,  colony7,  ROT270, "Taito", "Colony 7 (set 2)" )
 
-WILLIAMS_DRIVER      (defender, defender, 1980, ORIENTATION_DEFAULT,    "Defender (Red label)")
-WILLIAMS_CLONE_DRIVER(defendg,  defender, 1980, ORIENTATION_DEFAULT,    "Defender (Green label)", defender)
-EXTERNAL_CLONE_DRIVER(defndjeu, defender, 1980, ORIENTATION_DEFAULT | GAME_NOT_WORKING,    "Defender ? (bootleg)", "Jeutel", defender, defndjeu)
-EXTERNAL_CLONE_DRIVER(defcmnd,  defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 1)", "bootleg", defender, defender)
-EXTERNAL_CLONE_DRIVER(defcomnd, defender, 1980, ORIENTATION_DEFAULT | GAME_NOT_WORKING,    "Defense Command (set 2)", "???", defender, defender)
-EXTERNAL_CLONE_DRIVER(defence,  defender, 1981, ORIENTATION_DEFAULT,    "Defence Command", "Outer Limits", defender, defender)
+GAME( 1981, stargate, ,         williams, stargate, stargate, ROT0,   "Williams", "Stargate" )
 
-EXTERNAL_DRIVER      (mayday,   defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 1)", "???")
-EXTERNAL_CLONE_DRIVER(maydaya,  defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 2)", "???", mayday, mayday)
+GAME( 1982, robotron, ,         williams, robotron, robotron, ROT0,   "Williams", "Robotron (Solid Blue label)" )
+GAME( 1982, robotryo, robotron, williams, robotron, robotron, ROT0,   "Williams", "Robotron (Yellow/Orange label)" )
 
-EXTERNAL_DRIVER      (colony7,  defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 1)", "Taito")
-EXTERNAL_CLONE_DRIVER(colony7a, defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 2)", "Taito", colony7, colony7)
+GAME( 1982, joust,    ,         williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Green label)" )
+GAME( 1982, joustr,   joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (Solid Red label)" )
+GAME( 1982, joustwr,  joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Red label)" )
 
-WILLIAMS_DRIVER      (stargate, williams, 1981, ORIENTATION_DEFAULT,    "Stargate")
+GAME( 1982, bubbles,  ,         williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles" )
+GAME( 1982, bubblesr, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (Solid Red label)" )
 
-WILLIAMS_DRIVER      (robotron, williams, 1982, ORIENTATION_DEFAULT,    "Robotron (Solid Blue label)")
-WILLIAMS_CLONE_DRIVER(robotryo, williams, 1982, ORIENTATION_DEFAULT,    "Robotron (Yellow/Orange label)", robotron)
+GAME( 1982, splat,    ,         williams, splat,    splat,    ROT0,   "Williams", "Splat!" )
 
-WILLIAMS_DRIVER      (joust,    williams, 1982, ORIENTATION_DEFAULT,    "Joust (White/Green label)")
-WILLIAMS_CLONE_DRIVER(joustr,   williams, 1982, ORIENTATION_DEFAULT,    "Joust (Solid Red label)", joust)
-WILLIAMS_CLONE_DRIVER(joustwr,  williams, 1982, ORIENTATION_DEFAULT,    "Joust (White/Red label)", joust)
+GAME( 1982, sinistar, ,         sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 3)" )
+GAME( 1982, sinista1, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (prototype version)" )
+GAME( 1982, sinista2, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 2)" )
 
-WILLIAMS_DRIVER      (bubbles,  williams, 1982, ORIENTATION_DEFAULT,    "Bubbles")
-WILLIAMS_CLONE_DRIVER(bubblesr, williams, 1982, ORIENTATION_DEFAULT,    "Bubbles (Solid Red label)", bubbles)
+GAME( 1983, blaster,  ,         blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster" )
 
-WILLIAMS_DRIVER      (splat,    williams, 1982, ORIENTATION_DEFAULT,    "Splat!")
+GAME( 1983, mysticm,  ,         williams2,mysticm,  mysticm,  ROT0,   "Williams", "Mystic Marathon" )
+GAME( 1984, tshoot,   ,         williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot" )
+GAME( 1984, inferno,  ,         williams2,inferno,  inferno,  ROT0,   "Williams", "Inferno" )
+GAME( 1986, joust2,   ,         joust2,   joust2,   joust2,   ROT270, "Williams", "Joust 2 - Survival of the Fittest (set 1)" )
 
-WILLIAMS_DRIVER      (sinistar, sinistar, 1982, ORIENTATION_ROTATE_270, "Sinistar (revision 3)")
-WILLIAMS_CLONE_DRIVER(sinista1, sinistar, 1982, ORIENTATION_ROTATE_270, "Sinistar (prototype version)", sinistar)
-WILLIAMS_CLONE_DRIVER(sinista2, sinistar, 1982, ORIENTATION_ROTATE_270, "Sinistar (revision 2)", sinistar)
-
-WILLIAMS_DRIVER      (blaster,  blaster,  1983, ORIENTATION_DEFAULT,    "Blaster")
-
-WILLIAMS_DRIVER      (mysticm,  williams2,1983, ORIENTATION_DEFAULT,    "Mystic Marathon")
-WILLIAMS_DRIVER      (tshoot,   williams2,1984, ORIENTATION_DEFAULT,    "Turkey Shoot")
-WILLIAMS_DRIVER      (inferno,  williams2,1984, ORIENTATION_DEFAULT,    "Inferno")
-WILLIAMS_DRIVER      (joust2,   joust2,   1986, ORIENTATION_ROTATE_270, "Joust 2 - Survival of the Fittest (set 1)")
-
-EXTERNAL_DRIVER      (lottofun, williams, 1987, ORIENTATION_DEFAULT,    "Lotto Fun", "H.A.R. Management")
+GAME( 1987, lottofun, ,         williams, lottofun, lottofun, ROT0,   "H.A.R. Management", "Lotto Fun" )

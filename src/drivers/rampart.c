@@ -490,7 +490,9 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -593,6 +595,8 @@ static void rampart_init(void)
 
 	/* display messages */
 	atarigen_show_slapstic_message();
+
+	rom_decode();
 }
 
 
@@ -617,16 +621,15 @@ struct GameDriver driver_rampart =
 	rampart_init,
 
 	rom_rampart,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rampart,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -644,14 +647,13 @@ struct GameDriver driver_ramprt2p =
 	rampart_init,
 
 	rom_ramprt2p,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ramprt2p,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

@@ -612,7 +612,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_csk227it =
 {
 	{
 		{
@@ -643,7 +643,7 @@ static struct MachineDriver machine_driver =
 };
 
 
-static struct MachineDriver csk234it_machine_driver =
+static struct MachineDriver machine_driver_csk234it =
 {
 	{
 		{
@@ -719,72 +719,23 @@ ROM_END
 /*	Decode a simple PAL encryption
  */
 
-static void cska_decode(void)
+static void init_cska(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	for (A = 0;A < 0x10000;A++)
 	{
-		if ((A & 0x0020) == 0x0000) RAM[A] ^= 0x01;
-		if ((A & 0x0020) == 0x0020) RAM[A] ^= 0x21;
-		if ((A & 0x0282) == 0x0282) RAM[A] ^= 0x01;
-		if ((A & 0x0028) == 0x0028) RAM[A] ^= 0x20;
-		if ((A & 0x0940) == 0x0940) RAM[A] ^= 0x02;
+		if ((A & 0x0020) == 0x0000) rom[A] ^= 0x01;
+		if ((A & 0x0020) == 0x0020) rom[A] ^= 0x21;
+		if ((A & 0x0282) == 0x0282) rom[A] ^= 0x01;
+		if ((A & 0x0028) == 0x0028) rom[A] ^= 0x20;
+		if ((A & 0x0940) == 0x0940) rom[A] ^= 0x02;
 	}
 }
 
 
-struct GameDriver driver_csk227it =
-{
-	__FILE__,
-	0,
-	"csk227it",
-	"Champion Skill (with Ability)",
-	"????",
-	"IGS",
-	"Mirko Buffoni (Mame Driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_csk227it,
-	cska_decode, 0,
-	0,
-	0,
-
-	input_ports_csk227,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
-};
-
-struct GameDriver driver_csk234it =
-{
-	__FILE__,
-	&driver_csk227it,
-	"csk234it",
-	"Champion Skill (Ability, Poker & Symbols)",
-	"????",
-	"IGS",
-	"Mirko Buffoni (Mame Driver)",
-	0,
-	&csk234it_machine_driver,
-	0,
-
-	rom_csk234it,
-	cska_decode, 0,
-	0,
-	0,
-
-	input_ports_csk234,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
-};
+GAME( ????, csk227it, ,         csk227it, csk227, cska, ROT0, "IGS", "Champion Skill (with Ability)" )
+GAME( ????, csk234it, csk227it, csk234it, csk234, cska, ROT0, "IGS", "Champion Skill (Ability, Poker & Symbols)" )
 

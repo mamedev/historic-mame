@@ -1,5 +1,8 @@
 /***************************************************************************
 
+Block Out
+
+driver by Nicola Salmoria
 
 ***************************************************************************/
 
@@ -214,13 +217,13 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
 	{ 8000 },           /* 8000Hz frequency */
-	{ 3 },              /* memory region 3 */
+	{ REGION_SOUND1 },              /* memory region 3 */
 	{ 50 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_blockout =
 {
 	/* basic machine hardware */
 	{
@@ -280,17 +283,13 @@ ROM_START( blockout )
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
 	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
@@ -299,100 +298,17 @@ ROM_START( blckout2 )
 	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
 	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
-	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 
-	ROM_REGION(0x0100)	/* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
 
-/* hi load / save added 12/01/98 HSC */
 
-static int hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&ram_blockout[0x1fa4])==0x322d && READ_WORD(&ram_blockout[0x1fa6])==0x2b00 && READ_WORD(&ram_blockout[0x2012])==0x15 && READ_WORD(&ram_blockout[0x2016])==0x10)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread_msbfirst(f,&ram_blockout[0x1fa4],120);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram_blockout[0x1fa4],120);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_blockout =
-{
-	__FILE__,
-	0,
-	"blockout",
-	"Block Out (set 1)",
-	"1989",
-	"Technos + California Dreams",
-	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_blockout,
-	0, 0,
-	0,
-	0,
-
-	input_ports_blockout,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave /* hsc 12/1/98 */
-};
-
-struct GameDriver driver_blckout2 =
-{
-	__FILE__,
-	&driver_blockout,
-	"blckout2",
-	"Block Out (set 2)",
-	"1989",
-	"Technos + California Dreams",
-	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_blckout2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_blockout,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave /* hsc 12/1/98 */
-};
+GAME( 1989, blockout, ,         blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 1)" )
+GAME( 1989, blckout2, blockout, blockout, blockout, , ROT0, "Technos + California Dreams", "Block Out (set 2)" )

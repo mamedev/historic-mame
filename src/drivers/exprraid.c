@@ -377,7 +377,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( exprraid )
-    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
     ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
 
@@ -408,7 +408,7 @@ ROM_START( exprraid )
 ROM_END
 
 ROM_START( wexpress )
-    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
     ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
 
@@ -439,7 +439,7 @@ ROM_START( wexpress )
 ROM_END
 
 ROM_START( wexpresb )
-    ROM_REGIONX( 0x34000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )
 
@@ -469,8 +469,10 @@ ROM_START( wexpresb )
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
-static void exprraid_gfx_expand( void ) {
 
+
+static void exprraid_gfx_expand( void )
+{
 	/* Expand the background rom so we can use regular decode routines */
 
 	unsigned char	*gfx = memory_region(1);
@@ -479,8 +481,8 @@ static void exprraid_gfx_expand( void ) {
 
 	gfx += 0x34000;
 
-	for ( i = 0x8000-0x1000; i >= 0; i-= 0x1000 ) {
-
+	for ( i = 0x8000-0x1000; i >= 0; i-= 0x1000 )
+	{
 		memcpy( &(gfx[offs]), &(gfx[i]), 0x1000 );
 
 		offs -= 0x1000;
@@ -494,81 +496,43 @@ static void exprraid_gfx_expand( void ) {
 
 static void wexpress_decode_rom( void )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
 
 
+	exprraid_gfx_expand();
+
 	/* HACK!: Implement custom opcode as regular with a mapped io read */
-	for ( i = 0; i < 0x10000; i++ ) {
+	for ( i = 0; i < 0x10000; i++ )
+	{
 		/* make sure is what we want to patch */
-		if ( RAM[i] == 0x4b && RAM[i+1] == 0x00 && RAM[i+2] == 0x29 && RAM[i+3] == 0x02 ) {
+		if ( rom[i] == 0x4b && rom[i+1] == 0x00 && rom[i+2] == 0x29 && rom[i+3] == 0x02 )
+		{
 			/* replace custom opcode with: LDA	$FF */
-			ROM[i] = 0xa5;
+			rom[i] = 0xa5;
 			i++;
-			RAM[i] = 0xff;
-		} else
-			ROM[i] = RAM[i];
+			rom[i] = 0xff;
+		}
 	}
 }
 
 static void exprraid_decode_rom( void )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	/* decode vectors */
-	RAM[0xfffa] = RAM[0xfff7];
-	RAM[0xfffb] = RAM[0xfff6];
+	rom[0xfffa] = rom[0xfff7];
+	rom[0xfffb] = rom[0xfff6];
 
-	RAM[0xfffc] = RAM[0xfff1];
-	RAM[0xfffd] = RAM[0xfff0];
+	rom[0xfffc] = rom[0xfff1];
+	rom[0xfffd] = rom[0xfff0];
 
-	RAM[0xfffe] = RAM[0xfff3];
-	RAM[0xffff] = RAM[0xfff2];
+	rom[0xfffe] = rom[0xfff3];
+	rom[0xffff] = rom[0xfff2];
 
 	/* HACK!: Implement custom opcode as regular with a mapped io read */
 	wexpress_decode_rom();
-}
-
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int resetcount;
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 10) return 0;
-
-	if(memcmp(&RAM[0x0240],"\x20\x31\x53",3) == 0 &&
-			memcmp(&RAM[0x028D],"\x00\x77\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0240],80);
-			osd_fclose(f);
-		}
-
-		resetcount = 0;
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0240],80);
-		osd_fclose(f);
-	}
 }
 
 
@@ -584,19 +548,18 @@ struct GameDriver driver_exprraid =
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	exprraid_decode_rom,
 
 	rom_exprraid,
-	exprraid_gfx_expand, exprraid_decode_rom,
+	0, 0,
 	0,
 	0,
 
 	input_ports_exprraid,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_wexpress =
@@ -610,19 +573,18 @@ struct GameDriver driver_wexpress =
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	wexpress_decode_rom,
 
 	rom_wexpress,
-	exprraid_gfx_expand, wexpress_decode_rom,
+	0, 0,
 	0,
 	0,
 
 	input_ports_exprraid,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_wexpresb =
@@ -636,17 +598,16 @@ struct GameDriver driver_wexpresb =
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	exprraid_gfx_expand,
 
 	rom_wexpresb,
-	exprraid_gfx_expand, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_exprraid,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

@@ -553,11 +553,15 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
 		/* load history text */
 		if (hist_idx)
 		{
-			err = load_datafile_text (drv, buffer, bufsize,
-									  hist_idx, DATAFILE_TAG_BIO);
-			if (err && drv->clone_of)
-				err = load_datafile_text (drv->clone_of, buffer, bufsize,
+			const struct GameDriver *gdrv;
+
+			gdrv = drv;
+			do
+			{
+				err = load_datafile_text (gdrv, buffer, bufsize,
 										  hist_idx, DATAFILE_TAG_BIO);
+				gdrv = gdrv->clone_of;
+			} while (err && gdrv);
 
 			if (err) history = 0;
 		}
@@ -577,12 +581,15 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
 		if (mame_idx)
 		{
 			int len = strlen (buffer);
+			const struct GameDriver *gdrv;
 
-			err = load_datafile_text (drv, buffer+len, bufsize-len,
-									  mame_idx, DATAFILE_TAG_MAME);
-			if (err && drv->clone_of)
-				err = load_datafile_text (drv->clone_of, buffer+len, bufsize-len,
-						  				  mame_idx, DATAFILE_TAG_MAME);
+			gdrv = drv;
+			do
+			{
+				err = load_datafile_text (gdrv, buffer+len, bufsize-len,
+										  mame_idx, DATAFILE_TAG_MAME);
+				gdrv = gdrv->clone_of;
+			} while (err && gdrv);
 
 			if (err) mameinfo = 0;
 		}

@@ -293,7 +293,7 @@ static struct MachineDriver machine_driver =
 };
 
 /* Exactly the same but for the writemem handler */
-static struct MachineDriver popflame_machine_driver =
+static struct MachineDriver machine_driver_popflame =
 {
 	/* basic machine hardware */
 	{
@@ -455,134 +455,6 @@ ROM_END
 
 
 
-static int naughtyb_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score has already been written to screen */
-	if((RAM[0x874a] == 8) && (RAM[0x8746] == 9) && (RAM[0x8742] == 7) && (RAM[0x873e] == 8) &&  /* HIGH */
-	   (RAM[0x8743] == 0x20) && (RAM[0x873f] == 0x20) && (RAM[0x873b] == 0x20) && (RAM[0x8737] == 0x20))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			char buf[10];
-			int hi;
-
-			osd_fread(f,&RAM[0x4003],4);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			hi = (RAM[0x4006] & 0x0f) +
-			     (RAM[0x4006] >> 4) * 10 +
-			     (RAM[0x4005] & 0x0f) * 100 +
-			     (RAM[0x4005] >> 4) * 1000 +
-			     (RAM[0x4004] & 0x0f) * 10000 +
-			     (RAM[0x4004] >> 4) * 100000 +
-			     (RAM[0x4003] & 0x0f) * 1000000 +
-			     (RAM[0x4003] >> 4) * 10000000;
-			if (hi)
-			{
-				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') videoram_w(0x0743,buf[2]-'0'+0x20);
-				if (buf[3] != ' ') videoram_w(0x073f,buf[3]-'0'+0x20);
-				if (buf[4] != ' ') videoram_w(0x073b,buf[4]-'0'+0x20);
-				if (buf[5] != ' ') videoram_w(0x0737,buf[5]-'0'+0x20);
-				if (buf[6] != ' ') videoram_w(0x0733,buf[6]-'0'+0x20);
-				if (buf[7] != ' ') videoram_w(0x072f,buf[7]-'0'+0x20);
-			}
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static unsigned long get_score(unsigned char *score)
-{
-   return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
-}
-
-static void naughtyb_hisave(void)
-{
-	unsigned long score1,score2,hiscore;
-	void *f;
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	score1 = get_score(&RAM[0x4020]);
-	score2 = get_score(&RAM[0x4030]);
-	hiscore = get_score(&RAM[0x4003]);
-
-	if (score1 > hiscore) RAM += 0x4020;
-	else if (score2 > hiscore) RAM += 0x4030;
-	else RAM += 0x4003;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0],4);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int popflame_hiload (void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score has already been written to screen */
-	if ((RAM[0x874a] == 8) && (RAM[0x8746] == 9) && (RAM[0x8742] == 7) &&
-	    (RAM[0x873e] == 8) &&  /* HIGH */
-	    (RAM[0x8743] == 0x20) && (RAM[0x873f] == 0x20) && (RAM[0x873b] == 0x20) &&
-	    (RAM[0x8737] == 0x20)) /* 0000 */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread (f,&RAM[0x4004],3);
-			osd_fclose (f);
-
-			videoram_w (0x743, (RAM[0x4004] >> 4) | 0x20);
-			videoram_w (0x73f, (RAM[0x4004] & 0x0f) | 0x20);
-			videoram_w (0x73b, (RAM[0x4005] >> 4) | 0x20);
-			videoram_w (0x737, (RAM[0x4005] & 0x0f) | 0x20);
-			videoram_w (0x733, (RAM[0x4006] >> 4) | 0x20);
-			videoram_w (0x72f, (RAM[0x4006] & 0x0f) | 0x20);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void popflame_hisave (void)
-{
-	unsigned long score1,score2,hiscore;
-	void *f;
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	score1 = get_score (&RAM[0x4021]);
-	score2 = get_score (&RAM[0x4031]);
-	hiscore = get_score (&RAM[0x4004]);
-
-	if (score1 > hiscore) RAM += 0x4021;
-	else if (score2 > hiscore) RAM += 0x4031;
-	else RAM += 0x4004;
-
-	if ((f = osd_fopen (Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite (f,&RAM[0],3);
-		osd_fclose (f);
-	}
-}
-
-
-
 struct GameDriver driver_naughtyb =
 {
 	__FILE__,
@@ -604,9 +476,8 @@ struct GameDriver driver_naughtyb =
 	input_ports_naughtyb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_naughtya =
@@ -630,9 +501,8 @@ struct GameDriver driver_naughtya =
 	input_ports_naughtyb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_naughtyc =
@@ -656,9 +526,8 @@ struct GameDriver driver_naughtyc =
 	input_ports_naughtyb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	naughtyb_hiload, naughtyb_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_popflame =
@@ -671,7 +540,7 @@ struct GameDriver driver_popflame =
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
-	&popflame_machine_driver,
+	&machine_driver_popflame,
 	0,
 
 	rom_popflame,
@@ -682,9 +551,8 @@ struct GameDriver driver_popflame =
 	input_ports_naughtyb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	popflame_hiload, popflame_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_popflama =
@@ -697,7 +565,7 @@ struct GameDriver driver_popflama =
 	"Jaleco",
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
-	&popflame_machine_driver,
+	&machine_driver_popflame,
 	0,
 
 	rom_popflama,
@@ -708,8 +576,7 @@ struct GameDriver driver_popflama =
 	input_ports_naughtyb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	popflame_hiload, popflame_hisave
+	ROT90,
+	0,0
 };
 

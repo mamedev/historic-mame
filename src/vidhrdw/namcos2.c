@@ -1161,6 +1161,41 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 		draw_sprites_finallap( bitmap,priority );
 	}
 
+
+	/********************************************************************/
+	/*                                                                  */
+	/* Final Lap roadway implementation notes                           */
+	/*                                                                  */
+	/* namcos2_68k_roadtile_ram                                         */
+	/* ------------------------                                         */
+	/* Overall tilemap looks to be 64 wide x 512 deep in terms of tiles */
+	/* this gives and overall dimension of 512 x 4096 pixels. This is   */
+	/* very large and it may be that it uses double buffering which     */
+	/* would halve the depth of the buffer.                             */
+	/*                                                                  */
+	/* Each row of the tilemap is made of 64 words (128 bytes), the     */
+	/* first byte most likely holds the colour+attr, the second byte    */
+	/* contains the tilenumber, this references a RAM based tile        */
+	/* definition within namcos2_68k_roadgfx_ram, tiles are 8x8 8bpp.   */
+	/*                                                                  */
+	/* namcos2_68k_roadgfx_ram                                          */
+	/* -----------------------                                          */
+	/* This ram holds the gfx data for the 8x8 tiles in 8bpp format.    */
+	/* The data is arranged in 2 x 32 byte blocks with each block       */
+	/* arranged in a 4 x 8 byte pattern.                                */
+	/*                                                                  */
+	/* Bxxby == Byte <xx> bit <y>                                       */
+	/*                                                                  */
+	/* So Pixel 0,0 = B00b0 B01b0 B02b0 B03b0 B32b0 B33b0 B34b0 B35b0   */
+	/*    Pixel 0,1 = B00b1 B01b1 B02b1 B03b1 B32b1 B33b1 B34b1 B35b1   */
+	/*                          ..................                      */
+	/*    Pixel 0,7 = B00b7 B01b7 B02b7 B03b7 B32b7 B33b7 B34b7 B35b7   */
+	/*                                                                  */
+	/*    Pixel 1,0 = B04b0 B05b0 B06b0 B07b0 B36b0 B37b0 B38b0 B39b0   */
+	/*                                                                  */
+	/********************************************************************/
+
+	/* Flat rendering of the road tilemap */
 	if(0)
 	{
 		int loop,linel,data;
@@ -1170,7 +1205,7 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 			dest_line = bitmap->line[loop];
 			for(linel=0;linel<128;linel+=2)
 			{
-				data=READ_WORD(&namcos2_68k_mystery_ram[(loop*128)+linel]);
+				data=READ_WORD(&namcos2_68k_roadtile_ram[(loop*128)+linel]);
 				*(dest_line++)=(data&0x000f)>>0;
 				*(dest_line++)=(data&0x00f0)>>4;
 				*(dest_line++)=(data&0x0f00)>>8;
@@ -1227,20 +1262,28 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 					READ_WORD(&namcos2_sprite_ram[0x400+(i*8)+6]));
 			fprintf (f, "\n\n\n\n");
 
-			fprintf (f, "Mystery Memory\n");
-			for (i = 0; i < 0x2000; i++)
+			fprintf (f, "Road Tile Memory\n");
+			for (i = 0; i < 0x800; i++)
 			{
-				fprintf (f, "%04x %04x %04x %04x %04x %04x %04x %04x",
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x00]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x02]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x04]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x06]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x08]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x0a]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x0c]),
-					READ_WORD(&namcos2_68k_mystery_ram[(i*16)+0x0e]));
-				if((i%8)==0) fprintf(f,"\t\t\t\t0x%04x\n",i/8); else fprintf(f,"\n");
-				if((i%8)==7) fprintf(f,"\n");
+				if((i%4)==0) fprintf(f,"0x%03x    ",i/4);
+				fprintf (f, "%04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x %04x ",
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x00]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x02]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x04]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x06]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x08]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x0a]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x0c]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x0e]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x10]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x12]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x14]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x16]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x18]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x1a]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x1c]),
+					READ_WORD(&namcos2_68k_roadtile_ram[(i*32)+0x1e]));
+				if((i%4)==3) fprintf(f,"\n");
 			}
 			fprintf (f, "\n\n\n\n");
 

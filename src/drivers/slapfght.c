@@ -642,7 +642,7 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver tigerh_machine_driver =
+static struct MachineDriver machine_driver_tigerh =
 {
 	/* basic machine hardware */
 	{
@@ -687,7 +687,7 @@ static struct MachineDriver tigerh_machine_driver =
 	}
 };
 
-static struct MachineDriver slapfigh_machine_driver =
+static struct MachineDriver machine_driver_slapfigh =
 {
 	/* basic machine hardware */
 	{
@@ -736,7 +736,7 @@ static struct MachineDriver slapfigh_machine_driver =
 };
 
 /* identical to slapfigh_ but writemem has different scroll registers */
-static struct MachineDriver slapbtuk_machine_driver =
+static struct MachineDriver machine_driver_slapbtuk =
 {
 	/* basic machine hardware */
 	{
@@ -1032,225 +1032,6 @@ ROM_START( getstar )
 ROM_END
 
 
-/* High scores are at location C060 - C0A5 ( 70 bytes )	*/
-/* 10 * 3 bytes for score				*/
-/* 10 * 3 bytes for initials				*/
-/* 10 * 1 byte for level reached ( area ) 		*/
-static int slapfigh_hiload(void)
-{
-unsigned char	*RAM = memory_region(REGION_CPU1);
-
-	/* check to see if high scores initialised */
-	if ((memcmp(&RAM[0xc060],"\x50\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0xc0a3],"\x06\x05\x04",3) == 0))
-	 {
-	  void	*f;
-	  int	lead0;
-
-	  if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	   {
-	    osd_fread(f,&RAM[0xc060],10*7);
-	    RAM[0xc05d] = RAM[0xc060];
-	    RAM[0xc05e] = RAM[0xc061];
-	    RAM[0xc05f] = RAM[0xc062];
-	// patch in high score in screen display ...
-	    lead0 = 0;
-	    if ((RAM[0xc062]>>4) == 0)
-	      RAM[0xc118] = 0x2D;
-	    else
-	     {
-	      RAM[0xc118] = RAM[0xc062]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc062]&0x0f) == 0) && (lead0 == 0))
-	      RAM[0xc119] = 0x2D;
-	    else
-	     {
-	      RAM[0xc119] = RAM[0xc062]&0x0f;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc061]>>4) == 0) && (lead0 == 0))
-	      RAM[0xc11A] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11A] = RAM[0xc061]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc061]&0x0f) == 0) && (lead0 == 0))
-	      RAM[0xc11B] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11B] = RAM[0xc061]&0x0F;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc060]>>4) == 0) && (lead0 == 0))
-	      RAM[0xc11C] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11C] = RAM[0xc060]>>4;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-	    if (((RAM[0xc060]&0x0F) == 0) && (lead0 == 0))
-	      RAM[0xc11D] = 0x2D;
-	    else
-	     {
-	      RAM[0xc11D] = RAM[0xc060]&0x0F;
-	      lead0 = 1;		/* don't throw away 0 anymore ... */
-	     }
-
-	    osd_fclose(f);
-	   }
-	  return 1;	/* hi scores loaded */
-	 }
-	else
-	  return 0;	/* high scores not loaded yet */
-}
-
-static void slapfigh_hisave(void)
-{
-unsigned char	*RAM = memory_region(REGION_CPU1);
-void	*f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	 {
-	  osd_fwrite(f,&RAM[0xc060],10*7);
-	  osd_fclose(f);
-	 }
-
-}
-
-
-
-
-/* High scores are at location C0DB - C123 ( 70+3 bytes )               */
-/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
-/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
-/* 10 * 3 bytes for initials							*/
-/* 10 * 1 byte for level reached		 				*/
-static int tigerh_hiload(void)
-{
-        unsigned char *RAM = memory_region(REGION_CPU1);
-
-        if (memcmp(&RAM[0xc0db],"\x00\x20\x00\x00\x20\x00",6) == 0)
-        {
-                void  *f;
-
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f, &RAM[0xc0db], 73);
-                        RAM[0xc15f] = RAM[0xc0db] & 0x0f;
-                        RAM[0xc15e] = RAM[0xc0db] >> 4;
-                        RAM[0xc15d] = RAM[0xc0dc] & 0x0f;
-                        RAM[0xc15c] = RAM[0xc0dc] >> 4;
-                        RAM[0xc15b] = RAM[0xc0dd] & 0x0f;
-                        RAM[0xc15a] = RAM[0xc0dd] >> 4;
-
-                        /* The minimum hiscore is 20000 */
-                        if (RAM[0xc15a] == 0)
-                        {
-                                RAM[0xc15a] = 0x2d;
-                                if (RAM[0xc15b] == 0) RAM[0xc15b] = 0x2d;
-                        }
-                        osd_fclose(f);
-                }
-
-                return 1;       /* hi scores loaded */
-        }
-        else
-                return 0;       /* high scores not loaded yet */
-}
-
-
-
-static void tigerh_hisave(void)
-{
-        void *f;
-        unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&RAM[0xc0db],73);
-                osd_fclose(f);
-        }
-
-}
-
-
-
-/* High scores are at location C0D2 - C11A ( 70+3 bytes )		*/
-/*  1 * 3 bytes for the highest score (divided by ten and BCD)	*/
-/* 10 * 3 bytes for score		  (divided by ten and BCD)	*/
-/* 10 * 3 bytes for initials							*/
-/* 10 * 1 byte for level reached		 				*/
-
-static int getstar_hiload(void)
-{
-unsigned char	*RAM = memory_region(REGION_CPU1);
-static int phase = 0;
-
-/* phase 0: dirty memory just 1 byte ahead of hi-scores */
-
-	if (phase==0)
-	{
-		RAM[0xc11b]=0xFF;
-		phase++;		/* goto phase 1 */
-		return 0;		/* can't load hi-scores yet */
-	}
-
-/* phase 1: wait for the ram check of c000-cfff to pass the hi-scores area */
-
-	if (phase==1)
-	{
-		if (RAM[0xc11b]==0xFF)	/* if still dirty */
-			return 0;		/* can't load hi-scores yet */
-		else
-		{
-			RAM[0xc11a]=0xFF;	/* dirty last byte of hi-scores */
-			phase++;		/* goto phase 2 (final) */
-		}
-	}
-
-/* phase 2: check to see if high scores have been initialised */
-
-	if (phase==2)
-	{
-
-		if ((memcmp(&RAM[0xc0d2],"\x00\x20\x00\x00\x20\x00",6) == 0) &&
-		    (RAM[0xc11a] == 0))
-		{
-		  void	*f;
-
-			if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-			{
-				osd_fread(f, &RAM[0xc0d2], 10*7+3);
-				osd_fclose(f);
-			}
-
-			return 1;	/* hi scores loaded */
-		}
-		else
-			return 0;	/* high scores not loaded yet */
-	}
-	else return 0;
-}
-
-
-
-static void getstar_hisave(void)
-{
-unsigned char	*RAM = memory_region(REGION_CPU1);
-void	*f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	 {
-	  osd_fwrite(f,&RAM[0xc0d2],10*7+3);
-	  osd_fclose(f);
-	 }
-
-}
-
-
-
 
 struct GameDriver driver_tigerh =
 {
@@ -1262,7 +1043,7 @@ struct GameDriver driver_tigerh =
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
 	rom_tigerh,
@@ -1273,9 +1054,8 @@ struct GameDriver driver_tigerh =
 	input_ports_tigerh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-
-	tigerh_hiload, tigerh_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_tigerh2 =
@@ -1288,7 +1068,7 @@ struct GameDriver driver_tigerh2 =
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
 	rom_tigerh2,
@@ -1299,9 +1079,8 @@ struct GameDriver driver_tigerh2 =
 	input_ports_tigerh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-
-	tigerh_hiload, tigerh_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_tigerhb1 =
@@ -1314,7 +1093,7 @@ struct GameDriver driver_tigerhb1 =
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
 	rom_tigerhb1,
@@ -1325,9 +1104,8 @@ struct GameDriver driver_tigerhb1 =
 	input_ports_tigerh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_tigerhb2 =
@@ -1340,7 +1118,7 @@ struct GameDriver driver_tigerhb2 =
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&tigerh_machine_driver,
+	&machine_driver_tigerh,
 	0,
 
 	rom_tigerhb2,
@@ -1351,9 +1129,8 @@ struct GameDriver driver_tigerhb2 =
 	input_ports_tigerh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tigerh_hiload, tigerh_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_slapfigh =
@@ -1366,7 +1143,7 @@ struct GameDriver driver_slapfigh =
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapfigh_machine_driver,
+	&machine_driver_slapfigh,
 	0,
 
 	rom_slapfigh,
@@ -1377,9 +1154,8 @@ struct GameDriver driver_slapfigh =
 	input_ports_slapfigh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-
-	slapfigh_hiload, slapfigh_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_slapbtjp =
@@ -1392,7 +1168,7 @@ struct GameDriver driver_slapbtjp =
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapfigh_machine_driver,
+	&machine_driver_slapfigh,
 	0,
 
 	rom_slapbtjp,
@@ -1403,9 +1179,8 @@ struct GameDriver driver_slapbtjp =
 	input_ports_slapfigh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_slapbtuk =
@@ -1418,7 +1193,7 @@ struct GameDriver driver_slapbtuk =
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapbtuk_machine_driver,
+	&machine_driver_slapbtuk,
 	0,
 
 	rom_slapbtuk,
@@ -1429,9 +1204,8 @@ struct GameDriver driver_slapbtuk =
 	input_ports_slapfigh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	slapfigh_hiload, slapfigh_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_alcon =
@@ -1441,10 +1215,10 @@ struct GameDriver driver_alcon =
 	"alcon",
 	"Alcon",
 	"1986",
-	"?????",
+	"<unknown>",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
-	&slapfigh_machine_driver,
+	&machine_driver_slapfigh,
 	0,
 
 	rom_alcon,
@@ -1455,9 +1229,8 @@ struct GameDriver driver_alcon =
 	input_ports_slapfigh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
-
-	slapfigh_hiload, slapfigh_hisave
+	ROT270 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_getstar =
@@ -1470,7 +1243,7 @@ struct GameDriver driver_getstar =
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria\nLuca Elia",
 	0,
-	&slapfigh_machine_driver,
+	&machine_driver_slapfigh,
 	0,
 
 	rom_getstar,
@@ -1481,7 +1254,6 @@ struct GameDriver driver_getstar =
 	input_ports_getstar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
-
-	getstar_hiload, getstar_hisave
+	ROT0 | GAME_WRONG_COLORS,
+	0,0
 };

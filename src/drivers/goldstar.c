@@ -16,6 +16,24 @@ void goldstar_vh_stop(void);
 void goldstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
+
 void protection_w(int address, int data)
 {
 	if (data == 0x2a)
@@ -59,7 +77,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xb7ff, MWA_ROM },
-	{ 0xb800, 0xbfff, MWA_RAM },
+	{ 0xb800, 0xbfff, MWA_RAM, &nvram, &nvram_size },
 	{ 0xc000, 0xc7ff, MWA_ROM },
 	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
 	{ 0xd000, 0xd7ff, colorram_w, &colorram },
@@ -330,11 +348,13 @@ static struct MachineDriver machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-static struct MachineDriver goldstbl_machine_driver =
+static struct MachineDriver machine_driver_goldstbl =
 {
 	/* basic machine hardware */
 	{
@@ -373,7 +393,9 @@ static struct MachineDriver goldstbl_machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -427,40 +449,6 @@ static void goldstar_decode(void)
 
 
 
-int nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* just load in everything, the game will overwrite what it doesn't want */
-		osd_fread(f,&RAM[0xb800],0x0800);
-		osd_fclose(f);
-	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(&RAM[0xb800],0xff,0x0800);
-
-	return 1;
-}
-
-void nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xb800],0x0800);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_goldstar =
 {
 	__FILE__,
@@ -468,23 +456,23 @@ struct GameDriver driver_goldstar =
 	"goldstar",
 	"Golden Star",
 	"????",
-	"????",
+	"IGS",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	goldstar_decode,
 
 	rom_goldstar,
-	goldstar_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_goldstar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
-	nvram_load, nvram_save
+	0,0
 };
 
 
@@ -495,10 +483,10 @@ struct GameDriver driver_goldstbl =
 	"goldstbl",
 	"Golden Star (Blue version)",
 	"????",
-	"????",
+	"IGS",
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
-	&goldstbl_machine_driver,
+	&machine_driver_goldstbl,
 	0,
 
 	rom_goldstbl,
@@ -509,7 +497,7 @@ struct GameDriver driver_goldstbl =
 	input_ports_goldstar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
-	nvram_load, nvram_save
+	0,0
 };

@@ -356,7 +356,7 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static struct MachineDriver mnight_machine_driver =
+static struct MachineDriver machine_driver_mnight =
 {
 	{
 		{
@@ -484,49 +484,6 @@ ROM_END
 
 
 
-/****  Mutant Night high score save routine - RJF (April 29, 1999)  ****/
-
-static int mnight_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xc099],"\x00\x50\x00",3) == 0) &&
-            (memcmp(&RAM[0xc0d4],"\x53\x48\x49",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc099], 3*5);	  /* values */
-			osd_fread(f,&RAM[0xc0a8], 10*5);  /* names */
-
-                        RAM[0xc0e6] = RAM[0xc099];	/* update the HS */
-                        RAM[0xc0e7] = RAM[0xc09a];	/* on top of screen */
-                        RAM[0xc0e8] = RAM[0xc09b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void mnight_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc099],13*5);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_mnight =
 {
 	__FILE__,
@@ -537,7 +494,7 @@ struct GameDriver driver_mnight =
 	"UPL (Kawakus license)",
 	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&mnight_machine_driver,
+	&machine_driver_mnight,
 	0,
 
 	rom_mnight,
@@ -548,10 +505,8 @@ struct GameDriver driver_mnight =
 	input_ports_mnight,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mnight_hiload, mnight_hisave
-
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_arkarea =
@@ -564,7 +519,7 @@ struct GameDriver driver_arkarea =
 	"UPL",
 	"Leandro Dardini (MAME driver)\nMirko Buffoni (MAME driver)\nRoberto Ventura (hardware info)",
 	0,
-	&mnight_machine_driver,
+	&machine_driver_mnight,
 	0,
 
 	rom_arkarea,
@@ -575,7 +530,6 @@ struct GameDriver driver_arkarea =
 	input_ports_arkarea,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	mnight_hiload, mnight_hisave
+	ROT0,
+	0,0
 };

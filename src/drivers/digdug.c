@@ -110,7 +110,6 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *digdug_sharedram;
-int digdug_reset_r(int offset);
 int digdug_hiscore_print_r(int offset);
 int digdug_sharedram_r(int offset);
 void digdug_sharedram_w(int offset,int data);
@@ -138,14 +137,12 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;
-extern unsigned char digdug_hiscoreloaded;
 
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x0000, digdug_reset_r },
-	{ 0x0001, 0x3fff, MRA_ROM },
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x7000, 0x700f, digdug_customio_data_r },
 	{ 0x7100, 0x7100, digdug_customio_r },
 	{ 0x8000, 0x9fff, digdug_sharedram_r },
@@ -543,42 +540,6 @@ ROM_START( dzigzag )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized (works for Namco & Atari) */
-	if (RAM[0x89b1] == 0x35 && RAM[0x89b4] == 0x35)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x89a0],37);
-			osd_fclose(f);
-			digdug_hiscoreloaded = 1;
-		}
-
-		return 1;
-	}
-	else
-		return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x89a0],37);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_digdug =
 {
@@ -601,9 +562,8 @@ struct GameDriver driver_digdug =
 	input_ports_digdug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_digdugb =
@@ -627,9 +587,8 @@ struct GameDriver driver_digdugb =
 	input_ports_digdug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_digdugat =
@@ -653,9 +612,8 @@ struct GameDriver driver_digdugat =
 	input_ports_digdug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dzigzag =
@@ -679,7 +637,6 @@ struct GameDriver driver_dzigzag =
 	input_ports_digdug,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -212,7 +212,7 @@ static struct TAITO8741interface gsword_8741interface=
 
 void machine_init(void)
 {
-	unsigned char *ROM2 = memory_region(3);
+	unsigned char *ROM2 = memory_region(REGION_CPU2);
 
 	ROM2[0x1da] = 0xc3; /* patch for rom self check */
 	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
@@ -668,44 +668,6 @@ ROM_START( gsword )
 ROM_END
 
 
-static int gsword_hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-        /* Work RAM - 9c00 (3*10 for scores), 9c78(6*10 for names)*/
-        /* check if the hi score table has already been initialized */
-
-        if( memcmp(&RAM[0x9c00],"\x00\x00\x01",3) == 0)
-	{
-                void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-                        osd_fread(f,&RAM[0x9c00],3*10);
-                        osd_fread(f,&RAM[0x9c78],6*10);
-			osd_fclose(f);
-                }
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void gsword_hisave(void)
-{
-    	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-                osd_fwrite(f,&RAM[0x9c00],3*10);
-                osd_fwrite(f,&RAM[0x9c78],6*10);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_gsword =
 {
@@ -728,8 +690,7 @@ struct GameDriver driver_gsword =
 	input_ports_gsword,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	gsword_hiload, gsword_hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 

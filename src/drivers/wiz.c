@@ -463,7 +463,7 @@ static struct AY8910interface stinger_ay8910_interface =
 
 
 #define MACHINE_DRIVER(NAME)									\
-static struct MachineDriver NAME##_machine_driver =				\
+static struct MachineDriver machine_driver_##NAME =				\
 {																\
 	{															\
 		{														\
@@ -542,12 +542,12 @@ ROM_START( wiz )
 ROM_END
 
 ROM_START( stinger )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )
-	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )
-	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )
-	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )
-	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )	/* encrypted */
+	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )	/* encrypted */
+	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )	/* encrypted */
+	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )	/* encrypted */
+	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )	/* encrypted */
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
@@ -626,11 +626,14 @@ static void stinger_decode(void)
 		{ 0x80,0xa8,0x20,0x08 },	/* .........01.0... */
 		{ 0x28,0x28,0x88,0x88 }		/* .........01.1... */
 	};
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	for (A = 0x0000;A < 0xc000;A++)
+	memory_set_opcode_base(0,rom+diff);
+
+	for (A = 0x0000;A < 0x10000;A++)
 	{
 		int row,col;
 		unsigned char src;
@@ -639,11 +642,11 @@ static void stinger_decode(void)
 		if (A & 0x2040)
 		{
 			/* not encrypted */
-			ROM[A] = RAM[A];
+			rom[A+diff] = rom[A];
 		}
 		else
 		{
-			src = RAM[A];
+			src = rom[A];
 
 			/* pick the translation table from bits 3 and 5 */
 			row = ((A >> 3) & 1) + (((A >> 5) & 1) << 1);
@@ -654,121 +657,11 @@ static void stinger_decode(void)
 			if (src & 0x80) col = 3 - col;
 
 			/* decode the opcodes */
-			ROM[A] = src ^ xortable[row][col];
+			rom[A+diff] = src ^ xortable[row][col];
 		}
 	}
 }
 
-
-
-static int wiz_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc04e],"\x4d\x43",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc01e],0x32);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void wiz_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc01e],0x32);
-		osd_fclose(f);
-	}
-}
-
-static int stinger_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc211],"\x11\x23\x10",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc031],0x2a);
-			osd_fread(f,&RAM[0xc200],0x14);
-			osd_fclose(f);
-
-			memcpy(&RAM[0xc079], &RAM[0xc031], 6);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void stinger_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc031],0x2a);
-		osd_fwrite(f,&RAM[0xc200],0x14);
-		osd_fclose(f);
-	}
-}
-
-static int scion_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc0bd],"\x18\x11\x1e",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc070],0x50);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void scion_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc070],0x50);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_wiz =
@@ -781,7 +674,7 @@ struct GameDriver driver_wiz =
 	"Seibu Kaihatsu",
 	"Zsolt Vasvari",
 	0,
-	&wiz_machine_driver,
+	&machine_driver_wiz,
 	0,
 
 	rom_wiz,
@@ -792,9 +685,8 @@ struct GameDriver driver_wiz =
 	input_ports_wiz,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
-
-	wiz_hiload, wiz_hisave
+	ROT270 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_stinger =
@@ -807,20 +699,19 @@ struct GameDriver driver_stinger =
 	"Seibu Denshi",
 	"Nicola Salmoria",
 	0,
-	&stinger_machine_driver,
-	0,
+	&machine_driver_stinger,
+	stinger_decode,
 
 	rom_stinger,
-	0, stinger_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_stinger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	stinger_hiload, stinger_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_scion =
@@ -833,7 +724,7 @@ struct GameDriver driver_scion =
 	"Seibu Denshi",
 	"Nicola Salmoria",
 	0,
-	&stinger_machine_driver,
+	&machine_driver_stinger,
 	0,
 
 	rom_scion,
@@ -844,9 +735,8 @@ struct GameDriver driver_scion =
 	input_ports_scion,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	scion_hiload, scion_hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_scionc =
@@ -859,7 +749,7 @@ struct GameDriver driver_scionc =
 	"Seibu Denshi [Cinematronics license]",
 	"Nicola Salmoria",
 	0,
-	&stinger_machine_driver,
+	&machine_driver_stinger,
 	0,
 
 	rom_scionc,
@@ -870,8 +760,7 @@ struct GameDriver driver_scionc =
 	input_ports_scion,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	scion_hiload, scion_hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 

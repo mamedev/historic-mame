@@ -649,7 +649,7 @@ static struct MachineDriver machine_driver =
 
 
 /* Ring King */
-static struct MachineDriver rk_machine_driver =
+static struct MachineDriver machine_driver_rk =
 {
 	/* basic machine hardware */
 	{
@@ -885,144 +885,6 @@ static void ringkin3_expand_color_prom(void)
 }
 
 
-static int kingofb_hiload(void)
-{
-	unsigned char *RAM1 = memory_region(REGION_CPU1);
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-
-
-	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
-    	 memcmp(&RAM2[0x80D1],"\x10\x11\x12",3) == 0 &&
-		 memcmp(&RAM1[0xc22b],"\x03\x00\x05\x00\x00\x00",6) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM2[0x8048],140);
-			osd_fclose(f);
-
-			RAM1[0xc22a]=(RAM2[0x8063] >> 4 );
-			RAM1[0xc22b]=(RAM2[0x8063] & 0x0f );
-			RAM1[0xc22c]=(RAM2[0x8064] >> 4 );
-			RAM1[0xc22d]=(RAM2[0x8064] & 0x0f );
-
-
-
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void kingofb_hisave(void)
-{
-	void *f;
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM2[0x8048],140);
-		osd_fclose(f);
-	}
-}
-
-
-static int ringking_hiload(void)
-{
-	unsigned char *RAM1 = memory_region(REGION_CPU1);
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-
-
-	if  (memcmp(&RAM2[0x8049],"\x00\x15\x00",3) == 0 &&
-		 memcmp(&RAM2[0x80D2],"\x10\x11\x12",3) == 0 &&
-		 memcmp(&RAM1[0xc23c],"\x03\x00\x05\x00\x00\x00",6) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-			osd_fread(f,&RAM2[0x8049],140);
-			osd_fclose(f);
-
-
-			RAM1[0xc23b]=(RAM2[0x8064] >> 4 );
-			RAM1[0xc23c]=(RAM2[0x8064] & 0x0f );
-			RAM1[0xc23d]=(RAM2[0x8065] >> 4 );
-			RAM1[0xc23e]=(RAM2[0x8065] & 0x0f );
-
-
-
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void ringking_hisave(void)
-{
-	void *f;
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM2[0x8049],140);
-		osd_fclose(f);
-	}
-}
-
-
-static int ringkin2_hiload(void)
-{
-	unsigned char *RAM1 = memory_region(REGION_CPU1);
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-
-
-	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
-    	 memcmp(&RAM2[0x80D1],"\x10\x11\x12",3) == 0 &&
-		 memcmp(&RAM1[0xc235],"\x03\x00\x05\x00\x00\x00",6) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-
-			osd_fread(f,&RAM2[0x8048],140);
-			osd_fclose(f);
-
-			RAM1[0xc234]=(RAM2[0x8063] >> 4 );
-			RAM1[0xc235]=(RAM2[0x8063] & 0x0f );
-			RAM1[0xc236]=(RAM2[0x8064] >> 4 );
-			RAM1[0xc237]=(RAM2[0x8064] & 0x0f );
-
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void ringkin2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM2 = memory_region(REGION_CPU2);
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM2[0x8048],140);
-		osd_fclose(f);
-	}
-}
-
-
-
-
 
 struct GameDriver driver_kingofb =
 {
@@ -1045,9 +907,8 @@ struct GameDriver driver_kingofb =
 	input_ports_kingofb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kingofb_hiload, kingofb_hisave
+	ROT90,
+	0,0
 };
 
 /* Ring King */
@@ -1061,7 +922,7 @@ struct GameDriver driver_ringking =
 	"Data East USA",
 	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&rk_machine_driver,
+	&machine_driver_rk,
 	0,
 
 	rom_ringking,
@@ -1072,9 +933,8 @@ struct GameDriver driver_ringking =
 	input_ports_ringking,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	ringking_hiload, ringking_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_ringkin2 =
@@ -1084,10 +944,10 @@ struct GameDriver driver_ringkin2 =
 	"ringkin2",
 	"Ring King (set 2)",
 	"1985",
-	"????",
+	"<unknown>",
 	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&rk_machine_driver,
+	&machine_driver_rk,
 	0,
 
 	rom_ringkin2,
@@ -1098,9 +958,8 @@ struct GameDriver driver_ringkin2 =
 	input_ports_kingofb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	ringking_hiload, ringking_hisave
+	ROT90 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_ringkin3 =
@@ -1114,17 +973,16 @@ struct GameDriver driver_ringkin3 =
 	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	ringkin3_expand_color_prom,
 
 	rom_ringkin3,
-	ringkin3_expand_color_prom, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_kingofb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	ringkin2_hiload, ringkin2_hisave
+	ROT90,
+	0,0
 };

@@ -115,8 +115,8 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-    { 0x0800, 0x0800, YM2203_control_port_0_w },
-    { 0x0801, 0x0801, YM2203_write_port_0_w },
+	{ 0x0800, 0x0800, YM2203_control_port_0_w },
+	{ 0x0801, 0x0801, YM2203_write_port_0_w },
 	{ 0x1000, 0x1000, YM3812_control_port_0_w },
 	{ 0x1001, 0x1001, YM3812_write_port_0_w },
 	{ 0x1800, 0x1800, pcktgal_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
@@ -150,96 +150,96 @@ INPUT_PORTS_START( pcktgal )
 
 	PORT_START	/* Dip switch */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_3C ) )
  	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
  	PORT_DIPNAME( 0x08, 0x08, "Allow 2 Players Game" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
  	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
  	PORT_DIPNAME( 0x20, 0x20, "Time" )
-	PORT_DIPSETTING(    0x00, "100" )
-	PORT_DIPSETTING(    0x20, "120" )
+	PORT_DIPSETTING(	0x00, "100" )
+	PORT_DIPSETTING(	0x20, "120" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x40, "4" )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /***************************************************************************/
 
 static struct GfxLayout charlayout =
 {
-    8,8,    /* 8*8 characters */
-    4096,
-    4,
-    { 0x10000*8, 0, 0x18000*8, 0x8000*8 },
-    { 0, 1, 2, 3, 4, 5, 6, 7 },
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8     /* every char takes 8 consecutive bytes */
+	8,8,	/* 8*8 characters */
+	4096,
+	4,
+	{ 0x10000*8, 0, 0x18000*8, 0x8000*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout bootleg_charlayout =
 {
-    8,8,    /* 8*8 characters */
-    4096,
-    4,
-    { 0x18000*8, 0x8000*8, 0x10000*8, 0 },
-    { 0, 1, 2, 3, 4, 5, 6, 7 },
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8     /* every char takes 8 consecutive bytes */
+	8,8,	/* 8*8 characters */
+	4096,
+	4,
+	{ 0x18000*8, 0x8000*8, 0x10000*8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-    16,16,  /* 16*16 sprites */
-    1024,   /* 1024 sprites */
-    2,      /* 2 bits per pixel */
-    { 0x8000*8, 0 },
-    { 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7, 0, 1, 2, 3, 4, 5, 6, 7 },
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-    32*8    /* every char takes 8 consecutive bytes */
+	16,16,  /* 16*16 sprites */
+	1024,   /* 1024 sprites */
+	2,	  /* 2 bits per pixel */
+	{ 0x8000*8, 0 },
+	{ 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7, 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8	/* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout bootleg_spritelayout =
 {
-    16,16,  /* 16*16 sprites */
-    1024,   /* 1024 sprites */
-    2,      /* 2 bits per pixel */
-    { 0x8000*8, 0 },
-    { 128+7, 128+6, 128+5, 128+4, 128+3, 128+2, 128+1, 128+0, 7, 6, 5, 4, 3, 2, 1, 0,  },
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-    32*8    /* every char takes 8 consecutive bytes */
+	16,16,  /* 16*16 sprites */
+	1024,   /* 1024 sprites */
+	2,	  /* 2 bits per pixel */
+	{ 0x8000*8, 0 },
+	{ 128+7, 128+6, 128+5, 128+4, 128+3, 128+2, 128+1, 128+0, 7, 6, 5, 4, 3, 2, 1, 0,  },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8	/* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &charlayout,   256, 16 }, /* chars */
-    { 1, 0x20000, &spritelayout,   0,  8 }, /* sprites */
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x00000, &charlayout,   256, 16 }, /* chars */
+	{ REGION_GFX2, 0x00000, &spritelayout,   0,  8 }, /* sprites */
+	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &bootleg_charlayout,   256, 16 }, /* chars */
-    { 1, 0x20000, &bootleg_spritelayout,   0,  8 }, /* sprites */
-    { -1 } /* end of array */
+	{ REGION_GFX1, 0x00000, &bootleg_charlayout,   256, 16 }, /* chars */
+	{ REGION_GFX2, 0x00000, &bootleg_spritelayout,   0,  8 }, /* sprites */
+	{ -1 } /* end of array */
 };
 
 /***************************************************************************/
 
 static struct YM2203interface ym2203_interface =
 {
-	1,      /* 1 chip */
-	4000000,        /* 4.0 MHz ??? */
+	1,	  /* 1 chip */
+	4000000,		/* 4.0 MHz ??? */
 	{ YM2203_VOL(60,60) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -251,16 +251,16 @@ static struct YM2203interface ym2203_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,        /* 3 MHz? (hand tuned) */
+	3000000,		/* 3 MHz? (hand tuned) */
 	{ 50 }
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	384000,				/* 384KHz             */
+	1,					/* 1 chip			 */
+	384000,				/* 384KHz			 */
 	{ pcktgal_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B},	/* 8KHz               */
+	{ MSM5205_S48_4B},	/* 8KHz			   */
 	{ 70 }
 };
 
@@ -304,22 +304,22 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-	    {
-	        SOUND_YM2203,
-	        &ym2203_interface
-	    },
-	    {
-	        SOUND_YM3812,
-	        &ym3812_interface
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
 		},
 		{
 			SOUND_MSM5205,
 			&msm5205_interface
-	    }
+		}
 	}
 };
 
-static struct MachineDriver bootleg_machine_driver =
+static struct MachineDriver machine_driver_bootleg =
 {
 	/* basic machine hardware */
 	{
@@ -357,127 +357,137 @@ static struct MachineDriver bootleg_machine_driver =
 	/* sound hardware */
 	0,0,0,0,
 	{
-	    {
-	        SOUND_YM2203,
-	        &ym2203_interface
-	    },
-	    {
-	        SOUND_YM3812,
-	        &ym3812_interface
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
 		},
 		{
 			SOUND_MSM5205,
 			&msm5205_interface
-	    }
+		}
 	}
 };
 
 /***************************************************************************/
 
 ROM_START( pcktgal )
-    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
-    ROM_LOAD( "eb04.rom",     0x10000, 0x4000, 0x8215d60d )
-	ROM_CONTINUE(             0x04000, 0xc000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_LOAD( "eb04.rom",	   0x10000, 0x4000, 0x8215d60d )
+	ROM_CONTINUE(			   0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-    ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "eb01.rom",     0x00000, 0x10000, 0x63542c3d )
-    ROM_LOAD( "eb02.rom",     0x10000, 0x10000, 0xa9dcd339 )
-    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
+	ROM_REGIONX( 2*0x18000, REGION_CPU2 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_LOAD( "eb03.rom",	   0x10000, 0x8000, 0xcb029b02 )
+	ROM_CONTINUE(			   0x08000, 0x8000 )
 
-    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
-	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
-	ROM_CONTINUE(             0x08000, 0x8000)
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb01.rom",	   0x00000, 0x10000, 0x63542c3d )
+	ROM_LOAD( "eb02.rom",	   0x10000, 0x10000, 0xa9dcd339 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb00.rom",	   0x00000, 0x10000, 0x6c1a14a8 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
-	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( pcktgalb )
-    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
-    ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
-	ROM_CONTINUE(             0x04000, 0xc000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
+	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-    ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "sexybill.005", 0x00000, 0x10000, 0x3128dc7b )
-    ROM_LOAD( "sexybill.006", 0x10000, 0x10000, 0x0fc91eeb )
-    ROM_LOAD( "sexybill.003", 0x20000, 0x08000, 0x58182daa )
-    ROM_LOAD( "sexybill.004", 0x28000, 0x08000, 0x33a67af6 )
+	ROM_REGIONX( 2*0x18000, REGION_CPU2 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_LOAD( "eb03.rom",	  0x10000, 0x8000, 0xcb029b02 )
+	ROM_CONTINUE(			  0x08000, 0x8000 )
 
-    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
-	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
-	ROM_CONTINUE(             0x08000, 0x8000)
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sexybill.005", 0x00000, 0x10000, 0x3128dc7b )
+	ROM_LOAD( "sexybill.006", 0x10000, 0x10000, 0x0fc91eeb )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "sexybill.003", 0x00000, 0x08000, 0x58182daa )
+	ROM_LOAD( "sexybill.004", 0x08000, 0x08000, 0x33a67af6 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
-	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( pcktgal2 )
-    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
-    ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
-	ROM_CONTINUE(             0x04000, 0xc000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
+	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-    ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "eb01-2.rom",   0x00000, 0x10000, 0xe52b1f97 )
-    ROM_LOAD( "eb02-2.rom",   0x10000, 0x10000, 0xf30d965d )
-    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
-
-    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
-	ROM_CONTINUE(             0x08000, 0x8000)
+	ROM_CONTINUE(			  0x08000, 0x8000)
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb01-2.rom",   0x00000, 0x10000, 0xe52b1f97 )
+	ROM_LOAD( "eb02-2.rom",   0x10000, 0x10000, 0xf30d965d )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
-	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( spool3 )
-    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
-    ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
-	ROM_CONTINUE(             0x04000, 0xc000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
+	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-    ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "deco2.bin",    0x00000, 0x10000, 0x0a23f0cf )
-    ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
-    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
-
-    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
-	ROM_CONTINUE(             0x08000, 0x8000)
+	ROM_CONTINUE(			  0x08000, 0x8000)
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "deco2.bin",	  0x00000, 0x10000, 0x0a23f0cf )
+	ROM_LOAD( "deco3.bin",	  0x10000, 0x10000, 0x55ea7c45 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
-	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( spool3i )
-    ROM_REGIONX( 0x14000, REGION_CPU1 )     /* 64k for code + 16k for banks */
-    ROM_LOAD( "de1.bin",      0x10000, 0x4000, 0xa59980fe )
-	ROM_CONTINUE(             0x04000, 0xc000)
+	ROM_REGIONX( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_LOAD( "de1.bin",	  0x10000, 0x4000, 0xa59980fe )
+	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-    ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "deco2.bin",    0x00000, 0x10000, 0x0a23f0cf )
-    ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
-    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
-
-    ROM_REGIONX( 0x18000, REGION_CPU2 )     /* audio cpu */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
-	ROM_CONTINUE(             0x08000, 0x8000)
+	ROM_CONTINUE(			  0x08000, 0x8000)
+
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "deco2.bin",	  0x00000, 0x10000, 0x0a23f0cf )
+	ROM_LOAD( "deco3.bin",	  0x10000, 0x10000, 0x55ea7c45 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
-	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
-	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 /***************************************************************************/
@@ -485,29 +495,31 @@ ROM_END
 static void deco222_decode(void)
 {
 	int A;
-	unsigned char *RAM;
-	extern int encrypted_cpu;
+	unsigned char *rom = memory_region(REGION_CPU2);
+	int diff = memory_region_length(REGION_CPU2) / 2;
+
+
+	memory_set_opcode_base(1,rom+diff);
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = memory_region(REGION_CPU2);
-	encrypted_cpu = 1;
-	for (A = 0;A < 0x10000;A++)
-		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+	for (A = 0;A < diff;A++)
+		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
 static void graphics_decode(void)
 {
-	unsigned char *RAM = memory_region(1);
+	unsigned char *rom = memory_region(REGION_GFX1);
+	int len = memory_region_length(REGION_GFX1);
 	int i,j,temp[16];
 
 	/* Tile graphics roms have some swapped lines, original version only */
-	for (i=0x00000; i < 0x20000; i+=32)
+	for (i = 0x00000;i < len;i += 32)
 	{
 		for (j=0; j<16; j++)
 		{
-			temp[j]=RAM[i+j+16];
-			RAM[i+j+16]=RAM[i+j];
-			RAM[i+j]=temp[j];
+			temp[j] = rom[i+j+16];
+			rom[i+j+16] = rom[i+j];
+			rom[i+j] = temp[j];
 		}
 	}
 }
@@ -531,17 +543,17 @@ struct GameDriver driver_pcktgal =
 	"Bryan McPhail\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	pcktgal_decode,
 
 	rom_pcktgal,
-	0, pcktgal_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pcktgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -556,18 +568,18 @@ struct GameDriver driver_pcktgalb =
 	"bootleg",
 	"Bryan McPhail\nNicola Salmoria",
 	0,
-	&bootleg_machine_driver,
-	0,
+	&machine_driver_bootleg,
+	deco222_decode,
 
 	rom_pcktgalb,
-	0, deco222_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pcktgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -583,17 +595,17 @@ struct GameDriver driver_pcktgal2 =
 	"Bryan McPhail\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	graphics_decode,
 
 	rom_pcktgal2,
-	graphics_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pcktgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -609,17 +621,17 @@ struct GameDriver driver_spool3 =
 	"Bryan McPhail\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	graphics_decode,
 
 	rom_spool3,
-	graphics_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pcktgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -635,17 +647,17 @@ struct GameDriver driver_spool3i =
 	"Bryan McPhail\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	graphics_decode,
 
 	rom_spool3i,
-	graphics_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pcktgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

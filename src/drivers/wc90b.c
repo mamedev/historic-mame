@@ -388,7 +388,7 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver wc90b_machine_driver =
+static struct MachineDriver machine_driver_wc90b =
 {
 	/* basic machine hardware */
 	{
@@ -493,18 +493,18 @@ struct GameDriver driver_wc90b =
 	"bootleg",
     "Ernesto Corvi",
 	0,
-	&wc90b_machine_driver,
-	0,
+	&machine_driver_wc90b,
+	wc90b_decode,
 
 	rom_wc90b,
-	wc90b_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_wc90b,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -577,7 +577,7 @@ static struct K007232_interface k007232_interface =
 
 
 
-static struct MachineDriver scontra_machine_driver =
+static struct MachineDriver machine_driver_scontra =
 {
 	{
 		{
@@ -623,7 +623,7 @@ static struct MachineDriver scontra_machine_driver =
 	}
 };
 
-static struct MachineDriver thunderx_machine_driver =
+static struct MachineDriver machine_driver_thunderx =
 {
 	{
 		{
@@ -898,19 +898,19 @@ struct GameDriver driver_scontra =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&scontra_machine_driver,
-	0,
+	&machine_driver_scontra,
+	gfx_untangle,
 
 	rom_scontra,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_scontra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	0, 0	/* hiload,hisave */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_scontraj =
@@ -923,19 +923,19 @@ struct GameDriver driver_scontraj =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&scontra_machine_driver,
-	0,
+	&machine_driver_scontra,
+	gfx_untangle,
 
 	rom_scontraj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_scontra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	0, 0	/* hiload,hisave */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_thunderx =
@@ -948,18 +948,18 @@ struct GameDriver driver_thunderx =
 	"Konami",
 	"mish",
 	0,
-	&thunderx_machine_driver,
-	0,
+	&machine_driver_thunderx,
+	gfx_untangle,
 
 	rom_thunderx,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_thunderx,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+    ROT0 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -973,17 +973,17 @@ struct GameDriver driver_thnderxj =
 	"Konami",
 	"mish",
 	0,
-	&thunderx_machine_driver,
-	0,
+	&machine_driver_thunderx,
+	gfx_untangle,
 
 	rom_thnderxj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_thunderx,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+    ROT0 | GAME_NOT_WORKING,
 	0, 0
 };

@@ -21,10 +21,7 @@ static unsigned char *dirtychar;
 
 static void gradius3_tile_callback(int layer,int bank,int *code,int *color)
 {
-	/* flip Y? I sure hope this goes to some inverters on the ROM address lines, */
-	/* otherwise it would throw away all my understanding of the 051960 ;-) */
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPY : 0;
-
+	/* (color & 0x02) is flip y handled internally by the 052109 */
 	*code |= ((*color & 0x01) << 8) | ((*color & 0x1c) << 7);
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
 }
@@ -153,7 +150,11 @@ void gradius3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		TOTAL_CHARS,
 		4,
 		{ 0, 1, 2, 3 },
+#ifdef LSB_FIRST
 		{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+#else
+		{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+#endif
 		{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
 		32*8
 	};

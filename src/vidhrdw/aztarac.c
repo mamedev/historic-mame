@@ -109,9 +109,6 @@ int aztarac_vh_start (void)
 {
     int xmin, xmax, ymin, ymax;
 
-    /* patch IRQ vector 4 to autovector location */
-    WRITE_WORD(&ROM[0x70], 0);
-    WRITE_WORD(&ROM[0x72], 0x0c02);
 
 	xmin = Machine->drv->visible_area.min_x;
 	ymin = Machine->drv->visible_area.min_y;

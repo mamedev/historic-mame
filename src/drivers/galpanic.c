@@ -290,6 +290,6 @@ struct GameDriver driver_galpanic =
 	input_ports_galpanic,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_REQUIRES_16BIT,
+	ROT90 | GAME_REQUIRES_16BIT,
 	0, 0
 };

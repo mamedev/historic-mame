@@ -1,6 +1,10 @@
 /***************************************************************************
 
-Burger Time hardware description:
+Burger Time
+
+driver by Zsolt Vasvari
+
+hardware description:
 
 Actually Lock'n'Chase is (C)1981 while Burger Time is (C)1982, so it might
 be more accurate to say 'Lock'n'Chase hardware'.
@@ -105,7 +109,8 @@ INLINE int swap_bits_5_6(int data)
 static void btime_decrypt(void)
 {
 	int A,A1;
-	extern unsigned char *RAM;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
 
 	/* the encryption is a simple bit rotation: 76543210 -> 65342710, but */
@@ -119,21 +124,22 @@ static void btime_decrypt(void)
 	/* however if the previous instruction was JSR (which caused a write to */
 	/* the stack), fetch the address of the next instruction. */
 	A1 = cpu_getpreviouspc();
-	if (ROM[A1] == 0x20)	/* JSR $xxxx */
+	if (rom[A1 + diff] == 0x20)	/* JSR $xxxx */
 		A = cpu_readop_arg(A1+1) + 256 * cpu_readop_arg(A1+2);
 
 	/* If the address of the next instruction is xxxx xxx1 xxxx x1xx, decode it. */
 	if ((A & 0x0104) == 0x0104)
 	{
 		/* 76543210 -> 65342710 bit rotation */
-		ROM[A] = (RAM[A] & 0x13) | ((RAM[A] & 0x80) >> 5) | ((RAM[A] & 0x64) << 1)
-			   | ((RAM[A] & 0x08) << 2);
+		rom[A + diff] = (rom[A] & 0x13) | ((rom[A] & 0x80) >> 5) | ((rom[A] & 0x64) << 1)
+			   | ((rom[A] & 0x08) << 2);
 	}
 }
 
 static void lnc_w(int offset,int data)
 {
-	extern unsigned char *RAM;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
 	if      (offset <= 0x3bff)                       ;
 	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
@@ -146,15 +152,16 @@ static void lnc_w(int offset,int data)
 	else if (offset >= 0xb000 && offset <= 0xb1ff)   ;
 	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
-	RAM[offset] = data;
+	rom[offset] = data;
 
 	/* Swap bits 5 & 6 for opcodes */
-	ROM[offset] = swap_bits_5_6(data);
+	rom[offset+diff] = swap_bits_5_6(data);
 }
 
 static void mmonkey_w(int offset,int data)
 {
-	extern unsigned char *RAM;
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
 	if      (offset <= 0x3bff)                       ;
 	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
@@ -166,15 +173,15 @@ static void mmonkey_w(int offset,int data)
 	else if (offset >= 0xb000 && offset <= 0xbfff) { mmonkey_protection_w(offset - 0xb000, data); return; }
 	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
-	RAM[offset] = data;
+	rom[offset] = data;
 
 	/* Swap bits 5 & 6 for opcodes */
-	ROM[offset] = swap_bits_5_6(data);
+	rom[offset+diff] = swap_bits_5_6(data);
 }
 
 static void btime_w(int offset,int data)
 {
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if      (offset <= 0x07ff)                     RAM[offset] = data;
 	else if (offset >= 0x0c00 && offset <= 0x0c0f) btime_paletteram_w(offset - 0x0c00,data);
@@ -192,7 +199,7 @@ static void btime_w(int offset,int data)
 
 static void zoar_w(int offset,int data)
 {
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if      (offset <= 0x07ff) 					   RAM[offset] = data;
 	else if (offset >= 0x8000 && offset <= 0x83ff) videoram_w(offset - 0x8000,data);
@@ -212,7 +219,7 @@ static void zoar_w(int offset,int data)
 
 static void disco_w(int offset,int data)
 {
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if      (offset <= 0x04ff)                     RAM[offset] = data;
 	else if (offset >= 0x2000 && offset <= 0x7fff) deco_charram_w(offset - 0x2000,data);
@@ -1219,40 +1226,40 @@ static struct GfxLayout bnj_tilelayout =
 
 static struct GfxDecodeInfo btime_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 1 }, /* char set #1 */
-	{ 1, 0x0000, &spritelayout,        0, 1 }, /* sprites */
-	{ 1, 0x6000, &btime_tilelayout,    8, 1 }, /* background tiles */
+	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
+	{ REGION_GFX2, 0, &btime_tilelayout,    8, 1 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo cookrace_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 1 }, /* char set #1 */
-	{ 1, 0x0000, &spritelayout,        0, 1 }, /* sprites */
-	{ 1, 0x6000, &cookrace_tilelayout, 8, 1 }, /* background tiles */
+	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
+	{ REGION_GFX2, 0, &cookrace_tilelayout, 8, 1 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo lnc_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 1 },     /* char set #1 */
-	{ 1, 0x0000, &spritelayout,        0, 1 },     /* sprites */
+	{ REGION_GFX1, 0, &charlayout,          0, 1 },     /* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,        0, 1 },     /* sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo bnj_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 1 }, /* char set #1 */
-	{ 1, 0x0000, &spritelayout,        0, 1 }, /* sprites */
-	{ 1, 0x6000, &bnj_tilelayout,      8, 1 }, /* background tiles */
+	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
+	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
+	{ REGION_GFX2, 0, &bnj_tilelayout,      8, 1 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo zoar_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,          0, 8 }, /* char set #1 */
-	{ 1, 0x7800, &zoar_spritelayout,   0, 8 }, /* sprites */
-	{ 1, 0x6000, &btime_tilelayout,    0, 8 }, /* background tiles */
+	{ REGION_GFX1, 0, &charlayout,          0, 8 }, /* char set #1 */
+	{ REGION_GFX4, 0, &zoar_spritelayout,   0, 8 }, /* sprites */
+	{ REGION_GFX2, 0, &btime_tilelayout,    0, 8 }, /* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -1342,7 +1349,7 @@ static struct AY8910interface ay8910_interface =
 
 #define MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
 																	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
+static struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                	\
 	{		                                                        \
@@ -1405,102 +1412,110 @@ MACHINE_DRIVER( disco,     750000, btime_irq_interrupt, nmi_interrupt,       dis
 ***************************************************************************/
 
 ROM_START( btime )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0x368a25b5 )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
 	ROM_LOAD( "aa07.15b",     0xf000, 0x1000, 0x086440ad )
 
-	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "aa12.7k",      0x0000, 0x1000, 0xc4617243 )    /* charset #1 */
 	ROM_LOAD( "ab13.9k",      0x1000, 0x1000, 0xac01042f )
 	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
 	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
 	ROM_LOAD( "aa8.13k",      0x4000, 0x1000, 0x8650c788 )
 	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
-	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
-	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
-	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+	ROM_REGIONX( 0x1800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ab00.1b",      0x0000, 0x0800, 0xc7a14485 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",      0x0800, 0x0800, 0x25b49078 )
+	ROM_LOAD( "ab02.4b",      0x1000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x0800)      /* background graphics */
+	ROM_REGIONX( 0x0800, REGION_GFX3 )	/* background tilemaps */
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
 ROM_START( btime2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, 0xa041e25b )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, 0x8005bffa )
 	ROM_LOAD( "aa07.15b",     0xf000, 0x1000, 0x086440ad )
 
-	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "aa12.7k",      0x0000, 0x1000, 0xc4617243 )    /* charset #1 */
 	ROM_LOAD( "ab13.9k",      0x1000, 0x1000, 0xac01042f )
 	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
 	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
 	ROM_LOAD( "aa8.13k",      0x4000, 0x1000, 0x8650c788 )
 	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
-	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
-	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
-	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+	ROM_REGIONX( 0x1800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ab00.1b",      0x0000, 0x0800, 0xc7a14485 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",      0x0800, 0x0800, 0x25b49078 )
+	ROM_LOAD( "ab02.4b",      0x1000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x0800)      /* background graphics */
+	ROM_REGIONX( 0x0800, REGION_GFX3 )	/* background tilemaps */
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
 ROM_START( btimem )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, 0x0a98b230 )
 	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, 0x797e5f75 )
 	ROM_LOAD( "ab06.13b",     0xd000, 0x1000, 0xc77f3f64 )
 	ROM_LOAD( "ab05.10b",     0xe000, 0x1000, 0xb0d3640f )
 	ROM_LOAD( "ab07.15b",     0xf000, 0x1000, 0xa142f862 )
 
-	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ab12.7k",      0x0000, 0x1000, 0x6c79f79f )    /* charset #1 */
 	ROM_LOAD( "ab13.9k",      0x1000, 0x1000, 0xac01042f )
 	ROM_LOAD( "ab10.10k",     0x2000, 0x1000, 0x854a872a )
 	ROM_LOAD( "ab11.12k",     0x3000, 0x1000, 0xd4848014 )
 	ROM_LOAD( "ab8.13k",      0x4000, 0x1000, 0x70b35bbe )
 	ROM_LOAD( "ab9.15k",      0x5000, 0x1000, 0x8dec15e6 )
-	ROM_LOAD( "ab00.1b",      0x6000, 0x0800, 0xc7a14485 )    /* charset #2 */
-	ROM_LOAD( "ab01.3b",      0x6800, 0x0800, 0x25b49078 )
-	ROM_LOAD( "ab02.4b",      0x7000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "ab14.12h",     0xf000, 0x1000, 0xf55e5211 )
+	ROM_REGIONX( 0x1800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ab00.1b",      0x0000, 0x0800, 0xc7a14485 )    /* charset #2 */
+	ROM_LOAD( "ab01.3b",      0x0800, 0x0800, 0x25b49078 )
+	ROM_LOAD( "ab02.4b",      0x1000, 0x0800, 0xb8ef56c3 )
 
-	ROM_REGION(0x0800)      /* background graphics */
+	ROM_REGIONX( 0x0800, REGION_GFX3 )	/* background tilemaps */
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
 ROM_START( cookrace )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	/* code is in the range 0500-3fff, encrypted */
 	ROM_LOAD( "1f.1",         0x0000, 0x2000, 0x68759d32 )
 	ROM_LOAD( "2f.2",         0x2000, 0x2000, 0xbe7d72d1 )
 	ROM_LOAD( "2k",           0xffe0, 0x0020, 0xe2553b3d )	/* reset/interrupt vectors */
 
-	ROM_REGION_DISPOSE(0x7800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "m8.7",         0x0000, 0x2000, 0xa1a0d5a6 )  /* charset #1 */
-	ROM_LOAD( "m7.8",         0x2000, 0x2000, 0x1104f497 )
-	ROM_LOAD( "m6.9",         0x4000, 0x2000, 0xd0d94477 )
-	ROM_LOAD( "2f.3",         0x6000, 0x0800, 0x28609a75 )  /* garbage?? */
-	ROM_CONTINUE(             0x6000, 0x0800 )              /* charset #2 */
-	ROM_LOAD( "4f.4",         0x6800, 0x0800, 0x7742e771 )  /* garbage?? */
-	ROM_CONTINUE(             0x6800, 0x0800 )
-	ROM_LOAD( "5f.5",         0x7000, 0x0800, 0x611c686f )  /* garbage?? */
-	ROM_CONTINUE(             0x7000, 0x0800 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "6f.6",         0x0000, 0x1000, 0x6b8e0272 ) /* starts at 0000, not f000; 0000-01ff is RAM */
 	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "m8.7",         0x0000, 0x2000, 0xa1a0d5a6 )  /* charset #1 */
+	ROM_LOAD( "m7.8",         0x2000, 0x2000, 0x1104f497 )
+	ROM_LOAD( "m6.9",         0x4000, 0x2000, 0xd0d94477 )
+
+	ROM_REGIONX( 0x1800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "2f.3",         0x0000, 0x0800, 0x28609a75 )  /* garbage?? */
+	ROM_CONTINUE(             0x0000, 0x0800 )              /* charset #2 */
+	ROM_LOAD( "4f.4",         0x0800, 0x0800, 0x7742e771 )  /* garbage?? */
+	ROM_CONTINUE(             0x0800, 0x0800 )
+	ROM_LOAD( "5f.5",         0x1000, 0x0800, 0x611c686f )  /* garbage?? */
+	ROM_CONTINUE(             0x1000, 0x0800 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "f9.clr",       0x0000, 0x0020, 0xc2348c1d )	/* palette */
@@ -1511,13 +1526,16 @@ ROM_END
    http://www.gamearchive.com/flyers/video/taito/locknchase_f.jpg  */
 
 ROM_START( lnc )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "s3-3d",        0xc000, 0x1000, 0x1ab4f2c2 )
 	ROM_LOAD( "s2-3c",        0xd000, 0x1000, 0x5e46b789 )
 	ROM_LOAD( "s1-3b",        0xe000, 0x1000, 0x1308a32e )
 	ROM_LOAD( "s0-3a",        0xf000, 0x1000, 0xbeb4b1fc )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "sa-1h",        0xf000, 0x1000, 0x379387ec )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "s4-11l",       0x0000, 0x1000, 0xa2162a9e )
 	ROM_LOAD( "s5-11m",       0x1000, 0x1000, 0x12f1c2db )
 	ROM_LOAD( "s6-13l",       0x2000, 0x1000, 0xd21e2a57 )
@@ -1525,22 +1543,23 @@ ROM_START( lnc )
 	ROM_LOAD( "s8-15l",       0x4000, 0x1000, 0x672a92d0 )
 	ROM_LOAD( "s9-15m",       0x5000, 0x1000, 0x87c8ee9a )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "sa-1h",        0xf000, 0x1000, 0x379387ec )
-
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sc-5m",        0x0000, 0x0020, 0x2a976ebe )	/* palette */
 	ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
 ROM_START( wtennis )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "tx",           0xc000, 0x0800, 0xfd343474 )
 	ROM_LOAD( "t4",           0xd000, 0x1000, 0xe465d82c )
 	ROM_LOAD( "t3",           0xe000, 0x1000, 0x8f090eab )
 	ROM_LOAD( "t2",           0xf000, 0x1000, 0xd2f9dd30 )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "t1",           0x0000, 0x1000, 0x40737ea7 ) /* starts at 0000, not f000; 0000-01ff is RAM */
+	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "t7",           0x0000, 0x1000, 0xaa935169 )
 	ROM_LOAD( "t10",          0x1000, 0x1000, 0x746be927 )
 	ROM_LOAD( "t5",           0x2000, 0x1000, 0xea1efa5d )
@@ -1548,23 +1567,22 @@ ROM_START( wtennis )
 	ROM_LOAD( "t6",           0x4000, 0x1000, 0x4fb8565d )
 	ROM_LOAD( "t9",           0x5000, 0x1000, 0x4893286d )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "t1",           0x0000, 0x1000, 0x40737ea7 ) /* starts at 0000, not f000; 0000-01ff is RAM */
-	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
-
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "mb7051.m5",    0x0000, 0x0020, 0xf051cb28 )	/* palette */
 	ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
 ROM_START( mmonkey )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "mmonkey.e4",   0xc000, 0x1000, 0x8d31bf6a )
 	ROM_LOAD( "mmonkey.d4",   0xd000, 0x1000, 0xe54f584a )
 	ROM_LOAD( "mmonkey.b4",   0xe000, 0x1000, 0x399a161e )
 	ROM_LOAD( "mmonkey.a4",   0xf000, 0x1000, 0xf7d3d1e3 )
 
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "mmonkey.h1",   0xf000, 0x1000, 0x5bcb2e81 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "mmonkey.l11",  0x0000, 0x1000, 0xb6aa8566 )
 	ROM_LOAD( "mmonkey.m11",  0x1000, 0x1000, 0x6cc4d0c4 )
 	ROM_LOAD( "mmonkey.l13",  0x2000, 0x1000, 0x2a343b7e )
@@ -1572,72 +1590,78 @@ ROM_START( mmonkey )
 	ROM_LOAD( "mmonkey.l14",  0x4000, 0x1000, 0x922bb3e1 )
 	ROM_LOAD( "mmonkey.m14",  0x5000, 0x1000, 0xf943e28c )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "mmonkey.h1",   0xf000, 0x1000, 0x5bcb2e81 )
-
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "mmi6331.m5",   0x0000, 0x0020, 0x55e28b32 )	/* palette */
 	ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
 ROM_START( brubber )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
 	ROM_LOAD( "brubber.12d",  0xe000, 0x2000, 0xb2ce51f5 )
 
-	ROM_REGION_DISPOSE(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bnj4e.bin",    0x0000, 0x2000, 0xb864d082 )
 	ROM_LOAD( "bnj4f.bin",    0x2000, 0x2000, 0x6c31d77a )
 	ROM_LOAD( "bnj4h.bin",    0x4000, 0x2000, 0x5824e6fb )
-	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
-	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bnj10e.bin",   0x0000, 0x1000, 0xf4e9eb49 )
+	ROM_LOAD( "bnj10f.bin",   0x1000, 0x1000, 0xa9ffacb4 )
 ROM_END
 
 ROM_START( bnj )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
 	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, 0xfb3a2cdd )
 	ROM_LOAD( "bnj12d.bin",   0xe000, 0x2000, 0xb88bc99e )
 
-	ROM_REGION_DISPOSE(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bnj4e.bin",    0x0000, 0x2000, 0xb864d082 )
 	ROM_LOAD( "bnj4f.bin",    0x2000, 0x2000, 0x6c31d77a )
 	ROM_LOAD( "bnj4h.bin",    0x4000, 0x2000, 0x5824e6fb )
-	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
-	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bnj10e.bin",   0x0000, 0x1000, 0xf4e9eb49 )
+	ROM_LOAD( "bnj10f.bin",   0x1000, 0x1000, 0xa9ffacb4 )
 ROM_END
 
 ROM_START( caractn )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
 	ROM_LOAD( "caractn.a6",   0xe000, 0x2000, 0x1d6957c4 )
 
-	ROM_REGION_DISPOSE(0x8000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "caractn.a0",   0x0000, 0x2000, 0xbf3ea732 )
 	ROM_LOAD( "caractn.a1",   0x2000, 0x2000, 0x9789f639 )
 	ROM_LOAD( "caractn.a2",   0x4000, 0x2000, 0x51dcc111 )
-	ROM_LOAD( "bnj10e.bin",   0x6000, 0x1000, 0xf4e9eb49 )
-	ROM_LOAD( "bnj10f.bin",   0x7000, 0x1000, 0xa9ffacb4 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
-	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bnj10e.bin",   0x0000, 0x1000, 0xf4e9eb49 )
+	ROM_LOAD( "bnj10f.bin",   0x1000, 0x1000, 0xa9ffacb4 )
 ROM_END
 
 ROM_START( zoar )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "zoar15",       0xd000, 0x1000, 0x1f0cfdb7 )
 	ROM_LOAD( "zoar16",       0xe000, 0x1000, 0x7685999c )
 	ROM_LOAD( "zoar17",       0xf000, 0x1000, 0x619ea867 )
 
-	ROM_REGION_DISPOSE(0xa800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
+	ROM_LOAD( "zoar09",       0xf000, 0x1000, 0x18d96ff1 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zoar00",       0x0000, 0x1000, 0xfd2dcb64 )
 	ROM_LOAD( "zoar01",       0x1000, 0x1000, 0x74d3ca48 )
 	ROM_LOAD( "zoar03",       0x2000, 0x1000, 0x77b7df14 )
@@ -1645,19 +1669,18 @@ ROM_START( zoar )
 	ROM_LOAD( "zoar06",       0x4000, 0x1000, 0x07638c71 )
 	ROM_LOAD( "zoar07",       0x5000, 0x1000, 0xf4710f25 )
 
-	ROM_LOAD( "zoar10",       0x6000, 0x0800, 0xaa8bcab8 )
-	ROM_LOAD( "zoar11",       0x6800, 0x0800, 0xdcdad357 )
-	ROM_LOAD( "zoar12",       0x7000, 0x0800, 0xed317e40 )
+	ROM_REGIONX( 0x1800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zoar10",       0x0000, 0x0800, 0xaa8bcab8 )
+	ROM_LOAD( "zoar11",       0x0800, 0x0800, 0xdcdad357 )
+	ROM_LOAD( "zoar12",       0x1000, 0x0800, 0xed317e40 )
 
-	ROM_LOAD( "zoar02",       0x7800, 0x1000, 0xd8c3c122 )
-	ROM_LOAD( "zoar05",       0x8800, 0x1000, 0x05dc6b09 )
-	ROM_LOAD( "zoar08",       0x9800, 0x1000, 0x9a148551 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )      /* 64k for the audio CPU */
-	ROM_LOAD( "zoar09",       0xf000, 0x1000, 0x18d96ff1 )
-
-	ROM_REGION(0x1000)      /* background graphics */
+	ROM_REGIONX( 0x1000, REGION_GFX3 )	/* background tilemaps */
 	ROM_LOAD( "zoar13",       0x0000, 0x1000, 0x8fefa960 )
+
+	ROM_REGIONX( 0x3000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zoar02",       0x0000, 0x1000, 0xd8c3c122 )
+	ROM_LOAD( "zoar05",       0x1000, 0x1000, 0x05dc6b09 )
+	ROM_LOAD( "zoar08",       0x2000, 0x1000, 0x9a148551 )
 
 	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "z20-1l",       0x0000, 0x0020, 0xa63f0a07 )
@@ -1665,7 +1688,7 @@ ROM_START( zoar )
 ROM_END
 
 ROM_START( disco )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "disco.w5",     0xa000, 0x1000, 0xb2c87b78 )
 	ROM_LOAD( "disco.w4",     0xb000, 0x1000, 0xad7040ee )
 	ROM_LOAD( "disco.w3",     0xc000, 0x1000, 0x12fb4f08 )
@@ -1673,10 +1696,10 @@ ROM_START( disco )
 	ROM_LOAD( "disco.w1",     0xe000, 0x1000, 0xee7b536b )
 	ROM_LOAD( "disco.w0",     0xf000, 0x1000, 0x7c26e76b )
 
-	ROM_REGION_DISPOSE(0x0010)  /* empty */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
 	ROM_LOAD( "disco.w6",     0xf000, 0x1000, 0xd81e781e )
+
+	/* no gfx1 */
 
 	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "disco.clr",    0x0000, 0x0020, 0xa393f913 )
@@ -1696,632 +1719,69 @@ static int wtennis_reset_hack_r(int offset)
 	return RAM[0xc15f];
 }
 
-static void wtennis_driver_init(void)
+static void init_btime(void)
 {
-	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
-}
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
-
-static void btime_decode(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
+	memory_set_opcode_base(0,rom+diff);
 
 	/* For now, just copy the RAM array over to ROM. Decryption will happen */
 	/* at run time, since the CPU applies the decryption only if the previous */
 	/* instruction did a memory write. */
-	memcpy(ROM,RAM,0x10000);
+	memcpy(rom+diff,rom,0x10000);
 }
 
-static void zoar_decode(void)
+static void init_zoar(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
 
 	/* At location 0xD50A is what looks like an undocumented opcode. I tried
-	   implemting it given what opcode 0x23 should do, but it still didn't
+	   implementing it given what opcode 0x23 should do, but it still didn't
 	   work in demo mode. So this could be another protection or a bad ROM read.
 	   I'm NOPing it out for now. */
-	memset(&RAM[0xd50a],0xea,8);
+	memset(&rom[0xd50a],0xea,8);
 
-    btime_decode();
+    init_btime();
 }
 
-static void lnc_decode(void)
+static void init_lnc(void)
 {
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+	memory_set_opcode_base(0,rom+diff);
 
 	/* Swap bits 5 & 6 for opcodes */
 	for (A = 0;A < 0x10000;A++)
-		ROM[A] = swap_bits_5_6(RAM[A]);
+		rom[A+diff] = swap_bits_5_6(rom[A]);
+}
+
+static void init_wtennis(void)
+{
+	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
+	init_lnc();
 }
 
 
 
-static int btime_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
+GAME( 1982, btime,    ,        btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 1)" )
+GAME( 1982, btime2,   btime,   btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 2)" )
+GAME( 1982, btimem,   btime,   btime,    btime,    btime,   ROT270, "Data East (Bally Midway license)", "Burger Time (Midway)" )
+GAME( 1982, cookrace, btime,   cookrace, cookrace, lnc,     ROT270, "bootleg", "Cook Race" )
+GAME( 1981, lnc,      ,        lnc,      lnc,      lnc,     ROT270, "Data East Corporation", "Lock'n'Chase" )
+GAMEX(1982, wtennis,  ,        wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis", GAME_IMPERFECT_COLORS )
+GAME( 1982, mmonkey,  ,        mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey" )
+GAME( 1982, brubber,  ,        bnj,      bnj,      lnc,     ROT270, "Data East", "Burnin' Rubber" )
+GAME( 1982, bnj,      brubber, bnj,      bnj,      lnc,     ROT270, "Data East USA (Bally Midway license)", "Bump 'n' Jump" )
+GAME( 1983, caractn,  brubber, bnj,      bnj,      lnc,     ROT270, "bootleg", "Car Action" )
+GAME( 1982, zoar,     ,        zoar,     zoar,     zoar,    ROT270, "Data East USA", "Zoar" )
+GAME( 1982, disco,    ,        disco,    disco,    btime,   ROT270, "Data East", "Disco No.1" )
 
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0036],"\x00\x80\x02",3) == 0 &&
-		memcmp(&RAM[0x0042],"\x50\x48\x00",3) == 0)
-	{
-		void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0036],6*6);
-			RAM[0x0033] = RAM[0x0036];
-			RAM[0x0034] = RAM[0x0037];
-			RAM[0x0035] = RAM[0x0038];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void btime_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0036],6*6);
-		osd_fclose(f);
-	}
-}
-
-
-static int lnc_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime=0;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0008],0xff,3);
-		memset(&RAM[0x0294],0xff,16);
-		memset(&RAM[0x02a6],0xff,16);
-		firsttime = 1;
-	}
-
-	/*   Check if the hi score table has already been initialized.
-	 */
-	if ((memcmp(&RAM[0x0008],"\x00\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x02a6],"\x00\x00\x00",3) == 0))
-
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int banksave, i;
-
-			osd_fread(f,&RAM[0x0008],0x03);
-			osd_fread(f,&RAM[0x0294],0x0f);
-			osd_fread(f,&RAM[0x02a6],0x0f);
-
-			/* Put high score on screen as we missed when it was done
-			   by the program */
-			banksave = *lnc_charbank;
-			*lnc_charbank = 0;
-
-			lnc_videoram_w(0x004c, 0x0b);
-			lnc_videoram_w(0x0052, (RAM[0x0008] & 0x0f) + 1);
-			lnc_videoram_w(0x0051, (RAM[0x0008] >> 4) + 1);
-			lnc_videoram_w(0x0050, (RAM[0x0009] & 0x0f) + 1);
-			lnc_videoram_w(0x004f, (RAM[0x0009] >> 4) + 1);
-			lnc_videoram_w(0x004e, (RAM[0x000a] & 0x0f) + 1);
-			lnc_videoram_w(0x004d, (RAM[0x000a] >> 4) + 1);
-
-			/* Remove leading zeros */
-			for (i = 0; i < 5; i++)
-			{
-				if (videoram_r(0x004d + i) != 0x01) break;
-
-				lnc_videoram_w(0x004c + i, 0x00);
-				lnc_videoram_w(0x004d + i, 0x0b);
-			}
-
-			*lnc_charbank = banksave;
-
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-
-	/*
-	 *  The hi scores can't be loaded yet.
-	 */
-	return 0;
-}
-
-static void lnc_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0008],0x03);
-		osd_fwrite(f,&RAM[0x0294],0x0f);
-		osd_fwrite(f,&RAM[0x02a6],0x0f);
-		osd_fclose(f);
-	}
-}
-
-static int bnj_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/*   Check if the hi score table has already been initialized.
-	 */
-	if ((memcmp(&RAM[0x0500],"\x01\x00\x12",3) == 0) &&
-		(memcmp(&RAM[0x050c],"\x00\x19\x82",3) == 0))
-
-	/*if (RAM[0x0640] == 0x4d)*/
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0500],15);
-			osd_fread(f,&RAM[0x0640],15);
-			osd_fclose(f);
-			/* copy top score to top of screen */
-			RAM[0x000c] = RAM[0x0500];
-			RAM[0x000b] = RAM[0x0501];
-			RAM[0x000a] = RAM[0x0502];
-		}
-
-		return 1;
-	}
-
-	/*
-	 *  The hi scores can't be loaded yet.
-	 */
-	return 0;
-}
-
-static void bnj_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0500],15);
-		osd_fwrite(f,&RAM[0x0640],15);
-		osd_fclose(f);
-	}
-}
-
-
-static int zoar_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x034b],"\x20",1) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x02dd],3);
-			osd_fread(f,&RAM[0x02e5],5*3);
-			osd_fread(f,&RAM[0x034b],3);
-			osd_fread(f,&RAM[0x0356],3);
-			osd_fread(f,&RAM[0x0361],3);
-			osd_fread(f,&RAM[0x036c],3);
-			osd_fread(f,&RAM[0x0377],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void zoar_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x02dd],3);
-		osd_fwrite(f,&RAM[0x02e5],5*3);
-		osd_fwrite(f,&RAM[0x034b],3);
-		osd_fwrite(f,&RAM[0x0356],3);
-		osd_fwrite(f,&RAM[0x0361],3);
-		osd_fwrite(f,&RAM[0x036c],3);
-		osd_fwrite(f,&RAM[0x0377],3);
-		osd_fclose(f);
-	}
-}
-
-/*** Disco No.1 high score save - RJF (Apr 5, 1999) ***/
-static int disco_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime=0;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x0006],0xff, 3);
-		memset(&RAM[0x0400],0xff, 6*6);
-		firsttime = 1;
-	}
-
-	/*  Check if the hi score table has already been initialized. */
-	if ((memcmp(&RAM[0x0006],"\x00\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x0400],"\x00\x00\x00",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* the game only show 5 of 6 entries */
-			osd_fread(f,&RAM[0x0400], 6*6);
-			osd_fclose(f);
-
-			/* update the high score to top of screen */
-			RAM[0x0008] = RAM[0x0400];
-			RAM[0x0007] = RAM[0x0401];
-			RAM[0x0006] = RAM[0x0402];
-
-		}
-		firsttime = 0;
-		return 1;
-	}
-
-        /* The hi scores can't be loaded yet. */
-	return 0;
-}
-
-static void disco_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0400], 6*6);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver driver_btime =
-{
-	__FILE__,
-	0,
-	"btime",
-	"Burger Time (Data East set 1)",
-	"1982",
-	"Data East Corporation",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
-	0,
-	&btime_machine_driver,
-	0,
-
-	rom_btime,
-	0, btime_decode,
-	0,
-	0,
-
-	input_ports_btime,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	btime_hiload, btime_hisave
-};
-
-struct GameDriver driver_btime2 =
-{
-	__FILE__,
-	&driver_btime,
-	"btime2",
-	"Burger Time (Data East set 2)",
-	"1982",
-	"Data East Corporation",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
-	0,
-	&btime_machine_driver,
-	0,
-
-	rom_btime2,
-	0, btime_decode,
-	0,
-	0,
-
-	input_ports_btime,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	btime_hiload, btime_hisave
-};
-
-struct GameDriver driver_btimem =
-{
-	__FILE__,
-	&driver_btime,
-	"btimem",
-	"Burger Time (Midway)",
-	"1982",
-	"Data East (Bally Midway license)",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
-	0,
-	&btime_machine_driver,
-	0,
-
-	rom_btimem,
-	0, btime_decode,
-	0,
-	0,
-
-	input_ports_btime,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	btime_hiload, btime_hisave
-};
-
-struct GameDriver driver_cookrace =
-{
-	__FILE__,
-	&driver_btime,
-	"cookrace",
-	"Cook Race",
-	"1982",
-	"bootleg",
-	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&cookrace_machine_driver,
-	0,
-
-	rom_cookrace,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_cookrace,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_lnc =
-{
-	__FILE__,
-	0,
-	"lnc",
-	"Lock'n'Chase",
-	"1981",
-	"Data East Corporation",
-	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&lnc_machine_driver,
-	0,
-
-	rom_lnc,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_lnc,
-
-    0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	lnc_hiload, lnc_hisave
-};
-
-struct GameDriver driver_wtennis =
-{
-	__FILE__,
-	0,
-	"wtennis",
-	"World Tennis",
-	"1982",
-	"bootleg",
-	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&wtennis_machine_driver,
-	wtennis_driver_init,
-
-	rom_wtennis,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_wtennis,
-
-    0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_mmonkey =
-{
-	__FILE__,
-	0,
-	"mmonkey",
-	"Minky Monkey",
-	"1982",
-	"Technos + Roller Tron",
-	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&mmonkey_machine_driver,
-	0,
-
-	rom_mmonkey,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_mmonkey,
-
-    0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
-struct GameDriver driver_brubber =
-{
-	__FILE__,
-	0,
-	"brubber",
-	"Burnin' Rubber",
-	"1982",
-	"Data East",
-	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&bnj_machine_driver,
-	0,
-
-	rom_brubber,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_bnj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	bnj_hiload, bnj_hisave
-};
-
-struct GameDriver driver_bnj =
-{
-	__FILE__,
-	&driver_brubber,
-	"bnj",
-	"Bump 'n' Jump",
-	"1982",
-	"Data East USA (Bally Midway license)",
-	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&bnj_machine_driver,
-	0,
-
-	rom_bnj,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_bnj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	bnj_hiload, bnj_hisave
-};
-
-struct GameDriver driver_caractn =
-{
-	__FILE__,
-	&driver_brubber,
-	"caractn",
-	"Car Action",
-	"1983",
-	"bootleg",
-	"Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
-	0,
-	&bnj_machine_driver,
-	0,
-
-	rom_caractn,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_bnj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	bnj_hiload, bnj_hisave
-};
-
-struct GameDriver driver_zoar =
-{
-	__FILE__,
-	0,
-	"zoar",
-	"Zoar",
-	"1982",
-	"Data East USA",
-	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)",
-	0,
-	&zoar_machine_driver,
-	0,
-
-	rom_zoar,
-	0, zoar_decode,
-	0,
-	0,
-
-	input_ports_zoar,
-
-    0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	zoar_hiload, zoar_hisave
-};
-
-struct GameDriver driver_disco =
-{
-	__FILE__,
-	0,
-	"disco",
-	"Disco No.1",
-	"1982",
-	"Data East",
-	"Zsolt Vasvari",
-	0,
-	&disco_machine_driver,
-	0,
-
-	rom_disco,
-	0, btime_decode,
-	0,
-	0,
-
-	input_ports_disco,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	disco_hiload, disco_hisave
-};
 
 
 void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -2490,7 +1950,7 @@ static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct MachineDriver decocass_machine_driver =
+static struct MachineDriver machine_driver_decocass =
 {
 	/* basic machine hardware */
 	{
@@ -2534,7 +1994,7 @@ ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU
 };
 
 ROM_START( decocass )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "rms8.cpu",     0xf000, 0x1000, 0x23d929b7 )
 /* the following two are just about the same stuff as the one above */
 //	ROM_LOAD( "dsp3.p0b",     0xf000, 0x0800, 0xb67a91d9 )
@@ -2544,29 +2004,4 @@ ROM_START( decocass )
 	ROM_LOAD( "rms8.snd",     0xf800, 0x0800, 0xb66b2c2a )
 ROM_END
 
-struct GameDriver driver_decocass =
-{
-	__FILE__,
-	0,
-	"decocass",
-	"decocass",
-	"????",
-	"?????",
-	"Nicola Salmoria",
-	0,
-	&decocass_machine_driver,
-	0,
-
-	rom_decocass,
-	0, lnc_decode,
-	0,
-	0,
-
-	input_ports_decocass,
-
-    0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	0, 0
-};
-
+GAME( ????, decocass, , decocass, decocass, lnc, ROT270, "?????", "decocass" )

@@ -242,10 +242,12 @@ static struct GfxLayout motionlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0600, &charlayout, 0x00, 0x02 }, /* offset into colors, # of colors */
-	{ 1, 0x0000, &motionlayout, 0x08, 0x40 }, /* offset into colors, # of colors */
+	{ REGION_GFX1, 0x0600, &charlayout,   0x00, 0x02 },
+	{ REGION_GFX1, 0x0000, &motionlayout, 0x08, 0x40 },
 	{ -1 } /* end of array */
 };
+
+
 
 static unsigned char palette[] =
 {
@@ -356,7 +358,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bsktball =
 {
 	/* basic machine hardware */
 	{
@@ -402,42 +404,17 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bsktball )
 	ROM_REGIONX( 0x10000, REGION_CPU1 ) /* 64k for code */
-		ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
-		ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
-		ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
-		ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
-		ROM_RELOAD( 			0xF800, 0x0800 )
+	ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
+	ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
+	ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
+	ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 
-	ROM_REGION_DISPOSE(0x1000)	   /* 2k for graphics */
-		ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
-		ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
-
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
+	ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
 ROM_END
 
 
 
-struct GameDriver driver_bsktball =
-{
-	__FILE__,
-	0,
-	"bsktball",
-	"Basketball",
-	"1979",
-	"Atari",
-	"Mike Balfour",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bsktball,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bsktball,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
+GAME( 1979, bsktball, , bsktball, bsktball, , ROT0, "Atari", "Basketball" )

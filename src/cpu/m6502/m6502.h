@@ -26,7 +26,7 @@
 #include "osd_cpu.h"
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
-#define FAST_MEMORY 1
+#define FAST_MEMORY 0
 
 #define SUBTYPE_6502	0
 #if HAS_M65C02

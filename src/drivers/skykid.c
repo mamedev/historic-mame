@@ -457,7 +457,7 @@ static struct namco_interface namco_interface =
 	0					/* stereo */
 };
 
-static struct MachineDriver skykid_machine_driver =
+static struct MachineDriver machine_driver_skykid =
 {
 	/* basic machine hardware */
 	{
@@ -500,7 +500,7 @@ static struct MachineDriver skykid_machine_driver =
 	}
 };
 
-static struct MachineDriver drgnbstr_machine_driver =
+static struct MachineDriver machine_driver_drgnbstr =
 {
 	/* basic machine hardware */
 	{
@@ -606,7 +606,7 @@ struct GameDriver driver_skykid =
 	"Namco",
 	"Manuel Abadia",
 	0,
-	&skykid_machine_driver,
+	&machine_driver_skykid,
 	0,
 
 	rom_skykid,
@@ -618,7 +618,7 @@ struct GameDriver driver_skykid =
 	input_ports_skykid,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -632,7 +632,7 @@ struct GameDriver driver_drgnbstr =
 	"Namco",
 	"Manuel Abadia",
 	0,
-	&drgnbstr_machine_driver,
+	&machine_driver_drgnbstr,
 	0,
 
 	rom_drgnbstr,
@@ -644,6 +644,6 @@ struct GameDriver driver_drgnbstr =
 	input_ports_drgnbstr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

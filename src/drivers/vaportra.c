@@ -334,7 +334,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver vaportra_machine_driver =
+static struct MachineDriver machine_driver_vaportra =
 {
 	/* basic machine hardware */
 	{
@@ -462,6 +462,7 @@ static int cycle_r(int offset)
 static void custom_memory(void)
 {
 	install_mem_read_handler(0, 0xffc006, 0xffc007, cycle_r);
+	vaportra_decrypt();
 }
 
 /******************************************************************************/
@@ -476,18 +477,18 @@ struct GameDriver driver_vaportra =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&vaportra_machine_driver,
+	&machine_driver_vaportra,
 	custom_memory,
 
 	rom_vaportra,
-	vaportra_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vaportra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0 , 0
 };
 
@@ -501,17 +502,17 @@ struct GameDriver driver_kuhga =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&vaportra_machine_driver,
+	&machine_driver_vaportra,
 	custom_memory,
 
 	rom_kuhga,
-	vaportra_decrypt, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_vaportra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0 , 0
 };

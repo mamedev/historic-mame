@@ -78,25 +78,4 @@ void canyon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,0,sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-#if 0
-{
-	int x,x2;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-	x2 = 0;
-	for (x2 = 0;x2 < 16;x2 ++)
-	{
-		sprintf(buf,"%02X", spriteram[x2]);
-		for (x = 0;x < 2;x++)
-			drawgfx(bitmap,Machine->uifont,buf[x],DT_COLOR_WHITE,0,0,6*x + 16*x2,0,0,TRANSPARENCY_NONE,0);
-	}
-}
-#endif
-
 }

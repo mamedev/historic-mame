@@ -257,45 +257,6 @@ ROM_START( pkunwarj )
 	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
 ROM_END
 
-static int pkunwar_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xc187],"\x00\x20\x00",3) == 0)
-
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc187],12*5);
-			RAM[0xc1d8] = RAM[0xc187]; /* update the HS on screen writting it backward*/
-			RAM[0xc1d7] = RAM[0xc188];
-			RAM[0xc1d6] = RAM[0xc189];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;		/* can't load hi scores yet */
-}
-
-static void pkunwar_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc187],12*5);
-		osd_fclose(f);
-	}
-}
-
 
 
 struct GameDriver driver_pkunwar =
@@ -319,9 +280,8 @@ struct GameDriver driver_pkunwar =
 	input_ports_pkunwar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	pkunwar_hiload, pkunwar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_pkunwarj =
@@ -345,7 +305,6 @@ struct GameDriver driver_pkunwarj =
 	input_ports_pkunwar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	pkunwar_hiload, pkunwar_hisave
+	ROT0,
+	0,0
 };

@@ -2,9 +2,6 @@
 #include "vidhrdw/konamiic.h"
 
 
-#define TILEROM_MEM_REGION 1
-#define SPRITEROM_MEM_REGION 2
-
 static int layer_colorbase[3],sprite_colorbase;
 
 /***************************************************************************
@@ -64,12 +61,12 @@ int aliens_vh_start( void )
 	layer_colorbase[1] = 4;
 	layer_colorbase[2] = 8;
 	sprite_colorbase = 16;
-	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,tile_callback))
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 	{
 		free(paletteram);
 		return 1;
 	}
-	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		free(paletteram);
 		K052109_vh_stop();

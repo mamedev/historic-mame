@@ -412,7 +412,7 @@ static struct MachineDriver machine_driver =
 };
 
 /* Bootleg */
-static struct MachineDriver bl_machine_driver =
+static struct MachineDriver machine_driver_bl =
 {
 	/* basic machine hardware */
 	{
@@ -570,88 +570,6 @@ ROM_START( exctscc2 )
 ROM_END
 
 
-static int hiload_es(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (memcmp(&RAM[0x7c60],"\x02\x00\x00",3) == 0)
-	{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-			osd_fread(f,&RAM[0x7c90],48);
-			osd_fclose(f);
-
-			/* Copy the high score to the work ram as well */
-
-			RAM[0x7c60] = RAM[0x7c93];
-			RAM[0x7c61] = RAM[0x7c94];
-			RAM[0x7c62] = RAM[0x7c95];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave_es(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-		osd_fwrite(f,&RAM[0x7c90],48);
-		osd_fclose(f);
-	}
-}
-
-static int hiload_esb(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (memcmp(&RAM[0x8c60],"\x02\x00\x00",3) == 0)
-	{
-		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-		if (f)
-		{
-			osd_fread(f,&RAM[0x8c90],48);
-			osd_fclose(f);
-
-			/* Copy the high score to the work ram as well */
-
-			RAM[0x8c60] = RAM[0x8c93];
-			RAM[0x8c61] = RAM[0x8c94];
-			RAM[0x8c62] = RAM[0x8c95];
-		}
-		return 1;
-	}
-	return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave_esb(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-
-	if (f)
-	{
-		osd_fwrite(f,&RAM[0x8c90],48);
-		osd_fclose(f);
-	}
-}
-
-
-
 
 struct GameDriver driver_exctsccr =
 {
@@ -660,7 +578,7 @@ struct GameDriver driver_exctsccr =
 	"exctsccr",
 	"Exciting Soccer",
 	"1983",
-	"Alpha Denshi Co.",
+	"Alpha Denshi Co",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&machine_driver,
@@ -673,9 +591,8 @@ struct GameDriver driver_exctsccr =
 	input_ports_exctsccr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload_es, hisave_es
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_exctscca =
@@ -685,7 +602,7 @@ struct GameDriver driver_exctscca =
 	"exctscca",
 	"Exciting Soccer (alternate music)",
 	"1983",
-	"Alpha Denshi Co.",
+	"Alpha Denshi Co",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&machine_driver,
@@ -698,7 +615,7 @@ struct GameDriver driver_exctscca =
 	input_ports_exctsccr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -714,7 +631,7 @@ struct GameDriver driver_exctsccb =
 	"bootleg",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
-	&bl_machine_driver,
+	&machine_driver_bl,
 	0,
 	rom_exctsccb,
 	0, 0,
@@ -724,8 +641,8 @@ struct GameDriver driver_exctsccb =
 	input_ports_exctsccr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-	hiload_esb, hisave_esb
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_exctscc2 =
@@ -735,7 +652,7 @@ struct GameDriver driver_exctscc2 =
 	"exctscc2",
 	"Exciting Soccer II",
 	"1983",
-	"Alpha Denshi Co.",
+	"Alpha Denshi Co",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&machine_driver,
@@ -748,6 +665,6 @@ struct GameDriver driver_exctscc2 =
 	input_ports_exctsccr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-	hiload_esb, hisave_esb
+	ROT90 | GAME_NOT_WORKING,
+	0,0
 };

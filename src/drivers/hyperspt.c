@@ -9,6 +9,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
 
 extern unsigned char *hyperspt_scroll;
 
@@ -30,9 +31,6 @@ extern struct DACinterface konami_dac_interface;
 void konami_SN76496_latch_w(int offset,int data);
 void konami_SN76496_0_w(int offset,int data);
 
-/* in machine/konami.c */
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
-
 
 /* handle fake button for speed cheat */
 static int konami_IN1_r(int offset)
@@ -50,6 +48,80 @@ static int konami_IN1_r(int offset)
 		cheat = (++cheat)%4;
 	}
 	return res;
+}
+
+
+
+/*
+ Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
+*/
+static unsigned char *nvram;
+static int nvram_size;
+static int we_flipped_the_switch;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+	{
+		osd_fwrite(file,nvram,nvram_size);
+
+		if (we_flipped_the_switch)
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it */
+			/* back to off. */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == 0)
+						in->default_value = in->mask;
+					break;
+				}
+
+				in++;
+			}
+
+			we_flipped_the_switch = 0;
+		}
+	}
+	else
+	{
+		if (file)
+		{
+			osd_fread(file,nvram,nvram_size);
+			we_flipped_the_switch = 0;
+		}
+		else
+		{
+			struct InputPort *in;
+
+
+			/* find the dip switch which resets the high score table, and set it on */
+			in = Machine->input_ports;
+
+			while (in->type != IPT_END)
+			{
+				if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+						strcmp(in->name,"World Records") == 0)
+				{
+					if (in->default_value == in->mask)
+					{
+						in->default_value = 0;
+						we_flipped_the_switch = 1;
+					}
+					break;
+				}
+
+				in++;
+			}
+		}
+	}
 }
 
 
@@ -93,7 +165,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1500, 0x1500, soundlatch_w },
 	{ 0x2000, 0x27ff, videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, colorram_w, &colorram },
-	{ 0x3000, 0x3fff, MWA_RAM },
+	{ 0x3000, 0x37ff, MWA_RAM },
+	{ 0x3800, 0x3fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -413,7 +486,7 @@ struct VLM5030interface hyperspt_vlm5030_interface =
 };
 
 
-static struct MachineDriver hyperspt_machine_driver =
+static struct MachineDriver machine_driver_hyperspt =
 {
 	/* basic machine hardware */
 	{
@@ -461,10 +534,12 @@ static struct MachineDriver hyperspt_machine_driver =
 			SOUND_VLM5030,
 			&hyperspt_vlm5030_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver roadf_machine_driver =
+static struct MachineDriver machine_driver_roadf =
 {
 	/* basic machine hardware */
 	{
@@ -523,7 +598,7 @@ static struct MachineDriver roadf_machine_driver =
 ***************************************************************************/
 
 ROM_START( hyperspt )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -559,7 +634,7 @@ ROM_START( hyperspt )
 ROM_END
 
 ROM_START( hpolym84 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
 	ROM_LOAD( "c03",          0x8000, 0x2000, 0x9b01c7e6 )
@@ -595,7 +670,7 @@ ROM_START( hpolym84 )
 ROM_END
 
 ROM_START( roadf )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "g05_g01.bin",  0x4000, 0x2000, 0xe2492a06 )
 	ROM_LOAD( "g07_f02.bin",  0x6000, 0x2000, 0x0bf75165 )
 	ROM_LOAD( "g09_g03.bin",  0x8000, 0x2000, 0xdde401f8 )
@@ -648,149 +723,6 @@ ROM_END
 
 
 
-static void hyperspt_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x4000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
-/*
- HyperSports has 2k of battery backed RAM which can be erased by setting a dipswitch
- All we need to do is load it in. If the Dipswitch is set it will be erased
-*/
-
-static int we_flipped_the_switch;
-
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x3800],0x4000-0x3800);
-		osd_fclose(f);
-
-		we_flipped_the_switch = 0;
-	}
-	else
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it on */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == in->mask)
-				{
-					in->default_value = 0;
-					we_flipped_the_switch = 1;
-				}
-				break;
-			}
-
-			in++;
-		}
-	}
-
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x3800],0x800);
-		osd_fclose(f);
-	}
-
-	if (we_flipped_the_switch)
-	{
-		struct InputPort *in;
-
-
-		/* find the dip switch which resets the high score table, and set it */
-		/* back to off. */
-		in = Machine->input_ports;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
-					strcmp(in->name,"World Records") == 0)
-			{
-				if (in->default_value == 0)
-					in->default_value = in->mask;
-				break;
-			}
-
-			in++;
-		}
-
-		we_flipped_the_switch = 0;
-	}
-}
-
-
-
-static int roadf_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x3bd0],"\x01\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x3c7d],"\x43\x3f\x20",3) == 0)
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x3bd0],176);
-            osd_fclose(f);
-        	memcpy(&RAM[0x3066],&RAM[0x3bd0],3);	/* copy high score */
-		}
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void roadf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM[0x3bd0],176);
-		osd_fclose(f);
-	}
-
-}
-
-
-
 struct GameDriver driver_hyperspt =
 {
 	__FILE__,
@@ -801,20 +733,19 @@ struct GameDriver driver_hyperspt =
 	"Konami (Centuri license)",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&hyperspt_machine_driver,
-	0,
+	&machine_driver_hyperspt,
+	konami1_decode,
 
 	rom_hyperspt,
-	0, hyperspt_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hyperspt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_hpolym84 =
@@ -827,20 +758,19 @@ struct GameDriver driver_hpolym84 =
 	"Konami",
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
-	&hyperspt_machine_driver,
-	0,
+	&machine_driver_hyperspt,
+	konami1_decode,
 
 	rom_hpolym84,
-	0, hyperspt_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hyperspt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_roadf =
@@ -853,20 +783,19 @@ struct GameDriver driver_roadf =
 	"Konami",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
 	0,
-	&roadf_machine_driver,
-	0,
+	&machine_driver_roadf,
+	konami1_decode,
 
 	rom_roadf,
-	0, hyperspt_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_roadf,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	roadf_hiload, roadf_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_roadf2 =
@@ -879,18 +808,17 @@ struct GameDriver driver_roadf2 =
 	"Konami",
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
 	0,
-	&roadf_machine_driver,
-	0,
+	&machine_driver_roadf,
+	konami1_decode,
 
 	rom_roadf2,
-	0, hyperspt_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_roadf,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	roadf_hiload, roadf_hisave
+	ROT90,
+	0,0
 };

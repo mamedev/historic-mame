@@ -301,9 +301,9 @@ static struct GfxLayout tilelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &spritelayout,     0, 32},
-    { 1, 0x18000, &tilelayout,       0, 32},
-    { 1, 0x18000, &tilelayout2,      0, 32},
+	{ REGION_GFX1, 0, &spritelayout, 0, 32},
+	{ REGION_GFX2, 0, &tilelayout,   0, 32},
+	{ REGION_GFX2, 0, &tilelayout2,  0, 32},
 	{ -1 } /* end of array */
 };
 
@@ -315,7 +315,7 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_battlane =
 {
 	/* basic machine hardware */
 	{
@@ -370,21 +370,22 @@ ROM_START( battlane )
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-5",    0x8000, 0x8000, 0x7a6c3f02 )
 
-	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
-	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
-	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
-	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
-
-	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
 	ROM_LOAD( "da00-5",    0x00000, 0x8000, 0x85b4ed73 )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
-	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
+	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
+	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
+
+	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END
 
 ROM_START( battlan2 )
@@ -392,21 +393,22 @@ ROM_START( battlan2 )
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-3",    0x8000, 0x8000, 0xd9e40800 )
 
-	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
+	ROM_LOAD( "da00-3",    0x00000, 0x8000, 0x7a0a5d58 )	/* ...second half goes here */
+	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
+
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
 	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
 	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
-	ROM_LOAD( "da00-3",    0x00000, 0x8000, 0x7a0a5d58 )
-	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
-
-	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
+	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END
 
 ROM_START( battlan3 )
@@ -414,24 +416,27 @@ ROM_START( battlan3 )
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, 0x001c4bbe )
 
-	ROM_REGION_DISPOSE(0x24000)     /* temporary space for graphics */
-	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
-	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
-	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
-
-	ROM_LOAD( "da06",      0x18000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
-	ROM_LOAD( "da07",      0x20000, 0x4000, 0x56df4077 ) /* Tiles*/
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
 	ROM_LOAD( "bl_04.rom", 0x00000, 0x8000, 0x5681564c )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
-	ROM_REGION(0x0040)     /* PROMs (function unknown) */
-	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )
-	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
+	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
+	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
+	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
+
+	ROM_REGIONX( 0x0040, REGION_PROMS )
+	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
+	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END
 
-static void battlane_decode(void)
+
+
+static void init_battlane(void)
 {
 	unsigned char *src,*dest;
 	int A;
@@ -447,80 +452,6 @@ static void battlane_decode(void)
 
 
 
-struct GameDriver driver_battlane =
-{
-	__FILE__,
-	0,
-	"battlane",
-	"Battle Lane Vol. 5 (set 1)",
-	"1986",
-	"Technos (Taito license)",
-	"Paul Leaman\nKim Greenblatt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_battlane,
-	battlane_decode, 0,
-	0,
-	0,
-
-	input_ports_battlane,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_battlan2 =
-{
-	__FILE__,
-	&driver_battlane,
-	"battlan2",
-	"Battle Lane Vol. 5 (set 2)",
-	"1986",
-	"Technos (Taito license)",
-	"Paul Leaman\nKim Greenblatt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_battlan2,
-	battlane_decode, 0,
-	0,
-	0,
-
-	input_ports_battlane,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
-
-struct GameDriver driver_battlan3 =
-{
-	__FILE__,
-	&driver_battlane,
-	"battlan3",
-	"Battle Lane Vol. 5 (set 3)",
-	"1986",
-	"Technos (Taito license)",
-	"Paul Leaman\nKim Greenblatt",
-	0,
-	&machine_driver,
-	0,
-
-	rom_battlan3,
-	battlane_decode, 0,
-	0,
-	0,
-
-	input_ports_battlane,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	0, 0
-};
+GAMEX( 1986, battlane, ,         battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 1)", GAME_WRONG_COLORS )
+GAMEX( 1986, battlan2, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 2)", GAME_WRONG_COLORS )
+GAMEX( 1986, battlan3, battlane, battlane, battlane, battlane, ROT90, "Technos (Taito license)", "Battle Lane Vol. 5 (set 3)", GAME_WRONG_COLORS )

@@ -47,7 +47,6 @@ extern void irobot_poly_clear(void);
 
 extern struct osd_bitmap *polybitmapt;
 
-UINT8 *irobot_nvRAM;
 static UINT8 *comRAM[2], *mbRAM, *mbROM;
 static UINT8 irobot_control_num = 0;
 static UINT8 irobot_statwr;
@@ -59,7 +58,6 @@ UINT8 *irobot_combase;
 UINT8 irobot_bufsel;
 UINT8 irobot_alphamap;
 
-static void irmb_init(void);
 static void irmb_run(void);
 
 
@@ -73,11 +71,6 @@ static void irmb_run(void);
 
 /***********************************************************************/
 
-
-void irobot_nvram_w(int offset,int data)
-{
-	irobot_nvRAM[offset] = data & 0x0F;
-}
 
 
 int irobot_sharedmem_r(int offset)
@@ -230,7 +223,6 @@ void irobot_init_machine(void)
 	comRAM[0]	= MB + 0x0e000;
 	comRAM[1]	= MB + 0x0f000;
 
-	if (errorlog) fprintf(errorlog,"INIT_MACHINE\n");
 	irvg_vblank=0;
 	irvg_running = 0;
 	irmb_running = 0;
@@ -243,9 +235,6 @@ void irobot_init_machine(void)
 	irobot_combase = comRAM[0];
 	irobot_combase_mb = comRAM[1];
 	irobot_outx = 0;
-
-	/* Convert Mathbox Proms */
-	irmb_init();
 }
 
 void irobot_control_w (int offset, int data)

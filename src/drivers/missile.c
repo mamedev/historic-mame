@@ -138,6 +138,8 @@ Off Off 						1 coin 2 plays
 ******************************************************************************************/
 #include "driver.h"
 
+extern unsigned char *missile_video2ram;
+
 void missile_init_machine(void);
 int  missile_r(int offset);
 void missile_w(int offset, int data);
@@ -165,7 +167,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0400, 0x05ff, missile_video_3rd_bit_w },
 	{ 0x0600, 0x063f, MWA_RAM },
 	{ 0x0640, 0x4fff, missile_w }, /* shared region */
-	{ 0x5000, 0xffff, missile_video2_w },
+	{ 0x5000, 0xffff, missile_video2_w, &missile_video2ram },
 	{ -1 }	/* end of table */
 };
 
@@ -438,41 +440,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x002C],"\x47\x4A\x4C", 3) == 0 &&
-		memcmp(&RAM[0x0044],"\x50\x69\x00", 3) == 0){
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0){
-			osd_fread(f,&RAM[0x002C],6*8);
-			osd_fclose(f);
-		}
-		return 1;
-	}else
-		return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0){
-		osd_fwrite(f,&RAM[0x002C],6*8);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_missile =
 {
 	__FILE__,
@@ -494,9 +461,8 @@ struct GameDriver driver_missile =
 	input_ports_missile,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_missile2 =
@@ -520,9 +486,8 @@ struct GameDriver driver_missile2 =
 	input_ports_missile,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_suprmatk =
@@ -546,7 +511,6 @@ struct GameDriver driver_suprmatk =
 	input_ports_suprmatk,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

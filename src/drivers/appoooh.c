@@ -3,6 +3,9 @@
 Appoooh memory map (preliminary)
 Similar to Bank Panic
 
+driver by Tatsuyuki Satoh
+
+
 0000-9fff ROM
 a000-dfff BANKED ROM
 e000-e7ff RAM
@@ -61,7 +64,6 @@ void appoooh_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static unsigned char *adpcmptr = 0;
 static int appoooh_adpcm_data;
 
-#define APPOOOH_ADPCM_REGION 3
 
 static void appoooh_adpcm_int (int num)
 {
@@ -85,7 +87,7 @@ static void appoooh_adpcm_int (int num)
 /* adpcm address write */
 static void appoooh_adpcm_w (int offset,int data)
 {
-	unsigned char *RAM = memory_region(APPOOOH_ADPCM_REGION);
+	unsigned char *RAM = memory_region(REGION_SOUND1);
 	adpcmptr  = &RAM[data*256];
 	MSM5205_reset_w(0,0);
 	appoooh_adpcm_data=-1;
@@ -220,10 +222,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,        0, 32 },
-	{ 1, 0xc000, &charlayout,     32*8, 32 },
-	{ 1, 0x0000, &spritelayout,      0, 32 },
-	{ 1, 0xc000, &spritelayout,   32*8, 32 },
+	{ REGION_GFX1, 0, &charlayout,        0, 32 },
+	{ REGION_GFX2, 0, &charlayout,     32*8, 32 },
+	{ REGION_GFX1, 0, &spritelayout,      0, 32 },
+	{ REGION_GFX2, 0, &spritelayout,   32*8, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -247,7 +249,7 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_appoooh =
 {
 	/* basic machine hardware */
 	{
@@ -308,20 +310,22 @@ ROM_START( appoooh )
 	ROM_LOAD( "epr-5912.bin", 0x10000, 0x2000, 0x3c3915ab ) /* bank1     */
 	ROM_LOAD( "epr-5914.bin", 0x12000, 0x2000, 0x58792d4a ) /* a000-dfff */
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "epr-5895.bin", 0x00000, 0x4000, 0x4b0d4294 )	/* playfield #1 chars */
 	ROM_LOAD( "epr-5896.bin", 0x04000, 0x4000, 0x7bc84d75 )
 	ROM_LOAD( "epr-5897.bin", 0x08000, 0x4000, 0x745f3ffa )
-	ROM_LOAD( "epr-5898.bin", 0x0c000, 0x4000, 0xcf01644d )	/* playfield #2 chars */
-	ROM_LOAD( "epr-5899.bin", 0x10000, 0x4000, 0x885ad636 )
-	ROM_LOAD( "epr-5900.bin", 0x14000, 0x4000, 0xa8ed13f3 )
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "epr-5898.bin", 0x00000, 0x4000, 0xcf01644d )	/* playfield #2 chars */
+	ROM_LOAD( "epr-5899.bin", 0x04000, 0x4000, 0x885ad636 )
+	ROM_LOAD( "epr-5900.bin", 0x08000, 0x4000, 0xa8ed13f3 )
 
 	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pr5921.prm",   0x0000, 0x020, 0xf2437229 ) 	/* palette */
 	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, 0x85c542bf ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, 0x16acbd53 ) 	/* charset #2 lookup table */
 
-	ROM_REGION( 0xa000 )	/* adpcm voice data */
+	ROM_REGIONX( 0xa000, REGION_SOUND1 )	/* adpcm voice data */
 	ROM_LOAD( "epr-5901.bin", 0x0000, 0x2000, 0x170a10a4 )
 	ROM_LOAD( "epr-5902.bin", 0x2000, 0x2000, 0xf6981640 )
 	ROM_LOAD( "epr-5903.bin", 0x4000, 0x2000, 0x0439df50 )
@@ -329,64 +333,6 @@ ROM_START( appoooh )
 	ROM_LOAD( "epr-5905.bin", 0x8000, 0x2000, 0xfb5cd70e )
 ROM_END
 
-/****  Appoooh high score save routine - RJF (Aug 3, 1999)  ****/
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe029],"\x53\x41\x4d",3) == 0)
-	{
-		void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xe018], 5);	/* HS value */
-			osd_fread(f,&RAM[0xe029], 3);	/* HS initials */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xe018], 5);		/* HS value */
-		osd_fwrite(f,&RAM[0xe029], 3);		/* HS initials */
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver driver_appoooh =
-{
-	__FILE__,
-	0,
-	"appoooh",
-	"Appoooh",
-	"1984",
-	"Sega",
-	"Tatsuyuki Satoh",
-	0,
-	&machine_driver,
-	0,
-
-	rom_appoooh,
-	0, 0,
-	0,
-	0,
-
-	input_ports_appoooh,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
+GAME( 1984, appoooh, , appoooh, appoooh, , ROT0, "Sega", "Appoooh" )

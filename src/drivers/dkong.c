@@ -946,7 +946,7 @@ static struct Samplesinterface dkongjr_samples_interface =
 	dkongjr_sample_names
 };
 
-static struct MachineDriver radarscp_machine_driver =
+static struct MachineDriver machine_driver_radarscp =
 {
 	/* basic machine hardware */
 	{
@@ -993,7 +993,7 @@ static struct MachineDriver radarscp_machine_driver =
 	}
 };
 
-static struct MachineDriver dkong_machine_driver =
+static struct MachineDriver machine_driver_dkong =
 {
 	/* basic machine hardware */
 	{
@@ -1045,7 +1045,7 @@ static int hunchbkd_interrupt(void)
 	return 0x03;	/* hunchbkd S2650 interrupt vector */
 }
 
-static struct MachineDriver hunchbkd_machine_driver =
+static struct MachineDriver machine_driver_hunchbkd =
 {
 	/* basic machine hardware */
 	{
@@ -1094,7 +1094,7 @@ int herbiedk_interrupt(void)
 	return ignore_interrupt();
 }
 
-static struct MachineDriver herbiedk_machine_driver =
+static struct MachineDriver machine_driver_herbiedk =
 {
 	/* basic machine hardware */
 	{
@@ -1137,7 +1137,7 @@ static struct MachineDriver herbiedk_machine_driver =
 	}
 };
 
-static struct MachineDriver dkongjr_machine_driver =
+static struct MachineDriver machine_driver_dkongjr =
 {
 	/* basic machine hardware */
 	{
@@ -1194,7 +1194,7 @@ static struct NESinterface nes_interface =
 };
 
 
-static struct MachineDriver dkong3_machine_driver =
+static struct MachineDriver machine_driver_dkong3 =
 {
 	/* basic machine hardware */
 	{
@@ -1652,198 +1652,6 @@ static void herocast_decode(void)
 
 
 
-static int radarscp_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (	memcmp(&RAM[0x6307],"\x00\x00\x07",3) == 0 &&
-			memcmp(&RAM[0x631c],"\x00\x50\x76",3) == 0 &&
-			memcmp(&RAM[0x63a7],"\x00\xfc\x76",3) == 0 &&
-			memcmp(&RAM[0x60a8],"\x50\x76\x00",3) == 0) 	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6307],162);
-			osd_fclose(f);
-			RAM[0x60a7]	= RAM[0x631d];
-			RAM[0x60a8]	= RAM[0x631e];
-			RAM[0x60a9]	= RAM[0x631f];
-	/* also have to copy the score to video ram so it displays on startup */
-			RAM[0x7641] = RAM[0x6307];
-			RAM[0x7621] = RAM[0x6308];
-			RAM[0x7601] = RAM[0x6309];
-			RAM[0x75e1] = RAM[0x630a];
-			RAM[0x75c1] = RAM[0x630b];
-			RAM[0x75a1] = RAM[0x630c];
-
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void radarscp_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6307],162);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
-			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0 &&
-			memcmp(&RAM[0x60b8],"\x50\x76\x00",3) == 0)	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6100],34*5);
-			RAM[0x60b8] = RAM[0x611d];
-			RAM[0x60b9] = RAM[0x611e];
-			RAM[0x60ba] = RAM[0x611f];
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated until a new game is started */
-			videoram_w(0x0241,RAM[0x6107]);
-			videoram_w(0x0221,RAM[0x6108]);
-			videoram_w(0x0201,RAM[0x6109]);
-			videoram_w(0x01e1,RAM[0x610a]);
-			videoram_w(0x01c1,RAM[0x610b]);
-			videoram_w(0x01a1,RAM[0x610c]);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6100],34*5);
-		osd_fclose(f);
-	}
-}
-
-static int dkong3_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x6b00],0xff,34*5);
-		firsttime = 1;
-	}
-
-
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x6b00],"\xf3\x76\xe8",3) == 0 &&
-	    memcmp(&RAM[0x6ba7],"\x00\x5b\x76",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6b00],34*5);	/* hi scores */
-			RAM[0x68f3] = RAM[0x6b1f];
-			RAM[0x68f4] = RAM[0x6b1e];
-			RAM[0x68f5] = RAM[0x6b1d];
-			osd_fread(f,&RAM[0x6c20],0x40);	/* distributions */
-			osd_fread(f,&RAM[0x6c16],4);
-			osd_fclose(f);
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-static void dkong3_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6b00],34*5);	/* hi scores */
-		osd_fwrite(f,&RAM[0x6c20],0x40);	/* distribution */
-		osd_fwrite(f,&RAM[0x6c16],4);
-		osd_fclose(f);
-	}
-}
-
-
-static int dkngjrjp_hiload(void)
-{
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x611d],"\x00\x18\x01",3) == 0 &&
-			memcmp(&RAM[0x61a5],"\x00\x57\x00",3) == 0 &&
-			memcmp(&RAM[0x60b8],"\x00\x18\x01",3) == 0)	/* high score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6100],34*5);
-			osd_fclose(f);
-			RAM[0x60b8] = RAM[0x611d];
-			RAM[0x60b9] = RAM[0x611e];
-			RAM[0x60ba] = RAM[0x611f];
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated until a new game is started */
-			videoram_w(0x0241,RAM[0x6107]);
-			videoram_w(0x0221,RAM[0x6108]);
-			videoram_w(0x0201,RAM[0x6109]);
-			videoram_w(0x01e1,RAM[0x610a]);
-			videoram_w(0x01c1,RAM[0x610b]);
-			videoram_w(0x01a1,RAM[0x610c]);
-
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
 static void radarscp_patch(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -1866,20 +1674,19 @@ struct GameDriver driver_radarscp =
 	"Nintendo",
 	"Andy White (protection workaround)\nGary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili\nAndy White (color info)\nTim Lindquist (color info)",
 	0,
-	&radarscp_machine_driver,
-	0,
+	&machine_driver_radarscp,
+	radarscp_patch,
 
 	rom_radarscp,
-	radarscp_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	radarscp_hiload,radarscp_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkong =
@@ -1892,7 +1699,7 @@ struct GameDriver driver_dkong =
 	"Nintendo of America",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	0,
-	&dkong_machine_driver,
+	&machine_driver_dkong,
 	0,
 
 	rom_dkong,
@@ -1903,9 +1710,8 @@ struct GameDriver driver_dkong =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkongjp =
@@ -1918,7 +1724,7 @@ struct GameDriver driver_dkongjp =
 	"Nintendo",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	0,
-	&dkong_machine_driver,
+	&machine_driver_dkong,
 	0,
 
 	rom_dkongjp,
@@ -1929,9 +1735,8 @@ struct GameDriver driver_dkongjp =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkongjpo =
@@ -1944,7 +1749,7 @@ struct GameDriver driver_dkongjpo =
 	"Nintendo",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	0,
-	&dkong_machine_driver,
+	&machine_driver_dkong,
 	0,
 
 	rom_dkongjpo,
@@ -1955,9 +1760,8 @@ struct GameDriver driver_dkongjpo =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkongjr =
@@ -1970,7 +1774,7 @@ struct GameDriver driver_dkongjr =
 	"Nintendo of America",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkongjr_machine_driver,
+	&machine_driver_dkongjr,
 	0,
 
 	rom_dkongjr,
@@ -1981,9 +1785,8 @@ struct GameDriver driver_dkongjr =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkngjrjp =
@@ -1996,7 +1799,7 @@ struct GameDriver driver_dkngjrjp =
 	"bootleg?",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkongjr_machine_driver,
+	&machine_driver_dkongjr,
 	0,
 
 	rom_dkngjrjp,
@@ -2007,9 +1810,8 @@ struct GameDriver driver_dkngjrjp =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	dkngjrjp_hiload,hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkjrjp =
@@ -2022,7 +1824,7 @@ struct GameDriver driver_dkjrjp =
 	"Nintendo",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkongjr_machine_driver,
+	&machine_driver_dkongjr,
 	0,
 
 	rom_dkjrjp,
@@ -2033,9 +1835,8 @@ struct GameDriver driver_dkjrjp =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkjrbl =
@@ -2048,7 +1849,7 @@ struct GameDriver driver_dkjrbl =
 	"Nintendo of America",
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkongjr_machine_driver,
+	&machine_driver_dkongjr,
 	0,
 
 	rom_dkjrbl,
@@ -2059,9 +1860,8 @@ struct GameDriver driver_dkjrbl =
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkong3 =
@@ -2074,7 +1874,7 @@ struct GameDriver driver_dkong3 =
 	"Nintendo of America",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkong3_machine_driver,
+	&machine_driver_dkong3,
 	0,
 
 	rom_dkong3,
@@ -2085,9 +1885,8 @@ struct GameDriver driver_dkong3 =
 	input_ports_dkong3,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	dkong3_hiload, dkong3_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_dkong3j =
@@ -2100,7 +1899,7 @@ struct GameDriver driver_dkong3j =
 	"Nintendo",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&dkong3_machine_driver,
+	&machine_driver_dkong3,
 	0,
 
 	rom_dkong3j,
@@ -2111,9 +1910,8 @@ struct GameDriver driver_dkong3j =
 	input_ports_dkong3,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	dkong3_hiload, dkong3_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_hunchbkd =
@@ -2126,7 +1924,7 @@ struct GameDriver driver_hunchbkd =
 	"Century",
 	"Mike Coates",
 	0,
-	&hunchbkd_machine_driver,
+	&machine_driver_hunchbkd,
 	0,
 
 	rom_hunchbkd,
@@ -2137,7 +1935,7 @@ struct GameDriver driver_hunchbkd =
 	input_ports_hunchbdk,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ROT90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
@@ -2152,7 +1950,7 @@ struct GameDriver driver_herbiedk =
 	"CVS",//"Seatongrove UK Ltd",
 	"Mike Coates",
 	0,
-	&herbiedk_machine_driver,
+	&machine_driver_herbiedk,
 	0,
 
 	rom_herbiedk,
@@ -2163,7 +1961,7 @@ struct GameDriver driver_herbiedk =
 	input_ports_herbiedk,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ROT90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
@@ -2178,18 +1976,18 @@ struct GameDriver driver_herocast =
 	"Seatongrove (Crown license)",
 	"Nicola Salmoria",
 	0,
-	&dkong_machine_driver,
-	0,
+	&machine_driver_dkong,
+	herocast_decode,
 
 	rom_herocast,
-	herocast_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dkong,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 
 	0, 0
 };

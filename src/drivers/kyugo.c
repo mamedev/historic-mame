@@ -490,7 +490,7 @@ static struct AY8910interface ay8910_interface =
 ***************************************************************************/
 
 #define Machine_Driver( name ) \
-static struct MachineDriver name##_machine_driver =											\
+static struct MachineDriver machine_driver_##name =											\
 {																							\
 	{																						\
 		{																					\
@@ -877,7 +877,7 @@ struct GameDriver driver_gyrodine =
 	"Taito Corporation",
 	"Ernesto Corvi",
 	0,
-	&gyrodine_machine_driver,
+	&machine_driver_gyrodine,
 	0,
 
 	rom_gyrodine,
@@ -888,7 +888,7 @@ struct GameDriver driver_gyrodine =
 	input_ports_gyrodine,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -902,7 +902,7 @@ struct GameDriver driver_sonofphx =
 	"Associated Overseas MFR, Inc",
 	"Ernesto Corvi",
 	0,
-	&sonofphx_machine_driver,
+	&machine_driver_sonofphx,
 	0,
 
 	rom_sonofphx,
@@ -913,7 +913,7 @@ struct GameDriver driver_sonofphx =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -927,7 +927,7 @@ struct GameDriver driver_repulse =
 	"Sega",
 	"Ernesto Corvi",
 	0,
-	&sonofphx_machine_driver,
+	&machine_driver_sonofphx,
 	0,
 
 	rom_repulse,
@@ -938,7 +938,7 @@ struct GameDriver driver_repulse =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -952,7 +952,7 @@ struct GameDriver driver_99lstwar =
 	"Proma",
 	"Ernesto Corvi",
 	0,
-	&sonofphx_machine_driver,
+	&machine_driver_sonofphx,
 	0,
 
 	rom_99lstwar,
@@ -963,7 +963,7 @@ struct GameDriver driver_99lstwar =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -977,7 +977,7 @@ struct GameDriver driver_99lstwra =
 	"Proma",
 	"Ernesto Corvi",
 	0,
-	&sonofphx_machine_driver,
+	&machine_driver_sonofphx,
 	0,
 
 	rom_99lstwra,
@@ -988,7 +988,7 @@ struct GameDriver driver_99lstwra =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -1002,7 +1002,7 @@ struct GameDriver driver_flashgal =
 	"Sega",
 	"Ernesto Corvi",
 	0,
-	&flashgal_machine_driver,
+	&machine_driver_flashgal,
 	0,
 
 	rom_flashgal,
@@ -1013,7 +1013,7 @@ struct GameDriver driver_flashgal =
 	input_ports_flashgal,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1027,7 +1027,7 @@ struct GameDriver driver_srdmissn =
 	"Taito Corporation",
 	"Ernesto Corvi",
 	0,
-	&srdmissn_machine_driver,
+	&machine_driver_srdmissn,
 	0,
 
 	rom_srdmissn,
@@ -1038,7 +1038,7 @@ struct GameDriver driver_srdmissn =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0, 0
 };
 
@@ -1052,7 +1052,7 @@ struct GameDriver driver_airwolf =
 	"Kyugo",
 	"Ernesto Corvi",
 	0,
-	&srdmissn_machine_driver,
+	&machine_driver_srdmissn,
 	0,
 
 	rom_airwolf,
@@ -1063,7 +1063,7 @@ struct GameDriver driver_airwolf =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1077,7 +1077,7 @@ struct GameDriver driver_skywolf =
 	"bootleg",
 	"Ernesto Corvi",
 	0,
-	&srdmissn_machine_driver,
+	&machine_driver_srdmissn,
 	0,
 
 	rom_skywolf,
@@ -1088,7 +1088,7 @@ struct GameDriver driver_skywolf =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -1102,7 +1102,7 @@ struct GameDriver driver_skywolf2 =
 	"bootleg",
 	"Ernesto Corvi",
 	0,
-	&srdmissn_machine_driver,
+	&machine_driver_srdmissn,
 	0,
 
 	rom_skywolf2,
@@ -1113,6 +1113,6 @@ struct GameDriver driver_skywolf2 =
 	input_ports_sonofphx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

@@ -35,20 +35,36 @@ int  berzerk_sh_start(const struct MachineSound *msound);
 void berzerk_sh_update(void);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void berzerk_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+	}
+}
+
+
+
 static struct MemoryReadAddress berzerk_readmem[] =
 {
-	{ 0x0000, 0x07ff, MRA_ROM},
-	{ 0x0800, 0x09ff, MRA_RAM},
-	{ 0x1000, 0x3fff, MRA_ROM},
-	{ 0x4000, 0x87ff, MRA_RAM},
+	{ 0x0000, 0x07ff, MRA_ROM },
+	{ 0x0800, 0x09ff, MRA_RAM },
+	{ 0x1000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x87ff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress berzerk_writemem[] =
 {
-	{ 0x0000, 0x07ff, MWA_ROM},
-	{ 0x0800, 0x09ff, MWA_RAM},
-	{ 0x1000, 0x3fff, MWA_ROM},
+	{ 0x0000, 0x07ff, MWA_ROM },
+	{ 0x0800, 0x09ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x1000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
 	{ 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
 	{ 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
@@ -419,9 +435,9 @@ static struct CustomSound_interface custom_interface =
 
 #define  frenzy_init_machine  0
 
-#define DRIVER(GAMENAME)												\
+#define DRIVER(GAMENAME,NVRAM)											\
 																		\
-static struct MachineDriver GAMENAME##_machine_driver =					\
+static struct MachineDriver machine_driver_##GAMENAME =					\
 {																		\
 	/* basic machine hardware */										\
 	{																	\
@@ -459,12 +475,14 @@ static struct MachineDriver GAMENAME##_machine_driver =					\
 			SOUND_CUSTOM,	/* actually plays the samples */			\
 			&custom_interface											\
 		}																\
-	}																	\
+	},																	\
+																		\
+	NVRAM																\
 };
 
 
-DRIVER(berzerk)
-DRIVER(frenzy)
+DRIVER(berzerk,berzerk_nvram_handler)
+DRIVER(frenzy,0)
 
 
 
@@ -506,162 +524,6 @@ ROM_END
 
 
 
-static int berzerk_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x0800],0x0800);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void berzerk_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0800],0x800);
-		osd_fclose(f);
-	}
-}
-
-static int frenzy_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x406f],0xff,59);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x406f],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x40a7],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x5c81],"\x04\x10\x80",3)==0 )
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x406e],60);
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void frenzy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x406e],60);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_berzerk =
-{
-	__FILE__,
-	0,
-	"berzerk",
-	"Berzerk (set 1)",
-	"1980",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
-	0,
-	&berzerk_machine_driver,
-	0,
-
-	rom_berzerk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_berzerk,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-
-	berzerk_hiload, berzerk_hisave
-};
-
-
-struct GameDriver driver_berzerk1 =
-{
-	__FILE__,
-	&driver_berzerk,
-	"berzerk1",
-	"Berzerk (set 2)",
-	"1980",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (sound)",
-	0,
-	&berzerk_machine_driver,
-	0,
-
-	rom_berzerk1,
-	0, 0,
-	0,
-	0,
-
-	input_ports_berzerk,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-
-	berzerk_hiload, berzerk_hisave
-};
-
-
-struct GameDriver driver_frenzy =
-{
-	__FILE__,
-	0,
-	"frenzy",
-	"Frenzy",
-	"1982",
-	"Stern",
-	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nKeith Gerdes\nMike Cuddy\nBrad Oliver",
-	0,
-	&frenzy_machine_driver,
-	0,
-
-	rom_frenzy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_frenzy,
-
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-
-	frenzy_hiload, frenzy_hisave
-};
+GAME( 1980, berzerk,  ,        berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 1)" )
+GAME( 1980, berzerk1, berzerk, berzerk, berzerk, , ROT0, "Stern", "Berzerk (set 2)" )
+GAME( 1982, frenzy,   ,        frenzy,  frenzy,  , ROT0, "Stern", "Frenzy" )

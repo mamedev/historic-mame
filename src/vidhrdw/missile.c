@@ -89,7 +89,8 @@ void missile_video_w (int address,int data)
 {
 	/* $0640 - $4fff */
 	int wbyte, wbit;
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
 
 	if (address < 0xf800)
 	{
@@ -150,7 +151,7 @@ void missile_video_mult_w (int address, int data)
 void missile_video_3rd_bit_w(int address, int data)
 {
 	int i;
-	extern unsigned char *RAM;
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	address += 0x400;

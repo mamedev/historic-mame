@@ -22,6 +22,7 @@
 
 ***************************************************************************/
 
+void ms_soundlatch_w (int offset,int data);
 void ms_soundlatch2_w(int offset,int data);
 void ms_YM2151_register_port_0_w(int offset,int data);
 void ms_YM2151_data_port_0_w(int offset,int data);
@@ -329,6 +330,9 @@ extern int megasys1_scroll_flag[3], megasys1_scrollx[3], megasys1_scrolly[3], me
 extern int megasys1_active_layers, megasys1_sprite_bank;
 extern int megasys1_screen_flag, megasys1_sprite_flag;
 extern int megasys1_bits_per_color_code;
+extern int megasys1_8x8_scroll_0_factor, megasys1_16x16_scroll_0_factor;
+extern int megasys1_8x8_scroll_1_factor, megasys1_16x16_scroll_1_factor;
+extern int megasys1_8x8_scroll_2_factor, megasys1_16x16_scroll_2_factor;
 
 
 /* Functions */

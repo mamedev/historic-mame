@@ -366,7 +366,7 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] = {
 **
 ***************************************************************************/
 
-static struct MachineDriver marvins_machine_driver = {
+static struct MachineDriver machine_driver_marvins = {
 	{
 		{
 			CPU_Z80,
@@ -417,7 +417,7 @@ static struct MachineDriver marvins_machine_driver = {
 	}
 };
 
-static struct MachineDriver madcrash_machine_driver = {
+static struct MachineDriver machine_driver_madcrash = {
 	{
 		{
 			CPU_Z80,
@@ -832,13 +832,13 @@ struct GameDriver driver_marvins =
 	"SNK",
 	CREDITS,
 	0,
-	&marvins_machine_driver,
-	0,
+	&machine_driver_marvins,
+	marvins_init,
 	rom_marvins,
-	marvins_init,0,0,0,
+	0,0,0,0,
 	input_ports_marvins,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0,0
 };
 
@@ -853,13 +853,13 @@ struct GameDriver driver_madcrash =
 	"SNK",
 	CREDITS,
 	0, /* incomplete sound */
-	&madcrash_machine_driver,
-	0,
+	&machine_driver_madcrash,
+	madcrash_init,
 	rom_madcrash,
-	madcrash_init,0,0,0,
+	0,0,0,0,
 	input_ports_madcrash,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };
 
@@ -873,12 +873,12 @@ struct GameDriver driver_vangrd2 =
 	"SNK",
 	CREDITS,
 	0, /* incomplete sound */
-	&madcrash_machine_driver,
-	0,
+	&machine_driver_madcrash,
+	vangrd2_init,
 	rom_vangrd2,
-	vangrd2_init,0,0,0,
+	0,0,0,0,
 	input_ports_vangrd2,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0,0
 };

@@ -1385,7 +1385,7 @@ int osd_set_display(int width,int height, int attributes)
 
 			/* allocate a wide enough virtual screen if possible */
 			/* we round the width (in dwords) to be an even multiple 256 - that */
-			/* way, during page flipping page only one byte of the video RAM */
+			/* way, during page flipping only one byte of the video RAM */
 			/* address changes, therefore preventing flickering. */
 			if (bits == 8)
 				triplebuf_page_width = (gfx_width + 0x3ff) & ~0x3ff;
@@ -1677,7 +1677,7 @@ int osd_set_display(int width,int height, int attributes)
 		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
 
 		if (errorlog)
-			fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
+			fprintf(errorlog,"target frame rate = %ffps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > Machine->drv->frames_per_second * 108 / 100)
@@ -1687,7 +1687,7 @@ int osd_set_display(int width,int height, int attributes)
 		{
 			osd_close_display();
 			if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
-						"video refresh frequency = %dHz, target frame rate = %dfps\n",
+						"video refresh frequency = %dHz, target frame rate = %ffps\n",
 						(int)(UCLOCKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
@@ -2177,7 +2177,7 @@ void osd_update_video_and_audio(void)
 
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
-			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,Machine->drv->frames_per_second);
+			sprintf(buf,"%s%2d%4d%%%4d/%d fps",autoframeskip?"auto":"fskp",frameskip,speed,fps,(int)Machine->drv->frames_per_second);
 			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{

@@ -89,7 +89,7 @@ void neogeo_init_machine(void)
 
 
 /* This function is only called once per game. */
-void neogeo_onetime_init_machine(void)
+void init_neogeo(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	extern struct YM2610interface neogeo_ym2610_interface;
@@ -821,40 +821,27 @@ if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while 
 	}
 }
 
-int neogeo_sram_load(void)
+void neogeo_nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-
-    /* Load the SRAM settings for this game */
-	memset(neogeo_sram,0,0x10000);
-	f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	if (f)
+	if (read_or_write)
 	{
-		osd_fread_msbfirst(f,neogeo_sram,0x2000);
-		osd_fclose(f);
+		/* Save the SRAM settings */
+		osd_fwrite_msbfirst(file,neogeo_sram,0x2000);
+
+		/* save the memory card */
+		neogeo_memcard_save();
 	}
-
-	/* load the memory card */
-	neogeo_memcard_load(memcard_number);
-
-	return 1;
-}
-
-void neogeo_sram_save(void)
-{
-    void *f;
-
-
-    /* Save the SRAM settings */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	else
 	{
-		osd_fwrite_msbfirst(f,neogeo_sram,0x2000);
-		osd_fclose(f);
-	}
+		/* Load the SRAM settings for this game */
+		if (file)
+			osd_fread_msbfirst(file,neogeo_sram,0x2000);
+		else
+			memset(neogeo_sram,0,0x10000);
 
-	/* save the memory card */
-	neogeo_memcard_save();
+		/* load the memory card */
+		neogeo_memcard_load(memcard_number);
+	}
 }
 
 

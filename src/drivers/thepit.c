@@ -615,7 +615,7 @@ static struct AY8910interface ay8910_interface =
 
 
 #define MACHINE_DRIVER(GAMENAME, COLORS)		            \
-static struct MachineDriver GAMENAME##_machine_driver =		\
+static struct MachineDriver machine_driver_##GAMENAME =		\
 {									  			            \
 	/* basic machine hardware */							\
 	{														\
@@ -857,160 +857,6 @@ ROM_END
 
 
 
-static int thepit_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8297],"\x16",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8039],0x0f);
-			osd_fread(f,&RAM[0x8280],0x20);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void thepit_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8039],0x0f);
-		osd_fwrite(f,&RAM[0x8280],0x20);
-		osd_fclose(f);
-	}
-}
-
-
-static int roundup_suprmous_common_hiload(int address)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (videoram_r(0x0181) == 0x00 &&
-		videoram_r(0x01a1) == 0x24)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int pos;
-
-			osd_fread(f,&RAM[address],0x03);
-			osd_fclose(f);
-
-			/* Copy it to the screen and remove leading zeroes */
-			videoram_w(0x0221, RAM[address  ] >> 4);
-			videoram_w(0x0201, RAM[address  ] & 0x0f);
-			videoram_w(0x01e1, RAM[address+1] >> 4);
-			videoram_w(0x01c1, RAM[address+1] & 0x0f);
-			videoram_w(0x01a1, RAM[address+2] >> 4);
-			videoram_w(0x0181, RAM[address+2] & 0x0f);
-
-			for (pos = 0x0221; pos >= 0x01a1; pos -= 0x20 )
-			{
-				if (videoram_r(pos) != 0x00) break;
-
-				videoram_w(pos, 0x24);
-			}
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int roundup_hiload(void)
-{
-	return roundup_suprmous_common_hiload(0x8050);
-}
-
-static void roundup_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8050],0x03);
-		osd_fclose(f);
-	}
-}
-
-
-static int intrepid_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8078],"\xfd",1) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x803d],0x3c);
-			RAM[0x8035] = RAM[0x803d];
-			RAM[0x8036] = RAM[0x803e];
-			RAM[0x8037] = RAM[0x803f];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void intrepid_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x803d],0x3c);
-		osd_fclose(f);
-	}
-}
-
-
-static int suprmous_hiload(void)
-{
-	return roundup_suprmous_common_hiload(0x804a);
-}
-
-static void suprmous_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x804a],0x03);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_thepit =
 {
 	__FILE__,
@@ -1021,7 +867,7 @@ struct GameDriver driver_thepit =
 	"Centuri",
 	"Zsolt Vasvari",
 	0,
-	&thepit_machine_driver,
+	&machine_driver_thepit,
 	0,
 
 	rom_thepit,
@@ -1032,9 +878,8 @@ struct GameDriver driver_thepit =
 	input_ports_thepit,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	thepit_hiload, thepit_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 
@@ -1048,7 +893,7 @@ struct GameDriver driver_roundup =
 	"Amenip/Centuri",
 	"Zsolt Vasvari",
 	0,
-	&thepit_machine_driver,
+	&machine_driver_thepit,
 	0,
 
 	rom_roundup,
@@ -1059,9 +904,8 @@ struct GameDriver driver_roundup =
 	input_ports_roundup,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	roundup_hiload, roundup_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_fitter =
@@ -1074,7 +918,7 @@ struct GameDriver driver_fitter =
 	"Taito",
 	"Zsolt Vasvari",
 	0,
-	&thepit_machine_driver,
+	&machine_driver_thepit,
 	0,
 
 	rom_fitter,
@@ -1085,9 +929,8 @@ struct GameDriver driver_fitter =
 	input_ports_fitter,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	roundup_hiload, roundup_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 
@@ -1101,7 +944,7 @@ struct GameDriver driver_intrepid =
 	"Nova Games Ltd.",
 	"Zsolt Vasvari",
 	0,
-	&intrepid_machine_driver,
+	&machine_driver_intrepid,
 	0,
 
 	rom_intrepid,
@@ -1112,9 +955,8 @@ struct GameDriver driver_intrepid =
 	input_ports_intrepid,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	intrepid_hiload, intrepid_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_intrepi2 =
@@ -1127,7 +969,7 @@ struct GameDriver driver_intrepi2 =
 	"Nova Games Ltd.",
 	"Zsolt Vasvari",
 	0,
-	&intrepid_machine_driver,
+	&machine_driver_intrepid,
 	0,
 
 	rom_intrepi2,
@@ -1138,9 +980,8 @@ struct GameDriver driver_intrepi2 =
 	input_ports_intrepid,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
-
-	intrepid_hiload, intrepid_hisave
+	ROT90 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_portman =
@@ -1153,7 +994,7 @@ struct GameDriver driver_portman =
 	"Nova Games Ltd.",
 	"Zsolt Vasvari",
 	0,
-	&intrepid_machine_driver,
+	&machine_driver_intrepid,
 	0,
 
 	rom_portman,
@@ -1164,7 +1005,7 @@ struct GameDriver driver_portman =
 	input_ports_portman,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
@@ -1179,7 +1020,7 @@ struct GameDriver driver_suprmous =
 	"Taito",
 	"Brad Oliver",
 	0,
-	&suprmous_machine_driver,
+	&machine_driver_suprmous,
 	0,
 
 	rom_suprmous,
@@ -1190,9 +1031,8 @@ struct GameDriver driver_suprmous =
 	input_ports_suprmous,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	suprmous_hiload, suprmous_hisave
+	ROT90 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_suprmou2 =
@@ -1205,7 +1045,7 @@ struct GameDriver driver_suprmou2 =
 	"Chu Co. Ltd",
 	"Brad Oliver",
 	0,
-	&suprmous_machine_driver,
+	&machine_driver_suprmous,
 	0,
 
 	rom_suprmou2,
@@ -1216,9 +1056,8 @@ struct GameDriver driver_suprmou2 =
 	input_ports_suprmous,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	suprmous_hiload, suprmous_hisave
+	ROT90 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_machomou =
@@ -1231,7 +1070,7 @@ struct GameDriver driver_machomou =
 	"Techstar",
 	"Brad Oliver",
 	0,
-	&suprmous_machine_driver,
+	&machine_driver_suprmous,
 	0,
 
 	rom_machomou,
@@ -1242,7 +1081,7 @@ struct GameDriver driver_machomou =
 	input_ports_suprmous,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ROT90 | GAME_WRONG_COLORS,
 
 	0, 0
 };

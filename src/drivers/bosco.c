@@ -1,6 +1,9 @@
 /***************************************************************************
 
-bosco memory map (preliminary)
+Bosconian
+
+driver by Martin Scragg
+
 
 CPU #1:
 0000-3fff ROM
@@ -67,8 +70,6 @@ CPU #3 NMI (@120Hz)
 #include "vidhrdw/generic.h"
 
 extern unsigned char *bosco_sharedram;
-int  bosco_reset_r(int offset);
-int  bosco_hiscore_print_r(int offset);
 int  bosco_sharedram_r(int offset);
 void bosco_sharedram_w(int offset,int data);
 int  bosco_dsw_r(int offset);
@@ -113,8 +114,6 @@ void pengo_sound_w(int offset,int data);
 int  bosco_sh_start(const struct MachineSound *msound);
 void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
-extern unsigned char bosco_hiscoreloaded;
-extern int  HiScore;
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
@@ -212,92 +211,8 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 };
 
 
+
 INPUT_PORTS_START( bosco )
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter" )
-	PORT_DIPSETTING(    0x30, "15K 50K" )
-	PORT_DIPSETTING(    0x38, "20K 70K" )
-	PORT_DIPSETTING(    0x08, "10K 50K 50K" )
-	PORT_DIPSETTING(    0x10, "15K 50K 50K" )
-	PORT_DIPSETTING(    0x18, "15K 70K 70K" )
-	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
-	PORT_DIPSETTING(    0x28, "30K 100K 100K" )
-	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0x80, "Fighters" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x40, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0xc0, "5" )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game" )
-	PORT_DIPSETTING(    0x00, "1 Player" )
-	PORT_DIPSETTING(    0x01, "2 Players" )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x06, "Medium" )
-	PORT_DIPSETTING(    0x04, "Hardest" )
-	PORT_DIPSETTING(    0x00, "Auto" )
-	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Freeze" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Test ????" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-
-	PORT_START	/* FAKE */
-	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
-	/* These fake input ports are read by galaga_customio_data_r() */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* FAKE */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
-	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* FAKE */
-	/* the button here is used to trigger the sound in the test screen */
-	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_START1, 1 )
-	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
-	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( bosconm )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
@@ -378,8 +293,91 @@ INPUT_PORTS_START( bosconm )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
 INPUT_PORTS_END
+
+INPUT_PORTS_START( boscomd )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x38, 0x08, "Bonus Fighter" )
+	PORT_DIPSETTING(    0x30, "15K 50K" )
+	PORT_DIPSETTING(    0x38, "20K 70K" )
+	PORT_DIPSETTING(    0x08, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "15K 50K 50K" )
+	PORT_DIPSETTING(    0x18, "15K 70K 70K" )
+	PORT_DIPSETTING(    0x20, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x28, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0xc0, 0x80, "Fighters" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game" )
+	PORT_DIPSETTING(    0x00, "1 Player" )
+	PORT_DIPSETTING(    0x01, "2 Players" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x06, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hardest" )
+	PORT_DIPSETTING(    0x00, "Auto" )
+	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Freeze" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test ????" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	/* the button here is used to trigger the sound in the test screen */
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,	0, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_START1, 1 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -419,9 +417,9 @@ static struct GfxLayout dotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,	    0, 64 },
-	{ 1, 0x1000, &spritelayout,	 64*4, 64 },
-	{ 1, 0x2000, &dotlayout,    64*4+64*4,	1 },
+	{ REGION_GFX1, 0, &charlayout,	        0, 64 },
+	{ REGION_GFX2, 0, &spritelayout,	 64*4, 64 },
+	{ REGION_GFX3, 0, &dotlayout,    64*4+64*4,	1 },
 	{ -1 } /* end of array */
 };
 
@@ -432,7 +430,7 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	50,			/* playback volume */
-	6			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 
@@ -461,7 +459,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bosco =
 {
 	/* basic machine hardware */
 	{
@@ -536,10 +534,21 @@ ROM_START( bosco )
 	ROM_LOAD( "bos1_3.bin",   0x2000, 0x1000, 0xc80ccfa5 )
 	ROM_LOAD( "bos1_4b.bin",  0x3000, 0x1000, 0xa3f7f4ab )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
+	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
+	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
-	ROM_LOAD( "5200.5e",	  0x1000, 0x1000, 0xe869219c )
-	ROM_LOAD( "prom.2d",	  0x2000, 0x0100, 0x9b69b543 )	/* dots */
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+
+	ROM_REGIONX( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
@@ -548,21 +557,14 @@ ROM_START( bosco )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
-	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
-
-	ROM_REGION(0x3000)	/* ROMs for digitised speech */
+	ROM_REGIONX( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
 	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
 	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
-
-	ROM_REGION(0x0200)	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( boscomd )
@@ -572,10 +574,21 @@ ROM_START( boscomd )
 	ROM_LOAD( "3l", 	  0x2000, 0x1000, 0x6ca9a0cf )
 	ROM_LOAD( "3k", 	  0x3000, 0x1000, 0xd83bacc5 )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "3j", 	  0x0000, 0x1000, 0x4374e39a )
+	ROM_LOAD( "3h", 	  0x1000, 0x1000, 0x04e9fcef )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
+	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
-	ROM_LOAD( "5200.5e",	  0x1000, 0x1000, 0xe869219c )
-	ROM_LOAD( "prom.2d",	  0x2000, 0x0100, 0x9b69b543 )	/* dots */
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+
+	ROM_REGIONX( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
@@ -584,21 +597,14 @@ ROM_START( boscomd )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "3j", 	  0x0000, 0x1000, 0x4374e39a )
-	ROM_LOAD( "3h", 	  0x1000, 0x1000, 0x04e9fcef )
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
-
-	ROM_REGION(0x3000)	/* ROMs for digitised speech */
+	ROM_REGIONX( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
 	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
 	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
-
-	ROM_REGION(0x0200)	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( boscomdo )
@@ -608,10 +614,21 @@ ROM_START( boscomdo )
 	ROM_LOAD( "2500.3l",	  0x2000, 0x1000, 0xa21fae11 )
 	ROM_LOAD( "2600.3k",	  0x3000, 0x1000, 0x11d6ae23 )
 
-	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "2700.3j",	  0x0000, 0x1000, 0x7254e65e )
+	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
+	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5300.5d",	  0x0000, 0x1000, 0xa956d3c5 )
-	ROM_LOAD( "5200.5e",	  0x1000, 0x1000, 0xe869219c )
-	ROM_LOAD( "prom.2d",	  0x2000, 0x0100, 0x9b69b543 )	/* dots */
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5200.5e",	  0x0000, 0x1000, 0xe869219c )
+
+	ROM_REGIONX( 0x0100, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "prom.2d",	  0x0000, 0x0100, 0x9b69b543 )	/* dots */
 
 	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",	  0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
@@ -620,158 +637,18 @@ ROM_START( boscomdo )
 	ROM_LOAD( "prom.2r",	  0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
 	ROM_LOAD( "prom.7h",	  0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "2700.3j",	  0x0000, 0x1000, 0x7254e65e )
-	ROM_LOAD( "2800.3h",	  0x1000, 0x1000, 0x31b8c648 )
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
+	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU  */
-	ROM_LOAD( "2900.3e",	  0x0000, 0x1000, 0xd45a4911 )
-
-	ROM_REGION(0x3000)	/* ROMs for digitised speech */
+	ROM_REGIONX( 0x3000, REGION_SOUND2 )	/* ROMs for digitised speech */
 	ROM_LOAD( "4900.5n",	  0x0000, 0x1000, 0x09acc978 )
 	ROM_LOAD( "5000.5m",	  0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",	  0x2000, 0x1000, 0x17ac9511 )
-
-	ROM_REGION(0x0200)	/* sound prom */
-	ROM_LOAD( "bosco.spr",	  0x0000, 0x0100, 0xee8ca3a8 )
-	ROM_LOAD( "prom.5c",	  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	int		i;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8bd3],"\x18",1) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8BC5],15);
-			osd_fread(f,&RAM[0x8BE4],16);
-			osd_fread(f,&RAM[0x885C],4);
-			osd_fread(f,&RAM[0x8060],8);
-			osd_fclose(f);
-		}
-		HiScore = 0;
-		for (i = 0; i < 3; i++)
-		{
-			HiScore = HiScore * 10 + RAM[0x8065 + i];
-			/* Set colour RAM to show large values if they are not zero */
-			if (RAM[0x8065 + i] != 0)
-				RAM[0x8865 + i] = 0x62;
-		}
-		for (i = 0; i < 4; i++)
-		{
-			HiScore = HiScore * 10 + RAM[0x8060 + i];
-		}
-		if (HiScore == 0)
-			HiScore = 20000;
-		bosco_hiscoreloaded = 1;
-		return 1;
-	}
-	return 0; /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8BC5],15);
-		osd_fwrite(f,&RAM[0x8BE4],16);
-		osd_fwrite(f,&RAM[0x885C],4);
-		osd_fwrite(f,&RAM[0x8060],8);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_bosco =
-{
-	__FILE__,
-	0,
-	"bosco",
-	"Bosconian",
-	"1981",
-	"Namco",
-	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bosco,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bosconm,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_boscomd =
-{
-	__FILE__,
-	&driver_bosco,
-	"boscomd",
-	"Bosconian (Midway, new version)",
-	"1981",
-	"[Namco] (Midway license)",
-	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
-	0,
-	&machine_driver,
-	0,
-
-	rom_boscomd,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bosco,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_boscomdo =
-{
-	__FILE__,
-	&driver_bosco,
-	"boscomdo",
-	"Bosconian (Midway, old version)",
-	"1981",
-	"[Namco] (Midway license)",
-	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
-	0,
-	&machine_driver,
-	0,
-
-	rom_boscomdo,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bosco,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-
+GAME( 1981, bosco,    ,      bosco, bosco,   , ROT0, "Namco", "Bosconian" )
+GAME( 1981, boscomd,  bosco, bosco, boscomd, , ROT0, "[Namco] (Midway license)", "Bosconian (Midway, new version)" )
+GAME( 1981, boscomdo, bosco, bosco, boscomd, , ROT0, "[Namco] (Midway license)", "Bosconian (Midway, old version)" )

@@ -1178,11 +1178,8 @@ if (keyboard_pressed(KEYCODE_D))
 
 	int j;
 	char mybuf[20];
-	int trueorientation;
 	struct osd_bitmap *mybitmap = Machine->scrbitmap;
 
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
 
 
 for (i = 0;i < 8;i+=2)

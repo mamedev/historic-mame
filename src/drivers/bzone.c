@@ -474,46 +474,6 @@ INPUT_PORTS_END
 
 
 
-static int bzone_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0300],"\x05\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x0339],"\x22\x28\x38",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0300],6*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void bzone_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0300],6*10);
-		osd_fclose(f);
-	}
-}
-
-
-
 static struct POKEYinterface bzone_pokey_interface =
 {
 	1,	/* 1 chip */
@@ -554,7 +514,7 @@ static struct Samplesinterface bzone_samples_interface =
 };
 
 
-static struct MachineDriver bzone_machine_driver =
+static struct MachineDriver machine_driver_bzone =
 {
 	/* basic machine hardware */
 	{
@@ -597,95 +557,6 @@ static struct MachineDriver bzone_machine_driver =
 };
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( bzone )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
-	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
-	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
-	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
-	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
-	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
-	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
-ROM_END
-
-ROM_START( bzone2 )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
-	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
-	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
-	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
-	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
-	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
-	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
-	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
-ROM_END
-
-
-
-struct GameDriver driver_bzone =
-{
-	__FILE__,
-	0,
-	"bzone",
-	"Battle Zone (set 1)",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
-	0,
-	&bzone_machine_driver,
-	0,
-
-	rom_bzone,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bzone,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	bzone_hiload, bzone_hisave
-};
-
-struct GameDriver driver_bzone2 =
-{
-	__FILE__,
-	&driver_bzone,
-	"bzone2",
-	"Battle Zone (set 2)",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
-	0,
-	&bzone_machine_driver,
-	0,
-
-	rom_bzone2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bzone,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	bzone_hiload, bzone_hisave
-};
-
-
 static struct POKEYinterface redbaron_pokey_interface =
 {
 	1,	/* 1 chip */
@@ -722,7 +593,7 @@ static struct Samplesinterface redbaron_samples_interface =
 	redbaron_sample_names
 };
 
-static struct MachineDriver redbaron_machine_driver =
+static struct MachineDriver machine_driver_redbaron =
 {
 	/* basic machine hardware */
 	{
@@ -760,9 +631,10 @@ static struct MachineDriver redbaron_machine_driver =
 			SOUND_SAMPLES,
 			&redbaron_samples_interface
 		}
-	}
-};
+	},
 
+	atari_vg_earom_handler
+};
 
 
 /***************************************************************************
@@ -770,6 +642,34 @@ static struct MachineDriver redbaron_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( bzone )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
+ROM_END
+
+ROM_START( bzone2 )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
+ROM_END
 
 ROM_START( redbaron )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
@@ -786,29 +686,8 @@ ROM_START( redbaron )
 	ROM_LOAD( "037007.01e", 0x3800, 0x0800, 0x60250ede )
 ROM_END
 
-struct GameDriver driver_redbaron =
-{
-	__FILE__,
-	0,
-	"redbaron",
-	"Red Baron",
-	"1980",
-	"Atari",
-	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Baloo (stick support)",
-	0,
-	&redbaron_machine_driver,
-	0,
 
-	rom_redbaron,
-	0, 0,
-	0,
-	0,
 
-	input_ports_redbaron,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load, atari_vg_earom_save
-};
-
+GAME( 1980, bzone,    ,      bzone,    bzone,    , ROT0, "Atari", "Battle Zone (set 1)" )
+GAME( 1980, bzone2,   bzone, bzone,    bzone,    , ROT0, "Atari", "Battle Zone (set 2)" )
+GAME( 1980, redbaron, ,      redbaron, redbaron, , ROT0, "Atari", "Red Baron" )

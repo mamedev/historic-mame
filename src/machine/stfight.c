@@ -34,59 +34,56 @@ Encryption PAL 16R4 on CPU board
 
 */
 
+void empcity_decode(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+	int A;
+
+
+	memory_set_opcode_base(0,rom+diff);
+
+	for (A = 0;A < 0x8000;A++)
+	{
+		unsigned char src = rom[A];
+
+		// decode opcode
+		rom[A+diff] =
+				( src & 0xA6 ) |
+				( ( ( ( src << 2 ) ^ src ) << 3 ) & 0x40 ) |
+				( ~( ( src ^ ( A >> 1 ) ) >> 2 ) & 0x10 ) |
+				( ~( ( ( src << 1 ) ^ A ) << 2 ) & 0x08 ) |
+				( ( ( src ^ ( src >> 3 ) ) >> 1 ) & 0x01 );
+
+		// decode operand
+		rom[A] =
+				( src & 0xA6 ) |
+				( ~( ( src ^ ( src << 1 ) ) << 5 ) & 0x40 ) |
+				( ( ( src ^ ( A << 3 ) ) << 1 ) & 0x10 ) |
+				( ( ( src ^ A ) >> 1 ) & 0x08 ) |
+				( ~( ( src >> 6 ) ^ A ) & 0x01 );
+	}
+}
+
 void stfight_decode(void)
 {
-    int             A;
-	unsigned char   *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
-    for( A=0; A<0x8000; A++ )
-    {
-        unsigned char src = RAM[A];
 
-        // decode opcode
-        ROM[A] = ( src & 0xA6 ) |
-                 ( ( ( ( src << 2 ) ^ src ) << 3 ) & 0x40 ) |
-                 ( ~( ( src ^ ( A >> 1 ) ) >> 2 ) & 0x10 ) |
-                 ( ~( ( ( src << 1 ) ^ A ) << 2 ) & 0x08 ) |
-                 ( ( ( src ^ ( src >> 3 ) ) >> 1 ) & 0x01 );
+	empcity_decode();
 
-        // decode operand
-        RAM[A] = ( src & 0xA6 ) |
-                 ( ~( ( src ^ ( src << 1 ) ) << 5 ) & 0x40 ) |
-                 ( ( ( src ^ ( A << 3 ) ) << 1 ) & 0x10 ) |
-                 ( ( ( src ^ A ) >> 1 ) & 0x08 ) |
-                 ( ~( ( src >> 6 ) ^ A ) & 0x01 );
-    }
+	/* patch out a tight loop during startup - is the code waiting */
+	/* for NMI to wake it up? */
+	rom[0xb1 + diff] = 0x00;
+	rom[0xb2 + diff] = 0x00;
+	rom[0xb3 + diff] = 0x00;
+	rom[0xb4 + diff] = 0x00;
+	rom[0xb5 + diff] = 0x00;
 }
 
 void stfight_init_machine( void )
 {
-    static int patch_0[] =
-    {
-        0x00B1, 0x00B2, 0x00B3,     // wait for NMI after power-on
-        0x00B4, 0x00B5,             // fix stack
-
-        //0x00C1, 0x00C2, 0x00C3,     // check coin circuit
-
-        //0x2CBB, 0x2CBC, 0x2CBD,     // read coin mechs
-
-        //0x2858, 0x2859,             // wait for 30Hz interrupt
-
-        0x0000
-    };
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    int             i;
-
-    // Insert NOPs into ROM code
-    for( i=0; patch_0[i]; i++ )
-    {
-        // patch opcode space
-        ROM[patch_0[i]] = 0x00;
-        // patch operand space
-        RAM[patch_0[i]] = 0x00;
-    }
-
     // initialise rom bank
     stfight_bank_w( 0, 0 );
 }

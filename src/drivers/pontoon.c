@@ -49,6 +49,22 @@ void pontoon_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 void pontoon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -65,7 +81,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_RAM },
+	{ 0x6000, 0x67ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0xa001, 0xa002, MWA_NOP },  /* Probably lights and stuff */
@@ -239,7 +255,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -248,6 +266,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( pontoon )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )         /* 64k for code */
 	ROM_LOAD( "ponttekh.001",   0x0000, 0x4000, 0x1f8c1b38 )
@@ -264,42 +283,6 @@ ROM_START( pontoon )
 	ROM_LOAD( "pon24s10.002",   0x0100, 0x0100, 0x117e1b67 )  /* green component */
 	ROM_LOAD( "pon24s10.001",   0x0200, 0x0100, 0xc64ecee8 )  /* blue component */
 ROM_END
-
-
-/* Load/Save the battery backed up RAM */
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x6000],0x0800);
-		osd_fclose(f);
-	}
-	else
-	{
-		memset(&RAM[0x6000],0xff,0x0800);
-	}
-
-	return 1;
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6000],0x0800);
-		osd_fclose(f);
-	}
-}
 
 
 
@@ -325,7 +308,6 @@ struct GameDriver driver_pontoon =
 	input_ports_pontoon,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };

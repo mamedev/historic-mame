@@ -264,7 +264,7 @@ static struct namco_interface namco_interface =
 	5		/* memory region */
 };
 
-static struct MachineDriver phozon_machine_driver =
+static struct MachineDriver machine_driver_phozon =
 {
 	/* basic machine hardware  */
 	{
@@ -353,7 +353,7 @@ struct GameDriver driver_phozon =
 	"Namco",
 	"Manuel Abadia\nLarry Bank(color info)",
 	0,
-	&phozon_machine_driver,
+	&machine_driver_phozon,
 	0,
 
 	rom_phozon,
@@ -364,7 +364,7 @@ struct GameDriver driver_phozon =
 	input_ports_phozon,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

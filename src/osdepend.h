@@ -200,19 +200,24 @@ typedef struct {
 
 
 /* file handling routines */
-#define OSD_FILETYPE_ROM 1
-#define OSD_FILETYPE_SAMPLE 2
-#define OSD_FILETYPE_HIGHSCORE 3
-#define OSD_FILETYPE_CONFIG 4
-#define OSD_FILETYPE_INPUTLOG 5
-#define OSD_FILETYPE_STATE 6
-#define OSD_FILETYPE_ARTWORK 7
-#define OSD_FILETYPE_MEMCARD 8
-#define OSD_FILETYPE_SCREENSHOT 9
+enum
+{
+	OSD_FILETYPE_ROM = 1,
+	OSD_FILETYPE_SAMPLE,
+	OSD_FILETYPE_NVRAM,
+	OSD_FILETYPE_HIGHSCORE,
+	OSD_FILETYPE_CONFIG,
+	OSD_FILETYPE_INPUTLOG,
+	OSD_FILETYPE_STATE,
+	OSD_FILETYPE_ARTWORK,
+	OSD_FILETYPE_MEMCARD,
+	OSD_FILETYPE_SCREENSHOT
 #ifdef MESS
-  #define OSD_FILETYPE_IMAGE_R 10
-  #define OSD_FILETYPE_IMAGE_RW 11
+	,
+	OSD_FILETYPE_IMAGE_R,
+	OSD_FILETYPE_IMAGE_RW
 #endif
+};
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */

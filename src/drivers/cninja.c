@@ -659,21 +659,21 @@ static struct GfxLayout tilelayout =
 /* Areas 1536-2048 & 1024-1280 seem to be always empty */
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tilelayout,  512, 64 },	/* Tiles 16x16 (BASE 1280) */
-	{ 1, 0x0a0000, &tilelayout,  512, 64 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &tilelayout,  256, 16 },	/* Tiles 16x16 */
-	{ 1, 0x1a0000, &spritelayout,768, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,    0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,  512, 64 },	/* Tiles 16x16 (BASE 1280) */
+	{ REGION_GFX3, 0, &tilelayout,  512, 64 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &tilelayout,  256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX5, 0, &spritelayout,768, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo2[] =
 {
-	{ 1, 0x000000, &charlayout,     0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tilelayout,   512, 64 },	/* Tiles 16x16 (BASE 1280) */
-	{ 1, 0x0a0000, &tilelayout,   512, 64 },	/* Tiles 16x16 */
-	{ 1, 0x120000, &tilelayout,   256, 16 },	/* Tiles 16x16 */
-	{ 1, 0x1a0000, &spritelayout2,768, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,   512, 64 },	/* Tiles 16x16 (BASE 1280) */
+	{ REGION_GFX3, 0, &tilelayout,   512, 64 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &tilelayout,   256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX5, 0, &spritelayout2,768, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -728,13 +728,13 @@ static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* Frequency */
-	{ 3, 4 },       /* memory regions 3 & 4 */
+	{ REGION_SOUND1, REGION_SOUND2 },       /* memory regions 3 & 4 */
 	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 /**********************************************************************************/
 
-static struct MachineDriver cninja_machine_driver =
+static struct MachineDriver machine_driver_cninja =
 {
 	/* basic machine hardware */
 	{
@@ -786,7 +786,7 @@ static struct MachineDriver cninja_machine_driver =
 	}
 };
 
-static struct MachineDriver stoneage_machine_driver =
+static struct MachineDriver machine_driver_stoneage =
 {
 	/* basic machine hardware */
 	{
@@ -834,7 +834,7 @@ static struct MachineDriver stoneage_machine_driver =
 	}
 };
 
-static struct MachineDriver edrandy_machine_driver =
+static struct MachineDriver machine_driver_edrandy =
 {
 	/* basic machine hardware */
 	{
@@ -897,26 +897,32 @@ ROM_START( cninja )
 	ROM_LOAD_EVEN( "gn-00.rom",    0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom",    0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
-	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
-
-	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
-	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
-	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
-
-	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
-	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
-	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
-	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
-	ROM_REGION(0x20000) /* Oki samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
+	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-00.rom", 0x000000, 0x80000,  0xa8f05d33 )	/* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-01.rom", 0x000000, 0x80000,  0x5b399eed )	/* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  0xde89c69a )	/* tiles 3 */
+
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-03.rom", 0x000000, 0x80000,  0x2220eb9f )	/* sprites */
+	ROM_LOAD( "mag-04.rom", 0x080000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x100000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x180000, 0x80000,  0x82d44749 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
@@ -929,26 +935,32 @@ ROM_START( cninja0 )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
-	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
-
-	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
-	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
-	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
-
-	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
-	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
-	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
-	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
-	ROM_REGION(0x20000) /* Oki samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
+	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-00.rom", 0x000000, 0x80000,  0xa8f05d33 )	/* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-01.rom", 0x000000, 0x80000,  0x5b399eed )	/* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  0xde89c69a )	/* tiles 3 */
+
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-03.rom", 0x000000, 0x80000,  0x2220eb9f )	/* sprites */
+	ROM_LOAD( "mag-04.rom", 0x080000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x100000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x180000, 0x80000,  0x82d44749 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
@@ -961,26 +973,32 @@ ROM_START( cninjau )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
-	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
-	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
-
-	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
-	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
-	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
-
-	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
-	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
-	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
-	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
-	ROM_REGION(0x20000) /* Oki samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
+	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-00.rom", 0x000000, 0x80000,  0xa8f05d33 )	/* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-01.rom", 0x000000, 0x80000,  0x5b399eed )	/* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  0xde89c69a )	/* tiles 3 */
+
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-03.rom", 0x000000, 0x80000,  0x2220eb9f )	/* sprites */
+	ROM_LOAD( "mag-04.rom", 0x080000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x100000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x180000, 0x80000,  0x82d44749 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
@@ -993,26 +1011,32 @@ ROM_START( joemac )
 	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000,  0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000,  0x1e28e697 )
 
-	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
-	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
-
-	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
-	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
-	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
-
-	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
-	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
-	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
-	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
 	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
 
-	ROM_REGION(0x20000) /* Oki samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
+	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-00.rom", 0x000000, 0x80000,  0xa8f05d33 )	/* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-01.rom", 0x000000, 0x80000,  0x5b399eed )	/* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  0xde89c69a )	/* tiles 3 */
+
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-03.rom", 0x000000, 0x80000,  0x2220eb9f )	/* sprites */
+	ROM_LOAD( "mag-04.rom", 0x080000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x100000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x180000, 0x80000,  0x82d44749 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
@@ -1025,29 +1049,35 @@ ROM_START( stoneage )
 	ROM_LOAD_EVEN( "sa_1_017.bin", 0x80000, 0x20000,  0x08d6397a )
 	ROM_LOAD_ODD ( "sa_1_031.bin", 0x80000, 0x20000,  0x103079f5 )
 
-	ROM_REGION_DISPOSE(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
+	ROM_LOAD( "sa_1_012.bin",  0x00000,  0x10000, 0x56058934 )
+
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
 	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
 
 	/* The bootleg graphics are stored in a different arrangement but
 		seem to be the same as the original set */
 
-	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
-	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
-	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-00.rom", 0x000000, 0x80000,  0xa8f05d33 )	/* tiles 1 */
 
-	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
-	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
-	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
-	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-01.rom", 0x000000, 0x80000,  0x5b399eed )	/* tiles 2 */
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* Sound CPU */
-	ROM_LOAD( "sa_1_012.bin",  0x00000,  0x10000, 0x56058934 )
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-02.rom", 0x000000, 0x80000,  0xde89c69a )	/* tiles 3 */
 
-	ROM_REGION(0x40000) /* Oki samples */
+	ROM_REGIONX( 0x200000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mag-03.rom", 0x000000, 0x80000,  0x2220eb9f )	/* sprites */
+	ROM_LOAD( "mag-04.rom", 0x080000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x100000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x180000, 0x80000,  0x82d44749 )
+
+	ROM_REGIONX( 0x40000, REGION_SOUND1 ) /* Oki samples */
 	ROM_LOAD( "sa_1_069.bin",  0x00000,  0x40000, 0x2188f3ca )
 
-	ROM_REGION(0x100) /* No extra Oki samples in the bootleg */
+	/* No extra Oki samples in the bootleg */
 ROM_END
 
 ROM_START( edrandy )
@@ -1061,33 +1091,38 @@ ROM_START( edrandy )
 	ROM_LOAD_EVEN( "ge-03",   0xc0000, 0x20000, 0x5e7b19a8 )
 	ROM_LOAD_ODD ( "ge-07",   0xc0000, 0x20000, 0x5eb819a1 )
 
-	ROM_REGION_DISPOSE(0x6a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg-11",   0x000000, 0x10000, 0xee567448 )
-  	ROM_LOAD( "gg-10",   0x010000, 0x10000, 0xb96c6cbe )
-
-	ROM_LOAD( "mad-00", 0x020000, 0x80000, 0x3735b22d ) /* tiles 1 */
-	ROM_LOAD( "mad-01", 0x0a0000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
-	ROM_LOAD( "mad-02", 0x120000, 0x80000, 0x6c76face ) /* tiles 3 */
-
-	ROM_LOAD( "mad-03", 0x1a0000, 0x80000, 0xc0bff892 ) /* sprites */
-	ROM_LOAD( "mad-04", 0x220000, 0x80000, 0x464f3eb9 )
-	ROM_LOAD( "mad-07", 0x2a0000, 0x80000, 0xac03466e )
-	ROM_LOAD( "mad-10", 0x320000, 0x80000, 0x42da8ef0 )
-	ROM_LOAD( "mad-09", 0x3a0000, 0x80000, 0x930f4900 )
-
-	ROM_LOAD( "mad-05", 0x420000, 0x80000, 0x3f2ccf95 )
-	ROM_LOAD( "mad-06", 0x4a0000, 0x80000, 0x60871f77 )
-	ROM_LOAD( "mad-08", 0x520000, 0x80000, 0x1b420ec8 )
-	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
-	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "gg-11",    0x000000, 0x10000, 0xee567448 )
+  	ROM_LOAD( "gg-10",    0x010000, 0x10000, 0xb96c6cbe )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-00",   0x000000, 0x80000, 0x3735b22d ) /* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-01",   0x000000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-02",   0x000000, 0x80000, 0x6c76face ) /* tiles 3 */
+
+	ROM_REGIONX( 0x500000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-03",   0x000000, 0x80000, 0xc0bff892 ) /* sprites */
+	ROM_LOAD( "mad-04",   0x080000, 0x80000, 0x464f3eb9 )
+	ROM_LOAD( "mad-07",   0x100000, 0x80000, 0xac03466e )
+	ROM_LOAD( "mad-10",   0x180000, 0x80000, 0x42da8ef0 )
+	ROM_LOAD( "mad-09",   0x200000, 0x80000, 0x930f4900 )
+	ROM_LOAD( "mad-05",   0x280000, 0x80000, 0x3f2ccf95 )
+	ROM_LOAD( "mad-06",   0x300000, 0x80000, 0x60871f77 )
+	ROM_LOAD( "mad-08",   0x380000, 0x80000, 0x1b420ec8 )
+	ROM_LOAD( "mad-11",   0x400000, 0x80000, 0x03c1f982 )
+	ROM_LOAD( "mad-12",   0x480000, 0x80000, 0xa0bd62b6 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ge-08",    0x00000, 0x20000, 0xdfe28c7b )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
 ROM_END
 
@@ -1102,101 +1137,41 @@ ROM_START( edrandyj )
 	ROM_LOAD_EVEN( "ge-03",     0xc0000, 0x20000, 0x5e7b19a8 )
 	ROM_LOAD_ODD ( "ge-07",     0xc0000, 0x20000, 0x5eb819a1 )
 
-	ROM_REGION_DISPOSE(0x6a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ge-10",  0x000000, 0x10000, 0x2528d795 )
-  	ROM_LOAD( "ge-11",  0x010000, 0x10000, 0xe34a931e )
-
-	ROM_LOAD( "mad-00", 0x020000, 0x80000, 0x3735b22d ) /* tiles 1 */
-	ROM_LOAD( "mad-01", 0x0a0000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
-	ROM_LOAD( "mad-02", 0x120000, 0x80000, 0x6c76face ) /* tiles 3 */
-
-	ROM_LOAD( "mad-03", 0x1a0000, 0x80000, 0xc0bff892 ) /* sprites */
-	ROM_LOAD( "mad-04", 0x220000, 0x80000, 0x464f3eb9 )
-	ROM_LOAD( "mad-07", 0x2a0000, 0x80000, 0xac03466e )
-	ROM_LOAD( "mad-10", 0x320000, 0x80000, 0x42da8ef0 )
-	ROM_LOAD( "mad-09", 0x3a0000, 0x80000, 0x930f4900 )
-
-	ROM_LOAD( "mad-05", 0x420000, 0x80000, 0x3f2ccf95 )
-	ROM_LOAD( "mad-06", 0x4a0000, 0x80000, 0x60871f77 )
-	ROM_LOAD( "mad-08", 0x520000, 0x80000, 0x1b420ec8 )
-	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
-	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
 
-	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_REGIONX( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ge-10",    0x000000, 0x10000, 0x2528d795 )
+  	ROM_LOAD( "ge-11",    0x010000, 0x10000, 0xe34a931e )
+
+	ROM_REGIONX( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-00",   0x000000, 0x80000, 0x3735b22d ) /* tiles 1 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-01",   0x000000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
+
+	ROM_REGIONX( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-02",   0x000000, 0x80000, 0x6c76face ) /* tiles 3 */
+
+	ROM_REGIONX( 0x500000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mad-03",   0x000000, 0x80000, 0xc0bff892 ) /* sprites */
+	ROM_LOAD( "mad-04",   0x080000, 0x80000, 0x464f3eb9 )
+	ROM_LOAD( "mad-07",   0x100000, 0x80000, 0xac03466e )
+	ROM_LOAD( "mad-10",   0x180000, 0x80000, 0x42da8ef0 )
+	ROM_LOAD( "mad-09",   0x200000, 0x80000, 0x930f4900 )
+	ROM_LOAD( "mad-05",   0x280000, 0x80000, 0x3f2ccf95 )
+	ROM_LOAD( "mad-06",   0x300000, 0x80000, 0x60871f77 )
+	ROM_LOAD( "mad-08",   0x380000, 0x80000, 0x1b420ec8 )
+	ROM_LOAD( "mad-11",   0x400000, 0x80000, 0x03c1f982 )
+	ROM_LOAD( "mad-12",   0x480000, 0x80000, 0xa0bd62b6 )
+
+	ROM_REGIONX( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
 	ROM_LOAD( "ge-08",    0x00000, 0x20000, 0xdfe28c7b )
 
-	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_REGIONX( 0x80000, REGION_SOUND2 ) /* Extra Oki samples */
 	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
 ROM_END
 
-/**********************************************************************************/
-
-static int cninja_hiload(void)
-{
-	void *f;
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&cninja_ram[0x03808],"\x2E\x44\x20",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&cninja_ram[0x3808],0x0a0);
-			/* Update high score at the top of the screen */
-			cninja_ram[0x37FA] = cninja_ram[0x380C];
-			cninja_ram[0x37FB] = cninja_ram[0x380D];
-			cninja_ram[0x37FC] = cninja_ram[0x380E];
-			cninja_ram[0x37FD] = cninja_ram[0x380F];
-			osd_fclose(f);
-		}
-		return 1;     /* high score loaded yet */
-	}
-	else return 0; /* Can't load high score yet */
-}
-
-static void cninja_hisave(void)
-{
-	void *f;
-	/* save the hi score table */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&cninja_ram[0x3808],0x0A0);
-		osd_fclose(f);
-	}
-}
-
-static int cninja0_hiload(void)
-{
-	void *f;
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&cninja_ram[0x03804],"\x2E\x44\x20",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&cninja_ram[0x3804],0x0a0);
-			/* Update high score at the top of the screen */
-			cninja_ram[0x37F6] = cninja_ram[0x3808];
-			cninja_ram[0x37F7] = cninja_ram[0x3809];
-			cninja_ram[0x37F8] = cninja_ram[0x380A];
-			cninja_ram[0x37F9] = cninja_ram[0x380B];
-			osd_fclose(f);
-		}
-		return 1;     /* high score loaded yet */
-	}
-	else return 0; /* Can't load high score yet */
-}
-
-static void cninja0_hisave(void)
-{
-	void *f;
-	/* save the hi score table */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&cninja_ram[0x3804],0x0A0);
-		osd_fclose(f);
-	}
-}
 
 /**********************************************************************************/
 
@@ -1237,191 +1212,23 @@ static void edrandyj_patch(void)
 
 /**********************************************************************************/
 
-static void custom_memory(void)
+static void init_cninja(void)
 {
 	install_mem_write_handler(0, 0x1bc0a8, 0x1bc0a9, cninja_sound_w);
+	cninja_patch();
 }
 
-static void custom_memory2(void)
+static void init_stoneage(void)
 {
 	install_mem_write_handler(0, 0x1bc0a8, 0x1bc0a9, stoneage_sound_w);
 }
 
 /**********************************************************************************/
 
-struct GameDriver driver_cninja =
-{
-	__FILE__,
-	0,
-	"cninja",
-	"Caveman Ninja (World revision 3)",
-	"1991",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&cninja_machine_driver,
-	custom_memory,
-
-	rom_cninja,
-	cninja_patch, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cninja_hiload, cninja_hisave
-};
-
-struct GameDriver driver_cninja0 =
-{
-	__FILE__,
-	&driver_cninja,
-	"cninja0",
-	"Caveman Ninja (World revision 0)",
-	"1991",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&cninja_machine_driver,
-	custom_memory,
-
-	rom_cninja0,
-	cninja_patch, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cninja0_hiload, cninja0_hisave
-};
-
-
-struct GameDriver driver_cninjau =
-{
-	__FILE__,
-	&driver_cninja,
-	"cninjau",
-	"Caveman Ninja (US)",
-	"1991",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&cninja_machine_driver,
-	custom_memory,
-
-	rom_cninjau,
-	cninja_patch, 0,
-	0,
-	0,
-
-	input_ports_cninjau,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cninja_hiload, cninja_hisave
-};
-
-struct GameDriver driver_joemac =
-{
-	__FILE__,
-	&driver_cninja,
-	"joemac",
-	"Joe & Mac (Japan)",
-	"1991",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&cninja_machine_driver,
-	custom_memory,
-
-	rom_joemac,
-	cninja_patch, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cninja_hiload, cninja_hisave
-};
-
-struct GameDriver driver_stoneage =
-{
-	__FILE__,
-	&driver_cninja,
-	"stoneage",
-	"Stoneage",
-	"1991",
-	"bootleg",
-	"Bryan McPhail",
-	0,
-	&stoneage_machine_driver,
-	custom_memory2,
-
-	rom_stoneage,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	cninja0_hiload, cninja0_hisave
-};
-
-struct GameDriver driver_edrandy =
-{
-	__FILE__,
-	0,
-	"edrandy",
-	"Edward Randy (World)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&edrandy_machine_driver,
-	0,
-
-	rom_edrandy,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver driver_edrandyj =
-{
-	__FILE__,
-	&driver_edrandy,
-	"edrandyj",
-	"Edward Randy (Japan)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&edrandy_machine_driver,
-	0,
-
-	rom_edrandyj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cninja,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
+GAME( 1991, cninja,   ,        cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 3)" )
+GAME( 1991, cninja0,  cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Caveman Ninja (World revision 0)" )
+GAME( 1991, cninjau,  cninja,  cninja,   cninjau, cninja,   ROT0, "Data East Corporation", "Caveman Ninja (US)" )
+GAME( 1991, joemac,   cninja,  cninja,   cninja,  cninja,   ROT0, "Data East Corporation", "Joe & Mac (Japan)" )
+GAME( 1991, stoneage, cninja,  stoneage, cninja,  stoneage, ROT0, "bootleg", "Stoneage" )
+GAMEX(1990, edrandy,  ,        edrandy,  cninja,  ,         ROT0, "Data East Corporation", "Edward Randy (World)", GAME_NOT_WORKING )
+GAMEX(1990, edrandyj, edrandy, edrandy,  cninja,  ,         ROT0, "Data East Corporation", "Edward Randy (Japan)", GAME_NOT_WORKING )

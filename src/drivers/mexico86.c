@@ -357,7 +357,7 @@ static struct YM2203interface ym2203_interface =
 
 
 #define MACHINEDRIVER(NAME) 														\
-static struct MachineDriver NAME##_machine_driver = 								\
+static struct MachineDriver machine_driver_##NAME = 								\
 {																					\
 	{																				\
 		{																			\
@@ -499,86 +499,6 @@ ROM_END
 
 
 
-/** Kick and Run & Mexico 86 high score save routine - RJF (Nov 10, 1999) **/
-static int kicknrun_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xee18],"\x17\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0xee1d],"\x04\x4b\x41",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xee18], 5*9);		/* HS table */
-			/* each record has 9 bytes */
-			/* byte 1 = score     */
-			/* byte 5 = flag      */
-			/* byte 6 = win       */
-			/* bytes 7,8,9 = name */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void kicknrun_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xee18], 5*9);		/* HS table */
-		osd_fclose(f);
-	}
-}
-
-/****  Kiki Kaikai high score save routine - RJF (Nov 18, 1999)  ****/
-static int kikikai_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe2fc],"\x00\x49\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe2fc], 5*7);         /* HS table */
-                        /* each record has 7 bytes */
-                        /* bytes 1,2,3 = score     */
-                        /* byte 4      = scene     */
-                        /* bytes 5,6,7 = name      */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void kikikai_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe2fc], 5*7);                /* HS table */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_kicknrun =
 {
 	__FILE__,
@@ -589,7 +509,7 @@ struct GameDriver driver_kicknrun =
 	"Taito Corporation",
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
-	&mexico86_machine_driver,
+	&machine_driver_mexico86,
 	0,
 
 	rom_kicknrun,
@@ -600,9 +520,8 @@ struct GameDriver driver_kicknrun =
 	input_ports_mexico86,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kicknrun_hiload, kicknrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mexico86 =
@@ -615,7 +534,7 @@ struct GameDriver driver_mexico86 =
 	"bootleg",
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
-	&mexico86_machine_driver,
+	&machine_driver_mexico86,
 	0,
 
 	rom_mexico86,
@@ -626,9 +545,8 @@ struct GameDriver driver_mexico86 =
 	input_ports_mexico86,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kicknrun_hiload, kicknrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kikikai =
@@ -641,7 +559,7 @@ struct GameDriver driver_kikikai =
 	"Taito Corporation",
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
-	&kikikai_machine_driver,
+	&machine_driver_kikikai,
 	0,
 
 	rom_kikikai,
@@ -652,7 +570,6 @@ struct GameDriver driver_kikikai =
 	input_ports_kikikai,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	kikikai_hiload, kikikai_hisave
+	ROT90 | GAME_NOT_WORKING,
+	0,0
 };

@@ -30,6 +30,24 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
+void simpsons_nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 10;
+	}
+}
+
 int simpsons_eeprom_r( int offset )
 {
 	int res;
@@ -202,33 +220,4 @@ void simpsons_init_machine( void )
 	cpu_setbank( 2, &RAM[0x10000] );
 
 	simpsons_video_banking( 0 );
-
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
-}
-
-int simpsons_eeprom_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 10;
-
-	return 1;
-}
-
-void simpsons_eeprom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
 }

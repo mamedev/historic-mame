@@ -155,10 +155,13 @@ void kabuki_decode(unsigned char *src,unsigned char *dest_op,unsigned char *dest
 static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	int i;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
-	for (i = 0x10000;i < memory_region_length(REGION_CPU1);i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+
+	memory_set_opcode_base(0,rom+diff);
+	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
+	for (i = 0x10000;i < diff;i += 0x4000)
+		kabuki_decode(rom+i,rom+i+diff,rom+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
 void mgakuen2_decode(void) { mitchell_decode(0x76543210,0x01234567,0xaa55,0xa5); }
@@ -175,10 +178,11 @@ void block_decode(void)    { mitchell_decode(0x02461357,0x64207531,0x0002,0x01);
 
 static void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
-	extern int encrypted_cpu;
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	encrypted_cpu = 1;
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
+	unsigned char *rom = memory_region(REGION_CPU2);
+	int diff = memory_region_length(REGION_CPU2) / 2;
+
+	memory_set_opcode_base(1,rom+diff);
+	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
 void wof_decode(void)      { cps1_decode(0x01234567,0x54163072,0x5151,0x51); }

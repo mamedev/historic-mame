@@ -353,7 +353,7 @@ static struct namco_interface namco_interface =
 
 
 
-static struct MachineDriver superpac_machine_driver =
+static struct MachineDriver machine_driver_superpac =
 {
 	/* basic machine hardware  */
 	{
@@ -407,7 +407,7 @@ static struct MachineDriver superpac_machine_driver =
 	}
 };
 
-static struct MachineDriver pacnpal_machine_driver =
+static struct MachineDriver machine_driver_pacnpal =
 {
 	/* basic machine hardware  */
 	{
@@ -551,125 +551,6 @@ ROM_START( pacnchmp )
 ROM_END
 
 
-/* load the high score table */
-static int superpac_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x113c],"N@N",3) == 0 &&        /* check for high score initials */
-	    RAM[0x1087] == 0 && RAM[0x1089] == 0 && RAM[0x1088] != 0 && /* check for main high score value */
-	    memcmp(&RAM[0x3ee],"000",3) == 0)           /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1138],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x1087] = RAM[0x1138];
-			RAM[0x1088] = RAM[0x1139];
-			RAM[0x1089] = RAM[0x113a];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x1087] >> 4);
-		videoram_w (0x3f4, writing ? (RAM[0x1087] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1087] & 0x0f);
-		videoram_w (0x3f3, writing ? (RAM[0x1087] & 0x0f) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1088] >> 4);
-		videoram_w (0x3f2, writing ? (RAM[0x1088] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1088] & 0x0f);
-		videoram_w (0x3f1, writing ? (RAM[0x1088] & 0x0f) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1089] >> 4);
-		videoram_w (0x3f0, writing ? (RAM[0x1089] >> 4) + '0' : ' ');
-		if (!writing) writing = (RAM[0x1089] & 0x0f);
-		videoram_w (0x3ef, writing ? (RAM[0x1089] & 0x0f) + '0' : ' ');
-		videoram_w (0x3ee, 0 + '0');
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void superpac_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1138],40);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int pacnpal_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1051],"\x1a\x25\x1a",3) == 0 &&        /* check for high score initials */
-	   RAM[0x116d] == 0 && RAM[0x116f] == 0 && RAM[0x116e] != 0 && /* check for main high score value */
-	   memcmp(&RAM[0x3ed],"\x0\x0\x0",3) == 0)           /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x104c],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x116d] = RAM[0x104d];
-			RAM[0x116e] = RAM[0x104e];
-			RAM[0x116f] = RAM[0x104f];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x116d] >> 4);
-		videoram_w (0x3f3, writing ? (RAM[0x116d] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116d] & 0x0f);
-		videoram_w (0x3f2, writing ? (RAM[0x116d] & 0x0f) : 0x24);
-		if (!writing) writing = (RAM[0x116e] >> 4);
-		videoram_w (0x3f1, writing ? (RAM[0x116e] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116e] & 0x0f);
-		videoram_w (0x3f0, writing ? (RAM[0x116e] & 0x0f) : 0x24);
-		if (!writing) writing = (RAM[0x116f] >> 4);
-		videoram_w (0x3ef, writing ? (RAM[0x116f] >> 4) : 0x24);
-		if (!writing) writing = (RAM[0x116f] & 0x0f);
-		videoram_w (0x3ee, writing ? (RAM[0x116f] & 0x0f) : 0x24);
-		videoram_w (0x3ed, 0);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void pacnpal_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x104c],40);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_superpac =
 {
@@ -681,7 +562,7 @@ struct GameDriver driver_superpac =
 	"Namco",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
 	0,
-	&superpac_machine_driver, /* MachineDriver */
+	&machine_driver_superpac, /* MachineDriver */
 	0,
 
 	rom_superpac,             /* RomModule */
@@ -692,9 +573,8 @@ struct GameDriver driver_superpac =
 	input_ports_superpac,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	superpac_hiload, superpac_hisave /* hi score save/load */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_superpcm =
@@ -707,7 +587,7 @@ struct GameDriver driver_superpcm =
 	"[Namco] (Bally Midway license)",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
 	0,
-	&superpac_machine_driver, /* MachineDriver */
+	&machine_driver_superpac, /* MachineDriver */
 	0,
 
 	rom_superpcm,             /* RomModule */
@@ -718,9 +598,8 @@ struct GameDriver driver_superpcm =
 	input_ports_superpac,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	superpac_hiload, superpac_hisave /* hi score save/load */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_pacnpal =
@@ -733,7 +612,7 @@ struct GameDriver driver_pacnpal =
 	"Namco",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	0,
-	&pacnpal_machine_driver,  /* MachineDriver */
+	&machine_driver_pacnpal,  /* MachineDriver */
 	0,
 
 	rom_pacnpal,              /* RomModule */
@@ -744,9 +623,8 @@ struct GameDriver driver_pacnpal =
 	input_ports_pacnpal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_pacnchmp =
@@ -759,7 +637,7 @@ struct GameDriver driver_pacnchmp =
 	"Namco",
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	0,
-	&pacnpal_machine_driver,  /* MachineDriver */
+	&machine_driver_pacnpal,  /* MachineDriver */
 	0,
 
 	rom_pacnchmp,              /* RomModule */
@@ -770,7 +648,6 @@ struct GameDriver driver_pacnchmp =
 	input_ports_pacnpal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacnpal_hiload, pacnpal_hisave /* hi score save/load */
+	ROT90,
+	0,0
 };

@@ -116,7 +116,7 @@ struct GameDriver driver_minivadr =
 	input_ports_minivadr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

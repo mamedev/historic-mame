@@ -359,7 +359,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver frogger2_machine_driver =
+static struct MachineDriver machine_driver_frogger2 =
 {
 	/* basic machine hardware */
 	{
@@ -521,46 +521,6 @@ static void frogger2_decode(void)
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x83f1],"\x63\x04",2) == 0 &&
-			memcmp(&RAM[0x83f9],"\x27\x01",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x83f1],2*5);
-			RAM[0x83ef] = RAM[0x83f1];
-			RAM[0x83f0] = RAM[0x83f2];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x83f1],2*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_frogger =
 {
 	__FILE__,
@@ -572,19 +532,18 @@ struct GameDriver driver_frogger =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	frogger_decode,
 
 	rom_frogger,
-	frogger_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_frogger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_frogseg1 =
@@ -598,19 +557,18 @@ struct GameDriver driver_frogseg1 =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	frogger_decode,
 
 	rom_frogseg1,
-	frogger_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_frogger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_frogseg2 =
@@ -624,19 +582,18 @@ struct GameDriver driver_frogseg2 =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	frogger_decode,
 
 	rom_frogseg2,
-	frogger_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_frogger,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 /* this version runs on modified Moon Cresta hardware */
@@ -650,18 +607,17 @@ struct GameDriver driver_froggrmc =
 	"bootleg?",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
-	&frogger2_machine_driver,
-	0,
+	&machine_driver_frogger2,
+	frogger2_decode,
 
 	rom_frogger2,
-	frogger2_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_frogger2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

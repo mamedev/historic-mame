@@ -176,18 +176,3 @@ int llander_IN0_r (int offset)
 
 	return res;
 }
-
-
-int llander_zeropage_r(int offset)
-{
-	extern unsigned char *RAM;
-
-	return RAM[0x0100+offset];
-}
-
-void llander_zeropage_w(int offset,int data)
-{
-	extern unsigned char *RAM;
-
-	RAM[0x0100+offset]=data;
-}

@@ -473,71 +473,6 @@ static void exerionb_decode(void)
 
 
 
-static int hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-    static int firsttime;
-
-
-    /* check if the hi score table has already been initialized */
-    /* the high score table is intialized to all 0, so first of all */
-    /* we dirty it, then we wait for it to be cleared again */
-    if (firsttime == 0)
-    {
-        memset(&RAM[0x6600],0xff,10);   /* high score */
-        memset(&RAM[0x6700],0xff,40);
-        firsttime = 1;
-    }
-
-
-
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x6600],"\x00\x00\x00",3) == 0 &&
-        memcmp(&RAM[0x6700],"\x00\x00\x00",3) == 0 &&
-        memcmp(&RAM[0x6725],"\x00\x00\x00",3) == 0)
-    {
-        void *f;
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            int writing = 0;
-
-
-            osd_fread(f,&RAM[0x6600],10);
-            osd_fread(f,&RAM[0x6700],40);
-            osd_fclose(f);
-
-            /* this is a little gross, but necessary to get the high score on-screen */
-            if (!writing) writing = (RAM[0x6600] >> 4);
-            videoram_w (0x48d, writing ? (RAM[0x6600] >> 4) | 0x30 : ' ');
-            if (!writing) writing = (RAM[0x6600] & 0x0f);
-            videoram_w (0x44d, writing ? (RAM[0x6600] & 0x0f) | 0x30 : ' ');
-            if (!writing) writing = (RAM[0x6601] >> 4);
-            videoram_w (0x40d, writing ? (RAM[0x6601] >> 4) | 0x30 : ' ');
-            if (!writing) writing = (RAM[0x6601] & 0x0f);
-            videoram_w (0x3cd, writing ? (RAM[0x6601] & 0x0f) | 0x30 : ' ');
-        }
-        firsttime = 0;
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x6600],10);
-        osd_fwrite(f,&RAM[0x6700],40);
-        osd_fclose(f);
-    }
-}
-
-
 struct GameDriver driver_exerion =
 {
     __FILE__,
@@ -549,19 +484,18 @@ struct GameDriver driver_exerion =
     "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
     0,
     &machine_driver,
-    0,
+    exerion_decode,
 
     rom_exerion,
-    exerion_decode, 0,
+    0, 0,
     0,
     0,
 
     input_ports_exerion,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-    hiload, hisave
+    ROT90 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_exeriont =
@@ -575,19 +509,18 @@ struct GameDriver driver_exeriont =
     "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
     0,
     &machine_driver,
-    0,
+    exerion_decode,
 
     rom_exeriont,
-    exerion_decode, 0,
+    0, 0,
     0,
     0,
 
     input_ports_exerion,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-    hiload, hisave
+    ROT90 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_exerionb =
@@ -601,17 +534,16 @@ struct GameDriver driver_exerionb =
     "Brad Oliver\nJohn Butler\nGerald Vanderick (color info)",
     0,
     &machine_driver,
-    0,
+    exerionb_decode,
 
     rom_exerionb,
-    exerionb_decode, 0,
+    0, 0,
     0,
     0,
 
     input_ports_exerion,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-    hiload, hisave
+    ROT90 | GAME_WRONG_COLORS,
+	0,0
 };

@@ -786,42 +786,6 @@ ROM_START( teedoff )
 ROM_END
 
 
-static int tehkanwc_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0xc600] == 0x03)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc600],8*12);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void tehkanwc_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc600],8*12);
-		osd_fclose(f);
-	}
-
-}
-
 
 struct GameDriver driver_tehkanwc =
 {
@@ -844,9 +808,8 @@ struct GameDriver driver_tehkanwc =
 	input_ports_tehkanwc,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	tehkanwc_hiload, tehkanwc_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gridiron =
@@ -870,7 +833,7 @@ struct GameDriver driver_gridiron =
 	input_ports_gridiron,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -896,7 +859,7 @@ struct GameDriver driver_teedoff =
 	input_ports_teedoff,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	ROT90 | GAME_NOT_WORKING,
 
 	0, 0
 };

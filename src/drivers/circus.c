@@ -2,6 +2,8 @@
 
 Circus memory map
 
+driver by Mike Coates
+
 0000-00FF Base Page RAM
 0100-01FF Stack RAM
 1000-1FFF ROM
@@ -101,7 +103,7 @@ INPUT_PORTS_START( circus )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( robotbowl )
+INPUT_PORTS_START( robotbwl )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -195,16 +197,10 @@ static unsigned char palette[] =
 };
 
 #define ARTWORK_COLORS 254
-static unsigned short colortable[ARTWORK_COLORS] =
-{
-	0,0,
-	0,1,
-};
 
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
 	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
 }
 
 
@@ -245,117 +241,32 @@ static struct GfxLayout robotlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 2 },
-	{ 1, 0x0800, &clownlayout, 0, 2 },
+	{ REGION_GFX1, 0, &charlayout,  0, 2 },
+	{ REGION_GFX2, 0, &clownlayout, 0, 2 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0, 2 },
-	{ 1, 0x0800, &robotlayout, 0, 2 },
+	{ REGION_GFX1, 0, &charlayout,  0, 2 },
+	{ REGION_GFX2, 0, &robotlayout, 0, 2 },
 	{ -1 } /* end of array */
 };
 
-
-
-/***************************************************************************
-  ROMs
-***************************************************************************/
-
-ROM_START( circus )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "circus.1a",    0x1000, 0x0200, 0x7654ea75 ) /* Code */
-	ROM_LOAD( "circus.2a",    0x1200, 0x0200, 0xb8acdbc5 )
-	ROM_LOAD( "circus.3a",    0x1400, 0x0200, 0x901dfff6 )
-	ROM_LOAD( "circus.5a",    0x1600, 0x0200, 0x9dfdae38 )
-	ROM_LOAD( "circus.6a",    0x1800, 0x0200, 0xc8681cf6 )
-	ROM_LOAD( "circus.7a",    0x1A00, 0x0200, 0x585f633e )
-	ROM_LOAD( "circus.8a",    0x1C00, 0x0200, 0x69cc409f )
-	ROM_LOAD( "circus.9a",    0x1E00, 0x0200, 0xaff835eb )
-	ROM_RELOAD(            0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "circus.1c",    0x0600, 0x0200, 0x1f954bb3 )     /* Character Set */
-	ROM_LOAD( "circus.2c",    0x0400, 0x0200, 0x361da7ee )
-	ROM_LOAD( "circus.3c",    0x0200, 0x0200, 0x30d72ef5 )
-	ROM_LOAD( "circus.4c",    0x0000, 0x0200, 0x6efc315a )
-	ROM_LOAD( "circus.14d",   0x0800, 0x0200, 0x2fde3930 ) /* Clown */
-
-ROM_END
-
-ROM_START( robotbowl )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "robotbwl.1a",  0xF000, 0x0200, 0xdf387a0b ) /* Code */
-	ROM_LOAD( "robotbwl.2a",  0xF200, 0x0200, 0xc948274d )
-	ROM_LOAD( "robotbwl.3a",  0xF400, 0x0200, 0x8fdb3ec5 )
-	ROM_LOAD( "robotbwl.5a",  0xF600, 0x0200, 0xba9a6929 )
-	ROM_LOAD( "robotbwl.6a",  0xF800, 0x0200, 0x16fd8480 )
-	ROM_LOAD( "robotbwl.7a",  0xFA00, 0x0200, 0x4cadbf06 )
-	ROM_LOAD( "robotbwl.8a",  0xFC00, 0x0200, 0xbc809ed3 )
-	ROM_LOAD( "robotbwl.9a",  0xFE00, 0x0200, 0x07487e27 )
-
-	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, 0xb2991e7e )     /* Character Set */
-	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, 0x47b3e39c )
-	ROM_LOAD( "robotbwl.3c",  0x0200, 0x0200, 0xd5380c9b )
-	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, 0xa5f7acb9 )
-	ROM_LOAD( "robotbwl.14d", 0x0800, 0x0020, 0xa402ac06 ) /* Ball */
-
-ROM_END
-
-ROM_START( crash )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "crash.a1",     0x1000, 0x0200, 0xb9571203 ) /* Code */
-	ROM_LOAD( "crash.a2",     0x1200, 0x0200, 0xb4581a95 )
-	ROM_LOAD( "crash.a3",     0x1400, 0x0200, 0x597555ae )
-	ROM_LOAD( "crash.a4",     0x1600, 0x0200, 0x0a15d69f )
-	ROM_LOAD( "crash.a5",     0x1800, 0x0200, 0xa9c7a328 )
-	ROM_LOAD( "crash.a6",     0x1A00, 0x0200, 0xc7d62d27 )
-	ROM_LOAD( "crash.a7",     0x1C00, 0x0200, 0x5e5af244 )
-	ROM_LOAD( "crash.a8",     0x1E00, 0x0200, 0x3dc50839 )
-	ROM_RELOAD(            0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics */
-	ROM_LOAD( "crash.c1",     0x0600, 0x0200, 0xe9adf1e1 )  /* Character Set */
-	ROM_LOAD( "crash.c2",     0x0400, 0x0200, 0x38f3e4ed )
-	ROM_LOAD( "crash.c3",     0x0200, 0x0200, 0x3c8f7560 )
-	ROM_LOAD( "crash.c4",     0x0000, 0x0200, 0xba16f9e8 )
-	ROM_LOAD( "crash.d14",    0x0800, 0x0200, 0x833f81e4 ) /* Cars */
-ROM_END
-
-ROM_START( ripcord )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
-	ROM_LOAD( "9027.1a",      0x1000, 0x0200, 0x56b8dc06 ) /* Code */
-	ROM_LOAD( "9028.2a",      0x1200, 0x0200, 0xa8a78a30 )
-	ROM_LOAD( "9029.4a",      0x1400, 0x0200, 0xfc5c8e07 )
-	ROM_LOAD( "9030.5a",      0x1600, 0x0200, 0xb496263c )
-	ROM_LOAD( "9031.6a",      0x1800, 0x0200, 0xcdc7d46e )
-	ROM_LOAD( "9032.7a",      0x1A00, 0x0200, 0xa6588bec )
-	ROM_LOAD( "9033.8a",      0x1C00, 0x0200, 0xfd49b806 )
-	ROM_LOAD( "9034.9a",      0x1E00, 0x0200, 0x7caf926d )
-	ROM_RELOAD(          0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x0A00)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9026.5c",      0x0000, 0x0200, 0x06e7adbb )
-	ROM_LOAD( "9025.4c",      0x0200, 0x0200, 0x3129527e )
-	ROM_LOAD( "9024.2c",      0x0400, 0x0200, 0xbcb88396 )
-	ROM_LOAD( "9023.1c",      0x0600, 0x0200, 0x9f86ed5b )     /* Character Set */
-	ROM_LOAD( "9035.14d",     0x0800, 0x0200, 0xc9979802 )
-ROM_END
 
 
 /***************************************************************************
   Machine drivers
 ***************************************************************************/
 
-static void robotbowl_decode(void)
+static void init_robotbwl(void)
 {
+	int i;
+
 	/* PROM is reversed, fix it! */
 
-	int Count;
-
-    for(Count=31;Count>=0;Count--) memory_region(1)[0x800+Count]^=0xFF;
+	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
+		memory_region(REGION_GFX2)[i] ^= 0xFF;
 }
 
 static int ripcord_interrupt (void)
@@ -373,7 +284,7 @@ static struct DACinterface dac_interface =
 	{ 255, 255 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_circus =
 {
 	/* basic machine hardware */
 	{
@@ -411,7 +322,7 @@ static struct MachineDriver machine_driver =
 };
 
 
-static struct MachineDriver robotbowl_machine_driver =
+static struct MachineDriver machine_driver_robotbwl =
 {
 	/* basic machine hardware */
 	{
@@ -429,7 +340,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	robotbowl_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	2, 2,
 	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -448,7 +359,7 @@ static struct MachineDriver robotbowl_machine_driver =
 	}
 };
 
-static struct MachineDriver crash_machine_driver =
+static struct MachineDriver machine_driver_crash =
 {
 	/* basic machine hardware */
 	{
@@ -466,7 +377,7 @@ static struct MachineDriver crash_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	2, 2,
 	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -485,7 +396,7 @@ static struct MachineDriver crash_machine_driver =
 	}
 };
 
-static struct MachineDriver ripcord_machine_driver =
+static struct MachineDriver machine_driver_ripcord =
 {
 	/* basic machine hardware */
 	{
@@ -503,7 +414,7 @@ static struct MachineDriver ripcord_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	2, 2,
 	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -522,188 +433,98 @@ static struct MachineDriver ripcord_machine_driver =
 	}
 };
 
-/***************************************************************************
- Hi score load/save
-***************************************************************************/
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0036],"\x00\x00",2) == 0))
-	{
-		void *f;
+ROM_START( circus )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "circus.1a",    0x1000, 0x0200, 0x7654ea75 ) /* Code */
+	ROM_LOAD( "circus.2a",    0x1200, 0x0200, 0xb8acdbc5 )
+	ROM_LOAD( "circus.3a",    0x1400, 0x0200, 0x901dfff6 )
+	ROM_LOAD( "circus.5a",    0x1600, 0x0200, 0x9dfdae38 )
+	ROM_LOAD( "circus.6a",    0x1800, 0x0200, 0xc8681cf6 )
+	ROM_LOAD( "circus.7a",    0x1a00, 0x0200, 0x585f633e )
+	ROM_LOAD( "circus.8a",    0x1c00, 0x0200, 0x69cc409f )
+	ROM_LOAD( "circus.9a",    0x1e00, 0x0200, 0xaff835eb )
+	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0036],2);
-			osd_fclose(f);
-		}
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "circus.4c",    0x0000, 0x0200, 0x6efc315a )	/* Character Set */
+	ROM_LOAD( "circus.3c",    0x0200, 0x0200, 0x30d72ef5 )
+	ROM_LOAD( "circus.2c",    0x0400, 0x0200, 0x361da7ee )
+	ROM_LOAD( "circus.1c",    0x0600, 0x0200, 0x1f954bb3 )
 
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "circus.14d",   0x0000, 0x0200, 0x2fde3930 )	/* Clown */
+ROM_END
+
+ROM_START( robotbwl )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "robotbwl.1a",  0xf000, 0x0200, 0xdf387a0b ) /* Code */
+	ROM_LOAD( "robotbwl.2a",  0xf200, 0x0200, 0xc948274d )
+	ROM_LOAD( "robotbwl.3a",  0xf400, 0x0200, 0x8fdb3ec5 )
+	ROM_LOAD( "robotbwl.5a",  0xf600, 0x0200, 0xba9a6929 )
+	ROM_LOAD( "robotbwl.6a",  0xf800, 0x0200, 0x16fd8480 )
+	ROM_LOAD( "robotbwl.7a",  0xfa00, 0x0200, 0x4cadbf06 )
+	ROM_LOAD( "robotbwl.8a",  0xfc00, 0x0200, 0xbc809ed3 )
+	ROM_LOAD( "robotbwl.9a",  0xfe00, 0x0200, 0x07487e27 )
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "robotbwl.4c",  0x0000, 0x0200, 0xa5f7acb9 )	/* Character Set */
+	ROM_LOAD( "robotbwl.3c",  0x0200, 0x0200, 0xd5380c9b )
+	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, 0x47b3e39c )
+	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, 0xb2991e7e )
+
+	ROM_REGIONX( 0x0020, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, 0xa402ac06 )	/* Ball */
+ROM_END
+
+ROM_START( crash )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "crash.a1",     0x1000, 0x0200, 0xb9571203 ) /* Code */
+	ROM_LOAD( "crash.a2",     0x1200, 0x0200, 0xb4581a95 )
+	ROM_LOAD( "crash.a3",     0x1400, 0x0200, 0x597555ae )
+	ROM_LOAD( "crash.a4",     0x1600, 0x0200, 0x0a15d69f )
+	ROM_LOAD( "crash.a5",     0x1800, 0x0200, 0xa9c7a328 )
+	ROM_LOAD( "crash.a6",     0x1a00, 0x0200, 0xc7d62d27 )
+	ROM_LOAD( "crash.a7",     0x1c00, 0x0200, 0x5e5af244 )
+	ROM_LOAD( "crash.a8",     0x1e00, 0x0200, 0x3dc50839 )
+	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "crash.c4",     0x0000, 0x0200, 0xba16f9e8 )	/* Character Set */
+	ROM_LOAD( "crash.c3",     0x0200, 0x0200, 0x3c8f7560 )
+	ROM_LOAD( "crash.c2",     0x0400, 0x0200, 0x38f3e4ed )
+	ROM_LOAD( "crash.c1",     0x0600, 0x0200, 0xe9adf1e1 )
+
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "crash.d14",    0x0000, 0x0200, 0x833f81e4 )	/* Cars */
+ROM_END
+
+ROM_START( ripcord )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "9027.1a",      0x1000, 0x0200, 0x56b8dc06 ) /* Code */
+	ROM_LOAD( "9028.2a",      0x1200, 0x0200, 0xa8a78a30 )
+	ROM_LOAD( "9029.4a",      0x1400, 0x0200, 0xfc5c8e07 )
+	ROM_LOAD( "9030.5a",      0x1600, 0x0200, 0xb496263c )
+	ROM_LOAD( "9031.6a",      0x1800, 0x0200, 0xcdc7d46e )
+	ROM_LOAD( "9032.7a",      0x1a00, 0x0200, 0xa6588bec )
+	ROM_LOAD( "9033.8a",      0x1c00, 0x0200, 0xfd49b806 )
+	ROM_LOAD( "9034.9a",      0x1e00, 0x0200, 0x7caf926d )
+	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
+
+	ROM_REGIONX( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9026.5c",      0x0000, 0x0200, 0x06e7adbb )	/* Character Set */
+	ROM_LOAD( "9025.4c",      0x0200, 0x0200, 0x3129527e )
+	ROM_LOAD( "9024.2c",      0x0400, 0x0200, 0xbcb88396 )
+	ROM_LOAD( "9023.1c",      0x0600, 0x0200, 0x9f86ed5b )
+
+	ROM_REGIONX( 0x0200, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9035.14d",     0x0000, 0x0200, 0xc9979802 )
+ROM_END
 
 
 
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0036],2);
-		osd_fclose(f);
-	}
-}
-
-static int crash_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0x004B] != 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x000F],2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void crash_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x000F],2);
-		osd_fclose(f);
-		RAM[0x004B] =0;
-	}
-}
-
-
-/***************************************************************************
-  Game Drivers
-***************************************************************************/
-
-struct GameDriver driver_circus =
-{
-	__FILE__,
-	0,
-	"circus",
-	"Circus",
-	"1977",
-	"Exidy",
-	"Mike Coates",
-	0,
-	&machine_driver,
-	0,
-
-	rom_circus,
-	0, 0,
-	0,
-	0,
-
-	input_ports_circus,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave
-};
-
-struct GameDriver driver_robotbwl =
-{
-	__FILE__,
-	0,
-	"robotbwl",
-	"Robot Bowl",
-	"1977",
-	"Exidy",
-	"Mike Coates",
-	0,
-	&robotbowl_machine_driver,
-	0,
-
-	rom_robotbowl,
-	robotbowl_decode, 0,
-	0,
-	0,
-
-	input_ports_robotbowl,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0
-};
-
-struct GameDriver driver_crash =
-{
-	__FILE__,
-	0,
-	"crash",
-	"Crash",
-	"1979",
-	"Exidy",
-	"Mike Coates",
-	0,
-	&crash_machine_driver,
-	0,
-
-	rom_crash,
-	0, 0,
-	0,
-	0,
-
-	input_ports_crash,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	crash_hiload,crash_hisave
-};
-
-struct GameDriver driver_ripcord =
-{
-	__FILE__,
-	0,
-	"ripcord",
-	"Rip Cord",
-	"1977",
-	"Exidy",
-	"Mike Coates",
-	0,
-	&ripcord_machine_driver,
-	0,
-
-	rom_ripcord,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ripcord,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	0, 0
-};
+GAME( 1977, circus,   , circus,   circus,   ,         ROT0, "Exidy", "Circus" )
+GAME( 1977, robotbwl, , robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl" )
+GAME( 1979, crash,    , crash,    crash,    ,         ROT0, "Exidy", "Crash" )
+GAMEX(1977, ripcord,  , ripcord,  ripcord,  ,         ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )

@@ -656,79 +656,6 @@ ROM_END
 
 
 
-static int tigeroad_hiload(void)
-{
-	void *f;
-
-
-	/* check if the hi score table has already been initialized */
-	if (READ_WORD(&ram[0x2c70])== 0x5955 && READ_WORD(&ram[0x2cbe])== 0x5000)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x2c70],100);
-			ram[0x0092]=ram[0x2cac];
-			ram[0x0093]=ram[0x2cad];
-			ram[0x0094]=ram[0x2cae];
-			ram[0x0095]=ram[0x2caf];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void tigeroad_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram[0x2c70],100);
-		osd_fclose(f);
-	}
-}
-
-
-static int f1dream_hiload(void)
-{
-	void *f;
-
-
-	/* check if the hi score table has already been initialized */
-
-	if (READ_WORD(&ram[0x312e])== 0x0030 && READ_WORD(&ram[0x3190])== 0x0101)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x312e],100); /* high score table */
-			osd_fread_msbfirst(f,&ram[0x32e8],100); /* best times */
-
-			osd_fclose(f);
-
-		}
-	return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void f1dream_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite_msbfirst(f,&ram[0x312e],100); /* high score table */
-		osd_fwrite_msbfirst(f,&ram[0x32e8],100); /* best times */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_tigeroad =
 {
 	__FILE__,
@@ -748,8 +675,8 @@ struct GameDriver driver_tigeroad =
 	input_ports_tigeroad,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	tigeroad_hiload, tigeroad_hisave
+	ROT0,
+	0,0
 };
 
 /* F1 Dream has an Intel 8751 microcontroller for protection */
@@ -772,8 +699,8 @@ struct GameDriver driver_f1dream =
 	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	f1dream_hiload, f1dream_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_f1dreamb =
@@ -795,6 +722,6 @@ struct GameDriver driver_f1dreamb =
 	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	f1dream_hiload, f1dream_hisave
+	ROT0,
+	0,0
 };

@@ -508,7 +508,7 @@ static struct Samplesinterface samples_interface =
 
 
 
-static struct MachineDriver gaplus_machine_driver =
+static struct MachineDriver machine_driver_gaplus =
 {
 	/* basic machine hardware  */
 	{
@@ -563,7 +563,7 @@ static struct MachineDriver gaplus_machine_driver =
 	}
 };
 
-static struct MachineDriver gaplusa_machine_driver =
+static struct MachineDriver machine_driver_gaplusa =
 {
 	/* basic machine hardware  */
 	{
@@ -618,7 +618,7 @@ static struct MachineDriver gaplusa_machine_driver =
 	}
 };
 
-static struct MachineDriver galaga3_machine_driver =
+static struct MachineDriver machine_driver_galaga3 =
 {
 	/* basic machine hardware  */
 	{
@@ -810,75 +810,6 @@ ROM_START( galaga3a )
 ROM_END
 
 
-	/* load the high score table */
-static int gaplus_hiload( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
-
-	/* check if the hi score table has already been initialized */
-	for ( i = 0; i < 0x0e; i++)
-		temp[i] = gaplus_sharedram_r( 0x0190 + i );
-
-	if (memcmp( temp, "GAPLUS  24  AB",0x0e ) == 0)
-	{
-		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
-		{
-			osd_fread( f,&temp,0xa0 );
-			for ( i = 0; i < 0xa0; i++)
-				gaplus_sharedram_w( 0x100 + i, temp[i] );
-			osd_fclose( f );
-		}
-		return 1;
-	}
-	else
-		return 0;	/* we can't load the hi scores yet */
-}
-
-	/* save the high score table */
-static void gaplus_hisave( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
-
-	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
-	{
-		for ( i = 0; i < 0xa0; i++)
-			temp[i] = gaplus_sharedram_r( 0x100 + i);
-		osd_fwrite( f, temp, 0xa0 );
-		osd_fclose( f );
-	}
-}
-
-	/* load the high score table */
-static int galaga3_hiload( void )
-{
-	int i;
-	void *f;
-	unsigned char temp[0xa0];
-
-	/* check if the hi score table has already been initialized */
-	for ( i = 0; i < 0x0f; i++)
-		temp[i] = gaplus_sharedram_r( 0x0190 + i );
-
-	if (memcmp( temp,"  A[A      4   ",0x0f ) == 0)
-	{
-		if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0 )) != 0)
-		{
-			osd_fread( f,&temp,0xa0 );
-			for ( i = 0; i < 0xa0; i++)
-				gaplus_sharedram_w( 0x100 + i, temp[i] );
-			osd_fclose( f );
-		}
-		return 1;
-	}
-	else
-		return 0;	/* we can't load the hi scores yet */
-}
-
-#define galaga3_hisave gaplus_hisave
 
 struct GameDriver driver_gaplus =
 {
@@ -890,7 +821,7 @@ struct GameDriver driver_gaplus =
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&gaplus_machine_driver,
+	&machine_driver_gaplus,
 	0,
 
 	rom_gaplus,
@@ -901,9 +832,8 @@ struct GameDriver driver_gaplus =
 	input_ports_gaplus,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	gaplus_hiload, gaplus_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_gaplusa =
@@ -916,7 +846,7 @@ struct GameDriver driver_gaplusa =
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&gaplusa_machine_driver,
+	&machine_driver_gaplusa,
 	0,
 
 	rom_gaplusa,
@@ -927,9 +857,8 @@ struct GameDriver driver_gaplusa =
 	input_ports_gaplus,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	gaplus_hiload, gaplus_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galaga3 =
@@ -942,7 +871,7 @@ struct GameDriver driver_galaga3 =
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&galaga3_machine_driver,
+	&machine_driver_galaga3,
 	0,
 
 	rom_galaga3,
@@ -953,9 +882,8 @@ struct GameDriver driver_galaga3 =
 	input_ports_galaga3,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaga3_hiload, galaga3_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_galaga3a =
@@ -968,7 +896,7 @@ struct GameDriver driver_galaga3a =
 	"Namco",
 	"Manuel Abadia\nErnesto Corvi\nLarry Bank\nNicola Salmoria",
 	0,
-	&galaga3_machine_driver,
+	&machine_driver_galaga3,
 	0,
 
 	rom_galaga3a,
@@ -979,7 +907,6 @@ struct GameDriver driver_galaga3a =
 	input_ports_galaga3a,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	galaga3_hiload, galaga3_hisave
+	ROT90,
+	0,0
 };

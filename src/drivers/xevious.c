@@ -290,7 +290,6 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x6823, 0x6823, xevious_halt_w },			/* reset control */
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dog reset */
 	{ 0x7800, 0xafff, xevious_sharedram_w },
 	{ 0xb000, 0xb7ff, xevious_fg_colorram_w },
@@ -937,48 +936,6 @@ static void xevios_decode(void)
 
 
 
-static int hiload(void) /* V.V */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8024],"\x00\x40\x00",3) == 0 &&
-	    memcmp(&RAM[0x8510],"\x00\x40\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8024],3);
-			osd_fread(f,&RAM[0x8510],16*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void) /* V.V */
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8024],3);
-		osd_fwrite(f,&RAM[0x8510],16*5);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_xevious =
 {
 	__FILE__,
@@ -1000,9 +957,8 @@ struct GameDriver driver_xevious =
 	input_ports_xevious,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_xeviousa =
@@ -1026,9 +982,8 @@ struct GameDriver driver_xeviousa =
 	input_ports_xeviousa,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_xevios =
@@ -1042,19 +997,18 @@ struct GameDriver driver_xevios =
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	xevios_decode,
 
 	rom_xevios,
-	xevios_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_xevious,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_sxevious =
@@ -1078,7 +1032,6 @@ struct GameDriver driver_sxevious =
 	input_ports_sxevious,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

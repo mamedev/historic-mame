@@ -98,6 +98,20 @@ int  exterm_sound_dac_speedup_r(int offset);
 int  exterm_sound_ym2151_speedup_r(int offset);
 
 
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,eeprom,eeprom_size);
+	else
+	{
+		if (file)
+			osd_fread(file,eeprom,eeprom_size);
+		else
+			memset(eeprom,0,eeprom_size);
+	}
+}
+
+
 static struct tms34010_config master_config =
 {
 	0,							/* halt on reset */
@@ -356,43 +370,12 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2151,
 			&ym2151_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
-
-/***************************************************************************
-
-  High score save/load
-
-***************************************************************************/
-
-static int hiload (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f, eeprom, eeprom_size);
-		osd_fclose (f);
-	}
-
-	return 1;
-}
-
-
-static void hisave (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite (f, eeprom, eeprom_size);
-		osd_fclose (f);
-	}
-}
 
 /***************************************************************************
 
@@ -463,7 +446,6 @@ struct GameDriver driver_exterm =
 	input_ports_exterm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
-
-	hiload, hisave
+	ROT0 | GAME_REQUIRES_16BIT,
+	0,0
 };

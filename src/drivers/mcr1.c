@@ -128,7 +128,7 @@ static struct IOWritePort writeport[] =
 	{ 0x04, 0x07, mcr_port_47_dispatch_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, mcr_unknown_w },
+	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
 	{ -1 }	/* end of table */
 };
@@ -263,7 +263,9 @@ static struct MachineDriver machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
@@ -407,8 +409,7 @@ struct GameDriver driver_solarfox =
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	mcr_hiload,mcr_hisave
+	0,0
 };
 
 
@@ -434,8 +435,7 @@ struct GameDriver driver_kick =
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	mcr_hiload,mcr_hisave
+	0,0
 };
 
 
@@ -460,7 +460,6 @@ struct GameDriver driver_kicka =
 	input_ports_kick,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mcr_hiload,mcr_hisave
+	ROT90,
+	0,0
 };

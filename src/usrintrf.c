@@ -855,7 +855,7 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
         int zx,int zy,const struct rectangle *clip);
-extern struct GameDriver neogeo_bios;
+extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
@@ -881,9 +881,9 @@ static void showcharset(void)
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &neogeo_bios ||
+	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
-				Machine->gamedrv->clone_of->clone_of == &neogeo_bios))
+				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 		game_is_neogeo=1;
 #endif
 #endif
@@ -2395,7 +2395,7 @@ static int displaygameinfo(int selected)
 		pixely /= tmin;
 
 		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
-		sprintf(&buf[strlen(buf)],"%d x %d (%s) %d Hz\n",
+		sprintf(&buf[strlen(buf)],"%d x %d (%s) %f Hz\n",
 				Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
 				Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
 				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
@@ -2594,7 +2594,8 @@ int showgamewarnings(void)
             strcpy(buf,"THIS GAME DOESN'T WORK PROPERLY");
 			#endif
 
-			if (Machine->gamedrv->clone_of) maindrv = Machine->gamedrv->clone_of;
+			if (Machine->gamedrv->clone_of && !(Machine->gamedrv->clone_of->flags & NOT_A_DRIVER))
+				maindrv = Machine->gamedrv->clone_of;
 			else maindrv = Machine->gamedrv;
 
 			foundworking = 0;
@@ -3105,9 +3106,9 @@ static void setup_menu_init(void)
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &neogeo_bios ||
+	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
-				Machine->gamedrv->clone_of->clone_of == &neogeo_bios))
+				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 	{
 		menu_item[menu_total] = "Memory Card"; menu_action[menu_total++] = UI_MEMCARD;
 	}

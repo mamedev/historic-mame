@@ -32,17 +32,17 @@ void cps2_qsound_sharedram_w(int offset,int data)
 struct GameDriver driver_##NAME =  \
 {                                  \
 	__FILE__,                      \
-    0,                             \
+	0,                             \
 	#NAME,                         \
 	DESCRIPTION,                   \
 	YEAR,                          \
 	MANUFACTURER,                  \
-    CPS2_CREDITS,                  \
+	CPS2_CREDITS,                  \
 	0,                             \
-	&NAME##_machine_driver,        \
-	0,                             \
+	&machine_driver_##NAME,        \
+	cps2_decode,                   \
 	rom_##NAME,                    \
-    cps2_decode, 0,                \
+	0, 0,                          \
 	0,                             \
 	0,                             \
 	input_ports_##NAME,            \
@@ -62,10 +62,10 @@ struct GameDriver driver_##NAME =  \
 	MANUFACTURER,                  \
 	CPS2_CREDITS,                  \
 	0,                             \
-    &MAIN##_machine_driver,        \
-	0,                             \
+	&machine_driver_##MAIN,        \
+	cps2_decode,                   \
 	rom_##NAME,                    \
-    cps2_decode, 0,                \
+	0, 0,                          \
 	0,                             \
 	0,                             \
 	input_ports_##MAIN,            \
@@ -82,8 +82,8 @@ struct GameDriver driver_##NAME =  \
 #undef  CODE_SIZE
 #define CODE_SIZE   0x0800000
 
-#define CPS2_CREDITS            CPS1_CREDITS
-#define CPS2_DEFAULT_CPU_SPEED  CPS1_DEFAULT_CPU_SPEED
+#define CPS2_CREDITS            ""
+#define CPS2_DEFAULT_CPU_SPEED  10000000
 
 void cps2_decode(void)
 {
@@ -142,7 +142,7 @@ void cps2_decode(void)
 }
 
 #define CPS2_MACHINE_DRIVER(CPS1_DRVNAME, CPS1_CPU_FRQ) \
-static struct MachineDriver CPS1_DRVNAME##_machine_driver =              \
+static struct MachineDriver machine_driver_##CPS1_DRVNAME =              \
 {                                                                        \
     /* basic machine hardware */                                         \
     {                                                                    \
@@ -877,31 +877,31 @@ ROM_START( xmvssfj )
     ROM_LOAD( "xmvssf.s12",   0x200000, 0x200000, 0x7b11e460 )
 ROM_END
 
-CPS2_GAME_DRIVER(armwara,                "Armoured Warriors (Asia 940920)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(avspj,                  "Aliens Vs. Predator (Japan 940520)"						, "1994", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(batcirj,                "Battle Circuit (Japan 970319)"							, "1997", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(ddtodu,                 "Dungeons & Dragons: Tower of Doom (USA 940125)"				, "1994", "Capcom", ORIENTATION_DEFAULT)
-CLONE_CPS2_GAME_DRIVER(ddtoda,  ddtodu , "Dungeons & Dragons: Tower of Doom (Asia 940113)"   			, "1994", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(mshj,                   "Marvel Super Heroes (Japan 951024)"                 			, "1995", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(mshvsfu,                "Marvel Super Heroes Vs. Street Fighter (USA 970625)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-//CPS2_GAME_DRIVER(mvsc,                   "Marvel Super Heroes vs. Capcom: Clash of Super Heroes (??? ??????)"    , "199?", "Capcom", ORIENTATION_DEFAULT)
-//CPS2_GAME_DRIVER(rckman2,                "Rockman 2: The Power Fighters (??? ??????)"                    , "199?", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(sfzj,                   "Street Fighter Zero (Japan, 950727)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
-CLONE_CPS2_GAME_DRIVER(sfzj1, sfzj,      "Street Fighter Zero (Japan, 950627)"						, "1995", "Capcom", ORIENTATION_DEFAULT)
-CLONE_CPS2_GAME_DRIVER(sfau, sfzj,       "Street Fighter Alpha: The Warriors Dream (USA, 950727)"			, "1995", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(sfz2j,                  "Street Fighter Zero 2 (Japan, 960227)"						, "1996", "Capcom", ORIENTATION_DEFAULT)
-//CPS2_GAME_DRIVER(sfa3,                   "Street Fighter Alpha 3 (??? ??????)"                       , "199?", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(ssf2j,                  "Super Street Fighter 2: The New Challengers (Japan 930910)"		, "1993", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(ssf2xj,                 "Super Street Fighter 2X: Grand Master Challenge (Japan 940223)"	, "1994", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(vampj,                  "Vampire: The Night Warriors (Japan, 940705)"					, "1994", "Capcom", ORIENTATION_DEFAULT)
-CLONE_CPS2_GAME_DRIVER(dstlka, vampj,    "Dark Stalkers (Asia, 940705)"							, "1994", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(vhuntj,                 "Vampire Hunter: Darkstalkers 2 (Japan, 950302)"				, "1995", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(vhunt2j,                "Vampire Hunter 2: Darkstalkers Revenge (Japan, 970828)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(vsavj,                  "Vampire Savior: The Lord of Vampire (Japan, 970519)"			, "1997", "Capcom", ORIENTATION_DEFAULT)
-CLONE_CPS2_GAME_DRIVER(vsavu, vsavj,     "Vampire Savior: Jedah's Damnation (USA 970519)"				, "1997", "Capcom", ORIENTATION_DEFAULT)
-//CPS2_GAME_DRIVER(vsav2,                  "Vampire Savior 2: The Lord of Vampire (??? ??????)"            , "199?", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(xmcotaj,                "X-Men: Children of the Atom (Japan, 950105)"					, "1995", "Capcom", ORIENTATION_DEFAULT)
-CPS2_GAME_DRIVER(xmvssfj,                "X-Men Vs. Street Fighter (Japan, 961004)"					, "1996", "Capcom", ORIENTATION_DEFAULT)
+CPS2_GAME_DRIVER(armwara,                "Armoured Warriors (Asia 940920)"							, "1994", "Capcom", ROT0)
+CPS2_GAME_DRIVER(avspj,                  "Aliens Vs. Predator (Japan 940520)"						, "1994", "Capcom", ROT0)
+CPS2_GAME_DRIVER(batcirj,                "Battle Circuit (Japan 970319)"							, "1997", "Capcom", ROT0)
+CPS2_GAME_DRIVER(ddtodu,                 "Dungeons & Dragons: Tower of Doom (USA 940125)"				, "1994", "Capcom", ROT0)
+CLONE_CPS2_GAME_DRIVER(ddtoda,  ddtodu , "Dungeons & Dragons: Tower of Doom (Asia 940113)"   			, "1994", "Capcom", ROT0)
+CPS2_GAME_DRIVER(mshj,                   "Marvel Super Heroes (Japan 951024)"                 			, "1995", "Capcom", ROT0)
+CPS2_GAME_DRIVER(mshvsfu,                "Marvel Super Heroes Vs. Street Fighter (USA 970625)"			, "1997", "Capcom", ROT0)
+//CPS2_GAME_DRIVER(mvsc,                   "Marvel Super Heroes vs. Capcom: Clash of Super Heroes (??? ??????)"    , "199?", "Capcom", ROT0)
+//CPS2_GAME_DRIVER(rckman2,                "Rockman 2: The Power Fighters (??? ??????)"                    , "199?", "Capcom", ROT0)
+CPS2_GAME_DRIVER(sfzj,                   "Street Fighter Zero (Japan, 950727)"						, "1995", "Capcom", ROT0)
+CLONE_CPS2_GAME_DRIVER(sfzj1, sfzj,      "Street Fighter Zero (Japan, 950627)"						, "1995", "Capcom", ROT0)
+CLONE_CPS2_GAME_DRIVER(sfau, sfzj,       "Street Fighter Alpha: The Warriors Dream (USA, 950727)"			, "1995", "Capcom", ROT0)
+CPS2_GAME_DRIVER(sfz2j,                  "Street Fighter Zero 2 (Japan, 960227)"						, "1996", "Capcom", ROT0)
+//CPS2_GAME_DRIVER(sfa3,                   "Street Fighter Alpha 3 (??? ??????)"                       , "199?", "Capcom", ROT0)
+CPS2_GAME_DRIVER(ssf2j,                  "Super Street Fighter 2: The New Challengers (Japan 930910)"		, "1993", "Capcom", ROT0)
+CPS2_GAME_DRIVER(ssf2xj,                 "Super Street Fighter 2X: Grand Master Challenge (Japan 940223)"	, "1994", "Capcom", ROT0)
+CPS2_GAME_DRIVER(vampj,                  "Vampire: The Night Warriors (Japan, 940705)"					, "1994", "Capcom", ROT0)
+CLONE_CPS2_GAME_DRIVER(dstlka, vampj,    "Dark Stalkers (Asia, 940705)"							, "1994", "Capcom", ROT0)
+CPS2_GAME_DRIVER(vhuntj,                 "Vampire Hunter: Darkstalkers 2 (Japan, 950302)"				, "1995", "Capcom", ROT0)
+CPS2_GAME_DRIVER(vhunt2j,                "Vampire Hunter 2: Darkstalkers Revenge (Japan, 970828)"			, "1997", "Capcom", ROT0)
+CPS2_GAME_DRIVER(vsavj,                  "Vampire Savior: The Lord of Vampire (Japan, 970519)"			, "1997", "Capcom", ROT0)
+CLONE_CPS2_GAME_DRIVER(vsavu, vsavj,     "Vampire Savior: Jedah's Damnation (USA 970519)"				, "1997", "Capcom", ROT0)
+//CPS2_GAME_DRIVER(vsav2,                  "Vampire Savior 2: The Lord of Vampire (??? ??????)"            , "199?", "Capcom", ROT0)
+CPS2_GAME_DRIVER(xmcotaj,                "X-Men: Children of the Atom (Japan, 950105)"					, "1995", "Capcom", ROT0)
+CPS2_GAME_DRIVER(xmvssfj,                "X-Men Vs. Street Fighter (Japan, 961004)"					, "1996", "Capcom", ROT0)
 
 /***************************************************************************
 
@@ -926,7 +926,7 @@ struct GameDriver driver_##NAME =  \
 	MANUFACTURER,                  \
     CPS2_CREDITS,                  \
 	0,                             \
-	&NAME##_machine_driver,        \
+	&machine_driver_##NAME,        \
 	0,                             \
 	rom_##NAME,                    \
     0, 0,                          \
@@ -940,7 +940,7 @@ struct GameDriver driver_##NAME =  \
 
 
 #define CPSX_MACHINE_DRIVER(CPS1_DRVNAME, CPS1_CPU_FRQ) \
-static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
+static struct MachineDriver machine_driver_##CPS1_DRVNAME =            \
 {                                                                        \
 	/* basic machine hardware */                                     \
 	{                                                                \
@@ -999,7 +999,7 @@ ROM_START( sfex )
     ROM_LOAD( "sfe-01m",        0x000000, 0x400000, 0xffffffff )
 ROM_END
 
-CPSX_GAME_DRIVER(sfex,    "Street Fighter EX",                "199?","Capcom",ORIENTATION_DEFAULT)
+CPSX_GAME_DRIVER(sfex,    "Street Fighter EX",                "199?","Capcom",ROT0)
 
 
 

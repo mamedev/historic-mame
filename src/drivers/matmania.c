@@ -373,7 +373,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver matmania_machine_driver =
+static struct MachineDriver machine_driver_matmania =
 {
 	/* basic machine hardware */
 	{
@@ -439,7 +439,7 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-static struct MachineDriver maniach_machine_driver =
+static struct MachineDriver machine_driver_maniach =
 {
 	/* basic machine hardware */
 	{
@@ -700,110 +700,6 @@ ROM_END
 
 
 
-static int matmania_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x074d],"\xb0\xb0\xb0",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0700],16*5);
-			RAM[0x0028] = RAM[0x0700];
-			RAM[0x0029] = RAM[0x0701];
-			RAM[0x002a] = RAM[0x0702];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int excthour_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0700],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x074d],"\xc9\xcd\xb0",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0700],16*5);
-			RAM[0x0028] = RAM[0x0700];
-			RAM[0x0029] = RAM[0x0701];
-			RAM[0x002a] = RAM[0x0702];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void matmania_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0700],16*5);
-		osd_fclose(f);
-	}
-}
-
-static int maniach_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x052b],"\x00\x30\x00",3) == 0) &&
-	    (memcmp(&RAM[0x0564],"\xc4\xd0\xc6",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x052b],60);
-			RAM[0x0028] = RAM[0x052b];
-			RAM[0x0029] = RAM[0x052c];
-			RAM[0x002a] = RAM[0x052d];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void maniach_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-		osd_fwrite(f,&RAM[0x052b],60);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_matmania =
 {
 	__FILE__,
@@ -814,7 +710,7 @@ struct GameDriver driver_matmania =
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&matmania_machine_driver,
+	&machine_driver_matmania,
 	0,
 
 	rom_matmania,
@@ -825,9 +721,8 @@ struct GameDriver driver_matmania =
 	input_ports_matmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	matmania_hiload, matmania_hisave
+	ROT270,
+	0,0
 };
 
 
@@ -841,7 +736,7 @@ struct GameDriver driver_excthour =
 	"Technos (Taito license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&matmania_machine_driver,
+	&machine_driver_matmania,
 	0,
 
 	rom_excthour,
@@ -852,9 +747,8 @@ struct GameDriver driver_excthour =
 	input_ports_matmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	excthour_hiload, matmania_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_maniach =
@@ -867,7 +761,7 @@ struct GameDriver driver_maniach =
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&maniach_machine_driver,
+	&machine_driver_maniach,
 	0,
 
 	rom_maniach,
@@ -878,9 +772,8 @@ struct GameDriver driver_maniach =
 	input_ports_matmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	maniach_hiload,maniach_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_maniach2 =
@@ -893,7 +786,7 @@ struct GameDriver driver_maniach2 =
 	"Technos (Taito America license)",
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
-	&maniach_machine_driver,
+	&machine_driver_maniach,
 	0,
 
 	rom_maniach2,
@@ -904,7 +797,6 @@ struct GameDriver driver_maniach2 =
 	input_ports_matmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	maniach_hiload,maniach_hisave
+	ROT270,
+	0,0
 };

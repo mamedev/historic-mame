@@ -64,7 +64,7 @@ void bowlrama_turbo_w(int offset, int data)
 int bowlrama_turbo_r(int offset)
 {
 	int ret = 0;
-	int data = memory_region(3)[currentaddress];
+	int data = memory_region(REGION_GFX1)[currentaddress];
 
 	switch (offset)
 	{

@@ -23,6 +23,9 @@
 #if (HAS_Z80_VM)
 #include "cpu/z80/z80_vm.h"
 #endif
+#if (HAS_Z80GB)
+#include "cpu/z80gb/z80gb.h"
+#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -128,7 +131,6 @@ struct cpuinfo
 static struct cpuinfo cpu[MAX_CPU];
 
 static int activecpu,totalcpu;
-static int cpu_running[MAX_CPU];
 static int cycles_running;	/* number of cycles that the CPU emulation was requested to run */
 					/* (needed by cpu_getfcount) */
 static int have_to_reset;
@@ -398,6 +400,42 @@ struct cpu_interface cpuintf[] =
 		0,16,CPU_IS_LE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
+#endif
+#if (HAS_Z80GB)
+    {
+        CPU_Z80GB,
+        z80gb_reset,
+        z80gb_exit,
+        z80gb_execute,
+        z80gb_burn,
+        z80gb_get_context,
+        z80gb_set_context,
+        z80gb_get_pc,
+        z80gb_set_pc,
+        z80gb_get_sp,
+        z80gb_set_sp,
+        z80gb_get_reg,
+        z80gb_set_reg,
+        z80gb_set_nmi_line,
+        z80gb_set_irq_line,
+        z80gb_set_irq_callback,
+        NULL,
+        z80gb_state_save,
+        z80gb_state_load,
+        z80gb_info,
+        z80gb_dasm,
+        5,0xff,
+        &z80_ICount,
+        1.0,
+        Z80GB_IGNORE_INT,
+        0,
+        1,
+        cpu_readmem16,
+        cpu_writemem16,
+        cpu_setOPbase16,
+        0,16,CPU_IS_LE,1,4,
+        ABITS1_16,ABITS2_16,ABITS_MIN_16
+    },
 #endif
 #if (HAS_8080)
 	{
@@ -2202,12 +2240,10 @@ reset:
 	{
         if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
 		{
-			cpu_running[i] = 1;
 			timer_suspendcpu(i, 0, SUSPEND_REASON_RESET);
 		}
 		else
 		{
-			cpu_running[i] = 0;
 			timer_suspendcpu(i, 1, SUSPEND_REASON_DISABLE);
 		}
 	}
@@ -2306,7 +2342,6 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 							(*cpu[activecpu].intf->cpu_state_load)(s);
 						/* update the contexts */
 						if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-						updatememorybase(activecpu);
                     }
                     state_close(s);
                 }
@@ -2337,7 +2372,6 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
 			/* update the contexts */
 			if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
-			updatememorybase(activecpu);
 			activecpu = -1;
 
 			/* update the timer with how long we actually ran */
@@ -2348,8 +2382,8 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	}
 
 	/* write hi scores to disk - No scores saving if cheat */
-	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
-		(*Machine->gamedrv->hiscore_save)();
+//	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
+//		(*Machine->gamedrv->hiscore_save)();
 
 #ifdef MESS
     if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
@@ -2413,8 +2447,8 @@ int watchdog_reset_r(int offset)
 void machine_reset(void)
 {
 	/* write hi scores to disk - No scores saving if cheat */
-	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
-		(*Machine->gamedrv->hiscore_save)();
+//	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
+//		(*Machine->gamedrv->hiscore_save)();
 
 	hiscoreloaded = 0;
 
@@ -2454,7 +2488,8 @@ int cpu_getstatus(int cpunum)
 {
 	if (cpunum >= MAX_CPU) return 0;
 
-	return cpu_running[cpunum];
+	return !timer_iscpususpended(cpunum,
+			SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE);
 }
 
 
@@ -3166,7 +3201,8 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 {
 	int oldactive = activecpu;
 
-	if (!cpu_running[cpunum]) return;
+	/* don't trigger interrupts on suspended CPUs */
+	if (cpu_getstatus(cpunum) == 0) return;
 
 	/* swap to the CPU's context */
     activecpu = cpunum;
@@ -3618,12 +3654,12 @@ static void cpu_vblankreset(void)
 	int i;
 
 	/* read hi scores from disk */
-	if (hiscoreloaded == 0 && Machine->gamedrv->hiscore_load)
-	{
-profiler_mark(PROFILER_HISCORE);
-		hiscoreloaded = (*Machine->gamedrv->hiscore_load)();
-profiler_mark(PROFILER_END);
-	}
+//	if (hiscoreloaded == 0 && Machine->gamedrv->hiscore_load)
+//	{
+//profiler_mark(PROFILER_HISCORE);
+//		hiscoreloaded = (*Machine->gamedrv->hiscore_load)();
+//profiler_mark(PROFILER_END);
+//	}
 
 	/* read keyboard & update the status of the input ports */
 	update_input_ports();

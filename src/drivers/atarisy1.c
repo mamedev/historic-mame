@@ -3,6 +3,9 @@
 Atari System 1 Memory Map
 -------------------------
 
+driver by Aaron Giles
+
+
 SYSTEM 1 68010 MEMORY MAP
 
 Function                           Address        R/W  DATA
@@ -804,7 +807,7 @@ static struct GfxLayout anlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &anlayout,       0, 64 },
+	{ REGION_GFX1, 0x00000, &anlayout,       0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -820,7 +823,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	7159160/2,	/* 3.58 MHZ ? */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
 	{ atarigen_ym2151_irq_gen }
 };
 
@@ -850,7 +853,7 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_atarisy1 =
 {
 	/* basic machine hardware */
 	{
@@ -898,7 +901,9 @@ static struct MachineDriver machine_driver =
 			SOUND_TMS5220,
 			&tms5220_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -911,8 +916,8 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT32 *data = (UINT32 *)&memory_region(4)[0];
-	int chips = memory_region_length(4) / 0x8000;
+	UINT32 *data = (UINT32 *)&memory_region(REGION_GFX2)[0];
+	int chips = memory_region_length(REGION_GFX2) / 0x8000;
 	int i, j;
 
 	/* invert the graphics bits on the playfield and motion objects */
@@ -957,7 +962,7 @@ static void roadblst_rom_decode(void)
  *
  *************************************/
 
-static void marble_init(void)
+static void init_marble(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 103);
@@ -975,10 +980,12 @@ static void marble_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void peterpak_init(void)
+static void init_peterpak(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 107);
@@ -992,10 +999,12 @@ static void peterpak_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void indytemp_init(void)
+static void init_indytemp(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 105);
@@ -1012,10 +1021,12 @@ static void indytemp_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void roadrunn_init(void)
+static void init_roadrunn(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 108);
@@ -1029,10 +1040,12 @@ static void roadrunn_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
-static void roadblst_init(void)
+static void init_roadblst(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 110);
@@ -1046,6 +1059,8 @@ static void roadblst_init(void)
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
 	atarigen_show_sound_message();
+
+	roadblst_rom_decode();
 }
 
 
@@ -1071,14 +1086,10 @@ ROM_START( marble )
 	ROM_LOAD( "136033.421",   0x8000, 0x4000, 0x78153dc3 )
 	ROM_LOAD( "136033.422",   0xc000, 0x4000, 0x2e66300e )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
-	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
-
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -1093,8 +1104,11 @@ ROM_START( marble )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
+	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
+ROM_END
 
 ROM_START( marble2 )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1111,14 +1125,10 @@ ROM_START( marble2 )
 	ROM_LOAD( "136033.121",   0x8000, 0x4000, 0x73fe2b46 )
 	ROM_LOAD( "136033.122",   0xc000, 0x4000, 0x03bf65c3 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
-	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
-
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -1133,8 +1143,11 @@ ROM_START( marble2 )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
+	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
+ROM_END
 
 ROM_START( marblea )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1155,14 +1168,10 @@ ROM_START( marblea )
 	ROM_LOAD( "136033.257",   0x8000, 0x4000, 0x2e2e0df8 )
 	ROM_LOAD( "136033.258",   0xc000, 0x4000, 0x1b9655cd )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
-	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
-
-	ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -1177,8 +1186,11 @@ ROM_START( marblea )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136033.118",   0x000, 0x200, 0x2101b0ed )  /* remap */
+	ROM_LOAD( "136033.119",   0x200, 0x200, 0x19f6e767 )  /* color */
+ROM_END
 
 ROM_START( peterpak )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1197,14 +1209,10 @@ ROM_START( peterpak )
 	ROM_LOAD( "136028.101",   0x8000, 0x4000, 0xff712aa2 )
 	ROM_LOAD( "136028.102",   0xc000, 0x4000, 0x89ea21a1 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136028.136",   0x000, 0x200, 0x861cfa36 )  /* remap */
-	ROM_LOAD( "136028.137",   0x200, 0x200, 0x8507e5ea )  /* color */
-
-	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x90000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136028.138",   0x00000, 0x08000, 0x53eaa018 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136028.139",   0x08000, 0x08000, 0x354a19cb )  /* bank 1, plane 1 */
 	ROM_LOAD( "136028.140",   0x10000, 0x08000, 0x8d2c4717 )  /* bank 1, plane 2 */
@@ -1219,8 +1227,11 @@ ROM_START( peterpak )
 	ROM_LOAD( "136028.108",   0x6c000, 0x04000, 0x51941e64 )  /* bank 3, plane 1 */
 	ROM_LOAD( "136028.111",   0x74000, 0x04000, 0x246599f3 )  /* bank 3, plane 2 */
 	ROM_LOAD( "136028.114",   0x7c000, 0x04000, 0x918a5082 )  /* bank 3, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136028.136",   0x000, 0x200, 0x861cfa36 )  /* remap */
+	ROM_LOAD( "136028.137",   0x200, 0x200, 0x8507e5ea )  /* color */
+ROM_END
 
 ROM_START( indytemp )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1240,14 +1251,10 @@ ROM_START( indytemp )
 	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
 	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
-	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1267,8 +1274,11 @@ ROM_START( indytemp )
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
 	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
 
 ROM_START( indytem2 )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1288,14 +1298,10 @@ ROM_START( indytem2 )
 	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
 	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
-	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1315,8 +1321,11 @@ ROM_START( indytem2 )
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
 	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
 
 ROM_START( indytem3 )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1336,14 +1345,10 @@ ROM_START( indytem3 )
 	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
 	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
-	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1363,8 +1368,11 @@ ROM_START( indytem3 )
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
 	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
 
 ROM_START( indytem4 )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1384,14 +1392,10 @@ ROM_START( indytem4 )
 	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
 	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
-	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0xc0000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1411,8 +1415,11 @@ ROM_START( indytem4 )
 	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
 	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
 
 ROM_START( roadrunn )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1435,14 +1442,10 @@ ROM_START( roadrunn )
 	ROM_LOAD( "136040.143",   0x8000, 0x4000, 0x62b9878e )
 	ROM_LOAD( "136040.144",   0xc000, 0x4000, 0x6ef1b804 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "136040.126",   0x000, 0x200, 0x1713c0cd )  /* remap */
-	ROM_LOAD( "136040.125",   0x200, 0x200, 0xa9ca8795 )  /* color */
-
-	ROM_REGION_DISPOSE(0x100000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136040.101",   0x00000, 0x08000, 0x26d9f29c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136040.107",   0x08000, 0x08000, 0x8aac0ba4 )  /* bank 1, plane 1 */
 	ROM_LOAD( "136040.113",   0x10000, 0x08000, 0x48b74c52 )  /* bank 1, plane 2 */
@@ -1472,8 +1475,11 @@ ROM_START( roadrunn )
 	ROM_LOAD( "136040.112",   0xe8000, 0x08000, 0xb6624f3c )  /* bank 6, plane 1 */
 	ROM_LOAD( "136040.118",   0xf0000, 0x08000, 0xf489a968 )  /* bank 6, plane 2 */
 	ROM_LOAD( "136040.124",   0xf8000, 0x08000, 0x524d65f7 )  /* bank 6, plane 3 */
-ROM_END
 
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "136040.126",   0x000, 0x200, 0x1713c0cd )  /* remap */
+	ROM_LOAD( "136040.125",   0x200, 0x200, 0xa9ca8795 )  /* color */
+ROM_END
 
 ROM_START( roadblst )
 	ROM_REGIONX( 0x88000, REGION_CPU1 )	/* 8.5*64k for 68000 code & slapstic ROM */
@@ -1493,14 +1499,10 @@ ROM_START( roadblst )
 	ROM_LOAD( "048-1169.rom", 0x8000, 0x4000, 0xee318052 )
 	ROM_LOAD( "048-1170.rom", 0xc000, 0x4000, 0x75dfec33 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
-	ROM_LOAD( "048-1174.bpr",   0x000, 0x200, 0xdb4a4d53 )  /* remap */
-	ROM_LOAD( "048-1173.bpr",   0x200, 0x200, 0xc80574af )  /* color */
-
-	ROM_REGION_DISPOSE(0x120000) /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x120000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "048-1101.rom", 0x00000, 0x08000, 0xfe342d27 )  /* bank 1, plane 0 */
 	ROM_LOAD( "048-1102.rom", 0x08000, 0x08000, 0x17c7e780 )  /* bank 1, plane 1 */
 	ROM_LOAD( "048-1103.rom", 0x10000, 0x08000, 0x39688e01 )  /* bank 1, plane 2 */
@@ -1534,6 +1536,10 @@ ROM_START( roadblst )
 	ROM_CONTINUE(             0xf0000, 0x08000 )			  /* bank 6, plane 2 */
 	ROM_LOAD( "048-1118.rom", 0x118000, 0x08000, 0xbe879b8e ) /* bank 7, plane 3 */
 	ROM_CONTINUE(             0xf8000, 0x08000 )			  /* bank 6, plane 3 */
+
+	ROM_REGIONX( 0x400, REGION_PROMS )	/* graphics mapping PROMs */
+	ROM_LOAD( "048-1174.bpr",   0x000, 0x200, 0xdb4a4d53 )  /* remap */
+	ROM_LOAD( "048-1173.bpr",   0x200, 0x200, 0xc80574af )  /* color */
 ROM_END
 
 
@@ -1544,72 +1550,13 @@ ROM_END
  *
  *************************************/
 
-#define ATARISY1_DRIVER_EXT(name,year,fullname,decoder)	\
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		0,										\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Atari Games",							\
-		"Aaron Giles (MAME driver)\n"			\
-		"Frank Palazzolo (Slapstic decoding)\n"	\
-		"Tim Lindquist (Hardware Info)",		\
-		0,										\
-		&machine_driver,						\
-		name##_init,							\
-												\
-		rom_##name,								\
-		decoder,								\
-		0,										\
-		0,										\
-		0,						\
-												\
-		input_ports_##name,						\
-												\
-		0, 0, 0,   /* colors, palette, colortable */\
-		ORIENTATION_DEFAULT,					\
-		atarigen_hiload, atarigen_hisave		\
-	};
-#define ATARISY1_DRIVER(name,year,fullname) ATARISY1_DRIVER_EXT(name,year,fullname,rom_decode)
-
-#define ATARISY1_CLONE_DRIVER(name,year,fullname,cloneof)		\
-	struct GameDriver driver_##name =			\
-	{											\
-		__FILE__,								\
-		&driver_##cloneof,						\
-		#name,									\
-		fullname,								\
-		#year,									\
-		"Atari Games",							\
-		"Aaron Giles (MAME driver)\n"			\
-		"Frank Palazzolo (Slapstic decoding)\n"	\
-		"Tim Lindquist (Hardware Info)",		\
-		0,										\
-		&machine_driver,						\
-		cloneof##_init,							\
-												\
-		rom_##name,								\
-		rom_decode,								\
-		0,										\
-		0,										\
-		0,						\
-												\
-		input_ports_##cloneof,					\
-												\
-		0, 0, 0,   /* colors, palette, colortable */\
-		ORIENTATION_DEFAULT,					\
-		atarigen_hiload, atarigen_hisave		\
-	};
-
-ATARISY1_DRIVER      (marble,   1984, "Marble Madness (set 1)")
-ATARISY1_CLONE_DRIVER(marble2,  1984, "Marble Madness (set 2)", marble)
-ATARISY1_CLONE_DRIVER(marblea,  1984, "Marble Madness (set 3)", marble)
-ATARISY1_DRIVER      (peterpak, 1984, "Peter Pack-Rat")
-ATARISY1_DRIVER      (indytemp, 1985, "Indiana Jones and the Temple of Doom (set 1)")
-ATARISY1_CLONE_DRIVER(indytem2, 1985, "Indiana Jones and the Temple of Doom (set 2)", indytemp)
-ATARISY1_CLONE_DRIVER(indytem3, 1985, "Indiana Jones and the Temple of Doom (set 3)", indytemp)
-ATARISY1_CLONE_DRIVER(indytem4, 1985, "Indiana Jones and the Temple of Doom (set 4)", indytemp)
-ATARISY1_DRIVER      (roadrunn, 1985, "Road Runner")
-ATARISY1_DRIVER_EXT  (roadblst, 1987, "Road Blasters", roadblst_rom_decode)
+GAME( 1984, marble,   ,         atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 1)" )
+GAME( 1984, marble2,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 2)" )
+GAME( 1984, marblea,  marble,   atarisy1, marble,   marble,   ROT0, "Atari Games", "Marble Madness (set 3)" )
+GAME( 1984, peterpak, ,         atarisy1, peterpak, peterpak, ROT0, "Atari Games", "Peter Pack-Rat" )
+GAME( 1985, indytemp, ,         atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 1)" )
+GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 2)" )
+GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 3)" )
+GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)" )
+GAME( 1985, roadrunn, ,         atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
+GAME( 1987, roadblst, ,         atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )

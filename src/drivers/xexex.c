@@ -34,10 +34,22 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void eeprom_init(void)
+static void nvram_handler(void *file,int read_or_write)
 {
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 10;
+	}
 }
 
 static void gfx_init(void)
@@ -50,7 +62,6 @@ static void machine_init(void)
 {
 	cur_rombank = 0;
 
-	eeprom_init();
 	gfx_init();
 }
 
@@ -191,31 +202,7 @@ static int backrom_r(int offset)
 	return *(memory_region(3) + 2048*cur_back_select + (offset>>2));
 }
 
-static int nvram_load(void)
-{
-	void *f;
 
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 10;
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -373,6 +360,11 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{0}
+	},
+
+	nvram_handler
 };
 
 
@@ -422,5 +414,5 @@ struct GameDriver driver_xexex =
 
 	0,0,0,
 	ORIENTATION_FLIP_Y,
-	nvram_load, nvram_save
+	0,0
 };

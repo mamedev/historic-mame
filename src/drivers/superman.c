@@ -345,41 +345,6 @@ static struct MachineDriver machine_driver =
 
 /***************************************************************************
 
-  High score save/load
-
-***************************************************************************/
-
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x2954]) == 0x1388)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x2954],0x39);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x2954],0x39);
-		osd_fclose(f);
-	}
-}
-
-/***************************************************************************
-
   Game driver(s)
 
 ***************************************************************************/
@@ -428,8 +393,8 @@ struct GameDriver driver_superman =
 	input_ports_superman,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
 

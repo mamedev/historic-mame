@@ -376,7 +376,7 @@ void DRAW_FUNC(struct osd_bitmap *bitmap, int full_refresh)
 		int xpos = sprite[3];
 
 		/* get a pointer to the source image */
-		src = &memory_region(2)[64 * image];
+		src = &memory_region(REGION_GFX1)[64 * image];
 		if (flags & 0x80) src += 4 * 15;
 
 		/* loop over y */

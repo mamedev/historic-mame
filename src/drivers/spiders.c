@@ -453,7 +453,7 @@ struct GameDriver driver_spiders =
 	input_ports_spiders,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
+	ROT270 | GAME_NO_SOUND,
 
 	0,0
 };
@@ -479,7 +479,7 @@ struct GameDriver driver_spiders2 =
 	input_ports_spiders,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
+	ROT270 | GAME_NO_SOUND,
 
 	0,0
 };

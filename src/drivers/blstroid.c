@@ -244,8 +244,8 @@ static struct GfxLayout molayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 2, 0x00000, &pflayout,  256, 16 },
-	{ 2, 0x40000, &molayout,    0, 16 },
+	{ REGION_GFX1, 0, &pflayout,  256, 16 },
+	{ REGION_GFX2, 0, &molayout,    0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -257,7 +257,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_blstroid =
 {
 	/* basic machine hardware */
 	{
@@ -287,7 +287,9 @@ static struct MachineDriver machine_driver =
 	blstroid_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO
+	JSA_I_STEREO,
+
+	atarigen_nvram_handler
 };
 
 
@@ -309,27 +311,29 @@ ROM_START( blstroid )
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
 	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
 	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
 	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
-	ROM_LOAD( "blstroid.5m",  0x040000, 0x10000, 0x50e0823f ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x050000, 0x10000, 0x729de7a9 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x060000, 0x10000, 0x090e42ab ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x070000, 0x10000, 0x1ff79e67 ) /* mo */
-	ROM_LOAD( "blstroid.11m", 0x080000, 0x10000, 0x4be1d504 ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x090000, 0x10000, 0xe4409310 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x0a0000, 0x10000, 0x7aaca15e ) /* mo */
-	ROM_LOAD( "blstroid.16m", 0x0b0000, 0x10000, 0x33690379 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x0c0000, 0x10000, 0x2720ee71 ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x0d0000, 0x10000, 0x2faecd15 ) /* mo */
-	ROM_LOAD( "blstroid.8n",  0x0e0000, 0x10000, 0xf10e59ed ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0f0000, 0x10000, 0x4d5fc284 ) /* mo */
-	ROM_LOAD( "blstroid.11n", 0x100000, 0x10000, 0xa70fc6e6 ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x110000, 0x10000, 0xf423b4f8 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x120000, 0x10000, 0x56fa3d16 ) /* mo */
-	ROM_LOAD( "blstroid.16n", 0x130000, 0x10000, 0xf257f738 ) /* mo */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, 0x4be1d504 ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, 0x33690379 ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, 0xf10e59ed ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, 0xa70fc6e6 ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, 0xf257f738 ) /* mo */
 ROM_END
 
 
@@ -344,27 +348,29 @@ ROM_START( blstroi2 )
 	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
 
-	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
 	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
 	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
 	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
-	ROM_LOAD( "blstroid.5m",  0x040000, 0x10000, 0x50e0823f ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x050000, 0x10000, 0x729de7a9 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x060000, 0x10000, 0x090e42ab ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x070000, 0x10000, 0x1ff79e67 ) /* mo */
-	ROM_LOAD( "blstroid.11m", 0x080000, 0x10000, 0x4be1d504 ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x090000, 0x10000, 0xe4409310 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x0a0000, 0x10000, 0x7aaca15e ) /* mo */
-	ROM_LOAD( "blstroid.16m", 0x0b0000, 0x10000, 0x33690379 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x0c0000, 0x10000, 0x2720ee71 ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x0d0000, 0x10000, 0x2faecd15 ) /* mo */
-	ROM_LOAD( "blstroid.8n",  0x0e0000, 0x10000, 0xf10e59ed ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0f0000, 0x10000, 0x4d5fc284 ) /* mo */
-	ROM_LOAD( "blstroid.11n", 0x100000, 0x10000, 0xa70fc6e6 ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x110000, 0x10000, 0xf423b4f8 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x120000, 0x10000, 0x56fa3d16 ) /* mo */
-	ROM_LOAD( "blstroid.16n", 0x130000, 0x10000, 0xf257f738 ) /* mo */
+
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "blstroid.5m",  0x000000, 0x10000, 0x50e0823f ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x010000, 0x10000, 0x729de7a9 ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x020000, 0x10000, 0x090e42ab ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x030000, 0x10000, 0x1ff79e67 ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x040000, 0x10000, 0x4be1d504 ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x050000, 0x10000, 0xe4409310 ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x060000, 0x10000, 0x7aaca15e ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x070000, 0x10000, 0x33690379 ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x080000, 0x10000, 0x2720ee71 ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x090000, 0x10000, 0x2faecd15 ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0a0000, 0x10000, 0xf10e59ed ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0b0000, 0x10000, 0x4d5fc284 ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x0c0000, 0x10000, 0xa70fc6e6 ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x0d0000, 0x10000, 0xf423b4f8 ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x0e0000, 0x10000, 0x56fa3d16 ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x0f0000, 0x10000, 0xf257f738 ) /* mo */
 ROM_END
 
 
@@ -375,7 +381,7 @@ ROM_END
  *
  *************************************/
 
-static void blstroid_init(void)
+static void init_blstroid(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 4, 2, 0x80);
@@ -395,55 +401,5 @@ static void blstroid_init(void)
  *
  *************************************/
 
-struct GameDriver driver_blstroid =
-{
-	__FILE__,
-	0,
-	"blstroid",
-	"Blasteroids (version 4)",
-	"1987",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
-	0,
-	&machine_driver,
-	blstroid_init,
-
-	rom_blstroid,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_blstroid,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver driver_blstroi2 =
-{
-	__FILE__,
-	&driver_blstroid,
-	"blstroi2",
-	"Blasteroids (version 2)",
-	"1987",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
-	0,
-	&machine_driver,
-	blstroid_init,
-
-	rom_blstroi2,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_blstroid,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1987, blstroid, ,         blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 4)" )
+GAME( 1987, blstroi2, blstroid, blstroid, blstroid, blstroid, ROT0, "Atari Games", "Blasteroids (version 2)" )

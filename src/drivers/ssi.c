@@ -429,7 +429,7 @@ struct GameDriver driver_ssi =
 	input_ports_ssi,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };
 
@@ -454,6 +454,6 @@ struct GameDriver driver_majest12 =
 	input_ports_majest12,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };

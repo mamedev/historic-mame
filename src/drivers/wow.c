@@ -508,7 +508,7 @@ static void wow_machine_init(void)
 }
 
 
-static struct MachineDriver wow_machine_driver =
+static struct MachineDriver machine_driver_wow =
 {
 	/* basic machine hardware */
 	{
@@ -553,45 +553,7 @@ static struct MachineDriver wow_machine_driver =
  	}
 };
 
-static int wow_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xd004],"\x00\x00",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xd004],20);
-			/* stored twice in memory??? */
-			memcpy(&RAM[0xd304],&RAM[0xd004],20);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void wow_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xd004],20);
-		osd_fclose(f);
-	}
-
-}
 
 struct GameDriver driver_wow =
 {
@@ -603,7 +565,7 @@ struct GameDriver driver_wow =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nKevin Estep (samples)\nAlex Judd (sound programming)\nFrank Palazzolo",
 	0,
-	&wow_machine_driver,
+	&machine_driver_wow,
 	0,
 
 	rom_wow,
@@ -614,9 +576,8 @@ struct GameDriver driver_wow =
 	input_ports_wow,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	wow_hiload, wow_hisave,
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
@@ -713,7 +674,7 @@ INPUT_PORTS_START( robby )
 
 INPUT_PORTS_END
 
-static struct MachineDriver robby_machine_driver =
+static struct MachineDriver machine_driver_robby =
 {
 	/* basic machine hardware */
 	{
@@ -750,46 +711,6 @@ static struct MachineDriver robby_machine_driver =
 	}
 };
 
-static int robby_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xe13b],"\x10\x27",2) == 0) &&
-		(memcmp(&RAM[0xe1e4],"COCK",4) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xe13b],0xad);
-			/* appears twice in memory??? */
-			memcpy(&RAM[0xe33b],&RAM[0xe13b],0xad);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void robby_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xe13b],0xad);
-		osd_fclose(f);
-	}
-
-}
 
 struct GameDriver driver_robby =
 {
@@ -801,7 +722,7 @@ struct GameDriver driver_robby =
 	"Bally Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nFrank Palazzolo",
 	0,
-	&robby_machine_driver,
+	&machine_driver_robby,
 	0,
 
 	rom_robby,
@@ -812,9 +733,8 @@ struct GameDriver driver_robby =
 	input_ports_robby,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	robby_hiload, robby_hisave
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
@@ -916,7 +836,7 @@ static void gorf_machine_init(void)
 }
 
 
-static struct MachineDriver gorf_machine_driver =
+static struct MachineDriver machine_driver_gorf =
 {
 	/* basic machine hardware */
 	{
@@ -964,43 +884,6 @@ static struct MachineDriver gorf_machine_driver =
 	}
 };
 
-static int gorf_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((RAM[0xd00b]==0xff) && (RAM[0xd03d]==0x33))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	    osd_fread(f,&RAM[0xd010],0x22);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void gorf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	osd_fwrite(f,&RAM[0xd010],0x22);
-		osd_fclose(f);
-	}
-
-}
 
 struct GameDriver driver_gorf =
 {
@@ -1012,7 +895,7 @@ struct GameDriver driver_gorf =
 	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
-	&gorf_machine_driver,
+	&machine_driver_gorf,
 	0,
 
 	rom_gorf,
@@ -1023,9 +906,8 @@ struct GameDriver driver_gorf =
 	input_ports_gorf,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gorf_hiload, gorf_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_gorfpgm1 =
@@ -1038,7 +920,7 @@ struct GameDriver driver_gorfpgm1 =
 	"Midway",
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
-	&gorf_machine_driver,
+	&machine_driver_gorf,
 	0,
 
 	rom_gorfpgm1,
@@ -1049,9 +931,8 @@ struct GameDriver driver_gorfpgm1 =
 	input_ports_gorf,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gorf_hiload, gorf_hisave
+	ROT270,
+	0,0
 };
 
 /****************************************************************************
@@ -1116,7 +997,7 @@ INPUT_PORTS_START( spacezap )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct MachineDriver spacezap_machine_driver =
+static struct MachineDriver machine_driver_spacezap =
 {
 	/* basic machine hardware */
 	{
@@ -1153,45 +1034,6 @@ static struct MachineDriver spacezap_machine_driver =
 	}
 };
 
-static int spacezap_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if memory has already been initialized */
-	    if (memcmp(&RAM[0xd024],"\x01\x01",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	        osd_fread(f,&RAM[0xd01d],6);
-			/* Appears twice in memory??? */
-			memcpy(&RAM[0xd041],&RAM[0xd01d],6);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void spacezap_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	    osd_fwrite(f,&RAM[0xd01d],6);
-		osd_fclose(f);
-	}
-
-}
 
 struct GameDriver driver_spacezap =
 {
@@ -1203,7 +1045,7 @@ struct GameDriver driver_spacezap =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
 	0,
-	&spacezap_machine_driver,
+	&machine_driver_spacezap,
 	0,
 
 	rom_spacezap,
@@ -1214,9 +1056,8 @@ struct GameDriver driver_spacezap =
 	input_ports_spacezap,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	spacezap_hiload, spacezap_hisave
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
@@ -1321,7 +1162,7 @@ static void seawolf2_machine_init(void)
 	install_port_read_handler(0, 0x11, 0x11, seawolf2_controller1_r);
 }
 
-static struct MachineDriver seawolf_machine_driver =
+static struct MachineDriver machine_driver_seawolf =
 {
 	/* basic machine hardware */
 	{
@@ -1352,41 +1193,6 @@ static struct MachineDriver seawolf_machine_driver =
 	0,0,0,0,
 };
 
-static int seawolf_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	    if (memcmp(&RAM[0xc20d],"\xd8\x19",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-	        osd_fread(f,&RAM[0xc208],2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void seawolf_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-	    osd_fwrite(f,&RAM[0xc208],2);
-		osd_fclose(f);
-	}
-
-}
 
 struct GameDriver driver_seawolf2 =
 {
@@ -1398,7 +1204,7 @@ struct GameDriver driver_seawolf2 =
 	"Midway",
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)",
 	0,
-	&seawolf_machine_driver,
+	&machine_driver_seawolf,
 	0,
 
 	rom_seawolf2,
@@ -1409,9 +1215,8 @@ struct GameDriver driver_seawolf2 =
 	input_ports_seawolf2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	seawolf_hiload, seawolf_hisave
+	ROT0,
+	0,0
 };
 
 /****************************************************************************
@@ -1505,7 +1310,7 @@ static void ebases_machine_init(void)
 }
 
 
-static struct MachineDriver ebases_machine_driver =
+static struct MachineDriver machine_driver_ebases =
 {
 	/* basic machine hardware */
 	{
@@ -1552,7 +1357,7 @@ struct GameDriver driver_ebases =
 	"Midway",
 	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
 	0,
-	&ebases_machine_driver,
+	&machine_driver_ebases,
 	0,
 
 	rom_ebases,
@@ -1563,7 +1368,7 @@ struct GameDriver driver_ebases =
 	input_ports_ebases,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
+	ROT0 | GAME_WRONG_COLORS,
 
 	0, 0
 };

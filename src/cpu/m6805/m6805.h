@@ -144,17 +144,6 @@ extern unsigned hd63705_dasm(char *buffer, unsigned pc);
 /****************************************************************************/
 #define M6805_RDOP_ARG(Addr) ((unsigned)cpu_readop_arg(Addr))
 
-/****************************************************************************/
-/* Flags for optimizing memory access. Game drivers should set m6805_Flags  */
-/* to a combination of these flags depending on what can be safely          */
-/* optimized. For example, if M6805_FAST_S is set, bytes are pulled 		*/
-/* directly from the RAM array, and cpu_readmem() is not called.            */
-/* The flags affect reads and writes.                                       */
-/****************************************************************************/
-extern int m6805_Flags;
-#define M6805_FAST_NONE	0x00	/* no memory optimizations */
-#define M6805_FAST_S	0x02	/* stack */
-
 #ifndef FALSE
 #    define FALSE 0
 #endif

@@ -357,7 +357,7 @@ static struct GfxLayout sprites =
 	16,16,	/* 16*16 sprites */
 	2048+1024,
 	4,
-	{ 0x48000*8, 0x30000*8, 0x18000*8, 0 },	/* plane offset */
+	{ 0, 0x18000*8, 0x30000*8, 0x48000*8 },	/* plane offset */
 	{ 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
 			0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -367,17 +367,17 @@ static struct GfxLayout sprites =
 
 static struct GfxDecodeInfo actfan_gfxdecodeinfo[] =
 {
-	{ 1, 0x60000, &chars,       0, 16 },
-	{ 1, 0x00000, &sprites,   512, 16 },
-	{ 1, 0x80000, &tiles,     256, 16 },
+	{ REGION_GFX1, 0, &chars,       0, 16 },
+	{ REGION_GFX2, 0, &sprites,   512, 16 },
+	{ REGION_GFX3, 0, &tiles,     256, 16 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo triothep_gfxdecodeinfo[] =
 {
-	{ 1, 0x60000, &chars,       0, 16 },
-	{ 1, 0x00000, &sprites,   256, 16 },
-	{ 1, 0x80000, &tiles,     512, 16 },
+	{ REGION_GFX1, 0, &chars,       0, 16 },
+	{ REGION_GFX2, 0, &sprites,   256, 16 },
+	{ REGION_GFX3, 0, &tiles,     512, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -411,7 +411,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	{ 8000 },       /* 8000Hz frequency */
-	{ 3 },          /* memory region 3 */
+	{ REGION_SOUND1 },          /* memory region 3 */
 	{ 85 }
 };
 
@@ -422,7 +422,7 @@ static int actfan_interrupt(void)
 	return H6280_INT_IRQ1;
 }
 
-static struct MachineDriver actfan_machine_driver =
+static struct MachineDriver machine_driver_actfancr =
 {
 	/* basic machine hardware */
 	{
@@ -474,7 +474,7 @@ static struct MachineDriver actfan_machine_driver =
 	}
 };
 
-static struct MachineDriver triothep_machine_driver =
+static struct MachineDriver machine_driver_triothep =
 {
 	/* basic machine hardware */
 	{
@@ -528,65 +528,69 @@ static struct MachineDriver triothep_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( actfan )
+ROM_START( actfancr )
 	ROM_REGIONX( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "08-1", 0x00000, 0x10000, 0x3bf214a4 )
 	ROM_LOAD( "09-1", 0x10000, 0x10000, 0x13ae78d5 )
 	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
 
-	ROM_REGION_DISPOSE(0xc0000)
-	ROM_LOAD( "00", 0x18000, 0x10000, 0xd50a9550 ) /* Sprites */
-	ROM_LOAD( "01", 0x28000, 0x08000, 0x34935e93 )
-	ROM_LOAD( "02", 0x48000, 0x10000, 0xb1db0efc )
-	ROM_LOAD( "03", 0x58000, 0x08000, 0xf313e04f )
-	ROM_LOAD( "04", 0x00000, 0x10000, 0xbcf41795 )
-	ROM_LOAD( "05", 0x10000, 0x08000, 0xd38b94aa )
-	ROM_LOAD( "06", 0x30000, 0x10000, 0x8cb6dd87 )
-	ROM_LOAD( "07", 0x40000, 0x08000, 0xdd345def )
-
-	ROM_LOAD( "15", 0x60000, 0x10000, 0xa1baf21e ) /* Chars */
-	ROM_LOAD( "16", 0x70000, 0x10000, 0x22e64730 )
-
-	ROM_LOAD( "11", 0xb0000, 0x10000, 0x1f006d9f ) /* Tiles */
-	ROM_LOAD( "12", 0x90000, 0x10000, 0x08787b7a )
-	ROM_LOAD( "13", 0xa0000, 0x10000, 0xc30c37dc )
-	ROM_LOAD( "14", 0x80000, 0x10000, 0xd6457420 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
 
-	ROM_REGION(0x10000) /* ADPCM sounds */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15", 0x00000, 0x10000, 0xa1baf21e ) /* Chars */
+	ROM_LOAD( "16", 0x10000, 0x10000, 0x22e64730 )
+
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "02", 0x00000, 0x10000, 0xb1db0efc ) /* Sprites */
+	ROM_LOAD( "03", 0x10000, 0x08000, 0xf313e04f )
+	ROM_LOAD( "06", 0x18000, 0x10000, 0x8cb6dd87 )
+	ROM_LOAD( "07", 0x28000, 0x08000, 0xdd345def )
+	ROM_LOAD( "00", 0x30000, 0x10000, 0xd50a9550 )
+	ROM_LOAD( "01", 0x40000, 0x08000, 0x34935e93 )
+	ROM_LOAD( "04", 0x48000, 0x10000, 0xbcf41795 )
+	ROM_LOAD( "05", 0x58000, 0x08000, 0xd38b94aa )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "14", 0x00000, 0x10000, 0xd6457420 ) /* Tiles */
+	ROM_LOAD( "12", 0x10000, 0x10000, 0x08787b7a )
+	ROM_LOAD( "13", 0x20000, 0x10000, 0xc30c37dc )
+	ROM_LOAD( "11", 0x30000, 0x10000, 0x1f006d9f )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* ADPCM sounds */
 	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
 ROM_END
 
-ROM_START( actfanj )
+ROM_START( actfancj )
 	ROM_REGIONX( 0x200000, REGION_CPU1 ) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "fd08-1.bin", 0x00000, 0x10000, 0x69004b60 )
 	ROM_LOAD( "fd09-1.bin", 0x10000, 0x10000, 0xa455ae3e )
 	ROM_LOAD( "10",   0x20000, 0x10000, 0xcabad137 )
 
-	ROM_REGION_DISPOSE(0xc0000)
-	ROM_LOAD( "00", 0x18000, 0x10000, 0xd50a9550 ) /* Sprites */
-	ROM_LOAD( "01", 0x28000, 0x08000, 0x34935e93 )
-	ROM_LOAD( "02", 0x48000, 0x10000, 0xb1db0efc )
-	ROM_LOAD( "03", 0x58000, 0x08000, 0xf313e04f )
-	ROM_LOAD( "04", 0x00000, 0x10000, 0xbcf41795 )
-	ROM_LOAD( "05", 0x10000, 0x08000, 0xd38b94aa )
-	ROM_LOAD( "06", 0x30000, 0x10000, 0x8cb6dd87 )
-	ROM_LOAD( "07", 0x40000, 0x08000, 0xdd345def )
-
-	ROM_LOAD( "15", 0x60000, 0x10000, 0xa1baf21e ) /* Chars */
-	ROM_LOAD( "16", 0x70000, 0x10000, 0x22e64730 )
-
-	ROM_LOAD( "11", 0xb0000, 0x10000, 0x1f006d9f ) /* Tiles */
-	ROM_LOAD( "12", 0x90000, 0x10000, 0x08787b7a )
-	ROM_LOAD( "13", 0xa0000, 0x10000, 0xc30c37dc )
-	ROM_LOAD( "14", 0x80000, 0x10000, 0xd6457420 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "17-1", 0x08000, 0x8000, 0x289ad106 )
 
-	ROM_REGION(0x10000) /* ADPCM sounds */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "15", 0x00000, 0x10000, 0xa1baf21e ) /* Chars */
+	ROM_LOAD( "16", 0x10000, 0x10000, 0x22e64730 )
+
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "02", 0x00000, 0x10000, 0xb1db0efc ) /* Sprites */
+	ROM_LOAD( "03", 0x10000, 0x08000, 0xf313e04f )
+	ROM_LOAD( "06", 0x18000, 0x10000, 0x8cb6dd87 )
+	ROM_LOAD( "07", 0x28000, 0x08000, 0xdd345def )
+	ROM_LOAD( "00", 0x30000, 0x10000, 0xd50a9550 )
+	ROM_LOAD( "01", 0x40000, 0x08000, 0x34935e93 )
+	ROM_LOAD( "04", 0x48000, 0x10000, 0xbcf41795 )
+	ROM_LOAD( "05", 0x58000, 0x08000, 0xd38b94aa )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "14", 0x00000, 0x10000, 0xd6457420 ) /* Tiles */
+	ROM_LOAD( "12", 0x10000, 0x10000, 0x08787b7a )
+	ROM_LOAD( "13", 0x20000, 0x10000, 0xc30c37dc )
+	ROM_LOAD( "11", 0x30000, 0x10000, 0x1f006d9f )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* ADPCM sounds */
 	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
 ROM_END
 
@@ -596,28 +600,30 @@ ROM_START( triothep )
 	ROM_LOAD( "ff15.bin", 0x20000, 0x10000, 0x6eada47c )
 	ROM_LOAD( "ff14.bin", 0x30000, 0x10000, 0x4ba7de4a )
 
-	ROM_REGION_DISPOSE(0xc0000)
-	ROM_LOAD( "ff01.bin", 0x00000, 0x10000, 0x68d80a66 ) /* Sprites */
-	ROM_LOAD( "ff00.bin", 0x10000, 0x08000, 0x41232442 )
-	ROM_LOAD( "ff03.bin", 0x18000, 0x10000, 0xb36ad42d )
-	ROM_LOAD( "ff02.bin", 0x28000, 0x08000, 0x6b9d24ce )
-	ROM_LOAD( "ff09.bin", 0x30000, 0x10000, 0x79c6bc0e )
-	ROM_LOAD( "ff08.bin", 0x40000, 0x08000, 0x1391e445 )
-	ROM_LOAD( "ff11.bin", 0x48000, 0x10000, 0x19e885c7 )
-	ROM_LOAD( "ff10.bin", 0x58000, 0x08000, 0x4b6b477a )
-
-	ROM_LOAD( "ff12.bin", 0x60000, 0x10000, 0x15fb49f2 ) /* Chars */
-	ROM_LOAD( "ff13.bin", 0x70000, 0x10000, 0xe20c9623 )
-
-	ROM_LOAD( "ff04.bin", 0x80000, 0x10000, 0x7cea3c87 ) /* Tiles */
-	ROM_LOAD( "ff06.bin", 0x90000, 0x10000, 0x5e7f3e8f )
-	ROM_LOAD( "ff05.bin", 0xa0000, 0x10000, 0x8bb13f05 )
-	ROM_LOAD( "ff07.bin", 0xb0000, 0x10000, 0x0d7affc3 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 6502 Sound CPU */
 	ROM_LOAD( "ff18.bin", 0x00000, 0x10000, 0x9de9ee63 )
 
-	ROM_REGION(0x10000) /* ADPCM sounds */
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ff12.bin", 0x00000, 0x10000, 0x15fb49f2 ) /* Chars */
+	ROM_LOAD( "ff13.bin", 0x10000, 0x10000, 0xe20c9623 )
+
+	ROM_REGIONX( 0x60000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ff11.bin", 0x00000, 0x10000, 0x19e885c7 ) /* Sprites */
+	ROM_LOAD( "ff10.bin", 0x10000, 0x08000, 0x4b6b477a )
+	ROM_LOAD( "ff09.bin", 0x18000, 0x10000, 0x79c6bc0e )
+	ROM_LOAD( "ff08.bin", 0x28000, 0x08000, 0x1391e445 )
+	ROM_LOAD( "ff03.bin", 0x30000, 0x10000, 0xb36ad42d )
+	ROM_LOAD( "ff02.bin", 0x40000, 0x08000, 0x6b9d24ce )
+	ROM_LOAD( "ff01.bin", 0x48000, 0x10000, 0x68d80a66 )
+	ROM_LOAD( "ff00.bin", 0x58000, 0x08000, 0x41232442 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ff04.bin", 0x00000, 0x10000, 0x7cea3c87 ) /* Tiles */
+	ROM_LOAD( "ff06.bin", 0x10000, 0x10000, 0x5e7f3e8f )
+	ROM_LOAD( "ff05.bin", 0x20000, 0x10000, 0x8bb13f05 )
+	ROM_LOAD( "ff07.bin", 0x30000, 0x10000, 0x0d7affc3 )
+
+	ROM_REGIONX( 0x10000, REGION_SOUND1 ) /* ADPCM sounds */
 	ROM_LOAD( "ff17.bin", 0x00000, 0x10000, 0xf0ab0d05 )
 ROM_END
 
@@ -653,92 +659,18 @@ static int cyclej_r(int offset)
 	return ret;
 }
 
-static void usa_patch(void)
+static void init_actfancr(void)
 {
 	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cycle_r);
 }
 
-static void jap_patch(void)
+static void init_actfancj(void)
 {
 	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cyclej_r);
 }
 
-/******************************************************************************/
 
-struct GameDriver driver_actfancr =
-{
-	__FILE__,
-	0,
-	"actfancr",
-	"Act-Fancer Cybernetick Hyper Weapon (World)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&actfan_machine_driver,
-	usa_patch,
 
-	rom_actfan,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_actfancr,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_actfancj =
-{
-	__FILE__,
-	&driver_actfancr,
-	"actfancj",
-	"Act-Fancer Cybernetick Hyper Weapon (Japan)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&actfan_machine_driver,
-	jap_patch,
-
-	rom_actfanj,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_actfancr,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver driver_triothep =
-{
-	__FILE__,
-	0,
-	"triothep",
-	"Trio The Punch - Never Forget Me... (Japan)",
-	"1989",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&triothep_machine_driver,
-	0,
-
-	rom_triothep,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_triothep,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0, 0
-};
+GAME( 1989, actfancr, ,         actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World)" )
+GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan)" )
+GAME( 1989, triothep, ,         triothep, triothep, ,         ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)" )

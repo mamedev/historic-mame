@@ -364,7 +364,9 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2413,
 			&ym2413_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -427,6 +429,8 @@ static void relief_init(void)
 	};
 
 	atarigen_eeprom_default = default_eeprom;
+
+	rom_decode();
 }
 
 
@@ -451,6 +455,8 @@ static void relief2_init(void)
 	};
 
 	atarigen_eeprom_default = default_eeprom;
+
+	rom_decode();
 }
 
 
@@ -522,16 +528,15 @@ struct GameDriver driver_relief =
 	relief_init,
 
 	rom_relief,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_relief,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -549,14 +554,13 @@ struct GameDriver driver_relief2 =
 	relief2_init,
 
 	rom_relief2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_relief,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

@@ -141,6 +141,8 @@ void liberatr_led_w(int offset, int data);
 void liberatr_coin_counter_w(int offset, int data);
 
 /* in vidhrdw */
+extern unsigned char *liberatr_bitmapram;
+
 int  liberatr_vh_start(void);
 void liberatr_vh_stop(void);
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -153,7 +155,7 @@ void liberatr_bitmap_xy_w(int offset, int data);
 static struct MemoryReadAddress liberatr_readmem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x403f, atari_vg_earom_r },
 	{ 0x5000, 0x5000, liberatr_input_port_0_r },
 	{ 0x5001, 0x5001, input_port_1_r },
@@ -167,7 +169,7 @@ static struct MemoryReadAddress liberatr_readmem[] =
 static struct MemoryReadAddress liberat2_readmem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
 	{ 0x4000, 0x4000, liberatr_input_port_0_r },
 	{ 0x4001, 0x4001, input_port_1_r },
 	{ 0x4800, 0x483f, atari_vg_earom_r },
@@ -182,7 +184,7 @@ static struct MemoryReadAddress liberat2_readmem[] =
 static struct MemoryWriteAddress liberatr_writemem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x6000, 0x600f, MWA_RAM, &liberatr_base_ram },
 	{ 0x6200, 0x621f, liberatr_colorram_w },
 	{ 0x6400, 0x6400, MWA_NOP },
@@ -207,7 +209,7 @@ static struct MemoryWriteAddress liberatr_writemem[] =
 static struct MemoryWriteAddress liberat2_writemem[] =
 {
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
 	{ 0x4000, 0x400f, MWA_RAM, &liberatr_base_ram },
 	{ 0x4200, 0x421f, liberatr_colorram_w },
 	{ 0x4400, 0x4400, MWA_NOP },
@@ -334,7 +336,7 @@ static struct POKEYinterface pokey_interface =
 
 
 #define MACHINE_DRIVER(NAME)							\
-static struct MachineDriver NAME##_machine_driver =		\
+static struct MachineDriver machine_driver_##NAME =		\
 {														\
 	/* basic machine hardware */						\
 	{													\
@@ -368,7 +370,9 @@ static struct MachineDriver NAME##_machine_driver =		\
 			SOUND_POKEY,								\
 			&pokey_interface							\
 		}												\
-	}													\
+	},													\
+														\
+	atari_vg_earom_handler								\
 };
 
 MACHINE_DRIVER(liberatr)
@@ -428,7 +432,7 @@ struct GameDriver driver_liberatr =
 	"Atari",
 	"Paul Winkler",
 	0,
-	&liberatr_machine_driver,
+	&machine_driver_liberatr,
 	0,
 
 	rom_liberatr,
@@ -439,9 +443,8 @@ struct GameDriver driver_liberatr =
 	input_ports_liberatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	atari_vg_earom_load,atari_vg_earom_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_liberat2 =
@@ -454,7 +457,7 @@ struct GameDriver driver_liberat2 =
 	"Atari",
 	"Paul Winkler",
 	0,
-	&liberat2_machine_driver,
+	&machine_driver_liberat2,
 	0,
 
 	rom_liberat2,
@@ -465,8 +468,7 @@ struct GameDriver driver_liberat2 =
 	input_ports_liberatr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	atari_vg_earom_load,atari_vg_earom_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 

@@ -2,28 +2,10 @@
 
 Cinematronics vector game handlers
 
+driver by Aaron Giles
+
 Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
 Retrocade Alliance
-
-Current drivers:
-
-extern struct GameDriver spacewar_driver;
-extern struct GameDriver barrier_driver;
-extern struct GameDriver starcas_driver;
-extern struct GameDriver tailg_driver;
-extern struct GameDriver ripoff_driver;
-extern struct GameDriver armora_driver;
-extern struct GameDriver wotw_driver;
-extern struct GameDriver warrior_driver;
-extern struct GameDriver starhawk_driver;
-extern struct GameDriver solarq_driver;
-extern struct GameDriver demon_driver;
-extern struct GameDriver boxingb_driver;
-extern struct GameDriver speedfrk_driver;
-
-Don't work due to bug in the input handling
-
-extern struct GameDriver sundance_driver;
 
 to do:
 
@@ -154,7 +136,7 @@ static void cinemat_writeport (int offset, int data)
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy) \
-static struct MachineDriver driver##_machine_driver = \
+static struct MachineDriver machine_driver_##driver = \
 { \
 	/* basic machine hardware */ \
 	{ \
@@ -192,7 +174,7 @@ static struct MachineDriver driver##_machine_driver = \
 };
 
 #define CINEMA_MACHINEX(driver, minx, miny, maxx, maxy) \
-static struct MachineDriver driver##_machine_driver = \
+static struct MachineDriver machine_driver_##driver = \
 { \
 	/* basic machine hardware */ \
 	{ \
@@ -230,49 +212,6 @@ static struct MachineDriver driver##_machine_driver = \
 };
 
 
-void cinemat_interleave (int romSize, int numRoms)
-{
-	unsigned char *temp = malloc (2 * romSize);
-	unsigned char *src1, *src2, *dest;
-	int i, j;
-
-	if (temp)
-	{
-		for (i = 0; i < numRoms; i += 2)
-		{
-			src1 = &memory_region(REGION_CPU1)[i * romSize + 0];
-			src2 = &memory_region(REGION_CPU1)[i * romSize + romSize];
-			dest = temp;
-
-			for (j = 0; j < romSize; j++)
-				*dest++ = *src1++, *dest++ = *src2++;
-
-			memcpy (&memory_region(REGION_CPU1)[i * romSize + 0], temp, 2 * romSize);
-		}
-
-		free (temp);
-	}
-}
-
-void cinemat4k_rom_decode (void)
-{
-	cinemat_interleave (0x800, 2);
-}
-
-void cinemat8k_rom_decode (void)
-{
-	cinemat_interleave (0x800, 4);
-}
-
-void cinemat16k_rom_decode (void)
-{
-	cinemat_interleave (0x1000, 4);
-}
-
-void cinemat32k_rom_decode (void)
-{
-	cinemat_interleave (0x1000, 8);
-}
 
 /* switch definitions are all mangled; for ease of use, I created these handy macros */
 
@@ -349,12 +288,6 @@ INPUT_PORTS_START( spacewar )
 INPUT_PORTS_END
 
 
-ROM_START( spacewar )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
-	ROM_LOAD( "spacewar.1l", 0x0000, 0x0800, 0xedf0fd53 )
-	ROM_LOAD( "spacewar.2r", 0x0800, 0x0800, 0x4f21328b )
-ROM_END
-
 
 static const char *spacewar_sample_names[] =
 {
@@ -383,7 +316,7 @@ void spacewar_init_machine (void)
     cinemat_sound_handler = spacewar_sound;
 }
 
-static struct MachineDriver spacewar_machine_driver =
+static struct MachineDriver machine_driver_spacewar =
 {
 	/* basic machine hardware */
 	{
@@ -418,33 +351,6 @@ static struct MachineDriver spacewar_machine_driver =
 			&spacewar_samples_interface
 		}
 	}
-};
-
-struct GameDriver driver_spacewar =
-{
-	__FILE__,
-	0,
-	"spacewar",
-	"Space Wars",
-	"1978",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&spacewar_machine_driver,
-	0,
-
-	rom_spacewar,
-	cinemat4k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_spacewar,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
 };
 
 
@@ -493,13 +399,6 @@ INPUT_PORTS_START( barrier )
 INPUT_PORTS_END
 
 
-ROM_START( barrier )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
-	ROM_LOAD( "barrier.t7", 0x0000, 0x0800, 0x7c3d68c8 )
-	ROM_LOAD( "barrier.p7", 0x0800, 0x0800, 0xaec142b5 )
-ROM_END
-
-
 static const char *barrier_sample_names[] =
 {
     0	/* end of array */
@@ -519,7 +418,7 @@ void barrier_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void barrier_init (void)
+void init_barrier(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
 }
@@ -527,33 +426,6 @@ void barrier_init (void)
 
 CINEMA_MACHINE (barrier, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_barrier =
-{
-	__FILE__,
-	0,
-	"barrier",
-	"Barrier",
-	"1979",
-	"Vectorbeam",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&barrier_machine_driver,
-	barrier_init,
-
-	rom_barrier,
-	cinemat4k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_barrier,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
-
-	0,0
-};
 
 
 
@@ -608,12 +480,6 @@ INPUT_PORTS_START( starhawk )
 INPUT_PORTS_END
 
 
-ROM_START( starhawk )
-	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
-	ROM_LOAD( "u7", 0x0000, 0x0800, 0x376e6c5c )
-	ROM_LOAD( "r7", 0x0800, 0x0800, 0xbb71144f )
-ROM_END
-
 
 static const char *starhawk_sample_names[] =
 {
@@ -634,7 +500,7 @@ void starhawk_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void starhawk_init (void)
+void init_starhawk(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
 }
@@ -642,33 +508,6 @@ void starhawk_init (void)
 
 CINEMA_MACHINE (starhawk, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_starhawk =
-{
-	__FILE__,
-	0,
-	"starhawk",
-	"Star Hawk",
-	"1981",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&starhawk_machine_driver,
-	starhawk_init,
-
-	rom_starhawk,
-	cinemat4k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_starhawk,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 
@@ -724,22 +563,6 @@ INPUT_PORTS_START( starcas )
 INPUT_PORTS_END
 
 
-ROM_START( starcas )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
-	ROM_LOAD( "starcas3.p7", 0x0800, 0x0800, 0xf6bc2f4d )
-	ROM_LOAD( "starcas3.u7", 0x1000, 0x0800, 0x188cd97c )
-	ROM_LOAD( "starcas3.r7", 0x1800, 0x0800, 0xc367b69d )
-ROM_END
-
-ROM_START( starcas1 )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
-	ROM_LOAD( "starcast.p7", 0x0800, 0x0800, 0xd8f58d9a )
-	ROM_LOAD( "starcast.u7", 0x1000, 0x0800, 0xd4f35b82 )
-	ROM_LOAD( "starcast.r7", 0x1800, 0x0800, 0x9fd3de54 )
-ROM_END
-
 
 static const char *starcas_sample_names[] =
 {
@@ -769,66 +592,12 @@ void starcas_init_machine (void)
     cinemat_sound_init ();
 }
 
-void starcas_init (void)
+void init_starcas(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, starcas_overlay);
 }
 
 CINEMA_MACHINE (starcas, 0, 0, 1024, 768)
-
-struct GameDriver driver_starcas =
-{
-	__FILE__,
-	0,
-	"starcas",
-	"Star Castle (version 3)",
-	"1980",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&starcas_machine_driver,
-	starcas_init,
-
-	rom_starcas,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_starcas,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
-
-struct GameDriver driver_starcas1 =
-{
-	__FILE__,
-	&driver_starcas,
-	"starcas1",
-	"Star Castle (older)",
-	"1980",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&starcas_machine_driver,
-	starcas_init,
-
-	rom_starcas1,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_starcas,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 /***************************************************************************
 
@@ -836,7 +605,7 @@ struct GameDriver driver_starcas1 =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( tgunner )
+INPUT_PORTS_START( tailg )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW6|SW2|SW1, SW6OFF|SW2OFF|SW1OFF, "Shield Points" )
@@ -881,68 +650,33 @@ INPUT_PORTS_START( tgunner )
 INPUT_PORTS_END
 
 
-ROM_START( tgunner )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "tgunner.t70", 0x0000, 0x0800, 0x21ec9a04 )
-	ROM_LOAD( "tgunner.p70", 0x0800, 0x0800, 0x8d7410b3 )
-	ROM_LOAD( "tgunner.t71", 0x1000, 0x0800, 0x2c954ab6 )
-	ROM_LOAD( "tgunner.p71", 0x1800, 0x0800, 0x8e2c8494 )
-ROM_END
 
-
-static const char *tgunner_sample_names[] =
+static const char *tailg_sample_names[] =
 {
     0	/* end of array */
 };
 
-static struct Samplesinterface tgunner_samples_interface =
+static struct Samplesinterface tailg_samples_interface =
 {
 	8,	/* 8 channels */
 	25,	/* volume */
-	tgunner_sample_names
+	tailg_sample_names
 };
 
 
-void tgunner_init_machine (void)
+void tailg_init_machine (void)
 {
 	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
     cinemat_sound_handler = 0;
 }
 
-void tgunner_init (void)
+void init_tailg(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, tailg_overlay);
 }
 
-CINEMA_MACHINE (tgunner, 0, 0, 1024, 768)
+CINEMA_MACHINE (tailg, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_tailg =
-{
-	__FILE__,
-	0,
-	"tailg",
-	"Tailgunner",
-	"1979",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&tgunner_machine_driver,
-	tgunner_init,
-
-	rom_tgunner,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_tgunner,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 /***************************************************************************
@@ -1002,14 +736,6 @@ INPUT_PORTS_START( ripoff )
 INPUT_PORTS_END
 
 
-ROM_START( ripoff )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "ripoff.t7", 0x0000, 0x0800, 0x40c2c5b8 )
-	ROM_LOAD( "ripoff.p7", 0x0800, 0x0800, 0xa9208afb )
-	ROM_LOAD( "ripoff.u7", 0x1000, 0x0800, 0x29c13701 )
-	ROM_LOAD( "ripoff.r7", 0x1800, 0x0800, 0x150bd4c8 )
-ROM_END
-
 
 static const char *ripoff_sample_names[] =
 {
@@ -1044,7 +770,7 @@ void ripoff_init_machine (void)
     cinemat_sound_init ();
 }
 
-void ripoff_init (void)
+void init_ripoff(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
 }
@@ -1052,33 +778,6 @@ void ripoff_init (void)
 
 CINEMA_MACHINE (ripoff, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_ripoff =
-{
-	__FILE__,
-	0,
-	"ripoff",
-	"Rip Off",
-	"1979",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&ripoff_machine_driver,
-	ripoff_init,
-
-	rom_ripoff,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_ripoff,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 
@@ -1194,14 +893,6 @@ INPUT_PORTS_START( speedfrk )
 INPUT_PORTS_END
 
 
-ROM_START( speedfrk )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "speedfrk.t7", 0x0000, 0x0800, 0x3552c03f )
-	ROM_LOAD( "speedfrk.p7", 0x0800, 0x0800, 0x4b90cdec )
-	ROM_LOAD( "speedfrk.u7", 0x1000, 0x0800, 0x616c7cf9 )
-	ROM_LOAD( "speedfrk.r7", 0x1800, 0x0800, 0xfbe90d63 )
-ROM_END
-
 
 static const char *speedfrk_sample_names[] =
 {
@@ -1222,7 +913,7 @@ void speedfrk_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void speedfrk_init (void)
+void init_speedfrk(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
 }
@@ -1230,33 +921,6 @@ void speedfrk_init (void)
 /* we use custom input ports */
 CINEMA_MACHINEX (speedfrk, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_speedfrk =
-{
-	__FILE__,
-	0,
-	"speedfrk",
-	"Speed Freak",
-	"19??",
-	"Vectorbeam",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&speedfrk_machine_driver,
-	speedfrk_init,
-
-	rom_speedfrk,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_speedfrk,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 
@@ -1310,14 +974,6 @@ INPUT_PORTS_START( sundance )
 INPUT_PORTS_END
 
 
-ROM_START( sundance )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "sundance.t7", 0x0000, 0x0800, 0xd5b9cb19 )
-	ROM_LOAD( "sundance.p7", 0x0800, 0x0800, 0x445c4f20 )
-	ROM_LOAD( "sundance.u7", 0x1000, 0x0800, 0x67887d48 )
-	ROM_LOAD( "sundance.r7", 0x1800, 0x0800, 0x10b77ebd )
-ROM_END
-
 
 static const char *sundance_sample_names[] =
 {
@@ -1338,40 +994,13 @@ void sundance_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void sundance_init (void)
+void init_sundance(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_16LEV, 1, 0, sundance_overlay);
 }
 
 CINEMA_MACHINE (sundance, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_sundance =
-{
-	__FILE__,
-	0,
-	"sundance",
-	"Sundance",
-	"1979",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&sundance_machine_driver,
-	sundance_init,
-
-	rom_sundance,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_sundance,
-
-	0, 0, 0,
-	(ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X) | GAME_NOT_WORKING,
-
-	0,0
-};
 
 
 
@@ -1434,14 +1063,6 @@ INPUT_PORTS_START( warrior )
 INPUT_PORTS_END
 
 
-ROM_START( warrior )
-	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
-	ROM_LOAD( "warrior.t7", 0x0000, 0x0800, 0xac3646f9 )
-	ROM_LOAD( "warrior.p7", 0x0800, 0x0800, 0x517d3021 )
-	ROM_LOAD( "warrior.u7", 0x1000, 0x0800, 0x2e39340f )
-	ROM_LOAD( "warrior.r7", 0x1800, 0x0800, 0x8e91b502 )
-ROM_END
-
 
 static const char *warrior_sample_names[] =
 {
@@ -1462,40 +1083,13 @@ void warrior_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void warrior_init (void)
+void init_warrior(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 1, 0);
 }
 
 CINEMA_MACHINE (warrior, 0, 0, 1024, 780)
 
-
-struct GameDriver driver_warrior =
-{
-	__FILE__,
-	0,
-	"warrior",
-	"Warrior",
-	"1978",
-	"Vectorbeam",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&warrior_machine_driver,
-	warrior_init,
-
-	rom_warrior,
-	cinemat8k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_warrior,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 
@@ -1553,14 +1147,6 @@ INPUT_PORTS_START( armora )
 INPUT_PORTS_END
 
 
-ROM_START( armora )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
-	ROM_LOAD( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
-	ROM_LOAD( "ar414lo.p6", 0x1000, 0x1000, 0xdf1c2370 )
-	ROM_LOAD( "ar414ue.u6", 0x2000, 0x1000, 0xb0276118 )
-	ROM_LOAD( "ar414uo.r6", 0x3000, 0x1000, 0x229d779f )
-ROM_END
-
 
 static const char *armora_sample_names[] =
 {
@@ -1581,40 +1167,13 @@ void armora_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void armora_init (void)
+void init_armora(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, 0);
 }
 
 CINEMA_MACHINE (armora, 0, 0, 1024, 772)
 
-
-struct GameDriver driver_armora =
-{
-	__FILE__,
-	0,
-	"armora",
-	"Armor Attack",
-	"1980",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&armora_machine_driver,
-	armora_init,
-
-	rom_armora,
-	cinemat16k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_armora,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 /***************************************************************************
@@ -1676,14 +1235,6 @@ INPUT_PORTS_START( solarq )
 INPUT_PORTS_END
 
 
-ROM_START( solarq )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
-	ROM_LOAD( "solar.6t", 0x0000, 0x1000, 0x1f3c5333 )
-	ROM_LOAD( "solar.6p", 0x1000, 0x1000, 0xd6c16bcc )
-	ROM_LOAD( "solar.6u", 0x2000, 0x1000, 0xa5970e5c )
-	ROM_LOAD( "solar.6r", 0x3000, 0x1000, 0xb763fff2 )
-ROM_END
-
 
 static const char *solarq_sample_names[] =
 {
@@ -1717,40 +1268,13 @@ void solarq_init_machine (void)
     cinemat_sound_init();
 }
 
-void solarq_init (void)
+void init_solarq(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 1, solarq_overlay);
 }
 
 
 CINEMA_MACHINE (solarq, 0, 0, 1024, 768)
-
-struct GameDriver driver_solarq =
-{
-	__FILE__,
-	0,
-	"solarq",
-	"Solar Quest",
-	"1981",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&solarq_machine_driver,
-	solarq_init,
-
-	rom_solarq,
-	cinemat16k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_solarq,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_180,
-
-	0,0
-};
 
 
 
@@ -1814,14 +1338,6 @@ INPUT_PORTS_START( demon )
 INPUT_PORTS_END
 
 
-ROM_START( demon )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
-	ROM_LOAD( "demon.7t", 0x0000, 0x1000, 0x866596c1 )
-	ROM_LOAD( "demon.7p", 0x1000, 0x1000, 0x1109e2f1 )
-	ROM_LOAD( "demon.7u", 0x2000, 0x1000, 0xd447a3c3 )
-	ROM_LOAD( "demon.7r", 0x3000, 0x1000, 0x64b515f0 )
-ROM_END
-
 
 static const char *demon_sample_names[] =
 {
@@ -1842,40 +1358,13 @@ void demon_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void demon_init (void)
+void init_demon(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
 }
 
 CINEMA_MACHINE (demon, 0, 0, 1024, 800)
 
-
-struct GameDriver driver_demon =
-{
-	__FILE__,
-	0,
-	"demon",
-	"Demon",
-	"1982",
-	"Rock-ola",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&demon_machine_driver,
-	demon_init,
-
-	rom_demon,
-	cinemat16k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_demon,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y,
-
-	0,0
-};
 
 
 
@@ -1930,14 +1419,6 @@ INPUT_PORTS_START( wotw )
 INPUT_PORTS_END
 
 
-ROM_START( wotw )
-	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
-	ROM_LOAD( "wow_le.t7", 0x0000, 0x1000, 0xb16440f9 )
-	ROM_LOAD( "wow_lo.p7", 0x1000, 0x1000, 0xbfdf4a5a )
-	ROM_LOAD( "wow_ue.u7", 0x2000, 0x1000, 0x9b5cea48 )
-	ROM_LOAD( "wow_uo.r7", 0x3000, 0x1000, 0xc9d3c866 )
-ROM_END
-
 
 static const char *wotw_sample_names[] =
 {
@@ -1958,7 +1439,7 @@ void wotw_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void wotw_init (void)
+void init_wotw(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
 }
@@ -1966,33 +1447,6 @@ void wotw_init (void)
 
 CINEMA_MACHINE (wotw, 0, 0, 1024, 768)
 
-
-struct GameDriver driver_wotw =
-{
-	__FILE__,
-	0,
-	"wotw",
-	"War of the Worlds",
-	"1981",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&wotw_machine_driver,
-	wotw_init,
-
-	rom_wotw,
-	cinemat16k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_wotw,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y | GAME_IMPERFECT_COLORS,
-
-	0,0
-};
 
 
 
@@ -2068,18 +1522,6 @@ INPUT_PORTS_START( boxingb )
 INPUT_PORTS_END
 
 
-ROM_START( boxingb )
-	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
-	ROM_LOAD( "u1a", 0x0000, 0x1000, 0xd3115b0f )
-	ROM_LOAD( "u1b", 0x1000, 0x1000, 0x3a44268d )
-	ROM_LOAD( "u2a", 0x2000, 0x1000, 0xc97a9cbb )
-	ROM_LOAD( "u2b", 0x3000, 0x1000, 0x98d34ff5 )
-	ROM_LOAD( "u3a", 0x4000, 0x1000, 0x5bb3269b )
-	ROM_LOAD( "u3b", 0x5000, 0x1000, 0x85bf83ad )
-	ROM_LOAD( "u4a", 0x6000, 0x1000, 0x25b51799 )
-	ROM_LOAD( "u4b", 0x7000, 0x1000, 0x7f41de6a )
-ROM_END
-
 
 static const char *boxingb_sample_names[] =
 {
@@ -2100,7 +1542,7 @@ void boxingb_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
-void boxingb_init (void)
+void init_boxingb(void)
 {
 	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
 }
@@ -2109,34 +1551,144 @@ void boxingb_init (void)
 CINEMA_MACHINEX (boxingb, 0, 0, 1024, 768)
 
 
-struct GameDriver driver_boxingb =
-{
-	__FILE__,
-	0,
-	"boxingb",
-	"Boxing Bugs",
-	"1981",
-	"Cinematronics",
-	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
-	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
-	&boxingb_machine_driver,
-	boxingb_init,
-
-	rom_boxingb,
-	cinemat32k_rom_decode, 0,
-	0,
-	0,
-
-	input_ports_boxingb,
-
-	0, 0, 0,
-	ORIENTATION_FLIP_Y | GAME_IMPERFECT_COLORS,
-
-	0,0
-};
 
 
 
 
 
+
+ROM_START( spacewar )
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_LOAD_GFX_EVEN( "spacewar.1l", 0x0000, 0x0800, 0xedf0fd53 )
+	ROM_LOAD_GFX_ODD ( "spacewar.2r", 0x0000, 0x0800, 0x4f21328b )
+ROM_END
+
+ROM_START( barrier )
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_LOAD_GFX_EVEN( "barrier.t7", 0x0000, 0x0800, 0x7c3d68c8 )
+	ROM_LOAD_GFX_ODD ( "barrier.p7", 0x0000, 0x0800, 0xaec142b5 )
+ROM_END
+
+ROM_START( starhawk )
+	ROM_REGIONX( 0x1000, REGION_CPU1 )	/* 4k for code */
+	ROM_LOAD_GFX_EVEN( "u7", 0x0000, 0x0800, 0x376e6c5c )
+	ROM_LOAD_GFX_ODD ( "r7", 0x0000, 0x0800, 0xbb71144f )
+ROM_END
+
+ROM_START( starcas )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
+	ROM_LOAD_GFX_ODD ( "starcas3.p7", 0x0000, 0x0800, 0xf6bc2f4d )
+	ROM_LOAD_GFX_EVEN( "starcas3.u7", 0x1000, 0x0800, 0x188cd97c )
+	ROM_LOAD_GFX_ODD ( "starcas3.r7", 0x1000, 0x0800, 0xc367b69d )
+ROM_END
+
+ROM_START( starcas1 )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
+	ROM_LOAD_GFX_ODD ( "starcast.p7", 0x0000, 0x0800, 0xd8f58d9a )
+	ROM_LOAD_GFX_EVEN( "starcast.u7", 0x1000, 0x0800, 0xd4f35b82 )
+	ROM_LOAD_GFX_ODD ( "starcast.r7", 0x1000, 0x0800, 0x9fd3de54 )
+ROM_END
+
+ROM_START( tailg )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "tgunner.t70", 0x0000, 0x0800, 0x21ec9a04 )
+	ROM_LOAD_GFX_ODD ( "tgunner.p70", 0x0000, 0x0800, 0x8d7410b3 )
+	ROM_LOAD_GFX_EVEN( "tgunner.t71", 0x1000, 0x0800, 0x2c954ab6 )
+	ROM_LOAD_GFX_ODD ( "tgunner.p71", 0x1000, 0x0800, 0x8e2c8494 )
+ROM_END
+
+ROM_START( ripoff )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "ripoff.t7", 0x0000, 0x0800, 0x40c2c5b8 )
+	ROM_LOAD_GFX_ODD ( "ripoff.p7", 0x0000, 0x0800, 0xa9208afb )
+	ROM_LOAD_GFX_EVEN( "ripoff.u7", 0x1000, 0x0800, 0x29c13701 )
+	ROM_LOAD_GFX_ODD ( "ripoff.r7", 0x1000, 0x0800, 0x150bd4c8 )
+ROM_END
+
+ROM_START( speedfrk )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "speedfrk.t7", 0x0000, 0x0800, 0x3552c03f )
+	ROM_LOAD_GFX_ODD ( "speedfrk.p7", 0x0000, 0x0800, 0x4b90cdec )
+	ROM_LOAD_GFX_EVEN( "speedfrk.u7", 0x1000, 0x0800, 0x616c7cf9 )
+	ROM_LOAD_GFX_ODD ( "speedfrk.r7", 0x1000, 0x0800, 0xfbe90d63 )
+ROM_END
+
+ROM_START( sundance )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "sundance.t7", 0x0000, 0x0800, 0xd5b9cb19 )
+	ROM_LOAD_GFX_ODD ( "sundance.p7", 0x0000, 0x0800, 0x445c4f20 )
+	ROM_LOAD_GFX_EVEN( "sundance.u7", 0x1000, 0x0800, 0x67887d48 )
+	ROM_LOAD_GFX_ODD ( "sundance.r7", 0x1000, 0x0800, 0x10b77ebd )
+ROM_END
+
+ROM_START( warrior )
+	ROM_REGIONX( 0x2000, REGION_CPU1 )	/* 8k for code */
+	ROM_LOAD_GFX_EVEN( "warrior.t7", 0x0000, 0x0800, 0xac3646f9 )
+	ROM_LOAD_GFX_ODD ( "warrior.p7", 0x0000, 0x0800, 0x517d3021 )
+	ROM_LOAD_GFX_EVEN( "warrior.u7", 0x1000, 0x0800, 0x2e39340f )
+	ROM_LOAD_GFX_ODD ( "warrior.r7", 0x1000, 0x0800, 0x8e91b502 )
+ROM_END
+
+ROM_START( armora )
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_LOAD_GFX_EVEN( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
+	ROM_LOAD_GFX_ODD ( "ar414lo.p6", 0x0000, 0x1000, 0xdf1c2370 )
+	ROM_LOAD_GFX_EVEN( "ar414ue.u6", 0x2000, 0x1000, 0xb0276118 )
+	ROM_LOAD_GFX_ODD ( "ar414uo.r6", 0x2000, 0x1000, 0x229d779f )
+ROM_END
+
+ROM_START( solarq )
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_LOAD_GFX_EVEN( "solar.6t", 0x0000, 0x1000, 0x1f3c5333 )
+	ROM_LOAD_GFX_ODD ( "solar.6p", 0x0000, 0x1000, 0xd6c16bcc )
+	ROM_LOAD_GFX_EVEN( "solar.6u", 0x2000, 0x1000, 0xa5970e5c )
+	ROM_LOAD_GFX_ODD ( "solar.6r", 0x2000, 0x1000, 0xb763fff2 )
+ROM_END
+
+ROM_START( demon )
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_LOAD_GFX_EVEN( "demon.7t", 0x0000, 0x1000, 0x866596c1 )
+	ROM_LOAD_GFX_ODD ( "demon.7p", 0x0000, 0x1000, 0x1109e2f1 )
+	ROM_LOAD_GFX_EVEN( "demon.7u", 0x2000, 0x1000, 0xd447a3c3 )
+	ROM_LOAD_GFX_ODD ( "demon.7r", 0x2000, 0x1000, 0x64b515f0 )
+ROM_END
+
+ROM_START( wotw )
+	ROM_REGIONX( 0x4000, REGION_CPU1 )	/* 16k for code */
+	ROM_LOAD_GFX_EVEN( "wow_le.t7", 0x0000, 0x1000, 0xb16440f9 )
+	ROM_LOAD_GFX_ODD ( "wow_lo.p7", 0x0000, 0x1000, 0xbfdf4a5a )
+	ROM_LOAD_GFX_EVEN( "wow_ue.u7", 0x2000, 0x1000, 0x9b5cea48 )
+	ROM_LOAD_GFX_ODD ( "wow_uo.r7", 0x2000, 0x1000, 0xc9d3c866 )
+ROM_END
+
+ROM_START( boxingb )
+	ROM_REGIONX( 0x8000, REGION_CPU1 )	/* 32k for code */
+	ROM_LOAD_GFX_EVEN( "u1a", 0x0000, 0x1000, 0xd3115b0f )
+	ROM_LOAD_GFX_ODD ( "u1b", 0x0000, 0x1000, 0x3a44268d )
+	ROM_LOAD_GFX_EVEN( "u2a", 0x2000, 0x1000, 0xc97a9cbb )
+	ROM_LOAD_GFX_ODD ( "u2b", 0x2000, 0x1000, 0x98d34ff5 )
+	ROM_LOAD_GFX_EVEN( "u3a", 0x4000, 0x1000, 0x5bb3269b )
+	ROM_LOAD_GFX_ODD ( "u3b", 0x4000, 0x1000, 0x85bf83ad )
+	ROM_LOAD_GFX_EVEN( "u4a", 0x6000, 0x1000, 0x25b51799 )
+	ROM_LOAD_GFX_ODD ( "u4b", 0x6000, 0x1000, 0x7f41de6a )
+ROM_END
+
+
+
+GAME( 1978, spacewar, ,        spacewar, spacewar, ,         ROT0,   "Cinematronics", "Space Wars" )
+GAME( 1979, barrier,  ,        barrier,  barrier,  barrier,  ROT270, "Vectorbeam", "Barrier" )
+GAME( 1981, starhawk, ,        starhawk, starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk" )
+GAME( 1980, starcas,  ,        starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (version 3)" )
+GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (older)" )
+GAME( 1979, tailg,    ,        tailg,    tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner" )
+GAME( 1979, ripoff,   ,        ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
+GAME( 19??, speedfrk, ,        speedfrk, speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak" )
+GAMEX(1979, sundance, ,        sundance, sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
+GAME( 1978, warrior,  ,        warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
+GAME( 1980, armora,   ,        armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack" )
+GAME( 1981, solarq,   ,        solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
+GAME( 1982, demon,    ,        demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
+GAMEX(1981, wotw,     ,        wotw,     wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS )
+GAMEX(1981, boxingb,  ,        boxingb,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS )

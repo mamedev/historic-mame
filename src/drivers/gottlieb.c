@@ -146,6 +146,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gottlieb_sh_w(int offset, int data);
 
+extern unsigned char *riot_ram;
 int riot_ram_r(int offset);
 int gottlieb_riot_r(int offset);
 void riot_ram_w(int offset, int data);
@@ -158,9 +159,6 @@ void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
 void gottlieb_nmi_rate_w(int offset,int data);
 void gottlieb_cause_dac_nmi_w(int offset, int data);
-
-int gottlieb_nvram_load(void);
-void gottlieb_nvram_save(void);
 
 
 
@@ -310,6 +308,23 @@ int gottlieb_interrupt(void)
 }
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0xff,nvram_size);
+	}
+}
+
+
 
 static struct MemoryReadAddress reactor_readmem[] =
 {
@@ -360,7 +375,7 @@ static struct MemoryReadAddress gottlieb_readmem[] =
 
 static struct MemoryWriteAddress gottlieb_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -380,7 +395,7 @@ static struct MemoryWriteAddress gottlieb_writemem[] =
 /* same as above, different video_outputs plus laser disc control outputs */
 static struct MemoryWriteAddress usvsthem_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x2000, 0x2fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -418,7 +433,7 @@ static struct MemoryReadAddress stooges_readmem[] =
 /* same as above, different video_outputs */
 static struct MemoryWriteAddress stooges_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x0fff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x1000, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x30ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -450,7 +465,7 @@ struct MemoryReadAddress gottlieb_sound_readmem[] =
 
 struct MemoryWriteAddress gottlieb_sound_writemem[] =
 {
-	{ 0x0000, 0x01ff, riot_ram_w },
+	{ 0x0000, 0x01ff, riot_ram_w, &riot_ram },
 	{ 0x0200, 0x03ff, gottlieb_riot_w },
 	{ 0x1000, 0x1000, DAC_data_w },
 	{ 0x2000, 0x2000, gottlieb_speech_w },
@@ -1211,8 +1226,8 @@ static struct AY8910interface ay8910_interface =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX)	\
-static struct MachineDriver GAMENAME##_machine_driver =             \
+#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
+static struct MachineDriver machine_driver_##GAMENAME =             \
 {                                                                   \
 	/* basic machine hardware */                                	\
 	{		                                                        \
@@ -1257,11 +1272,13 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			SOUND_SAMPLES,	/* for Votrax simulation */				\
 			&samples_interface										\
 		}                                                   		\
-	}                                                           	\
+	},                                                           	\
+																	\
+	NVRAM															\
 }
 
-#define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX)	\
-static struct MachineDriver GAMENAME##_machine_driver =				\
+#define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
+static struct MachineDriver machine_driver_##GAMENAME =				\
 {																	\
 	/* basic machine hardware */									\
 	{																\
@@ -1313,18 +1330,20 @@ static struct MachineDriver GAMENAME##_machine_driver =				\
 			SOUND_AY8910,											\
 			&ay8910_interface										\
 		}															\
-	}																\
+	},																\
+																	\
+	NVRAM															\
 }
 
 /* games using the revision 1 sound board */
-MACHINE_DRIVER_SOUND_1(reactor,reactor_readmem,reactor_writemem,charRAM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo);
+MACHINE_DRIVER_SOUND_1(reactor,reactor_readmem,reactor_writemem,charRAM_gfxdecodeinfo,0);
+MACHINE_DRIVER_SOUND_1(gottlieb,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(qbertqub,gottlieb_readmem,gottlieb_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_1(krull,gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo,nvram_handler);
 /* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo);
-MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo);
+MACHINE_DRIVER_SOUND_2(mach3,gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(usvsthem,gottlieb_readmem,usvsthem_writemem,qbertqub_gfxdecodeinfo,nvram_handler);
+MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecodeinfo,nvram_handler);
 
 
 /***************************************************************************
@@ -1583,82 +1602,6 @@ ROM_END
 
 
 
-/* Reactor is the only game which doesn't have non volatile RAM */
-static int reactor_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x04e3],"\x01\x00\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0554],"\x03\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x05c7],"\x02\x00\x00\x00",4) == 0 &&
-			memcmp(&RAM[0x0638],"\x06\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x04d8],16*8);	/* 3 lives */
-			osd_fread(f,&RAM[0x05bc],16*8);	/* 7 lives */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void reactor_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x04d8],16*8);	/* 3 lives */
-		osd_fwrite(f,&RAM[0x05bc],16*8);	/* 7 lives */
-		osd_fclose(f);
-	}
-}
-
-
-int gottlieb_nvram_load(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* Try loading static RAM */
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* just load in everything, the game will overwrite what it doesn't want */
-		osd_fread(f,&RAM[0x0000],0x1000);
-		osd_fclose(f);
-	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(&RAM[0x0000],0xff,0x1000);
-
-	return 1;
-}
-
-void gottlieb_nvram_save(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0000],0x1000);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_reactor =
 {
 	__FILE__,
@@ -1669,7 +1612,7 @@ struct GameDriver driver_reactor =
 	"Gottlieb",
 	"Fabrice Frances",
 	0,
-	&reactor_machine_driver,
+	&machine_driver_reactor,
 	reactor_init,
 
 	rom_reactor,
@@ -1680,9 +1623,8 @@ struct GameDriver driver_reactor =
 	input_ports_reactor,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	reactor_hiload, reactor_hisave     /* hi-score load and save */
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_mplanets =
@@ -1695,7 +1637,7 @@ struct GameDriver driver_mplanets =
 	"Gottlieb",
 	"Fabrice Frances",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	0,
 
 	rom_mplanets,
@@ -1706,9 +1648,8 @@ struct GameDriver driver_mplanets =
 	input_ports_mplanets,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_qbert =
@@ -1721,7 +1662,7 @@ struct GameDriver driver_qbert =
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	qbert_init,
 
 	rom_qbert,
@@ -1732,9 +1673,8 @@ struct GameDriver driver_qbert =
 	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_qbertjp =
@@ -1747,7 +1687,7 @@ struct GameDriver driver_qbertjp =
 	"Gottlieb (Konami license)",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	qbert_init,
 
 	rom_qbertjp,
@@ -1758,9 +1698,8 @@ struct GameDriver driver_qbertjp =
 	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_sqbert =
@@ -1773,7 +1712,7 @@ struct GameDriver driver_sqbert =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	qbert_init,
 
 	rom_sqbert,
@@ -1784,9 +1723,8 @@ struct GameDriver driver_sqbert =
 	input_ports_qbert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_qbertqub =
@@ -1799,7 +1737,7 @@ struct GameDriver driver_qbertqub =
 	"Mylstar",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
-	&qbertqub_machine_driver,
+	&machine_driver_qbertqub,
 	qbert_init,
 
 	rom_qbertqub,
@@ -1810,9 +1748,8 @@ struct GameDriver driver_qbertqub =
 	input_ports_qbertqub,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_krull =
@@ -1825,7 +1762,7 @@ struct GameDriver driver_krull =
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	0,
-	&krull_machine_driver,
+	&machine_driver_krull,
 	0,
 
 	rom_krull,
@@ -1836,9 +1773,8 @@ struct GameDriver driver_krull =
 	input_ports_krull,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_mach3 =
@@ -1852,7 +1788,7 @@ struct GameDriver driver_mach3 =
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
 	0,
-	&mach3_machine_driver,
+	&machine_driver_mach3,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
 	rom_mach3,
@@ -1863,9 +1799,8 @@ struct GameDriver driver_mach3 =
 	input_ports_mach3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_usvsthem =
@@ -1879,7 +1814,7 @@ struct GameDriver driver_usvsthem =
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
 	0,
-	&usvsthem_machine_driver,
+	&machine_driver_usvsthem,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
 	rom_usvsthem,
@@ -1890,9 +1825,8 @@ struct GameDriver driver_usvsthem =
 	input_ports_usvsthem,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_3stooges =
@@ -1905,7 +1839,7 @@ struct GameDriver driver_3stooges =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
-	&stooges_machine_driver,
+	&machine_driver_stooges,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
 	rom_3stooges,
@@ -1916,9 +1850,8 @@ struct GameDriver driver_3stooges =
 	input_ports_3stooges,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_curvebal =
@@ -1931,7 +1864,7 @@ struct GameDriver driver_curvebal =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)",
 	0,
-	&gottlieb_machine_driver,
+	&machine_driver_gottlieb,
 	0,
 
 	rom_curvebal,
@@ -1942,7 +1875,6 @@ struct GameDriver driver_curvebal =
 	input_ports_curvebal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gottlieb_nvram_load, gottlieb_nvram_save
+	ROT270,
+	0,0
 };

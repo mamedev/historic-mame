@@ -26,8 +26,6 @@ extern int cpu_get_halt_line(int num);
 extern void cpu_set_reset_line(int num, int reset);
 extern void cpu_set_test_line(int num, int test);
 
-/* Manufacturer names */
-#define LELAND "Leland Corp."
 
 /* Helps document the input ports. */
 #define IPT_SLAVEHALT IPT_UNKNOWN
@@ -70,7 +68,7 @@ static int ataxx_addrmask=0x0fffff; /* I86 Address mask (constant) */
 
 /* Machine driver */
 #define ATAXX_MACHINE_DRIVER(DRV, MRP, MWP, MR, MW, INITMAC, GFXD, VRF, SLR, SLW)\
-static struct MachineDriver DRV =                                 \
+static struct MachineDriver machine_driver_##DRV =                                 \
 {                                                                 \
 	{                                                             \
 		{                                                         \
@@ -109,7 +107,8 @@ static struct MachineDriver DRV =                                 \
 	{                                                             \
 		{SOUND_DAC,    &dac_interface },                          \
 		{SOUND_CUSTOM, &custom_interface }                        \
-	}                                                             \
+	},                                                            \
+	nvram_handler                                                 \
 }
 
 /***********************************************************************
@@ -220,52 +219,39 @@ void ataxx_battery_w(int offset, int data)
     ataxx_battery_ram[offset]=data;
 }
 
-static void ataxx_hisave (void)
+static void nvram_handler(void *file,int read_or_write)
 {
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
+	if (read_or_write)
 	{
 		/* Battery backed RAM */
-        osd_fwrite (f, ataxx_battery_ram, ataxx_battery_ram_size);
+		osd_fwrite (file, ataxx_battery_ram, ataxx_battery_ram_size);
 		/* EEPROM */
-        osd_fwrite_msbfirst (f, ataxx_eeprom, sizeof(ataxx_eeprom));
+		osd_fwrite_msbfirst (file, ataxx_eeprom, sizeof(ataxx_eeprom));
 #if USE_EEPROM
-        EEPROM_save(f);
+		EEPROM_save(file);
 #endif
-        osd_fclose (f);
-	}
-}
-
-static int ataxx_hiload (void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		/* Battery backed RAM */
-        osd_fread (f, ataxx_battery_ram, ataxx_battery_ram_size);
-		/* EEPROM */
-        osd_fread_msbfirst (f, ataxx_eeprom, sizeof(ataxx_eeprom));
-#if USE_EEPROM
-        EEPROM_load(f);
-#endif
-		osd_fclose (f);
 	}
 	else
 	{
-        memset(ataxx_battery_ram, 0, ataxx_battery_ram_size);
-        memset(ataxx_eeprom, 0, sizeof(ataxx_eeprom));
+		if (file)
+		{
+			/* Battery backed RAM */
+			osd_fread (file, ataxx_battery_ram, ataxx_battery_ram_size);
+			/* EEPROM */
+			osd_fread_msbfirst (file, ataxx_eeprom, sizeof(ataxx_eeprom));
+#if USE_EEPROM
+			EEPROM_load(file);
+#endif
+		}
+		else
+		{
+			memset(ataxx_battery_ram, 0, ataxx_battery_ram_size);
+			memset(ataxx_eeprom, 0, sizeof(ataxx_eeprom));
+#if USE_EEPROM
+			EEPROM_init(&ataxx_eeprom_interface);
+#endif
+		}
 	}
-	/*
-	Clear down RAM.
-	*/
-	memset(&RAM[0xe000], 0, 0x1000);
-
-	return 1;
 }
 
 #ifdef MAME_DEBUG
@@ -806,9 +792,6 @@ static struct IOWritePort ataxx_writeport[] =
 
 void ataxx_init_machine(void)
 {
-#if USE_EEPROM
-    EEPROM_init(&ataxx_eeprom_interface);
-#endif
 	leland_rearrange_bank_swap(0, 0x10000);
 	leland_rearrange_bank_swap(1, 0x10000);
 }
@@ -861,11 +844,11 @@ void ataxx_kludge_init_machine(void)
     RAM[0x3594]=0;
 }
 
-ATAXX_MACHINE_DRIVER(ataxx_kludge_machine,ataxx_readport, ataxx_writeport,
+ATAXX_MACHINE_DRIVER(kludge,ataxx_readport, ataxx_writeport,
     ataxx_readmem, ataxx_writemem, ataxx_kludge_init_machine, ataxx_gfxdecodeinfo,
 	ataxx_vh_screenrefresh, ataxx_slave_readmem, ataxx_slave_writemem);
 
-ATAXX_MACHINE_DRIVER(ataxx_machine,ataxx_readport, ataxx_writeport,
+ATAXX_MACHINE_DRIVER(ataxx,ataxx_readport, ataxx_writeport,
     ataxx_readmem, ataxx_writemem, ataxx_init_machine, ataxx_gfxdecodeinfo,
 	ataxx_vh_screenrefresh, ataxx_slave_readmem, ataxx_slave_writemem);
 
@@ -896,30 +879,6 @@ ROM_START( ataxx )
     /* Empty / not used */
 ROM_END
 
-struct GameDriver driver_ataxx =
-{
-	__FILE__,
-	0,
-	"ataxx",
-	"Ataxx",
-	"1990",
-	LELAND,
-	"Paul Leaman\nScott Kelley",
-	0,
-    &ataxx_kludge_machine,
-	0,
-	rom_ataxx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ataxx,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-    ataxx_hiload, ataxx_hisave
-};
-
 ROM_START( ataxxa )
     ROM_REGIONX( 0x80000, REGION_CPU1 )
     ROM_LOAD( "u38",   0x00000, 0x20000, 0x3378937d)
@@ -946,30 +905,6 @@ ROM_START( ataxxa )
     ROM_REGION(0x40000) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 ROM_END
-
-struct GameDriver driver_ataxxa =
-{
-	__FILE__,
-    &driver_ataxx,
-    "ataxxa",
-    "Ataxx (Set 2)",
-	"1990",
-	LELAND,
-	"Paul Leaman\nScott Kelley",
-	0,
-	&ataxx_machine,
-	0,
-    rom_ataxxa,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ataxx,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-    ataxx_hiload, ataxx_hisave
-};
 
 /***************************************************************************
 
@@ -1052,29 +987,6 @@ ROM_START( indyheat )
     ROM_LOAD( "u68_27c.010",   0x00000, 0x20000, 0x9e88efb3)
     ROM_LOAD( "u69_27c.010",   0x20000, 0x20000, 0xaa39fcb3)
 ROM_END
-
-struct GameDriver driver_indyheat =
-{
-	__FILE__,
-	0,
-    "indyheat",
-    "Indy Heat",
-    "1991",
-	LELAND,
-    "Paul Leaman",
-	0,
-    &ataxx_machine,
-	0,
-    rom_indyheat,
-	0, 0,
-	0,
-	0,
-
-    input_ports_indyheat,
-    0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-    ataxx_hiload, ataxx_hisave
-};
 
 /***************************************************************************
 
@@ -1174,26 +1086,9 @@ ROM_START( wsf )
     ROM_LOAD( "30010-01.u69",   0x20000, 0x10000, 0xb4ed2d3b)
 ROM_END
 
-struct GameDriver driver_wsf =
-{
-	__FILE__,
-	0,
-    "wsf",
-    "World Soccer Finals",
-	"1990",
-	LELAND,
-    "Paul Leaman",
-	0,
-    &ataxx_machine,
-	0,
-    rom_wsf,
-	0, 0,
-	0,
-	0,
 
-    input_ports_wsf,
 
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-    ataxx_hiload, ataxx_hisave
-};
+GAMEX( 1990, ataxx,    ,      kludge, ataxx,    , ROT0, "Leland Corp.", "Ataxx (set 1)", GAME_NOT_WORKING )
+GAMEX( 1990, ataxxa,   ataxx, ataxx,  ataxx,    , ROT0, "Leland Corp.", "Ataxx (set 2)", GAME_NOT_WORKING )
+GAMEX( 1991, indyheat, ,      ataxx,  indyheat, , ROT0, "Leland Corp.", "Indy Heat", GAME_NOT_WORKING )
+GAMEX( 1990, wsf,      ,      ataxx,  wsf,      , ROT0, "Leland Corp. USA", "World Soccer Finals", GAME_NOT_WORKING )

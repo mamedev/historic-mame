@@ -285,7 +285,7 @@ static void dynduke_eof_callback(void)
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static struct MachineDriver dynduke_machine_driver =
+static struct MachineDriver machine_driver_dynduke =
 {
 	/* basic machine hardware */
 	{
@@ -437,16 +437,16 @@ struct GameDriver driver_dynduke =
 	"Seibu Kaihatsu (Fabtek license)",
 	"Bryan McPhail",
 	0,
-	&dynduke_machine_driver,
-	0,
+	&machine_driver_dynduke,
+	seibu_sound_decrypt,
 
 	rom_dynduke,
-	seibu_sound_decrypt, 0,
+	0, 0,
 	0, 0,
 	input_ports_dynduke,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
+	ROT0 | GAME_NO_SOUND,
 
 	0, 0
 };
@@ -461,16 +461,16 @@ struct GameDriver driver_dbldyn =
 	"Seibu Kaihatsu (Fabtek license)",
 	"Bryan McPhail",
 	0,
-	&dynduke_machine_driver,
-	0,
+	&machine_driver_dynduke,
+	seibu_sound_decrypt,
 
 	rom_dbldyn,
-	seibu_sound_decrypt, 0,
+	0, 0,
 	0, 0,
 	input_ports_dynduke,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
+	ROT0 | GAME_NO_SOUND,
 
 	0, 0
 };

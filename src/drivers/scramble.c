@@ -1230,7 +1230,7 @@ static struct AY8910interface triplep_ay8910_interface =
 
 
 #define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART)	\
-static struct MachineDriver NAME##_machine_driver =				\
+static struct MachineDriver machine_driver_##NAME =				\
 {																\
 	/* basic machine hardware */								\
 	{															\
@@ -1285,7 +1285,7 @@ DRIVER_2CPU(hotshock, mariner,   hotshock, hotshock, pisces);
 
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
-static struct MachineDriver triplep_machine_driver =
+static struct MachineDriver machine_driver_triplep =
 {
 	/* basic machine hardware */
 	{
@@ -1322,7 +1322,7 @@ static struct MachineDriver triplep_machine_driver =
 	}
 };
 
-static struct MachineDriver mariner_machine_driver =
+static struct MachineDriver machine_driver_mariner =
 {
 	/* basic machine hardware */
 	{
@@ -1364,7 +1364,7 @@ static struct MachineDriver mariner_machine_driver =
 /*  epoxied in a plastic case labelled Century Playpack   */
 /**********************************************************/
 
-static struct MachineDriver hunchbks_machine_driver =
+static struct MachineDriver machine_driver_hunchbks =
 {
 	/* basic machine hardware */
 	{
@@ -1609,6 +1609,21 @@ ROM_START( triplep )
 	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
 ROM_END
 
+ROM_START( knockout )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "knockout.2h",   0x0000, 0x1000, 0xeaaa848e )
+	ROM_LOAD( "knockout.2k",   0x1000, 0x1000, 0xbc26d2c0 )
+	ROM_LOAD( "knockout.2l",   0x2000, 0x1000, 0x02025c10 )
+	ROM_LOAD( "knockout.2m",   0x3000, 0x1000, 0xe9abc42b )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "triplep.5f",   0x0000, 0x0800, 0xd51cbd6f )
+	ROM_LOAD( "triplep.5h",   0x0800, 0x0800, 0xf21c0059 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
+ROM_END
+
 ROM_START( mariner )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
 	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
@@ -1771,7 +1786,7 @@ static void hotshock_driver_init(void)
 {
 	/* protection??? The game jumps into never-neverland here. I think
 	   it just expects a RET there */
-	ROM[0x2ef9] = 0xc9;
+	memory_region(REGION_CPU1)[0x2ef9] = 0xc9;
 }
 
 
@@ -1815,225 +1830,6 @@ static void mars_decode(void)
 }
 
 
-static int scramble_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-    if ((memcmp(&RAM[0x4200],"\x00\x00\x01",3) == 0) &&
-		(memcmp(&RAM[0x421B],"\x00\x00\x01",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4200],0x1E);
-			/* copy high score */
-			memcpy(&RAM[0x40A8],&RAM[0x4200],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void scramble_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4200],0x1E);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int atlantis_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x403D],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x403D],4*11);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void atlantis_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x403D],4*11);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int theend_hiload(void)
-{
-	static int loop = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (loop == 0)
-	{
-		memset(&RAM[0x43c0],0xff,3*5);
-		loop = 1;
-	}
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x43c0],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x43cc],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* This seems to have more than 5 scores in memory. */
-			/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
-			/* however many it should be. */
-			osd_fread(f,&RAM[0x43c0],3*5);
-			/* copy high score */
-			memcpy(&RAM[0x40a8],&RAM[0x43c0],3);
-			osd_fclose(f);
-		}
-
-		loop = 0;
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void theend_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* This seems to have more than 5 scores in memory. */
-		/* If this DISPLAYS more than 5 scores, change 3*5 to 3*10 or */
-		/* however many it should be. */
-		osd_fwrite(f,&RAM[0x43C0],3*5);
-		osd_fclose(f);
-	}
-
-}
-
-
-static int froggers_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x43f1],"\x63\x04",2) == 0 &&
-		memcmp(&RAM[0x43f8],"\x27\x01",2) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x43f1],2*5);
-			RAM[0x43ef] = RAM[0x43f1];
-			RAM[0x43f0] = RAM[0x43f2];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void froggers_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x43f1],2*5);
-		osd_fclose(f);
-	}
-}
-
-
-static int ckongs_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-    /* check if the hi score table has already been initialized */
-    /* NOTE : 60b8 + 3 */
-	if (memcmp(&RAM[0x6109],"\x07\x06\x05",3) == 0 && memcmp(&RAM[0x61a0],"\xfd\xfd\xfd",3) == 0  )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			int hi;
-        	osd_fread(f,&RAM[0x6107],161);
-			osd_fclose(f);
-
-			hi = (RAM[0x610b] &0x0f) * 0x10 +
-				 (RAM[0x610c] &0x0f);
-			RAM[0x60b8] = hi;
-			hi = (RAM[0x6109] &0x0f) * 0x10 +
-				 (RAM[0x610a] &0x0f);
-			RAM[0x60b9] = hi;
-			hi = (RAM[0x6107] &0x0f) * 0x10 +
-				 (RAM[0x6108] &0x0f);
-			RAM[0x60ba] = hi;
-		}
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void ckongs_hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x6107],161);
-        osd_fclose(f);
-    }
-}
-
-
 
 struct GameDriver driver_scramble =
 {
@@ -2045,7 +1841,7 @@ struct GameDriver driver_scramble =
 	"Konami",
 	"Nicola Salmoria",
 	0,
-	&scramble_machine_driver,
+	&machine_driver_scramble,
 	scramblk_driver_init,
 
 	rom_scramblk,
@@ -2056,9 +1852,8 @@ struct GameDriver driver_scramble =
 	input_ports_scramble,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_scrambls =
@@ -2071,7 +1866,7 @@ struct GameDriver driver_scrambls =
 	"[Konami] (Stern license)",
 	"Nicola Salmoria",
 	0,
-	&scramble_machine_driver,
+	&machine_driver_scramble,
 	scramble_driver_init,
 
 	rom_scramble,
@@ -2082,9 +1877,8 @@ struct GameDriver driver_scrambls =
 	input_ports_scramble,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_atlantis =
@@ -2097,7 +1891,7 @@ struct GameDriver driver_atlantis =
 	"Comsoft",
 	"Nicola Salmoria\nMike Balfour",
 	0,
-	&scramble_machine_driver,
+	&machine_driver_scramble,
 	0,
 
 	rom_atlantis,
@@ -2108,9 +1902,8 @@ struct GameDriver driver_atlantis =
 	input_ports_atlantis,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	atlantis_hiload, atlantis_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_atlants2 =
@@ -2123,7 +1916,7 @@ struct GameDriver driver_atlants2 =
 	"Comsoft",
 	"Nicola Salmoria\nMike Balfour",
 	0,
-	&scramble_machine_driver,
+	&machine_driver_scramble,
 	0,
 
 	rom_atlants2,
@@ -2134,9 +1927,8 @@ struct GameDriver driver_atlants2 =
 	input_ports_atlantis,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	atlantis_hiload, atlantis_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_theend =
@@ -2149,7 +1941,7 @@ struct GameDriver driver_theend =
 	"Konami",
 	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
-	&theend_machine_driver,
+	&machine_driver_theend,
 	0,
 
 	rom_theend,
@@ -2160,9 +1952,8 @@ struct GameDriver driver_theend =
 	input_ports_theend,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	theend_hiload, theend_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_theends =
@@ -2175,7 +1966,7 @@ struct GameDriver driver_theends =
 	"[Konami] (Stern license)",
 	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
-	&theend_machine_driver,
+	&machine_driver_theend,
 	0,
 
 	rom_theends,
@@ -2186,9 +1977,8 @@ struct GameDriver driver_theends =
 	input_ports_theend,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	theend_hiload, theend_hisave
+	ROT90,
+	0,0
 };
 
 extern struct GameDriver driver_frogger;
@@ -2202,20 +1992,19 @@ struct GameDriver driver_froggers =
 	"bootleg",
 	"Nicola Salmoria",
 	0,
-	&froggers_machine_driver,
-	0,
+	&machine_driver_froggers,
+	froggers_decode,
 
 	rom_froggers,
-	froggers_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_froggers,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	froggers_hiload, froggers_hisave
+	ROT90,
+	0,0
 };
 
 extern struct GameDriver driver_amidar;
@@ -2229,7 +2018,7 @@ struct GameDriver driver_amidars =
 	"Konami",
 	"Nicola Salmoria\nMike Coates",
 	0,
-	&scramble_machine_driver,
+	&machine_driver_scramble,
 	0,
 
 	rom_amidars,
@@ -2240,7 +2029,7 @@ struct GameDriver driver_amidars =
 	input_ports_amidars,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };
@@ -2255,7 +2044,7 @@ struct GameDriver driver_triplep =
 	"KKI",
 	"Nicola Salmoria",
 	0,
-	&triplep_machine_driver,
+	&machine_driver_triplep,
 	0,
 
 	rom_triplep,
@@ -2266,9 +2055,33 @@ struct GameDriver driver_triplep =
 	input_ports_triplep,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
+	0,0
+};
 
-	scramble_hiload, scramble_hisave
+struct GameDriver driver_knockout =
+{
+	__FILE__,
+	&driver_triplep,
+	"knockout",
+	"Knock Out !!",
+	"1982",
+	"KKK",
+	"Nicola Salmoria",
+	0,
+	&machine_driver_triplep,
+	0,
+
+	rom_knockout,
+	0, 0,
+	0,
+	0,
+
+	input_ports_triplep,
+
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_mariner =
@@ -2281,7 +2094,7 @@ struct GameDriver driver_mariner =
 	"Amenip",
 	"Zsolt Vasvari\nGerald Coy",
 	0,
-	&mariner_machine_driver,
+	&machine_driver_mariner,
 	0,
 
 	rom_mariner,
@@ -2292,9 +2105,8 @@ struct GameDriver driver_mariner =
 	input_ports_scramble, /* seems to be the same as Scramble */
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scramble_hiload, scramble_hisave
+	ROT90,
+	0,0
 };
 
 extern struct GameDriver driver_ckong;
@@ -2308,7 +2120,7 @@ struct GameDriver driver_ckongs =
 	"bootleg",
 	"Nicola Salmoria",
 	0,
-	&ckongs_machine_driver,
+	&machine_driver_ckongs,
 	0,
 
 	rom_ckongs,
@@ -2319,9 +2131,8 @@ struct GameDriver driver_ckongs =
 	input_ports_ckongs,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	ckongs_hiload, ckongs_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_mars =
@@ -2334,18 +2145,18 @@ struct GameDriver driver_mars =
 	"Artic",
 	"Zsolt Vasvari",
 	0,
-	&mars_machine_driver,
-	0,
+	&machine_driver_mars,
+	mars_decode,
 
 	rom_mars,
-	mars_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_mars,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -2360,18 +2171,18 @@ struct GameDriver driver_devilfsh =
 	"Artic",
 	"Zsolt Vasvari",
 	0,
-	&devilfsh_machine_driver,
-	0,
+	&machine_driver_devilfsh,
+	mars_decode,
 
 	rom_devilfsh,
-	mars_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_devilfsh,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -2386,18 +2197,18 @@ struct GameDriver driver_newsin7 =
 	"ATW USA, Inc.",
 	"Zsolt Vasvari",
 	0,
-	&newsin7_machine_driver,
-	0,
+	&machine_driver_newsin7,
+	mars_decode,
 
 	rom_newsin7,
-	mars_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_newsin7,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
@@ -2412,7 +2223,7 @@ struct GameDriver driver_hotshock =
 	"E.G. Felaco",
 	"Zsolt Vasvari",
 	0,
-	&hotshock_machine_driver,
+	&machine_driver_hotshock,
 	hotshock_driver_init,
 
 	rom_hotshock,
@@ -2423,7 +2234,7 @@ struct GameDriver driver_hotshock =
 	input_ports_hotshock,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -2439,7 +2250,7 @@ struct GameDriver driver_hunchbks =
 	"Century",
 	"Mike Coates",
 	0,
-	&hunchbks_machine_driver,
+	&machine_driver_hunchbks,
 	0,
 
 	rom_hunchbks,
@@ -2450,7 +2261,7 @@ struct GameDriver driver_hunchbks =
 	input_ports_hunchbks,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0,0
 };

@@ -394,47 +394,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xE680],"\x00\x00\x00\x00\x00\x05",6) == 0) &&
-			(memcmp(&RAM[0xE6C0],"\x00\x00\x00\x00\x00\x01",6) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE680],0x50);
-			/* fix the score at the top */
-			memcpy(&RAM[0xE600],&RAM[0xE680],8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE680],0x50);
-		osd_fclose(f);
-	}
-
-}
-
-
-
 struct GameDriver driver_exedexes =
 {
 	__FILE__,
@@ -456,9 +415,8 @@ struct GameDriver driver_exedexes =
 	input_ports_exedexes,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_savgbees =
@@ -482,7 +440,6 @@ struct GameDriver driver_savgbees =
 	input_ports_exedexes,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

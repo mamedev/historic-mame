@@ -10,6 +10,7 @@ Finalizer (GX523) (c) 1985 Konami
 #include "cpu/i8039/i8039.h"
 
 
+void konami1_decode(void);
 
 extern unsigned char *finalizr_scroll;
 extern unsigned char *finalizr_videoram2,*finalizr_colorram2;
@@ -20,8 +21,6 @@ int finalizr_vh_start(void);
 void finalizr_vh_stop(void);
 void finalizr_videoctrl_w(int offset,int data);
 void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 
 
@@ -457,7 +456,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( finalizr )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "523k01.9c",    0x4000, 0x4000, 0x716633cb )
 	ROM_LOAD( "523k02.12c",   0x8000, 0x4000, 0x1bccc696 )
 	ROM_LOAD( "523k03.13c",   0xc000, 0x4000, 0xc48927c6 )
@@ -484,7 +483,7 @@ ROM_START( finalizr )
 ROM_END
 
 ROM_START( finalizb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "finalizr.5",   0x4000, 0x8000, 0xa55e3f14 )
 	ROM_LOAD( "finalizr.6",   0xc000, 0x4000, 0xce177f6e )
 
@@ -510,20 +509,6 @@ ROM_END
 
 
 
-static void finalizr_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x4000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
-
-
 struct GameDriver driver_finalizr =
 {
 	__FILE__,
@@ -535,17 +520,17 @@ struct GameDriver driver_finalizr =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_finalizr,
-	0, finalizr_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_finalizr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
+	ROT90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
@@ -561,17 +546,17 @@ struct GameDriver driver_finalizb =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_finalizb,
-	0, finalizr_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_finalizb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
+	ROT90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };

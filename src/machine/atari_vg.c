@@ -54,27 +54,15 @@ void atari_vg_earom_ctrl (int offset, int data)
 }
 
 
-int atari_vg_earom_load(void)
+void atari_vg_earom_handler(void *file,int read_or_write)
 {
-	/* We read the EAROM contents from disk */
-        /* No check necessary */
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	if (read_or_write)
+		osd_fwrite(file,earom,EAROM_SIZE);
+	else
 	{
-		osd_fread(f,&earom[0], EAROM_SIZE);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-void atari_vg_earom_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&earom[0], EAROM_SIZE);
-		osd_fclose(f);
+		if (file)
+			osd_fread(file,earom,EAROM_SIZE);
+		else
+			memset(earom,0,EAROM_SIZE);
 	}
 }

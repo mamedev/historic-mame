@@ -575,7 +575,7 @@ static void karnov_reset_init(void)
 	memset(karnov_ram,0,0x4000); /* Chelnov likes ram clear on reset.. */
 }
 
-static struct MachineDriver karnov_machine_driver =
+static struct MachineDriver machine_driver_karnov =
 {
 	/* basic machine hardware */
 	{
@@ -623,7 +623,7 @@ static struct MachineDriver karnov_machine_driver =
 	}
 };
 
-static struct MachineDriver wndrplnt_machine_driver =
+static struct MachineDriver machine_driver_wndrplnt =
 {
 	/* basic machine hardware */
 	{
@@ -829,113 +829,6 @@ ROM_END
 
 /******************************************************************************/
 
-static void wndrplnt_patch(void)
-{
-//	unsigned char *RAM = memory_region(REGION_CPU1);
-
-//	WRITE_WORD (&RAM[0x1106],0x4E71);
-//	WRITE_WORD (&RAM[0x110e],0x4E71);
-//	WRITE_WORD (&RAM[0xc0c],0x4E71);
-//	WRITE_WORD (&RAM[0xc0e],0x4E71);
-//	WRITE_WORD (&RAM[0xc4c],0x4E71);
-//	WRITE_WORD (&RAM[0xc0e],0x4E71);
-//WRITE_WORD (&RAM[0x5b0a],0x4E71);
-//WRITE_WORD (&RAM[0x5b0c],0x4E71);
-//WRITE_WORD (&RAM[0x5b0e],0x4E71);
-//WRITE_WORD (&RAM[0x5b1e],0x4E71);
-//WRITE_WORD (&RAM[0xd58],0x4E71);
-}
-
-static void chelnov_patch(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
-	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
-}
-
-static void chelnovj_patch(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
-	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
-}
-
-/******************************************************************************/
-
-/* MISH:  I doubt these functions will work on the mac.. */
-static int karnov_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-        if (memcmp(&karnov_ram[0x3d00],"\x41\x0\x41\x41",4) == 0 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread(f,&karnov_ram[0x3c00],4*10);
-                        osd_fread(f,&karnov_ram[0x3d00],4*10);
-                        karnov_ram[0x0a]=karnov_ram[0x3c00];
-                        karnov_ram[0x0b]=karnov_ram[0x3c01];
-                        karnov_ram[0x0c]=karnov_ram[0x3c02];
-                        karnov_ram[0x0d]=karnov_ram[0x3c03];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void karnov_hisave(void)
-{
-	void *f;
-
-	        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	        {
-	                osd_fwrite(f,&karnov_ram[0x3c00],4*10);
-	                osd_fwrite(f,&karnov_ram[0x3d00],4*10);
-	                osd_fclose(f);
-	        }
-}
-
-static int chelnov_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&karnov_ram[0xc0],"BA",2) == 0 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&karnov_ram[0x80],4*11);
-			osd_fread(f,&karnov_ram[0xc0],4*11);
-                        karnov_ram[0x0048]=karnov_ram[0x0080];
-                        karnov_ram[0x0049]=karnov_ram[0x0081];
-                        karnov_ram[0x004a]=karnov_ram[0x0082];
-                        karnov_ram[0x004b]=karnov_ram[0x0083];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void chelnov_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite(f,&karnov_ram[0x0080],4*11);
-                osd_fwrite(f,&karnov_ram[0x00c0],4*11);
-                osd_fclose(f);
-        }
-}
-
-/******************************************************************************/
-
 static int karnov_cycle_r(int offset)
 {
 	if (cpu_get_pc()==0x8f2 && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
@@ -989,6 +882,45 @@ static void karnov_init(void)
 	}
 }
 
+static void wndrplnt_patch(void)
+{
+//	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+//	WRITE_WORD (&RAM[0x1106],0x4E71);
+//	WRITE_WORD (&RAM[0x110e],0x4E71);
+//	WRITE_WORD (&RAM[0xc0c],0x4E71);
+//	WRITE_WORD (&RAM[0xc0e],0x4E71);
+//	WRITE_WORD (&RAM[0xc4c],0x4E71);
+//	WRITE_WORD (&RAM[0xc0e],0x4E71);
+//WRITE_WORD (&RAM[0x5b0a],0x4E71);
+//WRITE_WORD (&RAM[0x5b0c],0x4E71);
+//WRITE_WORD (&RAM[0x5b0e],0x4E71);
+//WRITE_WORD (&RAM[0x5b1e],0x4E71);
+//WRITE_WORD (&RAM[0xd58],0x4E71);
+}
+
+static void chelnov_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
+	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
+}
+
+static void chelnovj_patch(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	karnov_init();
+
+	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
+	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
+}
+
 /******************************************************************************/
 
 struct GameDriver driver_karnov =
@@ -1001,7 +933,7 @@ struct GameDriver driver_karnov =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
+	&machine_driver_karnov,
 	karnov_init,
 
 	rom_karnov,
@@ -1013,8 +945,8 @@ struct GameDriver driver_karnov =
 	input_ports_karnov,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	karnov_hiload, karnov_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_karnovj =
@@ -1027,7 +959,7 @@ struct GameDriver driver_karnovj =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
+	&machine_driver_karnov,
 	karnov_init,
 
 	rom_karnovj,
@@ -1039,8 +971,8 @@ struct GameDriver driver_karnovj =
 	input_ports_karnov,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	karnov_hiload, karnov_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_wndrplnt =
@@ -1053,11 +985,11 @@ struct GameDriver driver_wndrplnt =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&wndrplnt_machine_driver,
-	karnov_init,
+	&machine_driver_wndrplnt,
+	wndrplnt_patch,
 
 	rom_wndrplnt,
-	wndrplnt_patch,
+	0,
 	0,
 	0,
 	0,
@@ -1065,7 +997,7 @@ struct GameDriver driver_wndrplnt =
 	input_ports_karnov,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
+	ROT270 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -1079,11 +1011,11 @@ struct GameDriver driver_chelnov =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
-	karnov_init,
+	&machine_driver_karnov,
+	chelnov_patch,
 
 	rom_chelnov,
-	chelnov_patch,
+	0,
 	0,
 	0,
 	0,
@@ -1091,8 +1023,8 @@ struct GameDriver driver_chelnov =
 	input_ports_chelnov,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	chelnov_hiload, chelnov_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_chelnovj =
@@ -1105,11 +1037,11 @@ struct GameDriver driver_chelnovj =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&karnov_machine_driver,
-	karnov_init,
+	&machine_driver_karnov,
+	chelnovj_patch,
 
 	rom_chelnovj,
-	chelnovj_patch,
+	0,
 	0,
 	0,
 	0,
@@ -1117,6 +1049,6 @@ struct GameDriver driver_chelnovj =
 	input_ports_chelnov,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	chelnov_hiload, chelnov_hisave
+	ROT0,
+	0,0
 };

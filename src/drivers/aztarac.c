@@ -13,8 +13,7 @@
 /* from machine/foodf.c */
 int foodf_nvram_r(int offset);
 void foodf_nvram_w(int offset,int data);
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 /* from vidhrdw/aztarac.c */
 void aztarac_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -129,7 +128,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0, 0, 0 }
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_aztarac =
 {
 	/* basic machine hardware */
 	{
@@ -170,7 +169,9 @@ static struct MachineDriver machine_driver =
 			SOUND_AY8910,
 			&ay8910_interface
 		}
-    }
+    },
+
+	foodf_nvram_handler
 };
 
 /***************************************************************************
@@ -199,25 +200,17 @@ ROM_START( aztarac )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END
 
-struct GameDriver driver_aztarac =
-{
-	__FILE__,
-	0,
-	"aztarac",
-	"Aztarac",
-	"1983",
-	"Centuri",
-	0,
-	0,
-	&machine_driver,
-	0,
-	rom_aztarac,
-	0, 0,
-	0,
-	0,
-	input_ports_aztarac,
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	foodf_nvram_load, foodf_nvram_save
-};
 
+
+static void init_aztarac(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+	/* patch IRQ vector 4 to autovector location */
+	WRITE_WORD(&rom[0x70], 0);
+	WRITE_WORD(&rom[0x72], 0x0c02);
+}
+
+
+
+GAME( 1983, aztarac, , aztarac, aztarac, aztarac, ROT0, "Centuri", "Aztarac" )

@@ -400,7 +400,7 @@ static struct MachineDriver machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 };
 
-static struct MachineDriver dsoccr94_machine_driver =
+static struct MachineDriver machine_driver_dsoccr94 =
 {
 	/* basic machine hardware */
 	{
@@ -547,14 +547,15 @@ struct GameDriver driver_firebarr =
 	"Bryan McPhail",
 	0,
 	&machine_driver,
-	0,
+	m107_startup,
+
 	rom_firebarr,
-	m107_startup, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_firebarr,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_NO_SOUND | GAME_NOT_WORKING,
+	ROT270 | GAME_NO_SOUND | GAME_NOT_WORKING,
 	0,0
 };
 
@@ -568,14 +569,15 @@ struct GameDriver driver_dsoccr94 =
 	"Irem (Data East Corporation license)",
 	"Bryan McPhail",
 	0,
-	&dsoccr94_machine_driver,
-	0,
+	&machine_driver_dsoccr94,
+	dsoccr94_startup,
+
 	rom_dsoccr94,
-	dsoccr94_startup, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_dsoccr94,
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NO_SOUND,
+	ROT0 | GAME_NO_SOUND,
 	0,0
 };

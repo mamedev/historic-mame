@@ -252,7 +252,9 @@ int main (int argc, char **argv)
                     /* on equal fuzz index, we prefer working, original games */
                     if (tmp == fuzz)
                     {
-                        if (drivers[i]->clone_of != 0) /* game is a clone */
+						/* game is a clone */
+						if (drivers[i]->clone_of != 0
+								&& !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
                         {
                             /* if the game we already found works, why bother. */
                             /* and broken clones aren't very helpful either */

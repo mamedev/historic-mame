@@ -396,7 +396,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver twocrude_machine_driver =
+static struct MachineDriver machine_driver_twocrude =
 {
 	/* basic machine hardware */
 	{
@@ -588,7 +588,7 @@ ROM_END
 
 /******************************************************************************/
 
-static void twocrude_decrypt(void)
+static void init_twocrude(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char *PTR;
@@ -633,102 +633,7 @@ static void twocrude_decrypt(void)
 
 /******************************************************************************/
 
-struct GameDriver driver_cbuster =
-{
-	__FILE__,
-	0,
-	"cbuster",
-	"Crude Buster (World FX version)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	rom_cbuster,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	input_ports_twocrude,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver driver_cbusterw =
-{
-	__FILE__,
-	&driver_cbuster,
-	"cbusterw",
-	"Crude Buster (World FU version)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	rom_cbusterw,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	input_ports_twocrude,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver driver_cbusterj =
-{
-	__FILE__,
-	&driver_cbuster,
-	"cbusterj",
-	"Crude Buster (Japan)",
-	"1990",
-	"Data East Corporation",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	rom_cbusterj,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	input_ports_twocrude,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
-
-struct GameDriver driver_twocrude =
-{
-	__FILE__,
-	&driver_cbuster,
-	"twocrude",
-	"Two Crude (US)",
-	"1990",
-	"Data East USA",
-	"Bryan McPhail",
-	0,
-	&twocrude_machine_driver,
-	0,
-
-	rom_twocrude,
-	twocrude_decrypt, 0,
-	0,
-	0,
-
-	input_ports_twocrude,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	0 , 0
-};
+GAME( 1990, cbuster,  ,        twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FX version)" )
+GAME( 1990, cbusterw, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (World FU version)" )
+GAME( 1990, cbusterj, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East Corporation", "Crude Buster (Japan)" )
+GAME( 1990, twocrude, cbuster, twocrude, twocrude, twocrude, ROT0, "Data East USA", "Two Crude (US)" )

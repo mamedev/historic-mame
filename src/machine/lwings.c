@@ -13,41 +13,36 @@
 
 int lwings_bank_register=0xff;
 
-void lwings_bankswitch_w(int offset,int data)
-{
-	int bankaddress = 0x10000 + (data & 0x06) * 0x1000 * 2;
-	cpu_setbank(1,&ROM[bankaddress]);
+void lwings_bankswitch_w(int offset,int data){
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bank = (data>>1)&0x3;
+	cpu_setbank(1,&RAM[0x10000 + bank*0x4000]);
 
 	lwings_bank_register=data;
-
 }
 
-int lwings_interrupt(void)
-{
-	return 0x00d7;     /* RST 10h */
+int lwings_interrupt(void){
+	return 0x00d7; /* RST 10h */
 }
 
-int avengers_interrupt(void)
-{
+int avengers_interrupt( void ){ /* hack */
 	static int n;
-	if (keyboard_pressed(KEYCODE_S))
-	{
+	if (keyboard_pressed(KEYCODE_S)){ /* test code */
 		while (keyboard_pressed(KEYCODE_S))
 		{}
 		n++;
 		n&=0x0f;
 		ADPCM_trigger(0, n);
 	}
-	if (!(lwings_bank_register & 0x20)) /* Interrupts enabled bit */
-	{
+
+	if( lwings_bank_register & 0x08 ){ /* NMI enable */
 		static int s;
 		s=!s;
-		if (s)
-		{
-			cpu_cause_interrupt(0, 0xd7);
+		if( s ){
+			return interrupt();
+			//cpu_cause_interrupt(0, 0xd7);
 		}
-		else
-		{
+		else {
 			return Z80_NMI_INT;
 		}
 	}

@@ -67,47 +67,6 @@ int todruaga_sharedram_r2(int offset)
 }
 
 
-int mappy_cpu1ram_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
-	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x1382 && RAM[offset] == 0)
-		cpu_spinuntil_int ();
-	return RAM[offset];
-}
-
-int digdug2_cpu1ram_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
-	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0x1000 && RAM[offset] == 0 && cpu_get_pc () == 0x80c4)
-		cpu_spinuntil_int ();
-	return RAM[offset];
-}
-
-int motos_cpu1ram_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	return RAM[offset];
-}
-
-int todruaga_cpu1ram_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	return RAM[offset];
-}
-
-
 void mappy_sharedram_w(int offset,int data)
 {
 	mappy_sharedram[offset] = data;

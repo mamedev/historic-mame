@@ -20,6 +20,7 @@
 static int cinemat_monitor_type;
 static int cinemat_overlay_req;
 static int cinemat_backdrop_req;
+static int cinemat_screenh;
 static struct artwork_element *cinemat_simple_overlay;
 
 static int color_display;
@@ -27,14 +28,6 @@ static struct artwork *backdrop;
 static struct artwork *overlay;
 static struct artwork *spacewar_panel;
 static struct artwork *spacewar_pressed_panel;
-
-#if 0 	/* simple artwork template  */
-struct artwork_element no_overlay[]=
-{
-	{{0, 400-1, 0, 300-1}, 255, 255, 255, 0},
-	{{-1,-1,-1,-1},0,0,0,0}
-};
-#endif
 
 struct artwork_element starcas_overlay[]=
 {
@@ -60,7 +53,7 @@ struct artwork_element sundance_overlay[]=
 struct artwork_element solarq_overlay[]=
 {
 	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-	{{ 0,  399, 279, 299},31, 0, 12, 64},
+	{{ 0,  399, 0,    19},31, 0, 12, 64},
 	{{ 200, 12, 150,  -1},31, 31, 0, 64},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
@@ -69,6 +62,9 @@ struct artwork_element solarq_overlay[]=
 void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 {
     static int lastx, lasty;
+
+	fromy = cinemat_screenh - fromy;
+	toy = cinemat_screenh - toy;
 
 	if (fromx != lastx || fromx != lasty)
 		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
@@ -253,6 +249,7 @@ int cinemat_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 	if (backdrop) backdrop_refresh (backdrop);
 	if (overlay) overlay_remap (overlay);
+	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();
 }
 
@@ -261,6 +258,7 @@ int spacewar_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 	if (spacewar_panel) backdrop_refresh(spacewar_panel);
 	if (spacewar_pressed_panel) backdrop_refresh(spacewar_pressed_panel);
+	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
 	return vector_vh_start();
 }
 
@@ -299,7 +297,7 @@ void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-    int tk[10] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
+    int tk[] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
 	int i, pwidth, pheight, key, row, col, sw_option;
 	float scale;
 	struct osd_bitmap vector_bitmap;
@@ -326,15 +324,8 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     vector_clear_list ();
 
 	if (full_refresh)
-	{
-		rect.min_x = 0;
-		rect.max_x = pwidth-1;
-		rect.min_y = 0;
-		rect.max_y = pheight;
-
 		copybitmap(bitmap,spacewar_panel->artwork,0,0,
-				   0,0,&rect,TRANSPARENCY_NONE,0);
-	}
+				   0,bitmap->height - pheight, 0,TRANSPARENCY_NONE,0);
 
 	scale = pwidth/1024.0;
 
@@ -348,25 +339,24 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
             key = tk[i];
             col = key % 5;
             row = key / 5;
-			rect.min_x = scale * (466 + 20 * col);
-			rect.max_x = scale * (466 + 20 * col + 18);
-			rect.min_y = scale * (106  - 20 * row);
-			rect.max_y = scale * (106  - 20 * row + 18);
+			rect.min_x = scale * (465 + 20 * col);
+			rect.max_x = scale * (465 + 20 * col + 18);
+			rect.min_y = scale * (39  + 20 * row) + vector_bitmap.height;
+			rect.max_y = scale * (39  + 20 * row + 18) + vector_bitmap.height;
 
 			if (sw_option & (1 << i))
             {
 				copybitmap(bitmap,spacewar_panel->artwork,0,0,
-						   0, 0,&rect,TRANSPARENCY_NONE,0);
+						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
             }
 			else
             {
 				copybitmap(bitmap,spacewar_pressed_panel->artwork,0,0,
-						   0, 0,&rect,TRANSPARENCY_NONE,0);
+						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
             }
 
-			osd_mark_dirty (rect.min_x, bitmap->height - rect.max_y,
-                            rect.max_x, bitmap->height - rect.min_y, 0);
-
+			osd_mark_dirty (rect.min_x, rect.min_y,
+                            rect.max_x, rect.max_y, 0);
 		}
 	}
     sw_option_change = sw_option;

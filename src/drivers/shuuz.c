@@ -337,7 +337,9 @@ static struct MachineDriver machine_driver =
 			SOUND_OKIM6295,
 			&okim6295_interface
 		}
-	}
+	},
+
+	atarigen_nvram_handler
 };
 
 
@@ -426,6 +428,8 @@ ROM_END
 static void shuuz_init(void)
 {
 	atarigen_eeprom_default = NULL;
+
+	rom_decode();
 }
 
 
@@ -450,16 +454,15 @@ struct GameDriver driver_shuuz =
 	shuuz_init,
 
 	rom_shuuz,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_shuuz,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -477,14 +480,13 @@ struct GameDriver driver_shuuz2 =
 	shuuz_init,
 
 	rom_shuuz2,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_shuuz2,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

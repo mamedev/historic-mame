@@ -923,48 +923,6 @@ static void wardner_decode(void)
 
 
 
-static int wardner_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x7117],"\x20\x00\x00\x20",4) == 0) &&
-		(memcmp(&RAM[0x7170],"\x02\x01\x01",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x7119], 10*3);	/* score values */
-			osd_fread(f,&RAM[0x7137], 10*5);	/* initials */
-			osd_fread(f,&RAM[0x7169], 10);		/* levels */
-/*			osd_fread(f,&RAM[0x71b2], 3);		 * current players score */
-/*			osd_fread(f,&RAM[0x7230], 3);		 * other players score */
-
-			RAM[0x7116] = RAM[0x7119];		/* update high score */
-			RAM[0x7117] = RAM[0x711a];		/* on top of screen */
-			RAM[0x7118] = RAM[0x711b];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void wardner_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x7119],30+50+10);		/* HS table */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_wardner =
 {
 	__FILE__,
@@ -976,19 +934,18 @@ struct GameDriver driver_wardner =
 	"Quench",
 	0,
 	&machine_driver,
-	0,
+	wardner_decode,
 
 	rom_wardner,
-	wardner_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_wardner,
 
 	0, 0, 0,
-	0,
-
-	wardner_hiload, wardner_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_pyros =
@@ -1002,19 +959,18 @@ struct GameDriver driver_pyros =
 	"Quench",
 	0,
 	&machine_driver,
-	0,
+	wardner_decode,
 
 	rom_pyros,
-	wardner_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_pyros,
 
 	0, 0, 0,
-	0,
-
-	wardner_hiload, wardner_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_wardnerj =
@@ -1028,18 +984,17 @@ struct GameDriver driver_wardnerj =
 	"Quench",
 	0,
 	&machine_driver,
-	0,
+	wardner_decode,
 
 	rom_wardnerj,
-	wardner_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_wardnerj,
 
 	0, 0, 0,
-	0,
-
-	wardner_hiload, wardner_hisave
+	ROT0,
+	0,0
 };
 

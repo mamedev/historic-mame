@@ -668,7 +668,7 @@ struct GameDriver driver_joyfulr =
 	input_ports_mnchmobl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+	ROT270 | GAME_WRONG_COLORS,
 	0, 0
 };
 
@@ -691,6 +691,6 @@ struct GameDriver driver_mnchmobl =
 	input_ports_mnchmobl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+	ROT270 | GAME_WRONG_COLORS,
 	0, 0
 };

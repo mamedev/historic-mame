@@ -42,7 +42,7 @@ int arkanoi2_sh_f000_r(int offset)
 
 	if (errorlog) fprintf (errorlog, "PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
 
-	val = readinputport(3 + offset/2);
+	val = readinputport(5 + offset/2);
 	if (offset & 1)
 	{
 		return ((val >> 8) & 0xff);
@@ -498,7 +498,7 @@ static void mcu_tnzs_w(int offset, int data)
 
 
 
-void extrmatn_init(void)
+void init_extrmatn(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -509,7 +509,7 @@ void extrmatn_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 }
 
-void arkanoi2_init(void)
+void init_arkanoi2(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -520,7 +520,7 @@ void arkanoi2_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void drtoppel_init(void)
+void init_drtoppel(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -531,7 +531,7 @@ void drtoppel_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void chukatai_init(void)
+void init_chukatai(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -542,7 +542,7 @@ void chukatai_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void tnzs_init(void)
+void init_tnzs(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mcu_type = MCU_TNZS;
@@ -552,7 +552,7 @@ void tnzs_init(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void insectx_init(void)
+void init_insectx(void)
 {
 	mcu_type = MCU_NONE;
 
@@ -562,7 +562,7 @@ void insectx_init(void)
 	install_mem_read_handler(1, 0xc002, 0xc002, input_port_4_r );
 }
 
-void kageki_init(void)
+void init_kageki(void)
 {
 	/* this game has no mcu */
 	mcu_type = MCU_NONE;
@@ -614,7 +614,7 @@ int tnzs_interrupt(void)
 	switch (mcu_type)
 	{
 		case MCU_ARKANOID:
-			coin = ((readinputport(3) & 0xf000) ^ 0xd000) >> 12;
+			coin = ((readinputport(5) & 0xf000) ^ 0xd000) >> 12;
 			coin = (coin & 0x08) | ((coin & 0x03) << 1) | ((coin & 0x04) >> 2);
 			mcu_handle_coins(coin);
 			break;

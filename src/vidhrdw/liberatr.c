@@ -17,6 +17,9 @@
 #include "vidhrdw/generic.h"
 
 
+unsigned char *liberatr_bitmapram;
+
+
 void liberatr_vh_stop(void);
 
 
@@ -125,12 +128,10 @@ void liberatr_bitmap_xy_w(int offset, int data)
 
 void liberatr_bitmap_w(int offset, int data)
 {
-	extern unsigned char *RAM;
-
 	UINT8 x = (offset & 0x3f) << 2;
 	UINT8 y = (offset >> 6);
 
-	RAM[offset] = data;
+	liberatr_bitmapram[offset] = data;
 
     bitmap_common_w(x , y, data);
     bitmap_common_w(x+1, y, data);

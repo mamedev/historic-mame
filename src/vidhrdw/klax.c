@@ -87,7 +87,8 @@ int klax_vh_start(void)
 	static struct atarigen_pf_desc pf_desc =
 	{
 		8, 8,				/* width/height of each tile */
-		64, 32				/* number of tiles in each direction */
+		64, 32,				/* number of tiles in each direction */
+		1					/* non-scrolling */
 	};
 
 	/* initialize the playfield */

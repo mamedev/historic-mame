@@ -569,17 +569,17 @@ struct GameDriver driver_gradius3 =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_gradius3,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gradius3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -595,17 +595,17 @@ struct GameDriver driver_grdius3a =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_grdius3a,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_gradius3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

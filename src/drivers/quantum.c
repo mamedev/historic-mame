@@ -54,8 +54,7 @@ int quantum_input_2_r(int offset);
 
 int foodf_nvram_r(int offset);
 void foodf_nvram_w(int offset,int data);
-int foodf_nvram_load(void);
-void foodf_nvram_save(void);
+void foodf_nvram_handler(void *file,int read_or_write);
 
 
 
@@ -194,7 +193,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	foodf_nvram_handler
 };
 
 
@@ -271,9 +272,8 @@ struct GameDriver driver_quantum =
 	input_ports_quantum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_quantum1 =
@@ -298,9 +298,8 @@ struct GameDriver driver_quantum1 =
 	input_ports_quantum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_quantump =
@@ -325,8 +324,7 @@ struct GameDriver driver_quantump =
 	input_ports_quantum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	foodf_nvram_load, foodf_nvram_save
+	ROT0,
+	0,0
 };
 

@@ -116,3 +116,104 @@ void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
+
+
+
+/* Juno First Blitter Hardware emulation
+
+	Juno First can blit a 16x16 graphics which comes from un-memory mapped graphics roms
+
+	$8070->$8071 specifies the destination NIBBLE address
+	$8072->$8073 specifies the source NIBBLE address
+
+	Depending on bit 0 of the source address either the source pixels will be copied to
+	the destination address, or a zero will be written.
+	This allows the game to quickly clear the sprites from the screen
+
+	A lookup table is used to swap the source nibbles as they are the wrong way round in the
+	source data.
+
+	Bugs -
+
+		Currently only the even pixels will be written to. This is to speed up the blit routine
+		as it does not have to worry about shifting the source data.
+		This means that all destination X values will be rounded to even values.
+		In practice no one actaully notices this.
+
+		The clear works properly.
+*/
+
+void junofrst_blitter_w( int offset, int data )
+{
+	static unsigned char blitterdata[4];
+
+
+	blitterdata[offset] = data;
+
+	/* Blitter is triggered by $8073 */
+	if (offset==3)
+	{
+		int i;
+		unsigned long srcaddress;
+		unsigned long destaddress;
+		unsigned char srcflag;
+		unsigned char destflag;
+		unsigned char *JunoBLTRom = memory_region(REGION_GFX1);
+
+		srcaddress = (blitterdata[0x2]<<8) | (blitterdata[0x3]);
+		srcflag = srcaddress & 1;
+		srcaddress >>= 1;
+		srcaddress &= 0x7FFE;
+		destaddress = (blitterdata[0x0]<<8)  | (blitterdata[0x1]);
+
+		destflag = destaddress & 1;
+
+		destaddress >>= 1;
+		destaddress &= 0x7fff;
+
+		if (srcflag) {
+			for (i=0;i<16;i++) {
+
+#define JUNOBLITPIXEL(x)									\
+	if (JunoBLTRom[srcaddress+x])							\
+		tutankhm_videoram_w( destaddress+x,					\
+			((JunoBLTRom[srcaddress+x] & 0xf0) >> 4)		\
+			| ((JunoBLTRom[srcaddress+x] & 0x0f) << 4));
+
+				JUNOBLITPIXEL(0);
+				JUNOBLITPIXEL(1);
+				JUNOBLITPIXEL(2);
+				JUNOBLITPIXEL(3);
+				JUNOBLITPIXEL(4);
+				JUNOBLITPIXEL(5);
+				JUNOBLITPIXEL(6);
+				JUNOBLITPIXEL(7);
+
+				destaddress += 128;
+				srcaddress += 8;
+			}
+		} else {
+			for (i=0;i<16;i++) {
+
+#define JUNOCLEARPIXEL(x) 						\
+	if ((JunoBLTRom[srcaddress+x] & 0xF0)) 		\
+		tutankhm_videoram_w( destaddress+x,		\
+			videoram[destaddress+x] & 0xF0);	\
+	if ((JunoBLTRom[srcaddress+x] & 0x0F))		\
+		tutankhm_videoram_w( destaddress+x,		\
+			videoram[destaddress+x] & 0x0F);
+
+				JUNOCLEARPIXEL(0);
+				JUNOCLEARPIXEL(1);
+				JUNOCLEARPIXEL(2);
+				JUNOCLEARPIXEL(3);
+				JUNOCLEARPIXEL(4);
+				JUNOCLEARPIXEL(5);
+				JUNOCLEARPIXEL(6);
+				JUNOCLEARPIXEL(7);
+				destaddress += 128;
+				srcaddress+= 8;
+			}
+		}
+	}
+}

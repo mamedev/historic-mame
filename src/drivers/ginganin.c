@@ -383,7 +383,7 @@ static struct Y8950interface y8950_interface =
 	{ 0 }   /* I/O write */
 };
 
-static struct MachineDriver ginganin_machine_driver =
+static struct MachineDriver machine_driver_ginganin =
 {
 	{
 		{
@@ -496,18 +496,18 @@ struct GameDriver driver_ginganin =
 	"Jaleco",
 	"Luca Elia\n",
 	0,
-	&ginganin_machine_driver,
-	0,
+	&machine_driver_ginganin,
+	ginganin_rom_decode,
 
 	rom_ginganin,
-	ginganin_rom_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ginganin,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ROT0 | GAME_IMPERFECT_SOUND,
 
 	0,0
 };

@@ -1414,127 +1414,10 @@ void fshark_hiscore_init_tests(void)
 	twinc_levels = 0x02ae;
 	twinc_end    = 0x02d6;
 	twinc_vid_test = 0x0003;	/* white 3 */
+
+	fsharkbt_decode();
 }
 
-
-static int twincobr_hiload(void)
-{
-	/* check if the hi score table has already been initialized */
-
-	int twinc_tx_offset;
-	int twinc_tx_data;
-	int twinc_scrn1=0x466;	/* video ram locations of high score */
-	int twinc_scrn2=0x426;
-	int twinc_scrn3=0x3e6;
-	int twinc_scrn4=0x3a6;
-	int twinc_scrn5=0x366;
-	int twinc_scrn6=0x326;
-	int twinc_scrn7=0x2e6;
-
-	twinc_tx_offset = twincobr_txoffs_r();	/* save current video offset */
-	twincobr_txoffs_w(0,twinc_scrn4);
-	twinc_tx_data = twincobr_txram_r(0);
-
-
-	if ((READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)])==0x3000) && /* start of table */
-		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+6)])==0x3000) &&
-		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_end-4)])==0x0001) &&
-		(READ_WORD(&twincobr_68k_dsp_ram[(twinc_end-2)])==0x0001) && /* end of table */
-		(twinc_tx_data == twinc_vid_test))						   /* video layer initialised ? */
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			int twinc_hiscore;
-			int twinc_zero_flag = 0;
-			int twinc_digit1, twinc_digit2, twinc_digit3, twinc_digit4;
-
-			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_scores],
-				twinc_names - twinc_scores);					/* score values */
-			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_names],
-				twinc_levels - twinc_names);					/* initials */
-			osd_fread_msbfirst(f,&twincobr_68k_dsp_ram[twinc_levels],
-				twinc_end - twinc_levels);					/* levels */
-
-			WRITE_WORD(&twincobr_68k_dsp_ram[twinc_scores],		/* update high score on top of screen */
-				(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+4)])));
-			WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)],
-				(READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+6)])));
-
-			twinc_hiscore = READ_WORD(&twincobr_68k_dsp_ram[twinc_scores]);
-			twinc_digit1 =  twinc_hiscore & 0xf;
-			twinc_digit2 = (twinc_hiscore >>  4) & 0xf;
-			twinc_digit3 = (twinc_hiscore >>  8) & 0xf;
-
-			if (twinc_digit3)
-			{
-				twincobr_txoffs_w(0,twinc_scrn7);
-				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-				twincobr_txram_w(0,(twinc_tx_data | twinc_digit3));
-				twinc_zero_flag = 1;
-			}
-
-			if ((twinc_digit2) || (twinc_zero_flag))
-			{
-				twincobr_txoffs_w(0,twinc_scrn6);
-				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-				twincobr_txram_w(0,(twinc_tx_data | twinc_digit2));
-				twinc_zero_flag = 1;
-			}
-
-			if ((twinc_digit1) || (twinc_zero_flag))
-			{
-				twincobr_txoffs_w(0,twinc_scrn5);
-				twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-				twincobr_txram_w(0,(twinc_tx_data | twinc_digit1));
-			}
-
-			twinc_hiscore = READ_WORD(&twincobr_68k_dsp_ram[(twinc_scores+2)]);
-			twinc_digit4 = (twinc_hiscore >> 12) & 0xf;
-			twinc_digit3 = (twinc_hiscore >>  8) & 0xf;
-			twinc_digit2 = (twinc_hiscore >>  4) & 0xf;
-			twinc_digit1 =  twinc_hiscore & 0xf;
-
-			twincobr_txoffs_w(0,twinc_scrn4);
-			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-			twincobr_txram_w(0,(twinc_tx_data | twinc_digit4));
-
-			twincobr_txoffs_w(0,twinc_scrn3);
-			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-			twincobr_txram_w(0,(twinc_tx_data | twinc_digit3));
-
-			twincobr_txoffs_w(0,twinc_scrn2);
-			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-			twincobr_txram_w(0,(twinc_tx_data | twinc_digit2));
-
-			twincobr_txoffs_w(0,twinc_scrn1);
-			twinc_tx_data = twincobr_txram_r(0) & 0xf800;
-			twincobr_txram_w(0,(twinc_tx_data | twinc_digit1));
-
-			osd_fclose(f);
-		}
-		twincobr_txoffs_w(0,twinc_tx_offset);
-		return 1;
-	}
-	else
-	{
-		twincobr_txoffs_w(0,twinc_tx_offset);	/* restore video offset */
-		return 0;			/* we can't load the hi scores yet */
-	}
-}
-
-static void twincobr_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&twincobr_68k_dsp_ram[twinc_scores],
-			twinc_end - twinc_scores);						/* HS table */
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_twincobr =
@@ -1555,8 +1438,8 @@ struct GameDriver driver_twincobr =
 	0,
 	input_ports_twincobr,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_twincobu =
@@ -1577,7 +1460,7 @@ struct GameDriver driver_twincobu =
 	0,
 	input_ports_twincobu,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 	0, 0
 };
 
@@ -1599,8 +1482,8 @@ struct GameDriver driver_ktiger =
 	0,
 	input_ports_ktiger,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_fshark =
@@ -1615,14 +1498,15 @@ struct GameDriver driver_fshark =
 	0,
 	&machine_driver,
 	fshark_hiscore_init_tests,
+
 	rom_fshark,
-	fsharkbt_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_fshark,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_skyshark =
@@ -1637,14 +1521,15 @@ struct GameDriver driver_skyshark =
 	0,
 	&machine_driver,
 	fshark_hiscore_init_tests,
+
 	rom_skyshark,
-	fsharkbt_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_skyshark,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_hishouza =
@@ -1659,14 +1544,15 @@ struct GameDriver driver_hishouza =
 	0,
 	&machine_driver,
 	fshark_hiscore_init_tests,
+
 	rom_hishouza,
-	fsharkbt_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_hishouza,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_fsharkbt =
@@ -1681,13 +1567,14 @@ struct GameDriver driver_fsharkbt =
 	0,
 	&machine_driver,
 	fshark_hiscore_init_tests,
+
 	rom_fsharkbt,
-	fsharkbt_decode, 0,
+	0, 0,
 	0,
 	0,
 	input_ports_skyshark,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	twincobr_hiload, twincobr_hisave
+	ROT270,
+	0,0
 };
 

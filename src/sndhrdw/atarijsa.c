@@ -623,46 +623,10 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 };
 
 
-struct OKIM6295interface atarijsa_okim6295_interface_2 =
+struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 {
 	1,              /* 1 chip */
 	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 2 },          /* memory region 2 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_3 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 3 },          /* memory region 3 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_4 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 4 },          /* memory region 4 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_5 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 5 },          /* memory region 5 */
-	{ 75 }
-};
-
-
-struct OKIM6295interface atarijsa_okim6295_interface_6 =
-{
-	1,              /* 1 chip */
-	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
-	{ 6 },          /* memory region 6 */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 75 }
 };

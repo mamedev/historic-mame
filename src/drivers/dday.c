@@ -425,55 +425,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime = 0;
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x6237],0xff,0x03);	/* high score */
-		firsttime = 1;
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (RAM[0x537d] == 0x20)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6237],0x03);
-			osd_fclose(f);
-
-			// Move it to the screen, too
-			RAM[0x5379] =  (RAM[0x6237] & 0x0f)       | 0x20;
-			RAM[0x537a] = ((RAM[0x6238] & 0xf0) >> 4) | 0x20;
-			RAM[0x537b] =  (RAM[0x6238] & 0x0f)       | 0x20;
-			RAM[0x537c] = ((RAM[0x6239] & 0xf0) >> 4) | 0x20;
-			RAM[0x537d] =  (RAM[0x6239] & 0x0f)       | 0x20;
-		}
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6237],0x03);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_dday =
 {
 	__FILE__,
@@ -485,19 +436,18 @@ struct GameDriver driver_dday =
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
 	0,
 	&machine_driver,
-	0,
+	dday_decode,
 
 	rom_dday,
-	dday_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_dday,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };
 
 struct GameDriver driver_ddayc =
@@ -511,17 +461,16 @@ struct GameDriver driver_ddayc =
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
 	0,
 	&machine_driver,
-	0,
+	dday_decode,
 
 	rom_ddayc,
-	dday_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ddayc,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	hiload, hisave
+	ROT0 | GAME_IMPERFECT_COLORS,
+	0,0
 };

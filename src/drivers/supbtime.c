@@ -292,7 +292,7 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static struct MachineDriver supbtime_machine_driver =
+static struct MachineDriver machine_driver_supbtime =
 {
 	/* basic machine hardware */
 	{
@@ -385,7 +385,7 @@ struct GameDriver driver_supbtime =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&supbtime_machine_driver,
+	&machine_driver_supbtime,
 	custom_memory,
 
 	rom_supbtime,
@@ -396,6 +396,6 @@ struct GameDriver driver_supbtime =
 	input_ports_supbtime,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

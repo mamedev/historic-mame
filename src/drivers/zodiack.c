@@ -562,123 +562,6 @@ ROM_START( percuss )
 ROM_END
 
 
-static int zodiack_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x5875],"\x14\x12\x1d",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5857], 5*6);        /* scores */
-			osd_fread(f,&RAM[0x5875], 5*5);        /* initials */
-
-			RAM[0x5847] = RAM[0x5859];      /* update high score */
-			RAM[0x5848] = RAM[0x585a];      /* on top of screen */
-			RAM[0x5849] = RAM[0x585b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void zodiack_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5857], 5*6);
-		osd_fwrite(f,&RAM[0x5875], 5*5);
-		osd_fclose(f);
-	}
-}
-
-static int dogfight_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x587e],"\x20\x35\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x587e], 10*3);        /* scores */
-			osd_fread(f,&RAM[0x589c], 10*10);       /* initials */
-
-			RAM[0x587b] = RAM[0x587e];      /* update high score */
-			RAM[0x587c] = RAM[0x587f];      /* on top of screen */
-			RAM[0x587d] = RAM[0x5880];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void dogfight_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x587e], 10*3);
-		osd_fwrite(f,&RAM[0x589c], 10*10);
-		osd_fclose(f);
-	}
-}
-
-static int moguchan_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x5eda],0xff, 5);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x5eda],"\x00\x00\x00",3) == 0)
-	{
-		void *f;
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5eda], 5);	/* top score */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void moguchan_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5eda], 5);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_zodiack =
 {
@@ -702,9 +585,8 @@ struct GameDriver driver_zodiack =
 	input_ports_zodiac,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
-
-	zodiack_hiload, zodiack_hisave
+	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
+	0,0
 };
 
 struct GameDriver driver_dogfight =
@@ -729,9 +611,8 @@ struct GameDriver driver_dogfight =
 	input_ports_dogfight,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
-
-	dogfight_hiload, dogfight_hisave
+	ROT270 | GAME_IMPERFECT_COLORS,  /* bullet color needs to be verified */
+	0,0
 };
 
 struct GameDriver driver_moguchan =
@@ -756,9 +637,8 @@ struct GameDriver driver_moguchan =
 	input_ports_moguchan,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
-
-	moguchan_hiload, moguchan_hisave
+	ROT270 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_percuss =
@@ -783,7 +663,7 @@ struct GameDriver driver_percuss =
 	input_ports_percuss,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

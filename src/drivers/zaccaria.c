@@ -664,89 +664,6 @@ ROM_START( jackrabs )
     ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
-static int monymony_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    /* check if the hi score table has already been initialized */
-    if ((memcmp(&RAM[0x7512],"\x0a\x0a\x0a",3) == 0) &&
-        (memcmp(&RAM[0x7519],"\x0b\x0b\x0b",3) == 0))
-    {
-        void *f;
-
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x7512],8*6);
-            osd_fread(f,&RAM[0x7542],8*3);
-            RAM[0x726d] = RAM[0x7542];
-            RAM[0x726e] = RAM[0x7543];
-            RAM[0x726f] = RAM[0x7544];
-            osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void monymony_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x7512],8*6);
-        osd_fwrite(f,&RAM[0x7542],8*3);
-        osd_fclose(f);
-    }
-}
-
-
-static int jackrabt_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    /* check if the hi score table has already been initialized */
-    if ((memcmp(&RAM[0x73ba],"\x0a\x0a\x0a",3) == 0) &&
-        (memcmp(&RAM[0x73c2],"\x0b\x0b\x0b",3) == 0))
-    {
-        void *f;
-
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-            osd_fread(f,&RAM[0x73ba],8*6);
-            osd_fread(f,&RAM[0x73ea],8*3);
-            RAM[0x727d] = RAM[0x73ea];
-            RAM[0x727e] = RAM[0x73eb];
-            RAM[0x727f] = RAM[0x73ec];
-            osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void jackrabt_hisave(void)
-{
-    void *f;
-    unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-        osd_fwrite(f,&RAM[0x73ba],8*6);
-        osd_fwrite(f,&RAM[0x73ea],8*3);
-        osd_fclose(f);
-    }
-}
-
 
 
 struct GameDriver driver_monymony =
@@ -770,9 +687,8 @@ struct GameDriver driver_monymony =
     input_ports_monymony,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
-
-    monymony_hiload, monymony_hisave
+    ROT90 | GAME_NO_SOUND,
+	0,0
 };
 
 struct GameDriver driver_jackrabt =
@@ -796,9 +712,8 @@ struct GameDriver driver_jackrabt =
     input_ports_jackrabt,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
-
-    jackrabt_hiload, jackrabt_hisave
+    ROT90 | GAME_NO_SOUND,
+	0,0
 };
 
 struct GameDriver driver_jackrab2 =
@@ -822,9 +737,8 @@ struct GameDriver driver_jackrab2 =
     input_ports_jackrabt,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
-
-    jackrabt_hiload, jackrabt_hisave
+    ROT90 | GAME_NO_SOUND,
+	0,0
 };
 
 struct GameDriver driver_jackrabs =
@@ -848,8 +762,7 @@ struct GameDriver driver_jackrabs =
     input_ports_jackrabt,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
-
-    jackrabt_hiload, jackrabt_hisave
+    ROT90 | GAME_NO_SOUND,
+	0,0
 };
 

@@ -44,8 +44,9 @@ void paletteram_xRRRRxGGGGxBBBBx_word_w( int offset, int data )
 static void get_tile_info_screen0(int col,int row)
 {
 	int tile_index = 2*(64*row + col);
-	unsigned char attr = splash_videoram[tile_index+1];
-	unsigned char code = splash_videoram[tile_index];
+	unsigned short data = READ_WORD(&splash_videoram[tile_index]);
+	unsigned char attr = data >> 8;
+	unsigned char code = data & 0xff;
 
 	SET_TILE_INFO(0, code + ((0x20 + (attr & 0x0f)) << 8), (attr & 0xf0) >> 4);
 }
@@ -53,8 +54,9 @@ static void get_tile_info_screen0(int col,int row)
 static void get_tile_info_screen1(int col,int row)
 {
 	int tile_index = 2*(32*row + col);
-	unsigned char attr = splash_videoram[tile_index+0x1001];
-	unsigned char code = splash_videoram[tile_index+0x1000];
+	unsigned short data = READ_WORD(&splash_videoram[tile_index+0x1000]);
+	unsigned char attr = data >> 8;
+	unsigned char code = data & 0xff;
 
 	tile_info.flags = TILE_FLIPXY(code & 0x03);
 
@@ -157,11 +159,11 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	const struct GfxElement *gfx = Machine->gfx[1];
 
 	for (i = 0; i < 0x800; i += 8){
-		int sx = splash_spriteram[i+4];						/* x position */
-		int sy = 256 - splash_spriteram[i+2];				/* y position */
-		int attr = splash_spriteram[i+6];					/* attributes */
-		int attr2 = splash_spriteram[i+0x801];				/* attributes 2 */
-		int number = splash_spriteram[i] + (attr & 0xf)*256;/* sprite number */
+		int sx = READ_WORD(&splash_spriteram[i+4]) & 0xff;						/* x position */
+		int sy = 256 - (READ_WORD(&splash_spriteram[i+2]) & 0xff);				/* y position */
+		int attr = READ_WORD(&splash_spriteram[i+6]) & 0xff;					/* attributes */
+		int attr2 = READ_WORD(&splash_spriteram[i+0x800]) >> 8;				/* attributes 2 */
+		int number = (READ_WORD(&splash_spriteram[i]) & 0xff) + (attr & 0xf)*256;/* sprite number */
 
 		if (attr2 & 0x80) sx += 256;
 

@@ -1173,7 +1173,7 @@ static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 
 #define MACHINE_DRIVER(GAMENAME,READPORT,VISIBLEMINX,VISIBLEMAXX,COLORS,CONVERTCOLOR)        \
                                                                                              \
-static struct MachineDriver GAMENAME##_machine_driver =                                      \
+static struct MachineDriver machine_driver_##GAMENAME =                                      \
 {                                                                                            \
 	/* basic machine hardware */                                                             \
 	{                                                                                        \
@@ -1855,298 +1855,6 @@ ROM_START( spelunk2 )
 ROM_END
 
 
-static int kungfum_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xea06],"\x00\x14\x95",3) == 0 &&
-			memcmp(&RAM[0xea78],"\x00\x48\x52",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xea06],6*20);
-			RAM[0xe980] = RAM[0xea7a];
-			RAM[0xe981] = RAM[0xea79];
-			RAM[0xe982] = RAM[0xea78];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void kungfum_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xea06],6*20);
-		osd_fclose(f);
-	}
-}
-
-
-static int battroad_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (memcmp(&RAM[0xed52],"\x06\x05\x04",3) == 0 &&
-			memcmp(&RAM[0xedfd],"\x00\x13\x08",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xed50],0xb0);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void battroad_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xed50],0xb0);
-		osd_fclose(f);
-	}
-}
-
-
-static int ldrun_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0xE5E5],"\x01\x01\x00",3) == 0 &&
-			memcmp(&RAM[0xE6AA],"\x20\x20\x04",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE5E5],200);
-			osd_fclose(f);
-			memcpy (&RAM[0xe59a],&RAM[0xe6a3],3);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void ldrun_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE5E5],200);
-		osd_fclose(f);
-	}
-}
-
-static int ldrun2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0xE6bd],"\x00\x48\x54",3) == 0 &&
-		memcmp(&RAM[0xE782],"\x20\x20\x05",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		osd_fread(f,&RAM[0xE6bd],200);
-		osd_fclose(f);
-		memcpy (&RAM[0xe672],&RAM[0xe77b],3);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void ldrun2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-
-
-		osd_fwrite(f,&RAM[0xE6bd],200);
-		osd_fclose(f);
-	}
-}
-
-
-
-
-static int ldrun4_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0xE735],"\x00\x28\x76",3) == 0 &&
-			memcmp(&RAM[0xE7FA],"\x20\x20\x06",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE735],200);
-			osd_fclose(f);
-			memcpy (&RAM[0xe6ea],&RAM[0xe7f3],3);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void ldrun4_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE735],200);
-		osd_fclose(f);
-	}
-}
-
-
-static int kidniki_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0xE062],"\x00\x10\x00",3) == 0 &&
-			memcmp(&RAM[0xE0CE],"\x20\x20\x00",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE062],111);
-			osd_fclose(f);
-			memcpy (&RAM[0xE02b],&RAM[0xE062],3);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void kidniki_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE062],111);
-		osd_fclose(f);
-	}
-}
-
-
-static int spelunk2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0xE066],"\x99\x11\x59",3) == 0 &&
-			memcmp(&RAM[0xE0C7],"\x49\x4e\x3f",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE066],100);
-			osd_fclose(f);
-			memcpy(&RAM[0xE04f],&RAM[0xe066],2);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void spelunk2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE066],100);
-		osd_fclose(f);
-	}
-}
-
-
-static int lotlot_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if (memcmp(&RAM[0xE96a],"\x00\x02\x51",3) == 0 &&
-			memcmp(&RAM[0xEb8d],"\x49\x20\x20",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xE96b],0x226);
-			osd_fclose(f);
-			memcpy(&RAM[0xe956],&RAM[0xE96b],3);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void lotlot_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xE96b],0x226);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_kungfum =
 {
@@ -2158,7 +1866,7 @@ struct GameDriver driver_kungfum =
 	"Irem",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
 	0,
-	&kungfum_machine_driver,
+	&machine_driver_kungfum,
 	0,
 
 	rom_kungfum,
@@ -2169,9 +1877,8 @@ struct GameDriver driver_kungfum =
 	input_ports_kungfum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kungfum_hiload, kungfum_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kungfud =
@@ -2184,7 +1891,7 @@ struct GameDriver driver_kungfud =
 	"Irem (Data East license)",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
 	0,
-	&kungfum_machine_driver,
+	&machine_driver_kungfum,
 	0,
 
 	rom_kungfud,
@@ -2195,9 +1902,8 @@ struct GameDriver driver_kungfud =
 	input_ports_kungfum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kungfum_hiload, kungfum_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_spartanx =
@@ -2210,7 +1916,7 @@ struct GameDriver driver_spartanx =
 	"Irem",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
 	0,
-	&kungfum_machine_driver,
+	&machine_driver_kungfum,
 	0,
 
 	rom_spartanx,
@@ -2221,9 +1927,8 @@ struct GameDriver driver_spartanx =
 	input_ports_kungfum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kungfum_hiload, kungfum_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kungfub =
@@ -2236,7 +1941,7 @@ struct GameDriver driver_kungfub =
 	"bootleg",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
 	0,
-	&kungfum_machine_driver,
+	&machine_driver_kungfum,
 	0,
 
 	rom_kungfub,
@@ -2247,9 +1952,8 @@ struct GameDriver driver_kungfub =
 	input_ports_kungfum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kungfum_hiload, kungfum_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kungfub2 =
@@ -2262,7 +1966,7 @@ struct GameDriver driver_kungfub2 =
 	"bootleg",
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
 	0,
-	&kungfum_machine_driver,
+	&machine_driver_kungfum,
 	0,
 
 	rom_kungfub2,
@@ -2273,9 +1977,8 @@ struct GameDriver driver_kungfub2 =
 	input_ports_kungfum,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	kungfum_hiload, kungfum_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_battroad =
@@ -2288,7 +1991,7 @@ struct GameDriver driver_battroad =
 	"Irem",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nEric Hustvedt",
 	0,
-	&battroad_machine_driver,
+	&machine_driver_battroad,
 	0,
 
 	rom_battroad,
@@ -2299,9 +2002,8 @@ struct GameDriver driver_battroad =
 	input_ports_battroad,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	battroad_hiload, battroad_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_ldrun =
@@ -2314,7 +2016,7 @@ struct GameDriver driver_ldrun =
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
 	0,
-	&ldrun_machine_driver,
+	&machine_driver_ldrun,
 	0,
 
 	rom_ldrun,
@@ -2325,9 +2027,8 @@ struct GameDriver driver_ldrun =
 	input_ports_ldrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ldrun_hiload, ldrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ldruna =
@@ -2340,7 +2041,7 @@ struct GameDriver driver_ldruna =
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
 	0,
-	&ldrun_machine_driver,
+	&machine_driver_ldrun,
 	0,
 
 	rom_ldruna,
@@ -2351,9 +2052,8 @@ struct GameDriver driver_ldruna =
 	input_ports_ldrun,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ldrun_hiload, ldrun_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ldrun2 =
@@ -2367,7 +2067,7 @@ struct GameDriver driver_ldrun2 =
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",
 	0,
-	&ldrun2_machine_driver,
+	&machine_driver_ldrun2,
 	0,
 
 	rom_ldrun2,
@@ -2378,9 +2078,8 @@ struct GameDriver driver_ldrun2 =
 	input_ports_ldrun2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ldrun2_hiload, ldrun2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ldrun3 =
@@ -2393,7 +2092,7 @@ struct GameDriver driver_ldrun3 =
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",
 	0,
-	&ldrun3_machine_driver,
+	&machine_driver_ldrun3,
 	0,
 
 	rom_ldrun3,
@@ -2404,9 +2103,8 @@ struct GameDriver driver_ldrun3 =
 	input_ports_ldrun3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ldrun2_hiload, ldrun2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ldrun4 =
@@ -2419,7 +2117,7 @@ struct GameDriver driver_ldrun4 =
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",
 	0,
-	&ldrun4_machine_driver,
+	&machine_driver_ldrun4,
 	0,
 
 	rom_ldrun4,
@@ -2430,9 +2128,8 @@ struct GameDriver driver_ldrun4 =
 	input_ports_ldrun4,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ldrun4_hiload, ldrun4_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_lotlot =
@@ -2445,7 +2142,7 @@ struct GameDriver driver_lotlot =
 	"Irem (licensed from Tokuma Shoten)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",
 	0,
-	&lotlot_machine_driver,
+	&machine_driver_lotlot,
 	0,
 
 	rom_lotlot,
@@ -2456,9 +2153,8 @@ struct GameDriver driver_lotlot =
 	input_ports_lotlot,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	lotlot_hiload, lotlot_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kidniki =
@@ -2471,7 +2167,7 @@ struct GameDriver driver_kidniki =
 	"Irem (Data East USA license)",
 	"Phil Stroffolino\nAaron Giles (sound)",
 	0,
-	&kidniki_machine_driver,
+	&machine_driver_kidniki,
 	0,
 
 	rom_kidniki,
@@ -2482,9 +2178,8 @@ struct GameDriver driver_kidniki =
 	input_ports_kidniki,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-
-	kidniki_hiload, kidniki_hisave
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_yanchamr =
@@ -2497,7 +2192,7 @@ struct GameDriver driver_yanchamr =
 	"Irem",
 	"Phil Stroffolino\nAaron Giles (sound)",
 	0,
-	&kidniki_machine_driver,
+	&machine_driver_kidniki,
 	0,
 
 	rom_yanchamr,
@@ -2508,9 +2203,8 @@ struct GameDriver driver_yanchamr =
 	input_ports_kidniki,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-
-	kidniki_hiload, kidniki_hisave
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 struct GameDriver driver_spelunkr =
@@ -2523,7 +2217,7 @@ struct GameDriver driver_spelunkr =
 	"Irem (licensed from Broderbund)",
 	"Phil Stroffolino\nAaron Giles (sound)",
 	0,
-	&spelunkr_machine_driver,
+	&machine_driver_spelunkr,
 	0,
 
 	rom_spelunkr,
@@ -2534,7 +2228,7 @@ struct GameDriver driver_spelunkr =
 	input_ports_spelunkr,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -2549,7 +2243,7 @@ struct GameDriver driver_spelunk2 =
 	"Irem (licensed from Broderbund)",
 	"Phil Stroffolino\nAaron Giles (sound)",
 	0,
-	&spelunk2_machine_driver,
+	&machine_driver_spelunk2,
 	0,
 
 	rom_spelunk2,
@@ -2560,7 +2254,6 @@ struct GameDriver driver_spelunk2 =
 	input_ports_spelunk2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	spelunk2_hiload, spelunk2_hisave
+	ROT0,
+	0,0
 };

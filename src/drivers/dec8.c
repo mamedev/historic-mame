@@ -1944,7 +1944,7 @@ static int oscar_interrupt(void)
 
 /******************************************************************************/
 
-static struct MachineDriver cobra_machine_driver =
+static struct MachineDriver machine_driver_cobra =
 {
 	/* basic machine hardware */
 	{
@@ -1993,7 +1993,7 @@ static struct MachineDriver cobra_machine_driver =
 	}
 };
 
-static struct MachineDriver ghostb_machine_driver =
+static struct MachineDriver machine_driver_ghostb =
 {
 	/* basic machine hardware */
 	{
@@ -2042,7 +2042,7 @@ static struct MachineDriver ghostb_machine_driver =
 	}
 };
 
-static struct MachineDriver srdarwin_machine_driver =
+static struct MachineDriver machine_driver_srdarwin =
 {
 	/* basic machine hardware */
 	{
@@ -2091,7 +2091,7 @@ static struct MachineDriver srdarwin_machine_driver =
 	}
 };
 
-static struct MachineDriver gondo_machine_driver =
+static struct MachineDriver machine_driver_gondo =
 {
 	/* basic machine hardware */
 	{
@@ -2140,7 +2140,7 @@ static struct MachineDriver gondo_machine_driver =
 	}
 };
 
-static struct MachineDriver oscar_machine_driver =
+static struct MachineDriver machine_driver_oscar =
 {
 	/* basic machine hardware */
 	{
@@ -2195,7 +2195,7 @@ static struct MachineDriver oscar_machine_driver =
 	}
 };
 
-static struct MachineDriver lastmiss_machine_driver =
+static struct MachineDriver machine_driver_lastmiss =
 {
 	/* basic machine hardware */
 	{
@@ -2250,7 +2250,7 @@ static struct MachineDriver lastmiss_machine_driver =
 	}
 };
 
-static struct MachineDriver shackled_machine_driver =
+static struct MachineDriver machine_driver_shackled =
 {
 	/* basic machine hardware */
 	{
@@ -2305,7 +2305,7 @@ static struct MachineDriver shackled_machine_driver =
 	}
 };
 
-static struct MachineDriver csilver_machine_driver =
+static struct MachineDriver machine_driver_csilver =
 {
 	/* basic machine hardware */
 	{
@@ -2364,7 +2364,7 @@ static struct MachineDriver csilver_machine_driver =
 	}
 };
 
-static struct MachineDriver garyoret_machine_driver =
+static struct MachineDriver machine_driver_garyoret =
 {
 	/* basic machine hardware */
 	{
@@ -2465,7 +2465,7 @@ ROM_START( ghostb )
  	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x6ef9963b )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64K for sound CPU + 64k for decrypted opcodes */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -2498,7 +2498,7 @@ ROM_START( ghostb3 )
  	ROM_LOAD( "dz-09.rom", 0xa8000, 0x10000, 0xbb6efc02 )
 	ROM_LOAD( "dz-10.rom", 0xb8000, 0x10000, 0x6ef9963b )
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64K for sound CPU + 64k for decrypted opcodes */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
 	ROM_REGIONX( 0x0800, REGION_PROMS )
@@ -2564,7 +2564,7 @@ ROM_START( srdarwin )
 	ROM_CONTINUE(0x60000,0x4000)
 	ROM_CONTINUE(0x70000,0x4000)
 
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64K for sound CPU */
+	ROM_REGIONX( 2*0x10000, REGION_CPU2 )	/* 64K for sound CPU + 64k for decrypted opcodes */
 	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x2ae3591c )
 ROM_END
 
@@ -2658,11 +2658,11 @@ ROM_START( oscar )
 	ROM_LOAD( "ed02", 0xe8000, 0x10000, 0x7ddc5651 )
 	ROM_LOAD( "ed03", 0xa8000, 0x10000, 0x4fc4fb0f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "ed12", 0x8000, 0x8000,  0x432031c5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "ed11", 0x0000, 0x10000,  0x10e5d919 )
+
+	ROM_REGIONX( 2*0x10000, REGION_CPU3 )	/* 64K for sound CPU + 64k for decrypted opcodes */
+	ROM_LOAD( "ed12", 0x8000, 0x8000,  0x432031c5 )
 ROM_END
 
 ROM_START( oscarj )
@@ -2683,11 +2683,11 @@ ROM_START( oscarj )
 	ROM_LOAD( "ed02", 0xe8000, 0x10000, 0x7ddc5651 )
 	ROM_LOAD( "ed03", 0xa8000, 0x10000, 0x4fc4fb0f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "ed12", 0x8000, 0x8000, 0x432031c5 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
+
+	ROM_REGIONX( 2*0x10000, REGION_CPU3 )	/* 64K for sound CPU + 64k for decrypted opcodes */
+	ROM_LOAD( "ed12", 0x8000, 0x8000, 0x432031c5 )
 ROM_END
 
 ROM_START( lastmiss )
@@ -2708,11 +2708,11 @@ ROM_START( lastmiss )
 	ROM_LOAD( "lm_dl07.rom", 0xc8000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0xe8000, 0x10000, 0xc43c26a7 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
+	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
 ROM_END
 
 ROM_START( lastmss2 )
@@ -2733,11 +2733,11 @@ ROM_START( lastmss2 )
 	ROM_LOAD( "lm_dl07.rom", 0xc8000, 0x10000, 0x1b60604d )
 	ROM_LOAD( "lm_dl06.rom", 0xe8000, 0x10000, 0xc43c26a7 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
+	ROM_LOAD( "lm_dl05.rom", 0x8000, 0x8000, 0x1a5df8c0 )
 ROM_END
 
 ROM_START( shackled )
@@ -2765,11 +2765,11 @@ ROM_START( shackled )
 	ROM_LOAD( "dk-09.rom", 0xc8000, 0x10000, 0xc1557fac )
 	ROM_LOAD( "dk-08.rom", 0xe8000, 0x10000, 0x5e54e9f5 )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "dk-07.rom", 0x08000, 0x08000, 0x887e4bcc )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "dk-01.rom", 0x00000, 0x10000, 0x71fe3bda )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
+	ROM_LOAD( "dk-07.rom", 0x08000, 0x08000, 0x887e4bcc )
 ROM_END
 
 ROM_START( breywood )
@@ -2797,11 +2797,11 @@ ROM_START( breywood )
 	ROM_LOAD( "11.bin", 0xc8000, 0x10000, 0xe37d5dbe )
 	ROM_LOAD( "12.bin", 0xe8000, 0x10000, 0xbeee880f )
 
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
-	ROM_LOAD( "2.bin", 0x8000, 0x8000,  0x4a471c38 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
 	ROM_LOAD( "8.bin", 0x0000, 0x10000,  0x3d9fb623 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64K for sound CPU */
+	ROM_LOAD( "2.bin", 0x8000, 0x8000,  0x4a471c38 )
 ROM_END
 
 ROM_START( csilver )
@@ -2828,12 +2828,12 @@ ROM_START( csilver )
 	ROM_LOAD( "b1",  0xc8000, 0x10000, 0x3ef77a32 )
 	ROM_LOAD( "b2",  0xd8000, 0x10000, 0x9cf3d5b8 )
 
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
+	ROM_LOAD( "a5", 0x0000, 0x10000,  0x29432691 )
+
 	ROM_REGIONX( 0x18000, REGION_CPU3 )	/* 64K for sound CPU */
 	ROM_LOAD( "a6", 0x10000, 0x08000,  0xeb32cf25 )
 	ROM_CONTINUE(   0x08000, 0x08000 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "a5", 0x0000, 0x10000,  0x29432691 )
 ROM_END
 
 ROM_START( garyoret )
@@ -2886,24 +2886,28 @@ ROM_END
 static void deco222_decode(void)
 {
 	int A,sound_cpu;
-	unsigned char *RAM;
-	extern int encrypted_cpu;
+	unsigned char *rom;
+	int diff;
+
 
 	sound_cpu = 1;
 	/* Oscar has three CPUs */
 	if (Machine->drv->cpu[2].cpu_type != 0) sound_cpu = 2;
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = memory_region(REGION_CPU1+sound_cpu);
-	encrypted_cpu = sound_cpu;
+	rom = memory_region(REGION_CPU1+sound_cpu);
+	diff = memory_region_length(REGION_CPU1+sound_cpu) / 2;
+
+	memory_set_opcode_base(sound_cpu,rom+diff);
+
 	for (A = 0;A < 0x10000;A++)
-		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
+		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
 static void meikyuh_patch(void)
 {
 	/* Blank out garbage in colour prom to avoid colour overflow */
-	unsigned char *RAM = memory_region(3);
+	unsigned char *RAM = memory_region(REGION_PROMS);
 	memset(RAM+0x20,0,0xe0);
 }
 
@@ -2911,311 +2915,6 @@ static void ghostb_decode(void)
 {
 	deco222_decode();
 	meikyuh_patch();
-}
-
-/******************************************************************************/
-
-#define HI_SAVE(NAME,memory,address,length) 							\
-	static void NAME##_hisave(void)										\
-	{																	\
-		void *f;														\
-		unsigned char *RAM = memory;									\
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) \
-		{																\
-			osd_fwrite(f,&RAM[address],length);							\
-			osd_fclose(f);												\
-		}																\
-	}
-
-/* Short versions of hiscore save since they are all the same!  I'd like to change
-the load hiscore functions to macros too... */
-HI_SAVE(cobracom,memory_region(REGION_CPU1),0x06c6,30)
-HI_SAVE(ghostb,  memory_region(REGION_CPU1),0x01C0,118)
-HI_SAVE(ghostb3, memory_region(REGION_CPU1),0x0DA0,118)
-HI_SAVE(srdarwin,memory_region(REGION_CPU1),0x1342,70)
-HI_SAVE(gondo,   memory_region(REGION_CPU1),0x1532,72)
-HI_SAVE(makyo,   memory_region(REGION_CPU1),0x14f9,72)
-HI_SAVE(meikyuh, memory_region(REGION_CPU1),0x0190,80)
-HI_SAVE(oscar,   dec8_shared_ram,0x075A,70)
-HI_SAVE(lastmiss,dec8_shared_ram,0x09aa,60)
-HI_SAVE(shackled,dec8_shared_ram,0x0108,40)
-HI_SAVE(csilver, dec8_shared_ram,0x0e3c,60)
-
-static int cobracom_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x06c6],"\x00\x84\x76",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x06c6],30);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-            RAM[0x0135] = RAM[0x06c6];
-            RAM[0x0136] = RAM[0x06c7];
-            RAM[0x0137] = RAM[0x06c8];
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int ghostb_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x01C0],"\x01\x1F\x0F",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x01C0],118);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int meikyuh_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0190],"\x01\x1F\x0F",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0190],80);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int ghostb3_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0DA0],"\x01\x1F\x0F",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0DA0],118);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static int oscar_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&dec8_shared_ram[0x075A],"\x00\x68\x09",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&dec8_shared_ram[0x075A],70);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-/* Last Mission (Rev.5 & Rev.6) high score save - RJF (Feb 15, 1999) */
-static int lastmiss_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x09c8],"\x4a\x4b\x31",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x09aa],60);
-                        RAM[0x0006] = RAM[0x09aa];
-                        RAM[0x0007] = RAM[0x09ab];
-                        RAM[0x0008] = RAM[0x09ac];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-/* Super Real Darwin high score save - RJF (Feb 14, 1999) */
-static int srdarwin_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x1343],"\x05\x78\x00",3) == 0) &&
-            (memcmp(&RAM[0x136a],"\x53\x41\x54",3) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x1342],70);
-                        RAM[0x1332] = RAM[0x1343];
-                        RAM[0x1333] = RAM[0x1344];
-                        RAM[0x1334] = RAM[0x1345];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-/* Gondomania & Makyou Senshi high score save - RJF (Feb 14, 1999) */
-static int gondo_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x1532],"\x21\x2d\x25",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x1532],72);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int makyo_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x14f9],"\x21\x2d\x25",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x14f9],72);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-/* Shackled & Breywood high score save - RJF (Feb 15, 1999) */
-static int shackled_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0109],"\x41\x4f\x4b",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x0108],40);
-                        RAM[0x006b] = RAM[0x010d];
-                        RAM[0x006c] = RAM[0x010e];
-                        RAM[0x006d] = RAM[0x010f];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int breywood_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0109],"\x41\x4f\x4b",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x0108],40);
-                        RAM[0x006d] = RAM[0x010d];
-                        RAM[0x006e] = RAM[0x010e];
-                        RAM[0x006f] = RAM[0x010f];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-/* Captain Silver high score save - RJF (Feb 16, 1999) */
-static int csilver_hiload(void)
-{
-    unsigned char *RAM = memory_region(REGION_CPU1);
-	static int firsttime;
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-                memset(&RAM[0x0e3c],0xff,60);
-		firsttime = 1;
-	}
-
-
-          if(memcmp(&RAM[0x0e3c],"\x00\x00\x00",3) == 0)
-	{
-              void *f;
-              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              {
-                        osd_fread(f,&RAM[0x0e3c],6*10);
-                        RAM[0x0009] = RAM[0x0e3f];
-                        RAM[0x000a] = RAM[0x0e40];
-                        RAM[0x000b] = RAM[0x0e41];
-                        osd_fclose(f);
-              }
-
-              return 1;
-    		  firsttime = 0;
-	}
-      else return 0;   /* we can't load the hi scores yet */
 }
 
 /******************************************************************************/
@@ -3230,7 +2929,7 @@ struct GameDriver driver_cobracom =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&cobra_machine_driver,
+	&machine_driver_cobra,
 	0,
 
 	rom_cobracom,
@@ -3241,9 +2940,8 @@ struct GameDriver driver_cobracom =
 	input_ports_cobracom,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	cobracom_hiload, cobracom_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ghostb =
@@ -3256,20 +2954,19 @@ struct GameDriver driver_ghostb =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&ghostb_machine_driver,
-	0,
+	&machine_driver_ghostb,
+	ghostb_decode,
 
 	rom_ghostb,
-	0, ghostb_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ghostb,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ghostb_hiload, ghostb_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ghostb3 =
@@ -3282,20 +2979,19 @@ struct GameDriver driver_ghostb3 =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&ghostb_machine_driver,
-	0,
+	&machine_driver_ghostb,
+	ghostb_decode,
 
 	rom_ghostb3,
-	0, ghostb_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ghostb,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ghostb3_hiload, ghostb3_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_meikyuh =
@@ -3308,20 +3004,19 @@ struct GameDriver driver_meikyuh =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&ghostb_machine_driver,
-	0,
+	&machine_driver_ghostb,
+	meikyuh_patch,
 
 	rom_meikyuh,
-	meikyuh_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_ghostb,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	meikyuh_hiload, meikyuh_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_srdarwin =
@@ -3334,20 +3029,19 @@ struct GameDriver driver_srdarwin =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&srdarwin_machine_driver,
-	0,
+	&machine_driver_srdarwin,
+	deco222_decode,
 
 	rom_srdarwin,
-	0, deco222_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_srdarwin,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	srdarwin_hiload, srdarwin_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_gondo =
@@ -3360,7 +3054,7 @@ struct GameDriver driver_gondo =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&gondo_machine_driver,
+	&machine_driver_gondo,
 	0,
 
 	rom_gondo,
@@ -3371,9 +3065,8 @@ struct GameDriver driver_gondo =
 	input_ports_gondo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	gondo_hiload, gondo_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_makyosen =
@@ -3386,7 +3079,7 @@ struct GameDriver driver_makyosen =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&gondo_machine_driver,
+	&machine_driver_gondo,
 	0,
 
 	rom_makyosen,
@@ -3397,9 +3090,8 @@ struct GameDriver driver_makyosen =
 	input_ports_gondo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	makyo_hiload, makyo_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_oscar =
@@ -3412,20 +3104,19 @@ struct GameDriver driver_oscar =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&oscar_machine_driver,
-	0,
+	&machine_driver_oscar,
+	deco222_decode,
 
 	rom_oscar,
-	0, deco222_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_oscar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	oscar_hiload, oscar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_oscarj =
@@ -3438,20 +3129,19 @@ struct GameDriver driver_oscarj =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&oscar_machine_driver,
-	0,
+	&machine_driver_oscar,
+	deco222_decode,
 
 	rom_oscarj,
-	0, deco222_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_oscar,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	oscar_hiload, oscar_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_lastmiss =
@@ -3464,7 +3154,7 @@ struct GameDriver driver_lastmiss =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&lastmiss_machine_driver,
+	&machine_driver_lastmiss,
 	0,
 
 	rom_lastmiss,
@@ -3475,9 +3165,8 @@ struct GameDriver driver_lastmiss =
 	input_ports_lastmiss,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	lastmiss_hiload, lastmiss_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_lastmss2 =
@@ -3490,7 +3179,7 @@ struct GameDriver driver_lastmss2 =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&lastmiss_machine_driver,
+	&machine_driver_lastmiss,
 	0,
 
 	rom_lastmss2,
@@ -3501,9 +3190,8 @@ struct GameDriver driver_lastmss2 =
 	input_ports_lastmiss,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	lastmiss_hiload, lastmiss_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_shackled =
@@ -3516,7 +3204,7 @@ struct GameDriver driver_shackled =
 	"Data East USA",
 	"Bryan McPhail",
 	0,
-	&shackled_machine_driver,
+	&machine_driver_shackled,
 	0,
 
 	rom_shackled,
@@ -3527,9 +3215,8 @@ struct GameDriver driver_shackled =
 	input_ports_shackled,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	shackled_hiload, shackled_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_breywood =
@@ -3542,7 +3229,7 @@ struct GameDriver driver_breywood =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&shackled_machine_driver,
+	&machine_driver_shackled,
 	0,
 
 	rom_breywood,
@@ -3553,9 +3240,8 @@ struct GameDriver driver_breywood =
 	input_ports_shackled,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	breywood_hiload, shackled_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_csilver =
@@ -3568,7 +3254,7 @@ struct GameDriver driver_csilver =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&csilver_machine_driver,
+	&machine_driver_csilver,
 	0,
 
 	rom_csilver,
@@ -3579,9 +3265,8 @@ struct GameDriver driver_csilver =
 	input_ports_csilver,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	csilver_hiload, csilver_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_garyoret =
@@ -3594,7 +3279,7 @@ struct GameDriver driver_garyoret =
 	"Data East Corporation",
 	"Bryan McPhail",
 	0,
-	&garyoret_machine_driver,
+	&machine_driver_garyoret,
 	0,
 
 	rom_garyoret,
@@ -3605,7 +3290,7 @@ struct GameDriver driver_garyoret =
 	input_ports_garyoret,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -294,7 +294,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	atari_vg_earom_handler
 };
 
 
@@ -341,8 +343,7 @@ struct GameDriver driver_milliped =
 	input_ports_milliped,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	atari_vg_earom_load, atari_vg_earom_save
+	ROT270,
+	0,0
 };
 

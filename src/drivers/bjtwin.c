@@ -1,6 +1,8 @@
 /********************************************************************
 
-Bombjack Twin	(Mirko Buffoni)
+Bombjack Twin
+
+driver by Mirko Buffoni
 
 
 Memory layout:
@@ -257,8 +259,8 @@ static struct GfxLayout spritelayout =
 	8192,    /* 8192 sprites */
 	4,       /* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the bitplanes are packed in one nibble */
-	{ 0, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-		16*32+0, 16*32+1*4, 16*32+2*4, 16*32+3*4, 16*32+4*4, 16*32+5*4, 16*32+6*4, 16*32+7*4 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4,
+		16*32+2*4, 16*32+3*4, 16*32+0*4, 16*32+1*4, 16*32+6*4, 16*32+7*4, 16*32+4*4, 16*32+5*4 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 		8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
 	4*32*8   /* every sprites takes 256 consecutive bytes */
@@ -266,9 +268,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout,     0, 16 },	/* Chars */
-	{ 1, 0x010000, &tilelayout,     0, 16 },	/* Tiles */
-	{ 1, 0x110000, &spritelayout, 256, 16 },	/* Sprites */
+	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Chars */
+	{ REGION_GFX2, 0, &tilelayout,     0, 16 },	/* Tiles */
+	{ REGION_GFX3, 0, &spritelayout, 256, 16 },	/* Sprites */
 	{ -1 } /* end of array */
 };
 
@@ -278,13 +280,13 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chip */
 	{ 22050, 22050 },         /* 22050Hz frequency? */
 //	{ 24000, 24000 },	/* this fixes pitch but music breaks up */
-	{ 2,3 },        /* memory region 2,3 */
+	{ REGION_SOUND1, REGION_SOUND2 },        /* memory region 2,3 */
 	{ 50,50 }
 };
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bjtwin =
 {
 	/* basic machine hardware */
 	{
@@ -328,19 +330,22 @@ ROM_START( bjtwin )
 	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830A465 )	/* 68000 code */
 	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7CD4E72A )	/* 68000 code */
 
-	/* we need 0x210000 bytes, plus other 0x100000 needed for decryption */
-	ROM_REGION_DISPOSE(0x310000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bjt.35",		0x000000, 0x010000, 0xAA13DF7C )	/* 8x8 tiles */
-	ROM_LOAD( "bjt.32",		0x010000, 0x100000, 0x8A4F26D0 )	/* 16x16 tiles */
-	ROM_LOAD( "bjt.100",	0x110000, 0x100000, 0xBB06245D )	/* Sprites */
 
-	ROM_REGION( 0x100000 )		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bjt.32",		0x000000, 0x100000, 0x8A4F26D0 )	/* 16x16 tiles */
+
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bjt.100",	0x000000, 0x100000, 0xBB06245D )	/* Sprites */
+
+	ROM_REGIONX( 0x100000, REGION_SOUND1 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
 	ROM_LOAD( "bjt.130",    0x000000, 0x100000, 0x372D46DD )
 
-	ROM_REGION( 0x100000 )		/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
+	ROM_REGIONX( 0x100000, REGION_SOUND2 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
 	ROM_LOAD( "bjt.127",    0x000000, 0x100000, 0x8DA67808 )
-
 ROM_END
+
 
 
 static unsigned char decode_byte(unsigned char src, unsigned char *bitp)
@@ -378,10 +383,10 @@ unsigned long bjtwin_address_map_sprites(unsigned long addr)
 }
 
 
-void bjtwin_decode(void)
+void init_bjtwin(void)
 {
 	/* GFX are scrambled.  We decode them here.  (BIG Thanks to Antiriad for descrambling info) */
-	unsigned char * RAM = memory_region(1);
+	unsigned char *rom;
 
 	static unsigned char decode_data_bg[8][8] =
 	{
@@ -397,53 +402,57 @@ void bjtwin_decode(void)
 
 	static unsigned char decode_data_sprite[4][16] =
 	{
-		{0x0,0xD,0x2,0xC,0xE,0x6,0xF,0xA,0x9,0x3,0x4,0x5,0x7,0x1,0xB,0x8},
-		{0x8,0x5,0xE,0x6,0xD,0x2,0x7,0x9,0x1,0x3,0xC,0x4,0x0,0xF,0xB,0xA},
-		{0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0,0xF,0xE,0xD,0xC,0xB,0xA,0x9,0x8},
-		{0x9,0x2,0x3,0x4,0x5,0xD,0x1,0x0,0xF,0xE,0xC,0x6,0xA,0xB,0x7,0x8},
+		{0x9,0x3,0x4,0x5,0x7,0x1,0xB,0x8,0x0,0xD,0x2,0xC,0xE,0x6,0xF,0xA},
+		{0x1,0x3,0xC,0x4,0x0,0xF,0xB,0xA,0x8,0x5,0xE,0x6,0xD,0x2,0x7,0x9},
+		{0xF,0xE,0xD,0xC,0xB,0xA,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0},
+		{0xF,0xE,0xC,0x6,0xA,0xB,0x7,0x8,0x9,0x2,0x3,0x4,0x5,0xD,0x1,0x0},
 	};
 
 
 	int A,i;
 
-	/* Move encrypted background in work ram */
-	memcpy(&RAM[0x210000], &RAM[0x10000], 0x100000);
 
-	for (A=0; A<0x100000; A++)
+	/* background */
+	rom = memory_region(REGION_GFX2);
+	for (A = 0;A < memory_region_length(REGION_GFX2);A++)
 	{
-		RAM[A+0x10000] = decode_byte( RAM[A+0x210000], &decode_data_bg[bjtwin_address_map_bg0(A)][0]);
+		rom[A] = decode_byte( rom[A], decode_data_bg[bjtwin_address_map_bg0(A)]);
 	}
 
-	/* Move encrypted sprites in work ram */
-	memcpy(&RAM[0x210000], &RAM[0x110000], 0x100000);
-
-	for (A=0; A<0x100000; A+=2)
+	/* sprites */
+	rom = memory_region(REGION_GFX3);
+	for (A = 0;A < memory_region_length(REGION_GFX3);A += 2)
 	{
-		unsigned short tmp = decode_word( RAM[A+0x210000]*256 + RAM[A+0x210001], &decode_data_sprite[bjtwin_address_map_sprites(A)][0]);
-		RAM[A+0x110001] = tmp & 0xff;
-		RAM[A+0x110000] = tmp >> 8;
+		unsigned short tmp = decode_word( rom[A]*256 + rom[A+1], decode_data_sprite[bjtwin_address_map_sprites(A)]);
+		rom[A] = tmp >> 8;
+		rom[A+1] = tmp & 0xff;
 	}
+
 
 	/*	Bombjack Twin uses different banks for each voice of each OKI chip
 	 *	Each bank is 0x10000 bytes long, but 24 bit data stored in OKI rom header
 	 *	is invalid.  So we void the highest bits of address here.
 	 */
 
-	RAM = memory_region(2);	/* Process OKI 1 ROM */
+	rom = memory_region(REGION_SOUND1);	/* Process OKI 1 ROM */
 	for (i=0; i < 0x10; i++)
+	{
 		for (A=0; A < 0x400; A += 8)
 		{
-			RAM[i*0x10000+A] = 0;
-			RAM[i*0x10000+A+3] = 0;
+			rom[i*0x10000+A] = 0;
+			rom[i*0x10000+A+3] = 0;
 		}
+	}
 
-	RAM = memory_region(3);	/* Process OKI 2 ROM */
+	rom = memory_region(REGION_SOUND2);	/* Process OKI 2 ROM */
 	for (i=0; i < 0x10; i++)
+	{
 		for (A=0; A < 0x400; A += 8)
 		{
-			RAM[i*0x10000+A] = 0;
-			RAM[i*0x10000+A+3] = 0;
+			rom[i*0x10000+A] = 0;
+			rom[i*0x10000+A+3] = 0;
 		}
+	}
 
 
 	/* Patch rom to enable test mode */
@@ -462,65 +471,11 @@ void bjtwin_decode(void)
  *	008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-	RAM = memory_region(REGION_CPU1);
-//	WRITE_WORD(&RAM[0x09172], 0x6006);	/* patch checksum error */
-//	WRITE_WORD(&RAM[0x08f74], 0x4e71);
+//	rom = memory_region(REGION_CPU1);
+//	WRITE_WORD(&rom[0x09172], 0x6006);	/* patch checksum error */
+//	WRITE_WORD(&rom[0x08f74], 0x4e71);
 }
 
 
 
-static int hiload(void)
-{
-
-    void *f;
-
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&bjtwin_workram[0x919a])==0x0c04 && READ_WORD(&bjtwin_workram[0x919c])==0x0c20
-    	&& READ_WORD(&bjtwin_workram[0x919e])==0x0c4c)
-	{
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			osd_fread_msbfirst(f,&bjtwin_workram[0x9100],10*16);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&bjtwin_workram[0x9100],10*16);
-		osd_fclose(f);
-	}
-}
-
-
-struct GameDriver driver_bjtwin =
-{
-	__FILE__,
-	0,
-	"bjtwin",
-	"Bombjack Twin",
-	"1993",
-	"NMK",
-	"Mirko Buffoni (mame driver)\nRichard Bush (hardware info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bjtwin,
-	bjtwin_decode, 0,
-	0,
-	0,
-
-	input_ports_bjtwin,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
-};
+GAME( 1993, bjtwin, , bjtwin, bjtwin, bjtwin, ROT270, "NMK", "Bombjack Twin" )

@@ -46,11 +46,12 @@ struct MemoryWriteAddress
 #define MWA_NOP 0	                  /* do nothing */
 #define MWA_RAM ((void(*)(int,int))-1)	   /* plain RAM location (store the value) */
 #define MWA_ROM ((void(*)(int,int))-2)	   /* plain ROM location (do nothing) */
-/* RAM[] and ROM[] are usually the same, but they aren't if the CPU opcodes are */
-/* encrypted. In such a case, opcodes are fetched from ROM[], and arguments from */
-/* RAM[]. If the program dynamically creates code in RAM and executes it, it */
-/* won't work unless writes to RAM affects both RAM[] and ROM[]. */
-#define MWA_RAMROM ((void(*)(int,int))-3)	/* write to both the RAM[] and ROM[] array. */
+/*
+   If the CPU opcodes are encrypted, they are fetched from a different memory space.
+   In such a case, if the program dynamically creates code in RAM and executes it,
+   it won't work unless you use MWA_RAMROM to affect both memory spaces.
+ */
+#define MWA_RAMROM ((void(*)(int,int))-3)
 #define MWA_BANK1 ((void(*)(int,int))-10)  /* bank memory */
 #define MWA_BANK2 ((void(*)(int,int))-11)  /* bank memory */
 #define MWA_BANK3 ((void(*)(int,int))-12)  /* bank memory */
@@ -159,8 +160,6 @@ extern MHELE *cur_mrhard;
 extern MHELE *cur_mwhard;
 extern MHELE curhw;
 
-//extern unsigned char *RAM;	/* pointer to the memory region of the active CPU */
-extern unsigned char *ROM;
 extern unsigned char *OP_RAM;	/* op_code used */
 extern unsigned char *OP_ROM;	/* op_code used */
 
@@ -175,11 +174,14 @@ void cpu_setOPbase29(int pc);  /* AJP 980803 */
 void cpu_setOPbaseoverride(int cpu,int (*function)(int));
 
 /* ----- memory setup function ----- */
-int initmemoryhandlers(void);
-void shutdownmemoryhandler(void);
+int memory_init(void);
+void memory_shutdown(void);
+
+/* use this to set the a different opcode base address when using a CPU with
+   opcodes and data encrypted separately */
+void memory_set_opcode_base(int cpu,unsigned char *base);
 
 void memorycontextswap(int activecpu);
-void updatememorybase(int activecpu);
 
 /*
 look up a chunk of memory and get its start/end addresses, and its base.
@@ -263,8 +265,8 @@ extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
 
 #define cpu_readop(A) 		(OP_ROM[A])
-#define cpu_readop16(A)         READ_WORD(&OP_ROM[A])
+#define cpu_readop16(A)		READ_WORD(&OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])
-#define cpu_readop_arg16(A)     READ_WORD(&OP_RAM[A])
+#define cpu_readop_arg16(A)	READ_WORD(&OP_RAM[A])
 
 #endif

@@ -415,27 +415,4 @@ extern int atarifb_lamp1, atarifb_lamp2;
 	for (x = 0;x < 20;x++)
 			drawgfx(bitmap,Machine->uifont,buf2[x],DT_COLOR_WHITE,0,0,6*x,0,0,TRANSPARENCY_NONE,0);
 }
-
-#if 0
-{
-	int x,x2;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-extern int atarifb_lamp1, atarifb_lamp2;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-	x2 = 0;
-	for (x2 = 0;x2 < 1;x2 ++)
-	{
-		sprintf(buf,"%02X %02X", atarifb_lamp1, atarifb_lamp2);
-		for (x = 0;x < 5;x++)
-			drawgfx(bitmap,Machine->uifont,buf[x],DT_COLOR_WHITE,0,0,6*x + 16*x2,0,0,TRANSPARENCY_NONE,0);
-	}
 }
-#endif
-}
-
-

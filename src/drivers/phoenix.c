@@ -303,7 +303,7 @@ static struct CustomSound_interface pleiads_custom_interface =
 
 #define MACHINE_DRIVER(GAMENAME)									\
 																	\
-static struct MachineDriver GAMENAME##_machine_driver =				\
+static struct MachineDriver machine_driver_##GAMENAME =				\
 {																	\
 	/* basic machine hardware */									\
 	{																\
@@ -530,68 +530,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x438a],"\x00\x00\x0f",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4388],4);
-
-			/* copy the high score to the screen */
-			/*       // I suppose noone can do such an HISCORE!!! ;)
-			phoenix_videoram2_w(0x0221, (RAM[0x4388] >> 4)+0x20);
-			phoenix_videoram2_w(0x0201, (RAM[0x4388] & 0xf)+0x20);
-			*/
-			RAM[0x49e1] = (RAM[0x4389] >> 4) + 0x20;
-			RAM[0x49c1] = (RAM[0x4389] & 0xf) + 0x20;
-			RAM[0x49a1] = (RAM[0x438a] >> 4) + 0x20;
-			RAM[0x4981] = (RAM[0x438a] & 0xf) + 0x20;
-			RAM[0x4961] = (RAM[0x438b] >> 4) + 0x20;
-			RAM[0x4941] = (RAM[0x438b] & 0xf) + 0x20;
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-
-static unsigned long get_score(unsigned char *score)
-{
-     return (score[3])+(256*score[2])+((unsigned long)(65536)*score[1])+((unsigned long)(65536)*256*score[0]);
-}
-
-static void hisave(void)
-{
-   unsigned long score1,score2,hiscore;
-   void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-   score1 = get_score(&RAM[0x4380]);
-   score2 = get_score(&RAM[0x4384]);
-   hiscore = get_score(&RAM[0x4388]);
-
-   if (score1 > hiscore) RAM += 0x4380;         /* check consistency */
-   else if (score2 > hiscore) RAM += 0x4384;
-   else RAM += 0x4388;
-
-   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-   {
-      osd_fwrite(f,&RAM[0],4);
-      osd_fclose(f);
-   }
-}
-
-
 #define CREDITS   "Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili"
 
 struct GameDriver driver_phoenix =
@@ -604,7 +542,7 @@ struct GameDriver driver_phoenix =
 	"Amstar",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
 	rom_phoenix,
@@ -615,9 +553,8 @@ struct GameDriver driver_phoenix =
 	input_ports_phoenix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_phoenixa =
@@ -630,7 +567,7 @@ struct GameDriver driver_phoenixa =
 	"Amstar (Centuri license)",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
 	rom_phoenixa,
@@ -641,9 +578,8 @@ struct GameDriver driver_phoenixa =
 	input_ports_phoenixa,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_phoenixt =
@@ -656,7 +592,7 @@ struct GameDriver driver_phoenixt =
 	"Taito",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
 	rom_phoenixt,
@@ -667,9 +603,8 @@ struct GameDriver driver_phoenixt =
 	input_ports_phoenixt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_phoenix3 =
@@ -682,7 +617,7 @@ struct GameDriver driver_phoenix3 =
 	"bootleg",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
 	rom_phoenix3,
@@ -693,9 +628,8 @@ struct GameDriver driver_phoenix3 =
 	input_ports_phoenix3,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_phoenixc =
@@ -708,7 +642,7 @@ struct GameDriver driver_phoenixc =
 	"bootleg?",
 	CREDITS,
 	0,
-	&phoenix_machine_driver,
+	&machine_driver_phoenix,
 	0,
 
 	rom_phoenixc,
@@ -719,9 +653,8 @@ struct GameDriver driver_phoenixc =
 	input_ports_phoenixt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 
@@ -735,7 +668,7 @@ struct GameDriver driver_pleiads =
 	"Tehkan",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
 	rom_pleiads,
@@ -746,9 +679,8 @@ struct GameDriver driver_pleiads =
 	input_ports_pleiads,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_pleiadbl =
@@ -761,7 +693,7 @@ struct GameDriver driver_pleiadbl =
 	"bootleg",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
 	rom_pleiadbl,
@@ -772,9 +704,8 @@ struct GameDriver driver_pleiadbl =
 	input_ports_pleiads,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_pleiadce =
@@ -787,7 +718,7 @@ struct GameDriver driver_pleiadce =
 	"Tehkan (Centuri license)",
 	CREDITS,
 	0,
-	&pleiads_machine_driver,
+	&machine_driver_pleiads,
 	0,
 
 	rom_pleiadce,
@@ -798,7 +729,6 @@ struct GameDriver driver_pleiadce =
 	input_ports_pleiads,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -181,13 +181,13 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_workram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram;
-void extrmatn_init(void);
-void arkanoi2_init(void);
-void drtoppel_init(void);
-void chukatai_init(void);
-void tnzs_init(void);
-void insectx_init(void);
-void kageki_init(void);
+void init_extrmatn(void);
+void init_arkanoi2(void);
+void init_drtoppel(void);
+void init_chukatai(void);
+void init_tnzs(void);
+void init_insectx(void);
+void init_kageki(void);
 int arkanoi2_sh_f000_r(int offs);
 void tnzs_init_machine(void);
 int tnzs_interrupt (void);
@@ -229,7 +229,7 @@ int kageki_init_samples(const struct MachineSound *msound)
 
 	for (i = 0; i < samples->total; i++)
 	{
-		src = memory_region(3) + 0x0090;
+		src = memory_region(REGION_SOUND1) + 0x0090;
 		start = (src[(i * 2) + 1] * 256) + src[(i * 2)];
 		scan = &src[start];
 		size = 0;
@@ -356,7 +356,7 @@ static struct MemoryReadAddress sub_readmem[] =
 									/* changed in insectx_init() ) */
 	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_sub_r },
-	{ 0xf000, 0xf003, arkanoi2_sh_f000_r },	/* paddles in arkanoid2; the ports are */
+	{ 0xf000, 0xf003, arkanoi2_sh_f000_r },	/* paddles in arkanoid2/plumppop; the ports are */
 						/* read but not used by the other games, and are not read at */
 						/* all by insectx. */
 	{ -1 }  /* end of table */
@@ -599,6 +599,10 @@ INPUT_PORTS_START( arkanoi2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
+	PORT_START		/* empty */
+
+	PORT_START		/* empty */
+
 	PORT_START		/* spinner 1 - read at f000/1 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
@@ -667,6 +671,10 @@ INPUT_PORTS_START( ark2us )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
+	PORT_START		/* empty */
+
+	PORT_START		/* empty */
+
 	PORT_START		/* spinner 1 - read at f000/1 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
@@ -677,6 +685,91 @@ INPUT_PORTS_START( ark2us )
 	PORT_START		/* spinner 2 - read at f002/3 */
 	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( plumppop )
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_CHEAT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_CHEAT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* spinner 1 - read at f000/1 */
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
+
+	PORT_START		/* spinner 2 - read at f002/3 */
+	PORT_ANALOG( 0xffff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( drtoppel )
@@ -1272,19 +1365,19 @@ static struct GfxLayout insectx_charlayout =
 
 static struct GfxDecodeInfo arkanoi2_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &arkanoi2_charlayout, 0, 32 },
+	{ REGION_GFX1, 0, &arkanoi2_charlayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo tnzs_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &tnzs_charlayout, 0, 32 },
+	{ REGION_GFX1, 0, &tnzs_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
 static struct GfxDecodeInfo insectx_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &insectx_charlayout, 0, 32 },
+	{ REGION_GFX1, 0, &insectx_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
@@ -1348,7 +1441,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static struct MachineDriver arkanoi2_machine_driver =
+static struct MachineDriver machine_driver_arkanoi2 =
 {
 	/* basic machine hardware */
 	{
@@ -1392,7 +1485,7 @@ static struct MachineDriver arkanoi2_machine_driver =
 	}
 };
 
-static struct MachineDriver drtoppel_machine_driver =
+static struct MachineDriver machine_driver_drtoppel =
 {
 	/* basic machine hardware */
 	{
@@ -1435,7 +1528,7 @@ static struct MachineDriver drtoppel_machine_driver =
 	}
 };
 
-static struct MachineDriver tnzs_machine_driver =
+static struct MachineDriver machine_driver_tnzs =
 {
 	/* basic machine hardware */
 	{
@@ -1479,7 +1572,7 @@ static struct MachineDriver tnzs_machine_driver =
 	}
 };
 
-static struct MachineDriver tnzsb_machine_driver =
+static struct MachineDriver machine_driver_tnzsb =
 {
 	/* basic machine hardware */
 	{
@@ -1529,7 +1622,7 @@ static struct MachineDriver tnzsb_machine_driver =
 	}
 };
 
-static struct MachineDriver insectx_machine_driver =
+static struct MachineDriver machine_driver_insectx =
 {
 	/* basic machine hardware */
 	{
@@ -1573,7 +1666,7 @@ static struct MachineDriver insectx_machine_driver =
 	}
 };
 
-static struct MachineDriver kageki_machine_driver =
+static struct MachineDriver machine_driver_kageki =
 {
 	{
 		{
@@ -1638,15 +1731,15 @@ ROM_START( extrmatn )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b06-21.bin", 0x20000, 0x10000, 0x1614d6a2 )	/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x80000)		/* Region 1 - temporary for gfx roms */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, 0x744f2c84 )
+	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b06-01.bin", 0x00000, 0x20000, 0xd2afbf7e )
 	ROM_LOAD( "b06-02.bin", 0x20000, 0x20000, 0xe0c2757a )
 	ROM_LOAD( "b06-03.bin", 0x40000, 0x20000, 0xee80ab9d )
 	ROM_LOAD( "b06-04.bin", 0x60000, 0x20000, 0x3697ace4 )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
-	ROM_LOAD( "b06-06.bin", 0x00000, 0x08000, 0x744f2c84 )
-	ROM_CONTINUE(           0x10000, 0x08000 )	/* banked at 8000-9fff */
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b06-09.bin", 0x00000, 0x200, 0xf388b361 )	/* hi bytes */
@@ -1659,15 +1752,15 @@ ROM_START( arkanoi2 )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGION_DISPOSE(0x80000)		/* Region 1 - temporary for gfx roms */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_LOAD( "a2-13.rom",  0x00000, 0x08000, 0xe8035ef1 )
+	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
-	ROM_LOAD( "a2-13.rom",  0x00000, 0x08000, 0xe8035ef1 )
-	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
@@ -1680,15 +1773,15 @@ ROM_START( ark2us )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGION_DISPOSE(0x80000)		/* Region 1 - temporary for gfx roms */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_LOAD( "b08-12.bin", 0x00000, 0x08000, 0xdc84e27d )
+	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
-	ROM_LOAD( "b08-12.bin", 0x00000, 0x08000, 0xdc84e27d )
-	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
@@ -1701,19 +1794,52 @@ ROM_START( ark2jp )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
 	/* 20000-2ffff empty */
 
-	ROM_REGION_DISPOSE(0x80000)		/* Region 1 - temporary for gfx roms */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
+	ROM_LOAD( "b08-06",     0x00000, 0x08000, 0xadfcd40c )
+	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a2-m01.bin", 0x00000, 0x20000, 0x2ccc86b4 )
 	ROM_LOAD( "a2-m02.bin", 0x20000, 0x20000, 0x056a985f )
 	ROM_LOAD( "a2-m03.bin", 0x40000, 0x20000, 0x274a795f )
 	ROM_LOAD( "a2-m04.bin", 0x60000, 0x20000, 0x9754f703 )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )				/* Region 2 - sound cpu */
-	ROM_LOAD( "b08-06",     0x00000, 0x08000, 0xadfcd40c )
-	ROM_CONTINUE(           0x10000, 0x08000 )			/* banked at 8000-9fff */
-
 	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
+ROM_END
+
+ROM_START( plumppop )
+	ROM_REGIONX( 0x30000, REGION_CPU1 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "a98-09.bin", 0x00000, 0x08000, 0x107f9e06 )
+	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
+	ROM_LOAD( "a98-10.bin", 0x20000, 0x10000, 0xdf6e6af2 )	/* banked at 8000-bfff */
+
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "a98-11.bin", 0x00000, 0x08000, 0xbc56775c )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "a98-01.bin", 0x00000, 0x10000, 0xf3033dca )
+	ROM_RELOAD(             0x10000, 0x10000 )
+	ROM_LOAD( "a98-02.bin", 0x20000, 0x10000, 0xf2d17b0c )
+	ROM_RELOAD(             0x30000, 0x10000 )
+	ROM_LOAD( "a98-03.bin", 0x40000, 0x10000, 0x1a519b0a )
+	ROM_RELOAD(             0x40000, 0x10000 )
+	ROM_LOAD( "a98-04.bin", 0x60000, 0x10000, 0xb64501a1 )
+	ROM_RELOAD(             0x70000, 0x10000 )
+	ROM_LOAD( "a98-05.bin", 0x80000, 0x10000, 0x45c36963 )
+	ROM_RELOAD(             0x90000, 0x10000 )
+	ROM_LOAD( "a98-06.bin", 0xa0000, 0x10000, 0xe075341b )
+	ROM_RELOAD(             0xb0000, 0x10000 )
+	ROM_LOAD( "a98-07.bin", 0xc0000, 0x10000, 0x8e16cd81 )
+	ROM_RELOAD(             0xd0000, 0x10000 )
+	ROM_LOAD( "a98-08.bin", 0xe0000, 0x10000, 0xbfa7609a )
+	ROM_RELOAD(             0xf0000, 0x10000 )
+
+	ROM_REGIONX( 0x0400, REGION_PROMS )		/* color proms */
+	ROM_LOAD( "a98-13.bpr", 0x0000, 0x200, 0x7cde2da5 )	/* hi bytes */
+	ROM_LOAD( "a98-12.bpr", 0x0200, 0x200, 0x90dc9da7 )	/* lo bytes */
 ROM_END
 
 ROM_START( drtoppel )
@@ -1722,7 +1848,11 @@ ROM_START( drtoppel )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b19-10.bin", 0x20000, 0x10000, 0x7e72fd25 )	/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "b19-11.bin", 0x00000, 0x08000, 0x524dc249 )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b19-01.bin", 0x00000, 0x20000, 0xa7e8a0c1 )
 	ROM_LOAD( "b19-02.bin", 0x20000, 0x20000, 0x790ae654 )
 	ROM_LOAD( "b19-03.bin", 0x40000, 0x20000, 0x495c4c5a )
@@ -1731,10 +1861,6 @@ ROM_START( drtoppel )
 	ROM_LOAD( "b19-06.bin", 0xa0000, 0x20000, 0x2d39f1d0 )
 	ROM_LOAD( "b19-07.bin", 0xc0000, 0x20000, 0x8bb06f41 )
 	ROM_LOAD( "b19-08.bin", 0xe0000, 0x20000, 0x3584b491 )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "b19-11.bin", 0x00000, 0x08000, 0x524dc249 )
-	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
 	ROM_REGIONX( 0x0400, REGION_PROMS )		/* color proms */
 	ROM_LOAD( "b19-13.bin", 0x0000, 0x200, 0x6a547980 )	/* hi bytes */
@@ -1747,7 +1873,11 @@ ROM_START( chukatai )
 	ROM_CONTINUE(       0x18000, 0x08000 )				/* banked at 8000-bfff */
 	ROM_LOAD( "b44.11", 0x20000, 0x10000, 0x32484094 )  /* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "b44.12", 0x00000, 0x08000, 0x0600ace6 )
+	ROM_CONTINUE(       0x10000, 0x08000 )	/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b44-01.a13", 0x00000, 0x20000, 0xaae7b3d5 )
 	ROM_LOAD( "b44-02.a12", 0x20000, 0x20000, 0x7f0b9568 )
 	ROM_LOAD( "b44-03.a10", 0x40000, 0x20000, 0x5a54a3b9 )
@@ -1756,10 +1886,6 @@ ROM_START( chukatai )
 	ROM_LOAD( "b44-06.a05", 0xa0000, 0x20000, 0x269978a8 )
 	ROM_LOAD( "b44-07.a04", 0xc0000, 0x20000, 0x3e0e737e )
 	ROM_LOAD( "b44-08.a02", 0xe0000, 0x20000, 0x6cb1e8fc )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "b44.12", 0x00000, 0x08000, 0x0600ace6 )
-	ROM_CONTINUE(       0x10000, 0x08000 )	/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( tnzs )
@@ -1767,7 +1893,11 @@ ROM_START( tnzs )
 	ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
+	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
 	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0xc3519c2a )
 	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x2bf199e8 )
@@ -1777,10 +1907,6 @@ ROM_START( tnzs )
 	ROM_LOAD( "nzsb5323.bin", 0xa0000, 0x20000, 0x74acfb9b )
 	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
 	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
-	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 ROM_END
 
 ROM_START( tnzsb )
@@ -1788,7 +1914,14 @@ ROM_START( tnzsb )
 	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, 0xd66824c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, 0xd6ac4e71 )
+	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
+	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
 	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0xc3519c2a )
 	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x2bf199e8 )
@@ -1798,13 +1931,6 @@ ROM_START( tnzsb )
 	ROM_LOAD( "nzsb5323.bin", 0xa0000, 0x20000, 0x74acfb9b )
 	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
 	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, 0xd6ac4e71 )
-	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
-
-	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
 ROM_END
 
 ROM_START( tnzs2 )
@@ -1812,7 +1938,11 @@ ROM_START( tnzs2 )
 	ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_LOAD( "ns_e-3.rom",   0x00000, 0x08000, 0xc7662e96 )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ns_a13.rom",   0x00000, 0x20000, 0x7e0bd5bb )
 	ROM_LOAD( "ns_a12.rom",   0x20000, 0x20000, 0x95880726 )
 	ROM_LOAD( "ns_a10.rom",   0x40000, 0x20000, 0x2bc4c053 )
@@ -1821,10 +1951,6 @@ ROM_START( tnzs2 )
 	ROM_LOAD( "ns_a05.rom",   0xa0000, 0x20000, 0x6e762e20 )
 	ROM_LOAD( "ns_a04.rom",   0xc0000, 0x20000, 0xe1fd1b9d )
 	ROM_LOAD( "ns_a02.rom",   0xe0000, 0x20000, 0x2ab06bda )
-
-	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "ns_e-3.rom",   0x00000, 0x08000, 0xc7662e96 )
-	ROM_CONTINUE(             0x10000, 0x08000 )
 ROM_END
 
 ROM_START( insectx )
@@ -1832,22 +1958,26 @@ ROM_START( insectx )
 	ROM_LOAD( "insector.u32", 0x00000, 0x08000, 0x18eef387 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
 
-	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "insector.r15", 0x00000, 0x80000, 0xd00294b1 )
-	ROM_LOAD( "insector.r16", 0x80000, 0x80000, 0xdb5a7434 )
-
 	ROM_REGIONX( 0x18000, REGION_CPU2 )	/* 64k for the second CPU */
 	ROM_LOAD( "insector.u38", 0x00000, 0x08000, 0x324b28c9 )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "insector.r15", 0x00000, 0x80000, 0xd00294b1 )
+	ROM_LOAD( "insector.r16", 0x80000, 0x80000, 0xdb5a7434 )
 ROM_END
 
 ROM_START( kageki )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )		// main code
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
 
-	ROM_REGION_DISPOSE(0x100000)	// gfx
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
+	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
 	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
 	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
@@ -1857,21 +1987,21 @@ ROM_START( kageki )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )		// sound code
-	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
-	ROM_CONTINUE(            0x10000, 0x08000 )
-
-	ROM_REGION(0x10000)		// samples
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "b35-15.98g",  0x00000, 0x10000, 0xe6212a0f )	/* US ver */
 ROM_END
 
 ROM_START( kagekij )
-	ROM_REGIONX( 0x30000, REGION_CPU1 )		// main code
+	ROM_REGIONX( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
 	ROM_CONTINUE(            0x18000, 0x08000 )
 	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
 
-	ROM_REGION_DISPOSE(0x100000)	// gfx
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
+	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGIONX( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
 	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
 	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
@@ -1881,630 +2011,22 @@ ROM_START( kagekij )
 	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
 	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
 
-	ROM_REGIONX( 0x18000, REGION_CPU2 )		// sound code
-	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
-	ROM_CONTINUE(            0x10000, 0x08000 )
-
-	ROM_REGION(0x10000)		// samples
+	ROM_REGIONX( 0x10000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, 0x184409f1 )	/* JP ver */
 ROM_END
 
 
-static int extrmatn_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe8c9], "\x01\x47\x55\x55", 4) == 0 && memcmp(&RAM[0xe8a6], "\x00\x49\x00\x02", 4) == 0 )
-	{
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xe8a5], 5*8);
-			RAM[0xe886] = RAM[0xe8a8];			/* update high score */
-			RAM[0xe887] = RAM[0xe8a7];			/* on top of screen */
-			RAM[0xe888] = RAM[0xe8a6];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void extrmatn_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xe8a5], 5*8);
-		osd_fclose(f);
-		RAM[0xe8ca] = 0;	/* dirty the hi-score table */
-		RAM[0xe8a7] = 0;
-	}
-}
-
-static int arkanoi2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f, &RAM[0xe3a8], 3);
-		osd_fclose(f);
-	}
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xeca5], "\x54\x4b\x4e\xff", 4) == 0 && memcmp(&RAM[0xec81], "\x01\x00\x00\x05", 4) == 0 )
-	{
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xec81], 8*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void arkanoi2_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xec81], 8*5);
-		osd_fclose(f);
-		RAM[0xeca5] = 0;
-	}
-}
-
-static int drtoppel_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xe076], "\x24\x25\x25\x25", 4) == 0) &&
-		(memcmp(&RAM[0xe058], "\x50\x00\x00\x45", 4) == 0) &&
-		(RAM[0xe024] = 0x50))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xe057], 5*7);
-			RAM[0xe023] = RAM[0xe057];			/* update high score */
-			RAM[0xe024] = RAM[0xe058];			/* on top of screen */
-			RAM[0xe025] = RAM[0xe059];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void drtoppel_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xe057], 5*7);
-		osd_fclose(f);
-		RAM[0xe079] = 0;	/* dirty the hi-score table */
-		RAM[0xe058] = 0;
-		RAM[0xe024] = 0;
-	}
-}
-
-static int chukatai_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xedce], "\x01\x48\x54\x42", 4) == 0) &&
-		(memcmp(&RAM[0xed8c], "\x00\x04\x75\x01", 4) == 0 ) &&
-		(RAM[0xe212] = 0x75))
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xed8c], 10*7);
-			RAM[0xe210] = RAM[0xed8c];			/* update high score */
-			RAM[0xe211] = RAM[0xed8d];			/* on top of screen */
-			RAM[0xe212] = RAM[0xed8e];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void chukatai_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xed8c], 10*7);
-		osd_fclose(f);
-		RAM[0xedcf] = 0;	/* dirty the hi-score table */
-		RAM[0xed8d] = 0;
-		RAM[0xe212] = 0;
-	}
-}
-
-static int tnzs_hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xe6ad], "\x47\x55\x55", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xe68d], 35);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void tnzs_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xe68d], 35);
-		osd_fclose(f);
-	}
-}
-
-static int tnzs2_hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xec2a], "\x47\x55\x55", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xec0a], 35);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void tnzs2_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0xec0a], 35);
-		osd_fclose(f);
-	}
-}
-
-/****  Insector X high score save routine - RJF (April 17, 1999)  ****/
-
-static int insectx_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0xc604],"\x4b\x52\x59",3) == 0) &&
-		(memcmp(&RAM[0xc64c],"\x48\x54\x42",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xc600], 10*8);	/* HS table */
-
-			RAM[0xc6ea] = RAM[0xc600];			/* update high score */
-			RAM[0xc6eb] = RAM[0xc601];			/* on top of screen */
-			RAM[0xc6ec] = RAM[0xc602];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void insectx_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xc600], 10*8);		/* HS table */
-		osd_fclose(f);
-	}
-}
-
-static int kageki_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xe057],"\x05\x10\x04",3) == 0) &&
-                (memcmp(&RAM[0xe061],"\x87\x9a\x8a",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe057], 5*2);        /* entry level */
-                        osd_fread(f,&RAM[0xe061], 5*3);        /* entry name  */
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void kageki_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe057], 5*2);        /* entry level */
-                osd_fwrite(f,&RAM[0xe061], 5*3);        /* entry name  */
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_extrmatn =
-{
-	__FILE__,
-	0,
-	"extrmatn",
-	"Extermination (US)",
-	"1987",
-	"[Taito] World Games",
-	"Luca Elia\nMirko Buffoni",
-	0,
-	&arkanoi2_machine_driver,
-	extrmatn_init,
-
-	rom_extrmatn,
-	0, 0,
-	0,
-	0,
-
-	input_ports_extrmatn,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	extrmatn_hiload, extrmatn_hisave
-};
-
-struct GameDriver driver_arkanoi2 =
-{
-	__FILE__,
-	0,
-	"arkanoi2",
-	"Arkanoid - Revenge of DOH (World)",
-	"1987",
-	"Taito Corporation Japan",
-	"Luca Elia\nMirko Buffoni",
-	0,
-	&arkanoi2_machine_driver,
-	arkanoi2_init,
-
-	rom_arkanoi2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arkanoi2,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	arkanoi2_hiload, arkanoi2_hisave
-};
-
-struct GameDriver driver_ark2us =
-{
-	__FILE__,
-	&driver_arkanoi2,
-	"ark2us",
-	"Arkanoid - Revenge of DOH (US)",
-	"1987",
-	"Taito America Corporation (Romstar license)",
-	"Luca Elia\nMirko Buffoni",
-	0,
-	&arkanoi2_machine_driver,
-	arkanoi2_init,
-
-	rom_ark2us,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ark2us,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	arkanoi2_hiload, arkanoi2_hisave
-};
-
-struct GameDriver driver_ark2jp =
-{
-	__FILE__,
-	&driver_arkanoi2,
-	"ark2jp",
-	"Arkanoid - Revenge of DOH (Japan)",
-	"1987",
-	"Taito Corporation",
-	"Luca Elia\nMirko Buffoni",
-	0,
-	&arkanoi2_machine_driver,
-	arkanoi2_init,
-
-	rom_ark2jp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_ark2us,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	arkanoi2_hiload, arkanoi2_hisave
-};
-
-struct GameDriver driver_drtoppel =
-{
-	__FILE__,
-	0,
-	"drtoppel",
-	"Dr. Toppel's Tankentai (Japan)",
-	"1987",
-	"Taito Corporation",
-	"Quench\nChris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&drtoppel_machine_driver,
-	drtoppel_init,
-
-	rom_drtoppel,
-	0, 0,
-	0,
-	0,
-
-	input_ports_drtoppel,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	drtoppel_hiload, drtoppel_hisave
-};
-
-struct GameDriver driver_chukatai =
-{
-	__FILE__,
-	0,
-	"chukatai",
-	"Chuka Taisen (Japan)",
-	"1988",
-	"Taito Corporation",
-	"Quench\nChris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&tnzs_machine_driver,
-	chukatai_init,
-
-	rom_chukatai,
-	0, 0,
-	0,
-	0,
-
-	input_ports_chukatai,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	chukatai_hiload, chukatai_hisave
-};
-
-struct GameDriver driver_tnzs =
-{
-	__FILE__,
-	0,
-	"tnzs",
-	"The Newzealand Story (Japan)",
-	"1988",
-	"Taito Corporation",
-	"Chris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&tnzs_machine_driver,
-	tnzs_init,
-
-	rom_tnzs,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tnzs,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	tnzs_hiload, tnzs_hisave
-};
-
-struct GameDriver driver_tnzsb =
-{
-	__FILE__,
-	&driver_tnzs,
-	"tnzsb",
-	"The Newzealand Story (World, bootleg)",
-	"1988",
-	"bootleg",
-	"Chris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&tnzsb_machine_driver,
-	tnzs_init,
-
-	rom_tnzsb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tnzsb,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	tnzs_hiload, tnzs_hisave
-};
-
-struct GameDriver driver_tnzs2 =
-{
-	__FILE__,
-	&driver_tnzs,
-	"tnzs2",
-	"The Newzealand Story 2 (World)",
-	"1988",
-	"Taito Corporation Japan",
-	"Chris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&tnzs_machine_driver,
-	tnzs_init,
-
-	rom_tnzs2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_tnzs2,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	tnzs2_hiload, tnzs2_hisave
-};
-
-struct GameDriver driver_insectx =
-{
-	__FILE__,
-	0,
-	"insectx",
-	"Insector X (World)",
-	"1989",
-	"Taito Corporation Japan",
-	"Chris Moore\nMartin Scragg\nRichard Mitton",
-	0,
-	&insectx_machine_driver,
-	insectx_init,
-
-	rom_insectx,
-	0, 0,
-	0,
-	0,
-
-	input_ports_insectx,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	insectx_hiload, insectx_hisave
-};
-
-struct GameDriver driver_kageki =
-{
-	__FILE__,
-	0,
-	"kageki",
-	"Kageki (US)",
-	"1988",
-	"Taito America Corporation (Romstar license)",
-	"Takahiro Nogi",
-	0,
-	&kageki_machine_driver,
-	kageki_init,
-
-	rom_kageki,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kageki,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kageki_hiload, kageki_hisave
-};
-
-struct GameDriver driver_kagekij =
-{
-	__FILE__,
-	&driver_kageki,
-	"kagekij",
-	"Kageki (Japan)",
-	"1988",
-	"Taito Corporation",
-	"Takahiro Nogi",
-	0,
-	&kageki_machine_driver,
-	kageki_init,
-
-	rom_kagekij,
-	0, 0,
-	0,
-	0,
-
-	input_ports_kageki,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kageki_hiload, kageki_hisave
-};
+GAME( 1987, extrmatn, ,         arkanoi2, extrmatn, extrmatn, ROT270, "[Taito] World Games", "Extermination (US)" )
+GAME( 1987, arkanoi2, ,         arkanoi2, arkanoi2, arkanoi2, ROT270, "Taito Corporation Japan", "Arkanoid - Revenge of DOH (World)" )
+GAME( 1987, ark2us,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito America Corporation (Romstar license)", "Arkanoid - Revenge of DOH (US)" )
+GAME( 1987, ark2jp,   arkanoi2, arkanoi2, ark2us,   arkanoi2, ROT270, "Taito Corporation", "Arkanoid - Revenge of DOH (Japan)" )
+GAME( 1987, plumppop, ,         drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
+GAME( 1987, drtoppel, ,         drtoppel, drtoppel, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)" )
+GAME( 1988, chukatai, ,         tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
+GAME( 1988, tnzs,     ,         tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The Newzealand Story (Japan)" )
+GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzs,     ROT0,   "bootleg", "The Newzealand Story (World, bootleg)" )
+GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The Newzealand Story 2 (World)" )
+GAME( 1989, insectx,  ,         insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
+GAME( 1988, kageki,   ,         kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)" )
+GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)" )

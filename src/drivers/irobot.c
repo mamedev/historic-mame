@@ -70,8 +70,7 @@ extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short 
 extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern void irobot_paletteram_w(int offset,int data);
 
-extern void irobot_nvram_w(int offset,int data);
-extern unsigned char *irobot_nvRAM;
+void irmb_init(void);	/* convert mathbox ROMs */
 void irobot_init_machine (void);
 
 int irobot_status_r(int offset);
@@ -83,6 +82,30 @@ void irobot_control_w (int offset, int data);
 int irobot_sharedmem_r(int offset);
 void irobot_sharedmem_w(int offset,int data);
 
+
+
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+void irobot_nvram_w(int offset,int data)
+{
+	nvram[offset] = data & 0x0f;
+}
+
+
 void irobot_clearirq(int offest,int data) {
     cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
 }
@@ -91,6 +114,7 @@ void irobot_clearfirq(int offset,int data) {
     cpu_set_irq_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
 
 }
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -118,7 +142,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x1140, 0x1140, irobot_statwr_w },
     { 0x1180, 0x1180, irobot_out0_w },
     { 0x11C0, 0x11C0, irobot_rom_banksel },
-    { 0x1200, 0x12FF, irobot_nvram_w, &irobot_nvRAM },
+    { 0x1200, 0x12FF, irobot_nvram_w, &nvram, &nvram_size },
     { 0x1400, 0x143f, quad_pokey_w },       /* Quad Pokey write  */
     { 0x1800, 0x18FF, irobot_paletteram_w },
     { 0x1900, 0x19FF, MWA_RAM },            /* Watchdog reset */
@@ -298,7 +322,9 @@ static struct MachineDriver machine_driver =
 			SOUND_POKEY,
 			&pokey_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -350,32 +376,6 @@ ROM_END
 	/*  ROM_LOAD( "136029.125",    0x0000, 0x0020, 0xc05abf82 ) */
 
 
-static int novram_load(void)
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-        osd_fread(f,&RAM[0x1200],256);
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void novram_save(void)
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f,&RAM[0x1200],256);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_irobot =
 {
@@ -388,7 +388,7 @@ struct GameDriver driver_irobot =
 	"Dan Boris\nJohn Dickson\nMike Balfour\nFrank Palazzolo\nAaron Giles\nBryan Smith (Tech info)\nJohn Madfreda (Tech info)",
 	0,
 	&machine_driver,
-	0,
+	irmb_init,
 
 	rom_irobot,
 	0, 0,
@@ -398,7 +398,7 @@ struct GameDriver driver_irobot =
 	input_ports_irobot,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	novram_load, novram_save /* Highscore load, save */
+	ROT0,
+	0,0
 };
 

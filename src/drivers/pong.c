@@ -64,7 +64,7 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 	memcpy(game_colortable,colortable,sizeof(colortable));
 }
 
-static struct MachineDriver pong_machine_driver =
+static struct MachineDriver machine_driver_pong =
 {
 	/* basic machine hardware */
 	{
@@ -120,7 +120,7 @@ struct GameDriver driver_pong =
 	"Atari",
 	NULL,
 	0,
-	&pong_machine_driver,
+	&machine_driver_pong,
 	0,
 
 	NULL,
@@ -132,7 +132,7 @@ struct GameDriver driver_pong =
 	input_ports_pong,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0,0
 };

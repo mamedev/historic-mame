@@ -298,7 +298,7 @@ struct GameDriver driver_dlair =
 	input_ports_dlair,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

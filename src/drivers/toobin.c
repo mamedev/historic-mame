@@ -318,7 +318,9 @@ static struct MachineDriver machine_driver =
 	toobin_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_I_STEREO_WITH_POKEY
+	JSA_I_STEREO_WITH_POKEY,
+
+	atarigen_nvram_handler
 };
 
 
@@ -535,8 +537,8 @@ struct GameDriver driver_toobin =
 	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	atarigen_hiload, atarigen_hisave
+	ROT270,
+	0,0
 };
 
 
@@ -562,8 +564,8 @@ struct GameDriver driver_toobin2 =
 	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	atarigen_hiload, atarigen_hisave
+	ROT270,
+	0,0
 };
 
 
@@ -589,6 +591,6 @@ struct GameDriver driver_toobinp =
 	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	atarigen_hiload, atarigen_hisave
+	ROT270,
+	0,0
 };

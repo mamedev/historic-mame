@@ -294,7 +294,7 @@ static struct K007232_interface k007232_interface =
 };
 
 
-static struct MachineDriver flkatck_machine_driver =
+static struct MachineDriver machine_driver_flkatck =
 {
 	{
 		{
@@ -373,53 +373,6 @@ ROM_END
 
 
 
-/****  Flak Attack high score save routine  ****/
-/****  RJF (Nov 23, 1999)  ****/
-static int flkatck_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x3a00],"\x00\x66\x90",3) == 0) &&
-		(memcmp(&RAM[0x3a08],"\x00\x21\x40",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/*** 8 bytes each entry ****/
-			/* bytes 1,2,3     = score */
-			/* byte 4          = stage */
-			/* byte 5          = ???   */
-			/* bytes 6,7,8     = name  */
-
-			osd_fread(f,&RAM[0x3a00], 10*8);	/* hs table */
-
-			RAM[0x395e] = RAM[0x3a00];	/* update high score */
-			RAM[0x395f] = RAM[0x3a01];	/* on top of screen */
-			RAM[0x3960] = RAM[0x3a02];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void flkatck_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x3a00], 10*8);		/* hs table */
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_mx5000 =
 {
 	__FILE__,
@@ -430,7 +383,7 @@ struct GameDriver driver_mx5000 =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&flkatck_machine_driver,
+	&machine_driver_flkatck,
 	0,
 
 	rom_mx5000,
@@ -442,9 +395,8 @@ struct GameDriver driver_mx5000 =
 	input_ports_flkatck,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	flkatck_hiload, flkatck_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_flkatck =
@@ -457,7 +409,7 @@ struct GameDriver driver_flkatck =
 	"Konami",
 	"Manuel Abadia",
 	0,
-	&flkatck_machine_driver,
+	&machine_driver_flkatck,
 	0,
 
 	rom_flkatck,
@@ -469,7 +421,6 @@ struct GameDriver driver_flkatck =
 	input_ports_flkatck,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	flkatck_hiload, flkatck_hisave
+	ROT90,
+	0,0
 };

@@ -427,44 +427,6 @@ ROM_START( tutankst )
 ROM_END
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x88a9],"\x03\x58\x40",3) == 0 &&
-			memcmp(&RAM[0x88cd],"\x01\x20\x60",3) == 0 &&
-			memcmp(&RAM[0x88a6],"\x03\x58\x40",3) == 0)	/* high score */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x88a9],6*7+7);
-			RAM[0x88a6] = RAM[0x88a9];
-			RAM[0x88a7] = RAM[0x88aa];
-			RAM[0x88a8] = RAM[0x88ab];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x88a9],6*7+7);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_tutankhm =
 {
@@ -487,9 +449,8 @@ struct GameDriver driver_tutankhm =
 	input_ports_tutankhm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave		        /* High score load and save */
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_tutankst =
@@ -513,7 +474,6 @@ struct GameDriver driver_tutankst =
 	input_ports_tutankhm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave		        /* High score load and save */
+	ROT90,
+	0,0
 };

@@ -45,7 +45,7 @@ extern UINT16 *wms_videoram;
 extern INT32  wms_videoram_size;
        int    wms_code_rom_size;
        int    wms_gfx_rom_size;
-extern UINT8  wms_rom_loaded;
+       UINT8  wms_rom_loaded;
 static UINT32 wms_cmos_page = 0;
        INT32  wms_objpalram_select = 0;
        UINT8  wms_autoerase_enable = 0;
@@ -2107,15 +2107,18 @@ static void init_4bit(void)
 
 /* driver_init functions */
 
-void narc_driver_init(void)
+void init_narc(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0101b300), TOBYTE(0x0101b31f), narc_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 1;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void trog_driver_init(void)
+void init_trog(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a20a0), TOBYTE(0x010a20bf), trog_speedup_r);
@@ -2129,8 +2132,11 @@ void trog_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void trog3_driver_init(void)
+void init_trog3(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a2080), TOBYTE(0x010a209f), trog3_speedup_r);
@@ -2144,8 +2150,11 @@ void trog3_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void trogp_driver_init(void)
+void init_trogp(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a1ee0), TOBYTE(0x010a1eff), trogp_speedup_r);
@@ -2157,8 +2166,11 @@ void trogp_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void smashtv_driver_init(void)
+void init_smashtv(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01086760), TOBYTE(0x0108677f), smashtv_speedup_r);
@@ -2170,8 +2182,11 @@ void smashtv_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void smashtv4_driver_init(void)
+void init_smashtv4(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01086780), TOBYTE(0x0108679f), smashtv4_speedup_r);
@@ -2183,8 +2198,11 @@ void smashtv4_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void hiimpact_driver_init(void)
+void init_hiimpact(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01053140), TOBYTE(0x0105315f), hiimpact_speedup_r);
@@ -2193,8 +2211,11 @@ void hiimpact_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void shimpact_driver_init(void)
+void init_shimpact(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01052060), TOBYTE(0x0105207f), shimpact_speedup_r);
@@ -2203,8 +2224,11 @@ void shimpact_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void strkforc_driver_init(void)
+void init_strkforc(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01071dc0), TOBYTE(0x01071ddf), strkforc_speedup_r);
@@ -2218,8 +2242,11 @@ void strkforc_driver_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void mk_driver_init(void)
+void init_mk(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mk_speedup_r);
@@ -2228,8 +2255,11 @@ void mk_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void mkla1_driver_init(void)
+void init_mkla1(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f000), TOBYTE(0x0104f01f), mkla1_speedup_r);
@@ -2238,8 +2268,11 @@ void mkla1_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void mkla2_driver_init(void)
+void init_mkla2(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f020), TOBYTE(0x0104f03f), mkla2_speedup_r);
@@ -2248,8 +2281,11 @@ void mkla2_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void term2_driver_init(void)
+void init_term2(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
@@ -2258,8 +2294,11 @@ void term2_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void totcarn_driver_init(void)
+void init_totcarn(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
@@ -2268,8 +2307,11 @@ void totcarn_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void totcarnp_driver_init(void)
+void init_totcarnp(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
@@ -2278,8 +2320,11 @@ void totcarnp_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 	wms_autoerase_reset = 0;
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void mk2_driver_init(void)
+void init_mk2(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01068e60), TOBYTE(0x01068e7f), mk2_speedup_r);
@@ -2289,8 +2334,11 @@ void mk2_driver_init(void)
 
 	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void mk2r14_driver_init(void)
+void init_mk2r14(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01068de0), TOBYTE(0x01068dff), mk2r14_speedup_r);
@@ -2300,8 +2348,11 @@ void mk2r14_driver_init(void)
 
 	cpu_bankbase[7] = &(GFX_ROM[0x800000]);
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
-void nbajam_driver_init(void)
+void init_nbajam(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010754c0), TOBYTE(0x010754df), nbajam_speedup_r);
@@ -2310,6 +2361,9 @@ void nbajam_driver_init(void)
 	wms_autoerase_reset = 0;
 
 	install_mem_read_handler(0, TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK8);
+
+	/* This just causes the init_machine to copy the images again */
+	wms_rom_loaded = 0;
 }
 
 /* init_machine functions */

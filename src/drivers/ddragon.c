@@ -467,7 +467,7 @@ static int dd_interrupt(void)
 
 
 
-static struct MachineDriver ddragon_machine_driver =
+static struct MachineDriver machine_driver_ddragon =
 {
 	/* basic machine hardware */
 	{
@@ -519,7 +519,7 @@ static struct MachineDriver ddragon_machine_driver =
 	}
 };
 
-static struct MachineDriver ddragonb_machine_driver =
+static struct MachineDriver machine_driver_ddragonb =
 {
 	/* basic machine hardware */
 	{
@@ -571,7 +571,7 @@ static struct MachineDriver ddragonb_machine_driver =
 	}
 };
 
-static struct MachineDriver ddragon2_machine_driver =
+static struct MachineDriver machine_driver_ddragon2 =
 {
 	/* basic machine hardware */
 	{
@@ -729,86 +729,6 @@ ROM_END
 
 
 
-static int ddragonb_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((RAM[0x0e73] == 0x02) && (RAM[0x0e76] == 0x27) && (RAM[0x0023] == 0x02))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0e73],6*5);
-			RAM[0x0023] = RAM[0x0e73];
-			RAM[0x0024] = RAM[0x0e74];
-			RAM[0x0025] = RAM[0x0e75];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void ddragonb_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0e73],6*5);
-		osd_fclose(f);
-	}
-}
-
-
-static int ddragon2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if ((RAM[0x0f91] == 0x02) && (RAM[0x0f94] == 0x25) && (RAM[0x0023] == 0x02))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0f91],6*5);
-			RAM[0x0023] = RAM[0x0f91];
-			RAM[0x0024] = RAM[0x0f92];
-			RAM[0x0025] = RAM[0x0f93];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void ddragon2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0f91],6*5);
-		osd_fclose(f);
-	}
-
-}
-
-
-
 struct GameDriver driver_ddragon =
 {
 	__FILE__,
@@ -819,7 +739,7 @@ struct GameDriver driver_ddragon =
 	"bootleg?",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi",
 	0,
-	&ddragon_machine_driver,
+	&machine_driver_ddragon,
 	0,
 
 	rom_ddragon,
@@ -830,9 +750,8 @@ struct GameDriver driver_ddragon =
 	input_ports_dd1,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	ddragonb_hiload, ddragonb_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_ddragonb =
@@ -845,7 +764,7 @@ struct GameDriver driver_ddragonb =
 	"bootleg",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
-	&ddragonb_machine_driver,
+	&machine_driver_ddragonb,
 	0,
 
 	rom_ddragonb,
@@ -856,9 +775,8 @@ struct GameDriver driver_ddragonb =
 	input_ports_dd1,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ddragonb_hiload, ddragonb_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ddragon2 =
@@ -871,7 +789,7 @@ struct GameDriver driver_ddragon2 =
 	"Technos",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
-	&ddragon2_machine_driver,
+	&machine_driver_ddragon2,
 	0,
 
 	rom_ddragon2,
@@ -882,7 +800,6 @@ struct GameDriver driver_ddragon2 =
 	input_ports_dd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	ddragon2_hiload, ddragon2_hisave
+	ROT0,
+	0,0
 };

@@ -167,27 +167,27 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
-	{ 1, 0x02000, &spritelayout, 0, 16 },	/* colors 0-255 */
-	{ 1, 0x03000, &spritelayout, 0, 16 },
-	{ 1, 0x06000, &tilelayout, 256, 16 },	/* colors 256-511 */
-	{ 1, 0x07000, &tilelayout, 256, 16 },
-	{ 1, 0x08000, &tilelayout, 256, 16 },
-	{ 1, 0x09000, &tilelayout, 256, 16 },
-	{ 1, 0x0a000, &tilelayout, 256, 16 },
-	{ 1, 0x0b000, &tilelayout, 256, 16 },
-	{ 1, 0x0c000, &tilelayout, 256, 16 },
-	{ 1, 0x0d000, &tilelayout, 256, 16 },
-	{ 1, 0x0e000, &tilelayout, 256, 16 },
-	{ 1, 0x0f000, &tilelayout, 256, 16 },
-	{ 1, 0x10000, &tilelayout, 256, 16 },
-	{ 1, 0x11000, &tilelayout, 256, 16 },
+	{ REGION_GFX1, 0x00000, &charlayout, 512, 32 },	/* colors 512-639 */
+	{ REGION_GFX2, 0x00000, &spritelayout, 0, 16 },	/* colors 0-255 */
+	{ REGION_GFX2, 0x01000, &spritelayout, 0, 16 },
+	{ REGION_GFX3, 0x00000, &tilelayout, 256, 16 },	/* colors 256-511 */
+	{ REGION_GFX3, 0x01000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x02000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x03000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x04000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x05000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x06000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x07000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x08000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x09000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x0a000, &tilelayout, 256, 16 },
+	{ REGION_GFX3, 0x0b000, &tilelayout, 256, 16 },
 	{ -1 } /* end of array */
 };
 
 
 
-/* actually there is on1 AY8910 and one YM2203, but the sound core doesn't */
+/* actually there is one AY8910 and one YM2203, but the sound core doesn't */
 /* support that so we use 2 YM2203 */
 static struct YM2203interface ym2203_interface =
 {
@@ -203,7 +203,7 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_citycon =
 {
 	/* basic machine hardware */
 	{
@@ -259,22 +259,26 @@ ROM_START( citycon )
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11",          0x8000, 0x8000, 0x139eb1aa )
 
-	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
-	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
-	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
-	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
-	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
-	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
-	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0xe000 )
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 ROM_START( citycona )
@@ -282,22 +286,26 @@ ROM_START( citycona )
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
 
-	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
-	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
-	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
-	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
-	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
-	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
-	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0xe000 )
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 ROM_START( cruisin )
@@ -305,144 +313,30 @@ ROM_START( cruisin )
 	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
 	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )
 
-	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
-	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
-	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
-	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
-	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
-	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
-	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 
-	ROM_REGION( 0xe000 )
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
+
+	ROM_REGIONX( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c12",          0x00000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x02000, 0x2000, 0x1819aafb )
+
+	ROM_REGIONX( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c9",           0x00000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x08000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x0c000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x14000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGIONX( 0xe000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
 	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
 	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0900],"\x53\x48\x4f",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0900],24*10);
-			osd_fread(f,&RAM[0x0043],3);
-			osd_fread(f,&RAM[0x0055],3);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0900],24*10);
-		osd_fwrite(f,&RAM[0x0043],3);
-		osd_fwrite(f,&RAM[0x0055],3);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_citycon =
-{
-	__FILE__,
-	0,
-	"citycon",
-	"City Connection (set 1)",
-	"1985",
-	"Jaleco",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_citycon,
-	0, 0,
-	0,
-
-	0,
-
-	input_ports_citycon,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_citycona =
-{
-	__FILE__,
-	&driver_citycon,
-	"citycona",
-	"City Connection (set 2)",
-	"1985",
-	"Jaleco",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_citycona,
-	0, 0,
-	0,
-
-	0,
-
-	input_ports_citycon,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_cruisin =
-{
-	__FILE__,
-	&driver_citycon,
-	"cruisin",
-	"Cruisin",
-	"1985",
-	"Jaleco (Kitkorp license)",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_cruisin,
-	0, 0,
-	0,
-
-	0,
-
-	input_ports_citycon,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
-};
+GAME( 1985, citycon,  ,        citycon, citycon, , ROT0, "Jaleco", "City Connection (set 1)" )
+GAME( 1985, citycona, citycon, citycon, citycon, , ROT0, "Jaleco", "City Connection (set 2)" )
+GAME( 1985, cruisin,  citycon, citycon, citycon, , ROT0, "Jaleco (Kitkorp license)", "Cruisin" )

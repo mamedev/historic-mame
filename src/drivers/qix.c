@@ -1,7 +1,10 @@
 /***************************************************************************
 
-Qix/ZooKeeper/Space Dungeon Memory Map
+Qix/ZooKeeper/Space Dungeon
 ------------- ------ ---
+
+driver by John Butler, Ed Mueller, Aaron Giles
+
 
 Qix uses two 6809 CPUs:  one for data and sound and the other for video.
 Communication between the two CPUs is done using a 4K RAM space at $8000
@@ -224,6 +227,24 @@ extern void zoo_init_machine(void);
 
 
 
+static unsigned char *nvram;
+static int nvram_size;
+
+static void nvram_handler(void *file,int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file,nvram,nvram_size);
+	else
+	{
+		if (file)
+			osd_fread(file,nvram,nvram_size);
+		else
+			memset(nvram,0,nvram_size);
+	}
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x8000, 0x83ff, qix_sharedram_r },
@@ -322,7 +343,7 @@ static struct MemoryWriteAddress writemem_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8400, 0x87ff, MWA_RAM },
+	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },
 	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
 	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
@@ -337,9 +358,7 @@ static struct MemoryWriteAddress zoo_writemem_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
-///	{ 0x8400, 0x87ff, MWA_RAM },
-	{ 0x8400, 0x86ff, MWA_RAM },
-	{ 0x8700, 0x87ff, MWA_RAM },/////protected when coin door is closed
+	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },	/////protected when coin door is closed
 	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },	/* LEDs are upper 6 bits */
 	{ 0x8801, 0x8801, zoo_bankswitch_w },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
@@ -546,7 +565,7 @@ INPUT_PORTS_START( kram )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( zoo )
+INPUT_PORTS_START( zookeep )
 	PORT_START	/* PIA 0 Port A (PLAYER 1) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -588,7 +607,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_qix =
 {
 	/* basic machine hardware */
 	{
@@ -637,10 +656,12 @@ static struct MachineDriver machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver mcu_machine_driver =
+static struct MachineDriver machine_driver_mcu =
 {
 	/* basic machine hardware */
 	{
@@ -695,10 +716,12 @@ static struct MachineDriver mcu_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver zoo_machine_driver =
+static struct MachineDriver machine_driver_zookeep =
 {
 	/* basic machine hardware */
 	{
@@ -753,7 +776,9 @@ static struct MachineDriver zoo_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -1070,350 +1095,16 @@ ROM_START( zookeep3 )
 ROM_END
 
 
-/* Loads high scores and all other CMOS settings */
-static int hiload(void)
-{
-	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	void *f;
 
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		osd_fread(f,&RAM[0x8400],0x400);
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-
-
-static void hisave(void)
-{
-	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	void *f;
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8400],0x400);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_qix =
-{
-	__FILE__,
-	0,
-	"qix",
-	"Qix (set 1)",
-	"1981",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_qix,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_qix,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_qixa =
-{
-	__FILE__,
-	&driver_qix,
-	"qixa",
-	"Qix (set 2)",
-	"1981",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_qixa,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_qix,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_qixb =
-{
-	__FILE__,
-	&driver_qix,
-	"qixb",
-	"Qix (set 3)",
-	"1981",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_qixb,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_qix,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_qix2 =
-{
-	__FILE__,
-	&driver_qix,
-	"qix2",
-	"Qix II (Tournament)",
-	"1981",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_qix2,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_qix,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_sdungeon =
-{
-	__FILE__,
-	0,
-	"sdungeon",
-	"Space Dungeon",
-	"1981",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_sdungeon,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_sdungeon,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_elecyoyo =
-{
-	__FILE__,
-	0,
-	"elecyoyo",
-	"The Electric Yo-Yo (set 1)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_elecyoyo,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_elecyoyo,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_elecyoy2 =
-{
-	__FILE__,
-	&driver_elecyoyo,
-	"elecyoy2",
-	"The Electric Yo-Yo (set 2)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_elecyoy2,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_elecyoyo,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_kram =
-{
-	__FILE__,
-	0,
-	"kram",
-	"Kram (set 1)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_kram,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_kram,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_kram2 =
-{
-	__FILE__,
-	&driver_kram,
-	"kram2",
-	"Kram (set 2)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd Mueller\nAaron Giles",
-	0,
-	&mcu_machine_driver,
-	0,
-
-	rom_kram2,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-	input_ports_kram,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave	       /* High score load and save */
-};
-
-struct GameDriver driver_zookeep =
-{
-	__FILE__,
-	0,
-	"zookeep",
-	"Zoo Keeper (set 1)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd. Mueller\nAaron Giles",
-	0,
-	&zoo_machine_driver,
-	0,
-
-    rom_zookeep,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-    input_ports_zoo,
-
-    0, 0, 0,   			/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave		/* High score load and save */
-};
-
-struct GameDriver driver_zookeep2 =
-{
-	__FILE__,
-	&driver_zookeep,
-	"zookeep2",
-	"Zoo Keeper (set 2)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd. Mueller\nAaron Giles",
-	0,
-	&zoo_machine_driver,
-	0,
-
-    rom_zookeep2,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-    input_ports_zoo,
-
-    0, 0, 0,   			/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave		/* High score load and save */
-};
-
-
-struct GameDriver driver_zookeep3 =
-{
-	__FILE__,
-	&driver_zookeep,
-	"zookeep3",
-	"Zoo Keeper (set 3)",
-	"1982",
-	"Taito America Corporation",
-	"John Butler\nEd. Mueller\nAaron Giles",
-	0,
-	&zoo_machine_driver,
-	0,
-
-    rom_zookeep3,
-	0, 0,   /* ROM decode and opcode decode functions */
-	0,      /* Sample names */
-	0,
-
-    input_ports_zoo,
-
-    0, 0, 0,   			/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-
-	hiload,hisave		/* High score load and save */
-};
+GAME( 1981, qix,      ,         qix,     qix,      , ROT270, "Taito America Corporation", "Qix (set 1)" )
+GAME( 1981, qixa,     qix,      qix,     qix,      , ROT270, "Taito America Corporation", "Qix (set 2)" )
+GAME( 1981, qixb,     qix,      qix,     qix,      , ROT270, "Taito America Corporation", "Qix (set 3)" )
+GAME( 1981, qix2,     qix,      qix,     qix,      , ROT270, "Taito America Corporation", "Qix II (Tournament)" )
+GAME( 1981, sdungeon, ,         mcu,     sdungeon, , ROT270, "Taito America Corporation", "Space Dungeon" )
+GAME( 1982, elecyoyo, ,         mcu,     elecyoyo, , ROT270, "Taito America Corporation", "The Electric Yo-Yo (set 1)" )
+GAME( 1982, elecyoy2, elecyoyo, mcu,     elecyoyo, , ROT270, "Taito America Corporation", "The Electric Yo-Yo (set 2)" )
+GAME( 1982, kram,     ,         mcu,     kram,     , ROT0,   "Taito America Corporation", "Kram (set 1)" )
+GAME( 1982, kram2,    kram,     mcu,     kram,     , ROT0,   "Taito America Corporation", "Kram (set 2)" )
+GAME( 1982, zookeep,  ,         zookeep, zookeep,  , ROT0,   "Taito America Corporation", "Zoo Keeper (set 1)" )
+GAME( 1982, zookeep2, zookeep,  zookeep, zookeep,  , ROT0,   "Taito America Corporation", "Zoo Keeper (set 2)" )
+GAME( 1982, zookeep3, zookeep,  zookeep, zookeep,  , ROT0,   "Taito America Corporation", "Zoo Keeper (set 3)" )

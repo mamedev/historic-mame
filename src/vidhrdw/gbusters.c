@@ -15,10 +15,7 @@ static int layer_colorbase[3],sprite_colorbase;
 
 static void tile_callback(int layer,int bank,int *code,int *color)
 {
-	/* flip Y? I sure hope this goes to some inverters on the ROM address lines, */
-	/* otherwise it would throw away all my understanding of the 051960 ;-) */
-	tile_info.flags = (*color & 0x02) ? TILE_FLIPY : 0;
-
+	/* (color & 0x02) is flip y handled internally by the 052109 */
 	*code |= ((*color & 0x0d) << 8) | ((*color & 0x10) << 5) | (bank << 12);
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
 }

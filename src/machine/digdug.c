@@ -14,7 +14,6 @@
 
 unsigned char *digdug_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-unsigned char digdug_hiscoreloaded;
 
 static int credits;
 
@@ -29,17 +28,6 @@ void digdig_init_machine(void)
 	nmi_timer = 0;
 	interrupt_enable_1 = interrupt_enable_2 = interrupt_enable_3 = 0;
 	digdug_halt_w (0, 0);
-}
-
-
-int digdug_reset_r(int offset)
-{
-	extern unsigned char *RAM;
-
-
-	digdug_hiscoreloaded = 0;
-
-	return RAM[offset];
 }
 
 

@@ -35,9 +35,6 @@ static int slapstic_last75xx = 0;
 
 int atetris_slapstic_r(int offset)
 {
-	extern unsigned char *RAM;
-
-
     if (slapstic_nextbank != -1)
     {
         slapstic_bank = slapstic_nextbank;
@@ -139,7 +136,7 @@ int atetris_slapstic_r(int offset)
         slapstic_primed = 0;
     }
 
-    return RAM[slapstic_bank + offset];
+    return memory_region(REGION_CPU1)[slapstic_bank + offset];
 }
 
 

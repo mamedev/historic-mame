@@ -36,35 +36,7 @@ void goindol_bankswitch_w(int offset,int data)
 	goindol_char_bank = data & 0x10;
 }
 
-void goindol_init_machine(void)
-{
-	/* I hope that's all patches to avoid protection */
 
-	ROM[0x04a7] = 0xc9;
-	ROM[0x0641] = 0xc9;
-	ROM[0x0831] = 0xc9;
-	ROM[0x0b30] = 0x00;
-	ROM[0x0c13] = 0xc9;
-	ROM[0x134e] = 0xc9;
-	ROM[0x172e] = 0xc9;
-	ROM[0x1785] = 0xc9;
-	ROM[0x17cc] = 0xc9;
-	ROM[0x1aa5] = 0x7b;
-	ROM[0x1aa6] = 0x17;
-	ROM[0x1bee] = 0xc9;
-	ROM[0x218c] = 0x00;
-	ROM[0x218d] = 0x00;
-	ROM[0x218e] = 0x00;
-	ROM[0x333d] = 0xc9;
-	ROM[0x3365] = 0x00;
-}
-
-void homo_init_machine(void)
-{
-	ROM[0x218c] = 0x00;
-	ROM[0x218d] = 0x00;
-	ROM[0x218e] = 0x00;
-}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -376,7 +348,6 @@ ROM_START( goindol )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
-
 ROM_END
 
 ROM_START( homo )
@@ -401,46 +372,47 @@ ROM_START( homo )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
-
 ROM_END
 
-static int hiload(void)
+
+
+void goindol_patch(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
 
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xc076],"\x05\x00\x27",3) == 0)
-	{
-		void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
+	/* I hope that's all patches to avoid protection */
 
-                        osd_fread(f,&RAM[0xc076], 0x50);
+	rom[0x04a7] = 0xc9;
+	rom[0x0641] = 0xc9;
+	rom[0x0831] = 0xc9;
+	rom[0x0b30] = 0x00;
+	rom[0x0c13] = 0xc9;
+	rom[0x134e] = 0xc9;
+	rom[0x172e] = 0xc9;
+	rom[0x1785] = 0xc9;
+	rom[0x17cc] = 0xc9;
+	rom[0x1aa5] = 0x7b;
+	rom[0x1aa6] = 0x17;
+	rom[0x1bee] = 0xc9;
+	rom[0x218c] = 0x00;
+	rom[0x218d] = 0x00;
+	rom[0x218e] = 0x00;
+	rom[0x333d] = 0xc9;
+	rom[0x3365] = 0x00;
+}
 
-                        memcpy(&RAM[0xc0d8], &RAM[0xc076], 2);
-                        osd_fclose(f);
-		}
+void homo_patch(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
 
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+
+	rom[0x218c] = 0x00;
+	rom[0x218d] = 0x00;
+	rom[0x218e] = 0x00;
 }
 
 
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xc076], 0x50);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_goindol =
 {
@@ -453,19 +425,18 @@ struct GameDriver driver_goindol =
 	"Jarek Parchanski\n",
 	0,
 	&machine_driver,
-	0,
+	goindol_patch,
 
 	rom_goindol,
- 	goindol_init_machine, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_goindol,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_homo =
@@ -479,17 +450,16 @@ struct GameDriver driver_homo =
 	"Jarek Parchanski\nVictor Trucco\n",
 	0,
 	&machine_driver,
-	0,
+	homo_patch,
 
 	rom_homo,
- 	homo_init_machine, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_homo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -54,6 +54,9 @@ enum
 #if (HAS_Z80_VM)
 	CPU_Z80_VM,
 #endif
+#if (HAS_Z80GB)
+	CPU_Z80GB,
+#endif
 #if (HAS_8080)
 	CPU_8080,
 #endif
@@ -221,7 +224,7 @@ struct MachineDriver
 {
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
-	int frames_per_second;
+	float frames_per_second;
 	int vblank_duration;	/* in microseconds - see description below */
 	int cpu_slices_per_frame;	/* for multicpu games. 1 is the minimum, meaning */
 								/* that each CPU runs for the whole video frame */
@@ -259,6 +262,17 @@ struct MachineDriver
 	int obsolete2;
 	int obsolete3;
 	struct MachineSound sound[MAX_SOUND];
+
+	/*
+	   use this to manage nvram/eeprom/cmos/etc.
+	   It is called before the emulation starts and after it ends. Note that it is
+	   NOT called when the game is reset, since it is not needed.
+	   file == 0, read_or_write == 0 -> first time the game is run, initialize nvram
+	   file != 0, read_or_write == 0 -> load nvram from disk
+	   file == 0, read_or_write != 0 -> not allowed
+	   file != 0, read_or_write != 0 -> save nvram to disk
+	 */
+	void (*nvram_handler)(void *file,int read_or_write);
 };
 
 
@@ -351,40 +365,30 @@ struct GameDriver
 	int num_of_cassette_drives;
 #endif
 
-	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
-	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
-									/* if the encryption is different from the above. */
 	struct obsolete *obsolete3;
 	struct obsolete *obsolete4;
 
-	struct InputPortTiny *input_ports;
-
 	struct obsolete *obsolete5;
 	struct obsolete *obsolete6;
+
+	struct InputPortTiny *input_ports;
+
 	struct obsolete *obsolete7;
+	struct obsolete *obsolete8;
+	struct obsolete *obsolete9;
 	UINT32 flags;	/* orientation and other flags; see defines below */
 
-	int (*hiscore_load)(void);	/* will be called every vblank until it */
-						/* returns nonzero */
-	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
-						/* returned nonzero, to avoid saving an invalid table */
+	struct obsolete *obsolete10;
+	struct obsolete *obsolete11;
 };
 
 
 /* values for the flags field */
 
 #define ORIENTATION_MASK        0x0007
-#define	ORIENTATION_DEFAULT		0x0000
 #define	ORIENTATION_FLIP_X		0x0001	/* mirror everything in the X direction */
 #define	ORIENTATION_FLIP_Y		0x0002	/* mirror everything in the Y direction */
 #define ORIENTATION_SWAP_XY		0x0004	/* mirror along the top-left/bottom-right diagonal */
-#define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
-#define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
-#define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
-/* IMPORTANT: to perform more than one transformation, DO NOT USE |, use ^ instead. */
-/* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
-/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X */
-/* Always remember that FLIP is performed *after* SWAP_XY. */
 
 #define GAME_NOT_WORKING		0x0008
 #define GAME_WRONG_COLORS		0x0010	/* colors are totally wrong */
@@ -392,10 +396,69 @@ struct GameDriver
 #define GAME_NO_SOUND			0x0040	/* sound is missing */
 #define GAME_IMPERFECT_SOUND	0x0080	/* sound is known to be wrong */
 #define	GAME_REQUIRES_16BIT		0x0100	/* cannot fit in 256 colors */
-
+#define NOT_A_DRIVER			0x4000	/* set by the fake "root" driver_ and by "containers" */
+										/* e.g. driver_neogeo. */
 #ifdef MESS
  #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
 #endif
+
+
+#define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	MONITOR,								\
+0,0\
+};
+
+#define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
+extern struct GameDriver driver_##PARENT;	\
+struct GameDriver driver_##NAME =			\
+{											\
+	__FILE__,								\
+	&driver_##PARENT,						\
+	#NAME,									\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+"",0,\
+	&machine_driver_##MACHINE,				\
+	init_##INIT,							\
+	rom_##NAME,								\
+0,0,0,0,\
+	input_ports_##INPUT,					\
+0,0,0,\
+	(MONITOR)|(FLAGS),						\
+0,0\
+};
+
+
+/* monitor parameters to be used with the GAME() macro */
+#define	ROT0	0x0000
+#define	ROT90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
+#define	ROT180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
+#define	ROT270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
+#define	ROT0_16BIT		(ROT0|GAME_REQUIRES_16BIT)
+#define	ROT90_16BIT		(ROT90|GAME_REQUIRES_16BIT)
+#define	ROT180_16BIT	(ROT180|GAME_REQUIRES_16BIT)
+#define	ROT270_16BIT	(ROT270|GAME_REQUIRES_16BIT)
+
+/* this allows to leave the INIT field empty in the GAME() macro call */
+#define init_ 0
+
 
 extern const struct GameDriver *drivers[];
 

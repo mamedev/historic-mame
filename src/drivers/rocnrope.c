@@ -9,12 +9,11 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 #include "cpu/m6809/m6809.h"
 
 
+void konami1_decode(void);
 
 void rocnrope_flipscreen_w(int offset,int data);
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 /* defined in sndhrdw/timeplt.c */
 extern struct MemoryReadAddress timeplt_sound_readmem[];
@@ -278,7 +277,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( rocnrope )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, 0x83093134 )
 	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, 0x75af8697 )
 	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, 0xb21372b1 )
@@ -304,7 +303,7 @@ ROM_START( rocnrope )
 ROM_END
 
 ROM_START( rocnropk )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
 	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
 	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, 0x6d278459 )
@@ -331,62 +330,14 @@ ROM_END
 
 
 
-static void rocnropk_decode(void)
-{
-	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	for (A = 0x6000;A < 0x10000;A++)
-	{
-		ROM[A] = KonamiDecode(RAM[A],A);
-	}
-}
-
 static void rocnrope_decode(void)
 {
-	rocnropk_decode();
-	ROM[0x703d] = 0x98;	/* fix one instruction */
-}
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
 
-
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x50A6],"\x01\x00\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x5160],0x40);
-			RAM[0x50A6] = RAM[0x5160];
-			RAM[0x50A7] = RAM[0x5161];
-			RAM[0x50A8] = RAM[0x5162];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x5160],0x40);
-		osd_fclose(f);
-	}
+	konami1_decode();
+	rom[0x703d + diff] = 0x98;	/* fix one instruction */
 }
 
 
@@ -402,19 +353,18 @@ struct GameDriver driver_rocnrope =
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
-	0,
+	rocnrope_decode,
 
 	rom_rocnrope,
-	0, rocnrope_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rocnrope,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_rocnropk =
@@ -428,17 +378,16 @@ struct GameDriver driver_rocnropk =
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 
 	rom_rocnropk,
-	0, rocnropk_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rocnrope,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	hiload, hisave
+	ROT270,
+	0,0
 };

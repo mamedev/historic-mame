@@ -881,8 +881,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &tilelayout,	0, 32 },
-	{ 1, 0x1000, &spritelayout, 0, 32 },
+	{ REGION_GFX1, 0, &tilelayout,   0, 32 },
+	{ REGION_GFX2, 0, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -892,7 +892,7 @@ static struct namco_interface namco_interface =
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
 	100,		/* playback volume */
-	3			/* memory region */
+	REGION_SOUND1	/* memory region */
 };
 
 static struct SN76496interface sn76496_interface =
@@ -904,7 +904,7 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_pacman =
 {
 	/* basic machine hardware */
 	{
@@ -941,7 +941,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver theglob_machine_driver =
+static struct MachineDriver machine_driver_theglob =
 {
 	/* basic machine hardware */
 	{
@@ -978,7 +978,7 @@ static struct MachineDriver theglob_machine_driver =
 	}
 };
 
-static struct MachineDriver vanvan_machine_driver =
+static struct MachineDriver machine_driver_vanvan =
 {
 	/* basic machine hardware */
 	{
@@ -1015,7 +1015,7 @@ static struct MachineDriver vanvan_machine_driver =
 	}
 };
 
-static struct MachineDriver alibaba_machine_driver =
+static struct MachineDriver machine_driver_alibaba =
 {
 	/* basic machine hardware */
 	{
@@ -1065,15 +1065,17 @@ ROM_START( pacman )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
 	ROM_LOAD( "namcopac.6j",  0x3000, 0x1000, 0x7a36fe55 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1085,15 +1087,17 @@ ROM_START( npacmod )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
 	ROM_LOAD( "npacmod.6j",   0x3000, 0x1000, 0x7d98d5f5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1106,16 +1110,18 @@ ROM_START( pacmanjp )
 	ROM_LOAD( "prg7",         0x3000, 0x0800, 0xb6289b26 )
 	ROM_LOAD( "prg8",         0x3800, 0x0800, 0x17a88c13 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "chg1",         0x0000, 0x0800, 0x2066a0b7 )
 	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1127,15 +1133,17 @@ ROM_START( pacmanm )
 	ROM_LOAD( "pacman.6h",    0x2000, 0x1000, 0xbcdd1beb )
 	ROM_LOAD( "pacman.6j",    0x3000, 0x1000, 0x817d94e3 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1147,15 +1155,17 @@ ROM_START( pacmod )
 	ROM_LOAD( "pacmanh.6h",   0x2000, 0x1000, 0x18811780 )
 	ROM_LOAD( "pacmanh.6j",   0x3000, 0x1000, 0x5c96a733 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1167,15 +1177,17 @@ ROM_START( hangly )
 	ROM_LOAD( "hangly.6h",    0x2000, 0x1000, 0x4e7ef99f )
 	ROM_LOAD( "hangly.6j",    0x3000, 0x1000, 0x7f4147e6 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1189,15 +1201,17 @@ ROM_START( hangly2 )
 	ROM_LOAD( "hangly2.6j",   0x3000, 0x0800, 0x51305374 )
 	ROM_LOAD( "hangly2.6p",   0x3800, 0x0800, 0x427c9d4d )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1209,15 +1223,17 @@ ROM_START( puckman )
 	ROM_LOAD( "puckman.6h",   0x2000, 0x1000, 0x197443f8 )
 	ROM_LOAD( "puckman.6j",   0x3000, 0x1000, 0x2e64a3ba )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
-	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5f",    0x0000, 0x1000, 0x958fedf9 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1233,17 +1249,19 @@ ROM_START( pacheart )
 	ROM_LOAD( "pacheart.pg7", 0x3000, 0x0800, 0xf5265c10 )
 	ROM_LOAD( "pacheart.pg8", 0x3800, 0x0800, 0x1a21a381 )
 
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacheart.ch1", 0x0000, 0x0800, 0xc62bbabf )
 	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
-	ROM_LOAD( "pacheart.ch3", 0x1000, 0x0800, 0xca8c184c )
-	ROM_LOAD( "pacheart.ch4", 0x1800, 0x0800, 0x1b1d9096 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacheart.ch3", 0x0000, 0x0800, 0xca8c184c )
+	ROM_LOAD( "pacheart.ch4", 0x0800, 0x0800, 0x1b1d9096 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )      /* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
@@ -1255,17 +1273,19 @@ ROM_START( piranha )
 	ROM_LOAD( "pr3.cpu",      0x2000, 0x1000, 0x473c379d )
 	ROM_LOAD( "pr4.cpu",      0x3000, 0x1000, 0x63fbf895 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pr5.cpu",      0x0000, 0x0800, 0x3fc4030c )
 	ROM_LOAD( "pr7.cpu",      0x0800, 0x0800, 0x30b9a010 )
-	ROM_LOAD( "pr6.cpu",      0x1000, 0x0800, 0xf3e9c9d5 )
-	ROM_LOAD( "pr8.cpu",      0x1800, 0x0800, 0x133d720d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pr6.cpu",      0x0000, 0x0800, 0xf3e9c9d5 )
+	ROM_LOAD( "pr8.cpu",      0x0800, 0x0800, 0x133d720d )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1277,15 +1297,17 @@ ROM_START( pacplus )
 	ROM_LOAD( "pacplus.6h",   0x2000, 0x1000, 0xae379430 )
 	ROM_LOAD( "pacplus.6j",   0x3000, 0x1000, 0x5a6dff7b )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "pacplus.5e",   0x0000, 0x1000, 0x022c35da )
-	ROM_LOAD( "pacplus.5f",   0x1000, 0x1000, 0x4de65cdd )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacplus.5f",   0x0000, 0x1000, 0x4de65cdd )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "pacplus.7f",   0x0000, 0x0020, 0x063dd53a )
 	ROM_LOAD( "pacplus.4a",   0x0020, 0x0100, 0xe271a166 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1299,15 +1321,17 @@ ROM_START( mspacman )
 	ROM_LOAD( "boot5",        0x8000, 0x1000, 0x8c3e6de6 )
 	ROM_LOAD( "boot6",        0x9000, 0x1000, 0x368cb165 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
-	ROM_LOAD( "5f",           0x1000, 0x1000, 0x615af909 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x1000, 0x615af909 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1321,15 +1345,17 @@ ROM_START( mspacatk )
 	ROM_LOAD( "mspacatk.5",   0x8000, 0x1000, 0xe6e06954 )
 	ROM_LOAD( "mspacatk.6",   0x9000, 0x1000, 0x3b5db308 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
-	ROM_LOAD( "5f",           0x1000, 0x1000, 0x615af909 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x1000, 0x615af909 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1343,36 +1369,40 @@ ROM_START( pacgal )
 	ROM_LOAD( "boot5",        0x8000, 0x1000, 0x8c3e6de6 )
 	ROM_LOAD( "boot6",        0x9000, 0x1000, 0x368cb165 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
-	ROM_LOAD( "pacman.5ef",   0x1000, 0x0800, 0x65a3ee71 )
-	ROM_LOAD( "pacman.5hj",   0x1800, 0x0800, 0x50c7477d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pacman.5ef",   0x0000, 0x0800, 0x65a3ee71 )
+	ROM_LOAD( "pacman.5hj",   0x0800, 0x0800, 0x50c7477d )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0x63efb927 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( crush )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for opcode copy to hack protection */
 	ROM_LOAD( "crushkrl.6e",  0x0000, 0x1000, 0xa8dd8f54 )
 	ROM_LOAD( "crushkrl.6f",  0x1000, 0x1000, 0x91387299 )
 	ROM_LOAD( "crushkrl.6h",  0x2000, 0x1000, 0xd4455f27 )
 	ROM_LOAD( "crushkrl.6j",  0x3000, 0x1000, 0xd59fc251 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
-	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "maketrax.5f",  0x0000, 0x1000, 0xaea79f55 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1388,17 +1418,19 @@ ROM_START( crush2 )
 	ROM_LOAD( "tp4",          0x3000, 0x0800, 0x90b28fa3 )
 	ROM_LOAD( "tp8",          0x3800, 0x0800, 0x10854e1b )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
 	ROM_LOAD( "tpc",          0x0800, 0x0800, 0xe129d76a )
-	ROM_LOAD( "tpb",          0x1000, 0x0800, 0xd1899f05 )
-	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tpb",          0x0000, 0x0800, 0xd1899f05 )
+	ROM_LOAD( "tpd",          0x0800, 0x0800, 0xd35d1caf )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1414,37 +1446,41 @@ ROM_START( crush3 )
 	ROM_LOAD( "unkmol.4j",    0x3000, 0x0800, 0x072b91c9 )
 	ROM_LOAD( "unkmol.6j",    0x3800, 0x0800, 0x66fba07d )
 
-	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "unkmol.5e",    0x0000, 0x0800, 0x338880a0 )
 	ROM_LOAD( "unkmol.5h",    0x0800, 0x0800, 0x4ce9c81f )
-	ROM_LOAD( "unkmol.5f",    0x1000, 0x0800, 0x752e3780 )
-	ROM_LOAD( "unkmol.5j",    0x1800, 0x0800, 0x6e00d2ac )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "unkmol.5f",    0x0000, 0x0800, 0x752e3780 )
+	ROM_LOAD( "unkmol.5j",    0x0800, 0x0800, 0x6e00d2ac )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( maketrax )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for opcode copy to hack protection */
 	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
 	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
 	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
 	ROM_LOAD( "maketrax.6j",  0x3000, 0x1000, 0x0b4b5e0a )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
-	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "maketrax.5f",  0x0000, 0x1000, 0xaea79f55 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1456,17 +1492,19 @@ ROM_START( mbrush )
 	ROM_LOAD( "mbrush.6h",    0x2000, 0x1000, 0xd297108e )
 	ROM_LOAD( "mbrush.6j",    0x3000, 0x1000, 0x6fd719d0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
 	ROM_LOAD( "mbrush.5h",    0x0800, 0x0800, 0xc15b6967 )
-	ROM_LOAD( "mbrush.5f",    0x1000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
-	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mbrush.5f",    0x0000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
+	ROM_LOAD( "tpd",          0x0800, 0x0800, 0xd35d1caf )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1482,17 +1520,19 @@ ROM_START( paintrlr )
 	ROM_LOAD( "paintrlr.4",   0x3000, 0x0800, 0x0fd5884b )
 	ROM_LOAD( "paintrlr.8",   0x3800, 0x0800, 0x4900114a )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
 	ROM_LOAD( "mbrush.5h",    0x0800, 0x0800, 0xc15b6967 )
-	ROM_LOAD( "mbrush.5f",    0x1000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
-	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mbrush.5f",    0x0000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
+	ROM_LOAD( "tpd",          0x0800, 0x0800, 0xd35d1caf )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1508,15 +1548,17 @@ ROM_START( ponpoko )
 	ROM_LOAD( "ppoko7.bin",   0xa000, 0x1000, 0x3cbe47ca )
 	ROM_LOAD( "ppokoj8.bin",  0xb000, 0x1000, 0x04b63fc6 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ppoko9.bin",   0x0000, 0x1000, 0xb73e1a06 )
-	ROM_LOAD( "ppoko10.bin",  0x1000, 0x1000, 0x62069b5d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ppoko10.bin",  0x0000, 0x1000, 0x62069b5d )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1532,15 +1574,17 @@ ROM_START( ponpokov )
 	ROM_LOAD( "ppoko7.bin",   0xa000, 0x1000, 0x3cbe47ca )
 	ROM_LOAD( "ppoko8.bin",   0xb000, 0x1000, 0xb39be27d )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ppoko9.bin",   0x0000, 0x1000, 0xb73e1a06 )
-	ROM_LOAD( "ppoko10.bin",  0x1000, 0x1000, 0x62069b5d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ppoko10.bin",  0x0000, 0x1000, 0x62069b5d )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1552,15 +1596,17 @@ ROM_START( eyes )
 	ROM_LOAD( "f7",           0x2000, 0x1000, 0x731e294e )
 	ROM_LOAD( "h7",           0x3000, 0x1000, 0x22f7a719 )
 
-	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "d5",           0x0000, 0x1000, 0xd6af0030 )
-	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e5",           0x0000, 0x1000, 0xa42b5201 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1572,15 +1618,17 @@ ROM_START( eyes2 )
 	ROM_LOAD( "g38203.7f",    0x2000, 0x1000, 0xd618ba66 )
 	ROM_LOAD( "g38204.7h",    0x3000, 0x1000, 0xcf038276 )
 
-	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "g38205.5d",    0x0000, 0x1000, 0x03b1b4c7 )  /* this one has a (c) sign */
-	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "e5",           0x0000, 0x1000, 0xa42b5201 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1592,15 +1640,17 @@ ROM_START( mrtnt )
 	ROM_LOAD( "tnt.3",        0x2000, 0x1000, 0xad6fc688 )
 	ROM_LOAD( "tnt.4",        0x3000, 0x1000, 0xd77557b3 )
 
-	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tnt.5",        0x0000, 0x1000, 0x3038cc0e )
-	ROM_LOAD( "tnt.6",        0x1000, 0x1000, 0x97634d8b )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tnt.6",        0x0000, 0x1000, 0x97634d8b )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac-Man */
 	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac-Man */
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1614,16 +1664,19 @@ ROM_START( lizwiz )
 	ROM_LOAD( "wiza",         0x8000, 0x1000, 0xf6dea3a6 )
 	ROM_LOAD( "wizb",         0x9000, 0x1000, 0xf27fb5a8 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e.cpu",       0x0000, 0x1000, 0x45059e73 )
-	ROM_LOAD( "5f.cpu",       0x1000, 0x1000, 0xd2469717 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f.cpu",       0x0000, 0x1000, 0xd2469717 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "7f.cpu",       0x0000, 0x0020, 0x7549a947 )
 	ROM_LOAD( "4a.cpu",       0x0020, 0x0100, 0x5fdca536 )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( theglob )
@@ -1631,16 +1684,19 @@ ROM_START( theglob )
 	ROM_LOAD( "glob.u2",      0x0000, 0x2000, 0x829d0bea )
 	ROM_LOAD( "glob.u3",      0x2000, 0x2000, 0x31de6628 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "glob.5e",      0x0000, 0x1000, 0x53688260 )
-	ROM_LOAD( "glob.5f",      0x1000, 0x1000, 0x051f59c7 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "glob.5f",      0x0000, 0x1000, 0x051f59c7 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( beastf )
@@ -1648,16 +1704,19 @@ ROM_START( beastf )
 	ROM_LOAD( "bf-u2.bin",    0x0000, 0x2000, 0x3afc517b )
 	ROM_LOAD( "bf-u3.bin",    0x2000, 0x2000, 0x8dbd76d0 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "beastf.5e",    0x0000, 0x1000, 0x5654dc34 )
-	ROM_LOAD( "beastf.5f",    0x1000, 0x1000, 0x1b30ca61 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "beastf.5f",    0x0000, 0x1000, 0x1b30ca61 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
-	ROM_REGION( 0x0100 )	/* sound prom */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( jumpshot )
@@ -1667,15 +1726,17 @@ ROM_START( jumpshot )
 	ROM_LOAD( "6h",           0x2000, 0x1000, 0x894d6f68 )
 	ROM_LOAD( "6j",           0x3000, 0x1000, 0xf15a108a )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0xd9fa90f5 )
-	ROM_LOAD( "5f",           0x1000, 0x1000, 0x2ec711c1 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x1000, 0x2ec711c1 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
 	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1688,9 +1749,11 @@ ROM_START( vanvan )
 	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
 	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
-	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "van21.bin",    0x0000, 0x1000, 0x5dd53723 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
@@ -1705,9 +1768,11 @@ ROM_START( vanvanb )
 	ROM_LOAD( "vanvan.053",   0x3000, 0x1000, 0xb1f04006 )
 	ROM_LOAD( "vanvan.039",   0x8000, 0x1000, 0xdb67414c )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
-	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "van21.bin",    0x0000, 0x1000, 0x5dd53723 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
@@ -1723,17 +1788,19 @@ ROM_START( alibaba )
 	ROM_LOAD( "6l",           0x8000, 0x1000, 0x5ab315c1 )
 	ROM_LOAD( "6m",           0xa000, 0x0800, 0x438d0357 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5e",           0x0000, 0x0800, 0x85bcb8f8 )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0x38e50862 )
-	ROM_LOAD( "5f",           0x1000, 0x0800, 0xb5715c86 )
-	ROM_LOAD( "5k",           0x1800, 0x0800, 0x713086b3 )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "5f",           0x0000, 0x0800, 0xb5715c86 )
+	ROM_LOAD( "5k",           0x0800, 0x0800, 0x713086b3 )
 
 	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "alibaba.7f",   0x0000, 0x0020, 0x00000000 )  /* missing */
 	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, 0x00000000 )
 
-	ROM_REGION( 0x0200 )	/* sound PROMs */
+	ROM_REGIONX( 0x0200, REGION_SOUND1 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0x00000000 )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
@@ -1787,33 +1854,39 @@ static int maketrax_special_port3_r(int offset)
 	}
 }
 
-static void maketrax_driver_init(void)
+static void maketrax_rom_decode(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+
+
+	/* patch protection using a copy of the opcodes so ROM checksum */
+	/* tests will not fail */
+	memory_set_opcode_base(0,rom+diff);
+
+	memcpy(rom+diff,rom,diff);
+
+	rom[0x0415 + diff] = 0xc9;
+	rom[0x1978 + diff] = 0x18;
+	rom[0x238e + diff] = 0xc9;
+	rom[0x3ae5 + diff] = 0xe6;
+	rom[0x3ae7 + diff] = 0x00;
+	rom[0x3ae8 + diff] = 0xc9;
+	rom[0x3aed + diff] = 0x86;
+	rom[0x3aee + diff] = 0xc0;
+	rom[0x3aef + diff] = 0xb0;
+}
+
+static void init_maketrax(void)
 {
 	/* set up protection handlers */
 	install_mem_read_handler(0, 0x5080, 0x50bf, maketrax_special_port2_r);
 	install_mem_read_handler(0, 0x50c0, 0x50ff, maketrax_special_port3_r);
+
+	maketrax_rom_decode();
 }
 
-static void maketrax_rom_decode(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	memcpy(ROM,RAM,0x10000);
-
-	ROM[0x0415] = 0xc9;
-	ROM[0x1978] = 0x18;
-	ROM[0x238e] = 0xc9;
-	ROM[0x3ae5] = 0xe6;
-	ROM[0x3ae7] = 0x00;
-	ROM[0x3ae8] = 0xc9;
-	ROM[0x3aed] = 0x86;
-	ROM[0x3aee] = 0xc0;
-	ROM[0x3aef] = 0xb0;
-
-}
-
-static void ponpoko_decode(void)
+static void init_ponpoko(void)
 {
 	int i, j;
 	unsigned char *RAM, temp;
@@ -1847,7 +1920,7 @@ static void ponpoko_decode(void)
 	}
 }
 
-static void eyes_decode(void)
+static void init_eyes(void)
 {
 	int i;
 	unsigned char *RAM;
@@ -1888,1296 +1961,41 @@ static void eyes_decode(void)
 }
 
 
-static void copytoscreen(int mem, int len, int screen, int direction, int numstart)
+static void init_pacplus(void)
 {
-	char buf[10];
-	int hi;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	hi =      (RAM[mem + direction*3] & 0x0f) +
-		      (RAM[mem + direction*3] >> 4)   * 10 +
-		      (RAM[mem + direction*2] & 0x0f) * 100 +
-		      (RAM[mem + direction*2] >> 4)   * 1000 +
-		      (RAM[mem + direction*1] & 0x0f) * 10000 +
-		      (RAM[mem + direction*1] >> 4)   * 100000;
-
-	if (len == 4)
-	{
-		hi += (RAM[mem + 0*direction] & 0x0f) * 1000000 +
-		      (RAM[mem + 0*direction] >> 4)   * 10000000;
-	}
-
-	if (hi)
-	{
-		sprintf(buf,"%8d",hi);
-		if (buf[2] != ' ') videoram_w(screen + direction*0, buf[2]-'0'+numstart);
-		if (buf[3] != ' ') videoram_w(screen + direction*1, buf[3]-'0'+numstart);
-		if (buf[4] != ' ') videoram_w(screen + direction*2, buf[4]-'0'+numstart);
-		if (buf[5] != ' ') videoram_w(screen + direction*3, buf[5]-'0'+numstart);
-		if (buf[6] != ' ') videoram_w(screen + direction*4, buf[6]-'0'+numstart);
-		                   videoram_w(screen + direction*5, buf[7]-'0'+numstart);
-	}
-}
-
-static int pacman_alibaba_common_hiload(int numstart)
-{
-	static int resetcount;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
-
-	/* wait for "HIGH SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d1],"\x48\x47",2) == 0)
-	{
-		void *f;
-
-
-		resetcount = 0;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4e88],4);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4e8b, 4, 0x3f2, -1, numstart);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static int pacman_hiload(void)
-{
-	return pacman_alibaba_common_hiload(0);
-}
-
-static int alibaba_hiload(void)
-{
-	return pacman_alibaba_common_hiload(0x30);
-}
-
-static void pacman_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4e88],4);
-		osd_fclose(f);
-	}
+	pacplus_decode();
 }
 
 
-
-static int maketrax_hiload(void)
-{
-	static int resetcount;
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
-
-	/* wait for "HI SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",4) == 0)
-	{
-		resetcount = 0;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4E40],30);
-
-			RAM[0x4c80] = RAM[0x4e43];
-			RAM[0x4c81] = RAM[0x4e44];
-			RAM[0x4c82] = RAM[0x4e45];
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void maketrax_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4E40],30);
-		osd_fclose(f);
-	}
-
-}
-
-
-
-static int crush_hiload(void)
-{
-	static int resetcount;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
-
-	/* wait for "HI SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d0],"\x53\x40",2) == 0)
-	{
-		void *f;
-
-
-		resetcount = 0;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4c80],3);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4c83, 3, 0x3f3, -1, 0);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void crush_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4c80],3);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int eyes_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x4d30],"\x90\x52\x00",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4cf7],0x3c);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4cfd, 3, 0x3f2, -1, 0);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void eyes_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4cf7],0x3c);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int mrtnt_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x4cec],"\x40\x86\x01",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4cb3], 6 * 10);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4cb9, 3, 0x3f2, -1, 0);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void mrtnt_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4cb3], 6 * 10);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int lizwiz_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x4de8],"\x40\x86\x01",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4daf],0x3c);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4db5, 3, 0x3f2, -1, 0);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void lizwiz_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4daf],0x3c);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int ponpoko_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x406c],"\x0f\x0f\x0f\x0f\x0f\x00",6) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4e5a],0x14);
-			memcpy(&RAM[0x4c40], &RAM[0x4e5a], 3);
-
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated */
-			copytoscreen(0x4e59, 3, 0x6c, 1, 0);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void ponpoko_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4e5a],0x14);
-		osd_fclose(f);
-	}
-}
-
-
-
-static int theglob_beastf_common_hiload(int address)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[address],"MOB",3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[address],0x50);
-
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void theglob_beastf_common_hisave(int address)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[address],0x50);
-		osd_fclose(f);
-	}
-}
-
-static int theglob_hiload(void)
-{
-    return theglob_beastf_common_hiload(0x4c48);
-}
-
-static int beastf_hiload(void)
-{
-    return theglob_beastf_common_hiload(0x4c46);
-}
-
-static void theglob_hisave(void)
-{
-    theglob_beastf_common_hisave(0x4c48);
-}
-
-static void beastf_hisave(void)
-{
-    theglob_beastf_common_hisave(0x4c46);
-}
-
-
-
-static int vanvan_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x4c60],0xff,240);
-		firsttime = 1;
-	}
-
-	if (memcmp(&RAM[0x4c60],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x4cc0],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x4d4c],"\x00\x00\x00",3) == 0 )
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x4c60],240);
-			RAM[0x4809] = RAM[0x4c60];
-			RAM[0x480a] = RAM[0x4c61];
-			RAM[0x480b] = RAM[0x4c62];
-			RAM[0x480c] = RAM[0x4c63];
-
-
-			osd_fclose(f);
-		}
-
-		firsttime = 0;
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void vanvan_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x4c60],240);
-		osd_fclose(f);
-	}
-}
-
-
-
-#define BASE_CREDITS "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)"
-
-
-struct GameDriver driver_pacman =
-{
-	__FILE__,
-	0,
-	"pacman",
-	"PuckMan (Japan set 1)",
-	"1980",
-	"Namco",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacmanjp =
-{
-	__FILE__,
-	&driver_pacman,
-	"pacmanjp",
-	"PuckMan (Japan set 2)",
-	"1980",
-	"Namco",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacmanjp,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacmanm =
-{
-	__FILE__,
-	&driver_pacman,
-	"pacmanm",
-	"Pac-Man (Midway)",
-	"1980",
-	"[Namco] (Midway license)",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacmanm,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_npacmod =
-{
-	__FILE__,
-	&driver_pacman,
-	"npacmod",
-	"PuckMan (harder?)",
-	"1981",					/* Notice the (c) difference */
-	"Namco",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_npacmod,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacmod =
-{
-	__FILE__,
-	&driver_pacman,
-	"pacmod",
-	"Pac-Man (Midway, harder)",
-	"1981",
-	"[Namco] (Midway license)",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacmod,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_hangly =
-{
-	__FILE__,
-	&driver_pacman,
-	"hangly",
-	"Hangly-Man (set 1)",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_hangly,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_hangly2 =
-{
-	__FILE__,
-	&driver_pacman,
-	"hangly2",
-	"Hangly-Man (set 2)",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_hangly2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_puckman =
-{
-	__FILE__,
-	&driver_pacman,
-	"puckman",
-	"New Puck-X",
-	"1980",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_puckman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacheart =
-{
-	__FILE__,
-	&driver_pacman,
-	"pacheart",
-	"Pac-Man (Hearts)",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacheart,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_piranha =
-{
-	__FILE__,
-	&driver_pacman,
-	"piranha",
-	"Piranha",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_piranha,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mspacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacplus =
-{
-	__FILE__,
-	0,
-	"pacplus",
-	"Pac-Man Plus",
-	"1982",
-	"[Namco] (Midway license)",
-	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacplus,
-	pacplus_decode, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_mspacman =
-{
-	__FILE__,
-	0,
-	"mspacman",
-	"Ms. Pac-Man",
-	"1981",
-	"bootleg",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mspacman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mspacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_mspacatk =
-{
-	__FILE__,
-	&driver_mspacman,
-	"mspacatk",
-	"Ms. Pac-Man Plus",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mspacatk,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mspacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_pacgal =
-{
-	__FILE__,
-	&driver_mspacman,
-	"pacgal",
-	"Pac-Gal",
-	"1981",
-	"hack",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_pacgal,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mspacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	pacman_hiload, pacman_hisave
-};
-
-struct GameDriver driver_crush =
-{
-	__FILE__,
-	0,
-	"crush",
-	"Crush Roller (Kural Samno)",
-	"1981",
-	"Kural Samno Electric",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour",
-	0,
-	&machine_driver,
-	maketrax_driver_init,
-
-	rom_crush,
-	0, maketrax_rom_decode,
-	0,
-	0,
-
-	input_ports_maketrax,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	maketrax_hiload, maketrax_hisave /* hiload hisave */
-};
-
-struct GameDriver driver_crush2 =
-{
-	__FILE__,
-	&driver_crush,
-	"crush2",
-	"Crush Roller (Kural Esco - bootleg?)",
-	"1981",
-	"Kural Esco Electric",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crush2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_maketrax,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver driver_crush3 =
-{
-	__FILE__,
-	&driver_crush,
-	"crush3",
-	"Crush Roller (Kural - bootleg?)",
-	"1981",
-	"Kural Electric",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_crush3,
-	eyes_decode, 0,
-	0,
-	0,
-
-	input_ports_maketrax,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver driver_maketrax =
-{
-	__FILE__,
-	&driver_crush,
-	"maketrax",
-	"Make Trax",
-	"1981",
-	"[Kural] (Williams license)",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour",
-	0,
-	&machine_driver,
-	maketrax_driver_init,
-
-	rom_maketrax,
-	0, maketrax_rom_decode,
-	0,
-	0,
-
-	input_ports_maketrax,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	maketrax_hiload, maketrax_hisave /* hiload hisave */
-};
-
-struct GameDriver driver_mbrush =
-{
-	__FILE__,
-	&driver_crush,
-	"mbrush",
-	"Magic Brush",
-	"1981",
-	"bootleg",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_mbrush,
-	0, 0,
-	0,
-	0,
-
-	input_ports_mbrush,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver driver_paintrlr =
-{
-	__FILE__,
-	&driver_crush,
-	"paintrlr",
-	"Paint Roller",
-	"1981",
-	"bootleg",
-	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_paintrlr,
-	0, 0,
-	0,
-	0,
-
-	input_ports_paintrlr,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	crush_hiload, crush_hisave
-};
-
-struct GameDriver driver_ponpoko =
-{
-	__FILE__,
-	0,
-	"ponpoko",
-	"Ponpoko",
-	"1982",
-	"Sigma Ent. Inc.",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_ponpoko,
-	ponpoko_decode, 0,
-	0,
-	0,
-
-	input_ports_ponpoko,
-
-	0, 0, 0,	/* probably correct */
-	ORIENTATION_DEFAULT,
-
-	ponpoko_hiload, ponpoko_hisave
-};
-
-struct GameDriver driver_ponpokov =
-{
-	__FILE__,
-	&driver_ponpoko,
-	"ponpokov",
-	"Ponpoko (Venture Line)",
-	"1982",
-	"Sigma Ent. Inc. (Venture Line license)",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_ponpokov,
-	ponpoko_decode, 0,
-	0,
-	0,
-
-	input_ports_ponpoko,
-
-	0, 0, 0,	/* probably correct */
-	ORIENTATION_DEFAULT,
-
-	ponpoko_hiload, ponpoko_hisave
-};
-
-struct GameDriver driver_eyes =
-{
-	__FILE__,
-	0,
-	"eyes",
-	"Eyes (Digitrex Techstar)",
-	"1982",
-	"Digitrex Techstar (Rock-ola license)",
-	"Zsolt Vasvari\n"BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_eyes,
-	eyes_decode, 0,
-	0,
-	0,
-
-	input_ports_eyes,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	eyes_hiload, eyes_hisave
-};
-
-struct GameDriver driver_eyes2 =
-{
-	__FILE__,
-	&driver_eyes,
-	"eyes2",
-	"Eyes (Techstar Inc.)",
-	"1982",
-	"Techstar Inc. (Rock-ola license)",
-	"Zsolt Vasvari\n"BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_eyes2,
-	eyes_decode, 0,
-	0,
-	0,
-
-	input_ports_eyes,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	eyes_hiload, eyes_hisave
-};
-
-struct GameDriver driver_mrtnt =
-{
-	__FILE__,
-	0,
-	"mrtnt",
-	"Mr. TNT",
-	"1983",
-	"Telko",
-	"Zsolt Vasvari\n"BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_mrtnt,
-	eyes_decode, 0,
-	0,
-	0,
-
-	input_ports_eyes,
-
-	0, 0, 0,	/* wrong!! */
-	ORIENTATION_ROTATE_90,
-
-	mrtnt_hiload, mrtnt_hisave
-};
-
-struct GameDriver driver_lizwiz =
-{
-	__FILE__,
-	0,
-	"lizwiz",
-	"Lizard Wizard",
-	"1985",
-	"Techstar (Sunn license)",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_lizwiz,
-	0, 0,
-	0,
-	0,
-
-	input_ports_lizwiz,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	lizwiz_hiload, lizwiz_hisave
-};
-
-struct GameDriver driver_theglob =
-{
-	__FILE__,
-	0,
-	"theglob",
-	"The Glob",
-	"1983",
-	"Epos Corporation",
-	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
-	0,
-	&theglob_machine_driver,
-	0,
-
-	rom_theglob,
-	0, 0,
-	0,
-	0,
-
-	input_ports_theglob,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	theglob_hiload, theglob_hisave
-};
-
-struct GameDriver driver_beastf =
-{
-	__FILE__,
-	&driver_theglob,
-	"beastf",
-	"Beastie Feastie",
-	"1984",
-	"Epos Corporation",
-	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
-	0,
-	&theglob_machine_driver,
-	0,
-
-	rom_beastf,
-	0, 0,
-	0,
-	0,
-
-	input_ports_theglob,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	beastf_hiload, beastf_hisave
-};
-
-/* not working, encrypted */
-struct GameDriver driver_jumpshot =
-{
-	__FILE__,
-	0,
-	"jumpshot",
-	"Jump Shot",
-	"????",
-	"?????",
-	BASE_CREDITS,
-	0,
-	&machine_driver,
-	0,
-
-	rom_jumpshot,
-	0, 0,
-	0,
-	0,
-
-	input_ports_pacman,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	0, 0
-};
-
-struct GameDriver driver_vanvan =
-{
-	__FILE__,
-	0,
-	"vanvan",
-	"Van Van Car",
-	"1983",
-	"Karateco",
-	BASE_CREDITS,
-	0,
-	&vanvan_machine_driver,
-	0,
-
-	rom_vanvan,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vanvan,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	vanvan_hiload, vanvan_hisave
-};
-
-struct GameDriver driver_vanvanb =
-{
-	__FILE__,
-	&driver_vanvan,
-	"vanvanb",
-	"Van Van Car (bootleg)",
-	"1983",
-	"bootleg",
-	BASE_CREDITS,
-	0,
-	&vanvan_machine_driver,
-	0,
-
-	rom_vanvanb,
-	0, 0,
-	0,
-	0,
-
-	input_ports_vanvan,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	vanvan_hiload, vanvan_hisave
-};
-
-struct GameDriver driver_alibaba =
-{
-	__FILE__,
-	0,
-	"alibaba",
-	"Ali Baba and 40 Thieves",
-	"1982",
-	"Sega",
-	"Zsolt Vasvari\nMarco Cassili\n"BASE_CREDITS,
-	0,
-	&alibaba_machine_driver,
-	0,
-
-	rom_alibaba,
-	0, 0,
-	0,
-	0,
-
-	input_ports_alibaba,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	alibaba_hiload, pacman_hisave
-};
-
+GAME( 1980, pacman,   ,         pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (Japan set 1)" )
+GAME( 1980, pacmanjp, pacman,   pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (Japan set 2)" )
+GAME( 1980, pacmanm,  pacman,   pacman,  pacman,   ,         ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway)" )
+GAME( 1981, npacmod,  pacman,   pacman,  pacman,   ,         ROT90,  "Namco", "PuckMan (harder?)" )
+GAME( 1981, pacmod,   pacman,   pacman,  pacman,   ,         ROT90,  "[Namco] (Midway license)", "Pac-Man (Midway, harder)" )
+GAME( 1981, hangly,   pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Hangly-Man (set 1)" )
+GAME( 1981, hangly2,  pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Hangly-Man (set 2)" )
+GAME( 1980, puckman,  pacman,   pacman,  pacman,   ,         ROT90,  "hack", "New Puck-X" )
+GAME( 1981, pacheart, pacman,   pacman,  pacman,   ,         ROT90,  "hack", "Pac-Man (Hearts)" )
+GAME( 1981, piranha,  pacman,   pacman,  mspacman, ,         ROT90,  "hack", "Piranha" )
+GAME( 1982, pacplus,  ,         pacman,  pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus" )
+GAME( 1981, mspacman, ,         pacman,  mspacman, ,         ROT90,  "bootleg", "Ms. Pac-Man" )
+GAME( 1981, mspacatk, mspacman, pacman,  mspacman, ,         ROT90,  "hack", "Ms. Pac-Man Plus" )
+GAME( 1981, pacgal,   mspacman, pacman,  mspacman, ,         ROT90,  "hack", "Pac-Gal" )
+GAME( 1981, crush,    ,         pacman,  maketrax, maketrax, ROT90,  "Kural Samno Electric", "Crush Roller (Kural Samno)" )
+GAME( 1981, crush2,   crush,    pacman,  maketrax, ,         ROT90,  "Kural Esco Electric", "Crush Roller (Kural Esco - bootleg?)" )
+GAME( 1981, crush3,   crush,    pacman,  maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
+GAME( 1981, maketrax, crush,    pacman,  maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax" )
+GAME( 1981, mbrush,   crush,    pacman,  mbrush,   ,         ROT90,  "bootleg", "Magic Brush" )
+GAME( 1981, paintrlr, crush,    pacman,  paintrlr, ,         ROT90,  "bootleg", "Paint Roller" )
+GAME( 1982, ponpoko,  ,         pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )
+GAME( 1982, ponpokov, ponpoko,  pacman,  ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
+GAME( 1982, eyes,     ,         pacman,  eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
+GAME( 1982, eyes2,    eyes,     pacman,  eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
+GAME( 1983, mrtnt,    ,         pacman,  eyes,     eyes,     ROT90,  "Telko", "Mr. TNT" )
+GAME( 1985, lizwiz,   ,         pacman,  lizwiz,   ,         ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
+GAME( 1983, theglob,  ,         theglob, theglob,  ,         ROT90,  "Epos Corporation", "The Glob" )
+GAME( 1984, beastf,   theglob,  theglob, theglob,  ,         ROT90,  "Epos Corporation", "Beastie Feastie" )
+GAMEX(????, jumpshot, ,         pacman,  pacman,   ,         ROT90,  "<unknown>", "Jump Shot", GAME_NOT_WORKING )	/* not working, encrypted */
+GAME( 1983, vanvan,   ,         vanvan,  vanvan,   ,         ROT270, "Karateco", "Van Van Car" )
+GAME( 1983, vanvanb,  vanvan,   vanvan,  vanvan,   ,         ROT270, "bootleg", "Van Van Car (bootleg)" )
+GAME( 1982, alibaba,  ,         alibaba, alibaba,  ,         ROT90,  "Sega", "Ali Baba and 40 Thieves" )

@@ -49,7 +49,6 @@ void missile_init_machine(void)
 void missile_w(int address, int data)
 {
 	int pc, opcode;
-	extern unsigned char *RAM;
 
 
 	pc = cpu_getpreviouspc();
@@ -80,19 +79,15 @@ void missile_w(int address, int data)
 	/* $4800 - various IO */
 	if (address == 0x4800)
 	{
-		if (RAM[address] != data)
-		{
-			if (missile_flipscreen != (!(data & 0x40)))
-				missile_flip_screen ();
-			missile_flipscreen = !(data & 0x40);
-			coin_counter_w (0, data & 0x20);
-			coin_counter_w (1, data & 0x10);
-			coin_counter_w (2, data & 0x08);
-			osd_led_w (0, ~data >> 1);
-			osd_led_w (1, ~data >> 2);
-			ctrld = data & 1;
-			RAM[address] = data;
-		}
+		if (missile_flipscreen != (!(data & 0x40)))
+			missile_flip_screen ();
+		missile_flipscreen = !(data & 0x40);
+		coin_counter_w (0, data & 0x20);
+		coin_counter_w (1, data & 0x10);
+		coin_counter_w (2, data & 0x08);
+		osd_led_w (0, ~data >> 1);
+		osd_led_w (1, ~data >> 2);
+		ctrld = data & 1;
 		return;
 	}
 
@@ -129,14 +124,16 @@ void missile_w(int address, int data)
 
 
 /********************************************************************************************/
+
+unsigned char *missile_video2ram;
+
 int missile_r (int address)
 {
 	int pc, opcode;
-	extern unsigned char *RAM;
 
 
 	pc = cpu_getpreviouspc();
-	opcode = RAM[pc];
+	opcode = cpu_readop(pc);
 
 	address += 0x1900;
 
@@ -147,7 +144,7 @@ int missile_r (int address)
 	}
 
 	if (address >= 0x5000)
-		return RAM[address];
+		return missile_video2ram[address - 0x5000];
 
 	if (address == 0x4800)
 		return (missile_IN0_r(0));
@@ -160,5 +157,5 @@ int missile_r (int address)
 		return (pokey1_r (address & 0x0f));
 
 	if (errorlog) fprintf (errorlog, "possible unmapped read, offset: %04x\n", address);
-	return RAM[address];
+	return 0;
 }

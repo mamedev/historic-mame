@@ -428,7 +428,7 @@ static struct IOWritePort writeport[] =
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0x84, 0x86, mcr_scroll_value_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
-	{ 0xe8, 0xe8, mcr_unknown_w },
+	{ 0xe8, 0xe8, MWA_NOP },
 	{ 0xf0, 0xf3, z80ctc_0_w },
 	{ -1 }
 };
@@ -1126,7 +1126,7 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 
 
 /* General MCR3 system */
-static struct MachineDriver mcr3_machine_driver =
+static struct MachineDriver machine_driver_mcr3 =
 {
 	/* basic machine hardware */
 	{
@@ -1153,12 +1153,14 @@ static struct MachineDriver mcr3_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Discs of Tron = General MCR3 with Squawk & Talk, and backdrop support */
-static struct MachineDriver dotron_machine_driver =
+static struct MachineDriver machine_driver_dotron =
 {
 	/* basic machine hardware */
 	{
@@ -1187,12 +1189,14 @@ static struct MachineDriver dotron_machine_driver =
 	{
 		SOUND_SSIO,
 		SOUND_SQUAWK_N_TALK,
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Destruction Derby = General MCR3 with Turbo Chip Squeak instead of SSIO */
-static struct MachineDriver destderb_machine_driver =
+static struct MachineDriver machine_driver_destderb =
 {
 	/* basic machine hardware */
 	{
@@ -1219,13 +1223,15 @@ static struct MachineDriver destderb_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_TURBO_CHIP_SQUEAK
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Sarge/Demolition Derby Mono/Max RPM = MCR monoboardmonoboard = MCR3 with no SSIO */
 /* in this case, Turbo Chip Squeak is used for sound */
-static struct MachineDriver sarge_machine_driver =
+static struct MachineDriver machine_driver_sarge =
 {
 	/* basic machine hardware */
 	{
@@ -1252,12 +1258,14 @@ static struct MachineDriver sarge_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_TURBO_CHIP_SQUEAK
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Rampage = MCR monoboard with Sounds Good */
-static struct MachineDriver rampage_machine_driver =
+static struct MachineDriver machine_driver_rampage =
 {
 	/* basic machine hardware */
 	{
@@ -1284,12 +1292,14 @@ static struct MachineDriver rampage_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SOUNDS_GOOD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Power Drive = MCR monoboard with Sounds Good and external interrupts */
-static struct MachineDriver powerdrv_machine_driver =
+static struct MachineDriver machine_driver_powerdrv =
 {
 	/* basic machine hardware */
 	{
@@ -1322,12 +1332,14 @@ static struct MachineDriver powerdrv_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SOUNDS_GOOD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Spy Hunter = MCR3 with altered memory map, scrolling, special lamps, and a chip squeak deluxe */
-static struct MachineDriver spyhunt_machine_driver =
+static struct MachineDriver machine_driver_spyhunt =
 {
 	/* basic machine hardware */
 	{
@@ -1356,12 +1368,14 @@ static struct MachineDriver spyhunt_machine_driver =
 	{
 		SOUND_SSIO,
 		SOUND_CHIP_SQUEAK_DELUXE
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Turbo Tag = Spy Hunter with no SSIO */
-static struct MachineDriver turbotag_machine_driver =
+static struct MachineDriver machine_driver_turbotag =
 {
 	/* basic machine hardware */
 	{
@@ -1388,12 +1402,14 @@ static struct MachineDriver turbotag_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_CHIP_SQUEAK_DELUXE
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
 /* Crater Raider = Spy Hunter with no Chip Squeak Deluxe */
-static struct MachineDriver crater_machine_driver =
+static struct MachineDriver machine_driver_crater =
 {
 	/* basic machine hardware */
 	{
@@ -1420,7 +1436,9 @@ static struct MachineDriver crater_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
@@ -2101,7 +2119,7 @@ ROM_END
 		"Christopher Kirmse\nAaron Giles\n"			\
 		"Nicola Salmoria\nBrad Oliver",				\
 		0,											\
-		&machine##_machine_driver,					\
+		&machine_driver_##machine,					\
 		name##_init,								\
 													\
 		rom_##name,									\
@@ -2113,8 +2131,7 @@ ROM_END
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
 #define MCR3_CLONE_DRIVER(name,machine,year,rotate,fullname,cloneof) \
@@ -2129,7 +2146,7 @@ ROM_END
 		"Christopher Kirmse\nAaron Giles\n"			\
 		"Nicola Salmoria\nBrad Oliver",				\
 		0,											\
-		&machine##_machine_driver,					\
+		&machine_driver_##machine,					\
 		cloneof##_init,								\
 													\
 		rom_##name,									\
@@ -2141,26 +2158,25 @@ ROM_END
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 
-MCR3_DRIVER      (tapper,   mcr3,     1983, ORIENTATION_DEFAULT,   "Tapper (Budweiser)")
-MCR3_CLONE_DRIVER(tappera,  mcr3,     1983, ORIENTATION_DEFAULT,   "Tapper (alternate)", tapper)
-MCR3_CLONE_DRIVER(sutapper, mcr3,     1983, ORIENTATION_DEFAULT,   "Tapper (Suntory)", tapper)
-MCR3_CLONE_DRIVER(rbtapper, mcr3,     1984, ORIENTATION_DEFAULT,   "Tapper (Root Beer)", tapper)
-MCR3_DRIVER      (timber,   mcr3,     1984, ORIENTATION_DEFAULT,   "Timber")
+MCR3_DRIVER      (tapper,   mcr3,     1983, ROT0,   "Tapper (Budweiser)")
+MCR3_CLONE_DRIVER(tappera,  mcr3,     1983, ROT0,   "Tapper (alternate)", tapper)
+MCR3_CLONE_DRIVER(sutapper, mcr3,     1983, ROT0,   "Tapper (Suntory)", tapper)
+MCR3_CLONE_DRIVER(rbtapper, mcr3,     1984, ROT0,   "Tapper (Root Beer)", tapper)
+MCR3_DRIVER      (timber,   mcr3,     1984, ROT0,   "Timber")
 MCR3_DRIVER      (dotron,   dotron,   1983, ORIENTATION_FLIP_X,    "Discs of Tron (Upright)")
 MCR3_CLONE_DRIVER(dotrone,  dotron,   1983, ORIENTATION_FLIP_X,    "Discs of Tron (Environmental)", dotron)
-MCR3_DRIVER      (destderb, destderb, 1984, ORIENTATION_DEFAULT,   "Demolition Derby")
+MCR3_DRIVER      (destderb, destderb, 1984, ROT0,   "Demolition Derby")
 
-MCR3_CLONE_DRIVER(destderm, sarge,    1984, ORIENTATION_DEFAULT,   "Demolition Derby (2-Player Mono Board Version)", destderb)
-MCR3_DRIVER      (sarge,    sarge,    1985, ORIENTATION_DEFAULT,   "Sarge")
-MCR3_DRIVER      (rampage,  rampage,  1986, ORIENTATION_DEFAULT,   "Rampage (revision 3)")
-MCR3_CLONE_DRIVER(rampage2, rampage,  1986, ORIENTATION_DEFAULT,   "Rampage (revision 2)", rampage)
-MCR3_DRIVER      (powerdrv, powerdrv, 1986, ORIENTATION_DEFAULT,   "Power Drive")
-MCR3_DRIVER      (maxrpm,   sarge,    1986, ORIENTATION_DEFAULT,   "Max RPM")
+MCR3_CLONE_DRIVER(destderm, sarge,    1984, ROT0,   "Demolition Derby (2-Player Mono Board Version)", destderb)
+MCR3_DRIVER      (sarge,    sarge,    1985, ROT0,   "Sarge")
+MCR3_DRIVER      (rampage,  rampage,  1986, ROT0,   "Rampage (revision 3)")
+MCR3_CLONE_DRIVER(rampage2, rampage,  1986, ROT0,   "Rampage (revision 2)", rampage)
+MCR3_DRIVER      (powerdrv, powerdrv, 1986, ROT0,   "Power Drive")
+MCR3_DRIVER      (maxrpm,   sarge,    1986, ROT0,   "Max RPM")
 
-MCR3_DRIVER      (spyhunt,  spyhunt,  1983, ORIENTATION_ROTATE_90, "Spy Hunter")
-MCR3_DRIVER      (turbotag, turbotag, 1985, ORIENTATION_ROTATE_90, "Turbo Tag (Prototype)")
+MCR3_DRIVER      (spyhunt,  spyhunt,  1983, ROT90, "Spy Hunter")
+MCR3_DRIVER      (turbotag, turbotag, 1985, ROT90, "Turbo Tag (Prototype)")
 MCR3_DRIVER      (crater,   crater,   1984, ORIENTATION_FLIP_X,    "Crater Raider")

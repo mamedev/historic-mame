@@ -339,10 +339,10 @@ static struct GfxLayout scroll1layout_bionicc=
 
 static struct GfxDecodeInfo gfxdecodeinfo_bionicc[] =
 {
-	{ 1, 0x48000, &scroll2layout_bionicc,   0,  4 },	/* colors   0-  63 */
-	{ 1, 0x58000, &scroll1layout_bionicc, 256,  4 },	/* colors 256- 319 */
-	{ 1, 0x00000, &spritelayout_bionicc,  512, 16 },	/* colors 512- 767 */
-	{ 1, 0x40000, &vramlayout_bionicc,    768, 64 },	/* colors 768-1023 */
+	{ REGION_GFX1, 0, &vramlayout_bionicc,    768, 64 },	/* colors 768-1023 */
+	{ REGION_GFX2, 0, &scroll2layout_bionicc,   0,  4 },	/* colors   0-  63 */
+	{ REGION_GFX3, 0, &scroll1layout_bionicc, 256,  4 },	/* colors 256- 319 */
+	{ REGION_GFX4, 0, &spritelayout_bionicc,  512, 16 },	/* colors 512- 767 */
 	{ -1 }
 };
 
@@ -356,7 +356,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bionicc =
 {
 	/* basic machine hardware */
 	{
@@ -407,29 +407,35 @@ ROM_START( bionicc )
 	ROM_LOAD_EVEN( "tsu_03b.rom",  0x20000, 0x10000, 0x4e157ae2 ) /* 68000 code */
 	ROM_LOAD_ODD ( "tsu_05b.rom",  0x20000, 0x10000, 0xe66ca0f9 ) /* 68000 code */
 
-	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tsu_10.rom",   0x000000, 0x08000, 0xf1180d02 )	/* Sprites */
-	ROM_LOAD( "tsu_09.rom",   0x008000, 0x08000, 0x6a049292 )
-	ROM_LOAD( "tsu_15.rom",   0x010000, 0x08000, 0xea912701 )
-	ROM_LOAD( "tsu_14.rom",   0x018000, 0x08000, 0x46b2ad83 )
-	ROM_LOAD( "tsu_20.rom",   0x020000, 0x08000, 0x17857ad2 )
-	ROM_LOAD( "tsu_19.rom",   0x028000, 0x08000, 0xb5c82722 )
-	ROM_LOAD( "tsu_22.rom",   0x030000, 0x08000, 0x5ee1ae6a )
-	ROM_LOAD( "tsu_21.rom",   0x038000, 0x08000, 0x98777006 )
-	ROM_LOAD( "tsu_08.rom",   0x040000, 0x08000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
-	ROM_LOAD( "tsu_07.rom",   0x048000, 0x08000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
-	ROM_LOAD( "tsu_06.rom",   0x050000, 0x08000, 0x40bf0eb4 )
-	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
-	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
-	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
-	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
-	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
-	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
-	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
-	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_08.rom",   0x00000, 0x8000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_07.rom",   0x00000, 0x8000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "tsu_06.rom",   0x08000, 0x8000, 0x40bf0eb4 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x18000, 0x8000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x20000, 0x8000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x28000, 0x8000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_10.rom",   0x00000, 0x8000, 0xf1180d02 )	/* Sprites */
+	ROM_LOAD( "tsu_09.rom",   0x08000, 0x8000, 0x6a049292 )
+	ROM_LOAD( "tsu_15.rom",   0x10000, 0x8000, 0xea912701 )
+	ROM_LOAD( "tsu_14.rom",   0x18000, 0x8000, 0x46b2ad83 )
+	ROM_LOAD( "tsu_20.rom",   0x20000, 0x8000, 0x17857ad2 )
+	ROM_LOAD( "tsu_19.rom",   0x28000, 0x8000, 0xb5c82722 )
+	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
+	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
 ROM_END
 
 ROM_START( bionicc2 )
@@ -439,29 +445,35 @@ ROM_START( bionicc2 )
 	ROM_LOAD_EVEN( "03",      0x20000, 0x10000, 0x72c3b76f ) /* 68000 code */
 	ROM_LOAD_ODD ( "05",      0x20000, 0x10000, 0x70621f83 ) /* 68000 code */
 
-	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tsu_10.rom",   0x000000, 0x08000, 0xf1180d02 )	/* Sprites */
-	ROM_LOAD( "tsu_09.rom",   0x008000, 0x08000, 0x6a049292 )
-	ROM_LOAD( "tsu_15.rom",   0x010000, 0x08000, 0xea912701 )
-	ROM_LOAD( "tsu_14.rom",   0x018000, 0x08000, 0x46b2ad83 )
-	ROM_LOAD( "tsu_20.rom",   0x020000, 0x08000, 0x17857ad2 )
-	ROM_LOAD( "tsu_19.rom",   0x028000, 0x08000, 0xb5c82722 )
-	ROM_LOAD( "tsu_22.rom",   0x030000, 0x08000, 0x5ee1ae6a )
-	ROM_LOAD( "tsu_21.rom",   0x038000, 0x08000, 0x98777006 )
-	ROM_LOAD( "tsu_08.rom",   0x040000, 0x08000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
-	ROM_LOAD( "tsu_07.rom",   0x048000, 0x08000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
-	ROM_LOAD( "tsu_06.rom",   0x050000, 0x08000, 0x40bf0eb4 )
-	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
-	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
-	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
-	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
-	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
-	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
-	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
-	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_08.rom",   0x00000, 0x8000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_07.rom",   0x00000, 0x8000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "tsu_06.rom",   0x08000, 0x8000, 0x40bf0eb4 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x18000, 0x8000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x20000, 0x8000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x28000, 0x8000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tsu_10.rom",   0x00000, 0x8000, 0xf1180d02 )	/* Sprites */
+	ROM_LOAD( "tsu_09.rom",   0x08000, 0x8000, 0x6a049292 )
+	ROM_LOAD( "tsu_15.rom",   0x10000, 0x8000, 0xea912701 )
+	ROM_LOAD( "tsu_14.rom",   0x18000, 0x8000, 0x46b2ad83 )
+	ROM_LOAD( "tsu_20.rom",   0x20000, 0x8000, 0x17857ad2 )
+	ROM_LOAD( "tsu_19.rom",   0x28000, 0x8000, 0xb5c82722 )
+	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
+	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
 ROM_END
 
 ROM_START( topsecrt )
@@ -471,192 +483,39 @@ ROM_START( topsecrt )
 	ROM_LOAD_EVEN( "ts_03.rom",  0x20000, 0x10000, 0x27f04bb6 ) /* 68000 code */
 	ROM_LOAD_ODD ( "ts_05.rom",  0x20000, 0x10000, 0xc01547b1 ) /* 68000 code */
 
-	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ts_10.rom",    0x000000, 0x08000, 0xc3587d05 )	/* Sprites */
-	ROM_LOAD( "ts_09.rom",    0x008000, 0x08000, 0x6b63eef2 )
-	ROM_LOAD( "ts_15.rom",    0x010000, 0x08000, 0xdb8cebb0 )
-	ROM_LOAD( "ts_14.rom",    0x018000, 0x08000, 0xe2e41abf )
-	ROM_LOAD( "ts_20.rom",    0x020000, 0x08000, 0xbfd1a695 )
-	ROM_LOAD( "ts_19.rom",    0x028000, 0x08000, 0x928b669e )
-	ROM_LOAD( "ts_22.rom",    0x030000, 0x08000, 0x3fe05d9a )
-	ROM_LOAD( "ts_21.rom",    0x038000, 0x08000, 0x27a9bb7c )
-	ROM_LOAD( "ts_08.rom",    0x040000, 0x08000, 0x96ad379e )	/* VIDEORAM (text layer) tiles */
-	ROM_LOAD( "ts_07.rom",    0x048000, 0x08000, 0x25cdf8b2 )	/* SCROLL2 Layer Tiles */
-	ROM_LOAD( "ts_06.rom",    0x050000, 0x08000, 0x314fb12d )
-	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
-	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
-	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
-	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
-	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
-	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
-	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
-	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
 	ROM_LOAD( "ts_01.rom",    0x00000, 0x8000, 0x8ea07917 )
+
+	ROM_REGIONX( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_08.rom",    0x00000, 0x8000, 0x96ad379e )	/* VIDEORAM (text layer) tiles */
+
+	ROM_REGIONX( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_07.rom",    0x00000, 0x8000, 0x25cdf8b2 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "ts_06.rom",    0x08000, 0x8000, 0x314fb12d )
+
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x18000, 0x8000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x20000, 0x8000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x28000, 0x8000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ts_10.rom",    0x00000, 0x8000, 0xc3587d05 )	/* Sprites */
+	ROM_LOAD( "ts_09.rom",    0x08000, 0x8000, 0x6b63eef2 )
+	ROM_LOAD( "ts_15.rom",    0x10000, 0x8000, 0xdb8cebb0 )
+	ROM_LOAD( "ts_14.rom",    0x18000, 0x8000, 0xe2e41abf )
+	ROM_LOAD( "ts_20.rom",    0x20000, 0x8000, 0xbfd1a695 )
+	ROM_LOAD( "ts_19.rom",    0x28000, 0x8000, 0x928b669e )
+	ROM_LOAD( "ts_22.rom",    0x30000, 0x8000, 0x3fe05d9a )
+	ROM_LOAD( "ts_21.rom",    0x38000, 0x8000, 0x27a9bb7c )
 ROM_END
 
 
 
-/* hi load / save added 11/20/98 HSC */
-
-#ifdef LSB_FIRST
-#define ENDIAN_ALIGN(a)	(a)
-#else
-#define ENDIAN_ALIGN(a) (a^1)
-#endif
-
-static int hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&ram_bc[0x39e2])==0x2 && READ_WORD(&ram_bc[0x39e4])==0
-    	&& READ_WORD(&ram_bc[0x3a2e])==0x434f && READ_WORD(&ram_bc[0x3a30])==0x4d20
-	/* and for the score to be on screen */
-		&& bionicc_txvideoram_r(0x0e6) == 0)
-	{
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-        	UINT8 digit[8];
-			int hi;
-
-			osd_fread_msbfirst(f,&ram_bc[0x39e2],10*8);
-			osd_fclose(f);
-			ram_bc[0x57a]=ram_bc[0x39e2];
-            ram_bc[0x57b]=ram_bc[0x39e3];
-            ram_bc[0x57c]=ram_bc[0x39e4];
-            ram_bc[0x57d]=ram_bc[0x39e5];
-
-			digit[0] = ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0f;
-			digit[1] = ram_bc[ENDIAN_ALIGN(0x57c)] >> 4;
-			digit[2] = ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0f;
-			digit[3] = ram_bc[ENDIAN_ALIGN(0x57d)] >> 4;
-			digit[4] = ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0f;
-			digit[5] = ram_bc[ENDIAN_ALIGN(0x57a)] >> 4;
-			digit[6] = ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0f;
-			digit[7] = ram_bc[ENDIAN_ALIGN(0x57b)] >> 4;
-
-			hi =	digit[0] +
-					digit[1] * 10 +
-					digit[2] * 100 +
-					digit[3] * 1000 +
-					digit[4] * 10000 +
-					digit[5] * 100000 +
-					digit[6] * 1000000 +
-					digit[7] * 10000000;
-
-
-			if (hi >= 10000000)
-				bionicc_txvideoram_w(0x0d8, digit[7]);
-			if (hi >= 1000000)
-				bionicc_txvideoram_w(0x0da, digit[6]);
-			if (hi >= 100000)
-				bionicc_txvideoram_w(0x0dc, digit[5]);
-			if (hi >= 10000)
-				bionicc_txvideoram_w(0x0de, digit[4]);
-			if (hi >= 1000)
-				bionicc_txvideoram_w(0x0e0, digit[3]);
-			if (hi >= 100)
-				bionicc_txvideoram_w(0x0e2, digit[2]);
-			if (hi >= 10)
-				bionicc_txvideoram_w(0x0e4, digit[1]);
-			if (hi >= 0)
-				bionicc_txvideoram_w(0x0e6, digit[0]);
-
-        	if (errorlog)
-				fprintf(errorlog,"hi score: %i\n", hi);
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram_bc[0x39e2],10*8);
-		osd_fclose(f);
-	}
-}
-
-
-
-
-struct GameDriver driver_bionicc =
-{
-	__FILE__,
-	0,
-	"bionicc",
-	"Bionic Commando (US set 1)",
-	"1987",
-	"Capcom",
-	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bionicc,
-	0,
-	0,0,
-	0,
-
-	input_ports_bionicc,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	hiload,hisave
-};
-
-struct GameDriver driver_bionicc2 =
-{
-	__FILE__,
-	&driver_bionicc,
-	"bionicc2",
-	"Bionic Commando (US set 2)",
-	"1987",
-	"Capcom",
-	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bionicc2,
-	0,
-	0,0,
-	0,
-
-	input_ports_bionicc,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver driver_topsecrt =
-{
-	__FILE__,
-	&driver_bionicc,
-	"topsecrt",
-	"Top Secret (Japan)",
-	"1987",
-	"Capcom",
-	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
-	0,
-	&machine_driver,
-	0,
-
-	rom_topsecrt,
-	0,
-	0,0,
-	0,
-
-	input_ports_bionicc,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
+GAME( 1987, bionicc,  ,        bionicc, bionicc, , ROT0, "Capcom", "Bionic Commando (US set 1)" )
+GAME( 1987, bionicc2, bionicc, bionicc, bionicc, , ROT0, "Capcom", "Bionic Commando (US set 2)" )
+GAME( 1987, topsecrt, bionicc, bionicc, bionicc, , ROT0, "Capcom", "Top Secret (Japan)" )

@@ -132,8 +132,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0,    32 },
-	{ 1, 0x1000, &spritelayout, 32*4, 16 },
+	{ REGION_GFX1, 0, &charlayout,   0,    32 },
+	{ REGION_GFX2, 0, &spritelayout, 32*4, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -145,7 +145,7 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cheekyms =
 {
 	/* basic machine hardware */
 	{
@@ -199,11 +199,13 @@ ROM_START( cheekyms )
 	ROM_LOAD( "cm05.c7",       0x1000, 0x0800, 0x4169eba8 )
 	ROM_LOAD( "cm06.c8",       0x1800, 0x0800, 0x7031660c )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cm01.c1",       0x0000, 0x0800, 0x26f73bd7 )
 	ROM_LOAD( "cm02.c2",       0x0800, 0x0800, 0x885887c3 )
-	ROM_LOAD( "cm07.n5",       0x1000, 0x0800, 0x2738c88d )
-	ROM_LOAD( "cm08.n6",       0x1800, 0x0800, 0xb3fbd4ac )
+
+	ROM_REGIONX( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "cm07.n5",       0x0000, 0x0800, 0x2738c88d )
+	ROM_LOAD( "cm08.n6",       0x0800, 0x0800, 0xb3fbd4ac )
 
 	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cm.m8",         0x0000, 0x0020, 0x2386bc68 )	 /* Character colors \ Selected by Bit 6 of Port 0x80 */
@@ -213,28 +215,4 @@ ROM_END
 
 
 
-struct GameDriver driver_cheekyms =
-{
-	__FILE__,
-	0,
-	"cheekyms",
-	"Cheeky Mouse",
-	"1980?",
-	"Universal",
-	"Lee Taylor\nChris Moore\nZsolt Vasvari",
-	0,
-	&machine_driver,
-	0,
-
-	rom_cheekyms,
-	0, 0,
-	0,
-	0,
-
-	input_ports_cheekyms,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
-
-	0, 0
-};
+GAMEX( 1980?, cheekyms, , cheekyms, cheekyms, , ROT270, "Universal", "Cheeky Mouse", GAME_WRONG_COLORS )

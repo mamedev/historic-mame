@@ -431,6 +431,6 @@ struct GameDriver driver_footchmp =
 	input_ports_footchmp,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

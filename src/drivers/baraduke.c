@@ -420,12 +420,12 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &text_layout,		0, 512 },
-	{ 1, 0x02000, &tile_layout1,	0, 256 },
-	{ 1, 0x02000, &tile_layout2,	0, 256 },
-	{ 1, 0x02000, &tile_layout3,	0, 256 },
-	{ 1, 0x02000, &tile_layout4,	0, 256 },
-	{ 1, 0x0e000, &spritelayout,	0, 128 },
+	{ REGION_GFX1, 0, &text_layout,		0, 512 },
+	{ REGION_GFX2, 0, &tile_layout1,	0, 256 },
+	{ REGION_GFX2, 0, &tile_layout2,	0, 256 },
+	{ REGION_GFX2, 0, &tile_layout3,	0, 256 },
+	{ REGION_GFX2, 0, &tile_layout4,	0, 256 },
+	{ REGION_GFX3, 0, &spritelayout,	0, 128 },
 	{ -1 }
 };
 
@@ -439,7 +439,7 @@ static struct namco_interface namco_interface =
 };
 
 
-static struct MachineDriver baraduke_machine_driver =
+static struct MachineDriver machine_driver_baraduke =
 {
 	/* basic machine hardware */
 	{
@@ -482,7 +482,7 @@ static struct MachineDriver baraduke_machine_driver =
 	}
 };
 
-static struct MachineDriver metrocrs_machine_driver =
+static struct MachineDriver machine_driver_metrocrs =
 {
 	/* basic machine hardware */
 	{
@@ -531,20 +531,24 @@ ROM_START( baraduke )
 	ROM_LOAD( "prg2.9a",	0x8000, 0x04000, 0x9a0a9a87 )
 	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, 0x383e5458 )
 
-	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
-	ROM_LOAD( "ch2.4p",		0x02000, 0x4000, 0xb0bb0710 )	/* tiles */
-	ROM_LOAD( "ch3.4n",		0x06000, 0x4000, 0x0d7ebec9 )
-	ROM_LOAD( "ch4.4m",		0x0a000, 0x4000, 0xe5da0896 )
-	ROM_LOAD( "obj1.8k",	0x0e000, 0x4000, 0x87a29acc )	/* sprites */
-	ROM_LOAD( "obj2.8l",	0x12000, 0x4000, 0x72b6d20c )
-	ROM_LOAD( "obj3.8m",	0x16000, 0x4000, 0x3076af9c )
-	ROM_LOAD( "obj4.8n",	0x1a000, 0x4000, 0x8b4c09a3 )
-
 	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, 0xabda0fe7 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, 0x706b7fee )	/* characters */
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ch2.4p",		0x00000, 0x4000, 0xb0bb0710 )	/* tiles */
+	ROM_LOAD( "ch3.4n",		0x04000, 0x4000, 0x0d7ebec9 )
+	ROM_LOAD( "ch4.4m",		0x08000, 0x4000, 0xe5da0896 )
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "obj1.8k",	0x00000, 0x4000, 0x87a29acc )	/* sprites */
+	ROM_LOAD( "obj2.8l",	0x04000, 0x4000, 0x72b6d20c )
+	ROM_LOAD( "obj3.8m",	0x08000, 0x4000, 0x3076af9c )
+	ROM_LOAD( "obj4.8n",	0x0c000, 0x4000, 0x8b4c09a3 )
+
 	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
 	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
@@ -556,205 +560,40 @@ ROM_START( metrocrs )
 	ROM_LOAD( "mc1-1.9a",	0x8000, 0x04000, 0x10b0977e )
 	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, 0x5c846f35 )
 
-	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
-	ROM_LOAD( "mc1-7.4p",	0x02000, 0x4000, 0xc9dfa003 )	/* tiles */
-	ROM_LOAD( "mc1-6.4n",	0x06000, 0x4000, 0x9686dc3c )
-	/* empty space to decode the roms as 3bpp */
-	ROM_LOAD( "mc1-8.8k",	0x0e000, 0x4000, 0x265b31fa )	/* sprites */
-	ROM_LOAD( "mc1-9.8l",	0x12000, 0x4000, 0x541ec029 )
-
 	ROM_REGIONX(  0x10000 , REGION_CPU2 ) /* MCU code */
 	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
 															/* Using Pacland code (probably similar) */
+	ROM_REGIONX( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, 0x9b5ea33a )	/* characters */
+
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc1-7.4p",	0x00000, 0x4000, 0xc9dfa003 )	/* tiles */
+	ROM_LOAD( "mc1-6.4n",	0x04000, 0x4000, 0x9686dc3c )
+	/* empty space to decode the roms as 3bpp */
+
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mc1-8.8k",	0x00000, 0x4000, 0x265b31fa )	/* sprites */
+	ROM_LOAD( "mc1-9.8l",	0x04000, 0x4000, 0x541ec029 )
+	/* 8000-ffff empty */
+
 	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
 	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
 ROM_END
 
-static void gfx_untangle( void )
+
+
+static void init_metrocrs( void )
 {
 	int i;
-	unsigned char *gfx = memory_region(1);
+	unsigned char *rom = memory_region(REGION_GFX2);
 
-	for( i = 0xa000; i < 0x0e000; i++ ){
-		gfx[i] = 0xff;
-	}
+	for(i = 0x8000;i < memory_region_length(REGION_GFX2);i++)
+		rom[i] = 0xff;
 }
 
-/****  Baraduke high score save routine  ****/
-/****  RJF (Nov 22, 1999)  ****/
-static int baraduke_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0280],"\x00\x07\x65",3) == 0) &&
-		(memcmp(&RAM[0x02c0],"\x00\x07\x65",3) == 0))
-	{
-		void *f;
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/*** 9 bytes each entry ****/
-			/* bytes 1,2,3     = score */
-			/* byte 4          = floor */
-			/* bytes 5,6,7,8,9 = name  */
-
-			osd_fread(f,&RAM[0x0280], 9);	/* 1st entry */
-			osd_fread(f,&RAM[0x0290], 9);	/* 2nd entry */
-			osd_fread(f,&RAM[0x02a0], 9);	/* 3rd entry */
-			osd_fread(f,&RAM[0x02b0], 9);	/* 4th entry */
-			osd_fread(f,&RAM[0x02c0], 9);	/* 5th entry */
-
-			RAM[0x0074] = RAM[0x0280];	/* update high score */
-			RAM[0x0075] = RAM[0x0281];	/* on top of screen */
-			RAM[0x0076] = RAM[0x0282];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void baraduke_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0280], 9);		/* 1st entry */
-		osd_fwrite(f,&RAM[0x0290], 9);		/* 2nd entry */
-		osd_fwrite(f,&RAM[0x02a0], 9);		/* 3rd entry */
-		osd_fwrite(f,&RAM[0x02b0], 9);		/* 4th entry */
-		osd_fwrite(f,&RAM[0x02c0], 9);		/* 5th entry */
-		osd_fclose(f);
-	}
-}
-
-/****  Metro-Cross high score save routine  ****/
-/****  RJF (Nov 22, 1999)  ****/
-static int metrocrs_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x1473],"\x08\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x1481],"\x19\x1e\x16",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-			osd_fread(f,&RAM[0x1473], 5);	/* 1st entry score */
-			osd_fread(f,&RAM[0x147d], 1);	/* 1st entry round */
-			osd_fread(f,&RAM[0x1481], 7);	/* 1st entry name  */
-			osd_fread(f,&RAM[0x148c], 5);	/* 2nd entry score */
-			osd_fread(f,&RAM[0x1496], 1);	/* 2nd entry round */
-			osd_fread(f,&RAM[0x149a], 7);	/* 2nd entry name  */
-			osd_fread(f,&RAM[0x14a5], 5);	/* 3rd entry score */
-			osd_fread(f,&RAM[0x14af], 1);	/* 3rd entry round */
-			osd_fread(f,&RAM[0x14b3], 7);	/* 3rd entry name  */
-			osd_fread(f,&RAM[0x14be], 5);	/* 4th entry score */
-			osd_fread(f,&RAM[0x14c8], 1);	/* 4th entry round */
-			osd_fread(f,&RAM[0x14cc], 7);	/* 4th entry name  */
-			osd_fread(f,&RAM[0x14d7], 5);	/* 5th entry score */
-			osd_fread(f,&RAM[0x14e1], 1);	/* 5th entry round */
-			osd_fread(f,&RAM[0x14e5], 7);	/* 5th entry name  */
-
-			RAM[0x486e] = RAM[0x1473];	/* update high score */
-			RAM[0x486f] = RAM[0x1474];	/* on top of screen */
-			RAM[0x4870] = RAM[0x1475];
-			RAM[0x4871] = RAM[0x1476];
-			RAM[0x4872] = RAM[0x1477];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void metrocrs_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1473], 5);	/* 1st entry score */
-		osd_fwrite(f,&RAM[0x147d], 1);	/* 1st entry round */
-		osd_fwrite(f,&RAM[0x1481], 7);	/* 1st entry name  */
-		osd_fwrite(f,&RAM[0x148c], 5);	/* 2nd entry score */
-		osd_fwrite(f,&RAM[0x1496], 1);	/* 2nd entry round */
-		osd_fwrite(f,&RAM[0x149a], 7);	/* 2nd entry name  */
-		osd_fwrite(f,&RAM[0x14a5], 5);	/* 3rd entry score */
-		osd_fwrite(f,&RAM[0x14af], 1);	/* 3rd entry round */
-		osd_fwrite(f,&RAM[0x14b3], 7);	/* 3rd entry name  */
-		osd_fwrite(f,&RAM[0x14be], 5);	/* 4th entry score */
-		osd_fwrite(f,&RAM[0x14c8], 1);	/* 4th entry round */
-		osd_fwrite(f,&RAM[0x14cc], 7);	/* 4th entry name  */
-		osd_fwrite(f,&RAM[0x14d7], 5);	/* 5th entry score */
-		osd_fwrite(f,&RAM[0x14e1], 1);	/* 5th entry round */
-		osd_fwrite(f,&RAM[0x14e5], 7);	/* 5th entry name  */
-		osd_fclose(f);
-	}
-}
-
-struct GameDriver driver_baraduke =
-{
-	__FILE__,
-	0,
-	"baraduke",
-	"Baraduke",
-	"1985",
-	"Namco",
-	"Manuel Abadia",
-	0,
-	&baraduke_machine_driver,
-	0,
-
-	rom_baraduke,
-	0,
-	0,
-	0,
-	0,
-
-	input_ports_baraduke,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-
-	baraduke_hiload, baraduke_hisave
-};
-
-struct GameDriver driver_metrocrs =
-{
-	__FILE__,
-	0,
-	"metrocrs",
-	"Metro-Cross",
-	"1985",
-	"Namco",
-	"Manuel Abadia",
-	0,
-	&metrocrs_machine_driver,
-	0,
-
-	rom_metrocrs,
-	gfx_untangle,
-	0,
-	0,
-	0,
-
-	input_ports_metrocrs,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	metrocrs_hiload, metrocrs_hisave
-};
+GAME( 1985, baraduke, , baraduke, baraduke, ,         ROT0, "Namco", "Baraduke" )
+GAME( 1985, metrocrs, , metrocrs, metrocrs, metrocrs, ROT0, "Namco", "Metro-Cross" )

@@ -1526,7 +1526,7 @@ static struct K007232_interface k007232_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver nemesis_machine_driver =
+static struct MachineDriver machine_driver_nemesis =
 {
 	/* basic machine hardware */
 	{
@@ -1578,7 +1578,7 @@ static struct MachineDriver nemesis_machine_driver =
 	}
 };
 
-static struct MachineDriver konamigt_machine_driver =
+static struct MachineDriver machine_driver_konamigt =
 {
 	/* basic machine hardware */
 	{
@@ -1626,7 +1626,7 @@ static struct MachineDriver konamigt_machine_driver =
 	}
 };
 
-static struct MachineDriver salamand_machine_driver =
+static struct MachineDriver machine_driver_salamand =
 {
 	/* basic machine hardware */
 	{
@@ -1678,7 +1678,7 @@ static struct MachineDriver salamand_machine_driver =
 	}
 };
 
-static struct MachineDriver gx400_machine_driver =
+static struct MachineDriver machine_driver_gx400 =
 {
 	/* basic machine hardware */
 	{
@@ -1689,7 +1689,7 @@ static struct MachineDriver gx400_machine_driver =
 			gx400_interrupt,3
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,// | CPU_AUDIO_CPU,
 			14318180/4,        /* 3.579545 MHz */
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1730,7 +1730,7 @@ static struct MachineDriver gx400_machine_driver =
 	}
 };
 
-static struct MachineDriver twinbee_gx400_machine_driver =
+static struct MachineDriver machine_driver_twinbee_gx400 =
 {
 	/* basic machine hardware */
 	{
@@ -1741,7 +1741,7 @@ static struct MachineDriver twinbee_gx400_machine_driver =
 			gx400_interrupt,3
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80, // | CPU_AUDIO_CPU,
 			14318180/4,        /* 3.579545 MHz */
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1782,7 +1782,7 @@ static struct MachineDriver twinbee_gx400_machine_driver =
 	}
 };
 
-static struct MachineDriver rf2_gx400_machine_driver =
+static struct MachineDriver machine_driver_rf2_gx400 =
 {
 	/* basic machine hardware */
 	{
@@ -2048,231 +2048,7 @@ ROM_START( lifefrcj )
 	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-/******************************************************************************/
 
-static int nemesis_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x0098],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x5010],8*18);
-			ram[0x0098] = ram[0x501a];
-			ram[0x0099] = ram[0x501b];
-			ram[0x009a] = ram[0x501c];
-			ram[0x009b] = ram[0x501d];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void nemesis_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x5010],8*18);
-		osd_fclose(f);
-	}
-}
-
-static int gradius_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram2[0x10098],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x95f0],(4+10)*10);
-			ram2[0x10098] = ram[0x95fa];
-			ram2[0x10099] = ram[0x95fb];
-			ram2[0x1009a] = ram[0x95fc];
-			ram2[0x1009b] = ram[0x95fd];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void gradius_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x95f0],(4+10)*10);
-		osd_fclose(f);
-	}
-}
-
-static int twinbee_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0xeba0],"\x02\x00\x00\x00",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0xf580],4*10);
-			osd_fread(f,&ram[0xf5b0],4*10);
-			ram[0xeba0] = ram[0xf580];
-			ram[0xeba1] = ram[0xf581];
-			ram[0xeba2] = ram[0xf582];
-			ram[0xeba3] = ram[0xf583];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void twinbee_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0xf580],4*10);
-		osd_fwrite(f,&ram[0xf5b0],4*10);
-		osd_fclose(f);
-	}
-}
-
-static int gwarrior_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0xf72e],"\x00\x00\x85\x19",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0xa4f6],8*10);
-			ram[0xf72e] = ram[0xa4f6];
-			ram[0xf72f] = ram[0xa4f7];
-			ram[0xf730] = ram[0xa4f8];
-			ram[0xf731] = ram[0xa4f9];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void gwarrior_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0xa4f6],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int konamigt_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x106],"\x00\x10",2) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x1480],8*10);
-			ram[0x106] = ram[0x1484];
-			ram[0x107] = ram[0x1485];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void konamigt_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x1480],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int rf2_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram2[0xe106],"\x00\x10",2) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram2[0xf480],8*10);
-			ram2[0xe106] = ram2[0xf484];
-			ram2[0xe107] = ram2[0xf485];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void rf2_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram2[0xf480],8*10);
-		osd_fclose(f);
-	}
-}
-
-static int salamand_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&ram[0x005a],"\x05\x00\x00\x73",4) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&ram[0x5000],(4+2*3)*10);
-			ram[0x005a] = ram[0x5000];
-			ram[0x005b] = ram[0x5001];
-			ram[0x005c] = ram[0x5002];
-			ram[0x005d] = ram[0x5003];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void salamand_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&ram[0x5000],10*10);
-		osd_fclose(f);
-	}
-}
-
-/******************************************************************************/
 
 struct GameDriver driver_nemesis =
 {
@@ -2284,7 +2060,7 @@ struct GameDriver driver_nemesis =
 	"Konami",
 	"Allard van der Bas",
 	0,
-	&nemesis_machine_driver,
+	&machine_driver_nemesis,
 	0,
 
 	rom_nemesis,
@@ -2295,9 +2071,8 @@ struct GameDriver driver_nemesis =
 	input_ports_nemesis,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	nemesis_hiload,nemesis_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_nemesuk =
@@ -2310,7 +2085,7 @@ struct GameDriver driver_nemesuk =
 	"Konami",
 	"Allard van der Bas",
 	0,
-	&nemesis_machine_driver,
+	&machine_driver_nemesis,
 	0,
 
 	rom_nemesuk,
@@ -2321,9 +2096,8 @@ struct GameDriver driver_nemesuk =
 	input_ports_nemesuk,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	nemesis_hiload,nemesis_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_konamigt =
@@ -2336,7 +2110,7 @@ struct GameDriver driver_konamigt =
 	"Konami",
 	"Allard van der Bas\nAndrew Prime",
 	0,
-	&konamigt_machine_driver,
+	&machine_driver_konamigt,
 	0,
 
 	rom_konamigt,
@@ -2347,9 +2121,8 @@ struct GameDriver driver_konamigt =
 	input_ports_konamigt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	konamigt_hiload,konamigt_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_rf2 =
@@ -2362,7 +2135,7 @@ struct GameDriver driver_rf2 =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&rf2_gx400_machine_driver,
+	&machine_driver_rf2_gx400,
 	0,
 
 	rom_rf2,
@@ -2373,9 +2146,8 @@ struct GameDriver driver_rf2 =
 	input_ports_rf2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	rf2_hiload,rf2_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_twinbee =
@@ -2388,7 +2160,7 @@ struct GameDriver driver_twinbee =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime\nE.Watanabe",
 	0,
-	&twinbee_gx400_machine_driver,
+	&machine_driver_twinbee_gx400,
 	0,
 
 	rom_twinbee,
@@ -2400,8 +2172,7 @@ struct GameDriver driver_twinbee =
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
-
-	twinbee_hiload,twinbee_hisave
+	0,0
 };
 
 struct GameDriver driver_gradius =
@@ -2414,7 +2185,7 @@ struct GameDriver driver_gradius =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&gx400_machine_driver,
+	&machine_driver_gx400,
 	0,
 
 	rom_gradius,
@@ -2425,9 +2196,8 @@ struct GameDriver driver_gradius =
 	input_ports_gradius,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gradius_hiload,gradius_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_gwarrior =
@@ -2440,7 +2210,7 @@ struct GameDriver driver_gwarrior =
 	"Konami",
 	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
 	0,
-	&gx400_machine_driver,
+	&machine_driver_gx400,
 	0,
 
 	rom_gwarrior,
@@ -2451,9 +2221,8 @@ struct GameDriver driver_gwarrior =
 	input_ports_gwarrior,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	gwarrior_hiload,gwarrior_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_salamand =
@@ -2466,7 +2235,7 @@ struct GameDriver driver_salamand =
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
 	rom_salamand,
@@ -2477,9 +2246,8 @@ struct GameDriver driver_salamand =
 	input_ports_salamand,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_lifefrce =
@@ -2492,7 +2260,7 @@ struct GameDriver driver_lifefrce =
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
 	rom_lifefrce,
@@ -2503,9 +2271,8 @@ struct GameDriver driver_lifefrce =
 	input_ports_salamand,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_lifefrcj =
@@ -2518,7 +2285,7 @@ struct GameDriver driver_lifefrcj =
 	"Konami",
 	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)\nE.Watanabe (screen priority)",
 	0,
-	&salamand_machine_driver,
+	&machine_driver_salamand,
 	0,
 
 	rom_lifefrcj,
@@ -2529,7 +2296,6 @@ struct GameDriver driver_lifefrcj =
         input_ports_lifefrcj,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	salamand_hiload,salamand_hisave
+	ROT0,
+	0,0
 };

@@ -246,41 +246,6 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-/***************************************************************************
-
-  High score save/load
-
-***************************************************************************/
-
-static int hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-    if (READ_WORD(&ram[0x17cc]) == 0x0053 && READ_WORD(&ram[0x1840]) == 0x0700 && READ_WORD(&ram[0x23da]) == 0x03 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&ram[0x17cc],0x78);
-			osd_fclose(f);
-			memcpy(&ram[0x23da],&ram[0x17d2],6);	/* copy high score */
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&ram[0x17cc],0x78);
-		osd_fclose(f);
-	}
-}
 
 
 /***************************************************************************
@@ -328,6 +293,6 @@ struct GameDriver driver_zerozone =
 	input_ports_zerozone,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
+	ROT0,
+	0,0
 };

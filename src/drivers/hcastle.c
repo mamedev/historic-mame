@@ -458,7 +458,7 @@ struct GameDriver driver_hcastle =
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -484,7 +484,7 @@ struct GameDriver driver_hcastlea =
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };
@@ -510,7 +510,7 @@ struct GameDriver driver_hcastlej =
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

@@ -128,7 +128,6 @@ INPUT_PORTS_START( cchasm )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "Test 1", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED ) /* Test 2, not used in cchasm */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED ) /* Test 3, not used in cchasm */
-
 INPUT_PORTS_END
 
 
@@ -158,7 +157,7 @@ static Z80_DaisyChain daisy_chain[] =
 	{ 0,0,0,-1} 		/* end mark */
 };
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_cchasm =
 {
 	/* basic machine hardware */
 	{
@@ -261,46 +260,6 @@ ROM_START( cchasm1 )
 ROM_END
 
 
-struct GameDriver driver_cchasm =
-{
-	__FILE__,
-	0,
-	"cchasm",
-	"Cosmic Chasm (set 1)",
-	"1983",
-	"Cinematronics / GCE",
-	0,
-	0,
-	&machine_driver,
-	0,
-	rom_cchasm,
-	0, 0,
-	0,
-	0,
-	input_ports_cchasm,
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
 
-struct GameDriver driver_cchasm1 =
-{
-	__FILE__,
-	&driver_cchasm,
-	"cchasm1",
-	"Cosmic Chasm (set 2)",
-	"1983",
-	"Cinematronics / GCE",
-	0,
-	0,
-	&machine_driver,
-	0,
-	rom_cchasm1,
-	0, 0,
-	0,
-	0,
-	input_ports_cchasm,
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
+GAME( 1983, cchasm,  ,       cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 1)" )
+GAME( 1983, cchasm1, cchasm, cchasm, cchasm, , ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 2)" )

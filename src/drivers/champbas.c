@@ -3,6 +3,8 @@
 Championship Baseball memory map (preliminary)
 the hardware is similar to Pengo
 
+driver by Nicola Salmoria
+
 0000-5fff ROM
 7800-7fff ROM (Champion Baseball 2 only)
 8000-83ff Video RAM
@@ -184,10 +186,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 64 },
-	{ 1, 0x2000, &charlayout,   0, 64 },
-	{ 1, 0x1000, &spritelayout, 0, 64 },
-	{ 1, 0x3000, &spritelayout, 0, 64 },
+	{ REGION_GFX1, 0x0000, &charlayout,   0, 64 },
+	{ REGION_GFX2, 0x0000, &charlayout,   0, 64 },
+	{ REGION_GFX1, 0x1000, &spritelayout, 0, 64 },
+	{ REGION_GFX2, 0x1000, &spritelayout, 0, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -214,7 +216,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_champbas =
 {
 	/* basic machine hardware */
 	{
@@ -275,18 +277,20 @@ ROM_START( champbas )
 	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
 	ROM_LOAD( "champbb.3",    0x4000, 0x2000, 0xf39a7046 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
-	ROM_LOAD( "champbb.5",    0x2000, 0x2000, 0xa4cef5a1 )
-
-	ROM_REGIONX( 0x0120, REGION_PROMS )
-	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
-	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "champbb.6",    0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "champbb.7",    0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "champbb.5",    0x0000, 0x2000, 0xa4cef5a1 )
+
+	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
+	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 ROM_END
 
 ROM_START( champbb2 )
@@ -296,107 +300,26 @@ ROM_START( champbb2 )
 	ROM_LOAD( "epr5930",      0x4000, 0x2000, 0xb6570a90 )
 	ROM_LOAD( "epr5931",      0x7800, 0x0800, 0x0592434d )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0xc4a4df75 )
-	ROM_LOAD( "epr5937",      0x2000, 0x2000, 0x5c80ec42 )
-
-	ROM_REGIONX( 0x0120, REGION_PROMS )
-	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
-	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
-
 	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for the speech CPU */
 	ROM_LOAD( "epr5933",      0x0000, 0x2000, 0x26ab3e16 )
 	ROM_LOAD( "epr5934",      0x2000, 0x2000, 0x7c01715f )
 	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x3c911786 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0xc4a4df75 )
+
+	ROM_REGIONX( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "epr5937",      0x0000, 0x2000, 0x5c80ec42 )
+
+	ROM_REGIONX( 0x0120, REGION_PROMS )
+	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
+	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
 ROM_END
 
-static int hiload(void) /* hsc 10/10/98 */
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-    /* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x8c30],"\x40\x40\x40",3) == 0 )
-    {
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-             osd_fread(f,&RAM[0x8c30],48);
-             osd_fclose(f);
-        }
-
-        return 1;
-    }
-    else
-        return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-    void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-
-
-		/* store high score table 6 entries hsc 10/10/98 */
-        osd_fwrite(f,&RAM[0x8c30],48);
-
-        osd_fclose(f);
-    }
-}
-
-struct GameDriver driver_champbas =
-{
-	__FILE__,
-	0,
-	"champbas",
-	"Champion Baseball",
-	"1983",
-	"Sega",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	rom_champbas,
-	0, 0,
-	0,
-	0,
-
-	input_ports_champbas,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
+GAME( 1983, champbas, , champbas, champbas, , ROT0, "Sega", "Champion Baseball" )
 
 /* Champion Baseball 2 doesn't work - don't know why */
-struct GameDriver driver_champbb2 =
-{
-	__FILE__,
-	0,
-	"champbb2",
-	"Champion Baseball II",
-	"1983",
-	"Sega / Alpha Denshi",
-	"Nicola Salmoria",
-	0,
-	&machine_driver,
-	0,
+GAMEX(1983, champbb2, , champbas, champbas, , ROT0, "Sega / Alpha Denshi", "Champion Baseball II", GAME_NOT_WORKING )
 
-	rom_champbb2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_champbas,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-
-	0, 0
-};

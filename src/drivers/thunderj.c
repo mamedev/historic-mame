@@ -338,7 +338,9 @@ static struct MachineDriver machine_driver =
 	thunderj_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(3)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -358,7 +360,7 @@ static void rom_decode(void)
 		memory_region(4)[i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&memory_region(1)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
+	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 
@@ -384,6 +386,8 @@ static void thunderj_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -415,7 +419,7 @@ ROM_START( thunderj )
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM */
 	ROM_LOAD( "tj1016.bin",  0x00000, 0x10000, 0xc10bdf73 )
 	ROM_LOAD( "tj1017.bin",  0x10000, 0x10000, 0x4e5e25e8 )
 	ROM_LOAD( "tj1018.bin",  0x20000, 0x10000, 0xec81895d )
@@ -483,14 +487,13 @@ struct GameDriver driver_thunderj =
 	thunderj_init,
 
 	rom_thunderj,
-	rom_decode,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_thunderj,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

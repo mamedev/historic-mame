@@ -248,17 +248,17 @@ struct GameDriver driver_kopunch =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	patch,
 
 	rom_kopunch,
-	patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_kopunch,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ROT270,
 
 	0, 0
 };

@@ -205,6 +205,7 @@ static struct MachineDriver machine_driver =
 
 static void subs_rom_init(void)
 {
+	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* Merge nibble-wide roms together,
@@ -212,7 +213,7 @@ static void subs_rom_init(void)
 
 	for(i=0;i<0x100;i++)
 	{
-		ROM[0x2000+i] = (ROM[0x8000+i]<<4)+ROM[0x9000+i];
+		rom[0x2000+i] = (rom[0x8000+i]<<4)+rom[0x9000+i];
 	}
 }
 
@@ -255,17 +256,17 @@ struct GameDriver driver_subs =
 	"Mike Balfour",
 	0,
 	&machine_driver,
-	0,
+	subs_rom_init,
 
 	rom_subs,
-	subs_rom_init, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_subs,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

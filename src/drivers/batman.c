@@ -2,6 +2,8 @@
 
 	Batman
 
+    driver by Aaron Giles
+
 ****************************************************************************/
 
 #include "driver.h"
@@ -206,9 +208,9 @@ static struct GfxLayout pfmolayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 3, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
-	{ 3, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
-	{ 3, 0x200000, &anlayout,      0, 64 },		/* characters 8x8 */
+	{ REGION_GFX2, 0x040000, &pfmolayout,  512, 64 },		/* sprites & playfield */
+	{ REGION_GFX2, 0x000000, &pfmolayout,  256, 64 },		/* sprites & playfield */
+	{ REGION_GFX1, 0x000000, &anlayout,      0, 64 },		/* characters 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -220,7 +222,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_batman =
 {
 	/* basic machine hardware */
 	{
@@ -249,7 +251,9 @@ static struct MachineDriver machine_driver =
 	batman_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_III_MONO(2)
+	JSA_III_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -262,12 +266,12 @@ static struct MachineDriver machine_driver =
 
 static void rom_decode(void)
 {
-	UINT8 *base = memory_region(2);
+	UINT8 *base = memory_region(REGION_SOUND1);
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < 0x200000; i++)
-		memory_region(3)[i] ^= 0xff;
+	for (i = 0; i < memory_region_length(REGION_GFX2); i++)
+		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -290,7 +294,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-static void batman_init(void)
+static void init_batman(void)
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -316,6 +320,8 @@ static void batman_init(void)
 
 	/* display messages */
 	atarigen_show_sound_message();
+
+	rom_decode();
 }
 
 
@@ -339,13 +345,10 @@ ROM_START( batman )
 	ROM_LOAD( "085-1040.12c",  0x10000, 0x4000, 0x080db83c )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGION(0x100000)	/* 1MB for ADPCM */
-	ROM_LOAD( "085-1041.19e",  0x80000, 0x20000, 0xd97d5dbb )
-	ROM_LOAD( "085-1042.17e",  0xa0000, 0x20000, 0x8c496986 )
-	ROM_LOAD( "085-1043.15e",  0xc0000, 0x20000, 0x51812d3b )
-	ROM_LOAD( "085-1044.12e",  0xe0000, 0x20000, 0x5e2d7f31 )
+	ROM_REGIONX( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "085-2009.10m",  0x00000, 0x20000, 0xa82d4923 )	/* alphanumerics */
 
-	ROM_REGION_DISPOSE(0x220000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "085-1010.13r",  0x000000, 0x20000, 0x466e1365 )	/* graphics, plane 0 */
 	ROM_LOAD( "085-1014.14r",  0x020000, 0x20000, 0xef53475a )
 	ROM_LOAD( "085-1018.15r",  0x040000, 0x20000, 0x4c14f1e5 )
@@ -366,7 +369,11 @@ ROM_START( batman )
 	ROM_LOAD( "085-1021.15c",  0x1c0000, 0x20000, 0x9c8ef9ba )
 	ROM_LOAD( "085-1025.16c",  0x1e0000, 0x20000, 0x5d30bcd1 )
 
-	ROM_LOAD( "085-2009.10m",  0x200000, 0x20000, 0xa82d4923 )	/* alphanumerics */
+	ROM_REGIONX( 0x100000, REGION_SOUND1 )	/* 1MB for ADPCM */
+	ROM_LOAD( "085-1041.19e",  0x80000, 0x20000, 0xd97d5dbb )
+	ROM_LOAD( "085-1042.17e",  0xa0000, 0x20000, 0x8c496986 )
+	ROM_LOAD( "085-1043.15e",  0xc0000, 0x20000, 0x51812d3b )
+	ROM_LOAD( "085-1044.12e",  0xe0000, 0x20000, 0x5e2d7f31 )
 ROM_END
 
 
@@ -377,28 +384,4 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver driver_batman =
-{
-	__FILE__,
-	0,
-	"batman",
-	"Batman",
-	"1991",
-	"Atari Games",
-	"Aaron Giles (MAME driver)",
-	0,
-	&machine_driver,
-	batman_init,
-
-	rom_batman,
-	rom_decode,
-	0,
-	0,
-	0,
-
-	input_ports_batman,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+GAME( 1991, batman, , batman, batman, batman, ROT0, "Atari Games", "Batman" )

@@ -306,33 +306,6 @@ Level 2:
 		draw_sprites( bitmap, private_spriteram, 0 );
 		draw_sprites( bitmap, private_spriteram_2, 1 );
 	}
-
-#if 0
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",hcastle_pf1_control[i]+(hcastle_pf1_control[i+1]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",hcastle_pf2_control[i]+(hcastle_pf2_control[i+1]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+50,8*7,0,TRANSPARENCY_NONE,0);
-}
-	Machine->orientation = trueorientation;
-}
-#endif
 }
 
 /*****************************************************************************/

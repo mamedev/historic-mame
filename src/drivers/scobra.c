@@ -1208,7 +1208,7 @@ static struct AY8910interface hustler_ay8910_interface =
 
 
 
-static struct MachineDriver type1_machine_driver =
+static struct MachineDriver machine_driver_type1 =
 {
 	/* basic machine hardware */
 	{
@@ -1252,7 +1252,7 @@ static struct MachineDriver type1_machine_driver =
 };
 
 /* same as the above, the only difference is in gfxdecodeinfo to have long bullets */
-static struct MachineDriver armorcar_machine_driver =
+static struct MachineDriver machine_driver_armorcar =
 {
 	/* basic machine hardware */
 	{
@@ -1297,7 +1297,7 @@ static struct MachineDriver armorcar_machine_driver =
 
 /* Rescue, Minefield and Strategy X have extra colours, and custom video initialise */
 /* routines to set up the graduated colour backgound they use */
-static struct MachineDriver rescue_machine_driver =
+static struct MachineDriver machine_driver_rescue =
 {
 	/* basic machine hardware */
 	{
@@ -1340,7 +1340,7 @@ static struct MachineDriver rescue_machine_driver =
 	}
 };
 
-static struct MachineDriver minefld_machine_driver =
+static struct MachineDriver machine_driver_minefld =
 {
 	/* basic machine hardware */
 	{
@@ -1383,7 +1383,7 @@ static struct MachineDriver minefld_machine_driver =
 	}
 };
 
-static struct MachineDriver stratgyx_machine_driver =
+static struct MachineDriver machine_driver_stratgyx =
 {
 	/* basic machine hardware */
 	{
@@ -1426,7 +1426,7 @@ static struct MachineDriver stratgyx_machine_driver =
 	}
 };
 
-static struct MachineDriver type2_machine_driver =
+static struct MachineDriver machine_driver_type2 =
 {
 	/* basic machine hardware */
 	{
@@ -1469,7 +1469,7 @@ static struct MachineDriver type2_machine_driver =
 	}
 };
 
-static struct MachineDriver hustler_machine_driver =
+static struct MachineDriver machine_driver_hustler =
 {
 	/* basic machine hardware */
 	{
@@ -1512,7 +1512,7 @@ static struct MachineDriver hustler_machine_driver =
 	}
 };
 
-static struct MachineDriver hustlerb_machine_driver =
+static struct MachineDriver machine_driver_hustlerb =
 {
 	/* basic machine hardware */
 	{
@@ -1555,7 +1555,7 @@ static struct MachineDriver hustlerb_machine_driver =
 	}
 };
 
-static struct MachineDriver calipso_machine_driver =
+static struct MachineDriver machine_driver_calipso =
 {
 	/* basic machine hardware */
 	{
@@ -2312,456 +2312,6 @@ static void billiard_decode(void)
 
 
 
-static int scobra_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-	if (memcmp(&RAM[0x8200], "\x00\x00\x01", 3) != 0) return 0;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x8200],3*10);
-		/* copy high score */
-		memcpy(&RAM[0x80A8],&RAM[0x8200],3);
-
-		osd_fclose(f);
-	}
-
-	return 1;
-}
-
-static void scobra_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x8200],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-static int armorcar_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-	if ((memcmp(&RAM[0x8113], "\x02\x04\x40", 3) == 0) &&
-	    (memcmp(&RAM[0x814C], "WHP", 3) == 0))
-	{
-
-	/* armorcar sets the high score table, then clears it
-	   then sets it again , this gives it a chance to clear
-	   before loading the high score */
-
-	while (firsttime < 1)
-		{
-		firsttime ++;
-
-		}
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x8113],6*10);
-		osd_fclose(f);
-	}
-	firsttime = 0;
-	return 1;
-	}
-	return 0;
-
-}
-
-static void armorcar_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x8113],6*10);
-		osd_fclose(f);
-	}
-}
-
-
-static int moonwar2_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x80f2], "\x02\x04\x30", 3) == 0 &&
-			memcmp(&RAM[0x8128], "\x00\x25\x40", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x80f2],6*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void moonwar2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x80f2],6*10);
-		osd_fclose(f);
-	}
-}
-
-
-static int calipso_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x81cb], "\x01\x04\x80", 3) == 0 &&
-			memcmp(&RAM[0x8201], "\x00\x12\x00", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x81cb],6*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void calipso_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x81cb],6*10);
-		osd_fclose(f);
-	}
-}
-
-static int stratgyx_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-
-	if (memcmp(&RAM[0x81bf], "\x00\x00\x85", 3) == 0 &&
-			memcmp(&RAM[0x81dc], "\x13\x00\x00", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x81c0],30);
-			memcpy(&RAM[0x80a8],&RAM[0x81c0],3);	/* copy high score */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void stratgyx_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-
-		osd_fwrite(f,&RAM[0x81c0],30);
-		osd_fclose(f);
-	}
-}
-
-
-static int spdcoin_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x80ce], "\x25\x22\x1c", 3) == 0 &&
-			memcmp(&RAM[0x8128], "\x25\x22\x1c\x00\x00\x00\x00\x00\x00\x00", 10) == 0 &&
-			memcmp(&RAM[0x874f], "\x25\x22\x1c\x00\x00\x00",6) == 0 )
-
-
-	{
-
-
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-
-			osd_fread(f,&RAM[0x80ce],1671);
-			osd_fclose(f);
-
-#if 0
-			RAM[0x8b02]=RAM[0x80d1];
-			RAM[0x8ae2]=RAM[0x80d2];
-			RAM[0x8ac2]=RAM[0x80d3];
-			RAM[0x8aa2]=RAM[0x80d4];
-			RAM[0x8a82]=RAM[0x80d5];
-			RAM[0x8a62]=RAM[0x80d6];
-			RAM[0x8a42]=RAM[0x80d7];
-#endif
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void spdcoin_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x80ce],1671);
-		osd_fclose(f);
-	}
-}
-
-
-
-
-
-static int anteater_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x80ef], "\x01\x04\x80", 3) == 0 &&
-			memcmp(&RAM[0x8125], "\x00\x12\x00", 3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x80ef],6*10);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void anteater_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x80ef],6*10);
-		osd_fclose(f);
-	}
-}
-
-static int darkplnt_hiload(void)
-{
-	static int firsttime = 0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if (firsttime == 0)
-	{
-
-		memset(&RAM[0x8111],0xff,31);	/* high score */
-		firsttime = 1;
-	}
-
-
-
-
-	/* Wait for machine initialization to be done. */
-	if (memcmp(&RAM[0x80b9], "\x55\x90\x44", 3) == 0 && memcmp(&RAM[0x810f], "\x52\x41\x51", 3) == 0 && memcmp(&RAM[0x8127], "\x00\x00\x00", 3) == 0 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x80b8],120);
-		osd_fclose(f);
-		}
-	firsttime = 0;
-	return 1;
-	}
-	return 0;
-}
-
-static void darkplnt_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x80b8],120);
-		osd_fclose(f);
-	}
-}
-
-
-static int rescue_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-	if (memcmp(&RAM[0x80f3], "\x01\x04\x80", 3) == 0 && memcmp(&RAM[0x812c], "\x45\x4A\x4D", 3) == 0  )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x80f3],60);
-		osd_fclose(f);
-		}
-
-	return 1;
-	}
-	return 0;
-}
-
-
-
-static void rescue_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x80f3],60);
-		osd_fclose(f);
-	}
-}
-
-
-static int minefld_hiload(void)
-{
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-	if (memcmp(&RAM[0x80f3], "\x01\x04\x80", 3) == 0 && memcmp(&RAM[0x812c], "\x41\x42\x43", 3) == 0  )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x80f3],60);
-		osd_fclose(f);
-		}
-
-	return 1;
-	}
-	return 0;
-}
-
-
-static int losttomb_hiload(void)
-{
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-
-	if (memcmp(&RAM[0x810f], "\x00\x03\x04",3) == 0 && memcmp(&RAM[0x815c], "\x44\x52\x4a",3)==0 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x810f],80);
-		osd_fclose(f);
-		}
-
-	return 1;
-	}
-	return 0;
-}
-
-
-
-static void losttomb_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		/* Write hiscore table. */
-		osd_fwrite(f,&RAM[0x810f],80);
-		osd_fclose(f);
-	}
-}
-
-static int superbon_hiload(void)
-{
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	void *f;
-
-	/* Wait for machine initialization to be done. */
-	if (memcmp(&RAM[0x810f], "\x00\x09\x19", 3) == 0 && memcmp(&RAM[0x815c], "\x41\x53\x48", 3) == 0  )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-		/* Load and set hiscore table. */
-		osd_fread(f,&RAM[0x810f],80);
-		osd_fclose(f);
-		}
-
-	return 1;
-	}
-	return 0;
-}
-
-
-
 struct GameDriver driver_scobra =
 {
 	__FILE__,
@@ -2772,7 +2322,7 @@ struct GameDriver driver_scobra =
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	0,
 
 	rom_scobrak,
@@ -2783,9 +2333,8 @@ struct GameDriver driver_scobra =
 	input_ports_scobrak,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scobra_hiload, scobra_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_scobras =
@@ -2798,7 +2347,7 @@ struct GameDriver driver_scobras =
 	"[Konami] (Stern license)",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	0,
 
 	rom_scobra,
@@ -2809,9 +2358,8 @@ struct GameDriver driver_scobras =
 	input_ports_scobra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scobra_hiload, scobra_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_scobrab =
@@ -2824,7 +2372,7 @@ struct GameDriver driver_scobrab =
 	"bootleg",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	0,
 
 	rom_scobrab,
@@ -2835,9 +2383,8 @@ struct GameDriver driver_scobrab =
 	input_ports_scobra,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scobra_hiload, scobra_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_stratgyx =
@@ -2850,7 +2397,7 @@ struct GameDriver driver_stratgyx =
 	"Konami",
 	"Lee Taylor",
 	0,
-	&stratgyx_machine_driver,
+	&machine_driver_stratgyx,
 	0,
 
 	rom_stratgyx,
@@ -2861,8 +2408,8 @@ struct GameDriver driver_stratgyx =
 	input_ports_stratgyx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	stratgyx_hiload, stratgyx_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_stratgys =
@@ -2875,7 +2422,7 @@ struct GameDriver driver_stratgys =
 	"[Konami] (Stern license)",
 	"Lee Taylor",
 	0,
-	&stratgyx_machine_driver,
+	&machine_driver_stratgyx,
 	0,
 
 	rom_stratgys,
@@ -2886,8 +2433,8 @@ struct GameDriver driver_stratgys =
 	input_ports_stratgyx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	stratgyx_hiload, stratgyx_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_armorcar =
@@ -2900,7 +2447,7 @@ struct GameDriver driver_armorcar =
 	"Stern",
 	"Nicola Salmoria",
 	0,
-	&armorcar_machine_driver,
+	&machine_driver_armorcar,
 	0,
 
 	rom_armorcar,
@@ -2911,9 +2458,8 @@ struct GameDriver driver_armorcar =
 	input_ports_armorcar,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	armorcar_hiload, armorcar_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_armorca2 =
@@ -2926,7 +2472,7 @@ struct GameDriver driver_armorca2 =
 	"Stern",
 	"Nicola Salmoria",
 	0,
-	&armorcar_machine_driver,
+	&machine_driver_armorcar,
 	0,
 
 	rom_armorca2,
@@ -2937,9 +2483,8 @@ struct GameDriver driver_armorca2 =
 	input_ports_armorcar,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	armorcar_hiload, armorcar_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_moonwar2 =
@@ -2952,7 +2497,7 @@ struct GameDriver driver_moonwar2 =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	moonwar2_driver_init,
 
 	rom_moonwar2,
@@ -2963,9 +2508,8 @@ struct GameDriver driver_moonwar2 =
 	input_ports_moonwar2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	moonwar2_hiload, moonwar2_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_monwar2a =
@@ -2978,7 +2522,7 @@ struct GameDriver driver_monwar2a =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	moonwar2_driver_init,
 
 	rom_monwar2a,
@@ -2989,9 +2533,8 @@ struct GameDriver driver_monwar2a =
 	input_ports_monwar2a,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	moonwar2_hiload, moonwar2_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_spdcoin =
@@ -3004,7 +2547,7 @@ struct GameDriver driver_spdcoin =
     "Stern",
     "Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
     0,
-    &type1_machine_driver,
+    &machine_driver_type1,
     0,
 
     rom_spdcoin,
@@ -3015,9 +2558,8 @@ struct GameDriver driver_spdcoin =
     input_ports_spdcoin,
 
     0, 0, 0,
-    ORIENTATION_ROTATE_90,
-
-    spdcoin_hiload, spdcoin_hisave
+    ROT90,
+	0,0
 };
 
 
@@ -3031,7 +2573,7 @@ struct GameDriver driver_darkplnt =
 	"Stern",
 	"Mike Balfour",
 	0,
-	&type2_machine_driver,
+	&machine_driver_type2,
 	0,
 
 	rom_darkplnt,
@@ -3042,9 +2584,8 @@ struct GameDriver driver_darkplnt =
 	input_ports_darkplnt,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_180 | GAME_NOT_WORKING,
-
-	darkplnt_hiload, darkplnt_hisave
+	ROT180 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_tazmania =
@@ -3057,7 +2598,7 @@ struct GameDriver driver_tazmania =
 	"Stern",
 	"Chris Hardy",
 	0,
-	&type1_machine_driver,
+	&machine_driver_type1,
 	0,
 
 	rom_tazmania,
@@ -3068,9 +2609,8 @@ struct GameDriver driver_tazmania =
 	input_ports_tazmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	anteater_hiload, anteater_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_tazmani2 =
@@ -3083,7 +2623,7 @@ struct GameDriver driver_tazmani2 =
 	"Stern",
 	"Chris Hardy",
 	0,
-	&type2_machine_driver,
+	&machine_driver_type2,
 	0,
 
 	rom_tazmani2,
@@ -3094,9 +2634,8 @@ struct GameDriver driver_tazmani2 =
 	input_ports_tazmania,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	anteater_hiload, anteater_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_calipso =
@@ -3109,7 +2648,7 @@ struct GameDriver driver_calipso =
 	"[Stern] (Tago license)",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&calipso_machine_driver,
+	&machine_driver_calipso,
 	0,
 
 	rom_calipso,
@@ -3120,9 +2659,8 @@ struct GameDriver driver_calipso =
 	input_ports_calipso,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	calipso_hiload, calipso_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_anteater =
@@ -3135,20 +2673,19 @@ struct GameDriver driver_anteater =
 	"[Stern] (Tago license)",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
 	0,
-	&type1_machine_driver,
-	0,
+	&machine_driver_type1,
+	anteater_decode,
 
 	rom_anteater,
-	anteater_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_anteater,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	anteater_hiload, anteater_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_rescue =
@@ -3161,20 +2698,19 @@ struct GameDriver driver_rescue =
 	"Stern",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni\nAlan J. McCormick\nMike Coates (Background)",
 	0,
-	&rescue_machine_driver,
-	0,
+	&machine_driver_rescue,
+	rescue_decode,
 
 	rom_rescue,
-	rescue_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rescue,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	rescue_hiload, rescue_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_minefld =
@@ -3187,20 +2723,19 @@ struct GameDriver driver_minefld =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
 	0,
-	&minefld_machine_driver,
-	0,
+	&machine_driver_minefld,
+	minefld_decode,
 
 	rom_minefld,
-	minefld_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_minefld,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	minefld_hiload,rescue_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_losttomb =
@@ -3213,20 +2748,19 @@ struct GameDriver driver_losttomb =
 	"Stern",
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
-	&type1_machine_driver,
-	0,
+	&machine_driver_type1,
+	losttomb_decode,
 
 	rom_losttomb,
-	losttomb_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_losttomb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	losttomb_hiload, losttomb_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_losttmbh =
@@ -3239,20 +2773,19 @@ struct GameDriver driver_losttmbh =
 	"Stern",
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
-	&type1_machine_driver,
-	0,
+	&machine_driver_type1,
+	losttomb_decode,
 
 	rom_losttmbh,
-	losttomb_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_losttomb,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	losttomb_hiload, losttomb_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_superbon =
@@ -3265,20 +2798,19 @@ struct GameDriver driver_superbon =
 	"bootleg",
 	"Chris Hardy",
 	0,
-	&type1_machine_driver,
-	0,
+	&machine_driver_type1,
+	superbon_decode,
 
 	rom_superbon,
-	superbon_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_superbon,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
-
-	superbon_hiload, losttomb_hisave
+	ROT90 | GAME_WRONG_COLORS,
+	0,0
 };
 
 struct GameDriver driver_hustler =
@@ -3291,18 +2823,18 @@ struct GameDriver driver_hustler =
 	"Konami",
 	"Nicola Salmoria",
 	0,
-	&hustler_machine_driver,
-	0,
+	&machine_driver_hustler,
+	hustler_decode,
 
 	rom_hustler,
-	hustler_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hustler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -3317,18 +2849,18 @@ struct GameDriver driver_billiard =
 	"bootleg",
 	"Nicola Salmoria",
 	0,
-	&hustler_machine_driver,
-	0,
+	&machine_driver_hustler,
+	billiard_decode,
 
 	rom_billiard,
-	billiard_decode, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hustler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };
@@ -3343,7 +2875,7 @@ struct GameDriver driver_hustlerb =
 	"bootleg",
 	"Nicola Salmoria",
 	0,
-	&hustlerb_machine_driver,
+	&machine_driver_hustlerb,
 	0,
 
 	rom_hustlerb,
@@ -3354,7 +2886,7 @@ struct GameDriver driver_hustlerb =
 	input_ports_hustler,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 
 	0, 0
 };

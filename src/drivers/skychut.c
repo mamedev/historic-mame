@@ -118,7 +118,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct MachineDriver skychut_machine_driver =
+static struct MachineDriver machine_driver_skychut =
 {
 	/* basic machine hardware */
 	{
@@ -189,7 +189,7 @@ struct GameDriver driver_skychut =
 	"Irem",
 	"Lee Taylor",
 	0,
-	&skychut_machine_driver,
+	&machine_driver_skychut,
 	0,
 
 	rom_skychut,
@@ -200,7 +200,7 @@ struct GameDriver driver_skychut =
 	input_ports_skychut,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
+	ROT0 | GAME_WRONG_COLORS,
 
 	0, 0
 };

@@ -639,7 +639,7 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static struct MachineDriver renegade_machine_driver =
+static struct MachineDriver machine_driver_renegade =
 {
 	{
 		{
@@ -824,34 +824,7 @@ ROM_START( kuniokub )
 	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
 ROM_END
 
-/*
-static int hiload(void){
-	if( osd_key_pressed( OSD_KEY_L ) ){
-		void *f;
-		unsigned char *RAM = memory_region(REGION_CPU1);
 
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1020],8*5);
-			osd_fclose(f);
-		}
-		return 1;
-	}
-
-	return 0;
-}
-
-static void hisave(void){
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1020],8*5);
-		osd_fclose(f);
-	}
-}
-*/
 
 struct GameDriver driver_renegade =
 {
@@ -863,20 +836,19 @@ struct GameDriver driver_renegade =
 	"Technos (Taito America license)",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
-	0,
+	&machine_driver_renegade,
+	renegade_init,
 
 	rom_renegade,
-	renegade_init, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kuniokun =
@@ -889,7 +861,7 @@ struct GameDriver driver_kuniokun =
 	"Technos",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
+	&machine_driver_renegade,
 	kuniokun_init,
 
 	rom_kuniokun,
@@ -900,9 +872,8 @@ struct GameDriver driver_kuniokun =
 	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kuniokub =
@@ -915,7 +886,7 @@ struct GameDriver driver_kuniokub =
 	"bootleg",
 	CREDITS,
 	0,
-	&renegade_machine_driver,
+	&machine_driver_renegade,
 	0,
 
 	rom_kuniokub,
@@ -926,7 +897,6 @@ struct GameDriver driver_kuniokub =
 	input_ports_renegade,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0 /*hiload, hisave*/
+	ROT0,
+	0,0
 };

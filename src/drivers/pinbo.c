@@ -194,23 +194,88 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-
 INPUT_PORTS_START( pinbo )
 	PORT_START  /* 1804 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START  /* 1805 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START /* 1806 */
+	PORT_DIPNAME( 0x01, 0x00, "Two controls?" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_BITX( 0,       0x30, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* 1807 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Reversed" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( pinbos )
+	PORT_START  /* 1804 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START  /* 1805 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -230,10 +295,10 @@ INPUT_PORTS_START( pinbo )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x30, "99" )
-	PORT_DIPSETTING(    0x20, "3" )
-	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_BITX( 0,       0x30, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -245,21 +310,20 @@ INPUT_PORTS_START( pinbo )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Controls Reversed?" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Reversed" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 INPUT_PORTS_END
-
 
 
 static struct GfxLayout charlayout =
@@ -363,6 +427,29 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pinbo )
 	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "rom2.b7",     0x2000, 0x2000, 0x9a185338 )
+	ROM_LOAD( "rom3.e7",     0x6000, 0x2000, 0x1cd1b3bd )
+	ROM_LOAD( "rom4.h7",     0x8000, 0x2000, 0xba043fa7 )
+	ROM_LOAD( "rom5.j7",     0xa000, 0x2000, 0xe71046c4 )
+	ROM_RELOAD(              0xe000, 0x2000 )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )  /* 64K for sound */
+	ROM_LOAD( "rom1.s8",     0x0000, 0x2000, 0xca45a1be )
+
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rom6.a1",     0x0000, 0x4000, 0x74fe8e98 )
+	ROM_LOAD( "rom8.c1",     0x4000, 0x4000, 0x5a800fe7 )
+	ROM_LOAD( "rom7.d1",     0x8000, 0x4000, 0x327a3c21 )
+
+	ROM_REGIONX( 0x00300, REGION_PROMS ) /* Color PROMs */
+	ROM_LOAD( "red.l10",     0x0000, 0x0100, 0xe6c9ba52 )
+	ROM_LOAD( "green.k10",   0x0100, 0x0100, 0x1bf2d335 )
+	ROM_LOAD( "blue.n10",    0x0200, 0x0100, 0xe41250ad )
+ROM_END
+
+
+ROM_START( pinbos )
+	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "b4.bin",     0x2000, 0x2000, 0xd9452d4f )
 	ROM_LOAD( "b5.bin",     0x6000, 0x2000, 0xf80b204c )
 	ROM_LOAD( "b6.bin",     0x8000, 0x2000, 0xae967d83 )
@@ -373,54 +460,15 @@ ROM_START( pinbo )
 	ROM_LOAD( "b8.bin",     0x0000, 0x2000, 0x32d1df14 )
 
 	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "b1.bin",     0x0000, 0x4000, 0x74fe8e98 )
-	ROM_LOAD( "b3.bin",     0x4000, 0x4000, 0x5a800fe7 )
-	ROM_LOAD( "b2.bin",     0x8000, 0x4000, 0x327a3c21 )
+	ROM_LOAD( "rom6.a1",     0x0000, 0x4000, 0x74fe8e98 )
+	ROM_LOAD( "rom8.c1",     0x4000, 0x4000, 0x5a800fe7 )
+	ROM_LOAD( "rom7.d1",     0x8000, 0x4000, 0x327a3c21 )
 
 	ROM_REGIONX( 0x00300, REGION_PROMS ) /* Color PROMs */
-	ROM_LOAD( "prom2b.bin", 0x0000, 0x0100, 0xe6c9ba52 )
-	ROM_LOAD( "prom1b.bin", 0x0100, 0x0100, 0x1bf2d335 )
-	ROM_LOAD( "prom3b.bin", 0x0200, 0x0100, 0xe41250ad )
+	ROM_LOAD( "red.l10",     0x0000, 0x0100, 0xe6c9ba52 )
+	ROM_LOAD( "green.k10",   0x0100, 0x0100, 0x1bf2d335 )
+	ROM_LOAD( "blue.n10",    0x0200, 0x0100, 0xe41250ad )
 ROM_END
-
-
-
-static int pinbo_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x018d],"\x24\x24\x24",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0120],16*7);
-			osd_fread(f,&RAM[0x1800],8);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;		/* can't load hi scores yet */
-}
-
-static void pinbo_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0120],16*7);
-		osd_fwrite(f,&RAM[0x1800],8);
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver driver_pinbo =
@@ -429,8 +477,8 @@ struct GameDriver driver_pinbo =
 	0,
 	"pinbo",
 	"Pinbo",
-	"1985",
-	"Strike (Jaleco?)",
+	"1984",
+	"Jaleco",
 	"Scott Kelley",
 	0,
 	&machine_driver,
@@ -444,8 +492,32 @@ struct GameDriver driver_pinbo =
 	input_ports_pinbo,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
+	0,0
+};
 
-	pinbo_hiload, pinbo_hisave
+struct GameDriver driver_pinbos =
+{
+	__FILE__,
+	&driver_pinbo,
+	"pinbos",
+	"Pinbo (Strike)",
+	"1984",
+	"bootleg?",
+	"Scott Kelley",
+	0,
+	&machine_driver,
+	0,
+
+	rom_pinbos,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_pinbos,
+
+	0, 0, 0,
+	ROT90,
+	0,0
 };
 

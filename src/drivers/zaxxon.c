@@ -597,17 +597,17 @@ static struct GfxLayout futspy_spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &zaxxon_charlayout1,   0, 32 },	/* characters */
-	{ 1, 0x1800, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
-	{ 1, 0x7800, &spritelayout,  0, 32 },			/* sprites */
+	{ REGION_GFX1, 0, &zaxxon_charlayout1,   0, 32 },	/* characters */
+	{ REGION_GFX2, 0, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
+	{ REGION_GFX3, 0, &spritelayout,  0, 32 },			/* sprites */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo futspy_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &zaxxon_charlayout1,   0, 32 },	/* characters */
-	{ 1, 0x1800, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
-	{ 1, 0x7800, &futspy_spritelayout,  0, 32 },			/* sprites */
+	{ REGION_GFX1, 0, &zaxxon_charlayout1,   0, 32 },	/* characters */
+	{ REGION_GFX2, 0, &zaxxon_charlayout2,   0, 32 },	/* background tiles */
+	{ REGION_GFX3, 0, &futspy_spritelayout,  0, 32 },	/* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -639,7 +639,7 @@ static struct Samplesinterface zaxxon_samples_interface =
 };
 
 
-static struct MachineDriver zaxxon_machine_driver =
+static struct MachineDriver machine_driver_zaxxon =
 {
 	/* basic machine hardware */
 	{
@@ -676,7 +676,7 @@ static struct MachineDriver zaxxon_machine_driver =
 	}
 };
 
-static struct MachineDriver futspy_machine_driver =
+static struct MachineDriver machine_driver_futspy =
 {
 	/* basic machine hardware */
 	{
@@ -713,7 +713,7 @@ static struct MachineDriver futspy_machine_driver =
 	}
 };
 
-static struct MachineDriver razmataz_machine_driver =
+static struct MachineDriver machine_driver_razmataz =
 {
 	/* basic machine hardware */
 	{
@@ -758,18 +758,22 @@ ROM_START( zaxxon )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
 	ROM_LOAD( "zaxxon.1",     0x4000, 0x1000, 0x1c123ef9 )
 
-	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )	/* characters */
 	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "zaxxon.6",     0x1800, 0x2000, 0x6e07bb68 )	/* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x3800, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x5800, 0x2000, 0xa5bf1465 )
-	ROM_LOAD( "zaxxon.11",    0x7800, 0x2000, 0xeaf0dd4b )	/* sprites */
-	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -786,18 +790,22 @@ ROM_START( zaxxon2 )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
 	ROM_LOAD( "1a",           0x4000, 0x1000, 0x1977d933 )
 
-	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )	/* characters */
 	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "zaxxon.6",     0x1800, 0x2000, 0x6e07bb68 )	/* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x3800, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x5800, 0x2000, 0xa5bf1465 )
-	ROM_LOAD( "zaxxon.11",    0x7800, 0x2000, 0xeaf0dd4b )	/* sprites */
-	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -809,23 +817,27 @@ ROM_START( zaxxon2 )
 ROM_END
 
 ROM_START( zaxxonb )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, 0x125bca1c )
 	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, 0xc088df92 )
 	ROM_LOAD( "zaxxonb.1",    0x4000, 0x1000, 0xe7bdc417 )
 
-	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "zaxxon.14",    0x0000, 0x0800, 0x07bf8c52 )	/* characters */
 	ROM_LOAD( "zaxxon.15",    0x0800, 0x0800, 0xc215edcb )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "zaxxon.6",     0x1800, 0x2000, 0x6e07bb68 )	/* background tiles */
-	ROM_LOAD( "zaxxon.5",     0x3800, 0x2000, 0x0a5bce6a )
-	ROM_LOAD( "zaxxon.4",     0x5800, 0x2000, 0xa5bf1465 )
-	ROM_LOAD( "zaxxon.11",    0x7800, 0x2000, 0xeaf0dd4b )	/* sprites */
-	ROM_LOAD( "zaxxon.12",    0x9800, 0x2000, 0x1c5369c7 )
-	ROM_LOAD( "zaxxon.13",    0xb800, 0x2000, 0xab4e8a9a )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.6",     0x0000, 0x2000, 0x6e07bb68 )	/* background tiles */
+	ROM_LOAD( "zaxxon.5",     0x2000, 0x2000, 0x0a5bce6a )
+	ROM_LOAD( "zaxxon.4",     0x4000, 0x2000, 0xa5bf1465 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "zaxxon.11",    0x0000, 0x2000, 0xeaf0dd4b )	/* sprites */
+	ROM_LOAD( "zaxxon.12",    0x2000, 0x2000, 0x1c5369c7 )
+	ROM_LOAD( "zaxxon.13",    0x4000, 0x2000, 0xab4e8a9a )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "zaxxon.8",     0x0000, 0x2000, 0x28d65063 )
 	ROM_LOAD( "zaxxon.7",     0x2000, 0x2000, 0x6284c200 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
@@ -837,23 +849,27 @@ ROM_START( zaxxonb )
 ROM_END
 
 ROM_START( szaxxon )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, 0xaf7221da )
 	ROM_LOAD( "suzaxxon.2",   0x2000, 0x2000, 0x1b90fb2a )
 	ROM_LOAD( "suzaxxon.1",   0x4000, 0x1000, 0x07258b4a )
 
-	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "suzaxxon.14",  0x0000, 0x0800, 0xbccf560c )	/* characters */
 	ROM_LOAD( "suzaxxon.15",  0x0800, 0x0800, 0xd28c628b )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "suzaxxon.6",   0x1800, 0x2000, 0xf51af375 )	/* background tiles */
-	ROM_LOAD( "suzaxxon.5",   0x3800, 0x2000, 0xa7de021d )
-	ROM_LOAD( "suzaxxon.4",   0x5800, 0x2000, 0x5bfb3b04 )
-	ROM_LOAD( "suzaxxon.11",  0x7800, 0x2000, 0x1503ae41 )	/* sprites */
-	ROM_LOAD( "suzaxxon.12",  0x9800, 0x2000, 0x3b53d83f )
-	ROM_LOAD( "suzaxxon.13",  0xb800, 0x2000, 0x581e8793 )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "suzaxxon.6",   0x0000, 0x2000, 0xf51af375 )	/* background tiles */
+	ROM_LOAD( "suzaxxon.5",   0x2000, 0x2000, 0xa7de021d )
+	ROM_LOAD( "suzaxxon.4",   0x4000, 0x2000, 0x5bfb3b04 )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "suzaxxon.11",  0x0000, 0x2000, 0x1503ae41 )	/* sprites */
+	ROM_LOAD( "suzaxxon.12",  0x2000, 0x2000, 0x3b53d83f )
+	ROM_LOAD( "suzaxxon.13",  0x4000, 0x2000, 0x581e8793 )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "suzaxxon.8",   0x0000, 0x2000, 0xdd1b52df )
 	ROM_LOAD( "suzaxxon.7",   0x2000, 0x2000, 0xb5bc07f0 )
 	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, 0x68e84174 )
@@ -865,23 +881,27 @@ ROM_START( szaxxon )
 ROM_END
 
 ROM_START( futspy )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "fs_snd.u27",   0x0000, 0x2000, 0x7578fe7f )
 	ROM_LOAD( "fs_snd.u28",   0x2000, 0x2000, 0x8ade203c )
 	ROM_LOAD( "fs_snd.u29",   0x4000, 0x1000, 0x734299c3 )
 
-	ROM_REGION_DISPOSE(0x13800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fs_snd.u68",   0x0000, 0x0800, 0x305fae2d )	/* characters */
 	ROM_LOAD( "fs_snd.u69",   0x0800, 0x0800, 0x3c5658c0 )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "fs_vid.113",   0x1800, 0x2000, 0x36d2bdf6 )	/* background tiles */
-	ROM_LOAD( "fs_vid.112",   0x3800, 0x2000, 0x3740946a )
-	ROM_LOAD( "fs_vid.111",   0x5800, 0x2000, 0x4cd4df98 )
-	ROM_LOAD( "fs_vid.u77",   0x7800, 0x4000, 0x1b93c9ec )	/* sprites */
-	ROM_LOAD( "fs_vid.u78",   0xb800, 0x4000, 0x50e55262 )
-	ROM_LOAD( "fs_vid.u79",   0xf800, 0x4000, 0xbfb02e3e )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fs_vid.113",   0x0000, 0x2000, 0x36d2bdf6 )	/* background tiles */
+	ROM_LOAD( "fs_vid.112",   0x2000, 0x2000, 0x3740946a )
+	ROM_LOAD( "fs_vid.111",   0x4000, 0x2000, 0x4cd4df98 )
+
+	ROM_REGIONX( 0xc000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fs_vid.u77",   0x0000, 0x4000, 0x1b93c9ec )	/* sprites */
+	ROM_LOAD( "fs_vid.u78",   0x4000, 0x4000, 0x50e55262 )
+	ROM_LOAD( "fs_vid.u79",   0x8000, 0x4000, 0xbfb02e3e )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "fs_vid.u91",   0x0000, 0x2000, 0x86da01f4 )
 	ROM_LOAD( "fs_vid.u90",   0x2000, 0x2000, 0x2bd41d2d )
 	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, 0xb82b4997 )
@@ -893,23 +913,27 @@ ROM_START( futspy )
 ROM_END
 
 ROM_START( razmataz )
-	ROM_REGIONX( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGIONX( 2*0x10000, REGION_CPU1 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "u27",           0x0000, 0x2000, 0x254f350f )
 	ROM_LOAD( "u28",           0x2000, 0x2000, 0x3a1eaa99 )
 	ROM_LOAD( "u29",           0x4000, 0x2000, 0x0ee67e78 )
 
-	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x1800, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "1921.u68",      0x0000, 0x0800, 0x77f8ff5a )  /* characters */
 	ROM_LOAD( "1922.u69",      0x0800, 0x0800, 0xcf63621e )
 	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "1934.113",      0x1800, 0x2000, 0x39bb679c )  /* background tiles */
-	ROM_LOAD( "1933.112",      0x3800, 0x2000, 0x1022185e )
-	ROM_LOAD( "1932.111",      0x5800, 0x2000, 0xc7a715eb )
-	ROM_LOAD( "1925.u77",      0x7800, 0x2000, 0xa7965437 )  /* sprites */
-	ROM_LOAD( "1926.u78",      0x9800, 0x2000, 0x9a3af434 )
-	ROM_LOAD( "1927.u79",      0xb800, 0x2000, 0x0323de2b )
 
-	ROM_REGION( 0x8000 )	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1934.113",      0x0000, 0x2000, 0x39bb679c )  /* background tiles */
+	ROM_LOAD( "1933.112",      0x2000, 0x2000, 0x1022185e )
+	ROM_LOAD( "1932.111",      0x4000, 0x2000, 0xc7a715eb )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "1925.u77",      0x0000, 0x2000, 0xa7965437 )  /* sprites */
+	ROM_LOAD( "1926.u78",      0x2000, 0x2000, 0x9a3af434 )
+	ROM_LOAD( "1927.u79",      0x4000, 0x2000, 0x0323de2b )
+
+	ROM_REGIONX( 0x8000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "1929.u91",      0x0000, 0x2000, 0x55c7c757 )
 	ROM_LOAD( "1928.u90",      0x2000, 0x2000, 0xe58b155b )
 	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
@@ -926,7 +950,7 @@ ROM_END
 
 
 
-static void zaxxonb_decode(void)
+static void init_zaxxonb(void)
 {
 /*
 	the values vary, but the translation mask is always laid out like this:
@@ -969,8 +993,11 @@ static void zaxxonb_decode(void)
 		{ 0x02,0x08,0x2a,0x20,0x20,0x2a,0x08,0x02 } 	/* .......1...1...1 */
 	};
 	int A;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
 
+
+	memory_set_opcode_base(0,rom+diff);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -978,7 +1005,7 @@ static void zaxxonb_decode(void)
 		unsigned char src;
 
 
-		src = RAM[A];
+		src = rom[A];
 
 		/* pick the translation table from bit 0 of the address */
 		i = A & 1;
@@ -989,294 +1016,34 @@ static void zaxxonb_decode(void)
 		if (src & 0x80) j = 7 - j;
 
 		/* decode the ROM data */
-		RAM[A] = src ^ data_xortable[i][j];
+		rom[A] = src ^ data_xortable[i][j];
 
 		/* now decode the opcodes */
 		/* pick the translation table from bits 0, 4, and 8 of the address */
 		i = ((A >> 0) & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2);
-		ROM[A] = src ^ opcode_xortable[i][j];
+		rom[A + diff] = src ^ opcode_xortable[i][j];
 	}
 }
 
-
-
-static int hiload(void)
+static void init_szaxxon(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	szaxxon_decode();
+}
 
+static void init_futspy(void)
+{
+	futspy_decode();
+}
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x6110],"\x00\x89\x00",3) == 0 &&
-			memcmp(&RAM[0x6179],"\x00\x37\x00",3) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6100],21*6);
-			RAM[0x6038] = RAM[0x6110];
-			RAM[0x6039] = RAM[0x6111];
-			RAM[0x603a] = RAM[0x6112];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
+static void init_razmataz(void)
+{
+	nprinces_decode();
 }
 
 
-
-static void hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* make sure that the high score table is still valid (entering the */
-	/* test mode corrupts it) */
-	if (memcmp(&RAM[0x6110],"\x00\x00\x00",3) != 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-		{
-			osd_fwrite(f,&RAM[0x6100],21*6);
-			osd_fclose(f);
-		}
-	}
-}
-
-static int futspy_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x0427],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x0460],"\x49\x44\x41",3) == 0 &&
-			memcmp(&RAM[0x6419],"\x00\x00\x01",3) == 0 &&
-			memcmp(&RAM[0x6450],"\x10\x00\x49",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x6419],60);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void futspy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x6419],60);
-		osd_fclose(f);
-	}
-}
-
-/****  Razzmatazz high score save routine - RJF (July 11, 1999)  ****/
-static int razmataz_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	/* high score values are intialized to all 0 */
-	/* but no need to dirty it to be cleared again */
-
-        if ((memcmp(&RAM[0x66a4],"\x00\x00\x00",3) == 0) &&
-              (memcmp(&RAM[0x6739],"\x25\x1e\x26",3) == 0))
-	{
-              	void *f;
-              	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-              	{
-                        osd_fread(f,&RAM[0x66a4], 3*10);   /* HS values */
-                        osd_fread(f,&RAM[0x6739], 6*10);   /* HS initials */
-                        osd_fclose(f);
-              	}
-
-		return 1;
-
-	}
-      	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void razmataz_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x66a4], 30);		/* HS values */
-                osd_fwrite(f,&RAM[0x6739], 60);       	/* HS initials */
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_zaxxon =
-{
-	__FILE__,
-	0,
-	"zaxxon",
-	"Zaxxon (set 1)",
-	"1982",
-	"Sega",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
-	0,
-	&zaxxon_machine_driver,
-	0,
-
-	rom_zaxxon,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zaxxon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_zaxxon2 =
-{
-	__FILE__,
-	&driver_zaxxon,
-	"zaxxon2",
-	"Zaxxon (set 2)",
-	"1982",
-	"Sega",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
-	0,
-	&zaxxon_machine_driver,
-	0,
-
-	rom_zaxxon2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_zaxxon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_zaxxonb =
-{
-	__FILE__,
-	&driver_zaxxon,
-	"zaxxonb",
-	"Jackson",
-	"1982",
-	"bootleg",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
-	0,
-	&zaxxon_machine_driver,
-	0,
-
-	rom_zaxxonb,
-	0, zaxxonb_decode,
-	0,
-	0,
-
-	input_ports_zaxxon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_szaxxon =
-{
-	__FILE__,
-	0,
-	"szaxxon",
-	"Super Zaxxon",
-	"1982",
-	"Sega",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nTim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
-	0,
-	&zaxxon_machine_driver,
-	0,
-
-	rom_szaxxon,
-	0, szaxxon_decode,
-	0,
-	0,
-
-	input_ports_zaxxon,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_futspy =
-{
-	__FILE__,
-	0,
-	"futspy",
-	"Future Spy",
-	"1984",
-	"Sega",
-	"Nicola Salmoria",
-	0,
-	&futspy_machine_driver,
-	0,
-
-	rom_futspy,
-	0, futspy_decode,
-	0,
-	0,
-
-	input_ports_futspy,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	futspy_hiload, futspy_hisave
-};
-
-struct GameDriver driver_razmataz =
-{
-	__FILE__,
-	0,
-	"razmataz",
-	"Razzmatazz",
-	"1983",
-	"Sega",
-	"Nicola Salmoria",
-	0,
-	&razmataz_machine_driver,
-	0,
-
-	rom_razmataz,
-	0, nprinces_decode,
-	0,
-	0,
-
-	input_ports_razmataz,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	razmataz_hiload, razmataz_hisave
-};
+GAME( 1982, zaxxon,   ,       zaxxon,   zaxxon,   ,         ROT90,  "Sega",    "Zaxxon (set 1)" )
+GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   ,         ROT90,  "Sega",    "Zaxxon (set 2)" )
+GAME( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
+GAME( 1982, szaxxon,  ,       zaxxon,   zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
+GAME( 1984, futspy,   ,       futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy" )
+GAME( 1983, razmataz, ,       razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz" )

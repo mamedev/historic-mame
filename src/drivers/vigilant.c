@@ -432,7 +432,7 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver vigilant_machine_driver =
+static struct MachineDriver machine_driver_vigilant =
 {
 	/* basic machine hardware */
 	{
@@ -480,7 +480,7 @@ static struct MachineDriver vigilant_machine_driver =
 	}
 };
 
-static struct MachineDriver kikcubic_machine_driver =
+static struct MachineDriver machine_driver_kikcubic =
 {
 	/* basic machine hardware */
 	{
@@ -641,81 +641,6 @@ ROM_END
 
 
 
-static int vigilant_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xe04b],"\x00\x45\x11",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0xe04b],60);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-                        RAM[0xe048] = RAM[0xe04b];
-                        RAM[0xe049] = RAM[0xe04c];
-                        RAM[0xe04a] = RAM[0xe04d];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void vigilant_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0xe04b],60);
-		osd_fclose(f);
-	}
-}
-
-/** Meikyu Jima / Kickle Cubicle high score save routine - RJF (Oct 5, 1999) **/
-static int kikcubic_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xfe30],"\x07\x18\x35",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xfe30], 20*10);
-			osd_fclose(f);
-
-			/* copy the high score to the work RAM as well */
-			RAM[0xfef8] = RAM[0xfe30];
-			RAM[0xfef9] = RAM[0xfe31];
-			RAM[0xfefa] = RAM[0xfe32];
-
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void kikcubic_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xfe30], 20*10);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_vigilant =
 {
 	__FILE__,
@@ -726,7 +651,7 @@ struct GameDriver driver_vigilant =
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&vigilant_machine_driver,
+	&machine_driver_vigilant,
 	0,
 
 	rom_vigilant,
@@ -737,8 +662,8 @@ struct GameDriver driver_vigilant =
 	input_ports_vigilant,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	vigilant_hiload, vigilant_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_vigilntu =
@@ -751,7 +676,7 @@ struct GameDriver driver_vigilntu =
 	"Irem (Data East USA license)",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&vigilant_machine_driver,
+	&machine_driver_vigilant,
 	0,
 
 	rom_vigilntu,
@@ -762,8 +687,8 @@ struct GameDriver driver_vigilntu =
 	input_ports_vigilant,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	vigilant_hiload, vigilant_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_vigilntj =
@@ -776,7 +701,7 @@ struct GameDriver driver_vigilntj =
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&vigilant_machine_driver,
+	&machine_driver_vigilant,
 	0,
 
 	rom_vigilntj,
@@ -787,8 +712,8 @@ struct GameDriver driver_vigilntj =
 	input_ports_vigilant,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	vigilant_hiload, vigilant_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_kikcubic =
@@ -801,7 +726,7 @@ struct GameDriver driver_kikcubic =
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
-	&kikcubic_machine_driver,
+	&machine_driver_kikcubic,
 	0,
 
 	rom_kikcubic,
@@ -812,6 +737,6 @@ struct GameDriver driver_kikcubic =
 	input_ports_kikcubic,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-	kikcubic_hiload, kikcubic_hisave
+	ROT0,
+	0,0
 };

@@ -272,7 +272,9 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	const struct RomModule *rom = game->rom, *p_rom = NULL;
 
-	if (game->clone_of && game->clone_of != game) {
+	if (!rom) return;
+
+	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER)) {
 		fprintf(out, L1P "romof %s" L1N, game->clone_of->name);
 	}
 
@@ -298,18 +300,19 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 			if(game->clone_of && crc)
 			{
 				p_rom = game->clone_of->rom;
-				while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
-				{
-					p_rom++;
-					while(!in_parent && p_rom->length) {
-						do {
-							if (p_rom->crc == crc)
-								in_parent = 1;
-							else
-								p_rom++;
-						} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
+				if (p_rom)
+					while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
+					{
+						p_rom++;
+						while(!in_parent && p_rom->length) {
+							do {
+								if (p_rom->crc == crc)
+									in_parent = 1;
+								else
+									p_rom++;
+							} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
+						}
 					}
-				}
 			}
 
 			fprintf(out, L1P "rom" L2B);
@@ -454,7 +457,7 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 	}
 
 	fprintf(out, L2P "colors %d" L2N, driver->total_colors);
-	fprintf(out, L2P "freq %d" L2N, driver->frames_per_second);
+	fprintf(out, L2P "freq %f" L2N, driver->frames_per_second);
 	fprintf(out, L2E L1N);
 }
 
@@ -529,11 +532,6 @@ static void print_game_driver(FILE* out, const struct GameDriver* game) {
 	else
 		fprintf(out, L2P "sound good" L2N);
 
-	if (game->hiscore_load && game->hiscore_save)
-		fprintf(out, L2P "hiscore good" L2N);
-	else
-		fprintf(out, L2P "hiscore preliminary" L2N);
-
 	if (game->flags & GAME_REQUIRES_16BIT)
 		fprintf(out, L2P "colordeep 16" L2N);
 	else
@@ -572,12 +570,10 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	print_game_history(out,game);
 
-	/* print the cloneof only if is not a neogeo game */
-	if (game->clone_of && game->clone_of != game && strcmp(game->clone_of->name,"neogeo")!=0) {
+	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER)) {
 		fprintf(out, L1P "cloneof %s" L1N, game->clone_of->name);
 	}
 
-	if (game->rom) /* MESS */
 	print_game_rom(out,game);
 	print_game_sample(out,game);
 	print_game_micro(out,game);

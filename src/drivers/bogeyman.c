@@ -223,13 +223,13 @@ static struct GfxLayout sprites =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x000000, &charlayout1,     16, 32 },
-	{ 1, 0x000000, &charlayout2,     16, 32 },
-	{ 1, 0x010000, &sprites,          0,  2 },
-	{ 1, 0x020000, &tiles1a,     16+128,  8 },
-	{ 1, 0x020000, &tiles1b,     16+128,  8 },
-	{ 1, 0x01c000, &tiles1a,     16+128,  8 },
-	{ 1, 0x01c000, &tiles1b,     16+128,  8 },
+	{ REGION_GFX1, 0x00000, &charlayout1,     16, 32 },
+	{ REGION_GFX1, 0x00000, &charlayout2,     16, 32 },
+	{ REGION_GFX2, 0x00000, &sprites,          0,  2 },
+	{ REGION_GFX3, 0x00000, &tiles1a,     16+128,  8 },
+	{ REGION_GFX3, 0x00000, &tiles1b,     16+128,  8 },
+	{ REGION_GFX3, 0x04000, &tiles1a,     16+128,  8 },
+	{ REGION_GFX3, 0x04000, &tiles1b,     16+128,  8 },
 	/* colors 16+192 to 16+255 are currently unassigned */
 	{ -1 } /* end of array */
 };
@@ -250,7 +250,7 @@ static struct AY8910interface ay8910_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver bogeyman_machine_driver =
+static struct MachineDriver machine_driver_bogeyman =
 {
 	/* basic machine hardware */
 	{
@@ -296,21 +296,23 @@ ROM_START( bogeyman )
 	ROM_LOAD( "j10.c15",  0x08000, 0x04000, 0x0a8f218d )
 	ROM_LOAD( "j00.c17",  0x0c000, 0x04000, 0x5d486de9 )
 
-	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics */
+	ROM_REGIONX( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "j70.h15",  0x00000, 0x04000, 0xfdc787bf )	/* Characters */
 	ROM_LOAD( "j60.c17",  0x08000, 0x01000, 0xcc03ceb2 )
 	ROM_CONTINUE(         0x0a000, 0x01000 )
 
-	ROM_LOAD( "j30.c9",   0x10000, 0x04000, 0x41af81c0 )	/* Sprites */
-	ROM_LOAD( "j40.c7",   0x14000, 0x04000, 0x8b438421 )
-	ROM_LOAD( "j50.c5",   0x18000, 0x04000, 0xb507157f )
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j30.c9",   0x00000, 0x04000, 0x41af81c0 )	/* Sprites */
+	ROM_LOAD( "j40.c7",   0x04000, 0x04000, 0x8b438421 )
+	ROM_LOAD( "j50.c5",   0x08000, 0x04000, 0xb507157f )
 
-	ROM_LOAD( "j80.h13",  0x1c000, 0x04000, 0x77ebd0a4 )	/* Tiles */
-	ROM_LOAD( "j90.h12",  0x20000, 0x04000, 0x46b2d4d0 )
-	ROM_LOAD( "ja0.h10",  0x28000, 0x01000, 0xf2aa05ed )
-	ROM_CONTINUE(         0x2a000, 0x01000 )
-	ROM_CONTINUE(         0x24000, 0x01000 )
-	ROM_CONTINUE(         0x26000, 0x01000 )
+	ROM_REGIONX( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "j90.h12",  0x00000, 0x04000, 0x46b2d4d0 )	/* Tiles */
+	ROM_LOAD( "j80.h13",  0x04000, 0x04000, 0x77ebd0a4 )
+	ROM_LOAD( "ja0.h10",  0x08000, 0x01000, 0xf2aa05ed )
+	ROM_CONTINUE(         0x0a000, 0x01000 )
+	ROM_CONTINUE(         0x0c000, 0x01000 )
+	ROM_CONTINUE(         0x0e000, 0x01000 )
 
 	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s129.5k",  0x0000, 0x0100, 0x4a7c5367 )	/* Colour prom 1 */
@@ -319,28 +321,4 @@ ROM_END
 
 /******************************************************************************/
 
-struct GameDriver driver_bogeyman =
-{
-	__FILE__,
-	0,
-	"bogeyman",
-	"Bogey Manor",
-	"1985?",
-	"Technos Japan",
-	"Bryan McPhail",
-	0,
-	&bogeyman_machine_driver,
-	0,
-
-	rom_bogeyman,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bogeyman,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
-
-	0, 0
-};
+GAMEX( 1985?, bogeyman, , bogeyman, bogeyman, , ROT0, "Technos Japan", "Bogey Manor", GAME_IMPERFECT_COLORS )

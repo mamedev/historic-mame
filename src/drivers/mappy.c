@@ -63,22 +63,18 @@ void mappy_io_chips_enable_w(int offset,int data);
 void mappy_flipscreen_w(int offset,int data);
 
 int mappy_sharedram_r2(int offset);
-int mappy_cpu1ram_r(int offset);
 int mappy_customio_r_1(int offset);
 int mappy_customio_r_2(int offset);
 
 int digdug2_sharedram_r2(int offset);
-int digdug2_cpu1ram_r(int offset);
 int digdug2_customio_r_1(int offset);
 int digdug2_customio_r_2(int offset);
 
 int motos_sharedram_r2(int offset);
-int motos_cpu1ram_r(int offset);
 int motos_customio_r_1(int offset);
 int motos_customio_r_2(int offset);
 
 int todruaga_sharedram_r2(int offset);
-int todruaga_cpu1ram_r(int offset);
 int todruaga_customio_r_1(int offset);
 int todruaga_customio_r_2(int offset);
 
@@ -102,46 +98,42 @@ void mappy_sound_enable_w(int offset,int data);
 /* CPU 1 read addresses */
 static struct MemoryReadAddress mappy_readmem_cpu1[] =
 {
-	{ 0xa000, 0xffff, MRA_ROM },              /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM },              /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, mappy_customio_r_1 },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, mappy_customio_r_2 },   /* custom I/O chip #2 interface */
-	{ 0x0000, 0x9fff, mappy_cpu1ram_r },      /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, mappy_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, mappy_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x0000, 0x9fff, MRA_RAM },			/* RAM everywhere else */
+	{ 0xa000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress digdug2_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },              /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM },              /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, digdug2_customio_r_1 }, /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, digdug2_customio_r_2 }, /* custom I/O chip #2 interface */
-	{ 0x4820, 0x4bff, MRA_RAM },              /* extra RAM for Dig Dug 2 */
-	{ 0x0000, 0x7fff, digdug2_cpu1ram_r },    /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, digdug2_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, digdug2_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x4820, 0x4bff, MRA_RAM },				/* extra RAM for Dig Dug 2 */
+	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress motos_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },			/* ROM code */
 	{ 0x4040, 0x43ff, MRA_RAM },			/* shared RAM with the sound CPU */
 	{ 0x4800, 0x480f, motos_customio_r_1 },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, motos_customio_r_2 },	/* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, motos_cpu1ram_r },	/* RAM everywhere else */
-
+	{ 0x0000, 0x7fff, MRA_RAM },			/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },			/* ROM code */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress todruaga_readmem_cpu1[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },               /* ROM code */
-	{ 0x4040, 0x43ff, MRA_RAM },               /* shared RAM with the sound CPU */
-	{ 0x4800, 0x480f, todruaga_customio_r_1 }, /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, todruaga_customio_r_2 }, /* custom I/O chip #2 interface */
-	{ 0x0000, 0x7fff, todruaga_cpu1ram_r },    /* RAM everywhere else */
-
+	{ 0x4040, 0x43ff, MRA_RAM },				/* shared RAM with the sound CPU */
+	{ 0x4800, 0x480f, todruaga_customio_r_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, todruaga_customio_r_2 },	/* custom I/O chip #2 interface */
+	{ 0x0000, 0x7fff, MRA_RAM },				/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },				/* ROM code */
 	{ -1 }  /* end of table */
 };
 
@@ -631,7 +623,7 @@ static struct namco_interface namco_interface =
 
 
 /* the machine driver: 2 6809s running at 1MHz */
-static struct MachineDriver mappy_machine_driver =
+static struct MachineDriver machine_driver_mappy =
 {
 	/* basic machine hardware */
 	{
@@ -675,7 +667,7 @@ static struct MachineDriver mappy_machine_driver =
 	}
 };
 
-static struct MachineDriver digdug2_machine_driver =
+static struct MachineDriver machine_driver_digdug2 =
 {
 	/* basic machine hardware */
 	{
@@ -719,7 +711,7 @@ static struct MachineDriver digdug2_machine_driver =
 	}
 };
 
-static struct MachineDriver motos_machine_driver =
+static struct MachineDriver machine_driver_motos =
 {
 	/* basic machine hardware */
 	{
@@ -763,7 +755,7 @@ static struct MachineDriver motos_machine_driver =
 	}
 };
 
-static struct MachineDriver todruaga_machine_driver =
+static struct MachineDriver machine_driver_todruaga =
 {
 	/* basic machine hardware */
 	{
@@ -976,216 +968,6 @@ ROM_END
 
 
 
-/* load the high score table */
-static int mappy_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1465],"BEH",3) == 0 &&          /* check for high score initials */
-	    memcmp(&RAM[0x1385],"\0\x20\0",3) == 0 &&     /* check for main high score value */
-	    memcmp(&RAM[0x7ed],"\0\0\0",3) == 0)          /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1460],40);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x1385] = RAM[0x1460];
-			RAM[0x1386] = RAM[0x1461];
-			RAM[0x1387] = RAM[0x1462];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x1385] >> 4);
-		mappy_videoram_w (0x7f3, writing ? (RAM[0x1385] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1385] & 0x0f);
-		mappy_videoram_w (0x7f2, writing ? (RAM[0x1385] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x1386] >> 4);
-		mappy_videoram_w (0x7f1, writing ? (RAM[0x1386] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1386] & 0x0f);
-		mappy_videoram_w (0x7f0, writing ? (RAM[0x1386] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x1387] >> 4);
-		mappy_videoram_w (0x7ef, writing ? (RAM[0x1387] >> 4) : ' ');
-		if (!writing) writing = (RAM[0x1387] & 0x0f);
-		mappy_videoram_w (0x7ee, writing ? (RAM[0x1387] & 0x0f) : ' ');
-		mappy_videoram_w (0x7ed, 0);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void mappy_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1460],40);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int digdug2_hiload(void)
-{
-	int writing = 0;
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x11b6]," KAZU ",6) == 0 &&         /* check for high score initials */
-	    memcmp(&RAM[0x100b],"\x00\x20\x00",3) == 0 &&   /* check for main high score value */
-	    memcmp(&RAM[0x7ed],"\x30\0\0",3) == 0)          /* see if main high score was written to screen */
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x11b0],80);
-			osd_fclose(f);
-
-			/* also copy over the high score */
-			RAM[0x100b] = (RAM[0x11b0] << 4) | RAM[0x11b1];
-			RAM[0x100c] = (RAM[0x11b2] << 4) | RAM[0x11b3];
-			RAM[0x100d] = (RAM[0x11b4] << 4) | RAM[0x11b5];
-		}
-
-		/* this is a little gross, but necessary to get the high score on-screen */
-		if (!writing) writing = (RAM[0x11b0] & 0x0f);
-		mappy_videoram_w (0x7f3, writing ? (RAM[0x11b0] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b1] & 0x0f);
-		mappy_videoram_w (0x7f2, writing ? (RAM[0x11b1] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b2] & 0x0f);
-		mappy_videoram_w (0x7f1, writing ? (RAM[0x11b2] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b3] & 0x0f);
-		mappy_videoram_w (0x7f0, writing ? (RAM[0x11b3] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b4] & 0x0f);
-		mappy_videoram_w (0x7ef, writing ? (RAM[0x11b4] & 0x0f) : ' ');
-		if (!writing) writing = (RAM[0x11b5] & 0x0f);
-		mappy_videoram_w (0x7ee, writing ? (RAM[0x11b5] & 0x0f) : ' ');
-		mappy_videoram_w (0x7ed, 0x30);
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void digdug2_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x11b0],80);
-		osd_fclose(f);
-	}
-}
-
-
-/* load the high score table */
-static int motos_hiload(void)
-{
-
-
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2400],"\x20\x20\x20",3) == 0 &&
-		memcmp(&RAM[0x2499],"\x4f\x20\x20",3) == 0 &&
-		memcmp(&RAM[0x1830],"\x00\x00\x01",3) == 0 )
-
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x2400],0xA0);
-			osd_fclose(f);
-			/* also copy over the high score */
-
-			RAM[0x1831] = ((RAM[0x2404]& 0x0f) << 4) | (RAM[0x2405]& 0x0f);
-			RAM[0x1832] = ((RAM[0x2406]& 0x0f) << 4) | (RAM[0x2407]& 0x0f);
-			RAM[0x1833] = ((RAM[0x2408]& 0x0f) << 4) | (RAM[0x2409]& 0x0f);
-			RAM[0x1834] = ((RAM[0x240a]& 0x0f) << 4) | (RAM[0x240b]& 0x0f);
-
-
-		}
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void motos_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x2400],0xA0);
-		osd_fclose(f);
-	}
-}
-
-static int todruaga_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x1031],"END",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x102A],50);
-			osd_fclose(f);
-		}
-
-		RAM[0x100b] = RAM[0x102A];
-		RAM[0x100c] = RAM[0x102B];
-		RAM[0x100d] = RAM[0x102C];
-
-		return 1;
-	}
-	else return 0; /* we can't load the hi scores yet */
-}
-
-
-/* save the high score table */
-static void todruaga_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x102A],50);
-		osd_fclose(f);
-	}
-}
-
-
-/* the core game driver */
 struct GameDriver driver_mappy =
 {
 	__FILE__,
@@ -1196,7 +978,7 @@ struct GameDriver driver_mappy =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&mappy_machine_driver,
+	&machine_driver_mappy,
 	0,
 
 	rom_mappy,
@@ -1207,9 +989,8 @@ struct GameDriver driver_mappy =
 	input_ports_mappy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mappy_hiload, mappy_hisave
+	ROT90,
+	0,0
 };
 
 
@@ -1223,7 +1004,7 @@ struct GameDriver driver_mappyjp =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&mappy_machine_driver,
+	&machine_driver_mappy,
 	0,
 
 	rom_mappyjp,
@@ -1234,9 +1015,8 @@ struct GameDriver driver_mappyjp =
 	input_ports_mappy,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	mappy_hiload, mappy_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_digdug2 =
@@ -1249,7 +1029,7 @@ struct GameDriver driver_digdug2 =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&digdug2_machine_driver,
+	&machine_driver_digdug2,
 	0,
 
 	rom_digdug2,
@@ -1260,9 +1040,8 @@ struct GameDriver driver_digdug2 =
 	input_ports_digdug2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	digdug2_hiload, digdug2_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_digdug2a =
@@ -1275,7 +1054,7 @@ struct GameDriver driver_digdug2a =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nChad Hendrickson",
 	0,
-	&digdug2_machine_driver,
+	&machine_driver_digdug2,
 	0,
 
 	rom_digdug2a,
@@ -1286,9 +1065,8 @@ struct GameDriver driver_digdug2a =
 	input_ports_digdug2,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	digdug2_hiload, digdug2_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_motos =
@@ -1301,7 +1079,7 @@ struct GameDriver driver_motos =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&motos_machine_driver,
+	&machine_driver_motos,
 	0,
 
 	rom_motos,
@@ -1312,9 +1090,8 @@ struct GameDriver driver_motos =
 	input_ports_motos,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	motos_hiload, motos_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_todruaga =
@@ -1327,7 +1104,7 @@ struct GameDriver driver_todruaga =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&todruaga_machine_driver,
+	&machine_driver_todruaga,
 	0,
 
 	rom_todruaga,
@@ -1338,9 +1115,8 @@ struct GameDriver driver_todruaga =
 	input_ports_todruaga,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	todruaga_hiload, todruaga_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_todruagb =
@@ -1353,7 +1129,7 @@ struct GameDriver driver_todruagb =
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando\nChad Hendrickson",
 	0,
-	&todruaga_machine_driver,
+	&machine_driver_todruaga,
 	0,
 
 	rom_todruagb,
@@ -1364,7 +1140,6 @@ struct GameDriver driver_todruagb =
 	input_ports_todruaga,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	todruaga_hiload, todruaga_hisave
+	ROT90,
+	0,0
 };

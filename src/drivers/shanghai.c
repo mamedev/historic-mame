@@ -788,7 +788,7 @@ struct GameDriver driver_shanghai =
 	input_ports_shanghai,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

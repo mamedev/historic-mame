@@ -144,13 +144,6 @@ static PAIR ea; 		/* effective address */
 
 /* public globals */
 int m6800_ICount=50000;
-int m6800_Flags;		/* flags for speed optimization */
-
-/* handlers for speed optimization */
-static void (*rd_s_handler_b)(UINT8 *);
-static void (*rd_s_handler_w)(PAIR *);
-static void (*wr_s_handler_b)(UINT8 *);
-static void (*wr_s_handler_w)(PAIR *);
 
 /* DS -- THESE ARE RE-DEFINED IN m6800.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define RM				M6800_RDMEM
@@ -162,10 +155,10 @@ static void (*wr_s_handler_w)(PAIR *);
 #define IMMBYTE(b) {b = M_RDOP_ARG(PC++);}
 #define IMMWORD(w) {w.d = 0; w.b.h = M_RDOP_ARG(PC); w.b.l = M_RDOP_ARG(PC+1); PC+=2;}
 
-#define PUSHBYTE(b) (*wr_s_handler_b)(&b)
-#define PUSHWORD(w) (*wr_s_handler_w)(&w)
-#define PULLBYTE(b) (*rd_s_handler_b)(&b)
-#define PULLWORD(w) (*rd_s_handler_w)(&w)
+#define PUSHBYTE(b) wr_s_handler_b(&b)
+#define PUSHWORD(w) wr_s_handler_w(&w)
+#define PULLBYTE(b) rd_s_handler_b(&b)
+#define PULLWORD(w) rd_s_handler_w(&w)
 
 #define MODIFIED_tcsr {	\
 	m6800.irq2 = (m6800.tcsr&(m6800.tcsr<<3))&(TCSR_ICF|TCSR_OCF|TCSR_TOF); \
@@ -526,13 +519,13 @@ static unsigned char cycles_nsc8105[] =
 /* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
 #define CLEAR_PAIR(p)   p->d = 0
 
-static void rd_s_slow_b( UINT8 *b )
+INLINE void rd_s_handler_b( UINT8 *b )
 {
     m6800.s.w.l++;
     *b = RM( m6800.s.d );
 }
 
-static void rd_s_slow_w( PAIR *p )
+INLINE void rd_s_handler_w( PAIR *p )
 {
 	CLEAR_PAIR(p);
     m6800.s.w.l++;
@@ -541,53 +534,17 @@ static void rd_s_slow_w( PAIR *p )
     p->b.l = RM( m6800.s.d );
 }
 
-static void rd_s_fast_b( UINT8 *b )
-{
-	extern UINT8 *RAM;
-
-    m6800.s.w.l++;
-    *b = RAM[ m6800.s.d ];
-}
-
-static void rd_s_fast_w( PAIR *p )
-{
-	extern UINT8 *RAM;
-
-	CLEAR_PAIR(p);
-    m6800.s.w.l++;
-    p->b.h = RAM[ m6800.s.d ];
-    m6800.s.w.l++;
-    p->b.l = RAM[ m6800.s.d ];
-}
-
-static void wr_s_slow_b( UINT8 *b )
+INLINE void wr_s_handler_b( UINT8 *b )
 {
 	WM( m6800.s.d, *b );
     --m6800.s.w.l;
 }
 
-static void wr_s_slow_w( PAIR *p )
+INLINE void wr_s_handler_w( PAIR *p )
 {
     WM( m6800.s.d, p->b.l );
     --m6800.s.w.l;
     WM( m6800.s.d, p->b.h );
-    --m6800.s.w.l;
-}
-
-static void wr_s_fast_b( UINT8 *b )
-{
-	extern UINT8 *RAM;
-
-    RAM[ m6800.s.d ] = *b;
-    --m6800.s.w.l;
-}
-
-static void wr_s_fast_w( PAIR *p )
-{
-	extern UINT8 *RAM;
-    RAM[ m6800.s.d ] = p->b.l;
-    --m6800.s.w.l;
-    RAM[ m6800.s.d ] = p->b.h;
     --m6800.s.w.l;
 }
 
@@ -617,22 +574,6 @@ INLINE void WM16( UINT32 Addr, PAIR *p )
  ****************************************************************************/
 void m6800_reset(void *param)
 {
-
-	/* default to unoptimized memory access */
-	rd_s_handler_b = rd_s_slow_b;
-	rd_s_handler_w = rd_s_slow_w;
-	wr_s_handler_b = wr_s_slow_b;
-	wr_s_handler_w = wr_s_slow_w;
-
-    /* optimize memory access according to flags */
-	if( m6800_Flags & M6800_FAST_S )
-    {
-		rd_s_handler_b = rd_s_fast_b;
-		rd_s_handler_w = rd_s_fast_w;
-		wr_s_handler_b = wr_s_fast_b;
-		wr_s_handler_w = wr_s_fast_w;
-    }
-
     SEI;            /* IRQ disabled */
 	RM16( 0xfffe, &m6800.pc );
     change_pc(PC);

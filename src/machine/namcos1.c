@@ -1311,4 +1311,5 @@ void tankfrce_driver_init( void )
 	//key[0x57] = ;
 	//key[0x17] = ;
 	key[0x2b] = 0xb9;
+	key[0x50] = 0xb9;
 }

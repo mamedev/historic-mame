@@ -10,6 +10,9 @@ ernesto@imagina.com
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+
+void konami1_decode(void);
+
 /* from vidhrdw */
 extern unsigned char *jailbrek_scroll_x;
 extern int jailbrek_vh_start( void );
@@ -278,7 +281,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( jailbrek )
-    ROM_REGIONX( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGIONX( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )
 
@@ -302,52 +305,6 @@ ROM_START( jailbrek )
 	ROM_LOAD( "jailb8c.bin",  0x0000, 0x2000, 0xd91d15e3 )
 ROM_END
 
-extern unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
-
-void jailbrek_decode( void ) {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	int i;
-
-	for ( i = 0x8000; i < 0x10000; i++ )
-		ROM[i] = KonamiDecode(RAM[i],i);
-}
-
-
-static int jailbrek_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x1620],"\x00\x25\x30",3) == 0 &&
-			memcmp(&RAM[0x166D],"\x1F\x1B\x11",3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x1620],80);
-			memcpy(&RAM[0x157e],&RAM[0x1620],3); /* copy high score */
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;   /* we can't load the hi scores yet */
-}
-
-static void jailbrek_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x1620],80);
-		osd_fclose(f);
-	}
-}
-
 
 
 struct GameDriver driver_jailbrek =
@@ -361,16 +318,15 @@ struct GameDriver driver_jailbrek =
 	"Ernesto Corvi\n",
 	0,
 	&machine_driver,
-	0,
+	konami1_decode,
 	rom_jailbrek,
-	0, jailbrek_decode,
+	0, 0,
 	0,
 	0,
 
 	input_ports_jailbrek,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	jailbrek_hiload, jailbrek_hisave
+	ROT0,
+	0,0
 };

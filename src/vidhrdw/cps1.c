@@ -449,7 +449,6 @@ static struct osd_bitmap *cps1_scroll2_bitmap;
 CPS1 VIDEO RENDERER
 
 */
-const int cps1_gfx_region=1;	    /* MAME memory region to draw from */
 static UINT32 *cps1_gfx;		 /* Converted GFX memory */
 static int *cps1_char_pen_usage;	/* pen usage array */
 static int *cps1_tile16_pen_usage;      /* pen usage array */
@@ -461,8 +460,8 @@ static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
 int cps1_gfx_start(void)
 {
 	UINT32 dwval;
-	int size=memory_region_length(cps1_gfx_region);
-	unsigned char *data = memory_region(cps1_gfx_region);
+	int size=memory_region_length(REGION_GFX1);
+	unsigned char *data = memory_region(REGION_GFX1);
 	int i,j,nchar,penusage,gfxsize;
 
 	gfxsize=size/4;

@@ -22,7 +22,6 @@ static int settingsloaded;
 
 int bitmap_dirty;	/* set by osd_clearbitmap() */
 
-unsigned char *ROM;
 
 /* Used in vh_open */
 extern unsigned char *spriteram,*spriteram_2;
@@ -65,20 +64,11 @@ static int validitychecks(void)
 
 		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
 		{
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-extern struct GameDriver neogeo_bios;
-if (drivers[i]->clone_of->clone_of != &neogeo_bios)
-{
-#endif
-#endif
-			printf("%s is a clone of a clone\n",drivers[i]->name);
-			return 1;
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-}
-#endif
-#endif
+			if ((drivers[i]->clone_of->clone_of->flags & NOT_A_DRIVER) == 0)
+			{
+				printf("%s is a clone of a clone\n",drivers[i]->name);
+				return 1;
+			}
 		}
 
 		for (j = i+1;drivers[j];j++)
@@ -102,29 +92,55 @@ if (drivers[i]->clone_of->clone_of != &neogeo_bios)
 
 		romp = drivers[i]->rom;
 
-if (romp)
-{ /*MESS*/
-
-		while (romp->name || romp->offset || romp->length)
+		if (romp)
 		{
-			const char *c;
-			if (romp->name && romp->name != (char *)-1)
+			int region_type_used[REGION_MAX];
+
+			for (j = 0;j < REGION_MAX;j++)
+				region_type_used[j] = 0;
+
+			while (romp->name || romp->offset || romp->length)
 			{
-				c = romp->name;
-				while (*c)
+				const char *c;
+
+				if (romp->name == 0 && romp->length == 0)	/* ROM_REGION() */
 				{
-					if (tolower(*c) != *c)
+					int type = romp->crc & ~REGIONFLAG_MASK;
+
+					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
 					{
-						printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+						printf("%s has invalid ROM_REGION type %x\n",drivers[i]->name,type);
 						return 1;
 					}
-					c++;
+
+					region_type_used[type]++;
 				}
+				if (romp->name && romp->name != (char *)-1)
+				{
+					c = romp->name;
+					while (*c)
+					{
+						if (tolower(*c) != *c)
+						{
+							printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+							return 1;
+						}
+						c++;
+					}
+				}
+
+				romp++;
 			}
 
-			romp++;
+			for (j = 1;j < REGION_MAX;j++)
+			{
+				if (region_type_used[j] > 1)
+				{
+					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
+					return 1;
+				}
+			}
 		}
-}/*MESS*/
 	}
 
 	return 0;
@@ -166,40 +182,40 @@ int run_game(int game)
 
 	/* get orientation right */
 	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
-	Machine->ui_orientation = ORIENTATION_DEFAULT;
+	Machine->ui_orientation = ROT0;
 	if (options.norotate)
-		Machine->orientation = ORIENTATION_DEFAULT;
+		Machine->orientation = ROT0;
 	if (options.ror)
 	{
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->orientation ^= ROT180;
 
-		Machine->orientation ^= ORIENTATION_ROTATE_90;
+		Machine->orientation ^= ROT90;
 
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ROT180;
 
-		Machine->ui_orientation ^= ORIENTATION_ROTATE_90;
+		Machine->ui_orientation ^= ROT90;
 	}
 	if (options.rol)
 	{
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->orientation ^= ROT180;
 
-		Machine->orientation ^= ORIENTATION_ROTATE_270;
+		Machine->orientation ^= ROT270;
 
 		/* if only one of the components is inverted, switch them */
-		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
-				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
-			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+		if ((Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ROT180;
 
-		Machine->ui_orientation ^= ORIENTATION_ROTATE_270;
+		Machine->ui_orientation ^= ROT270;
 	}
 	if (options.flipx)
 	{
@@ -308,39 +324,6 @@ int init_machine(void)
 	if (readroms() != 0)
 		goto out_free;
 
-	{
-		extern unsigned char *RAM;
-		RAM = memory_region(REGION_CPU1);
-		ROM = RAM;
-	}
-
-	/* decrypt the ROMs if necessary */
-	if (gamedrv->rom_decode) (*gamedrv->rom_decode)();
-
-	if (gamedrv->opcode_decode)
-	{
-		int j;
-		extern int encrypted_cpu;
-
-
-		/* find the first available memory region pointer */
-		j = 0;
-		while (Machine->memory_region[j]) j++;
-
-		/* allocate a ROM array of the same length of cpu #0 memory region */
-		if ((ROM = malloc(memory_region_length(REGION_CPU1))) == 0)
-		{
-			/* TODO: should also free the allocated memory regions */
-			goto out_free;
-		}
-
-		Machine->memory_region[j] = ROM;
-		Machine->memory_region_length[j] = memory_region_length(REGION_CPU1);
-
-		encrypted_cpu = 0;
-		(*gamedrv->opcode_decode)();
-	}
-
 	#ifdef MESS
 	load_next:
 	/* The ROM loading routine should allocate the ROM and RAM space and */
@@ -362,20 +345,20 @@ int init_machine(void)
 	/* load input ports settings (keys, dip switches, and so on) */
 	settingsloaded = load_input_port_settings();
 
-	/* ASG 971007 move from mame.c */
-	if( !initmemoryhandlers() )
+	if( !memory_init() )
 		goto out_free;
 
 	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
 	return 0;
+
 out_free:
 	input_port_free(Machine->input_ports);
 	Machine->input_ports = 0;
 	input_port_free(Machine->input_ports_default);
 	Machine->input_ports_default = 0;
 out:
-    	return 1;
+	return 1;
 }
 
 
@@ -386,7 +369,7 @@ void shutdown_machine(void)
 
 
 	/* ASG 971007 free memory element map */
-	shutdownmemoryhandler();
+	memory_shutdown();
 
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
@@ -630,9 +613,32 @@ int run_machine(void)
 
 					init_user_interface();
 
+					/* disable cheat if no roms */
+					if (!gamedrv->rom) options.cheat = 0;
+
 					if (options.cheat) InitCheat();
 
+					if (drv->nvram_handler)
+					{
+						void *f;
+
+						f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,0);
+						(*drv->nvram_handler)(f,0);
+						if (f) osd_fclose(f);
+					}
+
 					cpu_run();      /* run the emulation! */
+
+					if (drv->nvram_handler)
+					{
+						void *f;
+
+						if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,1)) != 0)
+						{
+							(*drv->nvram_handler)(f,1);
+							osd_fclose(f);
+						}
+					}
 
 					if (options.cheat) StopCheat();
 

@@ -274,7 +274,7 @@ struct GameDriver driver_riskchal =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -300,7 +300,7 @@ struct GameDriver driver_gussun =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -326,7 +326,7 @@ struct GameDriver driver_shisen2 =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -352,7 +352,7 @@ struct GameDriver driver_quizf1 =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -378,7 +378,7 @@ struct GameDriver driver_atompunk =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };
@@ -404,7 +404,7 @@ struct GameDriver driver_bbmanw =
 	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+	ROT0 | GAME_NOT_WORKING,
 
 	0, 0
 };

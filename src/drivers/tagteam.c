@@ -323,44 +323,6 @@ ROM_END
 
 
 
-static int tagteam_hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0513],"\x19",1)==0 && memcmp(&RAM[0x0034],"\x05",1)== 0)
-	{
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			/* The game ranks you on a scale of 1-50, but only displays the top 3 scores */
-			osd_fread(f,&RAM[0x0406],50*3);
-                        /* Game keeps copy of highest score here */
-			RAM[0x0032] = RAM[0x0406];
-			RAM[0x0033] = RAM[0x0407];
-			RAM[0x0034] = RAM[0x0408];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void tagteam_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x406],50*3);
-		osd_fclose(f);
-	}
-}
-
 struct GameDriver driver_tagteam =
 {
 	__FILE__,
@@ -382,8 +344,7 @@ struct GameDriver driver_tagteam =
 	input_ports_tagteam,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	tagteam_hiload, tagteam_hisave
+	ROT270,
+	0,0
 };
 

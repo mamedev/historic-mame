@@ -31,7 +31,6 @@ int mcr68_interrupt(void);
 void mcr_port_01_w(int offset, int data);
 void mcr_port_47_dispatch_w(int offset, int value);
 void mcr_scroll_value_w(int offset, int value);
-void mcr_unknown_w(int offset, int value);
 
 int mcr_port_04_dispatch_r(int offset);
 
@@ -84,8 +83,7 @@ extern UINT16 mcr_hiscore_init_length;
 #define MCR_CONFIGURE_NO_HISCORE \
 	MCR_CONFIGURE_HISCORE(0,0,NULL)
 
-int mcr_hiload(void);
-void mcr_hisave(void);
+void mcr_nvram_handler(void *file,int read_or_write);
 
 
 

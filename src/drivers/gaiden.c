@@ -688,7 +688,7 @@ struct GameDriver driver_gaiden =
 	input_ports_gaiden,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -713,7 +713,7 @@ struct GameDriver driver_shadoww =
 	input_ports_gaiden,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -738,7 +738,7 @@ struct GameDriver driver_tknight =
 	input_ports_tknight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -763,6 +763,6 @@ struct GameDriver driver_wildfang =
 	input_ports_tknight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

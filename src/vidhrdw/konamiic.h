@@ -48,7 +48,8 @@ The callback must put:
 - in code the resulting tile number
 - in color the resulting color index
 - if necessary, put flags and/or priority for the TileMap code in the tile_info
-  structure (e.g. TILE_FLIPX)
+  structure (e.g. TILE_FLIPX). Note that TILE_FLIPY is handled internally by the
+  chip so it must not be set by the callback.
 */
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int layer,int bank,int *code,int *color));

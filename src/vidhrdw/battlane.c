@@ -229,7 +229,7 @@ INLINE void battlane_build_palette(void)
 {
 	int offset;
     unsigned char *PALETTE =
-        memory_region(3);
+        memory_region(REGION_PROMS);
 
     for (offset = 0; offset < 0x40; offset++)
 	{

@@ -316,7 +316,9 @@ static struct MachineDriver machine_driver =
 	hydra_vh_screenrefresh,
 
 	/* sound hardware */
-	JSA_II_MONO(2)
+	JSA_II_MONO(REGION_SOUND1),
+
+	atarigen_nvram_handler
 };
 
 
@@ -416,7 +418,7 @@ ROM_START( hydra )
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, 0x619d7319 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION(0x30000)	/* 192k for ADPCM samples */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
 	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, 0xb974d3d0 )
 	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, 0xa2eda15b )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, 0xeb9eaeb7 )
@@ -470,7 +472,7 @@ ROM_START( hydrap )
 	ROM_LOAD( "hydraa0.bin", 0x10000, 0x4000, BADCRC(0x619d7319) )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION(0x30000)	/* 192k for ADPCM samples */
+	ROM_REGIONX( 0x30000, REGION_SOUND1 )	/* 192k for ADPCM samples */
 	ROM_LOAD( "hydr1037.bin",  0x00000, 0x10000, BADCRC(0xb974d3d0) )
 	ROM_LOAD( "hydr1038.bin",  0x10000, 0x10000, BADCRC(0xa2eda15b) )
 	ROM_LOAD( "hydr1039.bin",  0x20000, 0x10000, BADCRC(0xeb9eaeb7) )
@@ -520,7 +522,7 @@ ROM_START( pitfight )
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
 	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
@@ -566,7 +568,7 @@ ROM_START( pitfigh3 )
 	ROM_LOAD( "1060", 0x10000, 0x4000, 0x231d71d7 )
 	ROM_CONTINUE(     0x04000, 0xc000 )
 
-	ROM_REGION(0x40000)	/* 256k for ADPCM samples */
+	ROM_REGIONX( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM samples */
 	ROM_LOAD( "1061",  0x00000, 0x10000, 0x5b0468c6 )
 	ROM_LOAD( "1062",  0x10000, 0x10000, 0xf73fe3cb )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
@@ -630,8 +632,8 @@ struct GameDriver driver_hydra =
 	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -657,8 +659,8 @@ struct GameDriver driver_hydrap =
 	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -684,8 +686,8 @@ struct GameDriver driver_pitfight =
 	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -711,6 +713,6 @@ struct GameDriver driver_pitfigh3 =
 	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
+	ROT0,
+	0,0
 };

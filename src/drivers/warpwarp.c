@@ -312,43 +312,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
-			memcmp(&RAM[0x8373],"\x18\x18\x18",3) == 0)
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x8358],3*10);
-			RAM[0x831d] = RAM[0x8364];
-			RAM[0x831e] = RAM[0x8365];
-			RAM[0x831f] = RAM[0x8366];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8358],3*10);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver driver_warpwarp =
 {
 	__FILE__,
@@ -370,9 +333,8 @@ struct GameDriver driver_warpwarp =
 	input_ports_warpwarp,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_warpwarr =
@@ -396,9 +358,8 @@ struct GameDriver driver_warpwarr =
 	input_ports_warpwarr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_warpwar2 =
@@ -422,7 +383,6 @@ struct GameDriver driver_warpwar2 =
 	input_ports_warpwarr,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
+	ROT90,
+	0,0
 };

@@ -103,7 +103,7 @@ void identify_rom(const char* name, int checksum, int length)
 
 		romp = drivers[i]->rom;
 
-		while (romp->name || romp->offset || romp->length)
+		while (romp && (romp->name || romp->offset || romp->length))
 		{
 			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
 			{
@@ -154,7 +154,7 @@ void identify_rom(const char* name, int checksum, int length)
 
 		romp = drivers[i]->rom;
 
-		while (romp->name || romp->offset || romp->length)
+		while (romp && (romp->name || romp->offset || romp->length))
 		{
 			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
 			{
@@ -328,11 +328,6 @@ int frontend_help (int argc, char **argv)
 	int ident = 0;
 	int help = 1;    /* by default is TRUE */
 	char gamename[9];
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-	extern struct GameDriver neogeo_bios;
-#endif
-#endif
 
 	/* covert '/' in '-' */
 	for (i = 1;i < argc;i++) if (argv[i][0] == '/') argv[i][0] = '-';
@@ -432,11 +427,7 @@ int frontend_help (int argc, char **argv)
 					while (drivers[i])
 					{
 						if ((listclones || drivers[i]->clone_of == 0
-		#ifndef NEOFREE
-		#ifndef TINY_COMPILE
-								|| drivers[i]->clone_of == &neogeo_bios
-		#endif
-		#endif
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 								) && !strwildcmp(gamename, drivers[i]->name))
 						{
 							printf("%-10s",drivers[i]->name);
@@ -464,11 +455,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					printf("%-8s",drivers[i]->name);
@@ -491,11 +478,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					char name[200];
@@ -533,11 +516,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 #if (HAS_SAMPLES)
@@ -651,11 +630,7 @@ int frontend_help (int argc, char **argv)
             while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
 					/* Dummy structs to fetch the information from */
@@ -713,11 +688,7 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((listclones || drivers[i]->clone_of == 0
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-						|| drivers[i]->clone_of == &neogeo_bios
-#endif
-#endif
+						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->description))
 				{
 					char name[200];
@@ -755,7 +726,8 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if (drivers[i]->clone_of &&
-						(!strwildcmp(gamename,drivers[i]->name) || !strwildcmp(gamename,drivers[i]->clone_of->name)))
+						((!strwildcmp(gamename,drivers[i]->name) && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
+								|| !strwildcmp(gamename,drivers[i]->clone_of->name)))
 					printf("%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
 				i++;
 			}
@@ -766,7 +738,8 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
-						drivers[i]->clone_of == 0 &&
+						(drivers[i]->clone_of == 0
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 						drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1 <=
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1)
 				{
@@ -833,12 +806,13 @@ int frontend_help (int argc, char **argv)
 			while (drivers[i])
 			{
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
-						drivers[i]->clone_of == 0 &&
+						(drivers[i]->clone_of == 0
+								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 						drivers[i]->drv->frames_per_second > 57 &&
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 > 244 &&
 						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 <= 256)
 				{
-					printf("%s %dx%d %dHz\n",drivers[i]->name,
+					printf("%s %dx%d %fHz\n",drivers[i]->name,
 							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
 							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1,
 							drivers[i]->drv->frames_per_second);
@@ -867,7 +841,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1)
 						printf("%08x %-12s %s\n",romp->crc,romp->name,drivers[i]->description);
@@ -888,7 +862,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1 && romp->crc)
 					{
@@ -899,7 +873,7 @@ int frontend_help (int argc, char **argv)
 
 							romp1 = drivers[j]->rom;
 
-							while (romp1->name || romp1->offset || romp1->length)
+							while (romp1 && (romp1->name || romp1->offset || romp1->length))
 							{
 								if (romp1->name && romp1->name != (char *)-1 &&
 										strcmp(romp->name,romp1->name) &&
@@ -934,7 +908,7 @@ int frontend_help (int argc, char **argv)
 
 				romp = drivers[i]->rom;
 
-				while (romp->name || romp->offset || romp->length)
+				while (romp && (romp->name || romp->offset || romp->length))
 				{
 					if (romp->name && romp->name != (char *)-1 && romp->crc)
 					{
@@ -942,12 +916,8 @@ int frontend_help (int argc, char **argv)
 						while (drivers[j])
 						{
 							if (j != i &&
-#ifndef NEOFREE
-#ifndef TINY_COMPILE
-								drivers[j]->clone_of != &neogeo_bios &&
-#endif
-#endif
 								drivers[j]->clone_of &&
+								(drivers[i]->clone_of->flags & NOT_A_DRIVER) == 0 &&
 								(drivers[j]->clone_of == drivers[i] ||
 								(i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
 							{
@@ -958,7 +928,7 @@ int frontend_help (int argc, char **argv)
 								romp1 = drivers[j]->rom;
 								match = 0;
 
-								while (romp1->name || romp1->offset || romp1->length)
+								while (romp1 && (romp1->name || romp1->offset || romp1->length))
 								{
 									if (romp1->name && romp1->name != (char *)-1 &&
 											!strcmp(romp->name,romp1->name))
@@ -974,7 +944,7 @@ int frontend_help (int argc, char **argv)
 								{
 									romp1 = drivers[j]->rom;
 
-									while (romp1->name || romp1->offset || romp1->length)
+									while (romp1 && (romp1->name || romp1->offset || romp1->length))
 									{
 										if (romp1->name && romp1->name != (char *)-1 &&
 												strcmp(romp->name,romp1->name) &&
@@ -1044,7 +1014,7 @@ int frontend_help (int argc, char **argv)
 				if (res == INCORRECT || res == BEST_AVAILABLE || (verify & VERIFY_VERBOSE))
 				{
 					printf ("romset %s ", drivers[i]->name);
-					if (drivers[i]->clone_of)
+					if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
 						printf ("[%s] ", drivers[i]->clone_of->name);
 				}
 			}

@@ -164,7 +164,7 @@ static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
 
 
 
-static struct MachineDriver troangel_machine_driver =
+static struct MachineDriver machine_driver_troangel =
 {
 	/* basic machine hardware */
 	{
@@ -246,7 +246,7 @@ struct GameDriver driver_troangel =
 	"Irem",
 	"Phil Stroffolino",
 	0,
-	&troangel_machine_driver,
+	&machine_driver_troangel,
 	0,
 
 	rom_troangel,
@@ -257,7 +257,7 @@ struct GameDriver driver_troangel =
 	input_ports_troangel,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 
 	0, 0
 };

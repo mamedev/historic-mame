@@ -382,7 +382,7 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static struct MachineDriver wc90_machine_driver =
+static struct MachineDriver machine_driver_wc90 =
 {
 	/* basic machine hardware */
 	{
@@ -432,46 +432,6 @@ static struct MachineDriver wc90_machine_driver =
 	}
 };
 
-static int wc90_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-        /* the color RAM is initialized when the startup reset is finished */
-        if (RAM[0xc200] == 0x69)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-                        osd_fread(f,&RAM[0x800F],6*5);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-
-        else
-                return 0;  /* we can't load the hi scores yet */
-}
-
-static void wc90_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-        /* for avoiding problems when we reset the game by pressing the F3 key */
-        RAM[0xc200] = 0x00;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-                osd_fwrite(f,&RAM[0x800F],6*5);
-		osd_fclose(f);
-	}
-
-}
 
 
 ROM_START( wc90 )
@@ -511,7 +471,7 @@ struct GameDriver driver_wc90 =
 	"Tecmo",
 	"Ernesto Corvi",
 	0,
-	&wc90_machine_driver,
+	&machine_driver_wc90,
 	0,
 
 	rom_wc90,
@@ -522,7 +482,6 @@ struct GameDriver driver_wc90 =
 	input_ports_wc90,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	wc90_hiload, wc90_hisave
+	ROT0,
+	0,0
 };

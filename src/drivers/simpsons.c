@@ -29,8 +29,7 @@ int simpsons_sound_r(int offset);
 int simpsons_speedup1_r( int offs );
 int simpsons_speedup2_r( int offs );
 void simpsons_init_machine( void );
-int simpsons_eeprom_load(void);
-void simpsons_eeprom_save(void);
+void simpsons_nvram_handler(void *file,int read_or_write);
 extern int simpsons_firq_enabled;
 
 /***************************************************************************
@@ -334,7 +333,9 @@ static struct MachineDriver machine_driver =
 			SOUND_K053260,
 			&k053260_interface
 		}
-	}
+	},
+
+	simpsons_nvram_handler
 };
 
 
@@ -450,18 +451,18 @@ struct GameDriver driver_simpsons =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_simpsons,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_simpsons,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	simpsons_eeprom_load, simpsons_eeprom_save
+    ROT0,
+	0,0
 };
 
 struct GameDriver driver_simpsn2p =
@@ -475,18 +476,18 @@ struct GameDriver driver_simpsn2p =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_simpsn2p,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_simpsn2p,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	simpsons_eeprom_load, simpsons_eeprom_save
+    ROT0,
+	0,0
 };
 
 struct GameDriver driver_simps2pj =
@@ -500,16 +501,16 @@ struct GameDriver driver_simps2pj =
 	"Ernesto Corvi",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_simps2pj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_simpsn2p,
 
 	0, 0, 0,
-    ORIENTATION_DEFAULT,
-	simpsons_eeprom_load, simpsons_eeprom_save
+    ROT0,
+	0,0
 };

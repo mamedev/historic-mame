@@ -960,7 +960,7 @@ static struct GfxDecodeInfo zwackery_gfxdecodeinfo[] =
 
 =================================================================*/
 
-static struct MachineDriver zwackery_machine_driver =
+static struct MachineDriver machine_driver_zwackery =
 {
 	/* basic machine hardware */
 	{
@@ -992,11 +992,13 @@ static struct MachineDriver zwackery_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_CHIP_SQUEAK_DELUXE
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver xenophob_machine_driver =
+static struct MachineDriver machine_driver_xenophob =
 {
 	/* basic machine hardware */
 	{
@@ -1028,11 +1030,13 @@ static struct MachineDriver xenophob_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SOUNDS_GOOD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver spyhunt2_machine_driver =
+static struct MachineDriver machine_driver_spyhunt2 =
 {
 	/* basic machine hardware */
 	{
@@ -1065,11 +1069,13 @@ static struct MachineDriver spyhunt2_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver archrivl_machine_driver =
+static struct MachineDriver machine_driver_archrivl =
 {
 	/* basic machine hardware */
 	{
@@ -1101,11 +1107,13 @@ static struct MachineDriver archrivl_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver pigskin_machine_driver =
+static struct MachineDriver machine_driver_pigskin =
 {
 	/* basic machine hardware */
 	{
@@ -1137,11 +1145,13 @@ static struct MachineDriver pigskin_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	mcr_nvram_handler
 };
 
 
-static struct MachineDriver trisport_machine_driver =
+static struct MachineDriver machine_driver_trisport =
 {
 	/* basic machine hardware */
 	{
@@ -1173,8 +1183,27 @@ static struct MachineDriver trisport_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	mcr_nvram_handler
 };
+
+
+
+/*************************************
+ *
+ *	ROM decoding
+ *
+ *************************************/
+
+static void rom_decode(void)
+{
+	int i;
+
+	/* tile graphics are inverted */
+	for (i = 0; i < 0x20000; i++)
+		memory_region(1)[i] ^= 0xff;
+}
 
 
 
@@ -1191,6 +1220,8 @@ static void zwackery_init(void)
 
 	/* Zwackery doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
+
+	rom_decode();
 }
 
 
@@ -1209,6 +1240,8 @@ static void xenophob_init(void)
 
 	/* install control port handler */
 	install_mem_write_handler(0, 0x0c0000, 0x0cffff, xenophobe_control_w);
+
+	rom_decode();
 }
 
 
@@ -1228,6 +1261,8 @@ static void spyhunt2_init(void)
 	/* analog port handling is a bit tricky */
 	install_mem_write_handler(0, 0x0c0000, 0x0cffff, spyhunt2_control_w);
 	install_mem_read_handler(0, 0x0d0000, 0x0dffff, spyhunt2_port_0_r);
+
+	rom_decode();
 }
 
 
@@ -1252,6 +1287,8 @@ static void blasted_init(void)
 	/* 6840 is mapped to the lower 8 bits */
 	install_mem_write_handler(0, 0x0a0000, 0x0a000f, mcr68_6840_lower_w);
 	install_mem_read_handler(0, 0x0a0000, 0x0a000f, mcr68_6840_lower_r);
+
+	rom_decode();
 }
 
 
@@ -1285,6 +1322,8 @@ static void archrivl_init(void)
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x58000], &memory_region(2)[0x50000], 0x08000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	rom_decode();
 }
 #define archriv2_init archrivl_init
 
@@ -1309,6 +1348,8 @@ static void pigskin_init(void)
 	memcpy(&memory_region(2)[0x20000], &memory_region(2)[0x10000], 0x10000);
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
+
+	rom_decode();
 }
 
 
@@ -1335,23 +1376,8 @@ static void trisport_init(void)
 	memcpy(&memory_region(2)[0x40000], &memory_region(2)[0x30000], 0x10000);
 	memcpy(&memory_region(2)[0x58000], &memory_region(2)[0x50000], 0x08000);
 	memcpy(&memory_region(2)[0x60000], &memory_region(2)[0x50000], 0x10000);
-}
 
-
-
-/*************************************
- *
- *	ROM decoding
- *
- *************************************/
-
-static void rom_decode(void)
-{
-	int i;
-
-	/* tile graphics are inverted */
-	for (i = 0; i < 0x20000; i++)
-		memory_region(1)[i] ^= 0xff;
+	rom_decode();
 }
 
 
@@ -1582,29 +1608,28 @@ ROM_END
 		"Bally Midway",								\
 		"Brian McPhail\nAaron Giles",		  		\
 		0,											\
-		&driver##_machine_driver,					\
+		&machine_driver_##driver,					\
 		name##_init,								\
 													\
 		rom_##name,									\
-		rom_decode, 0,								\
+		0, 0,										\
 		0,											\
-		0,							\
+		0,											\
 													\
 		input_ports_##name,							\
 													\
 		0, 0,0,										\
 		rotate,										\
-													\
-		mcr_hiload,mcr_hisave						\
+		0,0											\
 	};
 #define MCR68_DRIVER(name,drive,year,rotate,fullname) \
 	MCR68_CLONE_DRIVER(name,drive,year,rotate,fullname,0)
 
-MCR68_DRIVER      (zwackery, zwackery, 1984, ORIENTATION_DEFAULT,    "Zwackery")
-MCR68_DRIVER      (xenophob, xenophob, 1987, ORIENTATION_DEFAULT,    "Xenophobe")
-MCR68_DRIVER      (spyhunt2, spyhunt2, 1987, ORIENTATION_DEFAULT,    "Spy Hunter 2")
-MCR68_DRIVER      (blasted,  xenophob, 1988, ORIENTATION_DEFAULT,    "Blasted")
-MCR68_DRIVER      (archrivl, archrivl, 1989, ORIENTATION_DEFAULT,    "Arch Rivals (rev 4.0)")
-MCR68_CLONE_DRIVER(archriv2, archrivl, 1989, ORIENTATION_DEFAULT,    "Arch Rivals (rev 2.0)", &driver_archrivl)
-MCR68_DRIVER      (trisport, trisport, 1989, ORIENTATION_ROTATE_270, "Tri-Sports")
-MCR68_DRIVER      (pigskin,  pigskin,  1990, ORIENTATION_DEFAULT,    "Pigskin 621AD")
+MCR68_DRIVER      (zwackery, zwackery, 1984, ROT0,    "Zwackery")
+MCR68_DRIVER      (xenophob, xenophob, 1987, ROT0,    "Xenophobe")
+MCR68_DRIVER      (spyhunt2, spyhunt2, 1987, ROT0,    "Spy Hunter 2")
+MCR68_DRIVER      (blasted,  xenophob, 1988, ROT0,    "Blasted")
+MCR68_DRIVER      (archrivl, archrivl, 1989, ROT0,    "Arch Rivals (rev 4.0)")
+MCR68_CLONE_DRIVER(archriv2, archrivl, 1989, ROT0,    "Arch Rivals (rev 2.0)", &driver_archrivl)
+MCR68_DRIVER      (trisport, trisport, 1989, ROT270, "Tri-Sports")
+MCR68_DRIVER      (pigskin,  pigskin,  1990, ROT0,    "Pigskin 621AD")

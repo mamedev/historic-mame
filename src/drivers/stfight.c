@@ -232,6 +232,7 @@ DONE? (check on real board)
 #include "vidhrdw/generic.h"
 
 // machine
+void empcity_decode(void);
 void stfight_decode(void);
 void stfight_init_machine(void);
 int  stfight_vb_interrupt( void );
@@ -506,7 +507,7 @@ static struct MSM5205interface msm5205_interface =
 	{ 50 }
 };
 
-static struct MachineDriver stfight_machine_driver =
+static struct MachineDriver machine_driver_stfight =
 {
 	/* basic machine hardware */
 	{
@@ -564,7 +565,7 @@ static struct MachineDriver stfight_machine_driver =
 ***************************************************************************/
 
 ROM_START( empcity )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	        /* 64k for the first CPU */
+	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
 	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
 
@@ -615,7 +616,7 @@ ROM_START( empcity )
 ROM_END
 
 ROM_START( stfight )
-	ROM_REGIONX( 0x18000, REGION_CPU1 )	        /* 64k for the first CPU */
+	ROM_REGIONX( 2*0x18000, REGION_CPU1 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
 	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */
 
@@ -666,41 +667,6 @@ ROM_START( stfight )
 ROM_END
 
 
-static int stfight_hiload( void )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* check if the hi score table has already been initialized */
-	if( memcmp( &RAM[0xE0B4], "WORST   ", 8 ) == 0 )
-	{
-		void *f;
-
-		if( ( f = osd_fopen( Machine->gamedrv->name, 0,
-                             OSD_FILETYPE_HIGHSCORE, 0 ) ) != 0 )
-		{
-			osd_fread( f, &RAM[0xe012], 0xaa );
-			osd_fclose( f );
-		}
-		return( 1 );
-	}
-	else
-        return( 0 );    /* we can't load the hi scores yet */
-}
-
-static void stfight_hisave( void )
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if( ( f = osd_fopen( Machine->gamedrv->name, 0,
-                         OSD_FILETYPE_HIGHSCORE, 1 ) ) != 0 )
-	{
-		osd_fwrite( f, &RAM[0xe012], 0xaa );
-		osd_fclose( f );
-	}
-}
-
-
 
 struct GameDriver driver_empcity =
 {
@@ -712,20 +678,19 @@ struct GameDriver driver_empcity =
 	"Seibu Kaihatsu",
 	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
 	0,
-	&stfight_machine_driver,
-	0,
+	&machine_driver_stfight,
+	empcity_decode,
 
 	rom_empcity,
-    0,stfight_decode,
+    0, 0,
 	0,
 	0,
 
 	input_ports_stfight,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	stfight_hiload, stfight_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_stfight =
@@ -738,18 +703,17 @@ struct GameDriver driver_stfight =
 	"Seibu Kaihatsu",
 	"Mark McDougall (MAME Driver)\nJames Jenkins (Graphics Info)",
 	0,
-	&stfight_machine_driver,
-	0,
+	&machine_driver_stfight,
+	stfight_decode,
 
 	rom_stfight,
-    0,stfight_decode,
+    0, 0,
 	0,
 	0,
 
 	input_ports_stfight,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	stfight_hiload, stfight_hisave
+	ROT0,
+	0,0
 };

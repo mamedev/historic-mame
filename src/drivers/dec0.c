@@ -976,7 +976,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static struct MachineDriver hbarrel_machine_driver =
+static struct MachineDriver machine_driver_hbarrel =
 {
 	/* basic machine hardware */
 	{
@@ -1028,7 +1028,7 @@ static struct MachineDriver hbarrel_machine_driver =
 	}
 };
 
-static struct MachineDriver baddudes_machine_driver =
+static struct MachineDriver machine_driver_baddudes =
 {
 	/* basic machine hardware */
 	{
@@ -1080,7 +1080,7 @@ static struct MachineDriver baddudes_machine_driver =
 	}
 };
 
-static struct MachineDriver birdtry_machine_driver =
+static struct MachineDriver machine_driver_birdtry =
 {
 	/* basic machine hardware */
 	{
@@ -1132,7 +1132,7 @@ static struct MachineDriver birdtry_machine_driver =
 	}
 };
 
-static struct MachineDriver robocop_machine_driver =
+static struct MachineDriver machine_driver_robocop =
 {
 	/* basic machine hardware */
 	{
@@ -1190,7 +1190,7 @@ static struct MachineDriver robocop_machine_driver =
 	}
 };
 
-static struct MachineDriver robocopb_machine_driver =
+static struct MachineDriver machine_driver_robocopb =
 {
 	/* basic machine hardware */
 	{
@@ -1242,7 +1242,7 @@ static struct MachineDriver robocopb_machine_driver =
 	}
 };
 
-static struct MachineDriver hippodrm_machine_driver =
+static struct MachineDriver machine_driver_hippodrm =
 {
 	/* basic machine hardware */
 	{
@@ -1300,7 +1300,7 @@ static struct MachineDriver hippodrm_machine_driver =
 	}
 };
 
-static struct MachineDriver slyspy_machine_driver =
+static struct MachineDriver machine_driver_slyspy =
 {
 	/* basic machine hardware */
 	{
@@ -1352,7 +1352,7 @@ static struct MachineDriver slyspy_machine_driver =
 	}
 };
 
-static struct MachineDriver midres_machine_driver =
+static struct MachineDriver machine_driver_midres =
 {
 	/* basic machine hardware */
 	{
@@ -2187,6 +2187,8 @@ static void hippodrm_patch(void)
 {
 	unsigned char *RAM = memory_region(4);
 
+	dec0_custom_memory();
+
 	h6280_decrypt(4);
 
 	/* The protection cpu has additional memory mapped protection! */
@@ -2200,277 +2202,13 @@ static void slyspy_patch(void)
 {
 	unsigned char *RAM = memory_region(2);
 
+	dec0_custom_memory();
+
 	h6280_decrypt(2);
 
 	/* Slyspy sound cpu has some protection */
 	RAM[0xf2d]=0xea;
 	RAM[0xf2e]=0xea;
-}
-
-/******************************************************************************/
-
-static int robocopp_hiload(void)
-{
-	void *f;
-
-	/* check if the hi score table has already been initialized */
-
-	if (READ_WORD(&dec0_ram[0x0ed8]) == 0x4d55 && READ_WORD(&dec0_ram[0x0eda]) == 0x5250 &&
-		READ_WORD(&dec0_ram[0x0f68]) == 0x504f && READ_WORD(&dec0_ram[0x0f6a]) == 0x4c49 )
-	{
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread_msbfirst(f,&dec0_ram[0x0ed8],16*10);
-
-/* MISH :  The following lines DO NOT look endian friendly... */
-
-			dec0_ram[0x3522]=dec0_ram[0x0ee0];
-			dec0_ram[0x3523]=dec0_ram[0x0ee1];
-			dec0_ram[0x3524]=dec0_ram[0x0ee2];
-			dec0_ram[0x3525]=dec0_ram[0x0ee3];
-			osd_fclose(f);
-		}
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void robocopp_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x0ed8],16*10);
-                osd_fclose(f);
-				dec0_ram[0x0ed8]=0;
-        }
-}
-
-static int hbarrel_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e9c]) == 0x10 && READ_WORD(&dec0_ram[0x3ea0]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x3ef0]) == 0x55 && READ_WORD(&dec0_ram[0x3ef2]) == 0x4d26)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e9c],4*10);
-                        osd_fread_msbfirst(f,&dec0_ram[0x3ecc],4*10);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hbarrel_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e9c],4*10);
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3ecc],4*10);
-                osd_fclose(f);
-        }
-}
-
-static int hbarrelj_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e78]) == 0x10 && READ_WORD(&dec0_ram[0x3e7c]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x3ecc]) == 0x55 && READ_WORD(&dec0_ram[0x3ece]) == 0x4d26 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e78],4*10);
-                        osd_fread_msbfirst(f,&dec0_ram[0x3ea8],4*10);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hbarrelj_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e78],4*10);
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3ea8],4*10);
-                osd_fclose(f);
-        }
-}
-
-static int baddudes_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x28fe]) == 0x4d49 && READ_WORD(&dec0_ram[0x2900]) == 0x4e00 &&
-			READ_WORD(&dec0_ram[0x299E]) == 0x444d && READ_WORD(&dec0_ram[0x29a0]) == 0x5900 )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x28fe],8*20);
-                        dec0_ram[0x01d4]=dec0_ram[0x2903];
-                        dec0_ram[0x01d7]=dec0_ram[0x2902];
-                        dec0_ram[0x01d6]=dec0_ram[0x2905];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-
-static void baddudes_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x28fe],8*20);
-                osd_fclose(f);
-        }
-}
-
-static int drgninja_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x28f8]) == 0x4d49 && READ_WORD(&dec0_ram[0x28fa]) == 0x4e00 &&
-			READ_WORD(&dec0_ram[0x2998]) == 0x444d && READ_WORD(&dec0_ram[0x299a]) == 0x5900)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x28f8],8*20);
-                        dec0_ram[0x01d4]=dec0_ram[0x28fd];
-                        dec0_ram[0x01d7]=dec0_ram[0x28fc];
-                        dec0_ram[0x01d6]=dec0_ram[0x28ff];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void drgninja_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x28f8],8*20);
-                osd_fclose(f);
-        }
-}
-
-static int hippodrm_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x3e00]) == 0x0800 && READ_WORD(&dec0_ram[0x3e04]) == 0x0700  &&
-			READ_WORD(&dec0_ram[0x3e4c]) == 0x4352 && READ_WORD(&dec0_ram[0x3e4e]) == 0x5801  )
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x3e00],80);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hippodrm_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x3e00],80);
-                osd_fclose(f);
-        }
-}
-
-static int slyspy_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x0000]) == 0x30 && READ_WORD(&dec0_ram[0x0004]) == 0x28 &&
-			READ_WORD(&dec0_ram[0x0098]) == 0x3030 && READ_WORD(&dec0_ram[0x009c]) == 0x3030)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0],160);
-                        dec0_ram[0x2adc]=dec0_ram[0];
-                        dec0_ram[0x2add]=dec0_ram[1];
-                        dec0_ram[0x2ade]=dec0_ram[2];
-                        dec0_ram[0x2adf]=dec0_ram[3];
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void slyspy_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0],160);
-                osd_fclose(f);
-				dec0_ram[0x0098] = 0;
-        }
-}
-
-static int midres_hiload(void)
-{
-        void *f;
-
-        /* check if the hi score table has already been initialized */
-
-        if (READ_WORD(&dec0_ram[0x26ea]) == 0x10 && READ_WORD(&dec0_ram[0x26ee]) == 0x09 &&
-			READ_WORD(&dec0_ram[0x2736]) == 0x55 && READ_WORD(&dec0_ram[0x2738]) == 0x4d26)
-        {
-                if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-                {
-                        osd_fread_msbfirst(f,&dec0_ram[0x26ea],80);
-                        osd_fclose(f);
-                }
-                return 1;
-        }
-        else return 0;  /* we can't load the hi scores yet */
-}
-
-static void midres_hisave(void)
-{
-        void *f;
-
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-        {
-                osd_fwrite_msbfirst(f,&dec0_ram[0x26ea],80);
-                osd_fclose(f);
-        }
 }
 
 /******************************************************************************/
@@ -2485,7 +2223,7 @@ struct GameDriver driver_hbarrel =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hbarrel_machine_driver,
+	&machine_driver_hbarrel,
 	dec0_custom_memory,
 
 	rom_hbarrelu,
@@ -2496,8 +2234,8 @@ struct GameDriver driver_hbarrel =
 	input_ports_hbarrel,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hbarrel_hiload, hbarrel_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_hbarrelw =
@@ -2510,7 +2248,7 @@ struct GameDriver driver_hbarrelw =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hbarrel_machine_driver,
+	&machine_driver_hbarrel,
 	dec0_custom_memory,
 
 	rom_hbarrel,
@@ -2521,8 +2259,8 @@ struct GameDriver driver_hbarrelw =
 	input_ports_hbarrel,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hbarrelj_hiload, hbarrelj_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_baddudes =
@@ -2535,7 +2273,7 @@ struct GameDriver driver_baddudes =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&baddudes_machine_driver,
+	&machine_driver_baddudes,
 	dec0_custom_memory,
 
 	rom_baddudes,
@@ -2546,8 +2284,8 @@ struct GameDriver driver_baddudes =
 	input_ports_baddudes,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	baddudes_hiload, baddudes_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_drgninja =
@@ -2560,7 +2298,7 @@ struct GameDriver driver_drgninja =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&baddudes_machine_driver,
+	&machine_driver_baddudes,
 	dec0_custom_memory,
 
 	rom_drgninja,
@@ -2571,8 +2309,8 @@ struct GameDriver driver_drgninja =
 	input_ports_baddudes,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	drgninja_hiload, drgninja_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_birdtry =
@@ -2585,7 +2323,7 @@ struct GameDriver driver_birdtry =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&birdtry_machine_driver,
+	&machine_driver_birdtry,
 	dec0_custom_memory,
 
 	rom_birdtry,
@@ -2596,7 +2334,7 @@ struct GameDriver driver_birdtry =
 	input_ports_hbarrel, /* For now */
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
+	ROT270 | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -2610,7 +2348,7 @@ struct GameDriver driver_robocop =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocop_machine_driver,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
 	rom_robocop,
@@ -2621,8 +2359,8 @@ struct GameDriver driver_robocop =
 	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	robocopp_hiload, robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_robocopu =
@@ -2635,7 +2373,7 @@ struct GameDriver driver_robocopu =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocop_machine_driver,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
 	rom_robocopu,
@@ -2646,8 +2384,8 @@ struct GameDriver driver_robocopu =
 	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	robocopp_hiload, robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_robocpu0 =
@@ -2660,7 +2398,7 @@ struct GameDriver driver_robocpu0 =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocop_machine_driver,
+	&machine_driver_robocop,
 	dec0_custom_memory,
 
 	rom_robocpu0,
@@ -2671,8 +2409,8 @@ struct GameDriver driver_robocpu0 =
 	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
-	robocopp_hiload,robocopp_hisave
+	ROT0 | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_robocopb =
@@ -2685,7 +2423,7 @@ struct GameDriver driver_robocopb =
 	"bootleg",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&robocopb_machine_driver,
+	&machine_driver_robocopb,
 	dec0_custom_memory,
 
 	rom_robocopb,
@@ -2696,8 +2434,8 @@ struct GameDriver driver_robocopb =
 	input_ports_robocop,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	robocopp_hiload, robocopp_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_hippodrm =
@@ -2710,19 +2448,19 @@ struct GameDriver driver_hippodrm =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hippodrm_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_hippodrm,
+	hippodrm_patch,
 
 	rom_hippodrm,
-	hippodrm_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hippodrm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hippodrm_hiload,hippodrm_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_ffantasy =
@@ -2735,19 +2473,19 @@ struct GameDriver driver_ffantasy =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&hippodrm_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_hippodrm,
+	hippodrm_patch,
 
 	rom_ffantasy,
-	hippodrm_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_hippodrm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hippodrm_hiload,hippodrm_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_slyspy =
@@ -2760,19 +2498,19 @@ struct GameDriver driver_slyspy =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
 	rom_slyspy,
-	slyspy_patch,0,
+	0,0,
 	0,
 	0,
 
 	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_slyspy2 =
@@ -2785,19 +2523,19 @@ struct GameDriver driver_slyspy2 =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
 	rom_slyspy2,
-	slyspy_patch,0,
+	0,0,
 	0,
 	0,
 
 	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_secretag =
@@ -2810,19 +2548,19 @@ struct GameDriver driver_secretag =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
 	rom_secretag,
-	slyspy_patch,0,
+	0,0,
 	0,
 	0,
 
 	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 
 #if 0
@@ -2836,7 +2574,7 @@ struct GameDriver driver_secretab =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
+	&machine_driver_slyspy,
 	dec0_custom_memory,
 
 	rom_secretab,
@@ -2847,8 +2585,8 @@ struct GameDriver driver_secretab =
 	input_ports_slyspy,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	slyspy_hiload,slyspy_hisave
+	ROT0,
+	0,0
 };
 #endif
 
@@ -2862,7 +2600,7 @@ struct GameDriver driver_midres =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
 	rom_midres,
@@ -2873,8 +2611,8 @@ struct GameDriver driver_midres =
 	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_midresu =
@@ -2887,7 +2625,7 @@ struct GameDriver driver_midresu =
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
 	rom_midresu,
@@ -2898,8 +2636,8 @@ struct GameDriver driver_midresu =
 	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_midresj =
@@ -2912,7 +2650,7 @@ struct GameDriver driver_midresj =
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&midres_machine_driver,
+	&machine_driver_midres,
 	dec0_custom_memory,
 
 	rom_midresj,
@@ -2923,8 +2661,8 @@ struct GameDriver driver_midresj =
 	input_ports_midres,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	midres_hiload, midres_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_bouldash =
@@ -2937,17 +2675,17 @@ struct GameDriver driver_bouldash =
 	"Data East Corporation (licensed from First Star)",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
-	&slyspy_machine_driver,
-	dec0_custom_memory,
+	&machine_driver_slyspy,
+	slyspy_patch,
 
 	rom_bouldash,
-	slyspy_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_bouldash,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0,0
 };

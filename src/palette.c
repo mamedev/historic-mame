@@ -478,7 +478,16 @@ if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)
-		Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
+	{
+		int color = Machine->game_colortable[i];
+
+		/* check for invalid colors set by Machine->drv->vh_init_palette */
+		if (color < Machine->drv->total_colors)
+			Machine->remapped_colortable[i] = Machine->pens[color];
+		else
+			usrintf_showmessage("colortable[%d] (=%d) out of range (total_colors = %d)",
+					i,color,Machine->drv->total_colors);
+	}
 
 	return 0;
 }

@@ -395,17 +395,17 @@ struct GameDriver driver_rollerg =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_rollerg,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rollerg,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };
 
@@ -420,16 +420,16 @@ struct GameDriver driver_rollergj =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gfx_untangle,
 
 	rom_rollergj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_rollerg,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ROT0,
 	0, 0
 };

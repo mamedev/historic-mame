@@ -722,7 +722,7 @@ extern int showprofile;
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-extern struct GameDriver neogeo_bios;
+extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
@@ -1911,7 +1911,7 @@ static int build_tables (void)
 #endif
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &neogeo_bios)
+	if (Machine->gamedrv->clone_of == &driver_neogeo)
 	{
 		/* games based on NEOGEO driver */
 		CpuToScan = 0;

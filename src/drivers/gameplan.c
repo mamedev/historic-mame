@@ -689,145 +689,6 @@ ROM_END
 
 
 
-static int kaos_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x03c8], "\x84\x00\x00", 3) == 0 &&
-		memcmp(&RAM[0x03dd], "\x43\x00\x00", 3) == 0 &&
-		memcmp(&RAM[0x03e0], "\x50\x50\x43", 3) == 0 &&
-		memcmp(&RAM[0x03f5], "\x54\x4f\x44", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0x03c8], 0x30);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void kaos_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f, &RAM[0x03c8], 0x30);
-		osd_fclose(f);
-	}
-}
-
-static int killcom_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0x88], "\x47\x00", 2) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-            osd_fread(f, &RAM[0x88], 0x2);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void killcom_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0x88], 0x2);
-		osd_fclose(f);
-	}
-}
-
-static int megatack_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-    if (memcmp(&RAM[0xd0], "\x1f\x20\x1a", 3) == 0)
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-            osd_fread(f, &RAM[0xc4], 0xf);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void megatack_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0xc4], 0xf);
-		osd_fclose(f);
-	}
-}
-
-static int challeng_hiload(void)
-{
-	unsigned char *RAM =
-	memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xcc], "\x00\x01\x00", 3) == 0 &&
-		memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0 )
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f, &RAM[0xcc], 0xf);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void challeng_hisave(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-    void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-        osd_fwrite(f, &RAM[0xcc], 0xf);
-		osd_fclose(f);
-	}
-}
-
-
 struct GameDriver driver_kaos =
 {
 	__FILE__,
@@ -847,9 +708,8 @@ struct GameDriver driver_kaos =
 	input_ports_kaos,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-
-	kaos_hiload, kaos_hisave
+	ROT270,
+	0,0
 };
 
 
@@ -872,9 +732,8 @@ struct GameDriver driver_killcom =
 	input_ports_killcom,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-    killcom_hiload, killcom_hisave
+	ROT0,
+	0,0
 };
 
 
@@ -897,9 +756,8 @@ struct GameDriver driver_megatack =
 	input_ports_megatack,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-    megatack_hiload, megatack_hisave
+	ROT0,
+	0,0
 };
 
 struct GameDriver driver_challeng =
@@ -921,8 +779,7 @@ struct GameDriver driver_challeng =
     input_ports_challeng,
 
     0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-    challeng_hiload, challeng_hisave
+    ROT0,
+	0,0
 };
 

@@ -426,70 +426,7 @@ ROM_START( rugrats )
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END
 
-/**********************************************************************
 
-   Wiping & Rug Rats high score save routine - RJF (April 17, 1999)
-
-***********************************************************************/
-
-static int wiping_hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x90a6],"\x53\x2e\x53",3) == 0) &&
-            (memcmp(&RAM[0x90ae],"\x54\x2e\x48",3) == 0))
-	{
-		void *f;
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x9072], 10*4);	/* scores */
-			osd_fread(f,&RAM[0x90a6], 3);		/* initials */
-			osd_fread(f,&RAM[0x90ae], 3);
-			osd_fread(f,&RAM[0x90b6], 3);
-			osd_fread(f,&RAM[0x90be], 3);
-			osd_fread(f,&RAM[0x90c6], 3);
-			osd_fread(f,&RAM[0x90ce], 3);
-			osd_fread(f,&RAM[0x90d6], 3);
-			osd_fread(f,&RAM[0x90de], 3);
-			osd_fread(f,&RAM[0x90e6], 3);
-			osd_fread(f,&RAM[0x90ee], 3);
-
-			RAM[0x906e] = RAM[0x9072];	/* update high score */
-			RAM[0x906f] = RAM[0x9073];	/* on top of screen */
-			RAM[0x9070] = RAM[0x9074];
-			RAM[0x9071] = RAM[0x9075];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void wiping_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x9072], 10*4);	/* scores */
-		osd_fwrite(f,&RAM[0x90a6], 3);		/* initials */
-		osd_fwrite(f,&RAM[0x90ae], 3);
-		osd_fwrite(f,&RAM[0x90b6], 3);
-		osd_fwrite(f,&RAM[0x90be], 3);
-		osd_fwrite(f,&RAM[0x90c6], 3);
-		osd_fwrite(f,&RAM[0x90ce], 3);
-		osd_fwrite(f,&RAM[0x90d6], 3);
-		osd_fwrite(f,&RAM[0x90de], 3);
-		osd_fwrite(f,&RAM[0x90e6], 3);
-		osd_fwrite(f,&RAM[0x90ee], 3);
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver driver_wiping =
 {
@@ -512,9 +449,8 @@ struct GameDriver driver_wiping =
 	input_ports_wiping,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	wiping_hiload, wiping_hisave
+	ROT90,
+	0,0
 };
 
 struct GameDriver driver_rugrats =
@@ -538,7 +474,6 @@ struct GameDriver driver_rugrats =
 	input_ports_rugrats,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	wiping_hiload, wiping_hisave
+	ROT90,
+	0,0
 };

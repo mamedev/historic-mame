@@ -51,10 +51,22 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void eeprom_init(void)
+static void nvram_handler(void *file,int read_or_write)
 {
-	EEPROM_init(&eeprom_interface);
-	init_eeprom_count = 0;
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface);
+
+		if (file)
+		{
+			init_eeprom_count = 0;
+			EEPROM_load(file);
+		}
+		else
+			init_eeprom_count = 10;
+	}
 }
 
 static int eeprom_r(int offset)
@@ -314,7 +326,7 @@ static int xmen_interrupt(void)
 	else return m68_level3_irq();
 }
 
-static struct MachineDriver xmen_machine_driver =
+static struct MachineDriver machine_driver_xmen =
 {
 	/* basic machine hardware */
 	{
@@ -333,7 +345,7 @@ static struct MachineDriver xmen_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	eeprom_init,
+	0,
 
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
@@ -354,7 +366,9 @@ static struct MachineDriver xmen_machine_driver =
 			SOUND_YM2151,
 			&ym2151_interface
 		}
-	}
+	},
+
+	nvram_handler
 };
 
 
@@ -449,33 +463,6 @@ static void gfx_untangle(void)
 }
 
 
-static int nvram_load(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-	{
-		EEPROM_load(f);
-		osd_fclose(f);
-	}
-	else
-		init_eeprom_count = 10;
-
-	return 1;
-}
-
-static void nvram_save(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		EEPROM_save(f);
-		osd_fclose(f);
-	}
-}
-
-
 
 struct GameDriver driver_xmen =
 {
@@ -487,20 +474,19 @@ struct GameDriver driver_xmen =
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
-	&xmen_machine_driver,
-	0,
+	&machine_driver_xmen,
+	gfx_untangle,
 
 	rom_xmen,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_xmen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-
-	nvram_load, nvram_save
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };
 
 static void xmen6p_patch(void)
@@ -524,20 +510,19 @@ struct GameDriver driver_xmen6p =
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
-	&xmen_machine_driver,
-	0,
+	&machine_driver_xmen,
+	xmen6p_patch,
 
 	rom_xmen6p,
-	xmen6p_patch, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_xmen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
-
-	nvram_load, nvram_save
+	ROT0 | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
+	0,0
 };
 
 struct GameDriver driver_xmen2pj =
@@ -550,18 +535,17 @@ struct GameDriver driver_xmen2pj =
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
 	0,
-	&xmen_machine_driver,
-	0,
+	&machine_driver_xmen,
+	gfx_untangle,
 
 	rom_xmen2pj,
-	gfx_untangle, 0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_xmen2p,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-
-	nvram_load, nvram_save
+	ROT0 | GAME_IMPERFECT_SOUND,
+	0,0
 };

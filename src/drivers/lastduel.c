@@ -367,7 +367,7 @@ static int madgear_interrupt(void)
 	else return 6; /* Controls */
 }
 
-static struct MachineDriver lastduel_machine_driver =
+static struct MachineDriver machine_driver_lastduel =
 {
 	/* basic machine hardware */
 	{
@@ -411,7 +411,7 @@ static struct MachineDriver lastduel_machine_driver =
 	}
 };
 
-static struct MachineDriver madgear_machine_driver =
+static struct MachineDriver machine_driver_madgear =
 {
 	/* basic machine hardware */
 	{
@@ -879,133 +879,6 @@ ROM_END
 
 /******************************************************************************/
 
-/*added by hsc 1/18/98 */
-
-#ifdef LSB_FIRST
-#define ENDIAN_ALIGN(a)	(a)
-#else
-#define ENDIAN_ALIGN(a) (a^1)
-#endif
-
-static int hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&lastduel_ram[0x1c706])==0x2 &&
-		READ_WORD(&lastduel_ram[0x1c708])==0 &&
-		READ_WORD(&lastduel_ram[0x1c752])==0x434f &&
-		READ_WORD(&lastduel_ram[0x1c754])==0x4d20)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-    	  	int hi;
-			osd_fread_msbfirst(f,&lastduel_ram[0x1c706],80);
-			osd_fclose(f);
-
-			memcpy (&lastduel_ram[0x187e2],&lastduel_ram[0x1c706],4);
-
-
-			hi =(lastduel_ram[ENDIAN_ALIGN(0x187e4)] & 0x0f) +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e4)] >> 4) * 10 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] & 0x0f) * 100 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] >> 4) * 1000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] & 0x0f) * 10000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] >> 4) * 100000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] & 0x0f) * 1000000 +
-				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] >> 4) * 10000000;
-
-			if (hi >= 0){
-			lastduel_vram[ENDIAN_ALIGN(0x0a6c)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x0a6d)]=0x50;
-			}
-			if (hi >= 10){
-			lastduel_vram[ENDIAN_ALIGN(0x0aec)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x0aed)]=0x50;
-			}
-			if (hi >= 100){
-			lastduel_vram[ENDIAN_ALIGN(0x096c)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x096d)]=0x50;
-			}
-			if (hi >= 1000){
-			lastduel_vram[ENDIAN_ALIGN(0x09ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x09ed)]=0x50;
-			}
-			if (hi >= 10000){
-			lastduel_vram[ENDIAN_ALIGN(0x086c)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x086d)]=0x50;
-			}
-			if (hi >= 100000){
-			lastduel_vram[ENDIAN_ALIGN(0x08ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x08ed)]=0x50;
-			}
-			if (hi >= 1000000){
-			lastduel_vram[ENDIAN_ALIGN(0x076c)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)] >>4;
-			lastduel_vram[ENDIAN_ALIGN(0x076d)]=0x50;
-			}
-			if (hi >= 10000000){
-			lastduel_vram[ENDIAN_ALIGN(0x07ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)]& 0x0f;
-			lastduel_vram[ENDIAN_ALIGN(0x07ed)]=0x50;
-			}
-
-
-
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		lastduel_ram[ENDIAN_ALIGN(0x187e1)]=0;
-		lastduel_ram[ENDIAN_ALIGN(0x187e6)]=0;
-		osd_fwrite_msbfirst(f,&lastduel_ram[0x1c706],80);
-
-		osd_fclose(f);
-	}
-}
-
-static int madgear_hiload(void)
-{
-
-    void *f;
-    /* check if the hi score table has already been initialized */
-    if (READ_WORD(&lastduel_ram[0x88a4])==0x0010 &&
-		READ_WORD(&lastduel_ram[0x88a6])==0x0000 &&
-		READ_WORD(&lastduel_ram[0x88f0])==0x434f &&
-		READ_WORD(&lastduel_ram[0x88f2])==0x4d03)
-    {
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-
-			osd_fread_msbfirst(f,&lastduel_ram[0x88a4],80);
-
-			osd_fclose(f);
-
-		}
-		return 1;
-	}
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void madgear_hisave(void)
-{
-	void *f;
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite_msbfirst(f,&lastduel_ram[0x88a4],80);
-		osd_fclose(f);
-	}
-}
-
-/************************************************************************************/
-
 struct GameDriver driver_lastduel =
 {
 	__FILE__,
@@ -1016,7 +889,7 @@ struct GameDriver driver_lastduel =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
 	rom_lastduel,
@@ -1025,8 +898,8 @@ struct GameDriver driver_lastduel =
 	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload,hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_lstduela =
@@ -1039,7 +912,7 @@ struct GameDriver driver_lstduela =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
 	rom_lstduela,
@@ -1048,8 +921,8 @@ struct GameDriver driver_lstduela =
 	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload,hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_lstduelb =
@@ -1062,7 +935,7 @@ struct GameDriver driver_lstduelb =
 	"bootleg",
 	"Bryan McPhail",
 	0,
-	&lastduel_machine_driver,
+	&machine_driver_lastduel,
 	0,
 
 	rom_lstduelb,
@@ -1071,8 +944,8 @@ struct GameDriver driver_lstduelb =
 	input_ports_lastduel,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	hiload, hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_madgear =
@@ -1085,7 +958,7 @@ struct GameDriver driver_madgear =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&madgear_machine_driver,
+	&machine_driver_madgear,
 	0,
 
 	rom_madgear,
@@ -1094,8 +967,8 @@ struct GameDriver driver_madgear =
 	input_ports_madgear,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	madgear_hiload, madgear_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_madgearj =
@@ -1108,7 +981,7 @@ struct GameDriver driver_madgearj =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&madgear_machine_driver,
+	&machine_driver_madgear,
 	0,
 
 	rom_madgearj,
@@ -1117,8 +990,8 @@ struct GameDriver driver_madgearj =
 	input_ports_madgear,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	madgear_hiload, madgear_hisave
+	ROT270,
+	0,0
 };
 
 struct GameDriver driver_ledstorm =
@@ -1131,7 +1004,7 @@ struct GameDriver driver_ledstorm =
 	"Capcom",
 	"Bryan McPhail",
 	0,
-	&madgear_machine_driver,
+	&machine_driver_madgear,
 	0,
 
 	rom_ledstorm,
@@ -1140,6 +1013,6 @@ struct GameDriver driver_ledstorm =
 	input_ports_madgear,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	madgear_hiload, madgear_hisave /* Untested */
+	ROT270,
+	0,0
 };

@@ -134,24 +134,24 @@ void wms_dma2_w(int offset, int data);
 
 int wms_input_r (int offset);
 
-void narc_driver_init(void);
-void smashtv_driver_init(void);
-void smashtv4_driver_init(void);
-void trog_driver_init(void);
-void trog3_driver_init(void);
-void trogp_driver_init(void);
-void mk_driver_init(void);
-void mkla1_driver_init(void);
-void mkla2_driver_init(void);
-void mk2_driver_init(void);
-void mk2r14_driver_init(void);
-void nbajam_driver_init(void);
-void totcarn_driver_init(void);
-void totcarnp_driver_init(void);
-void hiimpact_driver_init(void);
-void shimpact_driver_init(void);
-void strkforc_driver_init(void);
-void term2_driver_init(void);
+void init_narc(void);
+void init_smashtv(void);
+void init_smashtv4(void);
+void init_trog(void);
+void init_trog3(void);
+void init_trogp(void);
+void init_mk(void);
+void init_mkla1(void);
+void init_mkla2(void);
+void init_mk2(void);
+void init_mk2r14(void);
+void init_nbajam(void);
+void init_totcarn(void);
+void init_totcarnp(void);
+void init_hiimpact(void);
+void init_shimpact(void);
+void init_strkforc(void);
+void init_term2(void);
 
 /* Functions in sndhrdw/smashtv.c */
 void narc_ym2151_int (int irq);
@@ -159,13 +159,22 @@ int  narc_DAC_r(int offset);
 void narc_slave_DAC_w (int offset,int data);
 void narc_slave_cmd_w (int offset,int data);
 
-UINT8 wms_rom_loaded;
 
-/* This just causes the init_machine to copy the images again */
-static void wms_decode(void)
+
+static void nvram_handler(void *file,int read_or_write)
 {
-	wms_rom_loaded = 0;
+	if (read_or_write)
+		osd_fwrite(file,wms_cmos_ram,0x8000);
+	else
+	{
+		if (file)
+			osd_fread(file,wms_cmos_ram,0x8000);
+		else
+			memset(wms_cmos_ram,0,0x8000);
+	}
 }
+
+
 
 static struct MemoryReadAddress smashtv_readmem[] =
 {
@@ -1085,7 +1094,7 @@ static struct tms34010_config cpu_config =
 
 
 /* Y-unit games */
-static struct MachineDriver smashtv_machine_driver =
+static struct MachineDriver machine_driver_smashtv =
 {
 	/* basic machine hardware */
 	{
@@ -1119,11 +1128,13 @@ static struct MachineDriver smashtv_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	nvram_handler
 };
 
 /* Z-Unit */
-static struct MachineDriver narc_machine_driver =
+static struct MachineDriver machine_driver_narc =
 {
 	/* basic machine hardware */
 	{
@@ -1157,10 +1168,12 @@ static struct MachineDriver narc_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_NARC
-	}
+	},
+
+	nvram_handler
 };
 
-static struct MachineDriver trog_machine_driver =
+static struct MachineDriver machine_driver_trog =
 {
 	/* basic machine hardware */
 	{
@@ -1194,11 +1207,13 @@ static struct MachineDriver trog_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_CVSD
-	}
+	},
+
+	nvram_handler
 };
 
 /* Y-Unit */
-static struct MachineDriver mk_machine_driver =
+static struct MachineDriver machine_driver_mk =
 {
 	/* basic machine hardware */
 	{
@@ -1232,11 +1247,13 @@ static struct MachineDriver mk_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_ADPCM(3)
-	}
+	},
+
+	nvram_handler
 };
 
 /* Y-Unit */
-static struct MachineDriver term2_machine_driver =
+static struct MachineDriver machine_driver_term2 =
 {
 	/* basic machine hardware */
 	{
@@ -1270,11 +1287,13 @@ static struct MachineDriver term2_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_ADPCM(3)
-	}
+	},
+
+	nvram_handler
 };
 
 /* T-Unit */
-static struct MachineDriver mk2_machine_driver =
+static struct MachineDriver machine_driver_mk2 =
 {
 	/* basic machine hardware */
 	{
@@ -1305,10 +1324,15 @@ static struct MachineDriver mk2_machine_driver =
 
 	/* sound hardware */
 	0,0,0,0,
+	{
+		{ 0 }
+	},
+
+	nvram_handler
 };
 
 /* T-Unit */
-static struct MachineDriver nbajam_machine_driver =
+static struct MachineDriver machine_driver_nbajam =
 {
 	/* basic machine hardware */
 	{
@@ -1342,42 +1366,14 @@ static struct MachineDriver nbajam_machine_driver =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_WILLIAMS_ADPCM(3)
-	}
+	},
+
+	nvram_handler
 };
 
 
-/***************************************************************************
 
-  High score save/load
-
-***************************************************************************/
-
-static int hiload (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
-	{
-		osd_fread (f,wms_cmos_ram,0x8000);
-		osd_fclose (f);
-	}
-
-	return 1;
-}
-
-static void hisave (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
-	{
-		osd_fwrite(f,wms_cmos_ram,0x8000);
-		osd_fclose (f);
-	}
-}
-
+#if 0
 void wms_stateload(void)
 {
 	void *f;
@@ -1411,6 +1407,8 @@ void wms_statesave(void)
 		osd_fclose(f);
 	}
 }
+#endif
+
 
 /***************************************************************************
 
@@ -2179,76 +2177,36 @@ ROM_START( nbajam )
 ROM_END
 
 
-#define BASE_CREDITS  "Alex Pasadyn\nZsolt Vasvari\nKurt Mahan (hardware info)"
 
-#define BASE_DRIVER(game, machine, init, inputs, year, company, fullname, clone, flags) \
-	struct GameDriver driver_##game =				\
-	{												\
-		__FILE__,									\
-		clone,										\
-		#game,										\
-		fullname,									\
-		#year,										\
-		company,									\
-		BASE_CREDITS,								\
-		0,											\
-		&machine##_machine_driver,					\
-		init##_driver_init,							\
-													\
-		rom_##game,									\
-		wms_decode, 0,								\
-		0,											\
-		0,							\
-													\
-		input_ports_##inputs,						\
-													\
-		0, 0, 0,   /* colors, palette, colortable */\
-		ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | flags,	\
-		hiload, hisave								\
-	};
+GAME( 1988, narc,     ,        narc,    narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 7.00)" )
+GAME( 1988, narc3,    narc,    narc,    narc,    narc,     ROT0_16BIT, "Williams", "Narc (rev 3.00)" )
 
-#define GAME_DRIVER(game, machine, init, inputs, year, company, fullname) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, 0, 0)
+GAME( 1990, smashtv,  ,        smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 8.00)" )
+GAME( 1990, smashtv6, smashtv, smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 6.00)" )
+GAME( 1990, smashtv5, smashtv, smashtv, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 5.00)" )
+GAME( 1990, smashtv4, smashtv, smashtv, smashtv, smashtv4, ROT0_16BIT, "Williams", "Smash T.V. (rev 4.00)" )
 
-#define BROKEN_DRIVER(game, machine, init, inputs, year, company, fullname) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, 0, GAME_NOT_WORKING)
+GAME( 1990, hiimpact, ,        smashtv, trog,    hiimpact, ROT0_16BIT, "Williams", "High Impact Football (rev LA3 12/27/90)" )
 
-#define CLONE_DRIVER(game, machine, init, inputs, year, company, fullname, clone) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &driver_##clone, 0)
+GAMEX(1991, shimpact, ,        smashtv, trog,    shimpact, ROT0_16BIT, "Williams", "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 
-#define BROKEN_CLONE(game, machine, init, inputs, year, company, fullname, clone) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &driver_##clone, GAME_NOT_WORKING)
+GAME( 1990, trog,     ,        trog,    trog,    trog,     ROT0_16BIT, "Midway",   "Trog (rev LA4 03/11/91)" )
+GAME( 1990, trog3,    trog,    trog,    trog,    trog3,    ROT0_16BIT, "Midway",   "Trog (rev LA3 02/14/91)" )
+GAME( 1990, trogp,    trog,    trog,    trog,    trogp,    ROT0_16BIT, "Midway",   "Trog (prototype, rev 4.00 07/27/90)" )
 
+GAME( 1991, strkforc, ,        trog,    strkforc,strkforc, ROT0_16BIT, "Midway",   "Strike Force (rev 1 02/25/91)" )
 
-GAME_DRIVER  (narc,     narc,    narc,     narc,     1988, "Williams", "Narc (rev 7.00)")
-CLONE_DRIVER (narc3,    narc,    narc,     narc,     1988, "Williams", "Narc (rev 3.00)", narc)
+GAME( 1992, mk,       ,        mk,      mk,      mk,       ROT0_16BIT, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )
+GAME( 1992, mkla1,    mk,      mk,      mk,      mkla1,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
+GAME( 1992, mkla2,    mk,      mk,      mk,      mkla2,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
 
-GAME_DRIVER  (smashtv,  smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 8.00)")
-CLONE_DRIVER (smashtv6, smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 6.00)", smashtv)
-CLONE_DRIVER (smashtv5, smashtv, smashtv,  smashtv,  1990, "Williams", "Smash T.V. (rev 5.00)", smashtv)
-CLONE_DRIVER (smashtv4, smashtv, smashtv4, smashtv,  1990, "Williams", "Smash T.V. (rev 4.00)", smashtv)
+GAME( 1991, term2,    ,        term2,   term2,   term2,    ROT0_16BIT, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
 
-GAME_DRIVER  (hiimpact, smashtv, hiimpact, trog,     1990, "Williams", "High Impact Football (rev LA3 12/27/90)")
+GAME( 1992, totcarn,  ,        mk,      totcarn, totcarn,  ROT0_16BIT, "Midway",   "Total Carnage (rev LA1 03/10/92)" )
+GAME( 1992, totcarnp, totcarn, mk,      totcarn, totcarnp, ROT0_16BIT, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)" )
 
-BROKEN_DRIVER(shimpact, smashtv, shimpact, trog,     1991, "Williams", "Super High Impact (rev LA1 09/30/91)")
+GAMEX(1993, mk2,      ,        mk2,     mk2,     mk2,      ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L3.1)", GAME_NOT_WORKING )
+GAMEX(1993, mk2r32,   mk2,     mk2,     mk2,     mk2,      ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L3.2 (European))", GAME_NOT_WORKING )
+GAMEX(1993, mk2r14,   mk2,     mk2,     mk2,     mk2r14,   ROT0_16BIT, "Midway",   "Mortal Kombat II (rev L1.4)", GAME_NOT_WORKING )
 
-GAME_DRIVER  (trog,     trog,    trog,     trog,     1990, "Midway",   "Trog (rev LA4 03/11/91)")
-CLONE_DRIVER (trog3,    trog,    trog3,    trog,     1990, "Midway",   "Trog (rev LA3 02/14/91)", trog)
-CLONE_DRIVER (trogp,    trog,    trogp,    trog,     1990, "Midway",   "Trog (prototype, rev 4.00 07/27/90)", trog)
-
-GAME_DRIVER  (strkforc, trog,    strkforc, strkforc, 1991, "Midway",   "Strike Force (rev 1 02/25/91)")
-
-GAME_DRIVER  (mk,       mk,      mk,       mk,       1992, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)")
-CLONE_DRIVER (mkla1,    mk,      mkla1,    mk,       1992, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)", mk)
-CLONE_DRIVER (mkla2,    mk,      mkla2,    mk,       1992, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)", mk)
-
-GAME_DRIVER  (term2,    term2,   term2,    term2,    1991, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)")
-
-GAME_DRIVER  (totcarn,  mk,      totcarn,  totcarn,  1992, "Midway",   "Total Carnage (rev LA1 03/10/92)")
-CLONE_DRIVER (totcarnp, mk,      totcarnp, totcarn,  1992, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)", totcarn)
-
-BROKEN_DRIVER(mk2,      mk2,     mk2,      mk2,      1993, "Midway",   "Mortal Kombat II (rev L3.1)")
-BROKEN_CLONE (mk2r32,   mk2,     mk2,      mk2,      1993, "Midway",   "Mortal Kombat II (rev L3.2 (European))", mk2)
-BROKEN_CLONE (mk2r14,   mk2,     mk2r14,   mk2,      1993, "Midway",   "Mortal Kombat II (rev L1.4)", mk2)
-
-BROKEN_DRIVER(nbajam,   nbajam,  nbajam,   nbajam,   1993, "Midway",   "NBA Jam")
+GAMEX(1993, nbajam,   ,        nbajam,  nbajam,  nbajam,   ROT0_16BIT, "Midway",   "NBA Jam", GAME_NOT_WORKING )

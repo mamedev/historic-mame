@@ -252,7 +252,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,  0, 64 },
+	{ REGION_GFX1, 0x00000, &charlayout,  0, 64 },
 	/* sprites use the same characters above, but are 16x8 */
 	{ -1 } /* end of array */
 };
@@ -273,7 +273,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_arkanoid =
 {
 	/* basic machine hardware */
 	{
@@ -316,7 +316,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver bootleg_machine_driver =
+static struct MachineDriver machine_driver_bootleg =
 {
 	/* basic machine hardware */
 	{
@@ -366,7 +366,10 @@ ROM_START( arkanoid )
 	ROM_LOAD( "a75_01-1.rom", 0x0000, 0x8000, 0x5bcda3b0 )
 	ROM_LOAD( "a75_11.rom",   0x8000, 0x8000, 0xeafd7191 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_LOAD( "arkanoid.uc",  0x0000, 0x0800, 0x515d77b6 )
+
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -375,9 +378,6 @@ ROM_START( arkanoid )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
-
-	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
-	ROM_LOAD( "arkanoid.uc",  0x0000, 0x0800, 0x515d77b6 )
 ROM_END
 
 ROM_START( arknoidu )
@@ -385,7 +385,10 @@ ROM_START( arknoidu )
 	ROM_LOAD( "a75-19.bin",   0x0000, 0x8000, 0xd3ad37d7 )
 	ROM_LOAD( "a75-18.bin",   0x8000, 0x8000, 0xcdc08301 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_LOAD( "arknoidu.uc",  0x0000, 0x0800, BADCRC( 0xde518e47 ) )
+
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -394,9 +397,6 @@ ROM_START( arknoidu )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
-
-	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
-	ROM_LOAD( "arknoidu.uc",  0x0000, 0x0800, BADCRC( 0xde518e47 ) )
 ROM_END
 
 ROM_START( arknoidj )
@@ -404,7 +404,10 @@ ROM_START( arknoidj )
 	ROM_LOAD( "a75-21.rom",   0x0000, 0x8000, 0xbf0455fc )
 	ROM_LOAD( "a75-22.rom",   0x8000, 0x8000, 0x3a2688d3 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_LOAD( "arknoidj.uc",  0x0000, 0x0800, BADCRC( 0x0a4abef6 ) )
+
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -413,9 +416,6 @@ ROM_START( arknoidj )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
-
-	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
-	ROM_LOAD( "arknoidj.uc",  0x0000, 0x0800, BADCRC( 0x0a4abef6 ) )
 ROM_END
 
 ROM_START( arkbl2 )
@@ -423,7 +423,10 @@ ROM_START( arkbl2 )
 	ROM_LOAD( "e1.6d",        0x0000, 0x8000, 0xdd4f2b72 )
 	ROM_LOAD( "e2.6f",        0x8000, 0x8000, 0xbbc33ceb )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_LOAD( "68705p3.6i",   0x0000, 0x0800, 0x389a8cfb )
+
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -432,9 +435,6 @@ ROM_START( arkbl2 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
-
-	ROM_REGIONX( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
-	ROM_LOAD( "68705p3.6i",   0x0000, 0x0800, 0x389a8cfb )
 ROM_END
 
 ROM_START( arkbl3 )
@@ -442,7 +442,7 @@ ROM_START( arkbl3 )
 	ROM_LOAD( "arkanunk.1",   0x0000, 0x8000, 0xb0f73900 )
 	ROM_LOAD( "arkanunk.2",   0x8000, 0x8000, 0x9827f297 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -458,7 +458,7 @@ ROM_START( arkatayt )
 	ROM_LOAD( "arkanoid.1",   0x0000, 0x8000, 0x6e0a2b6f )
 	ROM_LOAD( "arkanoid.2",   0x8000, 0x8000, 0x5a97dd56 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -474,7 +474,7 @@ ROM_START( arkblock )
 	ROM_LOAD( "block01.bin",  0x0000, 0x8000, 0x5be667e1 )
 	ROM_LOAD( "block02.bin",  0x8000, 0x8000, 0x4f883ef1 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -490,7 +490,7 @@ ROM_START( arkbloc2 )
 	ROM_LOAD( "ark-6.bin",    0x0000, 0x8000, 0x0be015de )
 	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -506,7 +506,7 @@ ROM_START( arkangc )
 	ROM_LOAD( "arkgc.1",      0x0000, 0x8000, 0xc54232e6 )
 	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
 
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
@@ -519,280 +519,12 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xef79],"\x00\x50\x00",3) == 0 && /* position 1 */
-		memcmp(&RAM[0xef95],"\x00\x30\x00",3) == 0 && /* position 5 */
-		memcmp(&RAM[0xc4df],"\x00\x50\x00",3) == 0)	  /* separate hi score */
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xef79],7*5);
-			RAM[0xc4df] = RAM[0xef79];
-			RAM[0xc4e0] = RAM[0xef7a];
-			RAM[0xc4e1] = RAM[0xef7b];
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xef79],7*5);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_arkanoid =
-{
-	__FILE__,
-	0,
-	"arkanoid",
-	"Arkanoid (World)",
-	"1986",
-	"Taito Corporation Japan",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arkanoid,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arkanoid,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arknoidu =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arknoidu",
-	"Arkanoid (US)",
-	"1986",
-	"Taito America Corporation (Romstar license)",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arknoidu,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arkanoid,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arknoidj =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arknoidj",
-	"Arkanoid (Japan)",
-	"1986",
-	"Taito Corporation",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arknoidj,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arkbl2 =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkbl2",
-	"Arkanoid (Japanese bootleg Set 2)",
-	"1986",
-	//"Taito Corporation",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	0,
-	&machine_driver,
-	0,
-
-	rom_arkbl2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arkbl3 =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkbl3",
-	"Arkanoid (Japanese bootleg Set 3)",
-	"1986",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	0,
-	&bootleg_machine_driver,
-	0,
-
-	rom_arkbl3,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arkatayt =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkatayt",
-	"Arkanoid (Tayto bootleg, Japanese)",
-	"1986",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&bootleg_machine_driver,
-	0,
-
-	rom_arkatayt,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arkblock =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkblock",
-	"Block (bootleg, Japanese)",
-	"1986",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&bootleg_machine_driver,
-	0,
-
-	rom_arkblock,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
-
-	hiload, hisave
-};
-
-struct GameDriver driver_arkbloc2 =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkbloc2",
-	"Block (Game Corporation bootleg)",
-	"1986",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nHIGHWAYMAN",
-	0,
-	&bootleg_machine_driver,
-	0,
-
-	rom_arkbloc2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-/** Arkanoid (Game Corporation) with round selector - RJF (April 23, 1999) **/
-struct GameDriver driver_arkangc =
-{
-	__FILE__,
-	&driver_arkanoid,
-	"arkangc",
-	"Arkanoid (Game Corporation bootleg)",
-	"1986",
-	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
-	0,
-	&bootleg_machine_driver,
-	0,
-
-	rom_arkangc,
-	0, 0,
-	0,
-	0,
-
-	input_ports_arknoidj,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
+GAME( 1986, arkanoid, ,         arkanoid, arkanoid, , ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
+GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, , ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
+GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, , ROT90, "Taito Corporation", "Arkanoid (Japan)" )
+GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, , ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
+GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
+GAME( 1986, arkatayt, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
+GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
+GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Block (Game Corporation bootleg)" )
+GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, , ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )

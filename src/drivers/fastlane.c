@@ -20,7 +20,7 @@ to be important, but I don't know what is supposed to do.
 static int irq_enable, nmi_enable, unknown_bit4;
 
 /* from vidhrdw/fastlane.c */
-unsigned char *fastlane_k007121_regs;
+extern unsigned char *fastlane_k007121_regs;
 void fastlane_vram0_w(int offset,int data);
 void fastlane_vram1_w(int offset,int data);
 void fastlane_cram0_w(int offset,int data);
@@ -362,6 +362,6 @@ struct GameDriver driver_fastlane =
 	input_ports_fastlane,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+    ROT90 | GAME_NOT_WORKING,
 	0, 0
 };

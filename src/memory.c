@@ -16,9 +16,6 @@ static void mem_dump( void );
 #endif
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
-#define MEMORY_READ(index,offset)       ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_read)(offset))
-#define MEMORY_WRITE(index,offset,data) ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].memory_write)(offset,data))
-#define SET_OP_BASE(index,pc)           ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].set_op_base)(pc))
 #define ADDRESS_BITS(index)             (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].address_bits)
 #define ABITS1(index)                   (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].abits1)
 #define ABITS2(index)                   (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].abits2)
@@ -47,18 +44,21 @@ static void mem_dump( void );
 	#define SHIFT3 0
 #endif
 
-unsigned char *RAM;
+static unsigned char *RAM;
 unsigned char *OP_RAM;
 unsigned char *OP_ROM;
+
+/* change bases preserving opcode/data shift for encrypted games */
+#define SET_OP_RAMROM(base)					\
+	OP_ROM = (base) + (OP_ROM - OP_RAM);	\
+	OP_RAM = (base);
+
+
 MHELE ophw;				/* op-code hardware number */
 
 struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 
-static unsigned char *ramptr[MAX_CPU], *romptr[MAX_CPU];
-/* quick kludge: we support encrypted opcodes on only one CPU. This is usually */
-/* CPU #0, to use a different one, change this variable in opcode_decode() */
-/* TODO: handle this better!!! */
-int encrypted_cpu;
+static unsigned char *ramptr[MAX_CPU],*romptr[MAX_CPU];
 
 /* element shift bits, mask bits */
 int mhshift[MAX_CPU][3], mhmask[MAX_CPU][3];
@@ -96,13 +96,13 @@ MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
 #define HT_BANK7  7		/* bank memory #7    */
 #define HT_BANK8  8		/* bank memory #8    */
 #define HT_NON    9		/* non mapped memory */
-#define HT_NOP    10		/* NOP memory        */
-#define HT_RAMROM 11		/* RAM ROM memory    */
-#define HT_ROM    12		/* ROM memory        */
+#define HT_NOP    10	/* NOP memory        */
+#define HT_RAMROM 11	/* RAM ROM memory    */
+#define HT_ROM    12	/* ROM memory        */
 
-#define HT_USER   13		/* user functions    */
-/* [MH_HARDMAX]-0xff	   link to sub memory element  */
-/*                         (value-MH_HARDMAX)<<MH_SBITS -> element bank */
+#define HT_USER   13	/* user functions    */
+/* [MH_HARDMAX]-0xff	  link to sub memory element  */
+/*                        (value-MH_HARDMAX)<<MH_SBITS -> element bank */
 
 #define HT_BANKMAX (HT_BANK1 + MAX_BANKS - 1)
 
@@ -207,7 +207,7 @@ void mwh_rom(int address,int data)
 }
 void mwh_ramrom(int address,int data)
 {
-	RAM[address] = ROM[address] = data;
+	RAM[address] = RAM[address + (OP_ROM - OP_RAM)] = data;
 }
 void mwh_nop(int address,int data)
 {
@@ -413,7 +413,7 @@ static int rdhard_max = HT_USER;
 static int wrhard_max = HT_USER;
 
 /* return = FALSE:can't allocate element memory */
-int initmemoryhandlers(void)
+int memory_init(void)
 {
 	int i, cpu;
 	const struct MemoryReadAddress *memoryread;
@@ -443,12 +443,7 @@ int initmemoryhandlers(void)
 
 		setOPbasefunc[cpu] = NULL;
 
-		ramptr[cpu] = memory_region(REGION_CPU1+cpu);
-
-		/* opcode decryption is currently supported only for the first memory region */
-		if (cpu == encrypted_cpu) romptr[cpu] = ROM;
-		else romptr[cpu] = ramptr[cpu];
-
+		ramptr[cpu] = romptr[cpu] = memory_region(REGION_CPU1+cpu);
 
 		/* initialize the memory base pointers for memory hooks */
 		_mra = Machine->drv->cpu[cpu].memory_read;
@@ -486,7 +481,7 @@ int initmemoryhandlers(void)
 		{
 			if (install_port_read_handler_common(cpu, ioread->start, ioread->end, ioread->handler, 0) == 0)
 			{
-				shutdownmemoryhandler();
+				memory_shutdown();
 				return 0;
 			}
 
@@ -503,7 +498,7 @@ int initmemoryhandlers(void)
 		{
 			if (install_port_write_handler_common(cpu, iowrite->start, iowrite->end, iowrite->handler, 0) == 0)
 			{
-				shutdownmemoryhandler();
+				memory_shutdown();
 				return 0;
 			}
 
@@ -599,12 +594,12 @@ int initmemoryhandlers(void)
 		/* allocate current element */
 		if( (cur_mr_element[cpu] = (MHELE *)malloc(sizeof(MHELE)<<abits1)) == 0 )
 		{
-			shutdownmemoryhandler();
+			memory_shutdown();
 			return 0;
 		}
 		if( (cur_mw_element[cpu] = (MHELE *)malloc(sizeof(MHELE)<<abits1)) == 0 )
 		{
-			shutdownmemoryhandler();
+			memory_shutdown();
 			return 0;
 		}
 
@@ -821,10 +816,15 @@ int initmemoryhandlers(void)
 	return 1;	/* ok */
 }
 
+void memory_set_opcode_base(int cpu,unsigned char *base)
+{
+	romptr[cpu] = base;
+}
+
+
 void memorycontextswap(int activecpu)
 {
 	RAM = cpu_bankbase[0] = ramptr[activecpu];
-	ROM = romptr[activecpu];
 
 	cur_mrhard = cur_mr_element[activecpu];
 	cur_mwhard = cur_mw_element[activecpu];
@@ -839,10 +839,10 @@ void memorycontextswap(int activecpu)
 	/* op code memory pointer */
 	ophw = HT_RAM;
 	OP_RAM = RAM;
-	OP_ROM = ROM;
+	OP_ROM = romptr[activecpu];
 }
 
-void shutdownmemoryhandler(void)
+void memory_shutdown(void)
 {
 	struct ExtMemory *ext;
 	int cpu;
@@ -877,13 +877,6 @@ void shutdownmemoryhandler(void)
 	for (ext = ext_memory; ext->data; ext++)
 		free (ext->data);
 	memset (ext_memory, 0, sizeof (ext_memory));
-}
-
-void updatememorybase(int activecpu)
-{
-	/* keep track of changes to RAM and ROM pointers (bank switching) */
-	ramptr[activecpu] = RAM;
-	romptr[activecpu] = ROM;
 }
 
 
@@ -2032,16 +2025,14 @@ void cpu_setOPbase16 (int pc)
 	if (!hw)
 	{
 	 /* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 
@@ -2074,16 +2065,14 @@ void cpu_setOPbase16bew (int pc)
 	if (!hw)
 	{
 	 /* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 
@@ -2116,16 +2105,14 @@ void cpu_setOPbase16lew (int pc)
 	if (!hw)
 	{
 	 /* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 
@@ -2158,16 +2145,14 @@ void cpu_setOPbase20 (int pc)
 	if (!hw)
 	{
 		/* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 
@@ -2179,8 +2164,7 @@ void cpu_setOPbase20 (int pc)
 /* Opcode execution is _always_ within the 16 bit range */
 void cpu_setOPbase21 (int pc)
 {
-	OP_RAM = RAM;
-	OP_ROM = ROM;
+	SET_OP_RAMROM(RAM)
 }
 
 
@@ -2208,16 +2192,14 @@ void cpu_setOPbase24 (int pc)
 	if (!hw)
 	{
 		/* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 
@@ -2252,16 +2234,14 @@ void cpu_setOPbase29 (int pc)    /* AJP 980803 */
 	if (!hw)
 	{
 		/* memory direct */
-		OP_RAM = RAM;
-		OP_ROM = ROM;
+		SET_OP_RAMROM(RAM)
 		return;
 	}
 
 	if (hw <= HT_BANKMAX)
 	{
 		/* banked memory select */
-		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
-		if (RAM == ROM) OP_ROM = OP_RAM;
+		SET_OP_RAMROM(cpu_bankbase[hw] - memoryreadoffset[hw])
 		return;
 	}
 

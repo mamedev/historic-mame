@@ -1,6 +1,12 @@
 /***************************************************************************
 
-Bomb Jack memory map (preliminary)
+Bomb Jack
+
+driver by Mirko Buffoni
+
+bombjac2 has YOU ARE LUCY instead of LUCKY, so it's probably an older version
+
+
 MAIN BOARD:
 
 0000-1fff ROM 0
@@ -289,10 +295,10 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,      0, 16 },	/* characters */
-	{ 1, 0x3000, &charlayout2,      0, 16 },	/* background tiles */
-	{ 1, 0x9000, &spritelayout1,    0, 16 },	/* normal sprites */
-	{ 1, 0xa000, &spritelayout2,    0, 16 },	/* large sprites */
+	{ REGION_GFX1, 0x0000, &charlayout1,      0, 16 },	/* characters */
+	{ REGION_GFX2, 0x0000, &charlayout2,      0, 16 },	/* background tiles */
+	{ REGION_GFX3, 0x0000, &spritelayout1,    0, 16 },	/* normal sprites */
+	{ REGION_GFX3, 0x1000, &spritelayout2,    0, 16 },	/* large sprites */
 	{ -1 } /* end of array */
 };
 
@@ -312,7 +318,7 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver machine_driver_bombjack =
 {
 	/* basic machine hardware */
 	{
@@ -371,22 +377,26 @@ ROM_START( bombjack )
 	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
 	ROM_LOAD( "13.1r",        0xc000, 0x2000, 0x70e0244d )
 
-	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
 	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
 	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
-	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
-	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
-	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
-	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
-	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
-	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
 
-	ROM_REGION(0x1000)	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "06_l08t.bin",  0x0000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x2000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x4000, 0x2000, 0x3155ee7d )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "16_m07b.bin",  0x0000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0x2000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0x4000, 0x2000, 0x101c858d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
-	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
 ROM_START( bombjac2 )
@@ -397,146 +407,29 @@ ROM_START( bombjac2 )
 	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
 	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000, 0xbcafdd29 )
 
-	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
+
+	ROM_REGIONX( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
 	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
 	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
-	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
-	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
-	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
-	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
-	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
-	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
 
-	ROM_REGION(0x1000)	/* background graphics */
+	ROM_REGIONX( 0x6000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "06_l08t.bin",  0x0000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x2000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x4000, 0x2000, 0x3155ee7d )
+
+	ROM_REGIONX( 0x6000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "16_m07b.bin",  0x0000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0x2000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0x4000, 0x2000, 0x101c858d )
+
+	ROM_REGIONX( 0x1000, REGION_GFX4 )	/* background tilemaps */
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
-
-	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* 64k for sound board */
-	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x8100],&RAM[0x8124],4) == 0 &&
-			memcmp(&RAM[0x8100],&RAM[0x80e2],4) == 0 &&	/* high score */
-			(memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 ||
-			memcmp(&RAM[0x8100],"\x00\x00\x03\x00",4) == 0 ||
-			memcmp(&RAM[0x8100],"\x00\x00\x05\x00",4) == 0 ||
-			memcmp(&RAM[0x8100],"\x00\x00\x10\x00",4) == 0))
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			char buf[10];
-			int hi;
-
-
-			osd_fread(f,&RAM[0x8100],15*10);
-			RAM[0x80e2] = RAM[0x8100];
-			RAM[0x80e3] = RAM[0x8101];
-			RAM[0x80e4] = RAM[0x8102];
-			RAM[0x80e5] = RAM[0x8103];
-			/* also copy the high score to the screen, otherwise it won't be */
-			/* updated until a new game is started */
-			hi = (RAM[0x8100] & 0x0f) +
-					(RAM[0x8100] >> 4) * 10 +
-					(RAM[0x8101] & 0x0f) * 100 +
-					(RAM[0x8101] >> 4) * 1000 +
-					(RAM[0x8102] & 0x0f) * 10000 +
-					(RAM[0x8102] >> 4) * 100000 +
-					(RAM[0x8103] & 0x0f) * 1000000 +
-					(RAM[0x8103] >> 4) * 10000000;
-			sprintf(buf,"%8d",hi);
-			videoram_w(0x013f,buf[0]);
-			videoram_w(0x011f,buf[1]);
-			videoram_w(0x00ff,buf[2]);
-			videoram_w(0x00df,buf[3]);
-			videoram_w(0x00bf,buf[4]);
-			videoram_w(0x009f,buf[5]);
-			videoram_w(0x007f,buf[6]);
-			videoram_w(0x005f,buf[7]);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;	/* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x8100],15*10);
-		osd_fclose(f);
-	}
-}
-
-
-
-struct GameDriver driver_bombjack =
-{
-	__FILE__,
-	0,
-	"bombjack",
-	"Bomb Jack (set 1)",
-	"1984",
-	"Tehkan",
-	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bombjack,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bombjack,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
-
-/* this one has YOU ARE LUCY instead of LUCKY, so it's probably an older version */
-struct GameDriver driver_bombjac2 =
-{
-	__FILE__,
-	&driver_bombjack,
-	"bombjac2",
-	"Bomb Jack (set 2)",
-	"1984",
-	"Tehkan",
-	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
-	0,
-	&machine_driver,
-	0,
-
-	rom_bombjac2,
-	0, 0,
-	0,
-	0,
-
-	input_ports_bombjack,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	hiload, hisave
-};
+GAME( 1984, bombjack, ,         bombjack, bombjack, , ROT90, "Tehkan", "Bomb Jack (set 1)" )
+GAME( 1984, bombjac2, bombjack, bombjack, bombjack, , ROT90, "Tehkan", "Bomb Jack (set 2)" )

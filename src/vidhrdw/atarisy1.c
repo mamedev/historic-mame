@@ -930,8 +930,8 @@ static void mo_render_callback(const UINT16 *data, const struct rectangle *clip,
 
 static int decode_gfx(void)
 {
-	UINT8 *prom1 = &memory_region(3)[0x000];
-	UINT8 *prom2 = &memory_region(3)[0x200];
+	UINT8 *prom1 = &memory_region(REGION_PROMS)[0x000];
+	UINT8 *prom2 = &memory_region(REGION_PROMS)[0x200];
 	int obj, i;
 
 	/* reset the globals */
@@ -1019,7 +1019,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		return bank_gfx[bpp - 4][bank_index];
 
 	/* if the bank is out of range, call it 0 */
-	if (bank_offset[bank_index] >= memory_region_length(4))
+	if (bank_offset[bank_index] >= memory_region_length(REGION_GFX2))
 		return 0;
 
 	/* don't have one? let's make it ... first find any empty slot */
@@ -1035,7 +1035,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		objlayout.planeoffset[i] = (bpp - i - 1) * 0x8000 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(&memory_region(4)[bank_offset[bank_index]], &objlayout);
+	Machine->gfx[gfx_index] = decodegfx(&memory_region(REGION_GFX2)[bank_offset[bank_index]], &objlayout);
 	if (!Machine->gfx[gfx_index])
 		return -1;
 

@@ -26,6 +26,10 @@ typedef struct
 	int frequency;
 	int counter;
 	int volume[2];
+	int noise_sw;
+	int noise_state;
+	int noise_seed;
+	int noise_counter;
 	const unsigned char *wave;
 } sound_channel;
 
@@ -45,6 +49,8 @@ static int sample_bits;
 static int num_voices;
 static int sound_enable;
 static int stream;
+static int namco_clock;
+static int sample_rate;
 
 /* mixer tables and internal buffers */
 static signed char *mixer_table;
@@ -124,34 +130,71 @@ static void namco_update_mono(int ch, void *buffer, int length)
 		int f = voice->frequency;
 		int v = voice->volume[0];
 
-		/* only update if we have non-zero volume and frequency */
-		if (v && f)
+		mix = mixer_buffer;
+
+		if (voice->noise_sw)
 		{
-			const unsigned char *w = voice->wave;
-			int c = voice->counter;
-
-			mix = mixer_buffer;
-
-			/* add our contribution */
-			for (i = 0; i < length; i++)
+			/* only update if we have non-zero volume and frequency */
+			if (v && (f & 0xff))
 			{
-				int offs;
+				float fbase = (float)sample_rate / (float)namco_clock;
+				int delta = (float)((f & 0xff) << 4) * fbase;
+				int c = voice->noise_counter;
 
-				c += f;
-				offs = (c >> 15) & 0x1f;
-				if (samples_per_byte == 1)	/* use only low 4 bits */
-					*mix++ += ((w[offs] & 0x0f) - 8) * v;
-				else	/* use full byte, first the high 4 bits, then the low 4 bits */
+				/* add our contribution */
+				for (i = 0; i < length; i++)
 				{
-					if (offs & 1)
-						*mix++ += ((w[offs>>1] & 0x0f) - 8) * v;
-					else
-						*mix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * v;
-				}
-			}
+					int noise_data;
+					int cnt;
 
-			/* update the counter for this voice */
-			voice->counter = c;
+					if (voice->noise_state)	noise_data = 0x07;
+					else noise_data = -0x07;
+					*mix++ += noise_data * (v >> 1);
+
+					c += delta;
+					cnt = (c >> 12);
+					c &= (1 << 12) - 1;
+					for( ;cnt > 0; cnt--)
+					{
+						if ((voice->noise_seed + 1) & 2) voice->noise_state ^= 1;
+						if (voice->noise_seed & 1) voice->noise_seed ^= 0x28000;
+						voice->noise_seed >>= 1;
+					}
+				}
+
+				/* update the counter for this voice */
+				voice->noise_counter = c;
+			}
+		}
+		else
+		{
+			/* only update if we have non-zero volume and frequency */
+			if (v && f)
+			{
+				const unsigned char *w = voice->wave;
+				int c = voice->counter;
+
+				/* add our contribution */
+				for (i = 0; i < length; i++)
+				{
+					int offs;
+
+					c += f;
+					offs = (c >> 15) & 0x1f;
+					if (samples_per_byte == 1)	/* use only low 4 bits */
+						*mix++ += ((w[offs] & 0x0f) - 8) * v;
+					else	/* use full byte, first the high 4 bits, then the low 4 bits */
+					{
+						if (offs & 1)
+							*mix++ += ((w[offs>>1] & 0x0f) - 8) * v;
+						else
+							*mix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * v;
+					}
+				}
+
+				/* update the counter for this voice */
+				voice->counter = c;
+			}
 		}
 	}
 
@@ -206,44 +249,82 @@ static void namco_update_stereo(int ch, void **buffer, int length)
 		int lv = voice->volume[0];
 		int rv = voice->volume[1];
 
-		/* only update if we have non-zero volume and frequency */
-		if ((lv || rv) && f)
+		lmix = mixer_buffer;
+		rmix = mixer_buffer_2;
+
+		if (voice->noise_sw)
 		{
-			const unsigned char *w = voice->wave;
-			int c = voice->counter;
-
-			lmix = mixer_buffer;
-			rmix = mixer_buffer_2;
-
-			/* add our contribution */
-			for (i = 0; i < length; i++)
+			/* only update if we have non-zero volume and frequency */
+			if ((lv || rv) && (f & 0xff))
 			{
-				int offs;
+				float fbase = (float)sample_rate / (float)namco_clock;
+				int delta = (float)((f & 0xff) << 4) * fbase;
+				int c = voice->noise_counter;
 
-				c += f;
-				offs = (c >> 15) & 0x1f;
-				if (samples_per_byte == 1)	/* use only low 4 bits */
+				/* add our contribution */
+				for (i = 0; i < length; i++)
 				{
-					*lmix++ += ((w[offs] & 0x0f) - 8) * lv;
-					*rmix++ += ((w[offs] & 0x0f) - 8) * rv;
-				}
-				else	/* use full byte, first the high 4 bits, then the low 4 bits */
-				{
-					if (offs & 1)
+					int noise_data;
+					int cnt;
+
+					if (voice->noise_state)	noise_data = 0x07;
+					else noise_data = -0x07;
+					*lmix++ += noise_data * (lv >> 1);
+					*rmix++ += noise_data * (rv >> 1);
+
+					c += delta;
+					cnt = (c >> 12);
+					c &= (1 << 12) - 1;
+					for( ;cnt > 0; cnt--)
 					{
-						*lmix++ += ((w[offs>>1] & 0x0f) - 8) * lv;
-						*rmix++ += ((w[offs>>1] & 0x0f) - 8) * rv;
-					}
-					else
-					{
-						*lmix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * lv;
-						*rmix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * rv;
+						if ((voice->noise_seed + 1) & 2) voice->noise_state ^= 1;
+						if (voice->noise_seed & 1) voice->noise_seed ^= 0x28000;
+						voice->noise_seed >>= 1;
 					}
 				}
+
+				/* update the counter for this voice */
+				voice->noise_counter = c;
 			}
+		}
+		else
+		{
+			/* only update if we have non-zero volume and frequency */
+			if ((lv || rv) && f)
+			{
+				const unsigned char *w = voice->wave;
+				int c = voice->counter;
 
-			/* update the counter for this voice */
-			voice->counter = c;
+				/* add our contribution */
+				for (i = 0; i < length; i++)
+				{
+					int offs;
+
+					c += f;
+					offs = (c >> 15) & 0x1f;
+					if (samples_per_byte == 1)	/* use only low 4 bits */
+					{
+						*lmix++ += ((w[offs] & 0x0f) - 8) * lv;
+						*rmix++ += ((w[offs] & 0x0f) - 8) * rv;
+					}
+					else	/* use full byte, first the high 4 bits, then the low 4 bits */
+					{
+						if (offs & 1)
+						{
+							*lmix++ += ((w[offs>>1] & 0x0f) - 8) * lv;
+							*rmix++ += ((w[offs>>1] & 0x0f) - 8) * rv;
+						}
+						else
+						{
+							*lmix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * lv;
+							*rmix++ += (((w[offs>>1]>>4) & 0x0f) - 8) * rv;
+						}
+					}
+				}
+
+				/* update the counter for this voice */
+				voice->counter = c;
+			}
 		}
 	}
 
@@ -284,6 +365,8 @@ int namco_sh_start(const struct MachineSound *msound)
 	sound_channel *voice;
 	const struct namco_interface *intf = msound->sound_interface;
 
+	namco_clock = intf->samplerate;
+	sample_rate = Machine->sample_rate;
 
 	/* get stream channels */
 	sample_bits = Machine->sample_bits;
@@ -337,6 +420,10 @@ int namco_sh_start(const struct MachineSound *msound)
 		voice->volume[0] = voice->volume[1] = 0;
 		voice->wave = &sound_prom[0];
 		voice->counter = 0;
+		voice->noise_sw = 0;
+		voice->noise_state = 0;
+		voice->noise_seed = 1;
+		voice->noise_counter = 0;
 	}
 
 	return 0;
@@ -403,26 +490,6 @@ void polepos_sound_w(int offset,int data)
 	/* recompute all the voice parameters */
 	for (base = 8, voice = channel_list; voice < last_channel; voice++, base += 4)
 	{
-#if 0		// original
-		int temp;
-
-		voice->frequency = namco_soundregs[0x01 + base];
-		voice->frequency = voice->frequency * 256 + namco_soundregs[0x00 + base];
-
-		/* the volume seems to vary between one of these five places */
-		/* it's likely that only 3 or 4 are valid; for now, we just */
-		/* take the maximum volume and that seems to do the trick */
-		voice->volume[0] = namco_soundregs[0x02 + base] & 0x0f;
-		temp = namco_soundregs[0x02 + base] >> 4;
-		if (temp > voice->volume[0]) voice->volume[0] = temp;
-		temp = namco_soundregs[0x03 + base] & 0x0f;
-		if (temp > voice->volume[0]) voice->volume[0] = temp;
-		temp = namco_soundregs[0x03 + base] >> 4;
-		if (temp > voice->volume[0]) voice->volume[0] = temp;
-		temp = namco_soundregs[0x23 + base] >> 4;
-		if (temp > voice->volume[0]) voice->volume[0] = temp;
-		voice->wave = &sound_prom[32 * (namco_soundregs[0x23 + base] & 7)];
-#else		// modified by T.Nogi
 		voice->frequency = namco_soundregs[0x01 + base];
 		voice->frequency = voice->frequency * 256 + namco_soundregs[0x00 + base];
 
@@ -437,10 +504,8 @@ void polepos_sound_w(int offset,int data)
 		// rear speaker ?
 		voice->volume[1] |= namco_soundregs[0x03 + base] & 0x0f;
 		voice->volume[0] |= namco_soundregs[0x03 + base] >> 4;
-	//	voice->volume[0] |= namco_soundregs[0x23 + base] & 0x0f;
 		voice->volume[1] |= namco_soundregs[0x23 + base] >> 4;
 		voice->wave = &sound_prom[32 * (namco_soundregs[0x23 + base] & 7)];
-#endif
 	}
 }
 
@@ -482,6 +547,7 @@ void namcos1_sound_w(int offset, int data)
 {
 	sound_channel *voice;
 	int base;
+	static int nssw;
 
 	/* verify the offset */
 	if (offset > 63)
@@ -506,7 +572,12 @@ void namcos1_sound_w(int offset, int data)
 		voice->volume[0] = namco_soundregs[0x00 + base] & 0x0f;
 		voice->volume[1] = namco_soundregs[0x04 + base] & 0x0f;
 		voice->wave = &sound_prom[32/samples_per_byte * ((namco_soundregs[0x01 + base] >> 4) & 15)];
+
+		nssw = ((namco_soundregs[0x04 + base] & 0x80) >> 7);
+		if ((voice + 1) < last_channel) (voice + 1)->noise_sw = nssw;
 	}
+	voice = channel_list;
+	voice->noise_sw = nssw;
 }
 
 int namcos1_sound_r(int offset)

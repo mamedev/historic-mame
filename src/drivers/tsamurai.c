@@ -684,7 +684,7 @@ struct GameDriver driver_tsamurai =  {
 	input_ports_tsamurai,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0,0
 };
 
@@ -709,7 +709,7 @@ struct GameDriver driver_tsamura2 =  {
 	input_ports_tsamurai,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ROT90,
 	0,0
 };
 
@@ -726,15 +726,14 @@ struct GameDriver driver_nunchaku =  {
 	0,
 
 	rom_nunchaku,
-	0,//nunchaku_gfx_untangle,
-	0,
+	0, 0,
 	0,
 	0,
 
 	input_ports_nunchaku,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ROT90 | GAME_WRONG_COLORS,
 	0,0
 };
 
@@ -759,7 +758,7 @@ struct GameDriver driver_yamagchi =  {
 	input_ports_yamagchi,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
+	ROT90 | GAME_IMPERFECT_COLORS,
 	0,0
 };
 

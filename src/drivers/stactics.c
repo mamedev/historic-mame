@@ -326,55 +326,6 @@ ROM_START( stactics )
 ROM_END
 
 
-static int hiload(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	static int first_pass = 1;
-
-	if (first_pass)
-	{
-		RAM[0x4030] = 0x00;
-		first_pass = 0;
-		return 0;
-	}
-
-	if (RAM[0x4030] == 0x01)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0xd700],0x0a);
-			osd_fread(f,&RAM[0xe700],0x0a);
-			osd_fread(f,&RAM[0xf700],0x0a);
-			osd_fclose(f);
-		}
-
-		first_pass = 1;
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-static void hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0xd700],0x0a);
-		osd_fwrite(f,&RAM[0xe700],0x0a);
-		osd_fwrite(f,&RAM[0xf700],0x0a);
-		osd_fclose(f);
-	}
-}
-
 
 struct GameDriver driver_stactics =
 {
@@ -399,8 +350,7 @@ struct GameDriver driver_stactics =
 	input_ports_stactics,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	hiload, hisave
+	ROT0,
+	0,0
 };
 
