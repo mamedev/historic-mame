@@ -306,7 +306,7 @@ ROM_END
 extern unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
 void jailbrek_decode( void ) {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i;
 
 	for ( i = 0x8000; i < 0x10000; i++ )
@@ -316,7 +316,7 @@ void jailbrek_decode( void ) {
 
 static int jailbrek_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x1620],"\x00\x25\x30",3) == 0 &&
@@ -339,7 +339,7 @@ static int jailbrek_hiload(void)
 static void jailbrek_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -366,7 +366,7 @@ struct GameDriver driver_jailbrek =
 	rom_jailbrek,
 	0, jailbrek_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_jailbrek,
 

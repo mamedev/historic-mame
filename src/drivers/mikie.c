@@ -387,7 +387,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -420,7 +420,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

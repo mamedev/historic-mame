@@ -304,7 +304,7 @@ ROM_END
 
 static void blockhl_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs;
 
 	/* bits 0-1 = ROM bank */
@@ -330,7 +330,7 @@ if (errorlog && (lines & 0x84) != 0x80) fprintf(errorlog,"%04x: setlines %02x\n"
 
 static void blockhl_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	konami_cpu_setlines_callback = blockhl_banking;
 
@@ -362,7 +362,7 @@ struct GameDriver driver_quarth =
 	rom_quarth,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_blockhl,
 

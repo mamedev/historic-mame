@@ -671,7 +671,7 @@ static void jumpcoas_driver_init(void)
 
 static int fastfred_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -696,7 +696,7 @@ static int fastfred_hiload(void)
 static void fastfred_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -708,7 +708,7 @@ static void fastfred_hisave(void)
 
 static int flyboy_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -731,7 +731,7 @@ static int flyboy_hiload(void)
 static void flyboy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -743,7 +743,7 @@ static void flyboy_hisave(void)
 
 static int jumpcoas_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Note: the game doesn't seem to initialize the high score display
@@ -771,7 +771,7 @@ static int jumpcoas_hiload(void)
 static void jumpcoas_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -798,7 +798,7 @@ struct GameDriver driver_flyboy =
 	rom_flyboy,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_flyboy,
 
@@ -824,7 +824,7 @@ struct GameDriver driver_flyboyb =
 	rom_flyboyb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_flyboy,
 
@@ -850,7 +850,7 @@ struct GameDriver driver_fastfred =
 	rom_fastfred,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_fastfred,
 
@@ -876,7 +876,7 @@ struct GameDriver driver_jumpcoas =
 	rom_jumpcoas,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_jumpcoas,
 

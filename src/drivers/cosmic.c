@@ -368,7 +368,7 @@ static struct MachineDriver panic_machine_driver =
 
 static int panic_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* wait for default to be copied */
@@ -395,7 +395,7 @@ static int panic_hiload(void)
 static void panic_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -511,7 +511,7 @@ struct GameDriver driver_panic =
 	rom_panic,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_panic,
 
@@ -537,7 +537,7 @@ struct GameDriver driver_panica =
 	rom_panica,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_panic,
 
@@ -563,7 +563,7 @@ struct GameDriver driver_panicger =
 	rom_panicger,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_panic,
 
@@ -711,7 +711,7 @@ static struct GfxDecodeInfo cosmicalien_gfxdecodeinfo[] =
 static int cosmicalienhiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -742,7 +742,7 @@ static int cosmicalienhiload(void)
 static void cosmicalienhisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -816,7 +816,7 @@ struct GameDriver driver_cosmica =
 	rom_cosmicalien,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cosmicalien,
 
@@ -866,10 +866,24 @@ static struct MemoryReadAddress cosmicguerilla_readmem[] =
 	{ -1 }	/* end of table */
 };
 
+static void cosmic_guerilla_videoram_w(int offset,int data)
+{
+#if 0
+  // 8-bit handler
+  cosmic_videoram_w(offset, data);
+#else
+  // 16-bit handler
+  if (! (data & 0xff000000))
+    cosmic_videoram_w(offset, (data >> 8) & 0xff);
+  if (! (data & 0x00ff0000))
+    cosmic_videoram_w(offset + 1, data & 0xff);
+#endif
+}
+
 static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 {
 	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3bff, cosmic_videoram_w, &cosmic_videoram },
+	{ 0x2400, 0x3bff, cosmic_guerilla_videoram_w, &cosmic_videoram },
 	{ 0x3C00, 0x3fff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -1010,11 +1024,9 @@ int cosmicguerilla_interrupt(void)
 
     /* Insert Coin */
 
-	/* R Nabet : fixed to make this piec of code sensible.
-	I assumed that the interrupt request lasted for as long as the coin
-	was "sensed".
-	It makes sense and works fine, but I cannot be 100% sure this is
-	correct,
+	/* R Nabet : fixed to make this piece of code sensible.
+	I assumed that the interrupt request lasted for as long as the coin was "sensed".
+	It makes sense and works fine, but I cannot be 100% sure this is correct,
 	as I have no Cosmic Guerilla console :-) . */
 
 	if (PixelClock == 0)
@@ -1094,11 +1106,15 @@ INPUT_PORTS_START( cosmicguerilla )
 
 	/* The coin slots are not memory mapped. Coin causes INT 4  */
 	/* This fake input port is used by the interrupt handler 	*/
-	/* to be notified of coin insertions. We use IMPULSE to */
-	/* trigger exactly one interrupt, without having to check   */
-	/* when the user releases the key. 							*/
-
+	/* to be notified of coin insertions. */
+#if 0
+	/* We use IMPULSE to trigger exactly one interrupt,        */
+	/* without having to check when the user releases the key. */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+#else
+	/* R Nabet : this trick not needed any more*/
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+#endif
 
     /* This dip switch is not read by the program at any time   */
     /* but is wired to enable or disable the flip screen output */
@@ -1120,7 +1136,7 @@ INPUT_PORTS_END
 static int cosmicguerillahiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1153,7 +1169,7 @@ static int cosmicguerillahiload(void)
 static void cosmicguerillahisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -1264,7 +1280,7 @@ struct GameDriver driver_cosmicg =
 	rom_cosmicguerilla,
 	cosmicguerilla_decode, 0,
     0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cosmicguerilla,
 
@@ -1500,7 +1516,7 @@ struct GameDriver driver_magspot2 =
 	rom_magspot2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_magspot2,
 
@@ -1699,7 +1715,7 @@ struct GameDriver driver_devzone =
 	rom_devzone,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_devzone,
 
@@ -2067,7 +2083,7 @@ struct GameDriver driver_nomnlnd =
 	rom_nomanland,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nomanland,
 
@@ -2093,7 +2109,7 @@ struct GameDriver driver_nomnlndg =
 	rom_nomanlandg,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nomanland2,
 

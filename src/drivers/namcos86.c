@@ -45,10 +45,7 @@ void rthunder_tilebank_select_1(int offset,int data);
 
 /*******************************************************************/
 
-#define MEM_CPU1		0
 #define MEM_DATA1		1
-#define MEM_CPU2		2
-#define MEM_MCU			7
 #define MEM_SAMPLES		8
 
 /*******************************************************************/
@@ -347,7 +344,7 @@ static void bankswitch1_w( int offset, int data )
 
 static void bankswitch2_w( int offset, int data )
 {
-	unsigned char *base = Machine->memory_region[MEM_CPU2]+0x10000;
+	unsigned char *base = memory_region(REGION_CPU2)+0x10000;
 //if (errorlog) fprintf(errorlog,"bank 2 select %02x\n",data);
 	cpu_setbank( 2, base + ((data&0x03)*0x2000) );
 }
@@ -1119,7 +1116,7 @@ static struct CustomSound_interface custom_interface1 =
 
 static void rt_init_machine( void )
 {
-	unsigned char *base = Machine->memory_region[MEM_CPU1] + 0x10000;
+	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
 	cpu_setbank(1,base);
 
@@ -1134,21 +1131,21 @@ static struct MachineDriver roishtar_machine_driver =
 			CPU_M6809,
 //			6000000/4,
 			49152000/32, 		/* ? */
-			MEM_CPU1,
+			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			MEM_CPU2,
+			REGION_CPU2,
 			roishtar_readmem2,roishtar_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			MEM_MCU,
+			REGION_CPU3,
 			roishtar_mcu_readmem,roishtar_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1198,21 +1195,21 @@ static struct MachineDriver genpeitd_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			MEM_CPU1,
+			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			MEM_CPU2,
+			REGION_CPU2,
 			genpeitd_readmem2,genpeitd_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			MEM_MCU,
+			REGION_CPU3,
 			genpeitd_mcu_readmem,genpeitd_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1262,21 +1259,21 @@ static struct MachineDriver rthunder_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			MEM_CPU1,
+			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			MEM_CPU2,
+			REGION_CPU2,
 			rthunder_readmem2,rthunder_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			MEM_MCU,
+			REGION_CPU3,
 			rthunder_mcu_readmem,rthunder_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1326,21 +1323,21 @@ static struct MachineDriver wndrmomo_machine_driver =
 			CPU_M6809,
 			6000000/4,
 //			49152000/32, 		/* ? */
-			MEM_CPU1,
+			REGION_CPU1,
 			readmem1,writemem1,0,0,
 			rt_interrupt1,1
 		},
 		{
 			CPU_M6809,
 			49152000/32, 		/* ? */
-			MEM_CPU2,
+			REGION_CPU2,
 			wndrmomo_readmem2,wndrmomo_writemem2,0,0,
 			rt_interrupt2,1
 		},
 		{
 			CPU_HD63701,	/* or compatible 6808 with extra instructions */
 			49152000/32, 		/* ? */
-			MEM_MCU,
+			REGION_CPU3,
 			wndrmomo_mcu_readmem,wndrmomo_mcu_writemem,mcu_readport,mcu_writeport,
 			interrupt, 1	/* ??? */
 		}
@@ -1390,14 +1387,14 @@ static struct MachineDriver wndrmomo_machine_driver =
 ***************************************************************************/
 
 ROM_START( roishtar )
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "ri1-1c.9c", 0x08000, 0x8000, 0x14acbacb )
 	ROM_LOAD( "ri1-2.9d",  0x10000, 0x2000, 0xfcd58d91 )
 
 	ROM_REGION( 0x40000 ) /* bank switched data for CPU1 */
 	/* the expansion board is not present in this game */
 
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU2 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "ri1-3.12c", 0x8000, 0x8000, 0xa39829f7 )
 	/* 12d empty */
 
@@ -1426,7 +1423,7 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-4.5v", 0x0c00, 0x0800, 0x22921617 )	/* sprites colortable */
 	ROM_LOAD( "ri1-5.6u", 0x1400, 0x0020, 0xe2188075 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000 ) /* MCU data */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "ri1-4.6b",    0x04000, 0x8000, 0x552172b8 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1435,7 +1432,7 @@ ROM_START( roishtar )
 ROM_END
 
 ROM_START( genpeitd )
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "gt1-1b.9c", 0x08000, 0x8000, 0x75396194 )
 	/* 9d empty */
 
@@ -1445,7 +1442,7 @@ ROM_START( genpeitd )
 	/* k1 empty */
 	/* m1 empty */
 
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU2 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "gt1-2.12c", 0xc000, 0x4000, 0x302f2cb6 )
 	/* 12d empty */
 
@@ -1474,7 +1471,7 @@ ROM_START( genpeitd )
 	ROM_LOAD( "gt1-4.5v", 0x0c00, 0x0800, 0x9f48ef17 )	/* sprites colortable */
 	ROM_LOAD( "gt1-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000 ) /* MCU data */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "gt1-3.6b",    0x04000, 0x8000, 0x315cd988 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1486,7 +1483,7 @@ ROM_START( genpeitd )
 ROM_END
 
 ROM_START( rthunder )
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "rt3-1b.9c",  0x8000, 0x8000, 0x7d252a1b )
 	/* 9d empty */
 
@@ -1496,7 +1493,7 @@ ROM_START( rthunder )
 	ROM_LOAD( "rt1-19.k1",  0x20000, 0x10000, 0xc16675e9 )
 	ROM_LOAD( "rt1-20.m1",  0x30000, 0x10000, 0xc470681b )
 
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU2 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "rt3-2b.12c", 0x08000, 0x8000, 0xa7ea46ee )
 	ROM_LOAD( "rt3-3.12d",  0x10000, 0x8000, 0xa13f601c )
 
@@ -1525,7 +1522,7 @@ ROM_START( rthunder )
 	ROM_LOAD( "mb7138h.6v", 0x0c00, 0x0800, 0x1391fec9 )	/* sprites colortable */
 	ROM_LOAD( "mb7112e.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000 ) /* MCU data */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "rt1-4.6b",    0x04000, 0x8000, 0x00cf293f )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1537,7 +1534,7 @@ ROM_START( rthunder )
 ROM_END
 
 ROM_START( rthundrb )
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "r1",         0x8000, 0x8000, 0x6f8c1252 )
 	/* 9d empty */
 
@@ -1547,7 +1544,7 @@ ROM_START( rthundrb )
 	ROM_LOAD( "r19",        0x20000, 0x10000, 0xfe9343b0 )
 	ROM_LOAD( "r20",        0x30000, 0x10000, 0xf8518d4f )
 
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU2 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "r2",        0x08000, 0x8000, 0xf22a03d8 )
 	ROM_LOAD( "r3",        0x10000, 0x8000, 0xaaa82885 )
 
@@ -1576,7 +1573,7 @@ ROM_START( rthundrb )
 	ROM_LOAD( "mb7138h.6v", 0x0c00, 0x0800, 0x1391fec9 )	/* sprites colortable */
 	ROM_LOAD( "mb7112e.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000 ) /* MCU data */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "r4",          0x04000, 0x8000, 0x0387464f )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1588,7 +1585,7 @@ ROM_START( rthundrb )
 ROM_END
 
 ROM_START( wndrmomo )
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
+	ROM_REGIONX( 0x18000, REGION_CPU1 )
 	ROM_LOAD( "wm1-1.9c", 0x8000, 0x8000, 0x34b50bf0 )
 	/* 9d empty */
 
@@ -1598,7 +1595,7 @@ ROM_START( wndrmomo )
 	/* k1 empty */
 	/* m1 empty */
 
-	ROM_REGION( 0x18000 ) /* 6809 code for CPU2 + banks */
+	ROM_REGIONX( 0x18000, REGION_CPU2 )
 	ROM_LOAD( "wm1-2.12c", 0x8000, 0x8000, 0x3181efd0 )
 	/* 12d empty */
 
@@ -1627,7 +1624,7 @@ ROM_START( wndrmomo )
 	ROM_LOAD( "wm1-4.5v", 0x0c00, 0x0800, 0xf4e83e0b )	/* sprites colortable */
 	ROM_LOAD( "wm1-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000 ) /* MCU data */
+	ROM_REGIONX( 0x10000, REGION_CPU3 )
 	ROM_LOAD( "wm1-3.6b",    0x04000, 0x8000, 0x55f01df7 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1716,7 +1713,7 @@ static void rthunder_init_driver( void ) {
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if  (memcmp(&RAM[0x5400],"\x00\x30\x00",3) == 0 &&
@@ -1742,7 +1739,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

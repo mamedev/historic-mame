@@ -797,7 +797,7 @@ ROM_END
 					 10 bytes - name (ASCII)		*/
 static int galivan_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the high scores table has already been initialized */
 	if ((memcmp(&RAM[0xe14f], "\x00\x01\x50\x4B", 4) == 0)&&
@@ -819,7 +819,7 @@ static int galivan_hiload(void)
 
 static void galivan_hisave(void)
 {
-    unsigned char *RAM = Machine->memory_region[0];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -832,7 +832,7 @@ static void galivan_hisave(void)
 /****  Ufo Robo Dangar high score save routine - RJF (June 19, 1999)  ****/
 static int dangar_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe209], "\x00\x01\x50", 3) == 0)
@@ -857,7 +857,7 @@ static int dangar_hiload(void)
 static void dangar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

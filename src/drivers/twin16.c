@@ -1464,7 +1464,7 @@ struct GameDriver driver_devilw =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_devilw,
 
@@ -1488,7 +1488,7 @@ struct GameDriver driver_majuu =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_devilw,
 
@@ -1512,7 +1512,7 @@ struct GameDriver driver_darkadv =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_devilw,
 
@@ -1536,7 +1536,7 @@ struct GameDriver driver_vulcan =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gradius2,
 
@@ -1560,7 +1560,7 @@ struct GameDriver driver_gradius2 =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gradius2,
 
@@ -1584,7 +1584,7 @@ struct GameDriver driver_grdius2a =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gradius2,
 
@@ -1608,7 +1608,7 @@ struct GameDriver driver_grdius2b =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gradius2,
 
@@ -1632,7 +1632,7 @@ struct GameDriver driver_cuebrick =  {
 	twin16_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_twin16,
 
@@ -1655,7 +1655,7 @@ struct GameDriver driver_fround =  {
 	rom_fround,
 	fround_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_fround,
 
@@ -1678,7 +1678,7 @@ struct GameDriver driver_hpuncher =  {
 	rom_hpuncher,
 	twin16_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_fround,
 
@@ -1702,7 +1702,7 @@ struct GameDriver driver_miaj =  {
 	rom_miaj,
 	twin16_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_miaj,
 

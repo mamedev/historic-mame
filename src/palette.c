@@ -53,7 +53,7 @@
   the GfxDecodeInfo array.
   When vh_init_palette() initializes the lookup table, it maps gfx codes
   to game colors (P1 above). The lookup table will be converted by the core to
-  map to OS specific pens (P3 above), and stored in Machine->colortable.
+  map to OS specific pens (P3 above), and stored in Machine->remapped_colortable.
 
 
   Display modes
@@ -125,7 +125,6 @@ static int *pen_visiblecount,*pen_cachedcount;
 static unsigned char *just_remapped;	/* colors which have been remapped in this frame, */
 										/* returned by palette_recalc() */
 
-unsigned short *game_colortable;	/* lookup table as set up by the driver */
 static unsigned char shrinked_palette[3 * 256];
 unsigned short *shrinked_pens;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */
@@ -151,10 +150,10 @@ int palette_start(void)
 	palette_map = malloc(Machine->drv->total_colors * sizeof(unsigned short));
 	if (Machine->drv->color_table_len)
 	{
-		game_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
-		Machine->colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
+		Machine->game_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
+		Machine->remapped_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
 	}
-	else game_colortable = Machine->colortable = 0;
+	else Machine->game_colortable = Machine->remapped_colortable = 0;
 
 	/* ASG 980209 - allocate space for the pens */
 	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
@@ -190,7 +189,7 @@ int palette_start(void)
 	}
 	else palette_used_colors = old_used_colors = just_remapped = new_palette = palette_dirty = 0;
 
-	if ((Machine->drv->color_table_len && (game_colortable == 0 || Machine->colortable == 0))
+	if ((Machine->drv->color_table_len && (Machine->game_colortable == 0 || Machine->remapped_colortable == 0))
 			|| game_palette == 0 ||	palette_map == 0 || Machine->pens == 0)
 	{
 		palette_stop();
@@ -210,10 +209,10 @@ void palette_stop(void)
 	game_palette = 0;
 	free(palette_map);
 	palette_map = 0;
-	free(game_colortable);
-	game_colortable = 0;
-	free(Machine->colortable);
-	Machine->colortable = 0;
+	free(Machine->game_colortable);
+	Machine->game_colortable = 0;
+	free(Machine->remapped_colortable);
+	Machine->remapped_colortable = 0;
 	free(shrinked_pens);
 	shrinked_pens = 0;
 	free(Machine->pens);
@@ -242,7 +241,7 @@ void palette_init(void)
 	/* order of the palette. The driver can overwrite this in */
 	/* vh_init_palette() */
 	for (i = 0;i < Machine->drv->color_table_len;i++)
-		game_colortable[i] = i % Machine->drv->total_colors;
+		Machine->game_colortable[i] = i % Machine->drv->total_colors;
 
 	/* by default we use -1 to identify the transparent color, the driver */
 	/* can modify this. */
@@ -250,7 +249,7 @@ void palette_init(void)
 
 	/* now the driver can modify the default values if it wants to. */
 	if (Machine->drv->vh_init_palette)
-		(*Machine->drv->vh_init_palette)(game_palette,game_colortable,memory_region(REGION_PROMS));
+		(*Machine->drv->vh_init_palette)(game_palette,Machine->game_colortable,memory_region(REGION_PROMS));
 
 
 	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
@@ -338,18 +337,11 @@ void palette_init(void)
 
 if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
 			/* shrink palette to fit */
-			/* many games use color 0 for transparency, so we leave it alone - */
-			/* it is never made to share a pen with another color. */
-			used = 1;
-			palette_map[0] = 0;
-			shrinked_palette[3*0 + 0] = game_palette[3*0 + 0];
-			shrinked_palette[3*0 + 1] = game_palette[3*0 + 1];
-			shrinked_palette[3*0 + 2] = game_palette[3*0 + 2];
+			used = 0;
 
-			for (i = 1;i < Machine->drv->total_colors;i++)
+			for (i = 0;i < Machine->drv->total_colors;i++)
 			{
-				/* we reuse pen 0 if we ran out of pens - needed for Namco System 86 */
-				for (j = (used == STATIC_MAX_PENS ? 0 : 1);j < used;j++)
+				for (j = 0;j < used;j++)
 				{
 					if (shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
 							shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&
@@ -394,7 +386,7 @@ if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)
-		Machine->colortable[i] = Machine->pens[game_colortable[i]];
+		Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
 }
 
 
@@ -493,9 +485,9 @@ void palette_increase_usage_count(int table_offset,unsigned int usage_mask,int c
 		if (usage_mask & 1)
 		{
 			if (color_flags & PALETTE_COLOR_VISIBLE)
-				pen_visiblecount[game_colortable[table_offset]]++;
+				pen_visiblecount[Machine->game_colortable[table_offset]]++;
 			if (color_flags & PALETTE_COLOR_CACHED)
-				pen_cachedcount[game_colortable[table_offset]]++;
+				pen_cachedcount[Machine->game_colortable[table_offset]]++;
 		}
 		table_offset++;
 		usage_mask >>= 1;
@@ -512,9 +504,9 @@ void palette_decrease_usage_count(int table_offset,unsigned int usage_mask,int c
 		if (usage_mask & 1)
 		{
 			if (color_flags & PALETTE_COLOR_VISIBLE)
-				pen_visiblecount[game_colortable[table_offset]]--;
+				pen_visiblecount[Machine->game_colortable[table_offset]]--;
 			if (color_flags & PALETTE_COLOR_CACHED)
-				pen_cachedcount[game_colortable[table_offset]]--;
+				pen_cachedcount[Machine->game_colortable[table_offset]]--;
 		}
 		table_offset++;
 		usage_mask >>= 1;
@@ -532,9 +524,9 @@ void palette_increase_usage_countx(int table_offset,int num_pens,const unsigned 
 		if (flag[pen] == 0)
 		{
 			if (color_flags & PALETTE_COLOR_VISIBLE)
-				pen_visiblecount[game_colortable[table_offset+pen]]++;
+				pen_visiblecount[Machine->game_colortable[table_offset+pen]]++;
 			if (color_flags & PALETTE_COLOR_CACHED)
-				pen_cachedcount[game_colortable[table_offset+pen]]++;
+				pen_cachedcount[Machine->game_colortable[table_offset+pen]]++;
 			flag[pen] = 1;
 		}
 	}
@@ -551,9 +543,9 @@ void palette_decrease_usage_countx(int table_offset, int num_pens, const unsigne
 		if (flag[pen] == 0)
 		{
 			if (color_flags & PALETTE_COLOR_VISIBLE)
-				pen_visiblecount[game_colortable[table_offset+pen]]--;
+				pen_visiblecount[Machine->game_colortable[table_offset+pen]]--;
 			if (color_flags & PALETTE_COLOR_CACHED)
-				pen_cachedcount[game_colortable[table_offset+pen]]--;
+				pen_cachedcount[Machine->game_colortable[table_offset+pen]]--;
 			flag[pen] = 1;
 		}
 	}
@@ -729,7 +721,7 @@ static const unsigned char *palette_recalc_16(void)
 	{
 		/* rebuild the color lookup table */
 		for (i = 0;i < Machine->drv->color_table_len;i++)
-			Machine->colortable[i] = Machine->pens[game_colortable[i]];
+			Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
 	}
 
 	if (need_refresh) return just_remapped;
@@ -1086,7 +1078,7 @@ for (color = 0;color < Machine->drv->total_colors;color++)
 	{
 		/* rebuild the color lookup table */
 		for (i = 0;i < Machine->drv->color_table_len;i++)
-			Machine->colortable[i] = Machine->pens[game_colortable[i]];
+			Machine->remapped_colortable[i] = Machine->pens[Machine->game_colortable[i]];
 	}
 
 	if (need_refresh)

@@ -317,7 +317,7 @@ static void bankselect_w(int offset, int data)
 
 	int oldword = READ_WORD(&bankselect[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	UINT8 *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
 
 	WRITE_WORD(&bankselect[offset], newword);
@@ -1406,9 +1406,9 @@ static void paperboy_init(void)
 	/* expand the 16k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
 	{
-		memcpy(&Machine->memory_region[0][i + 0x08000], &Machine->memory_region[0][i], 0x8000);
-		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x8000);
-		memcpy(&Machine->memory_region[0][i + 0x18000], &Machine->memory_region[0][i], 0x8000);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x08000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x18000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x8000);
 	}
 
 	atarigen_eeprom_default = compressed_default_eeprom;
@@ -1478,7 +1478,7 @@ static void ssprint_init(void)
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x10000);
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	slapstic_init(108);
@@ -1532,7 +1532,7 @@ static void csprint_init(void)
 
 	/* expand the 32k program ROMs into full 64k chunks */
 	for (i = 0x10000; i < 0x90000; i += 0x20000)
-		memcpy(&Machine->memory_region[0][i + 0x10000], &Machine->memory_region[0][i], 0x10000);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[i + 0x10000], &memory_region(Machine->drv->cpu[0].memory_region)[i], 0x10000);
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	slapstic_init(109);
@@ -1982,7 +1982,7 @@ struct GameDriver driver_paperboy =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_paperboy,
 
@@ -2009,7 +2009,7 @@ struct GameDriver driver_720 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_720,
 
@@ -2036,7 +2036,7 @@ struct GameDriver driver_720b =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_720,
 
@@ -2063,7 +2063,7 @@ struct GameDriver driver_ssprint =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssprint,
 
@@ -2090,7 +2090,7 @@ struct GameDriver driver_csprint =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_csprint,
 
@@ -2117,7 +2117,7 @@ struct GameDriver driver_apb =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_apb,
 
@@ -2144,7 +2144,7 @@ struct GameDriver driver_apb2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_apb,
 

@@ -1179,7 +1179,7 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 	struct rectangle clip = {0, 512-1, 0, 256-1};
 
-		fillbitmap(temp_bitmap2,0,0);
+		fillbitmap(temp_bitmap2,Machine->pens[0],0);
 
 		hotchase_draw_road(temp_bitmap2,0,&clip);
 

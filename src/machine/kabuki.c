@@ -152,12 +152,12 @@ void kabuki_decode(unsigned char *src,unsigned char *dest_op,unsigned char *dest
 
 
 
-void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
+static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
-	for (i = 0x10000;i < Machine->memory_region_length[Machine->drv->cpu[0].memory_region];i += 0x4000)
+	for (i = 0x10000;i < memory_region_length(Machine->drv->cpu[0].memory_region);i += 0x4000)
 		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
@@ -173,10 +173,10 @@ void qsangoku_decode(void) { mitchell_decode(0x23456701,0x23456701,0x1828,0x18);
 void block_decode(void)    { mitchell_decode(0x02461357,0x64207531,0x0002,0x01); }
 
 
-void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
+static void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	extern int encrypted_cpu;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	encrypted_cpu = 1;
 	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 }

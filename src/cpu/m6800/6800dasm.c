@@ -55,7 +55,7 @@ enum op_names {
 	rts,	sba,	sbca,	sbcb,	sec,	sev,	sta,	stb,
 	std,	sei,	sts,	stx,	suba,	subb,	subd,	swi,
 	wai,	tab,	tap,	tba,	tim,	tpa,	tst,	tsta,
-	tstb,	tsx,	txs,	asx1,	asx2,	xgdx
+	tstb,	tsx,	txs,	asx1,	asx2,	xgdx,	addx
 };
 
 static const char *op_name_str[] = {
@@ -74,7 +74,7 @@ static const char *op_name_str[] = {
 	"rts",   "sba",   "sbca",  "sbcb",  "sec",   "sev",   "sta",   "stb",
 	"std",   "sei",   "sts",   "stx",   "suba",  "subb",  "subd",  "swi",
 	"wai",   "tab",   "tap",   "tba",   "tim",   "tpa",   "tst",   "tsta",
-	"tstb",  "tsx",   "txs",   "asx1",  "asx2",  "xgdx"
+	"tstb",  "tsx",   "txs",   "asx1",  "asx2",  "xgdx",  "addx"
 };
 
 
@@ -103,7 +103,7 @@ static const char *op_name_str[] = {
  * 4	invalid opcode for 1:6800/6802/6808, 2:6801/6803, 4:HD63701
  */
 
-static UINT8 table[0x100][5] = {
+static UINT8 table[0x101][5] = {
 	{ill, inh,0  ,0,7},{nop, inh,0	,0,0},{ill, inh,0  ,0,7},{ill, inh,0  ,0,7},/* 00 */
 	{lsrd,inh,0  ,0,1},{asld,inh,0	,0,1},{tap, inh,0  ,0,0},{tpa, inh,0  ,0,0},
 	{inx, inh,0  ,0,0},{dex, inh,0	,0,0},{clv, inh,0  ,0,0},{sev, inh,0  ,0,0},
@@ -167,7 +167,10 @@ static UINT8 table[0x100][5] = {
 	{subb,ext,MRD,B,0},{cmpb,ext,MRD,B,0},{sbcb,ext,MRD,B,0},{addd,ext,MRD,W,1},/* f0 */
 	{andb,ext,MRD,B,0},{bitb,ext,MRD,B,0},{ldb, ext,MRD,B,0},{stb, ext,MWR,B,0},
 	{eorb,ext,MRD,B,0},{adcb,ext,MRD,B,0},{orb, ext,MRD,B,0},{addb,ext,MRD,B,0},
-	{ldd, ext,MRD,W,1},{std, ext,MRD,W,1},{ldx, ext,MRD,W,0},{stx, ext,MWR,W,0}
+	{ldd, ext,MRD,W,1},{std, ext,MRD,W,1},{ldx, ext,MRD,W,0},{stx, ext,MWR,W,0},
+
+	/* extra instruction $fc for NSC-8105 */
+	{addx,ext,MRD,W,0}
 };
 
 /* some macros to keep things short */
@@ -185,7 +188,7 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 
 	switch( subtype )
 	{
-		case 6800: case 6802: case 6808:
+		case 6800: case 6802: case 6808: case 8105:
 			invalid_mask = 1;
 			break;
 		case 6801: case 6803:
@@ -193,6 +196,16 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 			break;
 		default:
 			invalid_mask = 4;
+	}
+
+	/* NSC-8105 is a special case */
+	if (subtype == 8105)
+	{
+		/* swap bits */
+		code = (code & 0x3c) | ((code & 0x41) << 1) | ((code & 0x82) >> 1);
+
+		/* and check for extra instruction */
+		if (code == 0xfc)  code = 0x0100;
 	}
 
 	opcode = table[code][0];

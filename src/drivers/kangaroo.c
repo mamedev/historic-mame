@@ -138,7 +138,7 @@ static void kangaroo_init_machine(void)
 
 void kangaroo_bank_select_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* this is a VERY crude way to handle the banked ROMs - but it's */
@@ -418,7 +418,7 @@ ROM_END
 
 static int kangaroo_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -439,7 +439,7 @@ static int kangaroo_hiload(void)
 static void kangaroo_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -467,7 +467,7 @@ struct GameDriver driver_kangaroo =
 	rom_kangaroo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kangaroo,
 
@@ -493,7 +493,7 @@ struct GameDriver driver_kangarob =
 	rom_kangarob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kangaroo,
 

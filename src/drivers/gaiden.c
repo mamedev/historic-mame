@@ -685,7 +685,7 @@ struct GameDriver driver_gaiden =
 	rom_gaiden,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gaiden,
 
@@ -710,7 +710,7 @@ struct GameDriver driver_shadoww =
 	rom_shadoww,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gaiden,
 
@@ -735,7 +735,7 @@ struct GameDriver driver_tknight =
 	rom_tknight,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tknight,
 
@@ -760,7 +760,7 @@ struct GameDriver driver_wildfang =
 	rom_wildfang,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tknight,
 

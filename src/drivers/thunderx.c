@@ -173,7 +173,7 @@ static void thunderx_1f98_w(int offset,int data)
 
 void scontra_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs;
 
 //if (errorlog) fprintf(errorlog,"%04x: bank switch %02x\n",cpu_get_pc(),data);
@@ -856,7 +856,7 @@ ROM_END
 
 static void thunderx_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs;
 
 //	if ( errorlog )
@@ -869,14 +869,14 @@ static void thunderx_banking( int lines )
 
 static void scontra_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	paletteram = &RAM[0x30000];
 }
 
 static void thunderx_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	konami_cpu_setlines_callback = thunderx_banking;
 	cpu_setbank( 1, &RAM[0x10000] ); /* init the default bank */
@@ -908,7 +908,7 @@ struct GameDriver driver_scontra =
 	rom_scontra,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scontra,
 
@@ -933,7 +933,7 @@ struct GameDriver driver_scontraj =
 	rom_scontraj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scontra,
 
@@ -958,7 +958,7 @@ struct GameDriver driver_thunderx =
 	rom_thunderx,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_thunderx,
 
@@ -983,7 +983,7 @@ struct GameDriver driver_thnderxj =
 	rom_thnderxj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_thunderx,
 

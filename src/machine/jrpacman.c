@@ -17,7 +17,7 @@ static int speedcheat = 0;	/* a well known hack allows to make JrPac Man run at 
 
 void jrpacman_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the loaded set of ROMs allows the Pac Man speed hack */
@@ -30,7 +30,7 @@ void jrpacman_init_machine(void)
 
 int jrpacman_interrupt(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* speed up cheat */

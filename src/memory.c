@@ -319,7 +319,7 @@ static int memory_allocate_ext (void)
 		const struct MemoryWriteAddress *mwa;
 
 		int region = Machine->drv->cpu[cpu].memory_region;
-		int size = Machine->memory_region_length[region];
+		int size = memory_region_length(region);
 
 		/* now it's time to loop */
 		while (1)
@@ -387,7 +387,7 @@ unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunke
 
 	/* return RAM */
 	*chunkstart = 0;
-	*chunkend = Machine->memory_region_length[region] - 1;
+	*chunkend = memory_region_length(region) - 1;
 	return ramptr[cpu];
 }
 
@@ -443,7 +443,7 @@ int initmemoryhandlers(void)
 
 		setOPbasefunc[cpu] = NULL;
 
-		ramptr[cpu] = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+		ramptr[cpu] = memory_region(Machine->drv->cpu[cpu].memory_region);
 
 		/* opcode decryption is currently supported only for the first memory region */
 		if (cpu == encrypted_cpu) romptr[cpu] = ROM;
@@ -452,18 +452,24 @@ int initmemoryhandlers(void)
 
 		/* initialize the memory base pointers for memory hooks */
 		_mra = Machine->drv->cpu[cpu].memory_read;
-		while (_mra->start != -1)
+		if (_mra)
 		{
-//			if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
-//			if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
-			_mra++;
+			while (_mra->start != -1)
+			{
+//				if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
+//				if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
+				_mra++;
+			}
 		}
 		_mwa = Machine->drv->cpu[cpu].memory_write;
-		while (_mwa->start != -1)
+		if (_mwa)
 		{
-			if (_mwa->base) *_mwa->base = memory_find_base (cpu, _mwa->start);
-			if (_mwa->size) *_mwa->size = _mwa->end - _mwa->start + 1;
-			_mwa++;
+			while (_mwa->start != -1)
+			{
+				if (_mwa->base) *_mwa->base = memory_find_base (cpu, _mwa->start);
+				if (_mwa->size) *_mwa->size = _mwa->end - _mwa->start + 1;
+				_mwa++;
+			}
 		}
 
 		/* initialize port structures */
@@ -613,187 +619,193 @@ int initmemoryhandlers(void)
 		memorywrite = Machine->drv->cpu[cpu].memory_write;
 
 		/* memory read handler build */
-		mra = memoryread;
-		while (mra->start != -1) mra++;
-		mra--;
-
-		while (mra >= memoryread)
+		if (memoryread)
 		{
-			int (*handler)(int) = mra->handler;
+			mra = memoryread;
+			while (mra->start != -1) mra++;
+			mra--;
+
+			while (mra >= memoryread)
+			{
+				int (*handler)(int) = mra->handler;
 
 /* work around a compiler bug */
 #ifdef SGI_FIX_MWA_NOP
-			if ((FPTR)handler == (FPTR)MRA_NOP) {
-				hardware = HT_NOP;
-			} else {
+				if ((FPTR)handler == (FPTR)MRA_NOP) {
+					hardware = HT_NOP;
+				} else {
 #endif
-			switch ((FPTR)handler)
-			{
-			case (FPTR)MRA_RAM:
-			case (FPTR)MRA_ROM:
-				hardware = HT_RAM;	/* sprcial case ram read */
-				break;
-			case (FPTR)MRA_BANK1:
-				hardware = HT_BANK1;
-				memoryreadoffset[1] = bankreadoffset[1] = mra->start;
-				cpu_bankbase[1] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK2:
-				hardware = HT_BANK2;
-				memoryreadoffset[2] = bankreadoffset[2] = mra->start;
-				cpu_bankbase[2] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK3:
-				hardware = HT_BANK3;
-				memoryreadoffset[3] = bankreadoffset[3] = mra->start;
-				cpu_bankbase[3] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK4:
-				hardware = HT_BANK4;
-				memoryreadoffset[4] = bankreadoffset[4] = mra->start;
-				cpu_bankbase[4] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK5:
-				hardware = HT_BANK5;
-				memoryreadoffset[5] = bankreadoffset[5] = mra->start;
-				cpu_bankbase[5] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK6:
-				hardware = HT_BANK6;
-				memoryreadoffset[6] = bankreadoffset[6] = mra->start;
-				cpu_bankbase[6] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK7:
-				hardware = HT_BANK7;
-				memoryreadoffset[7] = bankreadoffset[7] = mra->start;
-				cpu_bankbase[7] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_BANK8:
-				hardware = HT_BANK8;
-				memoryreadoffset[8] = bankreadoffset[8] = mra->start;
-				cpu_bankbase[8] = memory_find_base (cpu, mra->start);
-				break;
-			case (FPTR)MRA_NOP:
-				hardware = HT_NOP;
-				break;
-			default:
-				/* create newer hardware handler */
-				if( rdhard_max == MH_HARDMAX )
+				switch ((FPTR)handler)
 				{
-					if (errorlog)
-					 fprintf(errorlog,"read memory hardware pattern over !\n");
-					hardware = 0;
+				case (FPTR)MRA_RAM:
+				case (FPTR)MRA_ROM:
+					hardware = HT_RAM;	/* sprcial case ram read */
+					break;
+				case (FPTR)MRA_BANK1:
+					hardware = HT_BANK1;
+					memoryreadoffset[1] = bankreadoffset[1] = mra->start;
+					cpu_bankbase[1] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK2:
+					hardware = HT_BANK2;
+					memoryreadoffset[2] = bankreadoffset[2] = mra->start;
+					cpu_bankbase[2] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK3:
+					hardware = HT_BANK3;
+					memoryreadoffset[3] = bankreadoffset[3] = mra->start;
+					cpu_bankbase[3] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK4:
+					hardware = HT_BANK4;
+					memoryreadoffset[4] = bankreadoffset[4] = mra->start;
+					cpu_bankbase[4] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK5:
+					hardware = HT_BANK5;
+					memoryreadoffset[5] = bankreadoffset[5] = mra->start;
+					cpu_bankbase[5] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK6:
+					hardware = HT_BANK6;
+					memoryreadoffset[6] = bankreadoffset[6] = mra->start;
+					cpu_bankbase[6] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK7:
+					hardware = HT_BANK7;
+					memoryreadoffset[7] = bankreadoffset[7] = mra->start;
+					cpu_bankbase[7] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_BANK8:
+					hardware = HT_BANK8;
+					memoryreadoffset[8] = bankreadoffset[8] = mra->start;
+					cpu_bankbase[8] = memory_find_base (cpu, mra->start);
+					break;
+				case (FPTR)MRA_NOP:
+					hardware = HT_NOP;
+					break;
+				default:
+					/* create newer hardware handler */
+					if( rdhard_max == MH_HARDMAX )
+					{
+						if (errorlog)
+						 fprintf(errorlog,"read memory hardware pattern over !\n");
+						hardware = 0;
+					}
+					else
+					{
+						/* regist hardware function */
+						hardware = rdhard_max++;
+						memoryreadhandler[hardware] = handler;
+						memoryreadoffset[hardware] = mra->start;
+					}
 				}
-				else
-				{
-					/* regist hardware function */
-					hardware = rdhard_max++;
-					memoryreadhandler[hardware] = handler;
-					memoryreadoffset[hardware] = mra->start;
-				}
-			}
 #ifdef SGI_FIX_MWA_NOP
-			}
+				}
 #endif
-			/* hardware element table make */
-			set_element( cpu , cur_mr_element[cpu] ,
-				(((unsigned int) mra->start) >> abitsmin) ,
-				(((unsigned int) mra->end) >> abitsmin) ,
-				hardware , readhardware , &rdelement_max );
+				/* hardware element table make */
+				set_element( cpu , cur_mr_element[cpu] ,
+					(((unsigned int) mra->start) >> abitsmin) ,
+					(((unsigned int) mra->end) >> abitsmin) ,
+					hardware , readhardware , &rdelement_max );
 
-            mra--;
+				mra--;
+			}
 		}
 
 		/* memory write handler build */
-		mwa = memorywrite;
-		while (mwa->start != -1) mwa++;
-		mwa--;
-
-		while (mwa >= memorywrite)
+		if (memorywrite)
 		{
-			void (*handler)(int,int) = mwa->handler;
-#ifdef SGI_FIX_MWA_NOP
-			if ((FPTR)handler == (FPTR)MWA_NOP) {
-				hardware = HT_NOP;
-			} else {
-#endif
-			switch( (FPTR)handler )
-			{
-			case (FPTR)MWA_RAM:
-				hardware = HT_RAM;	/* sprcial case ram write */
-				break;
-			case (FPTR)MWA_BANK1:
-				hardware = HT_BANK1;
-				memorywriteoffset[1] = bankwriteoffset[1] = mwa->start;
-				cpu_bankbase[1] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK2:
-				hardware = HT_BANK2;
-				memorywriteoffset[2] = bankwriteoffset[2] = mwa->start;
-				cpu_bankbase[2] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK3:
-				hardware = HT_BANK3;
-				memorywriteoffset[3] = bankwriteoffset[3] = mwa->start;
-				cpu_bankbase[3] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK4:
-				hardware = HT_BANK4;
-				memorywriteoffset[4] = bankwriteoffset[4] = mwa->start;
-				cpu_bankbase[4] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK5:
-				hardware = HT_BANK5;
-				memorywriteoffset[5] = bankwriteoffset[5] = mwa->start;
-				cpu_bankbase[5] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK6:
-				hardware = HT_BANK6;
-				memorywriteoffset[6] = bankwriteoffset[6] = mwa->start;
-				cpu_bankbase[6] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK7:
-				hardware = HT_BANK7;
-				memorywriteoffset[7] = bankwriteoffset[7] = mwa->start;
-				cpu_bankbase[7] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_BANK8:
-				hardware = HT_BANK8;
-				memorywriteoffset[8] = bankwriteoffset[8] = mwa->start;
-				cpu_bankbase[8] = memory_find_base (cpu, mwa->start);
-				break;
-			case (FPTR)MWA_NOP:
-				hardware = HT_NOP;
-				break;
-			case (FPTR)MWA_RAMROM:
-				hardware = HT_RAMROM;
-				break;
-			case (FPTR)MWA_ROM:
-				hardware = HT_ROM;
-				break;
-			default:
-				/* create newer hardware handler */
-				if( wrhard_max == MH_HARDMAX ){
-					if (errorlog)
-					 fprintf(errorlog,"write memory hardware pattern over !\n");
-					hardware = 0;
-				}else{
-					/* regist hardware function */
-					hardware = wrhard_max++;
-					memorywritehandler[hardware] = handler;
-					memorywriteoffset[hardware]  = mwa->start;
-				}
-			}
-#ifdef SGI_FIX_MWA_NOP
-			}
-#endif
-			/* hardware element table make */
-			set_element( cpu , cur_mw_element[cpu] ,
-				(int) (((unsigned int) mwa->start) >> abitsmin) ,
-				(int) (((unsigned int) mwa->end) >> abitsmin) ,
-				hardware , (MHELE *)writehardware , &wrelement_max );
+			mwa = memorywrite;
+			while (mwa->start != -1) mwa++;
+			mwa--;
 
-            mwa--;
+			while (mwa >= memorywrite)
+			{
+				void (*handler)(int,int) = mwa->handler;
+#ifdef SGI_FIX_MWA_NOP
+				if ((FPTR)handler == (FPTR)MWA_NOP) {
+					hardware = HT_NOP;
+				} else {
+#endif
+				switch( (FPTR)handler )
+				{
+				case (FPTR)MWA_RAM:
+					hardware = HT_RAM;	/* sprcial case ram write */
+					break;
+				case (FPTR)MWA_BANK1:
+					hardware = HT_BANK1;
+					memorywriteoffset[1] = bankwriteoffset[1] = mwa->start;
+					cpu_bankbase[1] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK2:
+					hardware = HT_BANK2;
+					memorywriteoffset[2] = bankwriteoffset[2] = mwa->start;
+					cpu_bankbase[2] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK3:
+					hardware = HT_BANK3;
+					memorywriteoffset[3] = bankwriteoffset[3] = mwa->start;
+					cpu_bankbase[3] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK4:
+					hardware = HT_BANK4;
+					memorywriteoffset[4] = bankwriteoffset[4] = mwa->start;
+					cpu_bankbase[4] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK5:
+					hardware = HT_BANK5;
+					memorywriteoffset[5] = bankwriteoffset[5] = mwa->start;
+					cpu_bankbase[5] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK6:
+					hardware = HT_BANK6;
+					memorywriteoffset[6] = bankwriteoffset[6] = mwa->start;
+					cpu_bankbase[6] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK7:
+					hardware = HT_BANK7;
+					memorywriteoffset[7] = bankwriteoffset[7] = mwa->start;
+					cpu_bankbase[7] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_BANK8:
+					hardware = HT_BANK8;
+					memorywriteoffset[8] = bankwriteoffset[8] = mwa->start;
+					cpu_bankbase[8] = memory_find_base (cpu, mwa->start);
+					break;
+				case (FPTR)MWA_NOP:
+					hardware = HT_NOP;
+					break;
+				case (FPTR)MWA_RAMROM:
+					hardware = HT_RAMROM;
+					break;
+				case (FPTR)MWA_ROM:
+					hardware = HT_ROM;
+					break;
+				default:
+					/* create newer hardware handler */
+					if( wrhard_max == MH_HARDMAX ){
+						if (errorlog)
+						 fprintf(errorlog,"write memory hardware pattern over !\n");
+						hardware = 0;
+					}else{
+						/* regist hardware function */
+						hardware = wrhard_max++;
+						memorywritehandler[hardware] = handler;
+						memorywriteoffset[hardware]  = mwa->start;
+					}
+				}
+#ifdef SGI_FIX_MWA_NOP
+				}
+#endif
+				/* hardware element table make */
+				set_element( cpu , cur_mw_element[cpu] ,
+					(int) (((unsigned int) mwa->start) >> abitsmin) ,
+					(int) (((unsigned int) mwa->end) >> abitsmin) ,
+					hardware , (MHELE *)writehardware , &wrelement_max );
+
+				mwa--;
+			}
 		}
     }
 

@@ -276,7 +276,8 @@ static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chip */
-	{ 24000, 24000 },	/* ??? */
+	{ 22050, 22050 },         /* 22050Hz frequency? */
+//	{ 24000, 24000 },	/* this fixes pitch but music breaks up */
 	{ 2,3 },        /* memory region 2,3 */
 	{ 50,50 }
 };
@@ -462,7 +463,7 @@ void bjtwin_decode(void)
  *	008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 //	WRITE_WORD(&RAM[0x09172], 0x6006);	/* patch checksum error */
 //	WRITE_WORD(&RAM[0x08f74], 0x4e71);
 }

@@ -7,6 +7,7 @@
 		- 3-voice mono (Pac-Man, Pengo, Dig Dug, etc)
 		- 8-voice mono (Mappy, Dig Dug 2, etc)
 		- 8-voice stereo (System 1)
+		- 6-voice stereo (Pole Position 1, Pole Position 2)
 
 ***************************************************************************/
 
@@ -388,6 +389,64 @@ void pengo_sound_w(int offset,int data)
 
 /********************************************************************************/
 
+void polepos_sound_w(int offset,int data)
+{
+	sound_channel *voice;
+	int base;
+
+	/* update the streams */
+	stream_update(stream, 0);
+
+	/* set the register */
+	namco_soundregs[offset] = data;
+
+	/* recompute all the voice parameters */
+	for (base = 8, voice = channel_list; voice < last_channel; voice++, base += 4)
+	{
+#if 0		// original
+		int temp;
+
+		voice->frequency = namco_soundregs[0x01 + base];
+		voice->frequency = voice->frequency * 256 + namco_soundregs[0x00 + base];
+
+		/* the volume seems to vary between one of these five places */
+		/* it's likely that only 3 or 4 are valid; for now, we just */
+		/* take the maximum volume and that seems to do the trick */
+		voice->volume[0] = namco_soundregs[0x02 + base] & 0x0f;
+		temp = namco_soundregs[0x02 + base] >> 4;
+		if (temp > voice->volume[0]) voice->volume[0] = temp;
+		temp = namco_soundregs[0x03 + base] & 0x0f;
+		if (temp > voice->volume[0]) voice->volume[0] = temp;
+		temp = namco_soundregs[0x03 + base] >> 4;
+		if (temp > voice->volume[0]) voice->volume[0] = temp;
+		temp = namco_soundregs[0x23 + base] >> 4;
+		if (temp > voice->volume[0]) voice->volume[0] = temp;
+		voice->wave = &sound_prom[32 * (namco_soundregs[0x23 + base] & 7)];
+#else		// modified by T.Nogi
+		voice->frequency = namco_soundregs[0x01 + base];
+		voice->frequency = voice->frequency * 256 + namco_soundregs[0x00 + base];
+
+		/* the volume seems to vary between one of these five places */
+		/* it's likely that only 3 or 4 are valid; for now, we just */
+		/* take the maximum volume and that seems to do the trick */
+		/* volume[0] = left speaker ?, volume[1] = right speaker ? */
+		voice->volume[0] = voice->volume[1] = 0;
+		// front speaker ?
+		voice->volume[1] |= namco_soundregs[0x02 + base] & 0x0f;
+		voice->volume[0] |= namco_soundregs[0x02 + base] >> 4;
+		// rear speaker ?
+		voice->volume[1] |= namco_soundregs[0x03 + base] & 0x0f;
+		voice->volume[0] |= namco_soundregs[0x03 + base] >> 4;
+	//	voice->volume[0] |= namco_soundregs[0x23 + base] & 0x0f;
+		voice->volume[1] |= namco_soundregs[0x23 + base] >> 4;
+		voice->wave = &sound_prom[32 * (namco_soundregs[0x23 + base] & 7)];
+#endif
+	}
+}
+
+
+/********************************************************************************/
+
 void mappy_sound_enable_w(int offset,int data)
 {
 	sound_enable = offset;
@@ -404,14 +463,6 @@ void mappy_sound_w(int offset,int data)
 	/* set the register */
 	namco_soundregs[offset] = data;
 
-if (errorlog && (offset & 7) <= 2)
-{
-	char baf[80];
-	sprintf(baf,"PC %02x: Namco reg %02x = %02x\n",cpu_get_pc(),offset,data);
-	fprintf(errorlog,baf);
-	usrintf_showmessage(baf);
-}
-
 	/* recompute all the voice parameters */
 	for (base = 0, voice = channel_list; voice < last_channel; voice++, base += 8)
 	{
@@ -423,7 +474,6 @@ if (errorlog && (offset & 7) <= 2)
 		voice->wave = &sound_prom[32 * ((namco_soundregs[0x06 + base] >> 4) & 7)];
 	}
 }
-
 
 
 /********************************************************************************/
@@ -478,11 +528,7 @@ int namcos1_wavedata_r(int offset)
 }
 
 
-
-
-
-
-
+/********************************************************************************/
 
 void snkwave_w(int offset,int data)
 {
@@ -503,3 +549,4 @@ void snkwave_w(int offset,int data)
 		}
 	}
 }
+

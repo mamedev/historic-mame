@@ -457,7 +457,7 @@ ROM_END
 
 static int c1943_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -493,7 +493,7 @@ static int c1943_hiload(void)
 static void c1943_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -520,7 +520,7 @@ static void c1943_hisave(void)
 
 static int c1943kai_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -556,7 +556,7 @@ static int c1943kai_hiload(void)
 static void c1943kai_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -598,7 +598,7 @@ struct GameDriver driver_1943 =
 	rom_1943,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1943,
 
@@ -624,7 +624,7 @@ struct GameDriver driver_1943j =
 	rom_1943j,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1943,
 
@@ -650,7 +650,7 @@ struct GameDriver driver_1943kai =
 	rom_1943kai,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1943,
 

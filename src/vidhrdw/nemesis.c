@@ -39,31 +39,39 @@ void nemesis_palette_w(int offset,int data)
 	COMBINE_WORD_MEM(&paletteram[offset],data);
 	data = READ_WORD(&paletteram[offset]);
 
-        #define MULTIPLIER 0x08 * bit1 + 0x10 * bit2 + 0x20 * bit3 + 0x40 * bit4 + 0x80 * bit5
-//      #define MULTIPLIER 0x40 * bit1 + 0x33 * bit2 + 0x33 * bit3 + 0x2f * bit4 + 0x2a * bit5
-//      #define MULTIPLIER 0x10 * bit1 + 0x18 * bit2 + 0x30 * bit3 + 0x40 * bit4 + 0x60 * bit5
+	/* Mish, 30/11/99 - Schematics show the resistor values are:
+		300 Ohms
+		620 Ohms
+		1200 Ohms
+		2400 Ohms
+		4700 Ohms
+
+		So the correct weights per bit are 8, 17, 33, 67, 130
+	*/
+
+	#define MULTIPLIER 8 * bit1 + 17 * bit2 + 33 * bit3 + 67 * bit4 + 130 * bit5
 
 	bit1=(data >>  0)&1;
 	bit2=(data >>  1)&1;
 	bit3=(data >>  2)&1;
 	bit4=(data >>  3)&1;
 	bit5=(data >>  4)&1;
-        r = MULTIPLIER;
-        r = pow (r/255.0, 2)*255;
+	r = MULTIPLIER;
+	r = pow (r/255.0, 2)*255;
 	bit1=(data >>  5)&1;
 	bit2=(data >>  6)&1;
 	bit3=(data >>  7)&1;
 	bit4=(data >>  8)&1;
 	bit5=(data >>  9)&1;
-        g = MULTIPLIER;
-        g = pow (g/255.0, 2)*255;
+	g = MULTIPLIER;
+	g = pow (g/255.0, 2)*255;
 	bit1=(data >>  10)&1;
 	bit2=(data >>  11)&1;
 	bit3=(data >>  12)&1;
 	bit4=(data >>  13)&1;
 	bit5=(data >>  14)&1;
-        b = MULTIPLIER;
-        b = pow (b/255.0, 2)*255;
+	b = MULTIPLIER;
+	b = pow (b/255.0, 2)*255;
 
 	palette_change_color(offset / 2,r,g,b);
 }
@@ -1239,7 +1247,7 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00])],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00]) & 0x7ff],&Machine->drv->visible_area);
 
 	/* Copy the background bitmap */
 	yscroll = -(READ_WORD(&nemesis_yscroll[0x300]) & 0xff);	/* used on nemesis level 2 */
@@ -1331,7 +1339,7 @@ void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	setup_backgrounds();
 
 	/* screen flash */
-	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00])],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[READ_WORD(&paletteram[0x00]) & 0x7ff],&Machine->drv->visible_area);
 
 	/* Kludge - check if we need row or column scroll */
 	if (READ_WORD(&nemesis_yscroll[0x780]) || READ_WORD(&nemesis_yscroll[0x790])) {

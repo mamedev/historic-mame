@@ -4,6 +4,7 @@
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
+#include "cpu/tms32010/tms32010.h"
 
 
 
@@ -12,8 +13,9 @@ void video_ofs3_w(int offset, int data);
 void toaplan1_videoram3_w(int offset, int data);
 
 int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
-int toaplan1_hs_count;	 /* Some games write default HS to screen a few times, so overwrite it many times */
-int toaplan1_hs_bank;	 /* MAME main RAM bank to check HS table in */
+int toaplan1_hs_count;   /* some games write default HS to screen a few times, so overwrite it many times */
+int toaplan1_hs_ramsc;   /* screen HS data is read from RAM at this address */
+int toaplan1_hs_bank;    /* MAME main RAM bank to check HS table in */
 int toaplan1_hs_start;	 /* offset in main RAM bank to start of HS table */
 int toaplan1_hs_end;	 /* offset in main RAM bank to  end  of HS table */
 int toaplan1_hs_t_hi;	 /* first value at start of table to test */
@@ -27,20 +29,101 @@ int toaplan1_int_enable;
 static int unk;
 static int credits;
 static int latch;
+static int dsp_execute;
+static unsigned int dsp_addr_w, main_ram_seg;
 
 extern unsigned char *toaplan1_sharedram;
 
 
 
-int rallybik_rom_r(int offset)
+int demonwld_dsp_in(int offset)
 {
-	unsigned char *m = Machine->memory_region[0];
-	// return the actual rom values not the patched ones.
-	if (offset == 0x18d4) return 0x6622 ;
-	if (offset == 0x18f0) return 0x6606 ;
+	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
-	return READ_WORD(m+offset) ;
+	unsigned int input_data = 0;
+
+	switch (main_ram_seg) {
+		case 0xc00000:	input_data = READ_WORD(&(cpu_bankbase[1][(dsp_addr_w)])); break;
+
+		default:		if (errorlog)
+							fprintf(errorlog,"DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+	}
+	if (errorlog) fprintf(errorlog,"DSP PC:%04x IO read %04x at %08x (port 1)\n",cpu_getpreviouspc(),input_data,main_ram_seg + dsp_addr_w);
+	return input_data;
 }
+
+void demonwld_dsp_out(int fnction,int data)
+{
+	if (fnction == 0) {
+		/* This sets the main CPU RAM address the DSP should */
+		/*		read/write, via the DSP IO port 0 */
+		/* Top three bits of data need to be shifted left 9 places */
+		/*		to select which memory bank from main CPU address */
+		/*		space to use */
+		/* Lower thirteen bits of this data is shifted left one position */
+		/*		to move it to an even address word boundary */
+
+		dsp_addr_w = ((data & 0x1fff) << 1);
+		main_ram_seg = ((data & 0xe000) << 9);
+		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x (%08x) at port 0\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
+	}
+	if (fnction == 1) {
+		/* Data written to main CPU RAM via DSP IO port 1*/
+
+		dsp_execute = 0;
+		switch (main_ram_seg) {
+			case 0xc00000:	WRITE_WORD(&(cpu_bankbase[1][(dsp_addr_w)]),data);
+							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
+			default:		if (errorlog)
+								fprintf(errorlog,"DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+		}
+		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x at %08x (port 1)\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
+	}
+	if (fnction == 3) {
+		/* data 0xffff	means inhibit BIO line to DSP and enable  */
+		/*				communication to main processor */
+		/*				Actually only DSP data bit 15 controls this */
+		/* data 0x0000	means set DSP BIO line active and disable */
+		/*				communication to main processor*/
+		if (errorlog) fprintf(errorlog,"DSP PC:%04x IO write %04x at port 3\n",cpu_getpreviouspc(),data);
+		if (data & 0x8000) {
+			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, CLEAR_LINE);
+		}
+		if (data == 0) {
+			if (dsp_execute) {
+				if (errorlog) fprintf(errorlog,"Turning Main 68000 on\n");
+				cpu_halt(0,1);
+				dsp_execute = 0;
+			}
+			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, ASSERT_LINE);
+		}
+	}
+}
+
+void demonwld_dsp_w(int offset,int data)
+{
+#if 0
+	if (errorlog) fprintf(errorlog,"68000:%08x  Writing %08x to %08x.\n",cpu_get_pc() ,data ,0xe0000a + offset);
+#endif
+
+	switch (data) {
+		case 0x0000: 	/* This means assert the INT line to the DSP */
+						if (errorlog) fprintf(errorlog,"Turning DSP on and 68000 off\n");
+						cpu_halt(2,1);
+						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
+						cpu_halt(0,0);
+						break;
+		case 0x0001: 	/* This means inhibit the INT line to the DSP */
+						if (errorlog) fprintf(errorlog,"Turning DSP off\n");
+						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
+						cpu_halt(2,0);
+						break;
+		default:		if (errorlog)
+							fprintf(errorlog,"68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
+	}
+}
+
+
 
 int toaplan1_interrupt(void)
 {
@@ -125,6 +208,8 @@ void toaplan1_shared_w(int offset, int data)
 
 void toaplan1_init_machine(void)
 {
+	dsp_addr_w = dsp_execute = 0;
+	main_ram_seg = 0;
 	toaplan1_int_enable = 0;
 	unk = 0;
 	credits = 0;
@@ -142,13 +227,10 @@ void toaplan1_init_machine(void)
 
 void rallybik_init_machine(void)
 {
-	unsigned char *m = Machine->memory_region[0];
-	WRITE_WORD(m+0x18d4,0x4e71); /* NOP */
-	WRITE_WORD(m+0x18f0,0x4e71); /* NOP */
-
 	toaplan1_hs_start = 0x01ac;	/* table starts at $801ac */
 	toaplan1_hs_end  = 0x04d0;
 	toaplan1_hs_bank = 1;
+	toaplan1_hs_ramsc= 0x050c;	/* $8053c */
 	toaplan1_hs_t_hi = 0x0004;	/* hs=40000 */
 	toaplan1_hs_t_lo = 0x0000;
 	toaplan1_hs_t_e1 = 0x0039;
@@ -164,6 +246,7 @@ void truxton_init_machine(void)
 	toaplan1_hs_start = 0x19de - 0x19d8;	/* table starts at $819de */
 	toaplan1_hs_end  = 0x1b4a - 0x19d8;
 	toaplan1_hs_bank = 2;
+	toaplan1_hs_ramsc= 0x1c52 - 0x19d8;	/* $81c62 */
 	toaplan1_hs_t_hi = 0x0000;	/* hs=50000 */
 	toaplan1_hs_t_lo = 0x5000;
 	toaplan1_hs_t_e1 = 0x000b;
@@ -179,6 +262,7 @@ void hellfire_init_machine(void)
 	toaplan1_hs_start = 0x2300 - 0x22f4;	/* table starts at $42300 */
 	toaplan1_hs_end  = 0x23c2 - 0x22f4;
 	toaplan1_hs_bank = 2;
+	toaplan1_hs_ramsc= 0x2528 - 0x22f4;	/* $42538 */
 	toaplan1_hs_t_hi = 0x0000;	/* hs=50000 */
 	toaplan1_hs_t_lo = 0x5000;
 	toaplan1_hs_t_e1 = 0x000b;
@@ -194,6 +278,7 @@ void zerowing_init_machine(void)
 	toaplan1_hs_start = 0x1776 - 0x1770;	/* table starts at $81776 */
 	toaplan1_hs_end  = 0x17de - 0x1770;
 	toaplan1_hs_bank = 2;
+	toaplan1_hs_ramsc= 0;		/* N/A */
 	toaplan1_hs_t_hi = 0x0000;	/* hs=50000 */
 	toaplan1_hs_t_lo = 0x5000;
 	toaplan1_hs_t_e1 = 0x0011;
@@ -206,13 +291,10 @@ void zerowing_init_machine(void)
 
 void demonwld_init_machine(void)
 {
-	unsigned char *m = Machine->memory_region[0];
-	WRITE_WORD(m+0x1824,0x600a); /* change BEQ to BRA  */
-	WRITE_WORD(m+0x181c,0x4e71); /* NOP  */
-
 	toaplan1_hs_start = 0x01be - 0x01ae;	/* table starts at $c001be */
 	toaplan1_hs_end  = 0x028a - 0x01ae;
 	toaplan1_hs_bank = 2;
+	toaplan1_hs_ramsc= 0;		/* N/A */
 	toaplan1_hs_t_hi = 0x0004;	/* hs=40000 */
 	toaplan1_hs_t_lo = 0x0000;
 	toaplan1_hs_t_e1 = 0x002d;
@@ -228,6 +310,7 @@ void outzone_init_machine(void)
 	toaplan1_hs_start = 0x01de;			/* table starts at $2401de */
 	toaplan1_hs_end  = 0x0552;
 	toaplan1_hs_bank = 1;
+	toaplan1_hs_ramsc= 0;		/* N/A */
 	toaplan1_hs_t_hi = 0x0020;	/* hs=200000 */
 	toaplan1_hs_t_lo = 0x0000;
 	toaplan1_hs_t_e1 = 0x003f;
@@ -243,6 +326,7 @@ void vimana_init_machine(void)
 	toaplan1_hs_start = 0x0198 - 0x0148;	/* table starts at $480198 */
 	toaplan1_hs_end  = 0x028c - 0x0148;
 	toaplan1_hs_bank = 2;
+	toaplan1_hs_ramsc= 0;		/* N/A */
 	toaplan1_hs_t_hi = 0x0002;	/* hs=200000 */
 	toaplan1_hs_t_lo = 0x0000;
 	toaplan1_hs_t_e1 = 0x004f;
@@ -329,6 +413,8 @@ int toaplan1_hiload(void)
 		int tp1_skip_zeros=0;
 		int tp1_voffs3_org, tp1_vram_offs;
 		int tp1_tmplo, tp1_tmphi, tp1_tmp_cnt;
+		int tp1_hs_ram_to_scrn = toaplan1_hs_ramsc;
+
 
 		tp1_tmphi=READ_WORD(&(cpu_bankbase[toaplan1_hs_bank][toaplan1_hs_start+4]));
 		tp1_tmplo=READ_WORD(&(cpu_bankbase[toaplan1_hs_bank][toaplan1_hs_start+6]));
@@ -350,9 +436,19 @@ int toaplan1_hiload(void)
 		{
 			if ((tp1_digit[tp1_tmp_cnt] != 0) || tp1_skip_zeros)
 			{
+				int tp1_scrn_data = toaplan1_hs_tile + tp1_digit[tp1_tmp_cnt];
 				video_ofs3_w(0, tp1_vram_offs);
-				toaplan1_videoram3_w(2,(toaplan1_hs_tile + tp1_digit[tp1_tmp_cnt]));
+				toaplan1_videoram3_w(2,tp1_scrn_data);
 				tp1_skip_zeros = 1;
+				if (toaplan1_hs_ramsc)
+				{
+					WRITE_WORD(&(cpu_bankbase[toaplan1_hs_bank][tp1_hs_ram_to_scrn]),tp1_scrn_data);
+				}
+			}
+			tp1_hs_ram_to_scrn += 4;
+			if (toaplan1_hs_ramsc == 0x050c)	/* Rally Bike */
+			{
+				tp1_hs_ram_to_scrn += 0x14;
 			}
 			tp1_vram_offs++ ;
 			if ((Machine->gamedrv->flags & ORIENTATION_MASK) == ORIENTATION_ROTATE_270)

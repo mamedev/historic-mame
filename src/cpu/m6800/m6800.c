@@ -19,6 +19,9 @@
 							machine must be twos complement
 
 History
+991031	ZV
+	Added NSC-8105 support
+
 990319	HJB
     Fixed wrong LSB/MSB order for push/pull word.
 	Subtract .extra_cycles at the beginning/end of the exectuion loops.
@@ -74,7 +77,8 @@ enum {
 	SUBTYPE_M6802,
 	SUBTYPE_M6803,
 	SUBTYPE_M6808,
-	SUBTYPE_HD63701
+	SUBTYPE_HD63701,
+	SUBTYPE_NSC8105
 };
 
 /* 6800 Registers */
@@ -118,6 +122,7 @@ static m6800_Regs m6800;
 #define m6803	m6800
 #define m6808	m6800
 #define hd63701 m6800
+#define nsc8105 m6800
 
 #define	pPPC    m6800.ppc
 #define pPC 	m6800.pc
@@ -239,13 +244,18 @@ static void (*wr_s_handler_w)(PAIR *);
 		case SUBTYPE_M6801: 											\
 		case SUBTYPE_M6803: 											\
 			(*m6803_insn[ireg])();										\
-			INCREMENT_COUNTER(cycles_6800[ireg]);						\
+			INCREMENT_COUNTER(cycles_6803[ireg]);						\
             m6800_ICount -= cycles_6803[ireg];                          \
             break;                                                      \
 		case SUBTYPE_HD63701:											\
 			(*hd63701_insn[ireg])();									\
-			INCREMENT_COUNTER(cycles_6800[ireg]);						\
+			INCREMENT_COUNTER(cycles_63701[ireg]);						\
             m6800_ICount -= cycles_63701[ireg];                         \
+			break;														\
+		case SUBTYPE_NSC8105: 											\
+			(*nsc8105_insn[ireg])();									\
+			INCREMENT_COUNTER(cycles_nsc8105[ireg]);					\
+            m6800_ICount -= cycles_nsc8105[ireg];                         \
 			break;														\
 		}																\
 	}																	\
@@ -490,6 +500,28 @@ static unsigned char cycles_63701[] =
 	/*E*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5,
 	/*F*/  4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5
 };
+
+static unsigned char cycles_nsc8105[] =
+{
+		/* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
+	/*0*/  0, 0, 2, 0, 0, 2, 0, 2, 4, 2, 4, 2, 2, 2, 2, 2,
+	/*1*/  2, 0, 2, 0, 0, 2, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0,
+	/*2*/  4, 4, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	/*3*/  4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 5,10, 0, 9, 0,12,
+	/*4*/  2, 0, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2,
+	/*5*/  2, 0, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2,
+	/*6*/  7, 0, 0, 7, 7, 7, 0, 7, 7, 7, 7, 0, 7, 4, 7, 7,
+	/*7*/  6, 0, 0, 6, 6, 6, 0, 6, 6, 6, 6, 0, 6, 3, 6, 6,
+	/*8*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 3, 3, 8, 0,
+	/*9*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 4, 4, 0, 5,
+	/*A*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 6, 6, 8, 7,
+	/*B*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 5, 5, 9, 6,
+	/*C*/  2, 2, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0, 3, 0, 0,
+	/*D*/  3, 3, 3, 0, 3, 3, 3, 4, 3, 3, 3, 3, 0, 4, 0, 5,
+	/*E*/  5, 5, 5, 0, 5, 5, 5, 6, 5, 5, 5, 5, 0, 6, 0, 7,
+	/*F*/  4, 4, 4, 0, 4, 4, 4, 5, 4, 4, 4, 4, 4, 5, 0, 6
+};
+
 
 /* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
 #define CLEAR_PAIR(p)   p->d = 0
@@ -1121,7 +1153,7 @@ int m6800_execute(int cycles)
 			case 0xf9: adcb_ex(); break;
 			case 0xfa: orb_ex(); break;
 			case 0xfb: addb_ex(); break;
-			case 0xfc: illegal(); break;
+			case 0xfc: addx_ex(); break;
 			case 0xfd: illegal(); break;
 			case 0xfe: ldx_ex(); break;
 			case 0xff: stx_ex(); break;
@@ -2109,6 +2141,361 @@ unsigned hd63701_dasm(char *buffer, unsigned pc)
 }
 #endif
 
+/****************************************************************************
+ * NSC-8105 similiar to the M6800, but the opcodes are scrambled and there
+ * is at least one new opcode ($fc)
+ ****************************************************************************/
+#if HAS_NSC8105
+void nsc8105_reset(void *param)
+{
+	m6800_reset(param);
+	m6800.subtype = SUBTYPE_NSC8105;
+}
+void nsc8105_exit(void) { m6800_exit(); }
+/****************************************************************************
+ * Execute cycles CPU cycles. Return number of cycles really executed
+ ****************************************************************************/
+int nsc8105_execute(int cycles)
+{
+	UINT8 ireg;
+	nsc8105_ICount = cycles;
+
+	INCREMENT_COUNTER(nsc8105.extra_cycles);
+	nsc8105_ICount -= nsc8105.extra_cycles;
+	nsc8105.extra_cycles = 0;
+
+    if( nsc8105.wai_state & NSC8105_WAI )
+	{
+		EAT_CYCLES;
+		goto getout;
+	}
+
+	do
+	{
+		pPPC = pPC;
+		CALL_MAME_DEBUG;
+        ireg=M_RDOP(PC++);
+
+		switch( ireg )
+		{
+			case 0x00: illegal(); break;
+			case 0x01: illegal(); break;
+			case 0x02: nop(); break;
+			case 0x03: illegal(); break;
+			case 0x04: illegal(); break;
+			case 0x05: tap(); break;
+			case 0x06: illegal(); break;
+			case 0x07: tpa(); break;
+			case 0x08: inx(); break;
+			case 0x09: CLV; break;
+			case 0x0a: dex(); break;
+			case 0x0b: SEV; break;
+			case 0x0c: CLC; break;
+			case 0x0d: cli(); break;
+			case 0x0e: SEC; break;
+			case 0x0f: sei(); break;
+			case 0x10: sba(); break;
+			case 0x11: illegal(); break;
+			case 0x12: cba(); break;
+			case 0x13: illegal(); break;
+			case 0x14: illegal(); break;
+			case 0x15: tab(); break;
+			case 0x16: illegal(); break;
+			case 0x17: tba(); break;
+			case 0x18: illegal(); break;
+			case 0x19: illegal(); break;
+			case 0x1a: daa(); break;
+			case 0x1b: aba(); break;
+			case 0x1c: illegal(); break;
+			case 0x1d: illegal(); break;
+			case 0x1e: illegal(); break;
+			case 0x1f: illegal(); break;
+			case 0x20: bra(); break;
+			case 0x21: bhi(); break;
+			case 0x22: brn(); break;
+			case 0x23: bls(); break;
+			case 0x24: bcc(); break;
+			case 0x25: bne(); break;
+			case 0x26: bcs(); break;
+			case 0x27: beq(); break;
+			case 0x28: bvc(); break;
+			case 0x29: bpl(); break;
+			case 0x2a: bvs(); break;
+			case 0x2b: bmi(); break;
+			case 0x2c: bge(); break;
+			case 0x2d: bgt(); break;
+			case 0x2e: blt(); break;
+			case 0x2f: ble(); break;
+			case 0x30: tsx(); break;
+			case 0x31: pula(); break;
+			case 0x32: ins(); break;
+			case 0x33: pulb(); break;
+			case 0x34: des(); break;
+			case 0x35: psha(); break;
+			case 0x36: txs(); break;
+			case 0x37: pshb(); break;
+			case 0x38: illegal(); break;
+			case 0x39: illegal(); break;
+			case 0x3a: rts(); break;
+			case 0x3b: rti(); break;
+			case 0x3c: illegal(); break;
+			case 0x3d: wai(); break;
+			case 0x3e: illegal(); break;
+			case 0x3f: swi(); break;
+			case 0x40: suba_im(); break;
+			case 0x41: sbca_im(); break;
+			case 0x42: cmpa_im(); break;
+			case 0x43: illegal(); break;
+			case 0x44: anda_im(); break;
+			case 0x45: lda_im(); break;
+			case 0x46: bita_im(); break;
+			case 0x47: sta_im(); break;
+			case 0x48: eora_im(); break;
+			case 0x49: ora_im(); break;
+			case 0x4a: adca_im(); break;
+			case 0x4b: adda_im(); break;
+			case 0x4c: cmpx_im(); break;
+			case 0x4d: lds_im(); break;
+			case 0x4e: bsr(); break;
+			case 0x4f: sts_im(); /* orthogonality */ break;
+			case 0x50: suba_di(); break;
+			case 0x51: sbca_di(); break;
+			case 0x52: cmpa_di(); break;
+			case 0x53: illegal(); break;
+			case 0x54: anda_di(); break;
+			case 0x55: lda_di(); break;
+			case 0x56: bita_di(); break;
+			case 0x57: sta_di(); break;
+			case 0x58: eora_di(); break;
+			case 0x59: ora_di(); break;
+			case 0x5a: adca_di(); break;
+			case 0x5b: adda_di(); break;
+			case 0x5c: cmpx_di(); break;
+			case 0x5d: lds_di(); break;
+			case 0x5e: jsr_di(); break;
+			case 0x5f: sts_di(); break;
+			case 0x60: suba_ix(); break;
+			case 0x61: sbca_ix(); break;
+			case 0x62: cmpa_ix(); break;
+			case 0x63: illegal(); break;
+			case 0x64: anda_ix(); break;
+			case 0x65: lda_ix(); break;
+			case 0x66: bita_ix(); break;
+			case 0x67: sta_ix(); break;
+			case 0x68: eora_ix(); break;
+			case 0x69: ora_ix(); break;
+			case 0x6a: adca_ix(); break;
+			case 0x6b: adda_ix(); break;
+			case 0x6c: cmpx_ix(); break;
+			case 0x6d: lds_ix(); break;
+			case 0x6e: jsr_ix(); break;
+			case 0x6f: sts_ix(); break;
+			case 0x70: suba_ex(); break;
+			case 0x71: sbca_ex(); break;
+			case 0x72: cmpa_ex(); break;
+			case 0x73: illegal(); break;
+			case 0x74: anda_ex(); break;
+			case 0x75: lda_ex(); break;
+			case 0x76: bita_ex(); break;
+			case 0x77: sta_ex(); break;
+			case 0x78: eora_ex(); break;
+			case 0x79: ora_ex(); break;
+			case 0x7a: adca_ex(); break;
+			case 0x7b: adda_ex(); break;
+			case 0x7c: cmpx_ex(); break;
+			case 0x7d: lds_ex(); break;
+			case 0x7e: jsr_ex(); break;
+			case 0x7f: sts_ex(); break;
+			case 0x80: nega(); break;
+			case 0x81: illegal(); break;
+			case 0x82: illegal(); break;
+			case 0x83: coma(); break;
+			case 0x84: lsra(); break;
+			case 0x85: rora(); break;
+			case 0x86: illegal(); break;
+			case 0x87: asra(); break;
+			case 0x88: asla(); break;
+			case 0x89: deca(); break;
+			case 0x8a: rola(); break;
+			case 0x8b: illegal(); break;
+			case 0x8c: inca(); break;
+			case 0x8d: illegal(); break;
+			case 0x8e: tsta(); break;
+			case 0x8f: clra(); break;
+			case 0x90: negb(); break;
+			case 0x91: illegal(); break;
+			case 0x92: illegal(); break;
+			case 0x93: comb(); break;
+			case 0x94: lsrb(); break;
+			case 0x95: rorb(); break;
+			case 0x96: illegal(); break;
+			case 0x97: asrb(); break;
+			case 0x98: aslb(); break;
+			case 0x99: decb(); break;
+			case 0x9a: rolb(); break;
+			case 0x9b: illegal(); break;
+			case 0x9c: incb(); break;
+			case 0x9d: illegal(); break;
+			case 0x9e: tstb(); break;
+			case 0x9f: clrb(); break;
+			case 0xa0: neg_ix(); break;
+			case 0xa1: illegal(); break;
+			case 0xa2: illegal(); break;
+			case 0xa3: com_ix(); break;
+			case 0xa4: lsr_ix(); break;
+			case 0xa5: ror_ix(); break;
+			case 0xa6: illegal(); break;
+			case 0xa7: asr_ix(); break;
+			case 0xa8: asl_ix(); break;
+			case 0xa9: dec_ix(); break;
+			case 0xaa: rol_ix(); break;
+			case 0xab: illegal(); break;
+			case 0xac: inc_ix(); break;
+			case 0xad: jmp_ix(); break;
+			case 0xae: tst_ix(); break;
+			case 0xaf: clr_ix(); break;
+			case 0xb0: neg_ex(); break;
+			case 0xb1: illegal(); break;
+			case 0xb2: illegal(); break;
+			case 0xb3: com_ex(); break;
+			case 0xb4: lsr_ex(); break;
+			case 0xb5: ror_ex(); break;
+			case 0xb6: illegal(); break;
+			case 0xb7: asr_ex(); break;
+			case 0xb8: asl_ex(); break;
+			case 0xb9: dec_ex(); break;
+			case 0xba: rol_ex(); break;
+			case 0xbb: illegal(); break;
+			case 0xbc: inc_ex(); break;
+			case 0xbd: jmp_ex(); break;
+			case 0xbe: tst_ex(); break;
+			case 0xbf: clr_ex(); break;
+			case 0xc0: subb_im(); break;
+			case 0xc1: sbcb_im(); break;
+			case 0xc2: cmpb_im(); break;
+			case 0xc3: illegal(); break;
+			case 0xc4: andb_im(); break;
+			case 0xc5: ldb_im(); break;
+			case 0xc6: bitb_im(); break;
+			case 0xc7: stb_im(); break;
+			case 0xc8: eorb_im(); break;
+			case 0xc9: orb_im(); break;
+			case 0xca: adcb_im(); break;
+			case 0xcb: addb_im(); break;
+			case 0xcc: illegal(); break;
+			case 0xcd: ldx_im(); break;
+			case 0xce: illegal(); break;
+			case 0xcf: stx_im(); break;
+			case 0xd0: subb_di(); break;
+			case 0xd1: sbcb_di(); break;
+			case 0xd2: cmpb_di(); break;
+			case 0xd3: illegal(); break;
+			case 0xd4: andb_di(); break;
+			case 0xd5: ldb_di(); break;
+			case 0xd6: bitb_di(); break;
+			case 0xd7: stb_di(); break;
+			case 0xd8: eorb_di(); break;
+			case 0xd9: orb_di(); break;
+			case 0xda: adcb_di(); break;
+			case 0xdb: addb_di(); break;
+			case 0xdc: illegal(); break;
+			case 0xdd: ldx_di(); break;
+			case 0xde: illegal(); break;
+			case 0xdf: stx_di(); break;
+			case 0xe0: subb_ix(); break;
+			case 0xe1: sbcb_ix(); break;
+			case 0xe2: cmpb_ix(); break;
+			case 0xe3: illegal(); break;
+			case 0xe4: andb_ix(); break;
+			case 0xe5: ldb_ix(); break;
+			case 0xe6: bitb_ix(); break;
+			case 0xe7: stb_ix(); break;
+			case 0xe8: eorb_ix(); break;
+			case 0xe9: orb_ix(); break;
+			case 0xea: adcb_ix(); break;
+			case 0xeb: addb_ix(); break;
+			case 0xec: illegal(); break;
+			case 0xed: ldx_ix(); break;
+			case 0xee: illegal(); break;
+			case 0xef: stx_ix(); break;
+			case 0xf0: subb_ex(); break;
+			case 0xf1: sbcb_ex(); break;
+			case 0xf2: cmpb_ex(); break;
+			case 0xf3: illegal(); break;
+			case 0xf4: andb_ex(); break;
+			case 0xf5: ldb_ex(); break;
+			case 0xf6: bitb_ex(); break;
+			case 0xf7: stb_ex(); break;
+			case 0xf8: eorb_ex(); break;
+			case 0xf9: orb_ex(); break;
+			case 0xfa: adcb_ex(); break;
+			case 0xfb: addb_ex(); break;
+			case 0xfc: addx_ex(); break;
+			case 0xfd: ldx_ex(); break;
+			case 0xfe: illegal(); break;
+			case 0xff: stx_ex(); break;
+		}
+		INCREMENT_COUNTER(cycles_nsc8105[ireg]);
+		nsc8105_ICount -= cycles_nsc8105[ireg];
+	} while( nsc8105_ICount>0 );
+
+getout:
+	INCREMENT_COUNTER(nsc8105.extra_cycles);
+	nsc8105_ICount -= nsc8105.extra_cycles;
+    nsc8105.extra_cycles = 0;
+
+    return cycles - nsc8105_ICount;
+}
+
+unsigned nsc8105_get_context(void *dst) { return m6800_get_context(dst); }
+void nsc8105_set_context(void *src) { m6800_set_context(src); }
+unsigned nsc8105_get_pc(void) { return m6800_get_pc(); }
+void nsc8105_set_pc(unsigned val) { m6800_set_pc(val); }
+unsigned nsc8105_get_sp(void) { return m6800_get_sp(); }
+void nsc8105_set_sp(unsigned val) { m6800_set_sp(val); }
+unsigned nsc8105_get_reg(int regnum) { return m6800_get_reg(regnum); }
+void nsc8105_set_reg(int regnum, unsigned val) { m6800_set_reg(regnum,val); }
+void nsc8105_set_nmi_line(int state) { m6800_set_nmi_line(state); }
+void nsc8105_set_irq_line(int irqline, int state) { m6800_set_irq_line(irqline,state); }
+void nsc8105_set_irq_callback(int (*callback)(int irqline)) { m6800_set_irq_callback(callback); }
+void nsc8105_state_save(void *file) { state_save(file,"nsc8105"); }
+void nsc8105_state_load(void *file) { state_load(file,"nsc8105"); }
+const char *nsc8105_info(void *context, int regnum)
+{
+	/* Layout of the registers in the debugger */
+	static UINT8 nsc8105_reg_layout[] = {
+		NSC8105_PC, NSC8105_S, NSC8105_CC, NSC8105_A, NSC8105_B, NSC8105_X, -1,
+		NSC8105_WAI_STATE, NSC8105_NMI_STATE, NSC8105_IRQ_STATE, 0
+	};
+
+	/* Layout of the debugger windows x,y,w,h */
+	static UINT8 nsc8105_win_layout[] = {
+		27, 0,53, 4,	/* register window (top rows) */
+		 0, 0,26,22,	/* disassembler window (left colums) */
+		27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+		27,14,53, 8,	/* memory #2 window (right, lower middle) */
+		 0,23,80, 1,	/* command line window (bottom rows) */
+	};
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "NSC8105";
+		case CPU_INFO_REG_LAYOUT: return (const char*)nsc8105_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)nsc8105_win_layout;
+    }
+	return m6800_info(context,regnum);
+}
+
+unsigned nsc8105_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return Dasm680x(8105,buffer,pc);
+#else
+	sprintf( buffer, "$%02X", cpu_readmem16(pc) );
+	return 1;
+#endif
+}
+#endif
 
 
 

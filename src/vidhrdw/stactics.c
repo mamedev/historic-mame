@@ -682,7 +682,7 @@ void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                      &Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 
     /* Now flip X & simulate the monitor motion */
-    fillbitmap(bitmap, 0, &Machine->drv->visible_area);
+    fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
     copybitmap(bitmap,tmpbitmap2,1,0,stactics_horiz_pos,stactics_vert_pos,
                 &visible_screen_area,TRANSPARENCY_NONE,0);
 

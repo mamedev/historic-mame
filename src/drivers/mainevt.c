@@ -59,7 +59,7 @@ static int zero_ret(int offset)
 
 void mainevt_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	/* bit 0-1 ROM bank select */
@@ -899,7 +899,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if  (memcmp(&RAM[0x415C],"\xFF\xAE\xCA",3) == 0 &&
@@ -921,7 +921,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -957,7 +957,7 @@ struct GameDriver driver_mainevt =
 	rom_mainevt,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mainevt,
 
@@ -983,7 +983,7 @@ struct GameDriver driver_mainevt2 =
 	rom_mainevt2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mainevt,
 
@@ -1009,7 +1009,7 @@ struct GameDriver driver_ringohja =
 	rom_ringohja,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ringohja,
 
@@ -1035,7 +1035,7 @@ struct GameDriver driver_devstors =
 	rom_devstors,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dv,
 
@@ -1061,7 +1061,7 @@ struct GameDriver driver_devstor2 =
 	rom_devstor2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dv,
 
@@ -1087,7 +1087,7 @@ struct GameDriver driver_garuka =
 	rom_garuka,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dv,
 

@@ -586,7 +586,7 @@ ROM_END
 
 static int locomotn_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -615,7 +615,7 @@ static int locomotn_hiload(void)
 static void locomotn_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -627,7 +627,7 @@ static void locomotn_hisave(void)
 
 static int jungler_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -653,7 +653,7 @@ static int jungler_hiload(void)
 static void jungler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -666,7 +666,7 @@ static void jungler_hisave(void)
 static int commsega_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (firsttime == 0)
@@ -698,7 +698,7 @@ static int commsega_hiload(void)
 static void commsega_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -726,7 +726,7 @@ struct GameDriver driver_locomotn =
 	rom_locomotn,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_locomotn,
 
@@ -752,7 +752,7 @@ struct GameDriver driver_gutangtn =
 	rom_gutangtn,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_locomotn,
 
@@ -778,7 +778,7 @@ struct GameDriver driver_cottong =
 	rom_cottong,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_locomotn,
 
@@ -804,7 +804,7 @@ struct GameDriver driver_jungler =
 	rom_jungler,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jungler,
 
@@ -830,7 +830,7 @@ struct GameDriver driver_junglers =
 	rom_junglers,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jungler,
 
@@ -856,7 +856,7 @@ struct GameDriver driver_commsega =
 	rom_commsega,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_commsega,
 

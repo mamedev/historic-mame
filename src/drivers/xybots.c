@@ -343,7 +343,7 @@ struct GameDriver driver_xybots =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xybots,
 

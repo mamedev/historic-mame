@@ -458,7 +458,7 @@ struct GameDriver driver_arcadecl =
 	arcadecl_rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arcadecl,
 
@@ -485,7 +485,7 @@ struct GameDriver driver_sparkz =
 	sparkz_rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sparkz,
 

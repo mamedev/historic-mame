@@ -66,7 +66,7 @@ void toki_adpcm_int (int data)
 void toki_adpcm_control_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	/* the code writes either 2 or 3 in the bottom two bits */
@@ -685,7 +685,7 @@ struct GameDriver driver_toki =
 	rom_toki,
 	0, 0,
 	0,
-	0,			/* sound_prom */
+	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
@@ -708,7 +708,7 @@ struct GameDriver driver_toki2 =
 	rom_toki2,
 	0, 0,
 	0,
-	0,			/* sound_prom */
+	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
@@ -731,7 +731,7 @@ struct GameDriver driver_toki3 =
 	rom_toki3,
 	0, 0,
 	0,
-	0,			/* sound_prom */
+	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
@@ -754,7 +754,7 @@ struct GameDriver driver_tokiu =
 	rom_tokiu,
 	0, 0,
 	0,
-	0,			/* sound_prom */
+	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
@@ -777,7 +777,7 @@ struct GameDriver driver_tokib =
 	rom_tokib,
 	tokib_rom_decode, 0,
 	0,
-	0,			/* sound_prom */
+	0,
 	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

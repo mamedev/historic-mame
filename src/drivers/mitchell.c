@@ -268,7 +268,7 @@ static void nvram_save(void)
 static int spang_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
@@ -283,7 +283,7 @@ static int spang_nvram_load(void)
 static void spang_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -296,7 +296,7 @@ static void spang_nvram_save(void)
 static int block_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
@@ -311,7 +311,7 @@ static int block_nvram_load(void)
 static void block_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -338,7 +338,7 @@ static void pang_bankswitch_w(int offset,int data)
 	if (data != olddata)
 	{
 		int bankaddress;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 
@@ -1266,7 +1266,7 @@ ROM_END
 
 static void pangb_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
 	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
@@ -1527,7 +1527,7 @@ ROM_END
 
 static void blockbl_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* this is a bootleg, the ROMs contain decrypted opcodes and data separately */
 	memcpy(ROM, RAM+0x50000, 0x8000);   /* OP codes */
@@ -1541,7 +1541,7 @@ static void blockbl_decode(void)
 /****  Mahjong Gakuen high score save routine - RJF (Aug 5, 1999)  ****/
 static int mgakuen_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe702],"\x01\x00\x00",3) == 0)
@@ -1570,7 +1570,7 @@ static int mgakuen_hiload(void)
 static void mgakuen_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1597,7 +1597,7 @@ struct GameDriver driver_mgakuen =
 	rom_mgakuen,
 	0, 0,	/* not encrypted */
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mgakuen,
 
@@ -1622,7 +1622,7 @@ struct GameDriver driver_mgakuen2 =
 	rom_mgakuen2,
 	0, mgakuen2_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_marukin,
 
@@ -1647,7 +1647,7 @@ struct GameDriver driver_pkladies =
 	rom_pkladies,
 	0, mgakuen2_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pkladies,
 
@@ -1672,7 +1672,7 @@ struct GameDriver driver_dokaben =
 	rom_dokaben,
 	0, mgakuen2_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1697,7 +1697,7 @@ struct GameDriver driver_pang =
 	rom_pang,
 	0, pang_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1722,7 +1722,7 @@ struct GameDriver driver_pangb =
 	rom_pangb,
 	0, pangb_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1747,7 +1747,7 @@ struct GameDriver driver_bbros =
 	rom_bbros,
 	0, pang_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1772,7 +1772,7 @@ struct GameDriver driver_pompingw =
 	rom_pompingw,
 	0, pang_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1797,7 +1797,7 @@ struct GameDriver driver_cworld =
 	rom_cworld,
 	0, cworld_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_qtono1,
 
@@ -1822,7 +1822,7 @@ struct GameDriver driver_hatena =
 	rom_hatena,
 	0, hatena_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_qtono1,
 
@@ -1847,7 +1847,7 @@ struct GameDriver driver_spang =
 	rom_spang,
 	0, spang_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1872,7 +1872,7 @@ struct GameDriver driver_sbbros =
 	rom_sbbros,
 	0, sbbros_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang,
 
@@ -1897,7 +1897,7 @@ struct GameDriver driver_marukin =
 	rom_marukin,
 	0, marukin_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_marukin,
 
@@ -1922,7 +1922,7 @@ struct GameDriver driver_qtono1 =
 	rom_qtono1,
 	0, qtono1_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_qtono1,
 
@@ -1947,7 +1947,7 @@ struct GameDriver driver_qsangoku =
 	rom_qsangoku,
 	0, qsangoku_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_qtono1,
 
@@ -1972,7 +1972,7 @@ struct GameDriver driver_block =
 	rom_block,
 	0, block_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_block,
 
@@ -1997,7 +1997,7 @@ struct GameDriver driver_blockj =
 	rom_blockj,
 	0, block_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_block,
 
@@ -2022,7 +2022,7 @@ struct GameDriver driver_blockbl =
 	rom_blockbl,
 	0, blockbl_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_block,
 

@@ -2300,7 +2300,7 @@ ROM_END
 
 static int junglek_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2323,7 +2323,7 @@ static int junglek_hiload(void)
 static void junglek_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2336,7 +2336,7 @@ static void junglek_hisave(void)
 
 static int alpine_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2368,7 +2368,7 @@ static int alpine_hiload(void)
 static void alpine_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -2379,7 +2379,7 @@ static void alpine_hisave(void)
 
 static int frontlin_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2409,7 +2409,7 @@ static int frontlin_hiload(void)
 static void frontlin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2421,7 +2421,7 @@ static void frontlin_hisave(void)
 
 static int elevator_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* wait for the high score to initialize */
@@ -2444,7 +2444,7 @@ static int elevator_hiload(void)
 static void elevator_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2488,7 +2488,7 @@ struct GameDriver driver_spaceskr =
 	rom_spaceskr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spaceskr,
 
@@ -2514,7 +2514,7 @@ struct GameDriver driver_junglek =
 	rom_junglek,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_junglek,
 
@@ -2540,7 +2540,7 @@ struct GameDriver driver_jungleh =
 	rom_jungleh,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_junglek,
 
@@ -2566,7 +2566,7 @@ struct GameDriver driver_alpine =
 	rom_alpine,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_alpine,
 
@@ -2592,7 +2592,7 @@ struct GameDriver driver_alpinea =
 	rom_alpinea,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_alpinea,
 
@@ -2618,7 +2618,7 @@ struct GameDriver driver_timetunl =
 	rom_timetunl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timetunl,
 
@@ -2644,7 +2644,7 @@ struct GameDriver driver_wwestern =
 	rom_wwestern,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wwestern,
 
@@ -2670,7 +2670,7 @@ struct GameDriver driver_wwester1 =
 	rom_wwester1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wwestern,
 
@@ -2696,7 +2696,7 @@ struct GameDriver driver_frontlin =
 	rom_frontlin,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frontlin,
 
@@ -2722,7 +2722,7 @@ struct GameDriver driver_elevator =
 	rom_elevator,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_elevator,
 
@@ -2748,7 +2748,7 @@ struct GameDriver driver_elevatob =
 	rom_elevatob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_elevator,
 
@@ -2774,7 +2774,7 @@ struct GameDriver driver_tinstar =
 	rom_tinstar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tinstar,
 
@@ -2800,7 +2800,7 @@ struct GameDriver driver_waterski =
 	rom_waterski,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_waterski,
 
@@ -2826,7 +2826,7 @@ struct GameDriver driver_bioatack =
 	rom_bioatack,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bioatack,
 
@@ -2852,7 +2852,7 @@ struct GameDriver driver_sfposeid =
 	rom_sfposeid,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sfposeid,
 
@@ -2878,7 +2878,7 @@ struct GameDriver driver_hwrace =
 	rom_hwrace,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hwrace,
 
@@ -2904,7 +2904,7 @@ struct GameDriver driver_kikstart =
 	rom_kikstart,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_junglek,
 

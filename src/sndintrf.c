@@ -261,8 +261,14 @@ int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_i
 int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
 int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_K051649)
+int K051649_clock(const struct MachineSound *msound) { return ((struct k051649_interface*)msound->sound_interface)->master_clock; }
+#endif
 #if (HAS_K053260)
 int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
+#endif
+#if (HAS_QSOUND)
+int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_interface*)msound->sound_interface)->clock; }
 #endif
 
 struct snd_interface sndintf[] =
@@ -457,6 +463,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_Y8950)
+	{
+		SOUND_Y8950,
+		"Y8950",	/* (MSX-AUDIO) */
+		YM3812_num,
+		YM3812_clock,
+		Y8950_sh_start,
+		Y8950_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_SN76496)
     {
 		SOUND_SN76496,
@@ -613,6 +631,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_K005289)
+    {
+		SOUND_K005289,
+		"005289",
+		0,
+		0,
+		K005289_sh_start,
+		K005289_sh_stop,
+		0,
+		0
+	},
+#endif
 #if (HAS_K007232)
     {
 		SOUND_K007232,
@@ -621,6 +651,18 @@ struct snd_interface sndintf[] =
 		0,
 		K007232_sh_start,
 		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_K051649)
+    {
+		SOUND_K051649,
+		"051649",
+		0,
+		K051649_clock,
+		K051649_sh_start,
+		K051649_sh_stop,
 		0,
 		0
 	},
@@ -681,6 +723,18 @@ struct snd_interface sndintf[] =
 		0,
 		C140_sh_start,
 		C140_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_QSOUND)
+	{
+		SOUND_QSOUND,
+		"QSound",
+		0,
+		qsound_clock,
+		qsound_sh_start,
+		qsound_sh_stop,
 		0,
 		0
 	},

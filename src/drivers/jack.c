@@ -634,7 +634,7 @@ ROM_END
 static void treahunt_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int data;
 
 	/* Thanks to Mike Balfour for helping out with the decryption */
@@ -675,7 +675,7 @@ static void treahunt_decode(void)
 
 static int jack_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -699,7 +699,7 @@ static int jack_hiload(void)
 static void jack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -711,7 +711,7 @@ static void jack_hisave(void)
 
 static int zzyzzyxx_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -736,7 +736,7 @@ static int zzyzzyxx_hiload(void)
 static void zzyzzyxx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -765,7 +765,7 @@ struct GameDriver driver_jack =
 	rom_jack,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jack,
 
@@ -791,7 +791,7 @@ struct GameDriver driver_jack2 =
 	rom_jack2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jack,
 
@@ -817,7 +817,7 @@ struct GameDriver driver_jack3 =
 	rom_jack3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jack,
 
@@ -843,7 +843,7 @@ struct GameDriver driver_treahunt =
 	rom_treahunt,
 	0, treahunt_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jack,
 
@@ -869,7 +869,7 @@ struct GameDriver driver_zzyzzyxx =
 	rom_zzyzzyxx,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zzyzzyxx,
 
@@ -895,7 +895,7 @@ struct GameDriver driver_zzyzzyx2 =
 	rom_zzyzzyx2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zzyzzyxx,
 
@@ -921,7 +921,7 @@ struct GameDriver driver_brix =
 	rom_brix,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zzyzzyxx,
 
@@ -947,7 +947,7 @@ struct GameDriver driver_freeze =
 	rom_freeze,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_freeze,
 
@@ -973,7 +973,7 @@ struct GameDriver driver_sucasino =
 	rom_sucasino,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jack,
 

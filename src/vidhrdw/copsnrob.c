@@ -87,9 +87,9 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             {
                 for (xoff = 0; xoff < 4; xoff++)
                 {
-                    if (tmpbitmap->line[8*(sy+COPSNROB_Y_OFFSET)+yoff][8*sx+xoff] != Machine->pens[0])
+                    if (read_pixel(tmpbitmap, 8*sx+xoff, 8*(sy+COPSNROB_Y_OFFSET)+yoff) != Machine->pens[0])
                     {
-                        tmpbitmap->line[8*(sy+COPSNROB_Y_OFFSET)+yoff][8*sx+xoff] = Machine->pens[COPSNROB_COLOR_YELLOW+1];
+                        plot_pixel(tmpbitmap, 8*sx+xoff, 8*(sy+COPSNROB_Y_OFFSET)+yoff, Machine->pens[COPSNROB_COLOR_YELLOW+1]);
                     }
                 }
             }
@@ -193,7 +193,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 {
                     if (copsnrob_bulletsram[y] & mask2)
                     {
-                        bitmap->line[y+8*COPSNROB_Y_OFFSET][256-x] = Machine->pens[color+1];
+                        plot_pixel(bitmap, 256-x, y+8*COPSNROB_Y_OFFSET, Machine->pens[color+1]);
                     }
                 }
             }

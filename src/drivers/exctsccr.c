@@ -578,7 +578,7 @@ static int hiload_es(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0x7c60],"\x02\x00\x00",3) == 0)
 	{
@@ -604,7 +604,7 @@ static void hisave_es(void)
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)
@@ -618,7 +618,7 @@ static int hiload_esb(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0x8c60],"\x02\x00\x00",3) == 0)
 	{
@@ -644,7 +644,7 @@ static void hisave_esb(void)
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)
@@ -672,7 +672,7 @@ struct GameDriver driver_exctsccr =
 	rom_exctsccr,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exctsccr,
 
@@ -697,7 +697,7 @@ struct GameDriver driver_exctscca =
 	rom_exctscca,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exctsccr,
 
@@ -723,7 +723,7 @@ struct GameDriver driver_exctsccb =
 	rom_exctsccb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exctsccr,
 
@@ -747,7 +747,7 @@ struct GameDriver driver_exctscc2 =
 	rom_exctscc2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exctsccr,
 

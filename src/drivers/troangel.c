@@ -255,7 +255,7 @@ struct GameDriver driver_troangel =
 	rom_troangel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_troangel,
 

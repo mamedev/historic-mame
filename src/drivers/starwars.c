@@ -42,7 +42,7 @@ int  starwars_interrupt (void);
 
 void starwars_out_w (int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	switch (offset)
 	{
@@ -706,7 +706,7 @@ ROM_END
 static int novram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -720,7 +720,7 @@ static int novram_load(void)
 static void novram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -747,7 +747,7 @@ struct GameDriver driver_starwars =
 	rom_starwars,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starwars,
 
@@ -773,7 +773,7 @@ struct GameDriver driver_starwar1 =
 	rom_starwar1,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starwars,
 
@@ -799,7 +799,7 @@ struct GameDriver driver_esb =
 	rom_esb,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_esb,
 

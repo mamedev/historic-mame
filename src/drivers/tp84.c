@@ -495,7 +495,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -518,7 +518,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -547,7 +547,7 @@ struct GameDriver driver_tp84 =
 	rom_tp84,			/* RomModule */
 	0, 0,				/* ROM decrypt routines */
 	0,					/* samplenames */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tp84,
 
@@ -573,7 +573,7 @@ struct GameDriver driver_tp84a =
 	rom_tp84a,			/* RomModule */
 	0, 0,				/* ROM decrypt routines */
 	0,					/* samplenames */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tp84,
 

@@ -406,7 +406,7 @@ static void patch(void)
 	/* patch one 68705 unused ROM location to make it pass the startup */
 	/* checksum test. It is supposed to return 0xf9, without this patch */
 	/* it would return 0x89 */
-	Machine->memory_region[Machine->drv->cpu[2].memory_region][0x2c0] = 0x6f;
+	memory_region(Machine->drv->cpu[2].memory_region)[0x2c0] = 0x6f;
 }
 
 struct GameDriver driver_flstory =
@@ -425,7 +425,7 @@ struct GameDriver driver_flstory =
 	rom_flstory,
 	patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_flstory,
 

@@ -244,7 +244,7 @@ static void ataxx_hisave (void)
 static int ataxx_hiload (void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
@@ -290,22 +290,22 @@ void ataxx_debug_dump_driver(void)
 		FILE *fp=fopen("MASTER.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 			fwrite(RAM, 0x10000, 1, fp);
 			fclose(fp);
 		}
 		fp=fopen("SLAVE.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 			fwrite(RAM, 0x10000, 1, fp);
 			fclose(fp);
 		}
 		fp=fopen("SOUND.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
-			int size=Machine->memory_region_length[Machine->drv->cpu[2].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
+			int size = memory_region_length(Machine->drv->cpu[2].memory_region);
 			if (size != 1)
 			{
 				fwrite(RAM, size, 1, fp);
@@ -399,7 +399,7 @@ int ataxx_i86_ram_r(int offset)
 	/*
 	Not very tidy, but it works for now...
 	*/
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
     return RAM[0x0c000+offset];
 }
 
@@ -408,7 +408,7 @@ void ataxx_i86_ram_w(int offset, int data)
 	/*
 	Not very tidy, but it works for now...
 	*/
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
     RAM[0x0c000+offset]=data;
 }
 
@@ -524,7 +524,7 @@ static struct GfxDecodeInfo ataxx_gfxdecodeinfo[] =
 
 void ataxx_slave_banksw_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
     int bank=data&0x0f;
     int bankaddress=0x10000*bank;
     if (!bank)
@@ -604,7 +604,7 @@ void ataxx_slave_cmd_w(int offset, int data)
 
 void ataxx_banksw_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     int bank=data & 0x0f;
     /* BANK1: Program ROM bank */
     if (!bank)
@@ -856,7 +856,7 @@ INPUT_PORTS_END
 
 void ataxx_kludge_init_machine(void)
 {
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     ataxx_init_machine();
 
     /* Hack!!!! Patch the code to get the game to start */

@@ -83,9 +83,9 @@ void crbaloon_0a_w(int offset,int data)
 
 int crbaloon_IN2_r(int offset)
 {
-	extern int BalloonCollision;
+	extern int crbaloon_collision;
 
-	if (BalloonCollision != 0)
+	if (crbaloon_collision != 0)
 	{
 		return (input_port_2_r(0) & 0xf0) | 0x08;
     }
@@ -357,7 +357,7 @@ static int hiload(void)
 {
 
 	static int firsttime =0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	if (firsttime == 0)
 		{
 			memset(&RAM[0x4014],0xff,5); /* hi score */
@@ -386,7 +386,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -418,7 +418,7 @@ struct GameDriver driver_crbaloon =
 	rom_crbaloon,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_crbaloon,
 
@@ -444,7 +444,7 @@ struct GameDriver driver_crbalon2 =
 	rom_crbalon2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_crbaloon,
 

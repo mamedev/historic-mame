@@ -7,16 +7,20 @@
 #define NOTFOUND  		1
 #define INCORRECT 		2
 #define CLONE_NOTFOUND	3
+#define BEST_AVAILABLE	4
 
 /* rom status values for tAuditRecord.status */
-#define AUD_ROM_GOOD		0
-#define AUD_ROM_NOT_FOUND	1
-#define AUD_BAD_CHECKSUM	2
-#define AUD_MEM_ERROR		3
-#define AUD_LENGTH_MISMATCH	4
+#define AUD_ROM_GOOD		0x00000001
+#define AUD_ROM_BAD			0x00000002
+#define AUD_ROM_NOT_FOUND	0x00000004
+#define AUD_NOT_AVAILABLE	0x00000008
+#define AUD_BAD_CHECKSUM	0x00000010
+#define AUD_MEM_ERROR		0x00000020
+#define AUD_LENGTH_MISMATCH	0x00000040
 
 #define AUD_MAX_ROMS		100	/* maximum roms per driver */
 #define AUD_MAX_SAMPLES		200	/* maximum samples per driver */
+
 
 typedef struct
 {
@@ -37,10 +41,8 @@ typedef void (CLIB_DECL *verify_printf_proc)(char *fmt,...);
 
 int AuditRomSet (int game, tAuditRecord **audit);
 int VerifyRomSet(int game,verify_printf_proc verify_printf);
-#if 0
 int AuditSampleSet (int game, tMissingSample **audit);
 int VerifySampleSet(int game,verify_printf_proc verify_printf);
-#endif
 int RomInSet (const struct GameDriver *gamedrv, unsigned int crc);
 int RomsetMissing (int game);
 

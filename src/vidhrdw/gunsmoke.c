@@ -120,7 +120,7 @@ void gunsmoke_vh_stop(void)
 void gunsmoke_c804_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* bits 0 and 1 are for coin counters? - we ignore them */

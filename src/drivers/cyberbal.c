@@ -142,7 +142,7 @@ static void init_machine(void)
 	atarigen_sound_io_reset(1);
 
 	/* reset the sound system */
-	bank_base = &Machine->memory_region[Machine->drv->cpu[1].memory_region][0x10000];
+	bank_base = &memory_region(Machine->drv->cpu[1].memory_region)[0x10000];
 	cpu_setbank(8, &bank_base[0x0000]);
 	fast_68k_int = io_68k_int = 0;
 	sound_data_from_68k = sound_data_from_6502 = 0;
@@ -1451,7 +1451,7 @@ struct GameDriver driver_cyberbal =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cyberbal,
 
@@ -1478,7 +1478,7 @@ struct GameDriver driver_cyberbt =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cyberbal,
 
@@ -1505,7 +1505,7 @@ struct GameDriver driver_cyberb2p =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cyberb2p,
 

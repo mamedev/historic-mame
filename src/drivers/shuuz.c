@@ -454,7 +454,7 @@ struct GameDriver driver_shuuz =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shuuz,
 
@@ -481,7 +481,7 @@ struct GameDriver driver_shuuz2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shuuz2,
 

@@ -863,7 +863,7 @@ struct GameDriver driver_ddragon3 =
 	rom_ddragon3,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_ddragon3,
 
@@ -890,7 +890,7 @@ struct GameDriver driver_ddrago3b =
 	rom_ddrago3b,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_ddrago3b,
 
@@ -917,7 +917,7 @@ struct GameDriver driver_ctribe =
 	rom_ctribe,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_ctribe,
 
@@ -944,7 +944,7 @@ struct GameDriver driver_ctribeb =
 	rom_ctribeb,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_ctribe,
 

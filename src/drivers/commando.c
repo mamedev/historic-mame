@@ -428,7 +428,7 @@ ROM_END
 static void commando_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* the first opcode is not encrypted */
@@ -445,7 +445,7 @@ static void commando_decode(void)
 static void spaceinv_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* the first opcode *is* encrypted */
@@ -462,7 +462,7 @@ static void spaceinv_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -492,7 +492,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -521,7 +521,7 @@ struct GameDriver driver_commando =
 	rom_commando,
 	0, commando_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_commando,
 
@@ -547,7 +547,7 @@ struct GameDriver driver_commandu =
 	rom_commandu,
 	0, commando_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_commando,
 
@@ -573,7 +573,7 @@ struct GameDriver driver_commandj =
 	rom_commandj,
 	0, commando_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_commando,
 
@@ -599,7 +599,7 @@ struct GameDriver driver_spaceinv =
 	rom_spaceinv,
 	0, spaceinv_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_commando,
 

@@ -71,7 +71,7 @@ static void crimfght_snd_bankswitch_w(int offset, int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	int data = ( RAM[0x0414] << 8 ) | RAM[0x0415];
 
@@ -490,7 +490,7 @@ ROM_START( crimfght )
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
 
 	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( crimfgtj )
@@ -513,7 +513,7 @@ ROM_START( crimfgtj )
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
 
 	ROM_REGION(0x0100)	/* PROMs */
-	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
+	ROM_LOAD( "821a08.i15", 0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
 
@@ -525,7 +525,7 @@ ROM_END
 
 static void crimfght_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs = 0;
 
 	/* bit 5 = select work RAM or palette */
@@ -540,7 +540,7 @@ static void crimfght_banking( int lines )
 
 static void crimfght_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	konami_cpu_setlines_callback = crimfght_banking;
 	paletteram_selected = 0;
@@ -573,7 +573,7 @@ struct GameDriver driver_crimfght =
 	rom_crimfght,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_crimfght,
 
@@ -598,7 +598,7 @@ struct GameDriver driver_crimfgtj =
 	rom_crimfgtj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_crimfgtj,
 

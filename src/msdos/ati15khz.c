@@ -14,6 +14,7 @@
 
 extern int center_x;
 extern int center_y;
+extern int use_triplebuf;
 
 /* Save values */
 static int DSPSet;
@@ -22,9 +23,21 @@ static int SaveDSPConfig;
 
 /* Currently -
 	only ATI cards based on the Mach64 chipset which have an internal clock/DAC
-	are supported */
+	are supported (see note below)*/
 
 /* Tested on a 3D Rage Pro II+ , 3D Rage Charger and Xpert@Play */
+
+/* NOTE: There are 2 versions of this driver, */
+/* one reprograms the clock to generate the mode (original driver) */
+/* the other doubles the scan line to generate the mode */
+
+/* The first version's display is smaller (and therefore faster), but only works on */
+/* cards which have internal clocks */
+/* The second should work on all Mach64 based cards */
+
+/* Comment out the following line to use the no-clock programming driver */
+#define ATI_PROGRAM_CLOCK
+
 
 /* Type of clock */
 char *mach64ClockTypeTable[] =
@@ -63,6 +76,7 @@ static int _mach64_crtc_h_total;
 static int _mach64_crtc_h_sync;
 static int _mach64_crtc_v_total;
 static int _mach64_crtc_v_sync;
+static int _mach64_crtc_v_line;
 static int _mach64_over_left_right;
 static int _mach64_over_top_bott;
 static int _mach64_mem_cntl;
@@ -82,6 +96,7 @@ int detectati(void)
 	int ROM_Table_Offset;
 	int Freq_Table_Ptr;
 	int Clock_Type;
+
 
 
 	/* query mach64 BIOS for the I/O base address */
@@ -140,15 +155,50 @@ int detectati(void)
 
 
 /*Get some useful registers while we're here  */
+
 /*
-M+090h/4AECh D(R/W):  Clock_Cntl
-bit   0-3  Clock_Sel. Clock select bit 0-3. Output to the clock chip
-      4-5  Clock_Div. Internal clock divider. 0: no div, 1: /2, 2: /4
-        6  (W) Clock_Strobe. Connected to the strobe or clk input on
-            programmable clock chips
-        7  Clock_Serial_Data. Data I/O for programmable clock chips
+M+000h/02ECh D(R/W):  Crtc_H_Total_Disp
+bit   0-7  Crtc_H_Total. Horizontal Total in character clocks (8 pixel units)
+    16-23  Crtc_H_Disp. Horizontal Display End in character clocks.
 */
-	_mach64_clock_reg = get_mach64_port (r.x.cx, r.x.dx, 0x12, 0x24);
+
+	_mach64_crtc_h_total = get_mach64_port (r.x.cx, r.x.dx, 0x00, 0x00);
+/*
+M+004h/06ECh D(R/W):  Crtc_H_Sync_Strt_Wid
+bit   0-7  Crtc_H_Sync_Strt. Horizontal Sync Start in character clocks (8
+           pixel units)
+     8-10  Crtc_H_Sync_Dly. Horizontal Sync Start delay in pixels
+    16-20  Crtc_H_Sync_Wid. Horizontal Sync Width in character clocks
+       21  Crtc_H_Sync_Pol. Horizontal Sync Polarity
+*/
+	_mach64_crtc_h_sync = get_mach64_port (r.x.cx, r.x.dx, 0x01, 0x01);
+/*
+M+008h/0AECh D(R/W):  Crtc_V_Total_Disp
+bit  0-10  Crtc_V_Total. Vertical Total
+    16-26  Crtc_V_Disp. Vertical Displayed End
+*/
+	_mach64_crtc_v_total = get_mach64_port (r.x.cx, r.x.dx, 0x02, 0x02);
+/*
+M+00Ch/0EECh D(R/W):  Crtc_V_Sync_Strt_Wid
+bit  0-10  Crtc_V_Sync_Strt. Vertical Sync Start
+    16-20  Crtc_V_Sync_Wid. Vertical Sync Width
+       21  Crtc_V_Sync_Pol. Vertical Sync Polarity
+*/
+	_mach64_crtc_v_sync = get_mach64_port (r.x.cx, r.x.dx, 0x03, 0x03);
+
+/*
+M+010h/12ECh D(R/W):  Crtc_Vline_Crnt_Vline
+bit  0-10  The line at which Vertical Line interrupt is triggered
+    16-26  (R) Crtc_Crnt_Vline. The line currently being displayed
+*/
+	_mach64_crtc_v_line = get_mach64_port (r.x.cx, r.x.dx, 0x04, 0x04);
+
+/*
+M+014h/16ECh D(R/W):  Crtc_Off_Pitch
+bit  0-19  Crtc_Offset. Display Start Address in units of 8 bytes.
+    22-31  Crtc_Pitch. Display pitch in units of 8 pixels
+*/
+	_mach64_off_pitch = get_mach64_port (r.x.cx, r.x.dx, 0x05, 0x05);
 
 /*
 M+01Ch/1EECh D(R/W):  Crtc_Gen_Cntl
@@ -172,12 +222,22 @@ bit     0  Crtc_Dbl_Scan_En. Enables double scan
 */
 
 	_mach64_gen_cntrl = get_mach64_port (r.x.cx, r.x.dx, 0x07, 0x07);
+
+/* DSP registers  */
+/* No reliable information available about these....  */
+	_mach64_dsp_config = get_mach64_port (r.x.cx, r.x.dx, 0x08, 0x08);
+	_mach64_dsp_on_off = get_mach64_port (r.x.cx, r.x.dx, 0x09, 0x09);
+
+
 /*
-M+014h/16ECh D(R/W):  Crtc_Off_Pitch
-bit  0-19  Crtc_Offset. Display Start Address in units of 8 bytes.
-    22-31  Crtc_Pitch. Display pitch in units of 8 pixels
+M+090h/4AECh D(R/W):  Clock_Cntl
+bit   0-3  Clock_Sel. Clock select bit 0-3. Output to the clock chip
+      4-5  Clock_Div. Internal clock divider. 0: no div, 1: /2, 2: /4
+        6  (W) Clock_Strobe. Connected to the strobe or clk input on
+            programmable clock chips
+        7  Clock_Serial_Data. Data I/O for programmable clock chips
 */
-	_mach64_off_pitch = get_mach64_port (r.x.cx, r.x.dx, 0x05, 0x05);
+	_mach64_clock_reg = get_mach64_port (r.x.cx, r.x.dx, 0x12, 0x24);
 
 /*
 M+0C4h/62ECh D(R/W):  Dac_Cntl
@@ -227,35 +287,6 @@ bit   0-2  Cfg_Bus_Type. Host Bus type. 0: ISA, 1: EISA, 6: VLB, 7: PCI
 */
 	_mach64_config_stat0 = get_mach64_port (r.x.cx, r.x.dx, 0x1c, 0x39);
 /*
-M+000h/02ECh D(R/W):  Crtc_H_Total_Disp
-bit   0-7  Crtc_H_Total. Horizontal Total in character clocks (8 pixel units)
-    16-23  Crtc_H_Disp. Horizontal Display End in character clocks.
-*/
-
-	_mach64_crtc_h_total = get_mach64_port (r.x.cx, r.x.dx, 0x00, 0x00);
-/*
-M+004h/06ECh D(R/W):  Crtc_H_Sync_Strt_Wid
-bit   0-7  Crtc_H_Sync_Strt. Horizontal Sync Start in character clocks (8
-           pixel units)
-     8-10  Crtc_H_Sync_Dly. Horizontal Sync Start delay in pixels
-    16-20  Crtc_H_Sync_Wid. Horizontal Sync Width in character clocks
-       21  Crtc_H_Sync_Pol. Horizontal Sync Polarity
-*/
-	_mach64_crtc_h_sync = get_mach64_port (r.x.cx, r.x.dx, 0x01, 0x01);
-/*
-M+008h/0AECh D(R/W):  Crtc_V_Total_Disp
-bit  0-10  Crtc_V_Total. Vertical Total
-    16-26  Crtc_V_Disp. Vertical Displayed End
-*/
-	_mach64_crtc_v_total = get_mach64_port (r.x.cx, r.x.dx, 0x02, 0x02);
-/*
-M+00Ch/0EECh D(R/W):  Crtc_V_Sync_Strt_Wid
-bit  0-10  Crtc_V_Sync_Strt. Vertical Sync Start
-    16-20  Crtc_V_Sync_Wid. Vertical Sync Width
-       21  Crtc_V_Sync_Pol. Vertical Sync Polarity
-*/
-	_mach64_crtc_v_sync = get_mach64_port (r.x.cx, r.x.dx, 0x03, 0x03);
-/*
 M+044h/26ECh D(R/W):  Ovr_Wid_Left_Right
 bit   0-3  Ovr_Wid_Left. Left overscan width in character clocks
     16-19  Ovr_Wid_Right. Right overscan width in character clocks
@@ -297,10 +328,6 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
     24-31  Cfg_Chip_Rev. Revision code
 */
 	_mach64_chip_id = get_mach64_port (r.x.cx, r.x.dx, 0x1b, 0x38);
-/* DSP registers  */
-/* No reliable information available about these....  */
-	_mach64_dsp_config = get_mach64_port (r.x.cx, r.x.dx, 0x08, 0x08);
-	_mach64_dsp_on_off = get_mach64_port (r.x.cx, r.x.dx, 0x09, 0x09);
 /* get the chip ID  */
 	old = inportl(_mach64_chip_id);
 	ChipID = (int)(old & CFG_CHIP_TYPE);
@@ -372,6 +399,8 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 	MemType = old & CFG_MEM_TYPE_xT;
 	if(errorlog)
 		fprintf(errorlog,"15.75KHz: Video Memory  Type %d\n",MemType);
+
+#ifdef ATI_PROGRAM_CLOCK
 /* only bail out here if the clock's wrong  */
 /* so we can collect as much info as possible about the card  */
 /* - just in case I ever feel like adding RAMDAC support  */
@@ -381,12 +410,27 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 			fprintf(errorlog,"15.75KHz: Clock type not supported, only internal clocks implemented\n");
 		return 0;
 	}
+#endif
 
 	DSPSet=0;
 
 	if(errorlog)
 		fprintf(errorlog,"15.75KHz: Found Mach64 based card with internal clock\n");
 	return 1;
+}
+
+int widthati15KHz(int width)
+{
+#ifdef ATI_PROGRAM_CLOCK
+/* standard width */
+	return width;
+#else
+/* double width scan line */
+/* turn off triple buffering */
+	use_triplebuf = 0;
+/* and return the actual width of the mode */
+	return width << 1;
+#endif
 }
 
 int setati15KHz(int vdouble,int width, int height)
@@ -396,12 +440,15 @@ int setati15KHz(int vdouble,int width, int height)
 	int nHzTotal;
 	int nHzDisplay;
 	int nHzSyncOffset;
+	int nVSyncOffset;
 	int nOffSet;
 	int interlace;
 	int dispdouble;
 	long int temp;
 	long int gen;
-	int temp1,temp2,temp3;
+#ifdef ATI_PROGRAM_CLOCK
+  	int temp1,temp2,temp3;
+#endif
 	int	lastvisline;
 	int	vTotal;
 
@@ -413,8 +460,8 @@ int setati15KHz(int vdouble,int width, int height)
 /* last visible line */
 	lastvisline = height >> 1;
 
-/* get clock and horizontal totals  */
-	if (!calc_mach64_height (vdouble, &nOffSet, &interlace, &dispdouble, &vTotal))
+/* get clock and horizontal/vertical totals  */
+	if (!calc_mach64_height (vdouble, &nOffSet, &interlace, &dispdouble, &vTotal, &nVSyncOffset, &lastvisline))
 		return 0;
 
 	if (!calc_mach64_scanline (&nHzTotal, &nHzDisplay, &nHzSyncOffset, &n, &P, &extdiv, &nActualMHz))
@@ -428,13 +475,14 @@ int setati15KHz(int vdouble,int width, int height)
 /* unlock the regs and disable the CRTC */
 	outportw (_mach64_gen_cntrl, gen & ~(CRTC_FLAG_lock_regs|CRTC_FLAG_enable_crtc));
 
+#ifdef ATI_PROGRAM_CLOCK
 /* we need to program the DSP - otherwise we'll get nasty artifacts all over the screen */
 /* when we change the clock speed */
 	if (((ChipType == MACH64_VT || ChipType == MACH64_GT)&&(ChipRev & 0x07)))
 	{
 		if (errorlog)
 			fprintf (errorlog, "15.75KHz: Programming the DSP\n");
-		if (!setmach64DSP())
+		if (!setmach64DSP(0))
 		{
 			outportl (_mach64_gen_cntrl, gen);
 			return 0;
@@ -445,8 +493,8 @@ int setati15KHz(int vdouble,int width, int height)
 		if (errorlog)
 			fprintf (errorlog, "15.75KHz: Decided NOT to program the DSP\n");
 	}
-/* now we can program the clock */
 
+/* now we can program the clock */
 	outportb (_mach64_clock_reg + 1, PLL_VCLK_CNTL << 2);
 	temp1 = inportb (_mach64_clock_reg + 2);
 	outportb (_mach64_clock_reg + 1, (PLL_VCLK_CNTL  << 2) | PLL_WR_EN);
@@ -479,17 +527,29 @@ int setati15KHz(int vdouble,int width, int height)
 
 /* reset the DAC */
 	inportb (_mach64_dac_cntl);
+#endif
+
+	if (errorlog)
+	{
+		fprintf (errorlog, "15.75KHz: H total %d, H display %d, H sync offset %d\n",nHzTotal,nHzDisplay,nHzSyncOffset);
+		fprintf (errorlog, "15.75KHz: V total %d, V display %d, V sync offset %d\n",vTotal,lastvisline,nVSyncOffset);
+	}
 
 /* now setup the CRTC timings */
+
 	outportb (_mach64_crtc_h_total, nHzTotal);  /* h total */
 	outportb (_mach64_crtc_h_total + 2, nHzDisplay); /* h display width */
 	outportb (_mach64_crtc_h_sync, nHzDisplay+nHzSyncOffset + center_x);   /* h sync start */
 	outportb (_mach64_crtc_h_sync + 1, 0);  /* h sync delay */
-	outportb (_mach64_crtc_h_sync + 2, 10); /* h sync width */
+#ifdef ATI_PROGRAM_CLOCK
+	outportb (_mach64_crtc_h_sync + 2, 12); /* h sync width */
+#else
+	outportb (_mach64_crtc_h_sync + 2, 20); /* h sync width */
+#endif
 	outportw (_mach64_crtc_v_total, (vTotal<<interlace));   /* v total */
 	outportw (_mach64_crtc_v_total + 2, (lastvisline<<interlace)-1);  /* v display height */
-	outportw (_mach64_crtc_v_sync, ((lastvisline+2)<<interlace) + center_y);    /* v sync start */
-	outportb (_mach64_crtc_v_sync + 2, 2);          /* v sync width */
+	outportw (_mach64_crtc_v_sync, ((lastvisline+nVSyncOffset)<<interlace) + center_y);    /* v sync start */
+	outportb (_mach64_crtc_v_sync + 2, 3);          /* v sync width */
 
 /* make sure sync is negative */
 	temp = inportl(_mach64_crtc_h_sync);
@@ -498,7 +558,7 @@ int setati15KHz(int vdouble,int width, int height)
 
 	temp = inportl(_mach64_crtc_v_sync);
 	temp |= CRTC_V_SYNC_NEG;
-	outportl (_mach64_crtc_v_sync,temp);
+  	outportl (_mach64_crtc_v_sync,temp);
 
 /* clear any overscan */
 	outportb (_mach64_over_left_right,0);
@@ -515,9 +575,9 @@ int setati15KHz(int vdouble,int width, int height)
 	gen |= (15<<16);
 
 /* turn on/off interlacing */
-	if (interlace)
+  	if (interlace)
 		gen |= CRTC_Enable_Interlace;
-	else
+  	else
 		gen &=~ CRTC_Enable_Interlace;
 /* set the interlace flag */
 	setinterlaceflag (interlace);
@@ -540,7 +600,7 @@ void resetati15KHz()
 /* so, I'll leave 'em for the moment */
 }
 
-int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,int *vTotal)
+int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,int *vTotal,int *nVSyncOffset,int *nlastline)
 {
 	int nVtDispTotal;
 	long int lport;
@@ -548,7 +608,8 @@ int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,i
 
 /* get the current visible display total */
 	nVtDispTotal = getVtEndDisplay();
-/* assume it's hires and we're :- going to interlace, not alter scanline doubling, and not change the offset */
+/* assume it's hires and we're :-  */
+/* going to interlace, not alter scanline doubling, and not change the offset */
 	*interlace = 1;
 	*dispdouble = 0;
 	temp = inportl (_mach64_off_pitch);
@@ -559,11 +620,9 @@ int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,i
 
 	switch (nVtDispTotal)
 	{
-		case 479:
-			*vTotal = 264;
-		case 599:
-			if (!*vTotal)
-				*vTotal = 324;
+		case 479:	/* 640x480 */
+			*vTotal = 256 + tw640x480arc_v;
+			*nVSyncOffset = 2;
 			if (vdouble)
 			{
 				if (errorlog)
@@ -597,29 +656,23 @@ int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,i
 int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int *N,int *P,int *externaldiv,int *nActualMHz)
 {
 /* set clock and horizontal Total based on Horizontal display width */
-/* NOTE: Only 640x480 implemented so far, */
+/* NOTE: Only 640x480 so far, */
 /* 320x240 has a very low clock width and even with the slowest clock speed has a 'bad' aspect ratio */
 /* doubled 640x480 looks a lot better and runs about as fast */
+/* higher resolutions just result in more and more overscan */
 
 	int nTargetHzTotal, nActualHzTotal;
-	int nTargetMHz;
+	int nTargetMHz=0;
 /* get the horizontal width */
 	*nHzDispTotal = inportb (_mach64_crtc_h_total + 2);
 	switch (*nHzDispTotal)
 	{
-		case 79: /* 80 - most likey 640x480 */
+		case 79: /* 640x480 */
 			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Attempting to use 14MHz Clock\n");
+				fprintf (errorlog, "15.75KHz: 640x480 mode Attempting to use 14MHz Clock\n");
 			nTargetMHz = 1400;
-			nTargetHzTotal = 110;
+			nTargetHzTotal = tw640x480arc_h - 83;
 			*nHzSyncOffset = 6;
-			break;
-		case 99: /* 100 - most likey 800x600 */
-			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Attempting to use ??MHz Clock\n");
-			nTargetMHz = 1400;
-			nTargetHzTotal = 110;
-       		*nHzSyncOffset = 6;
 			break;
 		default: /* unhandled res, return error */
 			if (errorlog)
@@ -627,6 +680,7 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 
 			return 0;
 	}
+#ifdef ATI_PROGRAM_CLOCK
 /* calculate the clock */
 	*nActualMHz = calc_mach64_clock (nTargetMHz, N, P, externaldiv);
 /* adjust the horizontal total */
@@ -634,7 +688,16 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 	if (errorlog)
 		fprintf (errorlog, "15.75KHz: tgt MHz:%d, act MHz:%d, tgt HzTot:%d, act HzTot:%d\n",
 				nTargetMHz, *nActualMHz, nTargetHzTotal, nActualHzTotal);
+#else
+/* not programming the clock, so setup a double width scan line */
+	*nActualMHz = 0;
+	nActualHzTotal = tw640x480arc_h + 5;
+	*nHzDispTotal = (*nHzDispTotal * 2) + 1;
+	*nHzSyncOffset = 0;
+	if (errorlog)
+		fprintf (errorlog, "15.75KHz: HzTot:%d\n", nActualHzTotal);
 
+#endif
 
 	*nHzTotal = nActualHzTotal;
 	return 1;
@@ -747,17 +810,18 @@ int get_mach64_port(int io_type, int io_base, int io_sel, int mm_sel)
 
 
 
-int setmach64DSP(void)
+int setmach64DSP(int nAdd)
 {
 	unsigned short dsp_on, dsp_off, dsp_xclks_per_qw, dsp_prec, loop_latency;
 	long portval;
+	static int offset=0;
 
+	offset+=nAdd;
 /* okay, I've been unable to get any reliable information about the DSP */
 /* so these are just values that work for this :- */
 /* dot clock speed, colour depth and video clock speed */
 /* found after a bit of hacking around */
 /*- The memory stuff is probably real though */
-
 
 /* get the colour depth */
 	portval = inportb (_mach64_gen_cntrl+1) & 7;
@@ -769,11 +833,11 @@ int setmach64DSP(void)
 			{
 				/* 100MHz -  for newer/faster cards */
 				case 10000:
-                    dsp_xclks_per_qw = 2239;
+                    dsp_xclks_per_qw = 2239+offset;
 					break;
 				/* Standard video memory speed (usually 60MHz)*/
 				default:
-                    dsp_xclks_per_qw = 2189;
+                    dsp_xclks_per_qw = 2189+offset;
 			}
             if (errorlog)
                 fprintf(errorlog,"DSP value %d (8bit)\n",dsp_xclks_per_qw);
@@ -785,11 +849,11 @@ int setmach64DSP(void)
 			{
 				/* 100MHz -  for newer/faster cards */
 				case 10000:
-                    dsp_xclks_per_qw = 3655;
+                    dsp_xclks_per_qw = 3655+offset;
 					break;
 				/* Standard video memory speed (usually 60MHz)*/
 				default:
-					dsp_xclks_per_qw = 3679;
+					dsp_xclks_per_qw = 3679+offset;
 			}
             if (errorlog)
                 fprintf(errorlog,"DSP value %d (16bit)\n",dsp_xclks_per_qw);
@@ -835,7 +899,7 @@ int setmach64DSP(void)
 				| (dsp_xclks_per_qw & DSP_XCLKS_PER_QW));
 	DSPSet = 1;
 
-	return 1;
+	return dsp_xclks_per_qw;
 }
 
 

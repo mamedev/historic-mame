@@ -628,7 +628,7 @@ struct GameDriver driver_hydra =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hydra,
 
@@ -655,7 +655,7 @@ struct GameDriver driver_hydrap =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hydra,
 
@@ -682,7 +682,7 @@ struct GameDriver driver_pitfight =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pitfight,
 
@@ -709,7 +709,7 @@ struct GameDriver driver_pitfigh3 =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pitfight,
 

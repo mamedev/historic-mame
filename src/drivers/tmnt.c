@@ -30,7 +30,6 @@ TODO:
   see the left corner in punkshot DownTown level
 - some slowdowns in lgtnfght when there are many sprites on screen - vblank issue?
 - 053260 sound emulation for
-Thunder Cross II
 Asterix
 
 ***************************************************************************/
@@ -61,12 +60,15 @@ int detatwin_vh_start(void);
 void detatwin_vh_stop(void);
 int glfgreat_vh_start(void);
 void glfgreat_vh_stop(void);
+int thndrx2_vh_start(void);
+void thndrx2_vh_stop(void);
 void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static int tmnt_soundlatch;
 
 
@@ -457,6 +459,70 @@ static void ssriders_eeprom_w(int offset,int data)
 }
 
 
+static struct EEPROM_interface thndrx2_eeprom_interface =
+{
+	7,				/* address bits */
+	8,				/* data bits */
+	"011000",		/*  read command */
+	"010100",		/* write command */
+	0,				/* erase command */
+	"0100000000000",/* lock command */
+	"0100110000000" /* unlock command */
+};
+
+static void thndrx2_eeprom_init(void)
+{
+	EEPROM_init(&thndrx2_eeprom_interface);
+	init_eeprom_count = 0;
+}
+
+static int thndrx2_in0_r(int offset)
+{
+	int res;
+
+	res = input_port_0_r(0);
+	if (init_eeprom_count)
+	{
+		init_eeprom_count--;
+		res &= 0xf7ff;
+	}
+	return res;
+}
+
+static int thndrx2_eeprom_r(int offset)
+{
+	int res;
+	static int toggle;
+
+	/* bit 0 is EEPROM data */
+	/* bit 1 is EEPROM ready */
+	/* bit 3 is VBLANK (???) */
+	/* bit 7 is service button */
+	res = (EEPROM_read_bit() << 8) | input_port_1_r(0);
+	toggle ^= 0x0800;
+	return (res ^ toggle);
+}
+
+static void thndrx2_eeprom_w(int offset,int data)
+{
+	static int last;
+
+
+	/* bit 0 is data */
+	/* bit 1 is cs (active low) */
+	/* bit 2 is clock (active high) */
+	EEPROM_write_bit(data & 0x01);
+	EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 5 triggers IRQ on sound cpu */
+	if (last == 0 && (data & 0x20) != 0)
+		cpu_cause_interrupt(1,0xff);
+
+	last = data & 0x20;
+}
+
+
 
 static struct MemoryReadAddress mia_readmem[] =
 {
@@ -719,7 +785,7 @@ void tmnt2_1c0800_w( int offset, int data )
 		CellSrc = ( READ_WORD( &tmnt2_1c0800[0x00] ) | ( READ_WORD( &tmnt2_1c0800[0x02] ) << 16 ) );
 //        if ( CellDest >= 0x180000 && CellDest < 0x183fe0 ) {
         CellVar -= 0x104000;
-		src = &Machine->memory_region[0][CellSrc];
+		src = &memory_region(Machine->drv->cpu[0].memory_region)[CellSrc];
 
 		cpu_writemem24_word(dst+0x00,0x8000 | ((READ_WORD(src+2) & 0xfc00) >> 2));	/* size, flip xy */
         cpu_writemem24_word(dst+0x04,READ_WORD(src+0));	/* code */
@@ -848,6 +914,53 @@ static struct MemoryWriteAddress ssriders_writemem[] =
 };
 
 
+static struct MemoryReadAddress thndrx2_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x100000, 0x103fff, MRA_BANK1 },	/* main RAM */
+	{ 0x200000, 0x200fff, paletteram_word_r },
+	{ 0x400000, 0x400003, punkshot_sound_r },	/* K053260 */
+	{ 0x500000, 0x50003f, K054000_halfword_r },
+	{ 0x500200, 0x500201, thndrx2_in0_r },
+	{ 0x500202, 0x500203, thndrx2_eeprom_r },
+	{ 0x600000, 0x603fff, K052109_word_r },
+	{ 0x604000, 0x606fff, MRA_BANK2 },
+	{ 0x700000, 0x700007, K051937_word_r },
+	{ 0x700400, 0x7007ff, K051960_word_r },
+#if 0
+	{ 0x1c0000, 0x1c0001, input_port_0_r },
+	{ 0x1c0002, 0x1c0003, input_port_1_r },
+	{ 0x1c0004, 0x1c0005, input_port_4_r },
+	{ 0x1c0006, 0x1c0007, input_port_5_r },
+	{ 0x1c0400, 0x1c0401, watchdog_reset_r },
+	{ 0x1c0800, 0x1c0801, ssriders_kludge },	/* protection device */
+#endif
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress thndrx2_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x100000, 0x103fff, MWA_BANK1 },	/* main RAM */
+	{ 0x200000, 0x200fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x300000, 0x30001f, K053251_halfword_w },
+	{ 0x400000, 0x400001, K053260_WriteReg },
+	{ 0x500000, 0x50003f, K054000_halfword_w },
+	{ 0x500100, 0x500101, thndrx2_eeprom_w },
+	{ 0x600000, 0x603fff, K052109_word_w },
+	{ 0x604000, 0x606fff, MWA_BANK2 },
+	{ 0x700000, 0x700007, K051937_word_w },
+	{ 0x700400, 0x7007ff, K051960_word_w },
+#if 0
+	{ 0x1c0300, 0x1c0301, ssriders_1c0300_w },
+	{ 0x1c0400, 0x1c0401, watchdog_reset_w },
+//	{ 0x1c0800, 0x1c081f,  },	/* protection device */
+	{ 0x5c0604, 0x5c0605, ssriders_soundkludge_w },
+#endif
+	{ -1 }	/* end of table */
+};
+
+
 
 static struct MemoryReadAddress mia_s_readmem[] =
 {
@@ -967,6 +1080,26 @@ static struct MemoryWriteAddress ssriders_s_writemem[] =
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa2f, K053260_WriteReg },
 	{ 0xfc00, 0xfc00, sound_arm_nmi },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress thndrx2_s_readmem[] =
+{
+	{ 0x0000, 0xefff, MRA_ROM },
+	{ 0xf000, 0xf7ff, MRA_RAM },
+	{ 0xf801, 0xf801, YM2151_status_port_0_r },
+	{ 0xfc00, 0xfc2f, K053260_ReadReg },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress thndrx2_s_writemem[] =
+{
+	{ 0x0000, 0xefff, MWA_ROM },
+	{ 0xf000, 0xf7ff, MWA_RAM },
+	{ 0xf800, 0xf800, YM2151_register_port_0_w },
+	{ 0xf811, 0xf811, YM2151_data_port_0_w },
+	{ 0xfc00, 0xfc2f, K053260_WriteReg },
+//	{ 0xfc00, 0xfc00, sound_arm_nmi },
 	{ -1 }	/* end of table */
 };
 
@@ -1884,6 +2017,44 @@ INPUT_PORTS_START( ssriders )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( thndrx2 )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(0x0800, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* EEPROM and service */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* EEPROM data */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* EEPROM status? - always 1 */
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* VBLK?? */
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 
 static struct YM2151interface ym2151_interface =
@@ -2362,6 +2533,56 @@ static struct MachineDriver ssriders_machine_driver =
 	}
 };
 
+static struct MachineDriver thndrx2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* 12 MHz */
+			0,
+			thndrx2_readmem,thndrx2_writemem,0,0,
+			m68_level4_irq,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* ????? makes the ROM test sync */
+			3,
+			thndrx2_s_readmem,thndrx2_s_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+								/* NMIs are generated by the 053260 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	thndrx2_eeprom_init,
+
+	/* video hardware */
+	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
+	0,	/* gfx decoded by konamiic.c */
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	thndrx2_vh_start,
+	thndrx2_vh_stop,
+	thndrx2_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_K053260,
+			&k053260_interface_nmi
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -2768,7 +2989,7 @@ ROM_START( detatwin )
 	ROM_LOAD_GFX_SWAP( "060_e06.r16",  0x000000, 0x080000, 0x09381492 )	/* sprites */
 	ROM_LOAD_GFX_SWAP( "060_e05.r16",  0x080000, 0x080000, 0x32454241 )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "060_j01.rom",  0x0000, 0x10000, 0xf9d9a673 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2788,7 +3009,7 @@ ROM_START( glfgreat )
 	ROM_LOAD( "061d11.3k",    0x000000, 0x100000, 0xc45b66a3 )	/* sprites */
 	ROM_LOAD( "061d12.8k",    0x100000, 0x100000, 0xd305ecd1 )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "061f01.4e",    0x0000, 0x8000, 0xab9a2a57 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2822,7 +3043,7 @@ ROM_START( tmnt2 )
 	ROM_LOAD( "b08",          0x300000, 0x080000, 0x3b1ae36f )
 	/* second half empty */
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "b01",          0x0000, 0x10000, 0x364f548a )
 
 	ROM_REGION(0x200000)	/* samples for the 053260 */
@@ -2848,7 +3069,7 @@ ROM_START( tmnt22p )
 	ROM_LOAD( "b08",          0x300000, 0x080000, 0x3b1ae36f )
 	/* second half empty */
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "b01",          0x0000, 0x10000, 0x364f548a )
 
 	ROM_REGION(0x200000)	/* samples for the 053260 */
@@ -2874,7 +3095,7 @@ ROM_START( tmnt2a )
 	ROM_LOAD( "b08",          0x300000, 0x080000, 0x3b1ae36f )
 	/* second half empty */
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "b01",          0x0000, 0x10000, 0x364f548a )
 
 	ROM_REGION(0x200000)	/* samples for the 053260 */
@@ -2896,7 +3117,7 @@ ROM_START( ssriders )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2918,7 +3139,7 @@ ROM_START( ssrdrebd )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2940,7 +3161,7 @@ ROM_START( ssrdrebc )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2962,7 +3183,7 @@ ROM_START( ssrdruda )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -2984,7 +3205,7 @@ ROM_START( ssrdruac )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -3006,7 +3227,7 @@ ROM_START( ssrdrubc )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -3028,7 +3249,7 @@ ROM_START( ssrdrabd )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
@@ -3050,11 +3271,31 @@ ROM_START( ssrdrjbd )
 	ROM_LOAD( "sr_7l.rom",    0x000000, 0x100000, 0x4160c372 )	/* sprites */
 	ROM_LOAD( "sr_3l.rom",    0x100000, 0x100000, 0x64dd673c )
 
-	ROM_REGION(0x010000) /* 64k for the audio CPU */
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "sr_e01.rom",   0x0000, 0x10000, 0x44b9bc52 )
 
 	ROM_REGION(0x100000)	/* samples for the 053260 */
 	ROM_LOAD( "sr_1d.rom",    0x0000, 0x100000, 0x59810df9 )
+ROM_END
+
+ROM_START( thndrx2 )
+	ROM_REGION(0x40000)
+	ROM_LOAD_EVEN( "073-k02.11c", 0x000000, 0x20000, 0x0c8b2d3f )
+	ROM_LOAD_ODD ( "073-k03.12c", 0x000000, 0x20000, 0x3803b427 )
+
+    ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "073-c06.16k",  0x000000, 0x080000, 0x24e22b42 )	/* tiles */
+	ROM_LOAD( "073-c05.12k",  0x080000, 0x080000, 0x952a935f )
+
+	ROM_REGION(0x100000)	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "073-c07.7k",   0x000000, 0x080000, 0x14e93f38 )	/* sprites */
+	ROM_LOAD( "073-c08.3k",   0x080000, 0x080000, 0x09fab3ab )
+
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "073-c01.4f",   0x0000, 0x10000, 0x44ebe83c )
+
+	ROM_REGION(0x80000)	/* samples for the 053260 */
+	ROM_LOAD( "073-b04.2d",   0x0000, 0x80000, 0x7f7f2fd3 )
 ROM_END
 
 
@@ -3345,7 +3586,7 @@ struct GameDriver driver_mia =
 	rom_mia,
 	mia_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mia,
 
@@ -3371,7 +3612,7 @@ struct GameDriver driver_mia2 =
 	rom_mia2,
 	mia_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mia,
 
@@ -3397,7 +3638,7 @@ struct GameDriver driver_tmnt =
 	rom_tmnt,
 	tmnt_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tmnt,
 
@@ -3423,7 +3664,7 @@ struct GameDriver driver_tmht =
 	rom_tmht,
 	tmnt_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tmnt,
 
@@ -3449,7 +3690,7 @@ struct GameDriver driver_tmntj =
 	rom_tmntj,
 	tmnt_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tmnt,
 
@@ -3475,7 +3716,7 @@ struct GameDriver driver_tmht2p =
 	rom_tmht2p,
 	tmnt_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tmnt2p,
 
@@ -3501,7 +3742,7 @@ struct GameDriver driver_tmnt2pj =
 	rom_tmnt2pj,
 	tmnt_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tmnt2p,
 
@@ -3527,7 +3768,7 @@ struct GameDriver driver_punkshot =
 	rom_punkshot,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_punkshot,
 
@@ -3553,7 +3794,7 @@ struct GameDriver driver_punksht2 =
 	rom_punksht2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_punksht2,
 
@@ -3579,7 +3820,7 @@ struct GameDriver driver_lgtnfght =
 	rom_lgtnfght,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_lgtnfght,
 
@@ -3605,7 +3846,7 @@ struct GameDriver driver_trigon =
 	rom_trigon,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_lgtnfght,
 
@@ -3631,7 +3872,7 @@ struct GameDriver driver_detatwin =
 	rom_detatwin,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_detatwin,
 
@@ -3657,7 +3898,7 @@ struct GameDriver driver_glfgreat =
 	rom_glfgreat,
 	glfgreat_gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_glfgreat,
 
@@ -3683,7 +3924,7 @@ struct GameDriver driver_tmnt2 =
 	rom_tmnt2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders4p,
 
@@ -3709,7 +3950,7 @@ struct GameDriver driver_tmnt22p =
 	rom_tmnt22p,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3735,7 +3976,7 @@ struct GameDriver driver_tmnt2a =
 	rom_tmnt2a,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders4p,
 
@@ -3761,7 +4002,7 @@ struct GameDriver driver_ssriders =
 	rom_ssriders,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders4p,
 
@@ -3787,7 +4028,7 @@ struct GameDriver driver_ssrdrebd =
 	rom_ssrdrebd,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3813,7 +4054,7 @@ struct GameDriver driver_ssrdrebc =
 	rom_ssrdrebc,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3839,7 +4080,7 @@ struct GameDriver driver_ssrdruda =
 	rom_ssrdruda,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3865,7 +4106,7 @@ struct GameDriver driver_ssrdruac =
 	rom_ssrdruac,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3891,7 +4132,7 @@ struct GameDriver driver_ssrdrubc =
 	rom_ssrdrubc,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3917,7 +4158,7 @@ struct GameDriver driver_ssrdrabd =
 	rom_ssrdrabd,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
 
@@ -3943,9 +4184,44 @@ struct GameDriver driver_ssrdrjbd =
 	rom_ssrdrjbd,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssriders,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	nvram_load, nvram_save
+};
+
+static void thndrx2_patch(void)
+{
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+
+	WRITE_WORD(&RAM[0x16c0],0x4e71);
+
+	gfx_untangle();
+}
+
+struct GameDriver driver_thndrx2 =
+{
+	__FILE__,
+	0,
+	"thndrx2",
+	"Thunder Cross 2 (Japan)",
+	"1991",
+	"Konami",
+	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
+	0,
+	&thndrx2_machine_driver,
+	0,
+
+	rom_thndrx2,
+	thndrx2_patch, 0,
+	0,
+	0,
+
+	input_ports_thndrx2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

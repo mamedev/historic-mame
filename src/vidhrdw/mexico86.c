@@ -47,7 +47,7 @@ void mexico86_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 void mexico86_bankswitch_w(int offs,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((data & 7) > 5)
 		usrintf_showmessage( "Switching to invalid bank!" );

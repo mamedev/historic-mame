@@ -1,242 +1,298 @@
 /*************************************************************************
-     Turbo - Sega - 1981
 
-     Machine Hardware
+	 Turbo - Sega - 1981
+
+	 Machine Hardware
 
 *************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "machine/8255ppi.h"
 
-int turbo_f8pa, turbo_f8pb, turbo_f8pc;
-int turbo_f9pa, turbo_f9pb, turbo_f9pc;
-int turbo_fbpla, turbo_fbcol;
-unsigned char turbo_seg_digit[32];
-static unsigned int turbo_seg_add, turbo_seg_auto_inc;
+/* globals */
+UINT8 turbo_opa, turbo_opb, turbo_opc;
+UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
+UINT8 turbo_fbpla, turbo_fbcol;
+UINT8 turbo_segment_data[32];
+UINT8 turbo_speed;
 
-void turbo_unpack_sprites(int region, int size);
-extern unsigned int turbo_collision;
-extern unsigned char 	*turbo_SpritesCollisionTable;
+/* local data */
+static UINT8 segment_address, segment_increment;
+static UINT8 osel, bsel, accel;
+
+/* prototypes */
+extern UINT8 turbo_collision;
+
+
+/*******************************************
+
+	Sample handling
+
+*******************************************/
+
+static void update_samples(void)
+{
+	/* accelerator sounds */
+	/* BSEL == 3 --> off */
+	/* BSEL == 2 --> standard */
+	/* BSEL == 1 --> tunnel */
+	/* BSEL == 0 --> ??? */
+	if (bsel == 3 && sample_playing(6))
+		sample_stop(6);
+	else if (bsel != 3 && !sample_playing(6))
+		sample_start(6, 7, 1);
+	if (sample_playing(6))
+		sample_set_freq(6, 44100 * (accel & 0x3f) / 7 + 44100);
+}
+
+
+/*******************************************
+
+	8255 PPI handling
+
+*******************************************/
+/*
+	chip index:
+	0 = IC75 - CPU Board, Sheet 6, D7
+	1 = IC32 - CPU Board, Sheet 6, D6
+	2 = IC123 - CPU Board, Sheet 6, D4
+	3 = IC6 - CPU Board, Sheet 5, D7
+*/
+
+static int portA_r(int chip)
+{
+	if (chip == 3)
+		return readinputport(4);	 /* Wheel */
+	return 0;
+}
+
+static int portB_r(int chip)
+{
+	if (chip == 3)
+		return readinputport(2);	/* DSW 2 */
+	return 0;
+}
+
+static void portA_w(int chip, int data)
+{
+	switch (chip)
+	{
+		case 0: /* signals 0PA0 to 0PA7 */
+			turbo_opa = data;
+			break;
+
+		case 1: /* signals 1PA0 to 1PA7 */
+			turbo_ipa = data;
+			break;
+
+		case 2: /* signals 2PA0 to 2PA7 */
+			/*
+				2PA0 = /CRASH
+				2PA1 = /TRIG1
+				2PA2 = /TRIG2
+				2PA3 = /TRIG3
+				2PA4 = /TRIG4
+				2PA5 = OSEL0
+				2PA6 = /SLIP
+				2PA7 = /CRASHL
+			*/
+			/* missing short crash sample, but I've never seen it triggered */
+			if (!(data & 0x02)) sample_start(0, 0, 0);
+			if (!(data & 0x04)) sample_start(0, 1, 0);
+			if (!(data & 0x08)) sample_start(0, 2, 0);
+			if (!(data & 0x10)) sample_start(0, 3, 0);
+			if (!(data & 0x40)) sample_start(1, 4, 0);
+			if (!(data & 0x80)) sample_start(2, 5, 0);
+			osel = (osel & 6) | ((data >> 5) & 1);
+			update_samples();
+			break;
+	}
+}
+
+static void portB_w(int chip, int data)
+{
+	switch (chip)
+	{
+		case 0: /* signals 0PB0 to 0PB7 */
+			turbo_opb = data;
+			break;
+
+		case 1: /* signals 1PB0 to 1PB7 */
+			turbo_ipb = data;
+			break;
+
+		case 2: /* signals 2PB0 to 2PB7 */
+			/*
+				2PB0 = ACC0
+				2PB1 = ACC1
+				2PB2 = ACC2
+				2PB3 = ACC3
+				2PB4 = ACC4
+				2PB5 = ACC5
+				2PB6 = /AMBU
+				2PB7 = /SPIN
+			*/
+			accel = data & 0x3f;
+			update_samples();
+			if (!(data & 0x40))
+			{
+				if (!sample_playing(7))
+					sample_start(7, 8, 0);
+				else
+					if (errorlog) fprintf(errorlog, "ambu didnt start\n");
+			}
+			else
+				sample_stop(7);
+			if (!(data & 0x80)) sample_start(3, 6, 0);
+			break;
+	}
+}
+
+static void portC_w(int chip, int data)
+{
+	switch (chip)
+	{
+		case 0: /* signals 0PC0 to 0PC7 */
+			turbo_opc = data;
+			break;
+
+		case 1: /* signals 1PC0 to 1PC7 */
+			turbo_ipc = data;
+			break;
+
+		case 2: /* signals 2PC0 to 2PC7 */
+			/*
+				2PC0 = OSEL1
+				2PC1 = OSEL2
+				2PC2 = BSEL0
+				2PC3 = BSEL1
+				2PC4 = SPEED0
+				2PC5 = SPEED1
+				2PC6 = SPEED2
+				2PC7 = SPEED3
+			*/
+			turbo_speed = (data >> 4) & 0x0f;
+			bsel = (data >> 2) & 3;
+			osel = (osel & 1) | ((data & 3) << 1);
+			update_samples();
+			break;
+
+		case 3:
+			/* bit 0-3 = signals PLA0 to PLA3 */
+			/* bit 4-6 = signals COL0 to COL2 */
+			/* bit 7 = unused */
+			turbo_fbpla = data & 0x0f;
+			turbo_fbcol = (data & 0x70) >> 4;
+			break;
+	}
+}
+
+static ppi8255_interface intf =
+{
+	4, /* 4 chips */
+	portA_r, /* Port A read */
+	portB_r, /* Port B read */
+		  0, /* Port C read */
+	portA_w, /* Port A write */
+	portB_w, /* Port B write */
+	portC_w, /* Port C write */
+};
+
+
+
+/*******************************************
+
+	Machine Init
+
+*******************************************/
 
 void turbo_init_machine(void)
 {
-//	system8_define_checkspriteram(NULL);
-//	system8_define_banksupport(SYSTEM8_SUPPORTS_SPRITEBANKS);
-//	system8_define_cliparea(16,239,0,223);
-	turbo_unpack_sprites(3, 0x20000);
-//	system8_define_sprite_offset_y(16);
+	ppi8255_init(&intf);
+	segment_address = segment_increment = 0;
 }
 
-int turbo_interrupt(void)   // this is just temporary
-{
-	return 1;
-}
 
-int turbo_fa00_r(int offset)
+/*******************************************
+
+	8279 handling
+	IC84 - CPU Board, Sheet 5, C7
+
+*******************************************/
+
+int turbo_8279_r(int offset)
 {
-	if (errorlog) fprintf(errorlog, "read 0xfa%02x\n", offset);
-	switch (offset%4)
+	if ((offset & 1) == 0)
+		return readinputport(1);  /* DSW 1 */
+	else
 	{
-		case 0x00:
-			return 0xff;
-		case 0x01:
-			return 0xc0;
-		case 0x02:
-			return 0xaf;
-		case 0x03:
-			return 0xef;
-		default:
-			return 0;
+		if (errorlog) fprintf(errorlog, "read 0xfc%02x\n", offset);
+		return 0x10;
 	}
 }
 
-int turbo_fb00_r(int offset)
+void turbo_8279_w(int offset, int data)
 {
-	switch (offset%4)
+	switch (offset & 1)
 	{
 		case 0x00:
-			return readinputport(4);  // WHEEL
+			turbo_segment_data[segment_address * 2] = data & 15;
+			turbo_segment_data[segment_address * 2 + 1] = (data >> 4) & 15;
+			segment_address = (segment_address + segment_increment) & 15;
+			break;
+
 		case 0x01:
-			return readinputport(2);  // DSW 2
-		case 0x02:
-	if (errorlog) fprintf(errorlog, "read 0xfb%02x\n", offset);
-			return 0x80;
-		case 0x03:
-	if (errorlog) fprintf(errorlog, "read 0xfb%02x\n", offset);
-			return 0x80;
-		default:
-			return 0;
-	}
-}
-
-int turbo_fc00_r(int offset)
-{
-	switch (offset%2)
-	{
-		case 0x00:
-			return readinputport(1);  // DSW 1;
-		case 0x01:
-	if (errorlog) fprintf(errorlog, "read 0xfc%02x\n", offset);
-			return 0x10;
-		default:
-			return 0;
-	}
-}
-
-int turbo_fd00_r(int offset)
-{
-	return readinputport(0); // coins, etc.
-}
-
-int turbo_fe00_r(int offset)
-{
-	if (errorlog) fprintf(errorlog, "read 0xfe%02x\n", offset);
-	return readinputport(3)|turbo_collision; // DSW 3 + 4 bits
-}
-
-void turbo_b800_w(int offset, int data)
-{
-	if (errorlog) fprintf(errorlog, "write b800: %x\n",data);
-//	memset(spriteram,0,spriteram_size);
-//	memset(turbo_SpritesCollisionTable,0,0x10000);
-	turbo_collision=0;
-}
-
-void turbo_f800_w(int offset, int data)
-{
-	switch (offset%4)
-	{
-		case 0x00:
-			turbo_f8pa = data;
-			break;
-		case 0x01:
-			turbo_f8pb = data;
-			break;
-		case 0x02:
-			turbo_f8pc = data;
-			break;
-		case 0x03:
-			if (data!=0x80)
-			{
-				if (errorlog) fprintf(errorlog, "8255: Unsupported mode\n");
-			}
-			break;
-	}
-}
-
-void turbo_f900_w(int offset, int data)
-{
-	switch (offset%4)
-	{
-		case 0x00:
-			turbo_f9pa = data;
-			break;
-		case 0x01:
-			turbo_f9pb = data;
-			break;
-		case 0x02:
-			turbo_f9pc = data;
-			break;
-		case 0x03:
-			if (data!=0x80)
-			{
-				if (errorlog) fprintf(errorlog, "8255: Unsupported mode\n");
-			}
-			break;
-	}
-}
-
-void turbo_fa00_w(int offset, int data)
-{
-//	if (errorlog) fprintf(errorlog, "write 0xfa%02x with %02x\n", offset, data);
-	switch (offset%4)
-	{
-		case 0x00:
-			if ((data&0x02)==0) /* Trig1 */
-			{
-				sample_start (0,0,0);
-			}
-			if ((data&0x04)==0) /* Trig2 */
-			{
-				sample_start (0,1,0);
-			}
-			if ((data&0x08)==0) /* Trig3 */
-			{
-				sample_start (0,2,0);
-			}
-			if ((data&0x10)==0) /* Trig4 */
-			{
-				sample_start (0,3,0);
-			}
-			break;
-		case 0x01:
-			if ((data&0x40)==0) /* Ambu */
-			{
-				if (!sample_playing(1)) sample_start (1,4,1);
-				else if (errorlog) fprintf(errorlog, "ambu didnt start\n");
-			}
-			else
-			{
-				sample_stop (1);
-			}
-			break;
-		case 0x02:
-//			turbo_f9pc = data;
-			break;
-		case 0x03:
-			if (data!=0x80)
-			{
-				if (errorlog) fprintf(errorlog, "8255: Unsupported mode\n");
-			}
-			break;
-	}
-}
-
-void turbo_fb00_w(int offset, int data)
-{
-	switch (offset%4)
-	{
-		case 0x02:
-			turbo_fbpla = data&0x0f;
-			if (turbo_fbcol != ((data&0x70)>>4))
-			{
-				turbo_fbcol = (data&0x70)>>4;
-				memset(dirtybuffer,1,videoram_size);
-			}
-			break;
-		case 0x03:
-			{
-//				if (errorlog) fprintf(errorlog, "fb03: %x\n",data);
-			}
-			break;
-	}
-}
-
-void turbo_fc00_w(int offset, int data) /* 8279 */
-{
-	switch (offset%2)
-	{
-		case 0x00:
-			turbo_seg_digit[turbo_seg_add*2] = (data&0x0f);
-			turbo_seg_digit[turbo_seg_add*2+1] = ((data&0xf0)>>4);
-			turbo_seg_add+=turbo_seg_auto_inc;
-			if (turbo_seg_add==16) turbo_seg_add=0;
-			break;
-		case 0x01:
-			switch (data&0xe0)
+			switch (data & 0xe0)
 			{
 				case 0x80:
-					turbo_seg_add = data&0x0f;
-					turbo_seg_auto_inc = 0;
+					segment_address = data & 15;
+					segment_increment = 0;
 					break;
 				case 0x90:
-					turbo_seg_add = data&0x0f;
-					turbo_seg_auto_inc = 1;
+					segment_address = data & 15;
+					segment_increment = 1;
 					break;
 				case 0xc0:
-					memset(turbo_seg_digit,0,32);
+					memset(turbo_segment_data, 0, 32);
 					break;
 			}
+			break;
+	}
+}
+
+
+/*******************************************
+
+	Misc handling
+
+*******************************************/
+
+int turbo_collision_r(int offset)
+{
+	return readinputport(3) | (turbo_collision & 15);
+}
+
+void turbo_collision_clear_w(int offset, int data)
+{
+	turbo_collision = 0;
+}
+
+void turbo_coin_and_lamp_w(int offset, int data)
+{
+	data &= 1;
+	switch (offset & 7)
+	{
+		case 0:		/* Coin Meter 1 */
+		case 1:		/* Coin Meter 2 */
+		case 2:		/* n/c */
+			break;
+
+		case 3:		/* Start Lamp */
+			osd_led_w(0, data);
+			break;
+
+		case 4:		/* n/c */
+		default:
 			break;
 	}
 }

@@ -216,6 +216,24 @@ static struct MemoryReadAddress centipdb_readmem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress centipb2_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0x0400, 0x07ff, MRA_RAM },
+	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
+	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
+	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
+	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
+	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
+	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
+	{ 0x1001, 0x1001, AY8910_read_port_0_r },
+	{ 0x1700, 0x173f, atari_vg_earom_r },
+	{ 0x2000, 0x3fff, MRA_ROM },
+	{ 0x6000, 0x67ff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ -1 }	/* end of table */
+};
+
 static struct MemoryWriteAddress centiped_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -250,6 +268,26 @@ static struct MemoryWriteAddress centipdb_writemem[] =
 	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
 	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress centipb2_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
+	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
+	{ 0x1000, 0x1000, AY8910_write_port_0_w },
+	{ 0x1001, 0x1001, AY8910_control_port_0_w },
+	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
+	{ 0x1600, 0x163f, atari_vg_earom_w },
+	{ 0x1680, 0x1680, atari_vg_earom_ctrl },
+	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
+	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c03, 0x1c04, centiped_led_w },
+	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
+	{ 0x2000, 0x2000, watchdog_reset_w },
+	{ 0x2000, 0x3fff, MWA_ROM },
+	{ 0x6000, 0x67ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -403,13 +441,25 @@ static struct POKEYinterface pokey_interface =
 	{ 0 },
 };
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface centipdb_ay8910_interface =
 {
 	1,	/* 1 chips */
 	12096000/8,	/* 1.512 MHz */
 	{ 50 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct AY8910interface centipb2_ay8910_interface =
+{
+	1,	/* 1 chips */
+	12096000/8,	/* 1.512 MHz */
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
+	{ centipdb_rand_r },
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -459,8 +509,9 @@ static struct MachineDriver GAMENAME##_machine_driver =							\
 
 DRIVER(centiped, SOUND_POKEY, &pokey_interface)
 
-/* In the bootleg the Pokey has been replaced by an AY8910 */
-DRIVER(centipdb, SOUND_AY8910, &ay8910_interface)
+/* In the bootlegs the Pokey has been replaced by an AY8910 */
+DRIVER(centipdb, SOUND_AY8910, &centipdb_ay8910_interface)
+DRIVER(centipb2, SOUND_AY8910, &centipb2_ay8910_interface)
 
 
 /***************************************************************************
@@ -508,6 +559,20 @@ ROM_START( centipdb )
 	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
 ROM_END
 
+ROM_START( centipb2 )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "d1",  		  0x2000, 0x0800, 0xb17b8e0b )
+	ROM_LOAD( "e1",  		  0x2800, 0x0800, 0x7684398e )
+	ROM_LOAD( "h1",  		  0x3000, 0x0800, 0x74580fe4 )
+	ROM_LOAD( "j1",  		  0x3800, 0x0800, 0x84600161 )
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+	ROM_LOAD( "k1",  		  0x6000, 0x0800, 0xf1aa329b )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
+ROM_END
+
 
 struct GameDriver driver_centiped =
 {
@@ -525,7 +590,7 @@ struct GameDriver driver_centiped =
 	rom_centiped,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_centiped,
 
@@ -551,7 +616,7 @@ struct GameDriver driver_centipd2 =
 	rom_centipd2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_centiped,
 
@@ -566,7 +631,7 @@ struct GameDriver driver_centipdb =
 	__FILE__,
 	&driver_centiped,
 	"centipdb",
-	"Centipede (bootleg)",
+	"Centipede (bootleg set 1)",
 	"1980",
 	"bootleg",
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
@@ -577,9 +642,35 @@ struct GameDriver driver_centipdb =
 	rom_centipdb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_centipdb,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
+struct GameDriver driver_centipb2 =
+{
+	__FILE__,
+	&driver_centiped,
+	"centipb2",
+	"Centipede (bootleg set 2)",
+	"1980",
+	"bootleg",
+	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
+	0,
+	&centipb2_machine_driver,
+	0,
+
+	rom_centipb2,
+	0, 0,
+	0,
+	0,
+
+	input_ports_centiped,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

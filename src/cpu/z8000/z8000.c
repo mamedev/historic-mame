@@ -28,6 +28,7 @@
 
 #define VERBOSE 0
 
+
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
 #else
@@ -189,40 +190,39 @@ INLINE UINT16 RDOP(void)
 
 INLINE UINT8 RDMEM_B(UINT16 addr)
 {
-	return cpu_readmem16(addr);
+	return cpu_readmem16bew(addr);
 }
 
 INLINE UINT16 RDMEM_W(UINT16 addr)
 {
-	return cpu_readmem16((UINT16)(addr+B0_16)) +
-		  (cpu_readmem16((UINT16)(addr+B1_16)) << 8);
+	addr &= ~1;
+	return cpu_readmem16bew_word(addr);
 }
 
 INLINE UINT32 RDMEM_L(UINT16 addr)
 {
-	return cpu_readmem16((UINT16)(addr+B0_32)) +
-		  (cpu_readmem16((UINT16)(addr+B1_32)) << 8) +
-		  (cpu_readmem16((UINT16)(addr+B2_32)) << 16) +
-		  (cpu_readmem16((UINT16)(addr+B3_32)) << 24);
+	UINT32 result;
+	addr &= ~1;
+	result = cpu_readmem16bew_word(addr) << 16;
+	return result + cpu_readmem16bew_word(addr + 2);
 }
 
 INLINE void WRMEM_B(UINT16 addr, UINT8 value)
 {
-	cpu_writemem16(addr,value);
+	cpu_writemem16bew(addr, value);
 }
 
 INLINE void WRMEM_W(UINT16 addr, UINT16 value)
 {
-	cpu_writemem16((UINT16)(addr+B0_16),value & 0xff);
-	cpu_writemem16((UINT16)(addr+B1_16),(value >> 8) & 0xff);
+	addr &= ~1;
+	cpu_writemem16bew_word(addr, value);
 }
 
 INLINE void WRMEM_L(UINT16 addr, UINT32 value)
 {
-	cpu_writemem16((UINT16)(addr+B0_32),value & 0xff);
-	cpu_writemem16((UINT16)(addr+B1_32),(value >> 8) & 0xff);
-	cpu_writemem16((UINT16)(addr+B2_32),(value >> 16) & 0xff);
-	cpu_writemem16((UINT16)(addr+B3_32),(value >> 24) & 0xff);
+	addr &= ~1;
+	cpu_writemem16bew_word(addr, value >> 16);
+	cpu_writemem16bew_word((UINT16)(addr + 2), value & 0xffff);
 }
 
 INLINE UINT8 RDPORT_B(int mode, UINT16 addr)
@@ -242,8 +242,8 @@ INLINE UINT16 RDPORT_W(int mode, UINT16 addr)
 {
 	if( mode == 0 )
 	{
-		return cpu_readport((UINT16)(addr+B0_16)) +
-			  (cpu_readport((UINT16)(addr+B1_16)) << 8);
+		return cpu_readport((UINT16)(addr)) +
+			  (cpu_readport((UINT16)(addr+1)) << 8);
 	}
 	else
 	{
@@ -256,10 +256,10 @@ INLINE UINT32 RDPORT_L(int mode, UINT16 addr)
 {
 	if( mode == 0 )
 	{
-		return	cpu_readport((UINT16)(addr+B0_32)) +
-			   (cpu_readport((UINT16)(addr+B1_32)) <<  8) +
-			   (cpu_readport((UINT16)(addr+B2_32)) << 16) +
-			   (cpu_readport((UINT16)(addr+B3_32)) << 24);
+		return	cpu_readport((UINT16)(addr)) +
+			   (cpu_readport((UINT16)(addr+1)) <<  8) +
+			   (cpu_readport((UINT16)(addr+2)) << 16) +
+			   (cpu_readport((UINT16)(addr+3)) << 24);
 	}
 	else
 	{
@@ -284,8 +284,8 @@ INLINE void WRPORT_W(int mode, UINT16 addr, UINT16 value)
 {
 	if( mode == 0 )
 	{
-		cpu_writeport((UINT16)(addr+B0_16),value & 0xff);
-		cpu_writeport((UINT16)(addr+B1_16),(value >> 8) & 0xff);
+		cpu_writeport((UINT16)(addr),value & 0xff);
+		cpu_writeport((UINT16)(addr+1),(value >> 8) & 0xff);
 	}
 	else
 	{
@@ -297,10 +297,10 @@ INLINE void WRPORT_L(int mode, UINT16 addr, UINT32 value)
 {
 	if( mode == 0 )
 	{
-		cpu_writeport((UINT16)(addr+B0_32),value & 0xff);
-		cpu_writeport((UINT16)(addr+B1_32),(value >> 8) & 0xff);
-		cpu_writeport((UINT16)(addr+B2_32),(value >> 16) & 0xff);
-		cpu_writeport((UINT16)(addr+B3_32),(value >> 24) & 0xff);
+		cpu_writeport((UINT16)(addr),value & 0xff);
+		cpu_writeport((UINT16)(addr+1),(value >> 8) & 0xff);
+		cpu_writeport((UINT16)(addr+2),(value >> 16) & 0xff);
+		cpu_writeport((UINT16)(addr+3),(value >> 24) & 0xff);
 	}
 	else
 	{
@@ -459,7 +459,7 @@ void z8000_reset(void *param)
 	memset(&Z, 0, sizeof(z8000_Regs));
 	FCW = RDMEM_W( 2 ); /* get reset FCW */
 	PC	= RDMEM_W( 4 ); /* get reset PC  */
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 void z8000_exit(void)
@@ -516,7 +516,7 @@ void z8000_set_context(void *src)
 	if( src )
 	{
 		Z = *(z8000_Regs*)src;
-		change_pc16(PC);
+		change_pc16bew(PC);
 	}
 }
 
@@ -528,7 +528,7 @@ unsigned z8000_get_pc(void)
 void z8000_set_pc(unsigned val)
 {
 	PC = val;
-	change_pc(PC);
+	change_pc16bew(PC);
 }
 
 unsigned z8000_get_sp(void)

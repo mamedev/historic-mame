@@ -72,7 +72,7 @@ command to list them.
 | Bagman               |  Yes   |  Yes   |No Speech  Yes   |  Yes   | bagman   |
 | Bandido              |  Yes   |  b/w   |   No   |   No   |   No   | bandido  |
 | Bank Panic           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bankp    |
-| Baraduke             |  Yes   |  Yes   |  Yes   |   No   |   No   | baraduke |
+| Baraduke             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | baraduke |
 | Batman               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | batman   |
 | Battlantis           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | battlnts |
 | Battle Chopper       |  Yes   |  Yes   |  Yes   |   No   |   No   | bchopper |
@@ -139,6 +139,7 @@ command to list them.
 | Chuka Taisen         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | chukatai |
 | Circus               |  Yes   |Overlay |Partial |  Yes   |   No   | circus   |
 | Circus Charlie       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | circusc  |
+| Cisco Heat           |  Yes   |  Yes   |  Yes   |   No   |   No   | cischeat |
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
 | Clay Pigeon          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | claypign |
 | Cloak & Dagger       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cloak    |
@@ -196,7 +197,7 @@ command to list them.
 | Digger               |  Yes   |  Yes   |   No   |   No   |   No   | digger   |
 | Disco No. 1          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | disco    |
 | Discs of Tron        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | dotron   |
-| Dog Fight            |  Yes   |   No   |  Yes   |  Yes   |   No   | dogfight |
+| Dog Fight            |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | dogfight |
 | Dokaben              |  Yes   |  Yes   |Partial |   No   |  Yes   | dokaben  |
 | Domino Man           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | domino   |
 | Dominos              |  Yes   |  b/w   |   No   |   No   |   No   | dominos  |
@@ -209,6 +210,7 @@ command to list them.
 | Double Dribble       |  Yes   |  Yes   |No Speech   No   |   No   | ddribble |
 | Dr. Toppel Tankentai |  Yes   |  Yes   |  Yes   |   No   |  Yes   | drtoppel |
 | Dragon Breed         |  Yes   |  Yes   |  Yes   |   No   |   No   | dbreed   |
+| Dragon Buster        |  Yes   |  Yes   |  Yes   |   No   |   No   | drgnbstr |
 | Dream Soccer '94     |  Yes   |  Yes   |   No   |   No   |   No   | dsoccr94 |
 | Dyger                |  Yes   |  Yes   |  Yes   |   No   |   No   | dyger    |
 | Dynamite Duke        |  Yes   |  Yes?  |   No   |   No   |   No   | dynduke  |
@@ -231,10 +233,11 @@ command to list them.
 | Express Raider       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | exprraid |
 | Extermination        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | extrmatn |
 | Exterminator         |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | exterm   |
-| Extra Bases          |   No   |   No   |   No   |   No   |   No   | ebases   |
+| Extra Bases          |  Yes   |   No   |   No   |   No   |   No   | ebases   |
 | Eyes                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | eyes     |
 | F.H.M.C. Q*Bert      |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | sqbert   |
 | F1 Dream             |  Yes   |  Yes   |  Yes   |   No   |   No   | f1dream  |
+| F1 Grand Prix Star   |  Yes   |  Yes   |  Yes   |   No   |   No   | f1gpstar |
 | Fantasy              |  Yes   |  Yes   |No Spech|  Yes   |  Yes   | fantasy  |
 | Fantasy Zone         |   No   |  Yes   |   No   |   No   |   No   | fantzone |
 | Fax                  |  Yes   |  Yes   |   No   |   No   |   No   | fax      |
@@ -242,7 +245,7 @@ command to list them.
 | Finalizer            |  Yes   |  Yes   |Partial |   No   |   No   | finalizr |
 | Fire One             |Partial.|   No   |   No   |   No   |   No   | fireone  |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
-| Flak Attack          |  Yes   |  Yes   |  Yes   |   No   |   No   | flkatck  |
+| Flak Attack          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flkatck  |
 | Flash Gal            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | flashgal |
 | Flash Point          |   No   |  Yes   |   No   |   No   |   No   | fpointbl |
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
@@ -442,13 +445,13 @@ command to list them.
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
 | Meteoroids           |  Yes   |  Yes?  |  Yes   |   No   |   No   | meteor   |
-| Metro-Cross          |  Yes   |  Yes   |  Yes   |   No   |   No   | metrocrs |
+| Metro-Cross          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | metrocrs |
 | Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
 | Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mikie    |
 | Millipede            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | milliped |
 | Minefield            |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | minefld  |
 | Minky Monkey         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | mmonkey  |
-| Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | missile  |
+| Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | missile  |
 | Missing in Action    |  Yes   |  Yes   |  Yes   |   No   |  Yes   | mia      |
 | Mister Viking        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mrviking |
 | Moguchan             |  Yes   |   No   |  Yes   |  Yes   |   No   | moguchan |
@@ -509,6 +512,7 @@ command to list them.
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
 | Penguin-Kun Wars     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pkunwar  |
 | Pepper II            |  Yes   |  Yes   |   No   |  Yes   |   No   | pepper2  |
+| Percussor, The       |  Yes   |  Yes   |  Yes   |   No   |   No   | percuss  |
 | Perfect Soldiers     |  Yes   |  Yes   |   No   |   No   |   No   | psoldier |
 | Peter Packrat        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | peterpak |
 | Phoenix              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | phoenix  |
@@ -527,6 +531,8 @@ command to list them.
 | Pocket Gal           |  Yes   |  Yes   |  Yes   |   No   |   No   | pcktgal  |
 | Poker Ladies         |  Yes   |  Yes   |Partial |   No   |  Yes   | pkladies |
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
+| Pole Position        |  Yes   |  Yes   | Yes(1) |   No   |   No   | polepos  |
+| Pole Position II     |  Yes   |  Yes   | Yes(1) |   No   |   No   | polepos2 |
 | Pong                 |  Yes   |  b/w   |  Yes   |  n/a   |  n/a   | pong     |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
@@ -634,6 +640,7 @@ command to list them.
 | Skull & Crossbones   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | skullxbo |
 | Sky Adventure        |  Yes   |  Yes   |  Yes   |   No   |   No   | skyadvnt |
 | Sky Diver            |  Yes   |  b/w   |   No   |   No   |   No   | skydiver |
+| Sky Kid              |  Yes   |  Yes   |  Yes   |   No   |   No   | skykid   |
 | Sky Lancer           |  Yes   |  Yes   |  Yes   |   No   |   No   | skylancr |
 | Sky Soldiers         |  Yes   |  Yes   |  Yes   |   No   |   No   | skysoldr |
 | Slap Fight           |  Yes   |  Yes   |  Yes   |   No   |   No   | slapfigh |
@@ -769,7 +776,7 @@ command to list them.
 | Tropical Angel       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | troangel |
 | Truxton              |  Yes   |  Yes   |  Yes   |   No   |   No   | truxton  |
 | Tumble Pop           |  Yes   |  Yes   |  Yes   |   No   |   No   | tumblep  |
-| Turbo                |   No   |   No   |   No   |   No   |   No   | turbo    |
+| Turbo                |  Yes   |  Yes   | Yes(1) |   No   |   No   | turbo    |
 | Turbo Force          |  Yes   |  Yes   |  Yes   |   No   |   No   | turbofrc |
 | Turkey Shoot         |   No   |  Yes   |  Yes   |  Yes   |   No   | tshoot   |
 | Turtle Ship          |  Yes   |  Yes   |  Yes   |   No   |   NO   | turtship |
@@ -835,7 +842,7 @@ command to list them.
 | Zero Zone            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerozone |
 | Zig Zag              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zigzag   |
 | Zoar                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zoar     |
-| Zodiack              |  Yes   |   No   |  Yes   |  Yes   |   No   | zodiack  |
+| Zodiack              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | zodiack  |
 | Zoo Keeper           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zookeep  |
 | Zzyzzyxx             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zzyzzyxx |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -1667,31 +1674,9 @@ Known issues:
 
 
 
-Heavy Barrel ("hbarrel")
-=======================
-Clones supported:
-  Japanese version ("hbarrelj")
-
-Known issues:
-- The game is playable to the end, however there are some problems due to
-  copy protection, for example the bonus items appear in the wrong places
-  and at the wrong time.
-
-
-
 HigeMaru ("higemaru")
 =====================
 Press BUTTON1 during boot to enter service mode.
-
-
-
-Hippodrome ("hippodrm")
-=======================
-Clones supported:
-  Fighting Fantasy ("ffantasy")
-
-Known issues:
-- Sometimes the game crashes after you beat the first enemy.
 
 
 

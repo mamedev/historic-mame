@@ -412,7 +412,7 @@ struct GameDriver driver_skydiver =
 	rom_skydiver,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skydiver,
 

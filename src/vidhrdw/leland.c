@@ -917,7 +917,7 @@ int ataxx_vh_start(void)
 	{
 		return 1;
 	}
-    fillbitmap(background_bitmap,0, NULL);
+    fillbitmap(background_bitmap,Machine->pens[0], NULL);
 
     ataxx_qram1=malloc(ataxx_qram_size);
     if (!ataxx_qram1)

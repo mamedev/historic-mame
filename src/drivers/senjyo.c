@@ -685,7 +685,7 @@ ROM_END
 
 static int starforc_hiload(void)
 {
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
         if (memcmp(&RAM[0x8348],"\x00\x08\x05\x00",4) == 0 &&
@@ -737,7 +737,7 @@ static void starforc_hisave(void)
 {
         void *f;
         int i;
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
         /* Bug to solve the problem about resetting in the hi-score screen */
@@ -773,7 +773,7 @@ struct GameDriver driver_senjyo =
 	rom_senjyo,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_senjyo,
 
@@ -799,7 +799,7 @@ struct GameDriver driver_starforc =
 	rom_starforc,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_starforc,
 
@@ -825,7 +825,7 @@ struct GameDriver driver_starfore =
 	rom_starfore,
 	0, suprloco_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_starforc,
 
@@ -851,7 +851,7 @@ struct GameDriver driver_megaforc =
 	rom_megaforc,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_starforc,
 

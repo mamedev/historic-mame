@@ -835,7 +835,7 @@ ROM_END
 
 static void wndrplnt_patch(void)
 {
-//	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 //	WRITE_WORD (&RAM[0x1106],0x4E71);
 //	WRITE_WORD (&RAM[0x110e],0x4E71);
@@ -852,7 +852,7 @@ static void wndrplnt_patch(void)
 
 static void chelnov_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD (&RAM[0x0A26],0x4E71);  /* removes a protection lookup table */
 	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
@@ -860,7 +860,7 @@ static void chelnov_patch(void)
 
 static void chelnovj_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD (&RAM[0x0A2E],0x4E71);  /* removes a protection lookup table */
 	WRITE_WORD (&RAM[0x062a],0x4E71);  /* hangs waiting on i8751 int */
@@ -1012,7 +1012,7 @@ struct GameDriver driver_karnov =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_karnov,
 
@@ -1038,7 +1038,7 @@ struct GameDriver driver_karnovj =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_karnov,
 
@@ -1064,7 +1064,7 @@ struct GameDriver driver_wndrplnt =
 	wndrplnt_patch,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_karnov,
 
@@ -1090,7 +1090,7 @@ struct GameDriver driver_chelnov =
 	chelnov_patch,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_chelnov,
 
@@ -1116,7 +1116,7 @@ struct GameDriver driver_chelnovj =
 	chelnovj_patch,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_chelnov,
 

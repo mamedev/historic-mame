@@ -423,7 +423,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8030],"\x00\x89\x00",3) == 0 &&
 	    memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
@@ -449,7 +449,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-    unsigned char *RAM = Machine->memory_region[0];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* make sure that the high score table is still valid (entering the */
 	/* test mode corrupts it) */
 	if (memcmp(&RAM[0x8030],"\x00\x00\x00",3) != 0)
@@ -483,7 +483,7 @@ struct GameDriver driver_congo =
 	rom_congo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_congo,
 
@@ -509,7 +509,7 @@ struct GameDriver driver_tiptop =
 	rom_tiptop,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_congo,
 

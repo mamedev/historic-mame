@@ -518,7 +518,7 @@ struct GameDriver driver_tempest =
 	rom_tempest,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tempest,
 
@@ -544,7 +544,7 @@ struct GameDriver driver_tempest1 =
 	rom_tempest1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tempest,
 
@@ -570,7 +570,7 @@ struct GameDriver driver_tempest2 =
 	rom_tempest2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tempest,
 
@@ -596,7 +596,7 @@ struct GameDriver driver_temptube =
 	rom_temptube,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tempest,
 

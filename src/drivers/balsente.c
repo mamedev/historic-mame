@@ -306,8 +306,8 @@ static void init_machine(void)
 	memset(noise_position, 0, sizeof(noise_position));
 
 	/* point the banks to bank 0 */
-	cpu_setbank(1, &Machine->memory_region[0][0x10000]);
-	cpu_setbank(2, &Machine->memory_region[0][0x12000]);
+	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000]);
+	cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000]);
 
 	/* start a timer to generate interrupts */
 	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
@@ -430,8 +430,8 @@ static void rombank_select_w(int offset, int data)
 if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* the bank number comes from bits 4-6 */
-	cpu_setbank(1, &Machine->memory_region[0][0x10000 + bank_offset]);
-	cpu_setbank(2, &Machine->memory_region[0][0x12000 + bank_offset]);
+	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + bank_offset]);
+	cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + bank_offset]);
 }
 
 
@@ -448,15 +448,15 @@ static void rombank2_select_w(int offset, int data)
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
 	{
-		cpu_setbank(1, &Machine->memory_region[0][0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &Machine->memory_region[0][0x12000 + 0x6000 * 6]);
+		cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 0x6000 * bank]);
+		cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + 0x6000 * 6]);
 	}
 
 	/* set both banks */
 	else
 	{
-		cpu_setbank(1, &Machine->memory_region[0][0x10000 + 0x6000 * bank]);
-		cpu_setbank(2, &Machine->memory_region[0][0x12000 + 0x6000 * bank]);
+		cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 0x6000 * bank]);
+		cpu_setbank(2, &memory_region(Machine->drv->cpu[0].memory_region)[0x12000 + 0x6000 * bank]);
 	}
 }
 
@@ -2455,11 +2455,11 @@ static int hiload(void)
 	void *f = osd_fopen(Machine->gamedrv->name,0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
-		osd_fread(f, &Machine->memory_region[0][0x9b00], 0x200);
+		osd_fread(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0x200);
 		osd_fclose(f);
 	}
 	else
-		memset(&Machine->memory_region[0][0x9b00], 0, 0x200);
+		memset(&memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0, 0x200);
 
 	return 1;
 }
@@ -2470,7 +2470,7 @@ static void hisave(void)
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 	if (f)
 	{
-		osd_fwrite(f, &Machine->memory_region[0][0x9b00], 0x200);
+		osd_fwrite(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x9b00], 0x200);
 		osd_fclose(f);
 	}
 }
@@ -2497,7 +2497,7 @@ static void expand_roms(UINT8 cd_rom_mask)
 	UINT8 *temp = malloc(0x20000);
 	if (temp)
 	{
-		UINT8 *rom = Machine->memory_region[0];
+		UINT8 *rom = memory_region(Machine->drv->cpu[0].memory_region);
 		UINT32 base;
 
 		for (base = 0x10000; base < Machine->memory_region_length[0]; base += 0x30000)
@@ -2564,8 +2564,8 @@ static void stocker_init(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0
 static void triviag1_init(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static void triviag2_init(void)
 {
-	memcpy(&Machine->memory_region[0][0x20000], &Machine->memory_region[0][0x28000], 0x4000);
-	memcpy(&Machine->memory_region[0][0x24000], &Machine->memory_region[0][0x28000], 0x4000);
+	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x20000], &memory_region(Machine->drv->cpu[0].memory_region)[0x28000], 0x4000);
+	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x24000], &memory_region(Machine->drv->cpu[0].memory_region)[0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
 static void triviasp_init(void) { triviag2_init(); }
@@ -3058,7 +3058,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##name,						\
 												\
@@ -3085,7 +3085,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##name,						\
 												\

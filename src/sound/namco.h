@@ -16,10 +16,12 @@ void namco_sh_stop(void);
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
 
+void polepos_sound_enable_w(int offset,int data);
+void polepos_sound_w(int offset,int data);
+
 void mappy_sound_enable_w(int offset,int data);
 void mappy_sound_w(int offset,int data);
 
-void namcos1_sound_enable_w(int offset,int data);
 void namcos1_sound_w(int offset,int data);
 void namcos1_wavedata_w(int offset,int data);
 int namcos1_sound_r(int offset);
@@ -30,6 +32,7 @@ extern unsigned char *namco_wavedata;
 
 #define mappy_soundregs namco_soundregs
 #define pengo_soundregs namco_soundregs
+#define polepos_soundregs namco_soundregs
 
 #endif
 

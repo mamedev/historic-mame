@@ -1543,14 +1543,14 @@ void wecleman_rom_decode(void)
 /* Optional code patches */
 
 	/* Main CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 //	WRITE_WORD (&RAM[0x08c2],0x601e);	// faster self test
 
 	/* Sub CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	/* Sound CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	RAM = memory_region(Machine->drv->cpu[2].memory_region);
 
 
 /* Decode GFX Roms - Compensate for the address lines scrambling */
@@ -1740,14 +1740,14 @@ int i;
 /* Optional code patches */
 
 	/* Main CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	WRITE_WORD (&RAM[0x1140],0x0015);	WRITE_WORD (&RAM[0x195c],0x601A);	// faster self test
 
 	/* Sub CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	/* Sound CPU patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	RAM = memory_region(Machine->drv->cpu[2].memory_region);
 
 
 /* Decode GFX Roms */

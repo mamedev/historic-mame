@@ -581,7 +581,7 @@ struct GameDriver driver_offtwall =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_offtwall,
 
@@ -608,7 +608,7 @@ struct GameDriver driver_offtwalc =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_offtwall,
 

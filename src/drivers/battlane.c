@@ -40,14 +40,14 @@ int battlane_cpu_control;
 void battlane_shared_ram_w(int offset, int data)
 {
 	unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[offset]=data;
 }
 
 int battlane_shared_ram_r(int offset)
 {
 	unsigned char *RAM =
-		Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		memory_region(Machine->drv->cpu[0].memory_region);
 	return RAM[offset];
 }
 
@@ -154,7 +154,7 @@ int battlane_cpu1_interrupt(void)
 		if (fp)
 		{
 			unsigned char *RAM =
-			Machine->memory_region[Machine->drv->cpu[0].memory_region];
+			memory_region(Machine->drv->cpu[0].memory_region);
 
 			fwrite(RAM, 0x4000, 1, fp);
 			fclose(fp);
@@ -440,8 +440,8 @@ static void battlane_decode(void)
 
 	/* no encryption, but one ROM is shared among two CPUs. We loaded it into the */
 	/* second CPU address space, let's copy it to the first CPU's one */
-	src = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	dest = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	src = memory_region(Machine->drv->cpu[1].memory_region);
+	dest = memory_region(Machine->drv->cpu[0].memory_region);
 
 	for(A = 0;A < 0x4000;A++)
 		dest[A + 0x4000] = src[A];

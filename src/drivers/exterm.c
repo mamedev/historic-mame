@@ -441,7 +441,7 @@ ROM_END
 
 void driver_init(void)
 {
-	memcpy (exterm_code_rom,Machine->memory_region[Machine->drv->cpu[0].memory_region],code_rom_size);
+	memcpy (exterm_code_rom,memory_region(Machine->drv->cpu[0].memory_region),code_rom_size);
 
 	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
 	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));
@@ -464,7 +464,7 @@ struct GameDriver driver_exterm =
 	rom_exterm,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_exterm,
 

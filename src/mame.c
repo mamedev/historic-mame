@@ -198,6 +198,7 @@ int run_game(int game)
 		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
 	}
 
+	set_pixel_functions();
 
 	/* Do the work*/
 	err = 1;
@@ -315,7 +316,7 @@ int init_machine(void)
 
 	{
 		extern unsigned char *RAM;
-		RAM = Machine->memory_region[drv->cpu[0].memory_region];
+		RAM = memory_region(drv->cpu[0].memory_region);
 		ROM = RAM;
 	}
 
@@ -332,8 +333,8 @@ int init_machine(void)
 		j = 0;
 		while (Machine->memory_region[j]) j++;
 
-		/* allocate a ROM array of the same length of memory region #0 */
-		if ((ROM = malloc(Machine->memory_region_length[0])) == 0)
+		/* allocate a ROM array of the same length of cpu #0 memory region */
+		if ((ROM = malloc(memory_region_length(drv->cpu[0].memory_region))) == 0)
 		{
 			free(Machine->input_ports);
 			Machine->input_ports = 0;
@@ -342,7 +343,7 @@ int init_machine(void)
 		}
 
 		Machine->memory_region[j] = ROM;
-		Machine->memory_region_length[j] = Machine->memory_region_length[0];
+		Machine->memory_region_length[j] = memory_region_length(drv->cpu[0].memory_region);
 
 		encrypted_cpu = 0;
 		(*gamedrv->opcode_decode)();
@@ -484,8 +485,8 @@ static int vh_open(void)
 				vh_close();
 				return 1;
 			}
-			if (Machine->colortable)
-				Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
+			if (Machine->remapped_colortable)
+				Machine->gfx[i]->colortable = &Machine->remapped_colortable[drv->gfxdecodeinfo[i].color_codes_start];
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}

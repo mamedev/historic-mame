@@ -56,17 +56,6 @@
   * Distortion effect missing on character description screen during attract
     mode. The game rapidly toggles on and off the layer enable bit.
 
-  Captain Commando
-  * The continue screen is missing the text and counter. The game is playing
-    one too many frames of the star animation. The culprit seems to be here:
-00D95A:   70 00                          moveq   #$0, D0
-00D95C:   3b 40 28 28                    move.w  D0, ($2828,A5)
-00D960:   3b 40 28 2c                    move.w  D0, ($282c,A5)
-00D964:   3b 7c 91 e0 28 1c              move.w  #$91e0, ($281c,A5)
-00D96A:   3b 7c 01 00 28 28              move.w  #$100, ($2828,A5)
-00D970:   3b 7c 01 00 28 2c              move.w  #$100, ($282c,A5)
-    replacing the #$100 at D96A with #$000 fixes the problem.
-
   mtwins
   * in the cave, some parts of the background don't wave. That's because
     rowscroll is not supported for high priority tiles.
@@ -88,13 +77,6 @@
   * in level 6, palette changes due to lightnings cause a lot of tiling effects
     on scroll2.
 
-
-  Todo
-  ====
-
-  Implement CPS2 QSound system
-
-
   Unknown issues
   ==============
 
@@ -108,12 +90,12 @@
 #include "vidhrdw/generic.h"
 #include "drivers/cps1.h"
 
-#define VERBOSE 1
-
-//#define MAME_DEBUG
+#define VERBOSE 0
 
 #ifdef MAME_DEBUG
-#define CPS1_DUMP_VIDEO
+#define CPS1_DUMP_VIDEO 1
+#else
+#define CPS1_DUMP_VIDEO 0
 #endif
 
 
@@ -235,6 +217,7 @@ static struct CPS1config cps1_config_table[]=
 	{"dino",    0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,0x4c,0x4e,0x40,0x42,0x44, 0x16,0x16,0x16, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"dinoj",   0x00,0x0000, 0x00,0x00,0x00,0x00, 0x4a,0x4c,0x4e,0x40,0x42,0x44, 0x16,0x16,0x16, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
 	{"punisher",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"punishru",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"punishrj",0x4e,0x0c00, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x48,0x4a,0x4c, 0x04,0x02,0x20, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"slammast",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"mbomberj",0x6e,0x0c01, 0x00,0x00,0x00,0x00, 0x56,0x40,0x42,0x68,0x6a,0x6c, 0x10,0x0c,0x0c, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
@@ -289,16 +272,16 @@ static void cps1_init_machine(void)
 		/* Patch out protection check */
 		WRITE_WORD(&RAM[0xe5464],0x6012);
 	}
+  /*
 	else if (strcmp(gamename, "slammast" )==0 || strcmp(gamename, "mbomberj" )==0)
 	{
-		/* temporary patch until the protection is understood */
 		WRITE_WORD(&RAM[0x0fbe], 0x4e75);
 	}
 	else if (strcmp(gamename, "mbombrd" )==0 || strcmp(gamename, "mbombrdj" )==0)
 	{
-		/* temporary patch until the protection is understood */
 		WRITE_WORD(&RAM[0x0f1a], 0x4e75);
 	}
+    */
 }
 
 
@@ -310,9 +293,20 @@ INLINE int cps1_port(int offset)
 
 INLINE unsigned char * cps1_base(int offset)
 {
-	int base=cps1_port(offset)*256;
-	return &cps1_gfxram[base&0x3ffff];
+    int base=cps1_port(offset)*256;
+    /*
+    The scroll RAM must start on a 0x4000 boundary.
+    Some games do not do this.
+    For example:
+       Captain commando     - continue screen will not display
+       Muscle bomber games  - will animate garbage during gameplay
+    Mask out the irrelevant bits.
+    */
+    base &= 0xfc000;
+ 	return &cps1_gfxram[base&0x3ffff];
 }
+
+
 
 int cps1_output_r(int offset)
 {
@@ -801,7 +795,7 @@ static int cps1_transparency_scroll[4];
 
 
 
-#ifdef CPS1_DUMP_VIDEO
+#if CPS1_DUMP_VIDEO
 void cps1_dump_video(void)
 {
 	FILE *fp;
@@ -866,20 +860,20 @@ INLINE void cps1_get_video_base(void )
 	int layercontrol;
 
 	/* Re-calculate the VIDEO RAM base */
-	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
-	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
-	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
-	cps1_obj=cps1_base(CPS1_OBJ_BASE);
-	cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-	cps1_other=cps1_base(CPS1_OTHER_BASE);
+    cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
+    cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
+    cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
+    cps1_obj=cps1_base(CPS1_OBJ_BASE);
+    cps1_palette=cps1_base(CPS1_PALETTE_BASE);
+    cps1_other=cps1_base(CPS1_OTHER_BASE);
 
     /* Get scroll values */
-	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
-	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
-	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
-	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+    scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+    scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+    scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+    scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+    scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+    scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
 
 	/* Get transparency registers */
 	if (cps1_game_config->priority1)
@@ -940,11 +934,13 @@ if (keyboard_pressed(KEYCODE_Z))
 	}
 
 	enablemask = cps1_game_config->scrl1_enable_mask | cps1_game_config->scrl2_enable_mask | cps1_game_config->scrl3_enable_mask;
+#if 0
 	if (((layercontrol & ~enablemask) & 0xc03e) != 0)
 	{
 		sprintf(baf,"layer %02x",layercontrol&0xc03f);
 		usrintf_showmessage(baf);
-	}
+   }
+   #endif
 }
 #endif
 }
@@ -1938,6 +1934,13 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (l2 == 0) cps1_render_high_layer(bitmap,l1);	/* overlay sprites */
 	cps1_render_layer(bitmap,l3,distort_scroll2);
 	if (l3 == 0) cps1_render_high_layer(bitmap,l2);	/* overlay sprites */
+
+#if CPS1_DUMP_VIDEO
+    if (keyboard_pressed(KEYCODE_F))
+    {
+        cps1_dump_video();
+    }
+#endif
 }
 
 void cps1_eof_callback(void)

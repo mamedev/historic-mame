@@ -93,7 +93,7 @@ Points to note, known and proven information deleted from this map:
 #include "cpu/z80/z80.h"
 
 
-#define RASTER_LINES 260	/* guess! */
+#define RASTER_LINES 261	/* guess! */
 #define FIRST_VISIBLE_LINE 16
 #define LAST_VISIBLE_LINE 239
 #define RASTER_VBLANK_END (RASTER_LINES-(LAST_VISIBLE_LINE-FIRST_VISIBLE_LINE+1))
@@ -462,11 +462,11 @@ void neo_control_w(int offset, int data)
 
     irq2control = data & 0xff;
 
-	/* ssideki2, zedblade and turfmast seem to be the only games to not set this
-	  bit, and also the only ones to have an irq2repeat > 8. Coincidence?
+	/* ssideki2, zedblade and turfmast seem to be the only games to not set these
+	  bits, and also the only ones to have an irq2repeat > 8. Coincidence?
 	  */
-	if (data & 0x80)
-		irq2repeat_limit = 8;
+	if (data & 0xc0)
+		irq2repeat_limit = 16;
 	else
 		irq2repeat_limit = 29;
 }
@@ -489,7 +489,8 @@ static void neo_irq2pos_w(int offset,int data)
 
 	line = value / 0x180 + 1;
 	if (line <= irq2repeat_limit) irq2repeat = line;
-	else irq2start = line;
+	/* ugly kludge to align irq2start in all games */
+	else irq2start = line + (neogeo_irq2type);
 }
 
 
@@ -4549,7 +4550,7 @@ struct GameDriver neogeo_bios =
 	rom_bios,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 	input_ports_neogeo,
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -4645,7 +4646,7 @@ NEODRIVER(janshin, "Jyanshin Densetsu - Quest of Jongmaster","1994","Aicom",&neo
 NEODRIVER(pulstar, "Pulstar","1995","Aicom",&neogeo_machine_driver,0)
 
 /* Data East Corporation */
-NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_machine_driver,0)
+NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
 NEODRIVER(wjammers,"Windjammers / Flying Power Disc","1994","Data East Corporation",&neogeo_machine_driver,0)
 NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation",&neogeo_raster_machine_driver,GAME_REQUIRES_16BIT)
 NEODRIVER(strhoop, "Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation",&neogeo_machine_driver,0)

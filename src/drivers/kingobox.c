@@ -883,8 +883,8 @@ static void ringkin3_expand_color_prom(void)
 
 static int kingofb_hiload(void)
 {
-	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
@@ -915,7 +915,7 @@ static int kingofb_hiload(void)
 static void kingofb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM2[0x8048],140);
@@ -926,8 +926,8 @@ static void kingofb_hisave(void)
 
 static int ringking_hiload(void)
 {
-	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	if  (memcmp(&RAM2[0x8049],"\x00\x15\x00",3) == 0 &&
@@ -960,7 +960,7 @@ static int ringking_hiload(void)
 static void ringking_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 
@@ -975,8 +975,8 @@ static void ringking_hisave(void)
 
 static int ringkin2_hiload(void)
 {
-	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM1 = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
@@ -1007,7 +1007,7 @@ static int ringkin2_hiload(void)
 static void ringkin2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM2 = memory_region(Machine->drv->cpu[1].memory_region);
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 
@@ -1036,7 +1036,7 @@ struct GameDriver driver_kingofb =
 	rom_kingofb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_kingofb,
 
@@ -1063,7 +1063,7 @@ struct GameDriver driver_ringking =
 	rom_ringking,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ringking,
 
@@ -1089,7 +1089,7 @@ struct GameDriver driver_ringkin2 =
 	rom_ringkin2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_kingofb,
 
@@ -1115,7 +1115,7 @@ struct GameDriver driver_ringkin3 =
 	rom_ringkin3,
 	ringkin3_expand_color_prom, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_kingofb,
 

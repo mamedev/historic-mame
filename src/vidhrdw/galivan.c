@@ -56,7 +56,7 @@ static const unsigned char *spritepalettebank;
 /* Sets the ROM bank READ at c000-dfff. bank must be 0 or 1 */
 void galivan_setrombank(int bank)
 {
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
 }

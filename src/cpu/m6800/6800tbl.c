@@ -18,6 +18,7 @@ INLINE void addb_im(void);
 INLINE void addb_ix(void);
 INLINE void addd_di(void);
 INLINE void addd_ex(void);
+INLINE void addx_ex(void);
 INLINE void addd_im(void);
 INLINE void addd_ix(void);
 INLINE void aim_di(void);
@@ -341,3 +342,37 @@ subb_ex,cmpb_ex,sbcb_ex,addd_ex,andb_ex,bitb_ex,ldb_ex, stb_ex,
 eorb_ex,adcb_ex,orb_ex, addb_ex,ldd_ex, std_ex, ldx_ex, stx_ex
 };
 
+static void (*nsc8105_insn[0x100])(void) = {
+illegal,illegal,nop,	illegal,illegal,tap,	illegal,tpa,
+inx,	clv,	dex,	sev,	clc,	cli,	sec,	sei,
+sba,	illegal,cba,	illegal,illegal,tab,	illegal,tba,
+illegal,illegal,daa,	aba,	illegal,illegal,illegal,illegal,
+bra,	bhi,	brn,	bls,	bcc,	bne,	bcs,	beq,
+bvc,	bpl,	bvs,	bmi,	bge,	bgt,	blt,	ble,
+tsx,	pula,	ins,	pulb,	des,	psha,	txs,	pshb,
+illegal,illegal,rts,	rti,	illegal,wai,	illegal,swi,
+suba_im,sbca_im,cmpa_im,illegal,anda_im,lda_im, bita_im,sta_im,
+eora_im,ora_im, adca_im,adda_im,cmpx_im,lds_im, bsr,	sts_im,
+suba_di,sbca_di,cmpa_di,illegal,anda_di,lda_di, bita_di,sta_di,
+eora_di,ora_di, adca_di,adda_di,cmpx_di,lds_di, jsr_di, sts_di,
+suba_ix,sbca_ix,cmpa_ix,illegal,anda_ix,lda_ix, bita_ix,sta_ix,
+eora_ix,ora_ix, adca_ix,adda_ix,cmpx_ix,lds_ix, jsr_ix, sts_ix,
+suba_ex,sbca_ex,cmpa_ex,illegal,anda_ex,lda_ex, bita_ex,sta_ex,
+eora_ex,ora_ex, adca_ex,adda_ex,cmpx_ex,lds_ex, jsr_ex, sts_ex,
+nega,	illegal,illegal,coma,	lsra,	rora,	illegal,asra,
+asla,	deca,	rola,	illegal,inca,	illegal,tsta,	clra,
+negb,	illegal,illegal,comb,	lsrb,	rorb,	illegal,asrb,
+aslb,	decb,	rolb,	illegal,incb,	illegal,tstb,	clrb,
+neg_ix, illegal,illegal,com_ix, lsr_ix, ror_ix,	illegal,asr_ix,
+asl_ix, dec_ix, rol_ix, illegal,inc_ix, jmp_ix, tst_ix, clr_ix,
+neg_ex, illegal,illegal,com_ex, lsr_ex, ror_ex,	illegal,asr_ex,
+asl_ex, dec_ex, rol_ex, illegal,inc_ex, jmp_ex, tst_ex, clr_ex,
+subb_im,sbcb_im,cmpb_im,illegal,andb_im,ldb_im, bitb_im,stb_im,
+eorb_im,orb_im, adcb_im,addb_im,illegal,ldx_im, illegal,stx_im,
+subb_di,sbcb_di,cmpb_di,illegal,andb_di,ldb_di, bitb_di,stb_di,
+eorb_di,orb_di, adcb_di,addb_di,illegal,ldx_di, illegal,stx_di,
+subb_ix,sbcb_ix,cmpb_ix,illegal,andb_ix,ldb_ix, bitb_ix,stb_ix,
+eorb_ix,orb_ix, adcb_ix,addb_ix,illegal,ldx_ix, illegal,stx_ix,
+subb_ex,sbcb_ex,cmpb_ex,illegal,andb_ex,ldb_ex, bitb_ex,stb_ex,
+eorb_ex,orb_ex, adcb_ex,addb_ex,addx_ex,ldx_ex, illegal,stx_ex
+};

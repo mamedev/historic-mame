@@ -333,7 +333,7 @@ ROM_END
 /****  Appoooh high score save routine - RJF (Aug 3, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe029],"\x53\x41\x4d",3) == 0)
@@ -356,7 +356,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -382,7 +382,7 @@ struct GameDriver driver_appoooh =
 	rom_appoooh,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_appoooh,
 

@@ -26,7 +26,7 @@ void timeplt_sh_irqtrigger_w(int offset,int data);
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
 void rocnrope_interrupt_vector_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	RAM[0xFFF2+offset] = data;
@@ -336,7 +336,7 @@ ROM_END
 static void rocnropk_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -355,7 +355,7 @@ static void rocnrope_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x5160],"\x01\x00\x00",3) == 0 &&
@@ -381,7 +381,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -409,7 +409,7 @@ struct GameDriver driver_rocnrope =
 	rom_rocnrope,
 	0, rocnrope_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rocnrope,
 
@@ -435,7 +435,7 @@ struct GameDriver driver_rocnropk =
 	rom_rocnropk,
 	0, rocnropk_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rocnrope,
 

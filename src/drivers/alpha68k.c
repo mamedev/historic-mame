@@ -422,7 +422,7 @@ static struct MemoryWriteAddress alpha68k_V_writemem[] =
 static void sound_bank_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	bankaddress = 0x10000 + (data) * 0x4000;
 	cpu_setbank(7,&RAM[bankaddress]);
@@ -1861,7 +1861,7 @@ ROM_END
 
 static void gangwarb_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD(&RAM[0x98fa],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb76c],0x4e71);	/* Disable rom check */
@@ -1869,7 +1869,7 @@ static void gangwarb_patch(void)
 
 static void gangwars_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD(&RAM[0x98e6],0x4e71);	/* Alpha controller related? */
 	WRITE_WORD(&RAM[0xb758],0x4e71);	/* Disable rom check */
@@ -1877,7 +1877,7 @@ static void gangwars_patch(void)
 
 static void btl_patch(void)
 {
-//	unsigned char *RAM = Machine->memory_region[0];
+//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 //	WRITE_WORD(&RAM[0x9da8],0x4e73);
 //	WRITE_WORD(&RAM[0x9250],0x4240); /* Clear D0 */
 }
@@ -1957,7 +1957,7 @@ struct GameDriver driver_kyros =
 	rom_kyros,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timesold,
 
@@ -1982,7 +1982,7 @@ struct GameDriver driver_sstingry =
 	rom_sstingry,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sstingry,
 
@@ -2007,7 +2007,7 @@ struct GameDriver driver_paddlema =
 	rom_paddlema,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timesold,
 
@@ -2032,7 +2032,7 @@ struct GameDriver driver_timesold =
 	rom_timesold,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timesold,
 
@@ -2057,7 +2057,7 @@ struct GameDriver driver_timesol2 =
 	rom_timesol2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timesold,
 
@@ -2082,7 +2082,7 @@ struct GameDriver driver_btlfield =
 	rom_btlfield,
 	btl_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_timesold,
 
@@ -2107,7 +2107,7 @@ struct GameDriver driver_skysoldr =
 	rom_skysoldr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skysoldr,
 
@@ -2132,7 +2132,7 @@ struct GameDriver driver_goldmedl =
 	rom_goldmedl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_goldmedl,
 
@@ -2157,7 +2157,7 @@ struct GameDriver driver_goldmedb =
 	rom_goldmedb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_goldmedl,
 
@@ -2182,7 +2182,7 @@ struct GameDriver driver_skyadvnt =
 	rom_skyadvnt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skyadvnt,
 
@@ -2207,7 +2207,7 @@ struct GameDriver driver_gangwars =
 	rom_gangwars,
 	gangwars_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gangwars,
 
@@ -2232,7 +2232,7 @@ struct GameDriver driver_gangwarb =
 	rom_gangwarb,
 	gangwarb_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gangwars,
 

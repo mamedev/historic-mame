@@ -33,7 +33,7 @@ int turtship_read_ports(int offset);
 static void sidearms_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* bits 0 and 1 select the ROM bank */
@@ -806,7 +806,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -833,7 +833,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -861,7 +861,7 @@ struct GameDriver driver_sidearms =
 	rom_sidearms,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sidearms,
 
@@ -886,7 +886,7 @@ struct GameDriver driver_sidearmr =
 	rom_sidearmr,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sidearms,
 
@@ -911,7 +911,7 @@ struct GameDriver driver_sidearjp =
 	rom_sidearjp,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sidearms,
 
@@ -936,7 +936,7 @@ struct GameDriver driver_turtship =
 	rom_turtship,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_turtship,
 
@@ -961,7 +961,7 @@ struct GameDriver driver_dyger =
 	rom_dyger,
 	0,0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dyger,
 

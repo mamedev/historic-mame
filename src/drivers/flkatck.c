@@ -48,7 +48,7 @@ static int flkatck_interrupt( void )
 
 static void flkatck_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress = 0;
 
 	/* bits 3-4: coin counters */
@@ -341,10 +341,12 @@ static struct MachineDriver flkatck_machine_driver =
 	}
 };
 
-ROM_START( flkatck )
+
+
+ROM_START( mx5000 )
 	ROM_REGION(0x18000)		/* 6309 code */
-	ROM_LOAD( "gx669_p1.16c",	0x010000, 0x006000, 0xc5cd2807 )/* banked ROM */
-	ROM_CONTINUE(				0x006000, 0x00a000 )			/* fixed ROM */
+	ROM_LOAD( "r01",          0x010000, 0x006000, 0x79b226fc )/* banked ROM */
+	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
 
     ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
 	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
@@ -356,10 +358,101 @@ ROM_START( flkatck )
 	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
 ROM_END
 
-struct GameDriver driver_flkatck =
+ROM_START( flkatck )
+	ROM_REGION(0x18000)		/* 6309 code */
+	ROM_LOAD( "gx669_p1.16c", 0x010000, 0x006000, 0xc5cd2807 )/* banked ROM */
+	ROM_CONTINUE(             0x006000, 0x00a000 )			/* fixed ROM */
+
+    ROM_REGION_DISPOSE(0x080000) /* graphics (disposed after conversion) */
+	ROM_LOAD( "mask4m.bin",		0x000000, 0x080000, 0xff1d718b )/* tiles + sprites */
+
+	ROM_REGION(0x10000)		/* 64k for the SOUND CPU */
+	ROM_LOAD( "m02.bin",		0x000000, 0x008000, 0x7e11e6b9 )
+
+	ROM_REGION( 0x040000 )	/* 007232 data (chip 1) */
+	ROM_LOAD( "mask2m.bin",		0x000000, 0x040000, 0x6d1ea61c )
+ROM_END
+
+
+
+/****  Flak Attack high score save routine  ****/
+/****  RJF (Nov 23, 1999)  ****/
+static int flkatck_hiload(void)
+{
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x3a00],"\x00\x66\x90",3) == 0) &&
+		(memcmp(&RAM[0x3a08],"\x00\x21\x40",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			/*** 8 bytes each entry ****/
+			/* bytes 1,2,3     = score */
+			/* byte 4          = stage */
+			/* byte 5          = ???   */
+			/* bytes 6,7,8     = name  */
+
+			osd_fread(f,&RAM[0x3a00], 10*8);	/* hs table */
+
+			RAM[0x395e] = RAM[0x3a00];	/* update high score */
+			RAM[0x395f] = RAM[0x3a01];	/* on top of screen */
+			RAM[0x3960] = RAM[0x3a02];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void flkatck_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x3a00], 10*8);		/* hs table */
+		osd_fclose(f);
+	}
+}
+
+
+
+struct GameDriver driver_mx5000 =
 {
 	__FILE__,
 	0,
+	"mx5000",
+	"MX5000",
+	"1987",
+	"Konami",
+	"Manuel Abadia",
+	0,
+	&flkatck_machine_driver,
+	0,
+
+	rom_mx5000,
+	0,
+	0,
+	0,
+	0,
+
+	input_ports_flkatck,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	flkatck_hiload, flkatck_hisave
+};
+
+struct GameDriver driver_flkatck =
+{
+	__FILE__,
+	&driver_mx5000,
 	"flkatck",
 	"Flak Attack (Japan)",
 	"1987",
@@ -379,5 +472,6 @@ struct GameDriver driver_flkatck =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
-	0, 0
+
+	flkatck_hiload, flkatck_hisave
 };

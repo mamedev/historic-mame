@@ -345,7 +345,8 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (clip->max_y - clip->min_y > 8)	/* kludge to improve the ssideki games */
+			if (clip->max_y - clip->min_y > 8 ||	/* kludge to improve the ssideki games */
+					clip->min_y == Machine->drv->visible_area.min_y)
 			{
 				if (sy > 0x110) sy -= 0x200;
 				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
@@ -355,12 +356,12 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 			}
 			oy = sy;
 
-		  	if(my==0x21) my=0x20;
-			else if(rzy!=0xff && my!=0)
-			/* TODO: this is most likely wrong */
-				my=((my*16*256)/(rzy+1) + 15)/16;
-
-			if(my>0x20) my=0x20;
+			if (rzy < 0xff && my < 0x10 && my)
+			{
+				my = (my*256)/(rzy+1);
+				if (my > 0x10) my = 0x10;
+			}
+			if (my > 0x20) my=0x20;
 
 			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
@@ -426,8 +427,6 @@ static const unsigned char *neogeo_palette(const struct rectangle *clip)
 				}
 			}
 
-			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
-									// it breaks OverTop radar so it can't be right
 			if (sy+yskip-1 >= clip->min_y && sy <= clip->max_y)
 			{
 				tileatr=tileatr>>8;
@@ -931,7 +930,8 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	}
 	#endif
 
-    if (clip->max_y - clip->min_y > 8)	/* kludge to speed up raster effects */
+	if (clip->max_y - clip->min_y > 8 ||	/* kludge to speed up raster effects */
+			clip->min_y == Machine->drv->visible_area.min_y)
     {
 		/* Palette swap occured after last frame but before this one */
 		if (palette_swap_pending) swap_palettes();
@@ -939,9 +939,9 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 		/* Do compressed palette stuff */
 		neogeo_palette(clip);
 		/* no need to check the return code since we redraw everything each frame */
-
-		fillbitmap(bitmap,Machine->pens[4095],clip);
 	}
+
+	fillbitmap(bitmap,Machine->pens[4095],clip);
 
 #ifdef NEO_DEBUG
 if (!dotiles) { 					/* debug */
@@ -979,7 +979,8 @@ if (!dotiles) { 					/* debug */
 			else fullmode = 0;
 
 			sy = 0x200 - (t1 >> 7);
-			if (clip->max_y - clip->min_y > 8)	/* kludge to improve the ssideki games */
+			if (clip->max_y - clip->min_y > 8 ||	/* kludge to improve the ssideki games */
+					clip->min_y == Machine->drv->visible_area.min_y)
 			{
 				if (sy > 0x110) sy -= 0x200;
 				if (fullmode == 2 || (fullmode == 1 && rzy == 0xff))
@@ -989,12 +990,12 @@ if (!dotiles) { 					/* debug */
 			}
 			oy = sy;
 
-		  	if(my==0x21) my=0x20;
-			else if(rzy!=0xff && my!=0)
-			/* TODO: this is most likely wrong */
-				my=((my*16*256)/(rzy+1) + 15)/16;
-
-			if(my>0x20) my=0x20;
+			if (rzy < 0xff && my < 0x10 && my)
+			{
+				my = (my*256)/(rzy+1);
+				if (my > 0x10) my = 0x10;
+			}
+			if (my > 0x20) my=0x20;
 
 			ddax=0;	/* =16; NS990110 neodrift fix */		/* setup x zoom */
 		}
@@ -1069,8 +1070,6 @@ if (!dotiles) { 					/* debug */
 				}
 			}
 
-			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
-									// it breaks OverTop radar so it can't be right
 			if (sy+15 >= clip->min_y && sy <= clip->max_y)
 			{
 				if (Machine->scrbitmap->depth == 16)

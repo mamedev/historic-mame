@@ -4,7 +4,6 @@
 
 	Notes:
 		Graphics are wrong in the end of game animation
-		Konami SCC sound is not implemented.
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -31,7 +30,7 @@ void hcastle_pf2_control_w(int offset,int data);
 
 static void hcastle_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x1f) * 0x2000;
@@ -51,11 +50,11 @@ static void hcastle_coin_w(int offset, int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	int data = ( RAM[0x18dc] << 8 ) | RAM[0x18dd];
 
-	if ( data < Machine->memory_region_length[0] )
+	if ( data < memory_region_length(Machine->drv->cpu[0].memory_region) )
 	{
 		data = ( RAM[data] << 8 ) | RAM[data + 1];
 
@@ -133,7 +132,10 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9800, 0x98ff, MWA_NOP }, /* SCC */
+	{ 0x9800, 0x987f, K051649_waveform_w },
+	{ 0x9880, 0x9889, K051649_frequency_w },
+	{ 0x988a, 0x988e, K051649_volume_w },
+	{ 0x988f, 0x988f, K051649_keyonoff_w },
 	{ 0xa000, 0xa000, YM3812_control_port_0_w },
 	{ 0xa001, 0xa001, YM3812_write_port_0_w },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
@@ -285,7 +287,7 @@ static struct K007232_interface k007232_interface =
 {
 	1,		/* number of chips */
 	{ 3 },	/* memory regions */
-	{ K007232_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* volume */
+	{ K007232_VOL(44,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
 
@@ -297,7 +299,11 @@ static struct YM3812interface ym3812_interface =
 	{ irqhandler },
 };
 
-
+static struct k051649_interface k051649_interface =
+{
+	3579545/2,	/* Clock */
+	45,			/* Volume */
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -346,6 +352,10 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_YM3812,
 			&ym3812_interface
+		},
+		{
+			SOUND_K051649,
+			&k051649_interface,
 		}
 	}
 };
@@ -445,12 +455,12 @@ struct GameDriver driver_hcastle =
 	rom_hcastle,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -471,12 +481,12 @@ struct GameDriver driver_hcastlea =
 	rom_hcastlea,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };
@@ -497,12 +507,12 @@ struct GameDriver driver_hcastlej =
 	rom_hcastlej,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hcastle,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

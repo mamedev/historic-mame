@@ -87,23 +87,6 @@
 #define S16 0x8000
 #define S32 0x80000000
 
-/* memory byte order for word and long store/load */
-#ifdef  LSB_FIRST
-#define B0_16   0
-#define B1_16	1
-#define B0_32	0
-#define B1_32	1
-#define B2_32	2
-#define B3_32	3
-#else
-#define B0_16	1
-#define B1_16	0
-#define B0_32	3
-#define B1_32	2
-#define B2_32	1
-#define B3_32	0
-#endif
-
 /* get a single flag bit 0/1 */
 #define GET_C       ((FCW >> 7) & 1)
 #define GET_Z		((FCW >> 6) & 1)
@@ -181,7 +164,7 @@
 #define GET_IMM8(o) 	UINT8 imm8 = (UINT8)Z.op[o]
 
 #define GET_IMM16(o)	UINT16 imm16 = Z.op[o]
-#define GET_IMM32		UINT32 imm32 = Z.op[1] + (Z.op[2] << 16)
+#define GET_IMM32		UINT32 imm32 = Z.op[2] + (Z.op[1] << 16)
 #define GET_DSP7		UINT8 dsp7 = Z.op[0] & 127
 #define GET_DSP8		INT8 dsp8 = (INT8)Z.op[0]
 #define GET_DSP16		UINT16 dsp16 = PC + (INT16)Z.op[1]

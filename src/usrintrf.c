@@ -926,7 +926,6 @@ static void showcharset(void)
 			{
 				if (bank >= 0)
 				{
-					extern unsigned short *game_colortable;	/* in palette.c */
 					int table_offs;
 					int flipx,flipy;
 
@@ -938,10 +937,10 @@ static void showcharset(void)
 					if (palette_used_colors)
 					{
 						memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
-						table_offs = Machine->gfx[bank]->colortable - Machine->colortable
+						table_offs = Machine->gfx[bank]->colortable - Machine->remapped_colortable
 								+ Machine->gfx[bank]->color_granularity * color;
 						for (i = 0;i < Machine->gfx[bank]->color_granularity;i++)
-							palette_used_colors[game_colortable[table_offs + i]] = PALETTE_COLOR_USED;
+							palette_used_colors[Machine->game_colortable[table_offs + i]] = PALETTE_COLOR_USED;
 						palette_recalc();	/* do it twice in case of previous overflow */
 						palette_recalc();	/*(we redraw the screen only when it changes) */
 					}

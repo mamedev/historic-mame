@@ -435,7 +435,7 @@ ROM_END
 
 static void aliens_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs = 0x18000;
 
 
@@ -447,7 +447,7 @@ static void aliens_banking( int lines )
 
 static void aliens_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	konami_cpu_setlines_callback = aliens_banking;
 
@@ -481,7 +481,7 @@ struct GameDriver driver_aliens =
 	rom_aliens,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aliens,
 
@@ -506,7 +506,7 @@ struct GameDriver driver_aliens2 =
 	rom_aliens2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aliens,
 
@@ -531,7 +531,7 @@ struct GameDriver driver_aliensj =
 	rom_aliensj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aliens,
 

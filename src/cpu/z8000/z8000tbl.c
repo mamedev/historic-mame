@@ -282,14 +282,14 @@ static Z8000_init table[] = {
 {0x571d,0x57fd,16,2, 16,Z57_ssN0_ddN0_addr, 					 "pop     %a1(%rw3),@%rw2"},
 {0x571e,0x57fe,16,2, 16,Z57_ssN0_ddN0_addr, 					 "pop     %a1(%rw3),@%rw2"},
 {0x571f,0x57ff,16,2, 16,Z57_ssN0_ddN0_addr, 					 "pop     %a1(%rw3),@%rw2"},
-{0x5800,0x580f, 1,2,282,Z58_0000_dddd_addr, 					 "multl   %rq3,%a1"},
-{0x5810,0x58ff, 1,2,282,Z58_ssN0_dddd_addr, 					 "multl   %rq3,%a1(%rw2)"},
-{0x5900,0x590f, 1,2, 70,Z59_0000_dddd_addr, 					 "mult    %rl3,%a1"},
-{0x5910,0x59ff, 1,2, 70,Z59_ssN0_dddd_addr, 					 "mult    %rl3,%a1(%rw2)"},
+{0x5800,0x580f, 1,2,283,Z58_0000_dddd_addr, 					 "multl   %rq3,%a1"},
+{0x5810,0x58ff, 1,2,284,Z58_ssN0_dddd_addr, 					 "multl   %rq3,%a1(%rw2)"},
+{0x5900,0x590f, 1,2, 71,Z59_0000_dddd_addr, 					 "mult    %rl3,%a1"},
+{0x5910,0x59ff, 1,2, 72,Z59_ssN0_dddd_addr, 					 "mult    %rl3,%a1(%rw2)"},
 {0x5a00,0x5a0f, 1,2,745,Z5A_0000_dddd_addr, 					 "divl    %rq3,%a1"},
 {0x5a10,0x5aff, 1,2,746,Z5A_ssN0_dddd_addr, 					 "divl    %rq3,%a1(%rw2)"},
-{0x5b00,0x5b0f, 1,2,107,Z5B_0000_dddd_addr, 					 "div     %rl3,%a1"},
-{0x5b10,0x5bff, 1,2,107,Z5B_ssN0_dddd_addr, 					 "div     %rl3,%a1(%rw2)"},
+{0x5b00,0x5b0f, 1,2,108,Z5B_0000_dddd_addr, 					 "div     %rl3,%a1"},
+{0x5b10,0x5bff, 1,2,109,Z5B_ssN0_dddd_addr, 					 "div     %rl3,%a1(%rw2)"},
 {0x5c01,0x5c01, 1,3, 14,Z5C_0000_0001_0000_dddd_0000_nmin1_addr, "ldm     %rw5,%a2,n"},
 {0x5c08,0x5c08, 1,2, 16,Z5C_0000_1000_addr, 					 "testl   %a1"},
 {0x5c09,0x5c09, 1,3, 14,Z5C_0000_1001_0000_ssss_0000_nmin1_addr, "ldm     %a2,%rw5,n"},
@@ -556,7 +556,7 @@ void z8000_init(void)
     for (i = 0; i < 256; i++)
 		z8000_zsp[i] = ((i == 0) ? F_Z : 0) |
                        ((i & 128) ? F_S : 0) |
-                       (((i>>7)^(i>>6)^(i>>5)^(i>>4)^(i>>3)^(i>>2)^(i>>1)^i) & 1) ? F_PV : 0;
+                       ((((i>>7)^(i>>6)^(i>>5)^(i>>4)^(i>>3)^(i>>2)^(i>>1)^i) & 1) ? F_PV : 0);
 
     /* first set all 64K opcodes to invalid */
 	for (i = 0; i < 0x10000; i++)

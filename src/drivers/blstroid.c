@@ -415,7 +415,7 @@ struct GameDriver driver_blstroid =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_blstroid,
 
@@ -442,7 +442,7 @@ struct GameDriver driver_blstroi2 =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_blstroid,
 

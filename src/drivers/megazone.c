@@ -481,7 +481,7 @@ ROM_END
 /****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x244a],"\x4b\x4f\x5a",3) == 0)
@@ -511,7 +511,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -527,7 +527,7 @@ static void hisave(void)
 static void megazone_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x6000;A < 0x10000;A++)
@@ -554,7 +554,7 @@ struct GameDriver driver_megazone =
 	rom_megazone,
 	0, megazone_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_megazone,
 
@@ -580,7 +580,7 @@ struct GameDriver driver_megaznik =
 	rom_megaznik,
 	0, megazone_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_megazone,
 

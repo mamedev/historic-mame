@@ -196,7 +196,7 @@ struct GameDriver driver_skychut =
 	rom_skychut,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skychut,
 

@@ -284,7 +284,7 @@ void devram_w(int offs, int data)	{	devram[offs] = data; }
 
 static void bankswitch_w(int offs,int data)
 {
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
@@ -367,7 +367,7 @@ static int addr = 0xfd;
 
 static void bankswitch2_w(int offs,int data)
 {
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
@@ -510,7 +510,7 @@ static struct IOWritePort writeport2[] =
 
 static void sound_bankswitch_w(int offs,int data)
 {
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 
 	if ((data & 7) <  3)	RAM = &RAM[0x4000 * (data & 7)];
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
@@ -822,11 +822,11 @@ unsigned char *RAM;
 		RAM[i] = ((RAM[i] & 0xF0)>>4) + ((RAM[i] & 0x0F)<<4);
 	}
 
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0x37f4] = 0x00;		RAM[0x37f5] = 0x00;	// startup check. We need a reset
 												// so I patch a busy loop with jp 0
 
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	RAM[0x0258] = 0x53; // include EI in the busy loop.
 						// It's an hack to repair nested nmi troubles
 }
@@ -839,7 +839,7 @@ unsigned char *RAM;
 
 static int airbustr_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe160],"\x01\x68\x00",3) == 0)
@@ -860,7 +860,7 @@ static int airbustr_hiload(void)
 static void airbustr_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -42,7 +42,8 @@ static double timer_step;
 static NE_OPL_STATE *nonemu_state;
 
 /* These ones are used by both */
-static const struct YM3812interface *intf = NULL;
+//static const struct YM3812interface *intf = NULL;
+static const struct Y8950interface *intf = NULL;
 
 /* Function procs to access the selected YM type */
 /* static int ( *sh_start )( const struct MachineSound *msound ); */
@@ -316,6 +317,20 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		if(F3812[i] == NULL) return 1;
 		/* stream setup */
 		sprintf(name,"%s #%d",sound_name(msound),i);
+#if HAS_Y8950
+		/* ADPCM ROM DATA */
+		if(chiptype == OPL_TYPE_Y8950)
+		{
+			F3812[i]->deltat->memory = (unsigned char *)(Machine->memory_region[intf->rom_region[i]]);
+			F3812[i]->deltat->memory_size = Machine->memory_region_length[intf->rom_region[i]];
+			//F3812[i].porthandler_r = intf->portread[i];
+			//F3812[i].porthandler_w = intf->portwrite[i];
+			//F3812[i].keyboardhandler_r = intf-keyboardread[i];
+			//F3812[i].keyboardhandler_w = intf-keyboardwrite[i];
+			stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,(int)F3812[i],(STREAM_HANDLER)Y8950UpdateOne);
+		}
+		else
+#endif
 		//stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,UpdateHandler);
 		stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,(int)F3812[i],(STREAM_HANDLER)YM3812UpdateOne);
 		/* YM3812 setup */

@@ -31,8 +31,6 @@ int galpanic_paletteram_r(int offset);
 void galpanic_paletteram_w(int offset,int data);
 int galpanic_spriteram_r(int offset);
 void galpanic_spriteram_w(int offset,int data);
-int galpanic_vh_start(void);
-void galpanic_vh_stop(void);
 void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -221,8 +219,8 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	galpanic_vh_start,
-	galpanic_vh_stop,
+	generic_bitmapped_vh_start,
+	generic_bitmapped_vh_stop,
 	galpanic_vh_screenrefresh,
 
 	/* sound hardware */
@@ -287,7 +285,7 @@ struct GameDriver driver_galpanic =
 	rom_galpanic,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_galpanic,
 

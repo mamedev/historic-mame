@@ -6,20 +6,20 @@
 
 ***************************************************************************/
 
-//#define NAMCOS2_DEBUG_MODE
+// #define NAMCOS2_DEBUG_MODE
 
 /* memory decode regions */
 
-#define MEM_CPU1        0
-#define MEM_CPU2        1
-#define MEM_CPU_SOUND   2
-#define MEM_CPU_MCU     3
-#define MEM_GFX_OBJ     4
-#define MEM_GFX_CHR     5
-#define MEM_GFX_ROZ     6
-#define MEM_DATA        7
-#define MEM_VOICE       8
-#define MEM_GFX_MASK    9
+#define REGION_CPU_MASTER	REGION_CPU1
+#define REGION_CPU_SLAVE	REGION_CPU2
+#define REGION_CPU_SOUND	REGION_CPU3
+#define REGION_CPU_MCU		REGION_CPU4
+#define REGION_GFX_OBJ		REGION_GFX1
+#define REGION_GFX_CHR		REGION_GFX2
+#define REGION_GFX_ROZ		REGION_GFX3
+#define REGION_GFX_MASK		REGION_GFX4
+#define REGION_DATA			8
+#define REGION_VOICE		9
 
 
 /* CPU reference numbers */
@@ -77,7 +77,7 @@
 #define NAMCOS2_SUPER_WSTADIUM_92   0x101b
 #define NAMCOS2_SUPER_WSTADIUM_93   0x101c
 #define NAMCOS2_SUZUKA_8_HOURS      0x101d
-#define NAMCOS2_WALKYRIE            0x101e
+#define NAMCOS2_VALKYRIE            0x101e
 
 extern int namcos2_gametype;
 
@@ -85,7 +85,8 @@ extern int namcos2_gametype;
 
 int  namcos2_vh_start(void);
 void namcos2_vh_stop(void);
-void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh);
+void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh);
+void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh);
 void namcos2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* MACHINE */
@@ -212,14 +213,14 @@ extern int namcos2_68k_protect;
 #define NAMCOS2_C148_SERIRQ     6
 #define NAMCOS2_C148_VBLANKIRQ  7
 
-
 extern int  namcos2_68k_master_C148[32];
+extern int  namcos2_68k_slave_C148[32];
+
 void namcos2_68k_master_C148_w( int offset, int data );
 int  namcos2_68k_master_C148_r( int offset );
 int  namcos2_68k_master_vblank( void );
 void namcos2_68k_master_posirq( int moog );
 
-extern int  namcos2_68k_slave_C148[32];
 void namcos2_68k_slave_C148_w( int offset, int data );
 int  namcos2_68k_slave_C148_r( int offset );
 int  namcos2_68k_slave_vblank(void);
@@ -266,7 +267,7 @@ extern unsigned char namcos2_68k_roz_ctrl[];
 
 void namcos2_68k_roz_ram_w( int offset, int data );
 int  namcos2_68k_roz_ram_r( int offset );
-extern int  namcos2_68k_roz_ram_size;
+extern int namcos2_68k_roz_ram_size;
 extern unsigned char *namcos2_68k_roz_ram;
 
 

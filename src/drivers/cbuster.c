@@ -593,7 +593,7 @@ ROM_END
 
 static void twocrude_decrypt(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	unsigned char *PTR;
 	int i,j;
 

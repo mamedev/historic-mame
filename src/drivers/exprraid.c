@@ -66,7 +66,7 @@ void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 static int exprraid_prot_0_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	return RAM[0x02a9];
 }
@@ -496,7 +496,7 @@ static void exprraid_gfx_expand( void ) {
 
 static void wexpress_decode_rom( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i;
 
 
@@ -515,7 +515,7 @@ static void wexpress_decode_rom( void )
 
 static void exprraid_decode_rom( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* decode vectors */
@@ -536,7 +536,7 @@ static void exprraid_decode_rom( void )
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int resetcount;
 
 
@@ -564,7 +564,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -591,7 +591,7 @@ struct GameDriver driver_exprraid =
 	rom_exprraid,
 	exprraid_gfx_expand, exprraid_decode_rom,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exprraid,
 
@@ -617,7 +617,7 @@ struct GameDriver driver_wexpress =
 	rom_wexpress,
 	exprraid_gfx_expand, wexpress_decode_rom,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exprraid,
 
@@ -643,7 +643,7 @@ struct GameDriver driver_wexpresb =
 	rom_wexpresb,
 	exprraid_gfx_expand, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exprraid,
 

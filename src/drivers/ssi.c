@@ -426,7 +426,7 @@ struct GameDriver driver_ssi =
 	rom_ssi,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ssi,
 
@@ -451,7 +451,7 @@ struct GameDriver driver_majest12 =
 	rom_majest12,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_majest12,
 

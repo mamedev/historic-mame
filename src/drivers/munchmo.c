@@ -244,7 +244,7 @@ void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 //	if( keyboard_pressed( KEYCODE_Q ) ){
 //		FILE *f = fopen( "munch.ram", "wb" );
 //		if( f ){
-//			fwrite( &Machine->memory_region[0][0], 0x10000, 1, f );
+//			fwrite( &memory_region(Machine->drv->cpu[0].memory_region)[0], 0x10000, 1, f );
 //			fclose( f );
 //		}
 //		while( keyboard_pressed( KEYCODE_Q ) ){};

@@ -2509,7 +2509,7 @@ struct GameDriver driver_hbarrel =
 	rom_hbarrelu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hbarrel,
 
@@ -2534,7 +2534,7 @@ struct GameDriver driver_hbarrelw =
 	rom_hbarrel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hbarrel,
 
@@ -2559,7 +2559,7 @@ struct GameDriver driver_baddudes =
 	rom_baddudes,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_baddudes,
 
@@ -2584,7 +2584,7 @@ struct GameDriver driver_drgninja =
 	rom_drgninja,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_baddudes,
 
@@ -2609,7 +2609,7 @@ struct GameDriver driver_birdtry =
 	rom_birdtry,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hbarrel, /* For now */
 
@@ -2734,7 +2734,7 @@ struct GameDriver driver_hippodrm =
 	rom_hippodrm,
 	hippodrm_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hippodrm,
 
@@ -2759,7 +2759,7 @@ struct GameDriver driver_ffantasy =
 	rom_ffantasy,
 	hippodrm_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hippodrm,
 

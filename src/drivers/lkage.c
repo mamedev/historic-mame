@@ -424,7 +424,7 @@ ROM_END
 /****  Legend of Kage high score save routine - RJF (July 29, 1999)  ****/
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)
@@ -451,7 +451,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -463,7 +463,7 @@ static void hisave(void)
 /** Legend of Kage (bootleg) high score save routine - RJF (July 30, 1999) **/
 static int lkageb_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe287],"\x4b\x21\x53",3) == 0)

@@ -327,7 +327,7 @@ static struct MachineDriver cop01_machine_driver =
 static int cop01_hiload(void)
 {
 
-      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+      unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
       if (memcmp(&RAM[0xC46E],"\x02\x50\x00",3) == 0 &&
               memcmp(&RAM[0xC491],"\x52\x03\x59",3) == 0 )
@@ -350,7 +350,7 @@ static int cop01_hiload(void)
 static void cop01_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -363,7 +363,7 @@ static void cop01_hisave(void)
 static int cop01a_hiload(void)
 {
 
-      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+      unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
       if (memcmp(&RAM[0xC46F],"\x02\x50\x00",3) == 0 &&
               memcmp(&RAM[0xC492],"\x52\x03\x59",3) == 0 )
@@ -386,7 +386,7 @@ static int cop01a_hiload(void)
 static void cop01a_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

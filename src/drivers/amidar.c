@@ -769,7 +769,7 @@ ROM_END
 
 static int amidar_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -797,7 +797,7 @@ static int amidar_hiload(void)
 
 static int turtles_hiload(void) /* V.V */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* same as Amidar, but the high score table is initialized with zeros */
@@ -849,7 +849,7 @@ static int turtles_hiload(void) /* V.V */
 static void amidar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -877,7 +877,7 @@ struct GameDriver driver_amidar =
 	rom_amidarjp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_amidarjp,
 
@@ -903,7 +903,7 @@ struct GameDriver driver_amidaru =
 	rom_amidar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_amidar,
 
@@ -929,7 +929,7 @@ struct GameDriver driver_amidaro =
 	rom_amidaro,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_amidaro,
 
@@ -955,7 +955,7 @@ struct GameDriver driver_amigo =
 	rom_amigo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_amidar,
 
@@ -981,7 +981,7 @@ struct GameDriver driver_turtles =
 	rom_turtles,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_turtles,
 
@@ -1007,7 +1007,7 @@ struct GameDriver driver_turpin =
 	rom_turpin,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_turpin,
 
@@ -1033,7 +1033,7 @@ struct GameDriver driver_600 =
 	rom_600,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_600,
 

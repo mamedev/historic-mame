@@ -675,7 +675,7 @@ static int gsword_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
         /* Work RAM - 9c00 (3*10 for scores), 9c78(6*10 for names)*/
         /* check if the hi score table has already been initialized */
@@ -699,7 +699,7 @@ static void gsword_hisave(void)
     	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)
@@ -726,7 +726,7 @@ struct GameDriver driver_gsword =
 	rom_gsword,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gsword,
 

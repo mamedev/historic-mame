@@ -108,7 +108,7 @@ static void pending_command_clear_w(int offset,int data)
 
 static void aerofgt_sh_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	int bankaddress;
 
 
@@ -1299,7 +1299,7 @@ struct GameDriver driver_pspikes =
 	rom_pspikes,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pspikes,
 
@@ -1324,7 +1324,7 @@ struct GameDriver driver_turbofrc =
 	rom_turbofrc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_turbofrc,
 
@@ -1349,7 +1349,7 @@ struct GameDriver driver_aerofgt =
 	rom_aerofgt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aerofgt,
 
@@ -1374,7 +1374,7 @@ struct GameDriver driver_aerofgtb =
 	rom_aerofgtb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aerofgtb,
 
@@ -1399,7 +1399,7 @@ struct GameDriver driver_aerofgtc =
 	rom_aerofgtc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aerofgtb,
 
@@ -1425,7 +1425,7 @@ struct GameDriver driver_unkvsys =
 	rom_unkvsys,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_aerofgt,
 

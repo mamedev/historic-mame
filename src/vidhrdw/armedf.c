@@ -305,7 +305,7 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if( armedf_vreg & 0x0800 )
 		tilemap_draw( bitmap, background, 0 );
 	else
-		fillbitmap( bitmap, 0, 0 ); /* disabled background - all black? */
+		fillbitmap( bitmap, Machine->pens[0], 0 ); /* disabled background - all black? */
 
 	if( sprite_enable ) draw_sprites( bitmap, 0 );
 	tilemap_draw( bitmap, foreground, 0 );
@@ -357,7 +357,7 @@ void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( background, 0, armedf_bg_scrollx+104);
 	tilemap_set_scrolly( background, 0, armedf_bg_scrolly );
 
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	tilemap_set_scrollx( foreground, 0, READ_WORD(&RAM[0x6123c]) - (160 + 256 * 3)+8);	// ???
 	tilemap_set_scrolly( foreground, 0, READ_WORD(&RAM[0x6123e]) - 1);			// ???
 
@@ -373,7 +373,7 @@ void cclimbr2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if( armedf_vreg & 0x0800 )
 		tilemap_draw( bitmap, background, 0 );
 	else
-		fillbitmap( bitmap, 0, 0 ); /* disabled background - all black? */
+		fillbitmap( bitmap, Machine->pens[0], 0 ); /* disabled background - all black? */
 
 	if( sprite_enable ) cclimbr2_draw_sprites( bitmap, 2 );
 	tilemap_draw( bitmap, foreground, 0 );

@@ -989,24 +989,24 @@ static void rom_decode(void)
 	int i;
 
 	/* swap the top and bottom halves of the main CPU ROM images */
-	p1 = (UINT32 *)&Machine->memory_region[0][0x000000];
-	p2 = (UINT32 *)&Machine->memory_region[0][0x008000];
+	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x000000];
+	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x008000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&Machine->memory_region[0][0x040000];
-	p2 = (UINT32 *)&Machine->memory_region[0][0x048000];
+	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x040000];
+	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x048000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&Machine->memory_region[0][0x050000];
-	p2 = (UINT32 *)&Machine->memory_region[0][0x058000];
+	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x050000];
+	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x058000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&Machine->memory_region[0][0x060000];
-	p2 = (UINT32 *)&Machine->memory_region[0][0x068000];
+	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x060000];
+	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x068000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (UINT32 *)&Machine->memory_region[0][0x070000];
-	p2 = (UINT32 *)&Machine->memory_region[0][0x078000];
+	p1 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x070000];
+	p2 = (UINT32 *)&memory_region(Machine->drv->cpu[0].memory_region)[0x078000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
 
@@ -1137,7 +1137,7 @@ struct GameDriver driver_gauntlet =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gauntlet,
 
@@ -1164,7 +1164,7 @@ struct GameDriver driver_gauntir1 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gauntlet,
 
@@ -1191,7 +1191,7 @@ struct GameDriver driver_gauntir2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gauntlet,
 
@@ -1218,7 +1218,7 @@ struct GameDriver driver_gaunt2p =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gauntlet,
 
@@ -1245,7 +1245,7 @@ struct GameDriver driver_gaunt2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gauntlet,
 
@@ -1272,7 +1272,7 @@ struct GameDriver driver_vindctr2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vindctr2,
 

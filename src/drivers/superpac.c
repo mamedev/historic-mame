@@ -538,7 +538,7 @@ static int superpac_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -582,7 +582,7 @@ static int superpac_hiload(void)
 static void superpac_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -598,7 +598,7 @@ static int pacnpal_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -642,7 +642,7 @@ static int pacnpal_hiload(void)
 static void pacnpal_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -669,7 +669,7 @@ struct GameDriver driver_superpac =
 	rom_superpac,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
 	input_ports_superpac,
 
@@ -695,7 +695,7 @@ struct GameDriver driver_superpcm =
 	rom_superpcm,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
 	input_ports_superpac,
 
@@ -721,7 +721,7 @@ struct GameDriver driver_pacnpal =
 	rom_pacnpal,              /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
-	0,                        /* sound_prom */
+	0,
 
 	input_ports_pacnpal,
 

@@ -226,7 +226,7 @@ struct GameDriver driver_dominos =
 	rom_dominos,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dominos,
 

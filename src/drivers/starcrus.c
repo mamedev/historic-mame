@@ -264,7 +264,7 @@ struct GameDriver driver_starcrus =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starcrus,
 

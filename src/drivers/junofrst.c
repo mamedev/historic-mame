@@ -101,7 +101,7 @@ unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 void junofrst_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
@@ -484,7 +484,7 @@ ROM_END
 static void junofrst_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x6000;A < 0x1c000;A++)
@@ -520,7 +520,7 @@ static void junofrst_decode(void)
 void junofrst_blitter_w( int offset, int data )
 {
 	static unsigned char blitterdata[4];
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	blitterdata[offset] = data;
@@ -598,7 +598,7 @@ void junofrst_blitter_w( int offset, int data )
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -626,7 +626,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -653,7 +653,7 @@ struct GameDriver driver_junofrst =
 	rom_junofrst,
 	0, junofrst_decode,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,	/* sound_prom */
+	0,
 
 	input_ports_junofrst,
 

@@ -457,7 +457,7 @@ struct GameDriver driver_simpsons =
 	rom_simpsons,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_simpsons,
 
@@ -482,7 +482,7 @@ struct GameDriver driver_simpsn2p =
 	rom_simpsn2p,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_simpsn2p,
 
@@ -507,7 +507,7 @@ struct GameDriver driver_simps2pj =
 	rom_simps2pj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_simpsn2p,
 

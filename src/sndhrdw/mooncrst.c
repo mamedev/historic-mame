@@ -1,61 +1,86 @@
 #include "driver.h"
 #include <math.h>
 
+#define VERBOSE 0
 
-#define AUDIO_CONV(A) (A-0x80)
+#define NEW_LFO 0
+#define NEW_SHOOT 1
 
-#define SOUND_CLOCK (18432000/6/2) /* 1.536 Mhz */
+#define SOUND_CLOCK (18432000/6/2)			/* 1.536 Mhz */
 
-#define NOISE_LENGTH 8000
-#define NOISE_RATE 1000
+#define SAMPLES 1
+
+#define RNG_RATE	(18432000/3)			/* RNG clock is XTAL/3 */
+#define NOISE_RATE	(18432000/3/192/2/2)	/* 2V = 8kHz */
+#define NOISE_LENGTH (NOISE_RATE*4) 		/* four seconds of noise */
+
+#define SHOOT_RATE 2672
+#define SHOOT_LENGTH 13000
+
 #define TOOTHSAW_LENGTH 16
 #define TOOTHSAW_VOLUME 36
 #define STEPS 16
-#define LFO_VOLUME 8
+#define LFO_VOLUME 6
 #define SHOOT_VOLUME 50
 #define NOISE_VOLUME 50
-#define WAVE_AMPLITUDE 70
-#define MAXFREQ 200
-#define MINFREQ 80
+#define NOISE_AMPLITUDE 70*256
+#define TOOTHSAW_AMPLITUDE 64
+
+/* see comments in mooncrst_sh_update() */
+#define MINFREQ (139-139/3)
+#define MAXFREQ (139+139/3)
+
+#if VERBOSE
+#define LOG(x) if( errorlog ) fprintf x
+#else
+#define LOG(x)
+#endif
+
+static void *lfotimer = NULL;
+static int freq = MAXFREQ;
 
 #define STEP 1
 
-static signed char *noise;
+static void *noisetimer = NULL;
+static int noisevolume;
+static INT16 *noisewave;
+static INT16 *shootwave;
+#if NEW_SHOOT
+static int shoot_length;
+static int shoot_rate;
+#endif
 
+#if SAMPLES
 static int shootsampleloaded = 0;
 static int deathsampleloaded = 0;
-static int t=0;
 static int LastPort1=0;
+#endif
 static int LastPort2=0;
-static int lfo_rate=0;
 static int lfo_active[3];
-static int freq=MAXFREQ;
 
-static signed char waveform1[4][TOOTHSAW_LENGTH];
+static INT8 tonewave[4][TOOTHSAW_LENGTH];
 static int pitch,vol;
 
-static signed char waveform2[32] =
+static INT16 backgroundwave[32] =
 {
-   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-   0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
-  -0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,-0x40,
+   0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000,
+   0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000,
+   0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,
+  -0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,-0x4000,
 };
 
 static int channelnoise,channelshoot,channellfo;
 static int tone_stream;
 
-
-
 static void tone_update(int ch, void *buffer, int length)
 {
 	int i,j;
-	signed char *w = waveform1[vol];
-	signed char *dest = buffer;
-	static int counter,countdown;
+	INT8 *w = tonewave[vol];
+	INT16 *dest = buffer;
+	static int counter, countdown;
 
 	/* only update if we have non-zero volume and frequency */
-	if (pitch!=0xff)
+	if( pitch != 0xff )
 	{
 		for (i = 0; i < length; i++)
 		{
@@ -72,13 +97,12 @@ static void tone_update(int ch, void *buffer, int length)
 
 				mix += w[counter];
 			}
-
-			*dest++ = mix / STEPS;
+			*dest++ = (mix << 8) / STEPS;
 		}
 	}
 	else
 	{
-		for (i = 0; i < length; i++)
+		for( i = 0; i < length; i++ )
 			*dest++ = 0;
 	}
 }
@@ -99,10 +123,19 @@ void mooncrst_vol_w(int offset,int data)
 }
 
 
+static void noise_timer_cb(int param)
+{
+	if( noisevolume > 0 )
+	{
+		noisevolume -= (noisevolume / 10) + 1;
+		mixer_set_volume(channelnoise,noisevolume);
+	}
+}
 
 void mooncrst_noise_w(int offset,int data)
 {
-	if (deathsampleloaded)
+#if SAMPLES
+    if (deathsampleloaded)
 	{
 		if (data & 1 && !(LastPort1 & 1))
 			mixer_play_sample(channelnoise,Machine->samples->sample[1]->data,
@@ -112,24 +145,52 @@ void mooncrst_noise_w(int offset,int data)
 		LastPort1=data;
 	}
 	else
-	{
-		if (data & 1) mixer_set_volume(channelnoise,100);
-		else mixer_set_volume(channelnoise,0);
+#endif
+    {
+		if( noisetimer )
+			timer_remove(noisetimer);
+		noisetimer = NULL;
+		if( data & 1 )
+        {
+			noisevolume = 100;
+			mixer_set_volume(channelnoise,noisevolume);
+		}
+		else
+		{
+			/* discharge C21, 22uF via 150k+22k R35/R36 */
+			noisetimer = timer_pulse(TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, noise_timer_cb);
+		}
 	}
 }
 
 void mooncrst_shoot_w(int offset,int data)
 {
-	if (data & 1 && !(LastPort2 & 1) && shootsampleloaded)
-		mixer_play_sample(channelshoot,Machine->samples->sample[0]->data,
-				Machine->samples->sample[0]->length,
-				Machine->samples->sample[0]->smpfreq,
-				0);
+	if( data & 1 && !(LastPort2 & 1) )
+	{
+#if SAMPLES
+        if( shootsampleloaded )
+		{
+			mixer_play_sample(channelshoot,Machine->samples->sample[0]->data,
+					Machine->samples->sample[0]->length,
+					Machine->samples->sample[0]->smpfreq,
+					0);
+		}
+		else
+#endif
+        {
+#if NEW_SHOOT
+			mixer_play_sample_16(channelshoot, shootwave, shoot_length,shoot_rate, 0);
+#else
+			mixer_play_sample_16(channelshoot, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
+#endif
+            mixer_set_volume(channelshoot,SHOOT_VOLUME);
+		}
+    }
 	LastPort2=data;
 }
 
 
-
+#if SAMPLES
 static const char *mooncrst_sample_names[] =
 {
 	"*galaxian",
@@ -137,15 +198,18 @@ static const char *mooncrst_sample_names[] =
 	"death.wav",
 	0	/* end of array */
 };
+#endif
 
 int mooncrst_sh_start(const struct MachineSound *msound)
 {
-	int i;
+	int i, j, sweep, charge, countdown, generator, bit1, bit2;
 	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
 
-	Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
+#if SAMPLES
+    Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
+#endif
 
-	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
+    channelnoise = mixer_allocate_channel(NOISE_VOLUME);
 	mixer_set_name(channelnoise,"Noise");
 	channelshoot = mixer_allocate_channel(SHOOT_VOLUME);
 	mixer_set_name(channelshoot,"Shoot");
@@ -154,56 +218,279 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 	mixer_set_name(channellfo+1,"Background #1");
 	mixer_set_name(channellfo+2,"Background #2");
 
-	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
-	  shootsampleloaded = 1;
+#if SAMPLES
+    if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
+		shootsampleloaded = 1;
 	else
-	  shootsampleloaded = 0;
+		shootsampleloaded = 0;
 
 	if (Machine->samples != 0 && Machine->samples->sample[1] != 0)    /* We should check also that Samplename[0] = 0 */
-	  deathsampleloaded = 1;
+		deathsampleloaded = 1;
 	else
-	  deathsampleloaded = 0;
+		deathsampleloaded = 0;
+#endif
 
-	if ((noise = malloc(NOISE_LENGTH)) == 0)
+	if( (noisewave = malloc(NOISE_LENGTH * sizeof(INT16))) == 0 )
 	{
 		return 1;
 	}
 
-	for (i = 0;i < NOISE_LENGTH;i++)
-		noise[i] = (rand() % (2*WAVE_AMPLITUDE)) - WAVE_AMPLITUDE;
-	for (i = 0;i < TOOTHSAW_LENGTH;i++)
+#if NEW_SHOOT
+#define SHOOT_SEC 2
+	shoot_rate = Machine->sample_rate;
+	shoot_length = SHOOT_SEC * shoot_rate;
+	if ((shootwave = malloc(shoot_length * sizeof(INT16))) == 0)
+#else
+	if( (shootwave = malloc(SHOOT_LENGTH * sizeof(INT16))) == 0 )
+#endif
+    {
+        free(noisewave);
+        return 1;
+    }
+
+	/*
+	 * The RNG shifter is clocked with RNG_RATE, bit 17 is
+	 * latched every 2V cycles (every 2nd scanline).
+	 * This signal is used as a noise source.
+	 */
+    generator = 0;
+	countdown = NOISE_RATE / 2;
+    for( i = 0; i < NOISE_LENGTH; i++ )
 	{
-		int bit0,bit2,bit3;
-
-		bit0 = (i >> 0) & 1;
-		bit2 = (i >> 2) & 1;
-		bit3 = (i >> 3) & 1;
-
-		/* relative weigths derived from the schematics. There are 4 possible */
-		/* "volume" settings which also affect the pitch. */
-		waveform1[0][i] = AUDIO_CONV(0x20 * bit0 + 0x30 * bit2);
-		waveform1[1][i] = AUDIO_CONV(0x20 * bit0 + 0x99 * bit2);
-		waveform1[2][i] = AUDIO_CONV(0x20 * bit0 + 0x30 * bit2 + 0x46 * bit3);
-		waveform1[3][i] = AUDIO_CONV(0x20 * bit0 + 0x99 * bit2 + 0x46 * bit3);
+		countdown -= RNG_RATE;
+		while( countdown < 0 )
+		{
+			generator <<= 1;
+			bit1 = (~generator >> 17) & 1;
+			bit2 = (generator >> 5) & 1;
+			if (bit1 ^ bit2) generator |= 1;
+			countdown += NOISE_RATE;
+		}
+		noisewave[i] = ((generator >> 17) & 1) ? NOISE_AMPLITUDE : -NOISE_AMPLITUDE;
 	}
+
+#if NEW_SHOOT
+
+	/* dummy */
+	sweep = 100;
+	charge = +2;
+	j=0;
+	{
+#define R41__ 100000
+#define R44__ 10000
+#define R45__ 22000
+#define R46__ 10000
+#define R47__ 2200
+#define R48__ 2200
+#define C25__ 0.000001
+#define C27__ 0.00000001
+#define C28__ 0.000047
+#define C29__ 0.00000001
+#define IC8L3_L 0.2   /* 7400 L level */
+#define IC8L3_H 4.5   /* 7400 H level */
+#define NOISE_L 0.2   /* 7474 L level */
+#define NOISE_H 4.5   /* 7474 H level */
+/*
+	key on/off time is programable
+	Therefore,  it is necessary to make separate sample with key on/off.
+	And,  calculate the playback point according to the voltage of c28.
+*/
+#define SHOOT_KEYON_TIME 0.1  /* second */
+/*
+	NE555-FM input calcration is wrong.
+	The frequency is not proportional to the voltage of FM input.
+	And,  duty will be changed,too.
+*/
+#define NE555_FM_ADJUST_RATE 0.80
+		/* discharge : 100K * 1uF */
+		double v  = 5.0;
+		double vK = exp(-1 / (R41__*C25__) / shoot_rate);
+		/* -- SHOOT KEY port -- */
+		double IC8L3 = IC8L3_L; /* key on */
+		int IC8Lcnt = SHOOT_KEYON_TIME * shoot_rate; /* count for key off */
+		/* C28 : KEY port capaciry */
+		/*       connection : 8L-3 - R47(2.2K) - C28(47u) - R48(2.2K) - C29 */
+		double c28v = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*R47__;
+		double c28K = exp(-1 / (22000 * 0.000047 ) / shoot_rate);
+		/* C29 : NOISE capacity */
+		/*       connection : NOISE - R46(10K) - C29(0.1u) - R48(2.2K) - C28 */
+		double c29v  = IC8L3_H - (IC8L3_H-(NOISE_H+NOISE_L)/2)/(R46__+R47__+R48__)*(R47__+R48__);
+		double c29K1 = exp(-1 / (22000  * 0.00000001 ) / shoot_rate); /* form C28   */
+		double c29K2 = exp(-1 / (100000 * 0.00000001 ) / shoot_rate); /* from noise */
+		/* NE555 timer */
+		/* RA = 10K , RB = 22K , C=.01u ,FM = C29 */
+		double ne555cnt = 0;
+		double ne555step = (1.44/((R44__+R45__*2)*C27__)) / shoot_rate;
+		double ne555duty = (double)(R44__+R45__)/(R44__+R45__*2); /* t1 duty */
+		double ne555sr;    /* threshhold (FM) rate */
+		/* NOISE source */
+		double ncnt  = 0.0;
+		double nstep = (double)NOISE_RATE / shoot_rate;
+		double noise_sh2; /* voltage level */
+
+		for( i = 0; i < shoot_length; i++ )
+		{
+			/* noise port */
+			noise_sh2 = noisewave[(int)ncnt % NOISE_LENGTH] == NOISE_AMPLITUDE ? NOISE_H : NOISE_L;
+			ncnt+=nstep;
+			/* calcrate NE555 threshhold level by FM input */
+			ne555sr = c29v*NE555_FM_ADJUST_RATE / (5.0*2/3);
+			/* calc output */
+			ne555cnt += ne555step;
+			if( ne555cnt >= ne555sr) ne555cnt -= ne555sr;
+			if( ne555cnt < ne555sr*ne555duty )
+			{
+				 /* t1 time */
+				shootwave[i] = v/5*0x7fff;
+				/* discharge output level */
+				if(IC8L3==IC8L3_H)
+					v *= vK;
+			}
+			else
+				shootwave[i] = 0;
+			/* C28 charde/discharge */
+			c28v += (IC8L3-c28v) - (IC8L3-c28v)*c28K; /* from R47 */
+			c28v += (c29v-c28v) - (c29v-c28v)*c28K;     /* from R48 */
+			/* C29 charge/discharge */
+			c29v += (c28v-c29v) - (c28v-c29v)*c29K1;    /* from R48 */
+			c29v += (noise_sh2-c29v) - (noise_sh2-c29v)*c29K2; /* from R46 */
+			/* key off */
+			if(IC8L3==IC8L3_L && --IC8Lcnt==0)
+				IC8L3=IC8L3_H;
+		}
+	}
+#else
+	/*
+	 * Ra is 10k, Rb is 22k, C is 0.01uF
+	 * charge time t1 = 0.693 * (Ra + Rb) * C -> 221.76us
+	 * discharge time t2 = 0.693 * (Rb) *  C -> 152.46us
+	 * average period 374.22us -> 2672Hz
+	 * I use an array of 10 values to define some points
+	 * of the charge/discharge curve. The wave is modulated
+	 * using the charge/discharge timing of C28, a 47uF capacitor,
+	 * over a 2k2 resitor. This will change the frequency from
+	 * approx. Favg-Favg/3 upto Favg+Favg/3 downto Favg-Favg/3 again.
+	 */
+	sweep = 100;
+	charge = +2;
+	countdown = sweep / 2;
+	for( i = 0, j = 0; i < SHOOT_LENGTH; i++ )
+	{
+		#define AMP(n)	(n)*0x8000/100-0x8000
+		static int charge_discharge[10] = {
+			AMP( 0), AMP(25), AMP(45), AMP(60), AMP(70), AMP(85),
+			AMP(70), AMP(50), AMP(25), AMP( 0)
+		};
+		shootwave[i] = charge_discharge[j];
+		LOG((errorlog, "shoot[%5d] $%04x (sweep: %3d, j:%d)\n", i, shootwave[i] & 0xffff, sweep, j));
+		/*
+		 * The current sweep and a 2200/10000 fraction (R45 and R48)
+		 * of the noise are frequency modulating the NE555 chip.
+		 */
+		countdown -= sweep + noisewave[i % NOISE_LENGTH] / (2200*NOISE_AMPLITUDE/10000);
+		while( countdown < 0 )
+		{
+			countdown += 100;
+			j = ++j % 10;
+		}
+		/* sweep from 100 to 133 and down to 66 over the time of SHOOT_LENGTH */
+		if( i % (SHOOT_LENGTH / 33 / 3 ) == 0 )
+		{
+			sweep += charge;
+			if( sweep >= 133 )
+				charge = -1;
+		}
+	}
+#endif
+
+    memset(tonewave, 0, sizeof(tonewave));
+
+	for( i = 0; i < TOOTHSAW_LENGTH; i++ )
+	{
+		#define V(r0,r1) 2*TOOTHSAW_AMPLITUDE*(r0)/(r0+r1)-TOOTHSAW_AMPLITUDE
+		double r0a = 1.0/1e12, r1a = 1.0/1e12;
+		double r0b = 1.0/1e12, r1b = 1.0/1e12;
+
+		/* #0: VOL1=0 and VOL2=0
+		 * only the 33k and the 22k resistors R51 and R50
+		 */
+		if( i & 1 )
+		{
+			r1a += 1.0/33000;
+			r1b += 1.0/33000;
+		}
+		else
+		{
+			r0a += 1.0/33000;
+			r0b += 1.0/33000;
+        }
+		if( i & 4 )
+		{
+			r1a += 1.0/22000;
+			r1b += 1.0/22000;
+		}
+		else
+		{
+			r0a += 1.0/22000;
+			r0b += 1.0/22000;
+        }
+		tonewave[0][i] = V(1.0/r0a, 1.0/r1a);
+
+		/* #1: VOL1=1 and VOL2=0
+		 * add the 10k resistor R49 for bit QC
+		 */
+        if( i & 4 )
+			r1a += 1.0/10000;
+        else
+			r0a += 1.0/10000;
+		tonewave[1][i] = V(1.0/r0a, 1.0/r1a);
+
+		/* #2: VOL1=0 and VOL2=1
+		 * add the 15k resistor R52 for bit QD
+		 */
+        if( i & 8 )
+			r1b += 1.0/15000;
+		else
+			r0b += 1.0/15000;
+		tonewave[2][i] = V(1.0/r0b, 1.0/r1b);
+
+		/* #3: VOL1=1 and VOL2=1
+		 * add the 10k resistor R49 for QC
+		 */
+        if( i & 4 )
+			r0b += 1.0/10000;
+		else
+			r1b += 1.0/10000;
+		tonewave[3][i] = V(1.0/r0b, 1.0/r1b);
+		LOG((errorlog, "tone[%2d]: $%02x $%02x $%02x $%02x\n", i, tonewave[0][i]&0xff, tonewave[1][i]&0xff, tonewave[2][i]&0xff, tonewave[3][i]&0xff));
+    }
 
 	pitch = 0;
 	vol = 0;
 
-	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,8,0,tone_update);
+	tone_stream = stream_init("Tone",TOOTHSAW_VOLUME,SOUND_CLOCK/STEPS,16,0,tone_update);
 
-	if (!deathsampleloaded)
+#if SAMPLES
+    if (!deathsampleloaded)
+#endif
 	{
 		mixer_set_volume(channelnoise,0);
-		mixer_play_sample(channelnoise,noise,NOISE_LENGTH,NOISE_RATE,1);
+		mixer_play_sample_16(channelnoise,noisewave,NOISE_LENGTH,NOISE_RATE,1);
 	}
+#if SAMPLES
+	if (!shootsampleloaded)
+#endif
+	{
+		mixer_set_volume(channelshoot,0);
+		mixer_play_sample_16(channelshoot,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
+    }
 
 	mixer_set_volume(channellfo+0,0);
-	mixer_play_sample(channellfo+0,waveform2,32,1000,1);
+	mixer_play_sample_16(channellfo+0,backgroundwave,sizeof(backgroundwave),1000,1);
 	mixer_set_volume(channellfo+1,0);
-	mixer_play_sample(channellfo+1,waveform2,32,1000,1);
+	mixer_play_sample_16(channellfo+1,backgroundwave,sizeof(backgroundwave),1000,1);
 	mixer_set_volume(channellfo+2,0);
-	mixer_play_sample(channellfo+2,waveform2,32,1000,1);
+	mixer_play_sample_16(channellfo+2,backgroundwave,sizeof(backgroundwave),1000,1);
 
 	return 0;
 }
@@ -212,7 +499,18 @@ int mooncrst_sh_start(const struct MachineSound *msound)
 
 void mooncrst_sh_stop(void)
 {
-	free(noise);
+	if( lfotimer )
+	{
+		timer_remove( lfotimer );
+		lfotimer = NULL;
+    }
+	if( noisetimer )
+    {
+        timer_remove(noisetimer);
+        noisetimer = NULL;
+    }
+	free(noisewave);
+	noisewave = NULL;
 	osd_stop_sample(channelnoise);
 	osd_stop_sample(channelshoot);
 	osd_stop_sample(channellfo+0);
@@ -228,23 +526,153 @@ void mooncrst_background_w(int offset,int data)
 	else mixer_set_volume(channellfo+offset,0);
 }
 
+static void lfo_timer_cb(int param)
+{
+	if( freq > MINFREQ )
+		freq--;
+	else
+		freq = MAXFREQ;
+}
+
 void mooncrst_lfo_freq_w(int offset,int data)
 {
-	static int lforate[4];
+#if NEW_LFO
+    static int lfobit[4];
 
-	lforate[offset] = data & 1;
-	lfo_rate = lforate[3]*8 + lforate[2]*4 + lforate[1]*2 + lforate[0];
-	lfo_rate = 16 - lfo_rate;
+	/* R18 1M,R17 470K,R16 220K,R15 100K */
+	const int rv[4] = { 1000000,470000,220000,100000};
+	double r1,r2,Re,td;
+	int i;
+
+	if( (data & 1) == lfobit[offset] )
+		return;
+
+	/*
+     * NE555 9R is setup as astable multivibrator
+     * - this circuit looks LINEAR RAMP V-F converter
+       I  = 1/Re * ( R1/(R1+R2)-Vbe)
+       td = (2/3VCC*Re*(R1+R2)*C) / (R1*VCC-Vbe*(R1+R2))
+      parts assign
+       R1  : (R15* L1)|(R16* L2)|(R17* L3)|(R18* L1)
+       R2  : (R15*~L1)|(R16*~L2)|(R17*~L3)|(R18*~L4)|R??(330K)
+       Re  : R21(100K)
+       Vbe : Q2(2SA1015)-Vbe
+     * - R20(15K) and Q1 is unknown,maybe current booster.
+	*/
+
+    lfobit[offset] = data & 1;
+
+	/* R20 15K */
+	r1 = 1e12;
+	/* R19? 330k to gnd */
+	r2 = 330000;
+	//r1 = 15000;
+	/* R21 100K */
+	Re = 100000;
+	/* regsiter calcration */
+	for(i=0;i<4;i++)
+	{
+		if(lfobit[i])
+			r1 = (r1*rv[i])/(r1+rv[i]); /* Hi  */
+		else
+			r2 = (r2*rv[i])/(r2+rv[i]); /* Low */
+	}
+
+	if( lfotimer )
+	{
+		timer_remove( lfotimer );
+		lfotimer = NULL;
+	}
+
+#define Vcc 5.0
+#define Vbe 0.65     /* 2SA1015 */
+#define Cap 0.000001 /* C15 1uF */
+	td = (Vcc*2/3*Re*(r1+r2)*Cap) / (r1*Vcc - Vbe*(r1+r2) );
+#undef Cap
+#undef Vbe
+#undef Vcc
+	if( errorlog ) fprintf(errorlog, "lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
+	lfotimer = timer_pulse( TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
+#else
+    static int lfobit[4];
+	double r0, r1, rx = 100000.0;
+
+	if( (data & 1) == lfobit[offset] )
+		return;
+
+	/*
+     * NE555 9R is setup as astable multivibrator
+     * - Ra is between 100k and ??? (open?)
+     * - Rb is zero here (bridge between pins 6 and 7)
+     * - C is 1uF
+     * charge time t1 = 0.693 * (Ra + Rb) * C
+     * discharge time t2 = 0.693 * (Rb) *  C
+     * period T = t1 + t2 = 0.693 * (Ra + 2 * Rb) * C
+     * -> min period: 0.693 * 100 kOhm * 1uF -> 69300 us = 14.4Hz
+     * -> max period: no idea, since I don't know the max. value for Ra :(
+     */
+
+    lfobit[offset] = data & 1;
+
+	/* R?? 330k to gnd */
+	r0 = 1.0/330000;
+	/* open is a very high value really ;-) */
+	r1 = 1.0/1e12;
+
+	/* R18 1M */
+	if( lfobit[0] )
+		r1 += 1.0/1000000;
+	else
+		r0 += 1.0/1000000;
+
+    /* R17 470k */
+	if( lfobit[1] )
+		r1 += 1.0/470000;
+	else
+		r0 += 1.0/470000;
+
+    /* R16 220k */
+	if( lfobit[2] )
+		r1 += 1.0/220000;
+	else
+		r0 += 1.0/220000;
+
+    /* R15 100k */
+	if( lfobit[3] )
+		r1 += 1.0/100000;
+	else
+		r0 += 1.0/100000;
+
+	if( lfotimer )
+	{
+		timer_remove( lfotimer );
+		lfotimer = NULL;
+	}
+
+	r0 = 1.0/r0;
+	r1 = 1.0/r1;
+
+	/* I used an arbitrary value for max. Ra of 2M */
+	rx = rx + 2000000.0 * r0 / (r0+r1);
+
+	LOG((errorlog, "lfotimer bits:%d%d%d%d r0:%d, r1:%d, rx: %d, time: %9.2fus\n", lfobit[3], lfobit[2], lfobit[1], lfobit[0], (int)r0, (int)r1, (int)rx, 0.639 * rx));
+	lfotimer = timer_pulse( TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
+#endif
 }
 
 void mooncrst_sh_update(void)
 {
-	osd_set_sample_freq(channellfo+0,freq*32);
-	osd_set_sample_freq(channellfo+1,(freq*1040/760)*32);
-	osd_set_sample_freq(channellfo+2,(freq*1040/540)*32);
+	/*
+	 * NE555 8R, 8S and 8T are used as pulse position modulators
+	 * FS1 Ra=100k, Rb=470k and C=0.01uF
+	 *	-> 0.693 * 1040k * 0.01uF -> 7207.2us = 139Hz
+	 * FS2 Ra=100k, Rb=330k and C=0.01uF
+	 *	-> 0.693 * 760k * 0.01uF -> 5266.8us = 190Hz
+	 * FS2 Ra=100k, Rb=220k and C=0.01uF
+	 *	-> 0.693 * 540k * 0.01uF -> 3742.2us = 267Hz
+	 */
 
-	if (t == 0) freq -= lfo_rate;
-	if (freq <= MINFREQ) freq = MAXFREQ;
-
-	t = (t + 1) % 3;
+	osd_set_sample_freq(channellfo+0, sizeof(backgroundwave)*freq*(100+2*470)/(100+2*470) );
+	osd_set_sample_freq(channellfo+1, sizeof(backgroundwave)*freq*(100+2*300)/(100+2*470) );
+	osd_set_sample_freq(channellfo+2, sizeof(backgroundwave)*freq*(100+2*220)/(100+2*470) );
 }

@@ -415,7 +415,7 @@ ROM_END
 static void goldstar_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -432,7 +432,7 @@ static void goldstar_decode(void)
 int nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Try loading static RAM */
@@ -451,7 +451,7 @@ int nvram_load(void)
 void nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -479,7 +479,7 @@ struct GameDriver driver_goldstar =
 	rom_goldstar,
 	goldstar_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_goldstar,
 
@@ -506,7 +506,7 @@ struct GameDriver driver_goldstbl =
 	rom_goldstbl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_goldstar,
 

@@ -499,7 +499,7 @@ static int hiload(void)
 {
 	unsigned char *from, *to;
 	int i, j, digit, started;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -565,7 +565,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name, 0,
@@ -594,7 +594,7 @@ struct GameDriver driver_spacefb =
 	rom_spacefb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacefb,
 
@@ -620,7 +620,7 @@ struct GameDriver driver_spacefbg =
 	rom_spacefbg,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacefb,
 
@@ -646,7 +646,7 @@ struct GameDriver driver_spacebrd =
 	rom_spcbird,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacefb,
 
@@ -672,7 +672,7 @@ struct GameDriver driver_spacedem =
 	rom_spacedem,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacedem,
 

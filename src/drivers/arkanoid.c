@@ -524,7 +524,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -552,7 +552,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -580,7 +580,7 @@ struct GameDriver driver_arkanoid =
 	rom_arkanoid,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arkanoid,
 
@@ -606,7 +606,7 @@ struct GameDriver driver_arknoidu =
 	rom_arknoidu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arkanoid,
 
@@ -632,7 +632,7 @@ struct GameDriver driver_arknoidj =
 	rom_arknoidj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -659,7 +659,7 @@ struct GameDriver driver_arkbl2 =
 	rom_arkbl2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -685,7 +685,7 @@ struct GameDriver driver_arkbl3 =
 	rom_arkbl3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -711,7 +711,7 @@ struct GameDriver driver_arkatayt =
 	rom_arkatayt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -737,7 +737,7 @@ struct GameDriver driver_arkblock =
 	rom_arkblock,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -763,7 +763,7 @@ struct GameDriver driver_arkbloc2 =
 	rom_arkbloc2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 
@@ -790,7 +790,7 @@ struct GameDriver driver_arkangc =
 	rom_arkangc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_arknoidj,
 

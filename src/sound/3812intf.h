@@ -19,6 +19,8 @@ struct Y8950interface
 	int baseclock;
 	int mixing_level[MAX_8950];
 	void (*handler[MAX_8950])(int linestate);
+	/* Y8950 */
+	int rom_region[MAX_8950]; /* delta-T ADPCM ROM region */
 	int (*keyboardread[MAX_8950])(int offset);
 	void (*keyboardwrite[MAX_8950])(int offset,int data);
 	int (*portread[MAX_8950])(int offset);

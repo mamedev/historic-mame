@@ -402,7 +402,7 @@ struct GameDriver driver_solarfox =
 	rom_solarfox,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_solarfox,
 
@@ -429,7 +429,7 @@ struct GameDriver driver_kick =
 	rom_kick,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kick,
 
@@ -456,7 +456,7 @@ struct GameDriver driver_kicka =
 	rom_kicka,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kick,
 

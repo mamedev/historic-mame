@@ -49,7 +49,9 @@
 #endif
 
 /* execute main opcodes inside a big switch statement */
+#ifndef BIG_SWITCH
 #define BIG_SWITCH          1
+#endif
 
 /* big flags array for ADD/ADC/SUB/SBC/CP results */
 #define BIG_FLAGS_ARRAY     1

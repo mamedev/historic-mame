@@ -413,7 +413,7 @@ INLINE int get_sprite_xy(UINT8 num, UINT8* sx, UINT8* sy)
 static int check_sprite_sprite_bitpattern(int sx1, int sy1, int num1,
                                           int sx2, int sy2, int num2)
 {
-	int i,j,minx,miny,maxx = 16,maxy = 16;
+	int x,y,minx,miny,maxx = 16,maxy = 16;
 	int offs1 = num1 * 4;
 	int offs2 = num2 * 4;
 
@@ -444,24 +444,6 @@ static int check_sprite_sprite_bitpattern(int sx1, int sy1, int num1,
 		miny = sy1;
 	}
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = minx;
-		minx = miny;
-		miny = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		maxx = 32 - minx;  minx = 16;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		maxy = 32 - miny;  miny = 16;
-	}
-
-
 	/* draw the sprites into seperate bitmaps and check overlapping region */
 	drawgfx(sprite_sprite_collbitmap1,Machine->gfx[(spriteram[offs1 + 3] & 0x40) ? 3 : 1],
 			spriteram[offs1 + 3] & 0x3f,
@@ -477,12 +459,12 @@ static int check_sprite_sprite_bitpattern(int sx1, int sy1, int num1,
 			sx2,sy2,
 			0,TRANSPARENCY_NONE,0);
 
-	for (i = miny;i < maxy;i++)
+	for (y = miny;y < maxy;y++)
 	{
-		for(j = minx;j < maxx;j++)
+		for(x = minx;x < maxx;x++)
 		{
-			if ((sprite_sprite_collbitmap1->line[i][j] != Machine->pens[0]) &&
-			    (sprite_sprite_collbitmap2->line[i][j] != Machine->pens[0]))
+			if ((read_pixel(sprite_sprite_collbitmap1, x, y) != Machine->pens[0]) &&
+			    (read_pixel(sprite_sprite_collbitmap2, x, y) != Machine->pens[0]))
 			{
 				return 1;  /* collided */
 			}
@@ -579,7 +561,7 @@ static void calculate_sprites_areas(void)
 
 static int check_sprite_plane_bitpattern(int num)
 {
-	int i,j,flipx,flipy,minx,miny,maxx,maxy,temp;
+	int x,y,flipx,flipy,minx,miny,maxx,maxy;
 	int offs = num * 4;
 	int result = 0;  /* no collisions */
 
@@ -591,31 +573,6 @@ static int check_sprite_plane_bitpattern(int num)
 	miny = spritearea[num].min_y;
 	maxx = spritearea[num].max_x + 1;
 	maxy = spritearea[num].max_y + 1;
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = minx;
-		minx = miny;
-		miny = temp;
-
-		temp = maxx;
-		maxx = maxy;
-		maxy = temp;
-	}
-
-	if ((Machine->orientation & ORIENTATION_FLIP_X) ^ flipscreen[0])
-	{
-		temp = Machine->drv->screen_width - maxx;
-		maxx = Machine->drv->screen_width - minx;
-		minx = temp;
-	}
-
-	if ((Machine->orientation & ORIENTATION_FLIP_Y) ^ flipscreen[1])
-	{
-		temp = Machine->drv->screen_width - maxy;
-		maxy = Machine->drv->screen_width - miny;
-		miny = temp;
-	}
 
 
 	flipx = spriteram[offs + 2] & 1;
@@ -642,27 +599,26 @@ static int check_sprite_plane_bitpattern(int num)
 			0,0,
 			0,TRANSPARENCY_NONE,0);
 
-	for (i = miny;i < maxy;i++)
+	for (y = miny;y < maxy;y++)
 	{
-		for (j = minx;j < maxx;j++)
+		for (x = minx;x < maxx;x++)
 		{
-			/*Machine->scrbitmap->line[i][j] = Machine->pens[0]; continue;*/
-			if (sprite_plane_collbitmap1->line[i-miny][j-minx] != Machine->pens[0]) /* is there anything to check for ? */
+			if (read_pixel(sprite_plane_collbitmap1, x-minx, y-miny) != Machine->pens[0]) /* is there anything to check for ? */
 			{
-				if (check_playfield1 && (sprite_plane_collbitmap2[0]->line[i][j] != Machine->pens[0]))
+				if (check_playfield1 && (read_pixel(sprite_plane_collbitmap2[0], x, y) != Machine->pens[0]))
 				{
 					result |= 1;  /* collided */
 					if (result == 7)  goto done;
 					check_playfield1 = 0;
 				}
-				if (check_playfield2 && (sprite_plane_collbitmap2[1]->line[i][j] != Machine->pens[0]))
+				if (check_playfield2 && (read_pixel(sprite_plane_collbitmap2[1], x, y) != Machine->pens[0]))
 				{
 					result |= 2;  /* collided */
 					if (result == 7)  goto done;
 					check_playfield2 = 0;
 
 				}
-				if (check_playfield3 && (sprite_plane_collbitmap2[2]->line[i][j] != Machine->pens[0]))
+				if (check_playfield3 && (read_pixel(sprite_plane_collbitmap2[2], x, y) != Machine->pens[0]))
 				{
 					result |= 4;  /* collided */
 					if (result == 7)  goto done;

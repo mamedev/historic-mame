@@ -596,7 +596,7 @@ struct GameDriver driver_cabal =
 	rom_cabal,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_cabal,
 
@@ -622,7 +622,7 @@ struct GameDriver driver_cabal2 =
 	rom_cabal2,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_cabal,
 
@@ -648,7 +648,7 @@ struct GameDriver driver_cabalbl =
 	rom_cabalbl,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_cabal,
 

@@ -3,7 +3,7 @@
 
 		Basically the same video and machine hardware as Flying shark,
 		except for the Main CPU which is a Z80 here.
-
+		See Twin Cobra drivers to complete the hardware setup.
 
 **************************** Memory & I/O Maps *****************************
 Z80:(0)  Main CPU
@@ -194,7 +194,9 @@ void wardner_ramrom_banksw(int offset,int data)
 {
 	if (wardner_membank != data) {
 		int bankaddress = 0;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+		unsigned char *RAM = memory_region(REGION_CPU1);
+
 		wardner_membank = data;
 
 		if (data) {
@@ -270,7 +272,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x0000, 0x0fff, MRA_ROM },	/* 0x800 words */
 	{ 0x8000, 0x811F, MRA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }
@@ -278,7 +280,7 @@ static struct MemoryReadAddress DSP_readmem[] =
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x0000, 0x0fff, MWA_ROM },	/* 0x800 words */
 	{ 0x8000, 0x811F, MWA_RAM },	/* The real DSP has this at address 0 */
 									/* View this at 4000h in the debugger */
 	{ -1 }
@@ -597,18 +599,7 @@ static struct GfxLayout charlayout =
 	8*8		/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout fgtilelayout =
-{
-	8,8,	/* 8*8 tiles */
-	4096,	/* 4096 tiles */
-	4,		/* 4 bits per pixel */
-	{ 0*4096*8*8, 1*4096*8*8, 2*4096*8*8, 3*4096*8*8 }, /* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8		/* every tile takes 8 consecutive bytes */
-};
-
-static struct GfxLayout bgtilelayout =
+static struct GfxLayout tilelayout =
 {
 	8,8,	/* 8*8 tiles */
 	4096,	/* 4096 tiles */
@@ -636,23 +627,23 @@ static struct GfxLayout spritelayout =
 static void irqhandler(int linestate)
 {
 	cpu_set_irq_line(1,0,linestate);
-	//cpu_cause_interrupt(1,0xff);
 }
+
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip */
-	24000000/7,	/* 3.43 MHz ??? */
-	{ 100 },	/* volume */
+	1,				/* 1 chip */
+	24000000/7,		/* 3.43 MHz ??? */
+	{ 100 },		/* volume */
 	{ irqhandler },
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   1536, 32 },	/* colors 1536-1791 */
-	{ 1, 0x0c000, &fgtilelayout, 1280, 16 },	/* colors 1280-1535 */
-	{ 1, 0x2c000, &bgtilelayout, 1024, 16 },	/* colors 1024-1079 */
-	{ 1, 0x4c000, &spritelayout,    0, 64 },	/* colors    0-1023 */
+	{ REGION_GFX1, 0x00000, &charlayout,   1536, 32 },	/* colors 1536-1791 */
+	{ REGION_GFX2, 0x00000, &tilelayout,   1280, 16 },	/* colors 1280-1535 */
+	{ REGION_GFX3, 0x00000, &tilelayout,   1024, 16 },	/* colors 1024-1079 */
+	{ REGION_GFX4, 0x00000, &spritelayout,    0, 64 },	/* colors    0-1023 */
 	{ -1 } /* end of array */
 };
 
@@ -664,7 +655,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			24000000/4,			/* 6 MHz ??? - Real board crystal is 24Mhz */
-			0,					/* memory region #0 */
+			REGION_CPU1,		/* memory region #0 */
 			readmem,writemem,
 			readport,
 			writeport,
@@ -673,7 +664,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80,
 			24000000/7,			/* 3.43 MHz ??? */
-			2,					/* memory region #2 */
+			REGION_CPU2,		/* memory region #2 */
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
@@ -681,14 +672,14 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_TMS320C10,
 			24000000/7,			/* 3.43 MHz ??? */
-			3,					/* memory region #3 */
+			REGION_CPU3,		/* memory region #3 */
 			DSP_readmem,DSP_writemem,
 			DSP_readport,DSP_writeport,
 			ignore_interrupt,0	/* IRQs are caused by Z80(0) */
 		},
 	},
 	56, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	20,										/* 20 CPU slices per frame */
+	100,									/* 100 CPU slices per frame */
 	wardner_reset,
 
 	/* video hardware */
@@ -697,7 +688,7 @@ static struct MachineDriver machine_driver =
 	1792, 1792,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	twincobr_vh_start,
 	twincobr_vh_stop,
@@ -724,106 +715,220 @@ static struct MachineDriver machine_driver =
 
 
 ROM_START( wardner )
-	ROM_REGION(0x48000)		/* Banked Z80 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 )	/* Banked Main Z80 code */
 	ROM_LOAD( "wardner.17", 0x00000, 0x08000, 0xc5dd56fd )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom", 0x28000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "wardner.20", 0x40000, 0x08000, 0x347f411b )
 
-	ROM_REGION_DISPOSE(0x8c000)		/* temporary space for graphics */
-	ROM_LOAD( "wardner.07", 0x00000, 0x04000, 0x1392b60d )	/* chars */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "wardner.07", 0x00000, 0x04000, 0x1392b60d )
 	ROM_LOAD( "wardner.06", 0x04000, 0x04000, 0x0ed848da )
 	ROM_LOAD( "wardner.05", 0x08000, 0x04000, 0x79792c86 )
-	ROM_LOAD( "b25-12.rom", 0x0c000, 0x08000, 0x15d08848 )	/* fg tiles */
-	ROM_LOAD( "b25-15.rom", 0x14000, 0x08000, 0xcdd2d408 )
-	ROM_LOAD( "b25-14.rom", 0x1c000, 0x08000, 0x5a2aef4f )
-	ROM_LOAD( "b25-13.rom", 0x24000, 0x08000, 0xbe21db2b )
-	ROM_LOAD( "b25-08.rom", 0x2c000, 0x08000, 0x883ccaa3 )	/* bg tiles */
-	ROM_LOAD( "b25-11.rom", 0x34000, 0x08000, 0xd6ebd510 )
-	ROM_LOAD( "b25-10.rom", 0x3c000, 0x08000, 0xb9a61e81 )
-	ROM_LOAD( "b25-09.rom", 0x44000, 0x08000, 0x585411b7 )
-	ROM_LOAD( "b25-01.rom", 0x4c000, 0x10000, 0x42ec01fb )	/* sprites */
-	ROM_LOAD( "b25-02.rom", 0x5c000, 0x10000, 0x6c0130b7 )
-	ROM_LOAD( "b25-03.rom", 0x6c000, 0x10000, 0xb923db99 )
-	ROM_LOAD( "b25-04.rom", 0x7c000, 0x10000, 0x8059573c )
 
-	ROM_REGION(0x10000)		/* 32k for second Z80 CPU */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
+	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
+	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
+	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
+	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
+	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
+	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
+	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
+	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
+	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+#ifndef LSB_FIRST
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1000, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1400, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1400, 0x0200, 0x50452ff8 )
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1800, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1800, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1c00, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1c00, 0x0200, 0x712bad47 )
+#else
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1c00, 0x0200, 0x50452ff8 )
+#endif
+
+	ROM_REGIONX( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
+	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
+	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
+	ROM_LOAD( "82s123.c6",   0x220, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "82s123.f1",   0x240, 0x020, 0x4fb5df2a )	/* tile to sprite priority ?? */
 ROM_END
 
 ROM_START( pyros )
-	ROM_REGION(0x48000)		/* Banked Z80 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 )	/* Banked Z80 code */
 	ROM_LOAD( "b25-29.rom", 0x00000, 0x08000, 0xb568294d )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom", 0x28000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "b25-30.rom", 0x40000, 0x08000, 0x5056c799 )
 
-	ROM_REGION_DISPOSE(0x8c000)		/* temporary space for graphics */
-	ROM_LOAD( "b25-35.rom", 0x00000, 0x04000, 0xfec6f0c0 )	/* chars */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "b25-35.rom", 0x00000, 0x04000, 0xfec6f0c0 )
 	ROM_LOAD( "b25-34.rom", 0x04000, 0x04000, 0x02505dad )
 	ROM_LOAD( "b25-33.rom", 0x08000, 0x04000, 0x9a55fcb9 )
-	ROM_LOAD( "b25-12.rom", 0x0c000, 0x08000, 0x15d08848 )	/* fg tiles */
-	ROM_LOAD( "b25-15.rom", 0x14000, 0x08000, 0xcdd2d408 )
-	ROM_LOAD( "b25-14.rom", 0x1c000, 0x08000, 0x5a2aef4f )
-	ROM_LOAD( "b25-13.rom", 0x24000, 0x08000, 0xbe21db2b )
-	ROM_LOAD( "b25-08.rom", 0x2c000, 0x08000, 0x883ccaa3 )	/* bg tiles */
-	ROM_LOAD( "b25-11.rom", 0x34000, 0x08000, 0xd6ebd510 )
-	ROM_LOAD( "b25-10.rom", 0x3c000, 0x08000, 0xb9a61e81 )
-	ROM_LOAD( "b25-09.rom", 0x44000, 0x08000, 0x585411b7 )
-	ROM_LOAD( "b25-01.rom", 0x4c000, 0x10000, 0x42ec01fb )	/* sprites */
-	ROM_LOAD( "b25-02.rom", 0x5c000, 0x10000, 0x6c0130b7 )
-	ROM_LOAD( "b25-03.rom", 0x6c000, 0x10000, 0xb923db99 )
-	ROM_LOAD( "b25-04.rom", 0x7c000, 0x10000, 0x8059573c )
 
-	ROM_REGION(0x10000)		/* 32k for second Z80 CPU */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
+	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
+	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
+	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
+	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
+	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
+	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
+	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
+	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
+	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
+
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+#ifndef LSB_FIRST
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1000, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1400, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1400, 0x0200, 0x50452ff8 )
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1800, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1800, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1c00, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1c00, 0x0200, 0x712bad47 )
+#else
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1c00, 0x0200, 0x50452ff8 )
+#endif
+
+	ROM_REGIONX( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
+	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
+	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
+	ROM_LOAD( "82s123.c6",   0x220, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "82s123.f1",   0x240, 0x020, 0x4fb5df2a )	/* tile to sprite priority ?? */
 ROM_END
 
 ROM_START( wardnerj )
-	ROM_REGION(0x48000)		/* Banked Z80 code */
+	ROM_REGIONX( 0x48000, REGION_CPU1 )	/* Banked Z80 code */
 	ROM_LOAD( "wardnerj.17", 0x00000, 0x08000, 0xc06804ec )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom",  0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom",  0x28000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "wardner.20",  0x40000, 0x08000, 0x347f411b )
 
-	ROM_REGION_DISPOSE(0x8c000)		/* temporary space for graphics */
-	ROM_LOAD( "wardnerj.07", 0x00000, 0x04000, 0x50e329e0 )	/* chars */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_LOAD( "wardnerj.07", 0x00000, 0x04000, 0x50e329e0 )
 	ROM_LOAD( "wardnerj.06", 0x04000, 0x04000, 0x3bfeb6ae )
 	ROM_LOAD( "wardnerj.05", 0x08000, 0x04000, 0xbe36a53e )
-	ROM_LOAD( "b25-12.rom",  0x0c000, 0x08000, 0x15d08848 )	/* fg tiles */
-	ROM_LOAD( "b25-15.rom",  0x14000, 0x08000, 0xcdd2d408 )
-	ROM_LOAD( "b25-14.rom",  0x1c000, 0x08000, 0x5a2aef4f )
-	ROM_LOAD( "b25-13.rom",  0x24000, 0x08000, 0xbe21db2b )
-	ROM_LOAD( "b25-08.rom",  0x2c000, 0x08000, 0x883ccaa3 )	/* bg tiles */
-	ROM_LOAD( "b25-11.rom",  0x34000, 0x08000, 0xd6ebd510 )
-	ROM_LOAD( "b25-10.rom",  0x3c000, 0x08000, 0xb9a61e81 )
-	ROM_LOAD( "b25-09.rom",  0x44000, 0x08000, 0x585411b7 )
-	ROM_LOAD( "b25-01.rom",  0x4c000, 0x10000, 0x42ec01fb )	/* sprites */
-	ROM_LOAD( "b25-02.rom",  0x5c000, 0x10000, 0x6c0130b7 )
-	ROM_LOAD( "b25-03.rom",  0x6c000, 0x10000, 0xb923db99 )
-	ROM_LOAD( "b25-04.rom",  0x7c000, 0x10000, 0x8059573c )
 
-	ROM_REGION(0x10000)		/* 32k for second Z80 CPU */
+	ROM_REGIONX( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
+	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
+	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
+	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
+
+	ROM_REGIONX( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
+	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
+	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
+	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
+
+	ROM_REGIONX( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
+	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
+	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
+	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "dsp.lsb",	0x0000, 0x0800, BADCRC( 0x7bbb405a ) )
-	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
+	ROM_REGIONX( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
+#ifndef LSB_FIRST
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1000, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1000, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1400, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1400, 0x0200, 0x50452ff8 )
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1800, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1800, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1c00, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1c00, 0x0200, 0x712bad47 )
+#else
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x1000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x1000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x1400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x1400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x1800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x1800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x1c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x1c00, 0x0200, 0x50452ff8 )
+#endif
+
+	ROM_REGIONX( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
+	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
+	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
+	ROM_LOAD( "82s123.c6",   0x220, 0x020, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "82s123.f1",   0x240, 0x020, 0x4fb5df2a )	/* tile to sprite priority ?? */
 ROM_END
 
 
-
-static int hiload(void)
+static void wardner_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int A;
+	unsigned char datamsb;
+	unsigned char datalsb;
+
+	unsigned char *DSP_ROMS = memory_region(REGION_CPU3);
+
+	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
+
+	for (A = 0;A < 0x0600;A++)
+	{
+		datamsb = DSP_ROMS[0x1000 + A];
+		datalsb = DSP_ROMS[0x1800 + A];
+		DSP_ROMS[(A*2)]   = datamsb;
+		DSP_ROMS[(A*2)+1] = datalsb;
+
+		DSP_ROMS[0x1000 + A] = 00;
+		DSP_ROMS[0x1800 + A] = 00;
+	}
+}
+
+
+
+static int wardner_hiload(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x7117],"\x20\x00\x00\x20",4) == 0) &&
@@ -849,10 +954,10 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static void hisave(void)
+static void wardner_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -877,7 +982,7 @@ struct GameDriver driver_wardner =
 	0,
 
 	rom_wardner,
-	0, 0,
+	wardner_decode, 0,
 	0,
 	0,
 
@@ -886,7 +991,7 @@ struct GameDriver driver_wardner =
 	0, 0, 0,
 	0,
 
-	hiload, hisave
+	wardner_hiload, wardner_hisave
 };
 
 struct GameDriver driver_pyros =
@@ -903,7 +1008,7 @@ struct GameDriver driver_pyros =
 	0,
 
 	rom_pyros,
-	0, 0,
+	wardner_decode, 0,
 	0,
 	0,
 
@@ -912,7 +1017,7 @@ struct GameDriver driver_pyros =
 	0, 0, 0,
 	0,
 
-	hiload, hisave
+	wardner_hiload, wardner_hisave
 };
 
 struct GameDriver driver_wardnerj =
@@ -929,7 +1034,7 @@ struct GameDriver driver_wardnerj =
 	0,
 
 	rom_wardnerj,
-	0, 0,
+	wardner_decode, 0,
 	0,
 	0,
 
@@ -938,6 +1043,6 @@ struct GameDriver driver_wardnerj =
 	0, 0, 0,
 	0,
 
-	hiload, hisave
+	wardner_hiload, wardner_hisave
 };
 

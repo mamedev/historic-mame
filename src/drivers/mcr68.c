@@ -1569,7 +1569,7 @@ ROM_END
 		rom_##name,									\
 		rom_decode, 0,								\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
 		input_ports_##name,							\
 													\

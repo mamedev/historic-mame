@@ -636,6 +636,74 @@ INLINE void copyline_2x_16bpp(unsigned char *src,short seg,unsigned long address
 	"ax", "bx", "cc", "memory");
 }
 
+INLINE void copyline_3x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
+{
+	__asm__ __volatile__ (
+	"pushw %%es              \n"
+	"movw %%dx, %%es         \n"
+	"cld                     \n"
+	".align 4                \n"
+	"0:                      \n"
+	"lodsl                   \n"
+	"movl %%eax, %%ebx       \n"
+	"roll $16, %%eax         \n"
+	"xchgw %%ax,%%bx         \n"
+	"stosl                   \n"
+	"stosw                   \n"
+	"movl %%ebx, %%eax       \n"
+	"stosl                   \n"
+	"stosw                   \n"
+	"loop 0b                 \n"
+	"popw %%ax               \n"
+	"movw %%ax, %%es         \n"
+	:
+	"=c" (width2),
+	"=d" (seg),
+	"=S" (src),
+	"=D" (address)
+	:
+	"0" (width2),
+	"1" (seg),
+	"2" (src),
+	"3" (address):
+	"ax", "bx", "cc", "memory");
+}
+
+INLINE void copyline_4x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
+{
+	__asm__ __volatile__ (
+	"pushw %%es              \n"
+	"movw %%dx, %%es         \n"
+	"cld                     \n"
+	".align 4                \n"
+	"0:                      \n"
+	"lodsl                   \n"
+	"movl %%eax, %%ebx       \n"
+	"roll $16, %%eax         \n"
+	"xchgw %%ax,%%bx         \n"
+	"stosl                   \n"
+	"stosl                   \n"
+	"movl %%ebx, %%eax       \n"
+	"stosl                   \n"
+	"stosl 					 \n"
+
+
+	"loop 0b                 \n"
+	"popw %%ax               \n"
+	"movw %%ax, %%es         \n"
+	:
+	"=c" (width2),
+	"=d" (seg),
+	"=S" (src),
+	"=D" (address)
+	:
+	"0" (width2),
+	"1" (seg),
+	"2" (src),
+	"3" (address):
+	"ax", "bx", "cc", "memory");
+}
+
 INLINE void copyline_3x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
 {
 	int i;
@@ -836,6 +904,7 @@ void blitscreen_dirty1_vesa_1x_1x_8bpp(void)   { DIRTY1(8)  DIRTY1_NXNS(1,1,8)  
 void blitscreen_dirty1_vesa_1x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (1,8)  }
 void blitscreen_dirty1_vesa_1x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(1,2,8)  }
 void blitscreen_dirty1_vesa_2x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(2,1,8)  }
+void blitscreen_dirty1_vesa_3x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(3,1,8)  }
 void blitscreen_dirty1_vesa_2x_2x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX2 (2,8)  }
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(2,2,8)  }
 void blitscreen_dirty1_vesa_2x_3x_8bpp(void)   { DIRTY1(8)  DIRTY1_NX3 (2,8)  }
@@ -852,13 +921,20 @@ void blitscreen_dirty1_vesa_4x_3xs_8bpp(void)  { DIRTY1(8)  DIRTY1_NXNS(4,3,8)  
 void blitscreen_dirty1_vesa_1x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(1,1,16) }
 void blitscreen_dirty1_vesa_1x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (1,16) }
 void blitscreen_dirty1_vesa_1x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(1,2,16) }
+void blitscreen_dirty1_vesa_2x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(2,1,16) }
 void blitscreen_dirty1_vesa_2x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (2,16) }
 void blitscreen_dirty1_vesa_2x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(2,2,16) }
+void blitscreen_dirty1_vesa_3x_1x_16bpp(void)  { DIRTY1(16) DIRTY1_NXNS(3,1,16) }
+void blitscreen_dirty1_vesa_3x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (3,16)  }
+void blitscreen_dirty1_vesa_3x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(3,2,16) }
+void blitscreen_dirty1_vesa_4x_2x_16bpp(void)  { DIRTY1(16) DIRTY1_NX2 (4,16) }
+void blitscreen_dirty1_vesa_4x_2xs_16bpp(void) { DIRTY1(16) DIRTY1_NXNS(4,2,16) }
 
 void blitscreen_dirty0_vesa_1x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(1,1,8)  }
 void blitscreen_dirty0_vesa_1x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (1,8)  }
 void blitscreen_dirty0_vesa_1x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(1,2,8)  }
 void blitscreen_dirty0_vesa_2x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(2,1,8)  }
+void blitscreen_dirty0_vesa_3x_1x_8bpp(void)   { DIRTY0(8)  DIRTY0_NXNS(3,1,8)  }
 void blitscreen_dirty0_vesa_2x_2x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX2 (2,8)  }
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(2,2,8)  }
 void blitscreen_dirty0_vesa_2x_3x_8bpp(void)   { DIRTY0(8)  DIRTY0_NX3 (2,8)  }
@@ -875,5 +951,11 @@ void blitscreen_dirty0_vesa_4x_3xs_8bpp(void)  { DIRTY0(8)  DIRTY0_NXNS(4,3,8)  
 void blitscreen_dirty0_vesa_1x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(1,1,16) }
 void blitscreen_dirty0_vesa_1x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (1,16) }
 void blitscreen_dirty0_vesa_1x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(1,2,16) }
+void blitscreen_dirty0_vesa_2x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(2,1,16) }
 void blitscreen_dirty0_vesa_2x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (2,16) }
 void blitscreen_dirty0_vesa_2x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(2,2,16) }
+void blitscreen_dirty0_vesa_3x_1x_16bpp(void)  { DIRTY0(16) DIRTY0_NXNS(3,1,16) }
+void blitscreen_dirty0_vesa_3x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (3,16)  }
+void blitscreen_dirty0_vesa_3x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(3,2,16) }
+void blitscreen_dirty0_vesa_4x_2x_16bpp(void)  { DIRTY0(16) DIRTY0_NX2 (4,16) }
+void blitscreen_dirty0_vesa_4x_2xs_16bpp(void) { DIRTY0(16) DIRTY0_NXNS(4,2,16) }

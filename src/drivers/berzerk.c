@@ -509,7 +509,7 @@ ROM_END
 
 static int berzerk_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 
@@ -525,7 +525,7 @@ static int berzerk_hiload(void)
 static void berzerk_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -538,7 +538,7 @@ static void berzerk_hisave(void)
 static int frenzy_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -572,7 +572,7 @@ static int frenzy_hiload(void)
 static void frenzy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -600,7 +600,7 @@ struct GameDriver driver_berzerk =
 	rom_berzerk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_berzerk,
 
@@ -628,7 +628,7 @@ struct GameDriver driver_berzerk1 =
 	rom_berzerk1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_berzerk,
 
@@ -656,7 +656,7 @@ struct GameDriver driver_frenzy =
 	rom_frenzy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frenzy,
 

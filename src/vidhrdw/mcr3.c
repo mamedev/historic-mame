@@ -429,7 +429,11 @@ int dotron_vh_start(void)
 		/* from the horizon upwards, use the second palette */
 		for (y = 0; y < DOTRON_HORIZON; y++)
 			for (x = 0; x < dotron_backdrop->artwork->width; x++)
-				dotron_backdrop->orig_artwork->line[y][x] += 95;
+			{
+				int newpixel = read_pixel(dotron_backdrop->orig_artwork, x, y) + 95;
+				plot_pixel(dotron_backdrop->orig_artwork, x, y, newpixel);
+			}
+
 		backdrop_refresh(dotron_backdrop);
 
 		/* create palettes with different levels of brightness */

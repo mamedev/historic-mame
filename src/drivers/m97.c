@@ -271,7 +271,7 @@ struct GameDriver driver_riskchal =
 	rom_riskchal,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 
@@ -297,7 +297,7 @@ struct GameDriver driver_gussun =
 	rom_gussun,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 
@@ -323,7 +323,7 @@ struct GameDriver driver_shisen2 =
 	rom_shisen2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 
@@ -349,7 +349,7 @@ struct GameDriver driver_quizf1 =
 	rom_quizf1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 
@@ -375,7 +375,7 @@ struct GameDriver driver_atompunk =
 	rom_atompunk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 
@@ -401,7 +401,7 @@ struct GameDriver driver_bbmanw =
 	rom_bbmanw,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_m97,
 

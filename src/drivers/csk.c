@@ -724,7 +724,7 @@ ROM_END
 static void cska_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0;A < 0x10000;A++)

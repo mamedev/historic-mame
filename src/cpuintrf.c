@@ -318,7 +318,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_Z80)
-    {
+	{
 		CPU_Z80,							/* CPU number and family cores sharing resources */
         z80_reset,                          /* Reset CPU */
 		z80_exit,							/* Shut down the CPU */
@@ -352,7 +352,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_Z80_VM)
-    {
+	{
 		CPU_Z80_VM, 						/* CPU number and family cores sharing resources */
 		z80_vm_reset,						/* Reset CPU */
 		z80_vm_exit,						/* Shut down the CPU */
@@ -386,7 +386,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_8080)
-    {
+	{
 		CPU_8080,							/* CPU number and family cores sharing resources */
         i8080_reset,                        /* Reset CPU */
 		i8080_exit, 						/* Shut down the CPU */
@@ -417,10 +417,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_8085A)
-    {
+	{
 		CPU_8085A,							/* CPU number and family cores sharing resources */
         i8085_reset,                        /* Reset CPU */
 		i8085_exit, 						/* Shut down the CPU */
@@ -454,7 +454,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_M6502)
-    {
+	{
 		CPU_M6502,							/* CPU number and family cores sharing resources */
         m6502_reset,                        /* Reset CPU */
 		m6502_exit, 						/* Shut down the CPU */
@@ -488,7 +488,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_M65C02)
-    {
+	{
 		CPU_M65C02, 						/* CPU number and family cores sharing resources */
         m65c02_reset,                       /* Reset CPU */
 		m65c02_exit,						/* Shut down the CPU */
@@ -519,10 +519,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6510)
-    {
+	{
 		CPU_M6510,							/* CPU number and family cores sharing resources */
         m6510_reset,                        /* Reset CPU */
 		m6510_exit, 						/* Shut down the CPU */
@@ -553,10 +553,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_N2A03)
-    {
+	{
 		CPU_N2A03,							/* CPU number and family cores sharing resources */
         n2a03_reset,                        /* Reset CPU */
 		n2a03_exit, 						/* Shut down the CPU */
@@ -587,10 +587,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_H6280)
-    {
+	{
 		CPU_H6280,							/* CPU number and family cores sharing resources */
         h6280_reset,                        /* Reset CPU */
 		h6280_exit, 						/* Shut down the CPU */
@@ -621,10 +621,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase21,					/* Update CPU opcode base */
 		0,21,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_21,ABITS2_21,ABITS_MIN_21	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_I86)
-    {
+	{
 		CPU_I86,							/* CPU number and family cores sharing resources */
         i86_reset,                          /* Reset CPU */
 		i86_exit,							/* Shut down the CPU */
@@ -655,7 +655,7 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase20,					/* Update CPU opcode base */
 		0,20,CPU_IS_LE,1,5, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_V20)
 	{
@@ -760,7 +760,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_I8035)
-    {
+	{
 		CPU_I8035,							/* CPU number and family cores sharing resources */
         i8035_reset,                        /* Reset CPU */
 		i8035_exit, 						/* Shut down the CPU */
@@ -791,10 +791,10 @@ struct cpu_interface cpuintf[] =
         cpu_setOPbase16,                    /* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_I8039)
-    {
+	{
 		CPU_I8039,							/* CPU number and family cores sharing resources */
         i8039_reset,                        /* Reset CPU */
 		i8039_exit, 						/* Shut down the CPU */
@@ -825,10 +825,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_I8048)
-    {
+	{
 		CPU_I8048,							/* CPU number and family cores sharing resources */
         i8048_reset,                        /* Reset CPU */
 		i8048_exit, 						/* Shut down the CPU */
@@ -859,10 +859,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_N7751)
-    {
+	{
 		CPU_N7751,							/* CPU number and family cores sharing resources */
         n7751_reset,                        /* Reset CPU */
 		n7751_exit, 						/* Shut down the CPU */
@@ -893,10 +893,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_LE,1,2, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6800)
-    {
+	{
 		CPU_M6800,							/* CPU number and family cores sharing resources */
         m6800_reset,                        /* Reset CPU */
 		m6800_exit, 						/* Shut down the CPU */
@@ -927,10 +927,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6801)
-    {
+	{
 		CPU_M6801,							/* CPU number and family cores sharing resources */
         m6801_reset,                        /* Reset CPU */
 		m6801_exit, 						/* Shut down the CPU */
@@ -961,10 +961,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6802)
-    {
+	{
 		CPU_M6802,							/* CPU number and family cores sharing resources */
         m6802_reset,                        /* Reset CPU */
 		m6802_exit, 						/* Shut down the CPU */
@@ -995,10 +995,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6803)
-    {
+	{
 		CPU_M6803,							/* CPU number and family cores sharing resources */
         m6803_reset,                        /* Reset CPU */
 		m6803_exit, 						/* Shut down the CPU */
@@ -1029,10 +1029,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M6808)
-    {
+	{
 		CPU_M6808,							/* CPU number and family cores sharing resources */
         m6808_reset,                        /* Reset CPU */
 		m6808_exit, 						/* Shut down the CPU */
@@ -1063,10 +1063,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_HD63701)
-    {
+	{
 		CPU_HD63701,						/* CPU number and family cores sharing resources */
         hd63701_reset,                      /* Reset CPU */
 		hd63701_exit,						/* Shut down the CPU */
@@ -1097,10 +1097,44 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
+#endif
+#if (HAS_NSC8105)
+	{
+		CPU_NSC8105,						/* CPU number and family cores sharing resources */
+        nsc8105_reset,                      /* Reset CPU */
+		nsc8105_exit,						/* Shut down the CPU */
+		nsc8105_execute,					/* Execute a number of cycles */
+		nsc8105_get_context,				/* Get the contents of the registers */
+		nsc8105_set_context,				/* Set the contents of the registers */
+		nsc8105_get_pc,						/* Return the current program counter */
+		nsc8105_set_pc,						/* Set the current program counter */
+		nsc8105_get_sp,						/* Return the current stack pointer */
+		nsc8105_set_sp,						/* Set the current stack pointer */
+		nsc8105_get_reg, 					/* Get a specific register value */
+		nsc8105_set_reg, 					/* Set a specific register value */
+        nsc8105_set_nmi_line,               /* Set state of the NMI line */
+		nsc8105_set_irq_line,				/* Set state of the IRQ line */
+		nsc8105_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,                               /* Cause internal interrupt */
+		nsc8105_state_save, 				/* Save CPU state */
+		nsc8105_state_load, 				/* Load CPU state */
+        nsc8105_info,                       /* Get formatted string for a specific register */
+		nsc8105_dasm,						/* Disassemble one instruction */
+		1,0,                                /* Number of IRQ lines, default IRQ vector */
+		&nsc8105_ICount,					/* Pointer to the instruction count */
+		NSC8105_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		NSC8105_INT_IRQ,
+		NSC8105_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+	},
 #endif
 #if (HAS_M6805)
-    {
+	{
 		CPU_M6805,							/* CPU number and family cores sharing resources */
         m6805_reset,                        /* Reset CPU */
 		m6805_exit, 						/* Shut down the CPU */
@@ -1131,10 +1165,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,11,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M68705)
-    {
+	{
 		CPU_M68705, 						/* CPU number and family cores sharing resources */
         m68705_reset,                       /* Reset CPU */
 		m68705_exit,						/* Shut down the CPU */
@@ -1165,10 +1199,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,11,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_HD63705)
-    {
+	{
 		CPU_HD63705,						/* CPU number and family cores sharing resources */
 		hd63705_reset,						/* Reset CPU */
 		hd63705_exit,						/* Shut down the CPU */
@@ -1199,10 +1233,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_HD6309)
-    {
+	{
 		CPU_HD6309,							/* CPU number and family cores sharing resources */
         m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
@@ -1236,7 +1270,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_M6809)
-    {
+	{
 		CPU_M6809,							/* CPU number and family cores sharing resources */
         m6809_reset,                        /* Reset CPU */
 		m6809_exit, 						/* Shut down the CPU */
@@ -1267,10 +1301,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_KONAMI)
-    {
+	{
 		CPU_KONAMI,							/* CPU number and family cores sharing resources */
         konami_reset,                       /* Reset CPU */
 		konami_exit, 						/* Shut down the CPU */
@@ -1301,10 +1335,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M68000)
-    {
+	{
 		CPU_M68000, 						/* CPU number and family cores sharing resources */
         m68000_reset,                       /* Reset CPU */
 		m68000_exit,						/* Shut down the CPU */
@@ -1338,7 +1372,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_M68010)
-    {
+	{
 		CPU_M68010, 						/* CPU number and family cores sharing resources */
         m68010_reset,                       /* Reset CPU */
 		m68010_exit,						/* Shut down the CPU */
@@ -1369,10 +1403,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase24,					/* Update CPU opcode base */
 		0,24,CPU_IS_BE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_M68020)
-    {
+	{
 		CPU_M68020, 						/* CPU number and family cores sharing resources */
         m68020_reset,                       /* Reset CPU */
 		m68020_exit,						/* Shut down the CPU */
@@ -1403,10 +1437,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase24,					/* Update CPU opcode base */
 		0,24,CPU_IS_BE,2,10,				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_T11)
-    {
+	{
 		CPU_T11,							/* CPU number and family cores sharing resources */
         t11_reset,                          /* Reset CPU */
 		t11_exit,							/* Shut down the CPU */
@@ -1440,7 +1474,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_S2650)
-    {
+	{
 		CPU_S2650,							/* CPU number and family cores sharing resources */
         s2650_reset,                        /* Reset CPU */
 		s2650_exit, 						/* Shut down the CPU */
@@ -1474,7 +1508,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_TMS34010)
-    {
+	{
 		CPU_TMS34010,						/* CPU number and family cores sharing resources */
         tms34010_reset,                     /* Reset CPU */
 		tms34010_exit,						/* Shut down the CPU */
@@ -1508,7 +1542,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_TMS9900)
-    {
+	{
 		CPU_TMS9900,						/* CPU number and family cores sharing resources */
         tms9900_reset,                      /* Reset CPU */
 		tms9900_exit,						/* Shut down the CPU */
@@ -1534,15 +1568,15 @@ struct cpu_interface cpuintf[] =
 		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
 		-1,
 		-1,
-		cpu_readmem16,						/* Memory read */
-		cpu_writemem16, 					/* Memory write */
-		cpu_setOPbase16,					/* Update CPU opcode base */
+		cpu_readmem16bew,					/* Memory read */
+		cpu_writemem16bew, 					/* Memory write */
+		cpu_setOPbase16bew,					/* Update CPU opcode base */
 		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
-        ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW    /* Address bits, for the memory system */
 	},
 #endif
 #if (HAS_Z8000)
-    {
+	{
 		CPU_Z8000,							/* CPU number and family cores sharing resources */
         z8000_reset,                        /* Reset CPU */
 		z8000_exit, 						/* Shut down the CPU */
@@ -1568,15 +1602,15 @@ struct cpu_interface cpuintf[] =
 		Z8000_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		Z8000_NVI,
 		Z8000_NMI,
-		cpu_readmem16,                      /* Memory read */
-		cpu_writemem16,                     /* Memory write */
-		cpu_setOPbase16,                    /* Update CPU opcode base */
-		0,16,CPU_IS_LE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
-		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+		cpu_readmem16bew,                   /* Memory read */
+		cpu_writemem16bew,                  /* Memory write */
+		cpu_setOPbase16bew,                 /* Update CPU opcode base */
+		0,16,CPU_IS_BE,2,6, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16BEW,ABITS2_16BEW,ABITS_MIN_16BEW	/* Address bits, for the memory system */
+	},
 #endif
 #if (HAS_TMS320C10)
-    {
+	{
 		CPU_TMS320C10,						/* CPU number and family cores sharing resources */
         tms320c10_reset,                    /* Reset CPU */
 		tms320c10_exit, 					/* Shut down the CPU */
@@ -1607,10 +1641,10 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		-1,16,CPU_IS_BE,2,4,				/* CPU address shift, bits, endianess, align unit, max. instruction length */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-    },
+	},
 #endif
 #if (HAS_CCPU)
-    {
+	{
 		CPU_CCPU,							/* CPU number and family cores sharing resources */
         ccpu_reset,                         /* Reset CPU  */
 		ccpu_exit,							/* Shut down CPU  */
@@ -1644,7 +1678,7 @@ struct cpu_interface cpuintf[] =
 	},
 #endif
 #if (HAS_PDP1)
-    {
+	{
 		CPU_PDP1,							/* CPU number and family cores sharing resources */
         pdp1_reset,                         /* Reset CPU  */
 		pdp1_exit,							/* Shut down CPU  */
@@ -1675,7 +1709,7 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base  */
 		0,18,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	 */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
-    },
+	},
 #endif
 };
 
@@ -1726,19 +1760,19 @@ void cpu_run(void)
         /* allocate a context buffer for the CPU */
 		size = GETCONTEXT(i,NULL);
         if( size == 0 )
-        {
+    	{
             /* That can't really be true */
 			fprintf( stderr, "CPU #%d claims to need no context buffer!\n", i);
             raise( SIGABRT );
-        }
+    	}
 
         cpu[i].context = malloc( size );
         if( cpu[i].context == NULL )
-        {
+    	{
             /* That's really bad :( */
 			fprintf( stderr, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
             raise( SIGABRT );
-        }
+    	}
 
 		/* Zap the context buffer */
 		memset(cpu[i].context, 0, size );
@@ -1766,7 +1800,7 @@ void cpu_run(void)
 			irq_line_state[i * MAX_IRQ_LINES + j] = CLEAR_LINE;
             irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
-    }
+	}
 
 #ifdef	MAME_DEBUG
 	/* Initialize the debugger */
@@ -1832,7 +1866,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
         /* reset the total number of cycles */
 		cpu[i].totalcycles = 0;
-    }
+	}
 
 	/* reset the globals */
 	cpu_vblankreset ();
@@ -1855,12 +1889,12 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		profiler_mark(PROFILER_EXTRA);
 
 #if SAVE_STATE_TEST
-        {
+    	{
             if( keyboard_pressed_memory(KEYCODE_S) )
-            {
+        	{
                 void *s = state_create(Machine->gamedrv->name);
                 if( s )
-                {
+            	{
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
 					{
 						activecpu = cpunum;
@@ -1872,16 +1906,16 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 							(*cpu[activecpu].intf->cpu_state_save)(s);
 					}
                     state_close(s);
-                }
-            }
+            	}
+        	}
 
             if( keyboard_pressed_memory(KEYCODE_L) )
-            {
+        	{
                 void *s = state_open(Machine->gamedrv->name);
                 if( s )
-                {
+            	{
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
-                    {
+                	{
 						activecpu = cpunum;
 						memorycontextswap (activecpu);
 						if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
@@ -1892,11 +1926,11 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 						/* update the contexts */
 						if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 						updatememorybase (activecpu);
-                    }
+                	}
                     state_close(s);
-                }
-            }
-        }
+            	}
+        	}
+    	}
 #endif
         /* ask the timer system to schedule */
 		if (timer_schedule_cpu (&cpunum, &cycles_running))
@@ -2306,7 +2340,7 @@ static int cpu_0_irq_callback(int irqline)
 	{
 		SETIRQLINE(0, irqline, CLEAR_LINE);
 		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-    }
+	}
 	LOG((errorlog, "cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[0 * MAX_IRQ_LINES + irqline];
 }
@@ -2317,7 +2351,7 @@ static int cpu_1_irq_callback(int irqline)
 	{
 		SETIRQLINE(1, irqline, CLEAR_LINE);
 		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
-    }
+	}
 	LOG((errorlog, "cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[1 * MAX_IRQ_LINES + irqline];
 }
@@ -2675,7 +2709,7 @@ static void cpu_manualnmicallback(int param)
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
-    }
+	}
     /* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
@@ -2718,7 +2752,7 @@ static void cpu_manualirqcallback(int param)
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
-    }
+	}
 
     /* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
@@ -2831,12 +2865,12 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #if (HAS_H6280)
             case CPU_H6280:
                 switch (num)
-                {
+            	{
 				case H6280_INT_IRQ1:	irq_line = 0; LOG((errorlog,"H6280 INT 1\n")); break;
 				case H6280_INT_IRQ2:	irq_line = 1; LOG((errorlog,"H6280 INT 2\n")); break;
 				case H6280_INT_TIMER:	irq_line = 2; LOG((errorlog,"H6280 TIMER INT\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"H6280 unknown\n"));
-                }
+            	}
                 break;
 #endif
 #if (HAS_I86)
@@ -2923,7 +2957,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #if (HAS_M68000)
             case CPU_M68000:
 				switch (num)
-                {
+            	{
                 case MC68000_IRQ_1:     irq_line = 1; LOG((errorlog,"M68K IRQ1\n")); break;
                 case MC68000_IRQ_2:     irq_line = 2; LOG((errorlog,"M68K IRQ2\n")); break;
                 case MC68000_IRQ_3:     irq_line = 3; LOG((errorlog,"M68K IRQ3\n")); break;
@@ -2932,7 +2966,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
                 case MC68000_IRQ_6:     irq_line = 6; LOG((errorlog,"M68K IRQ6\n")); break;
                 case MC68000_IRQ_7:     irq_line = 7; LOG((errorlog,"M68K IRQ7\n")); break;
                 default:                irq_line = 0; LOG((errorlog,"M68K unknown\n"));
-                }
+            	}
                 /* until now only auto vector interrupts supported */
                 num = MC68000_INT_ACK_AUTOVECTOR;
                 break;
@@ -2940,7 +2974,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #if (HAS_M68010)
             case CPU_M68010:
                 switch (num)
-                {
+            	{
                 case MC68010_IRQ_1:     irq_line = 1; LOG((errorlog,"M68010 IRQ1\n")); break;
                 case MC68010_IRQ_2:     irq_line = 2; LOG((errorlog,"M68010 IRQ2\n")); break;
                 case MC68010_IRQ_3:     irq_line = 3; LOG((errorlog,"M68010 IRQ3\n")); break;
@@ -2949,7 +2983,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
                 case MC68010_IRQ_6:     irq_line = 6; LOG((errorlog,"M68010 IRQ6\n")); break;
                 case MC68010_IRQ_7:     irq_line = 7; LOG((errorlog,"M68010 IRQ7\n")); break;
                 default:                irq_line = 0; LOG((errorlog,"M68010 unknown\n"));
-                }
+            	}
                 /* until now only auto vector interrupts supported */
                 num = MC68000_INT_ACK_AUTOVECTOR;
                 break;
@@ -2957,7 +2991,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #if (HAS_M68020)
 			case CPU_M68020:
 				switch (num)
-                {
+            	{
 				case MC68020_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68020 IRQ1\n")); break;
 				case MC68020_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68020 IRQ2\n")); break;
 				case MC68020_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68020 IRQ3\n")); break;
@@ -2966,7 +3000,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case MC68020_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68020 IRQ6\n")); break;
 				case MC68020_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68020 IRQ7\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"M68020 unknown\n"));
-                }
+            	}
                 /* until now only auto vector interrupts supported */
                 num = MC68000_INT_ACK_AUTOVECTOR;
                 break;
@@ -2980,7 +3014,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case T11_IRQ2:			irq_line = 2; LOG((errorlog,"T11 IRQ2\n")); break;
 				case T11_IRQ3:			irq_line = 3; LOG((errorlog,"T11 IRQ3\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"T11 unknown\n"));
-                }
+            	}
                 break;
 #endif
 #if HAS_S2650
@@ -2993,7 +3027,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case TMS34010_INT1: 	irq_line = 0; LOG((errorlog,"TMS34010 INT1\n")); break;
 				case TMS34010_INT2: 	irq_line = 1; LOG((errorlog,"TMS34010 INT2\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"TMS34010 unknown\n"));
-                }
+            	}
                 break;
 #endif
 #if HAS_TMS9900
@@ -3006,7 +3040,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case Z8000_NVI: 		irq_line = 0; LOG((errorlog,"Z8000 NVI\n")); break;
 				case Z8000_VI:			irq_line = 1; LOG((errorlog,"Z8000 VI\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"Z8000 unknown\n"));
-                }
+            	}
                 break;
 #endif
 #if HAS_TMS320C10
@@ -3016,17 +3050,17 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG((errorlog,"TMS32010 INT\n")); break;
 				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG((errorlog,"TMS32010 BIO\n")); break;
 				default:					irq_line = 0; LOG((errorlog,"TMS32010 unknown\n"));
-                }
+            	}
                 break;
 #endif
 			default:
 				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
 				LOG((errorlog,"unknown IRQ\n"));
-            }
+        	}
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
 			cpu_manualirqcallback (irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
-        }
+    	}
 	}
 
     /* update the CPU's context */

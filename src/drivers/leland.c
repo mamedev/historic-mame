@@ -213,7 +213,7 @@ static void leland_hisave (void)
 static int leland_hiload (void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
@@ -256,22 +256,22 @@ void leland_debug_dump_driver(void)
 		FILE *fp=fopen("MASTER.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 			fwrite(RAM, 0x10000, 1, fp);
 			fclose(fp);
 		}
 		fp=fopen("SLAVE.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 			fwrite(RAM, 0x10000, 1, fp);
 			fclose(fp);
 		}
 		fp=fopen("SOUND.DMP", "w+b");
 		if (fp)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
-			int size=Machine->memory_region_length[Machine->drv->cpu[2].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
+			int size = memory_region_length(Machine->drv->cpu[2].memory_region);
 			if (size != 1)
 			{
 				fwrite(RAM, size, 1, fp);
@@ -608,7 +608,7 @@ int leland_i86_ram_r(int offset)
 	/*
 	Not very tidy, but it works for now...
 	*/
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 	return RAM[0x1c000+offset];
 }
 
@@ -617,7 +617,7 @@ void leland_i86_ram_w(int offset, int data)
 	/*
 	Not very tidy, but it works for now...
 	*/
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 	RAM[0x1c000+offset]=data;
 }
 
@@ -842,7 +842,7 @@ int leland_slave_cmd_r(int offset)
 
 void leland_slave_banksw_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	int bankaddress;
     bankaddress=0x10000+0xc000*(data&0x0f);
 	cpu_setbank(3, &RAM[bankaddress]);
@@ -858,7 +858,7 @@ void leland_slave_banksw_w(int offset, int data)
 
 void leland_slave_large_banksw_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	int bankaddress=0x10000+0x8000*(data&0x0f);
 	cpu_setbank(3, &RAM[bankaddress]);
 
@@ -926,7 +926,7 @@ void leland_rearrange_bank(int cpu, int start)
 	*/
 
 	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[cpu].memory_region);
 	unsigned char *p=&RAM[start];
 	char *buffer=malloc(0x18000);
 	if (buffer)
@@ -1098,7 +1098,7 @@ static int leland_bank;
 void strkzone_update_bank(void)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	if (leland_bank & 0x80 )
 	{
 		if (leland_bank & 0x40)
@@ -1192,7 +1192,7 @@ static struct IOWritePort strkzone_writeport[] =
 
 void strkzone_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	leland_update_master_bank=strkzone_update_bank;
 	leland_rearrange_bank(0, 0x10000);  /* Master bank */
 
@@ -1266,7 +1266,7 @@ struct GameDriver driver_strkzone =
 	rom_strkzone,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_strkzone,
 
@@ -1374,7 +1374,7 @@ struct GameDriver driver_dblplay =
 	rom_dblplay,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_strkzone,
 
@@ -1519,7 +1519,7 @@ struct GameDriver driver_wseries =
 	rom_wseries,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_wseries,
 
@@ -1628,7 +1628,7 @@ struct GameDriver driver_basebal2 =
 	rom_basebal2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_strkzone,
 
@@ -1687,7 +1687,7 @@ INPUT_PORTS_END
 
 void alleymas_init_machine(void)
 {
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* HACK!!!! Patch the code to get the controls working */
     RAM[0x1826]=1;
 
@@ -1758,7 +1758,7 @@ struct GameDriver driver_alleymas =
 	rom_alleymas,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_alleymas,
 
@@ -1874,7 +1874,7 @@ struct GameDriver driver_mayhem =
 	rom_mayhem,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mayhem,
 
@@ -2031,7 +2031,7 @@ struct GameDriver driver_cerberus =
     rom_cerberus,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cerberus,
 
@@ -2106,7 +2106,7 @@ void pigout_banksw_w(int offset, int data)
 {
 	int bank;
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	unsigned char *battery_bank=&RAM[0xa000];
 
 	bank=data&0x07;
@@ -2250,7 +2250,7 @@ struct GameDriver driver_pigout =
 	rom_pigout,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pigout,
 
@@ -2317,7 +2317,7 @@ struct GameDriver driver_pigoutj =
 	rom_pigoutj,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pigout,
 
@@ -2469,7 +2469,7 @@ struct GameDriver driver_offroad =
 	rom_offroad,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_offroad,
 
@@ -2545,7 +2545,7 @@ struct GameDriver driver_offroadt =
 	rom_offroadt,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_offroad,
 
@@ -2704,7 +2704,7 @@ struct GameDriver driver_teamqb =
 	rom_teamqb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_teamqb,
 
@@ -2750,7 +2750,7 @@ void redlin2p_banksw_w(int offset, int data)
 {
 	int bank;
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 //	unsigned char *battery_bank=&RAM[0xa000];
 
 /*    char baf[40];
@@ -2822,7 +2822,7 @@ static struct IOWritePort redlin2p_writeport[] =
 
 void redlin2p_init_machine(void)
 {
-//	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	leland_init_machine();
 	leland_rearrange_bank_swap(0, 0x10000);
@@ -2888,7 +2888,7 @@ struct GameDriver driver_redlin2p =
 	rom_redlin2p,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_redlin2p,
 
@@ -2934,7 +2934,7 @@ INPUT_PORTS_END
 
 void dangerz_banksw_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress=(data&0x01)*0x10000;
 	if (errorlog)
 	{
@@ -3033,7 +3033,7 @@ struct GameDriver driver_dangerz =
 	rom_dangerz,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dangerz,
 
@@ -3085,7 +3085,7 @@ void viper_banksw_w(int offset, int data)
 {
 	int bank;
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	unsigned char *battery_bank=&RAM[0xa000];
 
 	bank=data&0x07;
@@ -3203,7 +3203,7 @@ struct GameDriver driver_viper =
 	rom_viper,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_viper,
 
@@ -3354,7 +3354,7 @@ struct GameDriver driver_aafb =
 	rom_aafb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_aafb,
 
@@ -3421,7 +3421,7 @@ struct GameDriver driver_aafb2p =
 	rom_aafb2p,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_aafb,
 
@@ -3573,7 +3573,7 @@ struct GameDriver driver_aafbu =
 	rom_aafbu,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_aafbu,
 

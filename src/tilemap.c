@@ -594,10 +594,10 @@ void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap ){
 				if( the_color ){
 					unsigned int old_pen_usage = tilemap->pen_usage[tile_index];
 					if( old_pen_usage ){
-						palette_decrease_usage_count( the_color-Machine->colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+						palette_decrease_usage_count( the_color-Machine->remapped_colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 					}
 					else {
-						palette_decrease_usage_countx( the_color-Machine->colortable, num_pens, tilemap->pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+						palette_decrease_usage_countx( the_color-Machine->remapped_colortable, num_pens, tilemap->pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 					}
 					tilemap->paldata[tile_index] = NULL;
 				}
@@ -1384,10 +1384,10 @@ void tilemap_update( struct tilemap *tilemap ){
 						if( the_color ){
 							unsigned int old_pen_usage = pen_usage[tile_index];
 							if( old_pen_usage ){
-								palette_decrease_usage_count( the_color-Machine->colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+								palette_decrease_usage_count( the_color-Machine->remapped_colortable, old_pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 							}
 							else {
-								palette_decrease_usage_countx( the_color-Machine->colortable, num_pens, pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+								palette_decrease_usage_countx( the_color-Machine->remapped_colortable, num_pens, pendata[tile_index], PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 							}
 						}
 					}
@@ -1409,10 +1409,10 @@ void tilemap_update( struct tilemap *tilemap ){
 
 
 					if( tile_info.pen_usage ){
-						palette_increase_usage_count( tile_info.pal_data-Machine->colortable, tile_info.pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+						palette_increase_usage_count( tile_info.pal_data-Machine->remapped_colortable, tile_info.pen_usage, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 					}
 					else {
-						palette_increase_usage_countx( tile_info.pal_data-Machine->colortable, num_pens, tile_info.pen_data, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
+						palette_increase_usage_countx( tile_info.pal_data-Machine->remapped_colortable, num_pens, tile_info.pen_data, PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED );
 					}
 
 					dirty_pixels[tile_index] = 1;

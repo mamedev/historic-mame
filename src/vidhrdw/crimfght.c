@@ -27,22 +27,19 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 static void sprite_callback(int *code,int *color,int *priority)
 {
 	/* Weird priority scheme. Why use three bits when two would suffice? */
+	/* The PROM allows for mixed priorities, where sprites would have */
+	/* priority over text but not on one or both of the other two planes. */
+	/* Luckily, this isn't used by the game. */
 	switch (*color & 0x70)
 	{
 		case 0x10: *priority = 0; break;
 		case 0x00: *priority = 1; break;
 		case 0x40: *priority = 2; break;
-#if 0
-		default:
-		{
-			char buf[40];
-			sprintf(buf,"sprite priority %02x",(*color&0x70)>>4);
-			usrintf_showmessage(buf);
-			*color = rand();
-			*priority = 0;
-			break;
-		}
-#endif
+		case 0x20: *priority = 3; break;
+		/*   0x60 == 0x20 */
+		/*   0x50 priority over F and A, but not over B */
+		/*   0x30 priority over F, but not over A and B */
+		/*   0x70 == 0x30 */
 	}
 	/* bit 7 is on in the "Game Over" sprites, meaning unknown */
 	/* in Aliens it is the top bit of the code, but that's not needed here */

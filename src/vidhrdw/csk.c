@@ -207,7 +207,7 @@ void cpk_initmachine(void)
 
 int cska_interrupt(void)
 {
-	unsigned char * RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char * RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	RAM[ hopperOK ] = 1;	/* simulate hopper working! */
 

@@ -187,22 +187,22 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 		{
 		case 0:
 		invaders_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
 		break;
 
 		case 1:
 					lrescue_videoram_w((31-y) + (i+adjust)*32 + j*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
 		break;
 
 		case 2:
 					boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-								Machine->memory_region[0][romarea+offset+disp+i]);
+								memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]);
 		break;
 
 		case 3:
 		boothill_videoram_w((31-j) + (i+adjust)*32 + y*256,
-										~(Machine->memory_region[0][romarea+offset+disp+i]));
+										~(memory_region(Machine->drv->cpu[0].memory_region)[romarea+offset+disp+i]));
 		break;
 		}
 
@@ -282,21 +282,21 @@ INPUT_PORTS_START( invaders )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
-	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -394,7 +394,7 @@ static struct MachineDriver machine_driver =
 
 static int invaders_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -417,7 +417,7 @@ static int invaders_hiload(void)
 static void invaders_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -444,7 +444,7 @@ struct GameDriver driver_invaders =
 	rom_invaders,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_invaders,
 
@@ -507,7 +507,7 @@ INPUT_PORTS_START( invadpt2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* N ? */
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START		/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -518,22 +518,22 @@ INPUT_PORTS_START( invadpt2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -589,7 +589,7 @@ static struct MachineDriver invadpt2_machine_driver =
 
 static int invadpt2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -614,7 +614,7 @@ static int invadpt2_hiload(void)
 static void invadpt2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -646,7 +646,7 @@ struct GameDriver driver_invadpt2 =
 	rom_invaders2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_invadpt2,
 
@@ -681,22 +681,22 @@ INPUT_PORTS_START( earthinv )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW 1" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW 2" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 
@@ -716,7 +716,7 @@ struct GameDriver driver_earthinv =
 	rom_earthinv,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_earthinv,
 
@@ -751,21 +751,21 @@ INPUT_PORTS_START( spaceatt )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
-	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 struct GameDriver driver_spaceatt =
@@ -784,7 +784,7 @@ struct GameDriver driver_spaceatt =
 	rom_spaceatt,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_spaceatt,
 
@@ -837,21 +837,21 @@ INPUT_PORTS_START( invrvnge )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 INPUT_PORTS_END
 
 static struct MachineDriver invrvnge_machine_driver =
@@ -894,7 +894,7 @@ static struct MachineDriver invrvnge_machine_driver =
 
 static int invrvnge_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -918,7 +918,7 @@ static int invrvnge_hiload(void)
 static void invrvnge_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -944,7 +944,7 @@ struct GameDriver driver_invrvnge =
 	rom_invrvnge,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_invrvnge,
 
@@ -970,7 +970,7 @@ struct GameDriver driver_invrvnga =
 	rom_invrvnga,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_invrvnge,
 
@@ -1034,22 +1034,22 @@ INPUT_PORTS_START( invdpt2m )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1097,7 +1097,7 @@ static struct MachineDriver invdpt2m_machine_driver =
 
 static int invdpt2m_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1122,7 +1122,7 @@ static int invdpt2m_hiload(void)
 static void invdpt2m_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1152,7 +1152,7 @@ struct GameDriver driver_invdpt2m =
 	rom_invdpt2m,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_invdpt2m,
 
@@ -1197,22 +1197,22 @@ INPUT_PORTS_START( astlaser )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1222,7 +1222,7 @@ INPUT_PORTS_END
 
 static int astlaser_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 			/* check if the hi score table has already been initialized */
@@ -1251,7 +1251,7 @@ static int astlaser_hiload(void)
 static void astlaser_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1281,7 +1281,7 @@ struct GameDriver driver_astlaser =
 	rom_astlaser,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_astlaser,
 
@@ -1325,22 +1325,22 @@ INPUT_PORTS_START( intruder )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x08, 0x00, "Preset Mode" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_START		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1363,7 +1363,7 @@ struct GameDriver driver_intruder =
 	rom_intruder,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_intruder,
 
@@ -1401,27 +1401,27 @@ INPUT_PORTS_START( galxwars )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x08, "5000" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 INPUT_PORTS_END
 
 
 static int galxwars_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1460,7 +1460,7 @@ static int galxwars_hiload(void)
 static void galxwars_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1487,7 +1487,7 @@ struct GameDriver driver_galxwars =
 	rom_galxwars,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_galxwars,
 
@@ -1546,21 +1546,21 @@ INPUT_PORTS_START( lrescue )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct MachineDriver lrescue_machine_driver =
@@ -1603,7 +1603,7 @@ static struct MachineDriver lrescue_machine_driver =
 
 static int lrescue_hiload(void)     /* V.V */ /* Whole function */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1631,7 +1631,7 @@ static int lrescue_hiload(void)     /* V.V */ /* Whole function */
 static void lrescue_hisave(void)    /* V.V */ /* Whole function */
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1663,7 +1663,7 @@ struct GameDriver driver_lrescue =
 	rom_lrescue,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lrescue,
 
@@ -1689,7 +1689,7 @@ struct GameDriver driver_grescue =
 	rom_grescue,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lrescue,
 
@@ -1729,26 +1729,26 @@ INPUT_PORTS_START( desterth )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 INPUT_PORTS_END
 
 static int desterth_hiload(void)     /* V.V */ /* Whole function */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1788,7 +1788,7 @@ struct GameDriver driver_desterth =
 	rom_desterth,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_desterth,
 
@@ -1826,21 +1826,21 @@ INPUT_PORTS_START( cosmicmo )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 INPUT_PORTS_END
 
 struct GameDriver driver_cosmicmo =
@@ -1859,7 +1859,7 @@ struct GameDriver driver_cosmicmo =
 	rom_cosmicmo,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cosmicmo,
 
@@ -1935,21 +1935,21 @@ INPUT_PORTS_START( rollingc )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY ) /* Player 1 Controls */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt ? */
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 1" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* Player 2 Controls */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) /* Player 2 Controls */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) /* Player 2 Controls */
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 2" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static unsigned char rollingc_palette[] =
@@ -2018,7 +2018,7 @@ static struct MachineDriver rollingc_machine_driver =
 
 static int rollingc_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2042,7 +2042,7 @@ static int rollingc_hiload(void)
 static void rollingc_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2073,7 +2073,7 @@ struct GameDriver driver_rollingc =
 	rom_rollingc,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_rollingc,
 
@@ -2184,14 +2184,14 @@ INPUT_PORTS_START( bandido )                        /* MJC */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START      /* 04 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x08, "Off" )
@@ -2243,7 +2243,7 @@ static struct MachineDriver bandido_machine_driver =                    /* MJC *
 
 static int bandido_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2265,7 +2265,7 @@ static int bandido_hiload(void)
 static void bandido_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2293,7 +2293,7 @@ struct GameDriver driver_bandido =                                              
 	rom_bandido,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_bandido,
 
@@ -2311,10 +2311,10 @@ struct GameDriver driver_bandido =                                              
 
 ROM_START( boothill )
 	ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
-    ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
-    ROM_LOAD( "romf.cpu",     0x1000, 0x0800, 0x3fdafd79 )
-    ROM_LOAD( "rome.cpu",     0x1800, 0x0800, 0x374529f4 )
+	ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
+	ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
+	ROM_LOAD( "romf.cpu",     0x1000, 0x0800, 0x3fdafd79 )
+	ROM_LOAD( "rome.cpu",     0x1800, 0x0800, 0x374529f4 )
 ROM_END
 
 static struct MemoryWriteAddress boothill_writemem[] =
@@ -2352,21 +2352,22 @@ INPUT_PORTS_START( boothill )                                       /* MJC 31019
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )        /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )              /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* Fire */
 
 	PORT_START      /* IN1 - Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )              /* Move Man */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )                    /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* Fire */
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x0C, 0x00, "Time" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+//	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Time" )
 	PORT_DIPSETTING(    0x00, "64" )
 	PORT_DIPSETTING(    0x04, "74" )
 	PORT_DIPSETTING(    0x08, "84" )
@@ -2475,7 +2476,7 @@ struct GameDriver driver_boothill =                                             
 	rom_boothill,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_boothill,
 
@@ -2517,32 +2518,32 @@ INPUT_PORTS_START( schaser )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_START      /* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Level" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt  */
-	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static int schaser_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2566,7 +2567,7 @@ static int schaser_hiload(void)
 static void schaser_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2595,7 +2596,7 @@ struct GameDriver driver_schaser =
 	rom_schaser,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_schaser,
 
@@ -2652,16 +2653,16 @@ INPUT_PORTS_START( spcenctr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "2000, 4000, 8000" )
 	PORT_DIPSETTING(    0x01, "3000, 6000, 12000" )
 	PORT_DIPSETTING(    0x02, "4000, 8000, 16000" )
 	PORT_DIPSETTING(    0x03, "5000, 10000, 20000" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x30, 0x00, "Bonus/Test Mode" )
 	PORT_DIPSETTING(    0x00, "Bonus On" )
 	PORT_DIPSETTING(    0x30, "Bonus Off" )
@@ -2715,7 +2716,7 @@ static struct MachineDriver spcenctr_machine_driver =
 
 static int spcenctr_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x26f0],"\x0e\x0e",2) == 0)
 	{
@@ -2739,7 +2740,7 @@ static int spcenctr_hiload(void)
 static void spcenctr_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2766,7 +2767,7 @@ struct GameDriver driver_spcenctr =
 	rom_spcenctr,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_spcenctr,
 
@@ -2811,28 +2812,28 @@ INPUT_PORTS_START( clowns )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 or 2 Players Game" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 or 2 Players Game" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, "Balloon Resets" )
 	PORT_DIPSETTING(    0x00, "Each row" )
 	PORT_DIPSETTING(    0x10, "All rows" )
-	PORT_DIPNAME( 0x20, 0x00, "Bonus Life" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x20, "4000" )
-	PORT_DIPNAME( 0x40, 0x00, "Lives" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
-	PORT_DIPSETTING(    0x80, "On" )
-	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct MachineDriver clowns_machine_driver =
@@ -2875,7 +2876,7 @@ static struct MachineDriver clowns_machine_driver =
 
 static int clowns_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 
@@ -2910,7 +2911,7 @@ static int clowns_hiload(void)
 static void clowns_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2939,7 +2940,7 @@ struct GameDriver driver_clowns =
 	rom_clowns,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_clowns,
 
@@ -2986,10 +2987,10 @@ INPUT_PORTS_START( gmissile )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x08, "70" )
@@ -3022,7 +3023,7 @@ struct GameDriver driver_gmissile =
 	rom_gmissile,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_gmissile,
 
@@ -3081,10 +3082,10 @@ INPUT_PORTS_START( seawolf )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" ) //
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_TILT ) // Reset High Scores
 	PORT_DIPNAME( 0xe0, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0x20, "2000" )
@@ -3139,7 +3140,7 @@ static struct MachineDriver seawolf_machine_driver =
 
 static int seawolf_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x23f0],"\x78\x00\x54",3) == 0)
@@ -3171,7 +3172,7 @@ static int seawolf_hiload(void)
 static void seawolf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3200,7 +3201,7 @@ struct GameDriver driver_seawolf =
 	rom_seawolf,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_seawolf,
 
@@ -3348,7 +3349,7 @@ struct GameDriver driver_gunfight =
 	rom_gunfight,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_gunfight,
 
@@ -3400,10 +3401,10 @@ INPUT_PORTS_START( zzzap )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x0c, 0x00, "Play Time" )
 	PORT_DIPSETTING(    0x0c, "60 Sec" )
 	PORT_DIPSETTING(    0x00, "80 Sec" )
@@ -3456,7 +3457,7 @@ static struct MachineDriver zzzap_machine_driver =
 
 static int zzzap_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 
@@ -3512,7 +3513,7 @@ static int zzzap_hiload(void)
 static void zzzap_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3542,7 +3543,7 @@ struct GameDriver driver_zzzap =
 	rom_zzzap,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_zzzap,
 
@@ -3598,7 +3599,7 @@ INPUT_PORTS_START( lupin3 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_4WAY )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -3614,9 +3615,9 @@ INPUT_PORTS_START( lupin3 )
 	PORT_DIPSETTING(    0x10, "Japan" )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH,  IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH,  IPT_UNUSED )
-	PORT_DIPNAME( 0x80, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "Onn" )
+	PORT_BITX(0x80,     0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -3660,7 +3661,7 @@ static struct MachineDriver lupin3_machine_driver =
 
 static int lupin3_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2000],"\x18\x41",2) == 0 )
@@ -3682,7 +3683,7 @@ static int lupin3_hiload(void)
 static void lupin3_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3710,7 +3711,7 @@ struct GameDriver driver_lupin3 =
 	rom_lupin3,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lupin3,
 
@@ -3801,19 +3802,19 @@ INPUT_PORTS_START( helifire )
         PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
         PORT_START      /* DSW */
-        PORT_DIPNAME( 0x03, 0x00, "Lives" )
+        PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x01, "4" )
         PORT_DIPSETTING(    0x02, "5" )
         PORT_DIPSETTING(    0x03, "6" )
-        PORT_DIPNAME( 0x0c, 0x00, "Bonus Life" )
+        PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
         PORT_DIPSETTING(    0x0c, "5000" )
         PORT_DIPSETTING(    0x04, "6000" )
         PORT_DIPSETTING(    0x08, "8000" )
         PORT_DIPSETTING(    0x00, "10000" )
         PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
-        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
         PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
         PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
         PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -3821,7 +3822,7 @@ INPUT_PORTS_END
 
 static int helifire_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -3855,7 +3856,7 @@ static int helifire_hiload(void)
 static void helifire_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3885,7 +3886,7 @@ struct GameDriver driver_helifire =
 	rom_helifire,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_helifire,
 
@@ -3911,7 +3912,7 @@ struct GameDriver driver_helifira =
 	rom_helifira,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_helifire,
 
@@ -3969,7 +3970,7 @@ INPUT_PORTS_START( spacefev )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* If on low the game doesn't start */
 
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
@@ -3982,7 +3983,7 @@ INPUT_PORTS_END
 
 static int spacefev_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x6013],"\xd0\x04",2) == 0 )
     {
@@ -4004,7 +4005,7 @@ static int spacefev_hiload(void)
 static void spacefev_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4034,7 +4035,7 @@ struct GameDriver driver_spacefev =
 	rom_spacefev,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_spacefev,
 
@@ -4071,7 +4072,7 @@ ROM_END
 
 static int sfeverbw_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x6070],"\xB0\x04",2) == 0 )
     {
@@ -4102,7 +4103,7 @@ static int sfeverbw_hiload(void)
 static void sfeverbw_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4142,7 +4143,7 @@ struct GameDriver driver_sfeverbw =
         rom_sfeverbw,
         0, 0,
         0,
-        0,      /* sound_prom */
+        0,
 
         input_ports_spacefev,
 
@@ -4239,13 +4240,13 @@ INPUT_PORTS_START( polaris )
 
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
 	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -4292,7 +4293,7 @@ static struct MachineDriver polaris_machine_driver =
 
 static int polaris_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -4315,7 +4316,7 @@ static int polaris_hiload(void)
 static void polaris_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4344,7 +4345,7 @@ struct GameDriver driver_polaris =
 	rom_polaris,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_polaris,
 
@@ -4370,7 +4371,7 @@ struct GameDriver driver_polarisa =
 	rom_polarisa,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_polaris,
 
@@ -4412,10 +4413,10 @@ INPUT_PORTS_START( lagunar )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Play Time" )
 	PORT_DIPSETTING(    0x00, "45 Sec" )
 	PORT_DIPSETTING(    0x04, "60 Sec" )
@@ -4436,7 +4437,7 @@ INPUT_PORTS_END
 
 static int lagunar_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2030],"\x04\x0d",2) == 0 )
     {
@@ -4459,7 +4460,7 @@ static int lagunar_hiload(void)
 static void lagunar_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4492,7 +4493,7 @@ struct GameDriver driver_lagunar =
 	rom_lagunar,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lagunar,
 
@@ -4549,9 +4550,9 @@ INPUT_PORTS_START( m4 )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit (or 2 Players)" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit (or 2 Players)" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
@@ -4618,7 +4619,7 @@ struct GameDriver driver_m4 =
 	rom_m4,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_m4,
 
@@ -4675,8 +4676,8 @@ INPUT_PORTS_START( phantom2 )
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x06, 0x06, "Time" )
 	PORT_DIPSETTING(    0x00, "45sec 20sec 20" )
 	PORT_DIPSETTING(    0x02, "60sec 25sec 25" )
@@ -4727,7 +4728,7 @@ static struct MachineDriver phantom2_machine_driver =
 
 static int phantom2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -4752,7 +4753,7 @@ static int phantom2_hiload(void)
 static void phantom2_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -4781,7 +4782,7 @@ struct GameDriver driver_phantom2 =
 	rom_phantom2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_phantom2,
 
@@ -4840,16 +4841,16 @@ INPUT_PORTS_START( dogpatch )
 	PORT_DIPSETTING(    0x01, "20" )
 	PORT_DIPSETTING(    0x00, "25" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, "2 Coins/1 Credit (1 or 2 Players)" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit (1 or 2 Players)" )
 	PORT_DIPNAME( 0x10, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0x10, "3 extra cans" )
 	PORT_DIPSETTING(    0x00, "5 extra cans" )
-	PORT_DIPNAME( 0x20, 0x20, "Test" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Test Mode" )
 	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0xc0, 0x00, "Extended Play" )
 	PORT_DIPSETTING(    0xc0, "150 Pts" )
 	PORT_DIPSETTING(    0x80, "175 Pts" )
@@ -4918,7 +4919,7 @@ struct GameDriver driver_dogpatch =
 
 	rom_dogpatch,
 	0, 0,
-	0, 0,      /* sound_prom */
+	0, 0,
 
 	input_ports_dogpatch,
 
@@ -4972,11 +4973,11 @@ INPUT_PORTS_START( midwbowl )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* effects button 1 */
-	PORT_DIPNAME( 0x80, 0x00, "Test" )
+	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
@@ -5033,7 +5034,7 @@ static struct MachineDriver midwbowl_machine_driver =
 
 static int midbowl_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -5055,7 +5056,7 @@ static int midbowl_hiload(void)
 static void midbowl_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -5083,7 +5084,7 @@ struct GameDriver driver_midwbowl =
 	rom_midwbowl,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_midwbowl,
 
@@ -5138,7 +5139,7 @@ INPUT_PORTS_START( blueshrk )
 	PORT_DIPSETTING(    0x40, "18000" )
 	PORT_DIPSETTING(    0x60, "22000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x80, 0x80, "Test" )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -5180,7 +5181,7 @@ static struct MachineDriver blueshrk_machine_driver =
 
 static int blueshrk_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0x2450],"\xc3\x7e",2) == 0 )
 	{
@@ -5208,7 +5209,7 @@ static int blueshrk_hiload(void)
 static void blueshrk_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -5236,7 +5237,7 @@ struct GameDriver driver_blueshrk =
 	rom_blueshrk,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_blueshrk,
 
@@ -5300,9 +5301,9 @@ INPUT_PORTS_START( einnings )
 /* 0x06 and 0x07 same as 0x00 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x40, 0x40, "Test")
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode")
 	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 INPUT_PORTS_END
 
@@ -5322,7 +5323,7 @@ struct GameDriver driver_einnings =
 	rom_einnings,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_einnings,
 
@@ -5363,7 +5364,7 @@ struct GameDriver driver_dplay =
 
 	rom_dplay,
 	0, 0,
-	0, 0,      /* sound_prom */
+	0, 0,
 
 	input_ports_einnings,
 
@@ -5483,7 +5484,7 @@ struct GameDriver driver_maze =
 	rom_maze,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_maze,
 
@@ -5600,7 +5601,7 @@ struct GameDriver driver_tornbase =
 	rom_tornbase,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_tornbase,
 
@@ -5679,7 +5680,7 @@ INPUT_PORTS_START( checkmat )
 	PORT_DIPSETTING(    0x20, "German?" )
 	PORT_DIPSETTING(    0x40, "French?" )
 	PORT_DIPSETTING(    0x60, "Spanish?" )
-	PORT_DIPNAME( 0x80, 0x00, "Test")
+	PORT_DIPNAME( 0x80, 0x00, "Test Mode")
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
@@ -5749,7 +5750,7 @@ struct GameDriver driver_checkmat =
 	rom_checkmat,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_checkmat,
 
@@ -5834,8 +5835,8 @@ INPUT_PORTS_START( ozmawars )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -5884,8 +5885,8 @@ INPUT_PORTS_START( solfight )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -5925,14 +5926,14 @@ INPUT_PORTS_START( spaceph )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 INPUT_PORTS_END
 
 
 static int ozmawars_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -5962,7 +5963,7 @@ static int ozmawars_hiload(void)
 static void ozmawars_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -5990,7 +5991,7 @@ struct GameDriver driver_ozmawars =
 	rom_ozmawars,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ozmawars,
 
@@ -6016,7 +6017,7 @@ struct GameDriver driver_solfight =
 	rom_solfight,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_solfight,
 
@@ -6042,7 +6043,7 @@ struct GameDriver driver_spaceph =
 	rom_spaceph,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_spaceph,
 
@@ -6070,21 +6071,21 @@ INPUT_PORTS_START( sinvemag )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
 	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_START		/* BSR */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -6126,7 +6127,7 @@ struct GameDriver driver_sinvemag =
 	rom_sinvemag,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sinvemag,
 
@@ -6155,7 +6156,7 @@ INPUT_PORTS_START( alieninv2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPNAME( 0x02, 0x02, "Pence Coinage" )
@@ -6210,7 +6211,7 @@ struct GameDriver driver_alieninv2 =
 	rom_alieninv2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_alieninv2,
 
@@ -6262,13 +6263,13 @@ INPUT_PORTS_START( sitv )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
 	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -6364,7 +6365,7 @@ struct GameDriver driver_sitv =
 	rom_sitv,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sitv,
 
@@ -6412,13 +6413,13 @@ INPUT_PORTS_START( sicv )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt */
-	PORT_DIPNAME( 0x08, 0x00, "Bonus" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "1000" )
 	PORT_DIPSETTING(    0x00, "1500" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -6506,7 +6507,7 @@ struct GameDriver driver_sicv =
 	rom_sicv,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sicv,
 
@@ -6552,7 +6553,7 @@ struct GameDriver driver_sisv =
 	rom_sisv,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sicv,	/* ?? */
 
@@ -6583,15 +6584,15 @@ ROM_START( ballbomb )
     /* The only difference between the 2 colourmaps is the colour */
     /* of the ships - each player has there own colour!           */
 
-    ROM_REGIONX( 0x800, REGION_PROMS )		/* Colour Maps */
+	ROM_REGIONX( 0x800, REGION_PROMS )		/* Colour Maps */
 	ROM_LOAD( "tn06",   0x0000, 0x0400, 0x7ec554c4 )
-    ROM_LOAD( "tn07",   0x0400, 0x0400, 0xdeb0ac82 )
+	ROM_LOAD( "tn07",   0x0400, 0x0400, 0xdeb0ac82 )
 ROM_END
 
 static struct MemoryWriteAddress ballbomb_writemem[] =
 {
 	{ 0x2000, 0x23ff, MWA_RAM },
-  	{ 0x2400, 0x3fff, ballbomb_videoram_w, &invaders_videoram },
+	{ 0x2400, 0x3fff, ballbomb_videoram_w, &invaders_videoram },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -6692,7 +6693,7 @@ struct GameDriver driver_ballbomb =
 	rom_ballbomb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ballbomb,
 
@@ -6700,4 +6701,226 @@ struct GameDriver driver_ballbomb =
 	ORIENTATION_ROTATE_270,
 	0,0
 };
+
+
+/*******************************************************/
+/*                                                     */
+/* Space War Part 3                                    */
+/*                                                     */
+/* Added 21/11/1999 By LT                              */
+/* Thanks to Peter Fyfe for machine info               */
+/*******************************************************/
+
+ROM_START( spacewr3 )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ic36.bin",   0x0000, 0x0800, 0x9e30f88a )
+	ROM_LOAD( "ic35.bin",   0x0800, 0x0800, 0x40c2d55b )
+	ROM_LOAD( "ic34.bin",   0x1000, 0x0800, 0xb435f021 )
+	ROM_LOAD( "ic33.bin",   0x1800, 0x0800, 0xcbdc6fe8 )
+	ROM_LOAD( "ic32.bin",   0x4000, 0x0800, 0x1e5a753c )
+ROM_END
+
+INPUT_PORTS_START( spacewr3 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "1000" )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_START		/* BSR */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+struct GameDriver driver_spacewr3 =
+{
+	__FILE__,
+	&driver_invaders,
+	"spacewr3",
+	"Space War Part 3",
+	"1978",
+	"bootleg",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	rom_spacewr3,
+	0, 0,
+	0,
+	0,
+
+	input_ports_spacewr3,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
+
+/*******************************************************/
+/*                                                     */
+/* Logitec Invaders by LOGITEC                         */
+/*                                                     */
+/* Added 22/11/1999 By LT                              */
+/*******************************************************/
+
+
+ROM_START( logi_invader )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "c01",        0x0000, 0x0400, 0x499f253a )
+	ROM_LOAD( "c02",        0x0400, 0x0400, 0x2d0b2e1f )
+	ROM_LOAD( "c03",        0x0800, 0x0400, 0x03033dc2 )
+	ROM_LOAD( "c04",        0x1400, 0x0400, 0x455b1fa7 )
+	ROM_LOAD( "c05",        0x1800, 0x0400, 0x40cbef75 )
+	ROM_LOAD( "sv06.bin",   0x1c00, 0x0400, 0x2c68e0b4 )
+	ROM_LOAD( "c07",        0x1000, 0x0400, 0x5a7bbf1f )
+ROM_END
+
+
+struct GameDriver driver_logitec =
+{
+	__FILE__,
+	&driver_invaders,
+	"logitec",
+	"Space Invaders (Logitec)",
+	"1978",
+	"bootleg",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	rom_logi_invader,
+	0, 0,
+	0,
+	0,
+
+	input_ports_invaders,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
+
+
+/*******************************************************/
+/*                                                     */
+/* Star Wars                                           */
+/* "Galaxy Wars" Bootleg on a Invaders Board           */
+/* Added 22/11/1999 By LT                              */
+/*******************************************************/
+
+
+ROM_START( starw_invader )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "roma",   0x0000, 0x0400, 0x60e8993c )
+	ROM_LOAD( "romb",   0x0400, 0x0400, 0xb8060773 )
+	ROM_LOAD( "romc",   0x0800, 0x0400, 0x307ce6b8 )
+	ROM_LOAD( "romd",   0x1400, 0x0400, 0x2b0d0a88 )
+	ROM_LOAD( "rome",   0x1800, 0x0400, 0x5b1c3ad0 )
+	ROM_LOAD( "romf",   0x1c00, 0x0400, 0xc8e42d3d )
+ROM_END
+
+struct GameDriver driver_starw =
+{
+	__FILE__,
+	&driver_galxwars,
+	"starw",
+	"Star Wars",
+	"1979",
+	"bootleg",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	rom_starw_invader,
+	0, 0,
+	0,
+	0,
+
+	input_ports_galxwars,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
+
+/*******************************************************/
+/*                                                     */
+/* Space Invaders Updated SV Version                   */
+/*                                                     */
+/* Added 22/11/1999 By LT                              */
+/*******************************************************/
+
+ROM_START( sisv2_invader )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "sv0h.bin",    0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "emag_si.b",   0x0400, 0x0400, 0xfebe6d1a )
+	ROM_LOAD( "sv12",        0x0800, 0x0400, 0xa08e7202 )
+	ROM_LOAD( "sv04.bin",    0x1400, 0x0400, 0x1293b826 )
+	ROM_LOAD( "sv13",        0x1800, 0x0400, 0xa9011634 )
+	ROM_LOAD( "sv14",        0x1c00, 0x0400, 0x58730370 )
+ROM_END
+
+struct GameDriver driver_sisv2 =
+{
+	__FILE__,
+	&driver_invaders,
+	"sisv2",
+	"Space Invaders (SV Version 2)",
+	"1978",
+	"Taito",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nLee Taylor\n",
+	0,
+	&machine_driver,
+	0,
+
+	rom_sisv2_invader,
+	0, 0,
+	0,
+	0,
+
+	input_ports_invaders,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};
+
 

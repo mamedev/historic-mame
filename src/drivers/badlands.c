@@ -364,7 +364,7 @@ struct GameDriver driver_badlands =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_badlands,
 

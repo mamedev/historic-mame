@@ -1320,7 +1320,7 @@ static void generate_gr_screen(int w,int bitmap_width,int skip,int start_color,i
 
 static void patch_codeX( int offset, int data, int cpu ){
 	int aligned_offset = offset&0xfffffe;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[cpu].memory_region);
 	int old_word = READ_WORD( &RAM[aligned_offset] );
 
 	if( offset&1 )
@@ -1335,7 +1335,7 @@ static void patch_code( int offset, int data ) {patch_codeX(offset,data,0);}
 static void patch_code2( int offset, int data ) {patch_codeX(offset,data,2);}
 
 static void patch_z80code( int offset, int data ){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	RAM[offset] = data;
 }
 
@@ -3076,7 +3076,7 @@ static void aurail_sprite_decode (void)
 
 static void aurail_program_decode (void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	memcpy(ROM,RAM,0x40000);
 
 	aurail_decode_data (RAM,RAM,0x10000);
@@ -8759,7 +8759,7 @@ ROM_START( tturf )
 	ROM_LOAD( "12280.8b", 0x70000, 0x10000, 0x639a57cb )
 
 	ROM_REGION( 0x30000 ) /* sound CPU */
-	ROM_LOAD( "12328.10a", 0x0000, 0x8000, 0x99671e52 )
+	ROM_LOAD( "12328.10a", 0x0000, 0x8000, 0x00000000 )
 	ROM_LOAD( "12329.11a", 0x10000, 0x10000, 0xed9a686d )		// speech
 	ROM_LOAD( "12330.12a", 0x20000, 0x10000, 0xfb762bca )
 
@@ -8789,7 +8789,7 @@ ROM_START( tturfu )
 	ROM_LOAD( "12280.8b", 0x70000, 0x10000, 0x639a57cb )
 
 	ROM_REGION( 0x30000 ) /* sound CPU */
-	ROM_LOAD( "12328.10a", 0x0000,  0x8000, 0x99671e52 )
+	ROM_LOAD( "epr12271.bin", 0x0000,  0x8000, 0x99671e52 )
 	ROM_LOAD( "epr12272.bin", 0x10000, 0x8000, 0x7cf7e69f )
 	ROM_LOAD( "epr12273.bin", 0x18000, 0x8000, 0x28f0bb8b )
 	ROM_LOAD( "epr12274.bin", 0x20000, 0x8000, 0x8207f0c4 )
@@ -11483,7 +11483,7 @@ static void outrun_onetime_init_machine( void ){
 }
 
 static void outrunb_onetime_init_machine( void ){
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i;
 	int odd,even,word;
 	sys16_onetime_init_machine();
@@ -12258,7 +12258,7 @@ static void enduror_init_machine( void ){
 
 
 static void enduror_sprite_decode( void ){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	sys16_sprite_decode2( 8,0x020000 ,1);
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 
@@ -12273,7 +12273,7 @@ static void endurob_sprite_decode( void ){
 }
 
 static void endurora_opcode_decode( void ){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	memcpy(ROM+0x10000,RAM+0x10000,0x20000);
 	memcpy(ROM,RAM+0x30000,0x10000);
 
@@ -12286,7 +12286,7 @@ static void endurora_opcode_decode( void ){
 }
 
 static void endurob2_opcode_decode( void ){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	memcpy(ROM,RAM,0x30000);
 
 	endurob2_decode_data (RAM,ROM,0x10000);

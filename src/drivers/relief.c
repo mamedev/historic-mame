@@ -526,7 +526,7 @@ struct GameDriver driver_relief =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_relief,
 
@@ -553,7 +553,7 @@ struct GameDriver driver_relief2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_relief,
 

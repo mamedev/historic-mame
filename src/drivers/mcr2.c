@@ -864,7 +864,7 @@ ROM_END
 		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
 		input_ports_##name,							\
 													\
@@ -892,7 +892,7 @@ ROM_END
 		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
 		input_ports_##cloneof,						\
 													\
@@ -929,7 +929,7 @@ struct GameDriver driver_journey =
 	rom_journey,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_domino,
 

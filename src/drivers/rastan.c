@@ -130,7 +130,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 static void rastan_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	bankaddress = 0x10000 + ((data^1) & 0x01) * 0x4000;
 	cpu_setbank(5,&RAM[bankaddress]);
@@ -623,7 +623,7 @@ struct GameDriver driver_rastan =
 	rom_rastan,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rastan,
 
@@ -649,7 +649,7 @@ struct GameDriver driver_rastanu =
 	rom_rastanu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rastsaga,
 
@@ -674,7 +674,7 @@ struct GameDriver driver_rastanu2 =
 	rom_rastanu2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rastsaga,
 
@@ -699,7 +699,7 @@ struct GameDriver driver_rastsaga =
 	rom_rastsaga,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rastsaga,
 

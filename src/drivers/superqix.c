@@ -292,7 +292,7 @@ ROM_END
 static int superqix_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -318,7 +318,7 @@ static int superqix_hiload(void)
 static void superqix_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -344,7 +344,7 @@ struct GameDriver driver_superqix =
 	rom_superqix,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_superqix,
 
@@ -370,7 +370,7 @@ struct GameDriver driver_sqixbl =
 	rom_sqixbl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_superqix,
 

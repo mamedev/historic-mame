@@ -694,7 +694,7 @@ ROM_END
 /* the stuff is stored in videoram */
 static int marineb_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8979],"\x24\x18\x1b",3) == 0)
@@ -717,7 +717,7 @@ static int marineb_hiload(void)
 static void marineb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -732,7 +732,7 @@ static void marineb_hisave(void)
 /* the stuff is stored in videoram */
 static int changes_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if ((memcmp(&RAM[0x899a],"\x26\x18\x1b",3) == 0) &&
@@ -761,7 +761,7 @@ static int changes_hiload(void)
 static void changes_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -779,7 +779,7 @@ static void changes_hisave(void)
 /* the stuff is stored in videoram */
 static int springer_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8b3a],"\x02\x1b\x02",3) == 0)
@@ -808,7 +808,7 @@ static int springer_hiload(void)
 static void springer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -826,7 +826,7 @@ static void springer_hisave(void)
 /****  Hoccer (set 1) high score save routine - RJF (July 29, 1999)  ****/
 static int hoccer_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8551],"\x02\x08\x05",3) == 0)
@@ -854,7 +854,7 @@ static int hoccer_hiload(void)
 static void hoccer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -867,7 +867,7 @@ static void hoccer_hisave(void)
 /* different values and lenght, same offset */
 static int hoccer2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8551],"\x05\x08\x05",3) == 0)
@@ -895,7 +895,7 @@ static int hoccer2_hiload(void)
 static void hoccer2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -907,7 +907,7 @@ static void hoccer2_hisave(void)
 /****  Wanted high score save routine - RJF (May 2, 1999)  ****/
 static int wanted_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x81b4],"\x00\x03\x00",3) == 0)
@@ -935,7 +935,7 @@ static int wanted_hiload(void)
 static void wanted_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -947,7 +947,7 @@ static void wanted_hisave(void)
 /****  Hopper Robo high score save routine - RJF (Aug 1, 1999)  ****/
 static int hopprobo_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x8060],"\x01\x06\x07",3) == 0)
@@ -975,7 +975,7 @@ static int hopprobo_hiload(void)
 static void hopprobo_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1002,7 +1002,7 @@ struct GameDriver driver_marineb =
 	rom_marineb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_marineb,
 
@@ -1028,7 +1028,7 @@ struct GameDriver driver_changes =
 	rom_changes,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_changes,
 
@@ -1054,7 +1054,7 @@ struct GameDriver driver_looper =
 	rom_looper,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_changes,
 
@@ -1080,7 +1080,7 @@ struct GameDriver driver_springer =
 	rom_springer,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_marineb,  /* same as Marine Boy */
 
@@ -1106,7 +1106,7 @@ struct GameDriver driver_hoccer =
 	rom_hoccer,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hoccer,
 
@@ -1132,7 +1132,7 @@ struct GameDriver driver_hoccer2 =
 	rom_hoccer2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hoccer,
 
@@ -1158,7 +1158,7 @@ struct GameDriver driver_wanted =
 	rom_wanted,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_wanted,
 
@@ -1184,7 +1184,7 @@ struct GameDriver driver_hopprobo =
 	rom_hopprobo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_marineb,
 

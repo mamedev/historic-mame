@@ -67,7 +67,7 @@ static int yamyam_interrupt(void)
 	{
 		if (input_ports_hack)
 		{
-			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+			unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 			RAM[0xe004] = readinputport(4);	/* COIN */
 			RAM[0xe005] = readinputport(3);	/* IN1 */
 			RAM[0xe006] = readinputport(2);	/* IN0 */
@@ -81,7 +81,7 @@ static int yamyam_interrupt(void)
 static void yamyam_bankswitch_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -89,7 +89,7 @@ static void yamyam_bankswitch_w(int offset, int data)
 
 static void yamyam_protection_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 if (errorlog) fprintf(errorlog,"e000 = %02x\n",RAM[0xe000]);
 	RAM[0xe000] = data;
@@ -519,7 +519,7 @@ struct GameDriver driver_gundealr =
 	rom_gundealr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gundealr,
 
@@ -545,7 +545,7 @@ struct GameDriver driver_gundeala =
 	rom_gundeala,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gundealr,
 
@@ -571,7 +571,7 @@ struct GameDriver driver_yamyam =
 	rom_yamyam,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_yamyam,
 
@@ -598,7 +598,7 @@ struct GameDriver driver_wiseguy =
 	rom_wiseguy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_yamyam,
 

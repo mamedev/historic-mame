@@ -705,7 +705,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score has already been initialized */
     if (memcmp(&RAM[0xff3a],"\x30\x30\x30",3) == 0)
@@ -728,7 +728,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -757,7 +757,7 @@ struct GameDriver driver_blockade =
 	blockade_init,
 	0,
 	0,
-	0,  /* sound_prom */
+	0,
 
 	input_ports_blockade,
 
@@ -784,7 +784,7 @@ struct GameDriver driver_comotion =
 	comotion_init,
 	0,
 	0,
-	0,  /* sound_prom */
+	0,
 
 	input_ports_comotion,
 
@@ -811,7 +811,7 @@ struct GameDriver driver_blasto =
 	comotion_init,
 	0,
 	0,
-	0,  /* sound_prom */
+	0,
 
 	input_ports_blasto,
 
@@ -838,7 +838,7 @@ struct GameDriver driver_hustle =
 	comotion_init,
 	0,
 	0,
-	0,  /* sound_prom */
+	0,
 
 	input_ports_hustle,
 

@@ -34,7 +34,7 @@ void battlnts_sh_irqtrigger_w(int offset, int data)
 
 static void battlnts_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	/* bits 6 & 7 = bank number */
@@ -474,7 +474,7 @@ struct GameDriver driver_battlnts =
 	rom_battlnts,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_battlnts,
 
@@ -499,7 +499,7 @@ struct GameDriver driver_battlntj =
 	rom_battlntj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_battlnts,
 
@@ -524,7 +524,7 @@ struct GameDriver driver_thehustl =
 	rom_thehustl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_thehustj,
 
@@ -549,7 +549,7 @@ struct GameDriver driver_thehustj =
 	rom_thehustj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_thehustj,
 

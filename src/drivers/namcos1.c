@@ -36,8 +36,78 @@ issue:
     : ws90 time count of select is wrong , somwtime no display 'score'
     : gaalga88 flip sprite in opening of 2player case 'TYPE A'
 
-stubs for driver.c:
-------------------
+
+-----------------------------------------------------
+NAMCO SYSTEM BOARD GAME HISTORY?(TABLE SIZE GAME FRAME)
+-----------------------------------------------------
+
+(NAMCO SYSTEM I)
+
+87.4  [YOU-KAI-DOU-CHUU-KI]                      "YD"    NONE
+87.6  DragonSpirit(OLD VERSION)                  "DS"    136
+87.7  Blazer                                     "BZ"    144
+87.?? DragonSpirit(NEW VERSION)                  "DS2"   136
+87.9  Quester                                    "QS"    'on sub board(A)'
+87.?? Quester(SPECIAL EDITION)                   "QS2"   'on sub board(A)'
+87.11 PAC-MANIA                                  "PN"    151
+??.?? PAC-MANIA(?)(it's rare in japan)           "PN2"   (151?)
+87.12 Galaga'88                                  "G8"    153
+88.3  '88 PRO-[YAKYUU] WORLD-STADIUM.            (WS?)   (154?)
+88.5  [CHOU-ZETU-RINN-JINN] [BERABOW]-MAN.       "BM"    'on sub board(B)'
+88.7  MELHEN MAZE(Alice in Wonderland)           "MM"    152
+88.8  [BAKU-TOTU-KIJYUU-TEI]                     "BK"    155
+88.10 pro-tennis WORLD COAT                      "WC"    143
+88.11 splatter house                             "SH"    181
+88.12 FAIS OFF(spell-mistake?)                   "FO"    'on sub board(C)'
+89.2  ROMPERS                                    "RP"    182
+89.3  BLAST-OFF                                  "BO"    183
+89.1  PRO-[YAKYUU] WORLD-STADIUM'89.             "W9"    184
+89.12 DANGERUS SEED                              "DR"    308
+90.7  PRO-[YAKYUU] WORLD-STADIUM'90.             "W90"   310
+90.10 [PISUTORU-DAIMYOU NO BOUKEN]               "PD"    309
+90.11 [SOUKO-BAN] DX                             "SB"    311
+91.12 TANK-FOURCE                                "TF"    185
+
+-----------------------------------------------------
+
+About system I sub board:
+sub board used game always need sub board.
+if sub bord nothing then not starting game.
+because, key custum chip on sub board.
+(diffalent type key custum chip on mother board.)
+
+-----------------------------------------------------
+
+'sub board(A)'= for sencer interface bord.
+it having changed jp that used format taito/namco.
+
+-----------------------------------------------------
+
+'sub board(B)'= two toggle switch bord.
+it sub board the inter face that 'two toggle switch'.
+( == in japan called 'BERABOW-SWITCH'.)
+
+<push switch side view>
+
+  =~~~~~=       =~~~~~=
+   |   |         |   |
+   +---+         +---+
+    | |           |||
+
+NORMAL-SW     BERABOW-SW
+(two-pins)    (tree-pins)
+(GND?,sw1)     (GND?,sw1,sw2)
+
+It abnormal switch was can feel player pushed power.
+(It power in proportion to the push speed.)
+It used the game controls, 1 stick & 2 it botton game.
+Passaged over-time from sw1 triggerd to sw2 triggerd then
+min panch/kick,and short time then max panch/kick feeled the game.
+
+-----------------------------------------------------
+
+'sub board(C)'= can 4 players sub board.
+it subboard on 3 player & 4 player input lines.
 
 ***************************************************************************/
 

@@ -89,7 +89,7 @@ void firetrap_nmi_disable_w(int offset,int data)
 void firetrap_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
@@ -128,7 +128,7 @@ static void firetrap_sound_2400_w(int offset,int data)
 void firetrap_sound_bankselect_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
@@ -489,7 +489,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xca47],"\x02\x14\x00",3) == 0)
@@ -511,7 +511,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

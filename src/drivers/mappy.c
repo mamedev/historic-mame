@@ -989,7 +989,7 @@ static int mappy_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1033,7 +1033,7 @@ static int mappy_hiload(void)
 static void mappy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1049,7 +1049,7 @@ static int digdug2_hiload(void)
 {
 	int writing = 0;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1093,7 +1093,7 @@ static int digdug2_hiload(void)
 static void digdug2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1110,7 +1110,7 @@ static int motos_hiload(void)
 
 
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1143,7 +1143,7 @@ static int motos_hiload(void)
 static void motos_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1156,7 +1156,7 @@ static void motos_hisave(void)
 static int todruaga_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1182,7 +1182,7 @@ static int todruaga_hiload(void)
 static void todruaga_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1210,7 +1210,7 @@ struct GameDriver driver_mappy =
 	rom_mappy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mappy,
 
@@ -1237,7 +1237,7 @@ struct GameDriver driver_mappyjp =
 	rom_mappyjp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mappy,
 
@@ -1263,7 +1263,7 @@ struct GameDriver driver_digdug2 =
 	rom_digdug2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_digdug2,
 
@@ -1289,7 +1289,7 @@ struct GameDriver driver_digdug2a =
 	rom_digdug2a,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_digdug2,
 
@@ -1315,7 +1315,7 @@ struct GameDriver driver_motos =
 	rom_motos,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_motos,
 
@@ -1341,7 +1341,7 @@ struct GameDriver driver_todruaga =
 	rom_todruaga,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_todruaga,
 
@@ -1367,7 +1367,7 @@ struct GameDriver driver_todruagb =
 	rom_todruagb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_todruaga,
 

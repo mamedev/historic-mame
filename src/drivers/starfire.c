@@ -339,7 +339,7 @@ struct GameDriver driver_starfire =
 	rom_starfire,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starfire,
 
@@ -364,7 +364,7 @@ struct GameDriver driver_fireone =
 	rom_fireone,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_fireone,
 

@@ -43,7 +43,7 @@ int m107_vram_r(int offset);
 
 static void bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (offset==1) return; /* Unused top byte */
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
@@ -510,7 +510,7 @@ ROM_END
 
 static void m107_startup(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */
@@ -524,7 +524,7 @@ static void m107_startup(void)
 
 static void dsoccr94_startup(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	memcpy(RAM+0xffff0,RAM+0x7fff0,0x10); /* Start vector */
 	cpu_setbank(1,&RAM[0xa0000]); /* Initial bank */

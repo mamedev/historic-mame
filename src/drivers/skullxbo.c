@@ -541,7 +541,7 @@ struct GameDriver driver_skullxbo =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skullxbo,
 
@@ -568,7 +568,7 @@ struct GameDriver driver_skullxb2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skullxbo,
 

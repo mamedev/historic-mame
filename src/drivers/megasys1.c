@@ -445,7 +445,7 @@ static int sound_interrupt(void)
 
 
 
-static void ms_soundlatch2_w(int offset,int data)
+void ms_soundlatch2_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		soundlatch2_w(0,data & 0xff);
@@ -453,7 +453,7 @@ static void ms_soundlatch2_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"%06x: write %02x to soundlatch2_w\n",cpu_get_pc(),data);
 }
 
-static void ms_YM2151_register_port_0_w(int offset,int data)
+void ms_YM2151_register_port_0_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		YM2151_register_port_0_w(0,data & 0xff);
@@ -461,7 +461,7 @@ static void ms_YM2151_register_port_0_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
 }
 
-static void ms_YM2151_data_port_0_w(int offset,int data)
+void ms_YM2151_data_port_0_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		YM2151_data_port_0_w(0,data & 0xff);
@@ -469,7 +469,7 @@ static void ms_YM2151_data_port_0_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
 }
 
-static void ms_OKIM6295_data_0_w(int offset,int data)
+void ms_OKIM6295_data_0_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		OKIM6295_data_0_w(0,data & 0xff);
@@ -477,7 +477,7 @@ static void ms_OKIM6295_data_0_w(int offset,int data)
 if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
 }
 
-static void ms_OKIM6295_data_1_w(int offset,int data)
+void ms_OKIM6295_data_1_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		OKIM6295_data_1_w(0,data & 0xff);
@@ -1112,9 +1112,10 @@ ROM_END
 
 INPUT_PORTS_START( street64 )
 	COINS
-	JOY(IPF_PLAYER1)
+//	fire	jump
+	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE				// Unused
-	JOY(IPF_PLAYER2)
+	JOY_2BUTTONS(IPF_PLAYER2)
 
 	PORT_START
 	COINAGE_8BITS
@@ -1232,10 +1233,11 @@ ROM_END
 
 
 INPUT_PORTS_START( astyanax )
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	jump
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -1445,12 +1447,12 @@ ROM_START( phantasm )
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-
+//	fire	jump
 #define INPUT_PORTS_AVSPIRIT \
 	COINS \
-	JOY(IPF_PLAYER1) \
+	JOY_2BUTTONS(IPF_PLAYER1) \
 	RESERVE \
-	JOY(IPF_PLAYER2) \
+	JOY_2BUTTONS(IPF_PLAYER2) \
 \
 	PORT_START \
 	COINAGE_8BITS \
@@ -1600,9 +1602,10 @@ ROM_END
 
 INPUT_PORTS_START( bigstrik )
 	COINS
-	JOY(IPF_PLAYER1)
+//	pass	shoot	feint
+	JOY_3BUTTONS(IPF_PLAYER1)
 	RESERVE
-	JOY(IPF_PLAYER2)
+	JOY_3BUTTONS(IPF_PLAYER2)
 
 	PORT_START			/* IN4 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
@@ -1697,6 +1700,8 @@ interrupts:	1,3]
 			2, 5,6]
 			4]
 
+Note: This game was a prototype
+
 ***************************************************************************/
 
 ROM_START( chimerab )
@@ -1728,9 +1733,10 @@ ROM_END
 INPUT_PORTS_START( chimerab )
 
 	COINS
-	JOY(IPF_PLAYER1)
+//	fire	jump	unused(shown in service mode, but not in instructions)
+	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE				// Unused
-	JOY(IPF_PLAYER2)
+	JOY_2BUTTONS(IPF_PLAYER2)
 
 	PORT_START			/* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -1836,9 +1842,10 @@ ROM_END
 INPUT_PORTS_START( cybattlr )
 
 	COINS
-	JOY(IPF_PLAYER1)
+//	fire	sword
+	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE				// Unused
-	JOY(IPF_PLAYER2)
+	JOY_2BUTTONS(IPF_PLAYER2)
 
 	PORT_START			/* IN - DSW 1 - 1fd2d9.b, !1fd009.b */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -1957,9 +1964,10 @@ ROM_END
 
 INPUT_PORTS_START( edf )
 	COINS
-	JOY(IPF_PLAYER1)
+//	fire	unfold weapons
+	JOY_2BUTTONS(IPF_PLAYER1)
 	RESERVE
-	JOY(IPF_PLAYER2)
+	JOY_2BUTTONS(IPF_PLAYER2)
 
 	PORT_START			/* IN4 */
 	COINAGE_6BITS
@@ -2058,10 +2066,11 @@ ROM_END
 
 
 INPUT_PORTS_START( hachoo )
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	jump
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS
@@ -2118,7 +2127,7 @@ MEGASYS1_GAME(	hachoo,Hachoo!,1989,ORIENTATION_DEFAULT,
 
 
 /* There's another revision, but it's a bad dump (top half of the code is FF) */
-/* There's the (priority?) PROM 82s131.14m in there, all FFs though :( */
+/* There's the priority PROM 82s131.14m in there, all FFs though :( */
 #if 0
 ROM_START( hachoo1 )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
@@ -2182,10 +2191,11 @@ ROM_END
 
 INPUT_PORTS_START( iganinju )
 
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	jump
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START 			/* IN4 0x80006.b */
 	COINAGE_6BITS
@@ -2254,11 +2264,14 @@ interrupts:	1-2]	rte
 f0128/a.w	*** Time (minutes/seconds BCD) ***
 f012c/e.w	*** Goals (P1/P2) ***
 
-Notes:	Coin B and Test are ignored. The alternate control method
-		(selectable through a DSW) isn't implemented:
-		the program tests the low 4 bits of the joystick inputs
-		($80002, $80004) but not the buttons. I can't get the
-		players to move.
+Notes:
+	* Coin B and Test are ignored
+	* The alternate control method (selectable through a DSW)
+	  isn't implemented: the program tests the low 4 bits of
+	  the joystick inputs ($80002, $80004) but not the buttons.
+	  I can't get the players to move
+	* Pressing P1 or P2 Start while the game boots pops up
+	  a rudimental sprites or tiles browser
 
 ***************************************************************************/
 
@@ -2297,10 +2310,11 @@ ROM_START( kickoff )
 ROM_END
 
 INPUT_PORTS_START( kickoff )
-	COINS				/* IN0 0x80001.b ->  !f0008/a.w  */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b ->  !f000c/e.w  */
-	RESERVE				/* IN2 0x80004.b --> !f0010/11.w */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b /               */
+	COINS						/* IN0 0x80001.b ->  !f0008/a.w  */
+//	shoot	pass
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b ->  !f000c/e.w  */
+	RESERVE						/* IN2 0x80004.b --> !f0010/11.w */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b /               */
 
 	PORT_START			/* IN4 0x80006.b */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -2406,10 +2420,11 @@ ROM_START( makaiden )
 ROM_END
 
 INPUT_PORTS_START( lomakai )
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	jump
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS_2
@@ -2582,10 +2597,11 @@ ROM_END
 
 INPUT_PORTS_START( p47 )
 
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	bomb
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS_2
@@ -2902,10 +2918,11 @@ ROM_START( plusalph )
 ROM_END
 
 INPUT_PORTS_START( plusalph )
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	bomb
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS
@@ -3066,10 +3083,11 @@ ROM_END
 
 INPUT_PORTS_START( rodland )
 
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	ladder
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS
@@ -3223,10 +3241,11 @@ ROM_START( stdragon )
 ROM_END
 
 INPUT_PORTS_START( stdragon )
-	COINS				/* IN0 0x80001.b */
-	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
-	RESERVE				/* IN2 0x80004.b */
-	JOY(IPF_PLAYER2)	/* IN3 0x80005.b */
+	COINS						/* IN0 0x80001.b */
+//	fire	fire
+	JOY_2BUTTONS(IPF_PLAYER1)	/* IN1 0x80003.b */
+	RESERVE						/* IN2 0x80004.b */
+	JOY_2BUTTONS(IPF_PLAYER2)	/* IN3 0x80005.b */
 
 	PORT_START			/* IN4 0x80006.b */
 	COINAGE_6BITS_2

@@ -1047,7 +1047,7 @@ ROM_END
 
 
 
-#define MOD_PAGE(page,addr,data) Machine->memory_region[0][page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
+#define MOD_PAGE(page,addr,data) memory_region(Machine->drv->cpu[0].memory_region)[page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
 
 void boblbobl_patch(void)
 {
@@ -1083,7 +1083,7 @@ void boblbobl_patch(void)
  */
 static int bublbobl_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1116,7 +1116,7 @@ static int bublbobl_hiload(void)
 static void bublbobl_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1131,7 +1131,7 @@ static void bublbobl_hisave(void)
 static int tokio_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0xf4c0],"\x61,\x28",2) == 0 )
         {
@@ -1148,7 +1148,7 @@ static int tokio_hiload(void)
 static void tokio_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1175,7 +1175,7 @@ struct GameDriver driver_bublbobl =
 	rom_bublbobl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bublbobl,
 
@@ -1201,7 +1201,7 @@ struct GameDriver driver_bublbobr =
 	rom_bublbobr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bublbobl,
 
@@ -1227,7 +1227,7 @@ struct GameDriver driver_boblbobl =
 	rom_boblbobl,
 	boblbobl_patch, 0,	/* remove protection */
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_boblbobl,
 
@@ -1253,7 +1253,7 @@ struct GameDriver driver_sboblbob =
 	rom_sboblbob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sboblbob,
 
@@ -1281,7 +1281,7 @@ struct GameDriver driver_tokio =
 	rom_tokio,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tokio,
 
@@ -1307,7 +1307,7 @@ struct GameDriver driver_tokiob =
 	rom_tokiob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tokio,
 

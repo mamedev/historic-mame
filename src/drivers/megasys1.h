@@ -18,6 +18,19 @@
 
 /***************************************************************************
 
+							 Sound Chips Access
+
+***************************************************************************/
+
+void ms_soundlatch2_w(int offset,int data);
+void ms_YM2151_register_port_0_w(int offset,int data);
+void ms_YM2151_data_port_0_w(int offset,int data);
+void ms_OKIM6295_data_0_w(int offset,int data);
+void ms_OKIM6295_data_1_w(int offset,int data);
+
+
+/***************************************************************************
+
 							 Code Decryption
 
 ***************************************************************************/
@@ -125,7 +138,7 @@ static struct GfxLayout _name_ =\
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 /* IN1/3 - PLAYER 1/2 */
-#define JOY(_flag_) \
+#define JOY_4BUTTONS(_flag_) \
 	PORT_START\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | _flag_ )\
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | _flag_ )\
@@ -135,6 +148,28 @@ static struct GfxLayout _name_ =\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | _flag_ )\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | _flag_ )\
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | _flag_ )
+
+#define JOY_3BUTTONS(_flag_) \
+	PORT_START\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | _flag_ )\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | _flag_ )\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | _flag_ )\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+#define JOY_2BUTTONS(_flag_) \
+	PORT_START\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | _flag_ )\
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | _flag_ )\
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )\
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 /* IN2 - RESERVE */
 #define RESERVE \
@@ -257,7 +292,7 @@ static struct GfxLayout _name_ =\
 
 #else
 
-#define SHOW_READ_ERROR(_offset_,_data_)\
+#define SHOW_READ_ERROR(_format_,_offset_)\
 {\
 	char buf[80];\
 	if (errorlog)\

@@ -427,7 +427,7 @@ ROM_END
 
 static int route16_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -455,7 +455,7 @@ static int route16_hiload(void)
 static void route16_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -468,7 +468,7 @@ static void route16_hisave(void)
 
 static int stratvox_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -497,7 +497,7 @@ static int stratvox_hiload(void)
 static void stratvox_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -510,7 +510,7 @@ static void stratvox_hisave(void)
 
 static int speakres_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 
 	if (firsttime == 0)
@@ -540,7 +540,7 @@ static int speakres_hiload(void)
 static void speakres_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -569,7 +569,7 @@ struct GameDriver driver_route16 =
 	rom_route16,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_route16,
 
@@ -595,7 +595,7 @@ struct GameDriver driver_route16b =
 	rom_route16b,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_route16,
 
@@ -621,7 +621,7 @@ struct GameDriver driver_stratvox =
 	rom_stratvox,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stratvox,
 
@@ -647,7 +647,7 @@ struct GameDriver driver_stratvxb =
 	rom_stratvxb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stratvox,
 
@@ -673,7 +673,7 @@ struct GameDriver driver_speakres =
 	rom_speakres,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stratvox,
 

@@ -13,7 +13,7 @@ static int protection_ret = 0;
 
 int mmonkey_protection_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	int ret = 0;
 
@@ -29,7 +29,7 @@ int mmonkey_protection_r(int offset)
 
 void mmonkey_protection_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (offset == 0)

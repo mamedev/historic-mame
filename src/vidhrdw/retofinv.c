@@ -114,7 +114,7 @@ void retofinv_flip_screen_w(int offset, int data)
 {
 	flipscreen = data;
 	memset(bg_dirtybuffer,1,retofinv_videoram_size);
-	fillbitmap(bitmap_bg,0,0);
+	fillbitmap(bitmap_bg,Machine->pens[0],0);
 }
 
 int retofinv_bg_videoram_r(int offset)

@@ -261,7 +261,7 @@ struct GameDriver driver_subs =
 	rom_subs,
 	subs_rom_init, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_subs,
 

@@ -179,6 +179,7 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	color_prom += 2 * 256;
 
+	/* big sprite */
 	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2;

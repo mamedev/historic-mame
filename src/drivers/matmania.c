@@ -707,7 +707,7 @@ ROM_END
 
 static int matmania_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -733,7 +733,7 @@ static int matmania_hiload(void)
 
 static int excthour_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -760,7 +760,7 @@ static int excthour_hiload(void)
 static void matmania_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -772,7 +772,7 @@ static void matmania_hisave(void)
 
 static int maniach_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x052b],"\x00\x30\x00",3) == 0) &&
@@ -798,7 +798,7 @@ static int maniach_hiload(void)
 static void maniach_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -825,7 +825,7 @@ struct GameDriver driver_matmania =
 	rom_matmania,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_matmania,
 
@@ -852,7 +852,7 @@ struct GameDriver driver_excthour =
 	rom_excthour,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_matmania,
 
@@ -878,7 +878,7 @@ struct GameDriver driver_maniach =
 	rom_maniach,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_matmania,
 
@@ -904,7 +904,7 @@ struct GameDriver driver_maniach2 =
 	rom_maniach2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_matmania,
 

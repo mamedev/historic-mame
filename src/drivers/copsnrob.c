@@ -193,8 +193,6 @@ static unsigned char palette[] =
 	0x40,0x40,0xc0, /* Blue */
 	0xf0,0xf0,0x30, /* Yellow */
 	0xbd,0x9b,0x13, /* Amber */
-
-	0xff,0x00,0x00  /* Red for MAME's use only */
 };
 static unsigned short colortable[] =
 {
@@ -269,6 +267,11 @@ ROM_START( copsnrob )
 	ROM_LOAD( "5780.l1",      0x0600, 0x0200, 0x6f4c6bab )
 	ROM_LOAD( "5781.j1",      0x0800, 0x0200, 0xc87f2f13 )
 	ROM_LOAD( "5770.m2",      0x0a00, 0x0100, 0xb00bbe77 )
+
+	ROM_REGIONX( 0x0060, REGION_PROMS )	 /* misc. PROMs (timing?) */
+	ROM_LOAD( "5765.h8",      0x0000, 0x0020, 0x6cd58931 )
+	ROM_LOAD( "5766.k8",      0x0020, 0x0020, 0xe63edf4f )
+	ROM_LOAD( "5767.j8",      0x0040, 0x0020, 0x381b5ae4 )
 ROM_END
 
 
@@ -288,7 +291,7 @@ struct GameDriver driver_copsnrob =
 	rom_copsnrob,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_copsnrob,
 

@@ -247,7 +247,7 @@ ROM_END
 
 static void atetris_rom_move (void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     // Move the lower 16k to 0x10000
@@ -259,7 +259,7 @@ static void atetris_rom_move (void)
 static int hiload (void)
 {
    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
@@ -282,7 +282,7 @@ static int hiload (void)
 static void hisave (void)
 {
    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
    f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
@@ -311,7 +311,7 @@ struct GameDriver driver_atetris =
 	atetris_rom_move,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_atetris,
 
@@ -337,7 +337,7 @@ struct GameDriver driver_atetrisa =
 	atetris_rom_move,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_atetris,
 
@@ -363,7 +363,7 @@ struct GameDriver driver_atetrisb =
 	atetris_rom_move,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_atetris,
 
@@ -389,7 +389,7 @@ struct GameDriver driver_atetcktl =
 	atetris_rom_move,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_atetcktl,
 
@@ -415,7 +415,7 @@ struct GameDriver driver_atetckt2 =
 	atetris_rom_move,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_atetcktl,
 

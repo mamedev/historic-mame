@@ -351,7 +351,7 @@ ROM_END
 
 static int astrof_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 
 	/* check if the hi score table has already been initialized */
@@ -384,7 +384,7 @@ static int astrof_hiload(void)
 static void astrof_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -396,7 +396,7 @@ static void astrof_hisave(void)
 
 static int tomahawk_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 
 	/* check if the hi score table has already been initialized */
@@ -430,7 +430,7 @@ static int tomahawk_hiload(void)
 static void tomahawk_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -460,7 +460,7 @@ struct GameDriver driver_astrof =
 	rom_astrof,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_astrof,
 
@@ -486,7 +486,7 @@ struct GameDriver driver_astrof2 =
 	rom_astrof2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_astrof,
 
@@ -512,7 +512,7 @@ struct GameDriver driver_astrof3 =
 	rom_astrof3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_astrof,
 
@@ -538,7 +538,7 @@ struct GameDriver driver_tomahawk =
 	rom_tomahawk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tomahawk,
 
@@ -565,7 +565,7 @@ struct GameDriver driver_tomahaw5 =
 	rom_tomahaw5,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tomahawk,
 

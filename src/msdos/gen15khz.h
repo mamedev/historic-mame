@@ -31,18 +31,20 @@
 #define	MEMORY_MODE_INDEX		20
 
 
-
-
 /* generic VGA functions */
 int	readCRTC(int nIndex);
 int	getVtEndDisplay(void);
 
+/* tweak values */
+extern unsigned char tw640x480arc_h;
+extern unsigned char tw640x480arc_v;
 
 /* structure for 15.75KHz SVGA drivers */
 typedef struct
 {
 	char name[64]; /* name of chipset/card */
-	int (*detectsvgacard)(void);  /* checks for a specific chipset */
+	int (*detectsvgacard)(void);	/* checks for a specific chipset */
+	int (*getlogicalwidth)(int width);	/*the logical width of the mode created */
 	int (*setSVGA15KHzmode)(int vdouble, int width, int height);  /* set's 15.75KHz SVGA mode */
 	void (*resetSVGA15KHzmode)(void);  /* clears up 15.75KHz SVGA mode */
 } SVGA15KHZDRIVER;
@@ -52,6 +54,7 @@ int getSVGA15KHzdriver(SVGA15KHZDRIVER **driver15KHz);
 
 /* our 'generic' SVGA 15.75KHz functions */
 int genericsvga(void);
+int widthgeneric15KHz(int width);
 int setgeneric15KHz(int vdouble, int width, int height);
 void resetgeneric15KHz(void);
 

@@ -607,7 +607,7 @@ static int deadeye_hiload(void)
 {
     static int resetcount =0;
 	static int firsttime =0 ;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (++resetcount < 30) return 0;
 
@@ -634,7 +634,7 @@ static int deadeye_hiload(void)
 static void deadeye_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 
@@ -670,7 +670,7 @@ struct GameDriver driver_deadeye =
 	0,
 	0,
 	0,
-	0,		/* sound_prom */
+	0,
 
 	input_ports_meadows,
 
@@ -697,7 +697,7 @@ struct GameDriver driver_gypsyjug =
 	gypsyjug_rom_decode,
 	0,
 	0,
-	0,		/* sound_prom */
+	0,
 
 	input_ports_meadows,
 

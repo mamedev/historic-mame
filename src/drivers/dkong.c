@@ -205,7 +205,7 @@ static int  dkong_sh_gett0(int offset)   { return t[0]; }
 static int  dkong_sh_gett1(int offset)   { return t[1]; }
 static int  dkong_sh_gettune(int offset)
 {
-	unsigned char *SND = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *SND = memory_region(Machine->drv->cpu[1].memory_region);
 	if (page & 0x40)
 	{
 		switch (offset)
@@ -1089,7 +1089,7 @@ ROM_END
 
 static void radarscp_unprotect(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Radarscope does some checks with bit 6 of 7d00 which prevent it from working. */
@@ -1404,7 +1404,7 @@ ROM_END
 static void herocast_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* swap data lines D3 and D4, this fixes the text but nothing more. */
@@ -1421,7 +1421,7 @@ static void herocast_decode(void)
 
 static int radarscp_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (	memcmp(&RAM[0x6307],"\x00\x00\x07",3) == 0 &&
@@ -1456,7 +1456,7 @@ static int radarscp_hiload(void)
 static void radarscp_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1470,7 +1470,7 @@ static void radarscp_hisave(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1506,7 +1506,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1518,7 +1518,7 @@ static void hisave(void)
 
 static int dkong3_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1559,7 +1559,7 @@ static int dkong3_hiload(void)
 static void dkong3_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1575,7 +1575,7 @@ static void dkong3_hisave(void)
 static int dkngjrjp_hiload(void)
 {
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x611d],"\x00\x18\x01",3) == 0 &&
@@ -1627,7 +1627,7 @@ struct GameDriver driver_radarscp =
 	rom_radarscp,
 	radarscp_unprotect, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1653,7 +1653,7 @@ struct GameDriver driver_dkong =
 	rom_dkong,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1679,7 +1679,7 @@ struct GameDriver driver_dkongjp =
 	rom_dkongjp,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1705,7 +1705,7 @@ struct GameDriver driver_dkongjr =
 	rom_dkongjr,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1731,7 +1731,7 @@ struct GameDriver driver_dkngjrjp =
 	rom_dkngjrjp,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1757,7 +1757,7 @@ struct GameDriver driver_dkjrjp =
 	rom_dkjrjp,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1783,7 +1783,7 @@ struct GameDriver driver_dkjrbl =
 	rom_dkjrbl,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1809,7 +1809,7 @@ struct GameDriver driver_dkong3 =
 	rom_dkong3,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong3,
 
@@ -1835,7 +1835,7 @@ struct GameDriver driver_dkong3j =
 	rom_dkong3j,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong3,
 
@@ -1861,7 +1861,7 @@ struct GameDriver driver_hunchbkd =
 	rom_hunchbkd,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1887,7 +1887,7 @@ struct GameDriver driver_herbiedk =
 	rom_herbiedk,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 
@@ -1913,7 +1913,7 @@ struct GameDriver driver_herocast =
 	rom_herocast,
 	herocast_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dkong,
 

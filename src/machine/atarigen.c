@@ -839,7 +839,7 @@ static int m6502_speedup_r(int offset);
 
 void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 {
-	UINT8 *memory = Machine->memory_region[Machine->drv->cpu[cpunum].memory_region];
+	UINT8 *memory = memory_region(Machine->drv->cpu[cpunum].memory_region);
 	int address_low, address_high;
 
 	/* determine the pointer to the first speed check location */
@@ -1609,7 +1609,7 @@ int atarigen_rle_init(int region, int colorbase)
 	int i;
 
 	rle_region = region;
-	rle_colortable = &Machine->colortable[colorbase];
+	rle_colortable = &Machine->remapped_colortable[colorbase];
 
 	/* build and allocate the tables */
 	if (build_rle_tables())

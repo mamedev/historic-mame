@@ -128,7 +128,7 @@ int gladiatr_bankswitch_r(int offset);
 void gladiatr_bankswitch_w(int offset,int data){
 	static int bank1[2] = { 0x10000, 0x12000 };
 	static int bank2[2] = { 0x14000, 0x18000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	banka = data;
 	cpu_setbank(1,&RAM[bank1[(data & 0x03)]]);
 	cpu_setbank(2,&RAM[bank2[(data & 0x03)]]);
@@ -202,7 +202,7 @@ static void gladiator_machine_init(void)
 	TAITO8741_start(&gsword_8741interface);
 	/* 6809 bank memory set */
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 		cpu_setbank(3,&RAM[0x10000]);
 		cpu_setbank(4,&RAM[0x18000]);
 		cpu_setbank(5,&RAM[0x20000]);
@@ -240,7 +240,7 @@ static void gladiator_ym_irq(int irq)
 /*Sound Functions*/
 void glad_adpcm_w( int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 	/* bit6 = bank offset */
 	int bankoffset = data&0x40 ? 0x4000 : 0;
 	cpu_setbank(3,&RAM[0x10000+bankoffset]);
@@ -743,7 +743,7 @@ ROM_END
 static int gladiatr_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -757,7 +757,7 @@ static int gladiatr_nvram_load(void)
 static void gladiatr_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

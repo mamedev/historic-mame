@@ -1211,7 +1211,7 @@ static void cninja0_hisave(void)
 
 static void cninja_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i;
 
 	for (i=0; i<0x80000; i+=2) {
@@ -1236,7 +1236,7 @@ static void cninja_patch(void)
 #if 0
 static void edrandyj_patch(void)
 {
-//	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+//	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 //	WRITE_WORD (&RAM[0x98cc],0x4E71);
 //	WRITE_WORD (&RAM[0x98ce],0x4E71);
@@ -1274,7 +1274,7 @@ struct GameDriver driver_cninja =
 	rom_cninja,
 	cninja_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cninja,
 
@@ -1299,7 +1299,7 @@ struct GameDriver driver_cninja0 =
 	rom_cninja0,
 	cninja_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cninja,
 
@@ -1325,7 +1325,7 @@ struct GameDriver driver_cninjau =
 	rom_cninjau,
 	cninja_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cninjau,
 
@@ -1350,7 +1350,7 @@ struct GameDriver driver_joemac =
 	rom_joemac,
 	cninja_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cninja,
 
@@ -1375,7 +1375,7 @@ struct GameDriver driver_stoneage =
 	rom_stoneage,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cninja,
 

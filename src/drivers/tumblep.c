@@ -493,7 +493,7 @@ ROM_END
 
 static void t_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i,x,a;
     char z[64];
 
@@ -531,7 +531,7 @@ struct GameDriver driver_tumblep =
 	rom_tumblepop,
 	t_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tumblep,
 
@@ -556,7 +556,7 @@ struct GameDriver driver_tumblepb =
 	rom_tumblepb,
 	t_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tumblep,
 
@@ -581,7 +581,7 @@ struct GameDriver driver_tumblep2 =
 	rom_tumblepop2,
 	t_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tumblep,
 

@@ -138,7 +138,7 @@ static void vendetta_5fe0_w(int offset,int data)
 
 static int speedup_r( int offs )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	int data = ( RAM[0x28d2] << 8 ) | RAM[0x28d3];
 
@@ -459,7 +459,7 @@ ROM_END
 
 static void vendetta_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ( lines >= 0x1c )
 	{
@@ -474,11 +474,11 @@ static void vendetta_init_machine( void )
 {
 	konami_cpu_setlines_callback = vendetta_banking;
 
-	paletteram = &Machine->memory_region[0][0x48000];
+	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
 	irq_enabled = 0;
 
 	/* init banks */
-	cpu_setbank( 1, &Machine->memory_region[0][0x10000] );
+	cpu_setbank( 1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000] );
 	vendetta_video_banking( 0 );
 
 	EEPROM_init(&eeprom_interface);
@@ -535,7 +535,7 @@ struct GameDriver driver_vendetta =
 	rom_vendetta,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vendetta,
 
@@ -560,7 +560,7 @@ struct GameDriver driver_vendett2 =
 	rom_vendett2,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vendetta,
 
@@ -585,7 +585,7 @@ struct GameDriver driver_vendettj =
 	rom_vendettj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vendetta,
 

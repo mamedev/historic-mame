@@ -299,7 +299,7 @@ struct GameDriver driver_foodf =
 	rom_foodf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_foodf,
 

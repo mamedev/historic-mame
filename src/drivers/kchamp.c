@@ -777,7 +777,7 @@ static void kchamp_decode( void ) {
 		0x02, 0x03, 0x0A, 0x0B, 0x06, 0x07, 0x0E, 0x0F
 	};
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int A;
 
 	for (A = 1;A < 0xE000;A++)
@@ -812,7 +812,7 @@ static void karatedo_decode( void ){
 
 static int kchampvs_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -832,7 +832,7 @@ static int kchampvs_hiload(void)
 
 static void kchampvs_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {
@@ -847,7 +847,7 @@ static void kchampvs_hisave(void)
 ********************/
 static int kchamp_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for hiscore table initialization to be done. */
@@ -867,7 +867,7 @@ static int kchamp_hiload(void)
 
 static void kchamp_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0) {

@@ -39,7 +39,7 @@ int mnight_bankselect_r(int offset)
 
 void mnight_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[main_cpu_num].memory_region);
 	int bankaddress;
 
 	if ( data != mnight_bank_latch )
@@ -490,7 +490,7 @@ ROM_END
 
 static int mnight_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -519,7 +519,7 @@ static int mnight_hiload(void)
 static void mnight_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

@@ -171,7 +171,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static void mg_bankswitch_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
 	cpu_setbank(3,&RAM[bankaddress]);

@@ -485,7 +485,7 @@ INPUT_PORTS_END
 
 static int asteroid1_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -509,7 +509,7 @@ static int asteroid1_hiload(void)
 
 static int asteroid_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -536,7 +536,7 @@ static int asteroid_hiload(void)
 static void asteroid1_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -549,7 +549,7 @@ static void asteroid1_hisave(void)
 static void asteroid_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -802,7 +802,7 @@ struct GameDriver driver_asteroid =
 	rom_asteroid,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_asteroid,
 
@@ -828,7 +828,7 @@ struct GameDriver driver_asteroi1 =
 	rom_asteroi1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_asteroid,
 
@@ -880,7 +880,7 @@ struct GameDriver driver_astdelux =
 	rom_astdelux,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_astdelux,
 
@@ -906,7 +906,7 @@ struct GameDriver driver_astdelu1 =
 	rom_astdelu1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_astdelux,
 
@@ -963,7 +963,7 @@ struct GameDriver driver_llander =
 	rom_llander,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_llander,
 
@@ -989,7 +989,7 @@ struct GameDriver driver_llander1 =
 	rom_llander1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_llander1,
 

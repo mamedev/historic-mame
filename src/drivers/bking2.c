@@ -441,7 +441,7 @@ struct GameDriver driver_bking2 =
 	rom_bking2,
 	0, 0,
 	0,
-	0,  /* sound_prom */
+	0,
 
 	input_ports_bking2,
 

@@ -1181,7 +1181,7 @@ ROM_END
 
 static int vanguard_hiload(void)     /* V.V */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1206,7 +1206,7 @@ static int vanguard_hiload(void)     /* V.V */
 static void vanguard_hisave(void)    /* V.V */
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1220,7 +1220,7 @@ static void vanguard_hisave(void)    /* V.V */
 
 static int fantasy_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1243,7 +1243,7 @@ static int fantasy_hiload(void)
 static void fantasy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1256,7 +1256,7 @@ static void fantasy_hisave(void)
 
 static int nibbler_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1281,7 +1281,7 @@ static int nibbler_hiload(void)
 static void nibbler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1310,7 +1310,7 @@ struct GameDriver driver_sasuke =
 	rom_sasuke,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sasuke,
 
@@ -1336,7 +1336,7 @@ struct GameDriver driver_satansat =
 	rom_satansat,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_satansat,
 
@@ -1362,7 +1362,7 @@ struct GameDriver driver_zarzon =
 	rom_zarzon,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_satansat,
 
@@ -1388,7 +1388,7 @@ struct GameDriver driver_vanguard =
 	rom_vanguard,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vanguard,
 
@@ -1414,7 +1414,7 @@ struct GameDriver driver_vangrdce =
 	rom_vangrdce,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vanguard,
 
@@ -1440,7 +1440,7 @@ struct GameDriver driver_fantasy =
 	rom_fantasy,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_fantasy,
 
@@ -1466,7 +1466,7 @@ struct GameDriver driver_fantasyj =
 	rom_fantasyj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_fantasy,
 
@@ -1492,7 +1492,7 @@ struct GameDriver driver_pballoon =
 	rom_pballoon,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pballoon,
 
@@ -1518,7 +1518,7 @@ struct GameDriver driver_nibbler =
 	rom_nibbler,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nibbler,
 
@@ -1544,7 +1544,7 @@ struct GameDriver driver_nibblera =
 	rom_nibblera,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nibbler,
 

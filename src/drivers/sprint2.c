@@ -179,7 +179,7 @@ INPUT_PORTS_START( sprint2 )
 
 	PORT_START      /* IN1 - fake port, gets mapped to Sprint2 ports */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1, "P1 Gas", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P1 Gas", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Gas", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -430,7 +430,7 @@ ROM_END
 
 static int sprint1_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -441,7 +441,7 @@ static int sprint1_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0x0057],3);
+			osd_fread(f,&RAM[0x0057],3);
 			osd_fclose(f);
 		}
 
@@ -455,12 +455,12 @@ static int sprint1_hiload(void)
 static void sprint1_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x0057],3);
+		osd_fwrite(f,&RAM[0x0057],3);
 		osd_fclose(f);
 	}
 
@@ -489,7 +489,7 @@ struct GameDriver driver_sprint1 =
 	rom_sprint1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sprint1,
 
@@ -515,7 +515,7 @@ struct GameDriver driver_sprint2 =
 	rom_sprint2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sprint2,
 

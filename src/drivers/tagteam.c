@@ -328,7 +328,7 @@ ROM_END
 static int tagteam_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x0513],"\x19",1)==0 && memcmp(&RAM[0x0034],"\x05",1)== 0)
@@ -353,7 +353,7 @@ static int tagteam_hiload(void)
 static void tagteam_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -379,7 +379,7 @@ struct GameDriver driver_tagteam =
 	rom_tagteam,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tagteam,
 

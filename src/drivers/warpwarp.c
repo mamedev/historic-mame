@@ -316,7 +316,7 @@ ROM_END
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x8358],"\x00\x30\x00",3) == 0 &&
@@ -338,7 +338,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -366,7 +366,7 @@ struct GameDriver driver_warpwarp =
 	rom_warpwarp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_warpwarp,
 
@@ -392,7 +392,7 @@ struct GameDriver driver_warpwarr =
 	rom_warpwarr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_warpwarr,
 
@@ -418,7 +418,7 @@ struct GameDriver driver_warpwar2 =
 	rom_warpwar2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_warpwarr,
 

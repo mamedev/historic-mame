@@ -230,7 +230,7 @@ struct GameDriver driver_cheekyms =
 	rom_cheekyms,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cheekyms,
 

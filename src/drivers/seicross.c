@@ -1,11 +1,5 @@
 /***************************************************************************
 
-TODO:
-- Frisky Tom hangs when you fall. It seems that the 6808 goes havoc and
-  trashes memory.
-- the DAC is poorly supported
-
-
 Seicross memory map (preliminary)
 
 0000-77ff ROM
@@ -76,14 +70,14 @@ static int friskyt_portB_r(int offset)
 
 static void friskyt_portB_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
+//if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 
 	/* bit 1 flips screen */
 
 	/* bit 2 resets the microcontroller */
-	if (data & 4)
+	if (((portb & 4) == 0) && (data & 4))
 	{
 		/* reset and start the protection mcu */
 		cpu_set_reset_line(1,PULSE_LINE);
@@ -107,18 +101,12 @@ static void sharedram_w(int offset,int data)
 	sharedram[offset] = data;
 }
 
-/* This kludge makes the player move correctly in Frisky Tom */
-void ft_kludge(int offset,int data)
-{
-	sharedram_w(0x2fd+offset,data);
-}
-
-
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0x7fff, sharedram_r },
+	{ 0x8820, 0x887f, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x981f, MRA_RAM },
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
@@ -170,11 +158,8 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x1100, 0x1101, ft_kludge },
 	{ 0x2000, 0x2000, DAC_data_w },
-//	{ 0x8000, 0xf7ff, MWA_ROM },
-	{ 0x8000, 0xe7ff, MWA_ROM },
-	{ 0xe800, 0xefff, sharedram_w },	/* AJP 990129 seems to need a mirror here */
+	{ 0x8000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, sharedram_w },
 	{ -1 }	/* end of table */
 };
@@ -438,7 +423,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6802,	/* probably a 6802 not sure */
+			CPU_NSC8105,
 			6000000/4,	/* ??? */
 			3,
 			mcu_readmem,mcu_writemem,0,0,
@@ -590,23 +575,14 @@ static void friskyt_decode(void)
 {
 	int A;
 	unsigned char *src,*dest;
-	extern int encrypted_cpu;
 
+	/* the protection mcu shares the main program ROMs and RAM with the main CPU. */
 
-	/* the protection mcu is a 6808-compatible cpu with scrambled opcodes, */
-	/* and shares the main program ROMs and RAM with the main CPU. */
-
-	/* First of all, copy over the ROMs */
-	src = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	dest = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	/* copy over the ROMs */
+	src = memory_region(Machine->drv->cpu[0].memory_region);
+	dest = memory_region(Machine->drv->cpu[1].memory_region);
 	for (A = 0;A < 0x8000;A++)
-		dest[A + 0x8000] = src[A];
-
-
-	/* Now decrypt the opcodes: bits 0/1 and 6/7 are swapped */
-	encrypted_cpu = 1;
-	for (A = 0x8000;A < 0x10000;A++)
-		ROM[A] = (dest[A] & 0x3c) | ((dest[A] & 0x41) << 1) | ((dest[A] & 0x82) >> 1);
+		 dest[A + 0x8000] = src[A];
 }
 
 
@@ -649,7 +625,7 @@ void friskyt_nvram_save(void)
 
 static int seicross_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -672,7 +648,7 @@ static int seicross_hiload(void)
 static void seicross_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -698,9 +674,9 @@ struct GameDriver driver_friskyt =
 	0,
 
 	rom_friskyt,
-	0, friskyt_decode,
+	friskyt_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_friskyt,
 
@@ -724,9 +700,9 @@ struct GameDriver driver_radrad =
 	no_nvram_init,
 
 	rom_radrad,
-	0, friskyt_decode,
+	friskyt_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_radrad,
 
@@ -750,9 +726,9 @@ struct GameDriver driver_seicross =
 	no_nvram_init,
 
 	rom_seicross,
-	0, friskyt_decode,
+	friskyt_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_seicross,
 
@@ -776,9 +752,9 @@ struct GameDriver driver_sectrzon =
 	no_nvram_init,
 
 	rom_sectrzon,
-	0, friskyt_decode,
+	friskyt_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_seicross,
 

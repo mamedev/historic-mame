@@ -4,6 +4,9 @@ Irem "M62" system
 
 There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
 
+TODO:
+- Kid Niki is missing the drums
+
 **************************************************************************/
 
 #include "driver.h"
@@ -56,7 +59,7 @@ int ldrun2_bankswitch_r(int offset)
 {
 	if (ldrun2_bankswap)
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 		ldrun2_bankswap--;
@@ -78,7 +81,7 @@ void ldrun2_bankswitch_w(int offset,int data)
 		0,1,1,1,1,1,0,0,0,0,
 		1,0,1,1,1,1,1,1,1,1
 	};
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankcontrol[offset] = data;
@@ -119,7 +122,7 @@ int ldrun3_prot_7_r(int offset)
 void ldrun4_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + ((data & 0x01) * 0x4000);
@@ -129,7 +132,7 @@ void ldrun4_bankswitch_w(int offset,int data)
 static void kidniki_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
@@ -141,7 +144,7 @@ static void kidniki_bankswitch_w(int offset,int data)
 static void spelunkr_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
@@ -150,7 +153,7 @@ static void spelunkr_bankswitch_w(int offset,int data)
 
 void spelunk2_bankswitch_w( int offset, int data )
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	cpu_setbank(1,&RAM[0x20000 + 0x1000 * ((data & 0xc0)>>6)]);
@@ -940,9 +943,10 @@ INPUT_PORTS_START( spelunkr )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_DIPSETTING(    0x08, "No" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	/* In teleport mode, keep 1 pressed and press up or down to move the character */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Teleport", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -1856,7 +1860,7 @@ ROM_END
 
 static int kungfum_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1883,7 +1887,7 @@ static int kungfum_hiload(void)
 static void kungfum_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1896,7 +1900,7 @@ static void kungfum_hisave(void)
 
 static int battroad_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0xed52],"\x06\x05\x04",3) == 0 &&
 			memcmp(&RAM[0xedfd],"\x00\x13\x08",3) == 0 )
@@ -1917,7 +1921,7 @@ static int battroad_hiload(void)
 static void battroad_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1930,7 +1934,7 @@ static void battroad_hisave(void)
 
 static int ldrun_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xE5E5],"\x01\x01\x00",3) == 0 &&
@@ -1953,7 +1957,7 @@ static int ldrun_hiload(void)
 static void ldrun_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1965,7 +1969,7 @@ static void ldrun_hisave(void)
 
 static int ldrun2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xE6bd],"\x00\x48\x54",3) == 0 &&
@@ -1988,7 +1992,7 @@ static int ldrun2_hiload(void)
 static void ldrun2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2005,7 +2009,7 @@ static void ldrun2_hisave(void)
 
 static int ldrun4_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xE735],"\x00\x28\x76",3) == 0 &&
@@ -2028,7 +2032,7 @@ static int ldrun4_hiload(void)
 static void ldrun4_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2041,7 +2045,7 @@ static void ldrun4_hisave(void)
 
 static int kidniki_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xE062],"\x00\x10\x00",3) == 0 &&
@@ -2064,7 +2068,7 @@ static int kidniki_hiload(void)
 static void kidniki_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2077,7 +2081,7 @@ static void kidniki_hisave(void)
 
 static int spelunk2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0xE066],"\x99\x11\x59",3) == 0 &&
@@ -2100,7 +2104,7 @@ static int spelunk2_hiload(void)
 static void spelunk2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2113,7 +2117,7 @@ static void spelunk2_hisave(void)
 
 static int lotlot_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0xE96a],"\x00\x02\x51",3) == 0 &&
 			memcmp(&RAM[0xEb8d],"\x49\x20\x20",3) == 0 )
@@ -2135,7 +2139,7 @@ static int lotlot_hiload(void)
 static void lotlot_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2476,12 +2480,12 @@ struct GameDriver driver_kidniki =
 	rom_kidniki,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kidniki,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	kidniki_hiload, kidniki_hisave
 };
@@ -2502,12 +2506,12 @@ struct GameDriver driver_yanchamr =
 	rom_yanchamr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kidniki,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	kidniki_hiload, kidniki_hisave
 };
@@ -2528,7 +2532,7 @@ struct GameDriver driver_spelunkr =
 	rom_spelunkr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spelunkr,
 
@@ -2554,7 +2558,7 @@ struct GameDriver driver_spelunk2 =
 	rom_spelunk2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spelunk2,
 

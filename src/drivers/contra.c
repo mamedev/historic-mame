@@ -49,7 +49,7 @@ extern void contra_vh_stop(void);
 void contra_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
@@ -517,7 +517,7 @@ ROM_END
 static int contra_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -543,7 +543,7 @@ static int contra_hiload(void)
 static void contra_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

@@ -693,7 +693,7 @@ ROM_END
 
 static int kaos_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -718,7 +718,7 @@ static int kaos_hiload(void)
 static void kaos_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -730,7 +730,7 @@ static void kaos_hisave(void)
 
 static int killcom_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -751,7 +751,7 @@ static int killcom_hiload(void)
 
 static void killcom_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -763,7 +763,7 @@ static void killcom_hisave(void)
 
 static int megatack_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -784,7 +784,7 @@ static int megatack_hiload(void)
 
 static void megatack_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -797,7 +797,7 @@ static void megatack_hisave(void)
 static int challeng_hiload(void)
 {
 	unsigned char *RAM =
-	Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -819,7 +819,7 @@ static int challeng_hiload(void)
 
 static void challeng_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
     void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -844,7 +844,7 @@ struct GameDriver driver_kaos =
 	0,
 
 	rom_kaos,
-	0, 0, 0, 0,					/* sound_prom */
+	0, 0, 0, 0,
 
 	input_ports_kaos,
 
@@ -869,7 +869,7 @@ struct GameDriver driver_killcom =
 	0,
 
 	rom_killcom,
-	0, 0, 0, 0,					/* sound_prom */
+	0, 0, 0, 0,
 
 	input_ports_killcom,
 
@@ -894,7 +894,7 @@ struct GameDriver driver_megatack =
 	0,
 
 	rom_megatack,
-	0, 0, 0, 0,					/* sound_prom */
+	0, 0, 0, 0,
 
 	input_ports_megatack,
 
@@ -918,7 +918,7 @@ struct GameDriver driver_challeng =
 	0,
 
     rom_challeng,
-    0, 0, 0, 0,                 /* sound_prom */
+    0, 0, 0, 0,
 
     input_ports_challeng,
 

@@ -1439,7 +1439,7 @@ ROM_END
 
 static int mtrap_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 		/* the high score table is intialized to all 0, so first of all */
 		/* we dirty it, then we wait for it to be cleared again */
@@ -1470,7 +1470,7 @@ static int mtrap_hiload(void)
 static void mtrap_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1483,7 +1483,7 @@ static void mtrap_hisave(void)
 
 static int venture_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0x0380],"\x00\x06\x0C\x12\x18",5) == 0) &&
@@ -1505,7 +1505,7 @@ static int venture_hiload(void)
 static void venture_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1518,7 +1518,7 @@ static void venture_hisave(void)
 
 static int pepper2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 		/* the high score table is intialized to all 0, so first of all */
 		/* we dirty it, then we wait for it to be cleared again */
@@ -1550,7 +1550,7 @@ static int pepper2_hiload(void)
 static void pepper2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1563,7 +1563,7 @@ static void pepper2_hisave(void)
 
 static int targ_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x00AE],"\x00\x10",2) == 0)
@@ -1584,7 +1584,7 @@ static int targ_hiload(void)
 static void targ_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1595,7 +1595,7 @@ static void targ_hisave(void)
 
 static int fax_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 		/* the high score table is intialized to all 0, so first of all */
 		/* we dirty it, then we wait for it to be cleared again */
@@ -1625,7 +1625,7 @@ static int fax_hiload(void)
 static void fax_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1637,7 +1637,7 @@ static void fax_hisave(void)
 
 static int sidetrac_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 		/* the high score table is intialized to all 0, so first of all */
 		/* we dirty it, then we wait for it to be cleared again */
@@ -1668,7 +1668,7 @@ static int sidetrac_hiload(void)
 static void sidetrac_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1706,7 +1706,7 @@ struct GameDriver driver_sidetrac =
 
 	ORIENTATION_DEFAULT,
 
-	0,0
+	sidetrac_hiload,sidetrac_hisave
 };
 
 struct GameDriver driver_targ =
@@ -1806,7 +1806,7 @@ struct GameDriver driver_mtrap =
 	rom_mtrap,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mtrap,
 
@@ -1832,7 +1832,7 @@ struct GameDriver driver_mtrap3 =
 	rom_mtrap3,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mtrap,
 
@@ -1858,7 +1858,7 @@ struct GameDriver driver_mtrap4 =
 	rom_mtrap4,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mtrap,
 
@@ -1884,7 +1884,7 @@ struct GameDriver driver_venture =
 	rom_venture,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_venture,
 
@@ -1910,7 +1910,7 @@ struct GameDriver driver_venture2 =
 	rom_venture2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_venture,
 
@@ -1936,7 +1936,7 @@ struct GameDriver driver_venture4 =
 	rom_venture4,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_venture,
 
@@ -1962,7 +1962,7 @@ struct GameDriver driver_pepper2 =
 	rom_pepper2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pepper2,
 
@@ -1988,7 +1988,7 @@ struct GameDriver driver_hardhat =
 	rom_hardhat,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pepper2,
 
@@ -2014,7 +2014,7 @@ struct GameDriver driver_fax =
 	rom_fax,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_fax,
 

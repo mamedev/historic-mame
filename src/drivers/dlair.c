@@ -294,7 +294,7 @@ struct GameDriver driver_dlair =
 	rom_dlair,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dlair,
 

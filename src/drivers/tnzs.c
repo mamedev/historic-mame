@@ -164,6 +164,14 @@ d011=if 00 checks counter, if FF doesn't
 d23f=input port 1 value
 
 ***************************************************************************/
+/***************************************************************************
+
+Kageki
+(c) 1988 Taito Corporation
+
+Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -179,6 +187,7 @@ void drtoppel_init(void);
 void chukatai_init(void);
 void tnzs_init(void);
 void insectx_init(void);
+void kageki_init(void);
 int arkanoi2_sh_f000_r(int offs);
 void tnzs_init_machine(void);
 int tnzs_interrupt (void);
@@ -201,6 +210,116 @@ void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
+/* max samples */
+#define	MAX_SAMPLES	0x2f
+
+int kageki_init_samples(const struct MachineSound *msound)
+{
+	struct GameSamples *samples;
+	unsigned char *scan, *src, *dest;
+	int start, size;
+	int i, n;
+
+	size = sizeof(struct GameSamples) + MAX_SAMPLES * sizeof(struct GameSamples *);
+
+	if ((Machine->samples = malloc(size)) == NULL) return 1;
+
+	samples = Machine->samples;
+	samples->total = MAX_SAMPLES;
+
+	for (i = 0; i < samples->total; i++)
+	{
+		src = Machine->memory_region[3] + 0x0090;
+		start = (src[(i * 2) + 1] * 256) + src[(i * 2)];
+		scan = &src[start];
+		size = 0;
+
+		// check sample length
+		while (1)
+		{
+			if (*scan++ == 0x00)
+			{
+				break;
+			} else {
+				size++;
+			}
+		}
+		if ((samples->sample[i] = malloc(sizeof(struct GameSample) + size * sizeof(unsigned char))) == NULL) return 1;
+
+		if (start < 0x100) start = size = 0;
+
+		samples->sample[i]->smpfreq = 7000;	/* 7 KHz??? */
+		samples->sample[i]->resolution = 8;	/* 8 bit */
+		samples->sample[i]->length = size;
+
+		// signed 8-bit sample to unsigned 8-bit sample convert
+		dest = (unsigned char *)samples->sample[i]->data;
+		scan = &src[start];
+		for (n = 0; n < size; n++)
+		{
+			*dest++ = ((*scan++) ^ 0x80);
+		}
+	//	if (errorlog) fprintf(errorlog, "samples num:%02X ofs:%04X lng:%04X\n", i, start, size);
+	}
+
+	return 0;
+}
+
+
+static int kageki_csport_sel = 0;
+static int kageki_csport_r(int offset)
+{
+	int	dsw, dsw1, dsw2;
+
+	dsw1 = readinputport(0); 		// DSW1
+	dsw2 = readinputport(1); 		// DSW2
+
+	switch (kageki_csport_sel)
+	{
+		case	0x00:			// DSW2 5,1 / DSW1 5,1
+			dsw = (((dsw2 & 0x10) >> 1) | ((dsw2 & 0x01) << 2) | ((dsw1 & 0x10) >> 3) | ((dsw1 & 0x01) >> 0));
+			break;
+		case	0x01:			// DSW2 7,3 / DSW1 7,3
+			dsw = (((dsw2 & 0x40) >> 3) | ((dsw2 & 0x04) >> 0) | ((dsw1 & 0x40) >> 5) | ((dsw1 & 0x04) >> 2));
+			break;
+		case	0x02:			// DSW2 6,2 / DSW1 6,2
+			dsw = (((dsw2 & 0x20) >> 2) | ((dsw2 & 0x02) << 1) | ((dsw1 & 0x20) >> 4) | ((dsw1 & 0x02) >> 1));
+			break;
+		case	0x03:			// DSW2 8,4 / DSW1 8,4
+			dsw = (((dsw2 & 0x80) >> 4) | ((dsw2 & 0x08) >> 1) | ((dsw1 & 0x80) >> 6) | ((dsw1 & 0x08) >> 3));
+			break;
+		default:
+			dsw = 0x00;
+		//	if (errorlog) fprintf(errorlog, "kageki_csport_sel error !! (0x%08X)\n", kageki_csport_sel);
+	}
+
+	return (dsw & 0xff);
+}
+
+static void kageki_csport_w(int offset, int data)
+{
+	char mess[80];
+
+	if (data > 0x3f)
+	{
+		// read dipsw port
+		kageki_csport_sel = (data & 0x03);
+	} else {
+		if (data > MAX_SAMPLES)
+		{
+			// stop samples
+			sample_stop(0);
+			sprintf(mess, "VOICE:%02X STOP", data);
+		} else {
+			// play samples
+			sample_start(0, data, 0);
+			sprintf(mess, "VOICE:%02X PLAY", data);
+		}
+	//	usrintf_showmessage(mess);
+	}
+}
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -208,6 +327,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_r },	/* WORK RAM (shared by the 2 z80's */
 	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
+	{ 0xf600, 0xf600, MRA_NOP },	/* ? */
 	{ 0xf800, 0xfbff, MRA_RAM },	/* not in extrmatn and arkanoi2 (PROMs instead) */
 	{ -1 }  /* end of table */
 };
@@ -220,6 +340,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
 	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
 	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
+	{ 0xf400, 0xf400, MWA_NOP },	/* ? */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
 	{ 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },	/* not in extrmatn and arkanoi2 (PROMs instead) */
 	{ -1 }  /* end of table */
@@ -253,6 +374,30 @@ static struct MemoryWriteAddress sub_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+static struct MemoryReadAddress kageki_sub_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_BANK2 },
+	{ 0xb000, 0xb000, YM2203_status_port_0_r },
+	{ 0xb001, 0xb001, YM2203_read_port_0_r },
+	{ 0xc000, 0xc000, input_port_2_r },
+	{ 0xc001, 0xc001, input_port_3_r },
+	{ 0xc002, 0xc002, input_port_4_r },
+	{ 0xd000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xefff, tnzs_workram_sub_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress kageki_sub_writemem[] =
+{
+	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
+	{ 0xb000, 0xb000, YM2203_control_port_0_w },
+	{ 0xb001, 0xb001, YM2203_write_port_0_w },
+	{ 0xd000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xefff, tnzs_workram_sub_w },
+	{ -1 }  /* end of table */
+};
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
 
@@ -1006,6 +1151,84 @@ INPUT_PORTS_START( insectx )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kageki )
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout arkanoi2_charlayout =
@@ -1099,6 +1322,30 @@ static struct YM2203interface ym2203b_interface =
 	{ irqhandler }
 };
 
+static struct YM2203interface kageki_ym2203_interface =
+{
+	1,					/* 1 chip */
+	3000000,				/* 12000000/4 ??? */
+	{ YM2203_VOL(35, 15) },
+	AY8910_DEFAULT_GAIN,
+	{ kageki_csport_r },
+	{ 0 },
+	{ 0 },
+	{ kageki_csport_w },
+};
+
+static struct Samplesinterface samples_interface =
+{
+	1,					/* 1 channel */
+	100					/* volume */
+};
+
+static struct CustomSound_interface custom_interface =
+{
+	kageki_init_samples,
+	0,
+	0
+};
 
 
 static struct MachineDriver arkanoi2_machine_driver =
@@ -1337,6 +1584,58 @@ static struct MachineDriver insectx_machine_driver =
 	}
 };
 
+static struct MachineDriver kageki_machine_driver =
+{
+	{
+		{
+			CPU_Z80,
+			6000000,		/* 12000000/2 ??? */
+			0,			/* memory_region */
+			readmem, writemem, 0, 0,
+			tnzs_interrupt, 1
+		},
+		{
+			CPU_Z80,
+			4000000,		/* 12000000/3 ??? */
+			2,			/* memory_region */
+			kageki_sub_readmem, kageki_sub_writemem, 0, 0,
+			interrupt, 1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	200,	/* 200 CPU slices per frame - an high value to ensure proper */
+		/* synchronization of the CPUs */
+	tnzs_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	tnzs_gfxdecodeinfo,
+	512, 512,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	0,
+	tnzs_vh_start,
+	tnzs_vh_stop,
+	tnzs_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_YM2203,
+			&kageki_ym2203_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
 
 
 
@@ -1450,7 +1749,7 @@ ROM_START( drtoppel )
 	ROM_LOAD( "b19-11.bin", 0x00000, 0x08000, 0x524dc249 )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
-	ROM_REGIONX( 0x0400, REGION_PROMS )
+	ROM_REGIONX( 0x0400, REGION_PROMS )		/* color proms */
 	ROM_LOAD( "b19-13.bin", 0x0000, 0x200, 0x6a547980 )	/* hi bytes */
 	ROM_LOAD( "b19-12.bin", 0x0200, 0x200, 0x5754e9d8 )	/* lo bytes */
 ROM_END
@@ -1555,11 +1854,58 @@ ROM_START( insectx )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 ROM_END
 
+ROM_START( kageki )
+	ROM_REGION(0x30000)		// main code
+	ROM_LOAD( "b35-16.11c",  0x00000, 0x08000, 0xa4e6fd58 )	/* US ver */
+	ROM_CONTINUE(            0x18000, 0x08000 )
+	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
+
+	ROM_REGION_DISPOSE(0x100000)	// gfx
+	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
+	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
+	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
+	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
+	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
+	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
+	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
+	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
+
+	ROM_REGION(0x18000)		// sound code
+	ROM_LOAD( "b35-17.43e",  0x00000, 0x08000, 0xfdd9c246 )	/* US ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGION(0x10000)		// samples
+	ROM_LOAD( "b35-15.98g",  0x00000, 0x10000, 0xe6212a0f )	/* US ver */
+ROM_END
+
+ROM_START( kagekij )
+	ROM_REGION(0x30000)		// main code
+	ROM_LOAD( "b35-09j.11c", 0x00000, 0x08000, 0x829637d5 )	/* JP ver */
+	ROM_CONTINUE(            0x18000, 0x08000 )
+	ROM_LOAD( "b35-10.9c",   0x20000, 0x10000, 0xb150457d )
+
+	ROM_REGION_DISPOSE(0x100000)	// gfx
+	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, 0x01d83a69 )
+	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, 0xd8af47ac )
+	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, 0x3cb68797 )
+	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, 0x71c03f91 )
+	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, 0xa4e20c08 )
+	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, 0x3f8ab658 )
+	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, 0x1b4af049 )
+	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, 0xdeb2268c )
+
+	ROM_REGION(0x18000)		// sound code
+	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, 0x64d093fc )	/* JP ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGION(0x10000)		// samples
+	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, 0x184409f1 )	/* JP ver */
+ROM_END
 
 
 static int extrmatn_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	void *f;
 
@@ -1584,7 +1930,7 @@ static int extrmatn_hiload(void)
 
 static void extrmatn_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1598,7 +1944,7 @@ static void extrmatn_hisave(void)
 
 static int arkanoi2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	void *f;
 
@@ -1626,7 +1972,7 @@ static int arkanoi2_hiload(void)
 
 static void arkanoi2_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1639,7 +1985,7 @@ static void arkanoi2_hisave(void)
 
 static int drtoppel_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	void *f;
 
@@ -1665,7 +2011,7 @@ static int drtoppel_hiload(void)
 
 static void drtoppel_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1680,7 +2026,7 @@ static void drtoppel_hisave(void)
 
 static int chukatai_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	void *f;
 
@@ -1706,7 +2052,7 @@ static int chukatai_hiload(void)
 
 static void chukatai_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1723,7 +2069,7 @@ static int tnzs_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe6ad], "\x47\x55\x55", 3) == 0)
@@ -1743,7 +2089,7 @@ static int tnzs_hiload(void)
 
 static void tnzs_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1757,7 +2103,7 @@ static int tnzs2_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xec2a], "\x47\x55\x55", 3) == 0)
@@ -1777,7 +2123,7 @@ static int tnzs2_hiload(void)
 
 static void tnzs2_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1791,7 +2137,7 @@ static void tnzs2_hisave(void)
 
 static int insectx_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xc604],"\x4b\x52\x59",3) == 0) &&
@@ -1817,11 +2163,47 @@ static int insectx_hiload(void)
 static void insectx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		osd_fwrite(f,&RAM[0xc600], 10*8);		/* HS table */
+		osd_fclose(f);
+	}
+}
+
+static int kageki_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if ((memcmp(&RAM[0xe057],"\x05\x10\x04",3) == 0) &&
+                (memcmp(&RAM[0xe061],"\x87\x9a\x8a",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe057], 5*2);        /* entry level */
+                        osd_fread(f,&RAM[0xe061], 5*3);        /* entry name  */
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void kageki_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe057], 5*2);        /* entry level */
+                osd_fwrite(f,&RAM[0xe061], 5*3);        /* entry name  */
 		osd_fclose(f);
 	}
 }
@@ -1937,7 +2319,7 @@ struct GameDriver driver_drtoppel =
 	__FILE__,
 	0,
 	"drtoppel",
-	"Dr. Toppel Tankentai (Japan)",
+	"Dr. Toppel's Tankentai (Japan)",
 	"1987",
 	"Taito Corporation",
 	"Quench\nChris Moore\nMartin Scragg\nRichard Mitton",
@@ -1948,7 +2330,7 @@ struct GameDriver driver_drtoppel =
 	rom_drtoppel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_drtoppel,
 
@@ -1974,7 +2356,7 @@ struct GameDriver driver_chukatai =
 	rom_chukatai,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_chukatai,
 
@@ -2000,7 +2382,7 @@ struct GameDriver driver_tnzs =
 	rom_tnzs,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tnzs,
 
@@ -2026,7 +2408,7 @@ struct GameDriver driver_tnzsb =
 	rom_tnzsb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tnzsb,
 
@@ -2052,7 +2434,7 @@ struct GameDriver driver_tnzs2 =
 	rom_tnzs2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tnzs2,
 
@@ -2078,7 +2460,7 @@ struct GameDriver driver_insectx =
 	rom_insectx,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_insectx,
 
@@ -2086,4 +2468,56 @@ struct GameDriver driver_insectx =
 	ORIENTATION_DEFAULT,
 
 	insectx_hiload, insectx_hisave
+};
+
+struct GameDriver driver_kageki =
+{
+	__FILE__,
+	0,
+	"kageki",
+	"Kageki (US)",
+	"1988",
+	"Taito America Corporation (Romstar license)",
+	"Takahiro Nogi",
+	0,
+	&kageki_machine_driver,
+	kageki_init,
+
+	rom_kageki,
+	0, 0,
+	0,
+	0,
+
+	input_ports_kageki,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	kageki_hiload, kageki_hisave
+};
+
+struct GameDriver driver_kagekij =
+{
+	__FILE__,
+	&driver_kageki,
+	"kagekij",
+	"Kageki (Japan)",
+	"1988",
+	"Taito Corporation",
+	"Takahiro Nogi",
+	0,
+	&kageki_machine_driver,
+	kageki_init,
+
+	rom_kagekij,
+	0, 0,
+	0,
+	0,
+
+	input_ports_kageki,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	kageki_hiload, kageki_hisave
 };

@@ -311,7 +311,7 @@ ROM_END
 static void finalizr_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x4000;A < 0x10000;A++)
@@ -338,7 +338,7 @@ struct GameDriver driver_finalizr =
 	rom_finalizr,
 	0, finalizr_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_finalizr,
 

@@ -1044,7 +1044,7 @@ ROM_END
 /* 10 * 1 byte for level reached ( area ) 		*/
 static int slapfigh_hiload(void)
 {
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check to see if high scores initialised */
 	if ((memcmp(&RAM[0xc060],"\x50\x30\x00",3) == 0) &&
@@ -1114,7 +1114,7 @@ unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 static void slapfigh_hisave(void)
 {
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
 void	*f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1135,7 +1135,7 @@ void	*f;
 /* 10 * 1 byte for level reached		 				*/
 static int tigerh_hiload(void)
 {
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
         if (memcmp(&RAM[0xc0db],"\x00\x20\x00\x00\x20\x00",6) == 0)
         {
@@ -1171,7 +1171,7 @@ static int tigerh_hiload(void)
 static void tigerh_hisave(void)
 {
         void *f;
-        unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+        unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
@@ -1191,7 +1191,7 @@ static void tigerh_hisave(void)
 
 static int getstar_hiload(void)
 {
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
 static int phase = 0;
 
 /* phase 0: dirty memory just 1 byte ahead of hi-scores */
@@ -1244,7 +1244,7 @@ static int phase = 0;
 
 static void getstar_hisave(void)
 {
-unsigned char	*RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+unsigned char	*RAM = memory_region(Machine->drv->cpu[0].memory_region);
 void	*f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

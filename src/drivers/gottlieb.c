@@ -1591,7 +1591,7 @@ ROM_END
 /* Reactor is the only game which doesn't have non volatile RAM */
 static int reactor_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1619,7 +1619,7 @@ static int reactor_hiload(void)
 static void reactor_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1634,7 +1634,7 @@ static void reactor_hisave(void)
 int gottlieb_nvram_load(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Try loading static RAM */
@@ -1653,7 +1653,7 @@ int gottlieb_nvram_load(void)
 void gottlieb_nvram_save(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1680,7 +1680,7 @@ struct GameDriver driver_reactor =
 	rom_reactor,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_reactor,
 
@@ -1706,7 +1706,7 @@ struct GameDriver driver_mplanets =
 	rom_mplanets,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mplanets,
 
@@ -1732,7 +1732,7 @@ struct GameDriver driver_qbert =
 	rom_qbert,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_qbert,
 
@@ -1758,7 +1758,7 @@ struct GameDriver driver_qbertjp =
 	rom_qbertjp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_qbert,
 
@@ -1784,7 +1784,7 @@ struct GameDriver driver_sqbert =
 	rom_sqbert,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_qbert,
 
@@ -1810,7 +1810,7 @@ struct GameDriver driver_qbertqub =
 	rom_qbertqub,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_qbertqub,
 
@@ -1836,7 +1836,7 @@ struct GameDriver driver_krull =
 	rom_krull,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_krull,
 
@@ -1863,7 +1863,7 @@ struct GameDriver driver_mach3 =
 	rom_mach3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mach3,
 
@@ -1890,7 +1890,7 @@ struct GameDriver driver_usvsthem =
 	rom_usvsthem,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_usvsthem,
 
@@ -1916,7 +1916,7 @@ struct GameDriver driver_stooges =
 	rom_stooges,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stooges,
 
@@ -1942,7 +1942,7 @@ struct GameDriver driver_curvebal =
 	rom_curvebal,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_curvebal,
 

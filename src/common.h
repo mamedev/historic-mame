@@ -148,6 +148,11 @@ void coin_lockout_global_w (int offset, int data);  /* Locks out all coin inputs
 int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);
 
+/* helper function that reads samples from disk - this can be used by other */
+/* drivers as well (e.g. a sound chip emulator needing drum samples) */
+struct GameSamples *readsamples(const char **samplenames,const char *name);
+void freesamples(struct GameSamples *samples);
+
 /* return a pointer to the specified memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */
 unsigned char *memory_region(int num);

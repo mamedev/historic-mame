@@ -325,7 +325,7 @@ void suprloco_unmangle(void)
 
 /**** Super Locomotive high score save routine - RJF (April 5, 1999) ****/
 static int suprloco_hiload(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
         if (memcmp(&RAM[0xfd00],"\x02\x20\x00",3) == 0){
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
@@ -347,7 +347,7 @@ static int suprloco_hiload(void){
 }
 
 static void suprloco_hisave(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
                         osd_fwrite(f,&RAM[0xfca0],10*3);

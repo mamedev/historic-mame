@@ -417,7 +417,7 @@ struct GameDriver driver_snowbros =
 	rom_snowbros,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_snowbros,
 
@@ -442,7 +442,7 @@ struct GameDriver driver_snowbroa =
 	rom_snowbroa,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_snowbros,
 
@@ -467,7 +467,7 @@ struct GameDriver driver_snowbrob =
 	rom_snowbrob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_snowbros,
 
@@ -492,7 +492,7 @@ struct GameDriver driver_snowbroj =
 	rom_snowbroj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_snowbros,
 

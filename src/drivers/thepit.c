@@ -861,7 +861,7 @@ ROM_END
 
 static int thepit_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -885,7 +885,7 @@ static int thepit_hiload(void)
 static void thepit_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -899,7 +899,7 @@ static void thepit_hisave(void)
 
 static int roundup_suprmous_common_hiload(int address)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -945,7 +945,7 @@ static int roundup_hiload(void)
 static void roundup_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -958,7 +958,7 @@ static void roundup_hisave(void)
 
 static int intrepid_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -984,7 +984,7 @@ static int intrepid_hiload(void)
 static void intrepid_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1003,7 +1003,7 @@ static int suprmous_hiload(void)
 static void suprmous_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1029,7 +1029,7 @@ struct GameDriver driver_thepit =
 	rom_thepit,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_thepit,
 
@@ -1056,7 +1056,7 @@ struct GameDriver driver_roundup =
 	rom_roundup,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_roundup,
 
@@ -1082,7 +1082,7 @@ struct GameDriver driver_fitter =
 	rom_fitter,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_fitter,
 
@@ -1109,7 +1109,7 @@ struct GameDriver driver_intrepid =
 	rom_intrepid,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_intrepid,
 
@@ -1135,7 +1135,7 @@ struct GameDriver driver_intrepi2 =
 	rom_intrepi2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_intrepid,
 
@@ -1161,7 +1161,7 @@ struct GameDriver driver_portman =
 	rom_portman,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_portman,
 
@@ -1187,7 +1187,7 @@ struct GameDriver driver_suprmous =
 	rom_suprmous,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_suprmous,
 
@@ -1213,7 +1213,7 @@ struct GameDriver driver_suprmou2 =
 	rom_suprmou2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_suprmous,
 
@@ -1239,7 +1239,7 @@ struct GameDriver driver_machomou =
 	rom_machomou,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_suprmous,
 

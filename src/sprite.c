@@ -780,7 +780,7 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 
 				if( palette_used_colors ){
 					UINT32 pen_usage = sprite->pen_usage;
-					int indx = sprite->pal_data - Machine->colortable;
+					int indx = sprite->pal_data - Machine->remapped_colortable;
 					while( pen_usage ){
 						if( pen_usage&1 ) palette_used_colors[indx] = PALETTE_COLOR_USED;
 						pen_usage>>=1;
@@ -816,7 +816,7 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 								front->y+front->total_height > sprite->y )
 							{
 								/* uncomment the following line to see which sprites are corrected */
-								//sprite->pal_data = Machine->colortable+(rand()&0xff);
+								//sprite->pal_data = Machine->remapped_colortable+(rand()&0xff);
 
 								if( sprite->mask_offset<0 ){ /* first masking? */
 									sprite->mask_offset = mask_buffer_alloc( sprite->total_width * sprite->total_height );

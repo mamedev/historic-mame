@@ -23,9 +23,9 @@ int cps2_gfx_start(void)
 	gfxsize=size/4;
 
 	/* Set up maximum values */
-	cps1_max_char  =(gfxsize/2)/8;
-	cps1_max_tile16=(gfxsize/4)/8;
-	cps1_max_tile32=(gfxsize/16)/8;
+    cps1_max_char  =(gfxsize/2)/8;
+    cps1_max_tile16=(gfxsize/4)/8;
+    cps1_max_tile32=(gfxsize/16)/8;
 
 	cps1_gfx=malloc(gfxsize*sizeof(UINT32));
 	if (!cps1_gfx)
@@ -257,7 +257,6 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     if (qcode != oldq)
     {
-        char baf[40];
         int mode=0;
         cps2_qsound_sharedram_w(0x1ffa, 0x0088);
         cps2_qsound_sharedram_w(0x1ffe, 0xffff);
@@ -274,12 +273,23 @@ void cps2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         cps2_qsound_sharedram_w(0x16, 0x0000);
         cps2_qsound_sharedram_w(0x18, 0x0000);
         cps2_qsound_sharedram_w(0x1e, 0x0000);
+    }
+    {
+    struct DisplayText dt[3];
+    char *instructions="PRESS: PGUP/PGDN=CODE  1=8x8  2=16x16  3=32x32  UP/DN=QCODE";
+    char text1[256];
+    sprintf(text1, "GFX CODE=%06x  :  QSOUND CODE=%04x", cps2_start, qcode );
+    dt[0].text = text1;
+    dt[0].color = DT_COLOR_RED;
+    dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text1)) / 2;
+    dt[0].y = 8*23;
+    dt[1].text = instructions;
+    dt[1].color = DT_COLOR_WHITE;
+    dt[1].x = (Machine->uiwidth - Machine->uifontwidth * strlen(instructions)) / 2;
+    dt[1].y = dt[0].y+2*Machine->uifontheight;
 
-
-
-        sprintf(baf, "QSound %04x", qcode);
-		usrintf_showmessage(baf);
-
+    dt[2].text = 0; /* terminate array */
+	displaytext(dt,0,0);
     }
 }
 

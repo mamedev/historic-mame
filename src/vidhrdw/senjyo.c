@@ -233,7 +233,7 @@ void senjyo_bgstripes_w(int offset,int data)
 
 static void draw_bgbitmap(struct osd_bitmap *bitmap)
 {
-	int x,y,pen,strwid,count,sx,sy;
+	int x,y,pen,strwid,count;
 
 
 	if (*senjyo_bgstripes == 0xff)	/* off */
@@ -255,20 +255,7 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap)
 		{
 			for (y = 0;y < 256;y++)
 			{
-				if (Machine->orientation & ORIENTATION_SWAP_XY)
-				{
-					sx = y; sy = x;
-				}
-				else
-				{
-					sx = x; sy = y;
-				}
-				if (Machine->orientation & ORIENTATION_FLIP_X)
-					sx ^= 0xff;
-				if (Machine->orientation & ORIENTATION_FLIP_Y)
-					sy ^= 0xff;
-
-				bgbitmap->line[sy][sx] = Machine->pens[384 + pen];
+				plot_pixel(bgbitmap, x, y, Machine->pens[384 + pen]);
 			}
 
 			count += 0x10;
@@ -285,7 +272,7 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap)
 
 static void draw_radar(struct osd_bitmap *bitmap)
 {
-	int offs,x,sx,sy;
+	int offs,x;
 
 	for (offs = 0;offs < 0x400;offs++)
 	{
@@ -295,22 +282,10 @@ static void draw_radar(struct osd_bitmap *bitmap)
 			{
 				if (senjyo_radarram[offs] & (1 << x))
 				{
-					if (Machine->orientation & ORIENTATION_SWAP_XY)
-					{
-						sy = (8 * (offs % 8) + x) + 256-64;
-						sx = ((offs & 0x1ff) / 8) + 96;
-					}
-					else
-					{
-						sx = (8 * (offs % 8) + x) + 256-64;
-						sy = ((offs & 0x1ff) / 8) + 96;
-					}
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-						sx ^= 0xff;
-					if (Machine->orientation & ORIENTATION_FLIP_Y)
-						sy ^= 0xff;
-
-					bitmap->line[sy][sx] = Machine->pens[offs < 0x200 ? 400 : 401];
+					plot_pixel(bitmap,
+							   (8 * (offs % 8) + x) + 256-64,
+							   ((offs & 0x1ff) / 8) + 96,
+							   Machine->pens[offs < 0x200 ? 400 : 401]);
 				}
 			}
 		}

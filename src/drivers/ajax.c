@@ -439,7 +439,7 @@ struct GameDriver driver_ajax =
 	gfx_untangle,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ajax,
 
@@ -465,7 +465,7 @@ struct GameDriver driver_ajaxj =
 	gfx_untangle,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ajax,
 

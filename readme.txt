@@ -98,10 +98,10 @@ VII. Derivative Works
 How to Contact Us
 -----------------
 
-The official MAME home page is http://mame.retrogames.com/. You can always
-find the latest release there, including beta versions and information on
-things being worked on. Also, a totally legal and free ROM set of Robby
-Roto is available on the same page.
+The official MAME home page is http://www.mame.net/. You can always find the
+latest release there, including beta versions and information on things being
+worked on. Also, a totally legal and free ROM set of Robby Roto is available
+on the same page.
 
 If you have bugs to report, check the MAME Testing Project at
 http://mameworld.retrogames.com/mametesters
@@ -417,7 +417,10 @@ options:
 -listclones   list all clones of the specified game
 -noclones     used together with the list commands, doesn't list alternate
               versions of the same game
--verifyroms   check selected game for missing and invalid ROMs.
+-verifyroms   check selected game(s) for missing and invalid ROMs. * checks all
+              available games.
+-verifysets   check selected game(s) and report their status. * checks all
+              available games.
 -verifysamples check selected game for missing samples.
 -romdir       specify an alternate directory/zip name where to load the ROMs
               for the specified game. E.g. "mame pacman -romdir pachack" will

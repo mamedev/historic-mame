@@ -556,7 +556,7 @@ static struct MachineDriver wow_machine_driver =
 
 static int wow_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -583,7 +583,7 @@ static int wow_hiload(void)
 static void wow_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -610,7 +610,7 @@ struct GameDriver driver_wow =
 	rom_wow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wow,
 
@@ -754,7 +754,7 @@ static struct MachineDriver robby_machine_driver =
 
 static int robby_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -782,7 +782,7 @@ static int robby_hiload(void)
 static void robby_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -809,7 +809,7 @@ struct GameDriver driver_robby =
 	rom_robby,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_robby,
 
@@ -969,7 +969,7 @@ static struct MachineDriver gorf_machine_driver =
 
 static int gorf_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -994,7 +994,7 @@ static int gorf_hiload(void)
 static void gorf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1021,7 +1021,7 @@ struct GameDriver driver_gorf =
 	rom_gorf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gorf,
 
@@ -1047,7 +1047,7 @@ struct GameDriver driver_gorfpgm1 =
 	rom_gorfpgm1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gorf,
 
@@ -1159,7 +1159,7 @@ static struct MachineDriver spacezap_machine_driver =
 
 static int spacezap_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if memory has already been initialized */
@@ -1186,7 +1186,7 @@ static int spacezap_hiload(void)
 static void spacezap_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1213,7 +1213,7 @@ struct GameDriver driver_spacezap =
 	rom_spacezap,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacezap,
 
@@ -1359,7 +1359,7 @@ static struct MachineDriver seawolf_machine_driver =
 
 static int seawolf_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1382,7 +1382,7 @@ static int seawolf_hiload(void)
 static void seawolf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1409,7 +1409,7 @@ struct GameDriver driver_seawolf2 =
 	rom_seawolf2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_seawolf2,
 
@@ -1564,7 +1564,7 @@ struct GameDriver driver_ebases =
 	rom_ebases,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ebases,
 

@@ -307,7 +307,7 @@ ROM_END
 
 static void surpratk_banking(int lines)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs = 0;
 
 if (errorlog) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
@@ -321,7 +321,7 @@ static void surpratk_init_machine( void )
 {
 	konami_cpu_setlines_callback = surpratk_banking;
 
-	paletteram = &Machine->memory_region[0][0x48000];
+	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
 }
 
 static void gfx_untangle(void)
@@ -348,7 +348,7 @@ struct GameDriver driver_surpratk =
 	rom_surpratk,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_surpratk,
 

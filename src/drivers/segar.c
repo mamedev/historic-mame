@@ -1418,7 +1418,7 @@ static void pignewt_decode(void)
 
 static int astrob_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1443,7 +1443,7 @@ static int astrob_hiload(void)
 static void astrob_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xCB3F],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1459,7 +1459,7 @@ static void astrob_hisave(void)
 
 static int monsterb_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		static int firsttime = 0;
 
@@ -1491,7 +1491,7 @@ static int monsterb_hiload(void)
 static void monsterb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Hi score memory gets corrupted by the self test */
@@ -1508,7 +1508,7 @@ static void monsterb_hisave(void)
 
 static int s005_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 		static int firsttime = 0;
 
 		if (firsttime == 0)
@@ -1540,7 +1540,7 @@ static int s005_hiload(void)
 static void s005_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xC911],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1556,7 +1556,7 @@ static void s005_hisave(void)
 
 static int spaceod_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xC8F1],"\xE2\x00\x04\x03",4) == 0)
@@ -1579,7 +1579,7 @@ static int spaceod_hiload(void)
 static void spaceod_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Hi score memory gets corrupted by the self test */
 	if (memcmp(&RAM[0xC906],"\xFF\xFF\xFF\xFF",4)==0)
@@ -1596,7 +1596,7 @@ static void spaceod_hisave(void)
 
 static int pignewt_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x12\x54\x83",3)==0)
 	{
@@ -1617,7 +1617,7 @@ static int pignewt_hiload(void)
 
 static int pignewta_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* check if memory has already been initialized */
 	if (memcmp(&RAM[0xCFE7],"PIGNEWTON",9) == 0 && memcmp(&RAM[0xce0c],"\x02\x90\x00",3)==0)
 	{
@@ -1640,7 +1640,7 @@ static int pignewta_hiload(void)
 static void pignewt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Hi score memory gets corrupted by the self test */
@@ -1659,7 +1659,7 @@ static void pignewt_hisave(void)
 /**** Sindbad Mystery high score save - RJF (April 02, 1999) ****/
 static int sindbadm_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if memory has already been initialized */
@@ -1686,7 +1686,7 @@ static int sindbadm_hiload(void)
 static void sindbadm_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -2033,7 +2033,7 @@ struct GameDriver driver_astrob =
 	rom_astrob,
 	astrob_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_astrob,
 
@@ -2059,7 +2059,7 @@ struct GameDriver driver_astrob1 =
 	rom_astrob1,
 	astrob_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_astrob1,
 
@@ -2085,7 +2085,7 @@ struct GameDriver driver_005 =
 	rom_005,
 	s005_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_005,
 
@@ -2111,7 +2111,7 @@ struct GameDriver driver_monsterb =
 	rom_monsterb,
 	monsterb_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_monsterb,
 
@@ -2137,7 +2137,7 @@ struct GameDriver driver_spaceod =
 	rom_spaceod,
 	spaceod_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_spaceod,
 
@@ -2163,7 +2163,7 @@ struct GameDriver driver_pignewt =
 	rom_pignewt,
 	pignewt_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pignewt,
 
@@ -2189,7 +2189,7 @@ struct GameDriver driver_pignewta =
 	rom_pignewta,
 	pignewt_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pignewta,
 

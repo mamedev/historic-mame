@@ -501,7 +501,7 @@ static void frogger_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
@@ -518,7 +518,7 @@ static void frogger2_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	for (A = 0;A < 0x1000;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
@@ -527,7 +527,7 @@ static void frogger2_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -553,7 +553,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -581,7 +581,7 @@ struct GameDriver driver_frogger =
 	rom_frogger,
 	frogger_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frogger,
 
@@ -607,7 +607,7 @@ struct GameDriver driver_frogseg1 =
 	rom_frogseg1,
 	frogger_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frogger,
 
@@ -633,7 +633,7 @@ struct GameDriver driver_frogseg2 =
 	rom_frogseg2,
 	frogger_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frogger,
 
@@ -660,7 +660,7 @@ struct GameDriver driver_froggrmc =
 	rom_frogger2,
 	frogger2_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frogger2,
 

@@ -67,7 +67,6 @@ static char seg_prefix;         /* prefix segment indicator */
 
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
-#define I86_PENDING 0x80
 
 #include "instr.h"
 #include "ea.h"

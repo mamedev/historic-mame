@@ -470,7 +470,7 @@ static void rom_decode(void)
 		Machine->memory_region[3][i] ^= 0xff;
 
 	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
+	memcpy(&Machine->memory_region[1][0x60000], &memory_region(Machine->drv->cpu[0].memory_region)[0x60000], 0x20000);
 }
 
 
@@ -607,7 +607,7 @@ struct GameDriver driver_eprom =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eprom,
 
@@ -634,7 +634,7 @@ struct GameDriver driver_eprom2 =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eprom,
 

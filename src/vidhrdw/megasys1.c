@@ -634,7 +634,7 @@ int old_data, new_data; \
 	if (old_data != new_data) \
 	{ \
 		WRITE_WORD(&megasys1_scrollram_##_n_[offset], new_data); \
-		if (megasys1_tmap_##_n_) \
+		if ( (offset < 0x40000) && (megasys1_tmap_##_n_) )\
 		{ \
 			int page, tile_index, row, col; \
 			if (megasys1_scroll_flag[_n_] & 0x10)	/* tiles are 8x8 */ \

@@ -143,7 +143,7 @@ unsigned char exidy_collision_mask = 0x00;
 
 void fax_bank_select_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank (1, &RAM[0x10000 + (0x2000 * (data & 0x1F))]);
 	cpu_setbankhandler_r (1, MRA_BANK1);
@@ -203,7 +203,7 @@ void spectar_driver_init(void) {
 void mtrap_driver_init(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0xF439]=0xEA;
 	RAM[0xF43A]=0xEA;
 	RAM[0xF43B]=0xEA;
@@ -218,7 +218,7 @@ void mtrap_driver_init(void) {
 void pepper2_driver_init(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0xF52D]=0xEA;
 	RAM[0xF52E]=0xEA;
 	RAM[0xF52F]=0xEA;
@@ -233,14 +233,14 @@ void pepper2_driver_init(void) {
 void venture_driver_init(void) {
 	/* Disable ROM Check for quicker startup (Venture)*/
 	#if 0
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0x8AF4]=0xEA;
 	RAM[0x8AF5]=0xEA;
 	RAM[0x8AF6]=0xEA;
 	#endif
 	/* Disable ROM Check for quicker startup (Venture2)*/
 	#if 0
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0x8B04]=0xEA;
 	RAM[0x8B05]=0xEA;
 	RAM[0x8B06]=0xEA;
@@ -255,7 +255,7 @@ void venture_driver_init(void) {
 void fax_driver_init(void) {
 	/* Disable ROM Check for quicker startup */
 	#if 0
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0xFBFC]=0xEA;
 	RAM[0xFBFD]=0xEA;
 	RAM[0xFBFE]=0xEA;

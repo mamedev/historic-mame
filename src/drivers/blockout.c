@@ -364,7 +364,7 @@ struct GameDriver driver_blockout =
 	rom_blockout,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_blockout,
 
@@ -389,7 +389,7 @@ struct GameDriver driver_blckout2 =
 	rom_blckout2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_blockout,
 

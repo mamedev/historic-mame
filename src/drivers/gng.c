@@ -188,7 +188,7 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void gng_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	static int bank[] = { 0x10000, 0x12000, 0x14000, 0x16000, 0x04000, 0x18000 };
@@ -802,7 +802,7 @@ ROM_END
 
 static int gng_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -836,7 +836,7 @@ static int gng_hiload(void)
 static void gng_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -850,7 +850,7 @@ static void gng_hisave(void)
 
 static int diamond_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* We're just going to blast the hi score table into ROM and be done with it */
@@ -875,7 +875,7 @@ static int diamond_hiload(void)
 static void diamond_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -905,7 +905,7 @@ struct GameDriver driver_gng =
 	rom_gng,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gng,
 
@@ -931,7 +931,7 @@ struct GameDriver driver_gnga =
 	rom_gnga,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gng,
 
@@ -957,7 +957,7 @@ struct GameDriver driver_gngt =
 	rom_gngt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gng,
 
@@ -983,7 +983,7 @@ struct GameDriver driver_makaimur =
 	rom_makaimur,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_makaimur,
 
@@ -1009,7 +1009,7 @@ struct GameDriver driver_makaimuc =
 	rom_makaimuc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_makaimur,
 
@@ -1035,7 +1035,7 @@ struct GameDriver driver_makaimug =
 	rom_makaimug,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_makaimur,
 
@@ -1061,7 +1061,7 @@ struct GameDriver driver_diamond =
 	rom_diamond,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_diamond,
 

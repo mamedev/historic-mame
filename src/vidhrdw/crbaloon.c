@@ -12,7 +12,7 @@
 static int spritectrl[3];
 static int flipscreen;
 
-int BalloonCollision=0;
+int crbaloon_collision;
 
 /***************************************************************************
 
@@ -83,7 +83,8 @@ void crbaloon_flipscreen_w(int offset,int data)
 
 void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,i,j;
+	int offs,x,y;
+	int bx,by;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -120,27 +121,45 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* Check Collision - Draw balloon in background colour, if no */
     /* collision occured, bitmap will be same as tmpbitmap        */
 
+	bx = spritectrl[1];
+	by = spritectrl[2];
+
 	drawgfx(bitmap,Machine->gfx[1],
 			spritectrl[0] & 0x0f,
 			15,
 			0,0,
-			spritectrl[1],spritectrl[2],
+			bx,by,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-    BalloonCollision = 0;
+    crbaloon_collision = 0;
 
-	for (i = 0;i < bitmap->height;i++)
+	for (x = bx; x < bx + Machine->gfx[1]->width; x++)
 	{
-    	for(j = 0;j < bitmap->width;j++)
+		for (y = by; y < by + Machine->gfx[1]->height; y++)
         {
-        	if(bitmap->line[i][j] != tmpbitmap->line[i][j]) BalloonCollision = -1;
+			if ((x < Machine->drv->visible_area.min_x) ||
+			    (x > Machine->drv->visible_area.max_x) ||
+			    (y < Machine->drv->visible_area.min_y) ||
+			    (y > Machine->drv->visible_area.max_y))
+			{
+				continue;
+			}
+
+        	if (read_pixel(bitmap, x, y) != read_pixel(tmpbitmap, x, y))
+        	{
+				crbaloon_collision = -1;
+				break;
+			}
         }
 	}
+
+
+	/* actually draw the balloon */
 
 	drawgfx(bitmap,Machine->gfx[1],
 			spritectrl[0] & 0x0f,
 			(spritectrl[0] & 0xf0) >> 4,
 			0,0,
-			spritectrl[1],spritectrl[2],
+			bx,by,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 }

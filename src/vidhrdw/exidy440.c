@@ -7,7 +7,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define EXIDY440_DEBUG		0
+
+#ifndef INCLUDE_DRAW_CORE
 
 
 /* external globals */
@@ -40,12 +41,8 @@ void exidy440_vh_stop(void);
 void exidy440_update_firq(void);
 void exidy440_update_callback(int param);
 
-static void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset);
-
-
-#if EXIDY440_DEBUG
-static void exidy440_dump_video(void);
-#endif
+static void update_screen_8(struct osd_bitmap *bitmap, int scroll_offset);
+static void update_screen_16(struct osd_bitmap *bitmap, int scroll_offset);
 
 
 
@@ -115,10 +112,6 @@ int exidy440_vh_start(void)
 
 void exidy440_vh_stop(void)
 {
-#if EXIDY440_DEBUG
-	exidy440_dump_video();
-#endif
-
 	/* free VRAM */
 	if (local_videoram)
 		free(local_videoram);
@@ -369,7 +362,98 @@ double compute_pixel_time(int x, int y)
 
 /*************************************
  *
- *	Refresh the screen
+ *	Update handling for shooters
+ *
+ *************************************/
+
+void exidy440_update_callback(int param)
+{
+	/* note: we do most of the work here, because collision detection and beam detection need
+		to happen at 60Hz, whether or not we're frameskipping; in order to do those, we pretty
+		much need to do all the update handling */
+
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+
+	int y, i;
+	int xoffs, yoffs;
+	double time, increment;
+	int beamx, beamy;
+
+	/* make sure color 256 is white for our crosshair */
+	palette_change_color(256, 0xff, 0xff, 0xff);
+
+	/* redraw the screen */
+	if (bitmap->depth == 8)
+		update_screen_8(bitmap, 0);
+	else
+		update_screen_16(bitmap, 0);
+
+	/* update the analog x,y values */
+	beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
+	beamy = ((input_port_5_r(0) & 0xff) * 240) >> 8;
+
+	/* The timing of this FIRQ is very important. The games look for an FIRQ
+		and then wait about 650 cycles, clear the old FIRQ, and wait a
+		very short period of time (~130 cycles) for another one to come in.
+		From this, it appears that they are expecting to get beams over
+		a 12 scanline period, and trying to pick roughly the middle one.
+		This is how it is implemented. */
+	increment = cpu_getscanlineperiod();
+	time = compute_pixel_time(beamx, beamy) - increment * 6;
+	for (i = 0; i <= 12; i++, time += increment)
+		timer_set(time, beamx, beam_firq_callback);
+
+	/* draw a crosshair */
+	xoffs = beamx - 3;
+	yoffs = beamy - 3;
+	for (y = -3; y <= 3; y++, yoffs++, xoffs++)
+	{
+		if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 320)
+		{
+			plot_pixel(bitmap, beamx, yoffs, Machine->pens[256]);
+			scanline_dirty[yoffs] = 1;
+		}
+		if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 240)
+			plot_pixel(bitmap, xoffs, beamy, Machine->pens[256]);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Standard screen refresh callback
+ *
+ *************************************/
+
+void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	/* if we need a full refresh, mark all scanlines dirty */
+	if (full_refresh)
+		memset(scanline_dirty, 1, 256);
+
+	/* if we're Top Secret, do our refresh here; others are done in the update function above */
+	if (exidy440_topsecret)
+	{
+		/* if the scroll changed, mark everything dirty */
+		if (topsecex_yscroll != topsecex_last_yscroll)
+		{
+			topsecex_last_yscroll = topsecex_yscroll;
+			memset(scanline_dirty, 1, 256);
+		}
+
+		/* redraw the screen */
+		if (bitmap->depth == 8)
+			update_screen_8(bitmap, topsecex_yscroll);
+		else
+			update_screen_16(bitmap, topsecex_yscroll);
+	}
+}
+
+
+/*************************************
+ *
+ *		Depth-specific refresh
  *
  *************************************/
 
@@ -381,7 +465,7 @@ double compute_pixel_time(int x, int y)
 		if (orientation & ORIENTATION_SWAP_XY)							\
 		{																\
 			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy;													\
+			xadv = dy / (bitmap->depth / 8);							\
 		}																\
 		if (orientation & ORIENTATION_FLIP_X)							\
 		{																\
@@ -394,10 +478,34 @@ double compute_pixel_time(int x, int y)
 			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
 		}																\
 		/* can't lookup line because it may be negative! */				\
-		dst = bitmap->line[0] + dy * ty + tx;							\
+		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
 	}
 
-void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
+#define INCLUDE_DRAW_CORE
+
+#define DRAW_FUNC update_screen_8
+#define TYPE UINT8
+#include "exidy440.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+#define DRAW_FUNC update_screen_16
+#define TYPE UINT16
+#include "exidy440.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+
+#else
+
+
+/*************************************
+ *
+ *		Core refresh routine
+ *
+ *************************************/
+
+void DRAW_FUNC(struct osd_bitmap *bitmap, int scroll_offset)
 {
 	int orientation = Machine->orientation;
 	int xoffs, yoffs, count;
@@ -421,7 +529,7 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 		if (scanline_dirty[sy])
 		{
 			UINT8 *src = &local_videoram[sy * 512];
-			UINT8 *dst = &bitmap->line[y][0];
+			TYPE *dst = (TYPE *)bitmap->line[y];
 			int xadv = 1;
 
 			/* adjust if we're oriented oddly */
@@ -470,7 +578,7 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 			if (yoffs >= 0 && yoffs < 240)
 			{
 				UINT8 *old = &local_videoram[sy * 512 + xoffs];
-				UINT8 *dst = &bitmap->line[yoffs][xoffs];
+				TYPE *dst = &((TYPE *)bitmap->line[yoffs])[xoffs];
 				int currx = xoffs, xadv = 1;
 
 				/* adjust if we're oriented oddly */
@@ -518,166 +626,6 @@ void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 				src += 8;
 		}
 	}
-}
-
-
-
-/*************************************
- *
- *	Update handling for shooters
- *
- *************************************/
-
-void exidy440_update_callback(int param)
-{
-	/* note: we do most of the work here, because collision detection and beam detection need
-		to happen at 60Hz, whether or not we're frameskipping; in order to do those, we pretty
-		much need to do all the update handling */
-
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-	int y, i;
-	int xoffs, yoffs;
-	double time, increment;
-	int beamx, beamy;
-
-	/* make sure color 256 is white for our crosshair */
-	palette_change_color(256, 0xff, 0xff, 0xff);
-
-	/* redraw the screen */
-	generic_refresh(bitmap, 0);
-
-	/* update the analog x,y values */
-	beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
-	beamy = ((input_port_5_r(0) & 0xff) * 240) >> 8;
-
-	/* The timing of this FIRQ is very important. The games look for an FIRQ
-		and then wait about 650 cycles, clear the old FIRQ, and wait a
-		very short period of time (~130 cycles) for another one to come in.
-		From this, it appears that they are expecting to get beams over
-		a 12 scanline period, and trying to pick roughly the middle one.
-		This is how it is implemented. */
-	increment = cpu_getscanlineperiod();
-	time = compute_pixel_time(beamx, beamy) - increment * 6;
-	for (i = 0; i <= 12; i++, time += increment)
-		timer_set(time, beamx, beam_firq_callback);
-
-	/* draw a crosshair */
-	xoffs = beamx - 3;
-	yoffs = beamy - 3;
-	for (y = -3; y <= 3; y++, yoffs++, xoffs++)
-	{
-		if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 320)
-		{
-			UINT8 *dst = &bitmap->line[yoffs][beamx];
-			int xadv = 1;
-			ADJUST_FOR_ORIENTATION(Machine->orientation, bitmap, dst, beamx, yoffs, xadv);
-			*dst = Machine->pens[256];
-
-			scanline_dirty[yoffs] = 1;
-		}
-		if (xoffs >= 0 && xoffs < 320 && beamy >= 0 && beamy < 240)
-		{
-			UINT8 *dst = &bitmap->line[beamy][xoffs];
-			int xadv = 1;
-			ADJUST_FOR_ORIENTATION(Machine->orientation, bitmap, dst, xoffs, beamy, xadv);
-			*dst = Machine->pens[256];
-		}
-	}
-}
-
-
-
-/*************************************
- *
- *	Standard screen refresh callback
- *
- *************************************/
-
-void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	/* if we need a full refresh, mark all scanlines dirty */
-	if (full_refresh)
-		memset(scanline_dirty, 1, 256);
-
-	/* if we're Top Secret, do our refresh here; others are done in the update function above */
-	if (exidy440_topsecret)
-	{
-		/* if the scroll changed, mark everything dirty */
-		if (topsecex_yscroll != topsecex_last_yscroll)
-		{
-			topsecex_last_yscroll = topsecex_yscroll;
-			memset(scanline_dirty, 1, 256);
-		}
-
-		/* redraw the screen */
-		generic_refresh(bitmap, topsecex_yscroll);
-	}
-}
-
-
-
-/*************************************
- *
- *	Debugging
- *
- *************************************/
-
-#if EXIDY440_DEBUG
-
-void exidy440_dump_video(void)
-{
-	UINT8 *sprite = spriteram;
-	UINT8 *pal = local_paletteram;
-	FILE *f = fopen ("local_videoram.log", "w");
-
-	int x, y;
-	for (y = 0; y < 256; y++)
-	{
-		for (x = 0; x < 256; x++)
-		{
-			char temp[5];
-			sprintf(temp, "%02X", local_videoram[y * 256 + x]);
-			if (temp[0] == '0') temp[0] = '.';
-			if (temp[1] == '0') temp[1] = '.';
-			fprintf (f, "%s", temp);
-			if (x % 16 == 15)
-				fprintf (f, " ");
-		}
-		fprintf (f, "\n");
-	}
-
-	fprintf(f, "\n\nImages:\n");
-	for (y = 0; y < 40; y++, sprite += 4)
-	{
-		int yoffs = (~sprite[0] & 0xff) + 1;
-		int xoffs = (~((sprite[1] << 8) | sprite[2]) & 0x1ff);
-		int image = (~sprite[3] & 0x3f);
-
-		fprintf(f, "X=%03X Y=%02X IMG=%02X (%02X %02X %02X %02X)\n",
-					xoffs, yoffs, image,
-					~sprite[0] & 0xff, ~sprite[1] & 0xff, ~sprite[2] & 0xff, ~sprite[3] & 0xff);
-	}
-
-	fprintf(f, "\n\nPalette Bank 1:\n");
-	for (y = 0; y < 256; y++, pal += 2)
-	{
-		int word = (pal[0] << 8) + pal[1];
-		fprintf(f, " %04X", word);
-		if (y % 16 == 15)
-			fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nPalette Bank 2:\n");
-	for (y = 0; y < 256; y++, pal += 2)
-	{
-		int word = (pal[0] << 8) + pal[1];
-		fprintf(f, " %04X", word);
-		if (y % 16 == 15)
-			fprintf(f, "\n");
-	}
-
-	fclose (f);
 }
 
 #endif

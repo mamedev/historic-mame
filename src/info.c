@@ -1,6 +1,7 @@
 #include <ctype.h>
 
 #include "driver.h"
+#include "sound/samples.h"
 #include "info.h"
 #include "datafile.h"
 
@@ -323,33 +324,39 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	}
 }
 
-#if 0
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
-	if (game->samplenames != 0 && game->samplenames[0] != 0) {
-		int k = 0;
-		if (game->samplenames[k][0]=='*') {
-			/* output sampleof only if different from game name */
-			if (strcmp(game->samplenames[k] + 1, game->name)!=0) {
-				fprintf(out, L1P "sampleof %s" L1N, game->samplenames[k] + 1);
-			}
-			++k;
-		}
-		while (game->samplenames[k] != 0) {
-			/* Check if is not empty */
-			if (*game->samplenames[k]) {
-				/* Check if sample is duplicate */
-				int l = 0;
-				while (l<k && strcmp(game->samplenames[k],game->samplenames[l])!=0)
-					++l;
-				if (l==k) {
-					fprintf(out, L1P "sample %s" L1N, game->samplenames[k]);
+	int i;
+	for( i = 0; game->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
+	{
+		const char **samplenames = NULL;
+		if( game->drv->sound[i].sound_type != SOUND_SAMPLES )
+			continue;
+		samplenames = ((struct Samplesinterface *)game->drv->sound[i].sound_interface)->samplenames;
+		if (samplenames != 0 && samplenames[0] != 0) {
+			int k = 0;
+			if (samplenames[k][0]=='*') {
+				/* output sampleof only if different from game name */
+				if (strcmp(samplenames[k] + 1, game->name)!=0) {
+					fprintf(out, L1P "sampleof %s" L1N, samplenames[k] + 1);
 				}
+				++k;
 			}
-			++k;
+			while (samplenames[k] != 0) {
+				/* Check if is not empty */
+				if (*samplenames[k]) {
+					/* Check if sample is duplicate */
+					int l = 0;
+					while (l<k && strcmp(samplenames[k],samplenames[l])!=0)
+						++l;
+					if (l==k) {
+						fprintf(out, L1P "sample %s" L1N, samplenames[k]);
+					}
+				}
+				++k;
+			}
 		}
 	}
 }
-#endif
 
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
@@ -570,7 +577,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	if (game->rom) /* MESS */
 	print_game_rom(out,game);
-//	print_game_sample(out,game);
+	print_game_sample(out,game);
 	print_game_micro(out,game);
 	print_game_video(out,game);
 	print_game_sound(out,game);

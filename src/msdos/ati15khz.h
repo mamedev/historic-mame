@@ -124,17 +124,18 @@
 /* bit in clock register for strobing */
 #define CLOCK_STROBE	0x40
 
-/* our 3 driver functions */
+/* our 4 driver functions */
 int detectati(void);
+int widthati15KHz(int width);
 int setati15KHz(int vdouble,int width,int height);
 void resetati15KHz(void);
 
 /* internal functions */
 int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int *N,int *P,int *externaldiv,int *nActualMHz);
-int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,int *vTotal);
+int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,int *vTotal,int *nVSyncOffset,int *nlastline);
 int calc_mach64_clock(int nTargetMHz,int *N,int *P,int *externaldiv);
 int get_mach64_port(int io_type, int io_base, int io_sel, int mm_sel);
 /* DSP */
-int setmach64DSP(void);
+int setmach64DSP(int nAdd);
 void resetmach64DSP(void);
 

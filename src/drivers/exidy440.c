@@ -317,7 +317,7 @@ static int main_interrupt(void)
 static void init_machine(void)
 {
 	exidy440_bank = 0;
-	cpu_setbank(1, &Machine->memory_region[0][0x10000]);
+	cpu_setbank(1, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000]);
 
 	last_coins = input_port_3_r(0) & 3;
 	coin_state = 3;
@@ -362,7 +362,7 @@ static void bankram_w(int offset, int data)
 	/* EEROM lives in the upper 8k of bank 15 */
 	if (exidy440_bank == 15 && offset >= 0x2000)
 	{
-		Machine->memory_region[0][0x10000 + 15 * 0x4000 + offset] = data;
+		memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + offset] = data;
 		if (errorlog) fprintf(errorlog, "W EEROM[%04X] = %02X\n", offset - 0x2000, data);
 	}
 
@@ -510,7 +510,7 @@ int showdown_pld_trigger_r(int offset)
 		showdown_bank_triggered = 1;
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
+	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x0055 + offset];
 }
 
 
@@ -528,11 +528,11 @@ int showdown_pld_select1_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&Machine->memory_region[0][0x10000], bankdata, 0x18);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
+	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x00ed + offset];
 }
 
 
@@ -550,11 +550,11 @@ int showdown_pld_select2_r(int offset)
 
 		/* clear the trigger and copy the expected 24 bytes to the RAM area */
 		showdown_bank_triggered = 0;
-		memcpy(&Machine->memory_region[0][0x10000], bankdata, 0x18);
+		memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000], bankdata, 0x18);
 	}
 
 	/* just return the value from the current bank */
-	return Machine->memory_region[0][0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
+	return memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + exidy440_bank * 0x4000 + 0x1243 + offset];
 }
 
 
@@ -1135,11 +1135,11 @@ static int hiload(void)
 	if (f)
 	{
 		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fread(f, &Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		osd_fread(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
 		osd_fclose(f);
 	}
 	else
-		memset(&Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
+		memset(&memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0, 0x2000);
 
 	return 1;
 }
@@ -1150,7 +1150,7 @@ static void hisave(void)
 	if (f)
 	{
 		/* the EEROM lives in the uppermost 8k of the top bank */
-		osd_fwrite(f, &Machine->memory_region[0][0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
+		osd_fwrite(f, &memory_region(Machine->drv->cpu[0].memory_region)[0x10000 + 15 * 0x4000 + 0x2000], 0x2000);
 		osd_fclose(f);
 	}
 }
@@ -1787,7 +1787,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##name,						\
 												\
@@ -1814,7 +1814,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##cloneof,					\
 												\

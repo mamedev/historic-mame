@@ -464,6 +464,28 @@ ROM_START( ironhors )
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
+ROM_START( dairesya )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "560-k03.13c",  0x4000, 0x8000, 0x2ac6103b )
+	ROM_LOAD( "560-k02.12c",  0xc000, 0x4000, 0x07bc13a9 )
+
+	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "560-k07.9f",   0x00000, 0x8000, 0xc8a1b840 )
+	ROM_LOAD( "560-k04.6f",   0x08000, 0x8000, 0xc883d856 )
+	ROM_LOAD( "560-j06.8f",   0x10000, 0x8000, 0xa6e8248d )
+	ROM_LOAD( "560-j05.7f",   0x18000, 0x8000, 0xf75893d4 )
+
+	ROM_REGIONX( 0x0500, REGION_PROMS )
+	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
+	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
+	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
+	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
+	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for audio cpu */
+	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
+ROM_END
+
 ROM_START( farwest )
 	ROM_REGION(0x12000)	/* 64k for code + 8k for extra ROM */
 	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
@@ -492,7 +514,7 @@ ROM_END
 
 static int hiload(void) /* HSC 12/29/98 */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -516,7 +538,7 @@ static int hiload(void) /* HSC 12/29/98 */
 static void hisave(void) /* HSC 12/29/98 */
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -542,6 +564,32 @@ struct GameDriver driver_ironhors =
 	0,
 
 	rom_ironhors,
+	0, 0,
+	0,
+	0,
+
+	input_ports_ironhors,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver driver_dairesya =
+{
+	__FILE__,
+	&driver_ironhors,
+	"dairesya",
+	"Dai-ressya Goutou (Japan)",
+	"1986",
+	"[Konami] (Kawakusu license)",
+	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
+	0,
+	&ironhors_machine_driver,
+	0,
+
+	rom_dairesya,
 	0, 0,
 	0,
 	0,

@@ -942,9 +942,9 @@ static void roadblst_rom_decode(void)
 	/* We need to swap the memory at 20000 and 50000 */
 	for (i = 0; i < 0x10000; i++)
 	{
-		int temp = Machine->memory_region[0][0x20000 + i];
-		Machine->memory_region[0][0x20000 + i] = Machine->memory_region[0][0x50000 + i];
-		Machine->memory_region[0][0x50000 + i] = temp;
+		int temp = memory_region(Machine->drv->cpu[0].memory_region)[0x20000 + i];
+		memory_region(Machine->drv->cpu[0].memory_region)[0x20000 + i] = memory_region(Machine->drv->cpu[0].memory_region)[0x50000 + i];
+		memory_region(Machine->drv->cpu[0].memory_region)[0x50000 + i] = temp;
 	}
 
 	/* invert the graphics bits on the playfield and motion objects */
@@ -1566,7 +1566,7 @@ ROM_END
 		decoder,								\
 		0,										\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##name,						\
 												\
@@ -1596,7 +1596,7 @@ ROM_END
 		rom_decode,								\
 		0,										\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##cloneof,					\
 												\

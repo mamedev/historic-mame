@@ -1609,7 +1609,7 @@ static struct MachineDriver joust2_machine_driver =
 
 static int cmos_load(void)
 {
-	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 
 	if (f)
@@ -1624,7 +1624,7 @@ static int cmos_load(void)
 
 static void cmos_save(void)
 {
-	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	UINT8 *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 
 	if (f)
@@ -1690,7 +1690,7 @@ static void defndjeu_init(void)
 	ROMD.BIN    IC04-4.BIN            DFNDR-D.ROM           21
 */
 
-	UINT8 *rom = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	UINT8 *rom = memory_region(Machine->drv->cpu[0].memory_region);
 	int x;
 
 	for (x = 0xd000; x < 0x15000; x++)
@@ -2587,7 +2587,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##name,						\
 												\
@@ -2616,7 +2616,7 @@ ROM_END
 		rom_##name,								\
 		0, 0,									\
 		0,										\
-		0,	/* sound_prom */					\
+		0,						\
 												\
 		input_ports_##initports,				\
 												\

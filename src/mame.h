@@ -27,7 +27,10 @@ struct RunningMachine
 							/* use this array to get the pen number. For example, */
 							/* if you want to use color #6 in the palette, use */
 							/* pens[6] instead of just 6. */
-	unsigned short *colortable;	/* lookup table used to map gfx pen numbers to palette pen numbers */
+	unsigned short *game_colortable;	/* lookup table used to map gfx pen numbers */
+										/* to color numbers */
+	unsigned short *remapped_colortable;	/* the above, already remapped through */
+											/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	int color_depth;	/* video color depth: 8 or 16 */

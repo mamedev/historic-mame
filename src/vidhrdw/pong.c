@@ -74,7 +74,7 @@ static int vpos_h;		   /* debug */
 
 INLINE void pong_hit_detector(void);
 INLINE void pong_vertical_velocity(void);
-INLINE void pong_7seg(UINT8 *bmp, UINT16 pixel, int H0, int n);
+INLINE void pong_7seg(int H0, int n);
 
 int pong_vh_start(void)
 {
@@ -175,6 +175,8 @@ void pong_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		{
 			STOP_G = 0;
 			ATRACT = 1;
+			score1 = 0;
+			score2 = 0;
 			if( serve_timer == NULL )
 			{
 				/* monoflop (NE555/G4) with a 330 kOhms resistor and 4.7 æF capacitor */
@@ -186,11 +188,12 @@ void pong_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	fillbitmap(tmpbitmap, Machine->pens[0], &Machine->drv->visible_area);
 
-    /* Reset the VPAD timers */
+	/* reset the VPAD timers */
 	vpad1_timer = 0;
 	vpad2_timer = 0;
 
-	hit_vbl_0 = hit_vbl_q;
+	/* save state of the vblank flip-flop 74107/A2 */
+    hit_vbl_0 = hit_vbl_q;
 
     if( errorlog )
 		fprintf(errorlog, "pong_vh_screenrefresh at H:%d, V:%d\n", cpu_get_reg(GS_H), cpu_get_reg(GS_V));
@@ -269,6 +272,7 @@ void pong_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 #define VBLANK	(V < PONG_VBLANK)
 
+
 /******* VERTICAL SYNC *******************************************************
  * The VERTICAL SYNC counters are incremented once per scanline
  * We emulate this by calling pong_vh_scanline() 262 times per frame
@@ -276,13 +280,10 @@ void pong_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 int pong_vh_scanline(void)
 {
 	int HRESET, H;
-
-    UINT8 *bmp;
+	int pen1 = Machine->pens[1];
 
 	if( V >= PONG_MAX_V )
 		return ignore_interrupt();
-
-    bmp = tmpbitmap->line[V];
 
 /******* THE NET *************************************************************
  * I'll try to start with the simpler things:
@@ -297,8 +298,8 @@ int pong_vh_scanline(void)
  * for (H == 256) and ((V & 4) == 0) for every non-blanked
  * scanline (scanlines 16...260).
  *****************************************************************************/
-	if( !V4 )
-		bmp[256] = Machine->pens[1];
+	if( !V4 && !VBLANK )
+		plot_pixel(tmpbitmap, 256, V, pen1);
 
 /******* THE SCORE ***********************************************************
  * The score for both players is counted using a decade
@@ -352,10 +353,10 @@ int pong_vh_scanline(void)
          * checking the expression for the E2/E3 gates,
          * we call a decoding function with appropriate X offsets.
          */
-        pong_7seg(bmp, Machine->pens[2], 128, score1 > 9 ? 1 : 15);
-        pong_7seg(bmp, Machine->pens[2], 128 + 32, score1 % 10);
-        pong_7seg(bmp, Machine->pens[2], 256 + 32, score2 > 9 ? 1 : 15);
-        pong_7seg(bmp, Machine->pens[2], 256 + 32 + 32, score2 % 10);
+		pong_7seg(128, score1 > 9 ? 1 : 15);
+		pong_7seg(128 + 32, score1 % 10);
+		pong_7seg(256 + 32, score2 > 9 ? 1 : 15);
+		pong_7seg(256 + 32 + 32, score2 % 10);
     }
 
 
@@ -405,7 +406,14 @@ int pong_vh_scanline(void)
 		/* check for the left VPAD */
 		if( VPAD1 )
 		{
-			memset(&bmp[128], Machine->pens[1], 8);
+			plot_pixel(tmpbitmap, 128+0, V, pen1);
+			plot_pixel(tmpbitmap, 128+1, V, pen1);
+			plot_pixel(tmpbitmap, 128+2, V, pen1);
+			plot_pixel(tmpbitmap, 128+3, V, pen1);
+			plot_pixel(tmpbitmap, 128+4, V, pen1);
+			plot_pixel(tmpbitmap, 128+5, V, pen1);
+			plot_pixel(tmpbitmap, 128+6, V, pen1);
+			plot_pixel(tmpbitmap, 128+7, V, pen1);
 			vpad1_count += 1;
 		}
 		else
@@ -422,8 +430,15 @@ int pong_vh_scanline(void)
 		/* check for the right VPAD */
 		if( VPAD2 )
 		{
-			memset(&bmp[256+128], Machine->pens[1], 8);
-			vpad2_count += 1;
+			plot_pixel(tmpbitmap, 256+128+0, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+1, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+2, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+3, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+4, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+5, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+6, V, pen1);
+			plot_pixel(tmpbitmap, 256+128+7, V, pen1);
+            vpad2_count += 1;
 		}
 		else
 		/* it isn't, was the timer fired already? */
@@ -541,8 +556,7 @@ int pong_vh_scanline(void)
 					hit_sound = 0;
 				}
 			}
-		}
-
+        }
 		/* If VBLANK is not active */
 		if( !VBLANK )
 		{
@@ -551,12 +565,12 @@ int pong_vh_scanline(void)
 		}
 
 		if( V == PONG_VBLANK )
-        {
+		{
             /* eventually enable hit VBLANK sound */
-            pong_vblank_sound = hit_vblank;
-            hit_vblank = 0;
-        }
-
+			if( hit_vblank > 0 )
+				hit_vblank--;
+			pong_vblank_sound = hit_vblank;
+		}
 
         /*
 		 * output of 7410 E2.2
@@ -575,7 +589,7 @@ int pong_vh_scanline(void)
 				 * A2.1 is cleared by any of the HIT1 or HIT2 signals.
 				 */
 				hit_vbl_q = hit_vbl_0 ^ 1;
-				pong_vblank_sound = hit_vblank = 1;
+				hit_vblank = 2;
 			}
 
 /******* HORIZONTAL SYNC *****************************************************
@@ -642,14 +656,11 @@ int pong_vh_scanline(void)
 							/* on a falling edge of RC output of H7: toggle the JK flip-flop */
 							if( hpos_b == 0 )
 								hpos_c ^= 1;
-						}
-
+                        }
 						/* increment the HORIZONTAL POSITION counter A (9316/G7) */
 						hpos_a = ++hpos_a % 16;
-					}
-
+                    }
                 }
-
 				/*
 				 * Output of 7410/E2.2
 				 * Are bits 2+3 of counter A, RC of counter B and the JK flip-flop active?
@@ -659,7 +670,7 @@ int pong_vh_scanline(void)
                 if( HVID && VVID )
 				{
 					if( !VBLANK )
-						bmp[H] = Machine->pens[1];
+						plot_pixel(tmpbitmap, H, V, pen1);
 #ifdef	MAME_DEBUG
 					if( vpos_a == 12 ) vpos = V;	/* first scanline of VVID */
 					if( hpos_a == 12 ) hpos = H;	/* first pixel of HVID */
@@ -818,7 +829,7 @@ INLINE void pong_vertical_velocity(void)
  * draw them into PONG's screenbitmap using the logic from the
  * schematics.
  */
-INLINE void pong_7seg(UINT8 *bmp, UINT16 pixel, int h0, int n)
+INLINE void pong_7seg(int h0, int n)
 {
 	/*
 	 * This is what an 7448 chip produces at it's outputs
@@ -869,7 +880,13 @@ INLINE void pong_7seg(UINT8 *bmp, UINT16 pixel, int h0, int n)
 		int score = (!a || !b || !c || !d || !e || !f || !g);
 
 		if( score )
-			bmp[H] = bmp[H+1] = bmp[H+2] = bmp[H+3] = pixel;
+		{
+			int pen2 = Machine->pens[2];
+			plot_pixel(tmpbitmap, H + 0, V, pen2);
+			plot_pixel(tmpbitmap, H + 1, V, pen2);
+			plot_pixel(tmpbitmap, H + 2, V, pen2);
+			plot_pixel(tmpbitmap, H + 3, V, pen2);
+		}
     }
 }
 

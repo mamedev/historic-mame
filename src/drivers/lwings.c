@@ -662,7 +662,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -691,7 +691,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -719,7 +719,7 @@ struct GameDriver driver_lwings =
 	rom_lwings,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lwings,
 
@@ -744,7 +744,7 @@ struct GameDriver driver_lwings2 =
 	rom_lwings2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lwings,
 
@@ -769,7 +769,7 @@ struct GameDriver driver_lwingsjp =
 	rom_lwingsjp,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lwings,
 
@@ -857,7 +857,7 @@ struct GameDriver driver_sectionz =
 	rom_sectionz,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sectionz,
 
@@ -882,7 +882,7 @@ struct GameDriver driver_sctionza =
 	rom_sctionza,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_sectionz,
 
@@ -1144,7 +1144,7 @@ ROM_END
 
 static int trojan_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1170,7 +1170,7 @@ static int trojan_hiload(void)
 static void trojan_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1198,7 +1198,7 @@ struct GameDriver driver_trojan =
 	rom_trojan,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_trojanls,
 
@@ -1223,7 +1223,7 @@ struct GameDriver driver_trojanr =
 	rom_trojanr,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_trojan,
 
@@ -1248,7 +1248,7 @@ struct GameDriver driver_trojanj =
 	rom_trojanj,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_trojan,
 
@@ -1518,7 +1518,7 @@ struct GameDriver driver_avengers =
 	rom_avengers,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_avengers,
 
@@ -1543,7 +1543,7 @@ struct GameDriver driver_avenger2 =
 	rom_avenger2,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_avengers,
 

@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
+#ifndef INCLUDE_DRAW_CORE
 
 /*************************************
  *
@@ -47,6 +47,8 @@ static UINT8 palettebank_vis;
 
 void balsente_vh_stop(void);
 
+static void update_screen_8(struct osd_bitmap *bitmap, int full_refresh);
+static void update_screen_16(struct osd_bitmap *bitmap, int full_refresh);
 
 
 /*************************************
@@ -226,33 +228,8 @@ void balsente_paletteram_w(int offset, int data)
  *
  *************************************/
 
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy;													\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = bitmap->line[0] + dy * ty + tx;							\
-	}
-
 void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int orientation = Machine->orientation;
 	UINT8 palette_used[4];
 	int x, y, i;
 
@@ -280,6 +257,94 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (palette_recalc())
 		memset(scanline_dirty, 1, 256);
 
+	/* do the core redraw */
+	if (bitmap->depth == 8)
+		update_screen_8(bitmap, full_refresh);
+	else
+		update_screen_16(bitmap, full_refresh);
+
+	/* draw a crosshair */
+	if (balsente_shooter)
+	{
+		int beamx = balsente_shooter_x;
+		int beamy = balsente_shooter_y - 12;
+
+		int xoffs = beamx - 3;
+		int yoffs = beamy - 3;
+
+		for (y = -3; y <= 3; y++, yoffs++, xoffs++)
+		{
+			if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 256)
+			{
+				plot_pixel(bitmap, beamx, yoffs, Machine->pens[1024]);
+				scanline_dirty[yoffs] = 1;
+			}
+			if (xoffs >= 0 && xoffs < 256 && beamy >= 0 && beamy < 240)
+				plot_pixel(bitmap, xoffs, beamy, Machine->pens[1024]);
+		}
+	}
+}
+
+
+/*************************************
+ *
+ *		Depth-specific refresh
+ *
+ *************************************/
+
+#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
+	if (orientation)													\
+	{																	\
+		int dy = bitmap->line[1] - bitmap->line[0];						\
+		int tx = x, ty = y, temp;										\
+		if (orientation & ORIENTATION_SWAP_XY)							\
+		{																\
+			temp = tx; tx = ty; ty = temp;								\
+			xadv = dy / (bitmap->depth / 8);							\
+		}																\
+		if (orientation & ORIENTATION_FLIP_X)							\
+		{																\
+			tx = bitmap->width - 1 - tx;								\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		if (orientation & ORIENTATION_FLIP_Y)							\
+		{																\
+			ty = bitmap->height - 1 - ty;								\
+			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																\
+		/* can't lookup line because it may be negative! */				\
+		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
+	}
+
+#define INCLUDE_DRAW_CORE
+
+#define DRAW_FUNC update_screen_8
+#define TYPE UINT8
+#include "balsente.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+#define DRAW_FUNC update_screen_16
+#define TYPE UINT16
+#include "balsente.c"
+#undef TYPE
+#undef DRAW_FUNC
+
+
+#else
+
+
+/*************************************
+ *
+ *		Core refresh routine
+ *
+ *************************************/
+
+void DRAW_FUNC(struct osd_bitmap *bitmap, int full_refresh)
+{
+	int orientation = Machine->orientation;
+	int x, y, i;
+
 	/* draw any dirty scanlines from the VRAM directly */
 	for (y = 0; y < 240; y++)
 	{
@@ -287,7 +352,7 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (scanline_dirty[y] || full_refresh)
 		{
 			UINT8 *src = &local_videoram[y * 256];
-			UINT8 *dst = &bitmap->line[y][0];
+			TYPE *dst = (TYPE *)bitmap->line[y];
 			int xadv = 1;
 
 			/* adjust in case we're oddly oriented */
@@ -321,7 +386,7 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			{
 				UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
 				UINT8 *old = &local_videoram[ypos * 256 + xpos];
-				UINT8 *dst = &bitmap->line[ypos][xpos];
+				TYPE *dst = &((TYPE *)bitmap->line[ypos])[xpos];
 				int currx = xpos, xadv = 1;
 
 				/* adjust in case we're oddly oriented */
@@ -400,33 +465,6 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			if (flags & 0x80) src -= 2 * 4;
 		}
 	}
-
-	/* draw a crosshair */
-	if (balsente_shooter)
-	{
-		int beamx = balsente_shooter_x;
-		int beamy = balsente_shooter_y - 12;
-
-		int xoffs = beamx - 3;
-		int yoffs = beamy - 3;
-
-		for (y = -3; y <= 3; y++, yoffs++, xoffs++)
-		{
-			if (yoffs >= 0 && yoffs < 240 && beamx >= 0 && beamx < 256)
-			{
-				UINT8 *dst = &bitmap->line[yoffs][beamx];
-				int xadv = 1;
-				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, beamx, yoffs, xadv);
-				*dst = Machine->pens[1024];
-				scanline_dirty[yoffs] = 1;
-			}
-			if (xoffs >= 0 && xoffs < 256 && beamy >= 0 && beamy < 240)
-			{
-				UINT8 *dst = &bitmap->line[beamy][xoffs];
-				int xadv = 1;
-				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xoffs, beamy, xadv);
-				*dst = Machine->pens[1024];
-			}
-		}
-	}
 }
+
+#endif

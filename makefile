@@ -68,6 +68,7 @@ CPUS+=M6802@
 CPUS+=M6803@
 CPUS+=M6808@
 CPUS+=HD63701@
+CPUS+=NSC8105@
 CPUS+=M6805@
 CPUS+=M68705@
 CPUS+=HD63705@
@@ -102,6 +103,7 @@ SOUNDS+=YM3438@
 SOUNDS+=YM2413@
 SOUNDS+=YM3812@
 SOUNDS+=YM3526@
+SOUNDS+=Y8950@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 #SOUNDS+=TIA@
@@ -115,12 +117,15 @@ SOUNDS+=OKIM6295@
 SOUNDS+=MSM5205@
 SOUNDS+=UPD7759@
 SOUNDS+=HC55516@
+SOUNDS+=K005289@
 SOUNDS+=K007232@
+SOUNDS+=K051649@
 SOUNDS+=K053260@
 SOUNDS+=SEGAPCM@
 SOUNDS+=RF5C68@
 SOUNDS+=CEM3394@
 SOUNDS+=C140@
+SOUNDS+=QSOUND@
 endif
 
 
@@ -315,6 +320,13 @@ endif
 CPU=$(strip $(findstring HD63701@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_HD63701=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring NSC8105@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_NSC8105=1
 CPUOBJS += obj/cpu/m6800/m6800.o
 DBGOBJS += obj/cpu/m6800/6800dasm.o
 endif
@@ -550,6 +562,12 @@ SOUNDDEFS += -DHAS_YM3526=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o obj/sound/fmopl.o
 endif
 
+SOUND=$(strip $(findstring Y8950@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_Y8950=1
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/fmopl.o obj/sound/ymdeltat.o
+endif
+
 SOUND=$(strip $(findstring SN76496@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SN76496=1
@@ -628,10 +646,22 @@ SOUNDDEFS += -DHAS_HC55516=1
 SOUNDOBJS += obj/sound/hc55516.o
 endif
 
+SOUND=$(strip $(findstring K005289@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_K005289=1
+SOUNDOBJS += obj/sound/k005289.o
+endif
+
 SOUND=$(strip $(findstring K007232@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_K007232=1
 SOUNDOBJS += obj/sound/k007232.o
+endif
+
+SOUND=$(strip $(findstring K051649@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_K051649=1
+SOUNDOBJS += obj/sound/k051649.o
 endif
 
 SOUND=$(strip $(findstring K053260@,$(SOUNDS)))
@@ -662,6 +692,12 @@ SOUND=$(strip $(findstring C140@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_C140=1
 SOUNDOBJS += obj/sound/c140.o
+endif
+
+SOUND=$(strip $(findstring QSOUND@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_QSOUND=1
+SOUNDOBJS += obj/sound/qsound.o
 endif
 
 
@@ -712,13 +748,14 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o \
          obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/gfxobj.o \
-		 obj/state.o obj/datafile.o \
+         obj/state.o obj/datafile.o \
          $(sort $(CPUOBJS)) \
          obj/sndintrf.o \
-		 obj/sound/streams.o obj/sound/mixer.o \
+         obj/sound/streams.o obj/sound/mixer.o \
          $(sort $(SOUNDOBJS)) \
-		 obj/sound/votrax.o \
+         obj/sound/votrax.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
+         obj/machine/8255ppi.o \
          obj/vidhrdw/generic.o obj/vidhrdw/vector.o \
          obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
          obj/machine/ticket.o \
@@ -731,14 +768,14 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
          obj/midw8080.a obj/midwz80.a obj/meadows.a obj/midway.a \
          obj/irem.a obj/gottlieb.a obj/taito.a obj/toaplan.a \
-		 obj/kyugo.a obj/williams.a obj/gremlin.a obj/vicdual.a \
+         obj/kyugo.a obj/williams.a obj/gremlin.a obj/vicdual.a \
          obj/capcom.a obj/capbowl.a obj/leland.a \
          obj/sega.a obj/dataeast.a obj/tehkan.a obj/konami.a \
          obj/exidy.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
-         obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
-         obj/tad.a obj/orca.a obj/other.a \
+         obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/visco.a \
+         obj/orca.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -854,7 +891,9 @@ obj/namco.a: \
          obj/machine/mappy.o obj/vidhrdw/mappy.o obj/drivers/mappy.o \
          obj/machine/grobda.o obj/vidhrdw/grobda.o obj/drivers/grobda.o \
          obj/machine/gaplus.o obj/vidhrdw/gaplus.o obj/drivers/gaplus.o \
+         obj/machine/polepos.o obj/vidhrdw/polepos.o obj/sndhrdw/polepos.o obj/drivers/polepos.o \
          obj/vidhrdw/pacland.o obj/drivers/pacland.o \
+         obj/vidhrdw/skykid.o obj/drivers/skykid.o \
          obj/vidhrdw/baraduke.o obj/drivers/baraduke.o \
          obj/vidhrdw/namcos86.o obj/drivers/namcos86.o \
          obj/machine/namcos1.o obj/vidhrdw/namcos1.o obj/drivers/namcos1.o \
@@ -928,9 +967,8 @@ obj/taito.a: \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
-		 obj/drivers/kageki.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
-		 obj/vidhrdw/footchmp.o obj/drivers/footchmp.o \
+         obj/vidhrdw/footchmp.o obj/drivers/footchmp.o \
          obj/drivers/lkage.o obj/vidhrdw/lkage.o \
          obj/vidhrdw/taitol.o obj/drivers/taitol.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
@@ -970,7 +1008,7 @@ obj/capcom.a: \
          obj/machine/kabuki.o obj/machine/eeprom.o \
          obj/vidhrdw/mitchell.o obj/drivers/mitchell.o \
          obj/vidhrdw/cbasebal.o obj/drivers/cbasebal.o \
-         obj/vidhrdw/cps1.o obj/drivers/cps1.o obj/sndhrdw/cpsq.o \
+         obj/vidhrdw/cps1.o obj/drivers/cps1.o \
 
 obj/capbowl.a: \
          obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/vidhrdw/tms34061.o obj/drivers/capbowl.o \
@@ -1098,7 +1136,7 @@ obj/exidy.a: \
 obj/atari.a: \
          obj/machine/atari_vg.o \
          obj/machine/asteroid.o obj/sndhrdw/asteroid.o \
-		 obj/vidhrdw/llander.o obj/drivers/asteroid.o \
+         obj/vidhrdw/llander.o obj/drivers/asteroid.o \
          obj/drivers/bwidow.o \
          obj/sndhrdw/bzone.o  obj/drivers/bzone.o \
          obj/sndhrdw/redbaron.o \
@@ -1126,7 +1164,6 @@ obj/atari.a: \
          obj/machine/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/drivers/arabian.o \
          obj/machine/missile.o obj/vidhrdw/missile.o obj/drivers/missile.o \
-         obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
          obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
          obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
@@ -1225,6 +1262,11 @@ obj/seibu.a: \
          obj/vidhrdw/raiden.o obj/drivers/raiden.o \
          obj/vidhrdw/dcon.o obj/drivers/dcon.o \
 
+obj/tad.a: \
+         obj/vidhrdw/cabal.o obj/drivers/cabal.o \
+         obj/vidhrdw/toki.o obj/drivers/toki.o \
+         obj/vidhrdw/bloodbro.o obj/drivers/bloodbro.o \
+
 obj/jaleco.a: \
          obj/vidhrdw/exerion.o obj/drivers/exerion.o \
          obj/vidhrdw/aeroboto.o obj/drivers/aeroboto.o \
@@ -1232,6 +1274,7 @@ obj/jaleco.a: \
          obj/vidhrdw/psychic5.o obj/drivers/psychic5.o \
          obj/vidhrdw/ginganin.o obj/drivers/ginganin.o \
          obj/vidhrdw/megasys1.o obj/drivers/megasys1.o \
+         obj/vidhrdw/cischeat.o obj/drivers/cischeat.o \
 
 obj/visco.a: \
          obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
@@ -1239,11 +1282,6 @@ obj/visco.a: \
 obj/leland.a: \
          obj/machine/8254pit.o obj/vidhrdw/leland.o obj/drivers/leland.o \
          obj/drivers/ataxx.o \
-
-obj/tad.a: \
-         obj/vidhrdw/cabal.o obj/drivers/cabal.o \
-         obj/vidhrdw/toki.o obj/drivers/toki.o \
-         obj/vidhrdw/bloodbro.o obj/drivers/bloodbro.o \
 
 obj/orca.a: \
          obj/vidhrdw/marineb.o obj/drivers/marineb.o \

@@ -46,9 +46,18 @@ void backdrop_refresh(struct artwork *a)
 	height = a->artwork->height;
 	width = a->artwork->width;
 
-	for ( j=0; j<height; j++)
-		for (i=0; i<width; i++)
-			back->line[j][i] = Machine->pens[orig->line[j][i]+offset];
+	if (back->depth == 8)
+	{
+		for ( j=0; j<height; j++)
+			for (i=0; i<width; i++)
+				back->line[j][i] = Machine->pens[orig->line[j][i]+offset];
+	}
+	else
+	{
+		for ( j=0; j<height; j++)
+			for (i=0; i<width; i++)
+				((unsigned short *)back->line[j])[i] = Machine->pens[((unsigned short *)orig->line[j])[i]+offset];
+	}
 }
 
 /*********************************************************************
@@ -149,8 +158,6 @@ void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,i
 					const struct rectangle *clip)
 {
 	int ox,oy,ex,ey,y,start,dy;
-	const unsigned char *sd;
-	unsigned char *bm,*bme;
 	/*  int col;
 		int *sd4;
 		int trans4,col4;*/
@@ -238,18 +245,43 @@ void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,i
 	start = sy-oy;
 	dy = 1;
 
-	for (y = sy;y <= ey;y++)
+	if (dest->depth == 8)
 	{
-		bm = dest->line[y];
-		bme = bm + ex;
-		sd = src->line[start] + (sx-ox);
-		for( bm = bm+sx ; bm <= bme ; bm++ )
+		for (y = sy;y <= ey;y++)
 		{
-			if (isblack[*bm])
-				*bm = *sd;
-			sd++;
+			const unsigned char *sd;
+			unsigned char *bm,*bme;
+
+			bm = dest->line[y];
+			bme = bm + ex;
+			sd = src->line[start] + (sx-ox);
+			for( bm = bm+sx ; bm <= bme ; bm++ )
+			{
+				if (isblack[*bm])
+					*bm = *sd;
+				sd++;
+			}
+			start+=dy;
 		}
-		start+=dy;
+	}
+	else
+	{
+		for (y = sy;y <= ey;y++)
+		{
+			const unsigned short *sd;
+			unsigned short *bm,*bme;
+
+			bm = (unsigned short *)dest->line[y];
+			bme = bm + ex;
+			sd = ((unsigned short *)src->line[start]) + (sx-ox);
+			for( bm = bm+sx ; bm <= bme ; bm++ )
+			{
+				if (isblack[*bm])
+					*bm = *sd;
+				sd++;
+			}
+			start+=dy;
+		}
 	}
 }
 
@@ -269,13 +301,10 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 {
 	int ox,oy,ex,ey,y,start,dy;
 	const unsigned char *sd;
-	unsigned char *bm,*bme;
 	/*int col;
 	  int *sd4;
 	  int trans4,col4;*/
 	struct rectangle myclip;
-
-	const unsigned char *sb;
 
 	if (!gfx) return;
 
@@ -373,93 +402,195 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 
 
-	if (gfx->colortable)	/* remap colors */
+	if (dest->depth == 8)
 	{
-		const unsigned short *paldata;	/* ASG 980209 */
+		unsigned char *bm,*bme;
+		const unsigned char *sb;
 
-		paldata = &gfx->colortable[gfx->color_granularity * color];
-
-		if (flipx)	/* X flip */
+		if (gfx->colortable)	/* remap colors */
 		{
-			for (y = sy;y <= ey;y++)
+			const unsigned short *paldata;	/* ASG 980209 */
+
+			paldata = &gfx->colortable[gfx->color_granularity * color];
+
+			if (flipx)	/* X flip */
 			{
-				bm  = dest->line[y];
-				bme = bm + ex;
-				sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
-                sb = back->line[y] + sx;
-				for( bm += sx ; bm <= bme ; bm++ )
+				for (y = sy;y <= ey;y++)
 				{
-					if (isblack[paldata[*sd]])
-                        *bm = *sb;
-                    else
-						*bm = paldata[*sd];
-					sd--;
-                    sb++;
+					bm  = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
+    	            sb = back->line[y] + sx;
+					for( bm += sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[paldata[*sd]])
+    	                    *bm = *sb;
+    	                else
+							*bm = paldata[*sd];
+						sd--;
+    	                sb++;
+					}
+					start+=dy;
 				}
-				start+=dy;
+			}
+			else		/* normal */
+			{
+				for (y = sy;y <= ey;y++)
+				{
+					bm  = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
+    	            sb = back->line[y] + sx;
+					for( bm += sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[paldata[*sd]])
+    	                    *bm = *sb;
+    	                else
+							*bm = paldata[*sd];
+						sd++;
+    	                sb++;
+					}
+					start+=dy;
+				}
 			}
 		}
-		else		/* normal */
+		else
 		{
-			for (y = sy;y <= ey;y++)
+			if (flipx)	/* X flip */
 			{
-				bm  = dest->line[y];
-				bme = bm + ex;
-				sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
-                sb = back->line[y] + sx;
-				for( bm += sx ; bm <= bme ; bm++ )
+				for (y = sy;y <= ey;y++)
 				{
-					if (isblack[paldata[*sd]])
-                        *bm = *sb;
-                    else
-						*bm = paldata[*sd];
-					sd++;
-                    sb++;
+					bm = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
+    	            sb = back->line[y] + sx;
+					for( bm = bm+sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[*sd])
+    	                    *bm = *sb;
+    	                else
+							*bm = *sd;
+						sd--;
+    	                sb++;
+					}
+					start+=dy;
 				}
-				start+=dy;
+			}
+			else		/* normal */
+			{
+				for (y = sy;y <= ey;y++)
+				{
+					bm = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
+    	            sb = back->line[y] + sx;
+					for( bm = bm+sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[*sb])
+    	                    *bm = *sb;
+    	                else
+							*bm = *sd;
+						sd++;
+    	                sb++;
+					}
+					start+=dy;
+				}
 			}
 		}
 	}
 	else
 	{
-		if (flipx)	/* X flip */
+		unsigned short *bm,*bme;
+		const unsigned short *sb;
+
+		if (gfx->colortable)	/* remap colors */
 		{
-			for (y = sy;y <= ey;y++)
+			const unsigned short *paldata;	/* ASG 980209 */
+
+			paldata = &gfx->colortable[gfx->color_granularity * color];
+
+			if (flipx)	/* X flip */
 			{
-				bm = dest->line[y];
-				bme = bm + ex;
-				sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
-                sb = back->line[y] + sx;
-				for( bm = bm+sx ; bm <= bme ; bm++ )
+				for (y = sy;y <= ey;y++)
 				{
-					if (isblack[*sd])
-                        *bm = *sb;
-                    else
-						*bm = *sd;
-					sd--;
-                    sb++;
+					bm  = (unsigned short *)dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
+    	            sb = ((unsigned short *)back->line[y]) + sx;
+					for( bm += sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[paldata[*sd]])
+    	                    *bm = *sb;
+    	                else
+							*bm = paldata[*sd];
+						sd--;
+    	                sb++;
+					}
+					start+=dy;
 				}
-				start+=dy;
+			}
+			else		/* normal */
+			{
+				for (y = sy;y <= ey;y++)
+				{
+					bm  = (unsigned short *)dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
+    	            sb = ((unsigned short *)back->line[y]) + sx;
+					for( bm += sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[paldata[*sd]])
+    	                    *bm = *sb;
+    	                else
+							*bm = paldata[*sd];
+						sd++;
+    	                sb++;
+					}
+					start+=dy;
+				}
 			}
 		}
-		else		/* normal */
+		else
 		{
-			for (y = sy;y <= ey;y++)
+			if (flipx)	/* X flip */
 			{
-				bm = dest->line[y];
-				bme = bm + ex;
-				sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
-                sb = back->line[y] + sx;
-				for( bm = bm+sx ; bm <= bme ; bm++ )
+				for (y = sy;y <= ey;y++)
 				{
-					if (isblack[*sb])
-                        *bm = *sb;
-                    else
-						*bm = *sd;
-					sd++;
-                    sb++;
+					bm = (unsigned short *)dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + gfx->width-1 - (sx-ox);
+    	            sb = ((unsigned short *)back->line[y]) + sx;
+					for( bm = bm+sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[*sd])
+    	                    *bm = *sb;
+    	                else
+							*bm = *sd;
+						sd--;
+    	                sb++;
+					}
+					start+=dy;
 				}
-				start+=dy;
+			}
+			else		/* normal */
+			{
+				for (y = sy;y <= ey;y++)
+				{
+					bm = (unsigned short *)dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata + start * gfx->line_modulo + (sx-ox);
+    	            sb = ((unsigned short *)back->line[y]) + sx;
+					for( bm = bm+sx ; bm <= bme ; bm++ )
+					{
+						if (isblack[*sb])
+    	                    *bm = *sb;
+    	                else
+							*bm = *sd;
+						sd++;
+    	                sb++;
+					}
+					start+=dy;
+				}
 			}
 		}
 	}
@@ -489,23 +620,44 @@ void overlay_draw(struct osd_bitmap *dest,const struct artwork *overlay)
 	int height,width;
 	struct osd_bitmap *o = NULL;
 	int black;
-	unsigned char *dst, *ovr;
 
 	o = overlay->artwork;
 	height = overlay->artwork->height;
 	width = overlay->artwork->width;
 	black = Machine->pens[0];
 
-	for ( j=0; j<height; j++)
+	if (dest->depth == 8)
 	{
-		dst = dest->line[j];
-		ovr = o->line[j];
-		for (i=0; i<width; i++)
+		unsigned char *dst, *ovr;
+
+		for ( j=0; j<height; j++)
 		{
-			if (*dst!=black)
-				*dst = *ovr;
-			dst++;
-			ovr++;
+			dst = dest->line[j];
+			ovr = o->line[j];
+			for (i=0; i<width; i++)
+			{
+				if (*dst!=black)
+					*dst = *ovr;
+				dst++;
+				ovr++;
+			}
+		}
+	}
+	else
+	{
+		unsigned short *dst, *ovr;
+
+		for ( j=0; j<height; j++)
+		{
+			dst = (unsigned short *)dest->line[j];
+			ovr = (unsigned short *)o->line[j];
+			for (i=0; i<width; i++)
+			{
+				if (*dst!=black)
+					*dst = *ovr;
+				dst++;
+				ovr++;
+			}
 		}
 	}
 }
@@ -597,16 +749,32 @@ static unsigned int *transparency_hist (struct artwork *a, int num_shades)
 	}
 	memset (hist, 0, a->num_pens_trans*sizeof(int));
 
-	for ( j=0; j<a->orig_artwork->height; j++)
-		for (i=0; i<a->orig_artwork->width; i++)
-		{
-			pen = a->orig_artwork->line[j][i];
-			if (pen < a->num_pens_trans)
+	if (a->orig_artwork->depth == 8)
+	{
+		for ( j=0; j<a->orig_artwork->height; j++)
+			for (i=0; i<a->orig_artwork->width; i++)
 			{
-				hist[pen]++;
-				num_pix++;
+				pen = a->orig_artwork->line[j][i];
+				if (pen < a->num_pens_trans)
+				{
+					hist[pen]++;
+					num_pix++;
+				}
 			}
-		}
+	}
+	else
+	{
+		for ( j=0; j<a->orig_artwork->height; j++)
+			for (i=0; i<a->orig_artwork->width; i++)
+			{
+				pen = ((unsigned short *)a->orig_artwork->line[j])[i];
+				if (pen < a->num_pens_trans)
+				{
+					hist[pen]++;
+					num_pix++;
+				}
+			}
+	}
 
 	/* we try to get at least 3 shades per transparent color */
 	min_shades = ((num_shades-a->num_pens_used-3*a->num_pens_trans) < 0) ? 0 : 3;
@@ -739,10 +907,18 @@ void overlay_remap(struct artwork *a)
 	struct osd_bitmap *overlay = a->artwork;
 	struct osd_bitmap *orig = a->orig_artwork;
 
-	for ( j=0; j<height; j++)
-		for (i=0; i<width; i++)
-			overlay->line[j][i] =
-				Machine->pens[orig->line[j][i]+offset];
+	if (overlay->depth == 8)
+	{
+		for ( j=0; j<height; j++)
+			for (i=0; i<width; i++)
+				overlay->line[j][i] = Machine->pens[orig->line[j][i]+offset];
+	}
+	else
+	{
+		for ( j=0; j<height; j++)
+			for (i=0; i<width; i++)
+				((unsigned short *)overlay->line[j])[i] = Machine->pens[((unsigned short *)orig->line[j])[i]+offset];
+	}
 
 	/* since the palette is static we can remap
 	   pens in the alpha table to OS colors */
@@ -836,8 +1012,8 @@ static struct artwork *allocate_artwork_mem (int width, int height)
 static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, struct png_info *p)
 {
 	UINT8 *tmp;
-	UINT32 orientation, i;
-	UINT32 j, x, y, h, w;
+	UINT32 orientation;
+	UINT32 x, y;
 	void *fp;
 
 	if (!(fp = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
@@ -879,7 +1055,7 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 
 	png_delete_unused_colors (p);
 
-	if (!(*bitmap=osd_new_bitmap(p->width,p->height,8)))
+	if ((*bitmap=osd_create_bitmap(p->width,p->height)) == 0)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Unable to allocate memory for artwork\n");
@@ -887,33 +1063,14 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 	}
 
 	orientation = Machine->orientation;
-	if (orientation != ORIENTATION_DEFAULT)
-	{
-		tmp = p->image;
-		for (i=0; i<p->height; i++)
-			for (j=0; j<p->width; j++)
-			{
-				if (orientation & ORIENTATION_SWAP_XY)
-				{
-					x=i; y=j; w=p->height; h=p->width;
-				}
-				else
-				{
-					x=j; y=i; w=p->width; h=p->height;
-				}
-				if (orientation & ORIENTATION_FLIP_X)
-					x=w-x-1;
-				if (orientation & ORIENTATION_FLIP_Y)
-					y=h-y-1;
 
-				(*bitmap)->line[y][x] = *tmp++;
-			}
-	}
-	else
-	{
-		for (i=0; i<p->height; i++)
-			memcpy ((*bitmap)->line[i], p->image+i*p->width, p->width);
-	}
+	tmp = p->image;
+	for (y=0; y<p->height; y++)
+		for (x=0; x<p->width; x++)
+		{
+			plot_pixel(*bitmap, x, y, *tmp++);
+		}
+
 	free (p->image);
 	return 1;
 }
@@ -1008,6 +1165,7 @@ static struct osd_bitmap *create_circle (int r, int pen)
 	int y = r;
 	int twoy = r+r;
 	int p = 1 - r;
+	int i;
 
 	if ((circle = osd_create_bitmap(twoy, twoy)) == 0)
 	{
@@ -1030,10 +1188,18 @@ static struct osd_bitmap *create_circle (int r, int pen)
 			twoy -= 2;
 			p += twox - twoy + 1;
 		}
-		memset (&circle->line[r-y][r-x], pen, twox);
-		memset (&circle->line[r+y-1][r-x], pen, twox);
-		memset (&circle->line[r-x][r-y], pen, twoy);
-		memset (&circle->line[r+x-1][r-y], pen, twoy);
+
+		for (i = 0; i < twox; i++)
+		{
+			plot_pixel(circle, r-x+i, r-y  , pen);
+			plot_pixel(circle, r-x+i, r+y+1, pen);
+		}
+
+		for (i = 0; i < twoy; i++)
+		{
+			plot_pixel(circle, r-y+i, r-x  , pen);
+			plot_pixel(circle, r-y+i, r+x-1, pen);
+		}
 	}
 	return circle;
 }

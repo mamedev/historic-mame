@@ -500,7 +500,7 @@ static void mcu_tnzs_w(int offset, int data)
 
 void extrmatn_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	mcu_type = MCU_EXTRMATN;
 
@@ -511,7 +511,7 @@ void extrmatn_init(void)
 
 void arkanoi2_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	mcu_type = MCU_ARKANOID;
 
@@ -522,7 +522,7 @@ void arkanoi2_init(void)
 
 void drtoppel_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	mcu_type = MCU_DRTOPPEL;
 
@@ -533,7 +533,7 @@ void drtoppel_init(void)
 
 void chukatai_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	mcu_type = MCU_CHUKATAI;
 
@@ -544,7 +544,7 @@ void chukatai_init(void)
 
 void tnzs_init(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	mcu_type = MCU_TNZS;
 
 	/* there's code which falls through from the fixed ROM to bank #0, I have to */
@@ -560,6 +560,12 @@ void insectx_init(void)
 	install_mem_read_handler(1, 0xc000, 0xc000, input_port_2_r );
 	install_mem_read_handler(1, 0xc001, 0xc001, input_port_3_r );
 	install_mem_read_handler(1, 0xc002, 0xc002, input_port_4_r );
+}
+
+void kageki_init(void)
+{
+	/* this game has no mcu */
+	mcu_type = MCU_NONE;
 }
 
 
@@ -642,10 +648,10 @@ void tnzs_init_machine (void)
 	{
 		unsigned char *RAM;
 
-		RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		RAM = memory_region(Machine->drv->cpu[0].memory_region);
 		cpu_setbank(1,&RAM[0x18000]);
 
-		RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		RAM = memory_region(Machine->drv->cpu[1].memory_region);
 		cpu_setbank(2,&RAM[0x10000]);
 	}
 }
@@ -717,7 +723,7 @@ void tnzs_workram_sub_w (int offset, int data)
 
 void tnzs_bankswitch_w (int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* bit 4 resets the second CPU */
 	if (data & 0x10)
@@ -732,7 +738,7 @@ void tnzs_bankswitch_w (int offset, int data)
 
 void tnzs_bankswitch1_w (int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 //	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch 1\n", cpu_get_pc(),data);
 

@@ -44,7 +44,7 @@ static void cbasebal_bankswitch_w(int offset,int data)
 	if ((data & 0x1f) != olddata)
 	{
 		int bankaddress;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 //if (errorlog) fprintf(errorlog,"%04x: bankswitch %02x\n",cpu_get_pc(),data);
 		bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
@@ -391,7 +391,7 @@ struct GameDriver driver_cbasebal =
 	rom_cbasebal,
 	0, pang_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cbasebal,
 

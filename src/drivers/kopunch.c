@@ -231,7 +231,7 @@ ROM_END
 
 static void patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* patch out bad instruction, either the ROM is bad, or there is */
 	/* a security chip */
@@ -254,7 +254,7 @@ struct GameDriver driver_kopunch =
 	rom_kopunch,
 	patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kopunch,
 

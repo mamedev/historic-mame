@@ -101,7 +101,14 @@ void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 	/* background palette */
-	for (i = 0;i < 32;i++)
+	/* reserve one color for the transparent pen (none of the game colors can have */
+	/* these RGB components) */
+	*(palette++) = 1;
+	*(palette++) = 1;
+	*(palette++) = 1;
+	color_prom++;
+
+	for (i = 1;i < 32;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -192,7 +199,7 @@ void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 ***************************************************************************/
 int mpatrol_vh_start(void)
 {
-	int i,j,k;
+	int i,j;
 
 
 	if (generic_vh_start() != 0)
@@ -210,19 +217,17 @@ int mpatrol_vh_start(void)
 
 		for (j = 0;j < 8;j++)
 		{
-			for (k = 0;k < 2;k++)
-			{
-				drawgfx(bgbitmap[i],Machine->gfx[2 + 2 * i + k],
-						j,0,
-						0,0,
-						32 * j,(BGHEIGHT / 2) * k,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
+			drawgfx(bgbitmap[i],Machine->gfx[2 + 2 * i],
+					j,0,
+					0,0,
+					32 * j,0,
+					0,TRANSPARENCY_NONE,0);
 
-		for (j = 64;j < BGHEIGHT;j++)
-		{
-			memset(bgbitmap[i]->line[j],Machine->gfx[2+i]->colortable[3],256);
+			drawgfx(bgbitmap[i],Machine->gfx[2 + 2 * i + 1],
+					j,0,
+					0,0,
+					32 * j,(BGHEIGHT / 2),
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 

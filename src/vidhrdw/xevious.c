@@ -73,9 +73,9 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 
 	/* color 0x80 is used by sprites to mark transparency */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
+	*(palette++) = 0;
+	*(palette++) = 0;
+	*(palette++) = 0;
 
 	color_prom += 128;	/* the bottom part of the PROM is unused */
 	color_prom += 2*256;

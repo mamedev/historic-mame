@@ -32,13 +32,14 @@ static int w[3];	/* opcode words */
 
 void GET_OP(int i, unsigned pc)
 {
-	w[i] = cpu_readop16(pc);
-	b[i*2+0] = w[i] & 0xff;
-	b[i*2+1] = w[0] >> 8;
-	n[i*4+0] = b[i*2+0] >> 4;
-	n[i*4+1] = b[i*2+0] & 15;
-	n[i*4+2] = b[i*2+1] >> 4;
-	n[i*4+3] = b[i*2+1] & 15;
+	UINT16 opcode = cpu_readop16(pc);
+	w[i] = opcode;
+	b[i*2+0] = opcode >> 8;
+	b[i*2+1] = opcode & 0xff;
+	n[i*4+0] = (opcode >> 12) & 0x0f;
+	n[i*4+1] = (opcode >> 8) & 0x0f;
+	n[i*4+2] = (opcode >> 4) & 0x0f;
+	n[i*4+3] = opcode & 0x0f;
 }
 
 static char *cc[16] = {
@@ -106,7 +107,7 @@ int DasmZ8000(char *buff, int pc)
 								break;
 							case 'l': /* imm32 (long) */
 								i = *src++ - '0';
-								dst += sprintf(dst, "#$%04x%04x", w[i+1], w[i]);
+								dst += sprintf(dst, "#$%04x%04x", w[i], w[i+1]);
 								break;
 						}
 						break;

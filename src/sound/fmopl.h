@@ -7,7 +7,11 @@ typedef void (*OPL_UPDATEHANDLER)(int param,int min_interval_us);
 
 #define BUILD_YM3812 (HAS_YM3812)
 #define BUILD_YM3526 (HAS_YM3526)
-#define BUILD_Y8950  0 /* (HAS_Y8950) */
+#define BUILD_Y8950  (HAS_Y8950)
+
+#if BUILD_Y8950
+#include "ymdeltat.h"
+#endif
 
 /* !!!!! here is private section , do not access there member direct !!!!! */
 
@@ -67,7 +71,7 @@ typedef struct fm_opl_f {
 	unsigned char type;			/* chip type                        */
 	int clock;					/* master clock  (Hz)                */
 	int rate;					/* sampling rate (Hz)                */
-	int freqbase;				/* frequency base                    */
+	double freqbase;			/* frequency base                    */
 	double TimerBase;			/* Timer base time (==sampling time) */
 	unsigned char address;		/* address register                  */
 	unsigned char status;		/* status flag                       */
@@ -81,11 +85,19 @@ typedef struct fm_opl_f {
 	int	max_ch;					/* maximum channel     */
 	/* Rythm sention */
 	unsigned int rythm;			/* Rythm mode , key flag */
+#if BUILD_Y8950
 	/* Delta-T ADPCM unit (Y8950) */
-	void *adpcm;				/* DELTA-T ADPCM       */
+	YM_DELTAT *deltat;			/* DELTA-T ADPCM       */
+#endif
 	/* Keyboard / I/O interface unit (Y8950) */
 	int portDirection;
 	int portLatch;
+	int (*porthandler_r)(struct fm_opl_f *OPL);
+	void (*porthandler_w)(struct fm_opl_f *OPL,int data);
+
+	int (*keyboardhandler_r)(struct fm_opl_f *OPL);
+	void (*keyboardhandler_w)(struct fm_opl_f *OPL,int data);
+
 	/* time tables */
 	signed int AR_TABLE[75];	/* atttack rate tables */
 	signed int DR_TABLE[75];	/* decay rate tables   */
@@ -125,5 +137,7 @@ int OPLTimerOver(FM_OPL *OPL,int c);
 
 /* YM3626/YM3812 local section */
 void YM3812UpdateOne(FM_OPL *OPL, void *buffer, int length);
+
+void Y8950UpdateOne(FM_OPL *OPL, void *buffer, int length);
 
 #endif

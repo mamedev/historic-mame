@@ -655,7 +655,7 @@ ROM_END
 static void hyperspt_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x4000;A < 0x10000;A++)
@@ -676,7 +676,7 @@ static int we_flipped_the_switch;
 static int hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -717,7 +717,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -756,7 +756,7 @@ static void hisave(void)
 
 static int roadf_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     /* check if the hi score table has already been initialized */
@@ -781,7 +781,7 @@ static int roadf_hiload(void)
 static void roadf_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -811,7 +811,7 @@ struct GameDriver driver_hyperspt =
 	rom_hyperspt,
 	0, hyperspt_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hyperspt,
 
@@ -837,7 +837,7 @@ struct GameDriver driver_hpolym84 =
 	rom_hpolym84,
 	0, hyperspt_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hyperspt,
 
@@ -863,7 +863,7 @@ struct GameDriver driver_roadf =
 	rom_roadf,
 	0, hyperspt_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_roadf,
 
@@ -889,7 +889,7 @@ struct GameDriver driver_roadf2 =
 	rom_roadf2,
 	0, hyperspt_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_roadf,
 

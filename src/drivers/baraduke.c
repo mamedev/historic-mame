@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Baraduke/Metro cross (c) Namco 1985
+Baraduke/Metro-Cross (c) Namco 1985
 
 Driver by:
 	Manuel Abadia (manu@teleline.es)
@@ -90,7 +90,7 @@ static struct MemoryReadAddress baraduke_readmem[] =
 	{ 0x2000, 0x3fff, baraduke_videoram_r },	/* Video RAM */
 	{ 0x4000, 0x40ff, namcos1_wavedata_r },		/* PSG device, shared RAM */
 	{ 0x4000, 0x43ff, baraduke_sharedram_r },	/* shared RAM with the MCU */
-	{ 0x4800, 0x4fff, baraduke_textlayer_r },	/* video RAM (text layer) */
+	{ 0x4800, 0x4fff, MRA_RAM },				/* video RAM (text layer) */
 	{ 0x6000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }
 };
@@ -100,9 +100,9 @@ static struct MemoryWriteAddress baraduke_writemem[] =
 	{ 0x0000, 0x17ff, MWA_RAM },				/* RAM */
 	{ 0x1800, 0x1fff, MWA_RAM, &spriteram },	/* Sprite RAM */
 	{ 0x2000, 0x3fff, baraduke_videoram_w, &baraduke_videoram },/* Video RAM */
-	{ 0x4000, 0x40ff, namcos1_wavedata_w }, /* PSG device, shared RAM */
-	{ 0x4000, 0x43ff, baraduke_sharedram_w, &sharedram },	/* shared RAM with the MCU */
-	{ 0x4800, 0x4fff, baraduke_textlayer_w, &textlayerram },/* video RAM (text layer) */
+	{ 0x4000, 0x40ff, namcos1_wavedata_w },		/* PSG device, shared RAM */
+	{ 0x4000, 0x43ff, baraduke_sharedram_w, &sharedram },/* shared RAM with the MCU */
+	{ 0x4800, 0x4fff, MWA_RAM, &textlayerram },	/* video RAM (text layer) */
 	{ 0x8000, 0x8000, watchdog_reset_w },		/* watchdog reset */
 	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
 	{ 0xb000, 0xb002, baraduke_scroll0_w },		/* scroll (layer 0) */
@@ -116,7 +116,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x0000, 0x001f, hd63701_internal_registers_r },/* internal registers */
 	{ 0x0080, 0x00ff, MRA_RAM },					/* built in RAM */
 	{ 0x1000, 0x10ff, namcos1_wavedata_r },			/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, MRA_RAM },	/* PSG device */
+	{ 0x1100, 0x113f, MRA_RAM },					/* PSG device */
 	{ 0x1000, 0x13ff, baraduke_sharedram_r },		/* shared RAM with the 6809 */
 	{ 0x8000, 0xbfff, MRA_ROM },					/* MCU external ROM */
 	{ 0xc000, 0xc800, MRA_RAM },					/* RAM */
@@ -128,8 +128,8 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x001f, hd63701_internal_registers_w },/* internal registers */
 	{ 0x0080, 0x00ff, MWA_RAM },				/* built in RAM */
-	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },		/* PSG device, shared RAM */
-	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs },		/* PSG device */
+	{ 0x1000, 0x10ff, namcos1_wavedata_w, &namco_wavedata },/* PSG device, shared RAM */
+	{ 0x1100, 0x113f, namcos1_sound_w, &namco_soundregs },/* PSG device */
 	{ 0x1000, 0x13ff, baraduke_sharedram_w },	/* shared RAM with the 6809 */
 	{ 0x8000, 0x8000, MWA_NOP },				/* ??? */
 	{ 0x8800, 0x8800, MWA_NOP },				/* ??? */
@@ -276,7 +276,7 @@ PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x02, 0x00, "Round Skip" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Screen Stop" )
+	PORT_DIPNAME( 0x04, 0x00, "Freeze" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
@@ -424,10 +424,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct namco_interface namco_interface =
 {
 	49152000/2048, 		/* 24000Hz */
-	8,		/* number of voices */
-	100,	/* playback volume */
-	-1,		/* memory region */
-	0		/* stereo */
+	8,					/* number of voices */
+	100,				/* playback volume */
+	-1,					/* memory region */
+	0					/* stereo */
 };
 
 
@@ -455,7 +455,7 @@ static struct MachineDriver baraduke_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	2048,2048*4,
 	baraduke_vh_convert_color_prom,
@@ -500,7 +500,7 @@ static struct MachineDriver metrocrs_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	2048,2048*4,
 	baraduke_vh_convert_color_prom,
@@ -540,7 +540,7 @@ ROM_START( baraduke )
 	ROM_REGION( 0x10000 ) /* MCU code */
 	ROM_LOAD( "prg4.3b",	0x8000,  0x4000, 0xabda0fe7 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
-													/* Using Pacland code (probably similar) */
+															/* Using Pacland code (probably similar) */
 	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "prmcolbg.1n",0x0000, 0x0800, 0x0d78ebc6 )	/* Blue + Green palette */
 	ROM_LOAD( "prmcolr.2m",	0x0800, 0x0800, 0x03f7241f )	/* Red palette */
@@ -563,7 +563,7 @@ ROM_START( metrocrs )
 	ROM_REGION( 0x10000 ) /* MCU code */
 	ROM_LOAD( "mc1-4.3b",	0x8000, 0x02000, 0x9c88f898 )	/* subprogram for the MCU */
 	ROM_LOAD( "pl1-mcu.bin",0xf000,	 0x1000, 0x6ef08fb3 )	/* The MCU internal code is missing */
-													/* Using Pacland code (probably similar) */
+															/* Using Pacland code (probably similar) */
 	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, 0x32a78a8b )	/* Blue + Green palette */
 	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, 0x6f4dca7b )	/* Red palette */
@@ -579,7 +579,130 @@ static void gfx_untangle( void )
 	}
 }
 
-struct GameDriver driver_baraduke =  {
+/****  Baraduke high score save routine  ****/
+/****  RJF (Nov 22, 1999)  ****/
+static int baraduke_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x0280],"\x00\x07\x65",3) == 0) &&
+		(memcmp(&RAM[0x02c0],"\x00\x07\x65",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			/*** 9 bytes each entry ****/
+			/* bytes 1,2,3     = score */
+			/* byte 4          = floor */
+			/* bytes 5,6,7,8,9 = name  */
+
+			osd_fread(f,&RAM[0x0280], 9);	/* 1st entry */
+			osd_fread(f,&RAM[0x0290], 9);	/* 2nd entry */
+			osd_fread(f,&RAM[0x02a0], 9);	/* 3rd entry */
+			osd_fread(f,&RAM[0x02b0], 9);	/* 4th entry */
+			osd_fread(f,&RAM[0x02c0], 9);	/* 5th entry */
+
+			RAM[0x0074] = RAM[0x0280];	/* update high score */
+			RAM[0x0075] = RAM[0x0281];	/* on top of screen */
+			RAM[0x0076] = RAM[0x0282];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void baraduke_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0280], 9);		/* 1st entry */
+		osd_fwrite(f,&RAM[0x0290], 9);		/* 2nd entry */
+		osd_fwrite(f,&RAM[0x02a0], 9);		/* 3rd entry */
+		osd_fwrite(f,&RAM[0x02b0], 9);		/* 4th entry */
+		osd_fwrite(f,&RAM[0x02c0], 9);		/* 5th entry */
+		osd_fclose(f);
+	}
+}
+
+/****  Metro-Cross high score save routine  ****/
+/****  RJF (Nov 22, 1999)  ****/
+static int metrocrs_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0x1473],"\x08\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x1481],"\x19\x1e\x16",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+			osd_fread(f,&RAM[0x1473], 5);	/* 1st entry score */
+			osd_fread(f,&RAM[0x147d], 1);	/* 1st entry round */
+			osd_fread(f,&RAM[0x1481], 7);	/* 1st entry name  */
+			osd_fread(f,&RAM[0x148c], 5);	/* 2nd entry score */
+			osd_fread(f,&RAM[0x1496], 1);	/* 2nd entry round */
+			osd_fread(f,&RAM[0x149a], 7);	/* 2nd entry name  */
+			osd_fread(f,&RAM[0x14a5], 5);	/* 3rd entry score */
+			osd_fread(f,&RAM[0x14af], 1);	/* 3rd entry round */
+			osd_fread(f,&RAM[0x14b3], 7);	/* 3rd entry name  */
+			osd_fread(f,&RAM[0x14be], 5);	/* 4th entry score */
+			osd_fread(f,&RAM[0x14c8], 1);	/* 4th entry round */
+			osd_fread(f,&RAM[0x14cc], 7);	/* 4th entry name  */
+			osd_fread(f,&RAM[0x14d7], 5);	/* 5th entry score */
+			osd_fread(f,&RAM[0x14e1], 1);	/* 5th entry round */
+			osd_fread(f,&RAM[0x14e5], 7);	/* 5th entry name  */
+
+			RAM[0x486e] = RAM[0x1473];	/* update high score */
+			RAM[0x486f] = RAM[0x1474];	/* on top of screen */
+			RAM[0x4870] = RAM[0x1475];
+			RAM[0x4871] = RAM[0x1476];
+			RAM[0x4872] = RAM[0x1477];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void metrocrs_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x1473], 5);	/* 1st entry score */
+		osd_fwrite(f,&RAM[0x147d], 1);	/* 1st entry round */
+		osd_fwrite(f,&RAM[0x1481], 7);	/* 1st entry name  */
+		osd_fwrite(f,&RAM[0x148c], 5);	/* 2nd entry score */
+		osd_fwrite(f,&RAM[0x1496], 1);	/* 2nd entry round */
+		osd_fwrite(f,&RAM[0x149a], 7);	/* 2nd entry name  */
+		osd_fwrite(f,&RAM[0x14a5], 5);	/* 3rd entry score */
+		osd_fwrite(f,&RAM[0x14af], 1);	/* 3rd entry round */
+		osd_fwrite(f,&RAM[0x14b3], 7);	/* 3rd entry name  */
+		osd_fwrite(f,&RAM[0x14be], 5);	/* 4th entry score */
+		osd_fwrite(f,&RAM[0x14c8], 1);	/* 4th entry round */
+		osd_fwrite(f,&RAM[0x14cc], 7);	/* 4th entry name  */
+		osd_fwrite(f,&RAM[0x14d7], 5);	/* 5th entry score */
+		osd_fwrite(f,&RAM[0x14e1], 1);	/* 5th entry round */
+		osd_fwrite(f,&RAM[0x14e5], 7);	/* 5th entry name  */
+		osd_fclose(f);
+	}
+}
+
+struct GameDriver driver_baraduke =
+{
 	__FILE__,
 	0,
 	"baraduke",
@@ -601,10 +724,12 @@ struct GameDriver driver_baraduke =  {
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
-	0, 0
+
+	baraduke_hiload, baraduke_hisave
 };
 
-struct GameDriver driver_metrocrs =  {
+struct GameDriver driver_metrocrs =
+{
 	__FILE__,
 	0,
 	"metrocrs",
@@ -626,5 +751,6 @@ struct GameDriver driver_metrocrs =  {
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+
+	metrocrs_hiload, metrocrs_hisave
 };

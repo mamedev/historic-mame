@@ -395,7 +395,7 @@ struct GameDriver driver_redalert =
 	rom_redalert,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_redalert,
 

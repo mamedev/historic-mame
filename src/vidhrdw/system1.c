@@ -319,10 +319,11 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 	skip = SprReg[SPR_SKIP_LO] + (SprReg[SPR_SKIP_HI] << 8);
 
 	Height		= SprReg[SPR_Y_BOTTOM] - SprReg[SPR_Y_TOP];
-	SprPalette	= Machine->colortable + 0x10 * spr_number;
+	SprPalette	= Machine->remapped_colortable + 0x10 * spr_number;
 	SprX = SprReg[SPR_X_LO] + ((SprReg[SPR_X_HI] & 0x01) << 8);
 	SprX /= 2;	/* the hardware has sub-pixel placement, it seems */
-if (Machine->gamedrv == &driver_wbml) SprX += 7;
+	if (Machine->gamedrv == &driver_wbml || Machine->gamedrv->clone_of == &driver_wbml)
+		SprX += 7;
 	SprY = SprReg[SPR_Y_TOP] + 1;
 
 	for (Row = 0;Row < Height;Row++)

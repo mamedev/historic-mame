@@ -506,7 +506,7 @@ static void rom_decode(void)
 {
 	int i;
 
-	memcpy(&Machine->memory_region[0][0x140000], &Machine->memory_region[0][0x40000], 0x8000);
+	memcpy(&memory_region(Machine->drv->cpu[0].memory_region)[0x140000], &memory_region(Machine->drv->cpu[0].memory_region)[0x40000], 0x8000);
 
 	for (i = 0; i < Machine->memory_region_length[1]; i++)
 		Machine->memory_region[1][i] ^= 0xff;
@@ -621,7 +621,7 @@ struct GameDriver driver_rampart =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rampart,
 
@@ -648,7 +648,7 @@ struct GameDriver driver_ramprt2p =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ramprt2p,
 

@@ -2172,7 +2172,7 @@ static void superbon_decode(void)
 	unsigned char *RAM;
 
 
-	RAM = Machine->memory_region[0];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	for (i = 0;i < 0x1000;i++)
 	{
@@ -2206,7 +2206,7 @@ static void hustler_decode(void)
 		unsigned char xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 		for (i = 0;i < 8;i++)
@@ -2227,7 +2227,7 @@ static void hustler_decode(void)
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 		for (A = 0;A < 0x0800;A++)
@@ -2245,7 +2245,7 @@ static void billiard_decode(void)
 		unsigned char xormask;
 		int bits[8];
 		int i;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 		for (i = 0;i < 8;i++)
@@ -2279,7 +2279,7 @@ static void billiard_decode(void)
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 		for (A = 0;A < 0x0800;A++)
@@ -2291,7 +2291,7 @@ static void billiard_decode(void)
 
 static int scobra_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2312,7 +2312,7 @@ static int scobra_hiload(void)
 
 static void scobra_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2327,7 +2327,7 @@ static void scobra_hisave(void)
 static int armorcar_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2360,7 +2360,7 @@ static int armorcar_hiload(void)
 
 static void armorcar_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2374,7 +2374,7 @@ static void armorcar_hisave(void)
 
 static int moonwar2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2398,7 +2398,7 @@ static int moonwar2_hiload(void)
 static void moonwar2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2411,7 +2411,7 @@ static void moonwar2_hisave(void)
 
 static int calipso_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2435,7 +2435,7 @@ static int calipso_hiload(void)
 static void calipso_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2447,7 +2447,7 @@ static void calipso_hisave(void)
 
 static int stratgyx_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2473,7 +2473,7 @@ static int stratgyx_hiload(void)
 static void stratgyx_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2487,7 +2487,7 @@ static void stratgyx_hisave(void)
 
 static int spdcoin_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* check if the hi score table has already been initialized */
@@ -2526,7 +2526,7 @@ static int spdcoin_hiload(void)
 static void spdcoin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2542,7 +2542,7 @@ static void spdcoin_hisave(void)
 
 static int anteater_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2566,7 +2566,7 @@ static int anteater_hiload(void)
 static void anteater_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2579,7 +2579,7 @@ static void anteater_hisave(void)
 static int darkplnt_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if (firsttime == 0)
@@ -2609,7 +2609,7 @@ static int darkplnt_hiload(void)
 
 static void darkplnt_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2623,7 +2623,7 @@ static void darkplnt_hisave(void)
 
 static int rescue_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2645,7 +2645,7 @@ static int rescue_hiload(void)
 
 static void rescue_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2660,7 +2660,7 @@ static void rescue_hisave(void)
 static int minefld_hiload(void)
 {
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2682,7 +2682,7 @@ static int minefld_hiload(void)
 static int losttomb_hiload(void)
 {
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2705,7 +2705,7 @@ static int losttomb_hiload(void)
 
 static void losttomb_hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2719,7 +2719,7 @@ static void losttomb_hisave(void)
 static int superbon_hiload(void)
 {
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f;
 
 	/* Wait for machine initialization to be done. */
@@ -2755,7 +2755,7 @@ struct GameDriver driver_scobra =
 	rom_scobrak,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scobrak,
 
@@ -2781,7 +2781,7 @@ struct GameDriver driver_scobras =
 	rom_scobra,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scobra,
 
@@ -2807,7 +2807,7 @@ struct GameDriver driver_scobrab =
 	rom_scobrab,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scobra,
 
@@ -2833,7 +2833,7 @@ struct GameDriver driver_stratgyx =
 	rom_stratgyx,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stratgyx,
 
@@ -2858,7 +2858,7 @@ struct GameDriver driver_stratgys =
 	rom_stratgys,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stratgyx,
 
@@ -2883,7 +2883,7 @@ struct GameDriver driver_armorcar =
 	rom_armorcar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_armorcar,
 
@@ -2909,7 +2909,7 @@ struct GameDriver driver_armorca2 =
 	rom_armorca2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_armorcar,
 
@@ -2935,7 +2935,7 @@ struct GameDriver driver_moonwar2 =
 	rom_moonwar2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_moonwar2,
 
@@ -2961,7 +2961,7 @@ struct GameDriver driver_monwar2a =
 	rom_monwar2a,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_moonwar2,
 
@@ -2987,7 +2987,7 @@ struct GameDriver driver_spdcoin =
     rom_spdcoin,
     0, 0,
     0,
-    0,  /* sound_prom */
+    0,
 
     input_ports_spdcoin,
 
@@ -3014,7 +3014,7 @@ struct GameDriver driver_darkplnt =
 	rom_darkplnt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_darkplnt,
 
@@ -3040,7 +3040,7 @@ struct GameDriver driver_tazmania =
 	rom_tazmania,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tazmania,
 
@@ -3066,7 +3066,7 @@ struct GameDriver driver_tazmani2 =
 	rom_tazmani2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tazmania,
 
@@ -3092,7 +3092,7 @@ struct GameDriver driver_calipso =
 	rom_calipso,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_calipso,
 
@@ -3118,7 +3118,7 @@ struct GameDriver driver_anteater =
 	rom_anteater,
 	anteater_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_anteater,
 
@@ -3144,7 +3144,7 @@ struct GameDriver driver_rescue =
 	rom_rescue,
 	rescue_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rescue,
 
@@ -3170,7 +3170,7 @@ struct GameDriver driver_minefld =
 	rom_minefld,
 	minefld_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_minefld,
 
@@ -3196,7 +3196,7 @@ struct GameDriver driver_losttomb =
 	rom_losttomb,
 	losttomb_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_losttomb,
 
@@ -3222,7 +3222,7 @@ struct GameDriver driver_losttmbh =
 	rom_losttmbh,
 	losttomb_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_losttomb,
 
@@ -3248,7 +3248,7 @@ struct GameDriver driver_superbon =
 	rom_superbon,
 	superbon_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_superbon,
 
@@ -3274,7 +3274,7 @@ struct GameDriver driver_hustler =
 	rom_hustler,
 	hustler_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hustler,
 
@@ -3300,7 +3300,7 @@ struct GameDriver driver_billiard =
 	rom_billiard,
 	billiard_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hustler,
 
@@ -3326,7 +3326,7 @@ struct GameDriver driver_hustlerb =
 	rom_hustlerb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hustler,
 

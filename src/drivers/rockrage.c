@@ -32,7 +32,7 @@ static int rockrage_interrupt( void )
 
 static void rockrage_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	/* bits 4-6 = bank number */
@@ -398,7 +398,7 @@ struct GameDriver driver_rockrage =
 	rom_rockrage,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rockrage,
 
@@ -423,7 +423,7 @@ struct GameDriver driver_rockragj =
 	rom_rockragj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rockrage,
 

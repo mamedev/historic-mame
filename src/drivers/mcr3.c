@@ -1447,7 +1447,7 @@ static void mcrmono_decode(void)
 
 static void spyhunt_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* some versions of rom 11d have the top and bottom 8k swapped; to enable us to work with either
 	   a correct set or a swapped set (both of which pass the checksum!), we swap them here */
@@ -2111,7 +2111,7 @@ ROM_END
 		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
 		input_ports_##name,							\
 													\
@@ -2139,7 +2139,7 @@ ROM_END
 		rom_##name,									\
 		0, 0,										\
 		0,											\
-		0,	/* sound_prom */						\
+		0,							\
 													\
 		input_ports_##cloneof,						\
 													\

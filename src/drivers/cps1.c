@@ -11,8 +11,8 @@
   68000 clock speeds are unknown for all games (except where commented)
 
 TODO:
-- 3rd player controls in wof, dino
-- 3rd & 4th player controls, 3rd & 4th coin input, lockout & counter in
+- Finish player controls in wof, dino
+- Finish 3rd & 4th player controls, 3rd & 4th coin input, lockout & counter in
   slammast, mbomber
 
 ***************************************************************************/
@@ -36,6 +36,13 @@ static int cps1_input2_r(int offset)
 	int buttons=readinputport(6);
 	return buttons << 8 | buttons;
 }
+
+static int cps1_input3_r(int offset)
+{
+    int buttons=readinputport(7);
+	return buttons << 8 | buttons;
+}
+
 
 static int cps1_sound_fade_timer;
 
@@ -98,17 +105,36 @@ static void cps1_coinctrl_w(int offset,int data)
 {
 	if ((data & 0xff000000) == 0)
 	{
+/*
 {
 	char baf[40];
 	sprintf(baf,"%04x",data);
-//	usrintf_showmessage(baf);
+    usrintf_showmessage(baf);
 }
+*/
 		coin_lockout_w(0,~data & 0x0400);
 		coin_lockout_w(1,~data & 0x0800);
 		coin_counter_w(0,data & 0x0100);
 		coin_counter_w(1,data & 0x0200);
 	}
 }
+
+void cpsq_coinctrl2_w(int offset, int data)
+{
+    if (!offset)
+    {
+        coin_lockout_w(2,~data & 0x0200);
+        coin_lockout_w(3,~data & 0x0800);
+       /*
+      {
+       char baf[40];
+       sprintf(baf,"0xf1c004=%04x", data);
+       usrintf_showmessage(baf);
+       }
+       */
+    }
+}
+
 
 static int cps1_interrupt(void)
 {
@@ -125,19 +151,12 @@ static int cps1_interrupt(void)
 *
 ********************************************************************/
 
-
-extern void cpsq_set_command(int command, int data);
-extern int cpsq_sh_start(const struct MachineSound *msound);
-extern void cpsq_sh_stop (void);
-extern void cpsq_sh_update(void);
-
-static struct CustomSound_interface custom_interface =
+static struct QSound_interface qsound_interface =
 {
-	cpsq_sh_start,
-	cpsq_sh_stop,
-	cpsq_sh_update
+    QSOUND_CLOCK,
+    3,
+    { 100,100 }
 };
-
 
 static unsigned char *qsound_sharedram;
 
@@ -158,29 +177,6 @@ static int qsound_sharedram_r(int offset)
 static void qsound_sharedram_w(int offset,int data)
 {
 	qsound_sharedram[offset / 2] = data;
-}
-
-static int qsound_status_r(int offset)
-{
-	/* Port ready bit (0x80 if ready) */
-	return 0x80;
-}
-
-static int cps1_qsound_data;
-
-static void qsound_data_h_w(int offset,int data)
-{
-	cps1_qsound_data=(cps1_qsound_data&0xff)|(data<<8);
-}
-
-static void qsound_data_l_w(int offset,int data)
-{
-	cps1_qsound_data=(cps1_qsound_data&0xff00)|data;
-}
-
-static void qsound_cmd_w(int offset,int data)
-{
-	cpsq_set_command(data, cps1_qsound_data);
 }
 
 static void qsound_banksw_w(int offset,int data)
@@ -283,13 +279,12 @@ static void cps1_eeprom_save(void)
 }
 
 
-
 static struct MemoryReadAddress cps1_readmem[] =
 {
-	{ 0x000000, 0x1fffff, MRA_ROM },     /* 68000 ROM */
+    { 0x000000, 0x1fffff, MRA_ROM }, /* 68000 ROM */
 	{ 0x800000, 0x800003, cps1_player_input_r }, /* Player input ports */
 	{ 0x800010, 0x800013, cps1_player_input_r }, /* ?? */
-	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
+    { 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
 	{ 0x800020, 0x800021, MRA_NOP }, /* ? Used by Rockman ? */
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
@@ -298,7 +293,8 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
 	{ 0xf18000, 0xf19fff, qsound_sharedram_r },       /* Q RAM */
-//	{ 0xf1c000, 0xf1c003, MRA_NOP }, /* Unknown */
+    { 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
+    { 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
 	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
 	{ -1 }  /* end of table */
@@ -315,7 +311,7 @@ static struct MemoryWriteAddress cps1_writemem[] =
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
 	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
 	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
-//	{ 0xf1c004, 0xf1c005, MWA_NOP }, /* Unknown */
+    { 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
 	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
 	{ -1 }  /* end of table */
@@ -2592,6 +2588,17 @@ INPUT_PORTS_START( wof )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START      /* Player 3 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dino )
@@ -2636,6 +2643,17 @@ INPUT_PORTS_START( dino )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START      /* Player 3 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( punisher )
@@ -2713,7 +2731,7 @@ INPUT_PORTS_START( slammast )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2723,8 +2741,29 @@ INPUT_PORTS_START( slammast )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START     /* Player 3 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START     /* Player 4 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( mbombrd )
 	PORT_START      /* IN0 */
@@ -2738,16 +2777,16 @@ INPUT_PORTS_START( mbombrd )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWB (not used, EEPROM) */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2768,6 +2807,27 @@ INPUT_PORTS_START( mbombrd )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START     /* Player 3 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START     /* Player 4 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pnickj )
@@ -3603,7 +3663,7 @@ static struct MachineDriver machine_driver_##CPS1_DRVNAME =            \
 									 \
 	/* sound hardware */                                             \
 	SOUND_SUPPORTS_STEREO,0,0,0,   \
-	{ { SOUND_CUSTOM, &custom_interface } } \
+    { { SOUND_QSOUND, &qsound_interface } } \
 };
 
 
@@ -5425,6 +5485,39 @@ ROM_START( punisher )
 	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
 ROM_END
 
+ROM_START( punishru )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_EVEN ( "psu26.rom",       0x000000, 0x20000, 0x9236d121 )
+	ROM_LOAD_ODD  ( "psu30.rom",       0x000000, 0x20000, 0x8320e501 )
+	ROM_LOAD_EVEN ( "psu27.rom",       0x040000, 0x20000, 0x61c960a1 )
+	ROM_LOAD_ODD  ( "psu31.rom",       0x040000, 0x20000, 0x78d4c298 )
+	ROM_LOAD_EVEN ( "psu24.rom",       0x080000, 0x20000, 0x1cfecad7 )
+	ROM_LOAD_ODD  ( "psu28.rom",       0x080000, 0x20000, 0xbdf921c1 )
+	ROM_LOAD_EVEN ( "psu25.rom",       0x0c0000, 0x20000, 0xc51acc94 )
+	ROM_LOAD_ODD  ( "psu29.rom",       0x0c0000, 0x20000, 0x52dce1ca )
+	ROM_LOAD_WIDE_SWAP( "ps_21.rom",   0x100000, 0x80000, 0x8affa5a9 )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ps_gfx2.rom",   0x000000, 0x80000, 0x64fa58d4 )
+	ROM_LOAD( "ps_gfx6.rom",   0x080000, 0x80000, 0xa544f4cc )
+	ROM_LOAD( "ps_gfx1.rom",   0x100000, 0x80000, 0x77b7ccab )
+	ROM_LOAD( "ps_gfx5.rom",   0x180000, 0x80000, 0xc54ea839 )
+	ROM_LOAD( "ps_gfx4.rom",   0x200000, 0x80000, 0x60da42c8 )
+	ROM_LOAD( "ps_gfx8.rom",   0x280000, 0x80000, 0x8f02f436 )
+	ROM_LOAD( "ps_gfx3.rom",   0x300000, 0x80000, 0x0122720b )
+	ROM_LOAD( "ps_gfx7.rom",   0x380000, 0x80000, 0x04c5acbd )
+
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "ps_q.rom",       0x00000, 0x08000, 0x49ff4446 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "ps_q1.rom",      0x000000, 0x80000, 0x31fd8726 )
+	ROM_LOAD( "ps_q2.rom",      0x080000, 0x80000, 0x980a9eef )
+	ROM_LOAD( "ps_q3.rom",      0x100000, 0x80000, 0x0dd44491 )
+	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
+ROM_END
+
 ROM_START( punishrj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "psj23.bin",   0x000000, 0x80000, 0x6b2fda52 )
@@ -6025,6 +6118,7 @@ CLONE_DRIVER(sf2tj,   sf2ce,    1992,"Street Fighter II' Turbo - Hyper Fighting 
 GAME_QSOUND (dino,              1993,"Cadillacs and Dinosaurs (World)",                           "Capcom",ORIENTATION_DEFAULT)
 CLONE_QSOUND(dinoj,   dino,     1993,"Cadillacs Kyouryuu-Shinseiki (Japan)",                      "Capcom",ORIENTATION_DEFAULT)
 GAME_QSOUND (punisher,          1993,"The Punisher (World)",                                      "Capcom",ORIENTATION_DEFAULT)
+CLONE_QSOUND(punishru,punisher, 1993,"The Punisher (US)",                                         "Capcom",ORIENTATION_DEFAULT)
 CLONE_QSOUND(punishrj,punisher, 1993,"The Punisher (Japan)",                                      "Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER (pnickj,            1994,"Pnickies (Japan)",                                          "Capcom (licensed from Compile)",ORIENTATION_DEFAULT)
 GAME_DRIVER (qad,               1992,"Quiz & Dragons (US)",                                       "Capcom",ORIENTATION_DEFAULT)
@@ -6052,7 +6146,7 @@ struct GameDriver driver_kodb =
 	rom_kodb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_kod,
 	0, 0, 0,
@@ -6077,12 +6171,12 @@ struct GameDriver driver_slammast =
 	rom_slammast,
 	0, slammast_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_slammast,
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+    ORIENTATION_DEFAULT | GAME_NOT_WORKING | GAME_REQUIRES_16BIT,
 	cps1_eeprom_load, cps1_eeprom_save
 };
 
@@ -6102,12 +6196,12 @@ struct GameDriver driver_mbomberj =
 	rom_mbomberj,
 	0, slammast_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_slammast,
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+    ORIENTATION_DEFAULT | GAME_NOT_WORKING | GAME_REQUIRES_16BIT,
 	cps1_eeprom_load, cps1_eeprom_save
 };
 
@@ -6127,12 +6221,12 @@ struct GameDriver driver_mbombrd =
 	rom_mbombrd,
 	0, slammast_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mbombrd,
 	0, 0, 0,
 
-	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
+    ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	cps1_eeprom_load, cps1_eeprom_save
 };
 
@@ -6152,7 +6246,7 @@ struct GameDriver driver_mbombrdj =
 	rom_mbombrdj,
 	0, slammast_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_mbombrd,
 	0, 0, 0,
@@ -6200,7 +6294,7 @@ struct GameDriver driver_pang3 =
 	rom_pang3,
 	pang3_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pang3,
 	0, 0, 0,

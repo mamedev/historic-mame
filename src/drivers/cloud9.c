@@ -56,7 +56,6 @@ extern void cloud9_bitmap_regs_w(int offset, int data);
 extern void cloud9_bitmap_w(int offset, int data);
 extern void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *cloud9_vram;
 extern unsigned char *cloud9_vram2;
 extern unsigned char *cloud9_bitmap_regs;
 extern unsigned char *cloud9_auto_inc_x;
@@ -91,7 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_w, &cloud9_bitmap_regs },
 	{ 0x0003, 0x05ff, MWA_RAM },
-	{ 0x0600, 0x3fff, cloud9_bitmap_w, &cloud9_vram },
+	{ 0x0600, 0x3fff, cloud9_bitmap_w, &videoram, &videoram_size },
 	{ 0x5000, 0x50ff, MWA_RAM, &spriteram },
 	{ 0x5400, 0x5400, watchdog_reset_w },
 	{ 0x5480, 0x5480, MWA_NOP },	/* IRQ Ack */
@@ -264,9 +263,9 @@ ROM_START( cloud9 )
 	ROM_REGION(0x14000)	/* 64k for code + extra VRAM space */
 	ROM_LOAD( "c9_6000.bin", 0x6000, 0x2000, 0xb5d95d98 )
 	ROM_LOAD( "c9_8000.bin", 0x8000, 0x2000, 0x49af8f22 )
-	ROM_LOAD( "c9_a000.bin", 0xA000, 0x2000, 0x7cf404a6 )
-	ROM_LOAD( "c9_c000.bin", 0xC000, 0x2000, 0x26a4d7df )
-	ROM_LOAD( "c9_e000.bin", 0xE000, 0x2000, 0x6e663bce )
+	ROM_LOAD( "c9_a000.bin", 0xa000, 0x2000, 0x7cf404a6 )
+	ROM_LOAD( "c9_c000.bin", 0xc000, 0x2000, 0x26a4d7df )
+	ROM_LOAD( "c9_e000.bin", 0xe000, 0x2000, 0x6e663bce )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c9_gfx0.bin", 0x0000, 0x1000, 0xd01a8019 )
@@ -283,7 +282,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	void *f;
 
@@ -300,11 +299,11 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x5C00],0x100);
+		osd_fwrite(f,&RAM[0x5c00],0x100);
 		osd_fclose(f);
 	}
 }
@@ -331,7 +330,7 @@ struct GameDriver driver_cloud9 =
 	rom_cloud9,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cloud9,
 

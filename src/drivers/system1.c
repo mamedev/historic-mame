@@ -40,8 +40,8 @@ static void system1_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	Machine->memory_region[0][0xeffe] = 0x4f;
-	Machine->memory_region[0][0xefff] = 0x4b;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
@@ -52,8 +52,8 @@ static void chplft_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	Machine->memory_region[0][0xeffe] = 0x4f;
-	Machine->memory_region[0][0xefff] = 0x4b;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
@@ -64,8 +64,8 @@ static void wbml_init_machine(void)
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
 	/* before doing the test */
-	Machine->memory_region[0][0xeffe] = 0x4f;
-	Machine->memory_region[0][0xefff] = 0x4b;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xeffe] = 0x4f;
+	memory_region(Machine->drv->cpu[0].memory_region)[0xefff] = 0x4b;
 
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
@@ -82,7 +82,7 @@ int wbml_bankswitch_r(int offset)
 void hvymetal_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* patch out the obnoxiously long startup RAM tests */
@@ -102,7 +102,7 @@ void hvymetal_bankswitch_w(int offset,int data)
 void brain_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
@@ -117,7 +117,7 @@ void brain_bankswitch_w(int offset,int data)
 void chplft_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
@@ -129,7 +129,7 @@ void chplft_bankswitch_w(int offset,int data)
 void wbml_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
@@ -2641,7 +2641,7 @@ void myherok_unmangle(void)
 
 	/* additionally to the usual protection, all the program ROMs have data lines */
 	/* D0 and D1 swapped. */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	for (A = 0;A < 0xc000;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 
@@ -3302,7 +3302,7 @@ ROM_END
 static void wbml_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -3313,7 +3313,7 @@ static void wbml_decode(void)
 static void blckgalb_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -3326,7 +3326,7 @@ static void blckgalb_decode(void)
 static int starjack_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3351,7 +3351,7 @@ static int starjack_hiload(void)
 static void starjack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3364,7 +3364,7 @@ static void starjack_hisave(void)
 static int starjacs_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3389,7 +3389,7 @@ static int starjacs_hiload(void)
 static void starjacs_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3402,7 +3402,7 @@ static void starjacs_hisave(void)
 static int upndown_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3421,7 +3421,7 @@ static int upndown_hiload(void)
 static void upndown_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3435,7 +3435,7 @@ static void upndown_hisave(void)
 static int mrviking_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3461,7 +3461,7 @@ static int mrviking_hiload(void)
 static void mrviking_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3475,7 +3475,7 @@ static void mrviking_hisave(void)
 static int flicky_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3500,7 +3500,7 @@ static int flicky_hiload(void)
 static void flicky_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3513,7 +3513,7 @@ static void flicky_hisave(void)
 static int bullfgtj_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3539,7 +3539,7 @@ static int bullfgtj_hiload(void)
 static void bullfgtj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3552,7 +3552,7 @@ static void bullfgtj_hisave(void)
 static int pitfall2_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3576,7 +3576,7 @@ static int pitfall2_hiload(void)
 static void pitfall2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3589,7 +3589,7 @@ static void pitfall2_hisave(void)
 static int seganinj_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3609,7 +3609,7 @@ static int seganinj_hiload(void)
 static void seganinj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3624,7 +3624,7 @@ static void seganinj_hisave(void)
 static int imsorry_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3649,7 +3649,7 @@ static int imsorry_hiload(void)
 static void imsorry_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3661,7 +3661,7 @@ static void imsorry_hisave(void)
 static int fdwarrio_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3688,7 +3688,7 @@ static int fdwarrio_hiload(void)
 static int teddybb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3713,7 +3713,7 @@ static int teddybb_hiload(void)
 static void teddybb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3726,7 +3726,7 @@ static void teddybb_hisave(void)
 static int myhero_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3749,7 +3749,7 @@ static int myhero_hiload(void)
 static void myhero_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3763,7 +3763,7 @@ static void myhero_hisave(void)
 static int wbdeluxe_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3794,7 +3794,7 @@ static int wbdeluxe_hiload(void)
 static void wbdeluxe_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3809,7 +3809,7 @@ static void wbdeluxe_hisave(void)
 static int chplft_hiload(void)
 {
 	void *f;
-	unsigned char *choplifter_ram = Machine->memory_region[0];
+	unsigned char *choplifter_ram = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3828,7 +3828,7 @@ static int chplft_hiload(void)
 static void chplft_hisave(void)
 {
 	void *f;
-	unsigned char *choplifter_ram = Machine->memory_region[0];
+	unsigned char *choplifter_ram = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -3842,7 +3842,7 @@ static void chplft_hisave(void)
 static int wbml_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3861,7 +3861,7 @@ static int wbml_hiload(void)
 static void wbml_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3873,7 +3873,7 @@ static void wbml_hisave(void)
 static int wboy_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3907,7 +3907,7 @@ static int wboy_hiload(void)
 static void wboy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3920,7 +3920,7 @@ static void wboy_hisave(void)
 static int regulus_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3943,7 +3943,7 @@ static int regulus_hiload(void)
 static void regulus_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -3958,7 +3958,7 @@ static void regulus_hisave(void)
 static int swat_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4007,7 +4007,7 @@ static int swat_hiload(void)
 static void swat_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4021,7 +4021,7 @@ static void swat_hisave(void)
 static int hvymetal_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4044,7 +4044,7 @@ static int hvymetal_hiload(void)
 static void hvymetal_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4057,7 +4057,7 @@ static void hvymetal_hisave(void)
 static int brain_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4080,7 +4080,7 @@ static int brain_hiload(void)
 static void brain_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -4093,7 +4093,7 @@ static void brain_hisave(void)
 static int tokisens_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -4116,7 +4116,7 @@ static int tokisens_hiload(void)
 static void tokisens_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

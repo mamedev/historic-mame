@@ -460,7 +460,7 @@ ROM_END
 static int naughtyb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score has already been written to screen */
@@ -512,7 +512,7 @@ static void naughtyb_hisave(void)
 	unsigned long score1,score2,hiscore;
 	void *f;
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	score1 = get_score(&RAM[0x4020]);
 	score2 = get_score(&RAM[0x4030]);
@@ -534,7 +534,7 @@ static void naughtyb_hisave(void)
 static int popflame_hiload (void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score has already been written to screen */
@@ -566,7 +566,7 @@ static void popflame_hisave (void)
 	unsigned long score1,score2,hiscore;
 	void *f;
 
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	score1 = get_score (&RAM[0x4021]);
 	score2 = get_score (&RAM[0x4031]);
@@ -601,7 +601,7 @@ struct GameDriver driver_naughtyb =
 	rom_naughtyb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_naughtyb,
 
@@ -627,7 +627,7 @@ struct GameDriver driver_naughtya =
 	rom_naughtya,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_naughtyb,
 
@@ -653,7 +653,7 @@ struct GameDriver driver_naughtyc =
 	rom_naughtyc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_naughtyb,
 
@@ -679,7 +679,7 @@ struct GameDriver driver_popflame =
 	rom_popflame,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_naughtyb,
 
@@ -705,7 +705,7 @@ struct GameDriver driver_popflama =
 	rom_popflama,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_naughtyb,
 

@@ -492,7 +492,7 @@ ROM_END
 
 static void darkseal_decrypt(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int i;
 
 	for (i=0x00000; i<0x80000; i++)

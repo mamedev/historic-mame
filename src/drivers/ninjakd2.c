@@ -291,7 +291,7 @@ int ninjakd2_bankselect_r(int offset)
 
 void ninjakd2_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	if (data != ninjakd2_bank_latch)
@@ -775,7 +775,7 @@ ROM_END
 static int hiload(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xe0f4],"\x00\x30\x00",3) == 0 )
@@ -795,7 +795,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -809,7 +809,7 @@ void ninjak2a_sound_decode(void)
 {
 	int A;
 	extern int encrypted_cpu;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	encrypted_cpu = 1;
 

@@ -1687,7 +1687,7 @@ ROM_END
 
 static int wtennis_reset_hack_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Otherwise the game goes into test mode and there is no way out that I
 	   can see.  I'm not sure how it can work, it probably somehow has to do
@@ -1706,7 +1706,7 @@ static void wtennis_driver_init(void)
 
 static void btime_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* For now, just copy the RAM array over to ROM. Decryption will happen */
@@ -1717,7 +1717,7 @@ static void btime_decode(void)
 
 static void zoar_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* At location 0xD50A is what looks like an undocumented opcode. I tried
@@ -1732,7 +1732,7 @@ static void zoar_decode(void)
 static void lnc_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* Swap bits 5 & 6 for opcodes */
@@ -1744,7 +1744,7 @@ static void lnc_decode(void)
 
 static int btime_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1770,7 +1770,7 @@ static int btime_hiload(void)
 static void btime_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1783,7 +1783,7 @@ static void btime_hisave(void)
 
 static int lnc_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime=0;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -1851,7 +1851,7 @@ static int lnc_hiload(void)
 static void lnc_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1865,7 +1865,7 @@ static void lnc_hisave(void)
 
 static int bnj_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/*   Check if the hi score table has already been initialized.
@@ -1900,7 +1900,7 @@ static int bnj_hiload(void)
 static void bnj_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1914,7 +1914,7 @@ static void bnj_hisave(void)
 
 static int zoar_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1942,7 +1942,7 @@ static int zoar_hiload(void)
 static void zoar_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1961,7 +1961,7 @@ static void zoar_hisave(void)
 /*** Disco No.1 high score save - RJF (Apr 5, 1999) ***/
 static int disco_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime=0;
 	/* check if the hi score table has already been initialized */
 	/* the high score table is intialized to all 0, so first of all */
@@ -2002,7 +2002,7 @@ static int disco_hiload(void)
 static void disco_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2029,7 +2029,7 @@ struct GameDriver driver_btime =
 	rom_btime,
 	0, btime_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_btime,
 
@@ -2055,7 +2055,7 @@ struct GameDriver driver_btime2 =
 	rom_btime2,
 	0, btime_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_btime,
 
@@ -2081,7 +2081,7 @@ struct GameDriver driver_btimem =
 	rom_btimem,
 	0, btime_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_btime,
 
@@ -2107,7 +2107,7 @@ struct GameDriver driver_cookrace =
 	rom_cookrace,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cookrace,
 
@@ -2133,7 +2133,7 @@ struct GameDriver driver_lnc =
 	rom_lnc,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_lnc,
 
@@ -2159,7 +2159,7 @@ struct GameDriver driver_wtennis =
 	rom_wtennis,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wtennis,
 
@@ -2185,7 +2185,7 @@ struct GameDriver driver_mmonkey =
 	rom_mmonkey,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mmonkey,
 
@@ -2211,7 +2211,7 @@ struct GameDriver driver_brubber =
 	rom_brubber,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bnj,
 
@@ -2237,7 +2237,7 @@ struct GameDriver driver_bnj =
 	rom_bnj,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bnj,
 
@@ -2263,7 +2263,7 @@ struct GameDriver driver_caractn =
 	rom_caractn,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bnj,
 
@@ -2289,7 +2289,7 @@ struct GameDriver driver_zoar =
 	rom_zoar,
 	0, zoar_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zoar,
 
@@ -2315,7 +2315,7 @@ struct GameDriver driver_disco =
 	rom_disco,
 	0, btime_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_disco,
 
@@ -2564,7 +2564,7 @@ struct GameDriver driver_decocass =
 	rom_decocass,
 	0, lnc_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_decocass,
 

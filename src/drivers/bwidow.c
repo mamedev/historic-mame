@@ -744,7 +744,7 @@ static struct MachineDriver spacduel_machine_driver =
 
 static int bwidow_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -768,7 +768,7 @@ static int bwidow_hiload(void)
 static void bwidow_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -813,7 +813,7 @@ struct GameDriver driver_bwidow =
 	rom_bwidow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bwidow,
 
@@ -887,7 +887,7 @@ struct GameDriver driver_gravitar =
 	rom_gravitar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gravitar,
 
@@ -913,7 +913,7 @@ struct GameDriver driver_gravitr2 =
 	rom_gravitr2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gravitar,
 
@@ -971,7 +971,7 @@ struct GameDriver driver_spacduel =
 	rom_spacduel,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacduel,
 

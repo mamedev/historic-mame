@@ -12,7 +12,7 @@
 static struct osd_bitmap *polybitmap1,*polybitmap2,*charbitmap;
 static struct osd_bitmap *polybitmap;
 
-int irvg_running;
+int irvg_palette_mod;
 
 extern int irvg_clear;
 
@@ -20,7 +20,6 @@ static unsigned char inverse_palette[256];
 unsigned char *comRAM1,*comRAM2,*mbRAM, *mbROM;
 static int ir_xmin, ir_ymin, ir_xmax, ir_ymax; /* clipping area */
 
-extern int irmb_running;
 extern unsigned char irobot_comswap;
 extern unsigned char irobot_bufsel;
 extern unsigned char irobot_alphamap;
@@ -57,7 +56,6 @@ void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-    unsigned char *CP = Machine->memory_region[3];
 
 	/* the palette will be initialized by the game. We just set it to some */
 	/* pre-cooked values so the startup copyright notice can be displayed. */
@@ -75,18 +73,18 @@ void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		int bits,intensity;
 	    unsigned int color;
 
-        color = *CP;
+	    color = *color_prom;
 	    intensity = color & 0x03;
 	    bits = (color >> 6) & 0x03;
-        r = 16 * bits * intensity;
+	    r = 16 * bits * intensity;
 	    bits = (color >> 4) & 0x03;
 	    g = 16 * bits * intensity;
 	    bits = (color >> 2) & 0x03;
-        b = 16 * bits * intensity;
+	    b = 16 * bits * intensity;
 		*(palette++) = r;
 		*(palette++) = g;
 		*(palette++) = b;
-        CP++;
+		color_prom++;
 	}
 
 
@@ -109,7 +107,6 @@ void irobot_paletteram_w(int offset,int data)
     unsigned int color;
 
     color = ((data << 1) | (offset & 0x01)) ^ 0x1ff;
-//    color = ((data << 1) | (offset & 0x01));
     intensity = color & 0x07;
     bits = (color >> 3) & 0x03;
     b = 8 * bits * intensity;
@@ -118,6 +115,7 @@ void irobot_paletteram_w(int offset,int data)
     bits = (color >> 7) & 0x03;
     r = 8 * bits * intensity;
     palette_change_color((offset >> 1) & 0x3F,r,g,b);
+    irvg_palette_mod = 1;
 }
 
 
@@ -128,49 +126,49 @@ void irobot_paletteram_w(int offset,int data)
 ***************************************************************************/
 int irobot_vh_start(void)
 {
-    int i;
+	int i;
 
-    /* Setup 2 bitmaps for the polygon generator */
-    if ((polybitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	/* Setup 2 bitmaps for the polygon generator */
+	if ((polybitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-    if ((polybitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((polybitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-    /* Character plane bitmaps */
+	/* Character plane bitmaps */
 	if ((charbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-        osd_free_bitmap(polybitmap1);
-        osd_free_bitmap(polybitmap2);
+		osd_free_bitmap(polybitmap1);
+		osd_free_bitmap(polybitmap2);
+
 		return 1;
 	}
 
 	if ((dirtybuffer = malloc(videoram_size)) == 0)
 	{
 		osd_free_bitmap(charbitmap);
-        osd_free_bitmap(polybitmap1);
-        osd_free_bitmap(polybitmap2);
+		osd_free_bitmap(polybitmap1);
+		osd_free_bitmap(polybitmap2);
 		return 1;
-    }
+	}
 	memset(dirtybuffer,1,videoram_size);
 
-    /* Set clipping */
-    ir_xmin=ir_ymin=0;
-    ir_xmax = Machine->drv->screen_width;
-    ir_ymax = Machine->drv->screen_height;
-    irvg_running=0;
+	/* Set clipping */
+	ir_xmin=ir_ymin=0;
+	ir_xmax = Machine->drv->screen_width;
+	ir_ymax = Machine->drv->screen_height;
 
-    /* Allocate other memory areas */
-    comRAM1 = (unsigned char *)malloc(0x1000);
-    comRAM2 = (unsigned char *)malloc(0x1000);
-    mbRAM = (unsigned char *)malloc(0x2000);
-    mbROM = (unsigned char *)malloc(0xC000);
-    if (!comRAM1 || !comRAM2 || !mbRAM || !mbROM) {
-        if (errorlog) fprintf(errorlog,"MALLOC ERROR\n");
-        return 1;
-    }
+	/* Allocate other memory areas */
+	comRAM1 = (unsigned char *)malloc(0x1000);
+	comRAM2 = (unsigned char *)malloc(0x1000);
+	mbRAM = (unsigned char *)malloc(0x2000);
+	mbROM = (unsigned char *)malloc(0xC000);
+	if (!comRAM1 || !comRAM2 || !mbRAM || !mbROM) {
+		if (errorlog) fprintf(errorlog,"MALLOC ERROR\n");
+		return 1;
+	}
 
-    for (i = 0;i < Machine->drv->total_colors;i++)
-        inverse_palette[Machine->pens[i]] = i;
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		inverse_palette[Machine->pens[i]] = i;
 
 	return 0;
 }
@@ -182,55 +180,55 @@ int irobot_vh_start(void)
 ***************************************************************************/
 void irobot_vh_stop(void)
 {
-    free(comRAM1);
-    free(comRAM2);
-    free(mbRAM);
-    free(mbROM);
-    free(dirtybuffer);
-    osd_free_bitmap(charbitmap);
-    osd_free_bitmap(tmpbitmap);
+	free(comRAM1);
+	free(comRAM2);
+	free(mbRAM);
+	free(mbROM);
+	free(dirtybuffer);
+	osd_free_bitmap(charbitmap);
+	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(polybitmap1);
 	osd_free_bitmap(polybitmap2);
 }
 
 /***************************************************************************
 
-    Polygon Generator  (Preliminary information)
-    The polygon communication ram works as follows (each location is a 16-bit word):
+	Polygon Generator  (Preliminary information)
+	The polygon communication ram works as follows (each location is a 16-bit word):
 
-    0000-xxxx: Object pointer table
-        bits 00..10: Address of object data
-        bits 12..15: Object type
-            0x4 = Polygon
-            0x8 = Point
-            0xC = Vector
-        (0xFFFF means end of table)
+	0000-xxxx: Object pointer table
+		bits 00..10: Address of object data
+		bits 12..15: Object type
+			0x4 = Polygon
+			0x8 = Point
+			0xC = Vector
+		(0xFFFF means end of table)
 
-   Point Object:
-        Word 0, bits 0..15: X Position  (0xFFFF = end of point objects)
-        Word 1, bits 7..15: Y Position
-                bits 0..5: Color
+	Point Object:
+		Word 0, bits 0..15: X Position  (0xFFFF = end of point objects)
+		Word 1, bits 7..15: Y Position
+		bits 0..5: Color
 
-    Vector Object:
-        Word 0, bits 7..15: Ending Y   (0xFFFF = end of line objects)
-        Word 1, bits 7..15: Starting Y
-                bits 0..5: Color
-        Word 2: Slope
-        Word 3, bits 0..15: Starting X
+	Vector Object:
+		Word 0, bits 7..15: Ending Y   (0xFFFF = end of line objects)
+		Word 1, bits 7..15: Starting Y
+				bits 0..5: Color
+		Word 2: Slope
+		Word 3, bits 0..15: Starting X
 
-    Polygon Object:
-        Word 0, bits 0..10: Pointer to second slope list
-        Word 1, bits 0..15: Starting X first vector
-        Word 2, bits 0..15: Starting X second vector
-        Word 3, bits 0..5: Color
-                bits 7..15: Initial Y value
+	Polygon Object:
+		Word 0, bits 0..10: Pointer to second slope list
+		Word 1, bits 0..15: Starting X first vector
+		Word 2, bits 0..15: Starting X second vector
+		Word 3, bits 0..5: Color
+		bits 7..15: Initial Y value
 
-        Slope Lists: (one starts a Word 4, other starts at pointer in Word 0)
-            Word 0, Slope (0xFFFF = side done)
-            Word 1, bits 7..15: Ending Y of vector
+	Slope Lists: (one starts at Word 4, other starts at pointer in Word 0)
+		Word 0, Slope (0xFFFF = side done)
+		Word 1, bits 7..15: Ending Y of vector
 
-        Each side is a continous set of vectors. Both sides are drawn at
-        the same time and the space between them is filled in.
+	Each side is a continous set of vectors. Both sides are drawn at
+	the same time and the space between them is filled in.
 
 ***************************************************************************/
 
@@ -250,7 +248,8 @@ INLINE void irobot_draw_pixel (int x, int y, int col)
     if (y < ir_ymin || y >= ir_ymax)
 		return;
 
-    polybitmap->line[y][x] = Machine->pens[col];
+//    polybitmap->line[y][x] = Machine->pens[col];
+	plot_pixel (polybitmap, x, y, Machine->pens[col]);
 }
 
 /*
@@ -301,154 +300,187 @@ void irobot_draw_line (int x1, int y1, int x2, int y2, int col)
     }
 }
 
-INLINE void irobot_draw_hline (int x1, int x2, int y1, int col)
+INLINE void irobot_draw_hline (int x1, int x2, int y, int col)
 {
-int loop, d = (x1 <= x2)?1:-1;
+	int loop, d = (x1 <= x2)?1:-1;
+	for (loop = x1; loop <= x2; loop+=d)
+		irobot_draw_pixel (loop, y, col);
 
-  for (loop = x1; loop <= x2; loop+=d)
-    irobot_draw_pixel (loop, y1, col);
+
+	/*    if (x1 < ir_xmin)
+		  x1 = ir_xmin;
+		  if (x1 > ir_xmax)
+		  x1 = ir_xmax;
+
+		  if (x2 < ir_xmin)
+		  x2 = ir_xmin;
+		  if (x2 > ir_xmax)
+		  x2 = ir_xmax;
+
+
+		  if (x1 < x2)
+		  memset(&polybitmap->line[y][x1], Machine->pens[col], x1-x2+1);
+		  else
+		  memset(&polybitmap->line[y][x2], Machine->pens[col], x2-x1+1);
+	 */
 }
 
 void run_video(void) {
- int sx,sy,ex,ey,sx2,ey2;
- int color;
- unsigned int d1;
- unsigned char *comRAM;
- int lpnt,spnt,spnt2;
- int shp;
- short word1,word2;
+	int sx,sy,ex,ey,sx2,ey2;
+	int color;
+	unsigned int d1;
+	unsigned char *comRAM;
+	int lpnt,spnt,spnt2;
+	int shp;
+	short word1,word2;
 
 	if (errorlog) fprintf(errorlog,"Starting Polygon Generator, Clear=%d\n",irvg_clear);
-	if (irobot_comswap)
+	if (irobot_comswap) {
 		comRAM = comRAM2;
-	else
+	}
+	else {
 		comRAM = comRAM1;
+	}
 
 	if (irobot_bufsel)
 		polybitmap = polybitmap2;
 	else
 		polybitmap = polybitmap1;
 
+	//    if (irvg_clear) irobot_poly_clear();
 	lpnt=0;
 	while (lpnt < 0xFFF) {
-	    d1 = (comRAM[lpnt] << 8) | comRAM[lpnt+1];
-	    lpnt+=2;
-	    if (d1 == 0xFFFF) break;
-	    spnt = (d1 & 0x07FF) << 1;
-	    shp = (d1 & 0xF000) >> 12;
+		d1 = (comRAM[lpnt] << 8) | comRAM[lpnt+1];
+		lpnt+=2;
+		if (d1 == 0xFFFF) break;
+		spnt = (d1 & 0x07FF) << 1;
+		shp = (d1 & 0xF000) >> 12;
 
-	/* Pixel */
-	    if (shp == 0x8) {
-	      while (spnt < 0xFFE) {
-	        sx = (comRAM[spnt] << 8) | comRAM[spnt+1];
-			if (sx == 0xFFFF) break;
-	        sy = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
-	        color = comRAM[spnt+3] & 0x3F;
-	        irobot_draw_pixel((sx>>7)-128,sy,color);
-	        spnt+=4;
-	      }//while object
-	    }//if point
+		/* Pixel */
+		if (shp == 0x8) {
+			while (spnt < 0xFFE) {
+				sx = (comRAM[spnt] << 8) | comRAM[spnt+1];
+				if (sx == 0xFFFF) break;
+				sy = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
+				color = comRAM[spnt+3] & 0x3F;
+				irobot_draw_pixel((sx>>7)-128,sy,color);
+				spnt+=4;
+			}//while object
+		}//if point
 
-	/* Line */
-	    if (shp == 0xC) {
-	      while (spnt < 0xFFF) {
-	        if (comRAM[spnt] == 0xFF && comRAM[spnt+1] == 0xFF) break;
-	        ey = ((comRAM[spnt] << 1) | (comRAM[spnt+1] >> 7)) - 128;
-	        sy = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
-	        sx = (comRAM[spnt+6] << 8) | comRAM[spnt+7];
-	        word1 = (comRAM[spnt+4] << 8) | comRAM[spnt+5];
-	        ex = sx + word1 * (ey - sy + 1);
-	        color = comRAM[spnt+3] & 0x3F;
-	        irobot_draw_line((sx>>7)-128,sy,(ex>>7)-128,ey,color);
-	        spnt+=8;
-	      }//while object
-	    }//if line
+		/* Line */
+		if (shp == 0xC) {
+			while (spnt < 0xFFF) {
+				if (comRAM[spnt] == 0xFF && comRAM[spnt+1] == 0xFF) break;
+				ey = ((comRAM[spnt] << 1) | (comRAM[spnt+1] >> 7)) - 128;
+				sy = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
+				sx = (comRAM[spnt+6] << 8) | comRAM[spnt+7];
+				word1 = (comRAM[spnt+4] << 8) | comRAM[spnt+5];
+				ex = sx + word1 * (ey - sy + 1);
+				color = comRAM[spnt+3] & 0x3F;
+				irobot_draw_line((sx>>7)-128,sy,(ex>>7)-128,ey,color);
+				spnt+=8;
+			}//while object
+		}//if line
 
-	/* Polygon */
-	    if (shp == 0x4) {
+		/* Polygon */
+		if (shp == 0x4) {
 
-	      spnt2 = (comRAM[spnt] << 8) | comRAM[spnt+1];
-	      spnt2 = (spnt2 & 0x7FF) << 1;
+			spnt2 = (comRAM[spnt] << 8) | comRAM[spnt+1];
+			spnt2 = (spnt2 & 0x7FF) << 1;
 
-	      sx = (comRAM[spnt+2] << 8) | comRAM[spnt+3];
-	      sx2 = (comRAM[spnt+4] << 8) | comRAM[spnt+5];
-	      sy = ((comRAM[spnt+6] << 1) | (comRAM[spnt+7] >> 7)) - 128;
-	      color = comRAM[spnt+7] & 0x3F;
-	      spnt+=8;
+			sx = (comRAM[spnt+2] << 8) | comRAM[spnt+3];
+			sx2 = (comRAM[spnt+4] << 8) | comRAM[spnt+5];
+			sy = ((comRAM[spnt+6] << 1) | (comRAM[spnt+7] >> 7)) - 128;
+			color = comRAM[spnt+7] & 0x3F;
+			spnt+=8;
 
-	      if(comRAM[spnt] != 0xff || comRAM[spnt+1] != 0xff
-	         || comRAM[spnt+2] != 0xff || comRAM[spnt+3] != 0xff)
-	      {
-	        word1 = ((comRAM[spnt]<<8) | comRAM[spnt+1]);
-	        ey = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
-	        spnt+=4;
+			if(comRAM[spnt] != 0xff || comRAM[spnt+1] != 0xff
+					|| comRAM[spnt+2] != 0xff || comRAM[spnt+3] != 0xff)
+			{
+				word1 = ((comRAM[spnt]<<8) | comRAM[spnt+1]);
+				ey = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
+				spnt+=4;
 
-	            sx += word1;
+				sx += word1;
 
-	        word2 = ((comRAM[spnt2]<<8) | comRAM[spnt2+1]);
-	        ey2 = ((comRAM[spnt2+2]<<1) | (comRAM[spnt2+3] >> 7)) - 128;
-	        spnt2+=4;
+				word2 = ((comRAM[spnt2]<<8) | comRAM[spnt2+1]);
+				ey2 = ((comRAM[spnt2+2]<<1) | (comRAM[spnt2+3] >> 7)) - 128;
+				spnt2+=4;
 
-	            sx2 += word2;
+				sx2 += word2;
 
-	        while(1)
-	        {
+				while(1)
+				{
 
-	          irobot_draw_hline((sx>>7)-128,(sx2>>7)-128,sy,color);
+					irobot_draw_hline((sx>>7)-128,(sx2>>7)-128,sy,color);
 
-	          sy++;
+					sy++;
 
-	          if (sy >= ey)
-	          {
-	            if(comRAM[spnt] == 0xff && comRAM[spnt+1] == 0xff
-	              && comRAM[spnt+2] == 0xff && comRAM[spnt+3] == 0xff)
-	              break;
-	            word1 = ((comRAM[spnt]<<8) | comRAM[spnt+1]);
-	            ey = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
-	            spnt+=4;
-	          }
-	          else
-	            sx += word1;
+					if (sy >= ey)
+					{
+						if(comRAM[spnt] == 0xff && comRAM[spnt+1] == 0xff
+								&& comRAM[spnt+2] == 0xff && comRAM[spnt+3] == 0xff)
+							break;
+						word1 = ((comRAM[spnt]<<8) | comRAM[spnt+1]);
+						ey = ((comRAM[spnt+2] << 1) | (comRAM[spnt+3] >> 7)) - 128;
+						spnt+=4;
+					}
+					else
+						sx += word1;
 
-	          if (sy >= ey2)
-	          {
-	            word2 = ((comRAM[spnt2]<<8) | comRAM[spnt2+1]);
-	            ey2 = ((comRAM[spnt2+2]<<1) | (comRAM[spnt2+3] >> 7)) - 128;
-	            spnt2+=4;
-	          }
-	          else
-	            sx2 += word2;
+					if (sy >= ey2)
+					{
+						word2 = ((comRAM[spnt2]<<8) | comRAM[spnt2+1]);
+						ey2 = ((comRAM[spnt2+2]<<1) | (comRAM[spnt2+3] >> 7)) - 128;
+						spnt2+=4;
+					}
+					else
+						sx2 += word2;
 
-	        } //while polygon
-	     }//if at least 2 sides
-	   } //if polygon
-  } //while object
+				} //while polygon
+			}//if at least 2 sides
+		} //if polygon
+	} //while object
 }
 
 
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
 void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int offs;
-    int c;
+	int offs;
+	int c;
 
-    palette_recalc();
+	if (errorlog) fprintf(errorlog,"Screen Refresh\n");
+
+	palette_recalc();
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--) {
-		if (dirtybuffer[offs]) {
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
 			int sx,sy;
 
 			sx = offs % 32;
 			sy = offs / 32;
-            c = ((videoram[offs] & 0xC0) >> 6) | (irobot_alphamap >> 0x03);
+			c = ((videoram[offs] & 0xC0) >> 6) | (irobot_alphamap >> 0x03);
 			drawgfx(charbitmap,Machine->gfx[0],
-            videoram[offs] & 0x3F,c ,
-			0,0,
-			8*sx,8*sy,
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					videoram[offs] & 0x3F, c,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+
 
 	if (irobot_bufsel)
 		copybitmap(bitmap,polybitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -456,6 +488,6 @@ void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,polybitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,64);
+	copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR, 64);
 
 }

@@ -59,7 +59,7 @@ static void bankedram2_w(int offset,int data)
 
 static void bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs;
 
 	/* bit 0 = RAM bank */
@@ -495,7 +495,7 @@ struct GameDriver driver_bottom9 =
 	rom_bottom9,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bottom9,
 
@@ -521,7 +521,7 @@ struct GameDriver driver_bottom9n =
 	rom_bottom9n,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bottom9,
 

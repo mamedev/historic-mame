@@ -433,7 +433,7 @@ struct GameDriver driver_bsktball =
 	rom_bsktball,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bsktball,
 

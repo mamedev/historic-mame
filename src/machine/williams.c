@@ -543,7 +543,7 @@ void williams2_bank_select(int offset, int data)
 	/* other banks reference ROM plus either palette RAM or the top of videoram */
 	else
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		cpu_setbank(1, &RAM[bank[williams2_bank]]);
 
@@ -797,7 +797,7 @@ static const UINT32 blaster_bank_offset[16] =
 
 void blaster_vram_select_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	vram_bank = data;
 
@@ -819,7 +819,7 @@ void blaster_vram_select_w(int offset, int data)
 
 void blaster_bank_select_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	blaster_bank = data & 15;
 

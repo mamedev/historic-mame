@@ -214,7 +214,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	skip = spr_reg[SPR_SKIP_LO] + (spr_reg[SPR_SKIP_HI] << 8);
 
 	height		= spr_reg[SPR_Y_BOTTOM] - spr_reg[SPR_Y_TOP];
-	spr_palette	= Machine->colortable + 0x10 * spr_reg[SPR_COL];
+	spr_palette	= Machine->remapped_colortable + 0x10 * spr_reg[SPR_COL];
 	sx = spr_reg[SPR_X];
 	sy = spr_reg[SPR_Y_TOP] + 1;
 

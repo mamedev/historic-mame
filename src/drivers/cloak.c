@@ -404,7 +404,7 @@ struct GameDriver driver_cloak =
 	rom_cloak,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cloak,
 

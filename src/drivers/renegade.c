@@ -339,7 +339,7 @@ static int bank;
 
 static void bankswitch_w( int offset, int data ){
 	if( (data&1)!=bank ){
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 		bank = data&1;
 		cpu_setbank(1,&RAM[ bank?0x10000:0x4000 ]);
 	}
@@ -830,7 +830,7 @@ ROM_END
 static int hiload(void){
 	if( osd_key_pressed( OSD_KEY_L ) ){
 		void *f;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -845,7 +845,7 @@ static int hiload(void){
 
 static void hisave(void){
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{

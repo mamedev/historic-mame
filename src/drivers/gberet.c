@@ -88,7 +88,7 @@ static void gberet_coincounter_w(int offset,int data)
 
 static void mrgoemon_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs;
 
 	/* bits 0/1 = coin counters */
@@ -779,7 +779,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -808,7 +808,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -836,7 +836,7 @@ struct GameDriver driver_gberet =
 	rom_gberet,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gberet,
 
@@ -862,7 +862,7 @@ struct GameDriver driver_rushatck =
 	rom_rushatck,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gberet,
 
@@ -888,7 +888,7 @@ struct GameDriver driver_gberetb =
 	rom_gberetb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gberetb,
 
@@ -914,7 +914,7 @@ struct GameDriver driver_mrgoemon =
 	rom_mrgoemon,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mrgoemon,
 

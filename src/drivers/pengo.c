@@ -424,7 +424,7 @@ static void penta_decode(void)
 		{ 0x88,0x0a,0x82,0x00,0xa0,0x22,0xaa,0x28 }		/* ...1...1...1.... */
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -457,7 +457,7 @@ static void penta_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -483,7 +483,7 @@ static int hiload(void)
 
 static int pengo2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -510,7 +510,7 @@ static int pengo2_hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -538,7 +538,7 @@ struct GameDriver driver_pengo =
 	rom_pengo,
 	0, pengo_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pengo,
 
@@ -564,7 +564,7 @@ struct GameDriver driver_pengo2 =
 	rom_pengo2,
 	0, pengo_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pengo,
 
@@ -590,7 +590,7 @@ struct GameDriver driver_pengo2u =
 	rom_pengo2u,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pengo,
 
@@ -616,7 +616,7 @@ struct GameDriver driver_penta =
 	rom_penta,
 	0, penta_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pengo,
 

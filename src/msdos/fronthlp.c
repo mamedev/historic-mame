@@ -300,9 +300,20 @@ enum { LIST_LIST = 1, LIST_LISTINFO, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTRO
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_LISTCRC, LIST_LISTDUPCRC, LIST_WRONGMERGE,
 		LIST_SOURCEFILE };
 
+#define VERIFY_ROMS		0x00000001
+#define VERIFY_SAMPLES	0x00000002
+#define VERIFY_VERBOSE	0x00000004
+#define VERIFY_TERSE	0x00000008
+
+void CLIB_DECL terse_printf(char *fmt,...)
+{
+	/* no-op */
+}
+
+
 int frontend_help (int argc, char **argv)
 {
-	int i, j;
+	int i, j, k;
 	int list = 0;
 	int listclones = 1;
 	int verify = 0;
@@ -362,8 +373,11 @@ int frontend_help (int argc, char **argv)
 		{
 			if (!stricmp(argv[i],"-listroms")) list = LIST_LISTROMS;
 			if (!stricmp(argv[i],"-listsamples")) list = LIST_LISTSAMPLES;
-			if (!stricmp(argv[i],"-verifyroms")) verify = 1;
-			if (!stricmp(argv[i],"-verifysamples")) verify = 2;
+			if (!stricmp(argv[i],"-verifyroms")) verify = VERIFY_ROMS;
+			if (!stricmp(argv[i],"-verifysets")) verify = VERIFY_ROMS|VERIFY_VERBOSE|VERIFY_TERSE;
+			if (!stricmp(argv[i],"-vset")) verify = VERIFY_ROMS|VERIFY_VERBOSE;
+			if (!stricmp(argv[i],"-verifysamples")) verify = VERIFY_SAMPLES|VERIFY_VERBOSE;
+			if (!stricmp(argv[i],"-vsam")) verify = VERIFY_SAMPLES|VERIFY_VERBOSE;
 			if (!stricmp(argv[i],"-romident")) ident = 1;
 			if (!stricmp(argv[i],"-isknown")) ident = 2;
 			if (!stricmp(argv[i],"-sourcefile")) list = LIST_SOURCEFILE;
@@ -466,7 +480,6 @@ int frontend_help (int argc, char **argv)
 			return 0;
 			break;
 
-#if 0
 		case LIST_LISTSAMDIR: /* games list with samples directories */
 			printf("Name:     Samples dir:\n");
 			i = 0;
@@ -479,19 +492,27 @@ int frontend_help (int argc, char **argv)
 #endif
 #endif
 						) && !strwildcmp(gamename, drivers[i]->name))
-					if (drivers[i]->samplenames != 0 && drivers[i]->samplenames[0] != 0)
+				{
+					for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
 					{
-						printf("%-10s",drivers[i]->name);
-						if (drivers[i]->samplenames[0][0] == '*')
-							printf("%s\n",drivers[i]->samplenames[0]+1);
-						else
-							printf("%s\n",drivers[i]->name);
+						const char **samplenames;
+						if( drivers[i]->drv->sound[j].sound_type != SOUND_SAMPLES )
+							continue;
+						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+						if (samplenames != 0 && samplenames[0] != 0)
+						{
+							printf("%-10s",drivers[i]->name);
+							if (samplenames[0][0] == '*')
+								printf("%s\n",samplenames[0]+1);
+							else
+								printf("%s\n",drivers[i]->name);
+						}
 					}
-				i++;
+					i++;
+				}
 			}
 			return 0;
 			break;
-#endif
 
 		case LIST_LISTROMS: /* game roms list or */
 		case LIST_LISTSAMPLES: /* game samples list */
@@ -506,20 +527,25 @@ int frontend_help (int argc, char **argv)
 			gamedrv = drivers[j];
 			if (list == LIST_LISTROMS)
 				printromlist(gamedrv->rom,gamename);
-#if 0
 			else
 			{
-				if (gamedrv->samplenames != 0 && gamedrv->samplenames[0] != 0)
+				for( k = 0; gamedrv->drv->sound[k].sound_type && j < MAX_SOUND; k++ )
 				{
-					i = 0;
-					while (gamedrv->samplenames[i] != 0)
+					const char **samplenames;
+					if( gamedrv->drv->sound[k].sound_type != SOUND_SAMPLES )
+						continue;
+					samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+					if (samplenames != 0 && samplenames[0] != 0)
 					{
-						printf("%s\n",gamedrv->samplenames[i]);
-						i++;
+						i = 0;
+						while (samplenames[i] != 0)
+						{
+							printf("%s\n",samplenames[i]);
+							i++;
+						}
 					}
-				}
+                }
 			}
-#endif
 			return 0;
 			break;
 
@@ -934,10 +960,11 @@ int frontend_help (int argc, char **argv)
 		int correct = 0;
 		int incorrect = 0;
 		int res = 0;
-		int total;
+		int total = 0;
+		int checked = 0;
 		int notfound = 0;
 
-		total = 0;
+
 		for (i = 0; drivers[i]; i++)
 		{
 			if (!strwildcmp(gamename, drivers[i]->name))
@@ -952,79 +979,83 @@ int frontend_help (int argc, char **argv)
 			/* set rom and sample path correctly */
 			get_rom_sample_path (argc, argv, i);
 
-			/* if using wildcards, ignore games we don't have romsets for. */
-			if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))
+			if (verify & VERIFY_ROMS)
 			{
-				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					if (drivers[i]->clone_of == 0 ||
-							!osd_faccess(drivers[i]->clone_of->name,OSD_FILETYPE_ROM))
-						if (stricmp(gamename, drivers[i]->name) != 0)
-						{
-							notfound++;
-							goto nextloop;
-						}
-				}
-			}
+				res = VerifyRomSet (i,(verify & VERIFY_TERSE) ? terse_printf : (verify_printf_proc)printf);
 
-			if (verify == 1)
-			{
-				res = VerifyRomSet (i,(verify_printf_proc)printf);
-
-				if (res == CLONE_NOTFOUND)
+				if (res == CLONE_NOTFOUND || res == NOTFOUND)
 				{
 					notfound++;
 					goto nextloop;
 				}
 
-				if (res != CORRECT)
+				if (res == INCORRECT || res == BEST_AVAILABLE || (verify & VERIFY_VERBOSE))
+				{
 					printf ("romset %s ", drivers[i]->name);
+					if (drivers[i]->clone_of)
+						printf ("[%s] ", drivers[i]->clone_of->name);
+				}
 			}
-#if 0
-			if (verify == 2)
+			if (verify & VERIFY_SAMPLES)
 			{
+				const char **samplenames = NULL;
+				for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+					if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
+						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 				/* ignore games that need no samples */
-				if (drivers[i]->samplenames == 0 ||
-					drivers[i]->samplenames[0] == 0)
-					continue;
+				if (samplenames == 0 || samplenames[0] == 0)
+					goto nextloop;
 
 				res = VerifySampleSet (i,(verify_printf_proc)printf);
-				if (res != CORRECT)
-					printf ("sampleset %s ", drivers[i]->name);
+				if (res == NOTFOUND)
+				{
+					notfound++;
+					goto nextloop;
+				}
+				printf ("sampleset %s ", drivers[i]->name);
 			}
-#endif
 
 			if (res == NOTFOUND)
 			{
-				printf ("not found\n\n");
-				notfound++;
+				printf ("oops, should never come along here\n");
 			}
 			else if (res == INCORRECT)
 			{
-				printf ("incorrect\n\n");
+				printf ("is bad\n");
 				incorrect++;
 			}
-			else
+			else if (res == CORRECT)
+			{
+				if (verify & VERIFY_VERBOSE)
+					printf ("is good\n");
 				correct++;
+			}
+			else if (res == BEST_AVAILABLE)
+			{
+				printf ("is best available\n");
+				correct++;
+			}
 			if (res)
 				err = res;
 
 nextloop:
-			fprintf(stderr,"%d%%\r",100 * (correct+incorrect+notfound) / total);
+			checked++;
+			fprintf(stderr,"%d%%\r",100 * checked / total);
 		}
 
 		if (correct+incorrect == 0)
 		{
+			printf ("%s ", (verify & VERIFY_ROMS) ? "romset" : "sampleset" );
 			if (notfound > 0)
-				printf("Game \"%s\" not found!\n",gamename);
+				printf("\"%8s\" not found!\n",gamename);
 			else
-				printf("Game \"%s\" not supported!\n",gamename);
+				printf("\"%8s\" not supported!\n",gamename);
 			return 1;
 		}
 		else
 		{
 			printf("%d %s found, %d were OK.\n", correct+incorrect,
-					(verify == 1)? "romsets" : "samplesets", correct);
+					(verify & VERIFY_ROMS)? "romsets" : "samplesets", correct);
 			if (incorrect > 0)
 				return 2;
 			else

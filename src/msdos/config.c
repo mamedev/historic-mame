@@ -49,6 +49,7 @@ extern unsigned char tw368x224arc_h, tw368x224arc_v;
 extern unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
 extern unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
 extern unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
+extern unsigned char tw640x480arc_h, tw640x480arc_v;
 
 
 /* from sound.c */
@@ -500,6 +501,8 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw512x448arc_v          = get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
 	tw512x512arc_h          = get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
 	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
+	tw640x480arc_h          = get_int ("tweaked", "640x480arc_h",   NULL, 0xc1);
+	tw640x480arc_v          = get_int ("tweaked", "640x480arc_v",   NULL, 0x09);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);

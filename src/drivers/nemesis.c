@@ -11,19 +11,6 @@
 	Lifeforce (US)			GX587
 	Lifeforce (Japan)		GX587
 
-Sound info:
-        GX400 games have a custom sound chip "0005289" which produces
-        two additional sound channels. They are generated using one of 8
-        waveforms which consist of 32 samples (4 bit, unsigned) each. Since
-        that makes it very similar to the Namco 3-voice sound chip, we use
-        the Namco driver, mapping all writes to the 0005289 to the respective
-        Namco registers.
-
-To do:
-	Combine video functions for Salamander/other games.
-	Clean up stuff :)
-	Lifeforce (Japan) needs support for the large sprite size.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -306,49 +293,6 @@ static int nemesis_portA_r(int offset)
 	return cpu_gettotalcycles() / TIMER_RATE;
 }
 
-int waveform_A, waveform_B;
-long regtemp_A, regtemp_B;
-
-void nemesis_portA_w (int offset, int data)
-{
-        namcos1_sound_w (0, (data & 0x0f));
-        waveform_A = (data >> 5);
-        namcos1_sound_w (1, regtemp_A + (waveform_A << 4));
-}
-
-void nemesis_portB_w (int offset, int data)
-{
-        namcos1_sound_w (8, (data & 0x0f));
-        waveform_B = (data >> 5)+8;
-        namcos1_sound_w (9, regtemp_B + (waveform_B << 4));
-}
-
-void setfreq_extraA (int offset, int data)
-{       int f1, f2, f3;
-        long frequency;
-        frequency = (1789772/(0x1000 - offset));
-        f1 = (frequency & 0x0000ff);
-        f2 = (frequency & 0x00ff00) >> 8;
-        f3 = frequency >> 16;
-        regtemp_A = f3;
-        namcos1_sound_w (1, f3 + (waveform_A << 4));
-        namcos1_sound_w (2, f2);
-        namcos1_sound_w (3, f1);
-}
-
-void setfreq_extraB (int offset, int data)
-{       int f1, f2, f3;
-        long frequency;
-        frequency = (1789772/(0x1000 - offset));
-        f1 = (frequency & 0x0000ff);
-        f2 = (frequency & 0x00ff00) >> 8;
-        f3 = frequency >> 16;
-        regtemp_B = f3;
-        namcos1_sound_w (9, f3 + (waveform_B << 4));
-        namcos1_sound_w (10,f2);
-        namcos1_sound_w (11,f1);
-}
-
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -363,12 +307,14 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0xa000, 0xafff, setfreq_extraA, &namco_soundregs },
-	{ 0xc000, 0xcfff, setfreq_extraB },
-	{ 0xe006, 0xe006, AY8910_control_port_0_w },
-	{ 0xe106, 0xe106, AY8910_write_port_0_w },
+	{ 0xa000, 0xafff, k005289_pitch_A_w },
+	{ 0xc000, 0xcfff, k005289_pitch_B_w },
+	{ 0xe003, 0xe003, k005289_keylatch_A_w },
+	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
 	{ 0xe405, 0xe405, AY8910_write_port_1_w },
+	{ 0xe006, 0xe006, AY8910_control_port_0_w },
+	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ -1 }  /* end of table */
 };
 
@@ -548,8 +494,10 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x87ff, MWA_RAM, &gx400_shared_ram },
-	{ 0xa000, 0xafff, setfreq_extraA, &namco_soundregs },
-	{ 0xc000, 0xcfff, setfreq_extraB },
+	{ 0xa000, 0xafff, k005289_pitch_A_w },
+	{ 0xc000, 0xcfff, k005289_pitch_B_w },
+	{ 0xe003, 0xe003, k005289_keylatch_A_w },
+	{ 0xe004, 0xe004, k005289_keylatch_B_w },
 	{ 0xe006, 0xe006, AY8910_control_port_0_w },
 	{ 0xe106, 0xe106, AY8910_write_port_0_w },
 	{ 0xe005, 0xe005, AY8910_control_port_1_w },
@@ -626,7 +574,6 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, VLM5030_data_w },
 	{ 0xf000, 0xf000, salamand_speech_start },
-
 	{ -1 }  /* end of table */
 };
 
@@ -1514,22 +1461,21 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-        2,      /* 2 chip */
-        (1789772),     /* 1.78975 Mhz?? */
-        { 0xff, 0xff },
-        { 0x20, 0x20 }, /* gain */
-        { nemesis_portA_r, 0 },
-        { 0, 0 },
-        { 0, nemesis_portA_w },
-        { 0, nemesis_portB_w }
+	2,      		/* 2 chips */
+	14318180/8,     /* 1.78975 Mhz */
+	{ 0xff, 0xff },
+	{ 0x20, 0x20 }, /* gain */
+	{ nemesis_portA_r, 0 },
+	{ 0, 0 },
+	{ 0, k005289_control_A_w },
+	{ 0, k005289_control_B_w }
 };
 
-static struct namco_interface namco_interface =
+static struct k005289_interface k005289_interface =
 {
-        2074428/32,     /* sample rate */
-        2,                      /* number of voices */
-        20,            /* playback volume */
-        3                       /* memory region */
+	3579545/2,		/* clock speed */
+	22,				/* playback volume */
+	3				/* prom memory region */
 };
 
 static void sound_irq(int state)
@@ -1586,17 +1532,17 @@ static struct MachineDriver nemesis_machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000*2,	/* ??? */
+			14318180/2,	/* From schematics, should be accurate */
 			0,
 			readmem,writemem,0,0,
 			nemesis_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4, /* From schematics, should be accurate */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		},
 	},
 
@@ -1621,15 +1567,15 @@ static struct MachineDriver nemesis_machine_driver =
 	{
 		{
 			SOUND_AY8910,
-                        &ay8910_interface
-                },
+			&ay8910_interface
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
@@ -1647,7 +1593,7 @@ static struct MachineDriver konamigt_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4,        /* 3.579545 MHz */
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1676,10 +1622,10 @@ static struct MachineDriver konamigt_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface
+			SOUND_K005289,
+			&k005289_interface
 		}
 	}
 };
@@ -1697,7 +1643,7 @@ static struct MachineDriver salamand_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4,        /* 3.579545 MHz */
 			2,
 			sal_sound_readmem,sal_sound_writemem,0,0,
 			ignore_interrupt,0
@@ -1751,7 +1697,7 @@ static struct MachineDriver gx400_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4,        /* 3.579545 MHz */
 			2,
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1780,14 +1726,14 @@ static struct MachineDriver gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
@@ -1805,7 +1751,7 @@ static struct MachineDriver twinbee_gx400_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4,        /* 3.579545 MHz */
 			2,
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1834,14 +1780,14 @@ static struct MachineDriver twinbee_gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
@@ -1859,7 +1805,7 @@ static struct MachineDriver rf2_gx400_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-                        3579545,        /* 3.579545 MHz */
+			14318180/4,        /* 3.579545 MHz */
 			2,
 			gx400_sound_readmem,gx400_sound_writemem,0,0,
 			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
@@ -1888,14 +1834,14 @@ static struct MachineDriver rf2_gx400_machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
-                },
+		},
 		{
-                        SOUND_NAMCO,
-                        &namco_interface,
+			SOUND_K005289,
+			&k005289_interface,
 		},
 		{
 			SOUND_VLM5030,
-                        &gx400_vlm5030_interface
+			&gx400_vlm5030_interface
 		}
 	}
 };
@@ -2356,7 +2302,7 @@ struct GameDriver driver_nemesis =
 	rom_nemesis,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_nemesis,
 
@@ -2382,7 +2328,7 @@ struct GameDriver driver_nemesuk =
 	rom_nemesuk,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_nemesuk,
 
@@ -2408,7 +2354,7 @@ struct GameDriver driver_konamigt =
 	rom_konamigt,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_konamigt,
 
@@ -2434,7 +2380,7 @@ struct GameDriver driver_rf2 =
 	rom_rf2,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_rf2,
 
@@ -2460,7 +2406,7 @@ struct GameDriver driver_twinbee =
 	rom_twinbee,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_twinbee,
 
@@ -2486,7 +2432,7 @@ struct GameDriver driver_gradius =
 	rom_gradius,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_gradius,
 
@@ -2512,7 +2458,7 @@ struct GameDriver driver_gwarrior =
 	rom_gwarrior,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_gwarrior,
 
@@ -2538,7 +2484,7 @@ struct GameDriver driver_salamand =
 	rom_salamand,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_salamand,
 
@@ -2564,7 +2510,7 @@ struct GameDriver driver_lifefrce =
 	rom_lifefrce,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_salamand,
 
@@ -2590,7 +2536,7 @@ struct GameDriver driver_lifefrcj =
 	rom_lifefrcj,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
         input_ports_lifefrcj,
 

@@ -101,7 +101,7 @@ void asteroid_bank_switch_w (int offset,int data)
 {
 	static int asteroid_bank = 0;
 	int asteroid_newbank;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	asteroid_newbank = (data >> 2) & 1;
@@ -125,7 +125,7 @@ void astdelux_bank_switch_w (int offset,int data)
 {
 	static int astdelux_bank = 0;
 	int astdelux_newbank;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	astdelux_newbank = (data >> 7) & 1;

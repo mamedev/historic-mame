@@ -249,7 +249,7 @@ struct GameDriver driver_nitedrvr =
 	rom_nitedrvr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nitedrvr,
 

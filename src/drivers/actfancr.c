@@ -686,7 +686,7 @@ struct GameDriver driver_actfancr =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_actfancr,
 
@@ -712,7 +712,7 @@ struct GameDriver driver_actfancj =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_actfancr,
 
@@ -738,7 +738,7 @@ struct GameDriver driver_triothep =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_triothep,
 

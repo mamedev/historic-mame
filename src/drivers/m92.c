@@ -13,13 +13,13 @@
 	Gun Hohki (Japan)						(c) 1992 Irem Corp
 	Undercover Cops	(World)					(c) 1992 Irem Corp
 	Undercover Cops	(Japan)					(c) 1992 Irem Corp
-	Rtype Leo (Japan)						(c) 1992 Irem Corp
-	Major Title 2  					M92-F	(c) 1992 Irem Corp
-	The Irem Skins Game (USA set 1)	M92-F	(c) 1992 Irem America Corp
-	The Irem Skins Game (USA set 2)	M92-F	(c) 1992 Irem America Corp
-	In The Hunt						M92-E	(c) 1993 Irem Corp
-	Kaitei Daisensou				M92-E	(c) 1993 Irem Corp
-	Ninja Baseball Batman (Not working)		(c) 1993 Irem America Corp
+	R-Type Leo (Japan)						(c) 1992 Irem Corp
+	Major Title 2 (World)			M92-F	(c) 1992 Irem Corp
+	The Irem Skins Game (USA Set 1)	M92-F	(c) 1992 Irem America Corp
+	The Irem Skins Game (USA Set 2)	M92-F	(c) 1992 Irem America Corp
+	In The Hunt	(World)				M92-E	(c) 1993 Irem Corp
+	Kaitei Daisensou (Japan)		M92-E	(c) 1993 Irem Corp
+	Ninja Baseball Batman (USA)				(c) 1993 Irem America Corp
 	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
 	Perfect Soldiers (Japan)		M92-G	(c) 1993 Irem Corp
 
@@ -42,6 +42,11 @@ System notes:
 
 
 Glitch list!
+
+	Gunforce:
+		Animated water sometimes doesn't appear on level 5 (but it
+		always appears if you cheat and jump straight to the level).
+		Almost certainly a core bug.
 
 	R-Type Leo:
 		Title screen is incorrect, it uses mask sprites but I can't find
@@ -1158,7 +1163,7 @@ static struct MachineDriver lethalth_machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18MHz clock */
+			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
 			0,
 			lethalth_readmem,lethalth_writemem,readport,writeport,
 			m92_interrupt,1
@@ -1610,14 +1615,14 @@ ROM_START( uccops )
 
 	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
 	ROM_LOAD( "uc_w38m.rom", 0x000000, 0x080000, 0x130a40e5 )
-	ROM_LOAD( "uc-w39m.rom", 0x080000, 0x080000, 0xe42ca144 )
-	ROM_LOAD( "uc-w40m.rom", 0x100000, 0x080000, 0xc2961648 )
-	ROM_LOAD( "uc-w41m.rom", 0x180000, 0x080000, 0xf5334b80 )
+	ROM_LOAD( "uc_w39m.rom", 0x080000, 0x080000, 0xe42ca144 )
+	ROM_LOAD( "uc_w40m.rom", 0x100000, 0x080000, 0xc2961648 )
+	ROM_LOAD( "uc_w41m.rom", 0x180000, 0x080000, 0xf5334b80 )
 
 	ROM_LOAD( "uc_k16m.rom", 0x200000, 0x100000, 0x4a225f09 )
-	ROM_LOAD( "uc-k17m.rom", 0x300000, 0x100000, 0xe4ed9a54 )
-	ROM_LOAD( "uc-k18m.rom", 0x400000, 0x100000, 0xa626eb12 )
-	ROM_LOAD( "uc-k19m.rom", 0x500000, 0x100000, 0x5df46549 )
+	ROM_LOAD( "uc_k17m.rom", 0x300000, 0x100000, 0xe4ed9a54 )
+	ROM_LOAD( "uc_k18m.rom", 0x400000, 0x100000, 0xa626eb12 )
+	ROM_LOAD( "uc_k19m.rom", 0x500000, 0x100000, 0x5df46549 )
 
 	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
 	ROM_LOAD_V20_EVEN( "uc_sh0.rom", 0x000000, 0x010000, 0xdf90b198 )
@@ -1817,55 +1822,50 @@ static int psoldier_cycle_r(int offset)
 	return m92_ram[0x1aec + offset];
 }
 
-#if 0
 static int inthunt_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==0) {
-		/* Adjust in-game counter, based on cycles left to run */
-		int old,c=cycles_left_to_run();
-if (errorlog) fprintf(errorlog,"%04x: %06x %04x SKIPPING\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
-//
-		old=m92_ram[0xb892]+(m92_ram[0xb893]<<8);
-		old=(old+c/82)&0xffff; /* 82 cycles per increment */
-		m92_ram[0xb892]=old&0xff;
-		m92_ram[0xb893]=old>>8;
+	int d=cpu_geticount();
+	int line = 256 - cpu_getiloops();
 
-		cpu_spinuntil_int();
+	/* If possible skip this cpu segment - idle loop */
+	if (d>159 && d<0xf0000000 && line<247) {
+		if (cpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==1) {
+			/* Adjust in-game counter, based on cycles left to run */
+			int old;//,c=cycles_left_to_run();
 
-//		return 0x80;
+			old=m92_ram[0xb892]+(m92_ram[0xb893]<<8);
+			old=(old+d/82)&0xffff; /* 82 cycles per increment */
+			m92_ram[0xb892]=old&0xff;
+			m92_ram[0xb893]=old>>8;
+
+			cpu_spinuntil_int();
+		}
 	}
 
-//if (errorlog) fprintf(errorlog,"%04x: %06x %04x\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
-//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
 	return m92_ram[0x25e + offset];
 }
-#endif
 
-#if 0
 static int uccops_cycle_r(int offset)
 {
 	int a=m92_ram[0x3f28]+(m92_ram[0x3f29]<<8);
 	int b=m92_ram[0x3a00]+(m92_ram[0x3a01]<<8);
 	int c=m92_ram[0x3a02]+(m92_ram[0x3a03]<<8);
+	int d=cpu_geticount();
+	int line = 256 - cpu_getiloops();
 
-	if (cpu_get_pc()==0x900ff && b==c && offset==0) {
-		/* Adjust in-game counter, based on cycles left before next interrupt */
-		int d=cycles_left_to_run();
-//
-		a=(a+d/127)&0xffff; /* 127 cycles per loop increment */
-		m92_ram[0x3f28]=a&0xff;
-		m92_ram[0x3f29]=a>>8;
-
-		cpu_spinuntil_int();
-
-//		return 0x80;
+	/* If possible skip this cpu segment - idle loop */
+	if (d>159 && d<0xf0000000 && line<247) {
+		if ((cpu_get_pc()==0x900ff || cpu_get_pc()==0x90103) && b==c && offset==1) {
+			cpu_spinuntil_int();
+			/* Update internal counter based on cycles left to run */
+			a=(a+d/127)&0xffff; /* 127 cycles per loop increment */
+			m92_ram[0x3f28]=a&0xff;
+			m92_ram[0x3f29]=a>>8;
+		}
 	}
 
-//if (errorlog) fprintf(errorlog,"%04x: %06x %04x\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
-//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
 	return m92_ram[0x3a02 + offset];
 }
-#endif
 
 static int rtypeleo_cycle_r(int offset)
 {
@@ -1873,6 +1873,27 @@ static int rtypeleo_cycle_r(int offset)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x32 + offset];
+}
+
+static int gunforce_cycle_r(int offset)
+{
+	int a=m92_ram[0x6542]+(m92_ram[0x6543]<<8);
+	int b=m92_ram[0x61d0]+(m92_ram[0x61d1]<<8);
+	int d=cpu_geticount();
+	int line = 256 - cpu_getiloops();
+
+	/* If possible skip this cpu segment - idle loop */
+	if (d>159 && d<0xf0000000 && line<247) {
+		if (cpu_get_pc()==0x40a && ((b&0x8000)==0) && offset==1) {
+			cpu_spinuntil_int();
+			/* Update internal counter based on cycles left to run */
+			a=(a+d/80)&0xffff; /* 80 cycles per loop increment */
+			m92_ram[0x6542]=a&0xff;
+			m92_ram[0x6543]=a>>8;
+		}
+	}
+
+	return m92_ram[0x61d0 + offset];
 }
 
 static void memory_hooks(void)
@@ -1885,13 +1906,17 @@ static void memory_hooks(void)
 		install_mem_read_handler(0, 0xe0012, 0xe0013, hook_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"psoldier"))
 		install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
-//	if (!strcmp(Machine->gamedrv->name,"inthunt")
-//		|| !strcmp(Machine->gamedrv->name,"kaiteids"))
-//		install_mem_read_handler(0, 0xe025e, 0xe025f, inthunt_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"inthunt")
+		|| !strcmp(Machine->gamedrv->name,"kaiteids"))
+		install_mem_read_handler(0, 0xe025e, 0xe025f, inthunt_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
 		install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
-//	if (!strcmp(Machine->gamedrv->name,"uccops"))
-//		install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"uccops")
+		|| !strcmp(Machine->gamedrv->name,"uccopsj"))
+		install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"gunforce")
+		|| !strcmp(Machine->gamedrv->name,"gunforcu"))
+		install_mem_read_handler(0, 0xe61d0, 0xe61d1, gunforce_cycle_r);
 }
 
 /***************************************************************************/
@@ -1933,6 +1958,7 @@ static void m92_startup(void)
 		|| !strcmp(Machine->gamedrv->name,"lethalth")
 		|| !strcmp(Machine->gamedrv->name,"thndblst")
 		|| !strcmp(Machine->gamedrv->name,"uccops")
+		|| !strcmp(Machine->gamedrv->name,"uccopsj")
 		|| !strcmp(Machine->gamedrv->name,"nbbatman")
 		|| !strcmp(Machine->gamedrv->name,"leaguemn")
 		|| !strcmp(Machine->gamedrv->name,"mysticri")
@@ -1960,13 +1986,13 @@ static void m92_sound_decrypt(void)
 /***************************************************************************/
 
 #define M92DRIVER(M92_NAME,M92_REALNAME,M92_YEAR,M92_MANU,M92_PORTS,M92_CLONE,M92_ROTATION) \
-struct GameDriver driver_##M92_NAME = \
-{                             		  \
-	__FILE__,                		   \
+struct GameDriver driver_##M92_NAME = 	\
+{                             		  	\
+	__FILE__,                		   	\
 	M92_CLONE,               			\
-	#M92_NAME,               		   \
-	M92_REALNAME,            		   \
-	M92_YEAR,                		   \
+	#M92_NAME,               		   	\
+	M92_REALNAME,            		   	\
+	M92_YEAR,                		   	\
 	M92_MANU,                   		\
 	"Bryan McPhail",          			\
 	0, 						       		\
@@ -1976,7 +2002,7 @@ struct GameDriver driver_##M92_NAME = \
 	m92_sound_decrypt, 0,     			\
 	0,                          		\
 	0, 	    	                		\
-	input_ports_##M92_PORTS,             				\
+	input_ports_##M92_PORTS,            \
 	0, 0, 0,                    		\
 	M92_ROTATION | GAME_NO_SOUND, 		\
 	0,0  								\
@@ -1984,13 +2010,13 @@ struct GameDriver driver_##M92_NAME = \
 
 /* A version for games with no raster effects - faster, but slightly less accurate */
 #define M92DRIVERNR(M92_NAME,M92_REALNAME,M92_YEAR,M92_MANU,M92_PORTS,M92_CLONE,M92_ROTATION) \
-struct GameDriver driver_##M92_NAME = \
-{                             		  \
-	__FILE__,                		   \
+struct GameDriver driver_##M92_NAME = 	\
+{                             		  	\
+	__FILE__,                		   	\
 	M92_CLONE,               			\
-	#M92_NAME,               		   \
-	M92_REALNAME,            		   \
-	M92_YEAR,                		   \
+	#M92_NAME,               		   	\
+	M92_REALNAME,            		   	\
+	M92_YEAR,                		   	\
 	M92_MANU,                   		\
 	"Bryan McPhail",          			\
 	0, 						       		\
@@ -2000,31 +2026,31 @@ struct GameDriver driver_##M92_NAME = \
 	m92_sound_decrypt, 0,     			\
 	0,                          		\
 	0, 	    	                		\
-	input_ports_##M92_PORTS,             				\
+	input_ports_##M92_PORTS,            \
 	0, 0, 0,                    		\
 	M92_ROTATION | GAME_NO_SOUND, 		\
 	0,0  								\
 };
 
-M92DRIVERNR(bmaster ,"Blade Master input_ports_(World)","1991","Irem",bmaster,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunforce,"Gunforce - Battle Fire Engulfed Terror Island input_ports_(World)","1991","Irem",gunforce,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem input_ports_America",gunforce,&driver_gunforce,ORIENTATION_DEFAULT)
-M92DRIVERNR(hook,    "Hook input_ports_(World)","1992","Irem",hook,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(hooku,   "Hook (US)","1992","Irem input_ports_America",hook,&driver_hook,ORIENTATION_DEFAULT)
-M92DRIVERNR(mysticri,"Mystic Riders input_ports_(World)","1992","Irem",gunhohki,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunhohki,"Gun Hohki input_ports_(Japan)","1992","Irem",gunhohki,&driver_mysticri,ORIENTATION_DEFAULT)
-M92DRIVER(uccops  ,"Undercover Cops input_ports_(World)","1992","Irem",uccops,0,ORIENTATION_DEFAULT)
-M92DRIVER(uccopsj ,"Undercover Cops input_ports_(Japan)","1992","Irem",uccops,&driver_uccops,ORIENTATION_DEFAULT)
-M92DRIVER(rtypeleo,"R-Type Leo input_ports_(Japan)","1992","Irem",rtypeleo,0,ORIENTATION_DEFAULT)
-M92DRIVER(majtitl2,"Major Title 2 input_ports_(World)","1992","Irem",skingame,0,ORIENTATION_DEFAULT)
-M92DRIVER(skingame,"The Irem Skins Game (US set 1)","1992","Irem input_ports_America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
-M92DRIVER(skingam2,"The Irem Skins Game (US set 2)","1992","Irem input_ports_America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
-M92DRIVERNR(inthunt ,"In The Hunt input_ports_(World)","1993","Irem",inthunt,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(kaiteids,"Kaitei Daisensou input_ports_(Japan)","1993","Irem",inthunt,&driver_inthunt,ORIENTATION_DEFAULT)
+M92DRIVERNR(bmaster ,"Blade Master (World)","1991","Irem",bmaster,0,ORIENTATION_DEFAULT)
+M92DRIVER  (gunforce,"Gunforce - Battle Fire Engulfed Terror Island (World)","1991","Irem",gunforce,0,ORIENTATION_DEFAULT)
+M92DRIVER  (gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem America",gunforce,&driver_gunforce,ORIENTATION_DEFAULT)
+M92DRIVERNR(hook,    "Hook (World)","1992","Irem",hook,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(hooku,   "Hook (US)","1992","Irem America",hook,&driver_hook,ORIENTATION_DEFAULT)
+M92DRIVERNR(mysticri,"Mystic Riders (World)","1992","Irem",gunhohki,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunhohki,"Gun Hohki (Japan)","1992","Irem",gunhohki,&driver_mysticri,ORIENTATION_DEFAULT)
+M92DRIVER  (uccops  ,"Undercover Cops (World)","1992","Irem",uccops,0,ORIENTATION_DEFAULT)
+M92DRIVER  (uccopsj ,"Undercover Cops (Japan)","1992","Irem",uccops,&driver_uccops,ORIENTATION_DEFAULT)
+M92DRIVER  (rtypeleo,"R-Type Leo (Japan)","1992","Irem",rtypeleo,0,ORIENTATION_DEFAULT)
+M92DRIVER  (majtitl2,"Major Title 2 (World)","1992","Irem",skingame,0,ORIENTATION_DEFAULT)
+M92DRIVER  (skingame,"The Irem Skins Game (US set 1)","1992","Irem America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
+M92DRIVER  (skingam2,"The Irem Skins Game (US set 2)","1992","Irem America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
+M92DRIVER  (inthunt ,"In The Hunt (World)","1993","Irem",inthunt,0,ORIENTATION_DEFAULT)
+M92DRIVER  (kaiteids,"Kaitei Daisensou (Japan)","1993","Irem",inthunt,&driver_inthunt,ORIENTATION_DEFAULT)
 
 /* Not working yet */
-M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem input_ports_America",nbbatman,0,ORIENTATION_DEFAULT)
-M92DRIVER(leaguemn,"Yakyuu Kakutou League-Man input_ports_(Japan)","1993","Irem",nbbatman,&driver_nbbatman,ORIENTATION_DEFAULT)
+M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem America",nbbatman,0,ORIENTATION_DEFAULT)
+M92DRIVER(leaguemn,"Yakyuu Kakutou League-Man (Japan)","1993","Irem",nbbatman,&driver_nbbatman,ORIENTATION_DEFAULT)
 
 /* Different machine driver for this one, it uses a different memory map */
 struct GameDriver driver_lethalth =

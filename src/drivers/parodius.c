@@ -127,7 +127,7 @@ static void sound_arm_nmi( int offs, int data )
 
 static int speedup_r( int offs )
 {
-	int data = Machine->memory_region[0][0x1837];
+	int data = memory_region(Machine->drv->cpu[0].memory_region)[0x1837];
 
 	if ( cpu_get_pc() == 0xa400 && data == 0 )
 		cpu_spinuntil_int();
@@ -408,7 +408,7 @@ ROM_END
 
 static void parodius_banking(int lines)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs = 0;
 
 if (errorlog && (lines & 0xf0)) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
@@ -420,11 +420,11 @@ if (errorlog && (lines & 0xf0)) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get
 
 static void parodius_init_machine( void )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	konami_cpu_setlines_callback = parodius_banking;
 
-	paletteram = &Machine->memory_region[0][0x48000];
+	paletteram = &memory_region(Machine->drv->cpu[0].memory_region)[0x48000];
 
 	videobank = 0;
 
@@ -456,7 +456,7 @@ struct GameDriver driver_parodius =
 	rom_parodius,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_parodius,
 

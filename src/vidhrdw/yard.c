@@ -96,15 +96,8 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	/* color_prom now points to the beginning of the sprite palette */
 
 
-	/* make the transparent pen unique (none of the game colors can have */
-	/* these RGB components) */
-	*(palette++) = 1;
-	*(palette++) = 1;
-	*(palette++) = 1;
-	color_prom++;
-
 	/* sprite palette */
-	for (i = 1;i < 16;i++)
+	for (i = 0;i < 16;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -134,10 +127,7 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 
 	/* sprite lookup table */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-	{
-		COLOR(1,i) = 256 + (*color_prom & 0x0f);
-		color_prom++;
-	}
+		COLOR(1,i) = 256 + (*(color_prom++) & 0x0f);
 
 	/* color_prom now points to the beginning of the radar palette */
 

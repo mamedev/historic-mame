@@ -110,7 +110,7 @@ static void ccastles_coin_counter_w(int offset,int data)
 
 static void ccastles_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (data) { cpu_setbank(1,&RAM[0x10000]); }
@@ -314,7 +314,7 @@ static int hiload(void)
 	/* Read the NVRAM contents from disk */
 	/* No check necessary */
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
@@ -330,7 +330,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -358,7 +358,7 @@ struct GameDriver driver_ccastles =
 	rom_ccastles,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ccastles,
 
@@ -384,7 +384,7 @@ struct GameDriver driver_ccastle2 =
 	rom_ccastle2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ccastles,
 

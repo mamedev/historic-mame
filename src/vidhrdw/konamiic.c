@@ -83,7 +83,7 @@ XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251 054338
 Asterix             GX068+1992   68000 054157 054156 053245 053244 053251 054358
 G.I. Joe            GX069+1992   68000 054157 054156 053247 053246 053251 054539
 The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
-Thunder Cross 2     GX073-1991   68000 052109 051962 051960 051937 053251 054000
+Thunder Cross 2     GX073*1991   68000 052109 051962 051960 051937 053251 054000 (collision)
 Vendetta /          GX081*1991  053248 052109 051962 053247 053246 053251 054000 (collision)
   Crime Fighters 2
 Premier Soccer      GX101 1993   68000 052109 051962 053245 053244 053251 053936 (3D)
@@ -139,6 +139,7 @@ TMNT 2              pass
 Sunset Riders       pass
 X-Men               fails 1F (054544)
 The Simpsons        pass
+Thunder Cross 2     fails 052109 (it has more RAM than usual, like X-Men)
 Vendetta            pass
 Xexex               pass
 
@@ -582,7 +583,7 @@ static void shuffle(UINT16 *buf,int len)
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
 void konami_rom_deinterleave_2(int mem_region)
 {
-	shuffle((UINT16 *)Machine->memory_region[mem_region],Machine->memory_region_length[mem_region]/2);
+	shuffle((UINT16 *)memory_region(mem_region),memory_region_length(mem_region)/2);
 }
 
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
@@ -1085,19 +1086,19 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* tweak the structure for the number of tiles we have */
-	charlayout.total = Machine->memory_region_length[gfx_memory_region] / 32;
+	charlayout.total = memory_region_length(gfx_memory_region) / 32;
 	charlayout.planeoffset[0] = plane3 * 8;
 	charlayout.planeoffset[1] = plane2 * 8;
 	charlayout.planeoffset[2] = plane1 * 8;
 	charlayout.planeoffset[3] = plane0 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&charlayout);
+	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->colortable;
+	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
 	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
 
 	K052109_memory_region = gfx_memory_region;
@@ -1180,7 +1181,7 @@ else
 		(*K052109_callback)(0,bank,&code,&color);
 
 		addr = (code << 5) + (offset & 0x1f);
-		addr &= Machine->memory_region_length[K052109_memory_region]-1;
+		addr &= memory_region_length(K052109_memory_region)-1;
 
 #if 0
 {
@@ -1190,7 +1191,7 @@ else
 }
 #endif
 
-		return Machine->memory_region[K052109_memory_region][addr];
+		return memory_region(K052109_memory_region)[addr];
 	}
 }
 
@@ -1537,19 +1538,19 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* tweak the structure for the number of tiles we have */
-	spritelayout.total = Machine->memory_region_length[gfx_memory_region] / 128;
+	spritelayout.total = memory_region_length(gfx_memory_region) / 128;
 	spritelayout.planeoffset[0] = plane0 * 8;
 	spritelayout.planeoffset[1] = plane1 * 8;
 	spritelayout.planeoffset[2] = plane2 * 8;
 	spritelayout.planeoffset[3] = plane3 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&spritelayout);
+	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->colortable;
+	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
 	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
 
 	K051960_memory_region = gfx_memory_region;
@@ -1584,7 +1585,7 @@ static int K051960_fetchromdata(int byte)
 	(*K051960_callback)(&code,&color,&pri);
 
 	addr = (code << 7) | (off1 << 2) | byte;
-	addr &= Machine->memory_region_length[K051960_memory_region]-1;
+	addr &= memory_region_length(K051960_memory_region)-1;
 
 #if 0
 {
@@ -1594,7 +1595,7 @@ static int K051960_fetchromdata(int byte)
 }
 #endif
 
-	return Machine->memory_region[K051960_memory_region][addr];
+	return memory_region(K051960_memory_region)[addr];
 }
 
 int K051960_r(int offset)
@@ -1999,19 +2000,19 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* tweak the structure for the number of tiles we have */
-	spritelayout.total = Machine->memory_region_length[gfx_memory_region] / 128;
+	spritelayout.total = memory_region_length(gfx_memory_region) / 128;
 	spritelayout.planeoffset[0] = plane3 * 8;
 	spritelayout.planeoffset[1] = plane2 * 8;
 	spritelayout.planeoffset[2] = plane1 * 8;
 	spritelayout.planeoffset[3] = plane0 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&spritelayout);
+	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->colortable;
+	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
 	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
 
 	K053245_memory_region = gfx_memory_region;
@@ -2063,7 +2064,7 @@ int K053244_r(int offset)
 
 
 		addr = 0x200000 * K053244_rombank + 4 * (K053244_romoffset & 0x7ffff) + ((offset & 3) ^ 1);
-		addr &= Machine->memory_region_length[K053245_memory_region]-1;
+		addr &= memory_region_length(K053245_memory_region)-1;
 
 #if 0
 {
@@ -2073,7 +2074,7 @@ int K053244_r(int offset)
 }
 #endif
 
-		return Machine->memory_region[K053245_memory_region][addr];
+		return memory_region(K053245_memory_region)[addr];
 	}
 	else
 	{
@@ -2448,19 +2449,19 @@ int K053247_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		return 1;
 
 	/* tweak the structure for the number of tiles we have */
-	spritelayout.total = Machine->memory_region_length[gfx_memory_region] / 128;
+	spritelayout.total = memory_region_length(gfx_memory_region) / 128;
 	spritelayout.planeoffset[0] = plane0;
 	spritelayout.planeoffset[1] = plane1;
 	spritelayout.planeoffset[2] = plane2;
 	spritelayout.planeoffset[3] = plane3;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&spritelayout);
+	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->colortable;
+	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
 	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / 16;
 
 	K053247_memory_region = gfx_memory_region;
@@ -2512,7 +2513,7 @@ int K053246_r(int offset)
 
 
 		addr = 2 * K053246_romoffset + ((offset & 1) ^ 1);
-		addr &= Machine->memory_region_length[K053247_memory_region]-1;
+		addr &= memory_region_length(K053247_memory_region)-1;
 
 #if 0
 {
@@ -2522,7 +2523,7 @@ int K053246_r(int offset)
 }
 #endif
 
-		return Machine->memory_region[K053247_memory_region][addr];
+		return memory_region(K053247_memory_region)[addr];
 	}
 	else
 	{
@@ -2979,10 +2980,10 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 
 
 		/* tweak the structure for the number of tiles we have */
-		charlayout.total = Machine->memory_region_length[gfx_memory_region] / 128;
+		charlayout.total = memory_region_length(gfx_memory_region) / 128;
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&charlayout);
+		Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
 	}
 	else if (bpp == 7)
 	{
@@ -3001,10 +3002,10 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 
 
 		/* tweak the structure for the number of tiles we have */
-		charlayout.total = Machine->memory_region_length[gfx_memory_region] / 256;
+		charlayout.total = memory_region_length(gfx_memory_region) / 256;
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx(Machine->memory_region[gfx_memory_region],&charlayout);
+		Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
 	}
 	else
 	{
@@ -3016,7 +3017,7 @@ if (errorlog) fprintf(errorlog,"K051316_vh_start supports only 4 or 7 bpp\n");
 		return 1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = Machine->colortable;
+	Machine->gfx[gfx_index]->colortable = Machine->remapped_colortable;
 	Machine->gfx[gfx_index]->total_colors = Machine->drv->color_table_len / (1 << bpp);
 
 	K051316_memory_region[chip] = gfx_memory_region;
@@ -3132,7 +3133,7 @@ int K051316_rom_r(int chip, int offset)
 
 		addr = offset + (K051316_ctrlram[chip][0x0c] << 11) + (K051316_ctrlram[chip][0x0d] << 19);
 		if (K051316_bpp[chip] <= 4) addr /= 2;
-		addr &= Machine->memory_region_length[K051316_memory_region[chip]]-1;
+		addr &= memory_region_length(K051316_memory_region[chip])-1;
 
 #if 0
 {
@@ -3142,7 +3143,7 @@ int K051316_rom_r(int chip, int offset)
 }
 #endif
 
-		return Machine->memory_region[K051316_memory_region[chip]][addr];
+		return memory_region(K051316_memory_region[chip])[addr];
 	}
 	else
 	{

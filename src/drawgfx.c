@@ -20,7 +20,11 @@
 #define WL1 0
 #endif
 
+
 UINT8 gfx_drawmode_table[256];
+plot_pixel_proc plot_pixel;
+read_pixel_proc read_pixel;
+
 
 #ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
@@ -428,8 +432,8 @@ extern unsigned short *shrinked_pens;
 									 transparency.
   transparency == TRANSPARENCY_PENS - as above, but transparent_color is a mask of
   									 transparent pens.
-  transparency == TRANSPARENCY_COLOR - bits whose _remapped_ value is == Machine->pens[transparent_color]
-                                     are transparent. This is used by e.g. Pac Man.
+  transparency == TRANSPARENCY_COLOR - bits whose _remapped_ palette index (taken from
+                                     Machine->game_colortable) is == transparent_color
   transparency == TRANSPARENCY_THROUGH - if the _destination_ pixel is == transparent_color,
                                      the source pixel is drawn over it. This is used by
 									 e.g. Jr. Pac Man to draw the sprites when the background
@@ -465,11 +469,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	code %= gfx->total_elements;
 	color %= gfx->total_colors;
 
-	/* if necessary, remap the transparent color */
-	if (transparency == TRANSPARENCY_COLOR)
-		transparent_color = Machine->pens[transparent_color];
-
-	if (gfx->pen_usage)
+	if (gfx->pen_usage && (transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_PENS))
 	{
 		int transmask = 0;
 
@@ -480,19 +480,6 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		else if (transparency == TRANSPARENCY_PENS)
 		{
 			transmask = transparent_color;
-		}
-		else if (transparency == TRANSPARENCY_COLOR && gfx->colortable)
-		{
-			int i;
-			const unsigned short *paldata;
-
-			paldata = &gfx->colortable[gfx->color_granularity * color];
-
-			for (i = gfx->color_granularity - 1;i >= 0;i--)
-			{
-				if (paldata[i] == transparent_color)
-					transmask |= 1 << i;
-			}
 		}
 
 		if ((gfx->pen_usage[code] & ~transmask) == 0)
@@ -923,7 +910,7 @@ usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
 				case TRANSPARENCY_NONE:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned char *source = source_bmp->line[(y_index>>16)];
+						unsigned short *source = (unsigned short *)source_bmp->line[(y_index>>16)];
 						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
@@ -941,7 +928,7 @@ usrintf_showmessage("copybitmapzoom() TRANSPARENCY_THROUGH");
 				case TRANSPARENCY_COLOR:
 					for( y=sy; y<ey; y++ )
 					{
-						unsigned char *source = source_bmp->line[(y_index>>16)];
+						unsigned short *source = (unsigned short *)source_bmp->line[(y_index>>16)];
 						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
 
 						int x, x_index = x_index_base;
@@ -1293,80 +1280,6 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 }
 
 
-void plot_pixel(struct osd_bitmap *bitmap,int x,int y,int pen)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = x;
-		x = y;
-		y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = bitmap->width-1 - x;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = bitmap->height-1 - y;
-
-	if (bitmap->depth == 16)
-		((unsigned short *)bitmap->line[y])[x] = pen;
-	else
-		bitmap->line[y][x] = pen;
-
-	osd_mark_dirty (x,y,x,y,0);
-}
-
-void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = x;
-		x = y;
-		y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = bitmap1->width-1 - x;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = bitmap1->height-1 - y;
-
-	if (bitmap1->depth == 16)
-	{
-		((unsigned short *)bitmap1->line[y])[x] = pen;
-		((unsigned short *)bitmap2->line[y])[x] = pen;
-	}
-	else
-	{
-		bitmap1->line[y][x] = pen;
-		bitmap2->line[y][x] = pen;
-	}
-
-	osd_mark_dirty (x,y,x,y,0);
-}
-
-int read_pixel(struct osd_bitmap *bitmap,int x,int y)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = x;
-		x = y;
-		y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = bitmap->width-1 - x;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = bitmap->height-1 - y;
-
-	if (bitmap->depth == 16)
-		return ((unsigned short *)bitmap->line[y])[x];
-	else
-		return bitmap->line[y][x];
-}
-
-
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)
@@ -1708,6 +1621,117 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	}
 }
 
+
+void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen)
+{
+	plot_pixel(bitmap1, x, y, pen);
+	plot_pixel(bitmap2, x, y, pen);
+}
+
+static void pp_8_nd(struct osd_bitmap *b,int x,int y,int p)  { b->line[y][x] = p; }
+static void pp_8_nd_fx(struct osd_bitmap *b,int x,int y,int p)  { b->line[y][b->width-1-x] = p; }
+static void pp_8_nd_fy(struct osd_bitmap *b,int x,int y,int p)  { b->line[b->height-1-y][x] = p; }
+static void pp_8_nd_fxy(struct osd_bitmap *b,int x,int y,int p)  { b->line[b->height-1-y][b->width-1-x] = p; }
+static void pp_8_nd_s(struct osd_bitmap *b,int x,int y,int p)  { b->line[x][y] = p; }
+static void pp_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int p)  { b->line[x][b->width-1-y] = p; }
+static void pp_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int p)  { b->line[b->height-1-x][y] = p; }
+static void pp_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { b->line[b->height-1-x][b->width-1-y] = p; }
+
+static void pp_8_d(struct osd_bitmap *b,int x,int y,int p)  { b->line[y][x] = p; osd_mark_dirty (x,y,x,y,0); }
+static void pp_8_d_fx(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x;  b->line[y][newx] = p; osd_mark_dirty (newx,y,newx,y,0); }
+static void pp_8_d_fy(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->height-1-y; b->line[newy][x] = p; osd_mark_dirty (x,newy,x,newy,0); }
+static void pp_8_d_fxy(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x; int newy = b->height-1-y; b->line[newy][newx] = p; osd_mark_dirty (newx,newy,newx,newy,0); }
+static void pp_8_d_s(struct osd_bitmap *b,int x,int y,int p)  { b->line[x][y] = p; osd_mark_dirty (y,x,y,x,0); }
+static void pp_8_d_fx_s(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->width-1-y; b->line[x][newy] = p; osd_mark_dirty (newy,x,newy,x,0); }
+static void pp_8_d_fy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; b->line[newx][y] = p; osd_mark_dirty (y,newx,y,newx,0); }
+static void pp_8_d_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; int newy = b->width-1-y; b->line[newx][newy] = p; osd_mark_dirty (newy,newx,newy,newx,0); }
+
+static void pp_16_nd(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[x] = p; }
+static void pp_16_nd_fx(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[b->width-1-x] = p; }
+static void pp_16_nd_fy(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-y])[x] = p; }
+static void pp_16_nd_fxy(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-y])[b->width-1-x] = p; }
+static void pp_16_nd_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[y] = p; }
+static void pp_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[b->width-1-y] = p; }
+static void pp_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-x])[y] = p; }
+static void pp_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[b->height-1-x])[b->width-1-y] = p; }
+
+static void pp_16_d(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[y])[x] = p; osd_mark_dirty (x,y,x,y,0); }
+static void pp_16_d_fx(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x;  ((unsigned short *)b->line[y])[newx] = p; osd_mark_dirty (newx,y,newx,y,0); }
+static void pp_16_d_fy(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->height-1-y; ((unsigned short *)b->line[newy])[x] = p; osd_mark_dirty (x,newy,x,newy,0); }
+static void pp_16_d_fxy(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->width-1-x; int newy = b->height-1-y; ((unsigned short *)b->line[newy])[newx] = p; osd_mark_dirty (newx,newy,newx,newy,0); }
+static void pp_16_d_s(struct osd_bitmap *b,int x,int y,int p)  { ((unsigned short *)b->line[x])[y] = p; osd_mark_dirty (y,x,y,x,0); }
+static void pp_16_d_fx_s(struct osd_bitmap *b,int x,int y,int p)  { int newy = b->width-1-y; ((unsigned short *)b->line[x])[newy] = p; osd_mark_dirty (newy,x,newy,x,0); }
+static void pp_16_d_fy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; ((unsigned short *)b->line[newx])[y] = p; osd_mark_dirty (y,newx,y,newx,0); }
+static void pp_16_d_fxy_s(struct osd_bitmap *b,int x,int y,int p)  { int newx = b->height-1-x; int newy = b->width-1-y; ((unsigned short *)b->line[newx])[newy] = p; osd_mark_dirty (newy,newx,newy,newx,0); }
+
+
+static int rp_8(struct osd_bitmap *b,int x,int y)  { return b->line[y][x]; }
+static int rp_8_fx(struct osd_bitmap *b,int x,int y)  { return b->line[y][b->width-1-x]; }
+static int rp_8_fy(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-y][x]; }
+static int rp_8_fxy(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-y][b->width-1-x]; }
+static int rp_8_s(struct osd_bitmap *b,int x,int y)  { return b->line[x][y]; }
+static int rp_8_fx_s(struct osd_bitmap *b,int x,int y)  { return b->line[x][b->width-1-y]; }
+static int rp_8_fy_s(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-x][y]; }
+static int rp_8_fxy_s(struct osd_bitmap *b,int x,int y)  { return b->line[b->height-1-x][b->width-1-y]; }
+
+static int rp_16(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[y])[x]; }
+static int rp_16_fx(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[y])[b->width-1-x]; }
+static int rp_16_fy(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-y])[x]; }
+static int rp_16_fxy(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-y])[b->width-1-x]; }
+static int rp_16_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[x])[y]; }
+static int rp_16_fx_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[x])[b->width-1-y]; }
+static int rp_16_fy_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-x])[y]; }
+static int rp_16_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((unsigned short *)b->line[b->height-1-x])[b->width-1-y]; }
+
+
+static plot_pixel_proc pps_8_nd[] =
+		{ pp_8_nd, 	 pp_8_nd_fx,   pp_8_nd_fy, 	 pp_8_nd_fxy,
+		  pp_8_nd_s, pp_8_nd_fx_s, pp_8_nd_fy_s, pp_8_nd_fxy_s };
+
+static plot_pixel_proc pps_8_d[] =
+		{ pp_8_d, 	pp_8_d_fx,   pp_8_d_fy,	  pp_8_d_fxy,
+		  pp_8_d_s, pp_8_d_fx_s, pp_8_d_fy_s, pp_8_d_fxy_s };
+
+static plot_pixel_proc pps_16_nd[] =
+		{ pp_16_nd,   pp_16_nd_fx,   pp_16_nd_fy, 	pp_16_nd_fxy,
+		  pp_16_nd_s, pp_16_nd_fx_s, pp_16_nd_fy_s, pp_16_nd_fxy_s };
+
+static plot_pixel_proc pps_16_d[] =
+		{ pp_16_d,   pp_16_d_fx,   pp_16_d_fy, 	 pp_16_d_fxy,
+		  pp_16_d_s, pp_16_d_fx_s, pp_16_d_fy_s, pp_16_d_fxy_s };
+
+
+static read_pixel_proc rps_8[] =
+		{ rp_8,	  rp_8_fx,   rp_8_fy,	rp_8_fxy,
+		  rp_8_s, rp_8_fx_s, rp_8_fy_s, rp_8_fxy_s };
+
+static read_pixel_proc rps_16[] =
+		{ rp_16,   rp_16_fx,   rp_16_fy,   rp_16_fxy,
+		  rp_16_s, rp_16_fx_s, rp_16_fy_s, rp_16_fxy_s };
+
+
+void set_pixel_functions(void)
+{
+	if (Machine->color_depth == 8)
+	{
+		read_pixel = rps_8[Machine->orientation];
+
+		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+			plot_pixel = pps_8_d[Machine->orientation];
+		else
+			plot_pixel = pps_8_nd[Machine->orientation];
+	}
+	else
+	{
+		read_pixel = rps_16[Machine->orientation];
+
+		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+			plot_pixel = pps_16_d[Machine->orientation];
+		else
+			plot_pixel = pps_16_nd[Machine->orientation];
+	}
+}
+
 #else /* DECLARE */
 
 /* -------------------- included inline section --------------------- */
@@ -2031,6 +2055,7 @@ DECLARE(blockmove_transcolor,(
 		const unsigned short *paldata,int transcolor),
 {
 	DATA_TYPE *end;
+	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	srcmodulo -= srcwidth;
 	dstmodulo -= srcwidth;
@@ -2040,10 +2065,8 @@ DECLARE(blockmove_transcolor,(
 		end = dstdata + srcwidth;
 		while (dstdata < end)
 		{
-			int col;
-
-			col = paldata[*(srcdata++)];
-			if (col != transcolor) *dstdata = col;
+			if (lookupdata[*srcdata] != transcolor) *dstdata = paldata[*srcdata];
+			srcdata++;
 			dstdata++;
 		}
 
@@ -2059,6 +2082,7 @@ DECLARE(blockmove_transcolor_flipx,(
 		const unsigned short *paldata,int transcolor),
 {
 	DATA_TYPE *end;
+	const unsigned short *lookupdata = Machine->game_colortable + (paldata - Machine->remapped_colortable);
 
 	srcmodulo += srcwidth;
 	dstmodulo -= srcwidth;
@@ -2069,10 +2093,8 @@ DECLARE(blockmove_transcolor_flipx,(
 		end = dstdata + srcwidth;
 		while (dstdata < end)
 		{
-			int col;
-
-			col = paldata[*(srcdata--)];
-			if (col != transcolor) *dstdata = col;
+			if (lookupdata[*srcdata] != transcolor) *dstdata = paldata[*srcdata];
+			srcdata--;
 			dstdata++;
 		}
 

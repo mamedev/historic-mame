@@ -26,7 +26,7 @@ void capbowl_init_machine(void)
 void capbowl_rom_select_w(int offset,int data)
 {
 	int bankaddress = 0x10000 + ((data & 0x0c) << 13) + ((data & 0x01) << 14);
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	cpu_setbank(1,&RAM[bankaddress]);

@@ -35,7 +35,7 @@ void taitosj_init_machine(void)
 
 void taitosj_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
 }

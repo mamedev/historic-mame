@@ -947,7 +947,7 @@ ROM_END
 
 static int docastle_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -971,7 +971,7 @@ static int docastle_hiload(void)
 static void docastle_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -983,7 +983,7 @@ static void docastle_hisave(void)
 
 static int dorunrun_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1007,7 +1007,7 @@ static int dorunrun_hiload(void)
 static void dorunrun_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1021,7 +1021,7 @@ static void dorunrun_hisave(void)
 /* it only keeps a top score */
 static int spiero_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x2010],"\x00\x10\x00",3) == 0)
@@ -1044,7 +1044,7 @@ static int spiero_hiload(void)
 static void spiero_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1056,7 +1056,7 @@ static void spiero_hisave(void)
 
 static int dowild_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1080,7 +1080,7 @@ static int dowild_hiload(void)
 static void dowild_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1108,7 +1108,7 @@ struct GameDriver driver_docastle =
 	rom_docastle,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_docastle,
 
@@ -1134,7 +1134,7 @@ struct GameDriver driver_docastl2 =
 	rom_docastl2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_docastle,
 
@@ -1160,7 +1160,7 @@ struct GameDriver driver_dounicorn =
 	rom_dounicorn,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_docastle,
 
@@ -1186,7 +1186,7 @@ struct GameDriver driver_dorunrun =
 	rom_dorunrun,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dorunrun,
 
@@ -1212,7 +1212,7 @@ struct GameDriver driver_dorunru2 =
 	rom_dorunru2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dorunrun,
 
@@ -1238,7 +1238,7 @@ struct GameDriver driver_dorunruc =
 	rom_dorunruc,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dorunrun,
 
@@ -1264,7 +1264,7 @@ struct GameDriver driver_spiero =
 	rom_spiero,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dorunrun,
 
@@ -1290,7 +1290,7 @@ struct GameDriver driver_dowild =
 	rom_dowild,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dowild,
 
@@ -1317,7 +1317,7 @@ struct GameDriver driver_jjack =
 	rom_jjack,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jjack,
 
@@ -1343,7 +1343,7 @@ struct GameDriver driver_kickridr =
 	rom_kickridr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kickridr,
 

@@ -368,7 +368,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void c1942_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
@@ -734,7 +734,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -781,7 +781,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -810,7 +810,7 @@ struct GameDriver driver_1942 =
 	rom_1942,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1942,
 
@@ -836,7 +836,7 @@ struct GameDriver driver_1942a =
 	rom_1942a,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1942,
 
@@ -862,7 +862,7 @@ struct GameDriver driver_1942b =
 	rom_1942b,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_1942,
 

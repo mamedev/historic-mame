@@ -835,7 +835,7 @@ static void gfx_untangle( void ){
 static int combatsc_hiload( void )
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	unsigned char temp []={ 0x4b, 0x3d, 0x41, 0x07 };
 
 	/* check if the hi score table has already been initialized */
@@ -856,7 +856,7 @@ static int combatsc_hiload( void )
 static void combatsc_hisave( void )
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen( Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1 )) != 0)
 	{
@@ -881,7 +881,7 @@ struct GameDriver driver_combasc =
 	rom_combatsc,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_combatsc,
 
@@ -906,7 +906,7 @@ struct GameDriver driver_combasct =
 	rom_combatsct,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_combatsct,
 
@@ -931,7 +931,7 @@ struct GameDriver driver_combascj =
 	rom_combatscj,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_combatsct,
 
@@ -956,7 +956,7 @@ struct GameDriver driver_combascb =
 	rom_combatscb,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cmbatscb,
 
@@ -981,7 +981,7 @@ struct GameDriver driver_bootcamp =
 	rom_bootcamp,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_combatsct,
 

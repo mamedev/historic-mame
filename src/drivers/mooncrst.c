@@ -1204,7 +1204,7 @@ static unsigned char decode(int data,int addr)
 static void mooncrst_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -1214,7 +1214,7 @@ static void mooncrst_decode(void)
 static void moonqsr_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0;A < 0x10000;A++)
@@ -1260,7 +1260,7 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 */
 	int A;
 	int data_xor=0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0;A < 0x2800;A++)
@@ -1284,7 +1284,7 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 
 static int mooncrst_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1308,7 +1308,7 @@ static int mooncrst_hiload(void)
 static void mooncrst_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1320,7 +1320,7 @@ static void mooncrst_hisave(void)
 
 static int mooncrsg_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1344,7 +1344,7 @@ static int mooncrsg_hiload(void)
 static void mooncrsg_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1356,7 +1356,7 @@ static void mooncrsg_hisave(void)
 
 static int moonqsr_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1380,7 +1380,7 @@ static int moonqsr_hiload(void)
 static void moonqsr_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1392,7 +1392,7 @@ static void moonqsr_hisave(void)
 
 static int checkman_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1416,7 +1416,7 @@ static int checkman_hiload(void)
 static void checkman_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1428,7 +1428,7 @@ static void checkman_hisave(void)
 
 static int kingball_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1452,7 +1452,7 @@ static int kingball_hiload(void)
 static void kingball_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1480,7 +1480,7 @@ struct GameDriver driver_mooncrst =
 	rom_mooncrst,
 	mooncrst_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1506,7 +1506,7 @@ struct GameDriver driver_mooncrsg =
 	rom_mooncrsg,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1532,7 +1532,7 @@ struct GameDriver driver_smooncrs =
 	rom_smooncrs,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1558,7 +1558,7 @@ struct GameDriver driver_mooncrsb =
 	rom_mooncrsb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1584,7 +1584,7 @@ struct GameDriver driver_mooncrs2 =
 	rom_mooncrs2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1610,7 +1610,7 @@ struct GameDriver driver_fantazia =
 	rom_fantazia,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mooncrst,
 
@@ -1636,7 +1636,7 @@ struct GameDriver driver_eagle =
 	rom_eagle,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eagle,
 
@@ -1662,7 +1662,7 @@ struct GameDriver driver_eagle2 =
 	rom_eagle2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eagle2,
 
@@ -1688,7 +1688,7 @@ struct GameDriver driver_moonqsr =
 	rom_moonqsr,
 	0, moonqsr_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_moonqsr,
 
@@ -1714,7 +1714,7 @@ struct GameDriver driver_checkman =
 	rom_checkman,
 	checkman_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_checkman,
 
@@ -1740,7 +1740,7 @@ struct GameDriver driver_moonal2 =
 	rom_moonal2,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_moonal2,
 
@@ -1766,7 +1766,7 @@ struct GameDriver driver_moonal2b =
 	rom_moonal2b,
 	0, 0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_moonal2,
 
@@ -1792,7 +1792,7 @@ struct GameDriver driver_kingball =
 	rom_kingball,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kingball,
 
@@ -1818,7 +1818,7 @@ struct GameDriver driver_kingbalj =
 	rom_kingbalj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kingball,
 

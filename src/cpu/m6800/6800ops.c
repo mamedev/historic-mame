@@ -2139,6 +2139,19 @@ INLINE void ldd_ex( void )
 	SET_NZ16(D);
 }
 
+/* $fc ADDX extended -****    NSC8105 only.  Flags are a guess */
+INLINE void addx_ex( void )
+{
+	UINT32 r,d;
+	PAIR b;
+	EXTWORD(b);
+	d = X;
+	r = d + b.d;
+	CLR_NZVC;
+	SET_FLAGS16(d,b.d,r);
+	X = r;
+}
+
 /* $fd STD extended -**0- */
 INLINE void std_ex( void )
 {

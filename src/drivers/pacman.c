@@ -1728,7 +1728,7 @@ static void maketrax_driver_init(void)
 
 static void maketrax_rom_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	memcpy(ROM,RAM,0x10000);
@@ -1787,7 +1787,7 @@ static void eyes_decode(void)
 	/* CPU ROMs */
 
 	/* Data lines D3 and D5 swapped */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	for (i = 0; i < 0x4000; i++)
 	{
 		RAM[i] =  (RAM[i] & 0xc0) | ((RAM[i] & 0x08) << 2) |
@@ -1824,7 +1824,7 @@ static void copytoscreen(int mem, int len, int screen, int direction, int numsta
 {
 	char buf[10];
 	int hi;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	hi =      (RAM[mem + direction*3] & 0x0f) +
@@ -1855,7 +1855,7 @@ static void copytoscreen(int mem, int len, int screen, int direction, int numsta
 static int pacman_alibaba_common_hiload(int numstart)
 {
 	static int resetcount;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1898,7 +1898,7 @@ static int alibaba_hiload(void)
 static void pacman_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1914,7 +1914,7 @@ static int maketrax_hiload(void)
 {
 	static int resetcount;
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1944,7 +1944,7 @@ static int maketrax_hiload(void)
 static void maketrax_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1960,7 +1960,7 @@ static void maketrax_hisave(void)
 static int crush_hiload(void)
 {
 	static int resetcount;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* during a reset, leave time to the game to clear the screen */
@@ -1993,7 +1993,7 @@ static int crush_hiload(void)
 static void crush_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2007,7 +2007,7 @@ static void crush_hisave(void)
 
 static int eyes_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x4d30],"\x90\x52\x00",3) == 0)
@@ -2033,7 +2033,7 @@ static int eyes_hiload(void)
 static void eyes_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2047,7 +2047,7 @@ static void eyes_hisave(void)
 
 static int mrtnt_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x4cec],"\x40\x86\x01",3) == 0)
@@ -2073,7 +2073,7 @@ static int mrtnt_hiload(void)
 static void mrtnt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2087,7 +2087,7 @@ static void mrtnt_hisave(void)
 
 static int lizwiz_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x4de8],"\x40\x86\x01",3) == 0)
@@ -2113,7 +2113,7 @@ static int lizwiz_hiload(void)
 static void lizwiz_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2127,7 +2127,7 @@ static void lizwiz_hisave(void)
 
 static int ponpoko_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x406c],"\x0f\x0f\x0f\x0f\x0f\x00",6) == 0)
@@ -2154,7 +2154,7 @@ static int ponpoko_hiload(void)
 static void ponpoko_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2168,7 +2168,7 @@ static void ponpoko_hisave(void)
 
 static int theglob_beastf_common_hiload(int address)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[address],"MOB",3) == 0)
@@ -2190,7 +2190,7 @@ static int theglob_beastf_common_hiload(int address)
 static void theglob_beastf_common_hisave(int address)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2225,7 +2225,7 @@ static void beastf_hisave(void)
 static int vanvan_hiload(void)
 {
 	static int firsttime = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -2265,7 +2265,7 @@ static int vanvan_hiload(void)
 static void vanvan_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2296,7 +2296,7 @@ struct GameDriver driver_pacman =
 	rom_pacman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2322,7 +2322,7 @@ struct GameDriver driver_pacmanjp =
 	rom_pacmanjp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2348,7 +2348,7 @@ struct GameDriver driver_pacmanm =
 	rom_pacmanm,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2374,7 +2374,7 @@ struct GameDriver driver_npacmod =
 	rom_npacmod,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2400,7 +2400,7 @@ struct GameDriver driver_pacmod =
 	rom_pacmod,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2426,7 +2426,7 @@ struct GameDriver driver_hangly =
 	rom_hangly,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2452,7 +2452,7 @@ struct GameDriver driver_hangly2 =
 	rom_hangly2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2478,7 +2478,7 @@ struct GameDriver driver_puckman =
 	rom_puckman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2504,7 +2504,7 @@ struct GameDriver driver_pacheart =
 	rom_pacheart,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2530,7 +2530,7 @@ struct GameDriver driver_piranha =
 	rom_piranha,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mspacman,
 
@@ -2556,7 +2556,7 @@ struct GameDriver driver_pacplus =
 	rom_pacplus,
 	pacplus_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -2582,7 +2582,7 @@ struct GameDriver driver_mspacman =
 	rom_mspacman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mspacman,
 
@@ -2608,7 +2608,7 @@ struct GameDriver driver_mspacatk =
 	rom_mspacatk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mspacman,
 
@@ -2634,7 +2634,7 @@ struct GameDriver driver_pacgal =
 	rom_pacgal,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mspacman,
 
@@ -2660,7 +2660,7 @@ struct GameDriver driver_crush =
 	rom_crush,
 	0, maketrax_rom_decode,
 	0,
-	0,     /* sound_prom */
+	0,
 
 	input_ports_maketrax,
 
@@ -2686,7 +2686,7 @@ struct GameDriver driver_crush2 =
 	rom_crush2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_maketrax,
 
@@ -2712,7 +2712,7 @@ struct GameDriver driver_crush3 =
 	rom_crush3,
 	eyes_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_maketrax,
 
@@ -2738,7 +2738,7 @@ struct GameDriver driver_maketrax =
 	rom_maketrax,
 	0, maketrax_rom_decode,
 	0,
-	0,     /* sound_prom */
+	0,
 
 	input_ports_maketrax,
 
@@ -2764,7 +2764,7 @@ struct GameDriver driver_mbrush =
 	rom_mbrush,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mbrush,
 
@@ -2790,7 +2790,7 @@ struct GameDriver driver_ponpoko =
 	rom_ponpoko,
 	ponpoko_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ponpoko,
 
@@ -2816,7 +2816,7 @@ struct GameDriver driver_ponpokov =
 	rom_ponpokov,
 	ponpoko_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ponpoko,
 
@@ -2842,7 +2842,7 @@ struct GameDriver driver_eyes =
 	rom_eyes,
 	eyes_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eyes,
 
@@ -2868,7 +2868,7 @@ struct GameDriver driver_eyes2 =
 	rom_eyes2,
 	eyes_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eyes,
 
@@ -2894,7 +2894,7 @@ struct GameDriver driver_mrtnt =
 	rom_mrtnt,
 	eyes_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_eyes,
 
@@ -2920,7 +2920,7 @@ struct GameDriver driver_lizwiz =
 	rom_lizwiz,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_lizwiz,
 
@@ -2946,7 +2946,7 @@ struct GameDriver driver_theglob =
 	rom_theglob,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_theglob,
 
@@ -2972,7 +2972,7 @@ struct GameDriver driver_beastf =
 	rom_beastf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_theglob,
 
@@ -2999,7 +2999,7 @@ struct GameDriver driver_jumpshot =
 	rom_jumpshot,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pacman,
 
@@ -3025,7 +3025,7 @@ struct GameDriver driver_vanvan =
 	rom_vanvan,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vanvan,
 
@@ -3051,7 +3051,7 @@ struct GameDriver driver_vanvanb =
 	rom_vanvanb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vanvan,
 
@@ -3077,7 +3077,7 @@ struct GameDriver driver_alibaba =
 	rom_alibaba,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_alibaba,
 

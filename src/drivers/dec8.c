@@ -369,7 +369,7 @@ if (errorlog && data!=5) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cp
 static void dec8_bank_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -379,7 +379,7 @@ static void dec8_bank_w(int offset, int data)
 static void ghostb_bank_w(int offset, int data)
 {
  	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Bit 0: Interrupt enable/disable (I think..)
 	   Bit 1: NMI enable/disable
@@ -400,7 +400,7 @@ static void ghostb_bank_w(int offset, int data)
 void csilver_control_w(int offset, int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* Bottom 4 bits - bank switch */
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
@@ -447,7 +447,7 @@ static void csilver_adpcm_data_w(int offset,int data)
 
 static void csilver_sound_bank_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[2].memory_region);
 
 	if (data&8) { cpu_setbank(3,&RAM[0x14000]); }
 	else { cpu_setbank(3,&RAM[0x10000]); }
@@ -2916,7 +2916,7 @@ static void deco222_decode(void)
 	if (Machine->drv->cpu[2].cpu_type != 0) sound_cpu = 2;
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = Machine->memory_region[Machine->drv->cpu[sound_cpu].memory_region];
+	RAM = memory_region(Machine->drv->cpu[sound_cpu].memory_region);
 	encrypted_cpu = sound_cpu;
 	for (A = 0;A < 0x10000;A++)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
@@ -2951,13 +2951,13 @@ static void ghostb_decode(void)
 
 /* Short versions of hiscore save since they are all the same!  I'd like to change
 the load hiscore functions to macros too... */
-HI_SAVE(cobracom,Machine->memory_region[0],0x06c6,30)
-HI_SAVE(ghostb,  Machine->memory_region[0],0x01C0,118)
-HI_SAVE(ghostb3, Machine->memory_region[0],0x0DA0,118)
-HI_SAVE(srdarwin,Machine->memory_region[0],0x1342,70)
-HI_SAVE(gondo,   Machine->memory_region[0],0x1532,72)
-HI_SAVE(makyo,   Machine->memory_region[0],0x14f9,72)
-HI_SAVE(meikyuh, Machine->memory_region[0],0x0190,80)
+HI_SAVE(cobracom,memory_region(Machine->drv->cpu[0].memory_region),0x06c6,30)
+HI_SAVE(ghostb,  memory_region(Machine->drv->cpu[0].memory_region),0x01C0,118)
+HI_SAVE(ghostb3, memory_region(Machine->drv->cpu[0].memory_region),0x0DA0,118)
+HI_SAVE(srdarwin,memory_region(Machine->drv->cpu[0].memory_region),0x1342,70)
+HI_SAVE(gondo,   memory_region(Machine->drv->cpu[0].memory_region),0x1532,72)
+HI_SAVE(makyo,   memory_region(Machine->drv->cpu[0].memory_region),0x14f9,72)
+HI_SAVE(meikyuh, memory_region(Machine->drv->cpu[0].memory_region),0x0190,80)
 HI_SAVE(oscar,   dec8_shared_ram,0x075A,70)
 HI_SAVE(lastmiss,dec8_shared_ram,0x09aa,60)
 HI_SAVE(shackled,dec8_shared_ram,0x0108,40)
@@ -2966,7 +2966,7 @@ HI_SAVE(csilver, dec8_shared_ram,0x0e3c,60)
 static int cobracom_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x06c6],"\x00\x84\x76",3) == 0)
@@ -2989,7 +2989,7 @@ static int cobracom_hiload(void)
 static int ghostb_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x01C0],"\x01\x1F\x0F",3) == 0)
@@ -3007,7 +3007,7 @@ static int ghostb_hiload(void)
 static int meikyuh_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0190],"\x01\x1F\x0F",3) == 0)
@@ -3025,7 +3025,7 @@ static int meikyuh_hiload(void)
 static int ghostb3_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0DA0],"\x01\x1F\x0F",3) == 0)
@@ -3060,7 +3060,7 @@ static int oscar_hiload(void)
 /* Last Mission (Rev.5 & Rev.6) high score save - RJF (Feb 15, 1999) */
 static int lastmiss_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3086,7 +3086,7 @@ static int lastmiss_hiload(void)
 /* Super Real Darwin high score save - RJF (Feb 14, 1999) */
 static int srdarwin_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3113,7 +3113,7 @@ static int srdarwin_hiload(void)
 /* Gondomania & Makyou Senshi high score save - RJF (Feb 14, 1999) */
 static int gondo_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3135,7 +3135,7 @@ static int gondo_hiload(void)
 
 static int makyo_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x14f9],"\x21\x2d\x25",3) == 0)
 	{
@@ -3157,7 +3157,7 @@ static int makyo_hiload(void)
 /* Shackled & Breywood high score save - RJF (Feb 15, 1999) */
 static int shackled_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3182,7 +3182,7 @@ static int shackled_hiload(void)
 
 static int breywood_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -3208,7 +3208,7 @@ static int breywood_hiload(void)
 /* Captain Silver high score save - RJF (Feb 16, 1999) */
 static int csilver_hiload(void)
 {
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 
 

@@ -505,7 +505,7 @@ ROM_END
 /** Kick and Run & Mexico 86 high score save routine - RJF (Nov 10, 1999) **/
 static int kicknrun_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xee18],"\x17\x00\x00",3) == 0) &&
@@ -533,7 +533,7 @@ static int kicknrun_hiload(void)
 static void kicknrun_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -545,7 +545,7 @@ static void kicknrun_hisave(void)
 /****  Kiki Kaikai high score save routine - RJF (Nov 18, 1999)  ****/
 static int kikikai_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xe2fc],"\x00\x49\x00",3) == 0)
@@ -571,7 +571,7 @@ static int kikikai_hiload(void)
 static void kikikai_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -598,7 +598,7 @@ struct GameDriver driver_kicknrun =
 	rom_kicknrun,
 	0, 0,
 	0,
-	0,	  /* sound_prom */
+	0,
 
 	input_ports_mexico86,
 
@@ -624,7 +624,7 @@ struct GameDriver driver_mexico86 =
 	rom_mexico86,
 	0, 0,
 	0,
-	0,	  /* sound_prom */
+	0,
 
 	input_ports_mexico86,
 
@@ -650,7 +650,7 @@ struct GameDriver driver_kikikai =
 	rom_kikikai,
 	0, 0,
 	0,
-	0,	  /* sound_prom */
+	0,
 
 	input_ports_kikikai,
 

@@ -13,7 +13,6 @@
 
 unsigned char mappy_scroll;
 
-static unsigned char *transparency;
 static int special_display;
 static int flipscreen;
 
@@ -40,67 +39,33 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 {
 	int i;
 
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
-		bit0 = (color_prom[31-i] >> 0) & 0x01;
-		bit1 = (color_prom[31-i] >> 1) & 0x01;
-		bit2 = (color_prom[31-i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[31-i] >> 3) & 0x01;
-		bit1 = (color_prom[31-i] >> 4) & 0x01;
-		bit2 = (color_prom[31-i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
-		bit1 = (color_prom[31-i] >> 6) & 0x01;
-		bit2 = (color_prom[31-i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
 	/* characters */
 	for (i = 0*4;i < 64*4;i++)
-		colortable[i] = 31 - ((color_prom[(i^3) + 32] & 0x0f) + 0x10);
+		colortable[i] = (color_prom[(i^3)] & 0x0f) + 0x10;
 
 	/* sprites */
 	for (i = 64*4;i < Machine->drv->color_table_len;i++)
-		colortable[i] = 31 - (color_prom[i + 32] & 0x0f);
-
-   /* now check our characters and mark which ones are completely solid-color */
-   {
-      struct GfxElement *gfx;
-      unsigned char *dp;
-      int x, y, color;
-
-      transparency = malloc (64*256);
-      if (!transparency)
-      	return;
-      memset (transparency, 0, 64*256);
-
-      gfx = Machine->gfx[0];
-      for (i = 0; i < gfx->total_elements; i++)
-      {
-			color = gfx->gfxdata[i * gfx->char_modulo];
-
-			dp = gfx->gfxdata + i * gfx->char_modulo;
-			for (y = 0; y < gfx->height; y++)
-			{
-				for (x = 0; x < gfx->width; x++)
-				{
-					if (dp[x] != color)
-						goto done;
-				}
-				dp += gfx->line_modulo;
-			}
-
-			for (y = 0; y < 64; y++)
-				if (colortable[y*4 + color] == 0)
-					transparency[(i << 6) + y] = 1;
-
-		done:
-			;
-      }
-   }
+		colortable[i] = color_prom[i] & 0x0f;
 }
 
 
@@ -146,7 +111,6 @@ int todruaga_vh_start(void)
 ***************************************************************************/
 void mappy_vh_stop(void)
 {
-	free(transparency);
 	free(dirtybuffer);
 	osd_free_bitmap(tmpbitmap);
 }
@@ -186,7 +150,7 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
 	if (special_display == 1) sy++;	/* Motos */
 
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-		TRANSPARENCY_COLOR,16);
+		TRANSPARENCY_COLOR,15);
 }
 
 void mappy_flipscreen_w(int offset,int data)
@@ -207,25 +171,12 @@ void mappy_flipscreen_w(int offset,int data)
 ***************************************************************************/
 void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	static unsigned short overoffset[2048];
-	unsigned short *save = overoffset;
 	int offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int color = colorram[offs];
-		int video = videoram[offs];
-
-		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
-		if (color & 0x40)
-		{
-			if (!transparency[(video << 6) + (color & 0x3f)])
-			{
-				*save++ = offs;
-			}
-		}
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
@@ -289,8 +240,8 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					video,
-					color,
+					videoram[offs],
+					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -405,56 +356,57 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Draw the high priority characters */
-	while (save > overoffset)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int sx,sy,mx,my;
-
-		offs = *--save;
-
-		if (offs >= videoram_size - 64)
+		if (colorram[offs] & 0x40)
 		{
-			/* Draw the top 2 lines. */
-			mx = (offs - (videoram_size - 64)) / 32;
-			my = offs % 32;
+			int sx,sy,mx,my;
 
-			sx = mx;
-			sy = my - 2;
+				if (offs >= videoram_size - 64)
+				{
+					/* Draw the top 2 lines. */
+					mx = (offs - (videoram_size - 64)) / 32;
+					my = offs % 32;
 
-			sy *= 8;
+					sx = mx;
+					sy = my - 2;
+
+					sy *= 8;
+				}
+				else if (offs >= videoram_size - 128)
+				{
+					/* Draw the bottom 2 lines. */
+					mx = (offs - (videoram_size - 128)) / 32;
+					my = offs % 32;
+
+					sx = mx + 34;
+					sy = my - 2;
+
+					sy *= 8;
+				}
+				else
+				{
+					/* draw the rest of the screen */
+					mx = offs % 32;
+					my = offs / 32;
+
+					sx = mx + 2;
+					sy = my;
+
+					sy = (8*sy-mappy_scroll);
+				}
+
+				if (flipscreen)
+				{
+					sx = 35 - sx;
+					sy = 216 - sy;
+				}
+
+				drawgfx(bitmap,Machine->gfx[0],
+						videoram[offs],
+						colorram[offs] & 0x3f,
+						flipscreen,flipscreen,8*sx,sy,
+						0,TRANSPARENCY_COLOR,31);
 		}
-		else if (offs >= videoram_size - 128)
-		{
-			/* Draw the bottom 2 lines. */
-			mx = (offs - (videoram_size - 128)) / 32;
-			my = offs % 32;
-
-			sx = mx + 34;
-			sy = my - 2;
-
-			sy *= 8;
-		}
-		else
-		{
-			/* draw the rest of the screen */
-			mx = offs % 32;
-			my = offs / 32;
-
-			sx = mx + 2;
-			sy = my;
-
-			sy = (8*sy-mappy_scroll);
-		}
-
-		if (flipscreen)
-		{
-			sx = 35 - sx;
-			sy = 216 - sy;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs],
-				colorram[offs],
-				flipscreen,flipscreen,8*sx,sy,
-				0,TRANSPARENCY_COLOR,0);
 	}
 }

@@ -363,7 +363,7 @@ ROM_END
 
 static void rollerg_banking( int lines )
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int offs = 0;
 
 
@@ -402,7 +402,7 @@ struct GameDriver driver_rollerg =
 	rom_rollerg,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rollerg,
 
@@ -427,7 +427,7 @@ struct GameDriver driver_rollergj =
 	rom_rollergj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rollerg,
 

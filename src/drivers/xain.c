@@ -51,7 +51,7 @@ void xain_sharedram_w(int offset, int data)
 
 void xainCPUA_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (data & 0x08) {cpu_setbank(1,&RAM[0x10000]);}
 	else {cpu_setbank(1,&RAM[0x4000]);}
@@ -59,7 +59,7 @@ void xainCPUA_bankswitch_w(int offset,int data)
 
 void xainCPUB_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	if (data & 0x01) {cpu_setbank(2,&RAM[0x10000]);}
 	else {cpu_setbank(2,&RAM[0x4000]);}
@@ -539,7 +539,7 @@ ROM_END
 
 void xsleena_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* do the same patch as the bootleg xsleena */
 	RAM[0xd488] = 0x12;
@@ -552,7 +552,7 @@ void xsleena_patch(void)
 
 void solarwar_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* do the same patch as the bootleg xsleena */
 	RAM[0xd47e] = 0x12;
@@ -567,7 +567,7 @@ void solarwar_patch(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -593,7 +593,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)

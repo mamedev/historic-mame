@@ -325,7 +325,7 @@ struct GameDriver driver_zerozone =
 	rom_zerozone,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zerozone,
 

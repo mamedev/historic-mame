@@ -28,7 +28,7 @@ extern int 	 	goindol_char_bank;
 void goindol_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	bankaddress = 0x10000 + ((data & 3) * 0x4000);
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -408,7 +408,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xc076],"\x05\x00\x27",3) == 0)
@@ -434,7 +434,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -460,7 +460,7 @@ struct GameDriver driver_goindol =
 	rom_goindol,
  	goindol_init_machine, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_goindol,
 
@@ -486,7 +486,7 @@ struct GameDriver driver_homo =
 	rom_homo,
  	homo_init_machine, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_homo,
 

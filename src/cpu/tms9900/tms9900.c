@@ -12,13 +12,13 @@
 
 /* set this to 1 to use 16-bit handlers */
 /* (requires some changes in cpuintrf.c and all drivers which use tms9900) */
-#define USE_16BIT_MEMORY_HANDLER 0
+#define USE_16BIT_MEMORY_HANDLER 1
 /* Set this to 1 to support HOLD_LINE */
 /* This is a weird HOLD_LINE, actually : we hold the interrupt line only until IAQ
   (instruction acquisition) is enabled.  Well, this scheme could possibly exist on
   a TMS9900-based system, unlike a real HOLD_LINE.  (OK, this is just a pretext, I was just too
   lazy to implement a true HOLD_LINE ;-) .) */
-#define SILLY_INTERRUPT_HACK 1
+#define SILLY_INTERRUPT_HACK 0
 
 #include "memory.h"
 #include "mamedbg.h"
@@ -141,23 +141,11 @@ static tms9900_Regs I =
 static UINT8 lastparity = 0;  /* rather than handling ST_P directly, we copy the last value that
                                   would set it here */
 
-#if USE_16BIT_MEMORY_HANDLER
-
 #define readword(addr)			cpu_readmem16bew_word(addr)
 #define writeword(addr,data)	cpu_writemem16bew_word((addr), (data))
 
 #define readbyte(addr)			cpu_readmem16bew(addr)
 #define writebyte(addr,data)	cpu_writemem16bew((addr),(data))
-
-#else
-
-#define readword(addr)			((cpu_readmem16((addr)) << 8) +cpu_readmem16((addr)+1))
-#define writeword(addr,data)	{ cpu_writemem16((addr), ((data)>>8));cpu_writemem16(((addr)+1),((data) & 0xff));}
-
-#define readbyte(addr)			(cpu_readmem16(addr))
-#define writebyte(addr,data)	{ cpu_writemem16((addr),(data)) ; }
-
-#endif
 
 #define READREG(reg)			readword(I.WP+reg)
 #define WRITEREG(reg,data)		writeword(I.WP+reg,data)
@@ -249,7 +237,7 @@ int tms9900_execute(int cycles)
 
 		/*
 		  We handle interrupts here because :
-		  a) LOAD and level-0 (reset) interrupts are non-maskable and, so, AFAIK, if the LOAD* line or
+		  a) LOAD and level-0 (reset) interrupts are non-maskable, so, AFAIK, if the LOAD* line or
 		     INTREQ* line (with IC0-3 == 0) remain active, we will execute repeatedly the first
 		     instruction of the interrupt routine.
 		  b) if we did otherwise, we could have weird, buggy behavior if IC0-IC3 changed more than
@@ -1680,7 +1668,7 @@ static void h4000(UINT16 opcode)
       /* Results:  D = S */
       value = readword(src);
       setst_lae(value);
-      (void)readword(dest);   /* yes, MOV performs a dummy read... */
+      (void)readword(dest); /* yes, MOV performs a dummy read... */
       writeword(dest, value);
       break;
     case 13:  /* MOVB */
@@ -1688,7 +1676,7 @@ static void h4000(UINT16 opcode)
       /* Results:  D = S */
       value = readbyte(src);
       setst_byte_laep(value);
-      readbyte(dest);   /* MOVB read destination,too (this read is NOT useless, but this is a long story :-) ) */
+      (void)readbyte(dest); /* MOVB read destination,too (this read is NOT useless, but this is a long story :-) ) */
       writebyte(dest, value);
       break;
     case 14:  /* SOC */

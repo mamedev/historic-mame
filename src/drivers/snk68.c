@@ -2,6 +2,7 @@
 
 	POW - Prisoners Of War (US)			A7008	SNK 1988
 	POW - Prisoners Of War (Japan)		A7008	SNK 1988
+	SAR - Search And Rescue	(World)		A8007	SNK 1989
 	SAR - Search And Rescue	(US)		A8007	SNK 1989
 	Street Smart (US version 1)			A8007	SNK 1989
 	Street Smart (US version 2)			A7008	SNK 1989
@@ -1072,6 +1073,33 @@ ROM_END
 
 ROM_START( searchar )
 	ROM_REGION(0x40000)
+	ROM_LOAD_EVEN( "bhw.2", 0x000000, 0x20000, 0xe1430138 )
+	ROM_LOAD_ODD ( "bhw.3", 0x000000, 0x20000, 0xee1f9374 )
+
+	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bh.7",       0x000000, 0x08000, 0xb0f1b049 )
+	ROM_LOAD( "bh.8",       0x008000, 0x08000, 0x174ddba7 )
+
+	ROM_LOAD( "bh.c1",      0x010000, 0x80000, 0x1fb8f0ae )
+	ROM_LOAD( "bh.c3",      0x090000, 0x80000, 0xfd8bc407 )
+	ROM_LOAD( "bh.c5",      0x110000, 0x80000, 0x1d30acc3 )
+	ROM_LOAD( "bh.c2",      0x190000, 0x80000, 0x7c803767 )
+	ROM_LOAD( "bh.c4",      0x210000, 0x80000, 0xeede7c43 )
+	ROM_LOAD( "bh.c6",      0x290000, 0x80000, 0x9f785cd9 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "bh.5",       0x000000, 0x10000, 0x53e2fa76 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "bh.v1",      0x000000, 0x20000, 0x07a6114b )
+
+	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_LOAD_EVEN( "bhw.1", 0x000000, 0x20000, 0x62b60066 )
+	ROM_LOAD_ODD ( "bhw.4", 0x000000, 0x20000, 0x16d8525c )
+ROM_END
+
+ROM_START( sercharu )
+	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
 	ROM_LOAD_ODD ( "bh.3",  0x000000, 0x20000, 0xbc04a4a1 )
 
@@ -1259,14 +1287,14 @@ static void searchar_memory(void)
 
 static void streetsm_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD (&RAM[0x107d0],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
 
 static void streetsj_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD (&RAM[0x10710],0x4245); /* Clear D5 (Sprite ram error!?) */
 }
@@ -1289,7 +1317,7 @@ struct GameDriver driver_pow =
 	rom_pow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pow,
 
@@ -1314,7 +1342,7 @@ struct GameDriver driver_powj =
 	rom_powj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_powj,
 
@@ -1328,7 +1356,7 @@ struct GameDriver driver_searchar =
 	__FILE__,
 	0,
 	"searchar",
-	"SAR - Search And Rescue (US)",
+	"SAR - Search And Rescue (World)",
 	"1989",
 	"SNK",
 	"Bryan McPhail",
@@ -1337,6 +1365,31 @@ struct GameDriver driver_searchar =
 	searchar_memory,
 
 	rom_searchar,
+	0, 0,
+	0,
+	0,
+
+	input_ports_searchar,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_90,
+	0, 0
+};
+
+struct GameDriver driver_sercharu =
+{
+	__FILE__,
+	&driver_searchar,
+	"sercharu",
+	"SAR - Search And Rescue (US)",
+	"1989",
+	"SNK",
+	"Bryan McPhail",
+	0,
+	&searchar_machine_driver,
+	searchar_memory,
+
+	rom_sercharu,
 	0, 0,
 	0,
 	0,
@@ -1439,7 +1492,7 @@ struct GameDriver driver_ikari3 =
 	rom_ikari3,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ikari3,
 

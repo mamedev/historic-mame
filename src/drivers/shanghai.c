@@ -542,7 +542,7 @@ if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 		for (x = 0;x < 384;x++)
 		{
 			b &= 0x1fffff;
-			bitmap->line[y][x] = Machine->pens[HD63484_ram[b]];
+			plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
 			b++;
 		}
 	}
@@ -556,7 +556,7 @@ if (keyboard_pressed_memory(KEYCODE_V)) bose++;
 			{
 				b &= 0x1fffff;
 				if (HD63484_ram[b])
-					bitmap->line[y][x] = Machine->pens[HD63484_ram[b]];
+					plot_pixel(bitmap,x,y,Machine->pens[HD63484_ram[b]]);
 				b++;
 			}
 		}
@@ -784,7 +784,7 @@ struct GameDriver driver_shanghai =
 	rom_shanghai,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shanghai,
 

@@ -1193,7 +1193,7 @@ struct GameDriver driver_liquidk =
 	rom_liquidk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_liquidk,
 
@@ -1218,7 +1218,7 @@ struct GameDriver driver_liquidku =
 	rom_liquidku,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_liquidk,
 
@@ -1243,7 +1243,7 @@ struct GameDriver driver_mizubaku =
 	rom_mizubaku,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_liquidk,
 
@@ -1293,7 +1293,7 @@ struct GameDriver driver_finalb =
 	rom_finalb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_finalb,
 
@@ -1417,7 +1417,7 @@ struct GameDriver driver_growl =
 	rom_growl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_growl,
 
@@ -1442,7 +1442,7 @@ struct GameDriver driver_growlu =
 	rom_growlu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_growl,
 
@@ -1467,7 +1467,7 @@ struct GameDriver driver_runark =
 	rom_runark,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_growl,
 
@@ -1517,7 +1517,7 @@ struct GameDriver driver_megab =
 	rom_megab,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_megab,
 

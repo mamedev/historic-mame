@@ -1748,7 +1748,7 @@ static void froggers_decode(void)
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	for (A = 0;A < 0x0800;A++)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
@@ -1765,7 +1765,7 @@ static void mars_decode(void)
 		A2 -> A3
 		A3 -> A1 */
 
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	for (i = 0; i < 0x10000; i += 16)
 	{
 		int j;
@@ -1783,7 +1783,7 @@ static void mars_decode(void)
 
 static int scramble_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1809,7 +1809,7 @@ static int scramble_hiload(void)
 static void scramble_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1823,7 +1823,7 @@ static void scramble_hisave(void)
 
 static int atlantis_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1846,7 +1846,7 @@ static int atlantis_hiload(void)
 static void atlantis_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1861,7 +1861,7 @@ static void atlantis_hisave(void)
 static int theend_hiload(void)
 {
 	static int loop = 0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1900,7 +1900,7 @@ static int theend_hiload(void)
 static void theend_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1917,7 +1917,7 @@ static void theend_hisave(void)
 
 static int froggers_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1943,7 +1943,7 @@ static int froggers_hiload(void)
 static void froggers_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1956,7 +1956,7 @@ static void froggers_hisave(void)
 
 static int ckongs_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
     /* check if the hi score table has already been initialized */
     /* NOTE : 60b8 + 3 */
@@ -1989,7 +1989,7 @@ static int ckongs_hiload(void)
 static void ckongs_hisave(void)
 {
     void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -2017,7 +2017,7 @@ struct GameDriver driver_scramble =
 	rom_scramblk,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scramble,
 
@@ -2043,7 +2043,7 @@ struct GameDriver driver_scrambls =
 	rom_scramble,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scramble,
 
@@ -2069,7 +2069,7 @@ struct GameDriver driver_atlantis =
 	rom_atlantis,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_atlantis,
 
@@ -2095,7 +2095,7 @@ struct GameDriver driver_atlants2 =
 	rom_atlants2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_atlantis,
 
@@ -2121,7 +2121,7 @@ struct GameDriver driver_theend =
 	rom_theend,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_theend,
 
@@ -2147,7 +2147,7 @@ struct GameDriver driver_theends =
 	rom_theends,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_theend,
 
@@ -2174,7 +2174,7 @@ struct GameDriver driver_froggers =
 	rom_froggers,
 	froggers_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_froggers,
 
@@ -2201,7 +2201,7 @@ struct GameDriver driver_amidars =
 	rom_amidars,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_amidars,
 
@@ -2227,7 +2227,7 @@ struct GameDriver driver_triplep =
 	rom_triplep,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_triplep,
 
@@ -2253,7 +2253,7 @@ struct GameDriver driver_mariner =
 	rom_mariner,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_scramble, /* seems to be the same as Scramble */
 
@@ -2280,7 +2280,7 @@ struct GameDriver driver_ckongs =
 	rom_ckongs,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ckongs,
 
@@ -2306,7 +2306,7 @@ struct GameDriver driver_mars =
 	rom_mars,
 	mars_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_mars,
 
@@ -2332,7 +2332,7 @@ struct GameDriver driver_devilfsh =
 	rom_devilfsh,
 	mars_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_devilfsh,
 
@@ -2358,7 +2358,7 @@ struct GameDriver driver_newsin7 =
 	rom_newsin7,
 	mars_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_newsin7,
 
@@ -2384,7 +2384,7 @@ struct GameDriver driver_hotshock =
 	rom_hotshock,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hotshock,
 
@@ -2411,7 +2411,7 @@ struct GameDriver driver_hunchbks =
 	rom_hunchbks,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_scramble,
 

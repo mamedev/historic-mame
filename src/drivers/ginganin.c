@@ -114,10 +114,6 @@ static struct MemoryWriteAddress writemem[] =
 */
 
 /* based on snk.c: */
-/* following emulates most of the adpcm portion of the YM8950 chip */
-
-static unsigned char YM8950_register_index;
-static unsigned char YM8950_register[256];
 
 /* Added by Takahiro Nogi. 1999/09/27 */
 static unsigned char MC6840_index0;
@@ -176,42 +172,6 @@ static void MC6840_write_port_1_w(int offset, int data)
 	MC6840_register1 = data;
 }
 
-
-static void YM8950_control_port_0_w( int offset, int data )
-{
-	YM8950_register_index = data;
-	YM3526_control_port_0_w(offset,data);
-}
-
-static void YM8950_write_port_0_w( int offset, int data )
-{
-//	if( errorlog ) fprintf( errorlog, "sound write:(%02x)%02x\n", YM8950_register_index, data);
-
-	YM8950_register[YM8950_register_index] = data;
-	YM3526_write_port_0_w(offset,data);
-
-	if (YM8950_register_index == 0x0c )
-	{
-		int chan	=	YM8950_register[0x08];
-		int start	=	(YM8950_register[0x09] + YM8950_register[0x0a] * 256) * 0x20;
-		int finish	=	(YM8950_register[0x0b] + YM8950_register[0x0c] * 256) * 0x20;
-//		int vol		=	YM8950_register[0x12];
-
-		int len		=	((finish-start) * 2);	// Takahiro Nogi. 1999/09/27 (finish-start -> ((finish-start) * 2))
-
-		if ( (start >= 0) && (finish <= 0x20000) && (len > 0) )
-		{
-//			ADPCM_setvol( chan & 3, vol );
-			ADPCM_play( chan & 3, start, len );
-		}
-		else
-		{
-			if( errorlog ) fprintf( errorlog, "sound write: Sample outside mem region!");
-		}
-	}
-}
-
-
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -228,8 +188,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0801, 0x0801, MC6840_control_port_1_w },	// Takahiro Nogi. 1999/09/27
 	{ 0x0802, 0x0802, MC6840_write_port_0_w },	// Takahiro Nogi. 1999/09/27
 	{ 0x0803, 0x0803, MC6840_write_port_1_w },	// Takahiro Nogi. 1999/09/27
-	{ 0x2000, 0x2000, YM8950_control_port_0_w },
-	{ 0x2001, 0x2001, YM8950_write_port_0_w },
+	{ 0x2000, 0x2000, Y8950_control_port_0_w },
+	{ 0x2001, 0x2001, Y8950_write_port_0_w },
 	{ 0x2800, 0x2800, AY8910_control_port_0_w },
 	{ 0x2801, 0x2801, AY8910_write_port_0_w },
 	{ -1 }
@@ -410,25 +370,18 @@ static struct AY8910interface AY8910_interface =
 
 
 /* The Y8950 is basically a YM3526 with ADPCM built in */
-static struct YM3526interface ym3526_interface =
+static struct Y8950interface y8950_interface =
 {
 	1,
 	3579545,	/* ? */
 	{ 63 },
-	{ 0 }
+	{ 0 },
+	{ 4 },  // ROM region
+	{ 0 },  /* keyboarc read  */
+	{ 0 },  /* keyboard write */
+	{ 0 },  /* I/O read  */
+	{ 0 }   /* I/O write */
 };
-
-
-/* ADPCM portion of the Y8950 */
-static struct ADPCMinterface adpcm_interface =
-{
-	4,			/* ? channels */
-	3579545/512,/* ??? */
-	4,			/* memory region */
-	0,			/* init function */
-	{ 10, 10, 10 , 10 }	/* volume(s) */
-};
-
 
 static struct MachineDriver ginganin_machine_driver =
 {
@@ -470,13 +423,9 @@ static struct MachineDriver ginganin_machine_driver =
 			SOUND_AY8910,
 			&AY8910_interface
 		},
-		{							// 3526+ADPCM ~= YM8950
-			SOUND_YM3526,
-			&ym3526_interface
-		},
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_Y8950,
+			&y8950_interface
 		}
 	}
 };
@@ -526,12 +475,12 @@ void ginganin_rom_decode(void)
 unsigned char *RAM;
 
 /* main cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	WRITE_WORD(&RAM[0x408],0x6000);	WRITE_WORD(&RAM[0x40a],0x001c);	// avoid writes to rom getting to the log
 
 
 /* sound cpu patches */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	/* let's clear the RAM: ROM starts at 0x4000 */
 	memset (&RAM[0],0,0x800);

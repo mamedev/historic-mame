@@ -115,14 +115,11 @@ INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 	liberatr_videoram[(y<<8) | x] = data & 0xe0;
 
 	pen = Machine->pens[(data >> 5) + 0x10];
-	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = pen;
+	plot_pixel(Machine->scrbitmap, x, y, pen);
 }
 
 void liberatr_bitmap_xy_w(int offset, int data)
 {
-	if (*liberatr_x == 0)
-	{
-	}
 	bitmap_common_w(*liberatr_x, *liberatr_y, data);
 }
 
@@ -313,8 +310,8 @@ static int liberatr_init_planet(int planet_select)
 			*buffer++ = segment_count;
 			last_x = 0;
 
-			/* calculate the tmpbitmap's x coordinate for the western horizon
-			   center of tmpbitmap - (the number of planet pixels) / 4 */
+			/* calculate the bitmap's x coordinate for the western horizon
+			   center of bitmap - (the number of planet pixels) / 4 */
 			*buffer++ = Machine->drv->screen_width/2 - (line->max_x + 2) / 4;
 
 			for (i = 0; i < segment_count; i++)
@@ -368,7 +365,7 @@ int liberatr_vh_start(void)
 		return 1;
 	}
 
-	return generic_bitmapped_vh_start();
+	return 0;
 }
 
 /***************************************************************************
@@ -401,8 +398,6 @@ void liberatr_vh_stop(void)
 		free(liberatr_planet_segs[1]);
 		liberatr_planet_segs[1] = 0;
 	}
-
-    generic_bitmapped_vh_stop();
 }
 
 
@@ -416,13 +411,8 @@ void liberatr_vh_stop(void)
 
 static void liberatr_draw_planet(void)
 {
-	UINT8 latitude, x;
+	UINT8 latitude;
 	UINT8 *buffer;
-	UINT8 reverse_map[256];
-
-
-	for (x = 0; x < Machine->drv->total_colors; x++)
-		reverse_map[Machine->pens[x]] = x;
 
 
 	buffer = liberatr_planet_segs[ (*liberatr_planet_select >> 4) & 0x01 ]->frame[ *liberatr_planet_frame ];
@@ -430,24 +420,19 @@ static void liberatr_draw_planet(void)
 	/* for each latitude */
 	for (latitude = 0; latitude < 0x80; latitude++)
 	{
-		UINT8 base_color, segment, segment_count, segment_x, y;
-		UINT8 *bitmap, *temp_bitmap;
+		UINT8 base_color, segment, segment_count, x, y;
 
 		/* grab the color value for the base (if any) at this latitude */
 		base_color = liberatr_base_ram[latitude>>3] ^ 0x0f;
 
 		segment_count = *buffer++;
-		segment_x     = *buffer++;
-
-		y = 64 + latitude;
-
-		     bitmap = &(Machine->scrbitmap->line[y][segment_x]);
-		temp_bitmap = &(         tmpbitmap->line[y][segment_x]);
+		x             = *buffer++;
+		y             = 64 + latitude;
 
 		/* run through the segments, drawing its color until its x_array value comes up. */
 		for (segment = 0; segment < segment_count; segment++)
 		{
-			UINT8 color, segment_length;
+			UINT8 color, segment_length, i;
 			UINT16 pen;
 
 			color = *buffer++;
@@ -458,18 +443,11 @@ static void liberatr_draw_planet(void)
 
 			segment_length = *buffer++;
 
-			for (x = 0; x < segment_length; x++)
+			for (i = 0; i < segment_length; i++, x++)
 			{
-				/* planet video doesn't overwrite bitmap video, so
-				     check the tmpbitmap where we want to draw into.
-				   bitmap writes into the tmpbitmap all have bit 4 (0x10) set
-				     (they use pens 0x10-0x17)
-				*/
-				if (reverse_map[*temp_bitmap] <= 0x10)
-					*bitmap = *temp_bitmap = pen;
-
-				bitmap++;
-				temp_bitmap++;
+				/* only plot pixels that don't cover the foreground up */
+				if (!liberatr_videoram[(y<<8) | x])
+					plot_pixel(Machine->scrbitmap, x, y, pen);
 			}
 		}
 	}
@@ -478,10 +456,24 @@ static void liberatr_draw_planet(void)
 
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
+	if (palette_recalc() || full_refresh)
+	{
+		UINT8 liberatr_y_save = *liberatr_y;
+		UINT8 liberatr_x_save = *liberatr_x;
+
+		/* redraw bitmap */
+		for (*liberatr_y = Machine->drv->visible_area.min_y; *liberatr_y < Machine->drv->visible_area.max_y; (*liberatr_y)++)
+		{
+			for (*liberatr_x = Machine->drv->visible_area.min_x; *liberatr_x < Machine->drv->visible_area.max_x; (*liberatr_x)++)
+			{
+				liberatr_bitmap_xy_w(0, liberatr_bitmap_xy_r(0));
+			}
+		}
+
+		*liberatr_y = liberatr_y_save;
+		*liberatr_x = liberatr_x_save;
+	}
 
 	/* draw the planet */
 	liberatr_draw_planet();
-
-	generic_bitmapped_vh_screenrefresh(bitmap, full_refresh);
 }

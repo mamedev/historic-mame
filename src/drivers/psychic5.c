@@ -329,7 +329,7 @@ int psychic5_bankselect_r(int offset)
 
 void psychic5_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	int bankaddress;
 
 	if (data != psychic5_bank_latch)
@@ -617,7 +617,7 @@ static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (memcmp(&RAM[0xfc84],"\x00\x07\x53",3) == 0)
 	{
@@ -643,7 +643,7 @@ static void hisave(void)
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
 	if (f)
@@ -669,7 +669,7 @@ struct GameDriver driver_psychic5 =
 	rom_psychic5,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_psychic5,
 

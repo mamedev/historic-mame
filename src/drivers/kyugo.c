@@ -853,7 +853,7 @@ struct GameDriver driver_gyrodine =
 	rom_gyrodine,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gyrodine,
 
@@ -878,7 +878,7 @@ struct GameDriver driver_sonofphx =
 	rom_sonofphx,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -903,7 +903,7 @@ struct GameDriver driver_repulse =
 	rom_repulse,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -928,7 +928,7 @@ struct GameDriver driver_99lstwar =
 	rom_99lstwar,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -953,7 +953,7 @@ struct GameDriver driver_flashgal =
 	rom_flashgal,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_flashgal,
 
@@ -978,7 +978,7 @@ struct GameDriver driver_srdmissn =
 	rom_srdmissn,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -1003,7 +1003,7 @@ struct GameDriver driver_airwolf =
 	rom_airwolf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -1028,7 +1028,7 @@ struct GameDriver driver_skywolf =
 	rom_skywolf,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 
@@ -1053,7 +1053,7 @@ struct GameDriver driver_skywolf2 =
 	rom_skywolf2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sonofphx,
 

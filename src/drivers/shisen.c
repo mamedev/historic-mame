@@ -419,7 +419,7 @@ ROM_END
 
 static int sichuan2_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0xfcb0],"\x2b\x03\x0f",3) == 0)
@@ -443,7 +443,7 @@ static int sichuan2_hiload(void)
 static void sichuan2_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -470,7 +470,7 @@ struct GameDriver driver_sichuan2 =
         rom_sichuan2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shisen,
 
@@ -496,7 +496,7 @@ struct GameDriver driver_sichuana =
         rom_sichuana,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shisen,
 
@@ -522,7 +522,7 @@ struct GameDriver driver_shisen =
 	rom_shisen,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_shisen,
 

@@ -13,57 +13,60 @@
  *---------------------------------------------------------------
  * History (so we know what bugs have been fixed)
  *
- * 02.11.98 MJC - CMPM bug, overwriting first value
- * 04.11.98 MJC - Debug timing - same as C core
- *                save PC on calls to C memory routines
- * 05.11.98 NS  - Re-insert changes to make work on OS/2
- * 06.11.98 MJC - Flags saved on ADDA commands
- *                X set on ADD commands
- * 23.11.98 MJC - Alternate Memory Read/Write for non DOS ports
- * 24.11.98 CK  - Add WIN32 specific stuff
- * 25.11.98 DEO - ABCD Size not initialised
- * 21.12.98 MJC - Change register saving on Memory Banking
- * 13.01.99 M/D - Change to new C core disassembler
- * 19.01.99 MJC - Proper? support for new Interrupt System
- * 17.02.99 MJC - TRACE68K define added
- *                ABCD,SBCD not keeping Z flag
- *                JMP, JSR for some EA combo's damaging flags
- *                DIVU - Overflow not being set correctly
- *                ASL/ASR - Flag Handling now correct
- *                some minor optimisations
- * 13.03.99 DEO - Added new cycle timing
- * 24.03.99 MJC - TRACE68K define removed
- *                NEW INTERRUPT SYSTEM only
- *                interrupt check sped up (when not taken)
- *                STOP checks for interrupt
- * 01.04.99 MJC - OS2 specifics added
- *                MOVEM reference point moved
- *                Data and Address register mode combined for :-
+ * 02.11.98 MJC   - CMPM bug, overwriting first value
+ * 04.11.98 MJC   - Debug timing - same as C core
+ *                  save PC on calls to C memory routines
+ * 05.11.98 NS    - Re-insert changes to make work on OS/2
+ * 06.11.98 MJC   - Flags saved on ADDA commands
+ *                  X set on ADD commands
+ * 23.11.98 MJC   - Alternate Memory Read/Write for non DOS ports
+ * 24.11.98 CK    - Add WIN32 specific stuff
+ * 25.11.98 DEO   - ABCD Size not initialised
+ * 21.12.98 MJC   - Change register saving on Memory Banking
+ * 13.01.99 M/D   - Change to new C core disassembler
+ * 19.01.99 MJC   - Proper? support for new Interrupt System
+ * 17.02.99 MJC   - TRACE68K define added
+ *                  ABCD,SBCD not keeping Z flag
+ *                  JMP, JSR for some EA combo's damaging flags
+ *                  DIVU - Overflow not being set correctly
+ *                  ASL/ASR - Flag Handling now correct
+ *                  some minor optimisations
+ * 13.03.99 DEO   - Added new cycle timing
+ * 24.03.99 MJC   - TRACE68K define removed
+ *                  NEW INTERRUPT SYSTEM only
+ *                  interrupt check sped up (when not taken)
+ *                  STOP checks for interrupt
+ * 01.04.99 MJC   - OS2 specifics added
+ *                  MOVEM reference point moved
+ *                  Data and Address register mode combined for :-
  *                	movecodes
  *                  dumpx
- * 04.05.99 MJC - Add Previous PC support to MOVE.B #X,XXXXXX.L (F1 Dream)
- *                ABCD/SBCD could corrupt zero flag
- *                DIVS/DIVU overflow should not update register
- * 22.05.99 MJC - Complete support of Previous PC on C calls
- *                Some optional bits now selected by DEFINES
- * 27.05.99 MJC - Interrupt system changed
- * 28.05.99 MJC - Use DEFINES in more places
- *                Interrupt check running one opcode when taken
- * 16.07.99 MJC - Reset - Preload next opcode / external call
- *                68010 commands almost complete
- *                more compression on jump table (16k smaller)
- *                Some optimising
- *                	shl reg,1 -> add reg,reg
- *                  or ecx,ecx:jz -> jecxz
- * 22.08.99 DEO - SBCD/ABCD sets N flag same as carry
- * 19.10.99 MJC - Change DOS memory routines
- *                Change DOS Clobber flags (ESI no longer safe)
- *                Save EAX around memory write where needed
- *                bit commands optimised
- * 25.10.99 MJC - Was keeping masked register on read/write
+ * 04.05.99 MJC   - Add Previous PC support to MOVE.B #X,XXXXXX.L (F1 Dream)
+ *                  ABCD/SBCD could corrupt zero flag
+ *                  DIVS/DIVU overflow should not update register
+ * 22.05.99 MJC   - Complete support of Previous PC on C calls
+ *                  Some optional bits now selected by DEFINES
+ * 27.05.99 MJC   - Interrupt system changed
+ * 28.05.99 MJC   - Use DEFINES in more places
+ *                  Interrupt check running one opcode when taken
+ * 16.07.99 MJC   - Reset - Preload next opcode / external call
+ *                  68010 commands almost complete
+ *                  more compression on jump table (16k smaller)
+ *                  Some optimising
+ *                	  shl reg,1 -> add reg,reg
+ *                    or ecx,ecx:jz -> jecxz
+ * 22.08.99 DEO   - SBCD/ABCD sets N flag same as carry
+ * 19.10.99 MJC   - Change DOS memory routines
+ *                  Change DOS Clobber flags (ESI no longer safe)
+ *                  Save EAX around memory write where needed
+ *                  bit commands optimised
+ * 25.10.99  MJC  - Was keeping masked register on read/write
  *                  if register was preserved over call
- *                ESI assumed 'safe' again
- * 25.10.99 MJC - Bank ID moved to CPU context
+ *                  ESI assumed 'safe' again
+ * 25.10.99  MJC  - Bank ID moved to CPU context
+ * 03.11.99 KENJO - VC++6.0 seems not to preserve EDI. Fixed "ABCD -(A0), -(A0)" crash / "roxr (A0)"-type shift crash
+ * 13.11.99 KENJO - Fixed "NABC"
+ *                  Now Win32 uses FASTCALL type call for interrupt callback
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -123,7 +126,7 @@ int 		DisOp;
 #undef cpu_readmem24_word
 #undef cpu_readmem24_dword
 
-#include "cpuintrf.h"
+#include "..\..\cpuintrf.h"
 
 /*
  * Defines used by Program
@@ -216,7 +219,8 @@ static char SavedRegs[] = "-B--SDB";
 
 #ifdef WIN32
 /* visual C++, win32, says it preserves ebx, edi, esi, and ebp */
-static char SavedRegs[] = "-B--SDB";
+/* ---------- VC++ deosn't preserve EDI? (Kenjo, 110399) ---------- */
+static char SavedRegs[] = "-B--S-B";
 #else
 /* Assume nothing preserved */
 static char SavedRegs[] = "-------";
@@ -535,14 +539,14 @@ void Completed(void)
         fprintf(fp, "\t\t jle   near MainExit\n\n");
 	}
 
- 	#ifdef MAME_DEBUG
+#ifdef MAME_DEBUG
 
     	/* Check for Debug Active */
 
   		fprintf(fp, "\n\t\t or    dword [_mame_debug],byte 0\n");
   		fprintf(fp, "\t\t jnz   near MainExit\n\n");
 
- 	#endif
+#endif
 
     if (CheckInterrupt)
     {
@@ -929,7 +933,7 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 
     if ((Flags[EAX] != '-') && (SavedRegs[EAX] == '-'))
     {
-		fprintf(fp, "\t\t push  EAX\n");
+		fprintf(fp, "\t\t push  EaX\n");
     }
 
     if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
@@ -1826,7 +1830,7 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 1:   /* F - Never */
-           if (SetWhat == "AL")
+           if (SetWhat[1] == 'L')
            {
    	       	  fprintf(fp, "\t\t xor   eax,eax\n");
            }
@@ -2519,9 +2523,9 @@ void movep(void)
                             /* Move bytes into Line */
 
                             if ( leng == 1)
-                            	fprintf(fp,"\t\t rol   eax,8\n");
+                            	fprintf(fp,"\t\t rol   eax,byte 8\n");
                             else
-                            	fprintf(fp,"\t\t rol   eax,24\n");
+                            	fprintf(fp,"\t\t rol   eax,byte 24\n");
 
 							Memory_Write('B',EDI,EAX,"A---SDB",2);	/* Mask First */
 							fprintf(fp,"\t\t add   edi,byte 2\n");
@@ -3519,7 +3523,7 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 
 					fprintf(fp, "\t\t %s   [%s+ECX*4],EAX\n",Op ,REG_ADD);
 
-                    if (Op == "cmp")
+                    if (Op[0] == 'c')
                     {
                     	SetFlags('L',EAX,FALSE,FALSE,FALSE);
                     }
@@ -4034,7 +4038,7 @@ void nbcd(void)
 
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-  				EffectiveAddressRead(Dest,'B',ECX,EBX,"--C-S-B",FALSE);
+  				EffectiveAddressRead(Dest,'B',ECX,EBX,"--C-SDB",FALSE);
 
 				fprintf(fp, "\t\t xor   eax,eax\n");
 	   	        CopyX();
@@ -4088,7 +4092,7 @@ void tas(void)
 
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
-  				EffectiveAddressRead(Dest,'B',ECX,EAX,"--C-S-B",FALSE);
+  				EffectiveAddressRead(Dest,'B',ECX,EAX,"--C-SDB",FALSE);
 
 				SetFlags('B',EAX,TRUE,TRUE,TRUE);
 				fprintf(fp, "\t\t or    al,128\n");
@@ -5347,7 +5351,7 @@ void abcd_sbcd(void)
 			fprintf(fp, "\t\t and   ecx, byte 7\n");
 
   			EffectiveAddressRead(mode,'B',EBX,EBX,"--C-S-B",TRUE);
-  			EffectiveAddressRead(mode,'B',ECX,EAX,"-BC-S-B",TRUE);
+  			EffectiveAddressRead(mode,'B',ECX,EAX,"-BC-SDB",TRUE);
 
 
             CopyX();
@@ -5531,7 +5535,7 @@ void rol_ror_ea(void)
                 TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
-				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
+				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-SDB",FALSE);
 
 				if ( dr == 0 )
 					fprintf(fp, "\t\t ror   ax,1\n");
@@ -5695,7 +5699,7 @@ void lsl_lsr_ea(void)
                 TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
-				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
+				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-SDB",FALSE);
 
 				if ( dr == 0 )
 					fprintf(fp, "\t\t shr   ax,1\n");
@@ -5787,7 +5791,7 @@ void roxl_roxr(void)
             fprintf(fp, "\t\t add   edx,edx\n");
             fprintf(fp, "\t\t sub   dword [%s],edx\n",ICOUNT);
 
-			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
+			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-SDB",FALSE);
 
 			/* move X into C so RCR & RCL can be used */
 			/* RCR & RCL only set the carry flag      */
@@ -5866,7 +5870,7 @@ void roxl_roxr_ea(void)
                 TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
-				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
+				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-SDB",FALSE);
 
 				/* move X into C so RCR & RCL can be used */
 				/* RCR & RCL only set the carry flag      */
@@ -6147,7 +6151,7 @@ void asl_asr_ea(void)
                 TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
-				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
+				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-SDB",FALSE);
 
 				if ( dr == 0 )
 					fprintf(fp, "\t\t sar   ax,1\n");
@@ -6603,7 +6607,7 @@ void CodeSegmentBegin(void)
 
 	fprintf(fp,"; Check for Interrupt waiting\n\n");
     fprintf(fp,"\t\t test  [%s],byte 07H\n",REG_IRQ);
-    fprintf(fp,"\t\t jne   short interrupt\n\n");
+    fprintf(fp,"\t\t jne   near interrupt\n\n");
 
     fprintf(fp, "IntCont:\n");
 
@@ -6696,9 +6700,16 @@ void CodeSegmentBegin(void)
 	    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
     }
 
-    fprintf(fp, "\t\t push  eax\t\t; irq line #\n");
+/* ----- Win32 uses FASTCALL (By Kenjo)----- */
+
+#ifdef WIN32
+	fprintf(fp, "\t\t mov   %s, eax\t\t; irq line #\n",FASTCALL_FIRST_REG);
+	fprintf(fp, "\t\t call  dword [%s]\t; get the IRQ level\n", REG_IRQ_CALLBACK);
+#else
+	fprintf(fp, "\t\t push  eax\t\t; irq line #\n");
 	fprintf(fp, "\t\t call  dword [%s]\t; get the IRQ level\n", REG_IRQ_CALLBACK);
 	fprintf(fp, "\t\t add   esp, byte 4\n");
+#endif
 
     if (SavedRegs[EDX] == '-')
     {
@@ -6710,12 +6721,11 @@ void CodeSegmentBegin(void)
 	    fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
     }
 
-
     /* Do we want to use normal vector number ? */
+
 
     fprintf(fp, "\t\t or    eax,eax\n");
     fprintf(fp, "\t\t jns   short AUTOVECTOR\n");
-
 
     /* Only need EBX restored if default vector to be used */
 
@@ -6727,9 +6737,11 @@ void CodeSegmentBegin(void)
 	/* Just get default vector */
 
     fprintf(fp, "\t\t mov   eax,ebx\n");
+
     fprintf(fp, "\t\t add   eax,byte 24\t\t; Vector\n\n");
 
     fprintf(fp, "AUTOVECTOR:\n\n");
+
     Exception(-1,0xFFFF);
 
     fprintf(fp, "\t\t pop   eax\t\t; set Int mask\n");
@@ -6745,6 +6757,7 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "Exception:\n");
 	fprintf(fp, "\t\t push  edx\t\t; Save flags\n");
 	fprintf(fp, "\t\t and   eax,0FFH\t\t; Zero Extend IRQ Vector\n");
+
 	fprintf(fp, "\t\t push  eax\t\t; Save for Later\n");
 
 	/*  Update Cycle Count */
@@ -6780,6 +6793,7 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "\t\t pop   eax\t\t;Level\n");
 	fprintf(fp, "\t\t shl   eax,2\n");
     fprintf(fp, "\t\t add   eax,[%s]\n",REG_VBR);		/* 68010+ Vector Base */
+
 	Memory_Read('L',EAX,"------B",0);
 
 	fprintf(fp, "\t\t mov   esi,eax\t\t;Set PC\n");
@@ -6892,6 +6906,7 @@ void CodeSegmentEnd(void)
     fprintf(fp, "\t\t DB 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38\n\n");
 
 	fprintf(fp, "; RLE Compressed Jump Table\n\n");
+
 	fprintf(fp, "COMPTABLE\n\n");
 
 #ifdef UNIX
@@ -6901,13 +6916,25 @@ void CodeSegmentEnd(void)
 #endif
 	fprintf(fp, "\t\tDW   0,0,0\n\n");
 
-#ifdef OS2
-    fprintf(fp, "\t\t SECTION tempdata USE32 FLAT CLASS=BSS\n\n");
-#else
-	fprintf(fp, "\t\t SECTION .bss\n");
-#endif
+
+/* If Win32, put the table area in .data section (Kenjo) */
+
+#ifdef WIN32
 
 	fprintf(fp, "OPCODETABLE\tRESD  65536\n\n");
+
+#else
+
+	#ifdef OS2
+    	fprintf(fp, "\t\t SECTION tempdata USE32 FLAT CLASS=BSS\n\n");
+	#else
+		fprintf(fp, "\t\t SECTION .bss\n");
+	#endif
+
+	fprintf(fp, "OPCODETABLE\tRESD  65536\n\n");
+
+#endif
+
 }
 
 void EmitCode(void)

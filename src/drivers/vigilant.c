@@ -26,7 +26,7 @@ void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void vigilant_bank_select_w (int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
@@ -648,7 +648,7 @@ ROM_END
 static int vigilant_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -673,7 +673,7 @@ static int vigilant_hiload(void)
 static void vigilant_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -686,7 +686,7 @@ static void vigilant_hisave(void)
 static int kikcubic_hiload(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -711,7 +711,7 @@ static int kikcubic_hiload(void)
 static void kikcubic_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -736,7 +736,7 @@ struct GameDriver driver_vigilant =
 	rom_vigilant,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vigilant,
 
@@ -761,7 +761,7 @@ struct GameDriver driver_vigilntu =
 	rom_vigilntu,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vigilant,
 
@@ -786,7 +786,7 @@ struct GameDriver driver_vigilntj =
 	rom_vigilntj,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vigilant,
 
@@ -811,7 +811,7 @@ struct GameDriver driver_kikcubic =
 	rom_kikcubic,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_kikcubic,
 

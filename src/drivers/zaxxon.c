@@ -960,7 +960,7 @@ static void zaxxonb_decode(void)
 		{ 0x02,0x08,0x2a,0x20,0x20,0x2a,0x08,0x02 } 	/* .......1...1...1 */
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x0000;A < 0x8000;A++)
@@ -993,7 +993,7 @@ static void zaxxonb_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1021,7 +1021,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* make sure that the high score table is still valid (entering the */
@@ -1041,7 +1041,7 @@ static void hisave(void)
 
 static int futspy_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if (memcmp(&RAM[0x0427],"\x00\x00\x01",3) == 0 &&
@@ -1065,7 +1065,7 @@ static int futspy_hiload(void)
 static void futspy_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1078,7 +1078,7 @@ static void futspy_hisave(void)
 /****  Razzmatazz high score save routine - RJF (July 11, 1999)  ****/
 static int razmataz_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	/* high score values are intialized to all 0 */
@@ -1104,7 +1104,7 @@ static int razmataz_hiload(void)
 static void razmataz_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1132,7 +1132,7 @@ struct GameDriver driver_zaxxon =
 	rom_zaxxon,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zaxxon,
 
@@ -1158,7 +1158,7 @@ struct GameDriver driver_zaxxon2 =
 	rom_zaxxon2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zaxxon,
 
@@ -1184,7 +1184,7 @@ struct GameDriver driver_zaxxonb =
 	rom_zaxxonb,
 	0, zaxxonb_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zaxxon,
 
@@ -1210,7 +1210,7 @@ struct GameDriver driver_szaxxon =
 	rom_szaxxon,
 	0, szaxxon_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_zaxxon,
 
@@ -1236,7 +1236,7 @@ struct GameDriver driver_futspy =
 	rom_futspy,
 	0, futspy_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_futspy,
 
@@ -1262,7 +1262,7 @@ struct GameDriver driver_razmataz =
 	rom_razmataz,
 	0, nprinces_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_razmataz,
 

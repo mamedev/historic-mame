@@ -8,35 +8,6 @@ int galpanic_fgvideoram_size;
 
 
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int galpanic_vh_start(void)
-{
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void galpanic_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
 int galpanic_bgvideoram_r(int offset)
 {
 	return READ_WORD(&galpanic_bgvideoram[offset]);
@@ -54,19 +25,6 @@ extern unsigned short *shrinked_pens;
 
 	sy = (offset/2) / 256;
 	sx = (offset/2) % 256;
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-
-		temp = sx;
-		sx = sy;
-		sy = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		sx = tmpbitmap->width - 1 - sx;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		sy = tmpbitmap->height - 1 - sy;
 
 	color = READ_WORD(&galpanic_bgvideoram[offset]);
 
@@ -78,10 +36,7 @@ extern unsigned short *shrinked_pens;
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	if (tmpbitmap->depth==16)
-		((unsigned short *)tmpbitmap->line[sy])[sx] = shrinked_pens[rgbpenindex(r,g,b)];
-	else
-		tmpbitmap->line[sy][sx] = shrinked_pens[rgbpenindex(r,g,b)];
+	plot_pixel(tmpbitmap, sx, sy, shrinked_pens[rgbpenindex(r,g,b)]);
 }
 
 int galpanic_fgvideoram_r(int offset)
@@ -152,52 +107,18 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* returns true */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
 	{
-		for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
+		int color;
+
+
+		sx = (offs/2) % 256;
+		sy = (offs/2) / 256;
+
+		color = READ_WORD(&galpanic_fgvideoram[offs]);
+		if (color)
 		{
-			int color;
-
-
-			sx = (offs/2) / 256;
-			sy = (offs/2) % 256;
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				sx = bitmap->width - 1 - sx;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				sy = bitmap->height - 1 - sy;
-
-			color = READ_WORD(&galpanic_fgvideoram[offs]);
-			if (color)
-			{
-				if (bitmap->depth==16)
-					((unsigned short *)bitmap->line[sy])[sx] = Machine->pens[color];
-				else
-					bitmap->line[sy][sx] = Machine->pens[color];
-			}
-		}
-	}
-	else
-	{
-		for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
-		{
-			int color;
-
-
-			sx = (offs/2) % 256;
-			sy = (offs/2) / 256;
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				sx = bitmap->width - 1 - sx;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				sy = bitmap->height - 1 - sy;
-
-			color = READ_WORD(&galpanic_fgvideoram[offs]);
-			if (color)
-			{
-				if (bitmap->depth==16)
-					((unsigned short *)bitmap->line[sy])[sx] = Machine->pens[color];
-				else
-					bitmap->line[sy][sx] = Machine->pens[color];
-			}
+			plot_pixel(bitmap, sx, sy, Machine->pens[color]);
 		}
 	}
 

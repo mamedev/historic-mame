@@ -35,19 +35,19 @@ static void retofinv_init_machine(void)
 
 static int  retofinv_shared_ram_r(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	return RAM[0x8800+offset];
 }
 
 static void retofinv_shared_ram_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	RAM[0x8800+offset] = data;
 }
 
 static void retofinv_protection_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (cpu0_me800_last & 0x80)
 	{
@@ -558,7 +558,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x990F],"\x00\x20\x00",3) == 0)
@@ -581,7 +581,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
        	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
         {
@@ -606,7 +606,7 @@ struct GameDriver driver_retofinv =
 	rom_retofinv,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 	input_ports_retofinv,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -629,7 +629,7 @@ struct GameDriver driver_retofin1 =
 	rom_retofin1,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 	input_ports_retofinv,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -652,7 +652,7 @@ struct GameDriver driver_retofin2 =
 	rom_retofin2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 	input_ports_retofinv,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

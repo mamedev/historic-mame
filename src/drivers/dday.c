@@ -428,7 +428,7 @@ ROM_END
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime = 0;
 	if (firsttime == 0)
 	{
@@ -465,7 +465,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -491,7 +491,7 @@ struct GameDriver driver_dday =
 	rom_dday,
 	dday_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_dday,
 
@@ -517,7 +517,7 @@ struct GameDriver driver_ddayc =
 	rom_ddayc,
 	dday_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ddayc,
 

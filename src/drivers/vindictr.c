@@ -477,7 +477,7 @@ struct GameDriver driver_vindictr =
 	rom_decode,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_vindictr,
 

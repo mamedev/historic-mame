@@ -568,7 +568,7 @@ static void cclimber_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -731,7 +731,7 @@ static void cclimbrj_decode(void)
 		}
 	};
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	for (A = 0x0000;A < 0x10000;A++)
@@ -986,7 +986,7 @@ ROM_END
 
 static int cclimber_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1010,7 +1010,7 @@ static int cclimber_hiload(void)
 static void cclimber_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1023,7 +1023,7 @@ static void cclimber_hisave(void)
 
 static int ckong_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1050,7 +1050,7 @@ static int ckong_hiload(void)
 static void ckong_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1062,7 +1062,7 @@ static void ckong_hisave(void)
 
 static int rpatrolb_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1092,7 +1092,7 @@ static int rpatrolb_hiload(void)
 static void rpatrolb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1127,7 +1127,7 @@ struct GameDriver driver_cclimber =
 	rom_cclimber,
 	0, cclimber_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cclimber,
 
@@ -1153,7 +1153,7 @@ struct GameDriver driver_cclimbrj =
 	rom_cclimbrj,
 	0, cclimbrj_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cclimber,
 
@@ -1179,7 +1179,7 @@ struct GameDriver driver_ccboot =
 	rom_ccboot,
 	0, cclimbrj_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cclimber,
 
@@ -1205,7 +1205,7 @@ struct GameDriver driver_ccboot2 =
 	rom_ccboot2,
 	0, cclimbrj_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_cclimber,
 
@@ -1233,7 +1233,7 @@ struct GameDriver driver_ckong =
 	rom_ckong,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1259,7 +1259,7 @@ struct GameDriver driver_ckonga =
 	rom_ckonga,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1285,7 +1285,7 @@ struct GameDriver driver_ckongjeu =
 	rom_ckongjeu,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1311,7 +1311,7 @@ struct GameDriver driver_ckongo =
 	rom_ckongo,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1337,7 +1337,7 @@ struct GameDriver driver_ckongalc =
 	rom_ckongalc,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1363,7 +1363,7 @@ struct GameDriver driver_monkeyd =
 	rom_monkeyd,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_ckong,
 
@@ -1389,7 +1389,7 @@ struct GameDriver driver_rpatrolb =
 	rom_rpatrolb,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_rpatrolb,
 
@@ -1415,7 +1415,7 @@ struct GameDriver driver_silvland =
     rom_silvland,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_rpatrolb,
 
@@ -1839,7 +1839,7 @@ ROM_END
 
 static int swimmer_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1871,7 +1871,7 @@ static int swimmer_hiload(void)
 static void swimmer_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1885,7 +1885,7 @@ static void swimmer_hisave(void)
 
 static int guzzler_hiload(void)
 {
-	unsigned char *RAM=Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM=memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 
 
@@ -1924,7 +1924,7 @@ static int guzzler_hiload(void)
 static void guzzler_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1952,7 +1952,7 @@ struct GameDriver driver_swimmer =
 	rom_swimmer,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_swimmer,
 
@@ -1978,7 +1978,7 @@ struct GameDriver driver_swimmera =
 	rom_swimmera,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_swimmer,
 
@@ -2004,7 +2004,7 @@ struct GameDriver driver_guzzler =
 	rom_guzzler,
 	0, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_guzzler,
 

@@ -1294,7 +1294,7 @@ int wms_cmos_r(int offset)
 
 void wms_load_code_roms(void)
 {
-	memcpy(CODE_ROM,Machine->memory_region[Machine->drv->cpu[0].memory_region],wms_code_rom_size);
+	memcpy(CODE_ROM,memory_region(Machine->drv->cpu[0].memory_region),wms_code_rom_size);
 }
 
 

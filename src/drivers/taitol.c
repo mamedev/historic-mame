@@ -37,6 +37,44 @@ TODO:
 - Cachat's title    screen  has some  problems.   The middle tile layer
   is shifted 16 pixels to the left.
 
+
+Ok,  the pipe  is   what is   used to  communicate   between the  main
+processors and the sound  one.  It sits  on two adresses, the even one
+being the register number, the odd data, in a very ym2149 kind of way.
+
+Registers 0-3 are data,  register 4 is  flags.  They probably are only
+4bits wide.
+
+Each time  you read or   write to a   register the register  number is
+automatically increased.  I have no reason to think that this register
+number needs  to be separated for the  two processors  that access it,
+given the usage patterns.
+
+Flags of register 4 (it seems to be possible to directly write to it)
+bit 0 : set to 1 when register 1 is written, set to 0 when it is read
+bit 1 : set to 1 when register 3 is written, set to 0 when it is read
+bit 2-3 : unknown (there may be some kind of overrun detection...)
+
+Also, I think that  setting a bit in  the register 4  raises an irq on
+the sound CPU.    I tend to think  that  even setting it thru   direct
+writing does that.
+
+Here are the adresses of the pipe for the different games:
+
+game main cpu sound cpu
+fhawk 2nd, c800 e000
+raimais 1st, 8c00 e200
+champwr 2nd, e800 a000
+
+
+> Note: the multicpu games run very slow (w/ emulation speed at 100%). The
+> interleaving factor most certainly has to be increased (since there is
+> shared memory).
+
+This  may even  help raimais.   The program on  the  second CPU is the
+weirdest I've ever seen.   Feel a bit like  a  z80 rewrite of a  68705
+protection program...
+
 */
 
 
@@ -142,7 +180,7 @@ static void machine_init(void)
 		cpu_setbank(2+i, current_base[i]);
 	}
 	cur_rombank = cur_rombank2 = 0;
-	cpu_setbank(1, Machine->memory_region[0] + 0x10000);
+	cpu_setbank(1, memory_region(Machine->drv->cpu[0].memory_region) + 0x10000);
 
 	for(i=0;i<512;i++) {
 		decodechar(Machine->gfx[2], i, taitol_rambanks,
@@ -289,7 +327,7 @@ static void rombankswitch_w(int offset, int data)
 		if(0 && errorlog)
 			fprintf(errorlog, "robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 		cur_rombank = data;
-		cpu_setbank(1, Machine->memory_region[0]+0x10000+0x2000*cur_rombank);
+		cpu_setbank(1, memory_region(Machine->drv->cpu[0].memory_region)+0x10000+0x2000*cur_rombank);
 	}
 }
 
@@ -1758,7 +1796,7 @@ static void plotting_decode(void)
 				v |= 1<<(7-j);
 		tab[i] = v;
 	}
-	p = Machine->memory_region[0];
+	p = memory_region(Machine->drv->cpu[0].memory_region);
 	for(i=0;i<0x20000;i++) {
 		*p = tab[*p];
 		p++;

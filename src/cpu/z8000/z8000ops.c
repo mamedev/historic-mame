@@ -88,22 +88,29 @@ INLINE UINT32 POPL(UINT8 src)
 #define CHK_XXXB_ZSP FCW |= z8000_zsp[result]
 
 /* check carry for addition and subtraction */
-#define CHK_ADDX_C  if (~dest < value) SET_C
-#define CHK_SUBX_C  if (value > dest) SET_C
+#define CHK_ADDX_C if (result < dest) SET_C
+#define CHK_ADCX_C if (result < dest || (result == dest && value)) SET_C
+
+#define CHK_SUBX_C if (result > dest) SET_C
+#define CHK_SBCX_C if (result > dest || (result == dest && value)) SET_C
 
 /* check half carry for A addition and S subtraction */
 #define CHK_ADDB_H  if ((result & 15) < (dest & 15)) SET_H
+#define CHK_ADCB_H	if ((result & 15) < (dest & 15) || ((result & 15) == (dest & 15) && (value & 15))) SET_H
+
 #define CHK_SUBB_H  if ((result & 15) > (dest & 15)) SET_H
+#define CHK_SBCB_H	if ((result & 15) > (dest & 15) || ((result & 15) == (dest & 15) && (value & 15))) SET_H
 
 /* check overflow for addition for byte, word and long */
-#define CHK_ADDB_V	if ((dest ^ result ^ value) & S08) SET_V
-#define CHK_ADDW_V	if ((dest ^ result ^ value) & S16) SET_V
-#define CHK_ADDL_V	if ((dest ^ result ^ value) & S32) SET_V
+#define CHK_ADDB_V if (((value & dest & ~result) | (~value & ~dest & result)) & S08) SET_V
+#define CHK_ADDW_V if (((value & dest & ~result) | (~value & ~dest & result)) & S16) SET_V
+#define CHK_ADDL_V if (((value & dest & ~result) | (~value & ~dest & result)) & S32) SET_V
 
-/* check overflow for addition for byte, word and long */
-#define CHK_SUBB_V	if (((result ^ dest ^ S08) ^ (dest ^ value)) & S08) SET_V
-#define CHK_SUBW_V	if (((result ^ dest ^ S16) ^ (dest ^ value)) & S16) SET_V
-#define CHK_SUBL_V	if (((result ^ dest ^ S32) ^ (dest ^ value)) & S32) SET_V
+/* check overflow for subtraction for byte, word and long */
+#define CHK_SUBB_V if (((~value & dest & ~result) | (value & ~dest & result)) & S08) SET_V
+#define CHK_SUBW_V if (((~value & dest & ~result) | (value & ~dest & result)) & S16) SET_V
+#define CHK_SUBL_V if (((~value & dest & ~result) | (value & ~dest & result)) & S32) SET_V
+
 
 /******************************************
  add byte
@@ -115,7 +122,7 @@ INLINE UINT8 ADDB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     CLR_DA;         /* clear DA (decimal adjust) flag for addb */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-    CHK_ADDX_C;     /* set C if result overflowed              */
+	CHK_ADDX_C; 	/* set C if result overflowed			   */
 	CHK_ADDB_V; 	/* set V if result has incorrect sign	   */
     CHK_ADDB_H;     /* set H if lower nibble overflowed        */
 	return result;
@@ -130,7 +137,7 @@ INLINE UINT16 ADDW(UINT16 dest, UINT16 value)
 	UINT16 result = dest + value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-    CHK_ADDX_C;     /* set C if result overflowed              */
+	CHK_ADDX_C; 	/* set C if result overflowed			   */
 	CHK_ADDW_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -144,7 +151,7 @@ INLINE UINT32 ADDL(UINT32 dest, UINT32 value)
 	UINT32 result = dest + value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-    CHK_ADDX_C;     /* set C if result overflowed              */
+	CHK_ADDX_C; 	/* set C if result overflowed			   */
 	CHK_ADDL_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -159,9 +166,9 @@ INLINE UINT8 ADCB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     CLR_DA;         /* clear DA (decimal adjust) flag for adcb */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-    CHK_ADDX_C;     /* set C if result overflowed              */
+	CHK_ADCX_C; 	/* set C if result overflowed			   */
 	CHK_ADDB_V; 	/* set V if result has incorrect sign	   */
-    CHK_ADDB_H;     /* set H if lower nibble overflowed        */
+	CHK_ADCB_H; 	/* set H if lower nibble overflowed 	   */
 	return result;
 }
 
@@ -174,7 +181,7 @@ INLINE UINT16 ADCW(UINT16 dest, UINT16 value)
 	UINT16 result = dest + value + GET_C;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-    CHK_ADDX_C;     /* set C if result overflowed              */
+	CHK_ADCX_C; 	/* set C if result overflowed			   */
 	CHK_ADDW_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -189,7 +196,7 @@ INLINE UINT8 SUBB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     SET_DA;         /* set DA (decimal adjust) flag for subb   */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBB_V; 	/* set V if result has incorrect sign	   */
     CHK_SUBB_H;     /* set H if lower nibble underflowed       */
 	return result;
@@ -204,7 +211,7 @@ INLINE UINT16 SUBW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBW_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -218,7 +225,7 @@ INLINE UINT32 SUBL(UINT32 dest, UINT32 value)
 	UINT32 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBL_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -233,9 +240,9 @@ INLINE UINT8 SBCB(UINT8 dest, UINT8 value)
     CLR_CZSVH;      /* first clear C, Z, S, P/V and H flags    */
     SET_DA;         /* set DA (decimal adjust) flag for sbcb   */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SBCX_C; 	/* set C if result underflowed			   */
 	CHK_SUBB_V; 	/* set V if result has incorrect sign	   */
-    CHK_SUBB_H;     /* set H if lower nibble underflowed       */
+	CHK_SBCB_H; 	/* set H if lower nibble underflowed	   */
 	return result;
 }
 
@@ -248,7 +255,7 @@ INLINE UINT16 SBCW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value - GET_C;
     CLR_CZSV;       /* first clear C, Z, S, P/V flags          */
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SBCX_C; 	/* set C if result underflowed			   */
 	CHK_SUBW_V; 	/* set V if result has incorrect sign	   */
 	return result;
 }
@@ -335,7 +342,7 @@ INLINE void CPB(UINT8 dest, UINT8 value)
 	UINT8 result = dest - value;
     CLR_CZSV;       /* first clear C, Z, S and P/V flags       */
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBB_V;
 }
 
@@ -348,7 +355,7 @@ INLINE void CPW(UINT16 dest, UINT16 value)
 	UINT16 result = dest - value;
 	CLR_CZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBW_V;
 }
 
@@ -361,7 +368,7 @@ INLINE void CPL(UINT32 dest, UINT32 value)
 	UINT32 result = dest - value;
 	CLR_CZSV;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
-    CHK_SUBX_C;     /* set C if result underflowed             */
+	CHK_SUBX_C; 	/* set C if result underflowed			   */
 	CHK_SUBL_V;
 }
 
@@ -505,10 +512,15 @@ INLINE UINT16 DECW(UINT16 dest, UINT16 value)
  ******************************************/
 INLINE UINT32 MULTW(UINT16 dest, UINT16 value)
 {
-	UINT32 result = (UINT32)dest * value;
+	UINT32 result = (INT32)(INT16)dest * (INT16)value;
 	CLR_CZSV;
     CHK_XXXL_ZS;
-	if ((INT16)(dest ^ result ^ value) < 0) SET_C;
+	if( !value )
+	{
+		/* multiplication with zero is faster */
+        z8000_ICount += (70-18);
+	}
+	if( (INT32)result < -0x7fff || (INT32)result >= 0x7fff ) SET_C;
 	return result;
 }
 
@@ -518,10 +530,21 @@ INLINE UINT32 MULTW(UINT16 dest, UINT16 value)
  ******************************************/
 INLINE UINT64 MULTL(UINT32 dest, UINT32 value)
 {
-	UINT64 result = (UINT64)dest * value;
-	CLR_CZSV;
+	UINT64 result = (INT64)(INT32)dest * (INT32)value;
+    if( !value )
+	{
+		/* multiplication with zero is faster */
+		z8000_ICount += (282 - 30);
+	}
+	else
+	{
+		int n;
+		for( n = 0; n < 32; n++ )
+			if( dest & (1L << n) ) z8000_ICount -= 7;
+    }
+    CLR_CZSV;
 	CHK_XXXQ_ZS;
-	if ((INT32)(dest ^ result ^ value) < 0) SET_C;
+	if( (INT64)result < -0x7fffffffL || (INT64)result >= 0x7fffffffL ) SET_C;
 	return result;
 }
 
@@ -532,22 +555,37 @@ INLINE UINT64 MULTL(UINT32 dest, UINT32 value)
 INLINE UINT32 DIVW(UINT32 dest, UINT16 value)
 {
 	UINT32 result = dest;
-	UINT32 remainder = 0;
+	UINT16 remainder = 0;
 	CLR_CZSV;
-	if (value) {
+	if (value)
+	{
+		UINT16 qsign = ((dest >> 16) ^ value) & S16;
+		UINT16 rsign = (dest >> 16) & S16;
+		if ((INT32)dest < 0) dest = -dest;
+		if ((INT16)value < 0) value = -value;
 		result = dest / value;
 		remainder = dest % value;
-        if (value & S16) remainder = (UINT32)-remainder;
-		if ((INT32)result < -0x8000 || (INT32)result > 0x7fff) {
+		if (qsign) result = -result;
+		if (rsign) remainder = -remainder;
+		if ((INT32)result < -0x8000 || (INT32)result > 0x7fff)
+		{
+			INT32 temp = (INT32)result >> 1;
 			SET_V;
-			if ((result >> 16) < 2) {
-				result = (result & S16) ? 0xffff : 0x0000;
+			if (temp >= -0x8000 && temp <= 0x7fff)
+			{
+				result = (temp < 0) ? -1 : 0;
 				CHK_XXXW_ZS;
 				SET_C;
 			}
 		}
-        result = (result << 16) | remainder;
-    } else {
+		else
+		{
+			CHK_XXXW_ZS;
+		}
+		result = ((UINT32)remainder << 16) | (result & 0xffff);
+    }
+    else
+    {
 		SET_Z;
         SET_V;
     }
@@ -561,26 +599,41 @@ INLINE UINT32 DIVW(UINT32 dest, UINT16 value)
 INLINE UINT64 DIVL(UINT64 dest, UINT32 value)
 {
 	UINT64 result = dest;
-	UINT64 remainder = 0;
+	UINT32 remainder = 0;
 	CLR_CZSV;
-	if (value) {
+	if (value)
+	{
+		UINT32 qsign = ((dest >> 32) ^ value) & S32;
+		UINT32 rsign = (dest >> 32) & S32;
+		if ((INT64)dest < 0) dest = -dest;
+		if ((INT32)value < 0) value = -value;
 		result = dest / value;
 		remainder = dest % value;
-		if (value & S32) remainder = (UINT64)-remainder;
-		if ((INT64)result < -0x80000000 || (INT64)result > 0x7fffffff) {
+		if (qsign) result = -result;
+		if (rsign) remainder = -remainder;
+		if ((INT64)result < -0x80000000 || (INT64)result > 0x7fffffff)
+		{
+			INT64 temp = (INT64)result >> 1;
 			SET_V;
-			if ((result >> 32) < 2) {
-				result = (result & S32) ? 0xffffffff : 0x00000000;
+			if (temp >= -0x80000000 && temp <= 0x7fffffff)
+			{
+				result = (temp < 0) ? -1 : 0;
 				CHK_XXXL_ZS;
 				SET_C;
 			}
 		}
-        result = (result << 32) | remainder;
-    } else {
+		else
+		{
+			CHK_XXXL_ZS;
+		}
+		result = ((UINT64)remainder << 32) | (result & 0xffffffff);
+    }
+    else
+    {
 		SET_Z;
-		SET_V;
-	}
-    return result;
+        SET_V;
+    }
+	return result;
 }
 
 /******************************************
@@ -643,7 +696,7 @@ INLINE UINT16 RLCW(UINT16 dest, UINT8 twice)
 	UINT16 result = (dest << 1) | GET_C;
 	CLR_CZSV;
 	if (twice) {
-		UINT16 c1 = c >> 7;
+		UINT16 c1 = c >> 15;
         c = result & S16;
 		result = (result << 1) | c1;
     }
@@ -711,7 +764,7 @@ INLINE UINT16 RRCW(UINT16 dest, UINT8 twice)
 	UINT16 result = (dest >> 1) | (GET_C << 15);
 	CLR_CZSV;
 	if (twice) {
-		UINT8 c1 = c << 15;
+		UINT16 c1 = c << 15;
 		c = result & 1;
 		result = (result >> 1) | c1;
     }
@@ -892,7 +945,7 @@ INLINE UINT8 SLAB(UINT8 dest, UINT8 count)
  ******************************************/
 INLINE UINT16 SLAW(UINT16 dest, UINT8 count)
 {
-    UINT8 c = (count) ? (dest << (count - 1)) & S16 : 0;
+    UINT16 c = (count) ? (dest << (count - 1)) & S16 : 0;
 	UINT16 result = (UINT16)((INT16)dest << count);
 	CLR_CZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
@@ -907,7 +960,7 @@ INLINE UINT16 SLAW(UINT16 dest, UINT8 count)
  ******************************************/
 INLINE UINT32 SLAL(UINT32 dest, UINT8 count)
 {
-    UINT8 c = (count) ? (dest << (count - 1)) & S32 : 0;
+    UINT32 c = (count) ? (dest << (count - 1)) & S32 : 0;
 	UINT32 result = (UINT32)((INT32)dest << count);
 	CLR_CZSV;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
@@ -936,7 +989,7 @@ INLINE UINT8 SLLB(UINT8 dest, UINT8 count)
  ******************************************/
 INLINE UINT16 SLLW(UINT16 dest, UINT8 count)
 {
-    UINT8 c = (count) ? (dest << (count - 1)) & S16 : 0;
+    UINT16 c = (count) ? (dest << (count - 1)) & S16 : 0;
 	UINT16 result = dest << count;
 	CLR_CZS;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
@@ -950,7 +1003,7 @@ INLINE UINT16 SLLW(UINT16 dest, UINT8 count)
  ******************************************/
 INLINE UINT32 SLLL(UINT32 dest, UINT8 count)
 {
-    UINT8 c = (count) ? (dest << (count - 1)) & S32 : 0;
+    UINT32 c = (count) ? (dest << (count - 1)) & S32 : 0;
 	UINT32 result = dest << count;
 	CLR_CZS;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
@@ -964,12 +1017,11 @@ INLINE UINT32 SLLL(UINT32 dest, UINT8 count)
  ******************************************/
 INLINE UINT8 SRAB(UINT8 dest, UINT8 count)
 {
-	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
+	UINT8 c = (count) ? ((INT8)dest >> (count - 1)) & 1 : 0;
 	UINT8 result = (UINT8)((INT8)dest >> count);
 	CLR_CZSV;
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
 	if (c) SET_C;
-    if ((result ^ dest) & S08) SET_V;
 	return result;
 }
 
@@ -979,12 +1031,11 @@ INLINE UINT8 SRAB(UINT8 dest, UINT8 count)
  ******************************************/
 INLINE UINT16 SRAW(UINT16 dest, UINT8 count)
 {
-	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
+	UINT8 c = (count) ? ((INT16)dest >> (count - 1)) & 1 : 0;
 	UINT16 result = (UINT16)((INT16)dest >> count);
 	CLR_CZSV;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
 	if (c) SET_C;
-    if ((result ^ dest) & S16) SET_V;
 	return result;
 }
 
@@ -994,12 +1045,11 @@ INLINE UINT16 SRAW(UINT16 dest, UINT8 count)
  ******************************************/
 INLINE UINT32 SRAL(UINT32 dest, UINT8 count)
 {
-	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
+	UINT8 c = (count) ? ((INT32)dest >> (count - 1)) & 1 : 0;
 	UINT32 result = (UINT32)((INT32)dest >> count);
 	CLR_CZSV;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
 	if (c) SET_C;
-    if ((result ^ dest) & S32) SET_V;
 	return result;
 }
 
@@ -1011,10 +1061,9 @@ INLINE UINT8 SRLB(UINT8 dest, UINT8 count)
 {
 	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
 	UINT8 result = dest >> count;
-	CLR_CZSV;
+	CLR_CZS;
     CHK_XXXB_ZS;    /* set Z and S flags for result byte       */
 	if (c) SET_C;
-    if ((result ^ dest) & S08) SET_V;
 	return result;
 }
 
@@ -1026,10 +1075,9 @@ INLINE UINT16 SRLW(UINT16 dest, UINT8 count)
 {
 	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
 	UINT16 result = dest >> count;
-	CLR_CZSV;
+	CLR_CZS;
     CHK_XXXW_ZS;    /* set Z and S flags for result word       */
 	if (c) SET_C;
-    if ((result ^ dest) & S16) SET_V;
 	return result;
 }
 
@@ -1041,10 +1089,9 @@ INLINE UINT32 SRLL(UINT32 dest, UINT8 count)
 {
 	UINT8 c = (count) ? (dest >> (count - 1)) & 1 : 0;
 	UINT32 result = dest >> count;
-	CLR_CZSV;
+	CLR_CZS;
     CHK_XXXL_ZS;    /* set Z and S flags for result long       */
 	if (c) SET_C;
-    if ((result ^ dest) & S32) SET_V;
 	return result;
 }
 
@@ -1120,7 +1167,7 @@ static void Z02_ssN0_dddd(void)
 {
 	GET_DST(OP0,NIB3);
 	GET_SRC(OP0,NIB2);
-	RB(dst) = SUBW( RB(dst), RDMEM_B(RW(src)) );
+	RB(dst) = SUBB( RB(dst), RDMEM_B(RW(src)) ); /* EHC */
 }
 
 /******************************************
@@ -1381,6 +1428,7 @@ static void Z0C_ddN0_0110(void)
 {
 	GET_DST(OP0,NIB2);
     if (RDMEM_B(RW(dst)) & S08) SET_S; else CLR_S;
+    WRMEM_B(RW(dst), 0xff);
 }
 
 /******************************************
@@ -1453,6 +1501,7 @@ static void Z0D_ddN0_0110(void)
 {
 	GET_DST(OP0,NIB2);
     if (RDMEM_W(RW(dst)) & S16) SET_S; else CLR_S;
+    WRMEM_W(RW(dst), 0xffff);
 }
 
 /******************************************
@@ -1794,7 +1843,7 @@ static void Z1E_ddN0_cccc(void)
 		case 14: if (CCE) PC = RW(dst); break;
 		case 15: if (CCF) PC = RW(dst); break;
 	}
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -1806,7 +1855,7 @@ static void Z1F_ddN0_0000(void)
 	GET_DST(OP0,NIB2);
 	PUSHW( SP, PC );
     PC = RW(dst);
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -1850,7 +1899,7 @@ static void Z22_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	RB(dst) = RB(dst) & ~(1 << RW(src));
+	RB(dst) = RB(dst) & ~(1 << (RW(src) & 7));
 }
 
 /******************************************
@@ -1872,7 +1921,7 @@ static void Z23_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	RW(dst) = RW(dst) & ~(1 << RW(src));
+	RW(dst) = RW(dst) & ~(1 << (RW(src) & 15));
 }
 
 /******************************************
@@ -1894,7 +1943,7 @@ static void Z24_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	RB(dst) = RB(dst) | (1 << RW(src));
+	RB(dst) = RB(dst) | (1 << (RW(src) & 7));
 }
 
 /******************************************
@@ -1916,7 +1965,7 @@ static void Z25_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	RW(dst) = RW(dst) | (1 << RW(src));
+	RW(dst) = RW(dst) | (1 << (RW(src) & 15));
 }
 
 /******************************************
@@ -1938,7 +1987,7 @@ static void Z26_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	if (RB(dst) & (1 << RW(src))) CLR_Z; else SET_Z;
+	if (RB(dst) & (1 << (RW(src) & 7))) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -1949,7 +1998,7 @@ static void Z26_ddN0_imm4(void)
 {
 	GET_BIT(OP0);
 	GET_DST(OP0,NIB2);
-	if (RB(dst) & bit) CLR_Z; else SET_Z;
+	if (RDMEM_B(RW(dst)) & bit) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -1960,7 +2009,7 @@ static void Z27_0000_ssss_0000_dddd_0000_0000(void)
 {
 	GET_SRC(OP0,NIB3);
 	GET_DST(OP1,NIB1);
-	if (RW(dst) & (1 << RW(src))) CLR_Z; else SET_Z;
+	if (RW(dst) & (1 << (RW(src) & 15))) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -1971,7 +2020,7 @@ static void Z27_ddN0_imm4(void)
 {
 	GET_BIT(OP0);
 	GET_DST(OP0,NIB2);
-	if (RW(dst) & bit) CLR_Z; else SET_Z;
+	if (RDMEM_W(RW(dst)) & bit) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -2283,7 +2332,7 @@ static void Z39_ssN0_0000(void)
 	fcw = RDMEM_W( RW(src) );
 	PC	= RDMEM_W( (UINT16)(RW(src) + 2) );
 	CHANGE_FCW(fcw); /* check for user/system mode change */
-    change_pc16(PC);
+    change_pc16bew(PC);
 }
 
 /******************************************
@@ -2721,7 +2770,7 @@ static void Z41_0000_dddd_addr(void)
 {
 	GET_DST(OP0,NIB3);
 	GET_ADDR(OP1);
-	ADDW(dst, RDMEM_W(addr));
+	RW(dst) = ADDW( RW(dst), RDMEM_W(addr)); /* EHC */
 }
 
 /******************************************
@@ -2734,7 +2783,7 @@ static void Z41_ssN0_dddd_addr(void)
 	GET_SRC(OP0,NIB2);
 	GET_ADDR(OP1);
 	addr += RW(src);
-	RB(dst) = ADDB( RB(dst), RDMEM_B(addr) );
+	RW(dst) = ADDW( RW(dst), RDMEM_W(addr) );	/* ASG */
 }
 
 /******************************************
@@ -2745,7 +2794,7 @@ static void Z42_0000_dddd_addr(void)
 {
 	GET_DST(OP0,NIB3);
 	GET_ADDR(OP1);
-	SUBB(dst, RDMEM_B(addr));
+	RB(dst) = SUBB( RB(dst), RDMEM_B(addr)); /* EHC */
 }
 
 /******************************************
@@ -3037,6 +3086,7 @@ static void Z4C_0000_0110_addr(void)
 {
 	GET_ADDR(OP1);
     if (RDMEM_B(addr) & S08) SET_S; else CLR_S;
+    WRMEM_B(addr, 0xff);
 }
 
 /******************************************
@@ -3121,6 +3171,7 @@ static void Z4C_ddN0_0110_addr(void)
 	GET_ADDR(OP1);
 	addr += RW(dst);
     if (RDMEM_B(addr) & S08) SET_S; else CLR_S;
+    WRMEM_B(addr, 0xff);
 }
 
 /******************************************
@@ -3195,6 +3246,7 @@ static void Z4D_0000_0110_addr(void)
 {
 	GET_ADDR(OP1);
     if (RDMEM_W(addr) & S16) SET_S; else CLR_S;
+    WRMEM_W(addr, 0xffff);
 }
 
 /******************************************
@@ -3279,6 +3331,7 @@ static void Z4D_ddN0_0110_addr(void)
 	GET_ADDR(OP1);
 	addr += RW(dst);
     if (RDMEM_W(addr) & S16) SET_S; else CLR_S;
+    WRMEM_W(addr, 0xffff);
 }
 
 /******************************************
@@ -3734,7 +3787,7 @@ static void Z5E_0000_cccc_addr(void)
 		case 14: if (CCE) PC = addr; break;
 		case 15: if (CCF) PC = addr; break;
 	}
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -3765,7 +3818,7 @@ static void Z5E_ddN0_cccc_addr(void)
 		case 14: if (CCE) PC = addr; break;
 		case 15: if (CCF) PC = addr; break;
 	}
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -3777,7 +3830,7 @@ static void Z5F_0000_0000_addr(void)
 	GET_ADDR(OP1);
 	PUSHW( SP, PC );
 	PC = addr;
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -3791,7 +3844,7 @@ static void Z5F_ddN0_0000_addr(void)
 	PUSHW( SP, PC );
 	addr += RW(dst);
 	PC = addr;
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -4321,7 +4374,7 @@ static void Z79_0000_0000_addr(void)
 	fcw = RDMEM_W(addr);
 	PC	= RDMEM_W((UINT16)(addr + 2));
 	CHANGE_FCW(fcw); /* check for user/system mode change */
-    change_pc16(PC);
+    change_pc16bew(PC);
 }
 
 /******************************************
@@ -4337,7 +4390,7 @@ static void Z79_ssN0_0000_addr(void)
 	fcw = RDMEM_W(addr);
 	PC	= RDMEM_W((UINT16)(addr + 2));
 	CHANGE_FCW(fcw); /* check for user/system mode change */
-    change_pc16(PC);
+    change_pc16bew(PC);
 }
 
 /******************************************
@@ -4362,7 +4415,7 @@ static void Z7B_0000_0000(void)
 	PC	= POPW( SP );	/* get PC	*/
     IRQ_SRV &= ~tag;    /* remove IRQ serviced flag */
 	CHANGE_FCW(fcw);		 /* check for user/system mode change */
-    change_pc16(PC);
+    change_pc16bew(PC);
 	LOG((errorlog, "Z8K#%d IRET tag $%04x, fcw $%04x, pc $%04x\n", cpu_getactivecpu(), tag, fcw, PC));
 }
 
@@ -4678,6 +4731,7 @@ static void Z8C_dddd_0110(void)
 {
 	GET_DST(OP0,NIB2);
     if (RB(dst) & S08) SET_S; else CLR_S;
+    RB(dst) = 0xff;
 }
 
 /******************************************
@@ -4737,6 +4791,7 @@ static void Z8D_dddd_0110(void)
 {
 	GET_DST(OP0,NIB2);
     if (RW(dst) & S16) SET_S; else CLR_S;
+    RW(dst) = 0xffff;
 }
 
 /******************************************
@@ -4987,7 +5042,7 @@ static void Z9E_0000_cccc(void)
 		case 14: if (CCE) PC = POPW( SP ); break;
 		case 15: if (CCF) PC = POPW( SP ); break;
 	}
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -5170,24 +5225,24 @@ static void ZAE_dddd_cccc(void)
 {
 	GET_CCC(OP0,NIB3);
 	GET_DST(OP0,NIB2);
-	UINT8 tmp = 0;
+	UINT8 tmp = RB(dst) & ~1;
 	switch (cc) {
-		case  0: if (CC0) tmp = 1; break;
-		case  1: if (CC1) tmp = 1; break;
-		case  2: if (CC2) tmp = 1; break;
-		case  3: if (CC3) tmp = 1; break;
-		case  4: if (CC4) tmp = 1; break;
-		case  5: if (CC5) tmp = 1; break;
-		case  6: if (CC6) tmp = 1; break;
-		case  7: if (CC7) tmp = 1; break;
-		case  8: if (CC8) tmp = 1; break;
-		case  9: if (CC9) tmp = 1; break;
-		case 10: if (CCA) tmp = 1; break;
-		case 11: if (CCB) tmp = 1; break;
-		case 12: if (CCC) tmp = 1; break;
-		case 13: if (CCD) tmp = 1; break;
-		case 14: if (CCE) tmp = 1; break;
-		case 15: if (CCF) tmp = 1; break;
+		case  0: if (CC0) tmp |= 1; break;
+		case  1: if (CC1) tmp |= 1; break;
+		case  2: if (CC2) tmp |= 1; break;
+		case  3: if (CC3) tmp |= 1; break;
+		case  4: if (CC4) tmp |= 1; break;
+		case  5: if (CC5) tmp |= 1; break;
+		case  6: if (CC6) tmp |= 1; break;
+		case  7: if (CC7) tmp |= 1; break;
+		case  8: if (CC8) tmp |= 1; break;
+		case  9: if (CC9) tmp |= 1; break;
+		case 10: if (CCA) tmp |= 1; break;
+		case 11: if (CCB) tmp |= 1; break;
+		case 12: if (CCC) tmp |= 1; break;
+		case 13: if (CCD) tmp |= 1; break;
+		case 14: if (CCE) tmp |= 1; break;
+		case 15: if (CCF) tmp |= 1; break;
     }
 	RB(dst) = tmp;
 }
@@ -5200,24 +5255,24 @@ static void ZAF_dddd_cccc(void)
 {
 	GET_CCC(OP0,NIB3);
 	GET_DST(OP0,NIB2);
-	UINT16 tmp = 0;
+	UINT16 tmp = RW(dst) & ~1;
 	switch (cc) {
-		case  0: if (CC0) tmp = 1; break;
-		case  1: if (CC1) tmp = 1; break;
-		case  2: if (CC2) tmp = 1; break;
-		case  3: if (CC3) tmp = 1; break;
-		case  4: if (CC4) tmp = 1; break;
-		case  5: if (CC5) tmp = 1; break;
-		case  6: if (CC6) tmp = 1; break;
-		case  7: if (CC7) tmp = 1; break;
-		case  8: if (CC8) tmp = 1; break;
-		case  9: if (CC9) tmp = 1; break;
-		case 10: if (CCA) tmp = 1; break;
-		case 11: if (CCB) tmp = 1; break;
-		case 12: if (CCC) tmp = 1; break;
-		case 13: if (CCD) tmp = 1; break;
-		case 14: if (CCE) tmp = 1; break;
-		case 15: if (CCF) tmp = 1; break;
+		case  0: if (CC0) tmp |= 1; break;
+		case  1: if (CC1) tmp |= 1; break;
+		case  2: if (CC2) tmp |= 1; break;
+		case  3: if (CC3) tmp |= 1; break;
+		case  4: if (CC4) tmp |= 1; break;
+		case  5: if (CC5) tmp |= 1; break;
+		case  6: if (CC6) tmp |= 1; break;
+		case  7: if (CC7) tmp |= 1; break;
+		case  8: if (CC8) tmp |= 1; break;
+		case  9: if (CC9) tmp |= 1; break;
+		case 10: if (CCA) tmp |= 1; break;
+		case 11: if (CCB) tmp |= 1; break;
+		case 12: if (CCC) tmp |= 1; break;
+		case 13: if (CCD) tmp |= 1; break;
+		case 14: if (CCE) tmp |= 1; break;
+		case 15: if (CCF) tmp |= 1; break;
     }
 	RW(dst) = tmp;
 }
@@ -5577,7 +5632,8 @@ static void ZB8_ddN0_0010_0000_rrrr_ssN0_0000(void)
 	GET_SRC(OP1,NIB2);
 	GET_CNT(OP1,NIB1);
 	UINT8 xlt = RDMEM_B( (UINT16)(RW(src) + RDMEM_B(RW(dst))) );
-	WRMEM_B( RW(dst), xlt );
+	RB(2) = xlt;
+	if (xlt) CLR_Z; else SET_Z;
 	RW(dst)++;
 	if (--RW(cnt)) CLR_V; else SET_V;
 }
@@ -5592,7 +5648,8 @@ static void ZB8_ddN0_0110_0000_rrrr_ssN0_1110(void)
 	GET_SRC(OP1,NIB2);
 	GET_CNT(OP1,NIB1);
 	UINT8 xlt = RDMEM_B( (UINT16)(RW(src) + RDMEM_B(RW(dst))) );
-	WRMEM_B( RW(dst), xlt );
+	RB(2) = xlt;
+	if (xlt) CLR_Z; else SET_Z;
 	RW(dst)++;
 	if (--RW(cnt)) { CLR_V; PC -= 4; } else SET_V;
 }
@@ -5607,7 +5664,8 @@ static void ZB8_ddN0_1010_0000_rrrr_ssN0_0000(void)
 	GET_SRC(OP1,NIB2);
 	GET_CNT(OP1,NIB1);
 	UINT8 xlt = RDMEM_B( (UINT16)(RW(src) + RDMEM_B(RW(dst))) );
-	WRMEM_B( RW(dst), xlt );
+	RB(2) = xlt;
+	if (xlt) CLR_Z; else SET_Z;
     RW(dst)--;
 	if (--RW(cnt)) CLR_V; else SET_V;
 }
@@ -5622,7 +5680,8 @@ static void ZB8_ddN0_1110_0000_rrrr_ssN0_1110(void)
 	GET_SRC(OP1,NIB2);
 	GET_CNT(OP1,NIB1);
 	UINT8 xlt = RDMEM_B( (UINT16)(RW(src) + RDMEM_B(RW(dst))) );
-	WRMEM_B( RW(dst), xlt );
+	RB(2) = xlt;
+	if (xlt) CLR_Z; else SET_Z;
     RW(dst)--;
 	if (--RW(cnt)) { CLR_V; PC -= 4; } else SET_V;
 }
@@ -6315,9 +6374,9 @@ static void ZBC_aaaa_bbbb(void)
 	UINT8 b = Z.op[0] & 15;
 	UINT8 a = (Z.op[0] >> 4) & 15;
 	UINT8 tmp = RB(b);
-	RB(b) = (RB(a) << 4) | (RB(b) >> 4);
-	RB(a) = (tmp << 4) | (RB(a) >> 4);
-    if (RB(a) || RB(b)) CLR_Z; else SET_Z;
+	RB(a) = (RB(a) >> 4) | (RB(b) << 4);
+	RB(b) = (RB(b) & 0xf0) | (tmp & 0x0f);
+    if (RB(b)) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -6340,9 +6399,9 @@ static void ZBE_aaaa_bbbb(void)
 	UINT8 b = Z.op[0] & 15;
 	UINT8 a = (Z.op[0] >> 4) & 15;
 	UINT8 tmp = RB(a);
-	RB(a) = (RB(a) << 4) | (RB(b) >> 4);
-	RB(b) = (RB(b) << 4) | (tmp >> 4);
-	if (RB(a) || RB(b)) CLR_Z; else SET_Z;
+	RB(a) = (RB(a) << 4) | (RB(b) & 0x0f);
+	RB(b) = (RB(b) & 0xf0) | (tmp >> 4);
+	if (RB(b)) CLR_Z; else SET_Z;
 }
 
 /******************************************
@@ -6381,7 +6440,7 @@ static void ZD_dsp12(void)
 	PUSHW( SP, PC );
 	dsp12 = (dsp12 & 2048) ? 4096 -2 * (dsp12 & 2047) : -2 * (dsp12 & 2047);
 	PC += dsp12;
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -6410,7 +6469,7 @@ static void ZE_cccc_dsp8(void)
 		case 14: if (CCE) PC += dsp8 * 2; break;
 		case 15: if (CCF) PC += dsp8 * 2; break;
     }
-	change_pc16(PC);
+	change_pc16bew(PC);
 }
 
 /******************************************
@@ -6424,7 +6483,7 @@ static void ZF_dddd_0dsp7(void)
     RB(dst) -= 1;
     if (RB(dst)) {
         PC = PC - 2 * dsp7;
-        change_pc16(PC);
+        change_pc16bew(PC);
     }
 }
 
@@ -6439,7 +6498,7 @@ static void ZF_dddd_1dsp7(void)
 	RW(dst) -= 1;
 	if (RW(dst)) {
 		PC = PC - 2 * dsp7;
-		change_pc16(PC);
+		change_pc16bew(PC);
 	}
 }
 

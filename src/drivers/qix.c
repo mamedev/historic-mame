@@ -1085,7 +1085,7 @@ ROM_END
 static int hiload(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	void *f;
 
 
@@ -1103,7 +1103,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	/* get RAM pointer (data is in second CPU's memory region) */
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	void *f;
 
 
@@ -1132,7 +1132,7 @@ struct GameDriver driver_qix =
 	rom_qix,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_qix,
 
@@ -1158,7 +1158,7 @@ struct GameDriver driver_qixa =
 	rom_qixa,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_qix,
 
@@ -1184,7 +1184,7 @@ struct GameDriver driver_qixb =
 	rom_qixb,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_qix,
 
@@ -1210,7 +1210,7 @@ struct GameDriver driver_qix2 =
 	rom_qix2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_qix,
 
@@ -1236,7 +1236,7 @@ struct GameDriver driver_sdungeon =
 	rom_sdungeon,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_sdungeon,
 
@@ -1262,7 +1262,7 @@ struct GameDriver driver_elecyoyo =
 	rom_elecyoyo,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_elecyoyo,
 
@@ -1288,7 +1288,7 @@ struct GameDriver driver_elecyoy2 =
 	rom_elecyoy2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_elecyoyo,
 
@@ -1314,7 +1314,7 @@ struct GameDriver driver_kram =
 	rom_kram,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_kram,
 
@@ -1340,7 +1340,7 @@ struct GameDriver driver_kram2 =
 	rom_kram2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
 	input_ports_kram,
 
@@ -1366,7 +1366,7 @@ struct GameDriver driver_zookeep =
     rom_zookeep,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
     input_ports_zoo,
 
@@ -1392,7 +1392,7 @@ struct GameDriver driver_zookeep2 =
     rom_zookeep2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
     input_ports_zoo,
 
@@ -1419,7 +1419,7 @@ struct GameDriver driver_zookeep3 =
     rom_zookeep3,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,		/* sound_prom */
+	0,
 
     input_ports_zoo,
 

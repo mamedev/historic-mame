@@ -123,7 +123,7 @@ static void xmen_18fa00_w(int offset,int data)
 static void sound_bankswitch(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
@@ -495,7 +495,7 @@ struct GameDriver driver_xmen =
 	rom_xmen,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xmen,
 
@@ -507,7 +507,7 @@ struct GameDriver driver_xmen =
 
 static void xmen6p_patch(void)
 {
-	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	WRITE_WORD(&RAM[0x21a6],0x4e71);
 	WRITE_WORD(&RAM[0x21a8],0x4e71);
@@ -532,7 +532,7 @@ struct GameDriver driver_xmen6p =
 	rom_xmen6p,
 	xmen6p_patch, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xmen,
 
@@ -558,7 +558,7 @@ struct GameDriver driver_xmen2pj =
 	rom_xmen2pj,
 	gfx_untangle, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xmen2p,
 

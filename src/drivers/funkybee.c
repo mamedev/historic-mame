@@ -336,7 +336,7 @@ struct GameDriver driver_funkybee =
 	rom_funkybee,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_funkybee,
 
@@ -362,7 +362,7 @@ struct GameDriver driver_skylancr =
 	rom_skylancr,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_skylancr,
 

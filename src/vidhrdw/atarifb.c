@@ -106,6 +106,7 @@ void atarifb_vh_stop(void)
 void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,obj;
+	int sprite_bank;
 
 	if (full_refresh)
 	{
@@ -113,6 +114,12 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		memset(alphap2_dirtybuffer, 1, atarifb_alphap2_vram_size);
 		memset(dirtybuffer,1,videoram_size);
 	}
+
+	/* Soccer uses a different graphics set for sprites */
+	if (atarifb_game == 4)
+		sprite_bank = 2;
+	else
+		sprite_bank = 1;
 
 	/* for every character in the Player 1 Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -130,7 +137,7 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 8 * (offs / 32) + 35*8;
 			sy = 8 * (offs % 32) + 8;
 
-			charcode = atarifb_alphap1_vram[offs] & 0x3F;
+			charcode = atarifb_alphap1_vram[offs] & 0x3f;
 			flipbit = (atarifb_alphap1_vram[offs] & 0x40) >> 6;
 			disable = (atarifb_alphap1_vram[offs] & 0x80) >> 7;
 
@@ -160,7 +167,7 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 8 * (offs / 32);
 			sy = 8 * (offs % 32) + 8;
 
-			charcode = atarifb_alphap2_vram[offs] & 0x3F;
+			charcode = atarifb_alphap2_vram[offs] & 0x3f;
 			flipbit = (atarifb_alphap2_vram[offs] & 0x40) >> 6;
 			disable = (atarifb_alphap2_vram[offs] & 0x80) >> 7;
 
@@ -186,12 +193,18 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer[offs]=0;
 
-			charcode = videoram[offs] & 0x3F;
+			charcode = videoram[offs] & 0x3f;
 			flipx = (videoram[offs] & 0x40) >> 6;
 			flipy = (videoram[offs] & 0x80) >> 7;
 
 			sx = (8 * (offs % 32) - *atarifb_scroll_register);
 			sy = 8 * (offs / 32) + 8;
+
+			/* Soccer hack */
+			if (atarifb_game == 4)
+			{
+				sy += 8;
+			}
 
 			/* Baseball hack */
 			if (atarifb_game == 0x03) sx -= 8;
@@ -215,32 +228,55 @@ void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int charcode;
 		int flipx,flipy;
 		int sx,sy;
+		int shade = 0;
 
 		sy = 255 - spriteram[obj*2 + 1];
 		if (sy == 255) continue;
 
-		charcode = spriteram[obj*2] & 0x3F;
+		charcode = spriteram[obj*2] & 0x3f;
 		flipx = (spriteram[obj*2] & 0x40);
 		flipy = (spriteram[obj*2] & 0x80);
 		sx = spriteram[obj*2 + 0x20] + 8*3;
 
-		drawgfx(bitmap,Machine->gfx[1],
-				charcode, 0,
+		/* Note on Atari Soccer: */
+		/* There are 3 sets of 2 bits each, where the 2 bits represent */
+		/* black, dk grey, grey and white. I think the 3 sets determine the */
+		/* color of each bit in the sprite, but I haven't implemented it that way. */
+		if (atarifb_game == 4)
+		{
+			shade = ((spriteram[obj*2+1 + 0x20]) & 0x07);
+
+			drawgfx(bitmap,Machine->gfx[sprite_bank+1],
+				charcode, shade,
 				flipx,flipy,sx,sy,
 				&bigfield_area,TRANSPARENCY_PEN,0);
 
-		/* The down markers are multiplexed by altering the y location during */
-		/* mid-screen. We'll fake it by essentially doing the same thing here. */
-		if ((charcode == 0x11) && (sy == 0x07))
-		{
-			sy = 0xf1; /* When multiplexed, it's 0x10...why? */
-			drawgfx(bitmap,Machine->gfx[1],
-				charcode, 0,
+			shade = ((spriteram[obj*2+1 + 0x20]) & 0x08) >> 3;
+		}
+
+		drawgfx(bitmap,Machine->gfx[sprite_bank],
+				charcode, shade,
 				flipx,flipy,sx,sy,
 				&bigfield_area,TRANSPARENCY_PEN,0);
+
+		/* If this isn't soccer, handle the multiplexed sprites */
+		if (atarifb_game != 4)
+		{
+			/* The down markers are multiplexed by altering the y location during */
+			/* mid-screen. We'll fake it by essentially doing the same thing here. */
+			if ((charcode == 0x11) && (sy == 0x07))
+			{
+				sy = 0xf1; /* When multiplexed, it's 0x10...why? */
+				drawgfx(bitmap,Machine->gfx[sprite_bank],
+					charcode, 0,
+					flipx,flipy,sx,sy,
+					&bigfield_area,TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 
+/* If this isn't Soccer, print the plays at the top of the screen */
+if (atarifb_game != 4)
 {
 	int x;
 	char buf1[25], buf2[25];
@@ -367,6 +403,10 @@ extern int atarifb_lamp1, atarifb_lamp2;
 					sprintf (buf2, "                    ");
 					break;
 			}
+			break;
+		default:
+			sprintf (buf1, "                    ");
+			sprintf (buf2, "                    ");
 			break;
 	}
 	for (x = 0;x < 20;x++)

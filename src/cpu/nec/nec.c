@@ -202,7 +202,6 @@ static nec_Regs I;
 
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
-#define NEC_PENDING 0x80
 
 #include "necinstr.h"
 #include "necea.h"

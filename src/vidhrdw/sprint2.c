@@ -15,9 +15,6 @@ extern int sprint2_collision2_data;
 extern int sprint2_gear1;
 extern int sprint2_gear2;
 
-/* local */
-void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
 
@@ -36,40 +33,40 @@ static struct osd_bitmap *white_car_vid;
 
 int sprint2_vh_start(void)
 {
-        if (generic_vh_start()!=0)
-                return 1;
+	if (generic_vh_start()!=0)
+		return 1;
 
-        if ((back_vid = osd_create_bitmap(16,8)) == 0)
-        {
-                generic_vh_stop();
-                return 1;
-        }
+	if ((back_vid = osd_create_bitmap(16,8)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
 
-        if ((grey_cars_vid = osd_create_bitmap(16,8)) == 0)
-        {
-                osd_free_bitmap(back_vid);
-                generic_vh_stop();
-                return 1;
-        }
+	if ((grey_cars_vid = osd_create_bitmap(16,8)) == 0)
+	{
+		osd_free_bitmap(back_vid);
+		generic_vh_stop();
+		return 1;
+	}
 
-        if ((black_car_vid = osd_create_bitmap(16,8)) == 0)
-        {
-                osd_free_bitmap(back_vid);
-                osd_free_bitmap(grey_cars_vid);
-                generic_vh_stop();
-                return 1;
-        }
+	if ((black_car_vid = osd_create_bitmap(16,8)) == 0)
+	{
+		osd_free_bitmap(back_vid);
+		osd_free_bitmap(grey_cars_vid);
+		generic_vh_stop();
+		return 1;
+	}
 
-        if ((white_car_vid = osd_create_bitmap(16,8)) == 0)
-        {
-                osd_free_bitmap(back_vid);
-                osd_free_bitmap(grey_cars_vid);
-                osd_free_bitmap(black_car_vid);
-                generic_vh_stop();
-                return 1;
-        }
+	if ((white_car_vid = osd_create_bitmap(16,8)) == 0)
+	{
+		osd_free_bitmap(back_vid);
+		osd_free_bitmap(grey_cars_vid);
+		osd_free_bitmap(black_car_vid);
+		generic_vh_stop();
+		return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
 /***************************************************************************
@@ -77,11 +74,11 @@ int sprint2_vh_start(void)
 
 void sprint2_vh_stop(void)
 {
-        osd_free_bitmap(back_vid);
-        osd_free_bitmap(grey_cars_vid);
-        osd_free_bitmap(black_car_vid);
-        osd_free_bitmap(white_car_vid);
-        generic_vh_stop();
+	osd_free_bitmap(back_vid);
+	osd_free_bitmap(grey_cars_vid);
+	osd_free_bitmap(black_car_vid);
+	osd_free_bitmap(white_car_vid);
+	generic_vh_stop();
 }
 
 /***************************************************************************
@@ -109,7 +106,6 @@ for a collision (Collision2).
 
 void sprint2_check_collision1(struct osd_bitmap *bitmap)
 {
-
     int sx,sy,org_x,org_y;
     struct rectangle clip;
     int offs;
@@ -223,22 +219,26 @@ void sprint2_check_collision1(struct osd_bitmap *bitmap)
     {
         for (sx=0;sx<16;sx++)
         {
-                if (white_car_vid->line[sy][sx]==Machine->pens[3])
+                if (read_pixel(white_car_vid, sx, sy)==Machine->pens[3])
                 {
+					int back_pixel;
+
                     /* Condition 1 - white car = black car */
-                    if (black_car_vid->line[sy][sx]==Machine->pens[0])
+                    if (read_pixel(black_car_vid, sx, sy)==Machine->pens[0])
                         sprint2_collision1_data|=0x40;
 
                     /* Condition 2 - white car = grey cars */
-                    if (grey_cars_vid->line[sy][sx]==Machine->pens[2])
+                    if (read_pixel(grey_cars_vid, sx, sy)==Machine->pens[2])
                         sprint2_collision1_data|=0x40;
 
+                    back_pixel = read_pixel(back_vid, sx, sy);
+
                     /* Condition 3 - white car = black playfield (oil) */
-                    if (back_vid->line[sy][sx]==Machine->pens[0])
+                    if (back_pixel==Machine->pens[0])
                         sprint2_collision1_data|=0x40;
 
                     /* Condition 4 - white car = white playfield (track) */
-                    if (back_vid->line[sy][sx]==Machine->pens[3])
+                    if (back_pixel==Machine->pens[3])
                         sprint2_collision1_data|=0x80;
                }
         }
@@ -364,69 +364,30 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
     {
         for (sx=0;sx<16;sx++)
         {
-                if (black_car_vid->line[sy][sx]==Machine->pens[0])
+                if (read_pixel(black_car_vid, sx, sy)==Machine->pens[0])
                 {
+					int back_pixel;
+
                     /* Condition 1 - black car = white car */
-                    if (white_car_vid->line[sy][sx]==Machine->pens[3])
+                    if (read_pixel(white_car_vid, sx, sy)==Machine->pens[3])
                         sprint2_collision2_data|=0x40;
 
                     /* Condition 2 - black car = grey cars */
-                    if (grey_cars_vid->line[sy][sx]==Machine->pens[2])
+                    if (read_pixel(grey_cars_vid, sx, sy)==Machine->pens[2])
                         sprint2_collision2_data|=0x40;
 
+                    back_pixel = read_pixel(back_vid, sx, sy);
+
                     /* Condition 3 - black car = black playfield (oil) */
-                    if (back_vid->line[sy][sx]==Machine->pens[0])
+                    if (back_pixel==Machine->pens[0])
                         sprint2_collision2_data|=0x40;
 
                     /* Condition 4 - black car = white playfield (track) */
-                    if (back_vid->line[sy][sx]==Machine->pens[3])
+                    if (back_pixel==Machine->pens[3])
                         sprint2_collision2_data|=0x80;
                }
         }
     }
-}
-
-/***************************************************************************
-***************************************************************************/
-
-void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-        char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
-        int offs;
-
-        sprint_vh_screenrefresh(bitmap,full_refresh);
-
-        /* gear shift indicators - not a part of the original game!!! */
-        gear_buf[5]=0x30 + sprint2_gear1;
-        for (offs = 0; offs < 6; offs++)
-                drawgfx(bitmap,Machine->gfx[0],
-                        gear_buf[offs],1,
-                        0,0,(offs+25)*8,30*8,
-                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-        gear_buf[5]=0x30 + sprint2_gear2;
-        for (offs = 0; offs < 6; offs++)
-                drawgfx(bitmap,Machine->gfx[0],
-                        gear_buf[offs],0,
-                        0,0,(offs+1)*8,30*8,
-                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-}
-
-void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-        char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
-        int offs;
-
-        sprint_vh_screenrefresh(bitmap,full_refresh);
-
-        /* gear shift indicators - not a part of the original game!!! */
-        gear_buf[5]=0x30 + sprint2_gear1;
-        for (offs = 0; offs < 6; offs++)
-                drawgfx(bitmap,Machine->gfx[0],
-                        gear_buf[offs],1,
-                        0,0,(offs+12)*8,30*8,
-                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 
 /***************************************************************************
@@ -436,51 +397,82 @@ void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
   the main emulation engine.
 
 ***************************************************************************/
-void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-        int offs,car;
+	int offs,car;
 
     /* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-                if (dirtybuffer[offs])
-                {
-                        int charcode;
-                        int sx,sy;
+		if (dirtybuffer[offs])
+		{
+			int charcode;
+			int sx,sy;
 
-                        dirtybuffer[offs]=0;
+			dirtybuffer[offs]=0;
 
-                        charcode = videoram[offs] & 0x3F;
+			charcode = videoram[offs] & 0x3f;
 
-                        sx = 8 * (offs % 32);
-                        sy = 8 * (offs / 32);
-                        drawgfx(tmpbitmap,Machine->gfx[0],
-                                        charcode, (videoram[offs] & 0x80)>>7,
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					charcode, (videoram[offs] & 0x80)>>7,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                }
+		}
 	}
 
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-        /* Draw each one of our four cars */
-        for (car=3;car>=0;car--)
-        {
-                int sx,sy;
+	/* Draw each one of our four cars */
+	for (car=3;car>=0;car--)
+	{
+		int sx,sy;
 
-                sx=30*8-sprint2_horiz_ram[car];
-                sy=31*8-sprint2_vert_car_ram[car*2];
+		sx=30*8-sprint2_horiz_ram[car];
+		sy=31*8-sprint2_vert_car_ram[car*2];
 
-                drawgfx(bitmap,Machine->gfx[1],
-                        (sprint2_vert_car_ram[car*2+1]>>3), car,
-                        0,0,sx,sy,
-                        &Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
+		drawgfx(bitmap,Machine->gfx[1],
+				(sprint2_vert_car_ram[car*2+1]>>3), car,
+				0,0,sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
+	}
 
-        }
+	/* Refresh our collision detection buffers */
+	sprint2_check_collision1(bitmap);
+	sprint2_check_collision2(bitmap);
+}
 
-       /* Refresh our collision detection buffers */
-       sprint2_check_collision1(bitmap);
-       sprint2_check_collision2(bitmap);
+
+static void draw_gear_indicator(int gear, struct osd_bitmap *bitmap, int x, int color)
+{
+	/* gear shift indicators - not a part of the original game!!! */
+
+	char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
+	int offs;
+
+	gear_buf[5] = 0x30 + gear;
+	for (offs = 0; offs < 6; offs++)
+		drawgfx(bitmap,Machine->gfx[0],
+				gear_buf[offs],color,
+				0,0,(x+offs)*8,30*8,
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
+
+
+void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	sprint_vh_screenrefresh(bitmap,full_refresh);
+
+	draw_gear_indicator(sprint2_gear1, bitmap, 25, 1);
+	draw_gear_indicator(sprint2_gear2, bitmap, 1 , 0);
+}
+
+void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	sprint_vh_screenrefresh(bitmap,full_refresh);
+
+	draw_gear_indicator(sprint2_gear1, bitmap, 12, 1);
 }

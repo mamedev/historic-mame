@@ -99,14 +99,14 @@ void slapfight_port_07_w(int offset, int data)
 
 void slapfight_port_08_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank(1,&RAM[0x10000]);
 }
 
 void slapfight_port_09_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank(1,&RAM[0x14000]);
 }

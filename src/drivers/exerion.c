@@ -440,7 +440,7 @@ static void exerion_decode(void)
 static void exerionb_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* the program ROMs have data lines D1 and D2 swapped. Decode them. */
@@ -455,7 +455,7 @@ static void exerionb_decode(void)
 
 static int hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	static int firsttime;
 
 
@@ -506,7 +506,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -534,12 +534,12 @@ struct GameDriver driver_exerion =
 	rom_exerion,
 	exerion_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exerion,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING | GAME_WRONG_COLORS,
 
 	hiload, hisave
 };
@@ -560,12 +560,12 @@ struct GameDriver driver_exeriont =
 	rom_exeriont,
 	exerion_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exerion,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING | GAME_WRONG_COLORS,
 
 	hiload, hisave
 };
@@ -586,12 +586,12 @@ struct GameDriver driver_exerionb =
 	rom_exerionb,
 	exerionb_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_exerion,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING | GAME_WRONG_COLORS,
 
 	hiload, hisave
 };

@@ -1042,7 +1042,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		return -1;
 
 	/* set the color information */
-	Machine->gfx[gfx_index]->colortable = &Machine->colortable[256];
+	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[256];
 	Machine->gfx[gfx_index]->total_colors = 48 >> (bpp - 4);
 
 	/* set the entry and return it */

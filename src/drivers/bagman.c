@@ -659,7 +659,7 @@ static int hiload(void)
 {
 
 
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		/* wait for "HIGH SCORE" to be on screen */
         if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x6217],"\x00\x42\x01",3) == 0)
@@ -687,7 +687,7 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -701,7 +701,7 @@ static void hisave(void)
 
 static int pickin_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 		/* wait for "HIGH SCORE" to be on screen */
 
@@ -731,7 +731,7 @@ static int pickin_hiload(void)
 static void pickin_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -760,7 +760,7 @@ struct GameDriver driver_bagman =
 	rom_bagman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bagman,
 
@@ -786,7 +786,7 @@ struct GameDriver driver_bagnard =
 	rom_bagnard,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bagman,
 
@@ -812,7 +812,7 @@ struct GameDriver driver_bagmans =
 	rom_bagmans,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bagmans,
 
@@ -838,7 +838,7 @@ struct GameDriver driver_bagmans2 =
 	rom_bagmans2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bagman,
 
@@ -864,7 +864,7 @@ struct GameDriver driver_sbagman =
 	rom_sbagman,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sbagman,
 
@@ -890,7 +890,7 @@ struct GameDriver driver_sbagmans =
 	rom_sbagmans,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sbagman,
 
@@ -916,7 +916,7 @@ struct GameDriver driver_pickin =
 	rom_pickin,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pickin,
 

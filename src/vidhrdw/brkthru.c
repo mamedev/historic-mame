@@ -132,7 +132,7 @@ void brkthru_1800_w(int offset,int data)
 	else if (offset == 1)
 	{
 		int bankaddress;
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 		/* bit 0-2 = ROM bank select */

@@ -533,7 +533,7 @@ struct GameDriver driver_toobin =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_toobin,
 
@@ -560,7 +560,7 @@ struct GameDriver driver_toobin2 =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_toobin,
 
@@ -587,7 +587,7 @@ struct GameDriver driver_toobinp =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_toobin,
 

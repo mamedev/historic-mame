@@ -250,7 +250,7 @@ void tnk3_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 }
 
 void tnk3_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
-	unsigned char *ram = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *ram = memory_region(Machine->drv->cpu[0].memory_region);
 	int attributes = ram[0xc800];
 	/*
 		X-------
@@ -359,8 +359,8 @@ void aso_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 
 
 void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
-	unsigned char *ram = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *ram2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *ram = memory_region(Machine->drv->cpu[0].memory_region);
+	unsigned char *ram2 = memory_region(Machine->drv->cpu[1].memory_region);
 	int attributes = ram[0xc800];
 	/*
 		X-------
@@ -424,7 +424,7 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 
 static void ikari_draw_background( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][bg_tilemap_baseaddr];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[bg_tilemap_baseaddr];
 
 	int offs;
 	for( offs=0; offs<32*32*2; offs+=2 ){
@@ -465,7 +465,7 @@ static void ikari_draw_background( struct osd_bitmap *bitmap, int xscroll, int y
 static void ikari_draw_text( struct osd_bitmap *bitmap ){
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xf800];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xf800];
 
 	int offs;
 	for( offs = 0;offs <0x400; offs++ ){
@@ -487,7 +487,7 @@ static void ikari_draw_status( struct osd_bitmap *bitmap ){
 
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xfc00];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xfc00];
 
 	int offs;
 	for( offs = 0; offs<64; offs++ ){
@@ -520,7 +520,7 @@ static void ikari_draw_sprites_16x16( struct osd_bitmap *bitmap, int start, int 
 	int transp_param = shadows_visible ? 7 : (1<<7) | (1<<6);
 
 	int which;
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xe800];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xe800];
 
 	struct rectangle clip = Machine->drv->visible_area;
 	clip.min_x += 16;
@@ -548,7 +548,7 @@ static void ikari_draw_sprites_32x32( struct osd_bitmap *bitmap, int start, int 
 	int transp_param = shadows_visible ? 7 : (1<<7) | (1<<6);
 
 	int which;
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xe000];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xe000];
 
 	struct rectangle clip = Machine->drv->visible_area;
 	clip.min_x += 16;
@@ -573,7 +573,7 @@ static void ikari_draw_sprites_32x32( struct osd_bitmap *bitmap, int start, int 
 }
 
 void ikari_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh){
-	const unsigned char *ram = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	const unsigned char *ram = memory_region(Machine->drv->cpu[0].memory_region);
 
 	shadows_visible = !shadows_visible;
 
@@ -606,7 +606,7 @@ static void tdfever_draw_background( struct osd_bitmap *bitmap,
 		int xscroll, int yscroll )
 {
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xd000];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xd000];
 
 	int offs;
 	for( offs=0; offs<32*32*2; offs+=2 ){
@@ -646,7 +646,7 @@ static void tdfever_draw_background( struct osd_bitmap *bitmap,
 
 static void tdfever_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xe000];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xe000];
 
 	int which;
 
@@ -680,7 +680,7 @@ static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xf800];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xf800];
 
 	int offs;
 
@@ -703,7 +703,7 @@ static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx
 }
 
 void tdfever_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
-	const unsigned char *ram = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	const unsigned char *ram = memory_region(Machine->drv->cpu[0].memory_region);
 
 	{
 		unsigned char bg_attributes = ram[0xc880];
@@ -727,7 +727,7 @@ void tdfever_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
 
 static void gwar_draw_sprites_16x16( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xe800];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xe800];
 
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
@@ -759,7 +759,7 @@ static void gwar_draw_sprites_16x16( struct osd_bitmap *bitmap, int xscroll, int
 
 void gwar_draw_sprites_32x32( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	const struct GfxElement *gfx = Machine->gfx[GFX_BIGSPRITES];
-	const unsigned char *source = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xe000];
+	const unsigned char *source = &memory_region(Machine->drv->cpu[0].memory_region)[0xe000];
 
 	const struct rectangle *clip = &Machine->drv->visible_area;
 
@@ -789,7 +789,7 @@ void gwar_draw_sprites_32x32( struct osd_bitmap *bitmap, int xscroll, int yscrol
 }
 
 void gwar_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
-	const unsigned char *ram = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	const unsigned char *ram = memory_region(Machine->drv->cpu[0].memory_region);
 	unsigned char bg_attributes = ram[0xc880];
 	unsigned char sp_attributes = ram[0xcac0];
 

@@ -552,7 +552,7 @@ ROM_END
 
 static int ladybug_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -579,7 +579,7 @@ static int ladybug_hiload(void)
 static void ladybug_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -594,7 +594,7 @@ static void ladybug_hisave(void)
 
 static int cavenger_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -620,7 +620,7 @@ static int cavenger_hiload(void)
 static void cavenger_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -633,7 +633,7 @@ static void cavenger_hisave(void)
 
 static int snapjack_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -660,7 +660,7 @@ static int snapjack_hiload(void)
 static void snapjack_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -689,7 +689,7 @@ struct GameDriver driver_ladybug =
 	rom_ladybug,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ladybug,
 
@@ -715,7 +715,7 @@ struct GameDriver driver_ladybugb =
 	rom_ladybugb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ladybug,
 
@@ -741,7 +741,7 @@ struct GameDriver driver_snapjack =
 	rom_snapjack,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_snapjack,
 
@@ -767,7 +767,7 @@ struct GameDriver driver_cavenger =
 	rom_cavenger,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_cavenger,
 

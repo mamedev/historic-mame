@@ -107,7 +107,7 @@ void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static void wc90b_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -117,7 +117,7 @@ static void wc90b_bankswitch_w(int offset,int data)
 static void wc90b_bankswitch1_w(int offset,int data)
 {
 	int bankaddress;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 
 	bankaddress = 0x10000 + ((data & 0xf8) << 8);
@@ -502,7 +502,7 @@ struct GameDriver driver_wc90b =
 	rom_wc90b,
 	wc90b_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wc90b,
 

@@ -337,7 +337,7 @@ struct GameDriver driver_milliped =
 	rom_milliped,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_milliped,
 

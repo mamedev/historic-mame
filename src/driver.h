@@ -120,6 +120,9 @@ enum
 #if (HAS_HD63701)
 	CPU_HD63701,	/* 6808 with some additional opcodes */
 #endif
+#if (HAS_NSC8105)
+	CPU_NSC8105,	/* same(?) as CPU_M6802(?) with scrambled opcodes. There is at least one new opcode. */
+#endif
 #if (HAS_M6805)
 	CPU_M6805,
 #endif
@@ -317,14 +320,14 @@ struct GameDriver
 								/* which is called every time the game is reset. */
 
 	const struct RomModule *rom;
-   #ifdef MESS
-   int (*rom_load)(void); /* used to load the ROM and set up memory regions */
+#ifdef MESS
+	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
 	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
 	int num_of_rom_slots;
 	int num_of_floppy_drives;
 	int num_of_hard_drives;
 	int num_of_cassette_drives;
- 	#endif
+#endif
 
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
 	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */

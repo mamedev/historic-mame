@@ -334,7 +334,7 @@ static void install_protection_handler(unsigned char *code,unsigned char *crc)
 	protection_crc =  crc;
 	install_mem_read_handler (0,0xb0000,0xb0fff,protection_r);
 	install_mem_write_handler(0,0xb0000,0xb0fff,protection_w);
-	protection_ram = &Machine->memory_region[0][0xb0000];
+	protection_ram = &memory_region(Machine->drv->cpu[0].memory_region)[0xb0000];
 }
 
 static void bchopper_init(void)
@@ -3015,7 +3015,7 @@ struct GameDriver driver_rtype =
 	rom_rtype,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtype,
 
@@ -3041,7 +3041,7 @@ struct GameDriver driver_rtypeu =
 	rom_rtypeu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtypeu,
 
@@ -3067,7 +3067,7 @@ struct GameDriver driver_rtypeb =
 	rom_rtypeb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtypeu,
 
@@ -3093,7 +3093,7 @@ struct GameDriver driver_bchopper =
 	rom_bchopper,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bchopper,
 
@@ -3119,7 +3119,7 @@ struct GameDriver driver_mrheli =
 	rom_mrheli,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bchopper,
 
@@ -3145,7 +3145,7 @@ struct GameDriver driver_nspirit =
 	rom_nspirit,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nspirit,
 
@@ -3171,7 +3171,7 @@ struct GameDriver driver_nspiritj =
 	rom_nspiritj,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_nspirit,
 
@@ -3197,7 +3197,7 @@ struct GameDriver driver_imgfight =
 	rom_imgfight,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_imgfight,
 
@@ -3223,7 +3223,7 @@ struct GameDriver driver_loht =
 	rom_loht,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_loht,
 
@@ -3249,7 +3249,7 @@ struct GameDriver driver_xmultipl =
 	rom_xmultipl,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xmultipl,
 
@@ -3275,7 +3275,7 @@ struct GameDriver driver_dbreed =
 	rom_dbreed,
 	0,0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_dbreed,
 
@@ -3301,7 +3301,7 @@ struct GameDriver driver_rtype2 =
 	rom_rtype2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtype2,
 
@@ -3327,7 +3327,7 @@ struct GameDriver driver_rtype2j =
 	rom_rtype2j,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtype2,
 
@@ -3353,7 +3353,7 @@ struct GameDriver driver_majtitle =
 	rom_majtitle,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rtype2,
 
@@ -3379,7 +3379,7 @@ struct GameDriver driver_hharry =
 	rom_hharry,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hharry,
 
@@ -3405,7 +3405,7 @@ struct GameDriver driver_hharryu =
 	rom_hharryu,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hharry,
 
@@ -3431,7 +3431,7 @@ struct GameDriver driver_dkgensan =
 	rom_dkgensan,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hharry,
 
@@ -3457,7 +3457,7 @@ struct GameDriver driver_kengo =
 	rom_kengo,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_hharry,
 
@@ -3483,7 +3483,7 @@ struct GameDriver driver_gallop =
 	rom_gallop,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_gallop,
 
@@ -3509,7 +3509,7 @@ struct GameDriver driver_poundfor =
 	rom_poundfor,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_poundfor,
 

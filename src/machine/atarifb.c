@@ -31,6 +31,20 @@ void atarifb4_out1_w(int offset, int data)
 //	if (errorlog) fprintf (errorlog, "out1_w: %02x\n", data);
 }
 
+void soccer_out1_w(int offset, int data)
+{
+	/* bit 0 = whistle */
+	/* bit 1 = hit */
+	/* bit 2 = kicker */
+	/* bit 3 = unused */
+	/* bit 4 = 2/4 Player LED */
+	/* bit 5-6 = trackball CTRL bits */
+	/* bit 7 = Rule LED */
+	CTRLD = data;
+	osd_led_w (0, (data & 0x10) >> 4);
+	osd_led_w (1, (data & 0x80) >> 7);
+}
+
 
 int atarifb_in0_r(int offset)
 {
@@ -121,7 +135,7 @@ int atarifb4_in0_r(int offset)
 		return val;
 	}
 	else if ((CTRLD & 0x60) == 0x60)
-	/* LD1 and LD2 both high, return Team 1 left player */
+	/* LD1 and LD2 both high, return Team 1 left player (player 1) */
 	{
 		static int counter_x;
 		static int counter_y;
@@ -145,7 +159,7 @@ int atarifb4_in0_r(int offset)
 		return ((counter_y << 4) | counter_x);
 	}
 	else if ((CTRLD & 0x60) == 0x20)
-	/* LD1 high, LD2 low, return Team 1 right player */
+	/* LD1 high, LD2 low, return Team 1 right player (player 3) */
 	{
 		static int counter_x;
 		static int counter_y;
@@ -180,7 +194,7 @@ int atarifb4_in2_r(int offset)
 		return input_port_2_r(offset);
 	}
 	else if ((CTRLD & 0x60) == 0x60)
-	/* LD1 and LD2 both high, return Team 2 left player */
+	/* LD1 and LD2 both high, return Team 2 left player (player 2) */
 	{
 		static int counter_x;
 		static int counter_y;
@@ -204,7 +218,7 @@ int atarifb4_in2_r(int offset)
 		return ((counter_y << 4) | counter_x);
 	}
 	else if ((CTRLD & 0x60) == 0x20)
-	/* LD1 high, LD2 low, return Team 2 right player */
+	/* LD1 high, LD2 low, return Team 2 right player (player 4) */
 	{
 		static int counter_x;
 		static int counter_y;

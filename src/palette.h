@@ -53,7 +53,7 @@
   the GfxDecodeInfo array.
   When vh_init_palette() initializes the lookup table, it maps gfx codes
   to game colors (P1 above). The lookup table will be converted by the core to
-  map to OS specific pens (P3 above), and stored in Machine->colortable.
+  map to OS specific pens (P3 above), and stored in Machine->remapped_colortable.
 
 
   Display modes

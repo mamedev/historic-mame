@@ -682,7 +682,7 @@ struct GameDriver driver_tsamurai =  {
 	0,
 	0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_tsamurai,
 
@@ -707,7 +707,7 @@ struct GameDriver driver_tsamura2 =  {
 	0,
 	0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_tsamurai,
 
@@ -732,7 +732,7 @@ struct GameDriver driver_nunchaku =  {
 	0,//nunchaku_gfx_untangle,
 	0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_nunchaku,
 
@@ -757,7 +757,7 @@ struct GameDriver driver_yamagchi =  {
 	0,
 	0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_yamagchi,
 

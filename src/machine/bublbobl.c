@@ -36,7 +36,7 @@ void bublbobl_sharedram2_w(int offset,int data)
 
 void bublbobl_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((data & 3) == 0) { cpu_setbank(1,&RAM[0x8000]); }
@@ -45,7 +45,7 @@ void bublbobl_bankswitch_w(int offset,int data)
 
 void tokio_bankswitch_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	cpu_setbank(1, &RAM[0x10000 + 0x4000 * (data & 7)]);
 }

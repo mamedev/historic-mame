@@ -670,7 +670,7 @@ ROM_END
 
 static int stfight_hiload( void )
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	/* check if the hi score table has already been initialized */
 	if( memcmp( &RAM[0xE0B4], "WORST   ", 8 ) == 0 )
@@ -692,7 +692,7 @@ static int stfight_hiload( void )
 static void stfight_hisave( void )
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if( ( f = osd_fopen( Machine->gamedrv->name, 0,
                          OSD_FILETYPE_HIGHSCORE, 1 ) ) != 0 )
@@ -720,7 +720,7 @@ struct GameDriver driver_empcity =
 	rom_empcity,
     0,stfight_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stfight,
 
@@ -746,7 +746,7 @@ struct GameDriver driver_stfight =
 	rom_stfight,
     0,stfight_decode,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_stfight,
 

@@ -53,6 +53,13 @@ static void detatwin_tile_callback(int layer,int bank,int *code,int *color)
 	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
 }
 
+static void thndrx2_tile_callback(int layer,int bank,int *code,int *color)
+{
+	*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
+			| (bank << 13);
+	*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
+}
+
 
 
 /***************************************************************************
@@ -78,6 +85,13 @@ static void punkshot_sprite_callback(int *code,int *color,int *priority)
 	*priority = 0x20 | ((*color & 0x60) >> 2);
 	*color = sprite_colorbase + (*color & 0x0f);
 }
+
+static void thndrx2_sprite_callback(int *code,int *color,int *priority)
+{
+//	*priority = 0x20 | ((*color & 0x60) >> 2);
+	*color = sprite_colorbase + (*color & 0x0f);
+}
+
 
 /***************************************************************************
 
@@ -190,6 +204,18 @@ int glfgreat_vh_start(void)
 	return 0;
 }
 
+int thndrx2_vh_start(void)
+{
+	if (K052109_vh_start(TILEROM_MEM_REGION,NORMAL_PLANE_ORDER,thndrx2_tile_callback))
+		return 1;
+	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,thndrx2_sprite_callback))
+	{
+		K052109_vh_stop();
+		return 1;
+	}
+	return 0;
+}
+
 void punkshot_vh_stop(void)
 {
 	K052109_vh_stop();
@@ -212,6 +238,12 @@ void glfgreat_vh_stop(void)
 {
 	K052109_vh_stop();
 	K053245_vh_stop();
+}
+
+void thndrx2_vh_stop(void)
+{
+	K052109_vh_stop();
+	K051960_vh_stop();
 }
 
 
@@ -577,4 +609,42 @@ void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			K053245_word_w(16*i,0xff000000|i);	/* workaround for protection */
 
 	lgtnfght_vh_screenrefresh(bitmap,full_refresh);
+}
+
+
+void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int pri[3],layer[3];
+
+
+	bg_colorbase       = K053251_get_palette_index(K053251_CI0);
+	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
+	layer_colorbase[0] = K053251_get_palette_index(K053251_CI2);
+	layer_colorbase[1] = K053251_get_palette_index(K053251_CI4);
+	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
+
+	K052109_tilemap_update();
+
+	palette_init_used_colors();
+	K051960_mark_sprites_colors();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	layer[0] = 0;
+	pri[0] = K053251_get_priority(K053251_CI2);
+	layer[1] = 1;
+	pri[1] = K053251_get_priority(K053251_CI4);
+	layer[2] = 2;
+	pri[2] = K053251_get_priority(K053251_CI3);
+
+	sortlayers(layer,pri);
+
+	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY);
+	K051960_sprites_draw(bitmap,pri[1]+1,pri[0]);
+	K052109_tilemap_draw(bitmap,layer[1],0);
+	K051960_sprites_draw(bitmap,pri[2]+1,pri[1]);
+	K052109_tilemap_draw(bitmap,layer[2],0);
+	K051960_sprites_draw(bitmap,0,pri[2]);
 }

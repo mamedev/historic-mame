@@ -669,7 +669,7 @@ ROM_END
 
 static int monymony_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -697,7 +697,7 @@ static int monymony_hiload(void)
 static void monymony_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -711,7 +711,7 @@ static void monymony_hisave(void)
 
 static int jackrabt_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -739,7 +739,7 @@ static int jackrabt_hiload(void)
 static void jackrabt_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -768,7 +768,7 @@ struct GameDriver driver_monymony =
 	rom_monymony,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_monymony,
 
@@ -794,7 +794,7 @@ struct GameDriver driver_jackrabt =
 	rom_jackrabt,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jackrabt,
 
@@ -820,7 +820,7 @@ struct GameDriver driver_jackrab2 =
 	rom_jackrab2,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jackrabt,
 
@@ -846,7 +846,7 @@ struct GameDriver driver_jackrabs =
 	rom_jackrabs,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jackrabt,
 

@@ -25,7 +25,7 @@ void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static void pcktgal_bank_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 	if (data & 1) { cpu_setbank(1,&RAM[0x4000]); }
 	else { cpu_setbank(1,&RAM[0x10000]); }
@@ -36,7 +36,7 @@ static void pcktgal_bank_w(int offset,int data)
 
 static void pcktgal_sound_bank_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 
 	if (data & 4) { cpu_setbank(3,&RAM[0x14000]); }
 	else { cpu_setbank(3,&RAM[0x10000]); }
@@ -493,7 +493,7 @@ static void deco222_decode(void)
 	extern int encrypted_cpu;
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	encrypted_cpu = 1;
 	for (A = 0;A < 0x10000;A++)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
@@ -540,7 +540,7 @@ struct GameDriver driver_pcktgal =
 	rom_pcktgal,
 	0, pcktgal_decode,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pcktgal,
 
@@ -618,7 +618,7 @@ struct GameDriver driver_spool3 =
 	rom_spool3,
 	graphics_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pcktgal,
 
@@ -644,7 +644,7 @@ struct GameDriver driver_spool3i =
 	rom_spool3i,
 	graphics_decode, 0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_pcktgal,
 

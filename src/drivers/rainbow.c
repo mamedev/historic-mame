@@ -74,7 +74,7 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 
 static void rastan_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[1].memory_region);
 	int banknum = ( data - 1 ) & 3;
 	cpu_setbank( 5, &RAM[ 0x10000 + ( banknum * 0x4000 ) ] );
 }
@@ -382,7 +382,7 @@ struct GameDriver driver_rainbow =
 	rom_rainbow,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rainbow,
 
@@ -407,7 +407,7 @@ struct GameDriver driver_rainbowe =
 	rom_rainbowe,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_rainbow,
 
@@ -655,7 +655,7 @@ struct GameDriver driver_jumping =
 	rom_jumping,
 	jumping_sprite_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_jumping,
 

@@ -1577,7 +1577,7 @@ ROM_END
 
 static void vicdual_decode(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* copy the ROMs to the mirror image */
@@ -1589,7 +1589,7 @@ static void vicdual_decode(void)
 
 static int carnival_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -1616,7 +1616,7 @@ static int carnival_hiload(void)
 static void carnival_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1715,7 +1715,7 @@ struct GameDriver driver_depthch =
 	rom_depthch,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_depthch,
 
@@ -1741,7 +1741,7 @@ struct GameDriver driver_safari =
 	rom_safari,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_safari,
 
@@ -1767,7 +1767,7 @@ struct GameDriver driver_frogs =
 	rom_frogs,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_frogs,
 
@@ -1793,7 +1793,7 @@ struct GameDriver driver_sspaceat =
 	rom_sspaceat,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sspaceat,
 
@@ -1819,7 +1819,7 @@ struct GameDriver driver_sspacatc =
 	rom_sspacatc,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sspaceat,
 
@@ -1845,7 +1845,7 @@ struct GameDriver driver_headon =
 	rom_headon,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_headon,
 
@@ -1871,7 +1871,7 @@ struct GameDriver driver_headonb =
 	rom_headonb,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_headon,
 
@@ -1897,7 +1897,7 @@ struct GameDriver driver_headon2 =
 	rom_headon2,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_headon2,
 
@@ -1934,7 +1934,7 @@ struct GameDriver driver_invho2 =
 	rom_invho2,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_invho2,
 
@@ -1960,7 +1960,7 @@ struct GameDriver driver_samurai =
 	rom_samurai,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_samurai,
 
@@ -1986,7 +1986,7 @@ struct GameDriver driver_invinco =
 	rom_invinco,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_invinco,
 
@@ -2012,7 +2012,7 @@ struct GameDriver driver_invds =
 	rom_invds,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_invds,
 
@@ -2038,7 +2038,7 @@ struct GameDriver driver_tranqgun =
 	rom_tranqgun,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tranqgun,
 
@@ -2064,7 +2064,7 @@ struct GameDriver driver_spacetrk =
 	rom_spacetrk,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacetrk,
 
@@ -2090,7 +2090,7 @@ struct GameDriver driver_sptrekct =
 	rom_sptrekct,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sptrekct,
 
@@ -2116,7 +2116,7 @@ struct GameDriver driver_carnival =
 	rom_carnival,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_carnival,
 
@@ -2142,7 +2142,7 @@ struct GameDriver driver_carnvckt =
 	rom_carnvckt,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_carnvckt,
 
@@ -2168,7 +2168,7 @@ struct GameDriver driver_digger =
 	rom_digger,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_digger,
 
@@ -2194,7 +2194,7 @@ struct GameDriver driver_pulsar =
 	rom_pulsar,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_pulsar,
 
@@ -2220,7 +2220,7 @@ struct GameDriver driver_heiankyo =
 	rom_heiankyo,
 	vicdual_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_heiankyo,
 

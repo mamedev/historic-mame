@@ -587,7 +587,7 @@ struct GameDriver driver_terracre =
 	rom_terracre,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_terracre,
 
@@ -613,7 +613,7 @@ struct GameDriver driver_terracrb =
 	rom_terracrb,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_terracre,
 
@@ -643,7 +643,7 @@ struct GameDriver driver_terracra =
 	rom_terracra,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_terracre,
 

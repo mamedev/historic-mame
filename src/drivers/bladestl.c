@@ -21,10 +21,9 @@ Interrupts:
 
 Notes:
 
-	* The game is not working properly because of protection(custom CPU/MCU Konami 051733).
+	* The game is not working properly because of protection(Konami 051733).
 	* Wrong sprite colors.
 	* Missing samples.
-	* Second Trackball is not implemented yet.
 
 ***************************************************************************/
 
@@ -64,7 +63,7 @@ static int trackball_r(int offset)
 
 static void bladestl_bankswitch_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	/* bits 0 & 1 = coin counters */
@@ -224,6 +223,117 @@ INPUT_PORTS_START( bladestl )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus time set" )
+	PORT_DIPSETTING(    0x18, "30 secs" )
+	PORT_DIPSETTING(    0x10, "20 secs" )
+	PORT_DIPSETTING(    0x08, "15 secs" )
+	PORT_DIPSETTING(    0x00, "10 secs" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x60, "Easy" )
+	PORT_DIPSETTING(	0x40, "Normal" )
+	PORT_DIPSETTING(	0x20, "Difficult" )
+	PORT_DIPSETTING(	0x00, "Very difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* COINSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* PLAYER 1 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x80, 0x80, "Period time set" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x00, "7" )
+
+
+	PORT_START	/* PLAYER 2 INPUTS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	/* Trackball 1P */
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 100, 63, 0x7f, 0, 0)
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0x7f, 0, 0)
+
+	/* Trackball 2P */
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 63, 0x7f, 0, 0)
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 63, 0x7f, 0, 0)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bladstle )
+	PORT_START	/* DSW #1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+
+	PORT_START	/* DSW #2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -276,14 +386,12 @@ INPUT_PORTS_START( bladestl )
 	/* Trackball 1P */
 	PORT_START
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 100, 63, 0x7f, 0, 0)
-
 	PORT_START
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0x7f, 0, 0)
 
 	/* Trackball 2P */
 	PORT_START
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 100, 63, 0x7f, 0, 0)
-
 	PORT_START
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 63, 0x7f, 0, 0)
 INPUT_PORTS_END
@@ -354,20 +462,20 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_HD6309,
 			3000000,		/* 24MHz/8 (?) */
-			0,
+			REGION_CPU1,
 			bladestl_readmem,bladestl_writemem,0,0,
             bladestl_interrupt,1
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2000000,		/* ? */
-			2,
+			REGION_CPU2,
 			bladestl_readmem_sound, bladestl_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	10,
 	0,
 
 	/* video hardware */
@@ -403,15 +511,37 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( bladestl )
-	ROM_REGION( 0x18000 ) /* code + banked roms */
-	ROM_LOAD( "797e01", 0x10000, 0x08000, 0xf8472e95 )	/* fixed ROM */
-	ROM_CONTINUE(		0x08000, 0x08000 )				/* banked ROM */
+	ROM_REGIONX( 0x18000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "797t01.bin", 0x10000, 0x08000, 0x89d7185d )	/* fixed ROM */
+	ROM_CONTINUE(			0x08000, 0x08000 )				/* banked ROM */
 
-	ROM_REGION_DISPOSE( 0x080000 ) /* graphics (disposed after conversion) */
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
 	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
 
-	ROM_REGION( 0x10000 ) /* 64k for the sound CPU */
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_LOAD( "797c02", 0x08000, 0x08000, 0x65a331ea )
+
+	ROM_REGION( 0x80000 ) /* uPD7759 data (chip 1) */
+	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
+
+	ROM_REGION( 0x40000 ) /* uPD7759 data (chip 2) */
+	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e ) /* sprites lookup table */
+ROM_END
+
+ROM_START( bladstle )
+	ROM_REGIONX( 0x18000, REGION_CPU1 ) /* code + banked roms */
+	ROM_LOAD( "797e01", 0x10000, 0x08000, 0xf8472e95 )	/* fixed ROM */
+	ROM_CONTINUE(		0x08000, 0x08000 )				/* banked ROM */
+
+	ROM_REGIONX( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
+	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
+
+	ROM_REGIONX( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
 	ROM_LOAD( "797c02", 0x08000, 0x08000, 0x65a331ea )
 
 	ROM_REGION( 0x80000 ) /* uPD7759 data (chip 1) */
@@ -424,6 +554,8 @@ ROM_START( bladestl )
 	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e )	/* lookup table */
 ROM_END
 
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -435,7 +567,7 @@ struct GameDriver driver_bladestl =
 	__FILE__,
 	0,
 	"bladestl",
-	"Blades of Steel",// (version E)",
+	"Blades of Steel (version T)",
 	"1987",
 	"Konami",
 	"Manuel Abadia",
@@ -446,9 +578,34 @@ struct GameDriver driver_bladestl =
 	rom_bladestl,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_bladestl,
+
+	0, 0, 0,
+    ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
+	0, 0
+};
+
+struct GameDriver driver_bladstle =
+{
+	__FILE__,
+	&driver_bladestl,
+	"bladstle",
+	"Blades of Steel (version E)",
+	"1987",
+	"Konami",
+	"Manuel Abadia",
+	0,
+	&machine_driver,
+	0,
+
+	rom_bladstle,
+	0, 0,
+	0,
+	0,
+
+	input_ports_bladstle,
 
 	0, 0, 0,
     ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,

@@ -78,7 +78,9 @@
 #include "m6809.h"
 
 /* Enable big switch statement for the main opcodes */
+#ifndef BIG_SWITCH
 #define BIG_SWITCH  1
+#endif
 
 #define VERBOSE 0
 

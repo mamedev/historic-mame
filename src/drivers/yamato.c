@@ -463,7 +463,7 @@ ROM_END
 
 /**** Yamato high score save routine - RJF (Apr 1, 1999) ****/
 static int yamato_hiload(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
         if (memcmp(&RAM[0x6106],"\x11\x11\x11",3) == 0){
 		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
@@ -483,7 +483,7 @@ static int yamato_hiload(void){
 }
 
 static void yamato_hisave(void){
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
 
                         osd_fwrite(f,&RAM[0x6038], 3);

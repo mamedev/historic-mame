@@ -442,7 +442,7 @@ struct GameDriver driver_klax =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_klax,
 
@@ -469,7 +469,7 @@ struct GameDriver driver_klax2 =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_klax,
 
@@ -496,7 +496,7 @@ struct GameDriver driver_klax3 =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_klax,
 
@@ -523,7 +523,7 @@ struct GameDriver driver_klaxj =
 	0,
 	0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_klax,
 

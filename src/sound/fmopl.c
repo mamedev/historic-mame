@@ -4,7 +4,7 @@
 **
 ** Copyright (C) 1999 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.36d
+** Version 0.36e
 **
 */
 
@@ -30,6 +30,8 @@
 /* attack/decay rate time rate */
 #define OPL_ARRATE     141280  /* RATE 4 =  2826.24ms @ 3.6MHz */
 #define OPL_DRRATE    1956000  /* RATE 4 = 39280.64ms @ 3.6MHz */
+
+#define DELTAT_MIXING_LEVEL (1) /* DELTA-T ADPCM MIXING LEVEL */
 
 #define FREQ_BITS 24			/* frequency turn          */
 
@@ -207,7 +209,7 @@ static signed int feedback2;		/* connect for SLOT 2 */
 
 #define LOG_LEVEL LOG_INF
 
-static void CLIB_DECL Log(int level,char *format,...)
+static void Log(int level,char *format,...)
 {
 	va_list argptr;
 
@@ -564,7 +566,7 @@ static void init_timetables( FM_OPL *OPL , int ARRATE , int DRRATE )
 	/* make attack rate & decay rate tables */
 	for (i = 0;i < 4;i++) OPL->AR_TABLE[i] = OPL->DR_TABLE[i] = 0;
 	for (i = 4;i <= 60;i++){
-		rate  = (double)OPL->freqbase / 4096.0;		/* frequency rate */
+		rate  = OPL->freqbase;						/* frequency rate */
 		if( i < 60 ) rate *= 1.0+(i&3)*0.25;		/* b0-1 : x1 , x1.25 , x1.5 , x1.75 */
 		rate *= 1<<((i>>2)-1);						/* b2-5 : shift bit */
 		rate *= (double)(EG_ENT<<ENV_BITS);
@@ -673,7 +675,7 @@ static int OPLOpenTable( void )
 		pom = (double)VIB_RATE*0.06*sin(2*PI*i/VIB_ENT); /* +-100sect step */
 		VIB_TABLE[i]         = VIB_RATE + (pom*0.07); /* +- 7cent */
 		VIB_TABLE[VIB_ENT+i] = VIB_RATE + (pom*0.14); /* +-14cent */
-		Log(LOG_INF,"vib %d=%d\n",i,VIB_TABLE[VIB_ENT+i]);
+		/* Log(LOG_INF,"vib %d=%d\n",i,VIB_TABLE[VIB_ENT+i]); */
 	}
 	return 1;
 }
@@ -710,7 +712,7 @@ static void OPL_initalize(FM_OPL *OPL)
 	int fn;
 
 	/* frequency base */
-	OPL->freqbase = (OPL->rate) ? ((double)OPL->clock * 4096.0 / OPL->rate) / 72  : 0;
+	OPL->freqbase = (OPL->rate) ? ((double)OPL->clock / OPL->rate) / 72  : 0;
 	/* Timer base time */
 	OPL->TimerBase = 1.0/((double)OPL->clock / 72.0 );
 	/* make time tables */
@@ -718,7 +720,7 @@ static void OPL_initalize(FM_OPL *OPL)
 	/* make fnumber -> increment counter table */
 	for( fn=0 ; fn < 1024 ; fn++ )
 	{
-		OPL->FN_TABLE[fn] = (double)fn * OPL->freqbase / 4096  * FREQ_RATE * (1<<7) / 2;
+		OPL->FN_TABLE[fn] = OPL->freqbase * fn * FREQ_RATE * (1<<7) / 2;
 	}
 	/* LFO freq.table */
 	OPL->amsIncr = OPL->rate ? (double)AMS_ENT*(1<<AMS_SHIFT) / OPL->rate * 3.7 * ((double)OPL->clock/3600000) : 0;
@@ -788,18 +790,23 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				}
 			}
 			return;
-#if 0
+#if BUILD_Y8950
 		case 0x06:		/* Key Board OUT */
-			if(!(OPL->type&OPL_TYPE_KEYBOARD)) return;
+			if(OPL->type&OPL_TYPE_KEYBOARD)
+			{
+				if(OPL->keyboardhandler_w)
+					OPL->keyboardhandler_w(OPL,v);
+				else
+					Log(LOG_WAR,"OPL:write unmapped KEYBOARD port\n");
+			}
 			return;
-		case 0x07:	/* ADPCM controll : START,REC,MEMDATA,REPT,SPOFF,x,x,RST */
-			if(!(OPL->type&OPL_TYPE_ADPCM)) return;
+		case 0x07:	/* DELTA-T controll : START,REC,MEMDATA,REPT,SPOFF,x,x,RST */
+			if(OPL->type&OPL_TYPE_ADPCM)
+				YM_DELTAT_ADPCM_Write(OPL->deltat,r-0x07,v);
 			return;
-#endif
-		case 0x08:	/* MODE : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom */
+		case 0x08:	/* MODE,DELTA-T : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom */
 			OPL->mode = v;
-			return;
-#if 0
+			v&=0x1f;	/* for DELTA-T unit */
 		case 0x09:		/* START ADD */
 		case 0x0a:
 		case 0x0b:		/* STOP ADD  */
@@ -810,21 +817,29 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 		case 0x10: 		/* DELTA-N    */
 		case 0x11: 		/* DELTA-N    */
 		case 0x12: 		/* EG-CTRL    */
+			if(OPL->type&OPL_TYPE_ADPCM)
+				YM_DELTAT_ADPCM_Write(OPL->deltat,r-0x07,v);
+			return;
+#if 0
 		case 0x15:		/* DAC data    */
 		case 0x16:
 		case 0x17:		/* SHIFT    */
 			return;
 		case 0x18:		/* I/O CTRL (Direction) */
-			if(!(OPL->type&OPL_TYPE_IO)) return;
-			/* OPL->portDirection = v&0x0f; */
+			if(OPL->type&OPL_TYPE_IO)
+				OPL->portDirection = v&0x0f;
 			return;
 		case 0x19:		/* I/O DATA */
-			if(!(OPL->type&OPL_TYPE_IO)) return;
-			/* OPL->portLatch = v; */
-			/* if(OPL->porthandler_w) OPL->porthandler_w(v&OPL->IODirection); */
+			if(OPL->type&OPL_TYPE_IO)
+			{
+				OPL->portLatch = v;
+				if(OPL->porthandler_w)
+					OPL->porthandler_w(v&OPL->portDirection);
+			}
 			return;
 		case 0x1a:		/* PCM data */
 			return;
+#endif
 #endif
 		}
 		break;
@@ -1053,8 +1068,64 @@ void YM3812UpdateOne(FM_OPL *OPL, void *buffer, int length)
 #endif /* (BUILD_YM3812 || BUILD_YM3526) */
 
 #if BUILD_Y8950
+
 void Y8950UpdateOne(FM_OPL *OPL, void *buffer, int length)
 {
+    int i;
+	int data;
+	FMSAMPLE *buf = (FMSAMPLE *)buffer;
+	unsigned long amsCnt  = OPL->amsCnt;
+	unsigned long vibCnt  = OPL->vibCnt;
+	int rythm = OPL->rythm&0x20;
+	OPL_CH *CH,*R_CH;
+	YM_DELTAT *DELTAT = OPL->deltat;
+
+	/* setup DELTA-T unit */
+	YM_DELTAT_DECODE_PRESET(DELTAT);
+
+	if( (void *)OPL != cur_chip ){
+		cur_chip = (void *)OPL;
+		/* channel pointers */
+		S_CH = OPL->P_CH;
+		E_CH = &S_CH[9];
+		/* rythm slot */
+		SLOT7_1 = &S_CH[7].SLOT[SLOT1];
+		SLOT7_2 = &S_CH[7].SLOT[SLOT2];
+		SLOT8_1 = &S_CH[8].SLOT[SLOT1];
+		SLOT8_2 = &S_CH[8].SLOT[SLOT2];
+		/* LFO state */
+		amsIncr = OPL->amsIncr;
+		vibIncr = OPL->vibIncr;
+		ams_table = OPL->ams_table;
+		vib_table = OPL->vib_table;
+	}
+	R_CH = rythm ? &S_CH[6] : E_CH;
+    for( i=0; i < length ; i++ )
+	{
+		/*            channel A         channel B         channel C      */
+		/* LFO */
+		ams = ams_table[(amsCnt+=amsIncr)>>AMS_SHIFT];
+		vib = vib_table[(vibCnt+=vibIncr)>>VIB_SHIFT];
+		outd[0] = 0;
+		/* deltaT ADPCM */
+		if( DELTAT->flag )
+			YM_DELTAT_ADPCM_CALC(DELTAT);
+		/* FM part */
+		for(CH=S_CH ; CH < R_CH ; CH++)
+			OPL_CALC_CH(CH);
+		/* Rythn part */
+		if(rythm)
+			OPL_CALC_RH(S_CH);
+		/* limit check */
+		data = Limit( outd[0] , OPL_MAXOUT, OPL_MINOUT );
+		/* store to sound buffer */
+		buf[i] = data >> OPL_OUTSB;
+	}
+	OPL->amsCnt = amsCnt;
+	OPL->vibCnt = vibCnt;
+	/* deltaT START flag */
+	if( !DELTAT->flag )
+		OPL->status &= 0xfe;
 }
 #endif
 
@@ -1088,6 +1159,18 @@ void OPLResetChip(FM_OPL *OPL)
 			CH->SLOT[s].evs = 0;
 		}
 	}
+#if BUILD_Y8950
+	if(OPL->type&OPL_TYPE_ADPCM)
+	{
+		YM_DELTAT *DELTAT = OPL->deltat;
+
+		DELTAT->freqbase = OPL->freqbase;
+		DELTAT->output_pointer = outd;
+		DELTAT->portshift = 5;
+		DELTAT->output_range = DELTAT_MIXING_LEVEL<<TL_BITS;
+		YM_DELTAT_ADPCM_Reset(DELTAT,0);
+	}
+#endif
 }
 
 /* ----------  Create one of vietual YM3812 ----------       */
@@ -1103,7 +1186,9 @@ FM_OPL *OPLCreate(int type, int clock, int rate)
 	/* allocate OPL state space */
 	state_size  = sizeof(FM_OPL);
 	state_size += sizeof(OPL_CH)*max_ch;
-	/* if(type&OPL_TYPE_ADPCM) state_size+= sizeof(YM_DELTAT) */
+#if BUILD_Y8950
+	if(type&OPL_TYPE_ADPCM) state_size+= sizeof(YM_DELTAT);
+#endif
 	/* allocate memory block */
 	ptr = malloc(state_size);
 	if(ptr==NULL) return NULL;
@@ -1111,8 +1196,9 @@ FM_OPL *OPLCreate(int type, int clock, int rate)
 	memset(ptr,0,state_size);
 	OPL        = (FM_OPL *)ptr; ptr+=sizeof(FM_OPL);
 	OPL->P_CH  = (OPL_CH *)ptr; ptr+=sizeof(OPL_CH)*max_ch;
-	/* if(type&OPL_TYPE_ADPCM) OPL->adpcm = (FM_DELTAT *)ptr; ptr+=sizeof(YM_DELTAT) */
-
+#if BUILD_Y8950
+	if(type&OPL_TYPE_ADPCM) OPL->deltat = (YM_DELTAT *)ptr; ptr+=sizeof(YM_DELTAT);
+#endif
 	/* set channel state pointer */
 	OPL->type  = type;
 	OPL->clock = clock;
@@ -1171,22 +1257,34 @@ unsigned char OPLRead(FM_OPL *OPL,int a)
 	{	/* status port */
 		return OPL->status & (OPL->statusmask|0x80);
 	}
-#if 0
 	/* data port */
 	switch(OPL->address)
 	{
 	case 0x05: /* KeyBoard IN */
+		if(OPL->type&OPL_TYPE_KEYBOARD)
+		{
+			if(OPL->keyboardhandler_r)
+				return OPL->keyboardhandler_r(OPL);
+			else
+				Log(LOG_WAR,"OPL:read unmapped KEYBOARD port\n");
+		}
 		return 0;
+#if 0
 	case 0x0f: /* ADPCM-DATA  */
 		return 0;
+#endif
 	case 0x19: /* I/O DATA    */
-		if(!(OPL->type&OPL_TYPE_IO)) return 0;
-		/* if(OPL->porthandler_w) return OPL->porthandler_w(); */
+		if(OPL->type&OPL_TYPE_IO)
+		{
+			if(OPL->porthandler_r)
+				return OPL->porthandler_r(OPL);
+			else
+				Log(LOG_WAR,"OPL:read unmapped I/O port\n");
+		}
 		return 0;
 	case 0x1a: /* PCM-DATA    */
 		return 0;
 	}
-#endif
 	return 0;
 }
 

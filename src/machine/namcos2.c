@@ -116,9 +116,7 @@ int namcos2_68k_eeprom_r( int offset )
 
 int namcos2_68k_data_rom_r(int offset)
 {
-	int data;
-	data= READ_WORD(&Machine->memory_region[MEM_DATA][offset]);
-	return data;
+	return READ_WORD(&memory_region(REGION_DATA)[offset]);
 }
 
 
@@ -207,6 +205,7 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 {
 	int olddata=namcos2_68k_vram_ctrl_r(offset&0x3f)&0x0f;
 	int newdata=data&0x0f;
+	int flip;
 
 	/* Write word to register */
 	COMBINE_WORD_MEM(&namcos2_68k_vram_ctrl[offset&0x3f],data);
@@ -214,92 +213,37 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 	switch(offset&0x3f)
 	{
 		case 0x02:
-			{
-				/* Plane 0 X Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x02)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x06)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
-				namcos2_tilemap0_flip=flip;
-				namcos2_tilemap4_flip=flip;
-				namcos2_tilemap5_flip=flip;
-				tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0x1ff );
-			}
+			/* All planes are flipped X+Y from D15 of this word */
+			flip=(namcos2_68k_vram_ctrl_r(0x02)&0x8000)?(TILEMAP_FLIPX|TILEMAP_FLIPY):0;
+			if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+			namcos2_tilemap0_flip=flip;
+			namcos2_tilemap1_flip=flip;
+			namcos2_tilemap2_flip=flip;
+			namcos2_tilemap3_flip=flip;
+			namcos2_tilemap4_flip=flip;
+			namcos2_tilemap5_flip=flip;
+			tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0x1ff );
 			break;
 		case 0x06:
-			{
-				/* Plane 0 Y Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x02)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x06)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
-				if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
-				namcos2_tilemap0_flip=flip;
-				namcos2_tilemap4_flip=flip;
-				namcos2_tilemap5_flip=flip;
-				tilemap_set_scrolly( namcos2_tilemap0, 0, (data+24)&0x1ff );
-			}
+			tilemap_set_scrolly( namcos2_tilemap0, 0, (data+24)&0x1ff );
 			break;
 		case 0x0a:
-			{
-				/* Plane 1 X Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x0a)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x0e)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap1_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
-				namcos2_tilemap1_flip=flip;
-				tilemap_set_scrollx( namcos2_tilemap1, 0, (data+44+2)&0x1ff );
-			}
+			tilemap_set_scrollx( namcos2_tilemap1, 0, (data+44+2)&0x1ff );
 			break;
 		case 0x0e:
-			{
-				/* Plane 1 Y Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x0a)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x0e)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap1_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
-				namcos2_tilemap1_flip=flip;
-				tilemap_set_scrolly( namcos2_tilemap1, 0, (data+24)&0x1ff );
-			}
+			tilemap_set_scrolly( namcos2_tilemap1, 0, (data+24)&0x1ff );
 			break;
 		case 0x12:
-			{
-				/* Plane 2 X Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x12)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x16)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap2_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
-				namcos2_tilemap2_flip=flip;
-				tilemap_set_scrollx( namcos2_tilemap2, 0, (data+44+1)&0x1ff );
-			}
+			tilemap_set_scrollx( namcos2_tilemap2, 0, (data+44+1)&0x1ff );
 			break;
 		case 0x16:
-			{
-				/* Plane 2 Y Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x12)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x16)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap2_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
-				namcos2_tilemap2_flip=flip;
-				tilemap_set_scrolly( namcos2_tilemap2, 0, (data+24)&0x1ff );
-			}
+			tilemap_set_scrolly( namcos2_tilemap2, 0, (data+24)&0x1ff );
 			break;
 		case 0x1a:
-			{
-				/* Plane 3 X Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x1a)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x1e)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap3_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
-				namcos2_tilemap3_flip=flip;
-				tilemap_set_scrollx( namcos2_tilemap3, 0, (data+44)&0x1ff );
-			}
+			tilemap_set_scrollx( namcos2_tilemap3, 0, (data+44)&0x1ff );
 			break;
 		case 0x1e:
-			{
-				/* Plane 3 Y Offset/flip */
-				int flip= (namcos2_68k_vram_ctrl_r(0x1a)&0x8000)?TILEMAP_FLIPX:0;
-				flip|=(namcos2_68k_vram_ctrl_r(0x1e)&0x8000)?TILEMAP_FLIPY:0;
-				if(namcos2_tilemap3_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
-				namcos2_tilemap3_flip=flip;
-				tilemap_set_scrolly( namcos2_tilemap3, 0, (data+24)&0x1ff );
-			}
+			tilemap_set_scrolly( namcos2_tilemap3, 0, (data+24)&0x1ff );
 			break;
 		case 0x30:
 			/* Change of colour bank needs to force a tilemap redraw */
@@ -472,7 +416,7 @@ int namcos2_sprite_bank=0;
 
 void namcos2_68k_sprite_ram_w(int offset, int data)
 {
-    COMBINE_WORD_MEM(&namcos2_sprite_ram[offset],data);
+    COMBINE_WORD_MEM(&namcos2_sprite_ram[offset&0x3fff],data);
 }
 
 void namcos2_68k_sprite_bank_w( int offset, int data )
@@ -771,8 +715,7 @@ int namcos2_sound_interrupt(void)
 
 void namcos2_sound_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[CPU_SOUND];
-/*	int bank = ( data >> 4 ) & 0x07;*/
+	unsigned char *RAM=memory_region(REGION_CPU_SOUND);
 	int bank = ( data >> 4 ) & 0x0f;	/* 991104.CAB */
 	cpu_setbank( CPU3_ROM1, &RAM[ 0x10000 + ( 0x4000 * bank ) ] );
 }

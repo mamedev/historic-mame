@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *cloud9_vram;
+
 unsigned char *cloud9_vram2;
 unsigned char *cloud9_bitmap_regs;
 unsigned char *cloud9_auto_inc_x;
@@ -32,7 +32,7 @@ void cloud9_paletteram_w(int offset,int data)
 	int blue;
 
 
-	paletteram[(offset & 0x3F)] = data;
+	paletteram[(offset & 0x3f)] = data;
 	blue = (offset & 0x40);
 
 	/* red component */
@@ -53,7 +53,7 @@ void cloud9_paletteram_w(int offset,int data)
 	bit2 = (~data >> 1) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color((offset & 0x3F),r,g,b);
+	palette_change_color((offset & 0x3f),r,g,b);
 }
 
 /***************************************************************************
@@ -96,7 +96,7 @@ void cloud9_paletteram_w(int offset,int data)
   This is used to take an x,y location and convert it to the proper memory
   address, bank, and nibble.  This is pure speculation.
 ***************************************************************************/
-static void ConvertPoint(unsigned int x, unsigned int y, unsigned char **vptr, int *vpixel)
+static void convert_point(unsigned int x, unsigned int y, unsigned char **vptr, int *vpixel)
 {
 	unsigned int voff;
 
@@ -104,22 +104,22 @@ static void ConvertPoint(unsigned int x, unsigned int y, unsigned char **vptr, i
 
 	switch (x & 0x02)
 	{
-		case 0x00:
-			*vptr = &(cloud9_vram[voff]);
-			break;
-		case 0x02:
-			*vptr = &(cloud9_vram2[voff]);
-			break;
+	case 0x00:
+		*vptr = &(videoram[voff]);
+		break;
+	case 0x02:
+		*vptr = &(cloud9_vram2[voff]);
+		break;
 	}
 
 	switch (x & 0x01)
 	{
-		case 0x00:
-			*vpixel = (**vptr & 0x0F) >> 0;
-			break;
-		case 0x01:
-			*vpixel = (**vptr & 0xF0) >> 4;
-			break;
+	case 0x00:
+		*vpixel = (**vptr & 0x0f) >> 0;
+		break;
+	case 0x01:
+		*vpixel = (**vptr & 0xf0) >> 4;
+		break;
 	}
 }
 
@@ -137,22 +137,22 @@ int cloud9_bitmap_regs_r(int offset)
 
 	switch (offset)
 	{
-		// Indirect Addressing - X register
-		case 0:
-			return x;
-		// Indirect Addressing - Y register
-		case 1:
-			return y;
-		// Indirect Addressing - pixel value at (X,Y)
-		case 2:
-			if (y < 0x0c)
-			{
-				if (errorlog) fprintf(errorlog,"Unexpected read from top of bitmap!\n");
-				return 0;
-			}
+	case 0:
+		/* Indirect Addressing - X register */
+		return x;
+	case 1:
+		/* Indirect Addressing - Y register */
+		return y;
+	case 2:
+		/* Indirect Addressing - pixel value at (X,Y) */
+		if (y < 0x0c)
+		{
+			if (errorlog) fprintf(errorlog,"Unexpected read from top of bitmap!\n");
+			return 0;
+		}
 
-			ConvertPoint(x,y,&vptr,&vpixel);
-			return vpixel;
+		convert_point(x,y,&vptr,&vpixel);
+		return vpixel;
 	}
 
 	return 0;
@@ -172,32 +172,32 @@ void cloud9_bitmap_regs_w(int offset,int data)
 
 	if (offset == 2)
 	{
-		// Not quite sure how these writes map to VRAM
-		// (Cloud9 only directly writes 00 to VRAM and doesn't read it)
+		/* Not quite sure how these writes map to VRAM
+		   (Cloud9 only directly writes 00 to VRAM and doesn't read it) */
 
-		// Don't allow writes to memory at less than 0x600
+		/* Don't allow writes to memory at less than 0x600 */
 		if (y >= 0x0c)
 		{
 			unsigned char *vptr;
 			int vpixel;
 
-			ConvertPoint(x,y,&vptr,&vpixel);
+			convert_point(x,y,&vptr,&vpixel);
 
-			// This is a guess
+			/* This is a guess */
 			switch (x & 0x01)
 			{
-				case 0x00:
-					*vptr = (*vptr & 0xF0) | ((data & 0x0F) << 0);
-					break;
-				case 0x01:
-					*vptr = (*vptr & 0x0F) | ((data & 0x0F) << 4);
-					break;
+			case 0x00:
+				*vptr = (*vptr & 0xf0) | ((data & 0x0f) << 0);
+				break;
+			case 0x01:
+				*vptr = (*vptr & 0x0f) | ((data & 0x0f) << 4);
+				break;
 			}
 
 		}
 
-		// If color_bank is set, add 0x20 to the color
-		tmpbitmap->line[y][x] = Machine->pens[(data & 0x0F) + ((*cloud9_color_bank & 0x80) >> 2)];
+		/* If color_bank is set, add 0x20 to the color */
+		plot_pixel(tmpbitmap, x, y, Machine->pens[(data & 0x0f) + ((*cloud9_color_bank & 0x80) >> 2)]);
 
 		if ((*cloud9_auto_inc_x) < 0x80)
 			cloud9_bitmap_regs[0]++;
@@ -212,41 +212,34 @@ void cloud9_bitmap_regs_w(int offset,int data)
 ***************************************************************************/
 void cloud9_bitmap_w(int offset,int data)
 {
-	unsigned int x, y;
+	UINT8 x, y;
 
-	y = ((offset + 0x600) >> 6) & 0xFF;
-	x = ((offset + 0x600) & 0x3F) << 2;
+	y = ((offset + 0x600) >> 6);
+	x = ((offset + 0x600) & 0x3f) << 2;
 
 	if (*cloud9_both_banks & 0x80)
 	{
-		cloud9_vram[offset] = data;
+		videoram[offset] = data;
 		cloud9_vram2[offset] = data;
 
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0x0F) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)];
-		x++;
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0xF0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)];
-		x++;
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0x0F) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)];
-		x++;
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0xF0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)];
+		plot_pixel(tmpbitmap, x,   y, Machine->pens[((data & 0x0f) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)]);
+		plot_pixel(tmpbitmap, x+1, y, Machine->pens[((data & 0xf0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)]);
+		plot_pixel(tmpbitmap, x+2, y, Machine->pens[((data & 0x0f) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)]);
+		plot_pixel(tmpbitmap, x+3, y, Machine->pens[((data & 0xf0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)]);
 	}
 	else if (*cloud9_vram_bank & 0x80)
 	{
 		cloud9_vram2[offset] = data;
 
-		x += 2;
-
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0x0F) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)];
-		x++;
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0xF0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)];
+		plot_pixel(tmpbitmap, x+2, y, Machine->pens[((data & 0x0f) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)]);
+		plot_pixel(tmpbitmap, x+3, y, Machine->pens[((data & 0xf0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)]);
 	}
 	else
 	{
-		cloud9_vram[offset] = data;
+		videoram[offset] = data;
 
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0x0F) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)];
-		x++;
-		tmpbitmap->line[y][x] = Machine->pens[((data & 0xF0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)];
+		plot_pixel(tmpbitmap, x  , y, Machine->pens[((data & 0x0f) >> 0) + ((*cloud9_color_bank & 0x80) >> 2)]);
+		plot_pixel(tmpbitmap, x+1, y, Machine->pens[((data & 0xf0) >> 4) + ((*cloud9_color_bank & 0x80) >> 2)]);
 	}
 }
 
@@ -257,17 +250,44 @@ void cloud9_bitmap_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
+static void redraw_bitmap(void)
+{
+	int offs;
+
+	int cloud9_both_banks_save = *cloud9_both_banks;
+	int cloud9_vram_bank_save  = *cloud9_vram_bank;
+
+	*cloud9_both_banks = 0;
+
+	for (offs = 0; offs < videoram_size; offs++)
+	{
+		*cloud9_vram_bank = 0;
+		cloud9_bitmap_w(offs, videoram[offs]);
+
+		*cloud9_vram_bank = 0x80;
+		cloud9_bitmap_w(offs, cloud9_vram2[offs]);
+	}
+
+	*cloud9_both_banks = cloud9_both_banks_save;
+	*cloud9_vram_bank  = cloud9_vram_bank_save;
+}
+
+
 void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
 
-	palette_recalc();
+	if (palette_recalc())
+	{
+		redraw_bitmap();
+	}
 
-	/* copy the character mapped graphics */
+
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	/* Draw the sprites */
+
+	/* draw the sprites */
 	for (offs = 0;offs < 20;offs++)
 	{
 		int spritenum;

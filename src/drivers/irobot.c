@@ -223,10 +223,10 @@ INPUT_PORTS_START( irobot )
     PORT_DIPSETTING(    0x00, "2 min 10 sec" )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_CENTER, 70, 10, 0, 95, 159 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_CENTER, 70, 50, 0, 95, 159 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_REVERSE|IPF_CENTER, 50, 10 ,0, 95, 159 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_REVERSE|IPF_CENTER, 50, 50, 0, 95, 159 )
 
 INPUT_PORTS_END
 
@@ -244,7 +244,7 @@ static struct GfxLayout charlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x0000, &charlayout,     64, 16 },
+    { REGION_GFX1, 0x0000, &charlayout,     64, 16 },
 	{ -1 }
 };
 /*
@@ -283,7 +283,7 @@ static struct MachineDriver machine_driver =
 		{
             CPU_M6809,
             1500000,    /* 1.5 Mhz */
-			0,
+			REGION_CPU1,
 			readmem,writemem,0,0,
             ignore_interrupt,0		/* interrupt handled by scanline callbacks */
          },
@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( irobot )
-	ROM_REGION(0x20000) /* 64k for code + 48K Banked ROM*/
+	ROM_REGIONX( 0x20000, REGION_CPU1 ) /* 64k for code + 48K Banked ROM*/
 	ROM_LOAD( "136029.208",   0x6000, 0x2000, 0xb4d0be59 )
 	ROM_LOAD( "136029.209",   0x8000, 0x4000, 0xf6be3cd0 )
 	ROM_LOAD( "136029.210",   0xC000, 0x4000, 0xc0eb2133 )
@@ -331,7 +331,7 @@ ROM_START( irobot )
 	ROM_LOAD( "136029.206",   0x14000, 0x4000, 0xe114a526 )
 	ROM_LOAD( "136029.207",   0x18000, 0x4000, 0xb4556cb0 )
 
-	ROM_REGION_DISPOSE(0x800)  /* temporary space for graphics (disposed after conversion) */
+	ROM_REGIONX( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
 	ROM_LOAD( "136029.124",   0x0000, 0x800, 0x848948b6 )
 
 	ROM_REGION(0x10000)  /* temoporary space for mathbox roms */
@@ -357,6 +357,8 @@ ROM_START( irobot )
 	ROM_LOAD( "ir125.bin",    0x0000, 0x0020, 0x446335ba )
 ROM_END
 
+	/*  Colorprom from John's driver. ? */
+	/*  ROM_LOAD( "136029.125",    0x0000, 0x0020, 0xc05abf82 ) */
 
 
 static int novram_load(void)
@@ -402,7 +404,7 @@ struct GameDriver driver_irobot =
 	rom_irobot,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_irobot,
 

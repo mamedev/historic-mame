@@ -428,7 +428,7 @@ struct GameDriver driver_footchmp =
 	rom_footchmp,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_footchmp,
 

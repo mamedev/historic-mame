@@ -338,7 +338,7 @@ void williams2_vh_stop(void)
 
 static void williams2_update_tiles(int y, const struct rectangle *clip)
 {
-	UINT8 *tileram = &Machine->memory_region[Machine->drv->cpu[0].memory_region][0xc000];
+	UINT8 *tileram = &memory_region(Machine->drv->cpu[0].memory_region)[0xc000];
 	int xpixeloffset, xtileoffset;
 	int color, col;
 

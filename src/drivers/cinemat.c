@@ -242,14 +242,14 @@ void cinemat_interleave (int romSize, int numRoms)
 	{
 		for (i = 0; i < numRoms; i += 2)
 		{
-			src1 = &Machine->memory_region[0][i * romSize + 0];
-			src2 = &Machine->memory_region[0][i * romSize + romSize];
+			src1 = &memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + 0];
+			src2 = &memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + romSize];
 			dest = temp;
 
 			for (j = 0; j < romSize; j++)
 				*dest++ = *src1++, *dest++ = *src2++;
 
-			memcpy (&Machine->memory_region[0][i * romSize + 0], temp, 2 * romSize);
+			memcpy (&memory_region(Machine->drv->cpu[0].memory_region)[i * romSize + 0], temp, 2 * romSize);
 		}
 
 		free (temp);
@@ -440,7 +440,7 @@ struct GameDriver driver_spacewar =
 	rom_spacewar,
 	cinemat4k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_spacewar,
 
@@ -548,7 +548,7 @@ struct GameDriver driver_barrier =
 	rom_barrier,
 	cinemat4k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_barrier,
 
@@ -663,7 +663,7 @@ struct GameDriver driver_starhawk =
 	rom_starhawk,
 	cinemat4k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starhawk,
 
@@ -796,7 +796,7 @@ struct GameDriver driver_starcas =
 	rom_starcas,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starcas,
 
@@ -823,7 +823,7 @@ struct GameDriver driver_starcas1 =
 	rom_starcas1,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_starcas,
 
@@ -937,7 +937,7 @@ struct GameDriver driver_tailg =
 	rom_tgunner,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_tgunner,
 
@@ -1073,7 +1073,7 @@ struct GameDriver driver_ripoff =
 	rom_ripoff,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_ripoff,
 
@@ -1251,7 +1251,7 @@ struct GameDriver driver_speedfrk =
 	rom_speedfrk,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_speedfrk,
 
@@ -1366,7 +1366,7 @@ struct GameDriver driver_sundance =
 	rom_sundance,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sundance,
 
@@ -1490,7 +1490,7 @@ struct GameDriver driver_warrior =
 	rom_warrior,
 	cinemat8k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_warrior,
 
@@ -1609,7 +1609,7 @@ struct GameDriver driver_armora =
 	rom_armora,
 	cinemat16k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_armora,
 
@@ -1745,7 +1745,7 @@ struct GameDriver driver_solarq =
 	rom_solarq,
 	cinemat16k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_solarq,
 
@@ -1860,7 +1860,7 @@ struct GameDriver driver_demon =
 	"demon",
 	"Demon",
 	"1982",
-	"Rock-Ola",
+	"Rock-ola",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
@@ -1870,7 +1870,7 @@ struct GameDriver driver_demon =
 	rom_demon,
 	cinemat16k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_demon,
 
@@ -1987,7 +1987,7 @@ struct GameDriver driver_wotw =
 	rom_wotw,
 	cinemat16k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_wotw,
 
@@ -2129,7 +2129,7 @@ struct GameDriver driver_boxingb =
 	rom_boxingb,
 	cinemat32k_rom_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_boxingb,
 

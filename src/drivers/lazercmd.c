@@ -648,9 +648,9 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x0c00; i++)
 	{
-		Machine->memory_region[0][i + 0x0000] =
-			((Machine->memory_region[0][i + 0x0000] << 4) |
-			 (Machine->memory_region[0][i + 0x1000] & 15)) ^ 0xff;
+		memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] =
+			((memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] << 4) |
+			 (memory_region(Machine->drv->cpu[0].memory_region)[i + 0x1000] & 15)) ^ 0xff;
 	}
 /******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
@@ -686,9 +686,9 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x4000; i++)
 	{
-		Machine->memory_region[0][i + 0x0000] =
-			~((Machine->memory_region[0][i + 0x0000] << 4) |
-			  (Machine->memory_region[0][i + 0x4000] & 15));
+		memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] =
+			~((memory_region(Machine->drv->cpu[0].memory_region)[i + 0x0000] << 4) |
+			  (memory_region(Machine->drv->cpu[0].memory_region)[i + 0x4000] & 15));
 	}
 /******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
@@ -732,7 +732,7 @@ struct GameDriver driver_lazercmd =
 	lazercmd_rom_decode,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_lazercmd,
 
@@ -760,7 +760,7 @@ struct GameDriver driver_medlanes =
 	medlanes_rom_decode,
 	0,
 	0,
-	0,      /* sound_prom */
+	0,
 
 	input_ports_medlanes,
 

@@ -942,7 +942,7 @@ static void xevios_decode(void)
 
 static int hiload(void) /* V.V */
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	/* check if the hi score table has already been initialized */
@@ -969,7 +969,7 @@ static int hiload(void) /* V.V */
 static void hisave(void) /* V.V */
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = memory_region(Machine->drv->cpu[0].memory_region);
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -998,7 +998,7 @@ struct GameDriver driver_xevious =
 	rom_xevious,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xevious,
 
@@ -1024,7 +1024,7 @@ struct GameDriver driver_xeviousa =
 	rom_xeviousa,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xeviousa,
 
@@ -1050,7 +1050,7 @@ struct GameDriver driver_xevios =
 	rom_xevios,
 	xevios_decode, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_xevious,
 
@@ -1076,7 +1076,7 @@ struct GameDriver driver_sxevious =
 	rom_sxevious,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
 	input_ports_sxevious,
 

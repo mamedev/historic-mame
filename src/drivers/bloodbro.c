@@ -679,7 +679,7 @@ struct GameDriver driver_bloodbro =
 	rom_bloodbro,
 	0,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_bloodbro,
 
@@ -705,7 +705,7 @@ struct GameDriver driver_weststry =
 	rom_weststry,
 	gfx_untangle,0,
 	0,
-	0, /* sound_prom */
+	0,
 
 	input_ports_weststry,
 
