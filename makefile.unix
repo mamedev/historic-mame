@@ -45,6 +45,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/vidhrdw/ckong.o obj/drivers/ckong.o \
          obj/vidhrdw/dkong.o obj/drivers/dkong.o \
+         obj/vidhrdw/dkong3.o obj/drivers/dkong3.o \
          obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o \
          obj/vidhrdw/wow.o obj/drivers/wow.o \
          obj/drivers/galaxian.o \
@@ -66,6 +67,8 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
          obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
+         obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
+         obj/machine/btime.o obj/vidhrdw/btime.o obj/drivers/btime.o \
          obj/Z80/Z80.o obj/M6502/M6502.o
 
 VPATH = src src/Z80 src/M6502

@@ -12,8 +12,8 @@
 #define VIDEO_RAM_SIZE 0x400
 
 
-unsigned char *mario_videoram;
-unsigned char *mario_spriteram;
+unsigned char *dkong3_videoram;
+unsigned char *dkong3_spriteram;
 static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static struct osd_bitmap *tmpbitmap;
@@ -22,7 +22,7 @@ static int gfx_bank;
 
 
 
-int mario_vh_start(void)
+int dkong3_vh_start(void)
 {
 	gfx_bank = 0;
 
@@ -39,28 +39,28 @@ int mario_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
-void mario_vh_stop(void)
+void dkong3_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap);
 }
 
 
 
-void mario_videoram_w(int offset,int data)
+void dkong3_videoram_w(int offset,int data)
 {
-	if (mario_videoram[offset] != data)
+	if (dkong3_videoram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
 
-		mario_videoram[offset] = data;
+		dkong3_videoram[offset] = data;
 	}
 }
 
 
 
-void mario_gfxbank_w(int offset,int data)
+void dkong3_gfxbank_w(int offset,int data)
 {
-	gfx_bank = data;
+	gfx_bank = (data ? 0 : 1);
 }
 
 
@@ -72,7 +72,7 @@ void mario_gfxbank_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
+void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int i,offs;
 
@@ -89,10 +89,10 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (31 - offs % 32);
-			sy = 8 * (31 - offs / 32);
+			sx = 8 * (31 - offs / 32);
+			sy = 8 * (offs % 32);
 
-			charcode = mario_videoram[offs] + 256 * gfx_bank;
+			charcode = dkong3_videoram[offs] + 256 * gfx_bank;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,charcode >> 2,
@@ -110,12 +110,13 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (i = 0;i < 4*96;i += 4)
 	{
-		if (mario_spriteram[i])
+		if (dkong3_spriteram[i])
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					mario_spriteram[i+2],mario_spriteram[i+1] & 0x3f,
-					mario_spriteram[i+1] & 0x80,mario_spriteram[i+1] & 0x40,
-					248 - mario_spriteram[i+3],mario_spriteram[i] - 8,
+					(dkong3_spriteram[i+1] & 0x7f) + 2 * (dkong3_spriteram[i+2] & 0x40),
+					dkong3_spriteram[i+2] & 0x3f,
+					dkong3_spriteram[i+1] & 0x80,dkong3_spriteram[i+2] & 0x80,
+					dkong3_spriteram[i] - 7,dkong3_spriteram[i+3] - 8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

@@ -10,11 +10,13 @@ extern struct MachineDriver cclimber_driver;
 extern struct MachineDriver ckong_driver;
 extern struct MachineDriver dkong_driver;
 extern struct MachineDriver dkongjr_driver;
+extern struct MachineDriver dkong3_driver;
 extern struct MachineDriver bagman_driver;
 extern struct MachineDriver wow_driver;
 extern struct MachineDriver galaxian_driver;
 extern struct MachineDriver pisces_driver;
 extern struct MachineDriver japirem_driver;
+extern struct MachineDriver uniwars_driver;
 extern struct MachineDriver warofbug_driver;
 extern struct MachineDriver mooncrst_driver;
 extern struct MachineDriver moonqsr_driver;
@@ -36,6 +38,8 @@ extern struct MachineDriver congo_driver;
 extern struct MachineDriver bombjack_driver;
 extern struct MachineDriver centiped_driver;
 extern struct MachineDriver nibbler_driver;
+extern struct MachineDriver mpatrol_driver;
+extern struct MachineDriver btime_driver;
 
 
 
@@ -443,6 +447,28 @@ ROM_START( dkongjr_rom )
 
 	ROM_REGION(0x1000)	/* sound? */
 	ROM_LOAD( "dkj.3h",  0x0000, 0x1000 )
+ROM_END
+
+
+
+ROM_START( dkong3_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk3c.7b",  0x0000, 0x2000 )
+	ROM_LOAD( "dk3c.7c",  0x2000, 0x2000 )
+	ROM_LOAD( "dk3c.7d",  0x4000, 0x2000 )
+	ROM_LOAD( "dk3c.7e",  0x8000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk3v.3n",  0x0000, 0x1000 )
+	ROM_LOAD( "dk3v.3p",  0x1000, 0x1000 )
+	ROM_LOAD( "dk3v.7c",  0x2000, 0x1000 )
+	ROM_LOAD( "dk3v.7d",  0x3000, 0x1000 )
+	ROM_LOAD( "dk3v.7e",  0x4000, 0x1000 )
+	ROM_LOAD( "dk3v.7f",  0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* sound? */
+	ROM_LOAD( "dk3c.5l",  0x0000, 0x2000 )
+	ROM_LOAD( "dk3c.6h",  0x2000, 0x2000 )
 ROM_END
 
 
@@ -1223,11 +1249,62 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC16", 0xa000, 0x1000 )
 	ROM_LOAD( "IC17", 0xb000, 0x1000 )
 /*	ROM_LOAD( "IC52", 0x????, 0x0800 )	what is this ??? */
+/*	ROM_LOAD( "IC53", 0x????, 0x0800 )	what is this ??? */
 	ROM_LOAD( "IC14", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC50", 0x0000, 0x1000 )
 	ROM_LOAD( "IC51", 0x1000, 0x1000 )
+ROM_END
+
+
+
+ROM_START( mpatrol_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000 )
+	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000 )
+	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000 )
+	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000 )
+	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000 )	/* sprites */
+	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000 )
+	ROM_LOAD( "mp-e.3h", 0x4000, 0x1000 )	/* background graphics */
+	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000 )
+	ROM_LOAD( "mp-e.3l", 0x6000, 0x1000 )
+ROM_END
+
+
+
+ROM_START( btime_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ab05a1.12b", 0xb000, 0x1000 )
+	ROM_LOAD( "ab04.9b",    0xc000, 0x1000 )
+	ROM_LOAD( "ab06.13b",   0xd000, 0x1000 )
+	ROM_LOAD( "ab05.10b",   0xe000, 0x1000 )
+	ROM_LOAD( "ab07.15b",   0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ab8.13k",    0x0000, 0x1000 )  /* charset */
+	ROM_LOAD( "ab10.10k",   0x1000, 0x1000 )
+	ROM_LOAD( "ab12.7k",    0x2000, 0x1000 )
+	ROM_LOAD( "ab9.15k",    0x3000, 0x1000 )
+	ROM_LOAD( "ab9.15k",    0x4000, 0x1000 )  /* this is incorrect... rom ab11.12k missing */
+	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000 )
+	ROM_LOAD( "ab02.4b",    0x6000, 0x0800 )
+	ROM_LOAD( "ab01.3b",    0x6800, 0x0800 )
+	ROM_LOAD( "ab00.1b",    0x7000, 0x0800 )
+
+	ROM_REGION(0x0800)	/* background graphics */
+	ROM_LOAD( "ab03.6b",    0x0000, 0x0800 )
+
+/*  this is for audio
+        ROM_REGION(0x10000)
+        ROM_LOAD( "ab14.12h",   0xf000, 0x1000 )
+*/
+
 ROM_END
 
 
@@ -1253,6 +1330,7 @@ struct GameDriver drivers[] =
 	{ "ckong",    ckong_rom,    0, 0,               &ckong_driver },
 	{ "dkong",    dkong_rom,    0, 0,               &dkong_driver },
 	{ "dkongjr",  dkongjr_rom,  0, 0,               &dkongjr_driver },
+	{ "dkong3",   dkong3_rom,   0, 0,               &dkong3_driver },
 	{ "bagman",   bagman_rom,   0, 0,               &bagman_driver },
 	{ "wow",      wow_rom,      0, 0,               &wow_driver },
 	{ "robby",    robby_rom,    0, 0,               &wow_driver },
@@ -1266,7 +1344,7 @@ struct GameDriver drivers[] =
 	{ "galturbo", galnamco_rom, 0, 0,               &galaxian_driver },
 	{ "pisces",   pisces_rom,   0, 0,               &pisces_driver },
 	{ "japirem",  japirem_rom,  0, 0,               &japirem_driver },
-	{ "uniwars",  uniwars_rom,  0, 0,               &japirem_driver },
+	{ "uniwars",  uniwars_rom,  0, 0,               &uniwars_driver },
 	{ "warofbug", galaxian_rom, 0, 0,               &warofbug_driver },
 	{ "mooncrst", mooncrst_rom, moonqsr_decode, 0,  &mooncrst_driver },
 	{ "mooncrsb", mooncrsb_rom, 0, 0,               &mooncrst_driver },
@@ -1299,5 +1377,7 @@ struct GameDriver drivers[] =
 	{ "bombjack", bombjack_rom, 0, 0,               &bombjack_driver },
 	{ "centiped", centiped_rom, 0, 0,               &centiped_driver },
 	{ "nibbler",  nibbler_rom,  0, 0,               &nibbler_driver },
+	{ "mpatrol",  mpatrol_rom,  0, 0,               &mpatrol_driver },
+	{ "btime",    btime_rom,    0, 0,               &btime_driver },
 	{ 0	}	/* end of array */
 };

@@ -9,9 +9,9 @@ Centipede memory map (preliminary)
 read:
 0800      DSW1
 0801      DSW2
-0c00      ?
+0c00      trackball x + other things
 0c01      IN0
-0c02      ?
+0c02      trackball y
 0c03      IN1
 100a      random number generator
 

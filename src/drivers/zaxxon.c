@@ -235,9 +235,9 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,     0, 64 },	/* characters */
-	{ 1, 0x1000, &spritelayout, 64*8, 32 },	/* sprites */
-	{ 1, 0x7000, &charlayout2,     0, 64 },	/* background graphics */
+	{ 1, 0x0000, &charlayout1,          0, 16 },	/* characters */
+	{ 1, 0x1000, &spritelayout,      16*4, 32 },	/* sprites */
+	{ 1, 0x7000, &charlayout2,  16*4+32*8, 16 },	/* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -245,128 +245,102 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x92,0x49,	/* BROWN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x00,0xdb,0x00,	/* UNUSED */
-	0x00,0xdb,0xdb,	/* CYAN */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0x88,0x88,0x88,	/* UNUSED */
-	0xdb,0xdb,0x00,	/* YELLOW */
-	0xff,0x00,0xdb,	/* UNUSED */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xdb,0x00,	/* GREEN */
-	0x49,0xb6,0x92,	/* DKGREEN */
-	0xff,0xb6,0x92,	/* LTORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
+	0x00,0x00,0x00, /* BLACK */
+	0xdb,0x00,0x00, /* RED */
+	0xdb,0x92,0x49, /* BROWN */
+	0xff,0xb6,0xdb, /* PINK */
+	0xff,0xff,0xff, /* WHITE */
+	0x00,0xdb,0xdb, /* CYAN */
+	0x49,0xb6,0xdb, /* DKCYAN */
+	0xff,0xb6,0x49, /* DKORANGE */
+	0x00,0x00,0x96, /* DKBLUE */
+	0xdb,0xdb,0x00, /* YELLOW */
+	0x03,0x96,0xd2, /* LTBLUE */
+	0x24,0x24,0xdb, /* BLUE */
+	0x00,0xdb,0x00, /* GREEN */
+	0x49,0xb6,0x92, /* DKGREEN */
+	0xff,0xb6,0x92, /* LTORANGE */
+	0xb6,0xb6,0xb6, /* GRAY */
+	0x19,0x96,0x62, /* VDKGREEN */
+	0x96,0x00,0x00, /* DKRED */
+	0xdb,0xdb,0xdb  /* LTGRAY */
 };
 
-enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
-		UNUSED2,YELLOW,UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,GREY};
+enum {BLACK,RED,BROWN,PINK,WHITE,CYAN,DKCYAN,DKORANGE,
+		DKBLUE,YELLOW,LTBLUE,BLUE,GREEN,DKGREEN,LTORANGE,GRAY,
+		VDKGREEN,DKRED,LTGRAY};
 
 static unsigned char colortable[] =
 {
 	/* chars */
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6,
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6,
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6,
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6,
+	0,BLACK,RED,LTGRAY,      /* Title */
+	0,0,0,9,
+	0,0,0,1,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
+	0,0,0,0,
 
 	/* sprites */
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6,
-	0,1,2,3,4,5,6,7,
-	0,2,3,4,5,6,7,8,
-	0,3,4,5,6,7,8,9,
-	0,4,5,6,7,8,9,10,
-	0,5,6,7,8,9,10,11,
-	0,6,7,8,9,10,11,12,
-	0,7,8,9,10,11,12,13,
-	0,8,9,10,11,12,13,14,
-	0,9,10,11,12,13,14,15,
-	0,10,11,12,13,14,15,1,
-	0,11,12,13,14,15,1,2,
-	0,12,13,14,15,1,2,3,
-	0,13,14,15,1,2,3,4,
-	0,14,15,1,2,3,4,5,
-	0,15,1,2,3,4,5,6,
-	0,15,1,2,3,4,5,6
+	0,RED,WHITE,GREEN,YELLOW,BLUE,DKCYAN,DKORANGE,   /* Explosion Space */
+	0,RED,WHITE,CYAN,YELLOW,BLUE,GREEN,DKORANGE,     /* Explosion City */
+	0,RED,GREEN,RED,GREEN,RED,GREEN,RED,             /* NMI Bullet */
+	0,RED,PINK,RED,PINK,RED,PINK,RED,                /* NMI Bullet */
+	0,BLACK,BLACK,DKORANGE,BLACK,BLACK,BLACK,BLACK,  /* Player Bullet */
+	0,0,0,0,0,0,0,0,
+	0,DKRED,RED,DKRED,RED,DKRED,RED,DKRED,           /* NMI Bullet */
+	0,DKBLUE,DKORANGE,LTBLUE,BLUE,CYAN,LTBLUE,BLACK, /* Satellite 1 */
+	0,DKRED,BLACK,DKCYAN,RED,RED,BLACK,BLACK,        /* Plane When Hit */
+	0,BLACK,VDKGREEN,CYAN,DKBLUE,LTBLUE,DKGREEN,RED, /* Cannon 2 */
+	0,LTGRAY,BLUE,LTBLUE,DKGREEN,GRAY,DKORANGE,BLACK,/* NMI Plane 1 */
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,BLACK,RED,BLACK,BLACK,BLACK,BLACK,BLACK,       /* Cross-Target */
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,BLUE,DKORANGE,GRAY,YELLOW,RED,BLACK,BLACK,     /* Plane */
+	0,RED,LTBLUE,YELLOW,DKGREEN,BLUE,BLACK,BLACK,    /* NMI Plane 2 */
+	0,BLACK,VDKGREEN,CYAN,DKBLUE,LTBLUE,DKGREEN,RED, /* Cannon 1 */
+	0,YELLOW,BLACK,LTGRAY,GRAY,DKGREEN,LTBLUE,BLACK, /* Wall */
+	0,GRAY,BLACK,RED,DKRED,DKORANGE,LTORANGE,WHITE,  /* Radar & Fuel */
+	0,RED,GREEN,YELLOW,RED,RED,LTBLUE,LTORANGE,      /* Rocket 1 */
+	0,WHITE,GRAY,CYAN,DKCYAN,LTBLUE,BLUE,BLACK,      /* Zaxxon 1 */
+	0,DKBLUE,RED,LTBLUE,BLUE,CYAN,DKCYAN,BLACK,      /* Satellite 2 */
+	0,WHITE,PINK,DKORANGE,CYAN,RED,DKRED,BLACK,      /* Zaxxon 2 */
+	0,BLUE,DKRED,RED,DKORANGE,YELLOW,LTBLUE,LTORANGE,/* Rocket 2 */
+	0,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,BLACK,     /* Shadow of Plane */
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,GRAY,GRAY,DKCYAN,CYAN,DKGREEN,VDKGREEN,BLACK,  /* Zaxxon Dead */
+	0,0,0,0,0,0,0,0,
+
+	/* background tiles */
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,
+	0,BLACK,RED,BLUE,DKBLUE,CYAN,BLACK,BLACK,        /* Zaxxon Arena */
+	0,DKBLUE,LTBLUE,WHITE,DKCYAN,BLACK,BLUE,CYAN,    /* Space BG */
+	0,DKBLUE,WHITE,GRAY,BLACK,CYAN,BLUE,DKCYAN,      /* City BG 2 */
+	0,BLUE,GRAY,DKGREEN,LTGRAY,DKBLUE,LTBLUE,BLACK,  /* City BG 1 */
+	0,WHITE,LTGRAY,BLACK,GRAY,DKGREEN,RED,BLUE      /* Buildings */
 };
 
 
@@ -394,7 +368,7 @@ const struct MachineDriver zaxxon_driver =
 	0,0,palette,colortable,
 	80,97,
 	0x00,0x01,
-	8*13,8*16,0x05,
+	8*13,8*16,0x02,
 	0,
 	zaxxon_vh_start,
 	zaxxon_vh_stop,

@@ -205,6 +205,8 @@ word Run6502(M6502 *R)
 
   for(;;)
   {
+static int missedinterrupt;
+
 #ifdef DEBUG
     /* Turn tracing on when reached trap address */
     if(PC.W==R->Trap) R->Trace=1;
@@ -232,24 +234,34 @@ word Run6502(M6502 *R)
     }
 
     /* If cycle counter expired... */
-    if(ICount<=0)
+    if(ICount<=0 || (I == 0x58 && missedinterrupt == 1))
     {
+I=INT_IRQ;
+missedinterrupt = 0;
+    if(ICount<=0)
+	{
       M_STORE(R);                      /* Store local registers      */
       I=Interrupt6502(R);              /* Call the interrupt handler */
       if(I==INT_QUIT) return(PC.W);    /* If INT_QUIT returned, exit */
       M_LOAD(R);                       /* Load local registers       */
       ICount=R->IPeriod;               /* Reset the cycle counter    */
+	}
 
-      if((I==INT_NMI)||((I==INT_IRQ)&&!(P&I_FLAG)))
+        if(I==INT_IRQ && (P&I_FLAG))
+		{
+			missedinterrupt = 1;
+		}
+		else if((I==INT_NMI)||(I==INT_IRQ))
       {
         ICount-=7;
         M_PUSH(PC.B.h);
         M_PUSH(PC.B.l);
         M_PUSH(P&~B_FLAG);
         P&=~D_FLAG;
-        if(I==INT_IRQ) { P|=I_FLAG;J.W=0xFFFE; } else J.W=0xFFFA;
-        PC.B.l=Rd6502(J.W++);
-        PC.B.h=Rd6502(J.W);
+		if(I==INT_IRQ) { P|=I_FLAG;J.W=0xFFFE; }
+		else J.W=0xFFFA;
+		PC.B.l=Rd6502(J.W++);
+		PC.B.h=Rd6502(J.W);
       }
 M_STORE(R);
 return(PC.W);

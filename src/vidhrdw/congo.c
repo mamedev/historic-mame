@@ -16,8 +16,8 @@ unsigned char *congo_videoram;
 unsigned char *congo_colorram;
 unsigned char *congo_spriteram;
 unsigned char *congo_background_position;
-//static
-unsigned char dirtybuffer[VIDEO_RAM_SIZE];       /* keep track of modified portions of the screen */
+unsigned char *congo_background_enable;
+static unsigned char dirtybuffer[VIDEO_RAM_SIZE];       /* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static struct osd_bitmap *tmpbitmap,*backgroundbitmap;
 
@@ -57,7 +57,7 @@ int congo_vh_start(void)
 
 		drawgfx(prebitmap,Machine->gfx[2],
                                 Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-                                Machine->memory_region[2][0x4000 + offs] >> 2,
+                                Machine->memory_region[2][0x4000 + offs] >> 4,
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
@@ -159,7 +159,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-                scroll = 1024+63 - (congo_background_position[0] + 256*congo_background_position[1]);
+                scroll = 1024+61 - (congo_background_position[0] + 256*congo_background_position[1]) * congo_background_enable[0];
 
                 skew = 128;
 
@@ -190,7 +190,6 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
-
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */

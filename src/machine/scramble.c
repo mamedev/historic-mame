@@ -28,7 +28,7 @@ if (errorlog) fprintf(errorlog,"%04x: read IN2\n",Z80_GetPC());
 
 
 
-extern int scramble_protection_r(int offset)
+int scramble_protection_r(int offset)
 {
 if (errorlog) fprintf(errorlog,"%04x: read protection\n",Z80_GetPC());
 

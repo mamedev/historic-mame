@@ -182,7 +182,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 4},	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
 	16*8	/* every char takes 16 bytes */

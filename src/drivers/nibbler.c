@@ -236,7 +236,7 @@ const struct MachineDriver nibbler_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			800000,	/* 0.8 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
 			nibbler_interrupt,1

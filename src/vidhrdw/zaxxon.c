@@ -56,7 +56,7 @@ int zaxxon_vh_start(void)
 
 		drawgfx(prebitmap,Machine->gfx[2],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				Machine->memory_region[2][0x4000 + offs] >> 2,
+				Machine->memory_region[2][0x4000 + offs] >> 4,
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);

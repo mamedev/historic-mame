@@ -12,7 +12,7 @@ Congo Bongo memory map (preliminary)
 a000-a3ff Video RAM
 a400-a7ff Color RAM
 
-a000-a0ff sprites  (!)
+8400-8fff sprites
 
 read:
 c000      IN0
@@ -100,6 +100,7 @@ extern unsigned char *congo_videoram;
 extern unsigned char *congo_colorram;
 extern unsigned char *congo_spriteram;
 extern unsigned char *congo_background_position;
+extern unsigned char *congo_background_enable;
 extern void congo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void congo_videoram_w(int offset,int data);
 extern void congo_colorram_w(int offset,int data);
@@ -131,6 +132,7 @@ static struct MemoryWriteAddress writemem[] =
         { 0x8400, 0x8fff, MWA_RAM, &congo_spriteram },
         { 0xc01f, 0xc01f, interrupt_enable_w },
         { 0xc028, 0xc029, MWA_RAM, &congo_background_position },
+        { 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },
         { 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -143,7 +145,7 @@ static struct InputPort input_ports[] =
 		0x00,
                 { OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
 				OSD_KEY_CONTROL, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
+                { OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
 				OSD_JOY_FIRE, 0, 0, 0 }
 	},
 	{	/* IN1 */
@@ -226,9 +228,9 @@ static struct GfxLayout charlayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,  0, 16 },	/* characters */
-	{ 1, 0x1000, &spritelayout, 0, 16 },	/* sprites */
-        { 1, 0xd000, &charlayout2,  0, 16 },    /* background graphics */
+	{ 1, 0x0000, &charlayout1,          0, 16 },	/* characters */
+	{ 1, 0x1000, &spritelayout,      16*4, 32 },	/* sprites */
+	{ 1, 0xd000, &charlayout2,  16*4+32*8, 16 },	/* background tiles */
 	{ -1 } /* end of array */
 };
 
@@ -259,6 +261,59 @@ enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
 
 static unsigned char colortable[] =
 {
+	/* chars */
+        0,2,0,14,
+        0,14,0,4,
+        0,4,0,13,
+        0,13,0,6,
+        0,6,0,7,
+        0,7,0,8,
+        0,8,0,7,
+        0,7,0,9,
+        0,9,0,2,
+        0,2,0,5,
+        0,5,0,13,
+        0,13,0,8,
+        0,8,0,13,
+        0,13,0,7,
+        0,7,0,2,
+        0,7,0,2,
+
+	/* sprites */
+        0,1,2,14,4,13,6,7,
+        0,2,14,4,13,6,7,8,
+        0,14,4,13,6,7,8,7,
+        0,4,13,6,7,8,17,9,
+        0,13,6,7,8,7,9,2,
+        0,6,7,8,7,9,2,5,
+        0,7,8,7,9,2,5,13,
+        0,8,7,9,2,5,13,8,
+        0,7,9,2,5,13,8,13,
+        0,9,2,5,13,8,13,7,
+        0,2,5,13,8,13,7,2,
+        0,5,13,8,13,7,2,14,
+        0,13,8,13,7,2,14,4,
+        0,8,13,7,2,14,4,5,
+        0,13,7,2,14,4,5,6,
+        0,13,7,2,14,4,5,6,
+        0,1,2,14,4,13,6,7,
+        0,2,14,4,13,6,7,8,
+        0,14,4,13,6,7,8,7,
+        0,4,13,6,7,8,17,9,
+        0,13,6,7,8,7,9,2,
+        0,6,7,8,7,9,2,5,
+        0,7,8,7,9,2,5,13,
+        0,8,7,9,2,5,13,8,
+        0,7,9,2,5,13,8,13,
+        0,9,2,5,13,8,13,7,
+        0,2,5,13,8,13,7,2,
+        0,5,13,8,13,7,2,14,
+        0,13,8,13,7,2,14,4,
+        0,8,13,7,2,14,4,5,
+        0,13,7,2,14,4,5,6,
+        0,13,7,2,14,4,5,6,
+
+	/* background tiles */
         0,1,2,14,4,13,6,7,
         0,2,14,4,13,6,7,8,
         0,14,4,13,6,7,8,7,

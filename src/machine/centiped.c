@@ -13,8 +13,8 @@
 int centiped_init_machine(const char *gamename)
 {
 	/* patch the roms to pass the startup test */
-	RAM[0x38a8] = 0xea;
-	RAM[0x38a9] = 0xea;
+/*	RAM[0x38a8] = 0xea; */
+/*	RAM[0x38a9] = 0xea; */
 	RAM[0x38ae] = 0xea;
 	RAM[0x38af] = 0xea;
 

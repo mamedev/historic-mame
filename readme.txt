@@ -27,6 +27,8 @@ Crazy Climber                  Yes            Yes             Yes
 Crazy Kong                     Yes             No             Yes
 Donkey Kong                    Yes             No              No
 Donkey Kong Jr.                Yes             No              No
+Donkey Kong 3                  Yes             No              No
+Mario Bros.                    Yes             No              No
 Bagman                    Yes (slowdowns)      No          Music only
 Wizard of Wor               Partially        Maybe             No
 The Adventures of Robby Roto    No             No              No
@@ -49,12 +51,13 @@ Phoenix                        Yes           Close             No
 Pleiades                       Yes             No              No
 Space Invaders                 Yes            Yes              No
 Carnival                        No             No              No
-Mario Bros.                    Yes             No              No
 Zaxxon                         Yes             No              No
 Congo Bongo                    Yes             No              No
 Bomb Jack                      Yes            Yes              No
 Centipede                      Yes             No              No
 Nibbler                        Yes             No              No
+Moon Patrol                    Yes             No              No
+Burger Time                    Yes            Yes?             No
 
 
 
@@ -90,8 +93,8 @@ UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
 
 Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
    Buffoni (mix@lim.dsi.unimi.it)
-Mario Bros., Zaxxon and Bomb Jack drivers provided by Mirko Buffoni
-   (mix@lim.dsi.unimi.it)
+Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
+   by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
 
 Very special thanks to Sergio Munoz for the precious information about the
@@ -126,9 +129,14 @@ Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
    indications.
 Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
    emulator by Gary Shepherdson.
-Colors for Amidar and Frogger derived from SPARCADE by Dave Spicer.
+Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
 Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
+Thanks to Marc Vergoossen for Zaxxon colors.
+Centipeded information taken from Centipede emulator by Ivan Mackintosh, MageX
+   0.3 by Edward Massey and memory map by Pete Rittwage.
+Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
+Thanks to Chris Hardy (Chris_Hardy@vie.co.uk) for info on Moon Patrol.
 Thanks to Dave W. for all his help.
 
 
@@ -319,8 +327,34 @@ CTRL    Jump
 Donkey Kong Jr. ("dkongjr")
 ---------------------------
 
+Runs on hardware similar to Donkey Kong
+
 Arrows  Move around
 CTRL    Jump
+
+
+
+Donkey Kong 3 ("dkong3")
+------------------------
+
+Runs on hardware similar to Donkey Kong
+
+Arrows  Move around
+CTRL    Fire
+F1      Test (keep it pressed - very nice, try it!)
+
+
+
+Mario Bros. ("mario")
+---------------------
+
+Runs on hardware similar to Donkey Kong
+
+Arrows  Move around player 1
+CTRL    Jump player 1
+Z,X     Move around player 2
+SPACE   Jump player 2
+F1      Test (keep it pressed - very nice, try it!)
 
 
 
@@ -633,17 +667,6 @@ Doesn't work yet!
 
 
 
-Mario Bros. ("mario")
----------------------
-
-Arrows  Move around player 1
-CTRL    Jump player 1
-Z,X     Move around player 2
-SPACE   Jump player 2
-F1      Test (keep it pressed - very nice, try it!)
-
-
-
 Zaxxon ("zaxxon")
 ---------------------
 
@@ -711,5 +734,36 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz
 - Some input bits seem to be used as debug controls - quite interesting, but
   I haven't investigated yet.
-- One ROM fails the power on test, but the game seems to work well - maybe
-  it's a bootleg?
+
+
+
+Moon Patrol ("mpatrol")
+-----------------------
+
+Arrows  Move around
+CTRL    Fire
+ALT     Jump
+F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
+                   tests, press 2 for an additional menu of options, then
+				   left/right to choose the option, and 1 to select it)
+
+Known issues:
+- No background graphics. I don't know where to place them... can anyone
+  provide a screen snapshot?
+
+
+
+Burger Time ("btime")
+---------------------
+
+Arrows  Move around
+CTRL    Pepper
+F1      \  Various tests.
+F2      |  Use F1 to cycle through tests while in test mode.
+F1+F2   /
+
+Known issues:
+- There are the same problems with ROM encrypton that Replay 0.01a by Kevin
+  Brisley has. I'm not yet sure whether the ROMs are actually encrypted or
+  just corrupted... also, one of the graphics ROMs is missing.
+- Sprites are not turned off appropriately
