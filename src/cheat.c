@@ -7923,7 +7923,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				return 1;
 
 #ifndef MESS
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
 
@@ -7938,7 +7937,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 					return 1;
 			}
 
-#endif
 #endif
 #endif
 #endif
@@ -10441,7 +10439,7 @@ static void BuildCRCTable(void)
 	{
 		for(deviceID = 0; deviceID < device_count(deviceType); deviceID++)
 		{
-			UINT32	crc = device_crc(deviceType, deviceID);
+			UINT32	crc = image_crc(deviceType, deviceID);
 			int		isUnique = 1;
 
 			for(listIdx = 0; listIdx < deviceCRCListLength; listIdx++)

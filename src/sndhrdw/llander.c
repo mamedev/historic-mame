@@ -16,6 +16,22 @@
 #define LLANDER_TONE6K_NODE	NODE_51
 #define LLANDER_THRUST_NODE	NODE_52
 #define LLANDER_EXPLOD_NODE	NODE_53
+#define LLANDER_NRESET_NODE	NODE_54
+
+#define LLANDER_NOISE_NODE	NODE_60
+
+const struct discrete_lfsr_desc llander_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	6,			/* Use Bit 6 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is inverted XOR */
+	DISC_LFSR_IN0,		/* Feedback stage2 is just stage 1 output external feed not used */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output has the required inversion from stage 1 */
+	14			/* Output bit */
+};
 
 /***************************************************************************
   Lander has 4 sound sources: 3kHz, 6kHz, thrust, explosion
@@ -35,31 +51,39 @@ amplitude. These are combined at the output stage with an adder
 ***************************************************************************/
 
 DISCRETE_SOUND_START(llander_sound_interface)
-	DISCRETE_INPUT(LLANDER_THRUST_NODE,0,0x0003,0)									// Input handlers, mostly for enable
-	DISCRETE_INPUT(LLANDER_TONE3K_NODE,1,0x0003,0)
-	DISCRETE_INPUT(LLANDER_TONE6K_NODE,2,0x0003,0)
-	DISCRETE_INPUT(LLANDER_EXPLOD_NODE,3,0x0003,0)
+	DISCRETE_INPUT(LLANDER_THRUST_NODE,0,0x0007,0)									// Input handlers, mostly for enable
+	DISCRETE_INPUT(LLANDER_TONE3K_NODE,1,0x0007,0)
+	DISCRETE_INPUT(LLANDER_TONE6K_NODE,2,0x0007,0)
+	DISCRETE_INPUT(LLANDER_EXPLOD_NODE,3,0x0007,0)
+	DISCRETE_INPUT(LLANDER_NRESET_NODE,4,0x0007,0)
 
-	DISCRETE_SINEWAVE(NODE_10,LLANDER_TONE3K_NODE,3000,(((1.0/8.0)*32767.0)),0)		// 3KHz Sine wave amplitude 1/12 * 16384
+	DISCRETE_LFSR_NOISE(NODE_11,1,LLANDER_NRESET_NODE,12000,1,0,0,&llander_lfsr)		// 12KHz Noise source for thrust
+	DISCRETE_RCFILTER(LLANDER_NOISE_NODE, 1, NODE_11, 2247, 1e-6)
 
-	DISCRETE_SINEWAVE(NODE_20,LLANDER_TONE6K_NODE,6000,(((1.0/8.0)*32767.0)),0)		// 6KHz Sine wave amplitude 1/12 * 16384
+	DISCRETE_SQUAREWAVE(NODE_10,LLANDER_TONE3K_NODE,3000,(((1.0/8.0)*65535.0)),50,0,0)		// 3KHz Sine wave amplitude 1/12 * 16384
 
-	DISCRETE_GAIN(NODE_32,LLANDER_THRUST_NODE,((((2.0+4.0)/8.0)*32767.0)/8.0))		// Convert gain to amplitude for noise (some additional added to compansate for RC filter
-	DISCRETE_NOISE(NODE_31,1,12000,NODE_32)			 							  	// 12KHz Noise source for thrust
-	DISCRETE_RCFILTER(NODE_30,1,NODE_31,47000,0.1e-6) 						  		// Remove high freq noise
+	DISCRETE_SQUAREWAVE(NODE_20,LLANDER_TONE6K_NODE,6000,(((1.0/8.0)*65536.0)),50,0,0)		// 6KHz Sine wave amplitude 1/12 * 16384
 
-	DISCRETE_GAIN(NODE_41,LLANDER_THRUST_NODE,(((4.0/8.0)*32767.0)/8.0))			// Docs say that explosion also takes volume of thrust
-	DISCRETE_NOISE(NODE_40,LLANDER_EXPLOD_NODE,12000,NODE_41)						// Noise source for explosion
+	DISCRETE_GAIN(NODE_32,LLANDER_THRUST_NODE,((((2.0+2.0)/8.0)*65535.0)/8.0))				// Convert gain to amplitude for noise (Volume tweaked by +2.0)
+	DISCRETE_MULTIPLY(NODE_31,1,LLANDER_NOISE_NODE,NODE_32)		 						// Mix in 12KHz Noise source for thrust
+	DISCRETE_RCFILTER(NODE_30,1,NODE_31,47000,0.1e-6) 						  			// Remove high freq noise
 
-	DISCRETE_ADDER4(NODE_90,1,NODE_10,NODE_20,NODE_30,NODE_40)						// Mix all four sound sources
+	DISCRETE_GAIN(NODE_41,LLANDER_THRUST_NODE,(((4.0/8.0)*65535.0)/8.0))				// Docs say that explosion also takes volume of thrust
+	DISCRETE_MULTIPLY(NODE_40,LLANDER_EXPLOD_NODE,LLANDER_NOISE_NODE,NODE_41)			// Mix in Noise source for explosion
 
-	DISCRETE_OUTPUT(NODE_90)														// Take the output from the mixer
+	DISCRETE_ADDER4(NODE_90,1,NODE_10,NODE_20,NODE_30,NODE_40)							// Mix all four sound sources
+
+	DISCRETE_OUTPUT(NODE_90,100)															// Take the output from the mixer
 DISCRETE_SOUND_END
 
 WRITE_HANDLER( llander_snd_reset_w )
 {
-	/* This does nothing in the discrete emulation but on the real machine */
-	/* It resets the LFSR that is used for the white noise generator       */
+	/* Resets the LFSR that is used for the white noise generator       */
+	/* The reset pulse is the width of the address decode, just the     */
+	/* write to the register is used to do the reset, no data is used   */
+	discrete_sound_w(4,1);				/* Reset */
+/*	Spin for at least one cycle */
+	discrete_sound_w(4,0);				/* Clear reset */
 }
 
 WRITE_HANDLER( llander_sounds_w )

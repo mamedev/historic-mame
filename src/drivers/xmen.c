@@ -302,7 +302,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz? (hand tuned) */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(20,MIXER_PAN_LEFT,20,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -311,7 +311,7 @@ static struct K054539interface k054539_interface =
 	1,			/* 1 chip */
 	48000,
 	{ REGION_SOUND1 },
-	{ { 100, 100 } },
+	{ { 80, 80 } },
 	{ 0 }		/* The YM does not seem to be connected to the 539 analog input */
 };
 

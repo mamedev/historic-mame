@@ -19,14 +19,14 @@ Hammerin' Harry	/ Daiku no Gensan  1990  M82(3)          N
                   Daiku no Gensan  1990  M72(4)          Y
 Pound for Pound                    1990  M85             N
 Air Duel                           1990  M72?            Y
-Gallop - Armed Police Unit         1991  M73?(5)         N
+Cosmic Cop /                       1991  M84             N
+  Gallop - Armed Police Unit       1991  M73?            N
 Ken-Go                             1991  ?           Encrypted
 
 (1) different addressing PALs, so different memory map
 (2) rtype2j has M84 written on the board, but it's the same hardware as rtype2
 (3) multiple versions supported, running on different hardware
 (4) normal M72 memory map, but IRQ vectors and sprite control as in X-Multiply
-(5) there is also a M84 version of Gallop
 
 
 TODO:
@@ -36,11 +36,8 @@ TODO:
 - Maybe there is a layer enable register, e.g. nspirit shows (for an instant)
   incomplete screens with bad colors when you start a game.
 
-- Sound doesn't work in Gallop
-
 - Samples are missing in Gallop. The NMI handler for the sound CPU is just RETN,
-  so the hardware has to be different. I also can't make a good sample start
-  offset table. Same thing with Air Duel and dkgenm72.
+  so the hardware has to be different. Same thing with Air Duel and dkgenm72.
 
 - No samples in Pound for Pound, I haven't checked why; there are a lot of unknown
   I/O writes.
@@ -71,6 +68,7 @@ poundfor    0x20   17    20 0F 0A
 xmultipl    0x08   13    08 0F FA
 dbreed       "     "     "
 hharry       "     "     "
+cosmccop	0x18   --------------
 kengo       0x18   --------------
 
 ***************************************************************************/
@@ -180,11 +178,11 @@ static WRITE_HANDLER( airduel_sample_trigger_w )
 
 static WRITE_HANDLER( gallop_sample_trigger_w )
 {
-	/* this is most likely wrong */
-	int a[31] = { 0x00000, 0x00040, 0x01360, 0x02580, 0x04f20, 0x06240, 0x076e0, 0x08660,
-				  0x092a0, 0x09ba0, 0x0a560, 0x0cee0, 0x0de20, 0x0e620, 0x0f1c0, 0x10240,
-				  0x11380, 0x127a0, 0x13c40, 0x140a0, 0x16760, 0x17e40, 0x18ee0, 0x19f60,
-				  0x1bbc0, 0x1cee0, 0x1e320,       0,       0,       0,       0 };
+	int a[31] = { 0x00000, 0x00020, 0x00040, 0x01360, 0x02580, 0x04f20, 0x06240, 0x076e0,
+			      0x08660, 0x092a0, 0x09ba0, 0x0a560, 0x0cee0, 0x0de20, 0x0e620, 0x0f1c0,
+				  0x10200, 0x10220, 0x10240, 0x11380, 0x12760, 0x12780, 0x127a0, 0x13c40,
+				  0x140a0, 0x16760, 0x17e40, 0x18ee0, 0x19f60, 0x1bbc0, 0x1cee0 };
+
 	if (data < 31) m72_set_sample_start(a[data]);
 }
 
@@ -2005,7 +2003,7 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( rtype )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(rtype_readmem,rtype_writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2040,7 +2038,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( m72 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(m72_readmem,m72_writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2077,7 +2075,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( dkgenm72 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(m72_readmem,m72_writemem)
 	MDRV_CPU_PORTS(readport,xmultipl_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2114,7 +2112,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( xmultipl )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(xmultipl_readmem,xmultipl_writemem)
 	MDRV_CPU_PORTS(readport,xmultipl_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2151,7 +2149,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( dbreed )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(dbreed_readmem,dbreed_writemem)
 	MDRV_CPU_PORTS(readport,xmultipl_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2187,7 +2185,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( rtype2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(rtype2_readmem,rtype2_writemem)
 	MDRV_CPU_PORTS(readport,rtype2_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2223,7 +2221,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( majtitle )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(majtitle_readmem,majtitle_writemem)
 	MDRV_CPU_PORTS(readport,majtitle_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2259,7 +2257,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hharry )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(hharry_readmem,hharry_writemem)
 	MDRV_CPU_PORTS(readport,hharry_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2296,7 +2294,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hharryu )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(hharryu_readmem,hharryu_writemem)
 	MDRV_CPU_PORTS(readport,rtype2_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2333,7 +2331,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( poundfor )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(rtype2_readmem,rtype2_writemem)
 	MDRV_CPU_PORTS(poundfor_readport,rtype2_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -2368,7 +2366,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( kengo )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz external freq (8MHz internal) */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz external freq (8MHz internal) */
 	MDRV_CPU_MEMORY(kengo_readmem,kengo_writemem)
 	MDRV_CPU_PORTS(readport,kengo_writeport)
 	MDRV_CPU_VBLANK_INT(m72_interrupt,256)
@@ -3113,6 +3111,32 @@ ROM_START( airduel )
 	ROM_LOAD( "ad-v0.bin",    0x00000, 0x20000, 0x339f474d )
 ROM_END
 
+ROM_START( cosmccop )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "cc-d-h0b.bin", 0x00001, 0x40000, 0x38958b01 )
+	ROM_RELOAD(                      0x80001, 0x40000 )
+	ROM_LOAD16_BYTE( "cc-d-l0b.bin", 0x00000, 0x40000, 0xeff87f70 )
+	ROM_RELOAD(                      0x80000, 0x40000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "cc-d-sp.bin", 0x0000, 0x10000, 0x3e3ace60 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "cc-c-00.bin", 0x00000, 0x20000, 0x9d99deaa )	// cc-b-n0
+	ROM_LOAD( "cc-c-10.bin", 0x20000, 0x20000, 0x7eb083ed )	// cc-b-n1
+	ROM_LOAD( "cc-c-20.bin", 0x40000, 0x20000, 0x9421489e )	// cc-b-n2
+	ROM_LOAD( "cc-c-30.bin", 0x60000, 0x20000, 0x920ec735 )	// cc-b-n3
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "cc-d-g00.bin", 0x00000, 0x20000, 0xe7f3d772 ) /* tiles */
+	ROM_LOAD( "cc-d-g10.bin", 0x20000, 0x20000, 0x418b4e4c )
+	ROM_LOAD( "cc-d-g20.bin", 0x40000, 0x20000, 0xa4b558eb )
+	ROM_LOAD( "cc-d-g30.bin", 0x60000, 0x20000, 0xf64a3166 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "cc-c-v0.bin", 0x00000, 0x20000, 0x6247bade )	// cc-d-v0
+ROM_END
+
 ROM_START( gallop )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "cc-c-h0.bin",  0x00001, 0x20000, 0x2217dcd0 )
@@ -3203,5 +3227,6 @@ GAMEX( 1990, dkgenm72, hharry,   dkgenm72, hharry,   dkgenm72, ROT0,   "Irem", "
 GAMEX( 1990, poundfor, 0,        poundfor, poundfor, 0,        ROT270, "Irem", "Pound for Pound (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1990, poundfou, poundfor, poundfor, poundfor, 0,        ROT270, "Irem America", "Pound for Pound (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1990, airduel,  0,        m72,      airduel,  airduel,  ROT270, "Irem", "Air Duel (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1991, gallop,   0,        m72,      gallop,   gallop,   ROT0,   "Irem", "Gallop - Armed police Unit (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1991, cosmccop, 0,        kengo,    gallop,   0,        ROT0,   "Irem", "Cosmic Cop (World)", GAME_NO_COCKTAIL )
+GAMEX( 1991, gallop,   cosmccop, m72,      gallop,   gallop,   ROT0,   "Irem", "Gallop - Armed police Unit (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, kengo,    0,        kengo,    kengo,    kengo,    ROT0,   "Irem", "Ken-Go", GAME_NO_COCKTAIL )

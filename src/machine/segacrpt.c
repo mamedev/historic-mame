@@ -107,10 +107,10 @@
   315-5010      Pengo                  unencrypted version available
   315-5013      Super Zaxxon           used Zaxxon for known plaintext attack
   ???-????      Super Locomotive
-  ???-???? M120 Razzmatazz             same key as Ninja Princess
   315-5018      Yamato
   315-5028      Sindbad Mystery
-  315-5030      Up'n Down              unencrypted version available
+  315-5030      Up'n Down &            unencrypted version available
+           M120 Razzmatazz
   315-5033      Regulus                unencrypted version available
   315-5041 M140 Mister Viking
   315-5048      SWAT                   used Bull Fight for k.p.a.
@@ -125,7 +125,7 @@
   315-5098      Ninja Princess         unencrypted version available; same key as Up'n Down
   315-5102      Sega Ninja             unencrypted version available
   315-5110      I'm Sorry              used My Hero for k.p.a.
-  315-5114      ?? pcb 834-5492        not decoded yet
+  315-5114      ?? pcb 834-5492        same key as Regulus
   315-5115      TeddyBoy Blues
   315-5132      My Hero
   315-5135      Heavy Metal &

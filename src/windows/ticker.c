@@ -35,6 +35,7 @@ cycles_t		(*cycle_counter)(void) = init_cycle_counter;
 cycles_t		(*ticks_counter)(void) = init_cycle_counter;
 cycles_t		cycles_per_sec;
 int				win_force_rdtsc;
+int				win_high_priority;
 
 
 
@@ -165,7 +166,10 @@ static cycles_t init_cycle_counter(void)
 		// compute ticks_per_sec
 		cycles_per_sec = (end - start) * 4;
 
-		// reduce our priority
+		// restore our priority
+		// raise it if the config option is set and the debugger is not active
+		if (win_high_priority && !options.mame_debug && priority == THREAD_PRIORITY_NORMAL)
+			priority = THREAD_PRIORITY_ABOVE_NORMAL;
 		SetThreadPriority(GetCurrentThread(), priority);
 	}
 

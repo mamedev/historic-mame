@@ -225,7 +225,7 @@ static void checkintegrity(const struct fileinfo *file,int side)
 	if (mask0)
 	{
 		if (mask0 == file->size/2)
-			printf("%-23s %-23s FIRST AND SECOND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "");
+			printf("%-23s %-23s 1ST AND 2ND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "");
 		else
 		{
 			printf("%-23s %-23s BADADDR",side ? "" : file->name,side ? file->name : "");
@@ -301,14 +301,27 @@ static void checkintegrity(const struct fileinfo *file,int side)
 	}
 
 
-	for (i = 0;i < file->size/4;i++)
+	mask0 = 0xff;
+	for (i = 0;i < file->size/4 && mask0;i++)
 	{
-		if (file->buf[file->size/2 + 2*i+1] != 0xff) break;
-		if (file->buf[2*i+1] != file->buf[file->size/2 + 2*i]) break;
+		if (file->buf[               2*i  ] != 0x00) mask0 &= ~0x01;
+		if (file->buf[               2*i  ] != 0xff) mask0 &= ~0x02;
+		if (file->buf[               2*i+1] != 0x00) mask0 &= ~0x04;
+		if (file->buf[               2*i+1] != 0xff) mask0 &= ~0x08;
+		if (file->buf[file->size/2 + 2*i  ] != 0x00) mask0 &= ~0x10;
+		if (file->buf[file->size/2 + 2*i  ] != 0xff) mask0 &= ~0x20;
+		if (file->buf[file->size/2 + 2*i+1] != 0x00) mask0 &= ~0x40;
+		if (file->buf[file->size/2 + 2*i+1] != 0xff) mask0 &= ~0x80;
 	}
 
-	if (i == file->size/4)
-		printf("%-23s %-23s BAD NEOGEO DUMP - CUT 2ND HALF\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x01) printf("%-23s %-23s 1ST HALF = 00xx\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x02) printf("%-23s %-23s 1ST HALF = FFxx\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x04) printf("%-23s %-23s 1ST HALF = xx00\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x08) printf("%-23s %-23s 1ST HALF = xxFF\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x10) printf("%-23s %-23s 2ND HALF = 00xx\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x20) printf("%-23s %-23s 2ND HALF = FFxx\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x40) printf("%-23s %-23s 2ND HALF = xx00\n",side ? "" : file->name,side ? file->name : "");
+	if (mask0 & 0x80) printf("%-23s %-23s 2ND HALF = xxFF\n",side ? "" : file->name,side ? file->name : "");
 }
 
 

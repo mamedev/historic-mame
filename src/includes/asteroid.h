@@ -31,6 +31,7 @@ extern struct discrete_sound_block astdelux_sound_interface[];
 WRITE_HANDLER( asteroid_explode_w );
 WRITE_HANDLER( asteroid_thump_w );
 WRITE_HANDLER( asteroid_sounds_w );
+WRITE_HANDLER( asteroid_noise_reset_w );
 WRITE_HANDLER( astdelux_sounds_w );
 
 

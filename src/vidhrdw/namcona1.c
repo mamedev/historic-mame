@@ -518,7 +518,6 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	int sx,sy;
 
 	sprite_control = namcona1_vreg[0x22/2];
-
 	if( sprite_control&1 ) source += 0x400; /* alternate spriteram bank */
 
 	for( which=0; which<0x100; which++ )
@@ -533,11 +532,6 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		height = ((ypos>>12)&0x7)+1;
 		flipy = ypos&0x8000;
 		flipx = color&0x8000;
-
-		if( namcona1_gametype==NAMCO_NUMANATH && ypos&0x0100 )
-		{
-			return; /* end-of-list marker; nb2 specific? */
-		}
 
 		if( (tile&0x8000)==0 )
 		{
@@ -697,7 +691,7 @@ VIDEO_UPDATE( namcona1 )
 		{
 			for( which=NAMCONA1_NUM_TILEMAPS-1; which>=0; which-- )
 			{
-				if( namcona1_vreg[0x50+which] == priority )
+				if( (namcona1_vreg[0x50+which]&0x7) == priority )
 				{
 					draw_background( bitmap,cliprect,which,pri_mask[priority] );
 				}

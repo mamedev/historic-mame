@@ -17,7 +17,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
+data8_t* superqix_tilemap_ram;
 
 VIDEO_START( superqix );
 READ_HANDLER( superqix_bitmapram_r );
@@ -25,6 +25,7 @@ WRITE_HANDLER( superqix_bitmapram_w );
 READ_HANDLER( superqix_bitmapram2_r );
 WRITE_HANDLER( superqix_bitmapram2_w );
 WRITE_HANDLER( superqix_0410_w );
+WRITE_HANDLER( superqix_tilemap_w );
 VIDEO_UPDATE( superqix );
 
 
@@ -39,8 +40,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xe000, 0xe0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe100, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xebff, videoram_w, &videoram, &videoram_size },
-	{ 0xec00, 0xefff, colorram_w, &colorram },
+	{ 0xe800, 0xefff, superqix_tilemap_w, &superqix_tilemap_ram },
 	{ 0xf000, 0xffff, MWA_RAM },
 MEMORY_END
 

@@ -322,6 +322,22 @@ WRITE_HANDLER( YM2151_data_port_2_w )
 	}
 }
 
+WRITE_HANDLER( YM2151_word_0_w )
+{
+	if (offset)
+		YM2151_data_port_0_w(0,data);
+	else
+		YM2151_register_port_0_w(0,data);
+}
+
+WRITE_HANDLER( YM2151_word_1_w )
+{
+	if (offset)
+		YM2151_data_port_1_w(0,data);
+	else
+		YM2151_register_port_1_w(0,data);
+}
+
 READ16_HANDLER( YM2151_status_port_0_lsb_r )
 {
 	return YM2151_status_port_0_r(0);

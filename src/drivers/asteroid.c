@@ -10,7 +10,6 @@
 	Known bugs:
 		* sound emu isn't perfect - sometimes explosions don't register in Asteroids
 		* the low background thrust in Lunar Lander isn't emulated
-		* Asteroids Deluxe and Lunar Lander both toggle the LEDs too frequently to be effectively emulated
 		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
 ****************************************************************************
@@ -229,6 +228,7 @@ static MEMORY_WRITE_START( asteroid_writemem )
 	{ 0x3600, 0x3600, asteroid_explode_w },
 	{ 0x3a00, 0x3a00, asteroid_thump_w },
 	{ 0x3c00, 0x3c05, asteroid_sounds_w },
+	{ 0x3e00, 0x3e00, asteroid_noise_reset_w },
 	{ 0x4000, 0x47ff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x5000, 0x57ff, MWA_ROM }, /* vector rom */
 	{ 0x6800, 0x7fff, MWA_ROM },
@@ -251,17 +251,17 @@ MEMORY_END
 
 static MEMORY_WRITE_START( astdelux_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2405, 0x2405, astdelux_sounds_w }, /* thrust sound */
 	{ 0x2c00, 0x2c0f, pokey1_w },
 	{ 0x3000, 0x3000, avgdvg_go_w },
 	{ 0x3200, 0x323f, atari_vg_earom_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3600, 0x3600, asteroid_explode_w },
 	{ 0x3a00, 0x3a00, atari_vg_earom_ctrl_w },
-/*	{ 0x3c00, 0x3c03, astdelux_led_w },*/ /* P1 LED, P2 LED, unknown, thrust? */
-	{ 0x3c00, 0x3c03, MWA_NOP }, /* P1 LED, P2 LED, unknown, thrust? */
+	{ 0x3c00, 0x3c01, astdelux_led_w },
+	{ 0x3c03, 0x3c03, astdelux_sounds_w },
 	{ 0x3c04, 0x3c04, astdelux_bank_switch_w },
 	{ 0x3c05, 0x3c07, astdelux_coin_counter_w },
+	{ 0x3e00, 0x3e00, asteroid_noise_reset_w },
 	{ 0x4000, 0x47ff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x4800, 0x57ff, MWA_ROM }, /* vector rom */
 	{ 0x6000, 0x7fff, MWA_ROM },

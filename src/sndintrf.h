@@ -65,7 +65,7 @@ struct MachineSound
  #ifndef MESS
 #include "sound/nes_apu.h"
  #else
-#include "mess/sound/nesintf.h"
+#include "sound/nesintf.h"
  #endif
 #endif
 #if (HAS_ASTROCADE)
@@ -146,6 +146,9 @@ struct MachineSound
 #if (HAS_BSMT2000)
 #include "sound/bsmt2000.h"
 #endif
+#if (HAS_YMF262)
+#include "sound/262intf.h"
+#endif
 #if (HAS_YMF278B)
 #include "sound/ymf278b.h"
 #endif
@@ -158,16 +161,16 @@ struct MachineSound
 
 #ifdef MESS
 #if (HAS_BEEP)
-#include "mess/sound/beep.h"
+#include "sound/beep.h"
 #endif
 #if (HAS_SPEAKER)
-#include "mess/sound/speaker.h"
+#include "sound/speaker.h"
 #endif
 #if (HAS_TIA)
-#include "mess/sound/tiaintf.h"
+#include "sound/tiaintf.h"
 #endif
 #if (HAS_WAVE)
-#include "mess/sound/wave.h"
+#include "sound/wave.h"
 #endif
 #endif
 
@@ -327,6 +330,9 @@ enum
 #endif
 #if (HAS_BSMT2000)
 	SOUND_BSMT2000,
+#endif
+#if (HAS_YMF262)
+	SOUND_YMF262,
 #endif
 #if (HAS_YMF278B)
 	SOUND_YMF278B,

@@ -16,6 +16,8 @@ static int cntrl_mask;
 static int input_latch[2];
 static int mirroring;
 
+static int MMC2_bank[4], MMC2_bank_latch[2];
+
 /*************************************
  *
  *	Init machine
@@ -30,6 +32,10 @@ MACHINE_INIT( pc10 )
 	cntrl_mask = 1;
 
 	input_latch[0] = input_latch[1] = 0;
+
+	/* variables used only in MMC2 game (mapper 9)  */
+	MMC2_bank[0] = MMC2_bank[1] = MMC2_bank[2] = MMC2_bank[3] = 0;
+	MMC2_bank_latch[0] = MMC2_bank_latch[1] = 0xfe;
 
 	/* reset the security chip */
 	RP5H01_enable_w( 0, 0 );
@@ -415,7 +421,7 @@ static WRITE_HANDLER( mmc1_rom_switch_w )
 
 /**********************************************************************************/
 
-/* A Board games (Track & Field) - BROKEN? - FIX ME? */
+/* A Board games (Track & Field, Gradius) */
 
 static WRITE_HANDLER( aboard_vrom_switch_w )
 {
@@ -429,6 +435,9 @@ DRIVER_INIT( pcaboard )
 
 	/* common init */
 	init_playch10();
+
+	/* set the mirroring here */
+	mirroring = PPU_MIRROR_VERT;
 }
 
 /**********************************************************************************/
@@ -499,6 +508,31 @@ DRIVER_INIT( pcdboard )
 
 /* E Board games (Mike Tyson's Punchout) - BROKEN - FIX ME */
 
+/* callback for the ppu_latch */
+static void mapper9_latch( offs_t offset )
+{
+	if( (offset & 0x1ff0) == 0x0fd0 && MMC2_bank_latch[0] != 0xfd )
+	{
+		MMC2_bank_latch[0] = 0xfd;
+		ppu2c03b_set_videorom_bank( 0, 0, 4, MMC2_bank[0], 256 );
+	}
+	else if( (offset & 0x1ff0) == 0x0fe0 && MMC2_bank_latch[0] != 0xfe )
+	{
+		MMC2_bank_latch[0] = 0xfe;
+		ppu2c03b_set_videorom_bank( 0, 0, 4, MMC2_bank[1], 256 );
+	}
+	else if( (offset & 0x1ff0) == 0x1fd0 && MMC2_bank_latch[1] != 0xfd )
+	{
+		MMC2_bank_latch[1] = 0xfd;
+		ppu2c03b_set_videorom_bank( 0, 4, 4, MMC2_bank[2], 256 );
+	}
+	else if( (offset & 0x1ff0) == 0x1fe0 && MMC2_bank_latch[1] != 0xfe )
+	{
+		MMC2_bank_latch[1] = 0xfe;
+		ppu2c03b_set_videorom_bank( 0, 4, 4, MMC2_bank[3], 256 );
+	}
+}
+
 static WRITE_HANDLER( eboard_rom_switch_w )
 {
 	/* a variation of mapper 9 on a nes */
@@ -507,29 +541,37 @@ static WRITE_HANDLER( eboard_rom_switch_w )
 		case 0x2000: /* code bank switching */
 			{
 				int bankoffset = 0x10000 + ( data & 0x0f ) * 0x2000;
-
 				memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bankoffset], 0x2000 );
 			}
 		break;
 
 		case 0x3000: /* gfx bank 0 - 4k */
-			ppu2c03b_set_videorom_bank( 0, 0, 1, data, 256 );
+			MMC2_bank[0] = data;
+			if( MMC2_bank_latch[0] == 0xfd )
+				ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
 		break;
 
 		case 0x4000: /* gfx bank 0 - 4k */
-			ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
+			MMC2_bank[1] = data;
+			if( MMC2_bank_latch[0] == 0xfe )
+				ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
 		break;
 
 		case 0x5000: /* gfx bank 1 - 4k */
-			ppu2c03b_set_videorom_bank( 0, 4, 1, data, 256 );
+			MMC2_bank[2] = data;
+			if( MMC2_bank_latch[1] == 0xfd )
+				ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
 		break;
 
 		case 0x6000: /* gfx bank 1 - 4k */
-			ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
+			MMC2_bank[3] = data;
+			if( MMC2_bank_latch[1] == 0xfe )
+				ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
 		break;
 
 		case 0x7000: /* mirroring */
 			ppu2c03b_set_mirroring( 0, data ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+
 		break;
 	}
 }
@@ -542,6 +584,9 @@ DRIVER_INIT( pceboard )
 
 	/* basically a mapper 9 on a nes */
 	install_mem_write_handler( 1, 0x8000, 0xffff, eboard_rom_switch_w );
+
+	/* ppu_latch callback */
+	ppu_latch = mapper9_latch;
 
 	/* nvram at $6000-$6fff */
 	install_mem_read_handler( 1, 0x6000, 0x6fff, MRA_RAM );
@@ -577,6 +622,7 @@ DRIVER_INIT( pcfboard )
 static int gboard_scanline_counter;
 static int gboard_scanline_latch;
 static int gboard_banks[2];
+static int gboard_4screen;
 
 static void gboard_scanline_cb( int num, int scanline, int vblank, int blanked )
 {
@@ -689,10 +735,13 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 		break;
 
 		case 0x2000: /* mirroring */
-			if ( data & 0x40 )
-				ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
-			else
-				ppu2c03b_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+			if( !gboard_4screen )
+			{
+				if ( data & 0x40 )
+					ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
+				else
+					ppu2c03b_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+			}
 		break;
 
 		case 0x2001: /* enable ram at $6000 */
@@ -708,7 +757,6 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 		break;
 
 		case 0x6000: /* disable irqs */
-			gboard_scanline_counter = gboard_scanline_latch;
 			ppu2c03b_set_scanline_callback( 0, 0 );
 		break;
 
@@ -736,9 +784,19 @@ DRIVER_INIT( pcgboard )
 	gboard_banks[1] = 0x1f;
 	gboard_scanline_counter = 0;
 	gboard_scanline_latch = 0;
+	gboard_4screen = 0;
 
 	/* common init */
 	init_playch10();
+}
+
+DRIVER_INIT( pcgboard_type2 )
+{
+	/* common init */
+	init_pcgboard();
+
+	/* enable 4 screen mirror */
+	gboard_4screen = 1;
 }
 
 /**********************************************************************************/

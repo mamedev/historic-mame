@@ -102,7 +102,6 @@ static struct ppu2c03b_interface *intf;
 /* chips state - allocated at init time */
 static ppu2c03b_chip *chips = 0;
 
-
 static void scanline_callback( int num );
 
 
@@ -382,6 +381,12 @@ static void draw_background( const int num, UINT8 *line_priority )
 		page2 = ppu_page[page][address];
 		index2 = nes_vram[ ( page2 >> 6 ) | tile_page ] + ( page2 & 0x3f );
 
+		//27/12/2002
+		if( ppu_latch )
+		{
+			(*ppu_latch)(( tile_page << 10 ) | ( page2 << 4 ));
+		}
+
 		paldata = &color_table[ 4 * ( ( ( color_byte >> color_bits ) & 0x03 ) ) ];
 		start = ( index2 % total_elements ) * char_modulo + scroll_y_fine * line_modulo;
 		sd = &gfx_data[start];
@@ -401,6 +406,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 					plot_pixel( bitmap, start_x+i, scanline, back_pen );
 				}
 			}
+
 		}
 
 		start_x += 8;
@@ -487,6 +493,10 @@ static void draw_sprites( const int num, UINT8 *line_priority )
 
 
 		index1 = chips[num].nes_vram[page] + ( tile & 0x3f );
+
+		//27/12/2002
+		if ( ppu_latch )
+			(*ppu_latch)(( sprite_page << 10 ) | ( (tile & 0xff) << 4 ));
 
 		/* compute the character's line to draw */
 		sprite_line = scanline - y;
@@ -905,6 +915,10 @@ int ppu2c03b_r( int num, int offset )
 		case PPU_DATA:
 			ret = chips[num].videoram_data_latch;
 
+			//27/12/2002
+			if ( ppu_latch )
+				(*ppu_latch)( chips[num].videoram_addr & 0x3fff );
+
 			if ( ( chips[num].videoram_addr >= 0x2000 ) && ( chips[num].videoram_addr <= 0x3fef ) )
 				chips[num].videoram_data_latch = chips[num].ppu_page[ ( chips[num].videoram_addr & 0xc00) >> 10][ chips[num].videoram_addr & 0x3ff ];
 			else
@@ -1030,6 +1044,10 @@ void ppu2c03b_w( int num, int offset, int data )
 		case PPU_DATA:
 			{
 				int tempAddr = chips[num].videoram_addr & 0x3fff;
+
+				//27/12/2002
+				if ( ppu_latch )
+					(*ppu_latch)( tempAddr );
 
 				/* if there's a callback, call it now */
 				if ( chips[num].vidaccess_callback_proc )

@@ -42,7 +42,7 @@ static void mbmj8688_gfxdraw(int gfxtype);
    data is copied verbatim to video RAM *twice* (thus doubling the pixel width),
    and in "lookup" mode, where the source byte is taken 4 bits at a time and indexed
    though a lookup table.
-   Video RAM directly maps to a RGB output. IN the first version of the hardware
+   Video RAM directly maps to a RGB output. In the first version of the hardware
    the palette was 8-bit, then they added more video RAM to have better color
    reproduction in photos. This was done in different ways, which differ for the
    implementation and the control over pixel color in the two drawing modes.

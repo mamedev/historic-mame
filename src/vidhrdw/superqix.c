@@ -18,6 +18,37 @@ int sqix_minx,sqix_maxx,sqix_miny,sqix_maxy;
 int sqix_last_bitmap;
 int sqix_current_bitmap;
 
+static struct tilemap *superqix_tilemap;
+extern data8_t *superqix_tilemap_ram;
+
+/* the tilemap */
+
+
+
+static void get_superqix_tile_info(int tile_index)
+{
+	int gfxr = (superqix_tilemap_ram[tile_index+0x400] & 0x04) ? 0 : (1 + gfxbank);
+	int code = superqix_tilemap_ram[tile_index] + 256 * (superqix_tilemap_ram[tile_index+0x400] & 0x03);
+	int colr = (superqix_tilemap_ram[tile_index+0x400] & 0xf0) >> 4;
+	int prio = (superqix_tilemap_ram[tile_index+0x400] & 0x08) >> 3;
+
+	tile_info.priority = prio;
+
+	SET_TILE_INFO(
+			gfxr,
+			code,
+			colr,
+			0)
+}
+
+WRITE_HANDLER( superqix_tilemap_w )
+{
+	if (superqix_tilemap_ram[offset] != data)
+	{
+		superqix_tilemap_ram[offset] = data;
+		tilemap_mark_tile_dirty(superqix_tilemap,offset&0x3ff);
+	}
+}
 
 
 /***************************************************************************
@@ -27,9 +58,6 @@ int sqix_current_bitmap;
 ***************************************************************************/
 VIDEO_START( superqix )
 {
-	if (video_start_generic() != 0)
-		return 1;
-
 	/* palette RAM is accessed thorough I/O ports, so we have to */
 	/* allocate it ourselves */
 	if ((paletteram = auto_malloc(256 * sizeof(unsigned char))) == 0)
@@ -54,6 +82,11 @@ VIDEO_START( superqix )
 
 	sqix_minx=0;sqix_maxx=127;sqix_miny=0;sqix_maxy=223;
 	sqix_last_bitmap=0;
+
+	superqix_tilemap = tilemap_create(get_superqix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32, 32);
+	if (!superqix_tilemap) return 1;
+
+	tilemap_set_transparent_pen(superqix_tilemap,0);
 
 	return 0;
 }
@@ -115,7 +148,7 @@ WRITE_HANDLER( superqix_0410_w )
 	if (gfxbank != (data & 0x03))
 	{
 		gfxbank = data & 0x03;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty (superqix_tilemap);
 	}
 
 	/* bit 2 controls bitmap 1/2 */
@@ -150,33 +183,9 @@ VIDEO_UPDATE( superqix )
 	int offs,i;
 	unsigned char pens[16];
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x04) ? 0 : (1 + gfxbank)],
-					videoram[offs] + 256 * (colorram[offs] & 0x03),
-					(colorram[offs] & 0xf0) >> 4,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+	/* does TILEMAP_IGNORE_TRANSPARENCY work with priority? */
+	tilemap_draw(bitmap,cliprect,superqix_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	for(i=1;i<16;i++)
 		pens[i]=Machine->pens[i];
@@ -246,24 +255,7 @@ VIDEO_UPDATE( superqix )
 
 
 	/* redraw characters which have priority over the bitmap */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (colorram[offs] & 0x08)
-		{
-			int sx,sy;
-
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(bitmap,Machine->gfx[(colorram[offs] & 0x04) ? 0 : (1 + gfxbank)],
-					videoram[offs] + 256 * (colorram[offs] & 0x03),
-					(colorram[offs] & 0xf0) >> 4,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
+	tilemap_draw(bitmap,cliprect,superqix_tilemap,1,0);
 
 	sqix_minx=1000;sqix_maxx=-1;sqix_miny=1000;sqix_maxy=-1;
 }

@@ -10,6 +10,7 @@
 
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
+unsigned char *sprint2_sound_ram;
 
 static struct mame_bitmap *back_vid;
 static struct mame_bitmap *grey_cars_vid;
@@ -407,6 +408,12 @@ static VIDEO_UPDATE( sprint )
 	/* Refresh our collision detection buffers */
 	sprint2_check_collision1(bitmap);
 	sprint2_check_collision2(bitmap);
+
+	/* Weird, but we have to update our sound registers here. */
+	for (offs = 2;offs >= 0;offs--)
+	{
+		discrete_sound_w(2 + offs, sprint2_sound_ram[offs] % 16);
+	}
 }
 
 
@@ -421,7 +428,7 @@ static void draw_gear_indicator(int gear, struct mame_bitmap *bitmap, int x, int
 	for (offs = 0; offs < 6; offs++)
 		drawgfx(bitmap,Machine->gfx[0],
 				gear_buf[offs],color,
-				0,0,(x+offs)*8,30*8,
+				0,0,(x+offs)*8,28*8,
 				&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 

@@ -362,6 +362,96 @@ INPUT_PORTS_START( cavenger )
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( dorodon )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	/* This should be connected to the 4V clock. I don't think the game uses it. */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	/* Note that there are TWO VBlank inputs, one is active low, the other active */
+	/* high. There are probably other differencies in the hardware, but emulating */
+	/* them this way is enough to get the game running. */
+	PORT_BIT( 0xc0, 0x40, IPT_VBLANK )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_UNUSED )
+	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	/* settings 0x00 thru 0x50 all give 1 Coin/1 Credit */
+
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
+	/* Coin Right an IRQ. This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -541,9 +631,83 @@ ROM_START( cavenger )
 	ROM_LOAD( "h9.bpr",       0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
+ROM_START( dorodon )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
+	ROM_LOAD( "dorodon.0",   0x0000, 0x2000, 0x460aaf26 )
+	ROM_LOAD( "dorodon.1",   0x2000, 0x2000, 0xd2451eb6 )
+	ROM_LOAD( "dorodon.2",   0x4000, 0x2000, 0xd3c6ee6c )
+
+	/* Characters */
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "dorodon.5",   0x0000, 0x1000, 0x5eee2b85 )
+	ROM_LOAD( "dorodon.6",   0x1000, 0x1000, 0x395ac25a )
+
+	/* Sprites */
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "dorodon.4",   0x0000, 0x1000, 0xd70bb50a )
+	ROM_LOAD( "dorodon.3",   0x1000, 0x1000, 0xe44e59e6 )
+
+	/* Opcode Decryption PROMS */
+	ROM_REGION( 0x0100, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD_NIB_HIGH( "dorodon.bp4",0x0000,0x0100,0xf865c135 )
+	ROM_LOAD_NIB_LOW(  "dorodon.bp3",0x0000,0x0100,0x47b2f0bb )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "dorodon.bp0", 0x0000, 0x0020, 0x8fcf0bc8 ) /* palette */
+	ROM_LOAD( "dorodon.bp1", 0x0020, 0x0020, 0x3f209be4 ) /* sprite color lookup table */
+	ROM_LOAD( "dorodon.bp2", 0x0040, 0x0020, 0x27fa3a50 ) /* timing?? */
+ROM_END
+
+ROM_START( dorodon2 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
+	ROM_LOAD( "1.3fg",        0x0000, 0x2000, 0x4d05d6f8 )
+	ROM_LOAD( "2.3h",         0x2000, 0x2000, 0x27b43b09 )
+	ROM_LOAD( "3.3k",         0x4000, 0x2000, 0x38d2f295 )
+
+	/* Characters */
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "6.6a",        0x0000, 0x1000, 0x2a2d8b9c )
+	ROM_LOAD( "7.6bc",       0x1000, 0x1000, 0xd14f95fa )
+
+	/* Sprites */
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5.3t",        0x0000, 0x1000, 0x54c04f58 )
+	ROM_LOAD( "4.3r",        0x1000, 0x1000, 0x1ebb6493 )
+
+	/* Opcode Decryption PROMS (from other romset) */
+	ROM_REGION( 0x0100, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD_NIB_HIGH( "dorodon.bp4",0x0000,0x0100,0xf865c135 )
+	ROM_LOAD_NIB_LOW(  "dorodon.bp3",0x0000,0x0100,0x47b2f0bb )
+
+	/* (from other romset - I think these are correct, they match the Starcade video) */
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "dorodon.bp0", 0x0000, 0x0020, 0x8fcf0bc8 ) /* palette */
+	ROM_LOAD( "dorodon.bp1", 0x0020, 0x0020, 0x3f209be4 ) /* sprite color lookup table */
+	ROM_LOAD( "dorodon.bp2", 0x0040, 0x0020, 0x27fa3a50 ) /* timing?? */
+ROM_END
 
 
-GAME( 1981, ladybug,  0,       ladybug, ladybug,  0, ROT270, "Universal", "Lady Bug" )
-GAME( 1981, ladybugb, ladybug, ladybug, ladybug,  0, ROT270, "bootleg", "Lady Bug (bootleg)" )
-GAME( 1981?,snapjack, 0,       ladybug, snapjack, 0, ROT0,   "Universal", "Snap Jack" )
-GAME( 1981, cavenger, 0,       ladybug, cavenger, 0, ROT0,   "Universal", "Cosmic Avenger" )
+DRIVER_INIT( dorodon )
+{
+	/* Decode the opcodes */
+
+	offs_t i;
+	data8_t *rom = memory_region(REGION_CPU1);
+	offs_t diff = memory_region_length(REGION_CPU1) / 2;
+	data8_t *table = memory_region(REGION_USER1);
+
+	memory_set_opcode_base(0,rom+diff);
+
+	for (i = 0;i < diff;i++)
+	{
+		rom[i + diff] = table[rom[i]];
+	}
+}
+
+
+GAME( 1981, ladybug,  0,       ladybug, ladybug,  0,       ROT270, "Universal", "Lady Bug" )
+GAME( 1981, ladybugb, ladybug, ladybug, ladybug,  0,       ROT270, "bootleg",   "Lady Bug (bootleg)" )
+GAME( 1981?,snapjack, 0,       ladybug, snapjack, 0,       ROT0,   "Universal", "Snap Jack" )
+GAME( 1981, cavenger, 0,       ladybug, cavenger, 0,       ROT0,   "Universal", "Cosmic Avenger" )
+GAME( 1982?,dorodon,  0,       ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 1)" )
+GAME( 1982?,dorodon2, dorodon, ladybug, dorodon,  dorodon, ROT270, "Falcon",    "Dorodon (set 2)" )

@@ -149,7 +149,7 @@ WRITE_HANDLER( astdelux_bank_switch_w )
 
 WRITE_HANDLER( astdelux_led_w )
 {
-	set_led_status(offset,~data & 0x01);
+	set_led_status(offset,(data&0x80)?0:1);
 }
 
 

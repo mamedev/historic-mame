@@ -2,7 +2,7 @@
 /*                                                                      */
 /*  MAME - Discrete sound system emulation library                      */
 /*                                                                      */
-/*  Written by Keith Wilkins (mame@dysfunction.demon.co.uk)             */
+/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
 /*                                                                      */
 /*  (c) K.Wilkins 2000                                                  */
 /*                                                                      */
@@ -10,6 +10,10 @@
 /*                                                                      */
 /* DSS_SINEWAVE          - Sinewave generator source code               */
 /* DSS_SQUAREWAVE        - Squarewave generator source code             */
+/* DSS_TRIANGLEWAVE      - Triangle waveform generator                  */
+/* DSS_SAWTOOTHWAVE      - Sawtooth waveform generator                  */
+/* DSS_NOISE             - Noise Source - Random source                 */
+/* DSS_LFSR_NOISE        - Linear Feedback Shift Register Noise         */
 /*                                                                      */
 /************************************************************************/
 
@@ -23,22 +27,27 @@ struct dss_noise_context
 	double phase;
 };
 
+struct dss_lfsr_context
+{
+	double phase;
+	int	lfsr_reg;
+};
+
 struct dss_squarewave_context
 {
 	double phase;
 	double trigger;
 };
 
-struct dss_oneshot_context
-{
-	double countdown;
-	double stepsize;
-	int state;
-};
-
 struct dss_trianglewave_context
 {
-        double phase;
+	double phase;
+};
+
+struct dss_sawtoothwave_context
+{
+	double phase;
+	int type;
 };
 
 /************************************************************************/
@@ -48,9 +57,9 @@ struct dss_trianglewave_context
 /* input0    - Enable input value                                       */
 /* input1    - Frequency input value                                    */
 /* input2    - Amplitde input value                                     */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
-/* input5    - Starting phase                                           */
+/* input3    - DC Bias                                                  */
+/* input4    - Starting phase                                           */
+/* input5    - NOT USED                                                 */
 /*                                                                      */
 /************************************************************************/
 int dss_sinewave_step(struct node_description *node)
@@ -71,11 +80,14 @@ int dss_sinewave_step(struct node_description *node)
 
 	if(node->input0)
 	{
-		node->output=node->input2 * sin(newphase);
+		node->output=(node->input2/2.0) * sin(newphase);
+		/* Add DC Bias component */
+		node->output=node->output+node->input3;
 	}
 	else
 	{
-		node->output=0;
+		/* Just output DC Bias */
+		node->output=node->input3;
 	}
 	return 0;
 }
@@ -86,9 +98,9 @@ int dss_sinewave_reset(struct node_description *node)
 	double start;
 	context=(struct dss_sinewave_context*)node->context;
 	/* Establish starting phase, convert from degrees to radians */
-	start=(node->input5/360.0)*(2.0*PI);
+	start=(node->input4/360.0)*(2.0*PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(node->input5,2.0*PI);
+	context->phase=fmod(start,2.0*PI);
 	return 0;
 }
 
@@ -131,7 +143,7 @@ int dss_sinewave_kill(struct node_description *node)
 /* input1    - Frequency input value                                    */
 /* input2    - Amplitude input value                                    */
 /* input3    - Duty Cycle                                               */
-/* input4    - NOT USED                                                 */
+/* input4    - DC Bias level                                            */
 /* input5    - Start Phase                                              */
 /*                                                                      */
 /************************************************************************/
@@ -157,13 +169,17 @@ int dss_squarewave_step(struct node_description *node)
 	if(node->input0)
 	{
 		if(context->phase>context->trigger)
-			node->output=node->input2;
+			node->output=(node->input2/2.0);
 		else
-                        node->output=-node->input2;
+			node->output=-(node->input2/2.0);
+
+		/* Add DC Bias component */
+		node->output=node->output+node->input4;
 	}
 	else
 	{
-		node->output=0;
+		/* Just output DC Bias */
+		node->output=node->input4;
 	}
 	return 0;
 }
@@ -177,7 +193,7 @@ int dss_squarewave_reset(struct node_description *node)
 	/* Establish starting phase, convert from degrees to radians */
 	start=(node->input5/360.0)*(2.0*PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(node->input5,2.0*PI);
+	context->phase=fmod(start,2.0*PI);
 
 	return 0;
 }
@@ -219,14 +235,14 @@ int dss_squarewave_kill(struct node_description *node)
 /* input0    - Enable input value                                       */
 /* input1    - Frequency input value                                    */
 /* input2    - Amplitde input value                                     */
-/* input3    - NOT USED                                                 */
-/* input4    - NOT USED                                                 */
+/* input3    - DC Bias value                                            */
+/* input4    - Initial Phase                                            */
 /* input5    - NOT USED                                                 */
 /*                                                                      */
 /************************************************************************/
 int dss_trianglewave_step(struct node_description *node)
 {
-        struct dss_trianglewave_context *context=(struct dss_trianglewave_context*)node->context;
+	struct dss_trianglewave_context *context=(struct dss_trianglewave_context*)node->context;
 	double newphase;
 
 	/* Work out the phase step based on phase/freq & sample rate */
@@ -238,57 +254,151 @@ int dss_trianglewave_step(struct node_description *node)
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	newphase=context->phase+((2.0*PI*node->input1)/Machine->sample_rate);
 	/* Keep the new phasor in thw 2Pi range.*/
-        newphase=fmod(newphase,2.0*PI);
-        context->phase=newphase;
+	newphase=fmod(newphase,2.0*PI);
+	context->phase=newphase;
 
 	if(node->input0)
 	{
-                node->output=newphase < PI ? node->input2 * (newphase / (PI/2.0) - 1.0) :
-                                             node->input2 * (3.0 - newphase / (PI/2.0)) ;
+		node->output=newphase < PI ? (node->input2 * (newphase / (PI/2.0) - 1.0))/2.0 :
+									(node->input2 * (3.0 - newphase / (PI/2.0)))/2.0 ;
 
+		/* Add DC Bias component */
+		node->output=node->output+node->input3;
 	}
 	else
 	{
-		node->output=0;
+		/* Just output DC Bias */
+		node->output=node->input3;
 	}
 	return 0;
 }
 
 int dss_trianglewave_reset(struct node_description *node)
 {
-        struct dss_trianglewave_context *context;
+	struct dss_trianglewave_context *context;
 	double start;
 
-        context=(struct dss_trianglewave_context*)node->context;
+	context=(struct dss_trianglewave_context*)node->context;
 	/* Establish starting phase, convert from degrees to radians */
-	start=(node->input5/360.0)*(2.0*PI);
+	start=(node->input4/360.0)*(2.0*PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(node->input5,2.0*PI);
+	context->phase=fmod(start,2.0*PI);
 	return 0;
 }
 
 int dss_trianglewave_init(struct node_description *node)
 {
-        discrete_log("dss_trianglewave_init() - Creating node %d.",node->node-NODE_00);
+	discrete_log("dss_trianglewave_init() - Creating node %d.",node->node-NODE_00);
 
 	/* Allocate memory for the context array and the node execution order array */
-        if((node->context=malloc(sizeof(struct dss_trianglewave_context)))==NULL)
+	if((node->context=malloc(sizeof(struct dss_trianglewave_context)))==NULL)
 	{
-                discrete_log("dss_trianglewave_init() - Failed to allocate local context memory.");
+		discrete_log("dss_trianglewave_init() - Failed to allocate local context memory.");
 		return 1;
 	}
 	else
 	{
 		/* Initialise memory */
-                memset(node->context,0,sizeof(struct dss_trianglewave_context));
+		memset(node->context,0,sizeof(struct dss_trianglewave_context));
 	}
 
 	/* Initialise the object */
-        dss_trianglewave_reset(node);
+	dss_trianglewave_reset(node);
 	return 0;
 }
 
 int dss_trianglewave_kill(struct node_description *node)
+{
+	free(node->context);
+	node->context=NULL;
+	return 0;
+}
+
+
+
+/************************************************************************/
+/*                                                                      */
+/* DSS_SAWTOOTHWAVE - Usage of node_description values for step function*/
+/*                                                                      */
+/* input0    - Enable input value                                       */
+/* input1    - Frequency input value                                    */
+/* input2    - Amplitde input value                                     */
+/* input3    - DC Bias Value                                            */
+/* input4    - Gradient                                                 */
+/* input5    - Initial Phase                                            */
+/*                                                                      */
+/************************************************************************/
+int dss_sawtoothwave_step(struct node_description *node)
+{
+	struct dss_sawtoothwave_context *context=(struct dss_sawtoothwave_context*)node->context;
+	double newphase;
+
+	/* Work out the phase step based on phase/freq & sample rate */
+	/* The enable input only curtails output, phase rotation     */
+	/* still occurs                                              */
+
+	/*     phase step = 2Pi/(output period/sample period)        */
+	/*                    boils out to                           */
+	/*     phase step = (2Pi*output freq)/sample freq)           */
+	newphase=context->phase+((2.0*PI*node->input1)/Machine->sample_rate);
+	/* Keep the new phasor in thw 2Pi range.*/
+	newphase=fmod(newphase,2.0*PI);
+	context->phase=newphase;
+
+	if(node->input0)
+	{
+		node->output=(context->type==0)?newphase*(node->input2/(2.0*PI)):node->input2-(newphase*(node->input2/(2.0*PI)));
+		node->output-=node->input2/2.0;
+		/* Add DC Bias component */
+		node->output=node->output+node->input3;
+	}
+	else
+	{
+		/* Just output DC Bias */
+		node->output=node->input3;
+	}
+	return 0;
+}
+
+int dss_sawtoothwave_reset(struct node_description *node)
+{
+	struct dss_sawtoothwave_context *context;
+	double start;
+
+	context=(struct dss_sawtoothwave_context*)node->context;
+	/* Establish starting phase, convert from degrees to radians */
+	start=(node->input5/360.0)*(2.0*PI);
+	/* Make sure its always mod 2Pi */
+	context->phase=fmod(start,2.0*PI);
+
+	/* Invert gradient depending on sawtooth type /|/|/|/|/| or |\|\|\|\|\ */
+	context->type=(node->input4)?1:0;
+
+	return 0;
+}
+
+int dss_sawtoothwave_init(struct node_description *node)
+{
+	discrete_log("dss_trianglewave_init() - Creating node %d.",node->node-NODE_00);
+
+	/* Allocate memory for the context array and the node execution order array */
+	if((node->context=malloc(sizeof(struct dss_sawtoothwave_context)))==NULL)
+	{
+		discrete_log("dss_sawtoothwave_init() - Failed to allocate local context memory.");
+		return 1;
+	}
+	else
+	{
+		/* Initialise memory */
+		memset(node->context,0,sizeof(struct dss_sawtoothwave_context));
+	}
+
+	/* Initialise the object */
+	dss_sawtoothwave_reset(node);
+	return 0;
+}
+
+int dss_sawtoothwave_kill(struct node_description *node)
 {
 	free(node->context);
 	node->context=NULL;
@@ -304,7 +414,7 @@ int dss_trianglewave_kill(struct node_description *node)
 /* input0    - Enable input value                                       */
 /* input1    - Noise sample frequency                                   */
 /* input2    - Amplitude input value                                    */
-/* input3    - NOT USED                                                 */
+/* input3    - DC Bias value                                            */
 /* input4    - NOT USED                                                 */
 /* input5    - NOT USED                                                 */
 /*                                                                      */
@@ -327,11 +437,15 @@ int dss_noise_step(struct node_description *node)
 		{
 			int newval=rand() & 0x7fff;
 			node->output=node->input2*(1-(newval/16384.0));
+
+			/* Add DC Bias component */
+			node->output=node->output+node->input3;
 		}
 	}
 	else
 	{
-		node->output=0;
+		/* Just output DC Bias */
+		node->output=node->input3;
 	}
 	return 0;
 }
@@ -376,96 +490,209 @@ int dss_noise_kill(struct node_description *node)
 
 /************************************************************************/
 /*                                                                      */
-/* DSS_ONESHOT - Usage of node_description values for one shot pulse    */
+/* DSS_LFSR_NOISE - Usage of node_description values for LFSR noise gen */
 /*                                                                      */
 /* input0    - Enable input value                                       */
-/* input1    - Trigger value                                            */
-/* input2    - Reset value                                              */
-/* input3    - Amplitude value                                          */
-/* input4    - Width of oneshot pulse                                   */
-/* input5    - NOT USED                                                 */
+/* input1    - Register reset                                           */
+/* input2    - Noise sample frequency                                   */
+/* input3    - Amplitude input value                                    */
+/* input4    - Input feed bit                                           */
+/* input5    - Bias                                                     */
 /*                                                                      */
 /************************************************************************/
-int dss_oneshot_step(struct node_description *node)
+int	dss_lfsr_function(int myfunc,int in0,int in1,int bitmask)
 {
-	struct dss_oneshot_context *context;
-	context=(struct dss_oneshot_context*)node->context;
+	int retval;
 
-	/* Check state */
-	switch(context->state)
+	in0&=bitmask;
+	in1&=bitmask;
+
+	switch(myfunc)
 	{
-		case 0:		/* Waiting for trigger */
-			if(node->input1)
-			{
-				context->state=1;
-				context->countdown=node->input4;
-				node->output=node->input3;
-			}
-		 	node->output=0;
+		case DISC_LFSR_XOR:
+			retval=in0^in1;
 			break;
-
-		case 1:		/* Triggered */
-			node->output=node->input3;
-			if(node->input1 && node->input2)
-			{
-				// Dont start the countdown if we're still triggering
-				// and we've got a reset signal as well
-			}
-			else
-			{
-				context->countdown-=context->stepsize;
-				if(context->countdown<0.0)
-				{
-					context->countdown=0;
-					node->output=0;
-					context->state=2;
-				}
-			}
+		case DISC_LFSR_OR:
+			retval=in0|in1;
 			break;
-
-		case 2:		/* Waiting for reset */
+		case DISC_LFSR_AND:
+			retval=in0&in1;
+			break;
+		case DISC_LFSR_XNOR:
+			retval=in0^in1;
+			retval=retval^bitmask;	/* Invert output */
+			break;
+		case DISC_LFSR_NOR:
+			retval=in0|in1;
+			retval=retval^bitmask;	/* Invert output */
+			break;
+		case DISC_LFSR_NAND:
+			retval=in0&in1;
+			retval=retval^bitmask;	/* Invert output */
+			break;
+		case DISC_LFSR_IN0:
+			retval=in0;
+			break;
+		case DISC_LFSR_IN1:
+			retval=in1;
+			break;
+		case DISC_LFSR_NOT_IN0:
+			retval=in0^bitmask;
+			break;
+		case DISC_LFSR_NOT_IN1:
+			retval=in1^bitmask;
+			break;
+		case DISC_LFSR_REPLACE:
+			retval=in0&~in1;
+			retval=in0|in1;
+			break;
 		default:
-			if(node->input2) context->state=0;
-		 	node->output=0;
+			discrete_log("dss_lfsr_function - Invalid function type passed");
+			retval=0;
 			break;
 	}
+	return retval;
+}
+
+/* reset prototype so that it can be used in init function */
+int dss_lfsr_reset(struct node_description *node);
+
+int dss_lfsr_step(struct node_description *node)
+{
+	struct dss_lfsr_context *context;
+	double newphase;
+	context=(struct dss_lfsr_context*)node->context;
+
+	newphase=context->phase+((2.0*PI*node->input2)/Machine->sample_rate);
+
+	/* Keep the new phasor in thw 2Pi range.*/
+	context->phase=fmod(newphase,2.0*PI);
+
+	/* Reset everything if necessary */
+	if(node->input1)
+	{
+		dss_lfsr_reset(node);
+	}
+
+	/* Only sample noise on rollover to next cycle */
+	if(newphase>(2.0*PI))
+	{
+		int fb0,fb1,fbresult;
+		struct discrete_lfsr_desc *lfsr_desc;
+
+		/* Fetch the LFSR descriptor structure in a local for quick ref */
+		lfsr_desc=(struct discrete_lfsr_desc*)(node->custom);
+
+		/* Now clock the LFSR by 1 cycle and output */
+		discrete_log("dss_lfsr_step: Shift register at begining  %#10X.\n",(context->lfsr_reg));
+
+		/* Fetch the last feedback result */
+		fbresult=((context->lfsr_reg)>>(lfsr_desc->bitlength))&0x01;
+		discrete_log("dss_lfsr_step: Last feedback = %d.\n",fbresult);
+
+		/* Stage 2 feedback combine fbresultNew with infeed bit */
+		fbresult=dss_lfsr_function(lfsr_desc->feedback_function1,fbresult,((node->input4)?0x01:0x00),0x01);
+		discrete_log("dss_lfsr_step: With food added = %d.\n",fbresult);
+
+		/* Stage 3 first we setup where the bit is going to be shifted into */
+		fbresult=fbresult*lfsr_desc->feedback_function2_mask;
+		discrete_log("dss_lfsr_step: Where its going = %#X.\n",fbresult);
+		/* Then we left shift the register, */
+		discrete_log("dss_lfsr_step: Shift register before shift %#10X.\n",(context->lfsr_reg));
+		context->lfsr_reg=(context->lfsr_reg)<<1;
+		discrete_log("dss_lfsr_step: Shift register after shift  %#10X.\n",(context->lfsr_reg));
+		/* Now move the fbresult into the shift register and mask it to the bitlength */
+		context->lfsr_reg=dss_lfsr_function(lfsr_desc->feedback_function2,fbresult, (context->lfsr_reg), ((1<<(lfsr_desc->bitlength))-1));
+		discrete_log("dss_lfsr_step: Shift register with fb      %#10X.\n",(context->lfsr_reg));
+
+		/* Now get and store the new feedback result */
+		/* Fetch the feedback bits */
+		fb0=((context->lfsr_reg)>>(lfsr_desc->feedback_bitsel0))&0x01;
+		fb1=((context->lfsr_reg)>>(lfsr_desc->feedback_bitsel1))&0x01;
+		discrete_log("dss_lfsr_step: XOR Bit0 = %d, Bit1 = %d.  ",fb0,fb1);
+		/* Now do the combo on them */
+		fbresult=dss_lfsr_function(lfsr_desc->feedback_function0,fb0,fb1,0x01);
+		discrete_log("dss_lfsr_step: Output = %d.\n",fbresult);
+		context->lfsr_reg=dss_lfsr_function(DISC_LFSR_REPLACE,(context->lfsr_reg), fbresult<<(lfsr_desc->bitlength), ((2<<(lfsr_desc->bitlength))-1));
+		discrete_log("dss_lfsr_step: Shift register final        %#10X.\n",(context->lfsr_reg));
+
+		/* Now select the output bit */
+		node->output=((context->lfsr_reg)>>(lfsr_desc->output_bit))&0x01;
+
+		/* Final inversion if required */
+		discrete_log("dss_lfsr_step: Before possible inversion %f.\n",(node->output));
+		if(lfsr_desc->output_invert) node->output=(node->output)?0.0:1.0;
+		discrete_log("dss_lfsr_step: FINAL Node Ouput before gain = %f.\n\n",(node->output));
+
+		/* Gain stage */
+		node->output=(node->output)?(node->input3)/2:-(node->input3)/2;
+		/* Bias input as required */
+		node->output=node->output+node->input5;
+	}
+
+	/* If disabled then clamp the output to DC Bias */
+	if(!node->input0)
+	{
+		node->output=node->input5;
+	}
+
 	return 0;
 }
 
-
-int dss_oneshot_reset(struct node_description *node)
+int dss_lfsr_reset(struct node_description *node)
 {
-	struct dss_oneshot_context *context=(struct dss_oneshot_context*)node->context;
-	context->countdown=0;
-	context->stepsize=1.0/Machine->sample_rate;
-	context->state=0;
- 	node->output=0;
- 	return 0;
+	struct dss_lfsr_context *context;
+	struct discrete_lfsr_desc *lfsr_desc;
+
+	context=(struct dss_lfsr_context*)node->context;
+	lfsr_desc=(struct discrete_lfsr_desc*)(node->custom);
+
+	context->lfsr_reg=((struct discrete_lfsr_desc*)(node->custom))->reset_value;
+	discrete_log("dss_lfsr_reset - Shift register INITialized");
+
+	context->lfsr_reg=dss_lfsr_function(DISC_LFSR_REPLACE,0, (dss_lfsr_function(lfsr_desc->feedback_function0,0,0,0x01))<<(lfsr_desc->bitlength),((2<<(lfsr_desc->bitlength))-1));
+	discrete_log("Shift register RESET to     %#10X.\n",(context->lfsr_reg));
+
+	/* Now select and setup the output bit */
+	node->output=((context->lfsr_reg)>>(lfsr_desc->output_bit))&0x01;
+
+	/* Final inversion if required */
+	if(lfsr_desc->output_invert) node->output=(node->output)?0.0:1.0;
+
+	/* Gain stage */
+	node->output=(node->output)?(node->input3)/2:-(node->input3)/2;
+	/* Bias input as required */
+	node->output=node->output+node->input5;
+
+	discrete_log("Output Node RESET to %f.\n\n",(node->output));
+	discrete_log("dss_lfsr_reset - Shift register stepped once to setup output");
+	return 0;
 }
 
-int dss_oneshot_init(struct node_description *node)
+int dss_lfsr_init(struct node_description *node)
 {
-	discrete_log("dss_oneshot_init() - Creating node %d.",node->node-NODE_00);
+	discrete_log("dss_lfsr_init() - Creating node %d.",node->node-NODE_00);
 
 	/* Allocate memory for the context array and the node execution order array */
-	if((node->context=malloc(sizeof(struct dss_oneshot_context)))==NULL)
+	if((node->context=malloc(sizeof(struct dss_lfsr_context)))==NULL)
 	{
-		discrete_log("dss_oneshot_init() - Failed to allocate local context memory.");
+		discrete_log("dss_lfsr_init() - Failed to allocate local context memory.");
 		return 1;
 	}
 	else
 	{
 		/* Initialise memory */
-		memset(node->context,0,sizeof(struct dss_oneshot_context));
+		memset(node->context,0,sizeof(struct dss_lfsr_context));
 	}
 
 	/* Initialise the object */
-	dss_oneshot_reset(node);
+	dss_lfsr_reset(node);
+	((struct dss_lfsr_context*)node->context)->phase=0.0;
 
 	return 0;
 }
 
-int dss_oneshot_kill(struct node_description *node)
+int dss_lfsr_kill(struct node_description *node)
 {
 	free(node->context);
 	node->context=NULL;

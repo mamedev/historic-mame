@@ -377,6 +377,10 @@ int ES5506_num(const struct MachineSound *msound) { return ((struct ES5506interf
 int BSMT2000_clock(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->baseclock[0]; }
 int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_YMF262)
+int YMF262_clock(const struct MachineSound *msound) { return ((struct YMF262interface*)msound->sound_interface)->baseclock; }
+int YMF262_num(const struct MachineSound *msound) { return ((struct YMF262interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_YMF278B)
 int YMF278B_clock(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->clock[0]; }
 int YMF278B_num(const struct MachineSound *msound) { return ((struct YMF278B_interface*)msound->sound_interface)->num; }
@@ -997,6 +1001,18 @@ struct snd_interface sndintf[] =
 		BSMT2000_sh_stop,
 		0,
 		0
+	},
+#endif
+#if (HAS_YMF262)
+	{
+		 SOUND_YMF262,
+		 "YMF262",
+		 YMF262_num,
+		 YMF262_clock,
+		 YMF262_sh_start,
+		 YMF262_sh_stop,
+		 0,
+		 0
 	},
 #endif
 #if (HAS_YMF278B)

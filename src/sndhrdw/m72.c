@@ -29,6 +29,7 @@ Daiku no Gensan (M72)                   1990  Rev 3.15 M72   No
 Hammerin' Harry                         1990  Rev 3.15 M81  Yes
 Ken-Go	                                1991  Rev 3.15 M81  Yes
 Pound for Pound                         1990  Rev 3.15 M83   No
+Cosmic Cop                              1991  Rev 3.15 M81  Yes
 Gallop - Armed Police Unit              1991  Rev 3.15 M72   No
 Hasamu                                  1991  Rev 3.15 M81  Yes
 Bomber Man                              1991  Rev 3.15 M81  Yes

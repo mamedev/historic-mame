@@ -52,9 +52,6 @@ Glitch list!
 		always appears if you cheat and jump straight to the level).
 		Almost certainly a core bug.
 
-	Lethal Thunder:
-		Gives 99 credits.
-
 	Irem Skins:
 		- Priority bug: you can't see the arrow on the top right map.
 		- Gfx problems at the players information during attract mode in
@@ -1137,12 +1134,12 @@ void m92_sprite_interrupt(void)
 static MACHINE_DRIVER_START( raster )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V33,18000000)	/* NEC V33, 18 MHz clock */
+	MDRV_CPU_ADD(V33,18000000/2)	/* NEC V33, 18 MHz clock */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m92_raster_interrupt,M92_SCANLINES) /* First visible line 8? */
 
-	MDRV_CPU_ADD(V30, 14318180)	/* 14.31818 MHz */
+	MDRV_CPU_ADD(V30, 14318180/2)	/* 14.31818 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1167,12 +1164,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( nonraster )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V33, 18000000)	 /* NEC V33, 18 MHz clock */
+	MDRV_CPU_ADD(V33, 18000000/2)	 /* NEC V33, 18 MHz clock */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
-	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_ADD(V30, 14318180/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
@@ -1198,12 +1195,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( lethalth )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V33, 18000000)	/* NEC V33, 18 MHz clock */
+	MDRV_CPU_ADD(V33, 18000000/2)	/* NEC V33, 18 MHz clock */
 	MDRV_CPU_MEMORY(lethalth_readmem,lethalth_writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
-	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_ADD(V30, 14318180/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
@@ -1229,12 +1226,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( psoldier )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V33, 18000000)		/* NEC V33, 18 MHz clock */
+	MDRV_CPU_ADD(V33, 18000000/2)		/* NEC V33, 18 MHz clock */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
 
-	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_ADD(V30, 14318180/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 

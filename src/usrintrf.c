@@ -11,6 +11,7 @@
 #include "vidhrdw/vector.h"
 #include "datafile.h"
 #include <stdarg.h>
+#include <math.h>
 #include "ui_text.h"
 #include "state.h"
 
@@ -3296,7 +3297,75 @@ static void displayosd(struct mame_bitmap *bitmap,const char *text,int percentag
 	displaytext(bitmap,dt);
 }
 
+/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
 
+static void onscrd_discrete(struct mame_bitmap *bitmap,int increment,int arg)
+{
+	int ourval,initial;
+	char buf[40];
+	struct discrete_sh_adjuster adjuster;
+
+	ourval=0;
+	initial=0;
+	strcpy(buf,"ADJUSTER ERROR");
+
+	/* Use ARG to select correct DISCRETE_ADJUST in sound subsystem */
+	if(discrete_sh_adjuster_get(arg,&adjuster)==-1)
+	{
+		/* Serious error, init has setup a non-existant slider, should NEVER happen */
+		logerror("onscrd_discrete() - osd_menu_init has setup invalid slider No %d",arg);
+	}
+	else
+	{
+		if(adjuster.islogscale)
+		{
+			double loginc,logspan,logval,logmin,loginit;
+			logspan=log10(adjuster.max)-log10(adjuster.min);
+			loginit=log10(adjuster.initial);
+			logmin=log10(adjuster.min);
+			logval=log10(adjuster.value);
+			loginc=(logspan/100)*increment;
+			logval+=loginc;
+			adjuster.value=pow(10,logval);
+
+			/* Keep within sensible bounds */
+			if(adjuster.value > adjuster.max)
+			{
+				adjuster.value=adjuster.max;
+				ourval=100;
+			}
+			if(adjuster.value < adjuster.min)
+			{
+				adjuster.value=adjuster.min;
+				ourval=0;
+			}
+
+			ourval=(int) (100.0*((logval-logmin)/logspan));
+			initial=(int) (100.0*((loginit-logmin)/logspan));
+		}
+		else
+		{
+			double finc;
+			finc=((adjuster.max-adjuster.min)/100)*increment;
+			adjuster.value+=finc;
+
+			/* Keep within sensible bounds */
+			if(adjuster.value > adjuster.max) adjuster.value=adjuster.max;
+			if(adjuster.value < adjuster.min) adjuster.value=adjuster.min;
+
+			ourval=(int) (100.0*((adjuster.value-adjuster.min)/(adjuster.max-adjuster.min)));
+			initial=(int) (100.0*((adjuster.initial-adjuster.min)/(adjuster.max-adjuster.min)));
+		}
+
+		/* Update the system */
+		discrete_sh_adjuster_set(arg,&adjuster);
+
+		sprintf(buf,"%s %d%%",adjuster.name,ourval);
+	}
+	displayosd(bitmap,buf,ourval,initial);
+}
+
+/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
 
 static void onscrd_volume(struct mame_bitmap *bitmap,int increment,int arg)
 {
@@ -3526,7 +3595,7 @@ static int onscrd_total_items;
 
 static void onscrd_init(void)
 {
-	int item,ch;
+	int item,ch,soundnum;
 
 
 	item = 0;
@@ -3546,6 +3615,31 @@ static void onscrd_init(void)
 				item++;
 			}
 		}
+
+		/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
+
+		/* See if there is a discrete sound sub-system present */
+		for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
+		{
+			if (Machine->drv->sound[soundnum].sound_type == SOUND_DISCRETE)
+			{
+				/* For each DISCRETE_ADJUST node then there is a slider, there can only be one SOUND_DISCRETE */
+				/* in the machinbe sound delcaration so this WONT trigger more than once                      */
+				{
+					int count;
+					count=discrete_sh_adjuster_count((struct discrete_sound_block*)Machine->drv->sound[soundnum].sound_interface);
+
+					for(ch=0;ch<count;ch++)
+					{
+						onscrd_fnc[item] = onscrd_discrete;
+						onscrd_arg[item] = ch;
+						item++;
+					}
+				}
+			}
+		}
+
+		/* K.Wilkins Feb2003 Additional of Disrete Sound System ADJUSTMENT sliders */
 	}
 
 	if (options.cheat)

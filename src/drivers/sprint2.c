@@ -82,6 +82,37 @@ static PALETTE_INIT( sprint2 )
 
 /*************************************
  *
+ *	Sound handlers
+ *
+ *************************************/
+WRITE_HANDLER( sprint2_skid1_w )
+{
+	discrete_sound_w(0, offset & 1);
+}
+
+WRITE_HANDLER( sprint2_skid2_w )
+{
+	discrete_sound_w(1, offset & 1);
+}
+
+WRITE_HANDLER( sprint2_attract_w )
+{
+	discrete_sound_w(5, !(offset & 1));
+}
+
+WRITE_HANDLER( sprint2_noise_reset_w )
+{
+	/* NOT WORKING PROPERLY */
+	/* Needs to write a 1 when this memory region is accessed. */
+	/* Otherwise it writes 0. */
+	discrete_sound_w(6, 1);
+	discrete_sound_w(6, 0);
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -116,11 +147,12 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM }, /* WRAM */
 	{ 0x0010, 0x0013, MWA_RAM, &sprint2_horiz_ram }, /* WRAM */
+	{ 0x0014, 0x0016, MWA_RAM, &sprint2_sound_ram }, /* WRAM */
 	{ 0x0018, 0x001f, MWA_RAM, &sprint2_vert_car_ram }, /* WRAM */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
-	{ 0x0c00, 0x0c0f, MWA_RAM }, /* ATTRACT */
-	{ 0x0c10, 0x0c1f, MWA_RAM }, /* SKID1 */
-	{ 0x0c20, 0x0c2f, MWA_RAM }, /* SKID2 */
+	{ 0x0c00, 0x0c0f, sprint2_attract_w }, /* ATTRACT */
+	{ 0x0c10, 0x0c1f, sprint2_skid1_w }, /* SKID1 */
+	{ 0x0c20, 0x0c2f, sprint2_skid2_w }, /* SKID2 */
 	{ 0x0c30, 0x0c3f, sprint2_lamp1_w }, /* LAMP1 */
 	{ 0x0c40, 0x0c4f, sprint2_lamp2_w }, /* LAMP2 */
 	{ 0x0c60, 0x0c6f, MWA_RAM }, /* SPARE */
@@ -129,7 +161,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0d80, 0x0dff, sprint2_collision_reset2_w }, /* COLLISION RESET 2 */
 	{ 0x0e00, 0x0e7f, sprint2_steering_reset1_w }, /* STEERING RESET 1 */
 	{ 0x0e80, 0x0eff, sprint2_steering_reset2_w }, /* STEERING RESET 2 */
-	{ 0x0f00, 0x0f7f, MWA_RAM }, /* NOISE RESET */
+	{ 0x0f00, 0x0f7f, sprint2_noise_reset_w }, /* NOISE RESET */
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM1-PROM8 */
 MEMORY_END
 
@@ -310,6 +342,312 @@ static MACHINE_INIT( sprint2 )
 }
 
 
+/************************************************************************/
+/* sprint2 Sound System Analog emulation                               */
+/************************************************************************/
+
+const struct discrete_lfsr_desc sprint2_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	0,			/* Use Bit 0 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is not inverted */
+	15			/* Output bit */
+};
+
+/* Nodes - Inputs */
+#define SPRINT2_MOTORSND1_DATA		NODE_01
+#define SPRINT2_MOTORSND2_DATA		NODE_02
+#define SPRINT2_SKIDSND1_EN		NODE_03
+#define SPRINT2_SKIDSND2_EN		NODE_04
+#define SPRINT2_CRASHSND_DATA		NODE_05
+#define SPRINT2_ATTRACT_EN		NODE_06
+#define SPRINT2_NOISE_RESET		NODE_07
+/* Nodes - Sounds */
+#define SPRINT2_MOTORSND1		NODE_10
+#define SPRINT2_MOTORSND2		NODE_11
+#define SPRINT2_CRASHSND		NODE_12
+#define SPRINT2_SKIDSND1		NODE_13
+#define SPRINT2_SKIDSND2		NODE_14
+#define SPRINT2_NOISE			NODE_15
+#define SPRINT2_FINAL_MIX1		NODE_16
+#define SPRINT2_FINAL_MIX2		NODE_17
+
+static DISCRETE_SOUND_START(sprint2_sound_interface)
+	/************************************************/
+	/* Sprint2 sound system: 5 Sound Sources        */
+	/*                     Relative Volume          */
+	/*    1/2) Motor           84.69%               */
+	/*      2) Crash          100.00%               */
+	/*    4/5) Screech/Skid    40.78%               */
+	/* Relative volumes calculated from resitor     */
+	/* network in combiner circuit                  */
+	/*                                              */
+	/*  Discrete sound mapping via:                 */
+	/*     discrete_sound_w($register,value)        */
+	/*  $00 - Skid enable Car1                      */
+	/*  $01 - Skid enable Car2                      */
+	/*  $02 - Motorsound frequency Car1             */
+	/*  $03 - Motorsound frequency Car2             */
+	/*  $04 - Crash volume                          */
+	/*  $05 - Attract                               */
+	/*  $06 - Noise Reset                           */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for sprint2           */
+	/************************************************/
+	/*                   NODE                  ADDR   MASK   INIT */
+	DISCRETE_INPUT(SPRINT2_SKIDSND1_EN       , 0x00, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_SKIDSND2_EN       , 0x01, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_MOTORSND1_DATA    , 0x02, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_MOTORSND2_DATA    , 0x03, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_CRASHSND_DATA     , 0x04, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_ATTRACT_EN        , 0x05, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_NOISE_RESET       , 0x06, 0x000f, 0.0)
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div6, 4 & 3 */
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 27-382Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div4)                            */
+	/*  F3 freq = (Div3) 33.3% duty, 33.3 deg phase */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 10uf capacitor on the R-ladder.         */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjusts the high end.                   */
+	/* 0k = 214Hz.   250k = 4416Hz                  */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_70, 1, SPRINT2_MOTORSND1_DATA, 123000, 10e-6)
+	DISCRETE_ADJUSTMENT(NODE_71, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (382.0-27.0)/12/15, DISC_LOGADJ, "Motor 1 RPM")
+	DISCRETE_MULTIPLY(NODE_72, 1, NODE_70, NODE_71)
+
+	DISCRETE_GAIN(NODE_20, NODE_72, 2)		/* F1 = /12*2 = /6 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_21, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_67, 1, NODE_27, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_22, NODE_72, 3)		/* F2 = /12*3 = /4 */
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_23, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_68, 1, NODE_28, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_24, NODE_72, 4)		/* F3 = /12*4 = /3 */
+	DISCRETE_ADDER2(NODE_25, 1, NODE_24, 27.0/3)
+	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_25, (846.9/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_69, 1, NODE_29, 10000, 1e-7)
+
+	DISCRETE_ADDER3(SPRINT2_MOTORSND1, SPRINT2_ATTRACT_EN, NODE_67, NODE_68, NODE_69)
+
+	/************************************************/
+	/* Car2 motor sound is basically the same as    */
+	/* Car1.  But I shifted the frequencies up for  */
+	/* it to sound different from car1.             */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_73, 1, SPRINT2_MOTORSND2_DATA, 123000, 10e-6)
+	DISCRETE_ADJUSTMENT(NODE_74, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (522.0-27.0)/12/15, DISC_LOGADJ, "Motor 2 RPM")
+	DISCRETE_MULTIPLY(NODE_75, 1, NODE_73, NODE_74)
+
+	DISCRETE_GAIN(NODE_50, NODE_75, 2)		/* F1 = /12*2 = /6 */
+	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_57, 1, NODE_51, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_77, 1, NODE_57, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_52, NODE_75, 3)		/* F2 = /12*3 = /4 */
+	DISCRETE_ADDER2(NODE_53, 1, NODE_52, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_58, 1, NODE_53, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_78, 1, NODE_58, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_54, NODE_75, 4)		/* F3 = /12*4 = /3 */
+	DISCRETE_ADDER2(NODE_55, 1, NODE_54, 27.0/3)
+	DISCRETE_SQUAREWAVE(NODE_59, 1, NODE_55, (846.9/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_79, 1, NODE_59, 10000, 1e-7)
+
+	DISCRETE_ADDER3(SPRINT2_MOTORSND2, SPRINT2_ATTRACT_EN, NODE_77, NODE_78, NODE_79)
+
+	/************************************************/
+	/* Crash circuit is built around a noise        */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(SPRINT2_NOISE, 1, SPRINT2_NOISE_RESET, 15750.0/4, 1.0, 0, 0, &sprint2_lfsr)
+
+	DISCRETE_MULTIPLY(NODE_38, 1, SPRINT2_NOISE, SPRINT2_CRASHSND_DATA)
+	DISCRETE_GAIN(NODE_39, NODE_38, 1000.0/15)
+	DISCRETE_RCFILTER(SPRINT2_CRASHSND, 1, NODE_39, 545, 1e-7)
+
+	/************************************************/
+	/* Skid circuits takes the noise output from    */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback cct.     */
+	/* RC is 1K & 10uF                              */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO,             */
+	/* breadboarded freq range as:                  */
+	/*  0 = 940Hz, 34% duty                         */
+	/*  1 = 630Hz, 29% duty                         */
+	/*  the duty variance is so small we ignore it  */
+	/************************************************/
+	DISCRETE_INVERT(NODE_30, SPRINT2_NOISE)
+	DISCRETE_GAIN(NODE_31, NODE_30, 940.0-630.0)
+	DISCRETE_ADDER2(NODE_32, 1, NODE_31, ((940.0-630.0)/2)+630.0)
+	DISCRETE_RCFILTER(NODE_33, 1, NODE_32, 1000, 1e-5)
+	DISCRETE_SQUAREWAVE(NODE_34, 1, NODE_33, 407.8, 31.5, 0, 0.0)
+	DISCRETE_ONOFF(SPRINT2_SKIDSND1, SPRINT2_SKIDSND1_EN, NODE_34)
+	DISCRETE_ONOFF(SPRINT2_SKIDSND2, SPRINT2_SKIDSND2_EN, NODE_34)
+
+	/************************************************/
+	/* Combine all 5 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, 1, SPRINT2_MOTORSND1, SPRINT2_CRASHSND, SPRINT2_SKIDSND1)
+	DISCRETE_ADDER3(NODE_91, 1, SPRINT2_MOTORSND2, SPRINT2_CRASHSND, SPRINT2_SKIDSND2)
+	DISCRETE_GAIN(SPRINT2_FINAL_MIX1, NODE_90, 65534.0/(846.9+1000.0+407.8))
+	DISCRETE_GAIN(SPRINT2_FINAL_MIX2, NODE_91, 65534.0/(846.9+1000.0+407.8))
+
+	DISCRETE_OUTPUT_STEREO(SPRINT2_FINAL_MIX2, SPRINT2_FINAL_MIX1, 100)
+DISCRETE_SOUND_END
+
+static DISCRETE_SOUND_START(sprint1_sound_interface)
+	/************************************************/
+	/* Sprint1 sound system: 3 Sound Sources        */
+	/*                     Relative Volume          */
+	/*      1) Motor           84.69%               */
+	/*      2) Crash          100.00%               */
+	/*      3) Screech/Skid    40.78%               */
+	/* Relative volumes calculated from resitor     */
+	/* network in combiner circuit                  */
+	/*                                              */
+	/*  Discrete sound mapping via:                 */
+	/*     discrete_sound_w($register,value)        */
+	/*  $00 - Skid enable                           */
+	/*  $02 - Motorsound frequency                  */
+	/*  $04 - Crash volume                          */
+	/*  $05 - Attract                               */
+	/*  $06 - Noise Reset                           */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for sprint1           */
+	/************************************************/
+	/*                   NODE                  ADDR   MASK   INIT */
+	DISCRETE_INPUT(SPRINT2_SKIDSND1_EN       , 0x00, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_MOTORSND1_DATA    , 0x02, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_CRASHSND_DATA     , 0x04, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_ATTRACT_EN        , 0x05, 0x000f, 0.0)
+	DISCRETE_INPUT(SPRINT2_NOISE_RESET       , 0x06, 0x000f, 0.0)
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div6, 4 & 3 */
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 27-382Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div4)                            */
+	/*  F3 freq = (Div3) 33.3% duty, 33.3 deg phase */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 10uf capacitor on the R-ladder.         */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjusts the high end.                   */
+	/* 0k = 214Hz.   250k = 4416Hz                  */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_70, 1, SPRINT2_MOTORSND1_DATA, 123000, 10e-6)
+	DISCRETE_ADJUSTMENT(NODE_71, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (382.0-27.0)/12/15, DISC_LOGADJ, "Motor RPM")
+	DISCRETE_MULTIPLY(NODE_72, 1, NODE_70, NODE_71)
+
+	DISCRETE_GAIN(NODE_20, NODE_72, 2)		/* F1 = /12*2 = /6 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_21, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_67, 1, NODE_27, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_22, NODE_72, 3)		/* F2 = /12*3 = /4 */
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_23, (846.9/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_68, 1, NODE_28, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_24, NODE_72, 4)		/* F3 = /12*4 = /3 */
+	DISCRETE_ADDER2(NODE_25, 1, NODE_24, 27.0/3)
+	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_25, (846.9/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_69, 1, NODE_29, 10000, 1e-7)
+
+	DISCRETE_ADDER3(SPRINT2_MOTORSND1, SPRINT2_ATTRACT_EN, NODE_67, NODE_68, NODE_69)
+
+	/************************************************/
+	/* Crash circuit is built around a noise        */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(SPRINT2_NOISE, 1, SPRINT2_NOISE_RESET, 15750.0/4, 1.0, 0, 0, &sprint2_lfsr)
+
+	DISCRETE_MULTIPLY(NODE_38, 1, SPRINT2_NOISE, SPRINT2_CRASHSND_DATA)
+	DISCRETE_GAIN(NODE_39, NODE_38, 1000.0/15)
+	DISCRETE_RCFILTER(SPRINT2_CRASHSND, 1, NODE_39, 545, 1e-7)
+
+	/************************************************/
+	/* Skid circuit takes the noise output from     */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback cct.     */
+	/* RC is 1K & 10uF                              */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO,             */
+	/* breadboarded freq range as:                  */
+	/*  0 = 940Hz, 34% duty                         */
+	/*  1 = 630Hz, 29% duty                         */
+	/*  the duty variance is so small we ignore it  */
+	/************************************************/
+	DISCRETE_INVERT(NODE_30, SPRINT2_NOISE)
+	DISCRETE_GAIN(NODE_31, NODE_30, 940.0-630.0)
+	DISCRETE_ADDER2(NODE_32, 1, NODE_31, ((940.0-630.0)/2)+630.0)
+	DISCRETE_RCFILTER(NODE_33, 1, NODE_32, 1000, 1e-5)
+	DISCRETE_SQUAREWAVE(SPRINT2_SKIDSND1, SPRINT2_SKIDSND1_EN, NODE_33, 407.8, 31.5, 0, 0.0)
+
+	/************************************************/
+	/* Combine all 5 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, 1, SPRINT2_MOTORSND1, SPRINT2_CRASHSND, SPRINT2_SKIDSND1)
+	DISCRETE_GAIN(SPRINT2_FINAL_MIX1, NODE_90, 65534.0/(846.9+1000.0+407.8))
+
+	DISCRETE_OUTPUT(SPRINT2_FINAL_MIX1, 100)
+DISCRETE_SOUND_END
+
+
 static MACHINE_DRIVER_START( sprint2 )
 
 	/* basic machine hardware */
@@ -324,8 +662,8 @@ static MACHINE_DRIVER_START( sprint2 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_SIZE(32*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 29*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
@@ -333,6 +671,10 @@ static MACHINE_DRIVER_START( sprint2 )
 	MDRV_PALETTE_INIT(sprint2)
 	MDRV_VIDEO_START(sprint2)
 	MDRV_VIDEO_UPDATE(sprint2)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, sprint2_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -345,6 +687,10 @@ static MACHINE_DRIVER_START( sprint1 )
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(sprint1)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_REPLACE("discrete", DISCRETE, sprint1_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -373,7 +719,7 @@ ROM_START( sprint1 )
 	ROM_LOAD_NIB_LOW ( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* unknown */
+	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* Address PROM, not used. Put here for posterity. */
 ROM_END
 
 ROM_START( sprint2 )
@@ -394,10 +740,11 @@ ROM_START( sprint2 )
 	ROM_LOAD_NIB_LOW ( "6398-01.k6",   0x0000, 0x0200, 0xc9e1017e )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* unknown */
+	ROM_LOAD( "6401-01.e2",   0x0000, 0x0020, 0x857df8db )	/* Address PROM, not used. Put here for posterity. */
 ROM_END
 
 
 
-GAMEX( 1978, sprint1, 0,       sprint1, sprint1, 0, ROT0, "Atari", "Sprint 1", GAME_NO_SOUND )
-GAMEX( 1976, sprint2, sprint1, sprint2, sprint2, 0, ROT0, "Atari", "Sprint 2", GAME_NO_SOUND )
+/*    YEAR  NAME      PARENT   MACHINE   INPUT  INIT MONITOR  */
+GAME( 1978, sprint1,  0,       sprint1,  sprint1, 0, ROT0, "Atari", "Sprint 1" )
+GAME( 1976, sprint2,  sprint1, sprint2,  sprint2, 0, ROT0, "Atari", "Sprint 2" )

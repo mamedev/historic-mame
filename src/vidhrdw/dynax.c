@@ -5,18 +5,17 @@
 					driver by	Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-				Q		Shows Layer 0
-				W		Shows Layer 1
-				E		Shows Layer 2
-
-		Keys can be used together!
-
-
-	There are three scrolling layers. Each layer consists of 2 frame
-	buffers. The 2 images are blended together to form the final picture
+	hanamai:
+	There are four scrolling layers. Each layer consists
+	of 2 frame buffers. The 2 images are interleaved to form the final picture
 	sent to the screen.
+
+	drgpunch:
+	There are three scrolling layers. Each layer consists of 2 frame buffers.
+	The 2 images are interleaved to form the final picture sent to the screen.
+
+	mjdialq2:
+	Two scrolling layers.
 
 	The gfx roms do not contain tiles: the CPU controls a video blitter
 	that can read data from them (instructions to draw pixel by pixel,
@@ -32,31 +31,18 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 #define VERBOSE 0
 
 
-WRITE_HANDLER( dynax_flipscreen_w )
-{
-	flip_screen_set( data & 1 );
-	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, flip screen <- %02X\n", activecpu_get_pc(), data);
-}
-
 /* 0 B01234 G01234 R01234 */
 PALETTE_INIT( sprtmtch )
 {
 	int i;
 
-	/* The bits are in reverse order */
-	#define BITSWAP5( _x_ )	( (((_x_) & 0x01) ? 0x10 : 0) | \
-							  (((_x_) & 0x02) ? 0x08 : 0) | \
-							  (((_x_) & 0x04) ? 0x04 : 0) | \
-							  (((_x_) & 0x08) ? 0x02 : 0) | \
-							  (((_x_) & 0x10) ? 0x01 : 0) )
-
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int x =	(color_prom[i]<<8) + color_prom[0x200+i];
-		int r = BITSWAP5((x >>  0) & 0x1f);
-		int g = BITSWAP5((x >>  5) & 0x1f);
-		int b = BITSWAP5((x >> 10) & 0x1f);
+		/* The bits are in reverse order! */
+		int r = BITSWAP8((x >>  0) & 0x1f, 7,6,5, 0,1,2,3,4 );
+		int g = BITSWAP8((x >>  5) & 0x1f, 7,6,5, 0,1,2,3,4 );
+		int b = BITSWAP8((x >> 10) & 0x1f, 7,6,5, 0,1,2,3,4 );
 		r =  (r << 3) | (r >> 2);
 		g =  (g << 3) | (g >> 2);
 		b =  (b << 3) | (b >> 2);
@@ -72,94 +58,49 @@ PALETTE_INIT( sprtmtch )
 
 ***************************************************************************/
 
-UINT32 dynax_blit_reg;
 
-UINT32 dynax_blit_x;
-UINT32 dynax_blit_y;
-UINT32 dynax_blit_scroll_x;
-UINT32 dynax_blit_scroll_y;
+static int dynax_blit_scroll_x;
+static int dynax_blit_scroll_y;
 
-UINT32 dynax_blit_address;
-UINT32 dynax_blit_dest;
+static int blit_dest;
+static int blit_src;
+static int dynax_blit_dest;
+static int hanamai_layer_dest;
 
-UINT32 dynax_blit_pen;
-UINT32 dynax_blit_backpen;
-UINT32 dynax_blit_palettes;
-UINT32 dynax_blit_palbank;
+static int dynax_blit_pen;
+static int dynax_blit_backpen;
+static int dynax_blit_palettes;
+static int dynax_blit_palbank;
 
-UINT32 dynax_blit_enable;
+static int dynax_layer_enable;
 
-// 3 layers, 2 images per layer (blended on screen)
-UINT8 *dynax_pixmap[3][2];
+static int extra_scroll_x,extra_scroll_y;
+static int flipscreen;
 
-/* Destination X */
-WRITE_HANDLER( dynax_blit_x_w )
+#define LAYOUT_HANAMAI	0	// 4 layers, interleaved
+#define LAYOUT_HNORIDUR	1	// same as hanamai but some bits are inverted and layer order is reversed
+#define LAYOUT_DRGPUNCH	2	// 3 couples of layers, interleaved
+#define LAYOUT_MJDIALQ2	3	// 2 layers
+
+static int layer_layout;
+
+static int trigger_irq;	// some games trigger IRQ at blitter end, some don't
+
+// 4 layers, 2 images per layer (interleaved on screen)
+static UINT8 *dynax_pixmap[4][2];
+
+
+
+WRITE_HANDLER( dynax_extra_scrollx_w )
 {
-	dynax_blit_x = data;
-#if VERBOSE
-	logerror("X=%02X ",data);
-#endif
+	extra_scroll_x = data;
 }
 
-/* Destination Y */
-WRITE_HANDLER( dynax_blit_y_w )
+WRITE_HANDLER( dynax_extra_scrolly_w )
 {
-	dynax_blit_y = data;
-#if VERBOSE
-	logerror("Y=%02X ",data);
-#endif
+	extra_scroll_y = data;
 }
 
-WRITE_HANDLER( dynax_blit_scroll_w )
-{
-	// 0x800000 also used!
-	if (dynax_blit_address & 0x400000)
-	{
-		dynax_blit_scroll_y = data;
-#if VERBOSE
-	logerror("SY=%02X ",data);
-#endif
-	}
-	else
-	{
-		dynax_blit_scroll_x = data;
-#if VERBOSE
-	logerror("SX=%02X ",data);
-#endif
-	}
-}
-
-/* Source Address */
-WRITE_HANDLER( dynax_blit_addr0_w )
-{
-	dynax_blit_address = (dynax_blit_address & ~0x0000ff) | (data<<0);
-#if VERBOSE
-	logerror("A0=%02X ",data);
-#endif
-}
-WRITE_HANDLER( dynax_blit_addr1_w )
-{
-	dynax_blit_address = (dynax_blit_address & ~0x00ff00) | (data<<8);
-#if VERBOSE
-	logerror("A1=%02X ",data);
-#endif
-}
-WRITE_HANDLER( dynax_blit_addr2_w )
-{
-	dynax_blit_address = (dynax_blit_address & ~0xff0000) | (data<<16);
-#if VERBOSE
-	logerror("A2=%02X ",data);
-#endif
-}
-
-/* Destination Layers */
-WRITE_HANDLER( dynax_blit_dest_w )
-{
-	dynax_blit_dest = data;
-#if VERBOSE
-	logerror("D=%02X ",data);
-#endif
-}
 
 /* Destination Pen */
 WRITE_HANDLER( dynax_blit_pen_w )
@@ -206,13 +147,55 @@ WRITE_HANDLER( dynax_blit_palbank_w )
 #endif
 }
 
-/* Layers Enable */
-WRITE_HANDLER( dynax_blit_enable_w )
+/* Destination Layers */
+WRITE_HANDLER( dynax_blit_dest_w )
 {
-	dynax_blit_enable = data;
+	dynax_blit_dest = data;
+	if (layer_layout == LAYOUT_HNORIDUR)
+		dynax_blit_dest = BITSWAP8(dynax_blit_dest ^ 0x0f, 7,6,5,4, 0,1,2,3);
+
+#if VERBOSE
+	logerror("D=%02X ",data);
+#endif
+}
+
+WRITE_HANDLER( hanamai_layer_dest_w )
+{
+	hanamai_layer_dest = data & 1;
+}
+
+WRITE_HANDLER( mjdialq2_blit_dest_w )
+{
+	int mask = (2 >> offset);	/* 1 or 2 */
+
+	dynax_blit_dest &= ~mask;
+	if (~data & 1) dynax_blit_dest |= mask;
+}
+
+/* Layers Enable */
+WRITE_HANDLER( dynax_layer_enable_w )
+{
+	dynax_layer_enable = data;
+
 #if VERBOSE
 	logerror("E=%02X ",data);
 #endif
+}
+
+WRITE_HANDLER( mjdialq2_layer_enable_w )
+{
+	int mask = (2 >> offset);	/* 1 or 2 */
+
+	dynax_layer_enable &= ~mask;
+	if (~data & 1) dynax_layer_enable |= mask;
+}
+
+
+WRITE_HANDLER( dynax_flipscreen_w )
+{
+	flipscreen = data & 1;
+	if (data & ~1)
+		logerror("CPU#0 PC %06X: Warning, flip screen <- %02X\n", activecpu_get_pc(), data);
 }
 
 
@@ -246,10 +229,17 @@ WRITE_HANDLER( dynax_blit_enable_w )
 /* Plot a pixel (in the pixmaps specified by dynax_blit_dest) */
 INLINE void sprtmtch_plot_pixel(int x, int y, int pen, int flags)
 {
-	/* "Flip Screen" just means complement the coordinates to 256 */
-	if (flip_screen)	{	x = 0x100 - x;	y = 0x100 - y;	}
+	x &= 0xff;	// confirmed by some mjdialq2 gfx and especially by mjfriday, which
+				// uses the front layer to mask out the right side of the screen as
+				// it draws stuff on the left, when it shows the girls scrolling
+				// horizontally after you win.
+	y &= 0xff;	// seems confirmed by mjdialq2 last picture of gal 6, but it breaks
+				// mjdialq2 title screen so there's something we are missing.
 
-	/* Swap X with Y */
+	/* "Flip Screen" just means complement the coordinates to 256 */
+	if (flipscreen)	{	x ^= 0xff;	y ^= 0xff;	}
+
+	/* Rotate: rotation = SWAPXY + FLIPY */
 	if (flags & 0x08)	{ int t = x; x = y; y = t;	}
 
 	/* Ignore the pens specified in ROM, draw everything with the
@@ -259,112 +249,227 @@ INLINE void sprtmtch_plot_pixel(int x, int y, int pen, int flags)
 	if (	(x >= 0) && (x <= 0xff) &&
 			(y >= 0) && (y <= 0xff)	)
 	{
-		if (dynax_blit_dest & 0x01)	dynax_pixmap[0][0][(y<<8)|x] = pen;
-		if (dynax_blit_dest & 0x02)	dynax_pixmap[0][1][(y<<8)|x] = pen;
-		if (dynax_blit_dest & 0x04)	dynax_pixmap[1][0][(y<<8)|x] = pen;
-		if (dynax_blit_dest & 0x08)	dynax_pixmap[1][1][(y<<8)|x] = pen;
-		if (dynax_blit_dest & 0x10)	dynax_pixmap[2][0][(y<<8)|x] = pen;
-		if (dynax_blit_dest & 0x20)	dynax_pixmap[2][1][(y<<8)|x] = pen;
+		switch (layer_layout)
+		{
+			case LAYOUT_HANAMAI:
+			case LAYOUT_HNORIDUR:
+				if (dynax_blit_dest & 0x01)	dynax_pixmap[0][hanamai_layer_dest][256*y+x] = pen;
+				if (dynax_blit_dest & 0x02)	dynax_pixmap[1][hanamai_layer_dest][256*y+x] = pen;
+				if (dynax_blit_dest & 0x04)	dynax_pixmap[2][hanamai_layer_dest][256*y+x] = pen;
+				if (dynax_blit_dest & 0x08)	dynax_pixmap[3][hanamai_layer_dest][256*y+x] = pen;
+				break;
+
+			case LAYOUT_DRGPUNCH:
+				if (dynax_blit_dest & 0x01)	dynax_pixmap[0][0][256*y+x] = pen;
+				if (dynax_blit_dest & 0x02)	dynax_pixmap[0][1][256*y+x] = pen;
+				if (dynax_blit_dest & 0x04)	dynax_pixmap[1][0][256*y+x] = pen;
+				if (dynax_blit_dest & 0x08)	dynax_pixmap[1][1][256*y+x] = pen;
+				if (dynax_blit_dest & 0x10)	dynax_pixmap[2][0][256*y+x] = pen;
+				if (dynax_blit_dest & 0x20)	dynax_pixmap[2][1][256*y+x] = pen;
+				break;
+
+			case LAYOUT_MJDIALQ2:
+				if (dynax_blit_dest & 0x01)	dynax_pixmap[0][0][256*y+x] = pen;
+				if (dynax_blit_dest & 0x02)	dynax_pixmap[1][0][256*y+x] = pen;
+				break;
+		}
 	}
 }
 
 
-UINT32 sprtmtch_drawgfx( UINT32 i, UINT32 x, UINT32 y, UINT32 flags )
+int sprtmtch_drawgfx( int i, int dest, int flags )
 {
-	data8_t cmd, pen, count;
+	data8_t cmd, pen;
+	int x = dest & 0xff;
+	int y = dest >> 8;
 
 	data8_t *SRC		=	memory_region( REGION_GFX1 );
 	size_t   size_src	=	memory_region_length( REGION_GFX1 );
 
 	int sx;
 
+if (flags & 0xf4) usrintf_showmessage("flags %02x",flags);
 	if ( flags & 1 )
 	{
+		int start,len;
+		pen = (dynax_blit_pen >> 4) & 0xf;
+
 		/* Clear the buffer(s) starting from the given scanline and exit */
 
-		if (dynax_blit_dest & 0x01)	memset(&dynax_pixmap[0][0][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
-		if (dynax_blit_dest & 0x02)	memset(&dynax_pixmap[0][1][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
-		if (dynax_blit_dest & 0x04)	memset(&dynax_pixmap[1][0][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
-		if (dynax_blit_dest & 0x08)	memset(&dynax_pixmap[1][1][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
-		if (dynax_blit_dest & 0x10)	memset(&dynax_pixmap[2][0][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
-		if (dynax_blit_dest & 0x20)	memset(&dynax_pixmap[2][1][y<<8],0,sizeof(UINT8)*(0x100-y)*0x100);
+		if (flipscreen)
+			start = 0;
+		else
+			start = dest;
+
+		len = 0x10000 - dest;
+
+		switch (layer_layout)
+		{
+			case LAYOUT_HANAMAI:
+			case LAYOUT_HNORIDUR:
+				if (dynax_blit_dest & 0x01)	memset(&dynax_pixmap[0][0][start],pen,len);
+				if (dynax_blit_dest & 0x01)	memset(&dynax_pixmap[0][1][start],pen,len);
+				if (dynax_blit_dest & 0x02)	memset(&dynax_pixmap[1][0][start],pen,len);
+				if (dynax_blit_dest & 0x02)	memset(&dynax_pixmap[1][1][start],pen,len);
+				if (dynax_blit_dest & 0x04)	memset(&dynax_pixmap[2][0][start],pen,len);
+				if (dynax_blit_dest & 0x04)	memset(&dynax_pixmap[2][1][start],pen,len);
+				if (dynax_blit_dest & 0x08)	memset(&dynax_pixmap[3][0][start],pen,len);
+				if (dynax_blit_dest & 0x08)	memset(&dynax_pixmap[3][1][start],pen,len);
+				break;
+
+			case LAYOUT_DRGPUNCH:
+				if (dynax_blit_dest & 0x01)	memset(&dynax_pixmap[0][0][start],pen,len);
+				if (dynax_blit_dest & 0x02)	memset(&dynax_pixmap[0][1][start],pen,len);
+				if (dynax_blit_dest & 0x04)	memset(&dynax_pixmap[1][0][start],pen,len);
+				if (dynax_blit_dest & 0x08)	memset(&dynax_pixmap[1][1][start],pen,len);
+				if (dynax_blit_dest & 0x10)	memset(&dynax_pixmap[2][0][start],pen,len);
+				if (dynax_blit_dest & 0x20)	memset(&dynax_pixmap[2][1][start],pen,len);
+				break;
+
+			case LAYOUT_MJDIALQ2:
+				if (dynax_blit_dest & 0x01)	memset(&dynax_pixmap[0][0][start],pen,len);
+				if (dynax_blit_dest & 0x02)	memset(&dynax_pixmap[1][0][start],pen,len);
+				break;
+		}
+
 		return i;
 	}
 
 	sx = x;
 
-	while ( y < Machine->drv->screen_height )
+	for ( ;; )
 	{
-		if (i >= size_src)	return i;
+		if (i >= size_src)
+		{
+usrintf_showmessage("GFXROM OVER %08x",i);
+			return i;
+		}
 		cmd = SRC[i++];
 		pen = (cmd & 0xf0)>>4;
 		cmd = (cmd & 0x0f)>>0;
 
 		switch (cmd)
 		{
-		case 0x0:	// Stop
-			return i;
-
-		case 0x1:	// Draw N pixels
-		case 0x2:
-		case 0x3:
-		case 0x4:
-		case 0x5:
-		case 0x6:
-		case 0x7:
-		case 0x8:
-		case 0x9:
-		case 0xa:
-		case 0xb:
-			count = cmd;
-			for ( ; count>0; count-- )
-				sprtmtch_plot_pixel(x++, y, pen, flags);
-			break;
-
-		case 0xd:	// Skip X pixels
-			if (i >= size_src)	return i;
-			x = sx + SRC[i++];
-		case 0xc:	// Draw N pixels
-			if (i >= size_src)	return i;
-			count = SRC[i++];
-
-			for ( ; count>0; count-- )
-				sprtmtch_plot_pixel(x++, y, pen, flags);
-			break;
-
-//		case 0xe:	// ? unused
-
 		case 0xf:	// Increment Y
-			y++;
+			/* Rotate: rotation = SWAPXY + FLIPY */
+			if (flags & 0x08)
+				y--;
+			else
+				y++;
 			x = sx;
 			break;
 
-		default:
-			logerror("Blitter unknown command %06X: %02X\n", i-1, cmd);
+		case 0xe:	// unused ? was "change dest mask" in the "rev1" blitter
+			usrintf_showmessage("Blitter unknown command %06X: %02X\n", i-1, cmd);
+
+		case 0xd:	// Skip X pixels
+			if (i >= size_src)
+			{
+usrintf_showmessage("GFXROM OVER %08x",i);
+				return i;
+			}
+			x = sx + SRC[i++];
+			/* fall through into next case */
+
+		case 0xc:	// Draw N pixels
+			if (i >= size_src)
+			{
+usrintf_showmessage("GFXROM OVER %08x",i);
+				return i;
+			}
+			cmd = SRC[i++];
+			/* fall through into next case */
+
+		case 0xb:
+		case 0xa:
+		case 0x9:
+		case 0x8:
+		case 0x7:
+		case 0x6:
+		case 0x5:
+		case 0x4:
+		case 0x3:
+		case 0x2:
+		case 0x1:	// Draw N pixels
+			while (cmd--)
+				sprtmtch_plot_pixel(x++, y, pen, flags);
+			break;
+
+		case 0x0:	// Stop
+			return i;
 		}
 	}
-	return i;
 }
 
-WRITE_HANDLER( sprtmtch_blit_draw_w )
+
+
+static void dynax_blitter_start(int flags)
 {
-	UINT32 i =
+	int i =
 	sprtmtch_drawgfx(
-		dynax_blit_address & 0x3fffff,
-		dynax_blit_x, dynax_blit_y,
-		data
+		blit_src & 0x3fffff,
+		blit_dest,
+		flags
 	);
 
 #if VERBOSE
 	logerror("BLIT=%02X\n",data);
 #endif
 
-	dynax_blit_address	=	(dynax_blit_address & ~0x3fffff) |
+	blit_src	=	(blit_src & ~0x3fffff) |
 							(i                  &  0x3fffff) ;
 
 	/* Generate an IRQ */
-	dynax_blitter_irq = 1;
-	sprtmtch_update_irq();
+	if (trigger_irq)
+	{
+		dynax_blitter_irq = 1;
+		sprtmtch_update_irq();
+	}
+}
+
+
+
+
+WRITE_HANDLER( dynax_blit_scroll_w )
+{
+//logerror("%04x blit_scroll_w data = %02x addr = %06x\n",activecpu_get_pc(),data,blit_src);
+	// 0x800000 also used!
+	if (blit_src & 0x800000)
+	{
+//usrintf_showmessage("dynax_blit_scroll %02x",data);
+	}
+	else
+	{
+		if (blit_src & 0x400000)
+		{
+			dynax_blit_scroll_y = data;
+#if VERBOSE
+			logerror("SY=%02X ",data);
+#endif
+		}
+		else
+		{
+			dynax_blit_scroll_x = data;
+#if VERBOSE
+			logerror("SX=%02X ",data);
+#endif
+		}
+	}
+}
+
+
+WRITE_HANDLER( dynax_blitter_rev2_w )
+{
+	switch (offset)
+	{
+		case 0: dynax_blitter_start(data); break;
+		case 1:	blit_dest = (blit_dest & 0xff00) | (data << 0); break;
+		case 2: blit_dest = (blit_dest & 0x00ff) | (data << 8); break;
+		case 3:	blit_src = (blit_src & 0xffff00) | (data << 0); break;
+		case 4: blit_src = (blit_src & 0xff00ff) | (data << 8); break;
+		case 5: blit_src = (blit_src & 0x00ffff) | (data <<16); break;
+		case 6: dynax_blit_scroll_w(0,data); break;
+	}
 }
 
 
@@ -376,8 +481,43 @@ WRITE_HANDLER( sprtmtch_blit_draw_w )
 
 ***************************************************************************/
 
-VIDEO_START( dynax )
+VIDEO_START( hanamai )
 {
+	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[3][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[3][1] = auto_malloc(256*256)))	return 1;
+
+	extra_scroll_x = 0;
+	extra_scroll_y = 0;
+
+	layer_layout = LAYOUT_HANAMAI;
+	trigger_irq = 1;
+
+	return 0;
+}
+
+VIDEO_START( hnoridur )
+{
+	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[3][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[3][1] = auto_malloc(256*256)))	return 1;
+
+	extra_scroll_x = 0;
+	extra_scroll_y = 0;
+
+	layer_layout = LAYOUT_HNORIDUR;
+	trigger_irq = 1;
+
 	return 0;
 }
 
@@ -389,8 +529,24 @@ VIDEO_START( sprtmtch )
 	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
 	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
 	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
+
+	layer_layout = LAYOUT_DRGPUNCH;
+	trigger_irq = 1;
+
 	return 0;
 }
+
+VIDEO_START( mjdialq2 )
+{
+	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
+
+	layer_layout = LAYOUT_MJDIALQ2;
+	trigger_irq = 0;
+
+	return 0;
+}
+
 
 /***************************************************************************
 
@@ -400,69 +556,124 @@ VIDEO_START( sprtmtch )
 
 ***************************************************************************/
 
-VIDEO_UPDATE( dynax )
+void hanamai_copylayer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int i)
 {
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-}
-
-
-void sprtmtch_copylayer(struct mame_bitmap *bitmap,int i)
-{
-	struct GfxElement gfx;
 	int color;
-	int sx,sy;
+	int scrollx,scrolly;
 
 	switch ( i )
 	{
-		case 0:	color = (dynax_blit_palettes >> 0) & 0xf;	break;
-		case 1:	color = (dynax_blit_palettes >> 4) & 0xf;	break;
-		case 2:	color = (dynax_blit_palettes >> 8) & 0xf;	break;
+		case 0:	color = (dynax_blit_palettes >>  0) & 0xf;	break;
+		case 1:	color = (dynax_blit_palettes >>  4) & 0xf;	break;
+		case 2:	color = (dynax_blit_palettes >>  8) & 0xf;	break;
+		case 3:	color = (dynax_blit_palettes >> 12) & 0xf;	break;
 		default:	return;
 	}
 
 	color += (dynax_blit_palbank & 1) * 16;
 
-	gfx.width				=	256;
-	gfx.height				=	256;
-	gfx.total_elements		=	1;
-	gfx.color_granularity	=	16;
-	gfx.colortable			=	Machine->remapped_colortable;
-	gfx.total_colors		=	32;
-	gfx.pen_usage			=	NULL;
-	gfx.gfxdata				=	dynax_pixmap[i][0];
-	gfx.line_modulo			=	gfx.width;
-	gfx.char_modulo			=	0;
-	gfx.flags				=	0;
+	scrollx = dynax_blit_scroll_x;
+	scrolly = dynax_blit_scroll_y;
 
-	for ( sy = dynax_blit_scroll_y+8 - 0x100; sy < 0x100; sy += 0x100 )
+	if ((layer_layout == LAYOUT_HANAMAI && i == 1)
+			|| (layer_layout == LAYOUT_HNORIDUR && i == 1))
 	{
-		for ( sx = dynax_blit_scroll_x - 0x100;	sx < 0x100; sx += 0x100 )
+		scrollx = extra_scroll_x;
+		scrolly = extra_scroll_y - 1;
+	}
+
+	{
+		int dy,length,pen,offs;
+		UINT8 *src1 = dynax_pixmap[i][1];
+		UINT8 *src2 = dynax_pixmap[i][0];
+
+		int palbase = 16*color;
+		offs = 0;
+
+		for (dy = 0; dy < 256; dy++)
 		{
-			gfx.gfxdata = dynax_pixmap[i][0];
-			drawgfx(	bitmap, &gfx,
-						0,
-						color,
-						0, 0,
-						sx, sy,
-						&Machine->visible_area, TRANSPARENCY_PEN, 0);
-//			if (!keyboard_pressed(KEYCODE_Z))
+			UINT16 *dst;
+			UINT16 *dstbase = (UINT16 *)bitmap->base + ((dy - scrolly) & 0xff) * bitmap->rowpixels;
+
+			length = scrollx;
+			dst = dstbase + 2*(256 - length);
+			while (length--)
 			{
-			gfx.gfxdata = dynax_pixmap[i][1];
-			alpha_set_level(0x100/2);	// blend the 2 pictures (50%)
-			drawgfx(	bitmap, &gfx,
-						0,
-						color,
-						0, 0,
-						sx, sy,
-						&Machine->visible_area, TRANSPARENCY_ALPHA, 0);
+				pen = *(src1++);
+				if (pen) *dst     = palbase + pen;
+				pen = *(src2++);
+				if (pen) *(dst+1) = palbase + pen;
+				dst += 2;
+			}
+
+			length = 256 - scrollx;
+			dst = dstbase;
+			while (length--)
+			{
+				pen = *(src1++);
+				if (pen) *dst     = palbase + pen;
+				pen = *(src2++);
+				if (pen) *(dst+1) = palbase + pen;
+				dst += 2;
 			}
 		}
 	}
 }
 
-VIDEO_UPDATE( sprtmtch )
+
+
+void mjdialq2_copylayer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int i)
 {
-#ifdef MAME_DEBUG
+	int color;
+	int scrollx,scrolly;
+
+	switch ( i )
+	{
+		case 0:	color = (dynax_blit_palettes >>  4) & 0xf;	break;
+		case 1:	color = (dynax_blit_palettes >>  0) & 0xf;	break;
+		default:	return;
+	}
+
+	color += (dynax_blit_palbank & 1) * 16;
+
+	scrollx = dynax_blit_scroll_x;
+	scrolly = dynax_blit_scroll_y;
+
+	{
+		int dy,length,pen,offs;
+		UINT8 *src = dynax_pixmap[i][0];
+
+		int palbase = 16*color;
+		offs = 0;
+
+		for (dy = 0; dy < 256; dy++)
+		{
+			UINT16 *dst;
+			UINT16 *dstbase = (UINT16 *)bitmap->base + ((dy - scrolly) & 0xff) * bitmap->rowpixels;
+
+			length = scrollx;
+			dst = dstbase + 256 - length;
+			while (length--)
+			{
+				pen = *(src++);
+				if (pen) *dst = palbase + pen;
+				dst++;
+			}
+
+			length = 256 - scrollx;
+			dst = dstbase;
+			while (length--)
+			{
+				pen = *(src++);
+				if (pen) *dst = palbase + pen;
+				dst++;
+			}
+		}
+	}
+}
+
+
+
 #if 0
 /*	A primitive gfx viewer:
 
@@ -487,38 +698,131 @@ if (toggle)	{
 
 	dynax_blit_palettes = (c & 0xf) * 0x111;
 	dynax_blit_palbank  = (c >>  4) & 1;
-	dynax_blit_dest = 3;
+	dynax_blit_dest = 1;
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	memset(dynax_pixmap[0][0],0,sizeof(UINT8)*0x100*0x100);
 	memset(dynax_pixmap[0][1],0,sizeof(UINT8)*0x100*0x100);
+	hanamai_layer_dest = 0;
 	sprtmtch_drawgfx(i, Machine->visible_area.min_x, Machine->visible_area.min_y, 0);
-	sprtmtch_copylayer(bitmap, 0);
+	hanamai_layer_dest = 1;
+	sprtmtch_drawgfx(i, Machine->visible_area.min_x, Machine->visible_area.min_y, 0);
+	hanamai_copylayer(bitmap, cliprect, 0);
 	usrintf_showmessage("%06X C%02X",i,c);
 }
 else
 #endif
-#endif
-{
-	int layers_ctrl = ~dynax_blit_enable;
 
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
-	if (msk != 0)	layers_ctrl &= msk;		}
-#endif
+
+static int hanamai_priority;
+
+WRITE_HANDLER( hanamai_priority_w )
+{
+	hanamai_priority = data;
+}
+
+
+VIDEO_UPDATE( hanamai )
+{
+	int layers_ctrl = ~dynax_layer_enable;
+	int lay[4];
 
 	fillbitmap(
 		bitmap,
 		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 1) * 256],
-		&Machine->visible_area);
+		cliprect);
 
-	if (layers_ctrl & 1)	sprtmtch_copylayer( bitmap, 0 );
-	if (layers_ctrl & 2)	sprtmtch_copylayer( bitmap, 1 );
-	if (layers_ctrl & 4)	sprtmtch_copylayer( bitmap, 2 );
+	/* bit 4 = display enable? */
+	if (!(hanamai_priority & 0x10)) return;
+
+	switch (hanamai_priority)
+	{
+		default:
+			usrintf_showmessage("unknown priority %02x",hanamai_priority);
+		case 0x10:
+			lay[0] = 0; lay[1] = 1; lay[2] = 2; lay[3] = 3; break;
+		case 0x11:
+			lay[0] = 0; lay[1] = 3; lay[2] = 2; lay[3] = 1; break;
+		case 0x12:
+			lay[0] = 0; lay[1] = 1; lay[2] = 3; lay[3] = 2; break;
+		case 0x13:
+			lay[0] = 0; lay[1] = 3; lay[2] = 1; lay[3] = 2; break;
+		case 0x14:
+			lay[0] = 0; lay[1] = 2; lay[2] = 1; lay[3] = 3; break;
+		case 0x15:
+			lay[0] = 0; lay[1] = 2; lay[2] = 3; lay[3] = 1; break;
+	}
+
+	if (layers_ctrl & (1 << lay[0]))	hanamai_copylayer( bitmap, cliprect, lay[0] );
+	if (layers_ctrl & (1 << lay[1]))	hanamai_copylayer( bitmap, cliprect, lay[1] );
+	if (layers_ctrl & (1 << lay[2]))	hanamai_copylayer( bitmap, cliprect, lay[2] );
+	if (layers_ctrl & (1 << lay[3]))	hanamai_copylayer( bitmap, cliprect, lay[3] );
 }
 
+
+VIDEO_UPDATE( hnoridur )
+{
+	int layers_ctrl = ~BITSWAP8(hanamai_priority, 7,6,5,4, 0,1,2,3);
+	int lay[4];
+
+	fillbitmap(
+		bitmap,
+		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 1) * 256],
+		cliprect);
+
+	switch (hanamai_priority & 0xf0)
+	{
+		default:
+			usrintf_showmessage("unknown priority %02x",hanamai_priority);
+		case 0x00:
+			lay[0] = 0; lay[1] = 2; lay[2] = 3; lay[3] = 1; break;
+		case 0x10:
+			lay[0] = 2; lay[1] = 1; lay[2] = 0; lay[3] = 3; break;
+		case 0x20:
+			lay[0] = 3; lay[1] = 1; lay[2] = 0; lay[3] = 2; break;
+		case 0x30:
+			lay[0] = 2; lay[1] = 0; lay[2] = 3; lay[3] = 1; break;
+		case 0x40:
+			lay[0] = 3; lay[1] = 0; lay[2] = 2; lay[3] = 1; break;
+		case 0x50:
+			lay[0] = 1; lay[1] = 3; lay[2] = 0; lay[3] = 2; break;
+		case 0x60:
+			lay[0] = 2; lay[1] = 3; lay[2] = 1; lay[3] = 0; break;
+		case 0x70:
+			lay[0] = 1; lay[1] = 0; lay[2] = 2; lay[3] = 3; break;
+	}
+
+	if (layers_ctrl & (1 << lay[0]))	hanamai_copylayer( bitmap, cliprect, lay[0] );
+	if (layers_ctrl & (1 << lay[1]))	hanamai_copylayer( bitmap, cliprect, lay[1] );
+	if (layers_ctrl & (1 << lay[2]))	hanamai_copylayer( bitmap, cliprect, lay[2] );
+	if (layers_ctrl & (1 << lay[3]))	hanamai_copylayer( bitmap, cliprect, lay[3] );
+}
+
+
+VIDEO_UPDATE( sprtmtch )
+{
+	int layers_ctrl = ~dynax_layer_enable;
+
+	fillbitmap(
+		bitmap,
+		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 1) * 256],
+		cliprect);
+
+	if (layers_ctrl & 1)	hanamai_copylayer( bitmap, cliprect, 0 );
+	if (layers_ctrl & 2)	hanamai_copylayer( bitmap, cliprect, 1 );
+	if (layers_ctrl & 4)	hanamai_copylayer( bitmap, cliprect, 2 );
+}
+
+
+VIDEO_UPDATE( mjdialq2 )
+{
+	int layers_ctrl = ~dynax_layer_enable;
+
+	fillbitmap(
+		bitmap,
+		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 1) * 256],
+		cliprect);
+
+	if (layers_ctrl & 1)	mjdialq2_copylayer( bitmap, cliprect, 0 );
+	if (layers_ctrl & 2)	mjdialq2_copylayer( bitmap, cliprect, 1 );
 }

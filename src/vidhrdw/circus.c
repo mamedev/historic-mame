@@ -19,6 +19,22 @@ static int clown_x=0,clown_y=0,clown_z=0;
 /***************************************************************************
 ***************************************************************************/
 
+static const char *circus_sample_names[] =
+{
+	"*circus",
+	"pop.wav",
+	"miss.wav",
+	"bounce.wav",
+	0       /* end of array */
+};
+
+struct Samplesinterface circus_samples_interface =
+{
+	3,	/* 3 channels */
+	25,	/* volume */
+	circus_sample_names
+};
+
 WRITE_HANDLER( circus_clown_x_w )
 {
 	clown_x = 240-data;
@@ -51,18 +67,21 @@ WRITE_HANDLER( circus_clown_z_w )
 			break;
 
 		case 2 : /* Pop */
+			sample_start (0, 0, 0);
 			break;
 
 		case 3 : /* Normal Video */
 			break;
 
 		case 4 : /* Miss */
+			sample_start (1, 1, 0);
 			break;
 
 		case 5 : /* Invert Video */
 			break;
 
 		case 6 : /* Bounce */
+			sample_start (2, 2, 0);
 			break;
 
 		case 7 : /* Don't Know */

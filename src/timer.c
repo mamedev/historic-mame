@@ -107,7 +107,7 @@ static int callback_timer_modified;
 static int pick_cpu(int *cpu, int *cycles, double expire);
 
 #if VERBOSE
-static void verbose_print(char *s, ...);
+#define verbose_print logerror
 #endif
 
 
@@ -300,6 +300,7 @@ void timer_init(void)
 		timers[i].tag = -1;
 		timers[i].next = &timers[i+1];
 	}
+	timers[MAX_TIMERS-1].next = NULL;
 	timer_free_tail = &timers[MAX_TIMERS-1];
 
 	/* reset the CPU timers */
@@ -511,10 +512,11 @@ void timer_remove(void *which)
 		timer_free_tail->next = timer;
 	else
 		timer_free_head = timer;
+	timer->next = NULL;
 	timer_free_tail = timer;
 
 	#if VERBOSE
-		verbose_print("T=%.6g: Removed %08X\n", getabsolutetime() + global_offset, timer);
+		verbose_print("T=%.6g: Removed %08X\n", getabsolutetime() + global_offset, (UINT32)timer);
 	#endif
 }
 
@@ -552,8 +554,8 @@ int timer_enable(void *which, int enable)
 	int old;
 
 	#if VERBOSE
-		if (enable) verbose_print("T=%.6g: Enabled %08X\n", getabsolutetime() + global_offset, timer);
-		else verbose_print("T=%.6g: Disabled %08X\n", getabsolutetime() + global_offset, timer);
+		if (enable) verbose_print("T=%.6g: Enabled %08X\n", getabsolutetime() + global_offset, (UINT32)timer);
+		else verbose_print("T=%.6g: Disabled %08X\n", getabsolutetime() + global_offset, (UINT32)timer);
 	#endif
 
 	/* set the enable flag */
@@ -648,12 +650,13 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 	while (timer_head->expire <= end)
 	{
 		timer_entry *timer = timer_head;
+		int was_enabled = timer->enabled;
 
 		/* the base time is now the time of the timer */
 		base_time = timer->expire;
 
 		#if VERBOSE
-			verbose_print("T=%.6g: %08X fired (exp time=%.6g)\n", getabsolutetime() + global_offset, timer, timer->expire + global_offset);
+			verbose_print("T=%.6g: %08X fired (exp time=%.6g)\n", getabsolutetime() + global_offset, (UINT32)timer, timer->expire + global_offset);
 		#endif
 
 		/* if this is a one-shot timer, disable it now */
@@ -665,7 +668,7 @@ int timer_schedule_cpu(int *cpu, int *cycles)
 		callback_timer = timer;
 
 		/* call the callback */
-		if (timer->callback)
+		if (was_enabled && timer->callback)
 		{
 			profiler_mark(PROFILER_TIMER_CALLBACK);
 			(*timer->callback)(timer->callback_param);
@@ -1004,33 +1007,3 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 	/* failure */
 	return 0;
 }
-
-
-
-/*-------------------------------------------------
-	debugging
--------------------------------------------------*/
-
-#if VERBOSE
-
-#ifdef macintosh
-#undef printf
-#endif
-
-static void verbose_print(char *s, ...)
-{
-	va_list ap;
-
-	va_start(ap, s);
-
-	#if (VERBOSE == 1)
-		if (errorlog) vfprintf(errorlog, s, ap);
-	#else
-		vprintf(s, ap);
-		fflush(NULL);
-	#endif
-
-	va_end(ap);
-}
-
-#endif

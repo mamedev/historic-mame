@@ -121,7 +121,10 @@ Stephh's notes (based on the games M68000 code and some tests) :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
-#include "dassault.h"
+#include "deco16ic.h"
+
+VIDEO_START( dassault );
+VIDEO_UPDATE( dassault );
 
 static data16_t *dassault_ram,*shared_ram,*dassault_ram2;
 
@@ -136,19 +139,13 @@ static READ16_HANDLER( dassault_control_r )
 
 		case 2: /* Player 3 & Player 4 joysticks & fire buttons */
 			return (readinputport(6) + (readinputport(7) << 8));
-#if 0
-		case 4: /* Dip 1 & 2 */
-			return (readinputport(3) + (readinputport(4) << 8));
 
-		case 6: /* Dip 3 but unused (solder pads not populated on some boards) */
-			return 0xffff;
-#else
 		case 4: /* Dip 1 (stored at 0x3f8035) */
 			return readinputport(3);
 
 		case 6: /* Dip 2 (stored at 0x3f8034) */
 			return readinputport(4);
-#endif
+
 		case 8: /* VBL, Credits */
 			return readinputport(2);
 	}
@@ -222,22 +219,22 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( dassault_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, dassault_palette_24bit_w, &paletteram16 },
+	{ 0x100000, 0x103fff, deco16_nonbuffered_palette_w, &paletteram16 },
 	{ 0x140004, 0x140007, MWA16_NOP }, /* ? */
 	{ 0x180000, 0x180001, dassault_sound_w },
-	{ 0x1c000a, 0x1c000b, dassault_priority_w },
+	{ 0x1c000a, 0x1c000b, deco16_priority_w },
 	{ 0x1c000c, 0x1c000d, buffer_spriteram16_2_w },
 	{ 0x1c000e, 0x1c000f, dassault_control_w },
 
-	{ 0x200000, 0x201fff, dassault_pf1_data_w, &dassault_pf1_data },
-	{ 0x202000, 0x203fff, dassault_pf4_data_w, &dassault_pf4_data },
-	{ 0x212000, 0x212fff, MWA16_RAM, &dassault_pf4_rowscroll },
-	{ 0x220000, 0x22000f, dassault_control_1_w },
+	{ 0x200000, 0x201fff, deco16_pf1_data_w, &deco16_pf1_data },
+	{ 0x202000, 0x203fff, deco16_pf2_data_w, &deco16_pf2_data },
+	{ 0x212000, 0x212fff, MWA16_RAM, &deco16_pf2_rowscroll },
+	{ 0x220000, 0x22000f, MWA16_RAM, &deco16_pf12_control },
 
-	{ 0x240000, 0x240fff, dassault_pf3_data_w, &dassault_pf3_data },
-	{ 0x242000, 0x242fff, dassault_pf2_data_w, &dassault_pf2_data },
-	{ 0x252000, 0x252fff, MWA16_RAM, &dassault_pf2_rowscroll },
-	{ 0x260000, 0x26000f, dassault_control_0_w },
+	{ 0x240000, 0x240fff, deco16_pf3_data_w, &deco16_pf3_data },
+	{ 0x242000, 0x242fff, deco16_pf4_data_w, &deco16_pf4_data },
+	{ 0x252000, 0x252fff, MWA16_RAM, &deco16_pf4_rowscroll },
+	{ 0x260000, 0x26000f, MWA16_RAM, &deco16_pf34_control },
 
 	{ 0x3f8000, 0x3fbfff, MWA16_RAM, &dassault_ram },
 	{ 0x3fc000, 0x3fcfff, MWA16_RAM, &spriteram16_2, &spriteram_2_size },
@@ -266,30 +263,6 @@ MEMORY_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( YM2151_w )
-{
-	switch (offset) {
-	case 0:
-		YM2151_register_port_0_w(0,data);
-		break;
-	case 1:
-		YM2151_data_port_0_w(0,data);
-		break;
-	}
-}
-
-static WRITE_HANDLER( YM2203_w )
-{
-	switch (offset) {
-	case 0:
-		YM2203_control_port_0_w(0,data);
-		break;
-	case 1:
-		YM2203_write_port_0_w(0,data);
-		break;
-	}
-}
-
 static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
@@ -302,8 +275,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x100000, 0x100001, YM2203_w },
-	{ 0x110000, 0x110001, YM2151_w },
+	{ 0x100000, 0x100001, YM2203_word_0_w },
+	{ 0x110000, 0x110001, YM2151_word_0_w },
 	{ 0x120000, 0x120001, OKIM6295_data_0_w },
 	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
@@ -360,7 +333,7 @@ INPUT_PORTS_START( thndzone )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )		// Check code at 0x0104fe
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "2 Coins to Start, 1 to Continue" )
@@ -414,10 +387,6 @@ INPUT_PORTS_START( dassault )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -438,7 +407,7 @@ INPUT_PORTS_START( dassault )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )		// Check code at 0x01143c
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "2 Coins to Start, 1 to Continue" )
@@ -491,10 +460,6 @@ INPUT_PORTS_START( dassaul4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
@@ -515,7 +480,7 @@ INPUT_PORTS_START( dassaul4 )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )		// Check code at 0x00f3f8
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "2 Coins to Start, 1 to Continue" )
@@ -868,7 +833,7 @@ static READ16_HANDLER( thndzone_main_skip )
 
 static void init_dassault(void)
 {
-	data8_t *src = memory_region(REGION_GFX1);
+	const data8_t *src = memory_region(REGION_GFX1);
 	data8_t *dst = memory_region(REGION_GFX2);
 	data8_t *tmp = (data8_t *)malloc(0x80000);
 
@@ -888,7 +853,7 @@ static void init_dassault(void)
 
 static void init_thndzone(void)
 {
-	data8_t *src = memory_region(REGION_GFX1);
+	const data8_t *src = memory_region(REGION_GFX1);
 	data8_t *dst = memory_region(REGION_GFX2);
 	data8_t *tmp = (data8_t *)malloc(0x80000);
 
@@ -908,6 +873,6 @@ static void init_thndzone(void)
 
 /**********************************************************************************/
 
-GAMEX(1991, thndzone, 0,        dassault, thndzone, thndzone, ROT0, "Data East Corporation", "Thunder Zone (World)", GAME_NO_COCKTAIL )
-GAMEX(1991, dassault, thndzone, dassault, dassault, dassault, ROT0, "Data East Corporation", "Desert Assault (US)", GAME_NO_COCKTAIL )
-GAMEX(1991, dassaul4, thndzone, dassault, dassaul4, dassault, ROT0, "Data East Corporation", "Desert Assault (US 4 Players)", GAME_NO_COCKTAIL )
+GAME(1991, thndzone, 0,        dassault, thndzone, thndzone, ROT0, "Data East Corporation", "Thunder Zone (World)" )
+GAME(1991, dassault, thndzone, dassault, dassault, dassault, ROT0, "Data East Corporation", "Desert Assault (US)" )
+GAME(1991, dassaul4, thndzone, dassault, dassaul4, dassault, ROT0, "Data East Corporation", "Desert Assault (US 4 Players)" )

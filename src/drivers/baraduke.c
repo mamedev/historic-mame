@@ -580,7 +580,7 @@ ROM_END
 ROM_START( metrocra )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
 	ROM_LOAD( "mc2-3.9b",	0x6000, 0x02000, 0xffe08075 )
-	ROM_LOAD( "mc2-1.9a ",	0x8000, 0x04000, 0x05a239ea )
+	ROM_LOAD( "mc2-1.9a",	0x8000, 0x04000, 0x05a239ea )
 	ROM_LOAD( "mc2-2.9a",	0xc000, 0x04000, 0xdb9b0e6d )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */

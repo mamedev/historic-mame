@@ -1375,7 +1375,7 @@ static unsigned get_boolean( char **parg, int *size )
 		else
 		if( !isalnum(p[1]) )
 		{
-			result = 0;
+			result = 1;
 			length = 1;
 			*parg += length;
 		}
@@ -3915,7 +3915,7 @@ static void cmd_dasm_to_file( void )
 		return;
 	}
 	opcodes = get_boolean( &cmd, &length );
-	if( !length ) opcodes = 1;	/* default to display opcodes */
+	if( length == 4 ) opcodes = 1; 	/* default to display opcodes */
 
 	file = fopen(filename, "w");
 	if( !file )
@@ -3936,44 +3936,50 @@ static void cmd_dasm_to_file( void )
 		s = rshift(size);
 
 		fprintf(file, "%0*X: ", width, pc );
-		switch( ALIGN )
+
+		if( opcodes )
 		{
-		case 1: /* dump bytes */
-			for( i = 0; i < INSTL; i++ )
+			switch( ALIGN )
 			{
-				if ( i < s )
-					fprintf( file, "%02X ", RDMEM(order(p+i,1)) );
-				else
-					fprintf( file, "   ");
+			case 1: /* dump bytes */
+				for( i = 0; i < INSTL; i++ )
+				{
+					if ( i < s )
+						fprintf( file, "%02X ", RDMEM(order(p+i,1)) );
+					else
+						fprintf( file, "   ");
+				}
+				break;
+			case 2: /* dump words */
+				for( i = 0; i < INSTL; i += 2 )
+				{
+					if ( i < s )
+						fprintf( file, "%02X%02X ",
+							RDMEM(order(p+i+0,2)), RDMEM(order(p+i+1,2)) );
+					else
+						fprintf( file, "     ");
+				}
+				break;
+			case 4: /* dump dwords */
+				for( i = 0; i < INSTL; i += 4 )
+				{
+					if ( i < s )
+						fprintf( file, "%02X%02X%02X%02X ",
+							RDMEM(order(p+i+0,4)), RDMEM(order(p+i+1,4)),
+							RDMEM(order(p+i+2,4)), RDMEM(order(p+i+3,4)) );
+					else
+						fprintf( file, "     ");
+				}
+				break;
 			}
-			break;
-		case 2: /* dump words */
-			for( i = 0; i < INSTL; i += 2 )
-			{
-				if ( i < s )
-					fprintf( file, "%02X%02X ",
-						RDMEM(order(p+i+0,2)), RDMEM(order(p+i+1,2)) );
-				else
-					fprintf( file, "     ");
-			}
-			break;
-		case 4: /* dump dwords */
-			for( i = 0; i < INSTL; i += 4 )
-			{
-				if ( i < s )
-					fprintf( file, "%02X%02X%02X%02X ",
-						RDMEM(order(p+i+0,4)), RDMEM(order(p+i+1,4)),
-						RDMEM(order(p+i+2,4)), RDMEM(order(p+i+3,4)) );
-				else
-					fprintf( file, "     ");
-			}
-			break;
 		}
+
 		fprintf( file, "%s\n", buffer );
 		if( (pc + size) < pc )
 			break;
 		pc += size;
 	}
+
 	fclose( file );
 
 	edit_cmds_reset();

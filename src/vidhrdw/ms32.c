@@ -389,7 +389,6 @@ static void draw_roz(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		while (y <= maxy)
 		{
 			data32_t *lineaddr = ms32_lineram + 8 * (y & 0xff);
-			my_clip.min_y = my_clip.max_y = y;
 
 			int start2x = (lineaddr[0x00/4] & 0xffff) | ((lineaddr[0x04/4] & 3) << 16);
 			int start2y = (lineaddr[0x08/4] & 0xffff) | ((lineaddr[0x0c/4] & 3) << 16);
@@ -399,6 +398,8 @@ static void draw_roz(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 			int starty = (ms32_roz_ctrl[0x08/4] & 0xffff) | ((ms32_roz_ctrl[0x0c/4] & 3) << 16);
 			int offsx  = ms32_roz_ctrl[0x30/4];
 			int offsy  = ms32_roz_ctrl[0x34/4];
+
+			my_clip.min_y = my_clip.max_y = y;
 
 			offsx += (ms32_roz_ctrl[0x38/4] & 1) * 0x400;	// ??? gratia, hayaosi1...
 			offsy += (ms32_roz_ctrl[0x3c/4] & 1) * 0x400;	// ??? gratia, hayaosi1...

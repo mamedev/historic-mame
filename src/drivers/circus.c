@@ -41,6 +41,7 @@ extern VIDEO_UPDATE( robotbowl );
 extern VIDEO_UPDATE( ripcord ); //AT
 extern VIDEO_EOF( ripcord ); //AT
 extern INTERRUPT_GEN( crash_interrupt );
+extern struct Samplesinterface circus_samples_interface;
 #if 0
 static int circus_interrupt;
 
@@ -313,6 +314,7 @@ static MACHINE_DRIVER_START( circus )
 	MDRV_VIDEO_UPDATE(circus)
 
 	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, circus_samples_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 

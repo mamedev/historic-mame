@@ -1,4 +1,4 @@
-/* One Shot One Kill
+/* One Shot One Kill & Maddonna
    Driver by David Haywood and Paul Priest
    Dip Switches and Inputs by Stephane Humbert
 
@@ -24,6 +24,8 @@ TO DO :
   - verify the parameters for the guns (analog ports)
   - figure out year and manufacturer
     (NOTHING is displayed in "demo mode", nor when you complete ALL levels !)
+  - sound too fast in Maddonna?
+  - layer order register?
 
 */
 
@@ -32,6 +34,7 @@ data16_t *oneshot_sprites;
 data16_t *oneshot_bg_videoram;
 data16_t *oneshot_mid_videoram;
 data16_t *oneshot_fg_videoram;
+data16_t *oneshot_scroll;
 
 int gun_x_p1,gun_y_p1,gun_x_p2,gun_y_p2;
 int gun_x_shift;
@@ -41,6 +44,7 @@ WRITE16_HANDLER( oneshot_mid_videoram_w );
 WRITE16_HANDLER( oneshot_fg_videoram_w );
 VIDEO_START( oneshot );
 VIDEO_UPDATE( oneshot );
+VIDEO_UPDATE( maddonna );
 
 
 static READ16_HANDLER( oneshot_in0_word_r )
@@ -130,7 +134,7 @@ static MEMORY_WRITE16_START( oneshot_writemem )
 	{ 0x180000, 0x180fff, oneshot_mid_videoram_w, &oneshot_mid_videoram }, // some people , girl etc.
 	{ 0x181000, 0x181fff, oneshot_fg_videoram_w, &oneshot_fg_videoram }, // credits etc.
 	{ 0x182000, 0x182fff, oneshot_bg_videoram_w, &oneshot_bg_videoram }, // credits etc.
-	{ 0x188000, 0x18800f, MWA16_NOP },	// scroll registers???
+	{ 0x188000, 0x18800f, MWA16_RAM, &oneshot_scroll },	// scroll registers???
 	{ 0x190010, 0x190011, soundlatch_word_w },
 	{ 0x190018, 0x190019, soundbank_w },
 MEMORY_END
@@ -243,6 +247,83 @@ INPUT_PORTS_START( oneshot )
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START( maddonna )
+	PORT_START /* DSW A */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x04, 0x04, "Girl Pictures" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )		// Not defined in the manual
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )		// Not defined in the manual
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Invunerability" )		// This one was not defined in the manual
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )				// 2 Monsters at start, but "dumber"??
+	PORT_DIPSETTING(    0x01, "Normal" )			// 2 Monsters at start
+	PORT_DIPSETTING(    0x02, "Hard" )				// 3 Monsters at start
+	PORT_DIPSETTING(    0x03, "Hardest" )			// 4 Monsters at start
+	PORT_DIPNAME( 0x0c, 0x08, "Time Per Round" )
+	PORT_DIPSETTING(    0x08, "80 Seconds" )
+	PORT_DIPSETTING(    0x04, "90 Seconds" )
+	PORT_DIPSETTING(    0x00, "100 Seconds" )
+//	PORT_DIPSETTING(    0x0c, "?? Seconds" )		// Not Defined for On+On
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )		// Not defined in the manual
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, "Hurry Up!" )			// Controls "Hurry Up!" banner & Vampire - Not defined the in manual
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )		// No Hurry up
+	PORT_DIPSETTING(    0x40, "On - 10" )			// The rest show the banner but is there a difference in how the Vampire shows up???
+	PORT_DIPSETTING(    0x80, "On - 01" )
+	PORT_DIPSETTING(    0xc0, "On - 11" )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout oneshot16x16_layout =
@@ -285,7 +366,7 @@ static void irq_handler(int irq)
 static struct YM3812interface ym3812_interface =
 {
 	1,
-	5000000,	/* ? */
+	3500000,	/* ??? music tempo in maddonna */
 	{ 100 },
 	{ irq_handler }
 };
@@ -326,6 +407,14 @@ static MACHINE_DRIVER_START( oneshot )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( maddonna )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(oneshot)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(maddonna) // no crosshair
+MACHINE_DRIVER_END
 
 
 ROM_START( oneshot )
@@ -356,8 +445,34 @@ ROM_END
 
 ROM_START( maddonna )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "maddonna.a24", 0x00000, 0x20000, 0 ) // not dumped
-	ROM_LOAD16_BYTE( "maddonna.a22", 0x00001, 0x20000, 0 ) // not dumped
+	ROM_LOAD16_BYTE( "maddonna.b16", 0x00000, 0x20000, 0x643f9054 )
+	ROM_LOAD16_BYTE( "maddonna.b15", 0x00001, 0x20000, 0xe36c0e26 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "x13.ua2", 0x00000, 0x010000, 0xf2080071 ) // b13
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "maddonna.b5",  0x000000, 0x080000, 0x838d3244 )
+	ROM_LOAD( "maddonna.b7",  0x080000, 0x080000, 0x4920d2ec )
+	ROM_LOAD( "maddonna.b9",  0x100000, 0x080000, 0x3a8a3feb )
+	ROM_LOAD( "maddonna.b11", 0x180000, 0x080000, 0x6f9b7fdf )
+	ROM_LOAD( "maddonna.b6",   0x200000, 0x080000, 0xb02e9e0e )
+	ROM_LOAD( "maddonna.b8",   0x280000, 0x080000, 0x03f1de40 )
+	ROM_LOAD( "maddonna.b10",  0x300000, 0x080000, 0x87936423 )
+	ROM_LOAD( "maddonna.b12",  0x380000, 0x080000, 0x879ab23c )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	/* no samples for this game */
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )
+	ROM_LOAD( "x1", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
+ROM_END
+
+ROM_START( maddonnb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	/* program roms missing in this dump, gfx don't seem 100% correct for other ones */
+	ROM_LOAD16_BYTE( "maddonna.b16", 0x00000, 0x20000, 0x00000000 )
+	ROM_LOAD16_BYTE( "maddonna.b15", 0x00001, 0x20000, 0x00000000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "x13.ua2", 0x00000, 0x010000, 0xf2080071 )
@@ -373,13 +488,16 @@ ROM_START( maddonna )
 	ROM_LOAD( "x12.08",  0x380000, 0x080000, 0xd56ca9f8 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "maddonna.u15", 0x000000, 0x080000, 0 ) // not dumped
-	ROM_LOAD( "maddonna.u14", 0x080000, 0x080000, 0 ) // not dumped
+	/* no samples for this game */
 
 	ROM_REGION( 0x10000, REGION_USER1, 0 )
 	ROM_LOAD( "x1", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
 ROM_END
 
 
-GAMEX(199?, oneshot,  0, oneshot, oneshot, 0, ROT0, "unknown", "One Shot One Kill", GAME_IMPERFECT_GRAPHICS )
-GAMEX(199?, maddonna, oneshot, oneshot, oneshot, 0, ROT0, "Tuning", "Maddonna", GAME_NOT_WORKING )
+
+
+
+GAMEX(199?, oneshot,  0,        oneshot,  oneshot , 0, ROT0, "unknown", "One Shot One Kill", GAME_IMPERFECT_GRAPHICS )
+GAME (1995, maddonna, 0,        maddonna, maddonna, 0, ROT0, "Tuning",  "Mad Donna (set 1)" )
+GAMEX(1995, maddonnb, maddonna, maddonna, maddonna, 0, ROT0, "Tuning",  "Mad Donna (set 2))", GAME_NOT_WORKING )

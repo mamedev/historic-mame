@@ -2,6 +2,7 @@
 #define _STATE_H
 
 #include "osd_cpu.h"
+#include "fileio.h"
 
 /* Initializes the save state registrations */
 void state_save_reset(void);
@@ -32,8 +33,8 @@ void state_save_register_func_postload(void (*func)(void));
 
 /* Save and load functions */
 /* The tags are a hack around the current cpu structures */
-void state_save_save_begin(void *file);
-int  state_save_load_begin(void *file);
+void state_save_save_begin(mame_file *file);
+int  state_save_load_begin(mame_file *file);
 
 void state_save_set_current_tag(int tag);
 void state_save_save_continue(void);

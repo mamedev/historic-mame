@@ -170,7 +170,7 @@ void gionbana_romsel_w(int data)
 #ifdef MAME_DEBUG
 		usrintf_showmessage("GFXROM BANK OVER!!");
 #endif
-		gionbana_gfxrom = 0;
+		gionbana_gfxrom &= (memory_region_length(REGION_GFX1)/0x20000 - 1);
 	}
 }
 
@@ -271,7 +271,7 @@ static void gionbana_gfxdraw(void)
 #ifdef MAME_DEBUG
 				usrintf_showmessage("GFXROM ADDRESS OVER!!");
 #endif
-				gfxaddr = 0;
+				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);
 			}
 
 			color = GFX[gfxaddr++];

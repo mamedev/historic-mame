@@ -118,7 +118,8 @@ static void MSM5205_vclk_callback(int num)
 	int val;
 	int new_signal;
 	/* callback user handler and latch next data */
-	if(msm5205_intf->vclk_interrupt[num]) (*msm5205_intf->vclk_interrupt[num])(num);
+	if(!voice->reset)	// NS20030218, shouldn't cause interrupt while reset
+		if(msm5205_intf->vclk_interrupt[num]) (*msm5205_intf->vclk_interrupt[num])(num);
 
 	/* reset check at last hieddge of VCLK */
 	if(voice->reset)

@@ -1,6 +1,6 @@
 
                  M.A.M.E.  -  Multiple Arcade Machine Emulator
-          Copyright (C) 1997-2002 by Nicola Salmoria and The MAME Team
+          Copyright (C) 1997-2003 by Nicola Salmoria and The MAME Team
 
 Many people have helped with this project--directly, or by releasing the source
 code for the drivers they have written. We are not trying to take credit that
@@ -113,44 +113,15 @@ on the same page.
 If you have bugs to report, check the MAME Testing Project at
 http://www.mametesters.com
 
-Here are some of the people contributing to MAME. If you have comments,
-suggestions, or bug reports about an existing driver, check the driver's
-source code to find who has worked on it, and send comments to that person.
-If you are not sure who to contact, write to Nicola. If you have comments
-specific to a system other than DOS (e.g. Mac, Win32, Unix), they should be
-sent to the respective port maintainer (check the documentation to know who he
-is). DON'T SEND THEM TO NICOLA - they will be ignored.
-
-Nicola Salmoria    MC6489@mclink.it
-
-Mike Balfour       mab22@po.cwru.edu
-Aaron Giles        agiles@mame.net
-Chris Moore        chris.moore@writeme.com
-Brad Oliver        bradman@pobox.com
-Andrew Scott       ascott@utkux.utcc.utk.edu
-Zsolt Vasvari      vaszs01@banet.net
-Luca Elia          l.elia@tin.it
-
-DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
-
-THESE ARE NOT SUPPORT ADDRESSES. Support questions sent to these addresses
-*will* be ignored. Please understand that this is a *free* project, mostly
-targeted at experienced users. We don't have the resources to provide end user
-support. Basically, if you can't get the emulator to work, you are on your own.
-First of all, read the docs carefully. If you still can't find an answer to
-your question, try checking the beginner's sections that many emulation pages
-have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
-on the official MAME message board at http://www.mame.net/msg/
+If you can't get the emulator to work, you are on your own. First of all, read
+the docs carefully. If you still can't find an answer to your question, try
+checking the beginner's sections that many emulation pages have, or ask on the
+appropriate Usenet newsgroups (e.g. comp.emulators.misc) or on the official
+MAME message board at http://www.mame.net/msg/
 
 For help in compiling MAME, check these pages:
 http://www.mame.net/compile.html
 http://www.mameworld.net
-
-Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
-info on the game hardware or, even better, own the board and have the technical
-expertise needed to help us.
-Please don't send us information widely available on the Internet - we are
-perfectly capable of finding it ourselves, thank you.
 
 
 

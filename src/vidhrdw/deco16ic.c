@@ -150,6 +150,8 @@ int deco16_raster_display_position;
 static struct tilemap *pf1_tilemap_16x16,*pf2_tilemap_16x16,*pf3_tilemap_16x16,*pf4_tilemap_16x16;
 static struct tilemap *pf1_tilemap_8x8,*pf2_tilemap_8x8;
 
+static struct mame_bitmap *sprite_priority_bitmap;
+
 static data8_t *dirty_palette;
 static int deco16_pf1_bank,deco16_pf2_bank,deco16_pf3_bank,deco16_pf4_bank;
 static int deco16_pf12_16x16_gfx_bank,deco16_pf34_16x16_gfx_bank,deco16_pf12_8x8_gfx_bank;
@@ -232,11 +234,11 @@ static void get_pf4_tile_info(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf34_control[6]>>8)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf34_control[6]>>8)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -256,11 +258,11 @@ static void get_pf3_tile_info(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf34_control[6]>>0)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf34_control[6]>>0)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -280,11 +282,11 @@ static void get_pf2_tile_info(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>8)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf12_control[6]>>8)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -304,11 +306,11 @@ static void get_pf1_tile_info(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>0)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf12_control[6]>>0)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -328,11 +330,11 @@ static void get_pf2_tile_info_b(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>8)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf12_control[6]>>8)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -352,11 +354,11 @@ static void get_pf1_tile_info_b(int tile_index)
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>0)&0x01) {
-			flags=TILE_FLIPX;
+			flags|=TILE_FLIPX;
 			colour&=0x7;
 		}
 		if ((deco16_pf12_control[6]>>0)&0x02) {
-			flags=TILE_FLIPY;
+			flags|=TILE_FLIPY;
 			colour&=0x7;
 		}
 	}
@@ -504,11 +506,12 @@ int deco16_1_video_init(void) /* 1 times playfield generator chip */
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
 
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !deco16_raster_display_list)
+	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
 		return 1;
 
 	memset(dirty_palette,0,4096);
@@ -550,11 +553,12 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
 
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !pf3_tilemap_16x16 || !pf4_tilemap_16x16 || !deco16_raster_display_list)
+	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !pf3_tilemap_16x16 || !pf4_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
 		return 1;
 
 	memset(dirty_palette,0,4096);
@@ -564,7 +568,7 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	tilemap_set_transparent_pen(pf2_tilemap_16x16,0);
 	tilemap_set_transparent_pen(pf3_tilemap_16x16,0);
 	tilemap_set_transparent_pen(pf4_tilemap_16x16,0);
-	if (split)
+	if (split) /* Caveman Ninja only */
 		tilemap_set_transmask(pf2_tilemap_16x16,0,0x00ff,0xff01);
 
 	deco16_bank_callback_1=0;
@@ -692,7 +696,6 @@ static void deco16_pf_update(
 
 		}
 
-
 	} else {
 		if (tilemap_16x16) {
 			tilemap_set_scroll_rows(tilemap_16x16,1);
@@ -796,6 +799,74 @@ void deco16_print_debug_info(void)
 	sprintf(buf,"%04X",deco16_priority);
 	for (j = 0;j< 4;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,80,0,TRANSPARENCY_NONE,0);
+}
+
+/*****************************************************************************************/
+
+void deco16_clear_sprite_priority_bitmap(void)
+{
+	if (sprite_priority_bitmap)
+		fillbitmap(sprite_priority_bitmap,0,NULL);
+}
+
+/* A special pdrawgfx z-buffered sprite renderer that is needed to properly draw multiple sprite sources with alpha */
+void deco16_pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color,UINT32 pri_mask,UINT32 sprite_mask)
+{
+	int ox,oy,cx,cy;
+	int x_index,y_index,x,y;
+
+	const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
+	int source_base = (code % gfx->total_elements) * gfx->height;
+
+	/* check bounds */
+	ox = sx;
+	oy = sy;
+
+	if (sx>319 || sy>247 || sx<-15 || sy<-7)
+		return;
+
+	if (sy<0) sy=0;
+	if (sx<0) sx=0;
+	if (sx>319) cx=319;
+	else cx=ox+16;
+
+	cy=(sy-oy);
+
+	if (flipy) y_index=15-cy; else y_index=cy;
+
+	for( y=0; y<16-cy; y++ )
+	{
+		UINT8 *source = gfx->gfxdata + ((source_base+y_index) * gfx->line_modulo);
+		UINT32 *destb = (UINT32 *)dest->line[sy];
+		UINT8 *pri = priority_bitmap->line[sy];
+		UINT8 *spri = sprite_priority_bitmap->line[sy];
+
+		if (flipx) { source+=15-(sx-ox); x_index=-1; } else { x_index=1; source+=(sx-ox); }
+
+		for (x=sx; x<cx; x++)
+		{
+			int c = *source;
+			if( c != transparent_color )
+			{
+				if (pri_mask>pri[x] && sprite_mask>spri[x]) {
+					if (transparency == TRANSPARENCY_ALPHA)
+						destb[x] = alpha_blend32(destb[x], pal[c]);
+					else
+						destb[x] = pal[c];
+					pri[x] |= pri_mask;
+				}
+				spri[x]|=sprite_mask;
+			}
+			source+=x_index;
+		}
+
+		sy++;
+		if (sy>247)
+			return;
+		if (flipy) y_index--; else y_index++;
+	}
 }
 
 /*****************************************************************************************/

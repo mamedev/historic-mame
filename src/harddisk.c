@@ -43,7 +43,9 @@
 
 #define SET_ERROR_AND_CLEANUP(err) do { last_error = (err); goto cleanup; } while (0)
 
-
+#ifdef _MSC_VER
+#define interface interface_
+#endif
 
 /*************************************
  *

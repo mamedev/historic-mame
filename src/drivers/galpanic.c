@@ -3,6 +3,7 @@
 Gals Panic       1990 Kaneko
 Fantasia         1994 Comad
 New Fantasia     1995 Comad
+Fantasy '95      1995 Hi-max Technology Inc. (Running on a Comad PCB)
 Miss World '96   1996 Comad
 Fantasia II      1997 Comad
 
@@ -80,6 +81,7 @@ Stephh's additional notes :
       * When you press the "Tilt" button, the game enters in an endless
         loop, but this isn't a bug ! Check code begining at 0x000e02 and
         ending at 0x000976 for more infos.
+          -Expects watchdog to reset it- pjp
       * Sound hasn't been tested.
       * The Comad games are definitively based on this version, the main
         differences being that read/writes to 0xe00000 have been replaced.
@@ -87,6 +89,7 @@ Stephh's additional notes :
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/random.h"
 #include "vidhrdw/generic.h"
 
 
@@ -125,51 +128,104 @@ static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
 
 static data16_t *galpanib_calc_data;
 
+static struct {
+	UINT16 x1p, y1p, x1s, y1s;
+	UINT16 x2p, y2p, x2s, y2s;
+
+	INT16 x12, y12, x21, y21;
+
+	UINT16 mult_a, mult_b;
+} hit;
+
 static READ16_HANDLER(galpanib_calc_r)
 {
 	UINT16 data = 0;
 
 	switch (offset)
 	{
-		case 0x00 >> 1:	// watchdog ?
-			return 0;
+		case 0x00 >> 1:	// watchdog
+			return watchdog_reset_r(0);
 
 		case 0x04 >> 1:
-			if (galpanib_calc_data[0x00 >> 1] >  galpanib_calc_data[0x08 >> 1])
-				data |= 0x00000002;	// bit 1	(cmp [0xe00000], [0xe00008])
-			if (galpanib_calc_data[0x00 >> 1] == galpanib_calc_data[0x08 >> 1])
-				data |= 0x00000004;	// bit 2	(cmp [0xe00000], [0xe00008])
-			if (galpanib_calc_data[0x00 >> 1] <  galpanib_calc_data[0x08 >> 1])
-				data |= 0x00000008;	// bit 3	(cmp [0xe00000], [0xe00008])
+			/* This is similar to the hit detection from SuperNova, but much simpler */
 
-			if (galpanib_calc_data[0x04 >> 1] >  galpanib_calc_data[0x0c >> 1])
-				data |= 0x00000020;	// bit 5	(cmp [0xe00004], [0xe0000c])
-			if (galpanib_calc_data[0x04 >> 1] == galpanib_calc_data[0x0c >> 1])
-				data |= 0x00000040;	// bit 6	(cmp [0xe00004], [0xe0000c])
-			if (galpanib_calc_data[0x04 >> 1] <  galpanib_calc_data[0x0c >> 1])
-				data |= 0x00000080;	// bit 7	(cmp [0xe00004], [0xe0000c])
+			// X Absolute Collision
+			if      (hit.x1p >  hit.x2p)	data |= 0x0200;
+			else if (hit.x1p == hit.x2p)	data |= 0x0400;
+			else if (hit.x1p <  hit.x2p)	data |= 0x0800;
 
-			return ((data & 0xff) << 8);
+			// Y Absolute Collision
+			if      (hit.y1p >  hit.y2p)	data |= 0x2000;
+			else if (hit.y1p == hit.y2p)	data |= 0x4000;
+			else if (hit.y1p <  hit.y2p)	data |= 0x8000;
+
+			// XY Overlap Collision
+			hit.x12 = (hit.x1p) - (hit.x2p + hit.x2s);
+			hit.y12 = (hit.y1p) - (hit.y2p + hit.y2s);
+			hit.x21 = (hit.x1p + hit.x1s) - (hit.x2p);
+			hit.y21 = (hit.y1p + hit.y1s) - (hit.y2p);
+
+			if ((hit.x12 < 0) && (hit.y12 < 0) &&
+				(hit.x21 >= 0) && (hit.y21 >= 0))
+					data |= 0x0001;
+
+			return data;
 
 		case 0x10 >> 1:
-			return ((((UINT32)(galpanib_calc_data[0x10 >> 1] * galpanib_calc_data[0x12 >> 1])) & 0xffff0000) >> 16);
+			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) >> 16);
 		case 0x12 >> 1:
-			return ((((UINT32)(galpanib_calc_data[0x10 >> 1] * galpanib_calc_data[0x12 >> 1])) & 0x0000ffff) >> 0);
+			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) & 0xffff);
 
 		case 0x14 >> 1:
-			return (rand() & 0xffff);
+			return (mame_rand() & 0xffff);
 
 		default:
 			logerror("CPU #0 PC %06x: warning - read unmapped calc address %06x\n",activecpu_get_pc(),offset<<1);
 	}
 
-	return galpanib_calc_data[offset];
+	return 0;
 }
 
 static WRITE16_HANDLER(galpanib_calc_w)
 {
-	COMBINE_DATA(&galpanib_calc_data[offset]);
+	switch (offset)
+	{
+		// p is position, s is size
+		case 0x00 >> 1:
+			hit.x1p = data;
+			break;
+		case 0x02 >> 1:
+			hit.x1s = data;
+			break;
+		case 0x04 >> 1:
+			hit.y1p = data;
+			break;
+		case 0x06 >> 1:
+			hit.y1s = data;
+			break;
+		case 0x08 >> 1:
+			hit.x2p = data;
+			break;
+		case 0x0a >> 1:
+			hit.x2s = data;
+			break;
+		case 0x0c >> 1:
+			hit.y2p = data;
+			break;
+		case 0x0e >> 1:
+			hit.y2s = data;
+			break;
+		case 0x10 >> 1:
+			hit.mult_a = data;
+			break;
+		case 0x12 >> 1:
+			hit.mult_b = data;
+			break;
+		default:
+			logerror("CPU #0 PC %06x: warning - write unmapped hit address %06x\n",activecpu_get_pc(),offset<<1);
+	}
 }
+
 
 
 static MEMORY_READ16_START( galpanic_readmem )
@@ -195,6 +251,7 @@ static MEMORY_WRITE16_START( galpanic_writemem )
 	{ 0xa00000, 0xa00001, MWA16_NOP },	/* ??? */
 	{ 0xb00000, 0xb00001, MWA16_NOP },	/* ??? */
 	{ 0xc00000, 0xc00001, MWA16_NOP },	/* ??? */
+	{ 0xd00000, 0xd00001, MWA16_NOP },	/* ??? */
 MEMORY_END
 
 static MEMORY_READ16_START( galpanib_readmem )
@@ -221,12 +278,13 @@ static MEMORY_WRITE16_START( galpanib_writemem )
 	{ 0xa00000, 0xa00001, MWA16_NOP },	/* ??? */
 	{ 0xb00000, 0xb00001, MWA16_NOP },	/* ??? */
 	{ 0xc00000, 0xc00001, MWA16_NOP },	/* ??? */
+	{ 0xd00000, 0xd00001, MWA16_NOP },	/* ??? */
 	{ 0xe00000, 0xe00015, galpanib_calc_w, &galpanib_calc_data },
 MEMORY_END
 
 static READ16_HANDLER( kludge )
 {
-	return rand() & 0x0700;
+	return mame_rand() & 0x0700;
 }
 
 static MEMORY_READ16_START( comad_readmem )
@@ -687,6 +745,11 @@ static struct OKIM6295interface okim6295_interface =
 	{ 100 }
 };
 
+static MACHINE_INIT( galpanib )
+{
+	/* init watchdog */
+	watchdog_reset_r(0);
+}
 
 static MACHINE_DRIVER_START( galpanic )
 
@@ -722,8 +785,8 @@ static MACHINE_DRIVER_START( galpanib )
 	MDRV_CPU_REPLACE("main", M68000, 10000000)
 	MDRV_CPU_MEMORY(galpanib_readmem,galpanib_writemem)
 
-	/* video hardware */
-//	MDRV_VIDEO_UPDATE(comad)
+	/* arm watchdog */
+	MDRV_MACHINE_INIT(galpanib)
 MACHINE_DRIVER_END
 
 
@@ -834,6 +897,29 @@ ROM_START( fantasia )
 	ROM_LOAD16_BYTE( "gscr3_11.rom", 0x100001, 0x80000, 0x6d00a4c5 )
 ROM_END
 
+ROM_START( fantsy95 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "prog2.12",  0x000000, 0x80000, 0x1e684da7 )
+	ROM_LOAD16_BYTE( "prog1.7",   0x000001, 0x80000, 0xdc4e4f6b )
+	ROM_LOAD16_BYTE( "i-scr2.10", 0x100000, 0x80000, 0xab8756ff )
+	ROM_LOAD16_BYTE( "i-scr1.5",  0x100001, 0x80000, 0xd8e2ef77 )
+	ROM_LOAD16_BYTE( "i-scr4.9",  0x200000, 0x80000, 0x4e52eb23 )
+	ROM_LOAD16_BYTE( "i-scr3.4",  0x200001, 0x80000, 0x797731f8 )
+	ROM_LOAD16_BYTE( "i-scr6.8",  0x300000, 0x80000, 0x6f8e5239 )
+	ROM_LOAD16_BYTE( "i-scr5.3",  0x300001, 0x80000, 0x85420e3f )
+	ROM_LOAD16_BYTE( "i-scr8.11", 0x400000, 0x80000, 0x33db8177 )
+	ROM_LOAD16_BYTE( "i-scr7.6",  0x400001, 0x80000, 0x8662dd01 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "obj1.13",  0x00000, 0x80000, 0x832cd451 )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
+	ROM_LOAD( "musc1.1", 0x00000, 0x80000, 0x3117e2ef )
+	ROM_RELOAD(               0x40000, 0x80000 )
+	ROM_LOAD( "musc2.2", 0xc0000, 0x80000, 0x0c1109f9 )
+ROM_END
+
 ROM_START( newfant )
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "prog2_12.rom", 0x000000, 0x80000, 0xde43a457 )
@@ -903,18 +989,11 @@ ROM_START( fantsia2 )
 ROM_END
 
 
-static DRIVER_INIT( galpanib )
-{
-	/* Hack to avoid the game to loop at the begining (check code at 0x000570) */
-	/* I have no hell of an idea of the reason of the read in the code ! */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
-	RAM[0x000588/2] = 0x4e71;
-}
 
-
-GAMEX( 1990, galpanic, 0,        galpanic, galpanic, 0,        ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1990, galpanib, galpanic, galpanib, galpanib, galpanib, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1994, fantasia, 0,        comad,    fantasia, 0,        ROT90, "Comad & New Japan System", "Fantasia", GAME_NO_COCKTAIL )
-GAMEX( 1995, newfant,  0,        comad,    fantasia, 0,        ROT90, "Comad & New Japan System", "New Fantasia", GAME_NO_COCKTAIL )
-GAMEX( 1996, missw96,  0,        comad,    missw96,  0,        ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
-GAMEX( 1997, fantsia2, 0,        fantsia2, missw96,  0,        ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )
+GAMEX( 1990, galpanic, 0,        galpanic, galpanic, 0, ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1990, galpanib, galpanic, galpanib, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1994, fantasia, 0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "Fantasia", GAME_NO_COCKTAIL )
+GAMEX( 1995, newfant,  0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "New Fantasia", GAME_NO_COCKTAIL )
+GAMEX( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology Inc.", "Fantasy '95", GAME_NO_COCKTAIL )
+GAMEX( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
+GAMEX( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )

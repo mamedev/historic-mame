@@ -696,13 +696,9 @@ int megasys1_layers_order[16];
 
 
 extern struct GameDriver driver_64street;
-extern struct GameDriver driver_astyanax;
 extern struct GameDriver driver_bigstrik;
 extern struct GameDriver driver_chimerab;
-extern struct GameDriver driver_hachoo;
 extern struct GameDriver driver_iganinju;
-extern struct GameDriver driver_kickoff;
-extern struct GameDriver driver_tshingen;
 
 /*
 	Layers order encoded as an int like: 0x01234, where
@@ -739,10 +735,6 @@ static struct priority priorities[] =
 	},
 	{	&driver_iganinju,
 		{ 0x04132,0xfffff,0xfffff,0x01423,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_kickoff,
-		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	0	}	// end of list: use the prom's data

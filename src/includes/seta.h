@@ -47,7 +47,6 @@ extern data16_t *seta2_vregs;
 
 WRITE16_HANDLER( seta2_vregs_w );
 
-PALETTE_INIT( seta2 );
 VIDEO_START( seta2 );
 VIDEO_START( seta2_offset );
 VIDEO_UPDATE( seta2 );

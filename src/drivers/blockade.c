@@ -441,7 +441,12 @@ static struct GfxDecodeInfo blasto_gfxdecodeinfo[] =
 static PALETTE_INIT( green )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0x00,0xff,0x00); /* GREEN */     /* overlay (Blockade/Hustle) */
+	palette_set_color(1,0x00,0xff,0x00); /* GREEN */     /* overlay (Blockade) */
+}
+static PALETTE_INIT( yellow )
+{
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0x20); /* YELLOW */     /* overlay (Hustle) */
 }
 static PALETTE_INIT( bw )
 {
@@ -567,7 +572,7 @@ static MACHINE_DRIVER_START( hustle )
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_COLORTABLE_LENGTH(2)
 
-	MDRV_PALETTE_INIT(green)
+	MDRV_PALETTE_INIT(yellow)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(blockade)
 

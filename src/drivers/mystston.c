@@ -9,6 +9,13 @@ Known problems:
 
 - Some dipswitches may not be mapped correctly.
 
+Notes:
+- The subtitle of the two sets is slightly different:
+  "dr john s adventure" vs. "dr kick in adventure".
+  The Dr John's is a bug fix. See the routine at 4376/4384 for example. The
+  old set thrashes the Y register, the new one saves in on the stack. The
+  newer set also resets the sound chips more often.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -124,8 +131,8 @@ INPUT_PORTS_START( mystston )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -141,9 +148,9 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPNAME(0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(   0x01, "3" )
 	PORT_DIPSETTING(   0x00, "5" )
-	PORT_DIPNAME(0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x02, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(   0x02, "Easy" )
+	PORT_DIPSETTING(   0x00, "Hard" )
 	PORT_DIPNAME(0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
@@ -164,12 +171,12 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(   0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x02, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(   0x01, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME(0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPNAME(0x0c, 0x0c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x08, DEF_STR( 1C_2C ) )
@@ -177,7 +184,7 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )	// flip screen according to manual? doesn't seem to work
 	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x40, 0x00, DEF_STR( Cabinet ) )
@@ -272,6 +279,35 @@ MACHINE_DRIVER_END
 
 ROM_START( mystston )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "rom6.bin",     0x4000, 0x2000, 0x7bd9c6cd )
+	ROM_LOAD( "rom5.bin",     0x6000, 0x2000, 0xa83f04a6 )
+	ROM_LOAD( "rom4.bin",     0x8000, 0x2000, 0x46c73714 )
+	ROM_LOAD( "rom3.bin",     0xa000, 0x2000, 0x34f8b8a3 )
+	ROM_LOAD( "rom2.bin",     0xc000, 0x2000, 0xbfd22cfc )
+	ROM_LOAD( "rom1.bin",     0xe000, 0x2000, 0xfb163e38 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ms6",          0x00000, 0x2000, 0x85c83806 )
+	ROM_LOAD( "ms9",          0x02000, 0x2000, 0xb146c6ab )
+	ROM_LOAD( "ms7",          0x04000, 0x2000, 0xd025f84d )
+	ROM_LOAD( "ms10",         0x06000, 0x2000, 0xd85015b5 )
+	ROM_LOAD( "ms8",          0x08000, 0x2000, 0x53765d89 )
+	ROM_LOAD( "ms11",         0x0a000, 0x2000, 0x919ee527 )
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ms12",         0x00000, 0x2000, 0x72d8331d )
+	ROM_LOAD( "ms13",         0x02000, 0x2000, 0x845a1f9b )
+	ROM_LOAD( "ms14",         0x04000, 0x2000, 0x822874b0 )
+	ROM_LOAD( "ms15",         0x06000, 0x2000, 0x4594e53c )
+	ROM_LOAD( "ms16",         0x08000, 0x2000, 0x2f470b0f )
+	ROM_LOAD( "ms17",         0x0a000, 0x2000, 0x38966d1b )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "ic61",         0x0000, 0x0020, 0xe802d6cf )
+ROM_END
+
+ROM_START( myststno )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ms0",          0x4000, 0x2000, 0x6dacc05f )
 	ROM_LOAD( "ms1",          0x6000, 0x2000, 0xa3546df7 )
 	ROM_LOAD( "ms2",          0x8000, 0x2000, 0x43bc6182 )
@@ -301,4 +337,5 @@ ROM_END
 
 
 
-GAME( 1984, mystston, 0, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones" )
+GAME( 1984, mystston, 0,        mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones (set 1)" )
+GAME( 1984, myststno, mystston, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones (set 2)" )

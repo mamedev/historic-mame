@@ -164,3 +164,19 @@ WRITE_HANDLER( YM2203_write_port_4_w )
 {
 	YM2203Write(4,1,data);
 }
+
+WRITE_HANDLER( YM2203_word_0_w )
+{
+	if (offset)
+		YM2203_write_port_0_w(0,data);
+	else
+		YM2203_control_port_0_w(0,data);
+}
+
+WRITE_HANDLER( YM2203_word_1_w )
+{
+	if (offset)
+		YM2203_write_port_1_w(0,data);
+	else
+		YM2203_control_port_1_w(0,data);
+}

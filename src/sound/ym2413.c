@@ -1094,7 +1094,7 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 				phase = 0xd0>>2;
 		}
 
-		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT7_1->wavetable) * 2;
 	}
 
 	/* Snare Drum (verified on real YM3812) */
@@ -1115,13 +1115,13 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 		if (noise)
 			phase ^= 0x100;
 
-		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT7_2->wavetable) * 2;
 	}
 
 	/* Tom Tom (verified on real YM3812) */
 	env = volume_calc(SLOT8_1);
 	if( env < ENV_QUIET )
-		output[1] += op_calc(SLOT8_1->phase, env, 0, SLOT->wavetable) * 2;
+		output[1] += op_calc(SLOT8_1->phase, env, 0, SLOT8_1->wavetable) * 2;
 
 	/* Top Cymbal (verified on real YM2413) */
 	env = volume_calc(SLOT8_2);
@@ -1148,7 +1148,7 @@ INLINE void rhythm_calc( OPLL_CH *CH, unsigned int noise )
 		if (res2)
 			phase = 0x300;
 
-		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[1] += op_calc(phase<<FREQ_SH, env, 0, SLOT8_2->wavetable) * 2;
 	}
 
 }
@@ -1185,7 +1185,7 @@ static int init_tables(void)
 			tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
 			tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
 		}
-	#if 1
+	#if 0
 			logerror("tl %04i", x*2);
 			for (i=0; i<11; i++)
 				logerror(", [%02i] %5i", i*2, tl_tab[ x*2 /*+1*/ + i*2*TL_RES_LEN ] );
@@ -1231,13 +1231,13 @@ static int init_tables(void)
 
 		/*logerror("ym2413.c: sin1[%4i]= %4i (tl_tab value=%5i)\n", i, sin_tab[1*SIN_LEN+i], tl_tab[sin_tab[1*SIN_LEN+i]] );*/
 	}
-
+#if 0
 	logerror("YM2413.C: ENV_QUIET= %08x (*32=%08x)\n", ENV_QUIET, ENV_QUIET*32 );
 	for (i=0; i<ENV_QUIET; i++)
 	{
 		logerror("tl_tb[%4x(%4i)]=%8x\n", i<<5, i, tl_tab[i<<5] );
 	}
-
+#endif
 #ifdef SAVE_SAMPLE
 	sample[0]=fopen("sampsum.pcm","wb");
 #endif

@@ -589,7 +589,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( bootleg )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,32000000/2)	/* 16 MHz */
+	MDRV_CPU_ADD(V30,32000000/4)	/* 16 MHz */
 	MDRV_CPU_MEMORY(bootleg_readmem,bootleg_writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(m90_interrupt,1)

@@ -133,7 +133,7 @@ static struct {
 		int freq;
 		UINT32 step, pos;
 
-		int sample, state, nibble, skip_last_nibble, next_skip_last_nibble, started, cmd_mode;
+		int sample, state, nibble, skip_last_nibble, next_skip_last_nibble, started, cmd_mode, last_sample;//*
 	} chip[MAX_UPD7759];
 } UPD7759_chips;
 
@@ -302,13 +302,14 @@ int UPD7759_sh_start(const struct MachineSound *msound)
 		ch->play_length = 0;
 		ch->param_mode  = 0;
 		ch->started     = 0;
+		ch->last_sample = 0; //* the last sample in master mode requires special treatment
 		ch->timer       = timer_alloc(UPD7759_slave_tick);
 
 		sprintf(name, "uPD7759 #%d", chip);
 
 		ch->channel = stream_init(name, intf->volume[chip], Machine->sample_rate, chip, UPD7759_update);
 
-		UPD7759_reset_w(chip, ch->reset); //* more comprehensive init
+		UPD7759_reset_w(chip, 0); //* more comprehensive init
 	}
 	return 0;
 }
@@ -406,13 +407,10 @@ static void UPD7759_cmd_w(int chip, UINT8 data)
 		UPD7759_start_play(chip, 256);
 		break;
 	default:
-
-		//* The 0xff command marks the end of a sample in slave mode.
-		//* Some SNK games also rely on it in master mode as Mish
-		//* has pointed out.
-		if (data == 0xff)
+		if (UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
 		{
-			if (UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
+			//* 0xff marks the start and end of a sample in slave mode
+			if (data == 0xff)
 			{
 				if(ch->started)
 				{
@@ -423,13 +421,28 @@ static void UPD7759_cmd_w(int chip, UINT8 data)
 				else
 					ch->started = 1;
 			}
-			else
+		}
+		else
+		{
+			//* 0x00 is likely to be the start/end marker in master mode.
+			//* Samples usually have pointer entries at the beginning of the
+			//* ROM so this is generally not needed. The only exception is the
+			//* last sample of which ending position can only be detected by
+			//* checking this marker. I'm going to make this a special case
+			//* until more tests are conducted.
+			if (data == 0x00 && ch->last_sample)
 			{
-				stream_update(ch->channel, 0);
-				ch->rr_pos = ch->rr_end;
-				ch->play_length = 0;
-				timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+				if (ch->started)
+					  ch->started = 0;
+				else
+					{ ch->started = 1; break; }
 			}
+			else if (data != 0xff) break;
+
+			stream_update(ch->channel, 0);
+			ch->rr_pos = ch->rr_end;
+			ch->play_length = 0;
+			timer_adjust(ch->timer, TIME_NEVER, 0, 0);
 		}
 		//else logerror("UPD7759.%d unknown command %02x\n", chip, data);
 
@@ -504,16 +517,25 @@ void UPD7759_start_w(int chip, UINT8 data)
 			logerror("UPD7759.%d: Header check failure on sample start\n", chip);
 
 		scount = ch->cur_rombank[0];
-		if(ch->port >= scount) {
-			logerror("UPD7759.%d: Sample number %x is higher than rom sample number (%x)\n", chip, ch->port, scount);
 
-			//* According to Mish the uPD7759 chip on a real P.O.W. board
-			//* seems to clamp out-of-range indices to the highest value.
-			if (scount>0) ch->port = scount-1; else return;
+		if(ch->port > scount) {
+			logerror("UPD7759.%d: Sample number %x is higher than rom sample number (%x)\n", chip, ch->port, scount);
+			return;
+		}
+
+		//*
+		if (ch->port != scount)
+		{
+			ch->rr_end = ((ch->cur_rombank[7+ch->port*2]<<8)|ch->cur_rombank[8+ch->port*2]) << 1;
+			ch->last_sample = 0;
+		}
+		else
+		{
+			ch->rr_end = 0x20000;
+			ch->last_sample = 1;
 		}
 
 		ch->rr_pos = ((ch->cur_rombank[5+ch->port*2]<<8)|ch->cur_rombank[6+ch->port*2])*2;
-		ch->rr_end = ch->port == scount ? 0x20000 : ((ch->cur_rombank[7+ch->port*2]<<8)|ch->cur_rombank[8+ch->port*2]) << 1;
 
 		stream_update(ch->channel, 0);
 		ch->playing = 1;

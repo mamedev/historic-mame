@@ -15,9 +15,8 @@
 	Offset: 	Bits:					Value:
 
 		0.w		f--- ---- ---- ----		Last sprite
-				-edc ba-- ---- ----		?
-				---- --9- ---- ----		Color depth: 4 bits (0) or 8 bits (1)
-				---- ---8 ---- ----		Select the   4 bits: low order (0) or high order (1)
+				-edc b--- ---- ----		?
+				---- -a98 ---- ----		tile color depth
 				---- ---- 7654 3210		Number of sprites - 1
 
 		2.w		fedc b--- ---- ----		?
@@ -76,24 +75,6 @@
 data16_t *seta2_vregs;
 
 static int yoffset;
-
-
-/***************************************************************************
-
-
-								Palette Init
-
-
-***************************************************************************/
-
-/* 256 color sprites, but the color code granularity is of 16 colors */
-PALETTE_INIT( seta2 )
-{
-	int color, pen;
-	for( color = 0; color < (0x8000/16); color++ )
-		for( pen = 0; pen < 256; pen++ )
-				colortable[color * 256 + pen + 0x8000] = (color * 16 + pen) % 0x8000;
-}
 
 
 /***************************************************************************
@@ -178,14 +159,26 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 		yoffs &= 0x3ff;
 
 		/* Color depth */
-		switch (num & 0x0300)
+		switch (num & 0x0700)
 		{
-			case 0x0300: default:
-			case 0x0200:	// 8 bit tiles
+			default:
+				usrintf_showmessage("unknown gfxset %x",(num & 0x0700)>>8);
+				gfx = rand()&3; break;
+			case 0x0700: 	// 8bpp tiles (76543210)
+				gfx = 3; break;
+			case 0x0600:	// 6bpp tiles (--543210) (myangel sliding blocks test)
 				gfx = 2; break;
-			case 0x0100:	// 4 bit tiles (high order 4 bits)
+			case 0x0500:	// 4bpp tiles (3210----)
 				gfx = 1; break;
-			case 0x0000:	// 4 bit tiles (low  order 4 bits)
+			case 0x0400:	// 4bpp tiles (----3210)
+				gfx = 0; break;
+//			case 0x0300:
+//				unknown
+			case 0x0200:	// 3bpp tiles?  (-----210) (myangel "Graduate Tests")
+				gfx = 4; break;
+			case 0x0100:	// 2bpp tiles??? (--10----) (myangel2 question bubble, myangel endgame)
+				gfx = 5; break;
+			case 0x0000:	// no idea!
 				gfx = 0; break;
 		}
 
@@ -329,12 +322,19 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 VIDEO_START( seta2 )
 {
+	Machine->gfx[2]->color_granularity = 16;
+	Machine->gfx[3]->color_granularity = 16;
+	Machine->gfx[4]->color_granularity = 16;
+	Machine->gfx[5]->color_granularity = 16;
+
 	yoffset = 0;
 	return 0;
 }
 
 VIDEO_START( seta2_offset )
 {
+	video_start_seta2();
+
 	yoffset = 0x10;
 	return 0;
 }

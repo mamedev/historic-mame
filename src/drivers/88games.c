@@ -108,7 +108,7 @@ static WRITE_HANDLER( speech_control_w )
 {
 	speech_chip = ( data & 4 ) ? 1 : 0;
 	UPD7759_reset_w( speech_chip, data & 2 );
-	UPD7759_start_w( speech_chip, !(data & 1) );
+	UPD7759_start_w( speech_chip, data & 1 );
 }
 
 static WRITE_HANDLER( speech_msg_w )

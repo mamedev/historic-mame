@@ -108,7 +108,7 @@ static MEMORY_WRITE16_START( stlforce_writemem )
 	{ 0x103400, 0x1037ff, MWA16_RAM, &stlforce_mlow_scrollram }, /* unknown / ram */
 	{ 0x103800, 0x103bff, MWA16_RAM, &stlforce_mhigh_scrollram }, /* unknown / ram */
 	{ 0x103c00, 0x103fff, MWA16_RAM, &stlforce_vidattrram }, /* unknown / ram */
-	{ 0x104000, 0x104fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
+	{ 0x104000, 0x104fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x105000, 0x107fff, MWA16_RAM }, /* unknown / ram */
 	{ 0x108000, 0x108fff, MWA16_RAM, &stlforce_spriteram }, /* or is this not sprite ram .. */
 	{ 0x109000, 0x11ffff, MWA16_RAM },

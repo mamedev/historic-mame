@@ -29,11 +29,87 @@ write:
 07a304-07a305 back  layer Y scroll
 07a30c-07a30d back  layer X scroll
 
+Notes:
+- The sprite Y size control is slightly different from gaiden/wildfang to
+  raiga. In the first two, size X and Y change together, while in the latter
+  they are changed independently. This is handled with a variable set in
+  DRIVER_INIT, but it might also be a selectable hardware feature, since
+  the two extra bits used by raiga are perfectly merged with the rest.
+  Raiga also uses more sprites than the others, but there's no way to tell
+  if hardware is more powerful or the extra sprites were just not needed
+  in the earlier games.
+
 todo:
 
 - finish raiga (need to trojanize the mcu).
 
 ***************************************************************************/
+/***************************************************************************
+
+Strato Fighter (US version)
+Tecmo, 1991
+
+
+PCB Layout
+----------
+
+Top Board
+---------
+0210-A
+MG-Y.VO
+-----------------------------------------------
+|         MN50005XTA         4MHz  DSW2 DSW1  |
+|                    6264 6264       8049     |
+|           IOP8     1.3S 2.4S                |
+|24MHz                                        |
+|                                             |
+|18.432MHz                                   J|
+|                                             |
+|              68000P10                      A|
+|                                             |
+|          6116                              M|
+|          6116                               |
+|          6116                              M|
+|                                             |
+|                                            A|
+|                                             |
+|              6264    YM2203  YM3014         |
+|       Z80    3.4B                           |
+| 4MHz  6295   4.4A    YM2203  YM3014         |
+-----------------------------------------------
+
+Bottom Board
+------------
+0210-B
+MG-Y.VO
+-----------------------------------------------
+|                TECMO-5                      |
+|               -----------                   |
+|               | TECMO-06|                   |
+| ROM.M1 ROM.M3 | YM6048  |     6264          |
+|               -----------     6264          |
+|   4164  4164  4164  4164                    |
+|   4164  4164  4164  4164                    |
+|   4164  4164  4164  4164                    |
+|                                             |
+|                                             |
+|        TECMO-3      TECMO-3      TECMO-3    |
+| TECMO-4      TECMO-4      TECMO-4           |
+|                                             |
+|                                             |
+|                                             |
+|  6264  6264   6116   6116   6264            |
+| ROM.1B        ROM.4B        6116            |
+|                             ROM.7A          |
+-----------------------------------------------
+
+Notes:
+      68k clock: 9.216MHz (18.432 / 2)
+      Z80 clock: 4.000MHz
+      IOP8 manufactured by Ricoh. Full part number: RICOH EPLIOP8BP (PAL or PIC?)
+
+***************************************************************************/
+
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -41,6 +117,7 @@ todo:
 #include "cpu/z80/z80.h"
 
 extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
+extern int gaiden_sprite_sizey;
 
 VIDEO_UPDATE( gaiden );
 
@@ -137,10 +214,11 @@ static READ16_HANDLER( wildfang_protection_r )
 
 
 /* raiga, incomplete. MCU read routine is at D9CE */
-/* some of the values returned are 16-bit sign-extended displacements from 58e96,
-   therefore fall in the range 50e96-60e95. But there's nothing there! Maybe
-   it's a mirror of main ROM?
-   Other values are jumped to directly; others don't look like jumps at all.
+/* on startup it reads 00/36/0e/11/33/34/2d, fetching some code copied to RAM,
+   and a value which is used as an offset to point to the code in RAM.
+   19/12/31/28 are read repeatedly, from the interrupt, and the returned value
+   changes.
+   Others polled: 2b (fbi/japan screen) 15 (first boss) 23 25 13 1e 1c
   */
 
 static WRITE16_HANDLER( raiga_protection_w )
@@ -150,7 +228,14 @@ static WRITE16_HANDLER( raiga_protection_w )
 		static int jumpcode;
 		static int jumppoints[] =
 		{
-			0x8008,	/* point to a harmless RTS */
+			0x6669,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+			    -1,    -1,    -1,    -1,    -1,    -1,0x4a46,    -1,
+			    -1,0x6704,    -2,    -1,    -1,    -1,    -1,    -1,
+			    -1,    -2,    -1,    -1,    -1,    -1,    -1,    -1,
+			    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+			    -2,    -1,    -1,    -1,    -1,0x4e75,    -1,    -1,
+			    -1,    -2,    -1,0x4e71,0x60fc,    -1,0x7288,    -1,
+			    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1
 		};
 
 		data >>= 8;
@@ -169,10 +254,12 @@ static WRITE16_HANDLER( raiga_protection_w )
 			case 0x20:	/* low 4 bits of jump code */
 				jumpcode |= data & 0x0f;
 				logerror("requested protection jumpcode %02x\n",jumpcode);
-				jumpcode = 0;
-				if (jumpcode >= sizeof(jumppoints)/sizeof(jumppoints[0]))
+//				jumpcode = 0;
+				if (jumpcode >= sizeof(jumppoints)/sizeof(jumppoints[0]) ||
+						jumppoints[jumpcode] == -1)
 				{
 					logerror("unknown jumpcode %02x\n",jumpcode);
+					usrintf_showmessage("unknown jumpcode %02x",jumpcode);
 					jumpcode = 0;
 				}
 				prot = 0x20;
@@ -201,7 +288,6 @@ static READ16_HANDLER( raiga_protection_r )
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x050000, 0x05ffff, MRA16_ROM },	/* raiga; mirror of main ROM? */
 	{ 0x060000, 0x063fff, MRA16_RAM },
 	{ 0x070000, 0x070fff, MRA16_RAM },
 	{ 0x072000, 0x073fff, gaiden_videoram2_r },
@@ -666,12 +752,12 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( shadoww )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_ADD(M68000, 18432000/2)	/* 9.216 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -908,11 +994,38 @@ ROM_START( wildfang )
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
+ROM_START( stratof )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "1.3s",        0x00000, 0x20000, 0x060822a4 )
+	ROM_LOAD16_BYTE( "2.4s",        0x00001, 0x20000, 0x339358fa )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "a-4b.3",           0x00000, 0x10000, 0x18655c95 )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* protection NEC D8749 */
+	ROM_LOAD( "a-6v.mcu",         0x00000, 0x1000, 0x00000000 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-7a.5",           0x00000, 0x10000, 0x6d2e4bf1 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-1b",  0x00000, 0x80000, 0x781d1bd2 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-4b",  0x00000, 0x80000, 0x89468b84 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-2m",  0x00000, 0x80000, 0x5794ec32 )
+	ROM_LOAD( "b-1m",  0x80000, 0x80000, 0xb0de0ded )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "a-4a.4", 0x00000, 0x20000, 0xef9acdcf )
+ROM_END
+
 ROM_START( raiga )
-	ROM_REGION( 0x60000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "a-3s.1",      0x00000, 0x20000, 0x303c2a6c  )
-	ROM_LOAD16_BYTE( "a-4s.2",      0x00001, 0x20000, 0x5f31fecb  )
-	ROM_COPY( REGION_CPU1,          0x00000, 0x40000, 0x20000 ) /* ???? */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "a-3s.1",      0x00000, 0x20000, 0x303c2a6c )
+	ROM_LOAD16_BYTE( "a-4s.2",      0x00001, 0x20000, 0x5f31fecb )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "a-4b.3",           0x00000, 0x10000, 0x18655c95 )
@@ -939,24 +1052,55 @@ ROM_END
 
 
 
+static DRIVER_INIT( shadoww )
+{
+	gaiden_sprite_sizey = 0;	// sprite size Y = sprite size X
+}
+
 static DRIVER_INIT( wildfang )
 {
+	gaiden_sprite_sizey = 0;	// sprite size Y = sprite size X
+
 	install_mem_read16_handler (0, 0x07a006, 0x07a007, wildfang_protection_r);
 	install_mem_write16_handler(0, 0x07a804, 0x07a805, wildfang_protection_w);
 }
 
 static DRIVER_INIT( raiga )
 {
+#if 0
+data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+int i;
+static data16_t tr[] =
+{
+	0x7000,0x7200,0x740F,0x47F9,0x0000,0x06B4,0x7E00,0x1E33,
+	0x1000,0x4EB9,0x0000,0xD9CE,0x3007,0xE848,0xE848,0xE848,
+	0x0240,0x000F,0x0600,0x0030,0x0C00,0x003A,0x6D04,0x0600,
+	0x0007,0x3340,0x0800,0x4259,0x3007,0xE848,0xE848,0x0240,
+	0x000F,0x0600,0x0030,0x0C00,0x003A,0x6D04,0x0600,0x0007,
+	0x3340,0x0800,0x4259,0x3007,0xE848,0x0240,0x000F,0x0600,
+	0x0030,0x0C00,0x003A,0x6D04,0x0600,0x0007,0x3340,0x0800,
+	0x4259,0x3007,0x0240,0x000F,0x0600,0x0030,0x0C00,0x003A,
+	0x6D04,0x0600,0x0007,0x3340,0x0800,0x4259,0xD0FC,0x0010,
+	0x2248,0x5201,0x51CA,0xFF76,0x60FE,
+	0x2828,0x282b,0x2815,0x281c,0x281e,0x2813,0x2823,0x2825
+};
+for (i = 0;i < sizeof(tr)/sizeof(tr[0]);i++)
+	rom[0x61a/2 + i] = tr[i];
+#endif
+
+	gaiden_sprite_sizey = 2;	// sprite size Y *independent* from sprite size X
+
 	install_mem_read16_handler (0, 0x07a006, 0x07a007, raiga_protection_r);
 	install_mem_write16_handler(0, 0x07a804, 0x07a805, raiga_protection_w);
 }
 
 
 
-GAME( 1988, shadoww,  0,        shadoww, shadoww,  0,        ROT0, "Tecmo", "Shadow Warriors (World set 1)" )
-GAME( 1988, shadowwa, shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Shadow Warriors (World set 2)" )
-GAME( 1988, gaiden,   shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Ninja Gaiden (US)" )
-GAME( 1989, ryukendn, shadoww,  shadoww, shadoww,  0,        ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
+GAME( 1988, shadoww,  0,        shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Shadow Warriors (World set 1)" )
+GAME( 1988, shadowwa, shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Shadow Warriors (World set 2)" )
+GAME( 1988, gaiden,   shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Ninja Gaiden (US)" )
+GAME( 1989, ryukendn, shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
 GAME( 1989, wildfang, 0,        shadoww, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
 GAME( 1989, tknight,  wildfang, shadoww, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
-GAMEX(1991, raiga,    0,        shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1991, stratof,  0,        shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1991, raiga,    stratof,  shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )

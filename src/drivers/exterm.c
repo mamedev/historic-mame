@@ -441,14 +441,14 @@ static struct tms34010_config slave_config =
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
-	{ 50, 50 },
+	{ 40, 40 },
 };
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
 
@@ -481,6 +481,7 @@ static MACHINE_DRIVER_START( exterm )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (263 - 240)) / (60 * 263))
+	MDRV_INTERLEAVE(1675)	// anything lower will have drop outs on the drums
 
 	MDRV_MACHINE_INIT(exterm)
 	MDRV_NVRAM_HANDLER(generic_0fill)

@@ -129,7 +129,6 @@ static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *
 	clip.min_x = cliprect->min_x;
 	clip.max_x = cliprect->max_x;
 
-
 	/* Finish list up to end of visible display */
 	deco16_raster_display_list[overflow++]=255;
 	deco16_raster_display_list[overflow++]=deco16_pf12_control[1];
@@ -303,7 +302,7 @@ static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *spriteptr, int gfxbank)
+static void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *spriteptr, int gfxbank)
 {
 	int offs,end,inc;
 
@@ -355,7 +354,10 @@ void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		w = (spriteptr[offs+2]&0x0f00)>> 8;
 
 		sy = spriteptr[offs];
-		if ((sy&0x2000) && (cpu_getcurrentframe() & 1)) continue;
+		if ((sy&0x2000) && (cpu_getcurrentframe() & 1)) {
+			offs+=inc;
+			continue;
+		}
 
 		colour = (spriteptr[offs+2] >>0) & 0x1f;
 
@@ -437,7 +439,7 @@ VIDEO_UPDATE( edrandy )
 	if (deco16_raster_display_position)
 		raster_pf3_draw(bitmap,cliprect,0,2);
 	else
-		deco16_tilemap_3_draw(bitmap,cliprect,0,2); 
+		deco16_tilemap_3_draw(bitmap,cliprect,0,2);
 	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
 	cninja_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
@@ -499,8 +501,8 @@ VIDEO_UPDATE( mutantf )
 	/* Draw playfields */
 	fillbitmap(bitmap,Machine->pens[0x400],cliprect); /* Confirmed */
 
-	/* There is no priority prom on this board, but there is a 
-	priority control word, the only values used in game appear 
+	/* There is no priority prom on this board, but there is a
+	priority control word, the only values used in game appear
 	to be 2, 6 & 7 though:
 
 	Bit 0:	If set sprite chip 2 above sprite chip 1 else vice versa
@@ -516,9 +518,9 @@ VIDEO_UPDATE( mutantf )
 
 	/* We need to abuse the priority bitmap a little by clearing it before
 		drawing each sprite layer.  This is because there is no priority
-		orthogonality between sprite layers, but the alpha layer must obey 
-		priority between sprites in each layer.  Ie, if we didn't do this, 
-		then when two alpha blended shadows overlapped then they would be 25% 
+		orthogonality between sprite layers, but the alpha layer must obey
+		priority between sprites in each layer.  Ie, if we didn't do this,
+		then when two alpha blended shadows overlapped then they would be 25%
 		transparent against the background, rather than 50% */
 	if (deco16_priority&1) {
 		fillbitmap(priority_bitmap,0,cliprect);

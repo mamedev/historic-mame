@@ -8,6 +8,7 @@
 #include "vidhrdw/generic.h"
 
 data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
+int gaiden_sprite_sizey;
 
 static struct tilemap *text_layer,*foreground,*background;
 
@@ -219,7 +220,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			UINT32 priority = (attributes>>6)&3;
 			UINT32 number = (source[1]&0x7fff);
 			UINT32 color = source[2];
-			UINT32 size = 1<<(color&0x3); // 1,2,4,8
+			UINT32 sizex = 1<<((color>>0)&0x3); // 1,2,4,8
+			UINT32 sizey = 1<<((color>>gaiden_sprite_sizey)&0x3); // 1,2,4,8
 			UINT32 flipx = (attributes&1);
 			UINT32 flipy = (attributes&2);
 			UINT32 priority_mask;
@@ -236,8 +238,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				flipx = !flipx;
 				flipy = !flipy;
 
-				xpos = 256 - (8 * size) - xpos;
-				ypos = 256 - (8 * size) - ypos;
+				xpos = 256 - (8 * sizex) - xpos;
+				ypos = 256 - (8 * sizey) - ypos;
 
 				if( xpos <= -256) xpos += 512;
 				if( ypos <= -256) ypos += 512;
@@ -253,12 +255,12 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				case 0x3: priority_mask = 0xf0|0xcc|0xaa; break; /* obscured by bg and fg */
 			}
 
-			for( row=0; row<size; row++ )
+			for( row=0; row<sizey; row++ )
 			{
-				for( col=0; col<size; col++ )
+				for( col=0; col<sizex; col++ )
 				{
-					int sx = xpos + 8*(flipx?(size-1-col):col);
-					int sy = ypos + 8*(flipy?(size-1-row):row);
+					int sx = xpos + 8*(flipx?(sizex-1-col):col);
+					int sy = ypos + 8*(flipy?(sizey-1-row):row);
 					pdrawgfx(bitmap,gfx,
 						number + layout[row][col],
 						color,

@@ -36,3 +36,4 @@ VIDEO_UPDATE( sprint2 );
 
 extern unsigned char *sprint2_vert_car_ram;
 extern unsigned char *sprint2_horiz_ram;
+extern unsigned char *sprint2_sound_ram;

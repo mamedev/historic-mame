@@ -382,7 +382,7 @@ static void ss_c8(unsigned char *data, unsigned size)
 }
 
 
-void state_save_save_begin(void *file)
+void state_save_save_begin(mame_file *file)
 {
 	ss_module *m;
 	TRACE(logerror("Beginning save\n"));

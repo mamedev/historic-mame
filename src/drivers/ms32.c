@@ -49,7 +49,8 @@ Game Paradise  - Custom chip: JALECO SS91022-10 9515EV 420201 06441
 Tetris Plus 2  - Custom chip: JALECO SS91022-10 9513EV 370121 06441
 Tetris Plus    - Custom chip: JALECO SS92046-01 9412EV 450891 06441
 kirarast       - Custom chip: JALECO SS92047-01 9425EV 367821 06441
-Gratia         - Custom chip: JALECO SS92047-01 9423EV 450891 06441
+Gratia (set 1) - Custom chip: JALECO SS92047-01 9423EV 450891 06441
+Gratia (set 2) - Custom chip: JALECO SS91022-10
 P47-Aces       - Custom chip: JALECO SS92048-01 9410EV 436091 06441
 others are unknown
 
@@ -57,6 +58,9 @@ Notes
 -----
 
 Some of the roms for each game are encrypted.
+
+The only difference between the two Gratia sets is in the encrypted ROMs (they use
+different custom chips). The program is the same.
 
 16x16x8 'Scroll' Tiles (Non-Roz BG Layer)
 8x8x8 'Ascii' Tiles (FG Layer)
@@ -1571,6 +1575,39 @@ ROM_START( gratia )
 	ROM_LOAD( "94019.09", 0x200000, 0x200000, 0x711ab08b )
 
 	ROM_REGION( 0x200000, REGION_GFX3, 0 ) /* bg tiles, don't dispose since we use GFX_RAW */
+	ROM_LOAD( "94019_2.07", 0x000000, 0x200000, 0x043f969b )
+
+	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* tx tiles, don't dispose since we use GFX_RAW */
+	ROM_LOAD( "94019_2.030",0x000000, 0x080000, 0xf9543fcf )
+
+	ROM_REGION( 0x40000, REGION_CPU2, 0 ) /* z80 program */
+	ROM_LOAD( "94019.021",0x000000, 0x040000, 0x6e8dd039 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* samples */
+	ROM_LOAD( "92042.01", 0x000000, 0x200000, 0x0fa26f65 ) // common rom?
+	ROM_LOAD( "94019.10", 0x200000, 0x200000, 0xa751e316 )
+ROM_END
+
+ROM_START( gratiaa )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* V70 code */
+ 	ROM_LOAD32_BYTE( "94019.026", 0x000003, 0x80000, 0xf398cba5 )
+	ROM_LOAD32_BYTE( "94019.027", 0x000002, 0x80000, 0xba3318c5 )
+	ROM_LOAD32_BYTE( "94019.028", 0x000001, 0x80000, 0xe0762e89 )
+	ROM_LOAD32_BYTE( "94019.029", 0x000000, 0x80000, 0x8059800b )
+
+	ROM_REGION( 0x0c00000, REGION_GFX1, 0 ) /* sprites, don't dispose since we use GFX_RAW */
+	ROM_LOAD32_WORD( "94019.01", 0x000000, 0x200000, 0x92d8ae9b )
+	ROM_LOAD32_WORD( "94019.02", 0x000002, 0x200000, 0xf7bd9cc4 )
+	ROM_LOAD32_WORD( "94019.03", 0x400000, 0x200000, 0x62a69590 )
+	ROM_LOAD32_WORD( "94019.04", 0x400002, 0x200000, 0x5a76a39b )
+	ROM_LOAD32_WORD( "94019.05", 0x800000, 0x200000, 0xa16994df )
+	ROM_LOAD32_WORD( "94019.06", 0x800002, 0x200000, 0x01d52ef1 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* roz tiles, don't dispose since we use GFX_RAW */
+	ROM_LOAD( "94019.08", 0x000000, 0x200000, 0xabd124e0 )
+	ROM_LOAD( "94019.09", 0x200000, 0x200000, 0x711ab08b )
+
+	ROM_REGION( 0x200000, REGION_GFX3, 0 ) /* bg tiles, don't dispose since we use GFX_RAW */
 	ROM_LOAD( "94019.07", 0x000000, 0x200000, BADCRC( 0xacb75824 ) )	// FIXED BITS (xxxxxxxx11111111)
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* tx tiles, don't dispose since we use GFX_RAW */
@@ -1786,11 +1823,11 @@ ROM_END
 
 /* 4 known types */
 
-/* SS91022-10: desertwr, gratia, tp2m32, gametngk */
+/* SS91022-10: desertwr, gratiaa, tp2m32, gametngk */
 
 /* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
 
-/* SS92047-01: kirarast */
+/* SS92047-01: gratia, kirarast */
 
 /* SS92048-01: p47aces */
 
@@ -1934,7 +1971,7 @@ static void decrypt_ms32_bg(int addr_xor,int data_xor)
 
 
 
-/* SS91022-10: desertwr, gratia, tp2m32, gametngk */
+/* SS91022-10: desertwr, gratiaa, tp2m32, gametngk */
 static DRIVER_INIT (ss91022_10)
 {
 	rearrange_sprites();
@@ -1950,7 +1987,7 @@ static DRIVER_INIT (ss92046_01)
 	decrypt_ms32_bg(0x00001,0x9b);
 }
 
-/* SS92047-01: kirarast */
+/* SS92047-01: gratia, kirarast */
 static DRIVER_INIT (ss92047_01)
 {
 	rearrange_sprites();
@@ -1991,7 +2028,8 @@ GAMEX( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "
 GAMEX( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, gratia,   0,        ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (set 1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (set 2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, tp2m32,   tetrisp2, ms32, ms32,     tp2m32,     ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_NOT_WORKING | GAME_NO_SOUND )
 

@@ -352,7 +352,7 @@ WRITE16_HANDLER( midxunit_uart_w )
 			break;
 
 		case 5:	/* register 5 write seems to reset things */
-			dcs_data_r() & 0xff;
+			dcs_data_r();
 			break;
 
 		default: /* everyone else just stores themselves */

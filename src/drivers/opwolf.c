@@ -613,5 +613,5 @@ static DRIVER_INIT( opwolfb )
 
 
 /*    year  rom       parent    machine   inp       init */
-GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corp", "Operation Wolf (US)" )
+GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)" )
 GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear" )

@@ -1,6 +1,7 @@
 /****************************************************************\
 * Status Trivia 2 driver by David Haywood, MooglyGuy, and Stephh *
 * Super Trivia driver by MooglyGuy                               *
+* Triv Quiz driver by MooglyGuy                                  *
 *                                                                *
 ******************************************************************
 *                                                                *
@@ -317,6 +318,24 @@ static PORT_WRITE_START( supertr2_writeport )
 	{ 0xc0, 0xcf, IOWP_NOP },				// ???
 PORT_END
 
+static PORT_WRITE_START( trivquiz_writeport )
+        { 0x22, 0x22, IOWP_NOP },                               // ???
+        { 0x23, 0x23, IOWP_NOP },                               // ???
+        { 0x28, 0x28, question_offset_low_w },
+        { 0x29, 0x29, question_offset_high_w },
+	{ 0xb0, 0xb0, AY8910_control_port_0_w },
+	{ 0xb1, 0xb1, AY8910_write_port_0_w },
+	{ 0xc0, 0xcf, IOWP_NOP },				// ???
+PORT_END
+
+static PORT_READ_START( trivquiz_readport )
+	{ 0x20, 0x20, input_port_0_r },
+	{ 0x21, 0x21, input_port_1_r },
+	{ 0x2a, 0x2a, statriv2_questions_read },                // question data
+	{ 0xb1, 0xb1, AY8910_read_port_0_r },		// ???
+	{ 0xce, 0xce, IORP_NOP },				// ???
+PORT_END
+
 INPUT_PORTS_START( statriv2 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -436,7 +455,7 @@ static MACHINE_DRIVER_START( supertr2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(generic_1fill)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
@@ -454,7 +473,33 @@ static MACHINE_DRIVER_START( supertr2 )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( trivquiz )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(8085A,12400000)              /* 12.4MHz / 4? */
+	MDRV_CPU_MEMORY(supertr2_readmem,supertr2_writemem)
+	MDRV_CPU_PORTS(trivquiz_readport,trivquiz_writeport)
+	MDRV_CPU_VBLANK_INT(statriv2_interrupt,1)
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(statriv2)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(4*8, 40*8-1, 0, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(2*256)
+
+	MDRV_PALETTE_INIT(statriv2)
+	MDRV_VIDEO_START(statriv2)
+	MDRV_VIDEO_UPDATE(statriv2)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START( statriv2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -474,6 +519,26 @@ ROM_START( statriv2 )
 	ROM_LOAD( "statuspb.u6", 0x0a000, 0x02000, 0x7ee1cea0 )
 	ROM_LOAD( "statuspb.u7", 0x0c000, 0x02000, 0x121d6976 )
 	ROM_LOAD( "statuspb.u8", 0x0e000, 0x02000, 0x5080df10 )
+ROM_END
+
+ROM_START( trivquiz )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "triv1-1f.u8",  0x00000, 0x01000, 0xda9a763a )
+	ROM_LOAD( "triv1-2f.u9",  0x01000, 0x01000, 0x270459fe )
+	ROM_LOAD( "triv1-3f.u10", 0x02000, 0x01000, 0x103f4160 )
+
+	ROM_REGION( 0x1000,  REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "triv1-0f.u7",  0x00000, 0x01000, 0xaf5f434a )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* question data */
+	ROM_LOAD( "qmt11.rom",    0x00000, 0x02000, 0x82107565 )
+	ROM_LOAD( "qmt12.rom",    0x02000, 0x02000, 0x68667637 )
+	ROM_LOAD( "qmt13.rom",    0x04000, 0x02000, 0xe0d01a68 )
+	ROM_LOAD( "qmt14.rom",    0x06000, 0x02000, 0x68262b46 )
+	ROM_LOAD( "qmt15.rom",    0x08000, 0x02000, 0xd1f39185 )
+	ROM_LOAD( "qmt16.rom",    0x0a000, 0x02000, 0x1d2ecf1d )
+	ROM_LOAD( "qmt17.rom",    0x0c000, 0x02000, 0x01840f9c )
+	ROM_LOAD( "qmt18.rom",    0x0e000, 0x02000, 0x004a9480 )
 ROM_END
 
 ROM_START( supertr2 )
@@ -497,5 +562,6 @@ ROM_START( supertr2 )
 	ROM_LOAD( "astq2-8.rom", 0x38000, 0x08000, 0xcd2674d5 )
 ROM_END
 
+GAMEX( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz", GAME_WRONG_COLORS )
 GAMEX( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "(Status) Triv Two", GAME_WRONG_COLORS )
 GAMEX( 1986, supertr2, 0, supertr2, supertr2, 0, ROT0, "Status Games", "Super Triv II", GAME_WRONG_COLORS )

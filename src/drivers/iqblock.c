@@ -7,7 +7,7 @@ Driver by Nicola Salmoria and Ernesto Corvi
 TODO:
 - Who generates IRQ and NMI? How many should there be per frame?
 
-- Sound chip is a UM3567. Is this compatible to something already in MAME?
+- Sound chip is a UM3567. Is this compatible to something already in MAME? yes, YM2413
 
 - Coin 2 doesn't work? DIP switch setting?
 
@@ -137,8 +137,8 @@ static PORT_WRITE_START( writeport )
 	{ 0x6800, 0x69ff, iqblock_fgvideoram_w },	/* initialized up to 6fff... bug or larger tilemap? */
 	{ 0x7000, 0x7fff, iqblock_bgvideoram_w },
 	{ 0x5080, 0x5083, ppi8255_0_w },
-	{ 0x50b0, 0x50b0, IOWP_NOP },	// UM3567_register_port_0_w
-	{ 0x50b1, 0x50b1, IOWP_NOP },	// UM3567_data_port_0_w
+	{ 0x50b0, 0x50b0, YM2413_register_port_0_w }, // UM3567_register_port_0_w
+	{ 0x50b1, 0x50b1, YM2413_data_port_0_w }, // UM3567_data_port_0_w
 	{ 0x50c0, 0x50c0, iqblock_irqack_w },
 PORT_END
 
@@ -276,12 +276,18 @@ static struct GfxDecodeInfo gfxdecodeinfo_cabaret[] =
 	{ -1 } /* end of array */
 };
 
+static struct YM2413interface ym2413_interface =
+{
+	1,
+	3579545,    /* 3.579545 MHz */
+	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
+};
 
 
 static MACHINE_DRIVER_START( iqblock )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz ???? */
+	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
@@ -302,13 +308,13 @@ static MACHINE_DRIVER_START( iqblock )
 	MDRV_VIDEO_UPDATE(iqblock)
 
 	/* sound hardware */
-//	MDRV_SOUND_ADD(UM3567, um3567_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface) // UM3567
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cabaret )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz ???? */
+	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
@@ -329,7 +335,7 @@ static MACHINE_DRIVER_START( cabaret )
 	MDRV_VIDEO_UPDATE(iqblock)
 
 	/* sound hardware */
-//	MDRV_SOUND_ADD(UM3567, um3567_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface) // UM3567
 MACHINE_DRIVER_END
 
 
@@ -418,6 +424,6 @@ static DRIVER_INIT( cabaret )
 
 
 
-GAMEX( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block", GAME_NO_SOUND )
+GAME( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block" )
 
 GAMEX( 19??, cabaret, 0, cabaret, iqblock, cabaret, ROT0, "IGS", "Cabaret", GAME_NOT_WORKING | GAME_NO_SOUND )

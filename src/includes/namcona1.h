@@ -11,7 +11,8 @@ enum
 	NAMCO_SWCOURT,
 	NAMCO_TINKLPIT,
 	NAMCO_NUMANATH,
-	NAMCO_FA
+	NAMCO_FA,
+	NAMCO_XDAY2
 };
 
 extern int namcona1_gametype;

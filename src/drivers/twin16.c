@@ -282,12 +282,6 @@ WRITE_HANDLER( twin16_sres_w )
 }
 
 
-// Added by Takahiro Nogi. (1999/10/27)
-static WRITE_HANDLER( twin16_UPD7759_start_w )
-{
-	UPD7759_start_w(offset, !(data & 1));
-}
-
 static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
@@ -306,7 +300,7 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0xc000, 0xc000, YM2151_register_port_0_w },
 	{ 0xc001, 0xc001, YM2151_data_port_0_w },
 	{ 0xd000, 0xd000, UPD7759_0_port_w },
-	{ 0xe000, 0xe000, twin16_UPD7759_start_w },	// Changed by Takahiro Nogi. (1999/10/27)
+	{ 0xe000, 0xe000, UPD7759_0_start_w },
 MEMORY_END
 
 /******************************************************************************************/

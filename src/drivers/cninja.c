@@ -106,11 +106,9 @@ static WRITE16_HANDLER( cninja_irq_w )
 		cninja_irq_mask=data&0xff;
 		return;
 
-	case 1: /* Raster IRQ scanline position */
+	case 1: /* Raster IRQ scanline position, only valid for values between 1 & 239 (0 and 240-256 do NOT generate IRQ's) */
 		cninja_scanline=data&0xff;
-//		logerror("%08x: Set raster irq for scanline %d (already on %d)\n",activecpu_get_pc(),cninja_scanline,cpu_getscanline());
-
-		if ((cninja_irq_mask&0x2)==0 && cninja_scanline) /* Writing 0 is not an irq even with rasters enabled */
+		if ((cninja_irq_mask&0x2)==0 && cninja_scanline>0 && cninja_scanline<240)
 			timer_adjust(raster_irq_timer,cpu_getscanlinetime(cninja_scanline),cninja_scanline,TIME_NEVER);
 		else
 			timer_adjust(raster_irq_timer,TIME_NEVER,0,0);
@@ -315,30 +313,6 @@ MEMORY_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( YM2151_w )
-{
-	switch (offset) {
-	case 0:
-		YM2151_register_port_0_w(0,data);
-		break;
-	case 1:
-		YM2151_data_port_0_w(0,data);
-		break;
-	}
-}
-
-static WRITE_HANDLER( YM2203_w )
-{
-	switch (offset) {
-	case 0:
-		YM2203_control_port_0_w(0,data);
-		break;
-	case 1:
-		YM2203_write_port_0_w(0,data);
-		break;
-	}
-}
-
 static MEMORY_READ_START( sound_readmem )
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x100000, 0x100001, YM2203_status_port_0_r },
@@ -351,8 +325,8 @@ MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x100000, 0x100001, YM2203_w },
-	{ 0x110000, 0x110001, YM2151_w },
+	{ 0x100000, 0x100001, YM2203_word_0_w },
+	{ 0x110000, 0x110001, YM2151_word_0_w },
 	{ 0x120000, 0x120001, OKIM6295_data_0_w },
 	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
@@ -373,7 +347,7 @@ MEMORY_END
 static MEMORY_WRITE_START( sound_writemem_mutantf )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, MWA_NOP },
-	{ 0x110000, 0x110001, YM2151_w },
+	{ 0x110000, 0x110001, YM2151_word_0_w },
 	{ 0x120000, 0x120001, OKIM6295_data_0_w },
 	{ 0x130000, 0x130001, OKIM6295_data_1_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },

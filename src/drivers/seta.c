@@ -46,12 +46,14 @@ P0-079-A				94 Eight Forces						Tecmo
 ?						93 J.J.Squawkers					Athena / Able
 ?        (93111A)		93 War Of Aero						Yang Cheng
 P0-081-A				93 Mobile Suit Gundam				Banpresto
+PO-083-A (BP931)		93 Ultra Toukon Densetsu			Banpresto + Tsuburaya Prod.
 PO-092-A				93 Daioh							Athena
 PO-096-A (BP934KA)		93 Kamen Rider						Banpresto
 P0-097-A				93 Oishii Puzzle ..					Sunsoft + Atlus
 bootleg					9? Triple Fun (4)					bootleg (Comad?)
 P0-100-A				93 Quiz Kokology 2					Tecmo
 P0-101-1				94 Pro Mahjong Kiwame				Athena
+PO-102-A				93 Mad Shark						Allumer
 P0-114-A (SKB-001)		94 Krazy Bowl						American Sammy
 P0-117-A (DH-01)		95 Extreme Downhill					Sammy Japan
 P0-117-A?				95 Sokonuke Taisen Game				Sammy Industries
@@ -71,6 +73,13 @@ Notes:
   Of course it's used to control the spinner. DownTown probably has it as well.
 
 TODO:
+- I think the best way to correctly align tilemaps and sprites and account for
+  both flipping and different visible areas is to have a table with per game
+  vertical and horizontal offsets for sprites, tilemaps and possibly the "floating
+  tilemaps" (made of sprites) for both the flipped and normal screen cases.
+  Current issues: metafox test grid not aligned when screen flipped, madshark & utoukond
+  ("floating tilemaps" sprites when flipped)
+
 - bad sound in sokonuke?
 - in msgunda1, colors for the score display screw up after the second animation
   in attract mode. The end of the animation also has garbled sprites.
@@ -82,12 +91,11 @@ TODO:
   See also msgundam.
 
 - tndrcade: lots of flickering sprites
-- metafox test grid not aligned when screen flipped
 - drgnunit sprite/bg unaligned when screen flipped (check I/O test in service mode)
-- oisipuzl doesn't support screen flip? tilemap flipping is also kludged in the video driver.
-- eightfrc has alignment problems both flipped and not
 - extdwnhl has some wrong colored tiles in one of the attract mode images and in
   later tracks.
+- oisipuzl doesn't support screen flip? tilemap flipping is also kludged in the video driver.
+- eightfrc has alignment problems both flipped and not
 - flip screen and mirror support not working correctly in zombraid
 - gundhara visible area might be smaller (zombraid uses the same MachineDriver, and
   the current area is right for it)
@@ -658,6 +666,41 @@ X1-010           X1-006
 
 /***************************************************************************
 
+
+									Mad Shark
+
+Allumer, 1993
+This game is a vertical shoot'em-up and runs on fairly standard Allumer hardware.
+
+PCB Layout
+----------
+
+PO-102A
+----------------------------------------------------
+|     X1-010   FQ001007 FQ001006 FQ001005 FQ001004 |
+|           LH5160                                 |
+|                    X1-011  X1-011       X1-002A  |
+|                                                  |
+|J                   X1-012  X1-012       X1-001A  |
+|A X1-007                                          |
+|M   LH5160           LH5160 LH5160 LH5160         |
+|M                                                 |
+|A   LH5160           LH5160 LH5160 LH5160         |
+|                                         FQ001002 |
+|*           MC68HC000B16                          |
+|  X1-004                                          |
+|                                         FQ001001 |
+|                        LH52250                   |
+| DSW2(8) DSW1(8) 16MHz  LH52250    D71054         |
+----------------------------------------------------
+
+Notes:
+      *: 4 jumper pads for region selection (hardwired)
+
+***************************************************************************/
+
+/***************************************************************************
+
 							Mobile Suit Gundam
 
 Banpresto 1993
@@ -901,6 +944,55 @@ BP-U-003.U13      8M mask (32 pin, 1M x 8),   read as MX27C8000           Sound
 ***************************************************************************/
 
 /***************************************************************************
+Ultra Toukon Densetsu
+Banpresto, 1993
+
+This game runs on fairly standard Allumer hardware.
+
+PCB Layout
+----------
+
+PO-083A
+BP931
+----------------------------------------------------
+|     X1-010  93UTA08  93UTA06 93UTA04  93UTA02    |
+|                93UTA07 93UTA05  93UTA03  93UTA01 |
+|  YM3438   LH5116                                 |
+|  LH5116            X1-011  X1-011       X1-002A  |
+|  Z80 93UTA009                                    |
+|J                   X1-012  X1-012       X1-001A  |
+|A X1-007                                          |
+|M   LH5116           LH5160 LH5160 LH5160         |
+|M                                                 |
+|A   LH5116           LH5160 LH5160 LH5160         |
+|                                                  |
+|*      16MHz                                      |
+|  X1-004                                   62256  |
+|                                           62256  |
+| DSW1(8)               93UTA011  93UTA010         |
+| DSW2(8)   68HC000N-16                            |
+----------------------------------------------------
+
+Notes:
+      *: 4 jumper pads for region selection (hardwired)
+      Z80 clock = 4.000MHz
+      VSync: 60Hz
+      HSync: 15.21kHz
+
+Developers:
+           More info reqd? Email me....
+           theguru@emuunlim.com
+
+1.048.576 93uta03.63
+1.048.576 93uta04.64
+1.048.576 93uta05.66
+1.048.576 93uta06.67
+1.048.576 93uta07.68
+1.048.576 93uta08.69
+
+***************************************************************************/
+
+/***************************************************************************
 
 							   War of Aero
 							Project M E I O U
@@ -1101,6 +1193,23 @@ static struct x1_010_interface seta_sound_intf_16MHz2 =
 	16000000,	/* clock */
 	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
 	0x1000,		/* address */
+};
+
+static void utoukond_ym3438_interrupt(int linestate)
+{
+	cpu_set_nmi_line(1,linestate);
+}
+
+static struct YM2612interface utoukond_ym3438_intf =
+{
+	1,
+	6000000,	// ?
+	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
+	{ 0 },		// port I/O
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ utoukond_ym3438_interrupt }	// IRQ handler
 };
 
 /***************************************************************************
@@ -1941,7 +2050,7 @@ static MEMORY_WRITE16_START( extdwnhl_writemem )
 MEMORY_END
 
 /***************************************************************************
-				(Kamen) Masked Riders Club Battle Race
+		(Kamen) Masked Riders Club Battle Race / Mad Shark
 ***************************************************************************/
 
 static MEMORY_READ16_START( kamenrid_readmem )
@@ -1972,6 +2081,7 @@ static MEMORY_WRITE16_START( kamenrid_writemem )
 	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
 	{ 0x50000c, 0x50000d, watchdog_reset16_w			},	// Watchdog (sokonuke)
 	{ 0x600000, 0x600005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
+	{ 0x600006, 0x600007, MWA16_NOP						},	// ?
 	{ 0x700000, 0x7003ff, MWA16_RAM						},	// Palette RAM (tested)
 	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x701000, 0x703fff, MWA16_RAM	},	// Palette
@@ -1982,8 +2092,54 @@ static MEMORY_WRITE16_START( kamenrid_writemem )
 	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
 	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
 	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
+	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? $4000
 	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
 	{ 0xb04000, 0xb07fff, MWA16_RAM },	// tested
+#if __uPD71054_TIMER
+	{ 0xc00000, 0xc00007, timer_regs_w					},	// ?
+#else
+	{ 0xc00000, 0xc00007, MWA16_NOP						},	// ?
+#endif
+	{ 0xd00000, 0xd03fff, seta_sound_word_w				},	// Sound
+MEMORY_END
+
+/* almast identical to kamenrid */
+static MEMORY_READ16_START( madshark_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_RAM				},	// ROM
+	{ 0x500000, 0x500001, input_port_0_word_r	},	// P1
+	{ 0x500002, 0x500003, input_port_1_word_r	},	// P2
+	{ 0x500004, 0x500005, input_port_2_word_r	},	// Coins
+	{ 0x500008, 0x50000b, seta_dsw_r			},	// DSW
+	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
+	{ 0x800000, 0x801fff, MRA16_RAM				},	// VRAM 0
+	{ 0x802000, 0x803fff, MRA16_RAM				},	// VRAM 1
+	{ 0x880000, 0x881fff, MRA16_RAM				},	// VRAM 2
+	{ 0x882000, 0x883fff, MRA16_RAM				},	// VRAM 3
+	{ 0xa00000, 0xa00607, MRA16_RAM			 	},	// Sprites Y
+	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+	{ 0xd00000, 0xd03fff, seta_sound_word_r		},	// Sound
+MEMORY_END
+
+static MEMORY_WRITE16_START( madshark_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
+	{ 0x50000c, 0x50000d, watchdog_reset16_w			},	// Watchdog
+	{ 0x600000, 0x600005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
+	{ 0x600006, 0x600007, MWA16_NOP						},	// ?
+	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
+	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
+	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
+	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
+	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
+	{ 0xa80000, 0xa80001, MWA16_RAM						},	// ? $4000
+	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
+#if __uPD71054_TIMER
+	{ 0xc00000, 0xc00007, timer_regs_w					},	// ?
+#else
+	{ 0xc00000, 0xc00007, MWA16_NOP						},	// ?
+#endif
 	{ 0xd00000, 0xd03fff, seta_sound_word_w				},	// Sound
 MEMORY_END
 
@@ -2349,13 +2505,56 @@ static MEMORY_WRITE16_START( umanclub_writemem )
 	{ 0xc00000, 0xc03fff, seta_sound_word_w			},	// Sound
 MEMORY_END
 
+/***************************************************************************
+							Ultra Toukond Densetsu
+***************************************************************************/
+
+static WRITE16_HANDLER( utoukond_soundlatch_w )
+{
+	if (ACCESSING_LSB)
+	{
+		cpu_set_irq_line(1,0,HOLD_LINE);
+		soundlatch_w(0,data & 0xff);
+	}
+}
+
+static MEMORY_READ16_START( utoukond_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_RAM				},	// ROM
+	{ 0x400000, 0x400001, input_port_0_word_r	},	// P1
+	{ 0x400002, 0x400003, input_port_1_word_r	},	// P2
+	{ 0x400004, 0x400005, input_port_2_word_r	},	// Coins
+	{ 0x600000, 0x600003, seta_dsw_r			},	// DSW
+	{ 0x700400, 0x700fff, MRA16_RAM				},	// Palette
+	{ 0x800000, 0x801fff, MRA16_RAM				},	// VRAM 0
+	{ 0x802000, 0x803fff, MRA16_RAM				},	// VRAM 1
+	{ 0x880000, 0x881fff, MRA16_RAM				},	// VRAM 2
+	{ 0x882000, 0x883fff, MRA16_RAM				},	// VRAM 3
+	{ 0xa00000, 0xa00607, MRA16_RAM			 	},	// Sprites Y
+	{ 0xb00000, 0xb03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+MEMORY_END
+
+static MEMORY_WRITE16_START( utoukond_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM						},	// ROM
+	{ 0x500000, 0x500005, seta_vregs_w, &seta_vregs		},	// ? Coin Lockout + Video Registers
+	{ 0x700400, 0x700fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x800000, 0x803fff, seta_vram_0_w, &seta_vram_0	},	// VRAM 0
+	{ 0x880000, 0x883fff, seta_vram_2_w, &seta_vram_2	},	// VRAM 2
+	{ 0x900000, 0x900005, MWA16_RAM, &seta_vctrl_0		},	// VRAM 0&1 Ctrl
+	{ 0x980000, 0x980005, MWA16_RAM, &seta_vctrl_2		},	// VRAM 2&3 Ctrl
+	{ 0xa00000, 0xa00607, MWA16_RAM , &spriteram16		},	// Sprites Y
+	{ 0xb00000, 0xb03fff, MWA16_RAM , &spriteram16_2	},	// Sprites Code + X + Attr
+	{ 0xc00000, 0xc00001, utoukond_soundlatch_w			},	// To Sound CPU (cause an IRQ)
+	{ 0xe00000, 0xe00001, MWA16_NOP						},	// ? ack
+MEMORY_END
 
 
 
 /***************************************************************************
 
 
-									Sub CPU
+								Sub / Sound CPU
 
 
 ***************************************************************************/
@@ -2531,6 +2730,32 @@ static MEMORY_WRITE_START( metafox_sub_writemem )
 MEMORY_END
 
 
+/***************************************************************************
+							Ultra Toukon Densetsu
+***************************************************************************/
+
+static MEMORY_READ_START( utoukond_sound_readmem )
+	{ 0x0000, 0xdfff, MRA_ROM },
+	{ 0xe000, 0xefff, MRA_RAM },
+	{ 0xf000, 0xffff, seta_sound_r },
+MEMORY_END
+static MEMORY_WRITE_START( utoukond_sound_writemem )
+	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xf000, 0xffff, seta_sound_w },
+MEMORY_END
+
+static PORT_READ_START( utoukond_sound_readport )
+	{ 0x00, 0x00, YM2612_status_port_0_A_r },
+	{ 0xc0, 0xc0, soundlatch_r },
+PORT_END
+static PORT_WRITE_START( utoukond_sound_writeport )
+	{ 0x00, 0x00, YM2612_control_port_0_A_w },
+	{ 0x01, 0x01, YM2612_data_port_0_A_w },
+	{ 0x02, 0x02, YM2612_control_port_0_B_w },
+	{ 0x03, 0x03, YM2612_data_port_0_B_w },
+	{ 0x80, 0x80, IOWP_NOP }, //?
+PORT_END
 
 
 
@@ -3790,6 +4015,83 @@ INPUT_PORTS_START( krzybowl )
 INPUT_PORTS_END
 
 
+/***************************************************************************
+								Mad Shark
+***************************************************************************/
+
+INPUT_PORTS_START( madshark )
+	PORT_START	// IN0 - Player 1
+	JOY_TYPE1_2BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	/* These are NOT Dip Switches but jumpers */
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0000, "Country" )
+	PORT_DIPSETTING(      0x0080, "Japan" )
+	PORT_DIPSETTING(      0x0000, "World" )
+
+	PORT_START	// IN3 - 2 DSWs
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0018, "1000k" )
+	PORT_DIPSETTING(      0x0008, "1000k 2000k" )
+	PORT_DIPSETTING(      0x0010, "1500k 3000k" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0040, "Easy" )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0020, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x1c00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x1400, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_4C ) )
+INPUT_PORTS_END
+
 
 /***************************************************************************
 								Meta Fox
@@ -4864,6 +5166,93 @@ INPUT_PORTS_START( umanclub )
 INPUT_PORTS_END
 
 
+/***************************************************************************
+							Ultra Toukon Densetsu
+***************************************************************************/
+
+INPUT_PORTS_START( utoukond )
+	PORT_START	// IN0 - Player 1
+	JOY_TYPE1_3BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2
+	JOY_TYPE1_3BUTTONS(2)
+
+	PORT_START	// IN2 - Coins
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	/* These are NOT Dip Switches but jumpers */
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN3 - 2 DSWs
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0050, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x00d0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0090, DEF_STR( 1C_7C ) )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x0c00, "Normal" )
+	PORT_DIPSETTING(      0x0400, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x4000, "100k" )
+	PORT_DIPSETTING(      0x0000, "150k" )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+INPUT_PORTS_END
 
 /***************************************************************************
 								U.S. Classic
@@ -6085,15 +6474,21 @@ MACHINE_DRIVER_END
 				(Kamen) Masked Riders Club Battle Race
 ***************************************************************************/
 
+/*	kamenrid: lev 2 by vblank, lev 4 by timer */
 static MACHINE_DRIVER_START( kamenrid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_MEMORY(kamenrid_readmem,kamenrid_writemem)
-	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+#if	__uPD71054_TIMER
+	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_STOP( wrofaero )
+#endif	// __uPD71054_TIMER
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -6109,6 +6504,7 @@ static MACHINE_DRIVER_START( kamenrid )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz) // ?
 MACHINE_DRIVER_END
+
 
 /***************************************************************************
 								Krazy Bowl
@@ -6139,6 +6535,45 @@ static MACHINE_DRIVER_START( krzybowl )
 	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
 MACHINE_DRIVER_END
 
+
+/***************************************************************************
+								Mad Shark
+***************************************************************************/
+
+/*	madshark: lev 2 by vblank, lev 4 by timer */
+static MACHINE_DRIVER_START( madshark )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(madshark_readmem,madshark_writemem)
+	MDRV_CPU_VBLANK_INT( wrofaero_interrupt, 1 )
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+#if	__uPD71054_TIMER
+	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_STOP( wrofaero )
+#endif	// __uPD71054_TIMER
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
+
+	MDRV_GFXDECODE(jjsquawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer2, layer1 */
+
+	MDRV_PALETTE_INIT(jjsquawk)				/* layers are 6 planes deep */
+
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 							Mobile Suit Gundam
@@ -6400,6 +6835,43 @@ static MACHINE_DRIVER_START( umanclub )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
+							Ultra Toukond Densetsu
+***************************************************************************/
+
+static MACHINE_DRIVER_START( utoukond )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(utoukond_readmem,utoukond_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(utoukond_sound_readmem,utoukond_sound_writemem)
+	MDRV_CPU_PORTS(utoukond_sound_readport,utoukond_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
+
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer2, layer1 */
+
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(X1_010, seta_sound_intf_16MHz)
+	MDRV_SOUND_ADD(YM2612, utoukond_ym3438_intf)
 MACHINE_DRIVER_END
 
 
@@ -7312,6 +7784,55 @@ ROM_START( zombraid )
 	ROM_LOAD( "fy001011.a",  0x280000, 0x200000, 0xe3c431de )
 ROM_END
 
+ROM_START( madshark )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "fq001002.201",  0x000000, 0x080000, 0x4286a811 )
+	ROM_LOAD16_BYTE( "fq001001.200",  0x000001, 0x080000, 0x38bfa0ad )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "fq001004.202", 0x100000, 0x100000, 0xe56a1b5e )
+	ROM_CONTINUE(             0x000000, 0x100000 )
+
+	ROM_REGION( 0x400000, REGION_USER1, ROMREGION_DISPOSE )	/* Layers 1+2 */
+	ROM_LOAD       ( "fq001006.152", 0x000000, 0x200000, 0x3bc5e8e4 )
+	ROM_LOAD16_BYTE( "fq001005.205", 0x200000, 0x100000, 0x5f6c6d4a )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x100000 )
+	ROM_COPY( REGION_USER1, 0x200000, 0x100000, 0x100000 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_COPY( REGION_USER1, 0x100000, 0x000000, 0x100000 )
+	ROM_COPY( REGION_USER1, 0x300000, 0x100000, 0x100000 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "fq001007.26", 0x000000, 0x100000, 0xe4b33c13 )
+ROM_END
+
+ROM_START( utoukond )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "93uta010.3",  0x000000, 0x080000, 0xc486ef5e )
+	ROM_LOAD16_BYTE( "93uta011.4",  0x000001, 0x080000, 0x978978f7 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "93uta009.112", 0x0000, 0x10000, 0x67f18483 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
+	ROM_LOAD( "93uta04.64",  0x000000, 0x100000, 0x9cba0538 )
+	ROM_LOAD( "93uta02.201", 0x100000, 0x100000, 0x884fedfa )
+	ROM_LOAD( "93uta03.63",  0x200000, 0x100000, 0x818484a5 )
+	ROM_LOAD( "93uta01.200", 0x300000, 0x100000, 0x364de841 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "93uta05.66",  0x000000, 0x100000, 0x5e640bfb )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "93uta07.68",  0x000000, 0x100000, 0x67bdd036 )
+	ROM_LOAD( "93uta06.67",  0x100000, 0x100000, 0x294c26e4 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "93uta08.69", 0x000000, 0x100000, 0x3d50bbcd )
+ROM_END
 
 
 READ16_HANDLER( twineagl_debug_r )
@@ -7535,14 +8056,16 @@ GAME( 1992, umanclub, 0,        umanclub, umanclub, 0,        ROT0,   "Tsuburaya
 GAME( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270, "Allumer + Tecmo",        "Zing Zing Zip" )
 GAME( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,   "Athena",                 "Athena no Hatena ?" )
 GAME( 1993, daioh,    0,        daioh,    daioh,    0,        ROT270, "Athena",                 "Daioh" )
+GAME( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0,   "Athena / Able",          "J. J. Squawkers" )
+GAME( 1993, kamenrid, 0,        kamenrid, kamenrid, 0,        ROT0,   "Toei / Banpresto",       "Masked Riders Club Battle Race" )
+GAME( 1993, madshark, 0,        madshark, madshark, 0,        ROT270, "Allumer",                "Mad Shark" )
 GAME( 1993, msgundam, 0,        msgundam, msgundam, 0,        ROT0,   "Banpresto",              "Mobile Suit Gundam (set 1)" )
 GAMEX(1993, msgunda1, msgundam, msgundam, msgundam, 0,        ROT0,   "Banpresto",              "Mobile Suit Gundam (set 2)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, 0,        ROT0,   "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka" )
-GAME( 1993, triplfun, oisipuzl, triplfun, oisipuzl, 0,        ROT0,   "bootleg",                "Triple Fun" )
 GAME( 1993, qzkklgy2, 0,        qzkklgy2, qzkklgy2, 0,        ROT0,   "Tecmo",                  "Quiz Kokology 2" )
+GAME( 1993, triplfun, oisipuzl, triplfun, oisipuzl, 0,        ROT0,   "bootleg",                "Triple Fun" )
+GAME( 1993, utoukond, 0,        utoukond, utoukond, 0,        ROT0,   "Banpresto + Tsuburaya Prod.", "Ultra Toukon Densetsu (Japan)" )
 GAME( 1993, wrofaero, 0,        wrofaero, wrofaero, 0,        ROT270, "Yang Cheng",             "War of Aero - Project MEIOU" )
-GAME( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0,   "Athena / Able",          "J. J. Squawkers" )
-GAME( 1993, kamenrid, 0,        kamenrid, kamenrid, 0,        ROT0,   "Toei / Banpresto",       "Masked Riders Club Battle Race" )
 GAME( 1994, eightfrc, 0,        eightfrc, eightfrc, eightfrc, ROT90,  "Tecmo",                  "Eight Forces" )
 GAME( 1994, kiwame,   0,        kiwame,   kiwame,   kiwame,   ROT0,   "Athena",                 "Pro Mahjong Kiwame" )
 GAME( 1994, krzybowl, 0,        krzybowl, krzybowl, 0,        ROT270, "American Sammy Corp.",   "Krazy Bowl" )
@@ -7550,3 +8073,4 @@ GAMEX(1995, extdwnhl, 0,        extdwnhl, extdwnhl, 0,        ROT0,   "Sammy Ind
 GAME( 1995, gundhara, 0,        gundhara, gundhara, 0,        ROT270, "Banpresto",              "Gundhara" )
 GAMEX(1995, sokonuke, 0,        extdwnhl, sokonuke, 0,        ROT0,   "Sammy Industries",       "Sokonuke Taisen Game (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX(1995, zombraid, 0,        gundhara, zombraid, zombraid, ROT0,   "American Sammy Corp.",   "Zombie Raid (US)", GAME_NO_COCKTAIL )
+

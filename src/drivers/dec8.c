@@ -214,16 +214,17 @@ bb63           = Square things again
 	but Boss #6 is uncomfirmed as correct.
 
 */
-	if (i8751_value==0x8000) i8751_return=0xf580 +  0; /* Boss #1: Snake + Bee */
+	if (i8751_value==0x8000) i8751_return=0xf580 +  0; /* Boss #1: Snake + Bees */
 	if (i8751_value==0x8001) i8751_return=0xf580 + 30; /* Boss #2: 4 Corners */
 	if (i8751_value==0x8002) i8751_return=0xf580 + 26; /* Boss #3: Clock */
-	if (i8751_value==0x8003) i8751_return=0xf580 +  6; /* Boss #4: Pyramid */
-	if (i8751_value==0x8004) i8751_return=0xf580 + 12; /* Boss #5: Grey things */
-	if (i8751_value==0x8005) i8751_return=0xf580 + 20; /* Boss #6: Ground Base?! */
+	if (i8751_value==0x8003) i8751_return=0xf580 +  2; /* Boss #4: Pyramid */
+	if (i8751_value==0x8004) i8751_return=0xf580 +  6; /* Boss #5: Snake + Head Combo */
+	if (i8751_value==0x8005) i8751_return=0xf580 + 24; /* Boss #6: LED Panels */
 	if (i8751_value==0x8006) i8751_return=0xf580 + 28; /* Boss #7: Dragon */
 	if (i8751_value==0x8007) i8751_return=0xf580 + 32; /* Boss #8: Teleport */
 	if (i8751_value==0x8008) i8751_return=0xf580 + 38; /* Boss #9: Octopus (Pincer) */
 	if (i8751_value==0x8009) i8751_return=0xf580 + 40; /* Boss #10: Bird */
+	if (i8751_value==0x800a) i8751_return=0xf580 + 42; /* End Game(bad address?) */
 }
 
 static WRITE_HANDLER( gondo_i8751_w )

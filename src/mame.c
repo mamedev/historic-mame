@@ -219,6 +219,10 @@ static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *a
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 
+#ifdef MESS
+#include "mesintrf.h"
+#define handle_user_interface	handle_mess_user_interface
+#endif
 
 
 /***************************************************************************
@@ -1298,7 +1302,11 @@ int updatescreen(void)
 
 	/* call the end-of-frame callback */
 	if (Machine->drv->video_eof)
+	{
+		profiler_mark(PROFILER_VIDEO);
 		(*Machine->drv->video_eof)();
+		profiler_mark(PROFILER_END);
+	}
 
 	return 0;
 }
@@ -1666,6 +1674,7 @@ static int validitychecks(void)
 			}
 		}
 
+#ifndef MESS
 		if ((drivers[i]->flags & NOT_A_DRIVER) == 0)
 		{
 			if (drv.sound[0].sound_type == 0 && (drivers[i]->flags & GAME_NO_SOUND) == 0 &&
@@ -1675,6 +1684,7 @@ static int validitychecks(void)
 				error = 1;
 			}
 		}
+#endif
 
 		romp = drivers[i]->rom;
 

@@ -133,6 +133,7 @@ SOUNDS+=IREMGA20@
 SOUNDS+=ES5505@
 SOUNDS+=ES5506@
 SOUNDS+=BSMT2000@
+SOUNDS+=YMF262@
 SOUNDS+=YMF278B@
 SOUNDS+=GAELCO_CG1V@
 SOUNDS+=GAELCO_GAE1@
@@ -470,6 +471,7 @@ $(OBJ)/tehkan.a: \
 	$(OBJ)/vidhrdw/wc90b.o $(OBJ)/drivers/wc90b.o \
 	$(OBJ)/vidhrdw/spbactn.o $(OBJ)/drivers/spbactn.o \
 	$(OBJ)/vidhrdw/tecmo16.o $(OBJ)/drivers/tecmo16.o \
+	$(OBJ)/drivers/tecmosys.o \
 
 $(OBJ)/konami.a: \
 	$(OBJ)/machine/scramble.o $(OBJ)/sndhrdw/scramble.o $(OBJ)/drivers/scramble.o \
@@ -884,7 +886,9 @@ $(OBJ)/esd.a: \
 
 $(OBJ)/dynax.a: \
 	$(OBJ)/drivers/royalmah.o \
+	$(OBJ)/vidhrdw/hnayayoi.o $(OBJ)/drivers/hnayayoi.o \
 	$(OBJ)/vidhrdw/dynax.o $(OBJ)/drivers/dynax.o \
+	$(OBJ)/drivers/ddenlovr.o \
 
 $(OBJ)/sigma.a: \
 	$(OBJ)/vidhrdw/crtc6845.o \

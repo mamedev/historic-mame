@@ -1,26 +1,50 @@
 /****************************************************************************
 
-Royal Mahjong (V1.01  03/15/1982)
-driver by Zsolt Vasvari
+Royal Mahjong (c) 1982 Falcon
+and many other Dyna/Dynax games running in similar bare-bones hardware
 
-Location     Device      File ID
---------------------------------
-O1            2732         ROM1
-O1/2          2732         ROM2
-O2/3          2732         ROM3
-O4/5          2732         ROM4
-O4            2732         ROM5
-O4/5          2732         ROM6
-K6       TBP18S030    F-ROM.BPR
+driver by Zsolt Vasvari and Nicola Salmoria
 
-Notes:    Falcon PCB No. FRM-03
+
+Hardware specs are the same for all Dyna/Dynax games:
+
+CPU:	Z80
+Sound:	AY-3-8910
+OSC:	18.432MHz and 8MHz
+
+Mahjong If doesn't use a Z80, it probably uses a Toshiba TLCS-90 which is
+similar to Z80 but with different opcodes
+
+-------------------------------------------------------------------------------------------
+Year + Game					Board			Company				Notes
+-------------------------------------------------------------------------------------------
+82 Royal Mahjong			FRM-03			Falcon
+86 Watashiha Suzumechan						Dyna Electronics
+86 Don Den Mahjong			D039198L-0		Dyna Electronics
+87 Mahjong Diplomat			D0706088L1-0	Dynax
+87 Tonton					D0908288L1-0	Dynax
+87 Mahjong Studio 101		D1708228L1		Dynax
+89 Mahjong Derringer		D2203018L		Dynax				Larger palette
+90 Mahjong If				D29?			Dynax				Larger palette, unsupported CPU
+-------------------------------------------------------------------------------------------
+
+TODO:
+- dip switches and inputs in dondenmj, suzume, mjderngr...
+
+- suzume: coins are not recognized, but the input does work in service mode.
+
+- there's something fishy with the bank switching in tontonb/mjdiplob
+
+- majs101b: service mode doesn't work
 
 
 Stephh's notes (based on the games Z80 code and some tests) :
 
 1) 'royalmah'
 
-  - COIN1 has no effect (imperfect royalmah_player_?_port_r read handler ?)
+  - COIN1 doesn't work correctly, the screen goes black instead of showing the
+    credits, and you can start a game but the "phantom" credit is not subtracted;
+    with NVRAM support, this means the game would always boot to a black screen.
   - The doesn't seem to be any possibility to play a 2 players game
     (but the inputs are mapped so you can test them in the "test mode").
     P1 IN4 doesn't seem to be needed outside the "test mode" either.
@@ -53,6 +77,9 @@ Stephh's notes (based on the games Z80 code and some tests) :
 #include "vidhrdw/generic.h"
 
 
+static int palette_base;
+
+
 PALETTE_INIT( royalmah )
 {
 	int i;
@@ -83,6 +110,25 @@ PALETTE_INIT( royalmah )
 	}
 }
 
+/* 0 B01234 G01234 R01234 */
+PALETTE_INIT( mjderngr )
+{
+	int i;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int x =	(color_prom[i]<<8) + color_prom[0x200+i];
+		/* The bits are in reverse order! */
+		int r = BITSWAP8((x >>  0) & 0x1f, 7,6,5, 0,1,2,3,4 );
+		int g = BITSWAP8((x >>  5) & 0x1f, 7,6,5, 0,1,2,3,4 );
+		int b = BITSWAP8((x >> 10) & 0x1f, 7,6,5, 0,1,2,3,4 );
+		r =  (r << 3) | (r >> 2);
+		g =  (g << 3) | (g >> 2);
+		b =  (b << 3) | (b >> 2);
+		palette_set_color(i,r,g,b);
+	}
+}
+
 
 WRITE_HANDLER( royalmah_videoram_w )
 {
@@ -103,11 +149,36 @@ WRITE_HANDLER( royalmah_videoram_w )
 	{
 		int col = ((col1 & 0x01) >> 0) | ((col1 & 0x10) >> 3) | ((col2 & 0x01) << 2) | ((col2 & 0x10) >> 1);
 
-		plot_pixel(tmpbitmap, x+i, y, Machine->pens[col]);
+		plot_pixel(tmpbitmap, (x+i) ^ 0xff, y ^ 0xff, 16*palette_base + col );
 
 		col1 >>= 1;
 		col2 >>= 1;
 	}
+}
+
+
+WRITE_HANDLER( royalmah_palbank_w )
+{
+	/* bit 1 = coin counter */
+	coin_counter_w(0,data & 2);
+
+	/* bit 2 always set? */
+
+	/* bit 3 = palette bank */
+	set_vh_global_attribute(&palette_base,(data & 0x08) >> 3);
+}
+
+WRITE_HANDLER( mjderngr_coin_w )
+{
+	/* bit 1 = coin counter */
+	coin_counter_w(0,data & 2);
+
+	/* bit 2 always set? */
+}
+
+WRITE_HANDLER( mjderngr_palbank_w )
+{
+	set_vh_global_attribute(&palette_base,data);
 }
 
 
@@ -171,48 +242,7 @@ static READ_HANDLER( royalmah_player_2_port_r )
 	return ret;
 }
 
-/* Royal Mahjong */
 
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x7000, 0x77ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x5fff, royalmah_rom_w },
-	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0x8000, 0xffff, royalmah_videoram_w, &videoram, &videoram_size },
-MEMORY_END
-
-static PORT_READ_START( readport )
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x10, 0x10, input_port_11_r },
-	{ 0x11, 0x11, input_port_10_r },
-PORT_END
-
-static PORT_WRITE_START( writeport )
-	{ 0x02, 0x02, AY8910_write_port_0_w },
-	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x11, 0x11, royalmah_input_port_select_w },
-PORT_END
-
-/* Dynax Mahjong Games */
-
-static MEMORY_READ_START( dynax_readmem )
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x7000, 0x7fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-MEMORY_END
-
-static MEMORY_WRITE_START( dynax_writemem )
-	{ 0x0000, 0x6fff, royalmah_rom_w },
-	{ 0x7000, 0x7fff, MWA_RAM },
-	{ 0x8000, 0xffff, royalmah_videoram_w, &videoram, &videoram_size },
-MEMORY_END
-
-
-/* Dynax Ports */
 
 static READ_HANDLER ( majs101b_dsw_r )
 {
@@ -228,9 +258,22 @@ static READ_HANDLER ( majs101b_dsw_r )
 
 static data8_t suzume_bank;
 
-static READ_HANDLER ( suzume_bank_r )
+static READ_HANDLER ( suzume_dsw_r )
 {
-	return suzume_bank;
+	if (suzume_bank & 0x40)
+	{
+		return suzume_bank;
+	}
+	else
+	{
+		switch (suzume_bank)
+		{
+			case 0x08: return readinputport(14);	/* DSW4 */
+			case 0x10: return readinputport(13);	/* DSW3 */
+			case 0x18: return readinputport(12);	/* DSW2 */
+		}
+		return 0;
+	}
 }
 
 static WRITE_HANDLER ( suzume_bank_w )
@@ -249,19 +292,34 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 }
 
 
-/* bits 5 and 6 seem to affect which Dip Switch to read in 'majs101b' */
-static WRITE_HANDLER ( dynax_bank_w )
+static WRITE_HANDLER ( tontonb_bank_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1);
 	int address;
 
 logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 
-	majs101b_dsw_select = data & 0x60;
-
 	if (data == 0) return;	// tontonb fix?
 
-	data &= 0x1f;			// 0x0f might be enough
+	data &= 0x0f;
+
+	address = 0x10000 + data * 0x8000;
+
+	cpu_setbank(1,&rom[address]);
+}
+
+
+/* bits 5 and 6 seem to affect which Dip Switch to read in 'majs101b' */
+static WRITE_HANDLER ( dynax_bank_w )
+{
+	data8_t *rom = memory_region(REGION_CPU1);
+	int address;
+
+//logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
+
+	majs101b_dsw_select = data & 0x60;
+
+	data &= 0x1f;
 
 	address = 0x10000 + data * 0x8000;
 
@@ -271,74 +329,126 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 
 
 
-static PORT_READ_START( dondenmj_readport )
-//	{ 0x00, 0x00, majs101b_dsw_r },
+
+static MEMORY_READ_START( readmem )
+	{ 0x0000, 0x6fff, MRA_ROM },
+	{ 0x7000, 0x7fff, MRA_RAM },
+	{ 0x8000, 0xffff, MRA_BANK1 },	// banked ROMs not present in royalmah
+MEMORY_END
+
+static MEMORY_WRITE_START( writemem )
+	{ 0x0000, 0x6fff, royalmah_rom_w },
+	{ 0x7000, 0x7fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+	{ 0x8000, 0xffff, royalmah_videoram_w, &videoram, &videoram_size },
+MEMORY_END
+
+
+static PORT_READ_START( royalmah_readport )
 	{ 0x01, 0x01, AY8910_read_port_0_r },
 	{ 0x10, 0x10, input_port_11_r },
 	{ 0x11, 0x11, input_port_10_r },
 PORT_END
 
-static PORT_WRITE_START( dondenmj_writeport )
+static PORT_WRITE_START( royalmah_writeport )
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
-	{ 0x87, 0x87, dynax_bank_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
+	{ 0x11, 0x11, royalmah_input_port_select_w },
 PORT_END
 
 static PORT_READ_START( suzume_readport )
-//	{ 0x00, 0x00, majs101b_dsw_r },
 	{ 0x01, 0x01, AY8910_read_port_0_r },
-//	{ 0x10, 0x10, input_port_11_r },
-//	{ 0x11, 0x11, input_port_10_r },
-	{ 0x80, 0x80, suzume_bank_r },
+	{ 0x10, 0x10, input_port_11_r },
+	{ 0x11, 0x11, input_port_10_r },
+	{ 0x80, 0x80, suzume_dsw_r },
 PORT_END
 
 static PORT_WRITE_START( suzume_writeport )
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
+	{ 0x11, 0x11, royalmah_input_port_select_w },
 	{ 0x81, 0x81, suzume_bank_w },
 PORT_END
 
-static PORT_READ_START( tontonb_readport )
+static PORT_READ_START( dondenmj_readport )
 	{ 0x01, 0x01, AY8910_read_port_0_r },
 	{ 0x10, 0x10, input_port_11_r },
 	{ 0x11, 0x11, input_port_10_r },
-	{ 0x46, 0x46, input_port_13_r },
-	{ 0x47, 0x47, input_port_12_r },
+	{ 0x85, 0x85, input_port_12_r },	// DSW2
+	{ 0x86, 0x86, input_port_13_r },	// DSW3
 PORT_END
 
-static PORT_WRITE_START( tontonb_writeport )
+static PORT_WRITE_START( dondenmj_writeport )
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
 	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x44, 0x44, dynax_bank_w },
+	{ 0x87, 0x87, dynax_bank_w },
 PORT_END
 
 static PORT_READ_START( mjdiplob_readport )
 	{ 0x01, 0x01, AY8910_read_port_0_r },
 	{ 0x10, 0x10, input_port_11_r },
 	{ 0x11, 0x11, input_port_10_r },
-	{ 0x62, 0x62, input_port_12_r },
-	{ 0x63, 0x63, input_port_13_r },
+	{ 0x62, 0x62, input_port_12_r },	// DSW2
+	{ 0x63, 0x63, input_port_13_r },	// DSW3
 PORT_END
 
 static PORT_WRITE_START( mjdiplob_writeport )
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
 	{ 0x11, 0x11, royalmah_input_port_select_w },
-	{ 0x61, 0x61, dynax_bank_w },
+	{ 0x61, 0x61, tontonb_bank_w },
 PORT_END
 
-static PORT_READ_START( majs101b_readport )
-	{ 0x00, 0x00, majs101b_dsw_r },
+static PORT_READ_START( tontonb_readport )
 	{ 0x01, 0x01, AY8910_read_port_0_r },
 	{ 0x10, 0x10, input_port_11_r },
 	{ 0x11, 0x11, input_port_10_r },
+	{ 0x46, 0x46, input_port_13_r },	// DSW2
+	{ 0x47, 0x47, input_port_12_r },	// DSW3
+PORT_END
+
+static PORT_WRITE_START( tontonb_writeport )
+	{ 0x02, 0x02, AY8910_write_port_0_w },
+	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
+	{ 0x11, 0x11, royalmah_input_port_select_w },
+	{ 0x44, 0x44, tontonb_bank_w },
+PORT_END
+
+static PORT_READ_START( majs101b_readport )
+	{ 0x01, 0x01, AY8910_read_port_0_r },
+	{ 0x10, 0x10, input_port_11_r },
+	{ 0x11, 0x11, input_port_10_r },
+	{ 0x00, 0x00, majs101b_dsw_r },
 PORT_END
 
 static PORT_WRITE_START( majs101b_writeport )
-	{ 0x00, 0x00, dynax_bank_w },
 	{ 0x02, 0x02, AY8910_write_port_0_w },
 	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, royalmah_palbank_w },
+	{ 0x11, 0x11, royalmah_input_port_select_w },
+	{ 0x00, 0x00, dynax_bank_w },
+PORT_END
+
+static PORT_READ_START( mjderngr_readport )
+	{ 0x01, 0x01, AY8910_read_port_0_r },
+//	{ 0x10, 0x10, input_port_11_r },
+	{ 0x11, 0x11, input_port_10_r },
+	{ 0x40, 0x40, input_port_13_r },	// DSW2
+	{ 0x4c, 0x4c, input_port_12_r },	// DSW3
+PORT_END
+
+static PORT_WRITE_START( mjderngr_writeport )
+	{ 0x02, 0x02, AY8910_write_port_0_w },
+	{ 0x03, 0x03, AY8910_control_port_0_w },
+	{ 0x10, 0x10, mjderngr_coin_w },	// palette bank is set separately
+	{ 0x11, 0x11, royalmah_input_port_select_w },
+	{ 0x20, 0x20, dynax_bank_w },
+	{ 0x60, 0x60, mjderngr_palbank_w },
 PORT_END
 
 
@@ -394,8 +504,8 @@ INPUT_PORTS_START( royalmah )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "P2 M",            IP_KEY_DEFAULT,    IP_JOY_NONE )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "P2 Kan",          IP_KEY_DEFAULT,    IP_JOY_NONE )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )	// "COIN2"
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )	// "COIN1", but not working
 
 	PORT_START	/* P2 IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, 0, "P2 B",            IP_KEY_DEFAULT,    IP_JOY_NONE )
@@ -963,9 +1073,9 @@ INPUT_PORTS_START( majs101b )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )		// check code at 0x1333
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )		// check code at 0x076d and 0x43c8
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Background" )
+	PORT_DIPSETTING(    0x00, "Black" )
+	PORT_DIPSETTING(    0x80, "Gray" )
 
 	PORT_START	/* DSW3 (inport $00 (after out 0,$00) -> 0x76fc) */
 	PORT_DIPNAME( 0x01, 0x00, "Special Combinaisons" )	// see notes
@@ -1037,17 +1147,19 @@ static MACHINE_DRIVER_START( royalmah )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000)        /* 3.00 MHz ? */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PORTS(royalmah_readport,royalmah_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-	MDRV_PALETTE_LENGTH(16)
+	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(royalmah)
 	MDRV_VIDEO_START(generic)
@@ -1058,22 +1170,24 @@ static MACHINE_DRIVER_START( royalmah )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( mjdiplob )
+static MACHINE_DRIVER_START( dondenmj )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 8000000/2)	/* 4 MHz ? */
-	MDRV_CPU_MEMORY(dynax_readmem,dynax_writemem)
-	MDRV_CPU_PORTS(mjdiplob_readport,mjdiplob_writeport)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(dondenmj_readport,dondenmj_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-	MDRV_PALETTE_LENGTH(16)
+	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(royalmah)
 	MDRV_VIDEO_START(generic)
@@ -1081,34 +1195,45 @@ static MACHINE_DRIVER_START( mjdiplob )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( dondenmj )
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(mjdiplob)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(dondenmj_readport,dondenmj_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( suzume )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(mjdiplob)
+	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(suzume_readport,suzume_writeport)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tontonb )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(mjdiplob)
+	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(tontonb_readport,tontonb_writeport)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( mjdiplob )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(dondenmj)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(mjdiplob_readport,mjdiplob_writeport)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( majs101b )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(mjdiplob)
+	MDRV_IMPORT_FROM(dondenmj)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PORTS(majs101b_readport,majs101b_writeport)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( mjderngr )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(dondenmj)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(mjderngr_readport,mjderngr_writeport)
+
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_PALETTE_INIT(mjderngr)
 MACHINE_DRIVER_END
 
 
@@ -1120,96 +1245,129 @@ MACHINE_DRIVER_END
 
 ROM_START( royalmah )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom1",   	0x0000, 0x1000, 0x69b37a62 )
-	ROM_LOAD( "rom2",   	0x1000, 0x1000, 0x0c8351b6 )
-	ROM_LOAD( "rom3",   	0x2000, 0x1000, 0xb7736596 )
-	ROM_LOAD( "rom4",   	0x3000, 0x1000, 0xe3c7c15c )
-	ROM_LOAD( "rom5",   	0x4000, 0x1000, 0x16c09c73 )
-	ROM_LOAD( "rom6",   	0x5000, 0x1000, 0x92687327 )
+	ROM_LOAD( "rom1",       0x0000, 0x1000, 0x69b37a62 )
+	ROM_LOAD( "rom2",       0x1000, 0x1000, 0x0c8351b6 )
+	ROM_LOAD( "rom3",       0x2000, 0x1000, 0xb7736596 )
+	ROM_LOAD( "rom4",       0x3000, 0x1000, 0xe3c7c15c )
+	ROM_LOAD( "rom5",       0x4000, 0x1000, 0x16c09c73 )
+	ROM_LOAD( "rom6",       0x5000, 0x1000, 0x92687327 )
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
 	ROM_LOAD( "f-rom.bpr",  0x0000, 0x0020, 0xd3007282 )
 ROM_END
 
 
-ROM_START( dondenmj )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "dn5.1h",   	0x00000, 0x08000, 0x3080252e )
-	/* for the banks */
-	ROM_LOAD( "dn1.1e",   	0x18000, 0x08000, 0x1cd9c48a )	// 1
-	ROM_LOAD( "dn2.1d",   	0x20000, 0x04000, 0x7a72929d )	// 2
-	ROM_LOAD( "dn3.2h",   	0x30000, 0x08000, 0xb09d2897 )	// 4
-	ROM_LOAD( "dn4.2e",   	0x50000, 0x08000, 0x67d7dcd6 )	// 8
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ic6k.bin",  0x0000, 0x0020, 0x97e1defe )
-ROM_END
-
 ROM_START( suzume )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "p1.bin",   	0x0000, 0x1000, 0xe9706967 )
-	ROM_LOAD( "p2.bin",   	0x1000, 0x1000, 0xdd48cd62 )
-	ROM_LOAD( "p3.bin",   	0x2000, 0x1000, 0x10a05c23 )
-	ROM_LOAD( "p4.bin",   	0x3000, 0x1000, 0x267eaf52 )
-	ROM_LOAD( "p5.bin",   	0x4000, 0x1000, 0x2fde346b )
-	ROM_LOAD( "p6.bin",   	0x5000, 0x1000, 0x57f42ac7 )
-	/* for the banks */
-	ROM_LOAD( "1.1a",   	0x10000, 0x08000, 0xf670dd47 )	// 0
-	ROM_LOAD( "2.1c",   	0x18000, 0x08000, 0x140b11aa )	// 1
-	ROM_LOAD( "3.1d",   	0x20000, 0x08000, 0x3d437b61 )	// 2
-	ROM_LOAD( "4.1e",   	0x28000, 0x08000, 0x9da8952e )	// 3
-	ROM_LOAD( "5.1h",   	0x30000, 0x08000, 0x04a6f41a )	// 4
+	ROM_LOAD( "p1.bin",     0x00000, 0x1000, 0xe9706967 )
+	ROM_LOAD( "p2.bin",     0x01000, 0x1000, 0xdd48cd62 )
+	ROM_LOAD( "p3.bin",     0x02000, 0x1000, 0x10a05c23 )
+	ROM_LOAD( "p4.bin",     0x03000, 0x1000, 0x267eaf52 )
+	ROM_LOAD( "p5.bin",     0x04000, 0x1000, 0x2fde346b )
+	ROM_LOAD( "p6.bin",     0x05000, 0x1000, 0x57f42ac7 )
+	/* bank switched ROMs follow */
+	ROM_LOAD( "1.1a",       0x10000, 0x08000, 0xf670dd47 )	// 0
+	ROM_LOAD( "2.1c",       0x18000, 0x08000, 0x140b11aa )	// 1
+	ROM_LOAD( "3.1d",       0x20000, 0x08000, 0x3d437b61 )	// 2
+	ROM_LOAD( "4.1e",       0x28000, 0x08000, 0x9da8952e )	// 3
+	ROM_LOAD( "5.1h",       0x30000, 0x08000, 0x04a6f41a )	// 4
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ic6k.bin",  0x0000, 0x0020, 0x97e1defe  )
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic6k.bin",   0x0000, 0x0020, 0x97e1defe  )
 ROM_END
 
-ROM_START( tontonb )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "091.5e",   	0x00000, 0x10000, 0xd8d67b59 ) /* 0x0000 - 0x6fff fixed code? */
-	/* banks */
-	ROM_RELOAD(             0x10000, 0x10000 )				// banks 0,1
-															// banks 2,3 empty?
-	ROM_LOAD( "093.5b",   	0x30000, 0x10000, 0x24b6be55 )	// banks 4,5
-															// banks 6,7 empty?
-	ROM_LOAD( "092.5c",   	0x50000, 0x10000, 0x7ff2738b )	// banks 8,9
+ROM_START( dondenmj )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )
+	ROM_LOAD( "dn5.1h",     0x00000, 0x08000, 0x3080252e )
+	/* bank switched ROMs follow */
+	ROM_LOAD( "dn1.1e",     0x18000, 0x08000, 0x1cd9c48a )	// 1
+	ROM_LOAD( "dn2.1d",     0x20000, 0x04000, 0x7a72929d )	// 2
+	ROM_LOAD( "dn3.2h",     0x30000, 0x08000, 0xb09d2897 )	// 4
+	ROM_LOAD( "dn4.2e",     0x50000, 0x08000, 0x67d7dcd6 )	// 8
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ic6k.bin",  0x0000, 0x0020, 0x97e1defe )
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic6k.bin",   0x0000, 0x0020, 0x97e1defe )
 ROM_END
 
 ROM_START( mjdiplob )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "071.4l",   	0x00000, 0x10000, 0x81a6d6b0  )
-	/* banks */
-	ROM_RELOAD(             0x10000, 0x10000 )				// banks 0,1
-	ROM_LOAD( "072.4k",   	0x20000, 0x10000, 0xa992bb85  )	// banks 2,3
-	ROM_LOAD( "073.4j",   	0x30000, 0x10000, 0x562ed64f  )	// banks 4,5
-	ROM_LOAD( "074.4h",   	0x40000, 0x10000, 0x1eba0140  )	// banks 6,7
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )
+	ROM_LOAD( "071.4l",     0x00000, 0x10000, 0x81a6d6b0  )
+	/* bank switched ROMs follow */
+	ROM_RELOAD(             0x10000, 0x10000 )				// 0,1
+	ROM_LOAD( "072.4k",     0x20000, 0x10000, 0xa992bb85  )	// 2,3
+	ROM_LOAD( "073.4j",     0x30000, 0x10000, 0x562ed64f  )	// 4,5
+	ROM_LOAD( "074.4h",     0x40000, 0x10000, 0x1eba0140  )	// 6,7
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ic6k.bin",  0x0000, 0x0020, 0xc1e427df  )
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic6k.bin",   0x0000, 0x0020, 0xc1e427df  )
+ROM_END
+
+ROM_START( tontonb )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )
+	ROM_LOAD( "091.5e",   	0x00000, 0x10000, 0xd8d67b59 )
+	/* bank switched ROMs follow */
+	ROM_RELOAD(             0x10000, 0x10000 )				// 0,1
+	/**/													// 2,3 unused
+	ROM_LOAD( "093.5b",   	0x30000, 0x10000, 0x24b6be55 )	// 4,5
+	/**/													// 6,7 unused
+	ROM_LOAD( "092.5c",   	0x50000, 0x10000, 0x7ff2738b )	// 8,9
+
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic6k.bin",   0x0000, 0x0020, 0x97e1defe )
 ROM_END
 
 ROM_START( majs101b )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD( "171.3e",   	0x00000, 0x10000, 0xfa3c553b )
-	/* for the banks */
-															// 0-1 unused?
-	ROM_RELOAD(             0x20000, 0x10000 )				// 2-3
-	ROM_LOAD( "172.3f",   	0x30000, 0x20000, 0x7da39a63 )	// 4-5-6-7
-	ROM_LOAD( "173.3h",   	0x50000, 0x20000, 0x7a9e71ae )	// 8-9-a-b
-	ROM_LOAD( "174.3j",   	0x70000, 0x10000, 0x972c2cc9 )	// c-d
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )
+	ROM_LOAD( "171.3e",     0x00000, 0x10000, 0xfa3c553b )
+	/* bank switched ROMs follow */
+	/**/													// 0,1 unused
+	ROM_RELOAD(             0x20000, 0x10000 )				// 2,3
+	ROM_LOAD( "172.3f",     0x30000, 0x20000, 0x7da39a63 )	// 4,5,6,7
+	ROM_LOAD( "173.3h",     0x50000, 0x20000, 0x7a9e71ae )	// 8,9,a,b
+	ROM_LOAD( "174.3j",     0x70000, 0x10000, 0x972c2cc9 )	// c,d
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "ic6k.bin",  0x0000, 0x0020, 0xc1e427df ) // wrong prom? colours are a bit off
+	ROM_REGION( 0x0020, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic6k.bin",   0x0000, 0x0020, 0xc1e427df )
+ROM_END
+
+ROM_START( mjderngr )
+	ROM_REGION( 0xb0000, REGION_CPU1, 0 )
+	ROM_LOAD( "2201.1a",    0x00000, 0x08000, 0x54ec531d )
+	/* bank switched ROMs follow */
+	ROM_CONTINUE(           0x10000, 0x08000 )				// 0
+	ROM_LOAD( "2202.1b",    0x30000, 0x10000, 0xedcf97f2 )	// 4,5
+	ROM_LOAD( "2203.1d",    0x50000, 0x10000, 0xa33368c0 )	// 8,9
+	ROM_LOAD( "2204.1e",    0x70000, 0x20000, 0xed5fde4b )	// c,d,e,f
+	ROM_LOAD( "2205.1f",    0x90000, 0x20000, 0xcfb8075d )	// 0x10,0x11,0x12,0x13
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic3g.bin",   0x000, 0x200, 0xd43f4c7c )
+	ROM_LOAD( "ic4g.bin",   0x200, 0x200, 0x30cf7831 )
+ROM_END
+
+ROM_START( mjifb )
+	ROM_REGION( 0xd0000, REGION_CPU1, 0 )
+	ROM_LOAD( "2911.1b",    0x00000, 0x08000, 0x138a31a1 )
+	/* bank switched ROMs follow */
+	ROM_CONTINUE(           0x10000, 0x08000 )
+	ROM_LOAD( "2902.1c",    0x30000, 0x10000, 0x0ce02a98 )
+	ROM_LOAD( "2903.1d",    0x50000, 0x20000, 0x90c44965 )
+	ROM_LOAD( "2904.1e",    0x70000, 0x20000, 0x2791abfa )
+	ROM_LOAD( "2905.1f",    0x90000, 0x20000, 0xb7a73cf7 )
+	ROM_LOAD( "2906.1g",    0xb0000, 0x20000, 0xad469345 )
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "d29-2.4d",   0x000, 0x200, 0x78252f6a )
+	ROM_LOAD( "d29-1.4c",   0x200, 0x200, 0x4aaec8cf )
 ROM_END
 
 
 
-GAME( 1982, royalmah, 0, royalmah, royalmah, 0, ROT180, "Falcon", "Royal Mahjong" )
-GAMEX(1986, dondenmj, 0, dondenmj, royalmah, 0, ROT180, "Dyna Electronics", "Don Den Mahjong [BET]", GAME_NOT_WORKING  )
-GAMEX(1986, suzume,   0, suzume,   royalmah, 0, ROT180, "Dyna Electronics", "Watashiha Suzumechan", GAME_NOT_WORKING  )
-GAME( 1987, tontonb,  0, tontonb,  tontonb,  0, ROT180, "Dynax", "Tonton [BET]" )
-GAME( 1987, mjdiplob, 0, mjdiplob, mjdiplob, 0, ROT180, "Dynax", "Mahjong Diplomat [BET]" )
-GAMEX(1987, majs101b, 0, majs101b, majs101b, 0, ROT180, "Dynax", "Mahjong Studio 101 [BET]", GAME_NOT_WORKING )
+GAME( 1982, royalmah, 0, royalmah, royalmah, 0, ROT0, "Falcon", "Royal Mahjong (Japan)" )
+GAMEX(1986, suzume,   0, suzume,   majs101b, 0, ROT0, "Dyna Electronics", "Watashiha Suzumechan (Japan)", GAME_NOT_WORKING )
+GAME( 1986, dondenmj, 0, dondenmj, majs101b, 0, ROT0, "Dyna Electronics", "Don Den Mahjong [BET] (Japan)" )
+GAME( 1987, mjdiplob, 0, mjdiplob, mjdiplob, 0, ROT0, "Dynax", "Mahjong Diplomat [BET] (Japan)" )
+GAME( 1987, tontonb,  0, tontonb,  tontonb,  0, ROT0, "Dynax", "Tonton [BET] (Japan)" )
+GAME( 1988, majs101b, 0, majs101b, majs101b, 0, ROT0, "Dynax", "Mahjong Studio 101 [BET] (Japan)" )
+GAME( 1989, mjderngr, 0, mjderngr, majs101b, 0, ROT0, "Dynax", "Mahjong Derringer (Japan)" )
+GAMEX(1990, mjifb,    0, mjderngr, majs101b, 0, ROT0, "Dynax", "Mahjong If [BET] (Japan)", GAME_NOT_WORKING )

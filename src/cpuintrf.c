@@ -154,37 +154,37 @@
 #ifdef MESS
 
 #if (HAS_APEXC)
-#include "mess/cpu/apexc/apexc.h"
+#include "cpu/apexc/apexc.h"
 #endif
 #if (HAS_CDP1802)
-#include "mess/cpu/cdp1802/cdp1802.h"
+#include "cpu/cdp1802/cdp1802.h"
 #endif
 #if (HAS_CP1600)
-#include "mess/cpu/cp1600/cp1600.h"
+#include "cpu/cp1600/cp1600.h"
 #endif
 #if (HAS_F8)
-#include "mess/cpu/f8/f8.h"
+#include "cpu/f8/f8.h"
 #endif
 #if (HAS_G65816)
-#include "mess/cpu/g65816/g65816.h"
+#include "cpu/g65816/g65816.h"
 #endif
 #if (HAS_LH5801)
-#include "mess/cpu/lh5801/lh5801.h"
+#include "cpu/lh5801/lh5801.h"
 #endif
 #if (HAS_PDP1)
-#include "mess/cpu/pdp1/pdp1.h"
+#include "cpu/pdp1/pdp1.h"
 #endif
 #if (HAS_SATURN)
-#include "mess/cpu/saturn/saturn.h"
+#include "cpu/saturn/saturn.h"
 #endif
 #if (HAS_SC61860)
-#include "mess/cpu/sc61860/sc61860.h"
+#include "cpu/sc61860/sc61860.h"
 #endif
 #if (HAS_SPC700)
-#include "mess/cpu/spc700/spc700.h"
+#include "cpu/spc700/spc700.h"
 #endif
 #if (HAS_Z80GB)
-#include "mess/cpu/z80gb/z80gb.h"
+#include "cpu/z80gb/z80gb.h"
 #endif
 #if (HAS_Z80_MSX)
 #include "cpu/z80/z80_msx.h"
@@ -534,6 +534,9 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_TMS34020)
 	CPU0(TMS34020, tms34020, 2,  0,1.00,16,29lew,  3,29,LE,2,10	),
 #endif
+#if (HAS_TI990_10)
+	/*CPU4*/CPU0(TI990_10, ti990_10, 1,  0,1.00,			   16,/*21*/24bew,  0,/*21*/24,BE,2, 6	),
+#endif
 #if (HAS_TMS9900)
 	CPU0(TMS9900,  tms9900,  1,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
@@ -646,7 +649,7 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(CP1600,   cp1600,	 4,  0,1.00, 16, 24bew,  -1,17,BE,2,3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount
@@ -660,7 +663,8 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(LH5801,   lh5801,	 1,  0,1.00, 8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00, 8, 16,	  0,18,LE,1, 3	),
+	//CPU0(PDP1,	   pdp1,	 0,  0,1.00, 8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,32,18bedw,0,18,LE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount

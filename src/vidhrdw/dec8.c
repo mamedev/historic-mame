@@ -376,15 +376,17 @@ static void srdarwin_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 	{
 		int multi,fx,sx,sy,sy2,code,color;
 
-		code = buffered_spriteram[offs+3] + ( ( buffered_spriteram[offs+1] & 0xe0 ) << 3 );
-		sx = (241 - buffered_spriteram[offs+2]);
-	//if (sx < -7) sx += 256;
-
-		sy = buffered_spriteram[offs];
 		color = (buffered_spriteram[offs+1] & 0x03) + ((buffered_spriteram[offs+1] & 0x08) >> 1);
-
 		if (pri==0 && color!=0) continue;
 		if (pri==1 && color==0) continue;
+
+		code = buffered_spriteram[offs+3] + ( ( buffered_spriteram[offs+1] & 0xe0 ) << 3 );
+		if (!code) continue;
+
+		sy = buffered_spriteram[offs];
+		if (sy == 0xf8) continue;
+
+		sx = (241 - buffered_spriteram[offs+2]);
 
 		fx = buffered_spriteram[offs+1] & 0x04;
 		multi = buffered_spriteram[offs+1] & 0x10;
@@ -710,11 +712,9 @@ VIDEO_UPDATE( srdarwin )
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (scroll2[0]<<8)+scroll2[1] );
 
-	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_BACK | 1,0);
-	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_BACK | 0,0);
-	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
-	srdarwin_drawsprites(bitmap,cliprect,0); /* Priority may not be right on later levels */
-	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT | 0,0);
+	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_BACK,0);
+	srdarwin_drawsprites(bitmap,cliprect,0); //* (srdarwin37b5gre)
+	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT,0);
 	srdarwin_drawsprites(bitmap,cliprect,1);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
 }
@@ -733,20 +733,22 @@ static void get_srdarwin_fix_tile_info( int tile_index )
 			0)
 }
 
+//AT: improved priority and fixed stage 4+ crashes caused by bank overflow
 static void get_srdarwin_tile_info(int tile_index)
 {
 	int tile=dec8_pf0_data[2*tile_index+1]+(dec8_pf0_data[2*tile_index]<<8);
-	int color=tile >> 12;
+	int color=tile >> 12 & 3;
+	int flag = TILE_SPLIT(color);
 	int bank;
 
-	tile=tile&0xfff;
+	tile=tile&0x3ff;
 	bank=(tile/0x100)+2;
 
 	SET_TILE_INFO(
 			bank,
 			tile,
 			color,
-			0)
+			flag)
 }
 
 VIDEO_START( srdarwin )
@@ -758,7 +760,10 @@ VIDEO_START( srdarwin )
 		return 1;
 
 	tilemap_set_transparent_pen(dec8_fix_tilemap,0);
-	tilemap_set_transmask(dec8_pf0_tilemap,0,0x00ff,0xff00); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,0,0xffff,0x0000); //* draw as background only
+	tilemap_set_transmask(dec8_pf0_tilemap,1,0x00ff,0xff00); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,2,0x00ff,0xff00); /* Bottom 8 pens */
+	tilemap_set_transmask(dec8_pf0_tilemap,3,0x0000,0xffff); //* draw as foreground only
 
 	return 0;
 }

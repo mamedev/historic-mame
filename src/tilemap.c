@@ -1389,7 +1389,7 @@ void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
 {
-	if( (incxx == 1<<16) && !incxy & !incyx && (incyy == 1<<16) )
+	if( (incxx == 1<<16) && !incxy & !incyx && (incyy == 1<<16) && wraparound )
 	{
 		tilemap_set_scrollx( tilemap, 0, startx >> 16 );
 		tilemap_set_scrolly( tilemap, 0, starty >> 16 );
@@ -1505,6 +1505,7 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 		exit(1);
 		break;
 	}
+	priority_bitmap_pitch_row = priority_bitmap_pitch_line*tilemap->cached_tile_height;
 	blit.screen_bitmap_pitch_row = blit.screen_bitmap_pitch_line*tilemap->cached_tile_height;
 	blit.tilemap_priority_code = 0;
 	scrollx = tilemap->cached_width  - scrollx % tilemap->cached_width;

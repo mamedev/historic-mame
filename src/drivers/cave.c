@@ -19,7 +19,7 @@ Other        :  93C46 EEPROM
 Year + Game			License		PCB			Tilemaps		Sprites			Other
 -----------------------------------------------------------------------------------
 94	Mazinger Z		Banpresto	?			038 9335EX706	013 9341E7009	Z80
-94	PowerInstinct 2 Atlus		ATG02?		038 9429WX709?	?				Z80
+94	PowerInstinct 2 Atlus		ATG02?		038 9429WX709?	?				Z80 NMK 112
 95	Metamoqester	Banpresto	BP947A		038 9437WX711	013 9346E7002	Z80
 95	Sailor Moon		Banpresto	BP945A		038 9437WX711	013 9346E7002	Z80
 95	Donpachi		Atlus		AT-C01DP-2	038 9429WX727	013 8647-01		NMK 112

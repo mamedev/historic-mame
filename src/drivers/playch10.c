@@ -74,6 +74,7 @@ Working games:
 	- Duck Hunt							(DH) - Standard board
 	- Excite Bike						(EB) - Standard board
 	- Fester's Quest					(EQ) - F board
+	- Gauntlet							(GL) - G board
 	- Golf								(GF) - Standard board
 	- Gradius							(GR) - A board
 	- Hogan's Alley						(HA) - Standard board
@@ -89,10 +90,12 @@ Working games:
 	- Power Blade						(7T) - G board
 	- Pro Wrestling						(PW) - B board
 	- Rad Racer							(RC) - D board
+	- Rad Racer II						(QR) - G board
 	- RC Pro Am							(PM) - F board
 	- Rescue Rangers					(RU) - F board
 	- Rockin' Kats						(7A) - G board
 	- Rush N' Attack					(RA) - B board
+	- Rygar								(RY) - B board
 	- Solar Jetman						(LJ) - i board
 	- Super C							(UE) - G board
 	- Super Mario Bros					(SM) - Standard board
@@ -102,6 +105,7 @@ Working games:
 	- Teenage Mutant Ninja Turtles		(U2) - F board
 	- Teenage Mutant Ninja Turtles 2	(2N) - G board
 	- Tennis							(TE) - Standard board
+	- Track & Field						(TR) - A board
 	- Trojan							(TJ) - B board
 	- The Goonies						(GN) - C board
 	- Volley Ball						(VB) - Standard board
@@ -110,11 +114,7 @@ Working games:
 
 Non working games due to mapper/nes emulation issues:
 -----------------------------------------------------
-	- Gauntlet							(GL) - G board
 	- Mike Tyson's Punchout				(PT) - E board
-	- Track & Field						(TR) - A board
-	- Rygar								(RY) - B board
-	- Rad Racer II						(QR) - G board
 
 Non working games due to missing roms:
 --------------------------------------
@@ -283,12 +283,10 @@ O to A-F AND, at the same time, O to P ... Any help is appreciated ...
 Notes & Todo:
 -------------
 
-- Fix Mike Tyson's Punchout gfx banking.
-- Fix Track & Field. It requires you to press start after starting
-  a game without displaying anything on screen. Bad rom?.
+- Fix Mike Tyson's Punchout background when playing.
 - Look at Ninja Gaiden 3. It has some slight timming issues on the
-second level. Probably related to the mapper's irq timming.
-- Fix Rad Racer II. More timming issues.
+  second level. Probably related to the mapper's irq timming.
+- Fix some remaining bad gfx in Rad Racer II.
 - Implement Dipswitches properly once Mame can support it.
 - Better control layout?. This thing has odd buttons.
 - Find dumps of the rest of the RP5H01's and add the remaining games.
@@ -322,6 +320,7 @@ extern DRIVER_INIT( pcdboard );	/* d-board games */
 extern DRIVER_INIT( pceboard );	/* e-board games */
 extern DRIVER_INIT( pcfboard );	/* f-board games */
 extern DRIVER_INIT( pcgboard );	/* g-board games */
+extern DRIVER_INIT( pcgboard_type2 ); /* g-board games with 4 screen mirror */
 extern DRIVER_INIT( pchboard );	/* h-board games */
 extern DRIVER_INIT( pciboard );	/* i-board games */
 extern DRIVER_INIT( pckboard );	/* k-board games */
@@ -1575,7 +1574,7 @@ GAME( 1984, pc_wgnmn,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "
 
 /* A-Board Games */
 GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" )
-GAMEX(1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Track & Field", GAME_NOT_WORKING )
+GAME( 1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Track & Field" )
 
 /* B-Board Games */
 GAME( 1986, pc_pwrst,playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
@@ -1609,11 +1608,9 @@ GAME( 19??, pc_rrngr,playch10, playch10, playch10, pcfboard, ROT0, "Capcom USA (
 GAME( 19??, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Technos?", "PlayChoice-10: Double Dragon" )
 
 /* G-Board Games */
-GAMEX(1985, pc_gntlt,playch10, playch10, playch10, pcgboard, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet", GAME_NOT_WORKING )
 GAME( 1988, pc_smb2 ,playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 2" )
 GAME( 1988, pc_smb3, playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )
 GAME( 1990, pc_mman3,playch10, playch10, playch10, pcgboard, ROT0, "Capcom USA (Nintendo of America license)", "PlayChoice-10: Mega Man 3" )
-GAMEX(1990, pc_radr2,playch10, playch10, playch10, pcgboard, ROT0, "Square (Nintendo of America license)", "PlayChoice-10: Rad Racer II", GAME_NOT_WORKING )
 GAME( 1990, pc_suprc,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Super C" )
 GAME( 1990, pc_tmnt2,playch10, playch10, playch10, pcgboard, ROT0, "Konami (Nintendo of America license)", "PlayChoice-10: Teenage mutant Ninja Turtles 2" )
 GAME( 1990, pc_wcup ,playch10, playch10, playch10, pcgboard, ROT0, "Technos (Nintendo license)", "PlayChoice-10: Nintendo World Cup" )
@@ -1621,6 +1618,9 @@ GAME( 1990, pc_ngai2,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Ninte
 GAME( 1991, pc_ngai3,playch10, playch10, playch10, pcgboard, ROT0, "Tecmo (Nintendo of America license)", "PlayChoice-10: Ninja Gaiden 3" )
 GAME( 1991, pc_pwbld,playch10, playch10, playch10, pcgboard, ROT0, "Taito (Nintendo of America license)", "PlayChoice-10: Power Blade" )
 GAME( 1991, pc_rkats,playch10, playch10, playch10, pcgboard, ROT0, "Atlus (Nintendo of America license)", "PlayChoice-10: Rockin' Kats" )
+/* variant with 4 screen mirror */
+GAME( 1990, pc_radr2,playch10, playch10, playch10, pcgboard_type2, ROT0, "Square (Nintendo of America license)", "PlayChoice-10: Rad Racer II" )
+GAME( 1985, pc_gntlt,playch10, playch10, playch10, pcgboard_type2, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet" )
 
 /* H-Board Games */
 GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_NOT_WORKING )

@@ -66,6 +66,7 @@ should sengekis be rot90 with the sprites flipped?  scrolling is in the wrong di
 */
 
 #include "driver.h"
+#include "machine/random.h"
 #include <time.h>
 
 #define BIOS_SKIP 1 // Skip Bios as it takes too long and doesn't complete atm.
@@ -260,7 +261,7 @@ READ32_HANDLER( skns_hit_r )
 	switch(adr) {
 	case 0x28:
 	case 0x2a:
-		return (UINT16)((rand()&0xff)|((rand()&0xff)<<8));
+		return mame_rand();
 	case 0x00:
 	case 0x10:
 		return (UINT16)hit.x_in;
@@ -519,6 +520,11 @@ static WRITE32_HANDLER( skns_io_w )
 				cpu_set_irq_line(0,0xd,CLEAR_LINE);
 			if(data&0x80)
 				cpu_set_irq_line(0,0xf,CLEAR_LINE);*/
+
+			/* idle skip for sarukani, i can't find a better place to put it :-( but i think it works ok unless its making the game too fast */
+			if (!strcmp(Machine->gamedrv->name,"sarukani")) if (activecpu_get_pc()==0x04013B44) cpu_spinuntil_int();
+
+
 		}
 		else
 		{
@@ -1370,7 +1376,7 @@ GAMEX( 1997, jjparad2, skns,    skns, skns, jjparad2, ROT0,  "Electro Design", "
 GAMEX( 1998, ryouran , skns,    skns, skns, ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1999, teljan  , skns,    skns, skns, teljan,   ROT0,  "Electro Design", "Tel Jan", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, sengekis, skns,    skns, skns, sengekis, ROT270,"Kaneko / Warashi", "Sengeki Striker", GAME_IMPERFECT_GRAPHICS ) // should be rot90 + flipped sprites?
+GAMEX( 1997, sarukani, skns,    skns, skns, sarukani, ROT0,  "Kaneko / Mediaworks", "Saru-Kani-Hamu-Zou", GAME_IMPERFECT_GRAPHICS )
 
 /* not playable */
 GAMEX( 2000, gutsn,    skns,    skns, skns, gutsn,    ROT0,  "Kaneko", "Guts'n (Japan)", GAME_NOT_WORKING ) // doesn't display anything (sh2?)
-GAMEX( 1997, sarukani, skns,    skns, skns, sarukani, ROT0,  "Kaneko", "Saru-Kani-Hamu-Zou", GAME_NOT_WORKING ) // character doesn't move

@@ -1396,9 +1396,7 @@ int osd_is_joystick_axis_code(int joycode)
 
 void osd_lightgun_read(int player,int *deltax,int *deltay)
 {
-	const int height2=win_physical_height/2, width2=win_physical_width/2;
 	POINT point;
-	int sx=0, sy=0;
 
 	// if the mouse isn't yet active, make it so
 	if (!mouse_active && (use_mouse||use_lightgun))
@@ -1429,15 +1427,13 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 	GetCursorPos(&point);
 
 	// Map absolute pixel values into -128 -> 128 range
-	sx=point.x-width2;
-	sy=point.y-height2;
-	if (sx> width2)  sx=width2;
-	if (sy> height2) sy=height2;
-	if (sx<-width2)  sx=-width2;
-	if (sy<-height2) sy=-height2;
+	*deltax = (point.x * 256 + win_physical_width/2) / (win_physical_width-1) - 128;
+	*deltay = (point.y * 256 + win_physical_height/2) / (win_physical_height-1) - 128;
 
-	*deltax=(sx*128)/width2;
-	*deltay=(sy*128)/height2;
+	if (*deltax < -128) *deltax = -128;
+	if (*deltax > 128) *deltax = 128;
+	if (*deltay < -128) *deltay = -128;
+	if (*deltay > 128) *deltay = 128;
 }
 
 //============================================================

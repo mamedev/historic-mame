@@ -12,6 +12,7 @@ Notes:
 
 TODO:
 - Perfect Billiard dip switches
+- Gigas cocktail mode / flipscreen
 
 ****************************************************************************
 
@@ -44,6 +45,7 @@ TODO:
 extern data8_t *freek_videoram;
 
 VIDEO_START(freekick);
+VIDEO_UPDATE(gigas);
 VIDEO_UPDATE(pbillrd);
 VIDEO_UPDATE(freekick);
 WRITE_HANDLER( freek_videoram_w );
@@ -110,6 +112,12 @@ static READ_HANDLER( spinner_r )
 	return readinputport(5 + spinner);
 }
 
+static READ_HANDLER( gigas_spinner_r )
+{
+	return readinputport( spinner );
+}
+
+
 
 static WRITE_HANDLER( pbillrd_bankswitch_w )
 {
@@ -128,6 +136,41 @@ static INTERRUPT_GEN( freekick_irqgen )
 {
 	if (nmi_en) cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
 }
+
+static MEMORY_READ_START( gigas_readmem )
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe000, input_port_2_r },
+	{ 0xe800, 0xe800, input_port_3_r },
+	{ 0xf000, 0xf000, input_port_4_r },
+	{ 0xf800, 0xf800, input_port_5_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( gigas_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xd000, 0xd7ff, freek_videoram_w, &freek_videoram },
+	{ 0xd800, 0xd8ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd900, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe001, MWA_NOP },// probably not flipscreen
+	{ 0xe002, 0xe003, coin_w },
+	{ 0xe004, 0xe004, nmi_enable_w },
+	{ 0xe005, 0xe005, MWA_NOP},
+	{ 0xf000, 0xf000, MWA_NOP }, //bankswitch ?
+	{ 0xfc00, 0xfc00, SN76496_0_w },
+	{ 0xfc01, 0xfc01, SN76496_1_w },
+	{ 0xfc02, 0xfc02, SN76496_2_w },
+	{ 0xfc03, 0xfc03, SN76496_3_w },
+MEMORY_END
+
+static PORT_READ_START( gigas_readport )
+	{ 0x00, 0x00, gigas_spinner_r },
+	{ 0x01, 0x01, MRA_NOP }, //unused dip 3
+PORT_END
+
+static PORT_WRITE_START( gigas_writeport )
+	{ 0x00, 0x00 ,spinner_select_w },
+PORT_END
 
 
 
@@ -208,7 +251,97 @@ static PORT_WRITE_START( freekckb_writeport )
 	{ 0xff, 0xff, freekick_ff_w },
 PORT_END
 
+INPUT_PORTS_START( gigas )
 
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 30, 15, 0, 0 )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 30, 15, 0, 0 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "20000, 60000, Every 60000" )
+	PORT_DIPSETTING(    0x02, "20000, 60000" )
+	PORT_DIPSETTING(    0x04, "30000, 90000, Every 90000" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "Easy" )    /* level 1 */
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" ) /* level 4 */
+  PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, "3 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
+
+
+
+INPUT_PORTS_END
 
 INPUT_PORTS_START( pbillrd )
 	PORT_START
@@ -494,6 +627,31 @@ static MACHINE_DRIVER_START( freekckb )
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gigas )
+	MDRV_CPU_ADD(Z80, 18432000/6)	//confirmed
+	MDRV_CPU_MEMORY(gigas_readmem,gigas_writemem)
+	MDRV_CPU_PORTS(gigas_readport,gigas_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,60*3)
+	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(0x200)
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+
+	MDRV_VIDEO_START(freekick)
+	MDRV_VIDEO_UPDATE(gigas)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
+
 
 
 /* roms */
@@ -613,8 +771,8 @@ ROM_END
 
 ROM_START( countrun )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 Code */
-    //  Custom CPU (pack) No. NS6201-A 1988.3 COUNTER RUN
-    ROM_LOAD( "countrun.cpu", 0x00000, 0x10000, 0x00000000 ) // missing
+	//  Custom CPU (pack) No. NS6201-A 1988.3 COUNTER RUN
+	ROM_LOAD( "countrun.cpu", 0x00000, 0x10000, 0x00000000 ) // missing
 
 	ROM_REGION( 0x08000, REGION_USER1, 0 ) /* sound data */
 	ROM_LOAD( "c-run.e1", 0x00000, 0x08000, 0x2c3b6f8f )
@@ -633,15 +791,109 @@ ROM_START( countrun )
 	ROM_LOAD( "prom5.bpr",    0x0000, 0x0100, 0x63c114ad )
 	ROM_LOAD( "prom2.bpr",    0x0100, 0x0100, 0xd16f95cc )
 	ROM_LOAD( "prom4.bpr",    0x0200, 0x0100, 0x217db2c1 )
-    ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, 0x8d983949 )
+	ROM_LOAD( "prom1.bpr",    0x0300, 0x0100, 0x8d983949 )
 	ROM_LOAD( "prom6.bpr",    0x0400, 0x0100, 0x33e87550 )
 	ROM_LOAD( "prom3.bpr",    0x0500, 0x0100, 0xc77d0077 )
 ROM_END
 
+ROM_START( gigasm2b )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_LOAD( "8.rom", 0x10000, 0x4000, 0xc00a4a6c )
+	ROM_CONTINUE(      0x00000, 0x4000 )
+	ROM_LOAD( "7.rom", 0x14000, 0x4000, 0x92bd9045 )
+	ROM_CONTINUE(      0x04000, 0x4000 )
+	ROM_LOAD( "9.rom", 0x18000, 0x4000, 0xa3ef809c )
+	ROM_CONTINUE(      0x08000, 0x4000 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "4.rom",       0x00000, 0x04000, 0x20b3405f )
+	ROM_LOAD( "5.rom",       0x04000, 0x04000, 0xd04ecfa8 )
+	ROM_LOAD( "6.rom",       0x08000, 0x04000, 0x33776801 )
+
+	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "1.rom",       0x00000, 0x04000, 0xf64cbd1e )
+	ROM_LOAD( "3.rom",       0x04000, 0x04000, 0xc228df19 )
+	ROM_LOAD( "2.rom",       0x08000, 0x04000, 0xa6ad9ce2 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "1.pr",    0x0000, 0x0100, 0xa784e71f )
+	ROM_LOAD( "6.pr",    0x0100, 0x0100, 0x376df30c )
+	ROM_LOAD( "5.pr",    0x0200, 0x0100, 0x4edff5bd )
+	ROM_LOAD( "4.pr",    0x0300, 0x0100, 0xfe201a4e )
+	ROM_LOAD( "2.pr",    0x0400, 0x0100, 0x5796cc4a )
+	ROM_LOAD( "3.pr",    0x0500, 0x0100, 0x28b5ee4c )
+ROM_END
+
+ROM_START( gigasb )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_LOAD( "g-7",   0x10000, 0x4000, 0xdaf4e88d )
+	ROM_CONTINUE(      0x00000, 0x4000 )
+	ROM_LOAD( "g-8",   0x14000, 0x8000, 0x4ab4c1f1 )
+	ROM_CONTINUE(      0x04000, 0x8000 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "g-4",     0x00000, 0x04000, 0x8ed78981 )
+	ROM_LOAD( "g-5",     0x04000, 0x04000, 0x0645ec2d )
+	ROM_LOAD( "g-6",     0x08000, 0x04000, 0x99e9cb27 )
+
+	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "g-1",     0x00000, 0x04000, 0xd78fae6e )
+	ROM_LOAD( "g-3",     0x04000, 0x04000, 0x37df4a4c )
+	ROM_LOAD( "g-2",     0x08000, 0x04000, 0x3a46e354 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "1.pr",    0x0000, 0x0100, 0xa784e71f )
+	ROM_LOAD( "6.pr",    0x0100, 0x0100, 0x376df30c )
+	ROM_LOAD( "5.pr",    0x0200, 0x0100, 0x4edff5bd )
+	ROM_LOAD( "4.pr",    0x0300, 0x0100, 0xfe201a4e )
+	ROM_LOAD( "2.pr",    0x0400, 0x0100, 0x5796cc4a )
+	ROM_LOAD( "3.pr",    0x0500, 0x0100, 0x28b5ee4c )
+ROM_END
+
+ROM_START( oigas )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_LOAD( "rom.7",   0x10000, 0x4000, 0xe5bc04cc )
+	ROM_CONTINUE(        0x00000, 0x4000)
+	ROM_LOAD( "rom.8",   0x04000, 0x8000, 0xc199060d )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )
+	ROM_LOAD( "8748.bin",		0x0000, 0x0800, 0x00000000 )	/* missing */
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "g-4",     0x00000, 0x04000, 0x8ed78981 )
+	ROM_LOAD( "g-5",     0x04000, 0x04000, 0x0645ec2d )
+	ROM_LOAD( "g-6",     0x08000, 0x04000, 0x99e9cb27 )
+
+	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* GFX */
+	ROM_LOAD( "g-1",     0x00000, 0x04000, 0xd78fae6e )
+	ROM_LOAD( "g-3",     0x04000, 0x04000, 0x37df4a4c )
+	ROM_LOAD( "g-2",     0x08000, 0x04000, 0x3a46e354 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "1.pr",    0x0000, 0x0100, 0xa784e71f )
+	ROM_LOAD( "6.pr",    0x0100, 0x0100, 0x376df30c )
+	ROM_LOAD( "5.pr",    0x0200, 0x0100, 0x4edff5bd )
+	ROM_LOAD( "4.pr",    0x0300, 0x0100, 0xfe201a4e )
+	ROM_LOAD( "2.pr",    0x0400, 0x0100, 0x5796cc4a )
+	ROM_LOAD( "3.pr",    0x0500, 0x0100, 0x28b5ee4c )
+ROM_END
 
 
-GAME( 1987, pbillrd,  0,        pbillrd,  pbillrd,  0, ROT0,   "Nihon System", "Perfect Billiard" )
-GAMEX(1987, pbillrds, pbillrd,  pbillrd,  pbillrd,  0, ROT0,   "Nihon System", "Perfect Billiard (Sega)", GAME_UNEMULATED_PROTECTION )	// encrypted
-GAMEX(1987, freekick, 0,        freekckb, freekckb, 0, ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
-GAME( 1987, freekckb, freekick, freekckb, freekckb, 0, ROT270, "bootleg", "Free Kick (bootleg)" )
-GAMEX(198?, countrun, 0,        freekckb, freekckb, 0, ROT0,   "Nihon System (Sega license)", "Counter Run", GAME_NOT_WORKING )
+
+static DRIVER_INIT(gigas)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+	memory_set_opcode_base(0,rom+diff);
+}
+
+
+
+GAMEX(1986, gigasb,   0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas (bootleg)", GAME_NO_COCKTAIL )
+GAMEX(1986, oigas,    gigasb,   gigas,    gigas,    gigas, ROT270, "bootleg", "Oigas (bootleg)", GAME_NOT_WORKING )
+GAMEX(1986, gigasm2b, 0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas Mark II (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1987, pbillrd,  0,        pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard" )
+GAMEX(1987, pbillrds, pbillrd,  pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard (Sega)", GAME_UNEMULATED_PROTECTION )	// encrypted
+GAMEX(1987, freekick, 0,        freekckb, freekckb, 0,     ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
+GAME( 1987, freekckb, freekick, freekckb, freekckb, 0,     ROT270, "bootleg", "Free Kick (bootleg)" )
+GAMEX(198?, countrun, 0,        freekckb, freekckb, 0,     ROT0,   "Nihon System (Sega license)", "Counter Run", GAME_NOT_WORKING )

@@ -143,7 +143,7 @@ static double scanline_period_inv;
  *************************************/
 
 static int loadsave_schedule;
-static char loadsave_schedule_id;
+static char *loadsave_schedule_name;
 
 
 
@@ -401,13 +401,11 @@ void machine_reset(void)
 
 static void handle_save(void)
 {
-	char name[2] = { 0 };
 	mame_file *file;
 	int cpunum;
 
 	/* open the file */
-	name[0] = loadsave_schedule_id;
-	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_STATE, 1);
+	file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 1);
 
 	if (file)
 	{
@@ -443,7 +441,7 @@ static void handle_save(void)
 	}
 
 	/* unschedule the save */
-	loadsave_schedule = LOADSAVE_NONE;
+	cpu_loadsave_reset();
 }
 
 
@@ -456,13 +454,11 @@ static void handle_save(void)
 
 static void handle_load(void)
 {
-	char name[2] = { 0 };
 	mame_file *file;
 	int cpunum;
 
 	/* open the file */
-	name[0] = loadsave_schedule_id;
-	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_STATE, 0);
+	file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 0);
 
 	/* if successful, load it */
 	if (file)
@@ -500,7 +496,7 @@ static void handle_load(void)
 	}
 
 	/* unschedule the load */
-	loadsave_schedule = LOADSAVE_NONE;
+	cpu_loadsave_reset();
 }
 
 
@@ -520,7 +516,27 @@ static void handle_loadsave(void)
 		handle_load();
 
 	/* reset the schedule */
-	loadsave_schedule = LOADSAVE_NONE;
+	cpu_loadsave_reset();
+}
+
+
+
+/*************************************
+ *
+ *	Schedules a save/load for later
+ *
+ *************************************/
+
+void cpu_loadsave_schedule_file(int type, const char *name)
+{
+	cpu_loadsave_reset();
+
+	loadsave_schedule_name = malloc(strlen(name) + 1);
+	if (loadsave_schedule_name)
+	{
+		strcpy(loadsave_schedule_name, name);
+		loadsave_schedule = type;
+	}
 }
 
 
@@ -533,8 +549,9 @@ static void handle_loadsave(void)
 
 void cpu_loadsave_schedule(int type, char id)
 {
-	loadsave_schedule = type;
-	loadsave_schedule_id = id;
+	char name[256];
+	sprintf(name, "%s-%c", Machine->gamedrv->name, id);
+	cpu_loadsave_schedule_file(type, name);
 }
 
 
@@ -548,6 +565,11 @@ void cpu_loadsave_schedule(int type, char id)
 void cpu_loadsave_reset(void)
 {
 	loadsave_schedule = LOADSAVE_NONE;
+	if (loadsave_schedule_name)
+	{
+		free(loadsave_schedule_name);
+		loadsave_schedule_name = NULL;
+	}
 }
 
 

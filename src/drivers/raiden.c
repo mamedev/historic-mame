@@ -280,11 +280,11 @@ static VIDEO_EOF( raiden )
 static MACHINE_DRIVER_START( raiden )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_ADD(V30,20000000/2) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
 
-	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_ADD(V30,20000000/2) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
 
@@ -315,11 +315,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( raidena )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_ADD(V30,20000000/2) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(alt_readmem,alt_writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
 
-	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_ADD(V30,20000000/2) /* NEC V30 CPU, 20MHz */
 	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
 

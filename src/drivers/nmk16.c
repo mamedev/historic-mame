@@ -13,7 +13,7 @@ Thunder Dragon           NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
 Thunder Dragon (bootleg) NMK/Tecmo  68000 Z80           YM3812 OKIM6295
 Hacha Mecha Fighter      NMK        68000 <unknown cpu> YM2203 2xOKIM6295
 Macross                  Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
-GunNail                  NMK/Tecmo  68000 <unknown cpu> YM2203 2xOKIM6295
+GunNail                  NMK/Tecmo  68000 NMK004        YM2203 2xOKIM6295
 Macross II               Banpresto  68000 Z80           YM2203 2xOKIM6295
 Thunder Dragon 2         NMK        68000 Z80           YM2203 2xOKIM6295
 Saboten Bombers          NMK/Tecmo  68000               2xOKIM6295
@@ -24,6 +24,9 @@ S.S. Mission             Comad      68000 Z80           OKIM6295
 
 driver by Mirko Buffoni, Richard Bush, Nicola Salmoria, Bryan McPhail,
           David Haywood, and R. Belmont.
+
+The NMK004 CPU might be a Toshiba TLCS-90 class CPU with internal ROM in the
+0000-3fff range.
 
 The later games have an higher resolution (384x224 instead of 256x224)
 but the hardware is pretty much the same. It's obvious that the higher

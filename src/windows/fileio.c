@@ -72,18 +72,12 @@ static osd_file openfile[MAX_OPEN_FILES];
 //============================================================
 
 #ifdef MESS
-static const char **softwarepath = NULL;
-static int softwarepathc = 0;
-static int softwarepath_needs_decomposition = 1;
-
-static const char *softwarepath;
-const char *crcdir;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 static char pcrcfilename[256] = "";
 const char *pcrcfile = pcrcfilename;
+char crcdir[256];
 #endif
-
 
 
 //============================================================
@@ -346,7 +340,9 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 	switch (filetype)
 	{
 		case FILETYPE_ROM_NOCRC:
+#ifndef MESS
 		case FILETYPE_IMAGE:
+#endif
 			list = &pathlist[FILETYPE_ROM];
 			break;
 

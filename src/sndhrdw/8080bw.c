@@ -28,7 +28,6 @@
  * bit 3=Fleet movement 4     7.raw
  * bit 4=UFO 2                8.raw
  */
-
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "machine/74123.h"
@@ -52,12 +51,19 @@ static WRITE_HANDLER( ballbomb_sh_port5_w );
 static WRITE_HANDLER( boothill_sh_port3_w );
 static WRITE_HANDLER( boothill_sh_port5_w );
 
+static WRITE_HANDLER( clowns_sh_port7_w );
+extern struct Samplesinterface circus_samples_interface;
+
+static WRITE_HANDLER( seawolf_sh_port5_w );
+
 static WRITE_HANDLER( schaser_sh_port3_w );
 static WRITE_HANDLER( schaser_sh_port5_w );
 static int  schaser_sh_start(const struct MachineSound *msound);
 static void schaser_sh_stop(void);
 static void schaser_sh_update(void);
 
+static WRITE_HANDLER( polaris_sh_port2_w );
+static WRITE_HANDLER( polaris_sh_port4_w );
 static WRITE_HANDLER( polaris_sh_port6_w );
 
 
@@ -403,20 +409,340 @@ static WRITE_HANDLER( ballbomb_sh_port5_w )
 
 /*******************************************************/
 /*                                                     */
-/* Taito "Polaris"		                               */
+/* Taito "Polaris"		                       */
 /*                                                     */
 /*******************************************************/
 
+const struct discrete_lfsr_desc polaris_lfsr={
+	17,			/* Bit Length */
+	0,			/* Reset Value */
+	4,			/* Use Bit 4 as XOR input 0 */
+	16,			/* Use Bit 16 as XOR input 1 */
+	DISC_LFSR_XOR,		/* Feedback stage1 is XOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is not inverted */
+	12			/* Output bit */
+};
+
+DISCRETE_SOUND_START(polaris_sound_interface)
+
+/* Nodes - Inputs */
+#define POLARIS_MUSIC_DATA	NODE_01
+#define POLARIS_SX0_EN		NODE_02
+#define POLARIS_SX1_EN		NODE_03
+#define POLARIS_SX2_EN		NODE_04
+#define POLARIS_SX3_EN		NODE_05
+#define POLARIS_SX5_EN		NODE_06
+#define POLARIS_SX6_EN		NODE_07
+#define POLARIS_SX7_EN		NODE_08
+#define POLARIS_SX9_EN		NODE_09
+#define POLARIS_SX10_EN		NODE_10
+/* Nodes - Sounds */
+#define POLARIS_MUSIC		NODE_11
+#define POLARIS_NOISE_LO	NODE_12
+#define POLARIS_NOISE_LO_FILT	NODE_13
+#define POLARIS_NOISE_HI_FILT	NODE_14
+#define POLARIS_SHOTSND		NODE_15
+#define POLARIS_SHIP_HITSND	NODE_16
+#define POLARIS_SHIPSND		NODE_17
+#define POLARIS_EXPLOSIONSND	NODE_18
+#define POLARIS_PLANESND	NODE_19
+#define POLARIS_HITSND		NODE_20
+#define POLARIS_SONARSND	NODE_21
+#define POLARIS_FINAL_MIX	NODE_22
+/* Nodes - Adjust */
+#define POLARIS_ADJ_VR1		NODE_97
+#define POLARIS_ADJ_VR2		NODE_98
+#define POLARIS_ADJ_VR3		NODE_99
+
+	/************************************************/
+	/* Polaris sound system: 8 Sound Sources        */
+	/*                                              */
+	/* Relative volumes are adjustable              */
+	/*                                              */
+	/*  Discrete sound mapping via:                 */
+	/*     discrete_sound_w($register,value)        */
+	/*  $00 - Music Data                            */
+	/*  $01 - SX0                                   */
+	/*  $02 - SX1                                   */
+	/*  $03 - SX2                                   */
+	/*  $04 - SX3                                   */
+	/*  $05 - SX5                                   */
+	/*  $06 - SX6                                   */
+	/*  $07 - SX7                                   */
+	/*  $08 - SX9                                   */
+	/*  $09 - SX10                                  */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for polaris           */
+	/************************************************/
+	/*               NODE                ADDR  MASK    INIT */
+	DISCRETE_INPUT(POLARIS_MUSIC_DATA  , 0x00, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX0_EN      , 0x01, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX1_EN      , 0x02, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX2_EN      , 0x03, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX3_EN      , 0x04, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX5_EN      , 0x05, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX6_EN      , 0x06, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX7_EN      , 0x07, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX9_EN      , 0x08, 0x000f, 0.0)
+	DISCRETE_INPUT(POLARIS_SX10_EN     , 0x09, 0x000f, 0.0)
+
+	DISCRETE_ADJUSTMENT(POLARIS_ADJ_VR1, 1, 0, 1000, 800, DISC_LINADJ, "Sub Volume VR1")
+	DISCRETE_ADJUSTMENT(POLARIS_ADJ_VR2, 1, 0, 1000, 700, DISC_LINADJ, "Sub Volume VR2")
+	DISCRETE_ADJUSTMENT(POLARIS_ADJ_VR3, 1, 0, 1000, 900, DISC_LINADJ, "Sub Volume VR3")
+
+/******************************************************************************
+ *
+ * Music Generator
+ *
+ * This is a simulation of the following circuit:
+ * 555 Timer (Ra = 1k, Rb = 1k, C =.01uF) running at 48kHz.  Connected to a
+ * 1 bit counter (/2) for 24kHz.  But I will use the breadboarded frequency
+ * of 44140Hz/2.
+ * This is then sent to a preloadable 8 bit counter, which loads the value
+ * from Port 2 when overflowing from 0xFF to 0x00.  Therefore it divides by
+ * 2 (Port 2 = FE) to 256 (Port 2 = 00).
+ * This goes to a 2 bit counter which has a 47k resistor on Q0 and a 12k on Q1.
+ * This creates a sawtooth ramp of: 0%, 12/59%, 47/59%, 100% then back to 0%
+ *
+ * Note that there is no music disable line.  When there is no music, the game
+ * sets the oscillator to 0Hz.  (Port 2 = FF)
+ *
+ ******************************************************************************/
+	DISCRETE_ADDER2(NODE_23, 1, POLARIS_MUSIC_DATA, 1)	/* To get values of 1 - 256 */
+	DISCRETE_DIVIDE(NODE_24, 1, 44140.0/2/2, NODE_23)	/* /2 counter frequency */
+	DISCRETE_DIVIDE(NODE_25, 1, 44140.0/2/4, NODE_23)	/* /4 counter frequency */
+	DISCRETE_SQUAREWAVE(NODE_26, 1, NODE_24, 12.0/59.0*0.7527, 50.0, 0, 0.0)	/* /2 */
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_25, 47.0/59.0*0.7527, 50.0, 0, 0.0)	/* /4 */
+	DISCRETE_ADDER2(NODE_28, POLARIS_MUSIC_DATA, NODE_26, NODE_27)	/* Port2=FF Disables audio */
+	DISCRETE_MULTIPLY(NODE_29, 1, NODE_28, POLARIS_ADJ_VR3)	/* Basic Volume Adj */
+	DISCRETE_RCFILTER(POLARIS_MUSIC, 1, NODE_29, 9559.0, 1.8e-10)
+
+/******************************************************************************
+ *
+ * Noise sources
+ *
+ * The frequencies for the noise sources were breadboarded to
+ * get an accurate value.
+ *
+ * Also we are going to cheat and reduce the gain of the HI noise a little to
+ * compensate for the computer being too accurate.
+ *
+ ******************************************************************************/
+	DISCRETE_SQUAREWAVE(NODE_30, 1, (60.0/512.0), 1, 0.01, 1.0/2, 359.0)	/* feed frequency to keep the noise going */
+
+	DISCRETE_LFSR_NOISE(POLARIS_NOISE_LO, 1, 0, 830.0, 1.0, NODE_30, 0, &polaris_lfsr)  /* Unfiltered Lo noise */
+
+	DISCRETE_RCFILTER(NODE_31, 1, POLARIS_NOISE_LO, 560.0, 2.2e-7)
+	DISCRETE_RCFILTER(POLARIS_NOISE_LO_FILT, 1, NODE_31, 6800.0, 2.2e-7)	/* Filtered Lo noise */
+
+	DISCRETE_LFSR_NOISE(NODE_32, 1, 0, 44140.0/2, 0.8, NODE_30, 0, &polaris_lfsr)
+	DISCRETE_RCFILTER(NODE_33, 1, NODE_32, 560.0, 1.e-8)
+	DISCRETE_RCFILTER(POLARIS_NOISE_HI_FILT, 1, NODE_33, 6800.0, 1.e-8)	/* Filtered Hi noise */
+
+/******************************************************************************
+ *
+ * Background Sonar Sound
+ *
+ * This is a background sonar that plays at all times during the game.
+ * It is a VCO triangle wave genarator, that uses the Low frequency filtered
+ * noise source for the frequency.  It goes from 1 to 1/1.12 of it's VCO range.
+ * This is then amplitude modulated, by some fancy clocking scheme.
+ * It is disabled during SX3.  (No sonar when you die.)
+ *
+ ******************************************************************************/
+	DISCRETE_MULTIPLY(NODE_74, 1, POLARIS_ADJ_VR1, 0.7527)	/* Basic Volume Adj * Relative Gain */
+
+	DISCRETE_ADDER2(NODE_80, 1, POLARIS_NOISE_LO_FILT, 1.0/2)	/* Shift back to DC */
+	DISCRETE_SQUAREWAVE(NODE_81, 1, 60.0/16.0, 1, 50.0, 1.0/2, 0)	/* Clock */
+	DISCRETE_SQUAREWAVE(NODE_82, 1, 60.0/16.0/8.0, 1, 50.0, 1.0/2, 0)	/* Data */
+	DISCRETE_LOGIC_OR(NODE_83, 1, NODE_82, POLARIS_SX3_EN)	/* OR for later enable */
+	DISCRETE_SWITCH(NODE_84, 1, NODE_83, 0, NODE_74)	/* Overall gain */
+	DISCRETE_SAMPLHOLD(NODE_85, 1, NODE_84, NODE_81, DISC_SAMPHOLD_REDGE)
+	DISCRETE_SWITCH(NODE_86, 1, NODE_83, NODE_85, 0)/* Invert */
+	DISCRETE_RCDISC2(NODE_87, NODE_85, NODE_86, 680000.0, NODE_86, 1000.0, 1e-6)	/* Decay envelope */
+	DISCRETE_GAIN(NODE_88, NODE_80, 1800.0-(1800.0/1.12))
+	DISCRETE_ADDER2(NODE_89, 1, NODE_88, 1800.0/1.12)
+	DISCRETE_TRIANGLEWAVE(POLARIS_SONARSND, NODE_86, NODE_89, NODE_87, 0, 0)
+
+
+/******************************************************************************
+ *
+ * Shot - SX0
+ *
+ * When Enabled it makes a low frequency RC filtered noise.  As soon as it
+ * disables, it switches to a high frequency RC filtered noise with the volume
+ * decaying based on the RC values of 680k and 1uF.
+ *
+ ******************************************************************************/
+	DISCRETE_MULTIPLY(NODE_34, 1, POLARIS_SX0_EN, POLARIS_ADJ_VR1)	/* Basic Volume Adj */
+	DISCRETE_MULTIPLY(NODE_35, 1, NODE_34, 0.6034)	/* Relative Gain */
+	DISCRETE_RCDISC2(NODE_36, POLARIS_SX0_EN, NODE_35, 680000.0, NODE_35, 1000.0, 1e-6)	/* Decay envelope */
+
+	DISCRETE_MULTIPLY(NODE_37, 1, POLARIS_NOISE_LO_FILT, NODE_36)	/* Amplify noise using envelope */
+	DISCRETE_MULTIPLY(NODE_38, 1, POLARIS_NOISE_HI_FILT, NODE_36)	/* Amplify noise using envelope */
+
+	DISCRETE_SWITCH(POLARIS_SHOTSND, 1, POLARIS_SX0_EN, NODE_38, NODE_37)
+
+/******************************************************************************
+ *
+ * Ship Hit (Sub) - SX1
+ *
+ * When Enabled it makes a low frequency RC filtered noise.  As soon as it
+ * disables, it's  volume starts decaying based on the RC values of 680k and
+ * 1uF.  Also as it decays, a decaying high frequency RC filtered noise is
+ * mixed in.
+ *
+ ******************************************************************************/
+	DISCRETE_MULTIPLY(NODE_40, 1, POLARIS_SX1_EN, POLARIS_ADJ_VR2)	/* Basic Volume Adj */
+	DISCRETE_MULTIPLY(NODE_41, 1, NODE_40, 0.4375)	/* Relative Gain */
+	DISCRETE_RCDISC2(NODE_42, POLARIS_SX1_EN, NODE_41, 680000.0, NODE_41, 1000.0, 1e-6)	/* Decay envelope */
+
+	DISCRETE_MULTIPLY(NODE_43, 1, POLARIS_NOISE_LO_FILT, NODE_42)	/* Amplify noise using envelope */
+	DISCRETE_MULTIPLY(NODE_44, 1, POLARIS_NOISE_HI_FILT, NODE_42)	/* Amplify noise using envelope */
+
+	DISCRETE_SWITCH(NODE_45, 1, POLARIS_SX1_EN, 0, NODE_44)
+	DISCRETE_ADDER2(POLARIS_SHIP_HITSND, 1, NODE_43, NODE_45)
+
+/******************************************************************************
+ *
+ * Ship - SX2
+ *
+ * This uses a 5.75Hz |\|\ sawtooth the modulate the frequency of a
+ * voltage controlled triangle wave oscillator.  The voltage varies 10.5V - 1.5V
+ * causing the frequency to change from 2040Hz to 245Hz with a rise percentage
+ * changing from 60% to 68%.  Close enough to a 50% triangle to most ears.
+ *
+ ******************************************************************************/
+	DISCRETE_SAWTOOTHWAVE(NODE_50, POLARIS_SX2_EN, 5.75, 2040.0-245.0, (2040.0-245.0)/2, 1, 0)	/* Modulation Wave */
+	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 245.0)
+	DISCRETE_MULTIPLY(NODE_52, 1, POLARIS_ADJ_VR2, 0.6034)	/* Basic Volume Adj * Relative Gain */
+	DISCRETE_TRIANGLEWAVE(POLARIS_SHIPSND, POLARIS_SX2_EN, NODE_51, NODE_52, 0, 0)
+
+/******************************************************************************
+ *
+ * Explosion - SX3
+ *
+ * When Enabled it makes a low frequency noise.  As soon as it disables, it's
+ * volume starts decaying based on the RC values of 680k and 0.33uF.  The
+ * final output is RC filtered.
+ *
+ * Note that when this is triggered, the sonar sound clock is disabled.
+ *
+ ******************************************************************************/
+	DISCRETE_GAIN(NODE_55, POLARIS_SX3_EN, 2000.0)
+	DISCRETE_RCDISC2(NODE_56, POLARIS_SX3_EN, NODE_55, 680000.0, NODE_55, 1000.0, 3.3e-7)	/* Decay envelope */
+
+	DISCRETE_MULTIPLY(NODE_57, 1, POLARIS_NOISE_LO, NODE_56)	/* Amplify noise using envelope */
+
+	DISCRETE_RCFILTER(NODE_58, 1, NODE_57, 560.0, 2.2e-7)
+	DISCRETE_RCFILTER(POLARIS_EXPLOSIONSND, 1, NODE_58, 6800.0, 2.2e-7)
+
+/******************************************************************************
+ *
+ * Plane Down - SX6
+ * Plane Up   - SX7
+ *
+ * The oscillator is enabled when SX7 goes high. When SX6 is enabled the
+ * frequency lowers.  When SX6 is disabled the frequency ramps back up.
+ * Also some NOISE_HI_FILT is mixed in so the frequency varies some.
+ *
+ ******************************************************************************/
+	DISCRETE_RAMP(NODE_70, POLARIS_SX7_EN, POLARIS_SX6_EN, (3240.0-410.0)/1.2, 3240.0, 410.0, 0)
+	DISCRETE_GAIN(NODE_71, POLARIS_NOISE_HI_FILT, 0.1)
+	DISCRETE_MULTIPLY(NODE_72, 1, NODE_70, NODE_71)
+//	DISCRETE_MULTIPLY(NODE_72, 1, POLARIS_NOISE_LO, (3240.0-410.0)/10.0/2.0)
+	DISCRETE_ADDER2(NODE_73, 1, NODE_70, NODE_72)	/* Add in 10% hi freq shift to final plane freq. */
+	DISCRETE_TRIANGLEWAVE(POLARIS_PLANESND, POLARIS_SX7_EN, NODE_73, NODE_74, 0, 0)
+
+/******************************************************************************
+ *
+ * HIT - SX9 & SX10
+ *
+ * SX9 seems to be never used, so I am not sure if the schematic is correct.
+ * Following the schematic, 3 different sounds are produced.
+ * SX10  SX9  Effect
+ *  0     0   no sound
+ *  0     1   NOISE_HI_FILT while enabled
+ *  1     0   NOISE_LO_FILT while enabled
+ *  1     1   NOISE_HI_FILT & NOISE_LO_FILT decaying imediately @ 680k, 0.22uF
+ *
+ ******************************************************************************/
+	DISCRETE_LOGIC_NAND(NODE_60, 1, POLARIS_SX9_EN, POLARIS_SX10_EN)
+	DISCRETE_SWITCH(NODE_61, 1, NODE_60, 0, POLARIS_ADJ_VR1)	/* Always on except when SX9 and SX10 enabled */
+	DISCRETE_RCDISC2(NODE_62, NODE_61, NODE_61, 680000.0, NODE_61, 1000.0, 2.2e-7)
+	DISCRETE_MULTIPLY(NODE_63, POLARIS_SX9_EN, POLARIS_NOISE_HI_FILT, NODE_62)
+	DISCRETE_MULTIPLY(NODE_64, POLARIS_SX10_EN, POLARIS_NOISE_LO_FILT, NODE_62)
+	DISCRETE_ADDER2(POLARIS_HITSND, 1, NODE_63, NODE_64)
+
+/******************************************************************************
+ *
+ * Final Mixing and Output
+ *
+ ******************************************************************************/
+
+	DISCRETE_ADDER4(NODE_90, 1, POLARIS_SHOTSND, POLARIS_HITSND, POLARIS_PLANESND, POLARIS_SONARSND)	/* VR1 */
+	DISCRETE_ADDER2(NODE_91, 1, POLARIS_SHIP_HITSND, POLARIS_SHIPSND)					/* VR2 */
+	DISCRETE_ADDER4(NODE_92, POLARIS_SX5_EN, NODE_90, NODE_91, POLARIS_MUSIC, POLARIS_EXPLOSIONSND)
+	DISCRETE_GAIN(POLARIS_FINAL_MIX, NODE_92, 65534.0/3000.0)
+	DISCRETE_OUTPUT(POLARIS_FINAL_MIX, 100)
+
+DISCRETE_SOUND_END
+
 MACHINE_INIT( polaris )
 {
+	install_port_write_handler(0, 0x02, 0x02, polaris_sh_port2_w);
+	install_port_write_handler(0, 0x04, 0x04, polaris_sh_port4_w);
 	install_port_write_handler(0, 0x06, 0x06, polaris_sh_port6_w);
+}
+
+static WRITE_HANDLER( polaris_sh_port2_w )
+{
+	discrete_sound_w(0, (~data) & 0xff);
+}
+
+static WRITE_HANDLER( polaris_sh_port4_w )
+{
+	/* 0x01 - SX0 - Shot */
+	discrete_sound_w(1, data & 0x01);
+
+	/* 0x02 - SX1 - Ship Hit (Sub) */
+	discrete_sound_w(2, (data & 0x02) >> 1);
+
+	/* 0x04 - SX2 - Ship */
+	discrete_sound_w(3, (data & 0x04) >> 2 );
+
+	/* 0x08 - SX3 - Explosion */
+	discrete_sound_w(4, (data & 0x08) >> 3);
+
+	/* 0x10 - SX4 */
+
+	/* 0x20 - SX5 - Sound Enable */
+	discrete_sound_w(5, (data & 0x20) >> 5);
 }
 
 static WRITE_HANDLER( polaris_sh_port6_w )
 {
-	coin_lockout_global_w(data & 0x04);
+	coin_lockout_global_w(data & 0x04);  /* SX8 */
 
-	c8080bw_flip_screen_w(data & 0x20);
+	c8080bw_flip_screen_w(data & 0x20);  /* SX11 */
+
+	/* 0x01 - SX6 - Plane Down */
+	discrete_sound_w(6, (data & 0x01) );
+
+	/* 0x02 - SX7 - Plane Up */
+	discrete_sound_w(7, (data & 0x02) >> 1 );
+
+	/* 0x08 - SX9 - Hit */
+	discrete_sound_w(9, (data & 0x08) >> 3);
+
+	/* 0x10 - SX10 - Hit */
+	discrete_sound_w(9, (data & 0x10) >> 4);
 }
 
 
@@ -650,9 +976,83 @@ MACHINE_INIT( bowler )
 /*                                                     */
 /*******************************************************/
 
+static const char *seawolf_sample_names[] =
+{
+	"*seawolf",
+	"shiphit.wav",
+	"torpedo.wav",
+	"dive.wav",
+	"sonar.wav",
+	"minehit.wav",
+	0       /* end of array */
+};
+
+struct Samplesinterface seawolf_samples_interface =
+{
+	5,	/* 5 channels */
+	25,	/* volume */
+	seawolf_sample_names
+};
+
 MACHINE_INIT( seawolf )
 {
+/*  Lamp Display Output (write) Ports are as follows:
+
+Port 1:
+  Basically D0-D3 are column drivers and D4-D7 are row drivers.
+  The folowing table shows values that light up individual lamps.
+
+	D7 D6 D5 D4 D3 D2 D1 D0   Function
+	--------------------------------------------------------------------------------------
+	 0  0  0  1  1  0  0  0   Explosion Lamp 0
+	 0  0  0  1  0  1  0  0   Explosion Lamp 1
+	 0  0  0  1  0  0  1  0   Explosion Lamp 2
+	 0  0  0  1  0  0  0  1   Explosion Lamp 3
+	 0  0  1  0  1  0  0  0   Explosion Lamp 4
+	 0  0  1  0  0  1  0  0   Explosion Lamp 5
+	 0  0  1  0  0  0  1  0   Explosion Lamp 6
+	 0  0  1  0  0  0  0  1   Explosion Lamp 7
+	 0  1  0  0  1  0  0  0   Explosion Lamp 8
+	 0  1  0  0  0  1  0  0   Explosion Lamp 9
+	 0  1  0  0  0  0  1  0   Explosion Lamp A
+	 0  1  0  0  0  0  0  1   Explosion Lamp B
+	 1  0  0  0  1  0  0  0   Explosion Lamp C
+	 1  0  0  0  0  1  0  0   Explosion Lamp D
+	 1  0  0  0  0  0  1  0   Explosion Lamp E
+	 1  0  0  0  0  0  0  1   Explosion Lamp F
+
+Port 2:
+	D7 D6 D5 D4 D3 D2 D1 D0   Function
+	--------------------------------------------------------------------------------------
+	 x  x  x  x  x  x  x  1   Torpedo 1
+	 x  x  x  x  x  x  1  x   Torpedo 2
+	 x  x  x  x  x  1  x  x   Torpedo 3
+	 x  x  x  x  1  x  x  x   Torpedo 4
+	 x  x  x  1  x  x  x  x   Ready
+	 x  x  1  x  x  x  x  x   Reload
+
+*/
+
 	install_port_read_handler (0, 0x01, 0x01, seawolf_port_1_r);
+
+	install_port_write_handler(0, 0x05, 0x05, seawolf_sh_port5_w);
+
+}
+
+static WRITE_HANDLER( seawolf_sh_port5_w )
+{
+	if (data & 0x01)
+		sample_start (0, 0, 0);  /* Ship Hit */
+	if (data & 0x02)
+		sample_start (1, 1, 0);  /* Torpedo */
+	if (data & 0x04)
+		sample_start (2, 2, 0);  /* Dive */
+	if (data & 0x08)
+		sample_start (3, 3, 0);  /* Sonar */
+	if (data & 0x10)
+		sample_start (4, 4, 0);  /* Mine Hit */
+
+	coin_counter_w(0, (data & 0x20) >> 5);    /* Coin Counter */
 }
 
 
@@ -821,4 +1221,35 @@ static void schaser_sh_stop(void)
 
 static void schaser_sh_update(void)
 {
+}
+
+
+static WRITE_HANDLER( clowns_sh_port7_w )
+{
+/* bit 0x08 seems to always be enabled.  Possibly sound enable? */
+/* A new sample set needs to be made with 3 different balloon sounds,
+   and the code modified to suit. */
+
+	if (data & 0x01)
+		sample_start (0, 0, 0);  /* Bottom Balloon Pop */
+
+	if (data & 0x02)
+		sample_start (0, 0, 0);  /* Middle Balloon Pop */
+
+	if (data & 0x04)
+		sample_start (0, 0, 0);  /* Top Balloon Pop */
+
+	if (data & 0x10)
+		sample_start (2, 2, 0);  /* Bounce */
+
+	if (data & 0x20)
+		sample_start (1, 1, 0);  /* Splat */
+}
+
+MACHINE_INIT( clowns )
+{
+	/* Ports 5 & 6 are probably the music channels. They change value when
+	 * a bonus is made. */
+
+	install_port_write_handler (0, 0x07, 0x07, clowns_sh_port7_w);
 }

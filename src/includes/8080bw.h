@@ -45,6 +45,7 @@ MACHINE_INIT( seawolf );
 MACHINE_INIT( desertgu );
 MACHINE_INIT( schaser );
 MACHINE_INIT( polaris );
+MACHINE_INIT( clowns );
 
 WRITE_HANDLER( sheriff_sh_p2_w );
 READ_HANDLER( sheriff_sh_p1_r );
@@ -62,6 +63,8 @@ extern struct Samplesinterface boothill_samples_interface;
 extern struct DACinterface schaser_dac_interface;
 extern struct CustomSound_interface schaser_custom_interface;
 extern struct SN76477interface schaser_sn76477_interface;
+extern struct Samplesinterface seawolf_samples_interface;
+extern struct discrete_sound_block polaris_sound_interface[];
 
 
 /*----------- defined in vidhrdw/8080bw.c -----------*/

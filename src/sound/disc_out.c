@@ -2,7 +2,7 @@
 /*                                                                      */
 /*  MAME - Discrete sound system emulation library                      */
 /*                                                                      */
-/*  Written by Keith Wilkins (mame@dysfunction.demon.co.uk)             */
+/*  Written by Keith Wilkins (mame@esplexo.co.uk)                       */
 /*                                                                      */
 /*  (c) K.Wilkins 2000                                                  */
 /*                                                                      */
@@ -24,7 +24,7 @@ struct dso_output_context
 /*                                                                      */
 /* input0    - Left channel output value                                */
 /* input1    - Right channel output value                               */
-/* input2    - NOT USED                                                 */
+/* input2    - Volume setting (static)                                  */
 /* input3    - NOT USED                                                 */
 /* input4    - NOT USED                                                 */
 /* input5    - NOT USED                                                 */
@@ -32,6 +32,7 @@ struct dso_output_context
 /************************************************************************/
 int dso_output_step(struct node_description *node)
 {
+	/* We ALWAYS work in stereo here, let the stream update decide if its mono/stereo output */
 	struct dso_output_context *context;
 	context=(struct dso_output_context*)node->context;
 	context->left=(INT16)node->input0;

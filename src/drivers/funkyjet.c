@@ -11,17 +11,7 @@
 
 Stephh's notes :
 
-0) Both games
-
-  - BUTTON3 is only checked in the "test mode".
-
-
-1) 'funkyjet'
-
-  Nothing for the moment.
-
-
-2) 'sotsugyo'
+0) 'sotsugyo'
 
   - COIN2 doesn't work due to code at 0x0001f0 :
 
@@ -48,113 +38,18 @@ Stephh's notes :
   - When the "Unused" Dip Switch is ON, the palette is modified.
 
 
-TODO:
-  - The protection chip which isn't fully worked out yet, stage selection
-    in funkyjet doesn't work.
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
-#include "funkyjet.h"
+
 #include "decocrpt.h"
+#include "decoprot.h"
+#include "deco16ic.h"
 
-/******************************************************************************/
-
-static data16_t loopback[0x400];
-
-static WRITE16_HANDLER( funkyjet_protection16_w )
-{
-	COMBINE_DATA(&loopback[offset]);
-
-/*	if (offset != (0x100 >> 1) && offset != (0x102 >> 1) && offset != (0x104 >> 1) &&
-		offset != (0x106 >> 1) && offset != (0x10a >> 1) && offset != (0x18e >> 1) &&
-		offset != (0x300 >> 1) && offset != (0x304 >> 1) && offset != (0x500 >> 1) &&
-		offset != (0x502 >> 1) && offset != (0x504 >> 1) && offset != (0x50c >> 1) &&
-		offset != (0x58c >> 1) && offset != (0x700 >> 1) && offset != (0x702 >> 1) &&
-		offset != (0x70e >> 1) && offset != (0x78e >> 1))
-
-		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",activecpu_get_pc(),offset<<1,data);
-*/
-	if (offset == (0x10a >> 1)) {
-		soundlatch_w(0,data&0xff);
-		cpu_set_irq_line(1,0,HOLD_LINE);
-	}
-}
-
-/* Protection/IO chip 74 */
-static READ16_HANDLER( funkyjet_protection16_r )
-{
-	switch (offset)
-	{
-		case 0x0be >> 1:
-			return loopback[0x106>>1];
-		case 0x11e >> 1:
-			return loopback[0x500>>1];
-
-		case 0x148 >> 1: /* EOR mask for joysticks */
-			return loopback[0x70e>>1];
-
-		case 0x1da >> 1:
-			return loopback[0x100>>1];
-		case 0x21c >> 1:
-			return loopback[0x504>>1];
-		case 0x226 >> 1:
-			return loopback[0x58c>>1];
-		case 0x24c >> 1:
-			return loopback[0x78e>>1];
-		case 0x250 >> 1:
-			return loopback[0x304>>1];
-		case 0x2d4 >> 1:
-			return loopback[0x102>>1];
-		case 0x2d8 >> 1: /* EOR mask for credits */
-			return loopback[0x502>>1];
-
-		case 0x3a6 >> 1:
-			return loopback[0x104>>1];
-		case 0x3a8 >> 1: /* See 93e4/9376 */
-			return loopback[0x500>>1];
-		case 0x3e8 >> 1:
-			return loopback[0x50c>>1];
-
-		case 0x4e4 >> 1:
-			return loopback[0x702>>1];
-		case 0x562 >> 1:
-			return loopback[0x18e>>1];
-		case 0x56c >> 1:
-			return loopback[0x50c>>1];
-
-		case 0x688 >> 1:
-			return loopback[0x300>>1];
-		case 0x788 >> 1:
-			return loopback[0x700>>1];
-
-		case 0x7d4 >> 1: /* !? On the bootleg these address checks are NOP'd, so a BEQ is never taken */
-			return 0x10; //loopback[0x7da>>1];
-
-		case 0x27c >>1: /* From bootleg code at 0x400 */
-			return ((loopback[0x70e>>1]>>4)&0x0fff) | ((loopback[0x70e>>1]&0x0001)<<15) | ((loopback[0x70e>>1]&0x000e)<<11);
-		case 0x192 >>1: /* From bootleg code at 0x400 */
-			return ((loopback[0x78e>>1]<<0)&0xf000);
-
-		case 0x5be >> 1: /* Confirmed from bootleg code at 0xc07c */
-			return ((loopback[0x70e>>1]<<4)&0xff00) | (loopback[0x70e>>1]&0x000f);
-		case 0x5ca >> 1: /* Confirmed from bootleg code at 0xc05e */
-			return ((loopback[0x78e>>1]>>4)&0xff00) | (loopback[0x78e>>1]&0x000f) | ((loopback[0x78e>>1]<<8)&0xf000);
-
-		case 0x00c >> 1: /* Player 1 & Player 2 joysticks & fire buttons */
-			return (readinputport(0) + (readinputport(1) << 8));
-		case 0x778 >> 1: /* Credits */
-			return readinputport(2);
-		case 0x382 >> 1: /* DIPS */
-			return (readinputport(3) + (readinputport(4) << 8));
-	}
-
-	if (activecpu_get_pc()!=0xc0ea)	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",activecpu_get_pc(),offset<<1);
-
-	return 0;
-}
+VIDEO_START( funkyjet );
+VIDEO_UPDATE( funkyjet );
 
 /******************************************************************************/
 
@@ -163,11 +58,10 @@ static MEMORY_READ16_START( funkyjet_readmem )
 	{ 0x120000, 0x1207ff, MRA16_RAM },
 	{ 0x140000, 0x143fff, MRA16_RAM },
 	{ 0x160000, 0x1607ff, MRA16_RAM },
-	{ 0x180000, 0x1807ff, funkyjet_protection16_r },
+	{ 0x180000, 0x1807ff, deco16_146_funkyjet_prot_r },
 	{ 0x320000, 0x321fff, MRA16_RAM },
 	{ 0x322000, 0x323fff, MRA16_RAM },
-	{ 0x340000, 0x3403ff, MRA16_RAM },
-	{ 0x340400, 0x340bff, MRA16_RAM },
+	{ 0x340000, 0x340bff, MRA16_RAM },
 	{ 0x342000, 0x342bff, MRA16_RAM },
 MEMORY_END
 
@@ -176,31 +70,17 @@ static MEMORY_WRITE16_START( funkyjet_writemem )
 	{ 0x120000, 0x1207ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x140000, 0x143fff, MWA16_RAM },
 	{ 0x160000, 0x1607ff, MWA16_RAM, &spriteram16 },
-	{ 0x180000, 0x1807ff, funkyjet_protection16_w },
+	{ 0x180000, 0x1807ff, deco16_146_funkyjet_prot_w, &deco16_prot_ram },
 	{ 0x184000, 0x184001, MWA16_NOP },
 	{ 0x188000, 0x188001, MWA16_NOP },
-	{ 0x300000, 0x30000f, funkyjet_control_0_w },
-	{ 0x320000, 0x321fff, funkyjet_pf1_data_w, &funkyjet_pf1_data },
-	{ 0x322000, 0x323fff, funkyjet_pf2_data_w, &funkyjet_pf2_data },
-	{ 0x340000, 0x3403ff, MWA16_RAM, &funkyjet_pf1_row },
-	{ 0x340400, 0x340bff, MWA16_RAM },
-	{ 0x342000, 0x342bff, MWA16_RAM }, /* pf2 rowscroll - unused? */
+	{ 0x300000, 0x30000f, MWA16_RAM, &deco16_pf12_control },
+	{ 0x320000, 0x321fff, deco16_pf1_data_w, &deco16_pf1_data },
+	{ 0x322000, 0x323fff, deco16_pf2_data_w, &deco16_pf2_data },
+	{ 0x340000, 0x340bff, MWA16_RAM, &deco16_pf1_rowscroll },
+	{ 0x342000, 0x342bff, MWA16_RAM, &deco16_pf2_rowscroll },
 MEMORY_END
 
 /******************************************************************************/
-
-static WRITE_HANDLER( YM2151_w )
-{
-	switch (offset)
-	{
-	case 0:
-		YM2151_register_port_0_w(0,data);
-		break;
-	case 1:
-		YM2151_data_port_0_w(0,data);
-		break;
-	}
-}
 
 /* Physical memory map (21 bits) */
 static MEMORY_READ_START( sound_readmem )
@@ -216,7 +96,7 @@ MEMORY_END
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x100000, 0x100001, MWA_NOP }, /* YM2203 - this board doesn't have one */
-	{ 0x110000, 0x110001, YM2151_w },
+	{ 0x110000, 0x110001, YM2151_word_0_w },
 	{ 0x120000, 0x120001, OKIM6295_data_0_w },
 	{ 0x130000, 0x130001, MWA_NOP },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
@@ -234,7 +114,7 @@ INPUT_PORTS_START( funkyjet )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* only in "test mode" */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* Button 3 only in "test mode" */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
@@ -244,7 +124,7 @@ INPUT_PORTS_START( funkyjet )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	/* only in "test mode" */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* Button 3 only in "test mode" */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* System Inputs */
@@ -252,10 +132,6 @@ INPUT_PORTS_START( funkyjet )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* Dips seem inverted with respect to other Deco games */
 
@@ -334,10 +210,6 @@ INPUT_PORTS_START( sotsugyo )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )		// Not working - see notes
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// See notes
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	/* Dips seem inverted with respect to other Deco games */
 
@@ -516,7 +388,6 @@ ROM_START( sotsugyo )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "sb030.15h",    0x00000, 0x20000, 0x1ea43f48 )
 ROM_END
-
 
 static DRIVER_INIT( funkyjet )
 {

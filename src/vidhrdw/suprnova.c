@@ -467,8 +467,8 @@ static void get_tilemap_A_tile_info(int tile_index)
 	int depth = (skns_v3_regs[0x0c/4] & 0x0001) << 1;
 	tile_info.flags = 0;
 
-	if(skns_tilemapA_ram[tile_index] & 0x80000000) tile_info.flags |= TILE_FLIPY;
-	if(skns_tilemapA_ram[tile_index] & 0x40000000) tile_info.flags |= TILE_FLIPX;
+	if(skns_tilemapA_ram[tile_index] & 0x80000000) tile_info.flags |= TILE_FLIPX;
+	if(skns_tilemapA_ram[tile_index] & 0x40000000) tile_info.flags |= TILE_FLIPY;
 
 	SET_TILE_INFO(
 			0+depth,
@@ -492,8 +492,8 @@ static void get_tilemap_B_tile_info(int tile_index)
 
 //	if ((code > 0x3ff) && (code < 0x4000)) code &= 0x3ff;
 
-	if(skns_tilemapB_ram[tile_index] & 0x80000000) tile_info.flags |= TILE_FLIPY;
-	if(skns_tilemapB_ram[tile_index] & 0x40000000) tile_info.flags |= TILE_FLIPX;
+	if(skns_tilemapB_ram[tile_index] & 0x80000000) tile_info.flags |= TILE_FLIPX;
+	if(skns_tilemapB_ram[tile_index] & 0x40000000) tile_info.flags |= TILE_FLIPY;
 
 	SET_TILE_INFO(
 			1+depth,
@@ -541,6 +541,113 @@ VIDEO_START(skns)
 
 	return 0;
 }
+
+static void supernova_draw_a( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
+{
+		int enable_a  = (skns_v3_regs[0x10/4] >> 0) & 0x0001;
+		UINT32 startx,starty;
+		int incxx,incxy,incyx,incyy;
+
+		if (enable_a)
+		{
+			startx = skns_v3_regs[0x1c/4];
+			incyy  = skns_v3_regs[0x30/4]; // was xx, changed for sarukani
+			incyx  = skns_v3_regs[0x2c/4];
+			starty = skns_v3_regs[0x20/4];
+			incxy  = skns_v3_regs[0x28/4];
+			incxx  = skns_v3_regs[0x24/4]; // was yy, changed for sarukani
+
+			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
+			{
+				int columnscroll_a = (skns_v3_regs[0x0c/4] >> 1) & 0x0001;
+				int offs;
+
+				startx >>= 8; // Lose Floating point
+				starty >>= 8;
+
+				if(columnscroll_a) {
+					tilemap_set_scroll_rows(skns_tilemap_A,1);
+					tilemap_set_scroll_cols(skns_tilemap_A,0x400);
+
+					tilemap_set_scrollx( skns_tilemap_A, 0, startx );
+					for(offs=0; offs<(0x1000/4); offs++)
+						tilemap_set_scrolly( skns_tilemap_A, offs, starty - (skns_v3slc_ram[offs]&0x3ff) );
+				}
+				else
+				{
+					tilemap_set_scroll_rows(skns_tilemap_A,0x400);
+					tilemap_set_scroll_cols(skns_tilemap_A,1);
+
+					tilemap_set_scrolly( skns_tilemap_A, 0, starty );
+					for(offs=0; offs<(0x1000/4); offs++)
+						tilemap_set_scrollx( skns_tilemap_A, offs, startx - (skns_v3slc_ram[offs]&0x3ff) );
+				}
+				tilemap_draw(bitmap,cliprect,skns_tilemap_A,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+			}
+			else
+			{
+				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_A,startx << 8,starty << 8,
+						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
+						1,	/* wraparound */
+						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+			}
+		}
+
+}
+
+static void supernova_draw_b( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
+{
+		int enable_b  = (skns_v3_regs[0x34/4] >> 0) & 0x0001;
+		UINT32 startx,starty;
+		int incxx,incxy,incyx,incyy;
+
+
+		if (enable_b)
+		{
+			startx = skns_v3_regs[0x40/4];
+			incyy  = skns_v3_regs[0x54/4];
+			incyx  = skns_v3_regs[0x50/4];
+			starty = skns_v3_regs[0x44/4];
+			incxy  = skns_v3_regs[0x4c/4];
+			incxx  = skns_v3_regs[0x48/4];
+
+			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
+			{
+				int columnscroll_b = (skns_v3_regs[0x0c/4] >> 9) & 0x0001;
+				int offs;
+
+				startx >>= 8;
+				starty >>= 8;
+
+				if(columnscroll_b) {
+					tilemap_set_scroll_rows(skns_tilemap_B,1);
+					tilemap_set_scroll_cols(skns_tilemap_B,0x400);
+
+					tilemap_set_scrollx( skns_tilemap_B, 0, startx );
+					for(offs=0; offs<(0x1000/4); offs++)
+						tilemap_set_scrolly( skns_tilemap_B, offs, starty - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
+				}
+				else
+				{
+					tilemap_set_scroll_rows(skns_tilemap_B,0x400);
+					tilemap_set_scroll_cols(skns_tilemap_B,1);
+
+					tilemap_set_scrolly( skns_tilemap_B, 0, starty );
+					for(offs=0; offs<(0x1000/4); offs++)
+						tilemap_set_scrollx( skns_tilemap_B, offs, startx - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
+				}
+				tilemap_draw(bitmap,cliprect,skns_tilemap_B,tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+			}
+			else
+			{
+				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_B,startx << 8,starty << 8,
+						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
+						1,	/* wraparound */
+						tran ? 0 : TILEMAP_IGNORE_TRANSPARENCY,0);
+			}
+		}
+}
+
 
 VIDEO_UPDATE(skns)
 {
@@ -608,101 +715,30 @@ VIDEO_UPDATE(skns)
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	{
-		int enable_a  = (skns_v3_regs[0x10/4] >> 0) & 0x0001;
-		int enable_b  = (skns_v3_regs[0x34/4] >> 0) & 0x0001;
-		UINT32 startx,starty;
-		int incxx,incxy,incyx,incyy;
+		int supernova_pri_a;
+		int supernova_pri_b;
+		int tran = 0;
 
-		if (enable_a)
+		supernova_pri_a = skns_v3_regs[0x10/4] & 0x0002;
+		supernova_pri_b = skns_v3_regs[0x34/4] & 0x0002;
+
+
+		/* needed until we have the per tile priorities sorted out */
+		if (!strcmp(Machine->gamedrv->name,"sarukani"))
 		{
-			startx = skns_v3_regs[0x1c/4];
-			incxx  = skns_v3_regs[0x30/4];
-			incyx  = skns_v3_regs[0x2c/4];
-			starty = skns_v3_regs[0x20/4];
-			incxy  = skns_v3_regs[0x28/4];
-			incyy  = skns_v3_regs[0x24/4];
-
-			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
-			{
-				int columnscroll_a = (skns_v3_regs[0x0c/4] >> 1) & 0x0001;
-				int offs;
-
-				startx >>= 8; // Lose Floating point
-				starty >>= 8;
-
-				if(columnscroll_a) {
-					tilemap_set_scroll_rows(skns_tilemap_A,1);
-					tilemap_set_scroll_cols(skns_tilemap_A,0x400);
-
-					tilemap_set_scrollx( skns_tilemap_A, 0, startx );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrolly( skns_tilemap_A, offs, starty - (skns_v3slc_ram[offs]&0x3ff) );
-				}
-				else
-				{
-					tilemap_set_scroll_rows(skns_tilemap_A,0x400);
-					tilemap_set_scroll_cols(skns_tilemap_A,1);
-
-					tilemap_set_scrolly( skns_tilemap_A, 0, starty );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrollx( skns_tilemap_A, offs, startx - (skns_v3slc_ram[offs]&0x3ff) );
-				}
-				tilemap_draw(bitmap,cliprect,skns_tilemap_A,TILEMAP_IGNORE_TRANSPARENCY,0);
-			}
-			else
-			{
-				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_A,startx << 8,starty << 8,
-						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
-						1,	/* wraparound */
-						TILEMAP_IGNORE_TRANSPARENCY,0);
-			}
+			supernova_pri_b = 0;
+			supernova_pri_a = 1;
 		}
 
-		if (enable_b)
-		{
-			startx = skns_v3_regs[0x40/4];
-			incxx  = skns_v3_regs[0x54/4];
-			incyx  = skns_v3_regs[0x50/4];
-			starty = skns_v3_regs[0x44/4];
-			incxy  = skns_v3_regs[0x4c/4];
-			incyy  = skns_v3_regs[0x48/4];
 
-			if( (incxx == 1<<8) && !incxy & !incyx && (incyy == 1<<8) ) // No Roz, only scroll.
-			{
-				int columnscroll_b = (skns_v3_regs[0x0c/4] >> 9) & 0x0001;
-				int offs;
+		if (!supernova_pri_a) { supernova_draw_a(bitmap,cliprect,tran); tran = 1;}
+		if (!supernova_pri_b) { supernova_draw_b(bitmap,cliprect,tran); tran = 1;}
+		if (supernova_pri_a) { supernova_draw_a(bitmap,cliprect,tran); tran = 1;}
+		if (supernova_pri_b) { supernova_draw_b(bitmap,cliprect,tran); tran = 1;}
 
-				startx >>= 8;
-				starty >>= 8;
 
-				if(columnscroll_b) {
-					tilemap_set_scroll_rows(skns_tilemap_B,1);
-					tilemap_set_scroll_cols(skns_tilemap_B,0x400);
-
-					tilemap_set_scrollx( skns_tilemap_B, 0, startx );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrolly( skns_tilemap_B, offs, starty - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
-				}
-				else
-				{
-					tilemap_set_scroll_rows(skns_tilemap_B,0x400);
-					tilemap_set_scroll_cols(skns_tilemap_B,1);
-
-					tilemap_set_scrolly( skns_tilemap_B, 0, starty );
-					for(offs=0; offs<(0x1000/4); offs++)
-						tilemap_set_scrollx( skns_tilemap_B, offs, startx - (skns_v3slc_ram[offs+(0x1000/4)]&0x3ff) );
-				}
-				tilemap_draw(bitmap,cliprect,skns_tilemap_B,0,0);
-			}
-			else
-			{
-				tilemap_draw_roz(bitmap,cliprect,skns_tilemap_B,startx << 8,starty << 8,
-						incxx << 8,incxy << 8,incyx << 8,incyy << 8,
-						1,	/* wraparound */
-						0,0);
-			}
-		}
 	}
+
 
 	skns_drawsprites(bitmap,cliprect);
 }

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Nintendo VS UniSystem and DualSystem - (c) 198? Nintendo of America
+Nintendo VS UniSystem and DualSystem - (c) 1984 Nintendo of America
 
 	Portions of this code are heavily based on
 	Brad Oliver's MESS implementation of the NES.
@@ -120,8 +120,6 @@ WRITE_HANDLER( vsnes_in0_w )
 
 READ_HANDLER( gun_in0_r )
 {
-
-
 	int ret = ( input_latch[0] ) & 1;
 
 	/* shift */
@@ -129,7 +127,6 @@ READ_HANDLER( gun_in0_r )
 
 	ret |= readinputport( 2 ); 				/* merge coins, etc */
 	ret |= ( readinputport( 3 ) & 3 ) << 3; /* merge 2 dipswitches */
-
 
 /* The gun games expect a 1 returned on every 5th read after sound_fix is reset*/
 /* Info Supplied by Ben Parnell <xodnizel@home.com> of FCE Ultra fame */
@@ -139,12 +136,9 @@ READ_HANDLER( gun_in0_r )
 		ret = 1;
 	}
 
+	sound_fix++;
 
-sound_fix ++;
-
-
-return ret;
-
+	return ret;
 
 }
 
@@ -218,6 +212,7 @@ READ_HANDLER( vsnes_in1_1_r )
  *	Init machine
  *
  *************************************/
+
 MACHINE_INIT( vsnes )
 {
 	input_latch[0] = input_latch[1] = 0;
@@ -245,11 +240,11 @@ MACHINE_INIT( vsdual )
 	ppu2c03b_reset( 0,1);
 	ppu2c03b_reset( 1,1 );
 
-/* if we need to remap, install the callback */
+	/* if we need to remap, install the callback */
 	if ( remapped_colortable )
 	{
-	ppu2c03b_set_vidaccess_callback( 0, remap_colors );
-	ppu2c03b_set_vidaccess_callback( 1, remap_colors );
+		ppu2c03b_set_vidaccess_callback( 0, remap_colors );
+		ppu2c03b_set_vidaccess_callback( 1, remap_colors );
 	}
 }
 
@@ -292,6 +287,20 @@ DRIVER_INIT( vsnormal )
 	install_mem_write_handler( 0, 0x4016, 0x4016, vsnormal_vrom_banking );
 }
 
+static WRITE_HANDLER( ppuRC2C05_protection )
+{
+	/* This PPU has registers mapped at $2000 and $2001 inverted */
+	/* and no remapped color */
+
+	if ( offset == 0 )
+	{
+		ppu2c03b_0_w( 1, data );
+		return;
+	}
+
+	ppu2c03b_0_w( 0, data );
+}
+
 /**********************************************************************************/
 
 /* Super Mario Bros. Extra ram at $6000 (NV?) and remapped colors */
@@ -320,8 +329,7 @@ DRIVER_INIT( suprmrio )
 
 static WRITE_HANDLER( duckhunt_vrom_banking )
 {
-static int zapstore;
-
+	static int zapstore;
 
 	/* switch vrom */
 	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
@@ -352,21 +360,19 @@ static int zapstore;
 				 ( pix == pens[color_base+0x33] ) || ( pix == pens[color_base+0x34] ) )
 			{
 				input_latch[0] |= 0x40;
-
-
 			}
 		}
 
 		input_latch[1] = readinputport( 1 );
 	}
 
+    if ( ( zapstore & 1 ) && ( !( data & 1 ) ) )
+	/* reset sound_fix to keep sound from hanging */
+    {
+		sound_fix = 0;
+	}
 
-                        if ((zapstore&1) && (!(data&1)))
-
-					/* reset sound_fix to keep sound from hanging */
-
-                                {sound_fix=0;}
-                        zapstore=data;
+    zapstore = data;
 
 }
 
@@ -459,7 +465,6 @@ DRIVER_INIT( vspinbal )
 	/* now override the vidaccess callback */
 	remapped_colortable = rp2c04001_colortable;
 
-
 }
 
 DRIVER_INIT( hogalley )
@@ -477,6 +482,42 @@ DRIVER_INIT( hogalley )
 
 	/* now override the vidaccess callback */
 	remapped_colortable = rp2c04001_colortable;
+}
+
+/***********************************************************************/
+
+/* Vs. Gumshoe */
+
+static READ_HANDLER( vsgshoe_security_r )
+{
+	/* low part must be 0x1c */
+	return ppu2c03b_0_r( 2 ) | 0x1c;
+}
+
+DRIVER_INIT( vsgshoe )
+{
+
+	//Game
+	memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x2000);
+
+	//Title Screen
+	//memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x12000], 0x2000);
+
+	memcpy (&memory_region( REGION_CPU1 )[0x0a000], &memory_region( REGION_CPU1 )[0x14000], 0x6000);
+
+	/* Protection */
+	install_mem_read_handler( 0,0x2002, 0x2002, vsgshoe_security_r );
+	install_mem_write_handler( 0, 0x2000, 0x2001, ppuRC2C05_protection );
+
+	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
+	/* vrom switching is enabled with bit 2 of $4016 */
+	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
+
+	/* common init */
+	init_vsnes();
+
+	vsnes_gun_controller = 1;
+
 }
 
 /**********************************************************************************/
@@ -499,6 +540,7 @@ static WRITE_HANDLER( drmario_rom_banking )
 		drmario_shiftreg = drmario_shiftcount = 0;
 
 		size16k = 1;
+
 		switchlow = 1;
 		vrom4k = 0;
 
@@ -615,6 +657,37 @@ DRIVER_INIT( drmario )
 	remapped_colortable = rp2c04003_colortable;
 }
 
+/***********************************************************************/
+
+/* Vs. Freedom Force */
+
+DRIVER_INIT( vsfdf )
+{
+	//It doesn't work due to the jump at location 0xe63e
+
+	/* We do manual banking, in case the code falls through */
+	/* Copy the initial banks */
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x2c000], 0x4000 );
+
+	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r );
+	/* vrom switching is enabled with bit 2 of $4016 */
+	install_mem_write_handler( 0, 0x4016, 0x4016, duckhunt_vrom_banking );
+
+	/* MMC1 mapper at writes to $8000-$ffff */
+	install_mem_write_handler( 0, 0x8000, 0xffff, drmario_rom_banking );
+
+	drmario_shiftreg = 0;
+	drmario_shiftcount = 0;
+
+	init_vsnes();
+
+	vsnes_gun_controller = 1;
+
+	remapped_colortable = rp2c04001_colortable;
+
+}
+
 /**********************************************************************************/
 
 /* Excite Bike */
@@ -632,7 +705,6 @@ DRIVER_INIT( excitebk )
 	/* this *is* the VS games protection, I guess */
 	remapped_colortable = rp2c04003_colortable;
 }
-
 
 DRIVER_INIT( excitbkj )
 {
@@ -654,6 +726,7 @@ DRIVER_INIT( excitbkj )
 
 DRIVER_INIT( machridr )
 {
+
 	/* common init */
 	init_vsnes();
 
@@ -694,7 +767,7 @@ static WRITE_HANDLER( castlevania_rom_banking )
 
 DRIVER_INIT( cstlevna )
 {
-	/* when starting the game , the 1st 16k and the last 16k are loaded into the 2 banks */
+	/* when starting the game, the 1st 16k and the last 16k are loaded into the 2 banks */
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );
 
    	/* banking is done with writes to the $8000-$ffff area */
@@ -719,43 +792,20 @@ static READ_HANDLER( topgun_security_r )
 	return ppu2c03b_0_r( 2 ) | 0x1b;
 }
 
-static WRITE_HANDLER( topgun_security_w )
+DRIVER_INIT( topgun )
 {
-	static int control;
-
-	ppu2c03b_set_mirroring( 0, PPU_MIRROR_VERT );
-
-	if ( offset == 0 )
-	{
-		data &= 0x7f;
-		control = data;
-		ppu2c03b_0_w( 0, data );
-		return;
-	}
-
-	ppu2c03b_0_w( 0, control | ( data & 0x80 ) );
-	ppu2c03b_0_w( 1, data );
-}
-
-DRIVER_INIT( vstopgun )
-{
-	/* when starting a mmc1 game , the 1st 16k and the last 16k are loaded into the 2 banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );/*memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );*/
+	/* when starting the game, the 1st 16k and the last 16k are loaded into the 2 banks */
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );
 
    	/* banking is done with writes to the $8000-$ffff area */
 	install_mem_write_handler( 0, 0x8000, 0xffff, castlevania_rom_banking );
 
 	/* tap on the PPU, due to some tricky protection */
 	install_mem_read_handler( 0, 0x2002, 0x2002, topgun_security_r );
-	install_mem_write_handler( 0, 0x2000, 0x2001, topgun_security_w );
+	install_mem_write_handler( 0, 0x2000, 0x2001, ppuRC2C05_protection );
 
 	/* common init */
 	init_vsnes();
-
-	/* now override the vidaccess callback */
-	/* we need to remap color tables */
-	/* this *is* the VS games protection, I guess */
-	remapped_colortable = rp2c04003_colortable;
 }
 
 /**********************************************************************************/
@@ -764,6 +814,8 @@ DRIVER_INIT( vstopgun )
 
 static int rbibb_scanline_counter;
 static int rbibb_scanline_latch;
+static int mmc3_bank;
+static int supxev_protection;
 
 static void rbibb_scanline_cb( int num, int scanline, int vblank, int blanked )
 {
@@ -781,31 +833,30 @@ static READ_HANDLER( rbi_hack_r)
 {
 /* Supplied by Ben Parnell <xodnizel@home.com> of FCE Ultra fame */
 
-static int VSindex;
+	static int VSindex;
 
-if (offset == 0)
+	if (offset == 0)
 	{
 		VSindex=0;
 		return 0xFF;
 
 	}
-else
+	else
 	{
-	switch(VSindex++)
-    		{
+		switch(VSindex++)
+		{
+   			case 9:
+    			return 0x6F;
+			break;
 
-    		case 9:
-    		return 0x6F;
-		break;
+			case 14:
+				return 0x94;
+			break;
 
-		case 14:
-		return 0x94;
-		break;
-
-    		default:
-    		return 0xB4;
-		break;
-    		}
+   			default:
+    			return 0xB4;
+			break;
+		}
 	}
 }
 
@@ -815,17 +866,15 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 	static int last_bank = 0xff;
 	static int rbibb_command;
 
-
 	switch( offset & 0x7001 )
 	{
 		case 0x0000:
 			rbibb_command = data;
-
 			if ( last_bank != ( data & 0xc0 ) )
 			{
 				/* reset the banks */
-				memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
-				memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
+				memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
+				memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
 
 				last_bank = data & 0xc0;
 			}
@@ -861,8 +910,9 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 							/* high bank */
 							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
 
+							memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
 							memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
+
 						}
 						else
 						{
@@ -870,16 +920,17 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
 
 							memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
-							memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x2000 );
+							memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x2000 );
+
 						}
 					break;
 
 					case 7: /* program banking */
 						{
-							/* mid bank */
 							int bank = ( data & 0x07 ) * 0x2000 + 0x10000;
 
 							memcpy( &memory_region( REGION_CPU1 )[0x0a000], &memory_region( REGION_CPU1 )[bank], 0x2000 );
+
 						}
 					break;
 				}
@@ -891,6 +942,7 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 				ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
 			else
 				ppu2c03b_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+
 		break;
 
 		case 0x2001: /* enable ram at $6000 */
@@ -917,10 +969,12 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 
 DRIVER_INIT( rbibb )
 {
+	mmc3_bank = 0x1c000;
+
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
 
 	/* RBI Base ball hack */
 	install_mem_read_handler(0,0x5e00, 0x5e01, rbi_hack_r) ;
@@ -934,75 +988,76 @@ DRIVER_INIT( rbibb )
 
 	/* common init */
 	init_vsnes();
+
 	remapped_colortable = rp2c04003_colortable;
 }
 
-#if 0
-static READ_HANDLER( xevious_hack_r)
+/**********************************************************************************/
+/* Vs. Super Xevious */
+
+static READ_HANDLER( xevious_hack_r )
 {
-
-
-return 0x05;
-
+	return 0x05;
 }
 
-static READ_HANDLER( xevious_hack_r1)
+static READ_HANDLER( xevious_hack_r1 )
 {
-
-
-
-return 0x01;
-
+	if( supxev_protection )
+		return 0;
+	else
+		return 0x01;
 }
 
-
-static READ_HANDLER( xevious_hack_r2)
+static READ_HANDLER( xevious_hack_r2 )
 {
-
-
-
-return 0x89;
-
+	if( supxev_protection )
+		return 0xd1;
+	else
+		return 0x89;
 }
 
-
-static READ_HANDLER( xevious_hack_r3)
+static READ_HANDLER( xevious_hack_r3 )
 {
-
-
-
-return 0x37;
-
+	if( supxev_protection )
+	{
+		supxev_protection = 0;
+		return 0x3e;
+	}
+	else
+	{
+		supxev_protection = 1;
+		return 0x37;
+	}
 }
-#endif
 
 DRIVER_INIT( xevious )
 {
+	mmc3_bank = 0x2c000;
+
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-
-	/* RBI Base ball hack */
-
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
 
 	/* MMC3 mapper at writes to $8000-$ffff */
 	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
 
-	//install_mem_read_handler(0,0x54ff,0x54ff,xevious_hack_r);
-	//install_mem_read_handler(0,0x5678,0x5678,xevious_hack_r1);
-	//install_mem_read_handler(0,0x578f,0x578f,xevious_hack_r2);
-	//install_mem_read_handler(0,0x5567,0x5567,xevious_hack_r3);
+	install_mem_read_handler( 0, 0x54ff, 0x54ff, xevious_hack_r );
+	install_mem_read_handler( 0, 0x5678, 0x5678, xevious_hack_r1 );
+	install_mem_read_handler( 0, 0x578f, 0x578f, xevious_hack_r2 );
+	install_mem_read_handler( 0, 0x5567, 0x5567, xevious_hack_r3 );
+
+	supxev_protection = 0;
 
 	/* extra ram at $6000-$7fff */
-//	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
-//	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
 
 	/* common init */
 	init_vsnes();
-	//remapped_colortable = rp2c04001_colortable;
-}
 
+	remapped_colortable = rp2c04001_colortable;
+}
 
 static READ_HANDLER( tko_security_r )
 {
@@ -1026,10 +1081,12 @@ static READ_HANDLER( tko_security_r )
 
 DRIVER_INIT( tkoboxng )
 {
+	mmc3_bank  = 0x1c000;
+
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
-	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
-	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[0x1c000], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
+	memcpy( &memory_region( REGION_CPU1 )[0x0c000], &memory_region( REGION_CPU1 )[mmc3_bank], 0x4000 );
 
 	/* MMC3 mapper at writes to $8000-$ffff */
 	install_mem_write_handler( 0, 0x8000, 0xffff, rbibb_rom_switch_w );
@@ -1040,7 +1097,6 @@ DRIVER_INIT( tkoboxng )
 
 	/* security device at $5e00-$5e01 */
 	install_mem_read_handler( 0, 0x5e00, 0x5e01, tko_security_r );
-
 
 	/* common init */
 	init_vsnes();
@@ -1058,19 +1114,21 @@ DRIVER_INIT( tkoboxng )
 static WRITE_HANDLER( vsskykid_rom_switch_w )
 {
 
-/* basically, a MMC3 mapper from the nes with out the program rom banking */
-
+	/* basically, a MMC3 mapper from the nes with out the program rom banking */
 
 	static int mapper_command;
 
 	switch( offset & 0x7001 )
 	{
 		case 0x0000:
+
 			mapper_command = data;
 
+			break;
 
 		case 0x0001:
 			{
+
 				UINT8 cmd = mapper_command & 0x07;
 				int page = ( mapper_command & 0x80 ) >> 5;
 
@@ -1081,8 +1139,8 @@ static WRITE_HANDLER( vsskykid_rom_switch_w )
 
 						data &= 0xfe;
 						page ^= ( cmd << 1 );
-
 						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
+
 					break;
 
 					case 2: /* char banking */
@@ -1091,19 +1149,15 @@ static WRITE_HANDLER( vsskykid_rom_switch_w )
 					case 5: /* char banking */
 
 						page ^= cmd + 2;
-
 						ppu2c03b_set_videorom_bank( 0, page, 1, data, 64 );
-					break;
 
+					break;
 
 				}
 			}
 		break;
 
-
-
 	}
-
 
 }
 
@@ -1112,16 +1166,10 @@ DRIVER_INIT( vsskykid )
 	/* ??? mapper at writes to $8000-$ffff */
 	install_mem_write_handler( 0, 0x8000, 0xffff, vsskykid_rom_switch_w );
 
-
 	/* common init */
 	init_vsnes();
 
-
-
-
 }
-
-
 
 /**********************************************************************************/
 /* Platoon rom banking */
@@ -1151,17 +1199,14 @@ static WRITE_HANDLER( mapper68_rom_banking ){
 		memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000 +data*0x4000], 0x4000 );
 		break;
 
-
 	}
 
 }
 
-
-
 DRIVER_INIT( platoon )
 {
 
-/* when starting a mapper 68 game  the first 16K ROM bank in the cart is loaded into $8000
+	/* when starting a mapper 68 game  the first 16K ROM bank in the cart is loaded into $8000
 	the LAST 16K ROM bank is loaded into $C000. The last 16K of ROM cannot be swapped. */
 
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x4000 );
@@ -1173,13 +1218,92 @@ DRIVER_INIT( platoon )
 
  	remapped_colortable = rp2c04001_colortable;
 
-
-
 }
 
+/**********************************************************************************/
+/* Vs. Raid on Bungeling Bay (Japan) */
+
+static int ret;
+static WRITE_HANDLER ( set_bnglngby_irq_w )
+{
+	ret = data;
+	cpu_set_irq_line( 0, 0, ( data & 2 ) ? ASSERT_LINE : CLEAR_LINE );
+	/* other values ??? */
+	/* 0, 4, 84 */
+}
+
+static READ_HANDLER ( set_bnglngby_irq_r )
+{
+	return ret;
+}
+
+DRIVER_INIT( bnglngby )
+{
+	install_mem_read_handler( 0, 0x0231, 0x0231, set_bnglngby_irq_r );
+	install_mem_write_handler( 0, 0x0231, 0x0231, set_bnglngby_irq_w );
+
+	/* extra ram */
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+
+	ret = 0;
+
+	/* common init */
+	init_vsnes();
+
+	/* normal banking */
+	init_vsnormal();
+
+	remapped_colortable = rp2c04002_colortable;
+}
 
 /**********************************************************************************/
+/* Vs. Ninja Jajamaru Kun */
 
+static READ_HANDLER( jajamaru_security_r )
+{
+	/* low part must be 0x40 */
+	return ppu2c03b_0_r( 2 ) | 0x40;
+}
+
+DRIVER_INIT( jajamaru )
+{
+	//It executes an illegal opcode: 0x04 at 0x9e67 and 0x9e1c
+	//At 0x9e5d and 0x9e12 there is a conditional jump to it
+	//Maybe it should be a DOP (double NOP)
+
+	/* Protection */
+	install_mem_read_handler( 0, 0x2002, 0x2002, jajamaru_security_r );
+	install_mem_write_handler( 0, 0x2000, 0x2001, ppuRC2C05_protection );
+
+	/* common init */
+	init_vsnes();
+
+	/* normal banking */
+	init_vsnormal();
+}
+
+/***********************************************************************/
+
+/* Vs. Mighty Bomb Jack */
+
+static READ_HANDLER( mightybj_security_r )
+{
+	/* low part must be 0x3d */
+	return ppu2c03b_0_r( 2 ) | 0x3d;
+}
+
+DRIVER_INIT( mightybj )
+{
+	/* Protection */
+	install_mem_read_handler( 0, 0x2002, 0x2002, mightybj_security_r );
+	install_mem_write_handler( 0, 0x2000, 0x2001, ppuRC2C05_protection );
+
+	/* common init */
+	init_vsnes();
+}
+
+/**********************************************************************************/
 /* VS Tennis */
 
 static WRITE_HANDLER( vstennis_vrom_banking )
@@ -1188,7 +1312,6 @@ static WRITE_HANDLER( vstennis_vrom_banking )
 
 	/* switch vrom */
 	ppu2c03b_set_videorom_bank( cpu_getactivecpu(), 0, 8, ( data & 4 ) ? 1 : 0, 512 );
-
 
 	/* bit 1 ( data & 2 ) triggers irq on the other cpu */
 	cpu_set_irq_line( other_cpu, 0, ( data & 2 ) ? CLEAR_LINE : ASSERT_LINE );
@@ -1212,18 +1335,14 @@ DRIVER_INIT( vstennis )
 	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA_BANK2 );
 	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA_BANK2 );
 
-
-
-
 }
-
 
 /**********************************************************************/
 /* Wrecking Crew Init*/
 
 DRIVER_INIT( wrecking )
 {
-/* only differance between this and vstennis is the colors */
+	/* only differance between this and vstennis is the colors */
 
 	init_vstennis();
 	remapped_colortable = rp2c04002_colortable;
@@ -1234,7 +1353,7 @@ DRIVER_INIT( wrecking )
 
 DRIVER_INIT( balonfgt )
 {
-/* only differance between this and vstennis is the colors */
+	/* only differance between this and vstennis is the colors */
 
 	init_vstennis();
 
@@ -1247,25 +1366,25 @@ DRIVER_INIT( balonfgt )
 
 DRIVER_INIT( vsbball )
 {
-/* only differance between this and vstennis is the colors */
+	/* only differance between this and vstennis is the colors */
 
 	init_vstennis();
 
-remapped_colortable = rp2c04001_colortable;
+	remapped_colortable = rp2c04001_colortable;
 
 }
 
 
 /**********************************************************************/
-/* Dual Ice climr Jpn */
+/* Dual Ice Climber Jpn */
 
 DRIVER_INIT( iceclmrj )
 {
-/* only differance between this and vstennis is the colors */
+	/* only differance between this and vstennis is the colors */
 
 	init_vstennis();
 
-remapped_colortable = rp2c05004_colortable;
+	remapped_colortable = rp2c05004_colortable;
 
 }
 
@@ -1282,13 +1401,16 @@ DRIVER_INIT( btlecity )
 /* Tetris */
 DRIVER_INIT( vstetris )
 {
+	/* extra ram at $6000 is enabled with bit 1 of $4016 */
+	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA_RAM );
+	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_RAM );
+
 	init_vsnes();
 	init_vsnormal();
 	remapped_colortable = rp2c04003_colortable;
 }
 
-/***********************************************************************/
-
+//remapped_colortable = rp2c04001_colortable;
 //remapped_colortable = rp2c04002_colortable;
 //remapped_colortable = rp2c04003_colortable;
 //remapped_colortable = rp2c05004_colortable;

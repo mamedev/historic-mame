@@ -867,21 +867,21 @@ static DRIVER_INIT( hyperpac )
 	hyperpac_ram[0xe086/2] = 0x3210;
 }
 
- static DRIVER_INIT(snowbro3)
- {
- 	unsigned char *buffer;
- 	data8_t *src = memory_region(REGION_CPU1);
- 	int len = memory_region_length(REGION_CPU1);
+static DRIVER_INIT(snowbro3)
+{
+	unsigned char *buffer;
+	data8_t *src = memory_region(REGION_CPU1);
+	int len = memory_region_length(REGION_CPU1);
 
- 	/* strange order */
- 	if ((buffer = malloc(len)))
- 	{
- 		int i;
- 		for (i = 0;i < len; i++)
- 			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,3,4,1,2,0)];
- 		memcpy(src,buffer,len);
- 		free(buffer);
- 	}
+	/* strange order */
+	if ((buffer = malloc(len)))
+	{
+		int i;
+		for (i = 0;i < len; i++)
+			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,3,4,1,2,0)];
+		memcpy(src,buffer,len);
+		free(buffer);
+	}
 }
 
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )

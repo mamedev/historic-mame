@@ -255,11 +255,11 @@ VIDEO_EOF( dynduke )
 static MACHINE_DRIVER_START( dynduke )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,16000000) /* NEC V30-8 CPU */
+	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
 
-	MDRV_CPU_ADD(V30,16000000) /* NEC V30-8 CPU */
+	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
 	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
 

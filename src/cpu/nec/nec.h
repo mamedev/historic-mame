@@ -72,17 +72,17 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 
 #define DefaultBase(Seg) ((seg_prefix && (Seg==DS || Seg==SS)) ? prefix_base : I.sregs[Seg] << 4)
 
-#define GetMemB(Seg,Off) (nec_ICount-=7, (UINT8)cpu_readmem20((DefaultBase(Seg)+(Off))))
-#define GetMemW(Seg,Off) (nec_ICount-=11, (UINT16) cpu_readmem20((DefaultBase(Seg)+(Off))) + (cpu_readmem20((DefaultBase(Seg)+((Off)+1)))<<8) )
+#define GetMemB(Seg,Off) ((UINT8)cpu_readmem20((DefaultBase(Seg)+(Off))))
+#define GetMemW(Seg,Off) ((UINT16) cpu_readmem20((DefaultBase(Seg)+(Off))) + (cpu_readmem20((DefaultBase(Seg)+((Off)+1)))<<8) )
 
-#define PutMemB(Seg,Off,x) { nec_ICount-=7; cpu_writemem20((DefaultBase(Seg)+(Off)),(x)); }
-#define PutMemW(Seg,Off,x) { nec_ICount-=11; PutMemB(Seg,Off,(x)&0xff); PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)); }
+#define PutMemB(Seg,Off,x) { cpu_writemem20((DefaultBase(Seg)+(Off)),(x)); }
+#define PutMemW(Seg,Off,x) { PutMemB(Seg,Off,(x)&0xff); PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)); }
 
 /* Todo:  Remove these later - plus readword could overflow */
-#define ReadByte(ea) (nec_ICount-=6,(BYTE)cpu_readmem20((ea)))
-#define ReadWord(ea) (nec_ICount-=10,cpu_readmem20((ea))+(cpu_readmem20(((ea)+1))<<8))
-#define WriteByte(ea,val) { nec_ICount-=7; cpu_writemem20((ea),val); }
-#define WriteWord(ea,val) { nec_ICount-=11; cpu_writemem20((ea),(BYTE)(val)); cpu_writemem20(((ea)+1),(val)>>8); }
+#define ReadByte(ea) ((BYTE)cpu_readmem20((ea)))
+#define ReadWord(ea) (cpu_readmem20((ea))+(cpu_readmem20(((ea)+1))<<8))
+#define WriteByte(ea,val) { cpu_writemem20((ea),val); }
+#define WriteWord(ea,val) { cpu_writemem20((ea),(BYTE)(val)); cpu_writemem20(((ea)+1),(val)>>8); }
 
 #define read_port(port) cpu_readport16(port)
 #define write_port(port,val) cpu_writeport16(port,val)
@@ -111,9 +111,9 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 
 #define CLK(all) nec_ICount-=all
 #define CLKS(v20,v30,v33) { const UINT32 ccount=(v20<<16)|(v30<<8)|v33; nec_ICount-=(ccount>>cpu_type)&0x7f; }
-#define CLKW(v20o,v30o,v33o,v20e,v30e,v33e) { const UINT32 ocount=(v20o<<16)|(v30o<<8)|v33o, ecount=(v20e<<16)|(v30e<<8)|v33e; nec_ICount-=(I.ip&1)?((ocount>>cpu_type)&0x7f):((ecount>>cpu_type)&0x7f); }
+#define CLKW(v20o,v30o,v33o,v20e,v30e,v33e,addr) { const UINT32 ocount=(v20o<<16)|(v30o<<8)|v33o, ecount=(v20e<<16)|(v30e<<8)|v33e; nec_ICount-=(addr&1)?((ocount>>cpu_type)&0x7f):((ecount>>cpu_type)&0x7f); }
 #define CLKM(v20,v30,v33,v20m,v30m,v33m) { const UINT32 ccount=(v20<<16)|(v30<<8)|v33, mcount=(v20m<<16)|(v30m<<8)|v33m; nec_ICount-=( ModRM >=0xc0 )?((ccount>>cpu_type)&0x7f):((mcount>>cpu_type)&0x7f); }
-#define CLKR(v20o,v30o,v33o,v20e,v30e,v33e,vall) { const UINT32 ocount=(v20o<<16)|(v30o<<8)|v33o, ecount=(v20e<<16)|(v30e<<8)|v33e; if (ModRM >=0xc0) nec_ICount-=vall; else nec_ICount-=(I.ip&1)?((ocount>>cpu_type)&0x7f):((ecount>>cpu_type)&0x7f); }
+#define CLKR(v20o,v30o,v33o,v20e,v30e,v33e,vall,addr) { const UINT32 ocount=(v20o<<16)|(v30o<<8)|v33o, ecount=(v20e<<16)|(v30e<<8)|v33e; if (ModRM >=0xc0) nec_ICount-=vall; else nec_ICount-=(addr&1)?((ocount>>cpu_type)&0x7f):((ecount>>cpu_type)&0x7f); }
 
 /************************************************************************/
 #define CompressFlags() (WORD)(CF | (PF << 2) | (AF << 4) | (ZF << 6) \
@@ -157,18 +157,20 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 		const UINT8 table[3]={3,10,10}; 	\
 		I.ip = (WORD)(I.ip+tmp);			\
 		nec_ICount-=table[cpu_type/8];		\
-		change_pc20((I.sregs[CS]<<4) + I.ip);\
+		CHANGE_PC;							\
 		return;								\
 	}
 
 #define ADJ4(param1,param2)					\
+	UINT8 tmpAL=I.regs.b[AL];				\
 	if (AF || ((I.regs.b[AL] & 0xf) > 9))	\
 	{										\
-		int tmp;							\
-		I.regs.b[AL] = tmp = I.regs.b[AL] + param1;	\
+		UINT16 tmp;							\
+		I.regs.b[AL] = tmp = tmpAL + param1;\
 		I.AuxVal = 1;						\
+		I.CarryVal |= tmp & 0x100;			\
 	}										\
-	if (CF || (I.regs.b[AL] > 0x9f))		\
+	if (CF || (tmpAL > 0x9f))				\
 	{										\
 		I.regs.b[AL] += param2;				\
 		I.CarryVal = 1;						\

@@ -168,8 +168,7 @@ WRITE16_HANDLER( cps2_eeprom_port_w )
 	coin_counter_w(0, data & 0x0001);
 	coin_counter_w(1, data & 0x0002);
 
-const char *gamename = Machine->gamedrv->name;
-	if(strncmp(gamename,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
+	if(strncmp(Machine->gamedrv->name,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
 	{
 		coin_lockout_w(0,data & 0x0010);
 		coin_lockout_w(1,data & 0x0020);
@@ -198,8 +197,7 @@ READ16_HANDLER( cps2_qsound_volume_r )
 	/* Network adapter (ssf2tb) present when bit 15 = 0 */
 	/* Only game known to use both these so far is SSF2TB */
 
-const char *gamename = Machine->gamedrv->name;
-	if(strcmp(gamename,"ssf2tb")==0)
+	if(strcmp(Machine->gamedrv->name,"ssf2tb")==0)
 		return 0x2021;
 	else
 		return 0xe021;
@@ -645,6 +643,51 @@ INPUT_PORTS_START( sgemf )
     PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ringdest )
+    PORT_START      /* IN0 (0x00) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+    PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+    PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+    PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+    PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+    PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+    PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+    PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+    PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START      /* IN1 (0x10) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+    PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+    PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START      /* IN2 (0x20) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SPECIAL )   /* EEPROM bit */
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+    PORT_BIT( 0x00f8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+    PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( cps2 )
     PORT_START      /* IN0 (0x00) */
     PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -797,7 +840,7 @@ ROM_START( 1944 )
 	ROM_LOAD16_WORD_SWAP( "nffu.05", 0x100000, 0x80000, 0xea813eb7 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "nffux.03", 0x000000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "nffux.03", 0x000000, 0x80000, 0x675c8109 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "nff.13",   0x0000000, 0x400000, 0xc9fca741, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -5439,9 +5482,9 @@ GAME( 1994, dstlka,   dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalk
 GAME( 1994, vampj,    dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire: The Night Warriors (Japan 940705)" )
 GAME( 1994, vampja,   dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire: The Night Warriors (Japan 940705 alt)" )
 GAME( 1994, vampjr1,  dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire: The Night Warriors (Japan 940630)" )
-GAME( 1994, ringdest, 0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Ring of Destruction: Slammasters II (Euro 940902)" )
-GAME( 1994, smbomb,   ringdest,cps2, ssf2,    cps2, ROT0,   "Capcom", "Super Muscle Bomber: The International Blowout (Japan 940831)" )
-GAME( 1994, smbombr1, ringdest,cps2, ssf2,    cps2, ROT0,   "Capcom", "Super Muscle Bomber: The International Blowout (Japan 940808)" )
+GAME( 1994, ringdest, 0,       cps2, ringdest,cps2, ROT0,   "Capcom", "Ring of Destruction: Slammasters II (Euro 940902)" )
+GAME( 1994, smbomb,   ringdest,cps2, ringdest,cps2, ROT0,   "Capcom", "Super Muscle Bomber: The International Blowout (Japan 940831)" )
+GAME( 1994, smbombr1, ringdest,cps2, ringdest,cps2, ROT0,   "Capcom", "Super Muscle Bomber: The International Blowout (Japan 940808)" )
 GAME( 1995, cybots,   0,       cps2, cybots,  cps2, ROT0,   "Capcom", "Cyberbots: Fullmetal Madness (US 950424)" )
 GAME( 1995, cybotsj,  cybots,  cps2, cybots,  cps2, ROT0,   "Capcom", "Cyberbots: Fullmetal Madness (Japan 950420)" )
 GAME( 1995, msh,      0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (US 951024)" )
@@ -5521,22 +5564,28 @@ GAME( 1998, sfa3r1,   sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1998, sfz3j,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980727)" )
 GAME( 1998, sfz3jr1,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980629)" )
 GAME( 1998, sfz3a,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Asia 980701)" )
-GAME( 1999, gigawing, 0,       cps2, 19xx,    cps2, ROT0,   "Capcom", "Giga Wing (US 990222)" )
-GAME( 1999, gwingj,   gigawing,cps2, 19xx,    cps2, ROT0,   "Capcom", "Giga Wing (Japan 990223)" )
 GAMEX(1999, jgokushi, 0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan 990527)", GAME_NOT_WORKING )
+
+/* Games released on CPS-2 hardware by Takumi */
+
+GAME( 1999, gigawing, 0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Giga Wing (US 990222)" )
+GAME( 1999, gwingj,   gigawing,cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Giga Wing (Japan 990223)" )
 GAME( 2000, mmatrix,  0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Mars Matrix: Hyper Solid Shooting (US 000412)" )
 GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Takumi", "Mars Matrix: Hyper Solid Shooting (Japan 000412)" )
-GAMEX(2001, progear,  0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Progear no Arashi (Japan 010117)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Mitchell */
 
-GAMEX(2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell", "Mighty! Pang (Japan 001011)", GAME_NOT_WORKING )
-GAMEX(2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell", "Choko (Japan 010820)", GAME_NOT_WORKING )
-GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )
+GAMEX(2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Mighty! Pang (Japan 001011)", GAME_NOT_WORKING )
+GAMEX(2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_NOT_WORKING )
+GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Eighting/Raizing */
 
 GAME( 2000, dimahoo,  0,       dima, sgemf,   cps2, ROT270, "Eighting/Raizing, distributed by Capcom", "Dimahoo (US 000121)" )
 GAME( 2000, gmahou,   dimahoo, dima, sgemf,   cps2, ROT270, "Eighting/Raizing, distributed by Capcom", "Great Mahou Daisakusen (Japan 000121)" )
-GAMEX(2000, 1944,     0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (US 000620)", GAME_NOT_WORKING )
+GAME( 2000, 1944,     0,       cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (US 000620)" )
 GAMEX(2000, 1944j,    1944,    cps2, 19xx,    cps2, ROT0,   "Capcom, supported by Eighting/Raizing", "1944: The Loop Master (Japan 000620)", GAME_NOT_WORKING )
+
+/* Games released on CPS-2 hardware by Cave */
+
+GAMEX(2001, progear,  0,       cps2, cps2,    cps2, ROT0,   "Cave, distributed by Capcom", "Progear no Arashi (Japan 010117)", GAME_NOT_WORKING )

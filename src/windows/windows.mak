@@ -13,7 +13,7 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 	 $(OBJ)/windows/asmtile.o
 
 # uncomment this line to enable guard pages on all memory allocations
-OSOBJS += $(OBJ)/windows/winalloc.o
+#OSOBJS += $(OBJ)/windows/winalloc.o
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm

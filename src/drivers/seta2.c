@@ -41,6 +41,16 @@ mj4simai:
 - test mode doesn't work correctly, the grid is ok but when you press a key to go to the
   next screen (input test) it stays up a second and then drops back into the game
 
+myangel:
+- some gfx at the end of the game (rays just before fireworks, and the border during
+  the wedding) have wrong colors. You can see the rays red, green and yellow because
+  that's how the palette is preinitialized by MAME, but the game never sets up those
+  palette entries. The game selects color depth "1", whose meaning is uncertain, and
+  color code 0 so I see no way to point to a different section of palette RAM.
+
+- there are glitches in the bg horizontal scroll in the wedding sequence at the end of
+  the game. It looks like "scrollx" should be delayed one frame wrt "xoffs".
+
 myangel2:
 - before each level, the background image is shown with completely wrong colors. It
   corrects itself when the level starts.
@@ -1020,7 +1030,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_8x8x4_lo =
+static struct GfxLayout layout_4bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1032,7 +1042,7 @@ static struct GfxLayout layout_8x8x4_lo =
 	8*8*2
 };
 
-static struct GfxLayout layout_8x8x4_hi =
+static struct GfxLayout layout_4bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1044,7 +1054,21 @@ static struct GfxLayout layout_8x8x4_hi =
 	8*8*2
 };
 
-static struct GfxLayout layout_8x8x8 =
+static struct GfxLayout layout_6bpp =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	6,
+	{
+		RGN_FRAC(2,4)+8,RGN_FRAC(2,4)+0,
+		RGN_FRAC(1,4)+8,RGN_FRAC(1,4)+0,
+		RGN_FRAC(0,4)+8,RGN_FRAC(0,4)+0		},
+	{	STEP8(0,1)		},
+	{	STEP8(0,8*2)	},
+	8*8*2
+};
+
+static struct GfxLayout layout_8bpp =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1058,13 +1082,39 @@ static struct GfxLayout layout_8x8x8 =
 	8*8*2
 };
 
-/*	Tiles are 8x8x8, but the hardware is additionally able to discard
+static struct GfxLayout layout_3bpp_lo =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	3,
+	{	                RGN_FRAC(1,4)+0,
+		RGN_FRAC(0,4)+8,RGN_FRAC(0,4)+0		},
+	{	STEP8(0,1)		},
+	{	STEP8(0,8*2)	},
+	8*8*2
+};
+
+static struct GfxLayout layout_2bpp_hi =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	2,
+	{	RGN_FRAC(2,4)+8,RGN_FRAC(2,4)+0 },
+	{	STEP8(0,1)		},
+	{	STEP8(0,8*2)	},
+	8*8*2
+};
+
+/*	Tiles are 8bpp, but the hardware is additionally able to discard
 	some bitplanes and use the low 4 bits only, or the high 4 bits only	*/
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_8x8x4_lo,	0,		0x8000/16 }, // [0] Sprites
-	{ REGION_GFX1, 0, &layout_8x8x4_hi,	0,		0x8000/16 }, // [1]	""
-	{ REGION_GFX1, 0, &layout_8x8x8,	0x8000,	0x8000/16 }, // [2]	""
+	{ REGION_GFX1, 0, &layout_4bpp_lo, 0, 0x8000/16 },
+	{ REGION_GFX1, 0, &layout_4bpp_hi, 0, 0x8000/16 },
+	{ REGION_GFX1, 0, &layout_6bpp,    0, 0x8000/16 },	/* 6bpp, but 4bpp granularity */
+	{ REGION_GFX1, 0, &layout_8bpp,    0, 0x8000/16 },	/* 8bpp, but 4bpp granularity */
+	{ REGION_GFX1, 0, &layout_3bpp_lo, 0, 0x8000/16 },	/* 3bpp, but 4bpp granularity */
+	{ REGION_GFX1, 0, &layout_2bpp_hi, 0, 0x8000/16 },	/* ??? */
 	{ -1 }
 };
 
@@ -1101,9 +1151,7 @@ static MACHINE_DRIVER_START( mj4simai )
 	MDRV_VISIBLE_AREA(0x40, 0x1c0-1, 0x80, 0x170-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x8000)
-	MDRV_COLORTABLE_LENGTH((0x8000/16)*16 + (0x8000/16)*256)
 
-	MDRV_PALETTE_INIT(seta2)
 	MDRV_VIDEO_START(seta2)
 	MDRV_VIDEO_UPDATE(seta2)
 
@@ -1282,7 +1330,7 @@ DRIVER_INIT( pzlbowl )
 
 
 GAMEX( 1996, mj4simai, 0, mj4simai, mj4simai, 0,        ROT0, "Maboroshi Ware",      "Wakakusamonogatari Mahjong Yonshimai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",   GAME_NO_COCKTAIL )
+GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",   GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  pzlbowl,  ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",        GAME_NO_COCKTAIL )
 GAMEX( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",         GAME_NO_COCKTAIL )

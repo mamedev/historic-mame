@@ -34,6 +34,9 @@ WRITE_HANDLER( YM2203_write_port_2_w );
 WRITE_HANDLER( YM2203_write_port_3_w );
 WRITE_HANDLER( YM2203_write_port_4_w );
 
+WRITE_HANDLER( YM2203_word_0_w );
+WRITE_HANDLER( YM2203_word_1_w );
+
 int YM2203_sh_start(const struct MachineSound *msound);
 void YM2203_sh_stop(void);
 void YM2203_sh_reset(void);

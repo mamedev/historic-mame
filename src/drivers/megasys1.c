@@ -2043,7 +2043,7 @@ ROM_START( kickoff )
 	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "kick.bin",    0x0000, 0x0200, 0x85b30ac4 )
 ROM_END
 
 INPUT_PORTS_START( kickoff )

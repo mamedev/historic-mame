@@ -225,12 +225,7 @@ static void ymf278b_pcm_update(int num, INT16 **outputs, int length)
 	INT32 *mixp;
 	INT32 vl, vr;
 
-//	GCC 3.2 bug? This line causes an abrupt exit without any error message.
-//	memset(mix, 0, sizeof(mix[0])*length*2);
-	for (i = 0; i < length*2; i++)
-	{
-		mix[i] = 0;
-	}
+	memset(mix, 0, sizeof(mix[0])*length*2);
 
 	rombase = YMF278B[num].rom;
 
@@ -492,7 +487,7 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 					slot->step = 0;
 
 					step = (slot->FN | 1024) << (oct + 7);
-					slot->step = (UINT32) ((((UINT64)step)*(44100/4)) / Machine->sample_rate * chip->clock_ratio);
+					slot->step = (UINT32) ((((INT64)step)*(44100/4)) / Machine->sample_rate * chip->clock_ratio);
 
 					ymf278b_envelope_next(slot, chip->clock_ratio);
 

@@ -134,6 +134,10 @@ VIDEO_UPDATE( ultratnk )
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	draw_sprites( bitmap );
+
+	/* Weird, but we have to update our sound registers here. */
+	discrete_sound_w(2, mirror_ram[0x88] % 16);
+	discrete_sound_w(3, mirror_ram[0x8A] % 16);
 }
 
 
@@ -213,6 +217,28 @@ static READ_HANDLER( ultratnk_dipsw_r )
 		case 0x03: return ((dipsw & 0x03) >> 0); /* extended time */
 	}
 	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Sound handlers
+ *
+ *************************************/
+WRITE_HANDLER( ultratnk_fire_w )
+{
+	discrete_sound_w(offset/2, offset&1);
+}
+
+WRITE_HANDLER( ultratnk_attract_w )
+{
+	discrete_sound_w(5, (data & 1));
+}
+
+WRITE_HANDLER( ultratnk_explosion_w )
+{
+	discrete_sound_w(4, data % 16);
 }
 
 
@@ -303,15 +329,14 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0100, 0x01ff, mirror_w },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
 	{ 0x0c00, 0x0cff, MWA_RAM }, /* ? */
-	{ 0x2000, 0x2000, MWA_NOP }, /* sound-related? */
-	{ 0x2020, 0x2023, MWA_NOP }, /* collision reset? */
-	{ 0x2040, 0x2040, da_latch_w }, /* D/A LATCH */
-	{ 0x2042, 0x2042, MWA_NOP }, /* EXPLOSION (sound) */
-	{ 0x2044, 0x2044, MWA_NOP }, /* TIMER (watchdog) RESET */
-	{ 0x2066, 0x2066, MWA_NOP }, /* LOCKOUT (coin lockout latched on */
-	{ 0x2067, 0x2067, MWA_NOP }, /* LOCKOUT (coin lockout latched off */
+	{ 0x2000, 0x201f, ultratnk_attract_w }, /* attract */
+	{ 0x2020, 0x203f, MWA_NOP }, /* collision reset 1-4, 2020-21=cr1, 22-23=cr2, 24-25=cr3, 26,27=cr4 */
+	{ 0x2040, 0x2041, da_latch_w }, /* D/A LATCH */
+	{ 0x2042, 0x2043, ultratnk_explosion_w }, /* EXPLOSION (sound) */
+	{ 0x2044, 0x2045, MWA_NOP }, /* TIMER (watchdog) RESET */
+	{ 0x2066, 0x2067, MWA_NOP }, /* LOCKOUT */
 	{ 0x2068, 0x206b, ultratnk_leds_w },
-//	{ 0x206c, 0x206f, MWA_RAM }, /* ? */
+	{ 0x206c, 0x206f, ultratnk_fire_w }, /* fire 1/2 */
 	{ 0xb000, 0xbfff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -423,6 +448,190 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+/************************************************************************/
+/* ultratnk Sound System Analog emulation                               */
+/************************************************************************/
+
+const struct discrete_lfsr_desc ultratnk_lfsr={
+	16,			/* Bit Length */
+	0,			/* Reset Value */
+	0,			/* Use Bit 0 as XOR input 0 */
+	14,			/* Use Bit 14 as XOR input 1 */
+	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is not inverted */
+	15			/* Output bit */
+};
+
+/* Nodes - Inputs */
+#define ULTRATNK_MOTORSND1_DATA		NODE_01
+#define ULTRATNK_MOTORSND2_DATA		NODE_02
+#define ULTRATNK_FIRESND1_EN		NODE_03
+#define ULTRATNK_FIRESND2_EN		NODE_04
+#define ULTRATNK_EXPLOSIONSND_DATA	NODE_05
+#define ULTRATNK_ATTRACT_EN		NODE_06
+/* Nodes - Sounds */
+#define ULTRATNK_MOTORSND1		NODE_10
+#define ULTRATNK_MOTORSND2		NODE_11
+#define ULTRATNK_EXPLOSIONSND		NODE_12
+#define ULTRATNK_FIRESND1		NODE_13
+#define ULTRATNK_FIRESND2		NODE_14
+#define ULTRATNK_NOISE			NODE_15
+#define ULTRATNK_FINAL_MIX		NODE_16
+
+static DISCRETE_SOUND_START(ultratnk_sound_interface)
+	/************************************************/
+	/* Ultratnk sound system: 5 Sound Sources       */
+	/*                     Relative Volume          */
+	/*    1/2) Motor           77.72%               */
+	/*      2) Explosion      100.00%               */
+	/*    4/5) Fire            29.89%               */
+	/* Relative volumes calculated from resitor     */
+	/* network in combiner circuit                  */
+	/*                                              */
+	/*  Discrete sound mapping via:                 */
+	/*     discrete_sound_w($register,value)        */
+	/*  $00 - Fire enable Tank 1                    */
+	/*  $01 - Fire enable Tank 2                    */
+	/*  $02 - Motorsound frequency Tank 1           */
+	/*  $03 - Motorsound frequency Tank 2           */
+	/*  $04 - Explode volume                        */
+	/*  $05 - Attract                               */
+	/*                                              */
+	/************************************************/
+
+	/************************************************/
+	/* Input register mapping for ultratnk           */
+	/************************************************/
+	/*                   NODE                    ADDR   MASK   GAIN    OFFSET  INIT */
+	DISCRETE_INPUT (ULTRATNK_FIRESND1_EN       , 0x00, 0x000f,                  0.0)
+	DISCRETE_INPUT (ULTRATNK_FIRESND2_EN       , 0x01, 0x000f,                  0.0)
+	DISCRETE_INPUTX(ULTRATNK_MOTORSND1_DATA    , 0x02, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUTX(ULTRATNK_MOTORSND2_DATA    , 0x03, 0x000f, -1.0   , 15.0,   0.0)
+	DISCRETE_INPUT (ULTRATNK_EXPLOSIONSND_DATA , 0x04, 0x000f,                  0.0)
+	DISCRETE_INPUT (ULTRATNK_ATTRACT_EN        , 0x05, 0x000f,                  0.0)
+
+	/************************************************/
+	/* Motor sound circuit is based on a 556 VCO    */
+	/* with the input frequency set by the MotorSND */
+	/* latch (4 bit). This freqency is then used to */
+	/* driver a modulo 12 counter, with div6, 4 & 3 */
+	/* summed as the output of the circuit.         */
+	/* VCO Output is Sq wave = 27-382Hz             */
+	/*  F1 freq - (Div6)                            */
+	/*  F2 freq = (Div4)                            */
+	/*  F3 freq = (Div3) 33.3% duty, 33.3 deg phase */
+	/* To generate the frequency we take the freq.  */
+	/* diff. and /15 to get all the steps between   */
+	/* 0 - 15.  Then add the low frequency and send */
+	/* that value to a squarewave generator.        */
+	/* Also as the frequency changes, it ramps due  */
+	/* to a 2.2uf capacitor on the R-ladder.        */
+	/* Note the VCO freq. is controlled by a 250k   */
+	/* pot.  The freq. used here is for the pot set */
+	/* to 125k.  The low freq is allways the same.  */
+	/* This adjusts the high end.                   */
+	/* 0k = 214Hz.   250k = 4416Hz                  */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_70, 1, ULTRATNK_MOTORSND1_DATA, 123000, 2.2e-6)
+	DISCRETE_ADJUSTMENT(NODE_71, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (382.0-27.0)/12/15, DISC_LOGADJ, "Motor 1 RPM")
+	DISCRETE_MULTIPLY(NODE_72, 1, NODE_70, NODE_71)
+
+	DISCRETE_GAIN(NODE_20, NODE_72, 2)		/* F1 = /12*2 = /6 */
+	DISCRETE_ADDER2(NODE_21, 1, NODE_20, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_27, 1, NODE_21, (777.2/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_67, 1, NODE_27, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_22, NODE_72, 3)		/* F2 = /12*3 = /4 */
+	DISCRETE_ADDER2(NODE_23, 1, NODE_22, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_28, 1, NODE_23, (777.2/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_68, 1, NODE_28, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_24, NODE_72, 4)		/* F3 = /12*4 = /3 */
+	DISCRETE_ADDER2(NODE_25, 1, NODE_24, 27.0/3)
+	DISCRETE_SQUAREWAVE(NODE_29, 1, NODE_25, (777.2/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_69, 1, NODE_29, 10000, 1e-7)
+
+	DISCRETE_ADDER3(ULTRATNK_MOTORSND1, ULTRATNK_ATTRACT_EN, NODE_67, NODE_68, NODE_69)
+
+	/************************************************/
+	/* Tank2 motor sound is basically the same as   */
+	/* Car1.  But I shifted the frequencies up for  */
+	/* it to sound different from Tank1.            */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_73, 1, ULTRATNK_MOTORSND2_DATA, 123000, 2.2e-6)
+	DISCRETE_ADJUSTMENT(NODE_74, 1, (214.0-27.0)/12/15, (4416.0-27.0)/12/15, (522.0-27.0)/12/15, DISC_LOGADJ, "Motor 2 RPM")
+	DISCRETE_MULTIPLY(NODE_75, 1, NODE_73, NODE_74)
+
+	DISCRETE_GAIN(NODE_50, NODE_75, 2)		/* F1 = /12*2 = /6 */
+	DISCRETE_ADDER2(NODE_51, 1, NODE_50, 27.0/6)
+	DISCRETE_SQUAREWAVE(NODE_57, 1, NODE_51, (777.2/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_77, 1, NODE_57, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_52, NODE_75, 3)		/* F2 = /12*3 = /4 */
+	DISCRETE_ADDER2(NODE_53, 1, NODE_52, 27.0/4)
+	DISCRETE_SQUAREWAVE(NODE_58, 1, NODE_53, (777.2/3), 50.0, 0, 0)
+	DISCRETE_RCFILTER(NODE_78, 1, NODE_58, 10000, 1e-7)
+
+	DISCRETE_GAIN(NODE_54, NODE_75, 4)		/* F3 = /12*4 = /3 */
+	DISCRETE_ADDER2(NODE_55, 1, NODE_54, 27.0/3)
+	DISCRETE_SQUAREWAVE(NODE_59, 1, NODE_55, (777.2/3), 100.0/3, 0, 360.0/3)
+	DISCRETE_RCFILTER(NODE_79, 1, NODE_59, 10000, 1e-7)
+
+	DISCRETE_ADDER3(ULTRATNK_MOTORSND2, ULTRATNK_ATTRACT_EN, NODE_77, NODE_78, NODE_79)
+
+	/************************************************/
+	/* Explosion circuit is built around a noise    */
+	/* generator built from 2 shift registers that  */
+	/* are clocked by the 2V signal.                */
+	/* 2V = HSYNC/4                                 */
+	/*    = 15750/4                                 */
+	/* Output is binary weighted with 4 bits of     */
+	/* crash volume.                                */
+	/************************************************/
+	DISCRETE_LOGIC_INVERT(NODE_37, 1, ULTRATNK_ATTRACT_EN)
+	DISCRETE_LFSR_NOISE(ULTRATNK_NOISE, ULTRATNK_ATTRACT_EN, NODE_37, 15750.0/4, 1.0, 0, 0, &ultratnk_lfsr)
+
+	DISCRETE_MULTIPLY(NODE_38, 1, ULTRATNK_NOISE, ULTRATNK_EXPLOSIONSND_DATA)
+	DISCRETE_GAIN(NODE_39, NODE_38, 1000.0/15)
+	DISCRETE_RCFILTER(ULTRATNK_EXPLOSIONSND, 1, NODE_39, 545, 1e-7)
+
+	/************************************************/
+	/* Fire circuits takes the noise output from    */
+	/* the crash circuit and applies +ve feedback   */
+	/* to cause oscillation. There is also an RC    */
+	/* filter on the input to the feedback circuit. */
+	/* RC is 1K & 10uF                              */
+	/* Feedback cct is modelled by using the RC out */
+	/* as the frequency input on a VCO,             */
+	/* breadboarded freq range as:                  */
+	/*  0 = 940Hz, 34% duty                         */
+	/*  1 = 630Hz, 29% duty                         */
+	/*  the duty variance is so small we ignore it  */
+	/************************************************/
+	DISCRETE_INVERT(NODE_30, ULTRATNK_NOISE)
+	DISCRETE_GAIN(NODE_31, NODE_30, 940.0-630.0)
+	DISCRETE_ADDER2(NODE_32, 1, NODE_31, ((940.0-630.0)/2)+630.0)
+	DISCRETE_RCFILTER(NODE_33, 1, NODE_32, 1000, 1e-5)
+	DISCRETE_SQUAREWAVE(NODE_34, 1, NODE_33, 407.8, 31.5, 0, 0.0)
+	DISCRETE_ONOFF(ULTRATNK_FIRESND1, ULTRATNK_FIRESND1_EN, NODE_34)
+	DISCRETE_ONOFF(ULTRATNK_FIRESND2, ULTRATNK_FIRESND2_EN, NODE_34)
+
+	/************************************************/
+	/* Combine all 5 sound sources.                 */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, 1, ULTRATNK_MOTORSND1, ULTRATNK_EXPLOSIONSND, ULTRATNK_FIRESND1)
+	DISCRETE_ADDER3(NODE_91, 1, NODE_90, ULTRATNK_MOTORSND2, ULTRATNK_FIRESND2)
+	DISCRETE_GAIN(ULTRATNK_FINAL_MIX, NODE_91, 65534.0/(777.2+777.2+1000.0+298.9+298.9))
+
+	DISCRETE_OUTPUT(ULTRATNK_FINAL_MIX, 100)
+DISCRETE_SOUND_END
+
+
 
 /*************************************
  *
@@ -451,6 +660,9 @@ static MACHINE_DRIVER_START( ultratnk )
 	MDRV_PALETTE_INIT(ultratnk)
 	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(ultratnk)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, ultratnk_sound_interface)
 MACHINE_DRIVER_END
 
 
@@ -489,4 +701,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1978, ultratnk, 0, ultratnk, ultratnk, 0, 0, "Atari", "Ultra Tank", GAME_NO_SOUND )
+GAME( 1978, ultratnk, 0, ultratnk, ultratnk, 0, 0, "Atari", "Ultra Tank" )
