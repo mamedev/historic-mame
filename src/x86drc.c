@@ -18,7 +18,8 @@
 
 const UINT8 scale_lookup[] = { 0,0,1,0,2,0,0,0,3 };
 
-static UINT16 fp_control[4] = { 0x23f, 0x63f, 0xa3f, 0xe3f };
+static UINT16 fp_control[4] = { 0x023f, 0x063f, 0x0a3f, 0x0e3f };
+static UINT32 sse_control[4] = { 0x9fc0, 0xbfc0, 0xdfc0, 0xffc0 };
 
 
 static void append_entry_point(struct drccore *drc);
@@ -59,7 +60,10 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->cb_entrygen  = config->cb_entrygen;
 	drc->uses_fp      = config->uses_fp;
 	drc->uses_sse     = config->uses_sse;
+	drc->pc_in_memory = config->pc_in_memory;
+	drc->icount_in_memory = config->icount_in_memory;
 	drc->fpcw_curr    = fp_control[0];
+	drc->mxcsr_curr   = sse_control[0];
 
 	/* allocate cache */
 	drc->cache_base = osd_alloc_executable(config->cache_size);
@@ -278,7 +282,47 @@ void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc)
 
 void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length)
 {
-	if (length >= 4)
+	if (length > 8)
+	{
+		UINT32 *codeptr = code, sum = 0;
+		void *target;
+		int i;
+		
+		for (i = 0; i < length / 4; i++)
+		{
+			sum = (sum >> 1) | (sum << 31);
+			sum += *codeptr++;
+		}
+		
+		_xor_r32_r32(REG_EAX, REG_EAX);								// xor	eax,eax
+		_mov_r32_imm(REG_EBX, code);								// mov	ebx,code
+		_mov_r32_imm(REG_ECX, length / 4);							// mov	ecx,length / 4
+		target = drc->cache_top;									// target:
+		_ror_r32_imm(REG_EAX, 1);									// ror	eax,1
+		_add_r32_m32bd(REG_EAX, REG_EBX, 0);						// add	eax,[ebx]
+		_sub_r32_imm(REG_ECX, 1);									// sub	ecx,1
+		_lea_r32_m32bd(REG_EBX, REG_EBX, 4);						// lea	ebx,[ebx+4]
+		_jcc(COND_NZ, target);										// jnz	target
+		_cmp_r32_imm(REG_EAX, sum);									// cmp	eax,sum
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+	}
+	else if (length >= 12)
+	{
+		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp	[pc+4],opcode+4
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm((UINT8 *)code + 8, ((UINT32 *)code)[2]);	// cmp	[pc+8],opcode+8
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+	}
+	else if (length >= 8)
+	{
+		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+		_cmp_m32abs_imm((UINT8 *)code + 4, ((UINT32 *)code)[1]);	// cmp	[pc+4],opcode+4
+		_jcc(COND_NE, drc->recompile);								// jne	recompile
+	}
+	else if (length >= 4)
 	{
 		_cmp_m32abs_imm(code, *(UINT32 *)code);						// cmp	[pc],opcode
 		_jcc(COND_NE, drc->recompile);								// jne	recompile
@@ -318,9 +362,9 @@ void drc_append_call_debugger(struct drccore *drc)
 
 void drc_append_save_volatiles(struct drccore *drc)
 {
-	if (drc->icountptr)
+	if (drc->icountptr && !drc->icount_in_memory)
 		_mov_m32abs_r32(drc->icountptr, REG_EBP);
-	if (drc->pcptr)
+	if (drc->pcptr && !drc->pc_in_memory)
 		_mov_m32abs_r32(drc->pcptr, REG_EDI);
 	if (drc->esiptr)
 		_mov_m32abs_r32(drc->esiptr, REG_ESI);
@@ -333,9 +377,9 @@ void drc_append_save_volatiles(struct drccore *drc)
 
 void drc_append_restore_volatiles(struct drccore *drc)
 {
-	if (drc->icountptr)
+	if (drc->icountptr && !drc->icount_in_memory)
 		_mov_r32_m32abs(REG_EBP, drc->icountptr);
-	if (drc->pcptr)
+	if (drc->pcptr && !drc->pc_in_memory)
 		_mov_r32_m32abs(REG_EDI, drc->pcptr);
 	if (drc->esiptr)
 		_mov_r32_m32abs(REG_ESI, drc->esiptr);
@@ -362,9 +406,16 @@ void drc_append_save_call_restore(struct drccore *drc, void *target, UINT32 stac
 
 void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit)
 {
+	if (pcdelta != 0 && drc->pc_in_memory)
+		_add_m32abs_imm(drc->pcptr, pcdelta);						// add	[pc],pcdelta
 	if (cycles != 0)
-		_sub_r32_imm(REG_EBP, cycles);								// sub	ebp,cycles
-	if (pcdelta != 0)
+	{
+		if (drc->icount_in_memory)
+			_sub_m32abs_imm(drc->icountptr, cycles);				// sub	[icount],cycles
+		else
+			_sub_r32_imm(REG_EBP, cycles);							// sub	ebp,cycles
+	}
+	if (pcdelta != 0 && !drc->pc_in_memory)
 		_lea_r32_m32bd(REG_EDI, REG_EDI, pcdelta);					// lea	edi,[edi+pcdelta]
 	if (allow_exit && cycles != 0)
 		_jcc(COND_S, drc->out_of_cycles);							// js	out_of_cycles
@@ -381,6 +432,8 @@ void drc_append_dispatcher(struct drccore *drc)
 	_push_imm(drc);													// push	drc
 	drc_append_save_call_restore(drc, (void *)log_dispatch, 4);		// call	log_dispatch
 #endif
+	if (drc->pc_in_memory)
+		_mov_r32_m32abs(REG_EDI, drc->pcptr);						// mov	edi,[pc]
 	_mov_r32_r32(REG_EAX, REG_EDI);									// mov	eax,edi
 	_shr_r32_imm(REG_EAX, drc->l1shift);							// shr	eax,l1shift
 	_mov_r32_r32(REG_EDX, REG_EDI);									// mov	edx,edi
@@ -453,6 +506,40 @@ void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
 void drc_append_restore_fp_rounding(struct drccore *drc)
 {
 	_fldcw_m16abs(&drc->fpcw_curr);									// fldcw [fpcw_curr]
+}
+
+
+
+/*------------------------------------------------------------------
+	drc_append_set_sse_rounding
+------------------------------------------------------------------*/
+
+void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex)
+{
+	_ldmxcsr_m32isd(regindex, 4, &sse_control[0]);					// ldmxcsr [sse_control + reg*2]
+	_stmxcsr_m32abs(&drc->mxcsr_curr);								// stmxcsr [mxcsr_curr]
+}
+
+
+
+/*------------------------------------------------------------------
+	drc_append_set_temp_sse_rounding
+------------------------------------------------------------------*/
+
+void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding)
+{
+	_ldmxcsr_m32abs(&sse_control[rounding]);						// ldmxcsr [sse_control]
+}
+
+
+
+/*------------------------------------------------------------------
+	drc_append_restore_sse_rounding
+------------------------------------------------------------------*/
+
+void drc_append_restore_sse_rounding(struct drccore *drc)
+{
+	_ldmxcsr_m32abs(&drc->mxcsr_curr);								// ldmxcsr [mxcsr_curr]
 }
 
 
@@ -533,6 +620,11 @@ static void append_entry_point(struct drccore *drc)
 		_fnstcw_m16abs(&drc->fpcw_save);							// fstcw [fpcw_save]
 		_fldcw_m16abs(&drc->fpcw_curr);								// fldcw [fpcw_curr]
 	}
+	if (drc->uses_sse)
+	{
+		_stmxcsr_m32abs(&drc->mxcsr_save);							// stmxcsr [mxcsr_save]
+		_ldmxcsr_m32abs(&drc->mxcsr_curr);							// ldmxcsr [mxcsr_curr]
+	}
 	drc_append_restore_volatiles(drc);								// load volatiles
 	if (drc->cb_entrygen)
 		(*drc->cb_entrygen)(drc);									// additional entry point duties
@@ -576,6 +668,8 @@ static void append_out_of_cycles(struct drccore *drc)
 		_fnclex();													// fnclex
 		_fldcw_m16abs(&drc->fpcw_save);								// fldcw [fpcw_save]
 	}
+	if (drc->uses_sse)
+		_ldmxcsr_m32abs(&drc->mxcsr_save);							// ldmxcsr [mxcsr_save]
 	_popad();														// popad
 	_ret();															// ret
 }

@@ -38,8 +38,6 @@ also has a DSP;
  -shadow effects;
  -global rgb brightness control,separate for every plane;
 
-some VDP2 registers are used to drive some VDP1 functions.
-
 this hardware comes above hell on the great list of hellish things as far as emulation goes anyway ;-)
 
 
@@ -107,23 +105,17 @@ ToDo / Notes:
  Kludged for now to work.
 -various: find idle skip if possible.
 -vmahjong: locks up the emulation due to DMA/irq issues.
--shanhigw: Wrong priorities.
--shanhigw: Can't get a proper vertical scrolling for the bitmaps,commented out ATM.
 -hanagumi + others: why do we get 2 credits on startup with sound enabled
  (game doesn't work with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
--colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
 -bakubaku/colmns97/vfkids: no sound?
--vfremix: game seems to start then waits for an address to change, another interrupt /
- stv timers issue?
 -most: static for sounds
 -some games (rsgun,myfairld) don't pass a sound ram address check if you
  enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
  this...
 -grdforce: missing roz on RBG0 layer.
--ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
 -elandore: fix the bitmap transparency,heavily used (or not used) by this.
@@ -4531,12 +4523,12 @@ GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus"
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )/*This is jerky but (somewhat) playable*/
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )

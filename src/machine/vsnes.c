@@ -378,7 +378,6 @@ static WRITE_HANDLER( gun_in0_w )
 	}
 
     zapstore = data;
-
 }
 
 DRIVER_INIT( duckhunt )
@@ -501,16 +500,24 @@ static READ_HANDLER( vsgshoe_security_r )
 	return ppu2c03b_0_r( 2 ) | 0x1c;
 }
 
+static WRITE_HANDLER( vsgshoe_gun_in0_w )
+{
+	static int old_bank = 0;
+	int addr;
+	if((data & 0x04) != old_bank)
+	{
+		old_bank = data & 0x04;
+		addr = old_bank ? 0x12000: 0x10000;
+		memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[addr], 0x2000);
+	}
+
+	gun_in0_w(offset, data);
+}
+
 DRIVER_INIT( vsgshoe )
 {
-
-	//Game
-	memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x10000], 0x2000);
-
-	//Title Screen
-	//memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x12000], 0x2000);
-
-	memcpy (&memory_region( REGION_CPU1 )[0x0a000], &memory_region( REGION_CPU1 )[0x14000], 0x6000);
+	/* set up the default bank */
+	memcpy (&memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x12000], 0x2000);
 
 	/* Protection */
 	install_mem_read_handler( 0,0x2002, 0x2002, vsgshoe_security_r );
@@ -518,7 +525,7 @@ DRIVER_INIT( vsgshoe )
 
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
 	/* vrom switching is enabled with bit 2 of $4016 */
-	install_mem_write_handler( 0, 0x4016, 0x4016, gun_in0_w );
+	install_mem_write_handler( 0, 0x4016, 0x4016, vsgshoe_gun_in0_w );
 
 	/* common init */
 	init_vsnes();

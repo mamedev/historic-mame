@@ -29,12 +29,36 @@ static void get_tile_info(int tile_index)
 			flags)
 }
 
+static void victnine_get_tile_info(int tile_index)
+{
+	int code = videoram[tile_index*2];
+	int attr = videoram[tile_index*2+1];
+	int tile_number = tile_number = ((attr & 0x38) << 5) + code;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0);
+
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			attr & 0x07,
+			flags)
+}
+
 
 VIDEO_START( flstory )
 {
-    tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32 );
+	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32 );
 //	tilemap_set_transparent_pen( tilemap,15 );
 	tilemap_set_transmask(tilemap,0,0x3fff,0xc000);
+	tilemap_set_scroll_cols(tilemap,32);
+
+	paletteram = auto_malloc(0x200);
+	paletteram_2 = auto_malloc(0x200);
+	return video_start_generic();
+}
+
+VIDEO_START( victnine )
+{
+	tilemap = tilemap_create( victnine_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	tilemap_set_scroll_cols(tilemap,32);
 
 	paletteram = auto_malloc(0x200);
@@ -75,6 +99,24 @@ WRITE_HANDLER( flstory_gfxctrl_w )
 	palette_bank = (data & 0x20) >> 5;
 
 	flip_screen_set(flipscreen);
+
+//usrintf_showmessage("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
+
+}
+
+WRITE_HANDLER( victnine_gfxctrl_w )
+{
+	if (gfxctrl == data)
+		return;
+	gfxctrl = data;
+
+	palette_bank = (data & 0x20) >> 5;
+
+	if (data & 0x04)
+	{
+		flipscreen = (data & 0x01);
+		flip_screen_set(flipscreen);
+	}
 
 //usrintf_showmessage("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
 
@@ -183,4 +225,56 @@ VIDEO_UPDATE( flstory )
 		}
 	}
 
+}
+
+void victnine_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	int i;
+
+	for (i = 0; i < 0x20; i++)
+	{
+		int pr = spriteram[spriteram_size-1 -i];
+		int offs = (pr & 0x1f) * 4;
+
+		//if ((pr & 0x80) == pri)
+		{
+			int code,sx,sy,flipx,flipy;
+
+			code = spriteram[offs+2] + ((spriteram[offs+1] & 0x20) << 3);
+			sx = spriteram[offs+3];
+			sy = spriteram[offs+0];
+
+			if (flipscreen)
+			{
+				sx = (240 - sx + 1) & 0xff ;
+				sy = sy + 1 ;
+			}
+			else
+				sy = 240 - sy + 1 ;
+
+			flipx = ((spriteram[offs+1]&0x40)>>6)^flipscreen;
+			flipy = ((spriteram[offs+1]&0x80)>>7)^flipscreen;
+
+			drawgfx(bitmap,Machine->gfx[1],
+					code,
+					spriteram[offs+1] & 0x0f,
+					flipx,flipy,
+					sx,sy,
+					cliprect,TRANSPARENCY_PEN,15);
+			/* wrap around */
+			if (sx > 240)
+				drawgfx(bitmap,Machine->gfx[1],
+						code,
+						spriteram[offs+1] & 0x0f,
+						flipx,flipy,
+						sx-256,sy,
+						cliprect,TRANSPARENCY_PEN,15);
+		}
+	}
+}
+
+VIDEO_UPDATE( victnine )
+{
+	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	victnine_draw_sprites(bitmap,cliprect);
 }

@@ -1,9 +1,12 @@
 /***************************************************************************
 
-	Goal '92
+	Goal! '92
 
 	driver by Pierpaolo Prazzoli
 	and some bits by David Haywood
+
+    TODO:
+	- Add ADPCM emulation
 
 ***************************************************************************/
 
@@ -46,7 +49,7 @@ static READ16_HANDLER( goal92_inputs_r )
 			return readinputport(4);
 
 		default:
-			logerror("reading unhandled goal92 inputs %04x %04x\n",offset, mem_mask);
+			logerror("reading unhandled goal92 inputs %04X %04X @ PC = %04X\n",offset, mem_mask,activecpu_get_pc());
 	}
 
 	return 0;
@@ -64,7 +67,7 @@ static ADDRESS_MAP_START( goal92_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x100800, 0x100fff) AM_WRITE(goal92_background_w) AM_BASE(&goal92_back_data)
 	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(goal92_foreground_w) AM_BASE(&goal92_fore_data)
-	AM_RANGE(0x101800, 0x101fff) AM_WRITE(MWA16_RAM) // it contains middle layer tiles for clouds, not sure if they should be displayed or not
+	AM_RANGE(0x101800, 0x101fff) AM_WRITE(MWA16_RAM) // it has tiles for clouds, but they aren't used
 	AM_RANGE(0x102000, 0x102fff) AM_WRITE(goal92_text_w) AM_BASE(&goal92_textram)
 	AM_RANGE(0x103000, 0x103fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x104000, 0x13ffff) AM_WRITE(MWA16_RAM)
@@ -77,29 +80,21 @@ static ADDRESS_MAP_START( goal92_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x18001c, 0x18001d) AM_WRITE(goal92_fg_bank_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe800, 0xe800) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0xe801, 0xe801) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0xec00, 0xec00) AM_READ(YM2203_status_port_1_r)
-	AM_RANGE(0xec01, 0xec01) AM_READ(YM2203_read_port_1_r)
-	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+/* Sound CPU */
+
+static ADDRESS_MAP_START( sound_cpu, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_ROM
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) // adpcm write ?
+	AM_RANGE(0xe400, 0xe400) AM_WRITE(MWA8_NOP) // adpcm write ?
+	AM_RANGE(0xe800, 0xe800) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0xe801, 0xe801) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0xec00, 0xec00) AM_READWRITE(YM2203_status_port_1_r, YM2203_control_port_1_w)
+	AM_RANGE(0xec01, 0xec01) AM_READWRITE(YM2203_read_port_1_r, YM2203_write_port_1_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM
 	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xe400, 0xe400) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xe800, 0xe800) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0xe801, 0xe801) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0xec00, 0xec00) AM_WRITE(YM2203_control_port_1_w)
-	AM_RANGE(0xec01, 0xec01) AM_WRITE(YM2203_write_port_1_w)
-	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
 INPUT_PORTS_START( goal92 )
-
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, "Coin A / Coin C" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
@@ -130,6 +125,9 @@ INPUT_PORTS_START( goal92 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
@@ -211,7 +209,6 @@ INPUT_PORTS_START( goal92 )
 	PORT_DIPNAME( 0xffc0, 0xffc0, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0xffc0, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
 INPUT_PORTS_END
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
@@ -223,7 +220,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	2510000/2,
+	2500000/2,
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
 	{ 0 },
 	{ 0 },
@@ -232,10 +229,24 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+static void goal92_adpcm_int(int data)
+{
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct MSM5205interface msm5205_interface =
+{
+	1,						/* 1 chip */
+	400000, 				/* 400KHz */
+	{ goal92_adpcm_int },	/* interrupt function */
+	{ MSM5205_S96_4B },		/* 4KHz 4-bit */
+	{ 25 }					/* volume */
+};
+
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 2510000 },
+	{ 2500000 },
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -298,13 +309,13 @@ static struct GfxDecodeInfo cupsocbl_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( goal92 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,16000000) // clock should be 12 MHz, but it causes problems for an unknown reason
+	MDRV_CPU_ADD(M68000,12000000)
 	MDRV_CPU_PROGRAM_MAP(goal92_readmem,goal92_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1) /* VBL */
 
-	MDRV_CPU_ADD(Z80, 2510000)
+	MDRV_CPU_ADD(Z80, 2500000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 								/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -313,7 +324,7 @@ static MACHINE_DRIVER_START( goal92 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) // black border at bottom is a game bug...
 	MDRV_GFXDECODE(goal92_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -322,6 +333,7 @@ static MACHINE_DRIVER_START( goal92 )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( cupsocbl )
@@ -333,7 +345,7 @@ static MACHINE_DRIVER_START( cupsocbl )
 
 	MDRV_CPU_ADD(Z80, 2510000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 								/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -342,7 +354,7 @@ static MACHINE_DRIVER_START( cupsocbl )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(cupsocbl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -477,5 +489,5 @@ ROM_START( cupsocbl )
 	ROM_LOAD( "sc_03.bin",    0x000000, 0x080000, CRC(6e254d12) SHA1(857779dbd276b688201a8ea3afd5817e38acad2e) )
 ROM_END
 
-GAME(  1992, goal92,   cupsoc, goal92,   goal92, 0, ROT0, "bootleg", "Goal '92" )
+GAMEX( 1992, goal92,   cupsoc, goal92,   goal92, 0, ROT0, "bootleg", "Goal! '92", GAME_IMPERFECT_SOUND )
 GAMEX( 1992, cupsocbl, cupsoc, cupsocbl, goal92, 0, ROT0, "bootleg", "Seibu Cup Soccer (bootleg)", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -8,6 +8,12 @@ based on what hanagumi columns needs
 
 the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 
+Framebuffer todo:
+- map framebuffer into memory
+- implement two framebuffers and swapping
+- add framebuffer erase
+- 8 bpp support - now we always draw as 16 bpp, but this is not a problem since
+  VDP2 interprets framebuffer as 8 bpp in these cases
 */
 
 
@@ -16,6 +22,14 @@ the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 data32_t *stv_vdp1_vram;
 data32_t *stv_vdp1_regs;
 extern data32_t *stv_scu;
+
+UINT16	 *stv_framebuffer;
+UINT16	 **stv_framebuffer_lines;
+int		 stv_framebuffer_width;
+int		 stv_framebuffer_height;
+int		 stv_framebuffer_mode;
+int		 stv_framebuffer_double_interlace;
+
 /*TV Mode Selection Register */
 /*
    xxxx xxxx xxxx ---- | UNUSED
@@ -103,194 +117,6 @@ extern data32_t *stv_scu;
 #define SET_CEF_FROM_0_TO_1     if(!(STV_VDP1_CEF))	 stv_vdp1_regs[0x010/4]^=0x00020000
 /**/
 
-/* VDP2 sprite related registers */
-extern data32_t* stv_vdp2_regs;
-
-/* 1800e6 - Colour Ram Address Offset (RBG0, SPRITE) */
-	#define STV_VDP2_CRAOFB ((stv_vdp2_regs[0x0e4/4] >> 0)&0x0000ffff)
-	#define STV_VDP2_SPCAOS ((STV_VDP2_CRAOFB & 0x0070) >> 4)
-
-/* 1800e0 - Sprite Control
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    | SPCCCS1  | SPCCCS0  |    --    |  SPCCN2  |  SPCCN1  |  SPCCN0  |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |  SPCLMD  | SPWINEN  |  SPTYPE3 |  SPTYPE2 |  SPTYPE1 |  SPTYPE0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_SPCTL		((stv_vdp2_regs[0xe0/4] >> 16)&0x0000ffff)
-	#define STV_VDP2_SPCCCS		((STV_VDP2_SPCTL & 0x3000) >> 12)
-	#define STV_VDP2_SPCCN		((STV_VDP2_SPCTL & 0x700) >> 8)
-	#define STV_VDP2_SPCMLD		((STV_VDP2_SPCTL & 0x20) >> 5)
-	#define STV_VDP2_SPWINEN	((STV_VDP2_SPCTL & 0x10) >> 4)
-	#define STV_VDP2_SPTYPE		((STV_VDP2_SPCTL & 0xf) >> 0)
-
-/* 1800ec - Colour Calculation Control
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |  BOKEN   |  BOKN2   |  BOKN1   |   BOKN0  |    --    |  EXCCEN  |  CCRTMD  |  CCMD    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |  SPCCEN  |  LCCCEN  |  R0CCEN  |  N3CCEN  |  N2CCEN  |  N1CCEN  |  N0CCEN  |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CCCR		((stv_vdp2_regs[0xec/4] >> 16) & 0x0000ffff)
-	#define STV_VDP2_SPCCEN		((STV_VDP2_CCCR & 0x40) >> 6)
-
-/* 1800f0 - Priority Number (Sprite 0,1)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |  S1PRIN2 |  S1PRIN1 |  S1PRIN0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |  S0PRIN2 |  S0PRIN1 |  S0PRIN0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_PRISA		((stv_vdp2_regs[0xf0/4] >> 16) & 0x0000ffff)
-	#define STV_VDP2_S1PRIN		((STV_VDP2_PRISA & 0x0700) >> 8)
-	#define STV_VDP2_S0PRIN		((STV_VDP2_PRISA & 0x0007) >> 0)
-
-/* 1800f2 - Priority Number (Sprite 2,3)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |  S3PRIN2 |  S3PRIN1 |  S3PRIN0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |  S2PRIN2 |  S2PRIN1 |  S2PRIN0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_PRISB		((stv_vdp2_regs[0xf0/4] >> 0) & 0x0000ffff)
-	#define STV_VDP2_S3PRIN		((STV_VDP2_PRISB & 0x0700) >> 8)
-	#define STV_VDP2_S2PRIN		((STV_VDP2_PRISB & 0x0007) >> 0)
-
-/* 1800f4 - Priority Number (Sprite 4,5)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |  S5PRIN2 |  S5PRIN1 |  S5PRIN0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |  S4PRIN2 |  S4PRIN1 |  S4PRIN0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_PRISC		((stv_vdp2_regs[0xf4/4] >> 16) & 0x0000ffff)
-	#define STV_VDP2_S5PRIN		((STV_VDP2_PRISC & 0x0700) >> 8)
-	#define STV_VDP2_S4PRIN		((STV_VDP2_PRISC & 0x0007) >> 0)
-
-/* 1800f6 - Priority Number (Sprite 6,7)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |  S7PRIN2 |  S7PRIN1 |  S7PRIN0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |  S6PRIN2 |  S6PRIN1 |  S6PRIN0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_PRISD		((stv_vdp2_regs[0xf4/4] >> 0) & 0x0000ffff)
-	#define STV_VDP2_S7PRIN		((STV_VDP2_PRISD & 0x0700) >> 8)
-	#define STV_VDP2_S6PRIN		((STV_VDP2_PRISD & 0x0007) >> 0)
-
-/* 180100 - Colour Calculation Ratio (Sprite 0,1)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |  S1CCRT4 |  S1CCRT3 |  S1CCRT2 |  S1CCRT1 |  S1CCRT0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |  S0CCRT4 |  S0CCRT3 |  S0CCRT2 |  S0CCRT1 |  S0CCRT0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CCRSA		((stv_vdp2_regs[0x100/4] >> 16) & 0x0000ffff)
-	#define STV_VDP2_S1CCRT		((STV_VDP2_CCRSA & 0x1f00) >> 8)
-	#define STV_VDP2_S0CCRT		((STV_VDP2_CCRSA & 0x001f) >> 0)
-
-/* 180102 - Colour Calculation Ratio (Sprite 2,3)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |  S3CCRT4 |  S3CCRT3 |  S3CCRT2 |  S3CCRT1 |  S3CCRT0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |  S2CCRT4 |  S2CCRT3 |  S2CCRT2 |  S2CCRT1 |  S2CCRT0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CCRSB		((stv_vdp2_regs[0x100/4] >> 0) & 0x0000ffff)
-	#define STV_VDP2_S3CCRT		((STV_VDP2_CCRSB & 0x1f00) >> 8)
-	#define STV_VDP2_S2CCRT		((STV_VDP2_CCRSB & 0x001f) >> 0)
-
-/* 180104 - Colour Calculation Ratio (Sprite 4,5)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |  S5CCRT4 |  S5CCRT3 |  S5CCRT2 |  S5CCRT1 |  S5CCRT0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |  S4CCRT4 |  S4CCRT3 |  S4CCRT2 |  S4CCRT1 |  S4CCRT0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CCRSC		((stv_vdp2_regs[0x104/4 ]>> 16) & 0x0000ffff)
-	#define STV_VDP2_S5CCRT		((STV_VDP2_CCRSC & 0x1f00) >> 8)
-	#define STV_VDP2_S4CCRT		((STV_VDP2_CCRSC & 0x001f) >> 0)
-
-/* 180106 - Colour Calculation Ratio (Sprite 6,7)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |  S7CCRT4 |  S7CCRT3 |  S7CCRT2 |  S7CCRT1 |  S7CCRT0 |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |  S6CCRT4 |  S6CCRT3 |  S6CCRT2 |  S6CCRT1 |  S6CCRT0 |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CCRSD		((stv_vdp2_regs[0x104/4 ]>> 0) & 0x0000ffff)
-	#define STV_VDP2_S7CCRT		((STV_VDP2_CCRSD & 0x1f00) >> 8)
-	#define STV_VDP2_S6CCRT		((STV_VDP2_CCRSD & 0x001f) >> 0)
-/* 180110 - Colour Offset Enable
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CLOFEN ((stv_vdp2_regs[0x110/4] >> 16)&0x0000ffff)
-	#define STV_VDP2_SPCOEN ((STV_VDP2_CLOFEN & 0x40) >> 6)
-
-/* 180112 - Colour Offset Select
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_CLOFSL ((stv_vdp2_regs[0x110/4] >> 0)&0x0000ffff)
-	#define STV_VDP2_SPCOSL ((STV_VDP2_CLOFSL & 0x40) >> 6)
-
-/* 180114 - Colour Offset A (Red)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_COAR ((stv_vdp2_regs[0x114/4] >> 16)&0x0000ffff)
-
-/* 180116 - Colour Offset A (Green)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-	#define STV_VDP2_COAG ((stv_vdp2_regs[0x114/4] >> 0)&0x0000ffff)
-
-/* 180118 - Colour Offset A (Blue)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-
-	#define STV_VDP2_COAB ((stv_vdp2_regs[0x118/4] >> 16)&0x0000ffff)
-
-/* 18011a - Colour Offset B (Red)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-	#define STV_VDP2_COBR ((stv_vdp2_regs[0x118/4] >> 0)&0x0000ffff)
-
-/* 18011b - Colour Offset B (Green)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-	#define STV_VDP2_COBG ((stv_vdp2_regs[0x11c/4] >> 16)&0x0000ffff)
-
-/* 18011c - Colour Offset B (Blue)
- bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
-       |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
-       \----------|----------|----------|----------|----------|----------|----------|---------*/
-	#define STV_VDP2_COBB ((stv_vdp2_regs[0x11c/4] >> 0)&0x0000ffff)
-
 
 #include "machine/random.h"
 
@@ -315,12 +141,56 @@ int stv_vdp1_start ( void )
 	memset(stv_vdp1_regs, 0, 0x040000);
 	memset(stv_vdp1_vram, 0, 0x100000);
 
+	stv_framebuffer = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 ); /* *2 is for double interlace */
+	stv_framebuffer_lines = auto_malloc( 512 * sizeof(UINT16*) );
+	stv_framebuffer_width = stv_framebuffer_height = 0;
+	stv_framebuffer_mode = -1;
+	stv_framebuffer_double_interlace = -1;
 	return 0;
+}
+
+static void stv_set_framebuffer_config( void )
+{
+	int i, rowsize;
+
+	if ( stv_framebuffer_mode == STV_VDP1_TVM &&
+		 stv_framebuffer_double_interlace == STV_VDP1_DIE ) return;
+
+	stv_framebuffer_mode = STV_VDP1_TVM;
+	stv_framebuffer_double_interlace = STV_VDP1_DIE;
+	switch( stv_framebuffer_mode )
+	{
+		case 0: stv_framebuffer_width = 512; stv_framebuffer_height = 256; break;
+		case 1: stv_framebuffer_width = 1024; stv_framebuffer_height = 256; break;
+		case 2: stv_framebuffer_width = 512; stv_framebuffer_height = 256; break;
+		case 3: stv_framebuffer_width = 512; stv_framebuffer_height = 512; break;
+		case 4: stv_framebuffer_width = 512; stv_framebuffer_height = 256; break;
+		default: logerror( "Invalid framebuffer config %x\n", STV_VDP1_TVM ); stv_framebuffer_width = 512; stv_framebuffer_height = 256; break;
+	}
+	if ( STV_VDP1_DIE ) stv_framebuffer_height *= 2; /* double interlace */
+	rowsize = stv_framebuffer_width;
+	for ( i = 0; i < stv_framebuffer_height; i++ )
+	{
+		stv_framebuffer_lines[i] = &stv_framebuffer[ i * rowsize ];
+	}
+	for ( ; i < 512; i++ )
+	{
+		stv_framebuffer_lines[i] = &stv_framebuffer[0];
+	}
+}
+
+static void stv_clear_framebuffer( void )
+{
+	memset( stv_framebuffer, 0, 1024 * 256 * sizeof(UINT16) * 2 );
 }
 
 WRITE32_HANDLER( stv_vdp1_regs_w )
 {
 	COMBINE_DATA(&stv_vdp1_regs[offset]);
+	if ( offset == 0 )
+	{
+		stv_set_framebuffer_config();
+	}
 }
 
 READ32_HANDLER ( stv_vdp1_vram_r )
@@ -351,23 +221,23 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {
-	usrintf_showmessage ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
+	//usrintf_showmessage ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer0_r )
 {
-	usrintf_showmessage ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
+	//usrintf_showmessage ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
 	return 0xffff;
 }
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer1_w )
 {
-	usrintf_showmessage ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
+	//usrintf_showmessage ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer1_r )
 {
-	usrintf_showmessage ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
+	//usrintf_showmessage ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
 	return 0xffff;
 }
 
@@ -456,9 +326,135 @@ static struct stv_vdp2_sprite_list
 int stvvdp1_local_x;
 int stvvdp1_local_y;
 
-static int stv_sprite_colormask;
+/* Gouraud shading */
 
-/* we should actually draw to the framebuffer then process that with vdp.. note that if we're drawing
+static struct _stv_gouraud_shading
+{
+	/* Gouraud shading table */
+	UINT16	GA;
+	UINT16	GB;
+	UINT16	GC;
+	UINT16	GD;
+	/* Gouraud shading data at drawn pixel */
+	UINT32	g_r;
+	UINT32	g_g;
+	UINT32	g_b;
+	/* Gouraud shading delta */
+	UINT32	gdelta_r;
+	UINT32	gdelta_g;
+	UINT32	gdelta_b;
+} stv_gouraud_shading;
+
+static void stv_clear_gouraud_shading(void)
+{
+	memset( &stv_gouraud_shading, 0, sizeof( stv_gouraud_shading ) );
+}
+
+static UINT8 stv_read_gouraud_table(void)
+{
+	int gaddr;
+
+	if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
+	{
+		gaddr = stv2_current_sprite.CMDGRDA * 8;
+		stv_gouraud_shading.GA = (stv_vdp1_vram[gaddr/4] >> 16) & 0xffff;
+		stv_gouraud_shading.GB = (stv_vdp1_vram[gaddr/4] >> 0) & 0xffff;
+		stv_gouraud_shading.GC = (stv_vdp1_vram[gaddr/4 + 1] >> 16) & 0xffff;
+		stv_gouraud_shading.GD = (stv_vdp1_vram[gaddr/4 + 1] >> 0) & 0xffff;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+static UINT16 stv_compute_shading_at_pixel(int size, int pt, UINT16 g1, UINT16 g2 )
+{
+	int r,g,b;
+	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
+	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
+	r = (g2 & 0x001f) - (g1 & 0x001f);
+
+	b = (((b << 16) / size) * pt) >> 16;
+	g = (((g << 16) / size) * pt) >> 16;
+	r = (((r << 16) / size) * pt) >> 16;
+
+	b += ((g1 & 0x7c00) >> 10);
+	g += ((g1 & 0x03e0) >> 5);
+	r += (g1 & 0x001f);
+
+	if ( b < 0 ) b = 0;
+	if ( b > 0x1f ) b = 0x1f;
+	if ( g < 0 ) g = 0;
+	if ( g > 0x1f ) g = 0x1f;
+	if ( r < 0 ) r = 0;
+	if ( r > 0x1f ) r = 0x1f;
+
+	return ((b & 0x1f) << 10) | ((g & 0x1f) << 5) | (b & 0x1f) | 0x8000;
+}
+
+static void stv_setup_shading_for_line(int size, UINT16 g1, UINT16 g2 )
+{
+	int r,g,b;
+	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
+	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
+	r = (g2 & 0x001f) - (g1 & 0x001f);
+
+	stv_gouraud_shading.gdelta_b = (b << 16) / size;
+	stv_gouraud_shading.gdelta_g = (g << 16) / size;
+	stv_gouraud_shading.gdelta_r = (r << 16) / size;
+
+	stv_gouraud_shading.g_b = ((g1 & 0x7c00) >> 10) << 16;
+	stv_gouraud_shading.g_g = ((g1 & 0x03e0) >> 5) << 16;
+	stv_gouraud_shading.g_r = (g1 & 0x001f) << 16;
+}
+
+static void stv_compute_shading_for_next_point(void)
+{
+	stv_gouraud_shading.g_b += stv_gouraud_shading.gdelta_b;
+	stv_gouraud_shading.g_g += stv_gouraud_shading.gdelta_g;
+	stv_gouraud_shading.g_r += stv_gouraud_shading.gdelta_r;
+}
+
+static UINT16 stv_apply_gouraud_shading( UINT16 pix )
+{
+	int r,g,b,sr,sg,sb;
+	b = (pix & 0x7c00) >> 10;
+	g = (pix & 0x03e0) >> 5;
+	r = (pix & 0x001f);
+	sb = (stv_gouraud_shading.g_b >> 16) & 0x1f;
+	sg = (stv_gouraud_shading.g_g >> 16) & 0x1f;
+	sr = (stv_gouraud_shading.g_r >> 16) & 0x1f;
+
+	if ( sb < 0x10 )
+		b -= (0x10 - sb);
+	else
+		b += sb - 0x10;
+
+	if ( b < 0 )    b = 0;
+	if ( b > 0x1f ) b = 0x1f;
+
+	if ( sg < 0x10 )
+		g -= (0x10 - sg);
+	else
+		g += sg - 0x10;
+
+	if ( g < 0 )	g = 0;
+	if ( g > 0x1f ) g = 0x1f;
+
+	if ( sr < 0x10 )
+		r -= (0x10 - sr);
+	else
+		r += sr - 0x10;
+
+	if ( r < 0 )	r = 0;
+	if ( r > 0x1f ) r = 0x1f;
+
+	return 0x8000 | b << 10 | g << 5 | r;
+}
+
+/* note that if we're drawing
 to the framebuffer we CAN'T frameskip the vdp1 drawing as the hardware can READ the framebuffer
 and if we skip the drawing the content could be incorrect when it reads it, although i have no idea
 why they would want to */
@@ -477,7 +473,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			// most of the shienryu sprites use this mode
 			pix = gfxdata[patterndata+offsetcnt/2];
 			pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
-			pix = pix+((stv2_current_sprite.CMDCOLR&0x0ff0));
+			pix = pix+((stv2_current_sprite.CMDCOLR&0xfff0));
 			mode = 0;
 			transmask = 0xf;
 			break;
@@ -512,19 +508,19 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 		case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
 			pix = gfxdata[patterndata+offsetcnt];
 			mode = 2;
-			pix = pix+(stv2_current_sprite.CMDCOLR&0x0fc0);
+			pix = pix+(stv2_current_sprite.CMDCOLR&0xffc0);
 			transmask = 0x3f;
 			break;
 		case 0x0018: // mode 3 128 colour bank mode (8bits) (little characters on hanagumi use this mode)
 			pix = gfxdata[patterndata+offsetcnt];
-			pix = pix+(stv2_current_sprite.CMDCOLR&0x0f80);
+			pix = pix+(stv2_current_sprite.CMDCOLR&0xff80);
 			transmask = 0x7f;
 			mode = 3;
 		//	pix = rand();
 			break;
 		case 0x0020: // mode 4 256 colour bank mode (8bits) (hanagumi title)
 			pix = gfxdata[patterndata+offsetcnt];
-			pix = pix+(stv2_current_sprite.CMDCOLR&0x0f00);
+			pix = pix+(stv2_current_sprite.CMDCOLR&0xff00);
 			transmask = 0xff;
 			mode = 4;
 			break;
@@ -559,195 +555,47 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 		return;
 	}
 
-	if (mode != 5) // mode 0-4 are 'normal'
+	/* MSBON */
+	pix |= stv2_current_sprite.CMDPMOD & 0x8000;
+	if ( mode != 5 )
 	{
-		pix &= stv_sprite_colormask;
-		pix += (STV_VDP2_SPCAOS << 8);
-		pix &= 0x7ff;
-
-		if (pix & transmask)
+		if ( pix & transmask )
 		{
-			/* there is probably a better way to do this .. it will probably have to change anyway because we'll be writing to the framebuffer instead */
-			int col;
-			col = (pix&1)? ((stv_vdp2_cram[(pix&0xfffe)/2] & 0x00007fff) >>0): ((stv_vdp2_cram[(pix&0xfffe)/2] & 0x7fff0000) >>16);
-			col = ((col & 0x001f)*0x400) + (col & 0x03e0) + ((col & 0x7c00)/0x400);
-			if ( stv2_current_sprite.isalpha )
-			{
-				*dest = alpha_blend16( *dest, col );
-			}
-			else
-			{
-				*dest = col;
-			}
+			*dest = pix;
 		}
 	}
-	else // mode 5 is rgb mode
+	else
 	{
-		int col;
-		if (pix & 0x8000)
+		if ( pix & transmask )
 		{
-			col = pix;
-			col = ((col & 0x001f)*0x400) + (col & 0x03e0) + ((col & 0x7c00)/0x400);
-			*dest = col & 0x7fff;
-		}
-	}
-}
-
-static void stv_vdp1_set_alpha(void)
-{
-	UINT8 priority;
-	UINT8 ccrr;
-	UINT8 alpha;
-
-	stv2_current_sprite.isalpha = 0;
-	if ( STV_VDP2_SPCCEN )
-	{
-		if ( ((stv2_current_sprite.CMDPMOD&0x0038) != 0x8) &&	/* not in lookup table mode */
-			 ((stv2_current_sprite.CMDPMOD&0x0038) != 0x28 )) /* not in RGB mode */
-		{
-			switch( STV_VDP2_SPTYPE )
+			switch( stv2_current_sprite.CMDPMOD & 0x7 )
 			{
-				case 0x0:
-					priority = (stv2_current_sprite.CMDCOLR & 0xc000) >> 14;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x3800) >> 11;
+				case 0:	/* replace */
+					*dest = pix;
 					break;
-				case 0x1:
-					priority = (stv2_current_sprite.CMDCOLR & 0xe000) >> 13;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x1800) >> 11;
+				case 3: /* half transparent */
+					if ( *dest & 0x8000 )
+					{
+						*dest = alpha_blend_r16( *dest, pix, 0x80 ) | 0x8000;
+					}
+					else
+					{
+						*dest = pix;
+					}
 					break;
-				case 0x2:
-					priority = (stv2_current_sprite.CMDCOLR & 0x4000) >> 14;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x3800) >> 11;
-					break;
-				case 0x3:
-					priority = (stv2_current_sprite.CMDCOLR & 0x6000) >> 13;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x1800) >> 11;
-					break;
-				case 0x4:
-					priority = (stv2_current_sprite.CMDCOLR & 0x6000) >> 13;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x1c00) >> 10;
-					break;
-				case 0x5:
-					priority = (stv2_current_sprite.CMDCOLR & 0x7000) >> 12;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x0800) >> 11;
-					break;
-				case 0x6:
-					priority = (stv2_current_sprite.CMDCOLR & 0x7000) >> 12;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x0c00) >> 10;
-					break;
-				case 0x7:
-					priority = (stv2_current_sprite.CMDCOLR & 0x7000) >> 12;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x0e00) >> 19;
-					break;
-				case 0x8:
-					priority = (stv2_current_sprite.CMDCOLR & 0x0080) >> 7;
-					ccrr = 0;
-					break;
-				case 0x9:
-					priority = (stv2_current_sprite.CMDCOLR & 0x0080) >> 7;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x0040) >> 6;
-					break;
-				case 0xa:
-					priority = (stv2_current_sprite.CMDCOLR & 0x00c0) >> 6;
-					ccrr = 0;
-					break;
-				case 0xb:
-					priority = 0;
-					ccrr = (stv2_current_sprite.CMDCOLR & 0x00c0) >> 6;
+				case 4: /* Gouraud shading */
+					*dest = stv_apply_gouraud_shading( pix );
 					break;
 				default:
-					priority = 0;
-					ccrr = 0;
+					*dest = pix;
+					//usrintf_showmessage( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
 					break;
-			}
-			switch( priority )
-			{
-				case 0x0: priority = STV_VDP2_S0PRIN; break;
-				case 0x1: priority = STV_VDP2_S1PRIN; break;
-				case 0x2: priority = STV_VDP2_S2PRIN; break;
-				case 0x3: priority = STV_VDP2_S3PRIN; break;
-				case 0x4: priority = STV_VDP2_S4PRIN; break;
-				case 0x5: priority = STV_VDP2_S5PRIN; break;
-				case 0x6: priority = STV_VDP2_S6PRIN; break;
-				case 0x7: priority = STV_VDP2_S7PRIN; break;
-			}
-			switch( STV_VDP2_SPCCCS )
-			{
-				case 0x0:
-					if ( priority <= STV_VDP2_SPCCN ) stv2_current_sprite.isalpha = 1;
-					break;
-				case 0x1:
-					if ( priority == STV_VDP2_SPCCN ) stv2_current_sprite.isalpha = 1;
-					break;
-				case 0x2:
-					if ( priority >= STV_VDP2_SPCCN ) stv2_current_sprite.isalpha = 1;
-					break;
-				case 0x3:
-					if ( stv2_current_sprite.CMDPMOD & 0x8000 /*??*/) stv2_current_sprite.isalpha = 1;
-					break;
-			}
-			if ( stv2_current_sprite.isalpha )
-			{
-				switch( ccrr )
-				{
-					case 0x0: alpha = STV_VDP2_S0CCRT; break;
-					case 0x1: alpha = STV_VDP2_S1CCRT; break;
-					case 0x2: alpha = STV_VDP2_S2CCRT; break;
-					case 0x3: alpha = STV_VDP2_S3CCRT; break;
-					case 0x4: alpha = STV_VDP2_S4CCRT; break;
-					case 0x5: alpha = STV_VDP2_S5CCRT; break;
-					case 0x6: alpha = STV_VDP2_S6CCRT; break;
-					case 0x7: alpha = STV_VDP2_S7CCRT; break;
-					default: alpha = 0; break;
-				}
-				if ( alpha == 0 )
-				{
-					stv2_current_sprite.isalpha = 0;
-				}
-				else
-				{
-					alpha_set_level( ((UINT16)(0x1f-alpha)*0xff)/0x1f);
-				}
 			}
 		}
 	}
+
 }
 
-static void stv_vdp1_set_sprite_colormask(void)
-{
-	switch( STV_VDP2_SPTYPE )
-	{
-		case 0x0:
-		case 0x1:
-		case 0x2:
-		case 0x3:
-		case 0x5:
-			stv_sprite_colormask = 0x07ff;
-			break;
-		case 0x4:
-		case 0x6:
-			stv_sprite_colormask = 0x03ff;
-			break;
-		case 0x7:
-			stv_sprite_colormask = 0x01ff;
-			break;
-		case 0x8:
-			stv_sprite_colormask = 0x007f;
-			break;
-		case 0x9:
-		case 0xa:
-		case 0xb:
-			stv_sprite_colormask = 0x003f;
-			break;
-		case 0xc:
-		case 0xd:
-		case 0xe:
-		case 0xf:
-			/* shared bits ??*/
-			stv_sprite_colormask = 0x0ff;
-			break;
-	}
-}
 
 enum { FRAC_SHIFT = 16 };
 
@@ -846,7 +694,7 @@ static void vdp1_fill_slope(struct mame_bitmap *bitmap, const struct rectangle *
 					xx2 = cliprect->max_x;
 
 				while(xx1 <= xx2) {
-					drawpixel(((UINT16 *)(bitmap->line[_y1]))+xx1,
+					drawpixel(stv_framebuffer_lines[_y1]+xx1,
 							  patterndata,
 							  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 					xx1++;
@@ -900,7 +748,7 @@ static void vdp1_fill_line(struct mame_bitmap *bitmap, const struct rectangle *c
 			xx2 = cliprect->max_x;
 
 		while(xx1 <= xx2) {
-			drawpixel(((UINT16 *)(bitmap->line[y]))+xx1,
+			drawpixel(stv_framebuffer_lines[y]+xx1,
 					  patterndata,
 					  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 			xx1++;
@@ -1247,6 +1095,9 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	int x, xsize, xcnt, drawxpos;
 	int direction;
 	int patterndata;
+	UINT8 shading;
+
+	shading = stv_read_gouraud_table();
 
 	x = x2s(stv2_current_sprite.CMDXA);
 	y = y2s(stv2_current_sprite.CMDYA);
@@ -1269,6 +1120,12 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 
 	for (ycnt = 0; ycnt != ysize; ycnt++) {
 
+		if ( shading )
+		{
+			stv_setup_shading_for_line( xsize,
+										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GA, stv_gouraud_shading.GD ),
+										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GB, stv_gouraud_shading.GC ));
+		}
 
 		if (direction & 0x2) // 'yflip' (reverse direction)
 		{
@@ -1281,7 +1138,7 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 
 		if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y))
 		{
-			destline = (UINT16 *)(bitmap->line[drawypos]);
+			destline = stv_framebuffer_lines[drawypos];
 
 			for (xcnt = 0; xcnt != xsize; xcnt ++)
 			{
@@ -1301,12 +1158,21 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 
 					drawpixel(destline+drawxpos, patterndata, offsetcnt);
 				} // drawxpos
+				if  ( shading )
+				{
+					stv_compute_shading_for_next_point();
+				}
 
 			} // xcnt
 
 		} // if drawypos
 
 	} // ycny
+
+	if ( shading )
+	{
+		stv_clear_gouraud_shading();
+	}
 }
 
 void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -1320,9 +1186,9 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 	if (vdp1_sprite_log) logerror ("Sprite List Process START\n");
 
-	stv_vdp1_set_sprite_colormask();
-
 	vdp1_nest = -1;
+
+	stv_clear_gouraud_shading();
 
 	/*Set CEF bit to 0*/
 	SET_CEF_FROM_1_TO_0;
@@ -1452,28 +1318,24 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 				case 0x0000:
 					if (vdp1_sprite_log) logerror ("Sprite List Normal Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vdp1_set_alpha();
 					stv_vpd1_draw_normal_sprite(bitmap,cliprect, 0);
 					break;
 
 				case 0x0001:
 					if (vdp1_sprite_log) logerror ("Sprite List Scaled Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vdp1_set_alpha();
 					stv_vpd1_draw_scaled_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0002:
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vdp1_set_alpha();
 					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0004:
 					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vdp1_set_alpha();
 					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
 					break;
 
@@ -1542,6 +1404,7 @@ void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *clipr
 //			fclose(fp);
 //		}
 //	}
+	stv_clear_framebuffer();
 	switch(STV_VDP1_PTM & 3)
 	{
 		case 0:/*Idle Mode*/

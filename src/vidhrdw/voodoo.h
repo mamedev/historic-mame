@@ -9,7 +9,6 @@
 extern data32_t *voodoo_regs;
 
 VIDEO_START( voodoo_1x4mb );
-VIDEO_START( voodoo_1x4mb_swap_rb );
 VIDEO_START( voodoo_2x4mb );
 VIDEO_START( voodoo2_1x4mb );
 VIDEO_START( voodoo2_2x4mb );

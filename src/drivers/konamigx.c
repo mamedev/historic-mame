@@ -1143,7 +1143,7 @@ static WRITE32_HANDLER( type1_cablamps_w )
 
 static ADDRESS_MAP_START( gx_base_memmap, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x01ffff) AM_ROM	// BIOS ROM
-	AM_RANGE(0x200000, 0x2fffff) AM_ROM	// main program ROM
+	AM_RANGE(0x200000, 0x3fffff) AM_ROM	// main program ROM
 	AM_RANGE(0x400000, 0x7fffff) AM_ROM	// data ROM
 	AM_RANGE(0xc00000, 0xc1ffff) AM_RAM AM_BASE(&gx_workram)	// work RAM
 	AM_RANGE(0xd00000, 0xd01fff) AM_READ(K056832_5bpp_rom_long_r)
@@ -2908,6 +2908,41 @@ ROM_START( le2u )
 	ROM_LOAD( "312a18.7g", 0x200000, 1*1024*1024, CRC(5717abd7) SHA1(d304d733e7fca0363ea6b3872c2d3bbe4edf1179) )
 ROM_END
 
+/* Lethal Enforcers II (Japan version) */
+ROM_START( le2j )
+	/* main program */
+	ROM_REGION( 0x300000, REGION_CPU1, 0 )
+	GX_BIOS
+        ROM_LOAD32_BYTE( "312jaa05.26b", 0x200000, 0x020000, BAD_DUMP CRC(7eaa6ce2) SHA1(59d3460be98ac32ebea0422c2a9962556a9e964e) )
+        ROM_LOAD32_BYTE( "312jaa04.28b", 0x200001, 0x020000, BAD_DUMP CRC(c3d19ddc) SHA1(3bc3e705567e8e59e56a40ae64381082c4f22271) )
+        ROM_LOAD32_BYTE( "312jaa03.30b", 0x200002, 0x020000, BAD_DUMP CRC(465e3d03) SHA1(8efeb775f6d9f1dfcebdbc79d0c832107278c063) )
+        ROM_LOAD32_BYTE( "312jaa02.33b", 0x200003, 0x020000, BAD_DUMP CRC(e971cb87) SHA1(53e2e7c4b96e4331df27d4788aa1bb81efddf9f0) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("312b06.9c", 0x000000, 128*1024, CRC(a6f62539) SHA1(b333e02c55237a0429d8c5386ec68b67797a1107) )
+	ROM_LOAD16_BYTE("312b07.7c", 0x000001, 128*1024, CRC(1aa19c41) SHA1(5b879fb17ac514f266e63db6af50f2f4af7da32c) )
+
+	/* tiles */
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "312a14.17h", 0x000000, 2*1024*1024, CRC(dc862f19) SHA1(8ec9f8715b622462fb8c79a48162c161eb9fe13b) )
+	ROM_LOAD16_BYTE( "312a12.22h", 0x000001, 2*1024*1024, CRC(98c04ddd) SHA1(7bc7af21625466e75003da9fd950437249e75b78) )
+	ROM_LOAD16_BYTE( "312a15.15h", 0x400000, 2*1024*1024, CRC(516f2941) SHA1(07415fec2d96fe6b707f801a9e9e963186d83d6a) )
+	ROM_LOAD16_BYTE( "312a13.20h", 0x400001, 2*1024*1024, CRC(16e5fdaa) SHA1(f04e09ee4207eb2bd67533997d36f4b3cf42a439) )
+
+	/* sprites */
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_ERASE00 )
+	_64_WORD_ROM_LOAD( "312a08.33g", 0x000000, 2*1024*1024, CRC(29015d56) SHA1(7273270804ecefd8f59469c2c2a8a89fb045a12b) )
+	_64_WORD_ROM_LOAD( "312a09.30g", 0x000002, 2*1024*1024, CRC(b2c5d6d5) SHA1(8248612275ca862c6688de5c6f24f37aeb3f9fe5) )
+	_64_WORD_ROM_LOAD( "312a10.28g", 0x000004, 2*1024*1024, CRC(3c570d04) SHA1(ebbf7d28726e98c8895c9bf901f8b2dd38018c77) )
+	_64_WORD_ROM_LOAD( "312a11.25g", 0x000006, 2*1024*1024, CRC(5f474357) SHA1(1f6d99f1ea69e07a65731ea4eae5917452cfcab6) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "312a17.9g", 0x000000, 2*1024*1024, CRC(ed101448) SHA1(ef1342f37fbbb092eddee0c237b40989ad42cf26) )
+	ROM_LOAD( "312a18.7g", 0x200000, 1*1024*1024, CRC(5717abd7) SHA1(d304d733e7fca0363ea6b3872c2d3bbe4edf1179) )
+ROM_END
+
 /* Racin' Force */
 ROM_START( racinfrc )
 	/* main program */
@@ -2955,13 +2990,67 @@ ROM_START( racinfrc )
 	ROM_LOAD( "250a18.12y", 0x200000, 2*1024*1024, CRC(8014a2eb) SHA1(d82f0a7d559340ae05a78ecc8bb69bb35b9c0658) )
 ROM_END
 
-/* Konami Open Golf Championship */
+/* Konami's Open Golf Championship - Europe version EAE */
 ROM_START( opengolf )
+	/* main program */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )
+	GX_BIOS
+	ROM_LOAD32_WORD_SWAP( "218eae02.34n", 0x200000, 512*1024, CRC(6f99ddb0) SHA1(99b18c571ce5b67dc8572ffef737b7b6beaf740e) )
+	ROM_LOAD32_WORD_SWAP( "218eae03.31n", 0x200002, 512*1024, CRC(c173cf3c) SHA1(f78fd40717997e913b0183f9f2d03a0433071c93) )
+	ROM_LOAD32_WORD_SWAP( "218eae02.34n", 0x300000, 512*1024, CRC(6f99ddb0) SHA1(99b18c571ce5b67dc8572ffef737b7b6beaf740e) )
+	ROM_LOAD32_WORD_SWAP( "218eae03.31n", 0x300002, 512*1024, CRC(c173cf3c) SHA1(f78fd40717997e913b0183f9f2d03a0433071c93) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "218a04.34s", 0x400000, 512*1024, CRC(e50043a7) SHA1(d3a8e214362c34c4151408f422c9b1c723f7f01c) )
+	ROM_LOAD32_WORD_SWAP( "218a05.31s", 0x400002, 512*1024, CRC(46c6b5d3) SHA1(e59c6d2dac9db635589149e4b4852e5f6a9c3c4f) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("218a06.8p", 0x000000, 128*1024, CRC(6755ccf9) SHA1(3bcb18302c385a937c748cf586970c12cef21b38) )
+	ROM_LOAD16_BYTE("218a07.6p", 0x000001, 128*1024, CRC(221e5293) SHA1(44b0b4fa37da4c19c29d4d2e5b93b94fbec03633) )
+
+	/* tiles */
+	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_ERASE00 )
+	TILE_WORD_ROM_LOAD( "218a15.19y", 0x000000, 2*1024*1024, CRC(78ddc8af) SHA1(24313881dbf7e1b06da008080b0143c3ca5e15b1) )
+	TILE_WORD_ROM_LOAD( "218a16.16y", 0x280000, 512*1024,    CRC(a41a3ec8) SHA1(dfef4c3e4d6d4e453a4958f2bd52788497c64093) )
+	TILE_BYTE_ROM_LOAD( "218a14.22y", 0x000004, 1*1024*1024, CRC(508cd75e) SHA1(adfaac92bc55f60b178a5817c48774a664d8980d) )
+
+	/* sprites */
+	ROM_REGION( 0x900000, REGION_GFX2, ROMREGION_ERASE00 )
+	_48_WORD_ROM_LOAD( "218a12.26y", 0x000000, 2*1024*1024, CRC(83158653) SHA1(b7e43d63f12a793b18ce9fc9cc2c38352d211905) )
+	_48_WORD_ROM_LOAD( "218a10.31y", 0x000002, 2*1024*1024, CRC(059bfee3) SHA1(e7f4621313b7f9a6cad81d455700172654bc7404) )
+	_48_WORD_ROM_LOAD( "218a08.35y", 0x000004, 2*1024*1024, CRC(5b7098f3) SHA1(91bedf731e94d1554f9a8f86f79425a2c58bbaf9) )
+	_48_WORD_ROM_LOAD( "218a13.24y", 0x600000, 1*1024*1024, CRC(b9ffd12a) SHA1(f8a689957b8ff966a38f999a679cdbf18a6dfc77) )
+	_48_WORD_ROM_LOAD( "218a11.28y", 0x600002, 1*1024*1024, CRC(b57231e5) SHA1(e1cd1854e909ca53dc2c32b27e5f9bb2217b0e4c) )
+	_48_WORD_ROM_LOAD( "218a09.33y", 0x600004, 1*1024*1024, CRC(13627443) SHA1(b51758e19ed7d6bb1e313f7c8a509ad1aad8b22c) )
+
+	/* K053936 tiles (CROM and HROM from the schematics) */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 )
+	T1_PSAC8_ROM_LOAD( "218a20.10d", 0x000000, 0x200000, CRC(f0ac2d6f) SHA1(acae9e20d663932a9a44a2e1089546338442c71f) )
+	T1_PSAC8_ROM_LOAD( "218a21.7d",  0x000001, 0x200000, CRC(cb15122a) SHA1(2d159dcfbd4a7fc6e824c1be0cc5b81dee7ce8a3) )
+	T1_PSAC8_ROM_LOAD( "218a22.5d",  0x000002, 0x200000, CRC(1b08d7dc) SHA1(2b963dbc415a30d3545ea730e47a592798f30a45) )
+	T1_PSAC8_ROM_LOAD( "218a23.3d",  0x000003, 0x200000, CRC(1e4224b5) SHA1(f34849d500a35001944da6b8864c796e7a0a7224) )
+
+	ROM_REGION( 0x600000, REGION_GFX4, ROMREGION_ERASE00 )
+	T1_PSAC6_ROM_LOAD( "218a24.10h", 0x000000, 0x200000, CRC(e938d96a) SHA1(176a9bfd252f01bc034ca348d018705926a1a545) )
+	T1_PSAC6_ROM_LOAD( "218a25.7h",  0x000001, 0x200000, CRC(11600c2d) SHA1(721c9361761dd20810ff18c63543b222c98a47a4) )
+	T1_PSAC6_ROM_LOAD( "218a26.5h",  0x000002, 0x200000, CRC(b37e4b7a) SHA1(3d21e540a366f6ef8ba761855fceecd8591179d7) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "218a17.14y", 0x000000, 2*1024*1024, CRC(0b525127) SHA1(218b306c12e1094a676815b7dddaf13bf19be2d5) )
+	ROM_LOAD( "218a18.12y", 0x200000, 1*1024*1024, CRC(98ec4cfb) SHA1(638753f9d9269719a37133b9c39c242507fdd8ac) )
+ROM_END
+
+/* Konami's Open Golf Championship - Europe version EAD */
+ROM_START( opengol2 )
 	/* main program */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )
 	GX_BIOS
 	ROM_LOAD32_WORD_SWAP( "218ead02.34n", 0x200000, 512*1024, CRC(eeb58816) SHA1(fe88a4515b552975f78897543bc564495b69dd68) )
 	ROM_LOAD32_WORD_SWAP( "218ead03.31n", 0x200002, 512*1024, CRC(5c36f84c) SHA1(8dcbc9e1a8857be9d407a9d0e962a62b963e7187) )
+	ROM_LOAD32_WORD_SWAP( "218ead02.34n", 0x300000, 512*1024, CRC(eeb58816) SHA1(fe88a4515b552975f78897543bc564495b69dd68) )
+	ROM_LOAD32_WORD_SWAP( "218ead03.31n", 0x300002, 512*1024, CRC(5c36f84c) SHA1(8dcbc9e1a8857be9d407a9d0e962a62b963e7187) )
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "218a04.34s", 0x400000, 512*1024, CRC(e50043a7) SHA1(d3a8e214362c34c4151408f422c9b1c723f7f01c) )
@@ -3302,10 +3391,12 @@ static DRIVER_INIT(konamigx)
 GAMEX(1994, konamigx, 0, konamigx, konamigx, konamigx, ROT0, "Konami", "System GX", NOT_A_DRIVER )
 
 
-/* Type 1: standard with an add-on 53936 on the ROM board, analog inputs, and LAN (link) capability */
-/* needs the 53936 to be playable */
-GAMEX( 1994, racinfrc, konamigx, racinfrc, racinfrc, konamigx, ROT0, "Konami", "Racin' Force (ver UAB)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
-GAMEX( 1994, opengolf, konamigx, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (ver EAD)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+/* Type 1: standard with an add-on 53936 on the ROM board, analog inputs, */
+/* and optional LAN capability (only on Racin' Force - chips aren't present on the golf games) */
+/* needs the ROZ layer to be playable */
+GAMEX( 1994, racinfrc, konamigx, racinfrc,  racinfrc, konamigx, ROT0, "Konami", "Racin' Force (ver UAB)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+GAMEX( 1994, opengolf, konamigx, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (ver EAE)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
+GAMEX( 1994, opengol2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Konami's Open Golf Championship (ver EAD)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING  )
 GAMEX( 1994, ggreats2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", "Golfing Greats 2 (ver JAC)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 
@@ -3313,6 +3404,7 @@ GAMEX( 1994, ggreats2, opengolf, opengolf,  racinfrc, konamigx, ROT0, "Konami", 
 /* these games work and are playable with minor graphics glitches */
 GAMEX( 1994, le2,      konamigx, le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver EAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, le2u,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver UAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, le2j,     le2,      le2,      le2,      konamigx, ROT0, "Konami", "Lethal Enforcers II: Gun Fighters (ver JAA)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
 GAMEX( 1994, gokuparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Gokujyou Parodius (ver JAD)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, puzldama, konamigx, konamigx, puzldama, konamigx, ROT0, "Konami", "Taisen Puzzle-dama (ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, tbyahhoo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Twin Bee Yahhoo! (ver JAA)", GAME_IMPERFECT_GRAPHICS )

@@ -46,6 +46,7 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 //============================================================
 
 extern const int win_key_trans_table[][4];
+extern int win_use_mouse;
 
 void start_led(void);
 void stop_led(void);

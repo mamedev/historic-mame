@@ -853,6 +853,10 @@ static void tms34010_init(void)
 		vsblnk_timer[i] = timer_alloc(vsblnk_callback);
 	}
 
+
+	/* allocate the shiftreg */
+	state.shiftreg = auto_malloc(SHIFTREG_SIZE);
+
 	cpunum = cpu_getactivecpu();
 	state_save_register_UINT32("tms34010", cpunum, "OP",        &state.op, 1);
 	state_save_register_UINT32("tms34010", cpunum, "PC",        &state.pc, 1);
@@ -888,13 +892,13 @@ static void tms34010_init(void)
 static void tms34010_reset(void *param)
 {
 	struct tms34010_config *config = param ? param : &default_config;
+	UINT16 *shiftreg;
 
 	/* zap the state and copy in the config pointer */
+	shiftreg = state.shiftreg;
 	memset(&state, 0, sizeof(state));
 	state.config = config;
-
-	/* allocate the shiftreg */
-	state.shiftreg = malloc(SHIFTREG_SIZE);
+	state.shiftreg = shiftreg;
 
 	/* fetch the initial PC and reset the state */
 	PC = RLONG(0xffffffe0) & 0xfffffff0;

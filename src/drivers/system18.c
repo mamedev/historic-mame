@@ -16,7 +16,10 @@
 /*
 
 Changes:
-03/17/04  Charles MacDonald
+04/28/04  Charles MacDonald
+- Added MSM5205 sample playback to shdancbl.
+
+03/17/04
 - Added Where's Wally? (wwally) It's encrypted and unplayable.
 - Moved Ace Attacker to system16.c (it's a not a System 18 game)
 - Fixed System 18 sample ROM banking. This doesn't help the current working games, but will support others when/if they are decrypted.
@@ -121,7 +124,7 @@ static void set_bg2_page( int data ){
 	8000-BFFF : ROM (banked)
 	C000-C007 : ?
 	C400      : Sound command (r/o)
-	C800      : Sound sample data output (DAC?) (w/o)
+	C800      : MSM5205 sample data output (w/o)
 	CC00-CC03 : YM3438 #1
 	D000-D003 : YM3438 #2
 	D400      : ROM bank control (w/o)
@@ -137,12 +140,42 @@ static void set_bg2_page( int data ){
 
 	Interrupts
 
-	IRQ = Program reads sound command from $C400
-	NMI = Program copies sample data from ROM bank to sound sample output at $C800
+	IRQ = Triggered when 68000 writes sound command. Z80 reads from $C400.
+	NMI = Triggered when second nibble of sample data has been output to the MSM5205.
+	      Program copies sample data from ROM bank to the MSM5205 sample data buffer at $C800.
 
 	ROM banking seems correct.
+	It doesn't look like there's a way to reset the MSM5205, unless that's related to bit 7 of the
+	ROM bank control register.
+	MSM5205 clock speed hasn't been confirmed.
 */
 /***************************************************************************/
+
+static int sample_buffer = 0;
+static int sample_select = 0;
+
+static WRITE_HANDLER( shdancbl_msm5205_data_w )
+{
+	sample_buffer = data;
+}
+
+static void shdancbl_msm5205_callback(int data)
+{
+	MSM5205_data_w(0, sample_buffer & 0x0F);
+	sample_buffer >>= 4;
+	sample_select ^= 1;
+	if(sample_select == 0)
+		cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct MSM5205interface shdancbl_msm5205_interface =
+{
+	1,
+	200000, /* 200KHz */
+	{ shdancbl_msm5205_callback },
+	{ MSM5205_S48_4B},
+	{ 80 }
+};
 
 UINT8* shdancbl_soundbank_ptr = NULL;		/* Pointer to currently selected portion of ROM */
 
@@ -204,7 +237,7 @@ static ADDRESS_MAP_START(shdancbl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_NOP) /* ROM bank */
 	AM_RANGE(0xc000, 0xc00f) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xc800, 0xc800) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xc800, 0xc800) AM_WRITE(shdancbl_msm5205_data_w)
 	AM_RANGE(0xcc00, 0xcc00) AM_WRITE(YM2612_control_port_0_A_w)
 	AM_RANGE(0xcc01, 0xcc01) AM_WRITE(YM2612_data_port_0_A_w)
 	AM_RANGE(0xcc02, 0xcc02) AM_WRITE(YM2612_control_port_0_B_w)
@@ -1300,6 +1333,8 @@ static MACHINE_DRIVER_START( shdancbl )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(shdancbl_sound_readmem,shdancbl_sound_writemem)
 	MDRV_CPU_IO_MAP(shdancbl_sound_readport,shdancbl_sound_writeport)
+	MDRV_SOUND_REMOVE("5c68")
+	MDRV_SOUND_ADD_TAG("5205", MSM5205, shdancbl_msm5205_interface)
 
 	MDRV_MACHINE_INIT(shdancbl)
 MACHINE_DRIVER_END
@@ -1962,7 +1997,7 @@ GAMEX(1990, moonwalk, 0,        moonwalk, moonwalk, moonwalk, ROT0, "Sega",    "
 GAMEX(1990, moonwlka, moonwalk, moonwalk, moonwalk, moonwalk, ROT0, "Sega",    "Michael Jackson's Moonwalker (Set 2)", GAME_NOT_WORKING )
 GAME( 1990, moonwlkb, moonwalk, moonwalk, moonwalk, moonwalk, ROT0, "bootleg", "Michael Jackson's Moonwalker (bootleg)" )
 GAME( 1989, shdancer, 0,        shdancer, shdancer, shdancer, ROT0, "Sega",    "Shadow Dancer (US)"  )
-GAMEX( 1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX( 1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_IMPERFECT_GRAPHICS)
 GAME( 1989, shdancrj, shdancer, shdancrj, shdancer, shdancrj, ROT0, "Sega",    "Shadow Dancer (Japan)" )
 GAME( 1989, shdancrb, shdancer, shdancrb, shdancer, shdancrb, ROT0, "Sega",    "Shadow Dancer (Rev.B)" )
 

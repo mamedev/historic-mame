@@ -80,7 +80,10 @@ CPUS+=ARM@
 CPUS+=JAGUAR@
 CPUS+=R3000@
 CPUS+=R4600@
+CPUS+=R4700@
 CPUS+=R5000@
+CPUS+=QED5271@
+CPUS+=RM7000@
 CPUS+=SH2@
 CPUS+=DSP32C@
 #CPUS+=PIC16C54@
@@ -264,6 +267,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namcos3d.o \
 	$(OBJ)/vidhrdw/namcos21.o $(OBJ)/drivers/namcos21.o \
 	$(OBJ)/vidhrdw/namcos22.o $(OBJ)/drivers/namcos22.o \
+	$(OBJ)/drivers/namcos23.o \
 
 $(OBJ)/univers.a: \
 	$(OBJ)/vidhrdw/cosmic.o $(OBJ)/drivers/cosmic.o \
@@ -274,7 +278,7 @@ $(OBJ)/univers.a: \
 	$(OBJ)/machine/docastle.o $(OBJ)/vidhrdw/docastle.o $(OBJ)/drivers/docastle.o \
 
 $(OBJ)/nintendo.a: \
-	$(OBJ)/drivers/n8080.o \
+	$(OBJ)/drivers/n8080.o $(OBJ)/vidhrdw/n8080.o $(OBJ)/sndhrdw/n8080.o \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
 	$(OBJ)/machine/strtheat.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
@@ -309,7 +313,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
-	$(OBJ)/drivers/seattle.o $(OBJ)/vidhrdw/voodoo.o \
+	$(OBJ)/drivers/seattle.o $(OBJ)/vidhrdw/voodoo.o $(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
 	$(OBJ)/machine/midwayic.o $(OBJ)/sndhrdw/dcs.o \
 	$(OBJ)/machine/midyunit.o $(OBJ)/vidhrdw/midyunit.o $(OBJ)/drivers/midyunit.o \
@@ -620,6 +624,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/vidhrdw/bishi.o $(OBJ)/drivers/bishi.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
+	$(OBJ)/vidhrdw/qdrmfgp.o $(OBJ)/drivers/qdrmfgp.o \
 	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \
@@ -649,6 +654,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/drivers/starwars.o $(OBJ)/sndhrdw/starwars.o \
 	$(OBJ)/machine/mhavoc.o $(OBJ)/drivers/mhavoc.o \
 	$(OBJ)/drivers/quantum.o \
+	$(OBJ)/drivers/cball.o \
 	$(OBJ)/vidhrdw/copsnrob.o $(OBJ)/machine/copsnrob.o $(OBJ)/drivers/copsnrob.o \
 	$(OBJ)/vidhrdw/flyball.o $(OBJ)/drivers/flyball.o \
 	$(OBJ)/drivers/mgolf.o \
@@ -995,7 +1001,6 @@ $(OBJ)/afega.a: \
 
 $(OBJ)/esd.a: \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
-	$(OBJ)/drivers/firehawk.o \
 
 $(OBJ)/dynax.a: \
 	$(OBJ)/drivers/royalmah.o \
@@ -1095,6 +1100,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/taxidrvr.o $(OBJ)/drivers/taxidrvr.o \
 	$(OBJ)/vidhrdw/xyonix.o $(OBJ)/drivers/xyonix.o \
 	$(OBJ)/drivers/findout.o \
+	$(OBJ)/drivers/getrivia.o \
 	$(OBJ)/vidhrdw/dribling.o $(OBJ)/drivers/dribling.o \
 	$(OBJ)/drivers/ace.o \
 	$(OBJ)/vidhrdw/clayshoo.o $(OBJ)/machine/clayshoo.o $(OBJ)/drivers/clayshoo.o \
@@ -1140,6 +1146,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/macs.o \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/1945kiii.o \
+	$(OBJ)/drivers/pbchmp95.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

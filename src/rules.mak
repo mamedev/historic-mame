@@ -981,6 +981,22 @@ else
 CPUDEFS += -DHAS_R4600=0
 endif
 
+CPU=$(strip $(findstring R4700@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/mips
+CPUDEFS += -DHAS_R4700=1
+ifdef X86_MIPS3_DRC
+CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+else
+CPUOBJS += $(OBJ)/cpu/mips/mips3.o
+$(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h
+endif
+DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
+else
+CPUDEFS += -DHAS_R4700=0
+endif
+
 CPU=$(strip $(findstring R5000@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/mips
@@ -995,6 +1011,38 @@ endif
 DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
 else
 CPUDEFS += -DHAS_R5000=0
+endif
+
+CPU=$(strip $(findstring QED5271@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/mips
+CPUDEFS += -DHAS_QED5271=1
+ifdef X86_MIPS3_DRC
+CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+else
+CPUOBJS += $(OBJ)/cpu/mips/mips3.o
+$(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h
+endif
+DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
+else
+CPUDEFS += -DHAS_QED5271=0
+endif
+
+CPU=$(strip $(findstring RM7000@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/mips
+CPUDEFS += -DHAS_RM7000=1
+ifdef X86_MIPS3_DRC
+CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+else
+CPUOBJS += $(OBJ)/cpu/mips/mips3.o
+$(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h
+endif
+DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
+else
+CPUDEFS += -DHAS_RM7000=0
 endif
 
 CPU=$(strip $(findstring SH2@,$(CPUS)))

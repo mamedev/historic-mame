@@ -1,50 +1,100 @@
 /*************************************************************************
 
-	Driver for Atari/Midway Seattle hardware games
+	Driver for Atari/Midway Phoenix/Seattle/Flagstaff hardware games
 
 	driver by Aaron Giles
 
 	Games supported:
-		* Bio Freaks [Midway]
-		* CarnEvil [Midway, 150MHz]
-		* NFL Blitz [Midway, 150MHz]
-		* NFL Blitz 99 [Midway, 150MHz]
-		* NFL Blitz 2000 [Midway, 150MHz]
+		* Wayne Gretzky's 3d Hockey    [Phoenix, Atari, ~100MHz, 4MB RAM, 1xTMU]
 
-		* California Speed [Atari, 150MHz]
-		* Mace: The Dark Age [Atari, 200MHz]
-		* San Francisco Rush [Atari]
-		* Vapor TRX [Atari, 192MHz, 8MB RAM, 1-TMU * 4MB]
-		* Wayne Gretzky's 3d Hockey [Atari, ~100MHz, 4MB RAM]
+		* Bio Freaks                   [Seattle, Midway, ???MHz, 8MB RAM, 1xTMU]
+		* CarnEvil                     [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+		* NFL Blitz                    [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+		* NFL Blitz 99                 [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+		* NFL Blitz 2000               [Seattle, Midway, 150MHz, 8MB RAM, 1xTMU]
+		* Mace: The Dark Age           [Seattle, Atari,  200MHz, 8MB RAM, 1xTMU]
+
+		* California Speed             [Seattle + Widget, Atari, 150MHz, 8MB RAM, 1xTMU]
+		* Vapor TRX                    [Seattle + Widget, Atari, 192MHz, 8MB RAM, 1xTMU]
+
+		* San Francisco Rush           [Flagstaff, Atari, 200MHz, 2xTMU]
+		* San Francisco Rush: The Rock [Flagstaff, Atari, 200MHz, 8MB RAM, 2xTMU]
 
 	Still missing hard disks for:
-		* Hyperdrive [Midway, 200MHz]
-		* San Francisco Rush Alcatraz Edition [Atari]
+		* Hyperdrive                   [Seattle, Midway, 200MHz, 8MB RAM, 1xTMU]
 
 	Known bugs:
 		* Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
 		* Carnevil: lets you set the flash brightness; need to emulate that
-		* SF Rush: hangs when trying to start a game (security?)
-		* Vapor TRX: missing BG graphics in level select screen
-		* Vapor TRX: resets when trying to start a game
+
+***************************************************************************
+
+	Phoenix hardware main board:
+	
+		* 100MHz R4700 main CPU (50MHz system clock)
+		* Galileo GT64010 system controller
+		* National Semiconductor PC87415 IDE controller
+		* 3dfx FBI with 2MB frame buffer
+		* 3dfx TMU with 4MB txture memory
+		* Midway I/O ASIC
+		* 4MB DRAM for main CPU
+		* 512KB boot ROM
+		* 16MHz ADSP 2115 audio CPU
+		* 4MB DRAM for audio CPU
+		* 32KB boot ROM
+	
+	Seattle hardware main board:
+	
+		* 144MHz/150MHz/192MHz/200MHz R5000 main CPU (system clock 48MHz/50MHz)
+		* Galileo GT64010 system controller
+		* National Semiconductor PC87415 IDE controller
+		* 3dfx FBI with 2MB frame buffer
+		* 3dfx TMU with 4MB txture memory
+		* Midway I/O ASIC
+		* 8MB DRAM for main CPU
+		* 512KB boot ROM
+		* 16MHz ADSP 2115 audio CPU
+		* 4MB DRAM for audio CPU
+		* 32KB boot ROM
+
+	Flagstaff hardware main board:
+	
+		* 200MHz R5000 main CPU (system clock 50MHz)
+		* Galileo GT64010 system controller
+		* National Semiconductor PC87415 IDE controller
+		* SMC91C94 ethernet controller
+		* ADC0848 8 x A-to-D converters
+		* 3dfx FBI with 2MB frame buffer
+		* 2 x 3dfx TMU with 4MB txture memory
+		* Midway I/O ASIC
+		* 8MB DRAM for main CPU
+		* 512KB boot ROM
+		* 33MHz TMS32C031 audio CPU
+		* 8MB ROM space for audio CPU
+		* 512KB boot ROM
+	
+	Widget board:
+	
+		* SMC91C94 ethernet controller
+		* ADC0848 8 x A-to-D converters
 
 ***************************************************************************
 
 	Interrupt summary:
 
-	                    __________
-	UART clear-to-send |          |  
-	-------(0x2000)--->|          |
-	                   |          |
-	UART data ready    |          |
-	-------(0x1000)--->|          |                     __________
+	                    __________ 
+	UART clear-to-send |          |                     __________
+	-------(0x2000)--->|          |   Ethernet/Widget  |          |
+	                   |          |   ----(IRQ3/4/5)-->|          |
+	UART data ready    |          |                    |          |
+	-------(0x1000)--->|          |                    |          |
 	                   |          |   VSYNC            |          |
 	Main-to-sound empty|  IOASIC  |   ----(IRQ3/4/5)-->|          |
 	-------(0x0080)--->|          |                    |          |
 	                   |          |                    |          |
-	Sound-to-main full |          |   IDE Controller   |          |
+	Sound-to-main full |          |   IDE Controller   |   CPU    |
 	-------(0x0040)--->|          |   -------(IRQ2)--->|          |
-	                   |          |                    |   CPU    |
+	                   |          |                    |          |
 	Sound FIFO empty   |          |                    |          |
 	-------(0x0008)--->|          |   IOASIC Summary   |          |
 	                   |__________|----------(IRQ1)--->|          |
@@ -84,36 +134,258 @@
 #include "sndhrdw/cage.h"
 #include "machine/idectrl.h"
 #include "machine/midwayic.h"
+#include "machine/smc91c9x.h"
 #include "vidhrdw/voodoo.h"
 
 
-#define TIMER_CLOCK			TIME_IN_HZ(50000000)
-#define DMA_SECS_PER_BYTE	TIME_IN_HZ(50000000)
 
+/*************************************
+ *
+ *	Debugging constants
+ *
+ *************************************/
 
+#define LOG_GALILEO			(0)
 #define LOG_TIMERS			(0)
 #define LOG_DMA				(0)
-#define LOG_GALILEO			(0)
+#define LOG_PCI				(0)
+#define LOG_WIDGET			(0)
 
+
+
+/*************************************
+ *
+ *	Core constants
+ *
+ *************************************/
+
+#define SYSTEM_CLOCK		50000000
+#define TIMER_CLOCK			(TIME_IN_HZ(SYSTEM_CLOCK))
+
+/* various board configurations */
+#define PHOENIX_CONFIG			(0)
+#define SEATTLE_CONFIG			(1)
+#define SEATTLE_WIDGET_CONFIG	(2)
+#define FLAGSTAFF_CONFIG		(3)
+
+/* static interrupts */
+#define GALILEO_IRQ_NUM		(0)
+#define IOASIC_IRQ_NUM		(1)
+#define IDE_IRQ_NUM			(2)
+
+/* configurable interrupts */
+#define ETHERNET_IRQ_SHIFT	(1)
+#define WIDGET_IRQ_SHIFT	(1)
+#define VBLANK_IRQ_SHIFT	(7)
+
+
+
+/*************************************
+ *
+ *	Galileo constants
+ *
+ *************************************/
+
+#define DMA_SECS_PER_BYTE	(TIME_IN_HZ(50000000))
+
+/* Galileo registers - 0x000-0x3ff */
+#define GREG_CPU_CONFIG		(0x000/4)
+#define GREG_RAS_1_0_LO		(0x008/4)
+#define GREG_RAS_1_0_HI		(0x010/4)
+#define GREG_RAS_3_2_LO		(0x018/4)
+#define GREG_RAS_3_2_HI		(0x020/4)
+#define GREG_CS_2_0_LO		(0x028/4)
+#define GREG_CS_2_0_HI		(0x030/4)
+#define GREG_CS_3_BOOT_LO	(0x038/4)
+#define GREG_CS_3_BOOT_HI	(0x040/4)
+#define GREG_PCI_IO_LO		(0x048/4)
+#define GREG_PCI_IO_HI		(0x050/4)
+#define GREG_PCI_MEM_LO		(0x058/4)
+#define GREG_PCI_MEM_HI		(0x060/4)
+#define GREG_INTERNAL_SPACE	(0x068/4)
+#define GREG_BUSERR_LO		(0x070/4)
+#define GREG_BUSERR_HI		(0x078/4)
+
+/* Galileo registers - 0x400-0x7ff */
+#define GREG_RAS0_LO		(0x400/4)
+#define GREG_RAS0_HI		(0x404/4)
+#define GREG_RAS1_LO		(0x408/4)
+#define GREG_RAS1_HI		(0x40c/4)
+#define GREG_RAS2_LO		(0x410/4)
+#define GREG_RAS2_HI		(0x414/4)
+#define GREG_RAS3_LO		(0x418/4)
+#define GREG_RAS3_HI		(0x41c/4)
+#define GREG_CS0_LO			(0x420/4)
+#define GREG_CS0_HI			(0x424/4)
+#define GREG_CS1_LO			(0x428/4)
+#define GREG_CS1_HI			(0x42c/4)
+#define GREG_CS2_LO			(0x430/4)
+#define GREG_CS2_HI			(0x434/4)
+#define GREG_CS3_LO			(0x438/4)
+#define GREG_CS3_HI			(0x43c/4)
+#define GREG_CSBOOT_LO		(0x440/4)
+#define GREG_CSBOOT_HI		(0x444/4)
+#define GREG_DRAM_CONFIG	(0x448/4)
+#define GREG_DRAM_BANK0		(0x44c/4)
+#define GREG_DRAM_BANK1		(0x450/4)
+#define GREG_DRAM_BANK2		(0x454/4)
+#define GREG_DRAM_BANK3		(0x458/4)
+#define GREG_DEVICE_BANK0	(0x45c/4)
+#define GREG_DEVICE_BANK1	(0x460/4)
+#define GREG_DEVICE_BANK2	(0x464/4)
+#define GREG_DEVICE_BANK3	(0x468/4)
+#define GREG_DEVICE_BOOT	(0x46c/4)
+#define GREG_ADDRESS_ERROR	(0x470/4)
+
+/* Galileo registers - 0x800-0xbff */
+#define GREG_DMA0_COUNT		(0x800/4)
+#define GREG_DMA1_COUNT		(0x804/4)
+#define GREG_DMA2_COUNT		(0x808/4)
+#define GREG_DMA3_COUNT		(0x80c/4)
+#define GREG_DMA0_SOURCE	(0x810/4)
+#define GREG_DMA1_SOURCE	(0x814/4)
+#define GREG_DMA2_SOURCE	(0x818/4)
+#define GREG_DMA3_SOURCE	(0x81c/4)
+#define GREG_DMA0_DEST		(0x820/4)
+#define GREG_DMA1_DEST		(0x824/4)
+#define GREG_DMA2_DEST		(0x828/4)
+#define GREG_DMA3_DEST		(0x82c/4)
+#define GREG_DMA0_NEXT		(0x830/4)
+#define GREG_DMA1_NEXT		(0x834/4)
+#define GREG_DMA2_NEXT		(0x838/4)
+#define GREG_DMA3_NEXT		(0x83c/4)
+#define GREG_DMA0_CONTROL	(0x840/4)
+#define GREG_DMA1_CONTROL	(0x844/4)
+#define GREG_DMA2_CONTROL	(0x848/4)
+#define GREG_DMA3_CONTROL	(0x84c/4)
+#define GREG_TIMER0_COUNT	(0x850/4)
+#define GREG_TIMER1_COUNT	(0x854/4)
+#define GREG_TIMER2_COUNT	(0x858/4)
+#define GREG_TIMER3_COUNT	(0x85c/4)
+#define GREG_DMA_ARBITER	(0x860/4)
+#define GREG_TIMER_CONTROL	(0x864/4)
+
+/* Galileo registers - 0xc00-0xfff */
+#define GREG_PCI_COMMAND	(0xc00/4)
+#define GREG_PCI_TIMEOUT	(0xc04/4)
+#define GREG_PCI_RAS_1_0	(0xc08/4)
+#define GREG_PCI_RAS_3_2	(0xc0c/4)
+#define GREG_PCI_CS_2_0		(0xc10/4)
+#define GREG_PCI_CS_3_BOOT	(0xc14/4)
+#define GREG_INT_STATE		(0xc18/4)
+#define GREG_INT_MASK		(0xc1c/4)
+#define GREG_PCI_INT_MASK	(0xc24/4)
+#define GREG_CONFIG_ADDRESS	(0xcf8/4)
+#define GREG_CONFIG_DATA	(0xcfc/4)
+
+/* Galileo interrupts */
+#define GINT_SUMMARY_SHIFT	(0)
+#define GINT_MEMOUT_SHIFT	(1)
+#define GINT_DMAOUT_SHIFT	(2)
+#define GINT_CPUOUT_SHIFT	(3)
+#define GINT_DMA0COMP_SHIFT	(4)
+#define GINT_DMA1COMP_SHIFT	(5)
+#define GINT_DMA2COMP_SHIFT	(6)
+#define GINT_DMA3COMP_SHIFT	(7)
+#define GINT_T0EXP_SHIFT	(8)
+#define GINT_T1EXP_SHIFT	(9)
+#define GINT_T2EXP_SHIFT	(10)
+#define GINT_T3EXP_SHIFT	(11)
+#define GINT_MASRDERR_SHIFT	(12)
+#define GINT_SLVWRERR_SHIFT	(13)
+#define GINT_MASWRERR_SHIFT	(14)
+#define GINT_SLVRDERR_SHIFT	(15)
+#define GINT_ADDRERR_SHIFT	(16)
+#define GINT_MEMERR_SHIFT	(17)
+#define GINT_MASABORT_SHIFT	(18)
+#define GINT_TARABORT_SHIFT	(19)
+#define GINT_RETRYCTR_SHIFT	(20)
+
+
+
+/*************************************
+ *
+ *	Widget board constants
+ *
+ *************************************/
+
+/* Widget registers */
+#define WREG_ETHER_ADDR		(0x00/4)
+#define WREG_INTERRUPT		(0x04/4)
+#define WREG_ANALOG			(0x10/4)
+#define WREG_ETHER_DATA		(0x14/4)
+
+/* Widget interrupts */
+#define WINT_ETHERNET_SHIFT	(2)
+
+
+
+/*************************************
+ *
+ *	Structures
+ *
+ *************************************/
+
+struct galileo_timer
+{
+	void *			timer;
+	UINT32			count;
+	UINT8			active;
+};
+
+
+struct galileo_data
+{
+	/* raw register data */
+	UINT32			reg[0x1000/4];
+
+	/* timer info */
+	struct galileo_timer timer[4];
+
+	/* DMA info */
+	UINT8			dma_pending_on_vblank[4];
+
+	/* PCI info */
+	UINT32			pci_bridge_regs[0x40];
+	UINT32			pci_3dfx_regs[0x40];
+	UINT32			pci_ide_regs[0x40];
+};
+
+
+struct widget_data
+{
+	/* ethernet register address */
+	UINT8			ethernet_addr;
+	
+	/* IRQ information */
+	UINT8			irq_num;
+	UINT8			irq_mask;
+};
+
+
+
+/*************************************
+ *
+ *	Local variables
+ *
+ *************************************/
 
 static data32_t *rambase;
 static data32_t *rombase;
-static data32_t *galileo_regs;
 
-static data32_t pci_bridge_regs[0x40];
-static data32_t pci_3dfx_regs[0x40];
+static struct galileo_data galileo;
+static struct widget_data widget;
 
-static UINT8 dma_pending_on_vblank[4];
+static UINT8 board_config;
 
-static void *timer[4];
-static UINT32 timer_count[4];
-static UINT8 timer_active[4];
+static UINT8 ethernet_irq_num;
+static UINT8 ethernet_irq_state;
 
+static UINT8 vblank_irq_num;
 static UINT8 vblank_latch;
-static UINT8 vblank_irq;
 static UINT8 vblank_state;
-static data32_t *vblank_config;
-static data32_t *vblank_enable;
+static data32_t *interrupt_config;
+static data32_t *interrupt_enable;
 
 static data32_t *asic_reset;
 
@@ -123,9 +395,22 @@ static data8_t status_leds;
 static data32_t *generic_speedup;
 static data32_t *generic_speedup2;
 
+static data32_t cmos_write_enabled;
 
-static void timer_callback(int param);
-static void perform_dma(int which);
+
+
+/*************************************
+ *
+ *	Prototypes
+ *
+ *************************************/
+
+static void update_vblank_irq(void);
+static void galileo_reset(void);
+static void galileo_timer_callback(int param);
+static void galileo_perform_dma(int which);
+static void widget_reset(void);
+static void update_widget_irq(void);
 
 
 
@@ -138,8 +423,17 @@ static void perform_dma(int which);
 static MACHINE_INIT( seattle )
 {
 	/* set the fastest DRC options, but strict verification */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY + MIPS3DRC_FLUSH_PC);
 
+	/* allocate timers for the galileo */
+	galileo.timer[0].timer = timer_alloc(galileo_timer_callback);
+	galileo.timer[1].timer = timer_alloc(galileo_timer_callback);
+	galileo.timer[2].timer = timer_alloc(galileo_timer_callback);
+	galileo.timer[3].timer = timer_alloc(galileo_timer_callback);
+
+	vblank_irq_num = 0;
+
+	/* reset either the DCS2 board or the CAGE board */
 	if (mame_find_cpu_index("dcs2") != -1)
 	{
 		dcs_reset_w(1);
@@ -151,16 +445,14 @@ static MACHINE_INIT( seattle )
 		cage_control_w(3);
 	}
 
+	/* reset the other devices */
+	galileo_reset();
 	ide_controller_reset(0);
-
-	timer[0] = timer_alloc(timer_callback);
-	timer[1] = timer_alloc(timer_callback);
-	timer[2] = timer_alloc(timer_callback);
-	timer[3] = timer_alloc(timer_callback);
-
-	vblank_irq = 0;
-
 	voodoo_reset();
+	if (board_config == SEATTLE_WIDGET_CONFIG)
+		widget_reset();
+	if (board_config == FLAGSTAFF_CONFIG)
+		smc91c94_reset();
 }
 
 
@@ -173,12 +465,40 @@ static MACHINE_INIT( seattle )
 
 static void ide_interrupt(int state)
 {
-	cpu_set_irq_line(0, 2, state);
+	cpu_set_irq_line(0, IDE_IRQ_NUM, state);
 }
+
 
 static struct ide_interface ide_intf =
 {
 	ide_interrupt
+};
+
+
+
+/*************************************
+ *
+ *	Ethernet interrupts
+ *
+ *************************************/
+
+static void ethernet_interrupt(int state)
+{
+	ethernet_irq_state = state;
+	if (board_config == FLAGSTAFF_CONFIG)
+	{
+		UINT8 assert = ethernet_irq_state && (*interrupt_enable & (1 << ETHERNET_IRQ_SHIFT));
+		if (ethernet_irq_num != 0)
+			cpu_set_irq_line(0, ethernet_irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
+	}
+	else if (board_config == SEATTLE_WIDGET_CONFIG)
+		update_widget_irq();
+}
+
+
+struct smc91c9x_interface ethernet_intf =
+{
+	ethernet_interrupt
 };
 
 
@@ -191,7 +511,82 @@ static struct ide_interface ide_intf =
 
 static void ioasic_irq(int state)
 {
-	cpu_set_irq_line(0, 1, state);
+	cpu_set_irq_line(0, IOASIC_IRQ_NUM, state);
+}
+
+
+
+/*************************************
+ *
+ *	Configurable interrupts
+ *
+ *************************************/
+
+static READ32_HANDLER( interrupt_state_r )
+{
+	data32_t result = 0;
+	result |= ethernet_irq_state << ETHERNET_IRQ_SHIFT;
+	result |= vblank_latch << VBLANK_IRQ_SHIFT;
+	return result;
+}
+
+
+static READ32_HANDLER( interrupt_state2_r )
+{
+	data32_t result = interrupt_state_r(offset, mem_mask);
+	result |= vblank_state << 8;
+	return result;
+}
+
+
+static WRITE32_HANDLER( interrupt_config_w )
+{
+	int irq;
+	COMBINE_DATA(interrupt_config);
+
+	/* VBLANK: clear anything pending on the old IRQ */
+	if (vblank_irq_num != 0)
+		cpu_set_irq_line(0, vblank_irq_num, CLEAR_LINE);
+
+	/* VBLANK: compute the new IRQ vector */
+	irq = (*interrupt_config >> (2*VBLANK_IRQ_SHIFT)) & 3;
+	vblank_irq_num = (irq != 0) ? (2 + irq) : 0;
+	
+	/* Widget board case */
+	if (board_config == SEATTLE_WIDGET_CONFIG)
+	{
+		/* Widget: clear anything pending on the old IRQ */
+		if (widget.irq_num != 0)
+			cpu_set_irq_line(0, widget.irq_num, CLEAR_LINE);
+
+		/* Widget: compute the new IRQ vector */
+		irq = (*interrupt_config >> (2*WIDGET_IRQ_SHIFT)) & 3;
+		widget.irq_num = (irq != 0) ? (2 + irq) : 0;
+	}
+	
+	/* Flagstaff board case */
+	if (board_config == FLAGSTAFF_CONFIG)
+	{
+		/* Ethernet: clear anything pending on the old IRQ */
+		if (ethernet_irq_num != 0)
+			cpu_set_irq_line(0, ethernet_irq_num, CLEAR_LINE);
+
+		/* Ethernet: compute the new IRQ vector */
+		irq = (*interrupt_config >> (2*ETHERNET_IRQ_SHIFT)) & 3;
+		ethernet_irq_num = (irq != 0) ? (2 + irq) : 0;
+	}
+
+	/* update the states */
+	update_vblank_irq();
+	ethernet_interrupt(ethernet_irq_state);
+}
+
+
+static WRITE32_HANDLER( seattle_interrupt_enable_w )
+{
+	COMBINE_DATA(interrupt_enable);
+	update_vblank_irq();
+	ethernet_interrupt(ethernet_irq_state);
 }
 
 
@@ -202,154 +597,62 @@ static void ioasic_irq(int state)
  *
  *************************************/
 
-static void update_vblank_state(void)
+static void update_vblank_irq(void)
 {
-	if (vblank_irq != 0)
-	{
-		int state = CLEAR_LINE;
+	int state = CLEAR_LINE;
 
-		if (vblank_latch && (*vblank_enable & 0x80))
-			state = ASSERT_LINE;
-		cpu_set_irq_line(0, vblank_irq, state);
-	}
-}
+	/* skip if no interrupt configured */
+	if (vblank_irq_num == 0)
+		return;
 
-
-static READ32_HANDLER( vblank_latch_r )
-{
-	data32_t result = 0;
-	result |= vblank_latch << 7;
-	return result;
-}
-
-
-static READ32_HANDLER( vblank_latch2_r )
-{
-	data32_t result = 0;
-	result |= vblank_latch << 7;
-	result |= vblank_state << 8;
-	return result;
-}
-
-
-static WRITE32_HANDLER( vblank_config_w )
-{
-	int irq;
-
-	COMBINE_DATA(vblank_config);
-
-	/* clear anything pending on the old IRQ */
-	if (vblank_irq != 0)
-		cpu_set_irq_line(0, vblank_irq, CLEAR_LINE);
-
-	/* compute the new IRQ vector */
-	irq = (*vblank_config >> 14) & 3;
-	if (irq != 0)
-		vblank_irq = 2 + irq;
-	else
-		vblank_irq = 0;
-
-	/* update the state */
-	update_vblank_state();
+	/* if the VBLANK has been latched, and the interrupt is enabled, assert */
+	if (vblank_latch && (*interrupt_enable & (1 << VBLANK_IRQ_SHIFT)))
+		state = ASSERT_LINE;
+	cpu_set_irq_line(0, vblank_irq_num, state);
 }
 
 
 static WRITE32_HANDLER( vblank_clear_w )
 {
+	/* clear the latch and update the IRQ */
 	vblank_latch = 0;
-	update_vblank_state();
-}
-
-
-static WRITE32_HANDLER( vblank_enable_w )
-{
-	COMBINE_DATA(vblank_enable);
-	update_vblank_state();
+	update_vblank_irq();
 }
 
 
 static void vblank_assert(int state)
 {
+	/* cache the raw state */
 	vblank_state = state;
-	if ((state && !(*vblank_enable & 0x100)) || (!state && (*vblank_enable & 0x100)))
+	
+	/* latch on the correct polarity transition */
+	if ((state && !(*interrupt_enable & 0x100)) || (!state && (*interrupt_enable & 0x100)))
 	{
 		vblank_latch = 1;
-		update_vblank_state();
+		update_vblank_irq();
 	}
 
 	/* if we have stalled DMA, restart */
-	if (dma_pending_on_vblank[0]) { cpuintrf_push_context(0); perform_dma(0); cpuintrf_pop_context(); }
-	if (dma_pending_on_vblank[1]) { cpuintrf_push_context(0); perform_dma(1); cpuintrf_pop_context(); }
-	if (dma_pending_on_vblank[2]) { cpuintrf_push_context(0); perform_dma(2); cpuintrf_pop_context(); }
-	if (dma_pending_on_vblank[3]) { cpuintrf_push_context(0); perform_dma(3); cpuintrf_pop_context(); }
-}
-
-
-
-/*************************************
- *
- *	CMOS access
- *
- *************************************/
-
-static WRITE32_HANDLER( cmos_w )
-{
-	data32_t *cmos_base = (data32_t *)generic_nvram;
-	COMBINE_DATA(&cmos_base[offset]);
-}
-
-
-static READ32_HANDLER( cmos_r )
-{
-	data32_t *cmos_base = (data32_t *)generic_nvram;
-	return cmos_base[offset];
-}
-
-
-
-/*************************************
- *
- *	PCI bus writes
- *
- *************************************/
-
-static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
-{
-	pci_bridge_regs[reg] = data;
-	logerror("%08X:PCI bridge write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
-}
-
-
-static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
-{
-	pci_3dfx_regs[reg] = data;
-
-	switch (reg)
+	if (state)
 	{
-		case 0x04:		/* address register */
-			pci_3dfx_regs[reg] &= 0xff000000;
-			if (data != 0x08000000)
-				logerror("3dfx not mapped where we expect it!\n");
-			break;
-
-		case 0x10:		/* initEnable register */
-			voodoo_set_init_enable(data);
-			break;
+		if (galileo.dma_pending_on_vblank[0]) { cpuintrf_push_context(0); galileo_perform_dma(0); cpuintrf_pop_context(); }
+		if (galileo.dma_pending_on_vblank[1]) { cpuintrf_push_context(0); galileo_perform_dma(1); cpuintrf_pop_context(); }
+		if (galileo.dma_pending_on_vblank[2]) { cpuintrf_push_context(0); galileo_perform_dma(2); cpuintrf_pop_context(); }
+		if (galileo.dma_pending_on_vblank[3]) { cpuintrf_push_context(0); galileo_perform_dma(3); cpuintrf_pop_context(); }
 	}
-	logerror("%08X:PCI 3dfx write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
 }
 
 
 
 /*************************************
  *
- *	PCI bus reads
+ *	PCI bridge accesses
  *
  *************************************/
 
 static data32_t pci_bridge_r(UINT8 reg, UINT8 type)
 {
-	data32_t result = pci_bridge_regs[reg];
+	data32_t result = galileo.pci_bridge_regs[reg];
 
 	switch (reg)
 	{
@@ -362,15 +665,30 @@ static data32_t pci_bridge_r(UINT8 reg, UINT8 type)
 			break;
 	}
 
-	logerror("%08X:PCI bridge read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
-
+	if (LOG_PCI)
+		logerror("%08X:PCI bridge read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
 	return result;
 }
 
 
+static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
+{
+	galileo.pci_bridge_regs[reg] = data;
+	if (LOG_PCI)
+		logerror("%08X:PCI bridge write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
+}
+
+
+
+/*************************************
+ *
+ *	PCI 3dfx accesses
+ *
+ *************************************/
+
 static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
 {
-	data32_t result = pci_3dfx_regs[reg];
+	data32_t result = galileo.pci_3dfx_regs[reg];
 
 	switch (reg)
 	{
@@ -383,9 +701,66 @@ static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
 			break;
 	}
 
-	logerror("%08X:PCI 3dfx read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
-
+	if (LOG_PCI)
+		logerror("%08X:PCI 3dfx read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
 	return result;
+}
+
+
+static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
+{
+	galileo.pci_3dfx_regs[reg] = data;
+
+	switch (reg)
+	{
+		case 0x04:		/* address register */
+			galileo.pci_3dfx_regs[reg] &= 0xff000000;
+			if (data != 0x08000000)
+				logerror("3dfx not mapped where we expect it!\n");
+			break;
+
+		case 0x10:		/* initEnable register */
+			voodoo_set_init_enable(data);
+			break;
+	}
+	if (LOG_PCI)
+		logerror("%08X:PCI 3dfx write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
+}
+
+
+
+/*************************************
+ *
+ *	PCI IDE accesses
+ *
+ *************************************/
+
+static data32_t pci_ide_r(UINT8 reg, UINT8 type)
+{
+	data32_t result = galileo.pci_ide_regs[reg];
+
+	switch (reg)
+	{
+		case 0x00:		/* ID register: 0x0002 = PC87415, 0x100b = National Semiconductor */
+			result = 0x0002100b;
+			break;
+
+		case 0x02:		/* Base Class:Sub Class:Reserved:Revision */
+			result = 0x01010001;
+			break;
+	}
+
+	if (LOG_PCI)
+		logerror("%08X:PCI IDE read: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, result);
+	return result;
+}
+
+
+static void pci_ide_w(UINT8 reg, UINT8 type, data32_t data)
+{
+	galileo.pci_ide_regs[reg] = data;
+	if (LOG_PCI)
+		logerror("%08X:PCI bridge write: reg %d type %d = %08X\n", activecpu_get_pc(), reg, type, data);
 }
 
 
@@ -398,39 +773,38 @@ static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
 
 static void update_galileo_irqs(void)
 {
-	if (galileo_regs[0xc18/4] & galileo_regs[0xc1c/4])
-	{
-		if (LOG_GALILEO)
-			logerror("Galileo IRQ asserted\n");
-		cpu_set_irq_line(0, 0, ASSERT_LINE);
-	}
-	else
-	{
-		if (LOG_GALILEO)
-			logerror("Galileo IRQ cleared\n");
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
-	}
+	int state = CLEAR_LINE;
+	
+	/* if any unmasked interrupts are live, we generate */
+	if (galileo.reg[GREG_INT_STATE] & galileo.reg[GREG_INT_MASK])
+		state = ASSERT_LINE;
+	cpu_set_irq_line(0, GALILEO_IRQ_NUM, state);
+
+	if (LOG_GALILEO)
+		logerror("Galileo IRQ %s\n", (state == ASSERT_LINE) ? "asserted" : "cleared");
 }
 
 
-static void timer_callback(int which)
+static void galileo_timer_callback(int which)
 {
-	if (LOG_GALILEO)
+	struct galileo_timer *timer = &galileo.timer[which];
+
+	if (LOG_TIMERS)
 		logerror("timer %d fired\n", which);
 
 	/* copy the start value from the registers */
-	timer_count[which] = galileo_regs[0x850/4 + which];
+	timer->count = galileo.reg[GREG_TIMER0_COUNT + which];
 	if (which != 0)
-		timer_count[which] &= 0xffffff;
+		timer->count &= 0xffffff;
 
 	/* if we're a timer, adjust the timer to fire again */
-	if (galileo_regs[0x864/4] & (2 << (2 * which)))
-		timer_adjust(timer[which], TIMER_CLOCK * timer_count[which], which, 0);
+	if (galileo.reg[GREG_TIMER_CONTROL] & (2 << (2 * which)))
+		timer_adjust(timer->timer, TIMER_CLOCK * timer->count, which, 0);
 	else
-		timer_active[which] = timer_count[which] = 0;
+		timer->active = timer->count = 0;
 
 	/* trigger the interrupt */
-	galileo_regs[0xc18/4] |= 0x100 << which;
+	galileo.reg[GREG_INT_STATE] |= 1 << (GINT_T0EXP_SHIFT + which);
 	update_galileo_irqs();
 }
 
@@ -442,73 +816,67 @@ static void timer_callback(int which)
  *
  *************************************/
 
-static int dma_fetch_next(int which)
+static int galileo_dma_fetch_next(int which)
 {
 	offs_t address = 0;
 	data32_t data;
 
 	/* no-op for unchained mode */
-	if (!(galileo_regs[0x840/4 + which] & 0x200))
-		address = galileo_regs[0x830/4 + which];
+	if (!(galileo.reg[GREG_DMA0_CONTROL + which] & 0x200))
+		address = galileo.reg[GREG_DMA0_NEXT + which];
 
 	/* if we hit the end address, signal an interrupt */
 	if (address == 0)
 	{
-		if (galileo_regs[0x840/4 + which] & 0x400)
+		if (galileo.reg[GREG_DMA0_CONTROL + which] & 0x400)
 		{
-			galileo_regs[0xc18/4] |= 0x10 << which;
+			galileo.reg[GREG_INT_STATE] |= 1 << (GINT_DMA0COMP_SHIFT + which);
 			update_galileo_irqs();
 		}
-		galileo_regs[0x840/4 + which] &= ~0x5000;
+		galileo.reg[GREG_DMA0_CONTROL + which] &= ~0x5000;
 		return 0;
 	}
 
 	/* fetch the byte count */
 	data = program_read_dword(address); address += 4;
-	galileo_regs[0x800/4 + which] = data;
+	galileo.reg[GREG_DMA0_COUNT + which] = data;
 
 	/* fetch the source address */
 	data = program_read_dword(address); address += 4;
-	galileo_regs[0x810/4 + which] = data;
+	galileo.reg[GREG_DMA0_SOURCE + which] = data;
 
 	/* fetch the dest address */
 	data = program_read_dword(address); address += 4;
-	galileo_regs[0x820/4 + which] = data;
+	galileo.reg[GREG_DMA0_DEST + which] = data;
 
 	/* fetch the next record address */
 	data = program_read_dword(address); address += 4;
-	galileo_regs[0x830/4 + which] = data;
-
-//	logerror("DMA Fetch Record: bytes=%08X src=%08X dst=%08X nextrec=%08X\n",
-//		galileo_regs[0x800/4 + which],
-//		galileo_regs[0x810/4 + which],
-//		galileo_regs[0x820/4 + which],
-//		galileo_regs[0x830/4 + which]);
+	galileo.reg[GREG_DMA0_NEXT + which] = data;
 	return 1;
 }
 
 
-static void perform_dma(int which)
+static void galileo_perform_dma(int which)
 {
 	do
 	{
-		offs_t srcaddr = galileo_regs[0x810/4 + which];
-		offs_t dstaddr = galileo_regs[0x820/4 + which];
-		data32_t bytesleft = galileo_regs[0x800/4 + which] & 0xffff;
+		offs_t srcaddr = galileo.reg[GREG_DMA0_SOURCE + which];
+		offs_t dstaddr = galileo.reg[GREG_DMA0_DEST + which];
+		data32_t bytesleft = galileo.reg[GREG_DMA0_COUNT + which] & 0xffff;
 		int srcinc, dstinc, i;
 
-		dma_pending_on_vblank[which] = 0;
-		galileo_regs[0x840/4 + which] |= 0x5000;
+		galileo.dma_pending_on_vblank[which] = 0;
+		galileo.reg[GREG_DMA0_CONTROL + which] |= 0x5000;
 
 		/* determine src/dst inc */
-		switch ((galileo_regs[0x840/4 + which] >> 2) & 3)
+		switch ((galileo.reg[GREG_DMA0_CONTROL + which] >> 2) & 3)
 		{
 			default:
 			case 0:		srcinc = 1;		break;
 			case 1:		srcinc = -1;	break;
 			case 2:		srcinc = 0;		break;
 		}
-		switch ((galileo_regs[0x840/4 + which] >> 4) & 3)
+		switch ((galileo.reg[GREG_DMA0_CONTROL + which] >> 4) & 3)
 		{
 			default:
 			case 0:		dstinc = 1;		break;
@@ -530,7 +898,7 @@ static void perform_dma(int which)
 			{
 				if (LOG_DMA)
 					logerror("DMA%d: blocked on voodoo\n", which);
-				dma_pending_on_vblank[which] = 1;
+				galileo.dma_pending_on_vblank[which] = 1;
 				return;
 			}
 
@@ -583,14 +951,14 @@ static void perform_dma(int which)
 		}
 
 		/* interrupt? */
-		if (!(galileo_regs[0x840/4 + which] & 0x400))
+		if (!(galileo.reg[GREG_DMA0_CONTROL + which] & 0x400))
 		{
-			galileo_regs[0xc18/4] |= 0x10 << which;
+			galileo.reg[GREG_INT_STATE] |= 1 << (GINT_DMA0COMP_SHIFT + which);
 			update_galileo_irqs();
 		}
-	} while (dma_fetch_next(which));
+	} while (galileo_dma_fetch_next(which));
 
-	galileo_regs[0x840/4 + which] &= ~0x5000;
+	galileo.reg[GREG_DMA0_CONTROL + which] &= ~0x5000;
 }
 
 
@@ -601,115 +969,31 @@ static void perform_dma(int which)
  *
  *************************************/
 
-/*
-	0x000 = CPU interface configuration
+static void galileo_reset(void)
+{
+	memset(&galileo.reg, 0, sizeof(galileo.reg));
+}
 
-	0x008 = RAS[1:0] low decode address
-	0x010 = RAS[1:0] high decode address
-	0x018 = RAS[3:2] low decode address
-	0x020 = RAS[3:2] high decode address
-	0x028 = CS[2:0] low decode address
-	0x030 = CS[2:0] high decode address
-	0x038 = CS[3] & boot CS low decode address
-	0x040 = CS[3] & boot CS high decode address
-	0x048 = PCI I/O low decode address
-	0x050 = PCI I/O high decode address
-	0x058 = PCI memory low decode address
-	0x060 = PCI memory high decode address
-	0x068 = internal space decode
-	0x070 = bus error address low processor
-	0x078 = bus error address high processor
-
-	0x400 = RAS[0] low decode address
-	0x404 = RAS[0] high decode address
-	0x408 = RAS[1] low decode address
-	0x40c = RAS[1] high decode address
-	0x410 = RAS[2] low decode address
-	0x414 = RAS[2] high decode address
-	0x418 = RAS[3] low decode address
-	0x41c = RAS[3] high decode address
-	0x420 = CS[0] low decode address
-	0x424 = CS[0] high decode address
-	0x428 = CS[1] low decode address
-	0x42c = CS[1] high decode address
-	0x430 = CS[2] low decode address
-	0x434 = CS[2] high decode address
-	0x438 = CS[3] low decode address
-	0x43c = CS[3] high decode address
-	0x440 = boot CS low decode address
-	0x444 = boot CS high decode address
-	0x448 = DRAM configuration
-	0x44c = DRAM bank 0 parameters
-	0x450 = DRAM bank 1 parameters
-	0x454 = DRAM bank 2 parameters
-	0x458 = DRAM bank 3 parameters
-	0x45c = device bank 0 parameters
-	0x460 = device bank 1 parameters
-	0x464 = device bank 2 parameters
-	0x468 = device bank 3 parameters
-	0x46c = device boot bank parameters
-	0x470 = address decode error
-
-	0x800 = channel 0 DMA byte count
-	0x804 = channel 1 DMA byte count
-	0x808 = channel 2 DMA byte count
-	0x80c = channel 3 DMA byte count
-	0x810 = channel 0 DMA source address
-	0x814 = channel 1 DMA source address
-	0x818 = channel 2 DMA source address
-	0x81c = channel 3 DMA source address
-	0x820 = channel 0 DMA destination address
-	0x824 = channel 1 DMA destination address
-	0x828 = channel 2 DMA destination address
-	0x82c = channel 3 DMA destination address
-	0x830 = channel 0 next record pointer
-	0x834 = channel 1 next record pointer
-	0x838 = channel 2 next record pointer
-	0x83c = channel 3 next record pointer
-	0x840 = channel 0 control
-	0x844 = channel 1 control
-	0x848 = channel 2 control
-	0x84c = channel 3 control
-	0x850 = timer/counter 0
-	0x854 = timer/counter 1
-	0x858 = timer/counter 2
-	0x85c = timer/counter 3
-	0x860 = DMA arbiter control
-	0x864 = timer/counter control
-
-	0xc00 = PCI internal command
-	0xc04 = PCI internal time out & retry
-	0xc08 = PCI internal RAS[1:0] bank size
-	0xc0c = PCI internal RAS[3:2] bank size
-	0xc10 = PCI internal CS[2:0] bank size
-	0xc14 = PCI internal CS[3] & boot CS bank size
-	0xc18 = interrupt cause
-	0xc1c = CPU interrupt mask
-	0xc24 = PCI interrupt mask
-	0xc28 = SErr mask
-	0xc34 = interrupt acknowledge
-	0xcf8 = configuration address
-	0xcfc = configuration data
-*/
 
 static READ32_HANDLER( galileo_r )
 {
-	data32_t result = galileo_regs[offset];
+	data32_t result = galileo.reg[offset];
 
 	/* switch off the offset for special cases */
 	switch (offset)
 	{
-		case 0x850/4:		/* timer/counter 0 count */
-		case 0x854/4:		/* timer/counter 1 count */
-		case 0x858/4:		/* timer/counter 2 count */
-		case 0x85c/4:		/* timer/counter 3 count */
+		case GREG_TIMER0_COUNT:	
+		case GREG_TIMER1_COUNT:
+		case GREG_TIMER2_COUNT:	
+		case GREG_TIMER3_COUNT:	
 		{
 			int which = offset % 4;
+			struct galileo_timer *timer = &galileo.timer[which];
 
-			result = timer_count[which];
-			if (timer_active[which])
+			result = timer->count;
+			if (timer->active)
 			{
-				UINT32 elapsed = (UINT32)(timer_timeelapsed(timer[which]) / TIMER_CLOCK);
+				UINT32 elapsed = (UINT32)(timer_timeelapsed(timer->timer) / TIMER_CLOCK);
 				result = (result > elapsed) ? (result - elapsed) : 0;
 			}
 
@@ -721,31 +1005,30 @@ static READ32_HANDLER( galileo_r )
 			break;
 		}
 
-		case 0xc00/4:		/* PCI internal command */
+		case GREG_PCI_COMMAND:
 			// code at 40188 loops until this returns non-zero in bit 0
 			result = 0x0001;
 			break;
 
-		case 0xc18/4:		/* interrupt cause */
-			if (LOG_GALILEO)
-				logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
-			break;
-
-		case 0xcfc/4:		/* configuration data */
+		case GREG_CONFIG_DATA:
 		{
-			int bus = (galileo_regs[0xcf8/4] >> 16) & 0xff;
-			int unit = (galileo_regs[0xcf8/4] >> 11) & 0x1f;
-			int func = (galileo_regs[0xcf8/4] >> 8) & 7;
-			int reg = (galileo_regs[0xcf8/4] >> 2) & 0x3f;
-			int type = galileo_regs[0xcf8/4] & 3;
+			int bus = (galileo.reg[GREG_CONFIG_ADDRESS] >> 16) & 0xff;
+			int unit = (galileo.reg[GREG_CONFIG_ADDRESS] >> 11) & 0x1f;
+			int func = (galileo.reg[GREG_CONFIG_ADDRESS] >> 8) & 7;
+			int reg = (galileo.reg[GREG_CONFIG_ADDRESS] >> 2) & 0x3f;
+			int type = galileo.reg[GREG_CONFIG_ADDRESS] & 3;
 
 			/* unit 0 is the PCI bridge */
 			if (unit == 0 && func == 0)
 				result = pci_bridge_r(reg, type);
 
-			/* unit 6 is the 3dfx card */
-			else if (unit == 6 && func == 0)
+			/* unit 8 is the 3dfx card */
+			else if (unit == 8 && func == 0)
 				result = pci_3dfx_r(reg, type);
+
+			/* unit 9 is the IDE controller */
+			else if (unit == 9 && func == 0)
+				result = pci_ide_r(reg, type);
 
 			/* anything else, just log */
 			else
@@ -756,7 +1039,12 @@ static READ32_HANDLER( galileo_r )
 			break;
 		}
 
-		case 0x864/4:		/* timer/counter control */
+		case GREG_CONFIG_ADDRESS:
+		case GREG_INT_STATE:
+		case GREG_INT_MASK:
+		case GREG_TIMER_CONTROL:
+			if (LOG_GALILEO)
+				logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
 			break;
 
 		default:
@@ -770,53 +1058,55 @@ static READ32_HANDLER( galileo_r )
 
 static WRITE32_HANDLER( galileo_w )
 {
-	UINT32 oldata = galileo_regs[offset];
-	COMBINE_DATA(&galileo_regs[offset]);
+	UINT32 oldata = galileo.reg[offset];
+	COMBINE_DATA(&galileo.reg[offset]);
 
 	/* switch off the offset for special cases */
 	switch (offset)
 	{
-		case 0x840/4:		/* DMA channel 0 control */
-		case 0x844/4:		/* DMA channel 1 control */
-		case 0x848/4:		/* DMA channel 2 control */
-		case 0x84c/4:		/* DMA channel 3 control */
+		case GREG_DMA0_CONTROL:
+		case GREG_DMA1_CONTROL:
+		case GREG_DMA2_CONTROL:
+		case GREG_DMA3_CONTROL:
 		{
 			int which = offset % 4;
 
-			logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
+			if (LOG_DMA)
+				logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 
 			/* keep the read only activity bit */
-			galileo_regs[offset] &= ~0x4000;
-			galileo_regs[offset] |= (oldata & 0x4000);
+			galileo.reg[offset] &= ~0x4000;
+			galileo.reg[offset] |= (oldata & 0x4000);
 
 			/* fetch next record */
 			if (data & 0x2000)
-				dma_fetch_next(which);
-			galileo_regs[offset] &= ~0x2000;
+				galileo_dma_fetch_next(which);
+			galileo.reg[offset] &= ~0x2000;
 
 			/* if enabling, start the DMA */
 			if (!(oldata & 0x1000) && (data & 0x1000))
-				perform_dma(which);
+				galileo_perform_dma(which);
 			break;
 		}
 
-		case 0x850/4:		/* timer/counter 0 reset value */
-		case 0x854/4:		/* timer/counter 1 reset value */
-		case 0x858/4:		/* timer/counter 2 reset value */
-		case 0x85c/4:		/* timer/counter 3 reset value */
+		case GREG_TIMER0_COUNT:
+		case GREG_TIMER1_COUNT:
+		case GREG_TIMER2_COUNT:
+		case GREG_TIMER3_COUNT:
 		{
 			int which = offset % 4;
+			struct galileo_timer *timer = &galileo.timer[which];
 
 			if (which != 0)
 				data &= 0xffffff;
-			if (!timer_active[which])
-				timer_count[which] = data;
+			if (!timer->active)
+				timer->count = data;
 			if (LOG_TIMERS)
-				logerror("%08X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer_count[which]);
+				logerror("%08X:timer/counter %d count = %08X [start=%08X]\n", activecpu_get_pc(), offset % 4, data, timer->count);
 			break;
 		}
 
-		case 0x864/4:		/* timer/counter control */
+		case GREG_TIMER_CONTROL:
 		{
 			int which, mask;
 
@@ -824,25 +1114,26 @@ static WRITE32_HANDLER( galileo_w )
 				logerror("%08X:timer/counter control = %08X\n", activecpu_get_pc(), data);
 			for (which = 0, mask = 0x01; which < 4; which++, mask <<= 2)
 			{
-				if (!timer_active[which] && (data & mask))
+				struct galileo_timer *timer = &galileo.timer[which];
+				if (!timer->active && (data & mask))
 				{
-					timer_active[which] = 1;
-					if (timer_count[which] == 0)
+					timer->active = 1;
+					if (timer->count == 0)
 					{
-						timer_count[which] = galileo_regs[0x850/4 + which];
+						timer->count = galileo.reg[GREG_TIMER0_COUNT + which];
 						if (which != 0)
-							timer_count[which] &= 0xffffff;
+							timer->count &= 0xffffff;
 					}
-					timer_adjust(timer[which], TIMER_CLOCK * timer_count[which], which, 0);
+					timer_adjust(timer->timer, TIMER_CLOCK * timer->count, which, 0);
 					if (LOG_TIMERS)
-						logerror("Adjusted timer to fire in %f secs\n", TIMER_CLOCK * timer_count[which]);
+						logerror("Adjusted timer to fire in %f secs\n", TIMER_CLOCK * timer->count);
 				}
-				else if (timer_active[which] && !(data & mask))
+				else if (timer->active && !(data & mask))
 				{
-					UINT32 elapsed = (UINT32)(timer_timeelapsed(timer[which]) / TIMER_CLOCK);
-					timer_active[which] = 0;
-					timer_count[which] = (timer_count[which] > elapsed) ? (timer_count[which] - elapsed) : 0;
-					timer_adjust(timer[which], TIME_NEVER, which, 0);
+					UINT32 elapsed = (UINT32)(timer_timeelapsed(timer->timer) / TIMER_CLOCK);
+					timer->active = 0;
+					timer->count = (timer->count > elapsed) ? (timer->count - elapsed) : 0;
+					timer_adjust(timer->timer, TIME_NEVER, which, 0);
 					if (LOG_TIMERS)
 						logerror("Disabled timer\n");
 				}
@@ -850,37 +1141,48 @@ static WRITE32_HANDLER( galileo_w )
 			break;
 		}
 
-		case 0xc18/4:		/* IRQ clear */
+		case GREG_INT_STATE:
 			if (LOG_GALILEO)
 				logerror("%08X:Galileo write to IRQ clear = %08X & %08X\n", offset*4, data, ~mem_mask);
-			galileo_regs[offset] = oldata & data;
+			galileo.reg[offset] = oldata & data;
 			update_galileo_irqs();
 			break;
 
-		case 0xcf8/4:		/* configuration address */
-			break;
-
-		case 0xcfc/4:		/* configuration data */
+		case GREG_CONFIG_DATA:
 		{
-			int bus = (galileo_regs[0xcf8/4] >> 16) & 0xff;
-			int unit = (galileo_regs[0xcf8/4] >> 11) & 0x1f;
-			int func = (galileo_regs[0xcf8/4] >> 8) & 7;
-			int reg = (galileo_regs[0xcf8/4] >> 2) & 0x3f;
-			int type = galileo_regs[0xcf8/4] & 3;
+			int bus = (galileo.reg[GREG_CONFIG_ADDRESS] >> 16) & 0xff;
+			int unit = (galileo.reg[GREG_CONFIG_ADDRESS] >> 11) & 0x1f;
+			int func = (galileo.reg[GREG_CONFIG_ADDRESS] >> 8) & 7;
+			int reg = (galileo.reg[GREG_CONFIG_ADDRESS] >> 2) & 0x3f;
+			int type = galileo.reg[GREG_CONFIG_ADDRESS] & 3;
 
 			/* unit 0 is the PCI bridge */
 			if (unit == 0 && func == 0)
 				pci_bridge_w(reg, type, data);
 
-			/* unit 6 is the 3dfx card */
-			else if (unit == 6 && func == 0)
+			/* unit 8 is the 3dfx card */
+			else if (unit == 8 && func == 0)
 				pci_3dfx_w(reg, type, data);
+
+			/* unit 9 is the IDE controller */
+			else if (unit == 9 && func == 0)
+				pci_ide_w(reg, type, data);
 
 			/* anything else, just log */
 			else
 				logerror("%08X:PCIBus write: bus %d unit %d func %d reg %d type %d = %08X\n", activecpu_get_pc(), bus, unit, func, reg, type, data);
 			break;
 		}
+
+		case GREG_DMA0_COUNT:	case GREG_DMA1_COUNT:	case GREG_DMA2_COUNT:	case GREG_DMA3_COUNT:
+		case GREG_DMA0_SOURCE:	case GREG_DMA1_SOURCE:	case GREG_DMA2_SOURCE:	case GREG_DMA3_SOURCE:
+		case GREG_DMA0_DEST:	case GREG_DMA1_DEST:	case GREG_DMA2_DEST:	case GREG_DMA3_DEST:
+		case GREG_DMA0_NEXT:	case GREG_DMA1_NEXT:	case GREG_DMA2_NEXT:	case GREG_DMA3_NEXT:
+		case GREG_CONFIG_ADDRESS:
+		case GREG_INT_MASK:
+			if (LOG_GALILEO)
+				logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
+			break;
 
 		default:
 			logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
@@ -892,54 +1194,7 @@ static WRITE32_HANDLER( galileo_w )
 
 /*************************************
  *
- *	Misc accesses
- *
- *************************************/
-
-static WRITE32_HANDLER( seattle_watchdog_w )
-{
-	activecpu_eat_cycles(100);
-}
-
-
-static WRITE32_HANDLER( asic_reset_w )
-{
-	COMBINE_DATA(asic_reset);
-	if (!(*asic_reset & 0x0002))
-		midway_ioasic_reset();
-}
-
-
-static WRITE32_HANDLER( asic_fifo_w )
-{
-	midway_ioasic_fifo_w(data);
-}
-
-
-
-/*************************************
- *
- *	Misc unknown accesses
- *
- *************************************/
-
-static READ32_HANDLER( status_leds_r )
-{
-	return status_leds | 0xffffff00;
-}
-
-
-static WRITE32_HANDLER( status_leds_w )
-{
-	if (!(mem_mask & 0x000000ff))
-		status_leds = data;
-}
-
-
-
-/*************************************
- *
- *	Analog input handling
+ *	Analog input handling (ADC0848)
  *
  *************************************/
 
@@ -1041,6 +1296,191 @@ static WRITE32_HANDLER( carnevil_gun_w )
 
 /*************************************
  *
+ *	Ethernet access
+ *
+ *************************************/
+
+static READ32_HANDLER( ethernet_r )
+{
+	if (!(offset & 8))
+		return smc91c94_r(offset & 7, mem_mask | 0x0000);
+	else
+		return smc91c94_r(offset & 7, mem_mask | 0xff00);
+}
+
+
+static WRITE32_HANDLER( ethernet_w )
+{
+	if (!(offset & 8))
+		smc91c94_w(offset & 7, data & 0xffff, mem_mask | 0x0000);
+	else
+		smc91c94_w(offset & 7, data & 0x00ff, mem_mask | 0xff00);
+}
+
+
+
+/*************************************
+ *
+ *	Widget board access
+ *
+ *************************************/
+
+static void widget_reset(void)
+{
+	UINT8 saved_irq = widget.irq_num;
+	memset(&widget, 0, sizeof(widget));
+	widget.irq_num = saved_irq;
+	smc91c94_reset();
+}
+
+
+static void update_widget_irq(void)
+{
+	UINT8 state = ethernet_irq_state << WINT_ETHERNET_SHIFT;
+	UINT8 mask = widget.irq_mask;
+	UINT8 assert = ((mask & state) != 0) && (*interrupt_enable & (1 << WIDGET_IRQ_SHIFT));
+	
+	/* update the IRQ state */
+	if (widget.irq_num != 0)
+		cpu_set_irq_line(0, widget.irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+static READ32_HANDLER( widget_r )
+{
+	data32_t result = ~0;
+	
+	switch (offset)
+	{
+		case WREG_ETHER_ADDR:
+			result = widget.ethernet_addr;
+			break;
+		
+		case WREG_INTERRUPT:
+			result = ethernet_irq_state << WINT_ETHERNET_SHIFT;
+			result = ~result;
+			break;
+		
+		case WREG_ANALOG:
+			result = analog_port_r(0, mem_mask);
+			break;
+		
+		case WREG_ETHER_DATA:
+			result = smc91c94_r(widget.ethernet_addr & 7, mem_mask & 0xffff);
+			break;
+	}
+
+	if (LOG_WIDGET)
+		logerror("Widget read (%02X) = %08X & %08X\n", offset*4, result, ~mem_mask);
+	return result;
+}
+
+
+static WRITE32_HANDLER( widget_w )
+{
+	if (LOG_WIDGET)
+		logerror("Widget write (%02X) = %08X & %08X\n", offset*4, data, ~mem_mask);
+
+	switch (offset)
+	{
+		case WREG_ETHER_ADDR:
+			widget.ethernet_addr = data;
+			break;
+		
+		case WREG_INTERRUPT:
+			widget.irq_mask = data;
+			update_widget_irq();
+			break;
+		
+		case WREG_ANALOG:
+			analog_port_w(0, data, mem_mask);
+			break;
+		
+		case WREG_ETHER_DATA:
+			smc91c94_w(widget.ethernet_addr & 7, data & 0xffff, mem_mask & 0xffff);
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	CMOS access
+ *
+ *************************************/
+
+static WRITE32_HANDLER( cmos_w )
+{
+	data32_t *cmos_base = (data32_t *)generic_nvram;
+	if (cmos_write_enabled)
+		COMBINE_DATA(&cmos_base[offset]);
+	cmos_write_enabled = 0;
+}
+
+
+static READ32_HANDLER( cmos_r )
+{
+	data32_t *cmos_base = (data32_t *)generic_nvram;
+	return cmos_base[offset];
+}
+
+
+static WRITE32_HANDLER( cmos_protect_w )
+{
+	cmos_write_enabled = 1;
+}
+
+
+static READ32_HANDLER( cmos_protect_r )
+{
+	return cmos_write_enabled;
+}
+
+
+
+/*************************************
+ *
+ *	Misc accesses
+ *
+ *************************************/
+
+static WRITE32_HANDLER( seattle_watchdog_w )
+{
+	activecpu_eat_cycles(100);
+}
+
+
+static WRITE32_HANDLER( asic_reset_w )
+{
+	COMBINE_DATA(asic_reset);
+	if (!(*asic_reset & 0x0002))
+		midway_ioasic_reset();
+}
+
+
+static WRITE32_HANDLER( asic_fifo_w )
+{
+	midway_ioasic_fifo_w(data);
+}
+
+
+static READ32_HANDLER( status_leds_r )
+{
+	return status_leds | 0xffffff00;
+}
+
+
+static WRITE32_HANDLER( status_leds_w )
+{
+	if (!(mem_mask & 0x000000ff))
+		status_leds = data;
+}
+
+
+
+/*************************************
+ *
  *	Speedups
  *
  *************************************/
@@ -1082,15 +1522,16 @@ static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xaa000000, 0xaa0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0xaa00040c, 0xaa00040f) AM_NOP						// IDE-related, but annoying
 	AM_RANGE(0xaa000f00, 0xaa000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
-	AM_RANGE(0xac000000, 0xac000fff) AM_READWRITE(galileo_r, galileo_w) AM_BASE(&galileo_regs)
+	AM_RANGE(0xac000000, 0xac000fff) AM_READWRITE(galileo_r, galileo_w)
 	AM_RANGE(0xb3000000, 0xb3000003) AM_WRITE(asic_fifo_w)
 	AM_RANGE(0xb6000000, 0xb600003f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
 	AM_RANGE(0xb6100000, 0xb611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xb7000000, 0xb7000003) AM_READWRITE(cmos_protect_r, cmos_protect_w)
 	AM_RANGE(0xb7100000, 0xb7100003) AM_WRITE(seattle_watchdog_w)
-	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, vblank_enable_w) AM_BASE(&vblank_enable)
-	AM_RANGE(0xb7400000, 0xb7400003) AM_READWRITE(MRA32_RAM, vblank_config_w) AM_BASE(&vblank_config)
-	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(vblank_latch_r)
-	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(vblank_latch2_r)
+	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, seattle_interrupt_enable_w) AM_BASE(&interrupt_enable)
+	AM_RANGE(0xb7400000, 0xb7400003) AM_READWRITE(MRA32_RAM, interrupt_config_w) AM_BASE(&interrupt_config)
+	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(interrupt_state_r)
+	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(interrupt_state2_r)
 	AM_RANGE(0xb7700000, 0xb7700003) AM_WRITE(vblank_clear_w)
 	AM_RANGE(0xb7800000, 0xb7800003) AM_NOP
 	AM_RANGE(0xb7900000, 0xb7900003) AM_READWRITE(status_leds_r, status_leds_w)
@@ -1338,6 +1779,118 @@ INPUT_PORTS_START( sfrush )
 	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	/* coin 1 */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )	/* coin 2 */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )	/* abort */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 	/* tilt */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )	/* test */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )	/* reverse */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* service coin */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )	/* coin 3 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )	/* coin 4 */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	/* view 1 */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	/* view 2 */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )	/* view 3 */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )	/* music */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )	/* track 1 */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )	/* track 2 */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )	/* track 3 */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER3 )	/* track 4 */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* 1st gear */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* 2nd gear */
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )	/* 3rd gear */
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )	/* 4th gear */
+	PORT_BITX(0x1000, IP_ACTIVE_LOW, 0, "Volume Up", KEYCODE_EQUALS, IP_JOY_NONE )
+	PORT_BITX(0x2000, IP_ACTIVE_LOW, 0, "Volume Down", KEYCODE_MINUS, IP_JOY_NONE )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 20, 0x00, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 100, 0x00, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 100, 0x00, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 5, 0x10, 0xf0 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( sfrushrk )
+	PORT_START	    /* DIPs */
+	PORT_DIPNAME( 0x0001, 0x0001, "Calibrate at startup" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ))
+	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) /* Test switch */
 	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
@@ -2078,14 +2631,15 @@ INPUT_PORTS_END
 
 static struct mips3_config config =
 {
-	16384,	/* code cache size */
-	16384	/* data cache size */
+	16384,			/* code cache size */
+	16384,			/* data cache size */
+	SYSTEM_CLOCK	/* system clock rate */
 };
 
-MACHINE_DRIVER_START( seattle_flagstaff_common )
+MACHINE_DRIVER_START( seattle_common )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", R5000LE, 50000000*3)
+	MDRV_CPU_ADD_TAG("main", R5000LE, SYSTEM_CLOCK*3)
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(seattle_map,0)
 
@@ -2109,47 +2663,37 @@ MACHINE_DRIVER_START( seattle_flagstaff_common )
 MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER_START( seattle150 )
-	MDRV_IMPORT_FROM(seattle_flagstaff_common)
-
-	/* sound hardware */
+MACHINE_DRIVER_START( phoenixsa )
+	MDRV_IMPORT_FROM(seattle_common)
+	MDRV_CPU_REPLACE("main", R4700LE, SYSTEM_CLOCK*2)
 	MDRV_IMPORT_FROM(dcs2_audio)
 MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER_START( seattle100 )
-	MDRV_IMPORT_FROM(seattle150)
-	MDRV_CPU_REPLACE("main", R5000LE, 50000000*2)
+MACHINE_DRIVER_START( seattle150 )
+	MDRV_IMPORT_FROM(seattle_common)
+	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*3)
+	MDRV_IMPORT_FROM(dcs2_audio)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( seattle200 )
-	MDRV_IMPORT_FROM(seattle150)
-	MDRV_CPU_REPLACE("main", R5000LE, 50000000*4)
+	MDRV_IMPORT_FROM(seattle_common)
+	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*4)
+	MDRV_IMPORT_FROM(dcs2_audio)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( carnevil )
 	MDRV_IMPORT_FROM(seattle150)
-	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VIDEO_UPDATE(carnevil)
 MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER_START( vaportrx )
-	MDRV_IMPORT_FROM(seattle200)
-	MDRV_VIDEO_START(voodoo_1x4mb_swap_rb)
-MACHINE_DRIVER_END
-
-
 MACHINE_DRIVER_START( flagstaff )
-	MDRV_IMPORT_FROM(seattle_flagstaff_common)
-	MDRV_CPU_REPLACE("main", R5000LE, 50000000*4)
-
-	/* video hardware */
+	MDRV_IMPORT_FROM(seattle_common)
+	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*4)
 	MDRV_VIDEO_START(voodoo_2x4mb)
-
-	/* sound hardware */
 	MDRV_IMPORT_FROM(cage_seattle)
 MACHINE_DRIVER_END
 
@@ -2211,13 +2755,13 @@ ROM_START( sfrushrk )
 	ROM_LOAD32_BYTE( "audboot.bin",    0x000000, 0x080000, CRC(c70c060d) SHA1(dd014bd13efdf5adc5450836bd4650351abefc46) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER3, 0 )	/* TMS320C31 sound ROMs */
-	ROM_LOAD32_WORD( "audio.u62",  0x400000, 0x200000, CRC(eabcb398) SHA1(02c8405c0a740b2717b25bc7bb550f655f3bbd8a) )
-	ROM_LOAD32_WORD( "audio.u61",  0x400002, 0x200000, CRC(73765b2d) SHA1(cbedb9c425c87d088e0946914b4b65b544320d03) )
-	ROM_LOAD32_WORD( "audio.u53",  0x800000, 0x200000, CRC(a35106e7) SHA1(6919c5dfa92b42817950e9dac657f6fb724b1225) )
-	ROM_LOAD32_WORD( "audio.u49",  0x800002, 0x200000, CRC(5656d6de) SHA1(89eda110afc3a2ff6766c3a8750396861328b18f) )
+	ROM_LOAD32_WORD( "audio.u62",  0x400000, 0x200000, CRC(cacf09e3) SHA1(349af1767cb0ee2a0eb9d7c2ab078fcae5fec8e7) )
+	ROM_LOAD32_WORD( "audio.u61",  0x400002, 0x200000, CRC(ea895d29) SHA1(1edde0497f2abd1636c5d7bcfbc03bcff321261c) )
+	ROM_LOAD32_WORD( "audio.u53",  0x800000, 0x200000, CRC(51c89a14) SHA1(6bc62bcda224040a4596d795132874828011a038) )
+	ROM_LOAD32_WORD( "audio.u49",  0x800002, 0x200000, CRC(e6b684d3) SHA1(1f5bab7fae974cecc8756dd23e3c7aa2cf6e7dc7) )
 
-	DISK_REGION( REGION_DISKS )	/* Hard Drive */
-	DISK_IMAGE( "sfrushrk", 0, NO_DUMP )
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.2 */
+	DISK_IMAGE( "sfrushrk", 0, MD5(425c83a4fd389d820aceabf2c72e6107) SHA1(75aba7be869996ff522163466c97f88f78904fe0) )
 ROM_END
 
 
@@ -2324,7 +2868,7 @@ ROM_END
  *
  *************************************/
 
-static void init_common(int ioasic, int serialnum, int yearoffs)
+static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 {
 	/* initialize the subsystems */
 	ide_controller_init(0, &ide_intf);
@@ -2332,23 +2876,48 @@ static void init_common(int ioasic, int serialnum, int yearoffs)
 
 	/* set our VBLANK callback */
 	voodoo_set_vblank_callback(vblank_assert);
+
+	/* switch off the configuration */
+	board_config = config;
+	switch (config)
+	{
+		case PHOENIX_CONFIG:
+			/* original Phoenix board only has 4MB of RAM */
+			install_mem_read32_handler (0, 0x00400000, 0x007fffff, MRA32_NOP);
+			install_mem_write32_handler(0, 0x00400000, 0x007fffff, MWA32_NOP);
+			install_mem_read32_handler (0, 0x20400000, 0x207fffff, MRA32_NOP);
+			install_mem_write32_handler(0, 0x20400000, 0x207fffff, MWA32_NOP);
+			install_mem_read32_handler (0, 0x80400000, 0x807fffff, MRA32_NOP);
+			install_mem_write32_handler(0, 0x80400000, 0x807fffff, MWA32_NOP);
+			install_mem_read32_handler (0, 0xa0400000, 0xa07fffff, MRA32_NOP);
+			install_mem_write32_handler(0, 0xa0400000, 0xa07fffff, MWA32_NOP);
+			break;
+		
+		case SEATTLE_WIDGET_CONFIG:
+			/* set up the widget board */
+			install_mem_read32_handler(0, 0xb6c00000, 0xb6c0001f, widget_r);
+			install_mem_write32_handler(0, 0xb6c00000, 0xb6c0001f, widget_w);
+			smc91c94_init(&ethernet_intf);
+			break;
+	
+		case FLAGSTAFF_CONFIG:
+			/* set up the analog inputs */
+			install_mem_read32_handler(0, 0xb4000000, 0xb4000003, analog_port_r);
+			install_mem_write32_handler(0, 0xb4000000, 0xb4000003, analog_port_w);
+
+			/* set up the ethernet controller */
+			install_mem_read32_handler(0, 0xb6c00000, 0xb6c0003f, ethernet_r);
+			install_mem_write32_handler(0, 0xb6c00000, 0xb6c0003f, ethernet_w);
+			smc91c94_init(&ethernet_intf);
+			break;
+	}
 }
 
 
 static DRIVER_INIT( wg3dh )
 {
 	dcs2_init(0x3839);
-	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80);
-
-	/* unlike the other games, we only have 4MB of RAM */
-	install_mem_read32_handler (0, 0x00400000, 0x007fffff, MRA32_NOP);
-	install_mem_write32_handler(0, 0x00400000, 0x007fffff, MWA32_NOP);
-	install_mem_read32_handler (0, 0x20400000, 0x207fffff, MRA32_NOP);
-	install_mem_write32_handler(0, 0x20400000, 0x207fffff, MWA32_NOP);
-	install_mem_read32_handler (0, 0x80400000, 0x807fffff, MRA32_NOP);
-	install_mem_write32_handler(0, 0x80400000, 0x807fffff, MWA32_NOP);
-	install_mem_read32_handler (0, 0xa0400000, 0xa07fffff, MRA32_NOP);
-	install_mem_write32_handler(0, 0xa0400000, 0xa07fffff, MWA32_NOP);
+	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80, PHOENIX_CONFIG);
 
 	/* speedups */
 	install_mem_read32_handler(0, 0x80115e00, 0x80115e03, generic_speedup_r);
@@ -2359,7 +2928,7 @@ static DRIVER_INIT( wg3dh )
 static DRIVER_INIT( mace )
 {
 	dcs2_init(0x3839);
-	init_common(MIDWAY_IOASIC_MACE, 450/* unknown */, 80);
+	init_common(MIDWAY_IOASIC_MACE, 450/* unknown */, 80, SEATTLE_CONFIG);
 
 	/* no obvious speedups */
 }
@@ -2368,11 +2937,7 @@ static DRIVER_INIT( mace )
 static DRIVER_INIT( sfrush )
 {
 	cage_init(REGION_USER2, 0x5236);
-	init_common(MIDWAY_IOASIC_STANDARD, 315/* no alternates */, 100);
-
-	/* set up the analog inputs */
-	install_mem_read32_handler(0, 0xb4000000, 0xb4000003, analog_port_r);
-	install_mem_write32_handler(0, 0xb4000000, 0xb4000003, analog_port_w);
+	init_common(MIDWAY_IOASIC_STANDARD, 315/* no alternates */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
 	install_mem_read32_handler(0, 0x8012498c, 0x8012498f, generic_speedup_r);
@@ -2384,12 +2949,8 @@ static DRIVER_INIT( sfrush )
 
 static DRIVER_INIT( sfrushrk )
 {
-	cage_init(REGION_USER2, 0x5236);
-	init_common(MIDWAY_IOASIC_VAPORTRX, 315/* no alternates */, 100);
-
-	/* set up the analog inputs */
-	install_mem_read32_handler(0, 0xb4000000, 0xb4000003, analog_port_r);
-	install_mem_write32_handler(0, 0xb4000000, 0xb4000003, analog_port_w);
+	cage_init(REGION_USER2, 0x5329);
+	init_common(MIDWAY_IOASIC_SFRUSHRK, /*267*/ 275 /* unknown */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
 //	install_mem_read32_handler(0, 0x8012498c, 0x8012498f, generic_speedup_r);
@@ -2402,13 +2963,8 @@ static DRIVER_INIT( sfrushrk )
 static DRIVER_INIT( calspeed )
 {
 	dcs2_init(0x39c0);
-	init_common(MIDWAY_IOASIC_CALSPEED, 450/* unknown */, 100);
+	init_common(MIDWAY_IOASIC_CALSPEED, 450/* unknown */, 100, SEATTLE_WIDGET_CONFIG);
 	midway_ioasic_set_auto_ack(1);
-
-	/* set up the analog inputs */
-	install_mem_read32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_r);
-	install_mem_write32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_w);
-	install_mem_write32_handler(0, 0xb6c0000c, 0xb6c0000f, MWA32_NOP);
 
 	/* speedups */
 	install_mem_read32_handler(0, 0x802e6480, 0x802e6483, generic_speedup_r);
@@ -2419,12 +2975,7 @@ static DRIVER_INIT( calspeed )
 static DRIVER_INIT( vaportrx )
 {
 	dcs2_init(0);
-	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* unknown */, 100);
-
-	/* set up the analog inputs */
-	install_mem_read32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_r);
-	install_mem_write32_handler(0, 0xb6c00010, 0xb6c00013, analog_port_w);
-	install_mem_write32_handler(0, 0xb6c0000c, 0xb6c0000f, MWA32_NOP);
+	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* unknown */, 100, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
 }
@@ -2433,7 +2984,7 @@ static DRIVER_INIT( vaportrx )
 static DRIVER_INIT( biofreak )
 {
 	dcs2_init(0x3835);
-	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80);
+	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
 //	install_mem_write32_handler(0, 0x802502bc, 0x802502bf, generic_speedup_w);
@@ -2444,7 +2995,7 @@ static DRIVER_INIT( biofreak )
 static DRIVER_INIT( blitz )
 {
 	dcs2_init(0x39c2);
-	init_common(MIDWAY_IOASIC_BLITZ99, 444/* or 528 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 444/* or 528 */, 80, SEATTLE_CONFIG);
 
 	/* for some reason, the code in the ROM appears buggy; this is a small patch to fix it */
 	rombase[0x934/4] += 4;
@@ -2458,7 +3009,7 @@ static DRIVER_INIT( blitz )
 static DRIVER_INIT( blitz99 )
 {
 	dcs2_init(0x0afb);
-	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
 	install_mem_write32_handler(0, 0x802502bc, 0x802502bf, generic_speedup_w);
@@ -2469,7 +3020,7 @@ static DRIVER_INIT( blitz99 )
 static DRIVER_INIT( blitz2k )
 {
 	dcs2_init(0x0b5d);
-	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80);
+	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
 	install_mem_write32_handler(0, 0x8024e8d8, 0x8024e8db, generic_speedup_w);
@@ -2480,7 +3031,7 @@ static DRIVER_INIT( blitz2k )
 static DRIVER_INIT( carnevil )
 {
 	dcs2_init(0x0af7);
-	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80);
+	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80, SEATTLE_CONFIG);
 
 	/* set up the gun */
 	install_mem_read32_handler(0, 0xb6800000, 0xb680001f, carnevil_gun_r);
@@ -2495,7 +3046,7 @@ static DRIVER_INIT( carnevil )
 static DRIVER_INIT( hyprdriv )
 {
 	dcs2_init(0);
-	init_common(MIDWAY_IOASIC_STANDARD, 469/* unknown */, 80);
+	init_common(MIDWAY_IOASIC_STANDARD, 469/* unknown */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
 }
@@ -2509,12 +3060,12 @@ static DRIVER_INIT( hyprdriv )
  *************************************/
 
 /* Atari */
-GAME ( 1996, wg3dh,    0,        seattle100, wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey" )
-GAME ( 1996, mace,     0,        seattle200, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age" )
-GAMEX( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush", GAME_NOT_WORKING )
-GAMEX( 1996, sfrushrk, 0,        flagstaff,  sfrush,   sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
+GAME ( 1996, wg3dh,    0,        phoenixsa,  wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey" )
+GAME ( 1996, mace,     0,        seattle150, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age" )
+GAME ( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush" )
+GAMEX( 1996, sfrushrk, 0,        flagstaff,  sfrushrk, sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
 GAME ( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed" )
-GAMEX( 1998, vaportrx, 0,        vaportrx,   vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX", GAME_NOT_WORKING )
+GAME ( 1998, vaportrx, 0,        seattle200, vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX" )
 
 /* Midway */
 GAME ( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)" )

@@ -70,153 +70,54 @@ extern WRITE_HANDLER( arkanoid_68705_ddrC_w );
 extern READ_HANDLER( arkanoid_68705_input_0_r );
 extern READ_HANDLER( arkanoid_input_2_r );
 
-/*
-Paddle 2 MCU simulation
+extern READ_HANDLER( paddle2_prot_r );
+extern WRITE_HANDLER( paddle2_prot_w );
+extern READ_HANDLER( paddle2_track_kludge_r );
 
-TODO:
-\-Fix crashes and level finishing.
-\-Finish the level pointer table & check the real thing for true level pattern...
-\-(track_kludge_r)Find a better way to handle the paddle inputs.
-\-Code optimizations + add this into machine/arkanoid.c
+/* Memory Maps */
 
-Notes:
-\-This game is an Arkanoid 1 bootleg but with level edited to match the Arkanoid 2 ones.
-\-Returning the right values for commands 0x38,0xff and 0x8a gives the level that has to
-be played,but I don't have any clue about the true level pattern used.Checking Arkanoid 2
-doesn't help much BTW...
-*/
-
-
-static int paddle2_prot;
-
-static READ_HANDLER( paddle2_prot_r )
-{
-	static UINT8 level_table_a[] =
-	{
-		0xf3,0xf7,0xf9,0xfb,0xfd,0xff,0xf5,0xe3, /* 1- 8*/
-		0xe5,0xe7,0xe9,0xeb,0xed,0xef,0xf1,0xf7, /* 9-16*/
-		0xf9,0xfb,0xfd,0xff,0x00,0x00,0x00,0x00, /*17-24*/
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
-	};
-	static UINT8 level_table_b[] =
-	{
-		0x52,0x52,0x52,0x52,0x52,0x52,0x0e,0x0e, /* 1- 8*/
-		0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e, /* 9-16*/
-		0x0e,0x0e,0x0e,0x0e,0x00,0x00,0x00,0x00, /*17-24*/
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
-	};
-	UINT8 *RAM = memory_region(REGION_CPU1);
-//	usrintf_showmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
-
-	switch (paddle2_prot)
-	{
-		case 0xc3: return 0x1d;
-		case 0x24: return 0x9b;
-		/* Level pointer table */
-		case 0x38:
-		if(RAM[0xed83] == 0)    return level_table_a[RAM[0xed72]];
-		else					return RAM[0xed83];
-		case 0xff:
-		if(RAM[0xed83] == 0)	return level_table_b[RAM[0xed72]];
-		else 					return RAM[0xed83];
-		/* Guess this is used for building level 	   */
-		/* pointers too,but I haven't tested yet...    */
-		case 0x8a: return 0x0a;
-		/* Goes into sub-routine $2050,controls level finishing(WRONG!!!) */
-		case 0xe3:
-		if(RAM[0xed83] != 0)	return 0xff;
-		else					return 0;
-		/* Gives BAD HW message otherwise */
-		case 0x36: return 0x2d;
-		case 0xf7: return 0;
-		default: return paddle2_prot;
-	}
-}
-
-static WRITE_HANDLER( paddle2_prot_w )
-{
-	logerror("%04x: prot_w %02x\n",activecpu_get_pc(),data);
-	paddle2_prot = data;
-}
-
-static READ_HANDLER( track_kludge_r )
-{
-	int track = readinputport(2);
-
-	/* temp kludge,needed to get the right side of the screen */
-	if(track < 0x44)
-		return 0x23;
-	return 0x03;
-}
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd001, 0xd001) AM_READ(AY8910_read_port_0_r)
+static ADDRESS_MAP_START( arkanoid_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)	/* gfx bank, flip screen etc. */
 	AM_RANGE(0xd00c, 0xd00c) AM_READ(arkanoid_68705_input_0_r)  /* mainly an input port, with 2 bits from the 68705 */
-	AM_RANGE(0xd010, 0xd010) AM_READ(input_port_1_r)
-	AM_RANGE(0xd018, 0xd018) AM_READ(arkanoid_Z80_mcu_r)  /* input from the 68705 */
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_NOP)	/* fixes instant death in final level */
+	AM_RANGE(0xd010, 0xd010) AM_READWRITE(input_port_1_r, watchdog_reset_w)
+	AM_RANGE(0xd018, 0xd018) AM_READWRITE(arkanoid_Z80_mcu_r, arkanoid_Z80_mcu_w)  /* input from the 68705 */
+	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe800, 0xe83f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe840, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_READNOP	/* fixes instant death in final level */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( bootleg_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0xd001, 0xd001) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
 	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)	/* gfx bank, flip screen etc. */
-	AM_RANGE(0xd010, 0xd010) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0xd018, 0xd018) AM_WRITE(arkanoid_Z80_mcu_w) /* output to the 68705 */
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xe800, 0xe83f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xe840, 0xefff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( boot_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd001, 0xd001) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0xd00c, 0xd00c) AM_READ(input_port_0_r)
-	AM_RANGE(0xd010, 0xd010) AM_READ(input_port_1_r)
-	AM_RANGE(0xd018, 0xd018) AM_READ(arkanoid_input_2_r)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_NOP)	/* fixes instant death in final level */
+	AM_RANGE(0xd010, 0xd010) AM_READWRITE(input_port_1_r, watchdog_reset_w)
+	AM_RANGE(0xd018, 0xd018) AM_READ(arkanoid_input_2_r) AM_WRITENOP
+	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe800, 0xe83f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe840, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_READNOP	/* fixes instant death in final level */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( boot_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0xd001, 0xd001) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)	/* gfx bank, flip screen etc. */
-	AM_RANGE(0xd010, 0xd010) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0xd018, 0xd018) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(arkanoid_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xe800, 0xe83f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xe840, 0xefff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
-	AM_RANGE(0x0000, 0x0000) AM_READ(arkanoid_68705_portA_r)
+	AM_RANGE(0x0000, 0x0000) AM_READWRITE(arkanoid_68705_portA_r, arkanoid_68705_portA_w)
 	AM_RANGE(0x0001, 0x0001) AM_READ(arkanoid_input_2_r)
-	AM_RANGE(0x0002, 0x0002) AM_READ(arkanoid_68705_portC_r)
-	AM_RANGE(0x0010, 0x007f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0080, 0x07ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
-	AM_RANGE(0x0000, 0x0000) AM_WRITE(arkanoid_68705_portA_w)
-	AM_RANGE(0x0002, 0x0002) AM_WRITE(arkanoid_68705_portC_w)
+	AM_RANGE(0x0002, 0x0002) AM_READWRITE(arkanoid_68705_portC_r, arkanoid_68705_portC_w)
 	AM_RANGE(0x0004, 0x0004) AM_WRITE(arkanoid_68705_ddrA_w)
 	AM_RANGE(0x0006, 0x0006) AM_WRITE(arkanoid_68705_ddrC_w)
-	AM_RANGE(0x0010, 0x007f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0010, 0x007f) AM_RAM
+	AM_RANGE(0x0080, 0x07ff) AM_ROM
 ADDRESS_MAP_END
 
+/* Input Ports */
 
 INPUT_PORTS_START( arkanoid )
 	PORT_START	/* IN0 */
@@ -253,8 +154,8 @@ INPUT_PORTS_START( arkanoid )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "20K, 60K and every 60K" )
-	PORT_DIPSETTING(    0x00, "20K only" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K+" )
+	PORT_DIPSETTING(    0x00, "20K" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -304,8 +205,8 @@ INPUT_PORTS_START( arknoidj )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "20K, 60K and every 60K" )
-	PORT_DIPSETTING(    0x00, "20K only" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K+" )
+	PORT_DIPSETTING(    0x00, "20K" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -354,8 +255,8 @@ INPUT_PORTS_START( arkatayt )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "60K, 100K and every 60K" )
-	PORT_DIPSETTING(    0x00, "60K only" )
+	PORT_DIPSETTING(    0x10, "60K 100K 60K+" )
+	PORT_DIPSETTING(    0x00, "60K" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -367,6 +268,7 @@ INPUT_PORTS_START( arkatayt )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+/* Graphics Layouts */
 
 static struct GfxLayout charlayout =
 {
@@ -379,21 +281,21 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-
+/* Graphics Decode Information */
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 64 },
-	/* sprites use the same characters above, but are 16x8 */
-	{ -1 } /* end of array */
+	// sprites use the same characters above, but are 16x8
+	{ -1 }
 };
 
-
+/* Sound Interfaces */
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chips */
-	1500000,	/* 1.5 MHz ???? */
+	1,			// 1 chip
+	1500000,	// 1.5 MHz ???
 	{ 33 },
 	{ 0 },
 	{ input_port_4_r },
@@ -401,25 +303,24 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( arkanoid )
+	// basic machine hardware
+	MDRV_CPU_ADD_TAG("main", Z80, 6000000)	// 6 MHz ???
+	MDRV_CPU_PROGRAM_MAP(arkanoid_map, 0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
-	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
+	MDRV_CPU_ADD_TAG("mcu", M68705, 500000)	// .5 MHz (don't know really how fast, but it doesn't need to even be this fast)
+	MDRV_CPU_PROGRAM_MAP(mcu_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100) /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
+	MDRV_INTERLEAVE(100)					// 100 CPU slices per second to synchronize between the MCU and the main CPU
 
 	MDRV_MACHINE_INIT(arkanoid)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -430,42 +331,21 @@ static MACHINE_DRIVER_START( arkanoid )
 	MDRV_VIDEO_START(arkanoid)
 	MDRV_VIDEO_UPDATE(arkanoid)
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bootleg )
+	MDRV_IMPORT_FROM(arkanoid)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
-	MDRV_CPU_PROGRAM_MAP(boot_readmem,boot_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	// basic machine hardware
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(bootleg_map, 0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
-
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(arkanoid)
-	MDRV_VIDEO_UPDATE(arkanoid)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_CPU_REMOVE("mcu")
 MACHINE_DRIVER_END
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( arkanoid )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -677,15 +557,16 @@ ROM_START( arkangc )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
-
+/* Driver Initialization */
 
 static DRIVER_INIT( paddle2 )
 {
-	install_mem_read_handler (0, 0xf002, 0xf002, paddle2_prot_r);
-	install_mem_write_handler(0, 0xd018, 0xd018, paddle2_prot_w);
-	install_mem_read_handler (0, 0xd008, 0xd008, track_kludge_r );
+	install_mem_read_handler ( 0, 0xf002, 0xf002, paddle2_prot_r );
+	install_mem_write_handler( 0, 0xd018, 0xd018, paddle2_prot_w );
+	install_mem_read_handler ( 0, 0xd008, 0xd008, paddle2_track_kludge_r );
 }
 
+/* Game Drivers */
 
 GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0,       ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
 GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )

@@ -2,126 +2,19 @@
 
   Sony ZN1/ZN2 - Arcade PSX Hardware
   ==================================
-  Driver by smf
+  Driver by smf & R Belmont
+  Board notes by The Guru
+  Thanks to Zinc Team, Amuse & Miguel Angel Horna
 
-  QSound emulation based on information from the cps1/cps2 driver, Amuse & Miguel Angel Horna
-  Taito FX1a sound emulation based on information from the Taito F2 driver
-
-  The ZN1/ZN2 boards are standard boards from Sony. Extra sound h/w is
-  included on the rom board,
-
-  The BIOS is protected in all the games that run on this hardware.
-  During boot up the BIOS decrypts parts of itself into ram using
-  a device connected to the PSX controller port. As this is not
-  emulated yet you only get the boot up colours.
-
-
-  Capcom ZN1 ( coh-1000 ) / ZN2 ( coh-3002c )
-  -------------------------------------------
-
-  The QSound hardware is different to cps2 as it uses an i/o port and
-  nmi's instead of shared memory. The driver uses 8bit i/o addresses
-  but the real ZN1 hardware may use 16bit i/o addresses as the code
-  always accesses port 0xf100. The ZN2 code however seems to vary the
-  top eight bits of the address, this may or may not be important but
-  it is currently ignored.
-
-  The Gallop Racer dump came from a Capcom ZN1 QSound board but there
-  were no QSound program/sample roms & the game doesn't appear to use
-  it. Tecmo went on to produce games on their own boards.
-
-    Key
-    ---
-    CP09 - kikaioh rom board
-    CP10 - kikaioh/shiryu2 motherboard
-    CP13 - shiryu2 rom board
-
-
-  Taito FX1a
-  ----------
-
-  The extra sound h/w is the same as taito f2 ( z80-a + ym2610b ).
-
-    Key
-    ---
-    TT02 - Super Football Champ
-    TT06 - Magical Date
-
-
-  Taito FX1b
-  ----------
-
-  The extra sound h/w isn't emulated and consists of an mn1020012a +
-  zoom zsg-2 + tms57002dpha.
-
-  mn1020012a is a 16bit panasonic mpu & the zoom zsg-2 is a sound generator
-  lsi produced by zoom corp in 1995.
-
-    Key
-    ---
-    TT04 - Ray Storm
-    TT05 - Fighter's Impact Ace
-    TT07 - G-Darius
-
-  Beastorizer bootleg runs on a ray storm motherboard, but doesn't have fx1b sound h/w.
-
-  PS Arcade 95 ( coh-1002e )
-  --------------------------
-Main Board: Sony ZN-1  (1-659-709-12  COH-1002E)
- Sub Board: Raizing RA9701 SUB
-
-    Key
-    ---
-    ET01 - Main board
-    ET02 - Beastorizer
-
-TMP68HC00N-16 (Toshiba 68K 12MHz)
-OSC: 12.0000MHz (Kyocera KX-01-1)
-Mach211 (x2) Labled "Main_IF2" & "SUB_IF2"
-ST M628032-15E1 (x2) Ram??
-Yamaha YMF271-F
-GAL16V8B
-CAT702 103090-ET02 (the "ET02" is a printed sticker/label) ??
-
-
-  Acclaim PSX ( coh-1000 )
-  ------------------------
-
-    Key
-    ---
-    AC01 - Motherboard
-    AC02 - NBA Jam Extreme
-
-Sound: Analog Devices ADSP-2181
-
-  Video System
-  ------------
-
-    Key
-    ---
-    KN01 - Motherboard
-    KN02 - Sonic Wings Limited
-
-  Tecmo ( coh-1002m )
-  -------------------
-
-    Key
-    ---
-    MG01 - Motherboard
-    MG02 - Gallop Racer 2
-    MG05 - Dead or Alive ++
-    MG09 - Tondemo Crisis
-
-  ***************************************************************************/
+***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/mips/psx.h"
 #include "cpu/z80/z80.h"
-#include "sndhrdw/taitosnd.h"
 #include "includes/psx.h"
 #include "machine/znsec.h"
 #include "machine/idectrl.h"
+#include "sndhrdw/taitosnd.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -145,28 +38,35 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-#define NODUMP 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
+INLINE UINT8 psxreadbyte( UINT32 n_address )
+{
+	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
+}
+
+INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
+{
+	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
+}
 
 static const unsigned char ac01[ 8 ] = { 0x80, 0x1c, 0xe2, 0xfa, 0xf9, 0xf1, 0x30, 0xc0 };
 static const unsigned char ac02[ 8 ] = { 0xfc, 0x60, 0xe2, 0xfa, 0xf9, 0xf1, 0x30, 0xc0 };
 static const unsigned char tw01[ 8 ] = { 0xc0, 0x18, 0xf9, 0x81, 0x82, 0xfe, 0x0c, 0xf0 };
 static const unsigned char tw02[ 8 ] = { 0xf0, 0x81, 0x03, 0xfa, 0x18, 0x1c, 0x3c, 0xc0 };
-static const unsigned char at01[ 8 ] = { NODUMP };
-static const unsigned char at02[ 8 ] = { NODUMP };
+static const unsigned char at01[ 8 ] = { 0xf8, 0xe1, 0xe2, 0xfe, 0x3c, 0x40, 0x70, 0xf0 };
+static const unsigned char at02[ 8 ] = { 0xc0, 0x70, 0x78, 0xfa, 0xfe, 0x1c, 0xe1, 0x01 };
 static const unsigned char cp01[ 8 ] = { 0xf0, 0x81, 0xc1, 0x20, 0xe2, 0xfe, 0x04, 0xf8 };
-static const unsigned char cp02[ 8 ] = { NODUMP };
+static const unsigned char cp02[ 8 ] = { 0xfc, 0xf1, 0x08, 0x18, 0xe2, 0xc2, 0x40, 0x80 }; /* brute forced */
 static const unsigned char cp03[ 8 ] = { 0xc0, 0x10, 0x60, 0x7c, 0x04, 0xfa, 0x03, 0x01 };
 static const unsigned char cp04[ 8 ] = { 0xf8, 0xe2, 0xe1, 0x81, 0x7c, 0x0c, 0x30, 0xc0 };
 static const unsigned char cp05[ 8 ] = { 0x80, 0x08, 0x30, 0xc2, 0xfe, 0xfd, 0xe1, 0xe0 };
 static const unsigned char cp06[ 8 ] = { 0xf0, 0x20, 0x3c, 0xfd, 0x81, 0x78, 0xfa, 0x02 };
-static const unsigned char cp07[ 8 ] = { NODUMP };
+static const unsigned char cp07[ 8 ] = { 0xf8, 0x60, 0x20, 0x3c, 0xfd, 0x03, 0xf2, 0xf0 }; /* brute forced */
 static const unsigned char cp08[ 8 ] = { 0xe0, 0xf2, 0x70, 0x81, 0xc1, 0x3c, 0x04, 0xf8 };
-static const unsigned char cp09[ 8 ] = { NODUMP };
+static const unsigned char cp09[ 8 ] = { 0xfc, 0x20, 0x38, 0x08, 0xf1, 0x03, 0x82, 0x80 }; /* brute forced */
 static const unsigned char cp10[ 8 ] = { 0xe0, 0x40, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
-static const unsigned char cp11[ 8 ] = { NODUMP };
-static const unsigned char cp12[ 8 ] = { NODUMP };
+static const unsigned char cp11[ 8 ] = { 0xf0, 0x20, 0xe1, 0x81, 0x7c, 0x04, 0xfa, 0x02 }; /* brute forced */
+static const unsigned char cp12[ 8 ] = { 0xfc, 0x82, 0x60, 0xe1, 0xf9, 0x38, 0x30, 0xf0 }; /* brute forced */
 static const unsigned char cp13[ 8 ] = { 0x02, 0x70, 0x08, 0x04, 0x3c, 0x20, 0xe1, 0x01 };
-static const unsigned char cp14[ 8 ] = { NODUMP };
 static const unsigned char et01[ 8 ] = { 0x02, 0x08, 0x18, 0x1c, 0xfd, 0xc1, 0x40, 0x80 };
 static const unsigned char et02[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfe, 0x7c, 0x70, 0x08, 0xf8 };
 static const unsigned char et03[ 8 ] = { 0xc0, 0x08, 0xfa, 0xe2, 0xe1, 0xfd, 0x7c, 0x80 };
@@ -174,20 +74,21 @@ static const unsigned char mg01[ 8 ] = { 0x80, 0xf2, 0x30, 0x38, 0xf9, 0xfd, 0x1
 static const unsigned char mg02[ 8 ] = { 0xe0, 0x7c, 0x40, 0xc1, 0xf9, 0xfa, 0xf2, 0xf0 };
 static const unsigned char mg03[ 8 ] = { 0xc0, 0x04, 0x78, 0x82, 0x03, 0xf1, 0x10, 0xe0 };
 static const unsigned char mg04[ 8 ] = { 0xf0, 0xe1, 0x81, 0x82, 0xfa, 0x04, 0x3c, 0xc0 };
-static const unsigned char mg05[ 8 ] = { NODUMP };
-static const unsigned char mg09[ 8 ] = { NODUMP };
+static const unsigned char mg05[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x0c, 0x10, 0xe0 }; /* brute forced */
+static const unsigned char mg09[ 8 ] = { 0xf0, 0x03, 0xe2, 0x18, 0x78, 0x7c, 0x3c, 0xc0 }; /* brute forced */
 static const unsigned char mg11[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x1c, 0x10, 0xf0 };
+static const unsigned char mg14[ 8 ] = { 0xfc, 0xf2, 0xfa, 0x18, 0x20, 0x40, 0x81, 0x01 };
 static const unsigned char tt01[ 8 ] = { 0xe0, 0xf9, 0xfd, 0x7c, 0x70, 0x30, 0xc2, 0x02 };
-static const unsigned char tt02[ 8 ] = { NODUMP };
-static const unsigned char tt03[ 8 ] = { NODUMP };
+static const unsigned char tt02[ 8 ] = { 0xfc, 0x60, 0xe1, 0xc1, 0x30, 0x08, 0xfa, 0x02 }; /* brute forced */
+static const unsigned char tt03[ 8 ] = { 0xf0, 0x20, 0xe2, 0xfa, 0x78, 0x81, 0xfd, 0xfc }; /* brute forced */
 static const unsigned char tt04[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfa, 0x78, 0x7c, 0x0c, 0xf0 };
-static const unsigned char tt05[ 8 ] = { NODUMP };
-static const unsigned char tt06[ 8 ] = { NODUMP };
-static const unsigned char tt07[ 8 ] = { NODUMP };
+static const unsigned char tt05[ 8 ] = { 0xc0, 0xf1, 0xf2, 0xe2, 0x60, 0x7c, 0x04, 0xf8 }; /* brute forced */
+static const unsigned char tt06[ 8 ] = { 0xfc, 0x38, 0xfa, 0xf2, 0xf1, 0xe1, 0x60, 0x80 }; /* brute forced */
+static const unsigned char tt07[ 8 ] = { 0x80, 0x10, 0xf1, 0x03, 0xfa, 0x38, 0x3c, 0xfc }; /* brute forced & dumped */
 static const unsigned char tt10[ 8 ] = { 0x80, 0x20, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
 static const unsigned char tt16[ 8 ] = { 0xc0, 0x04, 0xf9, 0xe1, 0x60, 0x70, 0xf2, 0x02 };
-static const unsigned char kn01[ 8 ] = { NODUMP };
-static const unsigned char kn02[ 8 ] = { NODUMP };
+static const unsigned char kn01[ 8 ] = { 0xf8, 0xe1, 0xe2, 0xfe, 0x3c, 0x30, 0x70, 0x80 }; /* brute forced */
+static const unsigned char kn02[ 8 ] = { 0x01, 0x18, 0xe2, 0xfe, 0x3c, 0x30, 0x70, 0x80 }; /* brute forced */
 
 static struct
 {
@@ -199,58 +100,60 @@ static struct
 	{ "nbajamex", ac01, ac02 }, /* black screen */
 	{ "jdredd",   ac01, ac02 }, /* OK ( missing guns ) */
 	{ "jdreddb",  ac01, ac02 }, /* OK ( missing guns ) */
-	{ "primrag2", tw01, tw02 }, /* boots */
-/*	{ "hvnsgate", at01, at02 }, */
-	{ "ts2",      cp01, cp02 }, /* system error C930 */
-	{ "ts2j",     cp01, cp02 }, /* system error C930 */
+	{ "primrag2", tw01, tw02 }, /* locks up when starting a game */
+	{ "hvnsgate", at01, at02 }, /* OK */
+	{ "ts2",      cp01, cp02 }, /* OK */
+	{ "ts2j",     cp01, cp02 }, /* OK */
 	{ "starglad", cp01, cp03 }, /* OK */
 	{ "sfex",     cp01, cp04 }, /* OK */
 	{ "sfexa",    cp01, cp04 }, /* OK */
 	{ "sfexj",    cp01, cp04 }, /* OK */
+	{ "sfexp",    cp01, cp04 }, /* OK */
+	{ "sfexpj",   cp01, cp04 }, /* OK */
 	{ "glpracr",  cp01, cp05 }, /* OK */
 	{ "rvschool", cp10, cp06 }, /* OK */
 	{ "jgakuen",  cp10, cp06 }, /* OK */
-	{ "plsmaswd", cp10, cp07 }, /* system error D094 */
-	{ "stargld2", cp10, cp07 }, /* system error D094 */
-	{ "sfex2",    cp10, cp08 }, /* OK */
-	{ "techromn", cp10, cp09 }, /* system error D094 */
-	{ "kikaioh",  cp10, cp09 }, /* system error D094 */
-	{ "tgmj",     cp10, cp11 }, /* system error D094 */ /* ? */
-	{ "sfexp",    cp10, cp12 }, /* system error C094 */
-	{ "sfexpj",   cp10, cp12 }, /* system error C094 */
-	{ "strider2", cp10, cp13 }, /* OK ( crashes on bosses ) */
-	{ "shiryu2",  cp10, cp13 }, /* OK ( crashes on bosses ) */
-	{ "sfex2p",   cp10, cp14 }, /* system error D094 */ /* ? */
-	{ "sfex2pj",  cp10, cp14 }, /* system error D094 */ /* ? */
+	{ "plsmaswd", cp10, cp07 }, /* OK */
+	{ "stargld2", cp10, cp07 }, /* OK */
+	{ "sfex2",    cp10, cp08 }, /* OK ( random crashes on garuda ) */
+	{ "techromn", cp10, cp09 }, /* OK */
+	{ "kikaioh",  cp10, cp09 }, /* OK */
+	{ "tgmj",     cp10, cp11 }, /* OK */
+	{ "sfex2p",   cp10, cp12 }, /* OK */
+	{ "sfex2pj",  cp10, cp12 }, /* OK */
+	{ "strider2", cp10, cp13 }, /* OK ( random crashes on bosses ) */
+	{ "shiryu2",  cp10, cp13 }, /* OK ( random crashes on bosses ) */
 	{ "beastrzr", et01, et02 }, /* OK */
 	{ "beastrza", et01, et02 }, /* OK */
 	{ "beastrzb", et01, et02 }, /* OK */
-/*	{ "bldyror2", et01, et03 }, */
+	{ "bldyror2", et01, et03 }, /* OK ( bad dump? ) */
 	{ "glpracr2", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "glprac2j", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "glprac2l", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "cbaj",     mg01, mg03 }, /* OK */
 	{ "shngmtkb", mg01, mg04 }, /* OK */
-	{ "doapp",    mg01, mg05 }, /* system error D094 */
-	{ "tondemo",  mg01, mg09 }, /* system error D094 */
+	{ "doapp",    mg01, mg05 }, /* OK */
+	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
-	{ "sfchamp",  tt01, tt02 }, /* red screen */
-	{ "psyfrcex", tt01, tt03 }, /* red screen */
-	{ "psyforce", tt01, tt03 }, /* red screen */
+	{ "sfchamp",  tt01, tt02 }, /* stuck in test mode */
+	{ "sfchampj", tt01, tt02 }, /* stuck in test mode */
+	{ "psyforce", tt01, tt03 }, /* OK */
+	{ "psyforcj", tt01, tt03 }, /* OK */
 	{ "raystorm", tt01, tt04 }, /* OK */
-	{ "ftimpcta", tt01, tt05 }, /* red screen */
-	{ "mgcldate", tt01, tt06 }, /* red screen */
-	{ "mgcldtea", tt01, tt06 }, /* red screen */
-	{ "gdarius",  tt01, tt07 }, /* red screen */
-	{ "gdarius2", tt01, tt07 }, /* red screen */
+	{ "ftimpcta", tt01, tt05 }, /* OK, geometry issues */
+	{ "mgcldate", tt01, tt06 }, /* stuck in test mode */
+	{ "mgcldtex", tt01, tt06 }, /* OK */
+	{ "gdarius",  tt01, tt07 }, /* OK */
+	{ "gdarius2", tt01, tt07 }, /* OK */
 	{ "taitogn",  tt10, tt16 }, /* error B930 */
-	{ "sncwgltd", kn01, kn02 }, /* red screen */
+	{ "sncwgltd", kn01, kn02 }, /* OK ( enters test mode on boot ) */
 	{ NULL, NULL, NULL }
 };
 
 static UINT32 m_n_znsecsel;
 static UINT32 m_b_znsecport;
 static int m_n_dip_bit;
+static int m_b_lastclock;
 
 static READ32_HANDLER( znsecsel_r )
 {
@@ -260,17 +163,33 @@ static READ32_HANDLER( znsecsel_r )
 
 static void sio_znsec0_handler( int n_data )
 {
-	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) == 0 )
 	{
-		psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 0, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+		if( m_b_lastclock )
+		{
+			psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 0, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+		}
+		m_b_lastclock = 0;
+	}
+	else
+	{
+		m_b_lastclock = 1;
 	}
 }
 
 static void sio_znsec1_handler( int n_data )
 {
-	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) == 0 )
 	{
-		psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 1, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+		if( m_b_lastclock )
+		{
+			psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 1, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+		}
+		m_b_lastclock = 0;
+	}
+	else
+	{
+		m_b_lastclock = 1;
 	}
 }
 
@@ -286,17 +205,25 @@ static void sio_pad_handler( int n_data )
 	}
 
 	verboselog( 2, "read pad %04x %04x %02x\n", m_n_znsecsel, m_b_znsecport, n_data );
-	psx_sio_input( 0, PSX_SIO_IN_DATA, PSX_SIO_IN_DATA );
+	psx_sio_input( 0, PSX_SIO_IN_DATA | PSX_SIO_IN_DSR, PSX_SIO_IN_DATA | PSX_SIO_IN_DSR );
 }
 
 static void sio_dip_handler( int n_data )
 {
-	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) == 0 )
 	{
-		verboselog( 2, "read dip %02x -> %02x\n", n_data, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
-		psx_sio_input( 0, PSX_SIO_IN_DATA, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
-		m_n_dip_bit++;
-		m_n_dip_bit &= 7;
+		if( m_b_lastclock )
+		{
+			verboselog( 2, "read dip %02x -> %02x\n", n_data, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
+			psx_sio_input( 0, PSX_SIO_IN_DATA, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
+			m_n_dip_bit++;
+			m_n_dip_bit &= 7;
+		}
+		m_b_lastclock = 0;
+	}
+	else
+	{
+		m_b_lastclock = 1;
 	}
 }
 
@@ -383,6 +310,20 @@ static WRITE32_HANDLER( zn_qsound_w )
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
+static WRITE32_HANDLER( coin_w )
+{
+	/* 0x01=counter
+	   0x02=coin lock 1
+	   0x08=??
+	   0x20=coin lock 2
+	   0x80=??
+	*/
+	if( ( data & ~0x23 ) != 0 )
+	{
+		verboselog( 0, "coin_w %08x\n", data );
+	}
+}
+
 static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
 	AM_RANGE(0x00400000, 0x007fffff) AM_RAM AM_SHARE(1) /* ram mirror */
@@ -412,6 +353,10 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1fa10100, 0x1fa10103) AM_READ(jamma_5_r)
 	AM_RANGE(0x1fa10200, 0x1fa10203) AM_READ(jamma_6_r)
 	AM_RANGE(0x1fa10300, 0x1fa10303) AM_READWRITE(znsecsel_r, znsecsel_w)
+	AM_RANGE(0x1fa20000, 0x1fa20003) AM_WRITE(coin_w)
+	AM_RANGE(0x1fa30000, 0x1fa30003) AM_NOP /* ?? */
+	AM_RANGE(0x1fa40000, 0x1fa40003) AM_READNOP /* ?? */
+	AM_RANGE(0x1fa60000, 0x1fa60003) AM_READNOP /* ?? */
 	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* eeprom */
 	AM_RANGE(0x1fb20000, 0x1fb20007) AM_READ(unknown_r)
 	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
@@ -505,232 +450,131 @@ static void init_znsec( void )
 	}
 }
 
-/* sound player */
-
-static int scode;
-static int scode_last;
-static int queue_data;
-static int queue_len;
-static int n_playermode;
-
-static WRITE32_HANDLER( player_queue_w )
-{
-	if( cpu_getstatus( 1 ) != 0 )
-	{
-		queue_data = data;
-		queue_len = 4;
-	}
-}
-
-static void player_reset( void )
-{
-	queue_len = 0;
-	scode_last = -1;
-
-	if( strcmp( Machine->gamedrv->name, "sfex2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex2p" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex2pj" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "tgmj" ) == 0 )
-	{
-		scode = 0x0400;
-	}
-	else if( strcmp( Machine->gamedrv->name, "techromn" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "kikaioh" ) == 0 )
-	{
-		scode = 0x8000;
-	}
-	else
-	{
-		scode = 0x0000;
-	}
-	cpu_set_reset_line( 0, PULSE_LINE );
-	cpu_set_reset_line( 1, PULSE_LINE );
-	if( n_playermode == 0 )
-	{
-		timer_suspendcpu( 0, 0, SUSPEND_ANY_REASON );
-	}
-	else
-	{
-		timer_suspendcpu( 0, 1, SUSPEND_REASON_DISABLE );
-	}
-}
-
-static VIDEO_UPDATE( player )
-{
-	if( keyboard_pressed_memory( KEYCODE_F1 ) )
-	{
-		n_playermode = !n_playermode;
-		player_reset();
-	}
-
-	if( n_playermode == 0 )
-	{
-		video_update_psx( bitmap, cliprect );
-	}
-	else
-	{
-		struct DisplayText dt[ 4 ];
-		char text1[ 256 ];
-		char text2[ 256 ];
-		char text3[ 256 ];
-
-		if( queue_len == 0 )
-		{
-			int stick;
-			static int old_stick = 0x0f;
-
-			stick = ~readinputport( 0 );
-			if( ( stick & old_stick & 0x01 ) != 0 )
-			{
-				scode=( scode & 0xff00 ) | ( ( scode + 0x0001 ) & 0xff );
-			}
-			if( ( stick & old_stick & 0x02 ) != 0 )
-			{
-				scode=( scode & 0xff00 ) | ( ( scode - 0x0001 ) & 0xff );
-			}
-			if( ( stick & old_stick & 0x08 ) != 0 )
-			{
-				scode=( ( scode + 0x0100 ) & 0xff00 ) | ( scode & 0xff );
-			}
-			if( ( stick & old_stick & 0x04 ) != 0 )
-			{
-				scode=( ( scode - 0x0100 ) & 0xff00 ) | ( scode & 0xff );
-			}
-			old_stick = ~stick;
-		}
-
-		if( scode != scode_last )
-		{
-			player_queue_w( 0, scode, 0x0000ffff );
-			scode_last = scode;
-		}
-
-		fillbitmap( bitmap, 0, &Machine->visible_area );
-
-		sprintf( text1, "%s", Machine->gamedrv->description );
-		if( strlen( text1 ) > Machine->uiwidth / Machine->uifontwidth )
-		{
-			text1[ Machine->uiwidth / Machine->uifontwidth ] = 0;
-		}
-		sprintf( text2, "SOUND CODE=%02x/%02x", scode >> 8, scode & 0xff );
-		if( strlen( text2 ) > Machine->uiwidth / Machine->uifontwidth )
-		{
-			text2[ Machine->uiwidth / Machine->uifontwidth ] = 0;
-		}
-		sprintf( text3, "SELECT WITH RIGHT&LEFT/UP&DN" );
-		if( strlen( text3 ) > Machine->uiwidth / Machine->uifontwidth )
-		{
-			text3[ Machine->uiwidth / Machine->uifontwidth ] = 0;
-		}
-		dt[ 0 ].text = text1;
-		dt[ 0 ].color = UI_COLOR_NORMAL;
-		dt[ 0 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 0 ].text ) ) / 2;
-		dt[ 0 ].y = Machine->uiheight - Machine->uifontheight * 5;
-		dt[ 1 ].text = text2;
-		dt[ 1 ].color = UI_COLOR_NORMAL;
-		dt[ 1 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 1 ].text ) ) / 2;
-		dt[ 1 ].y = Machine->uiheight - Machine->uifontheight * 3;
-		dt[ 2 ].text = text3;
-		dt[ 2 ].color = UI_COLOR_NORMAL;
-		dt[ 2 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( dt[ 2 ].text ) ) / 2;
-		dt[ 2 ].y = Machine->uiheight - Machine->uifontheight * 1;
-		dt[ 3 ].text = 0; /* terminate array */
-		displaytext( Machine->scrbitmap, dt );
-	}
-}
-
-static void player_init( void )
-{
-	n_playermode = 0;
-	player_reset();
-}
-
-static INTERRUPT_GEN( qsound_interrupt )
-{
-	if( queue_len == 4 )
-	{
-		soundlatch_w( 0, queue_data >> 8 );
-		queue_len -= 2;
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
-	}
-	else if( queue_len == 2 )
-	{
-		soundlatch_w( 0, queue_data & 0xff );
-		queue_len -= 2;
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
-	}
-	else
-	{
-		cpu_set_irq_line(1, 0, HOLD_LINE);
-	}
-}
-
-static INTERRUPT_GEN( fx1a_sound_interrupt )
-{
-	if( queue_len == 4 )
-	{
-		taitosound_port_w( 0, 0 );
-		taitosound_comm_w( 0, ( queue_data >> 0 ) & 0x0f );
-		queue_len--;
-	}
-	else if( queue_len == 3 )
-	{
-		taitosound_port_w( 0, 1 );
-		taitosound_comm_w( 0, ( queue_data >> 4 ) & 0x0f );
-		queue_len--;
-	}
-	if( queue_len == 2 )
-	{
-		taitosound_port_w( 0, 2 );
-		taitosound_comm_w( 0, ( queue_data >> 8 ) & 0x0f );
-		queue_len--;
-	}
-	else if( queue_len == 1 )
-	{
-		taitosound_port_w( 0, 3 );
-		taitosound_comm_w( 0, ( queue_data >> 12 ) & 0x0f );
-		queue_len--;
-	}
-}
 
 static struct PSXSPUinterface psxspu_interface =
 {
 	35,
 };
 
-static struct QSound_interface qsound_interface =
-{
-	QSOUND_CLOCK,
-	REGION_SOUND1,
-	{ 100,100 }
-};
-
-/* handler called by the YM2610 emulator when the internal timers cause an IRQ */
-static void irq_handler(int irq)
-{
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static struct YM2610interface ym2610_interface =
-{
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irq_handler },
-	{ REGION_SOUND1 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
-};
-
 static void zn_machine_init( void )
 {
 	m_n_dip_bit = 0;
+	m_b_lastclock = 1;
 	psx_machine_init();
 }
+
+/*
+Capcom ZN1 generic PCB Layout
+----------------------------
+
+Main board (Standard ZN1 Main Board with Capcom ZN1 BIOS)
+ZN-1 1-659-709-12  COH-1000C
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2922CQ         |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                *                                       |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000C.353, Capcom ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      *              - Unpopulated position for KM4132G271Q-12 SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'CP01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board (Gallop Racer)
+
+95681-2
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|LM833    60MHz              1.3B  8MHz|
+|                                      |
+|                                  Z80 |
+|NE5532        CAPCOM-Q1               |
+|                                      |
+|                                      |
+|TDA1543   93C46   C.P.S.2-B           |
+|                            3.3E  2.2E|
+|                                      |
+|CN2                                   |
+|  CAT702                         8464 |
+|                                      |
+|                                      |
+|  PAL1                                |
+|                                      |
+|               7.5H  6.4H   5.3H  4.2H|
+|  PAL2                                |
+|PAL3                                  |
+|                                      |
+|M54532                                |
+|                                      |
+|                                      |
+|13.7K  12.6K  11.5K  10.4K  9.3K  8.2K|
+|                                      |
+|                                      |
+|--------------------------------------|
+Notes:
+      CN2    - Standard 34 pin CAPCOM connector for extra player controls.
+      CAT702 - protection chip labelled 'CP05' (DIP20)
+      PAL1   - PAL16L8 stamped "CS1CNT"
+      PAL2   - PALCE16V8 stamped "BANK01"
+      PAL3   - PALCE16V8 stamped "CS0CNT"
+      4.2H   - 27C4002 DIP40 EPROM labelled 'GPAJ_04'
+      5.3H   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'GRA-05M'
+      6.4H   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'GRA-06M'
+      7.5H   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'GRA-07M'
+      8464   - 8K x8 SRAM
+      LM833  - National Semiconductor Dual Audio Operational Amplifier
+      NE5532 - Fairchild Semiconductor Dual Operational Amplifier
+      M54532 - Mitsubishi M54532 IC, connected to CN2
+      93C46  - 128Bytes EEPROM
+      TDA1543- PHILIPS Dual 16-bit DAC
+      CAPCOM-Q1 - Q-Sound chip also stamped DL-1425 45570 9420S 40 (C)92 AT&T (PLCC84)
+      C.P.S.2-B - RF5C320 CAPCOM C.P.S.2-B DL-3129 (QFP208)
+      Z80 clock - 4.000MHz
+      
+      Unpopulated sockets - 1.3B, 2.2E, 3.3E, 8.2K, 9.3K, 10.4K, 11.5K, 12.6K & 13.7K
+*/
 
 static READ32_HANDLER( capcom_kickharness_r )
 {
@@ -763,8 +607,14 @@ MACHINE_INIT( coh1000c )
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 ); /* banked game rom */
 	cpu_setbank( 3, memory_region( REGION_USER3 ) ); /* country rom */
 	zn_machine_init();
-	player_init();
 }
+
+static struct QSound_interface qsound_interface =
+{
+	QSOUND_CLOCK,
+	REGION_SOUND1,
+	{ 100,100 }
+};
 
 static MACHINE_DRIVER_START( coh1000c )
 	/* basic machine hardware */
@@ -776,7 +626,6 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
-	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -786,18 +635,13 @@ static MACHINE_DRIVER_START( coh1000c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
+	MDRV_SCREEN_SIZE( 1024, 512 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
-	MDRV_VIDEO_UPDATE( player )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
@@ -816,7 +660,6 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
-	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -826,18 +669,13 @@ static MACHINE_DRIVER_START( coh1002c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
-	MDRV_VIDEO_UPDATE( player )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
@@ -846,159 +684,145 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_SOUND_ADD( QSOUND, qsound_interface )
 MACHINE_DRIVER_END
 
-static size_t taitofx1_eeprom_size;
-static data8_t *taitofx1_eeprom;
+/*
 
-static WRITE32_HANDLER( bank_coh1000t_w )
-{
-	verboselog( 1, "bank_coh1000t_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
-	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 3 ) * 0x800000 ) );
-}
+Capcom ZN2 generic PCB Layout
+-----------------------------
 
-static WRITE32_HANDLER( taitofx1_volume_w )
-{
-	verboselog( 1, "taitofx1_volume_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
-}
+PCB Layouts
+-----------
 
-static WRITE32_HANDLER( taitofx1_sound_w )
-{
-	verboselog( 1, "taitofx1_sound_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
-}
+1-665-825-11
+ZN-2 COH-3000 (sticker says COH-3002C denoting Capcom ZN2 BIOS version)
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       S301           BIOS                              |
+|                                                        |
+|                                                        |
+|J                                                       |
+|                                                        |
+|A              814260    CXD2925Q     EPM7064           |
+|                                                        |
+|M                                     67.73MHz          |
+|                                                        |
+|M                                                       |
+|            S551    KM4132G271BQ-8                      |
+|A                                                       |
+|                                CXD8654Q    CXD8661R    |
+|                    KM4132G271BQ-8                      |
+|CN505  CN506                   53.693MHz    100MHz      |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|            MC44200FT                                   |
+|  NEC_78081G503        KM416V1204BT-L5  KM416V1204BT-L5 |
+|                                                        |
+|CN651  CN652                 *                 *        |
+|                CN654                                   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      S301  - Slide switch for stereo or mono sound output
+      S551  - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH-3002C.353, Capcom ZN2 BIOS 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM
+      814260-70      - 256K x16 (4MBit) DRAM 
+      KM4132G271BQ-8 - 128K x 32Bit x 2 Banks SGRAM
+      KM416V1204BT-L5- 1M x16 EDO DRAM
+      EPM7064        - Altera EPM7064QC100 CPLD (QFP100)
+      CAT702         - Protection chip labelled 'CP10' (DIP20)
+      *              - Unpopulated position for additional KM416V1204BT-L5 RAMs
 
-static READ32_HANDLER( taitofx1_sound_r )
-{
-	data32_t data = 0; // bit 0 = busy?
-	verboselog( 1, "taitofx1_sound_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
-	return data;
-}
 
-DRIVER_INIT( coh1000t )
-{
-	taitofx1_eeprom_size = 0x200; taitofx1_eeprom = auto_malloc( taitofx1_eeprom_size );
+Game board 
+(This covers at least Rival Schools and Street Fighter EX2, but likely all Capcom ZN2 games)
 
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );     /* banked game rom */
-	install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, MRA32_NOP );
-	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, MWA32_NOP );
-	install_mem_write32_handler( 0, 0x1fa30000, 0x1fa30003, MWA32_NOP );
-	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
-	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1_volume_w );
-	install_mem_write32_handler( 0, 0x1fba0000, 0x1fba0003, taitofx1_sound_w );
-	install_mem_read32_handler ( 0, 0x1fbc0000, 0x1fbc0003, taitofx1_sound_r );
-	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MRA32_BANK2 );
-	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MWA32_BANK2 );
+97695-1
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|LM833    60MHz              1.3A  8MHz|
+|                                      |
+|                                  Z80 |
+|NE5532        CAPCOM-Q1               |
+|                                      |
+|                                      |
+|TDA1543   93C46   C.P.S.2-B           |
+|                            3.3E  2.2E|
+|                                      |
+|CN2                                   |
+|  CAT702                      N341256 |
+|                                      |
+|                                      |
+|  PAL1                                |
+|                                      |
+|               7.5H  6.4H   5.3H  4.2H|
+|  PAL2                                |
+|PAL3                                  |
+|                                      |
+|M54532                                |
+|                                      |
+|                                      |
+|13.7K  12.6K  11.5K  10.4K  9.3K  8.2K|
+|                                      |
+|                                      |
+|--------------------------------------|
+Notes:
+      CN2    - Standard 34 pin CAPCOM connector for extra player controls.
+      CAT702 - protection chip 
+                               SFEX2 labelled 'CP08' (DIP20)
+                               Rival Schools labelled 'CP06' (DIP20)
+      PAL1   - PAL16L8 stamped "CS1CNT"
+      PAL2   - PALCE16V8 stamped "BANK02"
+      PAL3   - PALCE16V8 stamped "MEMDEC"
+      N341256- 32K x8 SRAM
+      LM833  - National Semiconductor Dual Audio Operational Amplifier
+      NE5532 - Fairchild Semiconductor Dual Operational Amplifier
+      M54532 - Mitsubishi M54532 IC, connected to CN2
+      93C46  - 128Bytes EEPROM
+      TDA1543- PHILIPS Dual 16-bit DAC
+      CAPCOM-Q1 - Q-Sound chip also stamped DL-1425 11008 9741T 74 (C)92 LUCENT (PLCC84)
+      C.P.S.2-B - RF5C320 CAPCOM C.P.S.2-B DL-3129 (QFP208)
+      Z80 clock - 4.000MHz
+      ROMs      - 
+                  SFEX2
+                       1.3A   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'EX2-01M'
+                       2.2E   - 27C1001 DIP32 EPROM labelled 'EX2_02'
+                       4.2H   - 27C240 DIP40 EPROM labelled 'EX2J_04'
+                       5.3H   - 64MBit DIP42 MaskROM labelled 'EX2-05M'  \
+                       6.4H   - 64MBit DIP42 MaskROM labelled 'EX2-06M'  |
+                       7.5H   - 64MBit DIP42 MaskROM labelled 'EX2-07M'  |  Unknown type manufactured by Sharp
+                       8.2K   - 64MBit DIP42 MaskROM labelled 'EX2-08M'  /
+                       9.3K   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'EX2-09M'
+                       Unpopulated sockets on SFEX2 - 3.3E, 10.4K, 11.5K, 12.6K & 13.7K
 
-	init_znsec();
-}
-
-MACHINE_INIT( coh1000t )
-{
-	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
-	cpu_setbank( 2, taitofx1_eeprom );
-	zn_machine_init();
-	player_init();
-}
-
-static NVRAM_HANDLER( coh1000t )
-{
-	if (read_or_write)
-	{
-		mame_fwrite(file, generic_nvram, generic_nvram_size);
-		mame_fwrite(file, taitofx1_eeprom, taitofx1_eeprom_size);
-	}
-	else if (file)
-	{
-		mame_fread(file, generic_nvram, generic_nvram_size);
-		mame_fread(file, taitofx1_eeprom, taitofx1_eeprom_size);
-	}
-	else
-		memset(generic_nvram, 0, generic_nvram_size);
-}
-
-static MACHINE_DRIVER_START( coh1000ta )
-	/* basic machine hardware */
-	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
-	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
-
-	MDRV_CPU_ADD( Z80, 16000000 / 4 )
-	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )	/* 4 MHz */
-	MDRV_CPU_PROGRAM_MAP( fx1a_sound_readmem, fx1a_sound_writemem )
-	MDRV_CPU_VBLANK_INT( fx1a_sound_interrupt, 1 ) /* 4 interrupts per frame ?? */
-
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
-
-	MDRV_MACHINE_INIT( coh1000t )
-	MDRV_NVRAM_HANDLER( coh1000t )
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
-	MDRV_PALETTE_LENGTH( 65536 )
-
-	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
-	MDRV_VIDEO_UPDATE( player )
-	MDRV_VIDEO_STOP( psx )
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( YM2610, ym2610_interface )
-MACHINE_DRIVER_END
-
-INTERRUPT_GEN( coh1000tb_vblank )
-{
-	/* kludge: stop dropping into test mode on bootup */
-	if( strcmp( Machine->gamedrv->name, "raystorm" ) == 0 )
-	{
-		if( g_p_n_psxram[ 0x1b358 / 4 ] == 0x34020001 )
-		{
-			g_p_n_psxram[ 0x1b358 / 4 ] = 0x34020000;
-		}
-	}
-	psx_vblank();
-}
-
-static MACHINE_DRIVER_START( coh1000tb )
-	/* basic machine hardware */
-	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
-	MDRV_CPU_VBLANK_INT( coh1000tb_vblank, 1 )
-
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
-
-	MDRV_MACHINE_INIT( coh1000t )
-	MDRV_NVRAM_HANDLER( coh1000t )
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
-	MDRV_PALETTE_LENGTH( 65536 )
-
-	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
-	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-MACHINE_DRIVER_END
-
+                  Rival Schools
+                       1.3A   - M533203E 32MBit DIP42 MaskROM labelled 'JST-01M'
+                       2.2E   - 27C1001 DIP32 EPROM labelled 'JST_02'
+                       3.3E   - 27C1001 DIP32 EPROM labelled 'JST_03'
+                       4.2H   - 27C240 DIP40 EPROM labelled 'JSTJ_04A'
+                       5.3H   - M533203E 32MBit DIP42 MaskROM labelled 'JST-05M'
+                       6.4H   - M533203E 32MBit DIP42 MaskROM labelled 'JST-06M'
+                       7.5H   - M533203E 32MBit DIP42 MaskROM labelled 'JST-07M'
+                       8.2K   - TC5332202 32MBit DIP42 MaskROM labelled 'JST-08M'
+                       9.3K   - TC5332202 32MBit DIP42 MaskROM labelled 'JST-09M'
+                       10.4K  - TC5332202 32MBit DIP42 MaskROM labelled 'JST-10M'
+                       11.5K  - GM23C32100A 32MBit DIP42 MaskROM labelled 'JST-11M'
+                       12.6K  - GM23C32100A 32MBit DIP42 MaskROM labelled 'JST-12M'
+                       13.7K  - GM23C32100A 32MBit DIP42 MaskROM labelled 'JST-13M'
+                       Unpopulated sockets on Rival Schools - None
+*/
 
 static WRITE32_HANDLER( bank_coh3002c_w )
 {
@@ -1009,7 +833,6 @@ DRIVER_INIT( coh3002c )
 {
 	install_mem_read32_handler ( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
 	install_mem_read32_handler ( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
-	install_mem_read32_handler ( 0, 0x1fa60000, 0x1fa60003, MRA32_NOP );
 	install_mem_read32_handler ( 0, 0x1fb40010, 0x1fb40013, capcom_kickharness_r );
 	install_mem_read32_handler ( 0, 0x1fb40020, 0x1fb40023, capcom_kickharness_r );
 	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, bank_coh3002c_w ); /* bankswitch */
@@ -1025,7 +848,6 @@ MACHINE_INIT( coh3002c )
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 ); /* banked game rom */
 	cpu_setbank( 3, memory_region( REGION_USER3 ) ); /* country rom */
 	zn_machine_init();
-	player_init();
 }
 
 static MACHINE_DRIVER_START( coh3002c )
@@ -1038,7 +860,6 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
-	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -1048,18 +869,13 @@ static MACHINE_DRIVER_START( coh3002c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
-	MDRV_VIDEO_UPDATE( player )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
@@ -1067,6 +883,775 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 	MDRV_SOUND_ADD( QSOUND, qsound_interface )
 MACHINE_DRIVER_END
+
+/*
+
+Main board (Standard ZN1 Main Board with Taito ZN1 BIOS)
+ZN-1 1-659-709-12  COH-1000T
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2922CQ         |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                *                                       |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000T.353, Taito ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      *              - Unpopulated position for KM4132G271Q-12 SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'TT01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+----------
+
+SROM PCB-A
+K11X0643A PSYCHIC FORCE
+M43J0308A 238102270
+|--------------------------------------------|
+|   |---------------------------|            |
+|   |---------------------------|            |
+|                                    IC1     |
+|              CAT702    E22-05.2            |
+|    E18-06                                  |
+|                        E22-10.7            |
+|                                    IC6     |
+| MB3773                                     |
+|                                            |
+|                                            |
+|              |---------|           IC12    |
+| E22-01.15    |TAITO    |                   |
+|              |TC0140SYT|                   |
+|              |         |                   |
+|              |         |          E22-02.16|
+|              |---------|                   |
+|  IC20                     16MHz            |
+|                                   E22-03.19|
+|                    84C000AM-6              |
+|                                            |
+|                                   E22-04.21|
+|TL074                                       |
+|                    LH5268AN-10LL           |
+|    MB87078                         IC27    |
+|                         E22-07.22          |
+|TL074           YM2610                      |
+|      Y3016                                 |
+|--------------------------------------------|
+Notes:
+      IC1, IC6     \
+      IC12, IC20   |   - Unpopulated positions for 16MBit SOP44 MaskROM
+      IC27         /
+      E22-01, E22-02 \
+      E22-03, E22-04 / - 23C16000 16MBit SOP44 MaskROMs
+      E22-05, E22-10   - 27C040 4MBit DIP32 EPROM
+      E22-07           - 27C010 1MBit DIP32 EPROM
+      E18-06           - AMD MACH111 CPLD stamped 'E18-06' (PLCC44)
+      LH5268AN-10LL    - Sharp 8K x8 SRAM (SOP28)
+      CAT702           - Protection chip labelled 'TT03' (DIP20)
+      MB3773           - Power Supply Monitor with Watch Dog Timer (i.e. Reset IC)
+      MB87078          - Electronic Volume Control IC
+      84C000AM-6       - Z80-A; clock 4.000MHz
+      YM2610           - clock 8.000MHz
+
+Main board (Standard ZN1 Main Board with Taito ZN1 BIOS)
+ZN-1 1-659-709-12  COH-1000T
+K11X0831A RAY STORM
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2922CQ         |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                *                                       |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000T.353, Taito ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      *              - Unpopulated position for KM4132G271Q-12 SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'TT01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+
+ZROM PCB
+K91J0636A RAY STORM
+M43J0311A 241103582
+|--------------------------------------------|
+|   |---------------------------|            |
+|   |---------------------------|            |
+|              CAT702                        |
+|                         E24-06.3           |
+|              E24-01                        |
+|                         E24-05.4   E24-02.1|
+|                                            |
+|  25MHz                                     |
+|                         LH52B256   E24-03.2|
+|      MB3773                                |
+|                    MN1020012A              |
+|                                    IC12    |
+|        MB87078                             |
+|                                            |
+| NJM2100                            IC13    |
+|                                            |
+| NJM2100                                    |
+|                                    IC20    |
+|              ZSG-2        E24-09.14        |
+|                                            |
+|                                    IC21    |
+| TMS57002DPHA                               |
+|                           M66220FP         |
+|                                    IC25    |
+|              IC28   E24-04.27              |
+| LC321664                                   |
+|                            FM1208S         |
+|--------------------------------------------|
+Notes:
+      IC12, IC13 \
+      IC20, IC21  |  - Unpopulated positions for 16MBit SOP44 MaskROM
+      IC25       /
+      IC28           - Unpopulated position for 32MBit SOP44 MaskROM
+      E24-04         - TC5332201 32MBit SOP44 MaskROM
+      E24-02, E24-03 - 23C16000 16MBit SOP44 MaskROM
+      E24-06, E24-05 - M27C4001 4MBit DIP32 EPROM
+      E24-09         - M27C4001 4MBit DIP32 EPROM
+      E24-01         - AMD MACH111 CPLD stamped 'E24-01' (PLCC44)
+      LH52B256       - Sharp 32K x8 SRAM (SOP28)
+      LC321664       - Sanyo 64K x16 EDO DRAM (SOP40)
+      MN1020012A     - Panasonic MN1020012A Sound CPU (QFP128)
+      ZSG-2          - Zoom Corp ZSG-2 sound DSP (QFP100)
+      TMS57002DPHA   - Texas Instruments TMS57002DPHA sound DSP (QFP80)
+      M66220FP       - 256 x8bit Mail-Box Inter-MPU data transfer
+      CAT702         - Protection chip labelled 'TT04' (DIP20)
+      MB3771         - Power Supply Monitor with Watch Dog Timer (i.e. Reset IC)
+      MB87078        - Electronic Volume Control IC
+      FM1208S        - RAMTRON 4096bit Nonvolatile Ferroelectric RAM (512w x 8b)
+*/
+
+static size_t taitofx1_eeprom_size1 = 0;
+static data8_t *taitofx1_eeprom1 = NULL;
+static size_t taitofx1_eeprom_size2 = 0;
+static data8_t *taitofx1_eeprom2 = NULL;
+
+static WRITE32_HANDLER( bank_coh1000t_w )
+{
+	watchdog_reset_w( 0, 0 ); /* unconfirmed */
+	verboselog( 1, "bank_coh1000t_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 3 ) * 0x800000 ) );
+}
+
+static NVRAM_HANDLER( coh1000t )
+{
+	if (read_or_write)
+	{
+		if( generic_nvram != NULL )
+		{
+			mame_fwrite(file, generic_nvram, generic_nvram_size);
+		}
+		if( taitofx1_eeprom1 != NULL )
+		{
+			mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+		}
+		if( taitofx1_eeprom2 != NULL )
+		{
+			mame_fwrite(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
+		}
+	}
+	else if (file)
+	{
+		if( generic_nvram != NULL )
+		{
+			mame_fread(file, generic_nvram, generic_nvram_size);
+		}
+		if( taitofx1_eeprom1 != NULL )
+		{
+			mame_fread(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+		}
+		if( taitofx1_eeprom2 != NULL )
+		{
+			mame_fread(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
+		}
+	}
+	else
+	{
+		if( generic_nvram != NULL )
+		{
+			memset(generic_nvram, 0, generic_nvram_size);
+		}
+		if( taitofx1_eeprom1 != NULL )
+		{
+			memset(taitofx1_eeprom1, 0, taitofx1_eeprom_size1);
+		}
+		if( taitofx1_eeprom2 != NULL )
+		{
+			memset(taitofx1_eeprom2, 0, taitofx1_eeprom_size2);
+		}
+	}
+}
+
+INTERRUPT_GEN( coh1000t_vblank )
+{
+	/* kludge: stop dropping into test mode on bootup */
+	if( strcmp( Machine->gamedrv->name, "raystorm" ) == 0 )
+	{
+		if( g_p_n_psxram[ 0x1b358 / 4 ] == 0x34020001 )
+		{
+			g_p_n_psxram[ 0x1b358 / 4 ] = 0x34020000;
+		}
+	}
+	if(strcmp( Machine->gamedrv->name, "gdarius" ) == 0 )
+	{
+		if (psxreadbyte(0x165d53) == 0)
+		{
+			psxwritebyte(0x165d53, 1);
+		}
+	}
+	if(strcmp( Machine->gamedrv->name, "gdarius2" ) == 0 )
+	{
+		if (psxreadbyte(0x16be3b) == 0)
+		{
+			psxwritebyte(0x16be3b, 1);
+		}
+	}
+	if(strcmp( Machine->gamedrv->name, "ftimpcta" ) == 0 )
+	{
+		if (psxreadbyte(0x0f8997) == 0)
+		{
+			psxwritebyte(0x0f8997, 1);
+		}
+	}
+	psx_vblank();
+}
+
+MACHINE_INIT( coh1000t )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
+	if( taitofx1_eeprom1 != NULL )
+	{
+		cpu_setbank( 2, taitofx1_eeprom1 );
+	}
+	if( taitofx1_eeprom2 != NULL )
+	{
+		cpu_setbank( 3, taitofx1_eeprom2 );
+	}
+	zn_machine_init();
+
+	// patch to make psyforce boot
+	if ((!strcmp(Machine->gamedrv->name, "psyforce")) || 
+	    (!strcmp(Machine->gamedrv->name, "psyforcj")))
+	{
+		// note: these values can be anything non-zero
+		// perhaps Taito expects RAM to be initialized to 0xff on power-up?
+		psxwritebyte(0x3fffda, 0xb5);
+		psxwritebyte(0x3fffdb, 0x6b);
+	}
+}
+
+static READ32_HANDLER( taitofx1a_ymsound_r )
+{
+	return taitosound_comm_r(0)<<16;
+}
+
+static WRITE32_HANDLER( taitofx1a_ymsound_w )
+{
+	if (mem_mask == 0xffff0000)
+	{
+		taitosound_port_w(0, data&0xff);
+	}
+	else
+	{
+		taitosound_comm_w(0, (data>>16)&0xff);
+	}
+}
+
+/* handler called by the YM2610 emulator when the internal timers cause an IRQ */
+static void irq_handler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static struct YM2610interface ym2610_interface =
+{
+	1,	/* 1 chip */
+	16000000/2,	/* 8 MHz */
+	{ 25 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irq_handler },
+	{ REGION_SOUND1 },	/* Delta-T */
+	{ REGION_SOUND1 },	/* ADPCM */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+};
+
+DRIVER_INIT( coh1000ta )
+{
+	taitofx1_eeprom_size1 = 0x200; taitofx1_eeprom1 = auto_malloc( taitofx1_eeprom_size1 );
+
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );     /* banked game rom */
+	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
+	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fb80003, taitofx1a_ymsound_r );
+	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1a_ymsound_w );
+	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), MWA32_BANK2 );
+
+	init_znsec();
+}
+
+static MACHINE_DRIVER_START( coh1000ta )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
+	MDRV_CPU_VBLANK_INT( coh1000t_vblank, 1 )
+
+	MDRV_CPU_ADD( Z80, 16000000 / 4 )
+	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )	/* 4 MHz */
+	MDRV_CPU_PROGRAM_MAP( fx1a_sound_readmem, fx1a_sound_writemem )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( coh1000t )
+	MDRV_NVRAM_HANDLER( coh1000t )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 512 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SOUND_ADD( YM2610B, ym2610_interface )
+MACHINE_DRIVER_END
+
+static WRITE32_HANDLER( taitofx1b_volume_w )
+{
+	verboselog( 1, "taitofx1_volume_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+}
+
+static WRITE32_HANDLER( taitofx1b_sound_w )
+{
+	verboselog( 1, "taitofx1_sound_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+}
+
+static READ32_HANDLER( taitofx1b_sound_r )
+{
+	data32_t data = 0; // bit 0 = busy?
+	verboselog( 1, "taitofx1_sound_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	return data;
+}
+
+DRIVER_INIT( coh1000tb )
+{
+	taitofx1_eeprom_size1 = 0x400; taitofx1_eeprom1 = auto_malloc( taitofx1_eeprom_size1 );
+	taitofx1_eeprom_size2 = 0x200; taitofx1_eeprom2 = auto_malloc( taitofx1_eeprom_size2 );
+
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 ); /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), MWA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
+	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1b_volume_w );
+	install_mem_write32_handler( 0, 0x1fba0000, 0x1fba0003, taitofx1b_sound_w );
+	install_mem_read32_handler ( 0, 0x1fbc0000, 0x1fbc0003, taitofx1b_sound_r );
+	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), MRA32_BANK3 );
+	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), MWA32_BANK3 );
+
+	init_znsec();
+}
+
+static MACHINE_DRIVER_START( coh1000tb )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
+	MDRV_CPU_VBLANK_INT( coh1000t_vblank, 1 )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( coh1000t )
+	MDRV_NVRAM_HANDLER( coh1000t )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 1024 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+MACHINE_DRIVER_END
+
+/*
+
+GNET Motherboard
+Taito, 1998
+
+This is the Taito GNET System. It comprises the following main parts....
+- Sony ZN-2 Motherboard (Main CPU/GPU/SPU, RAM, BIOS, EEPROM & peripheral interfaces)
+- Taito FC PCB (Sound hardware & FLASHROMs for storage of PCMCIA cart contents)
+- Taito CD PCB (PCMCIA cart interface)
+
+Also available are...
+- Optional Communication Interface PCB
+- Optional Save PCB
+
+On power-up, the system checks for a PCMCIA cart. If the cart matches the contents of the FLASHRAMs, 
+the game boots immediately with no delay. If the cart doesn't match, it re-flashes the FLASHROMs with _some_ 
+of the information contained in the cart, which takes approximately 2-3 minutes. The game then boots up.
+
+If no cart is present on power-up, the Taito GNET logo is displayed, then a message 'SYSTEM ERROR'
+
+
+PCB Layouts
+-----------
+
+ZN-2  COH-3002T
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       S301           COH3002T.353                      |
+|                                                        |
+|                                                        |
+|J                                                       |
+|                                                        |
+|A              814260    CXD2925Q     EPM7064           |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|            S551    KM4132G271BQ-8                      |
+|A                                                       |
+|                                CXD8654Q    CXD8661R    |
+|                    KM4132G271BQ-8                      |
+|CN505  CN506                   53.693MHz    100MHz      |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|            MC44200FT                                   |
+|  NEC_78081G503        KM416V1204BT-L5  KM416V1204BT-L5 |
+|                                                        |
+|CN651  CN652                 *                 *        |
+|                CN654                                   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      S301  - Slide switch for stereo or mono sound output
+      S551  - Dip switch (4 position, defaults all OFF)
+      
+      COH3002T.353   - GNET BIOS 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM
+      814260-70      - 256K x16 (4MBit) DRAM 
+      KM4132G271BQ-8 - 128K x 32Bit x 2 Banks SGRAM
+      KM416V1204BT-L5- 1M x16 EDO DRAM
+      EPM7064        - Altera EPM7064QC100 CPLD (QFP100)
+      CAT702         - Protection chip labelled 'TT10' (DIP20)
+      *              - Unpopulated position for additional KM416V1204BT-L5 RAMs
+
+
+FC PCB  K91X0721B  M43X0337B
+|--------------------------------------------|
+|   |---------------------------|            |
+|   |---------------------------|            |
+| NJM2100  NJM2100                           |
+| MB87078                                    |
+| *MB3773     XC95108         DIP40   CAT702 |
+| *ADM708AR                                  |
+| *UPD6379GR                                 |
+|             FLASH16                        |
+|                                            |
+| DIP24                                      |
+|                  *RF5C296                  |
+| -------CD-PCB------- _                     |
+| |                   | |                    |
+| |                   | |                    |
+| |                   | |                    |
+| |                   | |                    |
+| |                   | |                    |
+| |                   | |                    |
+| |                   | |                    |
+| |                   |-|                    |
+| --------------------                       |
+|            M66220FP      FLASH16  FLASH16  |
+|      FLASH4                  FLASH16       |
+|*LC321664                                   |
+| TMS57002DPHA                *ZSG-2         |
+|           LH52B256      25MHz              |
+|   MN1020012A                               |
+|--------------------------------------------|
+Notes:
+      DIP40        - Unpopulated socket for 8MBit DIP40 EPROM type AM27C800
+      DIP24        - Unpopulated position for FM1208 DIP24 IC
+      FLASH16      - Intel TE28F160 16MBit FLASHROM (TSOP56)
+      FLASH4       - Intel E28F400 4MBit FLASHROM (TSOP48)
+      LH52B256     - Sharp 32K x8 SRAM (SOP28)
+      LC321664     - Sanyo 64K x16 EDO DRAM (SOP40)
+      XC95108      - XILINX XC95108 CPLD labelled 'E65-01' (QFP100)
+      MN1020012A   - Panasonic MN1020012A Sound CPU (QFP128)
+      ZSG-2        - Zoom Corp ZSG-2 sound DSP (QFP100)
+      TMS57002DPHA - Texas Instruments TMS57002DPHA sound DSP (QFP80)
+      RF5C296      - Ricoh RF5C296 PCMCIA controller (TQFP144)
+      M66220FP     - 256 x8bit Mail-Box (Inter-MPU data transfer)
+      CAT702       - Protection chip labelled 'TT16' (DIP20)
+      *            - These parts located under the PCB
+      
+      Note! FLASHROMs are not dumped, but can be _IF_ required.
+            They shouldn't be needed though, as the devices are
+            flashed (with data from the cart) by the hardware.
+*/
+
+DRIVER_INIT( coh3002t )
+{
+	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+
+	init_znsec();
+}
+
+MACHINE_INIT( coh3002t )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
+	zn_machine_init();
+}
+
+static MACHINE_DRIVER_START( coh3002t )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( coh3002t )
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 1024 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+MACHINE_DRIVER_END
+
+/*
+
+Primal Rage 2
+Atari, 1996
+
+This game runs on Sony ZN1 hardware with a custom Atari top board.
+
+
+PCB Layout
+----------
+
+Main board (Standard ZN1 Main Board with Atari BIOS)
+
+ZN-1 1-659-709-12  COH-1000W
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2922CQ         |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                KM4132G271Q-12                          |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V2104AT-6   KM48V2104AT-6   |
+|            MC44200FT   KM48V2104AT-6   KM48V2104AT-6   |
+|CN651  CN652                 *                *         |
+|                CN654        *                *         |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000W.353, Atari ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      KM48V2104AT-6  - Bank0: 2M x8 (16MBit) DRAM (SOP28).
+                       * - Note Bank1 is empty.
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'TW01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+
+PSXTRA A055056-   055053-01 REV 1
+Also printed on the board near the ROMs is....
+"IM FEELING A LITTLE ANXIOUS, IF YOU KNOW WHAT I MEAN..."
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|                                      |
+|CAT702                           JGUN1|
+|                                      |
+|                                      |
+|                           *1    JGUN2|
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|   DS1232S                       LED  |
+|LED                                   |
+|                                 IDE1 |
+|                VT83C461              |
+|                                      |
+|   EPM7160ELC84                       |
+|                                      |
+|                                 IDE2 |
+|                                      |
+|                                      |
+|*2                                    |
+|PR2_036.U14   PR2_036.U16          NW1|
+|      PR2_036.U15    PR2_036.U17   NW2|
+|                            2631      |
+|                            2631   NW3|
+|--------------------------------------|
+Notes:
+      CAT702              - protection chip labelled 'TW02' (DIP20)
+      JGUN1, JGUN2        - Connector for optional gun controllers
+      ROMs U14 thru U17   - 27C040 EPROM
+      DS1232S             - Dallas DS1232 (reset IC, SOIC16)
+      VT83C461            - VIA VT83C461 (IDE Hard Drive controller, QFP100)
+      EPM7160ELC84        - Altera MAX EPM7160ELC84-10 (PLCC84 CPLD, labelled 'PSX PiD 9-19-96 2FDA')
+      IDE1, IDE2          - 40 pin IDE Hard Drive connector, using Quantum Fireball 1080AT 1GB IDE hard drive.
+      NW1                 - 8 pin RJ45 network connector labelled "SERIN"
+      NW2                 - 8 pin RJ45 network connector labelled "SEROUT
+      NW3                 - 8 pin RJ45 network connector labelled "SLONET"
+      2631                - ICPL2631 IC (DIP8 x2)
+      *1                  - Unpopulated position for PLCC44 IC
+      *2                  - Unpopulated DIP28 socket
+*/
 
 static void atpsx_interrupt(int state)
 {
@@ -1080,11 +1665,6 @@ static struct ide_interface atpsx_intf =
 {
 	atpsx_interrupt
 };
-
-INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
-{
-	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
-}
 
 static void atpsx_dma_read( UINT32 n_address, INT32 n_size )
 {
@@ -1116,10 +1696,6 @@ DRIVER_INIT( coh1000w )
 {
 	install_mem_read32_handler ( 0, 0x1f000000, 0x1f1fffff, MRA32_BANK1 );
 	install_mem_write32_handler( 0, 0x1f000000, 0x1f000003, MWA32_NOP );
-	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, MWA32_NOP );
-	install_mem_read32_handler ( 0, 0x1fa30000, 0x1fa30003, MRA32_NOP );
-	install_mem_write32_handler( 0, 0x1fa30000, 0x1fa30003, MWA32_NOP );
-	install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, MRA32_NOP );
 	install_mem_read32_handler ( 0, 0x1f7e4000, 0x1f7e4fff, ide_controller32_0_r );
 	install_mem_write32_handler( 0, 0x1f7e4000, 0x1f7e4fff, ide_controller32_0_w );
 	install_mem_write32_handler( 0, 0x1f7e8000, 0x1f7e8003, MWA32_NOP );
@@ -1157,17 +1733,12 @@ static MACHINE_DRIVER_START( coh1000w )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1176,11 +1747,158 @@ static MACHINE_DRIVER_START( coh1000w )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
+/*
+
+Main board (Standard ZN1 Main Board with Raizing/8ing BIOS)
+
+ZN-1 1-659-709-12  COH-1002E
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2925Q          |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                KM4132G271Q-12                          |
+|A           DSW                                         |
+|                                CXD8561BQ   CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1002E.353, Raizing/8ing ZN1 BIOS, 4MBit MaskROM type M53402CZ (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'ET01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Beastorizer Game board
+
+RA9701 SUB
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|NJM2060   RA-B.ROAR-1.217             |
+|                    CAT702  GAL16V8B  |
+|                                      |
+|NJM2060                     B.ROAR.212|
+|YAC513    RA-B.ROAR-2.216             |
+|                                      |
+|                                      |
+|                            B.ROAR.214|
+|          MAIN_IF2                    |
+|                                      |
+|                                      |
+|                            B.ROAR.213|
+|                                      |
+|          SUB_IF2                     |
+|                                      |
+|16.93MHz                    B.ROAR.215|
+|  YMF271-F                            |
+|  (QFP128)                            |
+|                                      |
+|                            B.ROAR.042|
+| RA-B.ROAR-3.326                      |
+|                                      |
+|                                      |
+|  TMP68HC000N-16            B.ROAR.046|
+|12MHz                 M628032  M628032|
+|--------------------------------------|
+Notes:
+      CAT702              - protection chip labelled 'ET02' (DIP20)
+      ROMs 217, 216 & 326 - surface mounted 32MBit MASK ROM (SOP44)
+      ROMs 042 & 046      - 27C2001 EPROM
+      ROMs 212 thru 215   - 27C4001 EPROM
+      MAIN_IF2 & SUB_IF2  - AMD Mach211 CPLD (PLCC44)
+      M628032             - 32K x8 SRAM, equivalent to 62256 SRAM (SOJ28)
+      68000 clock         - 12MHz
+      YMF271-F clock      - 16.93MHz
+
+	  
+Brave Blade / Bloody Roar 2 Game board
+
+PS9805
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|4560                    CAT702        |
+|          FLASH0.021    GAL16V8B      |
+|                                      |
+| YAC516   FLASH1.024                  |
+|                       ROM-1A.028     |
+|         *FLASH2.025                  |
+|                                      |
+|                                      |
+|             MAIN_IF2  ROM-1B.029     |
+|16.93MHz                              |
+|       YMF271-F                       |
+|12MHz  (QFP128)                       |
+|                       ROM-2A.026     |
+|             SUB_IF2                  |
+|                                      |
+|                                      |
+|    ROM-3.336          ROM-2B.210     |
+|                                      |
+|TMP68HC000N-16                        |
+|                                      |
+|                       *MASK4A.027    |
+|                                      |
+|    BR2_U0412.412    N341256          |
+|                     N341256          |
+|    BR2_U049.049       *MASK4B.016    |
+|--------------------------------------|
+Notes:
+      *                   - Unpopulated ROM positions.
+      CAT702              - protection chip labelled 'MG11' (DIP20)
+      ROM-x               - surface mounted 32MBit MASK ROM (SOP44)
+      ROMs 412 & 049      - 27C040 EPROM
+      MASK4A              - smt solder pads (unpopulated)
+      MASK4B              - DIP42 socket (unpopulated)
+      FLASHx              - surface mounted TSOP56 16MBit FlashROM type Sharp LH28F160S5T-L10
+      MAIN_IF2 & SUB_IF2  - AMD Mach211 CPLD (PLCC44)
+      N341256             - 32K x8 SRAM, equivalent to 62256 SRAM (SOJ28)
+      68000 clock         - 12MHz
+      YMF271-F clock      - 16.93MHz
+
+	  
+*/
+
 static WRITE32_HANDLER( coh1002e_bank_w )
 {
 	znsecsel_w( offset, data, mem_mask );
 
-	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 1 ) * 0x400000 ) );
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 3 ) * 0x800000 ) );
 }
 
 static WRITE32_HANDLER( coh1002e_latch_w )
@@ -1197,8 +1915,7 @@ static WRITE32_HANDLER( coh1002e_latch_w )
 
 DRIVER_INIT( coh1002e )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );
-	install_mem_read32_handler( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );
+	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
 	install_mem_write32_handler( 0, 0x1fa10300, 0x1fa10303, coh1002e_bank_w );
 	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00007, coh1002e_latch_w );
 
@@ -1208,7 +1925,6 @@ DRIVER_INIT( coh1002e )
 MACHINE_INIT( coh1002e )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
-	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x800000 ); /* fixed game rom */
 	zn_machine_init();
 }
 
@@ -1249,7 +1965,7 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-	MDRV_CPU_ADD( M68000, 8000000 )
+	MDRV_CPU_ADD( M68000, 12000000 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP( psarc_snd_map, 0 )
 
@@ -1261,17 +1977,12 @@ static MACHINE_DRIVER_START( coh1002e )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1280,6 +1991,176 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 	MDRV_SOUND_ADD( YMF271, ymf271_interface )
 MACHINE_DRIVER_END
+
+/*
+
+Judge Dread
+
+light-gun type shooting game
+
+Uses the Capcom/Sony  ZN-1 hardware with Rom board and 
+Hard disk Drive
+
+U35 and U36 eproms are 27c1001 are believed to be the bios 
+data.
+
+Disk Drive is a Quantum ????2.1 GB??
+
+connectors CN506 and CN505 are the gun inputs pins 13, 14, 15
+white/blue/ black respectively.   The + 5 (red) is seperate source (not
+from the CN506 or Cn505).
+
+You'll have to get the +5 for the guns from the jamma harness.
+
+
+NBA Jam Extreme
+Acclaim, 1996
+
+
+Main board (Standard ZN1 Main Board with Acclaim ZN1 BIOS)
+ZN-1 1-659-709-11  COH-1000A
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032   TC51V4260BJ-80   CXD2922CQ   |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                KM4132G271Q-12                          |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         424805AL-A60    424805AL-A60    |
+|            MC44200FT   424805AL-A60    424805AL-A60    |
+|CN651  CN652            424805AL-A60    424805AL-A60    |
+|                CN654   424805AL-A60    424805AL-A60    |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000A.353, Acclaim ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      TC51V4260BJ-80 - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      424805AL-A60   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'AC01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+
+PCB-100102
+|--------------------------------------|
+|LED |---------------------------|     |
+|    |---------------------------|     |
+|                                      |
+|71256                                 |
+|       ADM619AR                   CN1 |
+|                                      |
+|  BATT_3V     A1425       CAT702      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|NBA0E.U41 NBA0O.U28 NBA4E.U17 NBA4O.U3|
+|                                      |
+|                                      |
+|NBA1E.U42 NBA1O.U29 NBA5E.U18 NBA5O.U4|
+|                                      |
+|                                      |
+|NBA2E.U43 NBA2O.U30 NBA6E.U19 NBA6O.U5|
+|                                      |
+|                                      |
+|NBA3E.U44 NBA3O.U31       U20       U6|
+|                                      |
+| 360-MP-A1_EVEN.U35       U21         |
+|                                      |
+|  360-MP-A1_ODD.U36       U22         |
+|                                      |
+|--------------------------------------|
+Notes:
+      CN1      - 40 pin IDC connector (for 40 pin flat cable joining game PCB to sound PCB)
+      CAT702   - protection chip labelled 'AC02' (DIP20)
+      71256    - 32K x8 SRAM
+      BATT_3V  - 3 Volt coin battery (CR2032)
+      ADM619AR - 900MHz RF Transceiver (SOIC16, compatible to AD6190)
+      A1425    - Actel A1425A-2 PQ100C 9536 (FPGA, QFP100, labelled 'PD-11010A REV A 05/21 C/S EEC1')
+      U35, U36 - 27C080 DIP32 EPROM
+      U21, U22 - Unpopulated positions for DIP32 EPROM
+      U6, U20  - Unpopulated position for SOP44 MaskROM
+      U3 thru U6    \
+      U17 thru U19  |  surface mounted 32MBit SOP44 MaskROM
+      U28 thru U31  |
+      U41 thru U44  /
+
+
+Sound Board
+
+PCB-100095
+|---------------------------|
+|  TDA7240A  TDA7240A       |
+|                    LMC6484|
+|                           |
+|                    LMC6484|
+|                           |
+|CN1         AD1866  LMC6484|
+|                           |
+|                           |
+|                  LED      |
+|                           |
+|                  LED      |
+|              *        *   |
+|                           |
+|              *        *   |
+|                           |
+|           SND1.U49    *   |
+| 16.67MHz                  |
+|                           |
+|           SND0.U48    *   |
+| ADSP-2181                 |
+|                           |
+|             360-SND-A1.U52|
+| 52258   MACH111           |
+| 52258                     |
+|---------------------------|
+Notes:
+      CN1       - 40 pin IDC connector (for 40 pin flat cable joining sound PCB to game PCB)
+      AD1866    - Dual 16bit Audio DAC
+      52258     - Sharp LH52258 32K x8 SRAM (SOJ28)
+      TDA7240A  - 20W Bridge Amplifier
+      LMC6484   - CMOS Quad Rail-to-Rail Input and Output Operational Amplifier
+      MACH111   - AMD MACH111 CPLD (PLCC44, labelled '360 PLD-A1 CS=0794')
+      ADSP-2181 - Analog Devices DSP (QFP128, 16Bit, 40 MIPs, 5V, 2 serial ports, 16Bit internal DMA
+                  port, a byte DMA port, programmable timer, 80K on-chip memory configured as 
+                  16K words (24 Bit) RAM and 16K data (16Bit) RAM
+      U48, U49  - 32MBit DIP42 MaskROM
+      U52       - 27C040 DIP32 EPROM labelled '360-SND-A1 IC110345 CS = 7D5A'
+      *         - Unpopulated DIP42 socket
+*/
 
 static void jdredd_ide_interrupt(int state)
 {
@@ -1297,16 +2178,6 @@ static struct ide_interface jdredd_ide_intf =
 static READ32_HANDLER( jdredd_idestat_r )
 {
 	return ide_controller_0_r(0x1f7);
-}
-
-static READ32_HANDLER( jdredd_unknown_r )
-{
-	return 0xffffffff;
-}
-
-static READ32_HANDLER( jdredd_ideunknown_r )
-{
-	return 0xffffffff-2;
 }
 
 static READ32_HANDLER( jdredd_ide_r)
@@ -1403,8 +2274,6 @@ DRIVER_INIT( coh1000a )
 	if( ( !strcmp( Machine->gamedrv->name, "jdredd" ) ) ||
 		( !strcmp( Machine->gamedrv->name, "jdreddb" ) ) )
 	{
-		install_mem_read32_handler ( 0, 0x1fa30000, 0x1fa30003, jdredd_unknown_r );
-		install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, jdredd_ideunknown_r );
 		install_mem_read32_handler ( 0, 0x1fbfff8c, 0x1fbfff8f, jdredd_idestat_r );
 		install_mem_write32_handler( 0, 0x1fbfff8c, 0x1fbfff8f, MWA32_NOP );
 		install_mem_read32_handler ( 0, 0x1fbfff90, 0x1fbfff9f, jdredd_ide_r );
@@ -1441,17 +2310,12 @@ static MACHINE_DRIVER_START( coh1000a )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1460,9 +2324,197 @@ static MACHINE_DRIVER_START( coh1000a )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
+/*
+
+Main board (Standard ZN1 Main Board with Atlus BIOS)
+
+ZN-1 1-659-709-12  COH-1001L
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032     814260     CXD2925Q        |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                                                        |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                MB81G83222-012                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - coh1001l.353, Atlus ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM
+      814260         - 256K x16 (4MBit) DRAM
+      MB81G83222-012 - 128K x32 x2 banks (32MBit) SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'AT01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+----------
+
+ATHG-01
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|LM358  LM358  PAL(1) PAL(2)           |
+|                                      |
+|YAC513 LM358                          |
+|                            62256     |
+|              CAT702        62256     |
+|                                      |
+|                                      |
+| 16.9344MHz                           |
+| YMZ280B      ATHG-01B.18             |
+|                                      |
+|                       ATHG-02B.17    |
+|                                      |
+|                                      |
+|              ATHG-03.22     10MHz    |
+|                                      |
+|ATHG-06.4134           ATHG-04.21     |
+|                                      |
+|     ATHG-05.4136            68000    |
+|                                      |
+|                                PAL(3)|
+|                                      |
+|ATHG-11.215  ATHG-09.210   ATHG-07.027|
+|                                      |
+|                                      |
+|    ATHG-10.029    ATHG-08.028        |
+|--------------------------------------|
+Notes:
+      PAL(1)  - labelled 'ROM1'
+      PAL(2)  - labelled 'ROM2'
+      PAL(3)  - labelled 'ROM3'
+      CAT702  - Protection chip labelled 'AT02' (DIP20)
+      62256   - 32K x8 SRAM
+      
+      ATHG-01B.18   - Main program (27C040 EPROM)
+      ATHG-02B.17   /
+      
+      ATHG-03.22    - Sound program (27C010 EPROM)
+      ATHG-04.21    /
+      
+      ATHG-05.4136  - Sound data (16MBit DIP42 MASKROM)
+      ATHG-06.4134  /
+      
+      ATHG-07.027   - Graphics data (32MBit DIP42 MASKROM)
+      ATHG-08.028   /
+      ATHG-09.210   /
+      ATHG-10.029   /
+      ATHG-11.215   /
+      
+      68000 clock  - 10.000MHz
+      YMZ280 clock - 16.9344MHz
+      VSync        - 60Hz
+*/
+
+static WRITE32_HANDLER( coh1001l_bnk_w )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( ( data >> 16 ) & 3 ) * 0x800000 ) );
+}
+
+DRIVER_INIT( coh1001l )
+{
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 ); /* banked rom */
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1001l_bnk_w );
+
+	init_znsec();
+}
+
+MACHINE_INIT( coh1001l )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked rom */
+	zn_machine_init();
+}
+
+static MACHINE_DRIVER_START( coh1001l )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+
+//	MDRV_CPU_ADD( M68000, 10000000 )
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+//	MDRV_CPU_PROGRAM_MAP( atlus_snd_map, 0 )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( coh1001l )
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 1024 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+//	MDRV_SOUND_ADD( YMZ280B, ymz280b_intf )
+MACHINE_DRIVER_END
+
+/*
+
+Sonic Wings Limited (JPN Ver.)
+(c)1996 Video System
+
+Board:	PS based (ZN-1,COH-1002V)
+	VS34 (ROM board)
+
+Key:	Mother    KN01
+	ROM board KN02
+
+*/
+
+static WRITE32_HANDLER( coh1002v_bnk_w )
+{
+	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000 + (data * 0x100000));
+}
+
 DRIVER_INIT( coh1002v )
 {
 	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+	install_mem_read32_handler( 0, 0x1fb00000, 0x1fbfffff, MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1002v_bnk_w );
 
 	init_znsec();
 }
@@ -1470,6 +2522,7 @@ DRIVER_INIT( coh1002v )
 MACHINE_INIT( coh1002v )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
+	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000); /* banked rom */
 	zn_machine_init();
 }
 
@@ -1487,17 +2540,12 @@ static MACHINE_DRIVER_START( coh1002v )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1506,60 +2554,167 @@ static MACHINE_DRIVER_START( coh1002v )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
-DRIVER_INIT( coh3002t )
-{
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+/*
 
-	init_znsec();
-}
+Main board (Standard ZN1 Main Board with Tecmo BIOS)
 
-MACHINE_INIT( coh3002t )
-{
-	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	zn_machine_init();
-}
+ZN-1 1-659-709-12  COH-1002M
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032   M5M44260     CXD2925Q        |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                KM4132G271Q-12                          |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1002M.353, Tecmo ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM
+      M5M44260       - 256K x16 (4MBit) DRAM
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'MG01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
 
-static MACHINE_DRIVER_START( coh3002t )
-	/* basic machine hardware */
-	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
-	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
+Game board with sound
 
-	MDRV_MACHINE_INIT( coh3002t )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+Tecmo TPS1-7
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|LM358  GAL16V8B(1)  CAT702            |
+|YAC513  LM358  CBAJ1.119  CBAJ2.120   |
+|        LM358                         |
+|                                      |
+|                                      |
+| CB-VO  CB-SE            CB-08  CB-07 |
+|                                      |
+|                                      |
+|      CB-05     CB-03     CB-01       |
+| CB-06     CB-04     CB-02     CB-00  |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|YMZ280B  16.9MHz  GAL16V8(2)  LH54020 |
+|                  GAL16V8(3)          |
+|                  GAL16V8(4)  LH54020 |
+|                                      |
+|                                      |
+|                                      |
+| 32MHz  GAL16V8(5)         GAL16V8(6) |
+|                   D43001             |
+|                                      |
+|                                      |
+|             CBAJZ80.3118     Z80     |
+|--------------------------------------|
+Notes:
+      There are a few unpopulated positions on this game board, including
+      4 unpopulated positions for 4x 32MBit smt SOP44 MASKROMs
+      1 unpopulated position for uPD72103AG near the D43001 RAM
+      2 unpopulated positions for 2 connectors near the Z80 ROM possibly for a network link?
+      1 unpopulated position for a PAL16V8 near ROM 'CBAJ2'
+      
+      This board contains....
+      PAL16V8B(1) labelled 'SOPROM1'
+      PAL16V8B(2) labelled 'SOPROM3'
+      PAL16V8B(3) labelled 'SOPROM4C'
+      PAL16V8B(4) labelled 'SOPROM5B'
+      PAL16V8B(5) labelled 'SOPROM6A'
+      PAL16V8B(6) labelled 'SOPROM2B'
+      CAT702 Protection chip labelled 'MG03' (DIP20)
+      3 logic chips near main program ROMs.
+      2x 4MBit EPROMs labelled 'CBAJ1' and 'CBAJ2'
+      1x 2MBit EPROM labelled 'CBAJZ80'
+      9x 32MBit smt SOP44 MASKROMs labelled 'CB-00' thru 'CB-08' (Graphics)
+      2x 32MBit smt SOP44 MASKROMs labelled 'CB-SE' and 'CB-V0' (connected to the YMZ280B)
+      LH540202 - CMOS 1024 x 9 Asyncronous FIFO (PLCC32)
+      D43001   - 32K x8 SRAM, equivalent to 62256 SRAM
+      
+      Z80 clock: 4.000MHz
+      VSync    : 60Hz
 
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
-	MDRV_PALETTE_LENGTH( 65536 )
+Game board without sound
 
-	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
-	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-MACHINE_DRIVER_END
+Tecmo TPS1-7
+|--------------------------------------|
+|    |---------------------------|     |
+|    |---------------------------|     |
+|       GAL16V8B    CAT702             |
+|              SHMJ-B.119  SHMJ-A.120  |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|  SH-03.220       SH-01.218           |
+|         SH-02.219       SH-00.217    |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|--------------------------------------|
+Notes:
+      There are many unpopulated positions on this game board. This game only contains
+      the following parts...
+      PAL16V8B labelled 'SOPROM1'
+      CAT702 Protection chip labelled 'MG04' (DIP20)
+      3 logic chips
+      2x 4MBit EPROMs labelled 'SHMJ-B' and 'SHMJ-A'
+      4x 32MBit smt SOP44 MASKROMs labelled 'SH03, 'SH02', 'SH01' & 'SH00'. There is space
+      for 11 more 32MBit smt SOP44 MASKROMs.
+*/
 
 static WRITE32_HANDLER( coh1002m_bank_w )
 {
 	verboselog( 1, "coh1002m_bank_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	cpu_setbank( 1, memory_region( REGION_USER2 ) + ((data>>16) * 0x800000));
-}
-
-static WRITE32_HANDLER( coh1002m_watchdog_w )
-{
 }
 
 static int cbaj_to_z80 = 0, cbaj_to_r3k = 0;
@@ -1583,7 +2738,6 @@ static WRITE32_HANDLER( cbaj_z80_w )
 DRIVER_INIT( coh1002m )
 {
 	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
-	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, coh1002m_watchdog_w );
 	install_mem_read32_handler( 0, 0x1fb00000, 0x1fb00003, cbaj_z80_r );
 	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, cbaj_z80_w );
 	install_mem_write32_handler( 0, 0x1fb00004, 0x1fb00007, coh1002m_bank_w );
@@ -1653,17 +2807,12 @@ static MACHINE_DRIVER_START( coh1002m )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1678,7 +2827,7 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-	MDRV_CPU_ADD( Z80, 8000000 )
+	MDRV_CPU_ADD( Z80, 32000000/8 )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )
 	MDRV_CPU_PROGRAM_MAP( cbaj_z80_map, 0 )
 	MDRV_CPU_IO_MAP( cbaj_z80_port_map, 0 )
@@ -1691,17 +2840,12 @@ static MACHINE_DRIVER_START( coh1002msnd )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1728,17 +2872,12 @@ static MACHINE_DRIVER_START( coh1002ml )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1915,6 +3054,52 @@ ROM_START( sfexj )
 	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
 ROM_END
 
+ROM_START( sfexp )
+	CPZN1_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "sfpu-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
+
+	ROM_REGION32_LE( 0x1880000, REGION_USER2, 0 )
+	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
+	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
+	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
+	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
+	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
+	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
+ROM_END
+
+ROM_START( sfexpj )
+	CPZN1_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "sfpj-04", 0x0000000, 0x080000, CRC(18d043f5) SHA1(9e6e24a722d13888fbfd391ddb1a5045b162488c) )
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
+	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
+	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
+	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
+	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
+	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
+	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
+ROM_END
+
 ROM_START( starglad )
 	CPZN1_BIOS
 
@@ -2040,24 +3225,6 @@ ROM_START( jgakuen )
 	ROM_LOAD( "jst-01m", 0x0000000, 0x400000, CRC(9a7c98f9) SHA1(764c6c4f41047e1f36d2dceac4aa9b943a9d529a) )
 ROM_END
 
-ROM_START( tgmj )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "atej-04", 0x0000000, 0x080000, CRC(bb4bbb96) SHA1(808f4b29493e74efd661d561d11cbec2f4afd1c8) )
-
-	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 )
-	ROM_LOAD( "ate-05",  0x0000000, 0x400000, CRC(50977f5a) SHA1(78c2b1965957ff1756c25b76e549f11fc0001153) )
-	ROM_LOAD( "ate-06",  0x0400000, 0x400000, CRC(05973f16) SHA1(c9262e8de14c4a9489f7050316012913c1caf0ff) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "ate-02",  0x00000, 0x08000, CRC(f4f6e82f) SHA1(ad6c49197a60f456367c9f78353741fb847819a1) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "ate-01",  0x0000000, 0x400000, CRC(a21c6521) SHA1(560e4855f6e00def5277bdd12064b49e55c3b46b) )
-ROM_END
-
 ROM_START( techromn )
 	CPZN2_BIOS
 
@@ -2104,52 +3271,6 @@ ROM_START( kikaioh )
 	ROM_LOAD( "kio-01m.bin", 0x0000000, 0x400000, CRC(6dc5bd07) SHA1(e1755a48465f741691ea0fa1166cb2dc09210ed9) )
 ROM_END
 
-ROM_START( sfexp )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sfpe-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
-
-	ROM_REGION32_LE( 0x1880000, REGION_USER2, 0 )
-	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
-	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
-	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
-	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
-	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
-	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
-ROM_END
-
-ROM_START( sfexpj )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sfpj-04", 0x0000000, 0x080000, CRC(18d043f5) SHA1(9e6e24a722d13888fbfd391ddb1a5045b162488c) )
-
-	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
-	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
-	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
-	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
-	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
-	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
-	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
-ROM_END
-
 ROM_START( sfex2 )
 	CPZN2_BIOS
 
@@ -2175,7 +3296,7 @@ ROM_START( sfex2p )
 	CPZN2_BIOS
 
 	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sf2pu-04", 0x0000000, 0x080000, CRC(6179f937) SHA1(5e3664b5ebb25ba1c1730020e9dbffccf083fb03) )
+	ROM_LOAD( "sf2pa-04", 0x0000000, 0x080000, CRC(c437d602) SHA1(150f0dfd9f2e4f9adc11f8960da1e6be250456b1) )
 
 	ROM_REGION32_LE( 0x3000000, REGION_USER2, 0 )
 	ROM_LOAD( "sf2p-05", 0x0000000, 0x800000, CRC(4ee3110f) SHA1(704f8dca7d0b698659af9e3271ea5072dfd42b8b) )
@@ -2307,6 +3428,23 @@ ROM_START( shiryu2 )
 	ROM_RELOAD( 0x0200000, 0x200000 )
 ROM_END
 
+ROM_START( tgmj )
+	CPZN2_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "atej-04", 0x0000000, 0x080000, CRC(bb4bbb96) SHA1(808f4b29493e74efd661d561d11cbec2f4afd1c8) )
+
+	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 )
+	ROM_LOAD( "ate-05",  0x0000000, 0x400000, CRC(50977f5a) SHA1(78c2b1965957ff1756c25b76e549f11fc0001153) )
+	ROM_LOAD( "ate-06",  0x0400000, 0x400000, CRC(05973f16) SHA1(c9262e8de14c4a9489f7050316012913c1caf0ff) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "ate-02",  0x00000, 0x08000, CRC(f4f6e82f) SHA1(ad6c49197a60f456367c9f78353741fb847819a1) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "ate-01",  0x0000000, 0x400000, CRC(a21c6521) SHA1(560e4855f6e00def5277bdd12064b49e55c3b46b) )
+ROM_END
 
 /* Tecmo */
 
@@ -2476,12 +3614,12 @@ ROM_END
 ROM_START( ftimpcta )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e25-13.4",     0x0000001, 0x100000, CRC(7f078d7b) SHA1(df9800dd6885dbc33736c5143d877b0847221061) )
 	ROM_LOAD16_BYTE( "e25-14.3",     0x0000000, 0x100000, CRC(0c5f474f) SHA1(ce7031ba860297b99cddd6d0177f07e03520faeb) )
-	ROM_LOAD( "e25-01.1",            0x0200000, 0x400000, CRC(8cc4be0c) SHA1(9ca15558a83b7e332e50accf1f7852444a7ce730) )
-	ROM_LOAD( "e25-02.2",            0x0600000, 0x400000, CRC(8e8b4c82) SHA1(55c9d4d3a08fc3226a75ab3a674be433af83e289) )
-	ROM_LOAD( "e25-03.12",           0x0a00000, 0x400000, CRC(43b1c085) SHA1(6e53550e9be0d2f415fc6b4f3b8a71185c5370b2) )
+	ROM_LOAD( "e25-01.1",            0x0400000, 0x400000, CRC(8cc4be0c) SHA1(9ca15558a83b7e332e50accf1f7852444a7ce730) )
+	ROM_LOAD( "e25-02.2",            0x0800000, 0x400000, CRC(8e8b4c82) SHA1(55c9d4d3a08fc3226a75ab3a674be433af83e289) )
+	ROM_LOAD( "e25-03.12",           0x0c00000, 0x400000, CRC(43b1c085) SHA1(6e53550e9be0d2f415fc6b4f3b8a71185c5370b2) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e25-10.14",    0x0000000, 0x080000, CRC(2b2ad1b1) SHA1(6d064d0b6805d43ce42929ac8f5645b56384f53c) )
@@ -2494,12 +3632,12 @@ ROM_END
 ROM_START( gdarius )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e39-06.4",     0x0000001, 0x100000, CRC(2980c30d) SHA1(597321642125c3ae37581c2d9abc2723c7909996) )
 	ROM_LOAD16_BYTE( "e39-05.3",     0x0000000, 0x100000, CRC(750e5b13) SHA1(68fe9cbd7d506cfd587dccc40b6ae0b0b6ee7c29) )
-	ROM_LOAD( "e39-01.1",            0x0200000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
-	ROM_LOAD( "e39-02.2",            0x0600000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
-	ROM_LOAD( "e39-03.12",           0x0a00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
+	ROM_LOAD( "e39-01.1",            0x0400000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
+	ROM_LOAD( "e39-02.2",            0x0800000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
+	ROM_LOAD( "e39-03.12",           0x0c00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e39-07.14",    0x0000000, 0x080000, CRC(2252c7c1) SHA1(92b9908e0d87cad6587f1acc0eef69eaae8c6a98) )
@@ -2511,12 +3649,12 @@ ROM_END
 ROM_START( gdarius2 )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e39-12.4",     0x0000001, 0x100000, CRC(b23266c3) SHA1(80aaddaaf10e40280ade4c7d11f45ddab47ee9a6) )
 	ROM_LOAD16_BYTE( "e39-11.3",     0x0000000, 0x100000, CRC(766f73df) SHA1(9ce24c153920d259bc7fdef0778083eb6d639be3) )
-	ROM_LOAD( "e39-01.1",            0x0200000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
-	ROM_LOAD( "e39-02.2",            0x0600000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
-	ROM_LOAD( "e39-03.12",           0x0a00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
+	ROM_LOAD( "e39-01.1",            0x0400000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
+	ROM_LOAD( "e39-02.2",            0x0800000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
+	ROM_LOAD( "e39-03.12",           0x0c00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e39-07.14",    0x0000000, 0x080000, CRC(2252c7c1) SHA1(92b9908e0d87cad6587f1acc0eef69eaae8c6a98) )
@@ -2528,30 +3666,12 @@ ROM_END
 ROM_START( mgcldate )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00c00000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "e32-08.2",     0x0000001, 0x100000, CRC(3d42cd28) SHA1(9017922e835a359ba5126c8a9e8c27380a5ce081) )
-	ROM_LOAD16_BYTE( "e32-09.7",     0x0000000, 0x100000, CRC(db7ec115) SHA1(fa6f18de71ba997389d887d7ffe745aa25e24c20) )
-	ROM_LOAD( "e32-01.1",            0x0200000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
-	ROM_LOAD( "e32-02.6",            0x0600000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
-	ROM_LOAD( "e32-03.12",           0x0a00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
-
-	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
-	ROM_LOAD( "e32-10.22",           0x0000000, 0x004000, CRC(adf3feb5) SHA1(bae5bc3fad99a92a3492be1b775dab861007eb3b) )
-	ROM_CONTINUE(                    0x0010000, 0x01c000 ) /* banked stuff */
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "e32-04.15",           0x0000000, 0x400000, CRC(c72f9eea) SHA1(7ab8b412a8ed00a42016acb7d13d3b074155780a) )
-ROM_END
-
-ROM_START( mgcldtea )
-	TAITOFX1_BIOS
-
-	ROM_REGION32_LE( 0x00c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e32-05.2",     0x0000001, 0x080000, CRC(72fc7f7b) SHA1(50d9e84bc74fb63ec1900ab149051888bc3d03a5) )
 	ROM_LOAD16_BYTE( "e32-06.7",     0x0000000, 0x080000, CRC(d11c3881) SHA1(f7046c5bed4818152edcf697a49664b0bcf12a1b) )
-	ROM_LOAD( "e32-01.1",            0x0200000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
-	ROM_LOAD( "e32-02.6",            0x0600000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
-	ROM_LOAD( "e32-03.12",           0x0a00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
+	ROM_LOAD( "e32-01.1",            0x0400000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
+	ROM_LOAD( "e32-02.6",            0x0800000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
+	ROM_LOAD( "e32-03.12",           0x0c00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e32-10.22",           0x0000000, 0x004000, CRC(adf3feb5) SHA1(bae5bc3fad99a92a3492be1b775dab861007eb3b) )
@@ -2561,15 +3681,33 @@ ROM_START( mgcldtea )
 	ROM_LOAD( "e32-04.15",           0x0000000, 0x400000, CRC(c72f9eea) SHA1(7ab8b412a8ed00a42016acb7d13d3b074155780a) )
 ROM_END
 
-ROM_START( psyfrcex )
+ROM_START( mgcldtex )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e32-08.2",     0x0000001, 0x100000, CRC(3d42cd28) SHA1(9017922e835a359ba5126c8a9e8c27380a5ce081) )
+	ROM_LOAD16_BYTE( "e32-09.7",     0x0000000, 0x100000, CRC(db7ec115) SHA1(fa6f18de71ba997389d887d7ffe745aa25e24c20) )
+	ROM_LOAD( "e32-01.1",            0x0400000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
+	ROM_LOAD( "e32-02.6",            0x0800000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
+	ROM_LOAD( "e32-03.12",           0x0c00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "e32-10.22",           0x0000000, 0x004000, CRC(adf3feb5) SHA1(bae5bc3fad99a92a3492be1b775dab861007eb3b) )
+	ROM_CONTINUE(                    0x0010000, 0x01c000 ) /* banked stuff */
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "e32-04.15",           0x0000000, 0x400000, CRC(c72f9eea) SHA1(7ab8b412a8ed00a42016acb7d13d3b074155780a) )
+ROM_END
+
+ROM_START( psyforce )
+	TAITOFX1_BIOS
+
+	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "pfexic2.bin",  0x0000001, 0x080000, CRC(997e4500) SHA1(4a90b452c9a877ccec55a11f36c4cbc6df1f1f41) )
 	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
-	ROM_LOAD( "e22-02.16",           0x0100000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0300000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
-	ROM_LOAD( "e22-04.21",           0x0500000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
+	ROM_LOAD( "e22-03.19",           0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-04.21",           0x0c00000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e22-07.22",           0x0000000, 0x004000, CRC(739af589) SHA1(dbb4d1c6d824a99ccf27168e2c21644e19811523) )
@@ -2579,15 +3717,15 @@ ROM_START( psyfrcex )
 	ROM_LOAD( "e22-01.15",           0x000000,  0x200000, CRC(808b8340) SHA1(d8bde850dd9b5b71e94ea707d2d728754f907977) )
 ROM_END
 
-ROM_START( psyforce )
+ROM_START( psyforcj )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e22-05.2",     0x0000001, 0x080000, CRC(7770242c) SHA1(dd37575d3d9ffdef60fe0e4cab6c9e42d087f714) )
 	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
-	ROM_LOAD( "e22-02.16",           0x0100000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0300000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
-	ROM_LOAD( "e22-04.21",           0x0500000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
+	ROM_LOAD( "e22-03.19",           0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-04.21",           0x0c00000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e22-07.22",           0x0000000, 0x004000, CRC(739af589) SHA1(dbb4d1c6d824a99ccf27168e2c21644e19811523) )
@@ -2616,13 +3754,32 @@ ROM_END
 ROM_START( sfchamp )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e18-12.2",     0x0000001, 0x080000, CRC(72304685) SHA1(2e6f645871e19a49fcdfbdca49c6be415471eadf) )
+	ROM_LOAD16_BYTE( "e18-13.7",     0x0000000, 0x080000, CRC(fa4d01ee) SHA1(27efd8e2107d71213d35f2a58762ed8812f809d3) )
+	ROM_LOAD( "e18-02.12",           0x0600000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
+	ROM_LOAD( "e18-03.16",           0x0800000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
+	ROM_LOAD( "e18-04.19",           0x0a00000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
+	ROM_LOAD( "e18-05.21",           0x0c00000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "e18-09.22",           0x0000000, 0x004000, CRC(bb5a5319) SHA1(0bb700cafc157d3af663cc9bebb8167487ff2852) )
+	ROM_CONTINUE(                    0x0010000, 0x01c000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "e18-01.15",           0x0000000, 0x200000, CRC(dbd1408c) SHA1(ef81064f2f95e5ae25eb1f10d1e78f27f9e294f5) )
+ROM_END
+
+ROM_START( sfchampj )
+	TAITOFX1_BIOS
+
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e18-07.2",     0x0000001, 0x080000, CRC(1b484e1c) SHA1(f29f40a9988475d8abbb126095b0716133c087a0) )
 	ROM_LOAD16_BYTE( "e18-08.7",     0x0000000, 0x080000, CRC(6a5558cd) SHA1(75b26bcaaa213283e7e0dace69ee58f305b4572d) )
-	ROM_LOAD( "e18-02.12",           0x0100000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
-	ROM_LOAD( "e18-03.16",           0x0300000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
-	ROM_LOAD( "e18-04.19",           0x0500000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
-	ROM_LOAD( "e18-05.21",           0x0700000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+	ROM_LOAD( "e18-02.12",           0x0600000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
+	ROM_LOAD( "e18-03.16",           0x0800000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
+	ROM_LOAD( "e18-04.19",           0x0a00000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
+	ROM_LOAD( "e18-05.21",           0x0c00000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e18-09.22",           0x0000000, 0x004000, CRC(bb5a5319) SHA1(0bb700cafc157d3af663cc9bebb8167487ff2852) )
@@ -2654,19 +3811,16 @@ ROM_END
 ROM_START( beastrzr )
 	PSARC95_BIOS
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "broar.213",    0x000001, 0x080000, CRC(2c586534) SHA1(a38dfc3a45446d24a1caac89b0f560989d46ded5) )
 	ROM_LOAD16_BYTE( "broar.212",    0x000000, 0x080000, CRC(1c85d7fb) SHA1(aa406a42c424cc16a9e5330c68dda9acf8760088) )
 	ROM_LOAD16_BYTE( "broar.215",    0x100001, 0x080000, CRC(31c8e055) SHA1(2811789ab6221b972d1e3ffe98916587990f7564) )
-//	ROM_LOAD16_BYTE( "broar_u0.214", 0x100000, 0x080000, CRC(911e6c90) SHA1(724e4cae49bb124200e188a0288516b3a7d5ab53) ) /* bad dump? */
 	ROM_LOAD16_BYTE( "broar.214",    0x100000, 0x080000, CRC(1cdc450a) SHA1(9215e5fec52f7c5c0070feb621eb9c77f98e2362) )
-	ROM_LOAD( "rabroar2.216",        0x400000, 0x400000, CRC(d46d46b7) SHA1(1c42cb5dcda4b26c08c4ecf95efeadaf3a1d1dd2) )
-	ROM_LOAD( "rabroar1.217",        0x800000, 0x400000, CRC(11f1ba36) SHA1(d41ae686c2c607640cbadf906215c89134758050) )
+	ROM_LOAD( "rabroar1.217",        0x400000, 0x400000, CRC(11f1ba36) SHA1(d41ae686c2c607640cbadf906215c89134758050) )
+	ROM_LOAD( "rabroar2.216",        0x800000, 0x400000, CRC(d46d46b7) SHA1(1c42cb5dcda4b26c08c4ecf95efeadaf3a1d1dd2) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
-//	ROM_LOAD16_BYTE( "broar.046",    0x000001, 0x040000, CRC(98e47d50) SHA1(2750c14ee650a0de41360105665ea9feaaacd770) ) /* bad dump? */
 	ROM_LOAD16_BYTE( "broar.046",    0x000001, 0x040000, CRC(d4bb261a) SHA1(9a295b1354ef15f37ea09bb209cf0cb98437c462) )
-//	ROM_LOAD16_BYTE( "broar.042",    0x000000, 0x040000, CRC(47dac191) SHA1(076253f97574255f01a001a4264260bc09a92d08) ) /* bad dump? */
 	ROM_LOAD16_BYTE( "broar.042",    0x000000, 0x040000, CRC(4d537f88) SHA1(1760367d70a81606e29885ea315185d2c2a9409b) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
@@ -2676,13 +3830,12 @@ ROM_END
 ROM_START( beastrzb )
 	PSARC95_BIOS
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 )
 	ROM_LOAD( "27c160.1",     0x000000, 0x200000, CRC(820855e2) SHA1(18bdd4d0b4a92ae4fde457e1f37c813be6eece71) )
-	ROM_LOAD( "27c160.2",     0x400000, 0x200000, CRC(1712af34) SHA1(3a78997a2ad0fec1b09828b47150a4be611cd9ad) )
-	ROM_LOAD( "27c800.3",     0x700000, 0x100000, CRC(7192eb4e) SHA1(bb276a38261099d91080d8613dc7500322f6fcab) )
-//	ROM_LOAD( "4",            0x800000, 0x200000, CRC(bff21f44) SHA1(2dffc518c069f0692a3b75e10091658d9c10ecb5) ) /* bad dump? */
-	ROM_LOAD( "27c160.4",     0x800000, 0x200000, CRC(2d2b25f4) SHA1(77d8ad94602e71f16b47de47bc2e0a97957c530b) )
-	ROM_LOAD( "27c160.5",     0xa00000, 0x200000, CRC(10fe6f4d) SHA1(9faee2faa6d741e1caf25edd093644be5723aa5c) )
+	ROM_LOAD( "27c160.4",     0x400000, 0x200000, CRC(2d2b25f4) SHA1(77d8ad94602e71f16b47de47bc2e0a97957c530b) )
+	ROM_LOAD( "27c160.5",     0x600000, 0x200000, CRC(10fe6f4d) SHA1(9faee2faa6d741e1caf25edd093644be5723aa5c) )
+	ROM_LOAD( "27c160.2",     0x800000, 0x200000, CRC(1712af34) SHA1(3a78997a2ad0fec1b09828b47150a4be611cd9ad) )
+	ROM_LOAD( "27c800.3",     0xb00000, 0x100000, CRC(7192eb4e) SHA1(bb276a38261099d91080d8613dc7500322f6fcab) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 /*	http://www.atmel.com/dyn/products/product_card.asp?family_id=604&family_name=8051+Architecture&part_id=1939 */
@@ -2697,10 +3850,10 @@ ROM_END
 ROM_START( brvblade )
 	TPS_BIOS
 
-	ROM_REGION32_LE( 0x0c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 )
 	ROM_LOAD( "flash0.021",      0x0000000, 0x200000, CRC(97e12c63) SHA1(382970617a363f6c98ee741f26be6a75c9752bdb) )
 	ROM_LOAD( "flash1.024",      0x0200000, 0x200000, CRC(d9d40a34) SHA1(c91dbc6f85404e9397fa79a4bac28e8c3c1a5228) )
-	ROM_LOAD( "ra-bbl_rom1.028", 0x0400000, 0x400000, CRC(418535e0) SHA1(7c443e651704f2cd552565c35f4a93f2dc250558) )
+	ROM_LOAD( "ra-bbl_rom1.028", 0x0800000, 0x400000, CRC(418535e0) SHA1(7c443e651704f2cd552565c35f4a93f2dc250558) )
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 )
 	ROM_LOAD16_BYTE( "spu0u049.bin", 0x0000000, 0x080000, CRC(c9df8ed9) SHA1(00a58522189091c48d781b6703e4378e04343c33) )
@@ -2708,6 +3861,27 @@ ROM_START( brvblade )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "ra-bbl_rom2.336", 0x000000, 0x400000, CRC(cd052c02) SHA1(d955a70a89b3b1a0b505a05c0887c399fe7a2c68) )
+ROM_END
+
+ROM_START( bldyror2 )
+	PSARC95_BIOS
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
+	ROM_LOAD( "flash0.021",      0x0000000, 0x200000, CRC(fa7602e1) SHA1(6fb6af09656fbb86d2abda35804b2ed4a4cd7461) )
+	ROM_LOAD( "flash1.024",      0x0200000, 0x200000, BAD_DUMP CRC(4866dce3) SHA1(484e659a8f0ca40b29d7f5e57788e8a9f6957cbc) )
+	ROM_LOAD( "rom-1a.028",      0x0800000, 0x400000, CRC(0e711461) SHA1(1d0bd80e6885432ef0623babde28e5760b714bfa) )
+	ROM_LOAD( "rom-1b.29",       0x0c00000, 0x400000, CRC(0cf153f9) SHA1(53bb9f8642079f56d8e925792b069362df666819) )
+	ROM_LOAD( "rom-2a.026",      0x1000000, 0x400000, CRC(b71d955d) SHA1(49fce452c70ceafc8a149fa9ff073589b7261882) )
+	ROM_LOAD( "rom-2b.210",      0x1400000, 0x400000, CRC(89959dde) SHA1(99d54b9876f38f5e625334bbd1439618cdf01d56) )
+
+	ROM_REGION32_LE( 0x0400000, REGION_USER3, 0 )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "br2_u049.049",  0x000000, 0x080000, CRC(10dc855b) SHA1(4e6e3a71911c8976ae07c2b6cac5a36f98193def) )
+	ROM_LOAD16_BYTE( "br2_u0412.412", 0x000001, 0x080000, CRC(e254dd8a) SHA1(5b8fcafcf2176e0b55efcf37799d7c0d97e01bdc) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "rom-3.336",       0x000000, 0x400000, CRC(b74cc4d1) SHA1(eb5485582a12959ae06927a2f1d8a7e63e0f956f) )
 ROM_END
 
 /* Atari PSX */
@@ -2795,6 +3969,38 @@ ROM_START( jdreddb )
 	DISK_IMAGE( "jdreddb", 0, MD5(0da1d048d7223df74fca4f349473cefa) SHA1(9b810e3a16de62cabfc8271b6606574c7034cf41) )
 ROM_END
 
+/* Atlus */
+
+#define ATLUS_BIOS \
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) \
+	ROM_LOAD( "coh-1001l.353", 0x000000, 0x080000, CRC(6721146b) SHA1(9511d24bfe25eb180fb2db0835b131cb4a12730e) )
+
+ROM_START( atluspsx )
+	ATLUS_BIOS
+ROM_END
+
+ROM_START( hvnsgate )
+	ATLUS_BIOS
+
+	ROM_REGION32_LE( 0x02000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "athg-01b.18",  0x0000001, 0x080000, CRC(e820136f) SHA1(2bc3465928dd08060736a2a67d98864d634275d6) )
+	ROM_LOAD16_BYTE( "athg-02b.17",  0x0000000, 0x080000, CRC(11bfa89b) SHA1(f23e4c9d8eb90bd3bb3327d9950edd7a467ce8da) )
+	ROM_LOAD( "athg-07.027",         0x0100000, 0x400000, CRC(46411f67) SHA1(2e8f37c3d9d7f5f3c79fca8ffeaf4c2fd1634b91) )
+	ROM_LOAD( "athg-08.028",         0x0500000, 0x400000, CRC(85289345) SHA1(6385fe27451b80f97e7bad823b3b59eff3efa541) )
+	ROM_LOAD( "athg-09.210",         0x0900000, 0x400000, CRC(19e558b5) SHA1(c195bc7dc3cfe4f099d27afdebd6f9cfe064e1df) )
+	ROM_LOAD( "athg-10.029",         0x0d00000, 0x400000, CRC(748f936e) SHA1(134e78ea71bb9646f36cc503c704496a2b622ee9) )
+	ROM_LOAD( "athg-11.215",         0x1100000, 0x200000, CRC(f623e59c) SHA1(52ad88209ba5fa8e9002be03aee8fb777e60f256) )
+	ROM_CONTINUE( 0x1100000, 0x200000 )
+
+	ROM_REGION( 0x040000, REGION_CPU2, 0 )
+	ROM_LOAD( "athg-03.22",   0x000000, 0x020000, CRC(7eef7e68) SHA1(65b8ae18ef4ff636c548326a360b481aeb316869) ) 
+	ROM_LOAD( "athg-04.21",   0x020000, 0x020000, CRC(18523e85) SHA1(0ecc2116760f05fca8e5366b0a97dfe26fa9bc0c) ) 
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* YMZ280B Sound Samples */
+	ROM_LOAD( "athg-05.4136", 0x000000, 0x200000, CRC(74469a15) SHA1(0faa883900d7fd2e5240f486db33b3d868f1f05f) )
+	ROM_LOAD( "athg-06.4134", 0x200000, 0x200000, CRC(443ade73) SHA1(6ef6aa68c525b9749833125dcab929d1d65d3b90) )
+ROM_END
+
 /* Capcom ZN1 */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
@@ -2802,13 +4008,15 @@ ROM_END
 /* it in every zip file */
 GAMEX( 1995, cpzn1,    0,        coh1000c, zn, coh1000c, ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
 
-GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) 
+GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) 
 GAMEX( 1996, starglad, cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfex,     cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (USA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfexa,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfexj,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, glpracr,  cpzn1,    coh1000c, zn, coh1000c, ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, sfexp,    cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, sfexpj,   sfexp,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Capcom ZN2 */
 
@@ -2817,20 +4025,18 @@ GAMEX( 1996, glpracr,  cpzn1,    coh1000c, zn, coh1000c, ROT0, "Tecmo", "Gallop 
 /* it in every zip file */
 GAMEX( 1997, cpzn2,    0,        coh3002c, zn, coh3002c, ROT0, "Sony/Capcom", "ZN2", NOT_A_DRIVER )
 
-GAMEX( 1997, sfexp,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, sfexpj,   sfexp,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (ASIA 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Atari */
 
@@ -2848,9 +4054,9 @@ GAMEX( 1996, primrag2, atpsx,    coh1000w, zn, coh1000w, ROT0, "Atari", "Primal 
 /* it in every zip file */
 GAMEX( 1995, acpsx,    0,        coh1000a, zn, coh1000a, ROT0, "Acclaim", "Acclaim PSX", NOT_A_DRIVER )
 
-GAMEX( 1996, nbajamex, acpsx,    coh1000a, zn, coh1000a, ROT0, "Acclaim", "NBA Jam Extreme", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, jdredd,   acpsx,    coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge Dredd (Rev C Dec. 17 1997)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, jdreddb,  jdredd,   coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge Dredd (Rev B Nov. 26 1997)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, nbajamex, acpsx,    coh1000a, zn, coh1000a, ROT0, "Acclaim", "NBA Jam Extreme", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, jdredd,   acpsx,    coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge Dredd (Rev C Dec. 17 1997)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, jdreddb,  jdredd,   coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge Dredd (Rev B Nov. 26 1997)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* Tecmo */
 
@@ -2859,35 +4065,36 @@ GAMEX( 1996, jdreddb,  jdredd,   coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge
 /* it in every zip file */
 GAMEX( 1997, tps,      0,        coh1002m, zn, coh1002m, ROT0, "Sony/Tecmo", "TPS", NOT_A_DRIVER )
 
-GAMEX( 1997, glpracr2, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_NOT_WORKING )
-GAMEX( 1997, glprac2j, glpracr2, coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_NOT_WORKING )
-GAMEX( 1997, glprac2l, glpracr2, coh1002ml,zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_NOT_WORKING )
-GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glpracr2, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2j, glpracr2, coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2l, glpracr2, coh1002ml,zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool Boarders Arcade Jam", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Video System */
 
 /* only one game dumped on this system, so coh-1002v.353 is included in the game zip file */
-GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT270, "Video System", "Sonic Wings Limited (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Taito */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh-1000t.353 file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1995, taitofx1, 0,        coh1000ta,zn, coh1000t, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
+GAMEX( 1995, taitofx1, 0,        coh1000ta,zn, coh1000ta, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
-GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, psyfrcex, taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Psychic Force EX (?)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, psyforce, psyfrcex, coh1000ta,zn, coh1000t, ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldate, taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldtea, mgcldate, coh1000ta,zn, coh1000t, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.5O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sfchampj, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, psyforce, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, psyforcj, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, mgcldate, mgcldtex, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date (Ver 2.02J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Ray Storm (Ver 2.05J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Fighters' Impact A (Ver 2.00J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius Ver.2 (Ver 2.03J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh-3002t.353 file, so that we do not have to include */
@@ -2901,6 +4108,16 @@ GAMEX( 1997, taitogn,  0,        coh3002t, zn, coh3002t, ROT0, "Sony/Taito", "Ta
 /* it in every zip file */
 GAMEX( 1997, psarc95,  0,        coh1002e, zn, coh1002e, ROT0, "Sony/Eighting/Raizing", "PS Arcade 95", NOT_A_DRIVER )
 
-GAMEX( 1997, beastrzr, psarc95,  coh1002e, zn, coh1002e, ROT0, "Eighting/Raizing", "Beastorizer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1997, beastrzb, psarc95,  coh1002e, zn, coh1002e, ROT0, "Eighting/Raizing", "Beastorizer (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, beastrzr, psarc95,  coh1002e, zn, coh1002e, ROT0, "Eighting/Raizing", "Beastorizer (USA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, beastrzb, psarc95,  coh1002e, zn, coh1002e, ROT0, "Eighting/Raizing", "Beastorizer (USA Bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, bldyror2, psarc95,  coh1002e, zn, coh1002e, ROT0, "Eighting/Raizing", "Bloody Roar 2 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 2000, brvblade, tps,      coh1002e, zn, coh1002e, ROT270, "Eighting/Raizing", "Brave Blade (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+
+/* Atlus */
+
+/* A dummy driver, so that the bios can be debugged, and to serve as */
+/* parent for the coh-1002l.353 file, so that we do not have to include */
+/* it in every zip file */
+GAMEX( 1996, atluspsx,  0,       coh1001l, zn, coh1001l, ROT0, "Sony/Atlus", "Atlus PSX", NOT_A_DRIVER )
+
+GAMEX( 1996, hvnsgate, atluspsx, coh1001l, zn, coh1001l, ROT0, "Atlus", "Heavens Gate", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

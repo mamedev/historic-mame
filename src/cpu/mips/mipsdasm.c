@@ -431,7 +431,9 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x06:
-					if( INS_CO( op ) == 0x1400006 )
+					if( INS_CO( op ) == 0x0400006 ||
+						INS_CO( op ) == 0x1400006 ||
+						INS_CO( op ) == 0x0155cc6 )
 					{
 						sprintf( buffer, "nclip" );
 					}
@@ -541,7 +543,8 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x3d:
-					if( GTE_OP( op ) == 0x19 )
+					if( GTE_OP( op ) == 0x09 ||
+						GTE_OP( op ) == 0x19 )
 					{
 						sprintf( buffer, "gpf%s", s_gtesf[ GTE_SF( op ) ] );
 					}

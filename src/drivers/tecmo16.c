@@ -3,13 +3,14 @@
   Ganbare Ginkun  (Japan)  (c)1995 TECMO
   Final StarForce (US)     (c)1992 TECMO
 
-  driver by Eisuke Watanabe (MHF03337@nifty.ne.jp)
 
-  special thanks to Nekomata, NTD & code-name'Siberia'
+--
+driver by Eisuke Watanabe, Nicola Salmoria
+
+special thanks to Nekomata, NTD & code-name'Siberia'
 
 TODO:
 - wrong background in fstarfrc title
-- flip screen is unsupported
 
 To enter into service mode in Final Star Force press and hold start
 buttons 1 and 2 during P.O.S.T.
@@ -33,6 +34,7 @@ WRITE16_HANDLER( tecmo16_colorram_w );
 WRITE16_HANDLER( tecmo16_videoram2_w );
 WRITE16_HANDLER( tecmo16_colorram2_w );
 WRITE16_HANDLER( tecmo16_charram_w );
+WRITE16_HANDLER( tecmo16_flipscreen_w );
 
 WRITE16_HANDLER( tecmo16_scroll_x_w );
 WRITE16_HANDLER( tecmo16_scroll_y_w );
@@ -85,6 +87,7 @@ static ADDRESS_MAP_START( fstarfrc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x122000, 0x127fff) AM_WRITE(MWA16_RAM)	/* work area */
 	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x150000, 0x150001) AM_WRITE(tecmo16_flipscreen_w)
 	AM_RANGE(0x150010, 0x150011) AM_WRITE(tecmo16_sound_command_w)
 	AM_RANGE(0x150030, 0x150031) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0x160000, 0x160001) AM_WRITE(tecmo16_scroll_char_x_w)
@@ -119,7 +122,9 @@ static ADDRESS_MAP_START( ginkun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x123000, 0x123fff) AM_WRITE(tecmo16_colorram2_w) AM_BASE(&tecmo16_colorram2)
 	AM_RANGE(0x130000, 0x130fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x150000, 0x150001) AM_WRITE(tecmo16_flipscreen_w)
 	AM_RANGE(0x150010, 0x150011) AM_WRITE(tecmo16_sound_command_w)
+	AM_RANGE(0x150030, 0x150031) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0x160000, 0x160001) AM_WRITE(tecmo16_scroll_char_x_w)
 	AM_RANGE(0x160006, 0x160007) AM_WRITE(tecmo16_scroll_char_y_w)
 	AM_RANGE(0x16000c, 0x16000d) AM_WRITE(tecmo16_scroll_x_w)
@@ -467,5 +472,5 @@ ROM_END
 
 /******************************************************************************/
 
-GAMEX( 1992, fstarfrc, 0, fstarfrc, fstarfrc, 0, ROT90, "Tecmo", "Final Star Force (US)", GAME_NO_COCKTAIL )
-GAMEX( 1995, ginkun,   0, ginkun,   ginkun,   0, ROT0,  "Tecmo", "Ganbare Ginkun", GAME_NO_COCKTAIL )
+GAME(  1992, fstarfrc, 0, fstarfrc, fstarfrc, 0, ROT90, "Tecmo", "Final Star Force (US)" )
+GAME(  1995, ginkun,   0, ginkun,   ginkun,   0, ROT0,  "Tecmo", "Ganbare Ginkun" )

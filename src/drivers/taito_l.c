@@ -1725,6 +1725,13 @@ INPUT_PORTS_START( horshoes )
 	PORT_DIPNAME( 0x01, 0x01, "Beer Frame Message" )
 	PORT_DIPSETTING(    0x01, "Break Time" )
 	PORT_DIPSETTING(    0x00, "Beer Frame" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_US_8	/* According to the "United States Version" manual listing */
 
 	PORT_START

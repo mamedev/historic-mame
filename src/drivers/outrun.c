@@ -1559,5 +1559,5 @@ GAME( 1986, outrun,   0,        outrun,   outrun,   outrun,   ROT0,         "Seg
 GAME( 1986, outruna,  outrun,   outrun,   outrun,   outrun,   ROT0,         "Sega",    "Out Run (set 2)" )
 GAME( 1986, outrunb,  outrun,   outrun,   outrun,   outrunb,  ROT0,         "bootleg", "Out Run (set 3)" )
 GAME( 1986, outrundx, outrun,   outrun,   outrun,   outrun,   ROT0,         "Sega",    "Out Run (Deluxe?)" )
-GAMEX(19??, toutrun,  0,        outrun,   outrun,   outrun,   ROT0,         "Sega", "Turbo Outrun (set 1)", GAME_NOT_WORKING )
-GAMEX(19??, toutruna, toutrun,  outrun,   outrun,   outrun,   ROT0,         "Sega", "Turbo Outrun (set 2)", GAME_NOT_WORKING )
+GAMEX(1989, toutrun,  0,        outrun,   outrun,   outrun,   ROT0,         "Sega",	   "Turbo Out Run (set 1)", GAME_NOT_WORKING )
+GAMEX(1989, toutruna, toutrun,  outrun,   outrun,   outrun,   ROT0,         "Sega",    "Turbo Out Run (set 2)", GAME_NOT_WORKING )

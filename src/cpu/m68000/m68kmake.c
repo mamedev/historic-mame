@@ -73,7 +73,6 @@ const char* g_version = "3.3";
 #define M68K_MAX_PATH 1024
 #define M68K_MAX_DIR  1024
 
-#define NUM_CPUS                          3	/* 000, 010, 020 */
 #define MAX_LINE_LENGTH                 200	/* length of 1 line */
 #define MAX_BODY_LENGTH                 300	/* Number of lines in 1 function */
 #define MAX_REPLACE_LENGTH               30	/* Max number of replace strings */
@@ -131,10 +130,12 @@ const char* g_version = "3.3";
 /* ============================== PROTOTYPES ============================== */
 /* ======================================================================== */
 
-#define CPU_TYPE_000 0
-#define CPU_TYPE_008 1
-#define CPU_TYPE_010 2
-#define CPU_TYPE_020 3
+enum {
+	CPU_TYPE_000 = 0,
+	CPU_TYPE_010,
+	CPU_TYPE_020,
+	NUM_CPUS
+};
 
 #define UNSPECIFIED "."
 #define UNSPECIFIED_CH '.'
@@ -638,7 +639,7 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 
 		/* ASG: added these cases -- immediate modes take 2 extra cycles here */
 		/* SV: but only when operating on long, and also on register direct mode */
-		if((cpu_type == CPU_TYPE_000 || cpu_type == CPU_TYPE_008) && (ea_mode == EA_MODE_I || ea_mode == EA_MODE_NONE) && op->size == 32 &&
+		if(cpu_type == CPU_TYPE_000 && (ea_mode == EA_MODE_I || ea_mode == EA_MODE_NONE) && op->size == 32 &&
 		   ((strcmp(op->name, "add") == 0 && strcmp(op->spec_proc, "er") == 0) ||
 			strcmp(op->name, "adda")   == 0                                    ||
 			(strcmp(op->name, "and") == 0 && strcmp(op->spec_proc, "er") == 0) ||
@@ -1257,7 +1258,7 @@ int main(int argc, char **argv)
 	int table_body_read = 0;
 	int ophandler_body_read = 0;
 
-	printf("\n\t\tMusashi v%s 68000, 68010, 68EC020, 68020 emulator\n", g_version);
+	printf("\n\t\tMusashi v%s 68000, 68008, 68010, 68EC020, 68020 emulator\n", g_version);
 	printf("\t\tCopyright 1998-2000 Karl Stenerud (karl@mame.net)\n\n");
 
 	/* Check if output path and source for the input file are given */

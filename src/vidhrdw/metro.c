@@ -543,9 +543,12 @@ VIDEO_START( gstrik2 )
 		Offset:		Bits:					Value:
 
 		0.w									Number Of Sprites To Draw
-		2.w			fedc ba-- ---- ----		?
+		2.w			f--- ---- ---- ----		Disable Sprites Layer Priority
+					-edc ---- ---- ----
+					---- ba-- ---- ----		Sprites Masked Layer
 					---- --98 ---- ----		Sprites Priority
-					---- ---- 7654 3210		?
+					---- ---- 765- ----
+					---- ---- ---4 3210		Sprites Masked Number
 		4.w									Sprites Y Offset
 		6.w									Sprites X Offset
 		8.w									Sprites Color Codes Start
@@ -592,9 +595,9 @@ VIDEO_START( gstrik2 )
 
 ***************************************************************************/
 
-/* Draw sprites of a given priority */
+/* Draw sprites */
 
-void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	const int region		=	REGION_GFX1;
 
@@ -607,113 +610,143 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
 	int max_sprites			=	spriteram_size / 8;
 	int sprites				=	metro_videoregs[0x00/2] % max_sprites;
 
-	data16_t *src			=	spriteram16 + (sprites - 1) * (8/2);
-	data16_t *end			=	spriteram16;
-
 	int color_start			=	((metro_videoregs[0x08/2] & 0xf) << 4 ) + 0x100;
 
-	pri = (~pri & 0x1f) << (16-5);
+	int i, j, pri;
+	int primask[4] = { 0x0000, 0xff00, 0xff00|0xf0f0, 0xff00|0xf0f0|0xcccc };
 
-	for ( ; src >= end; src -= 8/2 )
+	data16_t *src;
+	int inc;
+
+	if (sprites == 0)
+		return;
+
+	for (i=0; i<0x20; i++)
 	{
-		int x,y, attr,code,color,flipx,flipy, zoom, curr_pri,width,height;
-		unsigned char *gfxdata;
-
-		/* Exponential zoom table extracted from daitoride */
-		const int zoomtable[0x40] =
-		{	0xAAC,0x800,0x668,0x554,0x494,0x400,0x390,0x334,
-			0x2E8,0x2AC,0x278,0x248,0x224,0x200,0x1E0,0x1C8,
-			0x1B0,0x198,0x188,0x174,0x164,0x154,0x148,0x13C,
-			0x130,0x124,0x11C,0x110,0x108,0x100,0x0F8,0x0F0,
-			0x0EC,0x0E4,0x0DC,0x0D8,0x0D4,0x0CC,0x0C8,0x0C4,
-			0x0C0,0x0BC,0x0B8,0x0B4,0x0B0,0x0AC,0x0A8,0x0A4,
-			0x0A0,0x09C,0x098,0x094,0x090,0x08C,0x088,0x080,
-			0x078,0x070,0x068,0x060,0x058,0x050,0x048,0x040	};
-
-		x					=	src[ 0 ];
-		curr_pri			=	x & 0xf800;
-		if ( (curr_pri == 0xf800) || (curr_pri != pri) )	continue;
-		y					=	src[ 1 ];
-		attr				=	src[ 2 ];
-		code				=	src[ 3 ];
-
-		flipx				=	attr & 0x8000;
-		flipy				=	attr & 0x4000;
-		color				=   (attr & 0xf0) >> 4;
-
-		zoom				=	zoomtable[(y & 0xfc00) >> 10] << (16-8);
-
-		x					=	(x & 0x07ff) - metro_sprite_xoffs;
-		y					=	(y & 0x03ff) - metro_sprite_yoffs;
-
-		width				= (( (attr >> 11) & 0x7 ) + 1 ) * 8;
-		height				= (( (attr >>  8) & 0x7 ) + 1 ) * 8;
-
-		gfxdata		=	base_gfx + (8*8*4/8) * (((attr & 0x000f) << 16) + code);
-
-		if (flip_screen)
+		if (!(metro_videoregs[0x02/2] & 0x8000))
 		{
-			flipx = !flipx;		x = max_x - x - width;
-			flipy = !flipy;		y = max_y - y - height;
+			src = spriteram16 + (sprites - 1) * (8/2);
+			inc = -(8/2);
+		} else {
+			src = spriteram16;
+			inc = (8/2);
 		}
 
-		if (support_8bpp && color == 0xf)	/* 8bpp */
+		for (j=0; j<sprites; j++)
 		{
-			/* prepare GfxElement on the fly */
-			struct GfxElement gfx;
-			gfx.width = width;
-			gfx.height = height;
-			gfx.total_elements = 1;
-			gfx.color_granularity = 256;
-			gfx.colortable = Machine->remapped_colortable;
-			gfx.total_colors = 0x20;
-			gfx.pen_usage = NULL;
-			gfx.gfxdata = gfxdata;
-			gfx.line_modulo = width;
-			gfx.char_modulo = 0;	/* doesn't matter */
-			gfx.flags = 0;
+			int x,y, attr,code,color,flipx,flipy, zoom, curr_pri,width,height;
+			unsigned char *gfxdata;
 
-			/* Bounds checking */
-			if ( (gfxdata + width * height - 1) >= gfx_max )
+			/* Exponential zoom table extracted from daitoride */
+			const int zoomtable[0x40] =
+			{	0xAAC,0x800,0x668,0x554,0x494,0x400,0x390,0x334,
+				0x2E8,0x2AC,0x278,0x248,0x224,0x200,0x1E0,0x1C8,
+				0x1B0,0x198,0x188,0x174,0x164,0x154,0x148,0x13C,
+				0x130,0x124,0x11C,0x110,0x108,0x100,0x0F8,0x0F0,
+				0x0EC,0x0E4,0x0DC,0x0D8,0x0D4,0x0CC,0x0C8,0x0C4,
+				0x0C0,0x0BC,0x0B8,0x0B4,0x0B0,0x0AC,0x0A8,0x0A4,
+				0x0A0,0x09C,0x098,0x094,0x090,0x08C,0x088,0x080,
+				0x078,0x070,0x068,0x060,0x058,0x050,0x048,0x040	};
+
+			x					=	src[ 0 ];
+			curr_pri			=	(x & 0xf800) >> 11;
+
+			if ((curr_pri == 0x1f) || (curr_pri != i))
+			{
+				src += inc;
 				continue;
+			}
 
-			drawgfxzoom(	bitmap,&gfx,
-							0,
-							color_start >> 4,
-							flipx, flipy,
-							x, y,
-							cliprect, TRANSPARENCY_PEN, 0,
-							zoom, zoom	);
-		}
-		else
-		{
-			/* prepare GfxElement on the fly */
-			struct GfxElement gfx;
-			gfx.width = width;
-			gfx.height = height;
-			gfx.total_elements = 1;
-			gfx.color_granularity = 16;
-			gfx.colortable = Machine->remapped_colortable;
-			gfx.total_colors = 0x200;
-			gfx.pen_usage = NULL;
-			gfx.gfxdata = gfxdata;
-			gfx.line_modulo = width/2;
-			gfx.char_modulo = 0;	/* doesn't matter */
-			gfx.flags = GFX_PACKED;
+			pri = (metro_videoregs[0x02/2] & 0x0300) >> 8;
 
-			/* Bounds checking */
-			if ( (gfxdata + width/2 * height - 1) >= gfx_max )
-				continue;
+			if (!(metro_videoregs[0x02/2] & 0x8000))
+			{
+				if (curr_pri > (metro_videoregs[0x02/2] & 0x1f))
+					pri = (metro_videoregs[0x02/2] & 0x0c00) >> 10;
+			}
 
-			drawgfxzoom(	bitmap,&gfx,
-							0,
-							(color ^ 0x0f) + color_start,
-							flipx, flipy,
-							x, y,
-							cliprect, TRANSPARENCY_PEN, 0,
-							zoom, zoom	);
-		}
+			y					=	src[ 1 ];
+			attr				=	src[ 2 ];
+			code				=	src[ 3 ];
 
+			flipx				=	attr & 0x8000;
+			flipy				=	attr & 0x4000;
+			color				=   (attr & 0xf0) >> 4;
+
+			zoom				=	zoomtable[(y & 0xfc00) >> 10] << (16-8);
+
+			x					=	(x & 0x07ff) - metro_sprite_xoffs;
+			y					=	(y & 0x03ff) - metro_sprite_yoffs;
+
+			width				= (( (attr >> 11) & 0x7 ) + 1 ) * 8;
+			height				= (( (attr >>  8) & 0x7 ) + 1 ) * 8;
+
+			gfxdata		=	base_gfx + (8*8*4/8) * (((attr & 0x000f) << 16) + code);
+
+			if (flip_screen)
+			{
+				flipx = !flipx;		x = max_x - x - width;
+				flipy = !flipy;		y = max_y - y - height;
+			}
+
+			if (color == 0xf)	/* 8bpp */
+			{
+				/* prepare GfxElement on the fly */
+				struct GfxElement gfx;
+				gfx.width = width;
+				gfx.height = height;
+				gfx.total_elements = 1;
+				gfx.color_granularity = 256;
+				gfx.colortable = Machine->remapped_colortable;
+				gfx.total_colors = 0x20;
+				gfx.pen_usage = NULL;
+				gfx.gfxdata = gfxdata;
+				gfx.line_modulo = width;
+				gfx.char_modulo = 0;	/* doesn't matter */
+				gfx.flags = 0;
+
+				/* Bounds checking */
+				if ( (gfxdata + width * height - 1) >= gfx_max )
+					continue;
+
+				pdrawgfxzoom(	bitmap,&gfx,
+								0,
+								color_start >> 4,
+								flipx, flipy,
+								x, y,
+								cliprect, TRANSPARENCY_PEN, 0,
+								zoom, zoom,
+								primask[pri]);
+			}
+			else
+			{
+				/* prepare GfxElement on the fly */
+				struct GfxElement gfx;
+				gfx.width = width;
+				gfx.height = height;
+				gfx.total_elements = 1;
+				gfx.color_granularity = 16;
+				gfx.colortable = Machine->remapped_colortable;
+				gfx.total_colors = 0x200;
+				gfx.pen_usage = NULL;
+				gfx.gfxdata = gfxdata;
+				gfx.line_modulo = width/2;
+				gfx.char_modulo = 0;	/* doesn't matter */
+				gfx.flags = GFX_PACKED;
+
+				/* Bounds checking */
+				if ( (gfxdata + width/2 * height - 1) >= gfx_max )
+					continue;
+
+				pdrawgfxzoom(	bitmap,&gfx,
+								0,
+								(color ^ 0x0f) + color_start,
+								flipx, flipy,
+								x, y,
+								cliprect, TRANSPARENCY_PEN, 0,
+								zoom, zoom,
+								primask[pri]);
+			}
 #if 0
 {	/* Display priority + zoom on each sprite */
 	struct DisplayText dt[2];	char buf[80];
@@ -722,6 +755,8 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip
     dt[0].x = x;    dt[0].y = y;    dt[1].text = 0; /* terminate array */
 	displaytext(Machine->scrbitmap,dt);		}
 #endif
+			src += inc;
+		}
 	}
 }
 
@@ -812,8 +847,8 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 			if (layers_ctrl & (1<<layer))	// for debug
 			{
 				/* Only *one* of tilemap_16x16 & tilemap is enabled at any given time! */
-				metro_tilemap_draw(bitmap,cliprect,tilemap[layer], 0, 0, sx, sy, wx, wy);
-				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,cliprect,tilemap_16x16[layer], 0, 0, sx, sy, wx, wy);
+				metro_tilemap_draw(bitmap,cliprect,tilemap[layer], 0, 1<<(3-pri), sx, sy, wx, wy);
+				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,cliprect,tilemap_16x16[layer], 0, 1<<(3-pri), sx, sy, wx, wy);
 			}
 		}
 	}
@@ -847,7 +882,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 
 VIDEO_UPDATE( metro )
 {
-	int i,pri,sprites_pri,layers_ctrl = -1;
+	int i,pri,layers_ctrl = -1;
 	data8_t *dirtyindex;
 	data16_t screenctrl = *metro_screenctrl;
 
@@ -883,6 +918,7 @@ VIDEO_UPDATE( metro )
 	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen_height / 2;
 
 	/* The background color is selected by a register */
+	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[((metro_videoregs[0x12/2] & 0x0fff) ^ 0x0ff) + 0x1000],cliprect);
 
 	/*	Screen Control Register:
@@ -935,15 +971,10 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	if (has_zoom) K053936_0_zoom_draw(bitmap,cliprect,metro_K053936_tilemap,0,0);
 
-	/* Sprites priority wrt layers: 3..0 (low..high) */
-	sprites_pri	=	(metro_videoregs[0x02/2] & 0x0300) >> 8;
 
-	for (pri = 3; pri >=0; pri--)
-	{
+	for (pri=3; pri>=0; pri--)
 		draw_layers(bitmap,cliprect,pri,layers_ctrl);
 
-		if ((layers_ctrl & 8) && (sprites_pri == pri))
-			for (i = 0; i < 0x20; i++)
-				metro_draw_sprites(bitmap,cliprect, i);
-	}
+	if (layers_ctrl & 0x08)
+		metro_draw_sprites(bitmap,cliprect);
 }

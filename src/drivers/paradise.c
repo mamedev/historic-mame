@@ -17,6 +17,44 @@ paradise: I'm not sure it's working correctly:
 - The chance to play a bonus game is very slim. I think I got to play
   a couple in total. Is there a way to trigger them !?
 
+Target Ball
+Yunsung, 1995
+
+PCB Layout
+----------
+
+YS-2002 YUNSUNG
+|---------------------------------------------------------|
+|  M6295  M6295   Z80              4MHz       YUNSUNG.110 |
+| YUNSUNG.113   YUNSUNG.128                   YUNSUNG.111 |
+| YUNSUNG.85     6264                                     |
+|                                             YUNSUNG.92  |
+|                                             YUNSUNG.93  |
+|                                                         |
+|                6116                                     |
+|                6116              6116                   |
+|J               6116                                     |
+|A                                                        |
+|M                                            6116        |
+|M                                            6116        |
+|A                            |-------|                   |
+|                             | ACTEL |                   |
+|                             |A1020B |                   |
+|DSW1(8)                      |PLCC84 |                   |
+|         12MHz               |-------|                   |
+|                           4464                          |
+|                           4464     YUNSUNG.114          |
+|                           4464     YUNSUNG.115          |
+|DSW2(8)                    4464                          |
+|                                                         |
+|---------------------------------------------------------|
+Notes:
+      Z80 clock: 6.000MHz
+     6295 clock: 1.000MHz (both), sample rate = 1000000/132 (both)
+          VSync: 54Hz
+
+ note even with these settings game runs slightly faster in Mame than real PCB
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -323,7 +361,7 @@ static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
 static struct OKIM6295interface paradise_okim6295_intf =
 {
 	2,
-	{ 8000,8000 },		/* ? */
+	{ 1000000/132,1000000/132 },		/* 1Mhz / 132 verified */
 	{ REGION_SOUND1,REGION_SOUND2 },
 	{ 50,50 }
 };
@@ -331,13 +369,13 @@ static struct OKIM6295interface paradise_okim6295_intf =
 static MACHINE_DRIVER_START( paradise )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)			/* Z8400B */
+	MDRV_CPU_ADD(Z80, 12000000/2)			/* Z8400B - 6mhz Verified*/
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(paradise_readmem,paradise_writemem)
 	MDRV_CPU_IO_MAP(paradise_readport,paradise_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No nmi routine */
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(54) /* 54 verified */
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* we're using IPT_VBLANK */
 
 	/* video hardware */
@@ -410,8 +448,8 @@ ROM_START( tgtball )
 	ROM_CONTINUE(         0x10000, 0x34000    )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 16x16x8 Sprites */
-	ROM_LOAD( "rom5.bin", 0x00000, 0x40000, CRC(3dbe1872) SHA1(754f90123a3944ca548fc66ee65a93615155bf30) )
-	ROM_LOAD( "rom6.bin", 0x40000, 0x40000, CRC(30f49dac) SHA1(b70d37973bd03069c48641d6c0804be6f9aa6553) )
+	ROM_LOAD( "yunsung.114", 0x00000, 0x40000, CRC(3dbe1872) SHA1(754f90123a3944ca548fc66ee65a93615155bf30) )
+	ROM_LOAD( "yunsung.115", 0x40000, 0x40000, CRC(30f49dac) SHA1(b70d37973bd03069c48641d6c0804be6f9aa6553) )
 
 	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* 8x8x4 Background */
 	/* not for this game? */
@@ -425,11 +463,39 @@ ROM_START( tgtball )
 	ROM_LOAD( "rom3.bin", 0x80000, 0x80000,  CRC(94822bbf) SHA1(9fa6595eb819f163b58181926c276346cfa5c332) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD( "rom8.bin", 0x00000, 0x20000, CRC(cdf3336b) SHA1(98029d6d5d8ffb3b24ae2bcf950618a7d5b404c3) )
+	ROM_LOAD( "yunsung.85", 0x00000, 0x20000, CRC(cdf3336b) SHA1(98029d6d5d8ffb3b24ae2bcf950618a7d5b404c3) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples (banked) */
-	ROM_LOAD( "rom9.bin", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
+	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
 ROM_END
+
+ROM_START( tgtballa )
+	ROM_REGION( 0x44000, REGION_CPU1, 0 )		/* Z80 Code */
+	ROM_LOAD( "yunsung.128", 0x00000, 0x0c000, CRC(cb0f3d46) SHA1(b56c4abbd4248074c1559a0f1902d2ea11cb01a8) )
+	ROM_CONTINUE(         0x10000, 0x34000    )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 16x16x8 Sprites */
+	ROM_LOAD( "yunsung.114", 0x00000, 0x40000, CRC(3dbe1872) SHA1(754f90123a3944ca548fc66ee65a93615155bf30) )
+	ROM_LOAD( "yunsung.115", 0x40000, 0x40000, CRC(30f49dac) SHA1(b70d37973bd03069c48641d6c0804be6f9aa6553) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF)	/* 8x8x4 Background */
+	/* not for this game? */
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 8x8x8 Foreground */
+	ROM_LOAD( "yunsung.92", 0x00000, 0x80000, CRC(bcf206a9) SHA1(0db2cee21c025b7b8d2d5b898c7231c77e36904d) )
+	ROM_LOAD( "yunsung.93", 0x80000, 0x80000, CRC(64edb93c) SHA1(94f8d4fd159c682d952d6a4c38dc50f2c0c0824d) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_INVERT)	/* 8x8x8 Midground */
+	ROM_LOAD( "yunsung.110", 0x00000, 0x80000, CRC(c209201e) SHA1(ba1cb3a204f689f9a3636834628d2265927e34f7) )
+	ROM_LOAD( "yunsung.111", 0x80000, 0x80000, CRC(82334337) SHA1(4b2a07196027b190366131cd7b8eca87a1bd0b1c) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "yunsung.85", 0x00000, 0x20000, CRC(cdf3336b) SHA1(98029d6d5d8ffb3b24ae2bcf950618a7d5b404c3) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples (banked) */
+	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
+ROM_END
+
 
 // Inverted flipscreen and sprites are packed in less memory (same number though)
 DRIVER_INIT (tgtball)
@@ -445,5 +511,6 @@ DRIVER_INIT (tgtball)
 
 ***************************************************************************/
 
-GAME( 1994+, paradise, 0, paradise, paradise, 0,       ROT90, "Yun Sung", "Paradise" )
-GAME( 1995,  tgtball,  0, paradise, tgtball,  tgtball, ROT0,  "Yun Sung", "Target Ball" )
+GAME( 1994+, paradise, 0,       paradise, paradise, 0,       ROT90, "Yun Sung", "Paradise" )
+GAME( 1995,  tgtball,  0,       paradise, tgtball,  tgtball, ROT0,  "Yun Sung", "Target Ball (Nude)" )
+GAME( 1995,  tgtballa, tgtball, paradise, tgtball,  tgtball, ROT0,  "Yun Sung", "Target Ball" )

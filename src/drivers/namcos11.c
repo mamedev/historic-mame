@@ -653,17 +653,12 @@ static MACHINE_DRIVER_START( coh100 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type1_1024x1024 )
+	MDRV_VIDEO_START( psx_type1 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -673,7 +668,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh110 )
 	MDRV_IMPORT_FROM( coh100 )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos11 )
@@ -1282,8 +1277,8 @@ GAMEX( 1995, tekken2,   0,        coh100, tekken,   namcos11, ROT0, "Namco", "Te
 GAMEX( 1995, tekken2a,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, souledge,  0,        coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

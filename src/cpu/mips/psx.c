@@ -1973,7 +1973,8 @@ static void docop2( int gteop )
 		}
 		break;
 	case 0x06:
-		if( gteop == 0x1400006 ||
+		if( gteop == 0x0400006 ||
+			gteop == 0x1400006 ||
 			gteop == 0x0155cc6 )
 		{
 			GTELOG( "NCLIP" );
@@ -2439,7 +2440,8 @@ static void docop2( int gteop )
 		}
 		break;
 	case 0x3d:
-		if( GTE_OP( gteop ) == 0x19 )
+		if( GTE_OP( gteop ) == 0x09 ||
+			GTE_OP( gteop ) == 0x19 )
 		{
 			GTELOG( "GPF" );
 			n_sf = 12 * GTE_SF( gteop );

@@ -80,6 +80,7 @@ VIDEO_START( warlords )
 
 	/* we overload centiped_flipscreen here to track the cocktail/upright state */
 	centiped_flipscreen = readinputport(0) & 0x80;
+	tilemap_set_flip(tilemap, centiped_flipscreen ? TILEMAP_FLIPX : 0);
 	return 0;
 }
 
@@ -170,7 +171,7 @@ WRITE_HANDLER( bullsdrt_sprites_bank_w )
 static void init_penmask(void)
 {
 	int i;
-	
+
 	for (i = 0; i < 64; i++)
 	{
 		UINT8 mask = 1;
@@ -223,7 +224,7 @@ PALETTE_INIT( centiped )
 		COLOR(1,i+2) = 4 + ((i >> 4) & 3);
 		COLOR(1,i+3) = 4 + ((i >> 6) & 3);
 	}
-	
+
 	/* create a pen mask for sprite drawing */
 	init_penmask();
 }
@@ -339,7 +340,7 @@ PALETTE_INIT( milliped )
 		COLOR(1,i+2) = base + ((i >> 4) & 3);
 		COLOR(1,i+3) = base + ((i >> 6) & 3);
 	}
-	
+
 	/* create a pen mask for sprite drawing */
 	init_penmask();
 }
@@ -469,7 +470,7 @@ VIDEO_UPDATE( bullsdrt )
 		spriteclip.min_x += 8;
 	else
 		spriteclip.max_x -= 8;
-	
+
 	/* draw the sprites */
 	for (offs = 0; offs < 0x10; offs++)
 	{

@@ -266,7 +266,7 @@ static void i386_trap(int irq)
 		PUSH16( I.eip );
 
 		I.sreg[CS].selector = READ16( I.idtr.base + entry + 2 );
-		I.eip = READ32( I.idtr.base + entry );
+		I.eip = READ16( I.idtr.base + entry );
 	}
 	else
 	{
@@ -287,11 +287,13 @@ static void i386_trap(int irq)
 	CHANGE_PC(I.eip);
 }
 
-static void i386_interrupt(int irq)
+static void i386_check_irq_line(void)
 {
 	/* Check if the interrupts are enabled */
-	if( I.IF )
-		i386_trap(irq);
+	if ( I.irq_line && I.IF )
+	{
+		i386_trap( I.irq_callback(0) );
+	}
 }
 
 
@@ -384,6 +386,7 @@ void i386_init(void)
 	state_save_register_UINT16(state_type, cpu,	"IDTR_LIMIT",	&I.idtr.limit, 1);
 	state_save_register_UINT32(state_type, cpu,	"GDTR_BASE",	&I.gdtr.base, 1);
 	state_save_register_UINT16(state_type, cpu,	"GDTR_LIMIT",	&I.gdtr.limit, 1);
+	state_save_register_int(state_type, cpu, "IRQ_LINE",		&I.irq_line);
 	state_save_register_UINT8(state_type, cpu,	"ISEGJMP",		&I.performed_intersegment_jump, 1);
 	state_save_register_func_postload(i386_postload);
 }
@@ -505,15 +508,19 @@ void i386_set_reg(int regnum, unsigned value)
 	}
 }
 
-void i386_set_irq_line(int irqline, int state)
+static void i386_set_irq_line(int irqline, int state)
 {
+	if ( irqline == IRQ_LINE_NMI )
+	{
+		/* NMI (I do not think that this is 100% right) */
 	if ( state )
-		i386_interrupt( irqline );
+			i386_trap(0x20);
 }
-
-void i386_set_irq_callback(int (*callback)(int))
+	else
 {
-
+		I.irq_line = state;
+		i386_check_irq_line();
+	}
 }
 
 int i386_execute(int num_cycles)
@@ -622,7 +629,7 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I386_TR7:			I.tr[7] = info->i; break;
 		
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				 break;	/* we don't have one */
+		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback; break;
 	}
 }
 
@@ -697,7 +704,7 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i386_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					break;	/* not supported */
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i386_reg_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i386_win_layout;		break;

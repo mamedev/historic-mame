@@ -130,25 +130,68 @@ static UINT32 m_p_n_dmachannelcontrol[ 7 ];
 static void *m_p_timer_dma[ 7 ];
 static psx_dma_read_handler m_p_fn_dma_read[ 7 ];
 static psx_dma_write_handler m_p_fn_dma_write[ 7 ];
-static UINT32 m_p_n_dma_lastscanline[ 7 ];
+static UINT32 m_p_n_dma_ticks[ 7 ];
+static UINT32 m_p_b_dma_running[ 7 ];
 static UINT32 m_n_dpcp;
 static UINT32 m_n_dicr;
 
-static void dma_timer( int n_channel, UINT32 n_scanline )
+static void dma_start_timer( int n_channel, UINT32 n_ticks )
 {
-	if( n_scanline != 0xffffffff )
+	timer_adjust( m_p_timer_dma[ n_channel ], TIME_IN_SEC( (double)n_ticks / 33868800 ), n_channel, 0 );
+	m_p_n_dma_ticks[ n_channel ] = n_ticks;
+	m_p_b_dma_running[ n_channel ] = 1;
+}
+
+static void dma_stop_timer( int n_channel )
+{
+	timer_adjust( m_p_timer_dma[ n_channel ], TIME_NEVER, 0, 0 );
+	m_p_b_dma_running[ n_channel ] = 0;
+}
+
+static void dma_timer( int n_channel )
+{
+	if( m_p_b_dma_running[ n_channel ] )
 	{
-		timer_adjust( m_p_timer_dma[ n_channel ], cpu_getscanlinetime( n_scanline ), n_channel, 0 );
+		dma_start_timer( n_channel, m_p_n_dma_ticks[ n_channel ] );
 	}
 	else
 	{
-		timer_adjust( m_p_timer_dma[ n_channel ], TIME_NEVER, 0, 0 );
+		dma_stop_timer( n_channel );
 	}
-	m_p_n_dma_lastscanline[ n_channel ] = n_scanline;
 }
 
 void dma_finished( int n_channel )
 {
+	if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000401 && n_channel == 2 )
+	{
+		UINT32 n_size;
+		UINT32 n_total;
+		UINT32 n_address = ( m_p_n_dmabase[ n_channel ] & 0xffffff );
+		UINT32 n_adrmask = g_n_psxramsize - 1;
+		UINT32 n_nextaddress;
+
+		if( n_address != 0xffffff )
+		{
+			n_total = 0;
+			for( ;; )
+			{
+				n_address &= n_adrmask;
+				n_nextaddress = g_p_n_psxram[ n_address / 4 ];
+				n_size = n_nextaddress >> 24;
+				m_p_fn_dma_write[ n_channel ]( n_address + 4, n_size );
+				n_address = ( n_nextaddress & 0xffffff );
+
+				n_total += ( n_size + 1 ) * 2;
+				if( n_total > 4096 || n_address == 0xffffff )
+				{
+					m_p_n_dmabase[ n_channel ] = n_address;
+					dma_start_timer( n_channel, n_total );
+					return;
+				}
+			}
+		}
+	}
+
 	m_p_n_dmachannelcontrol[ n_channel ] &= ~( ( 1L << 0x18 ) | ( 1L << 0x1c ) );
 
 	if( ( m_n_dicr & ( 1 << ( 16 + n_channel ) ) ) != 0 )
@@ -161,7 +204,7 @@ void dma_finished( int n_channel )
 	{
 		verboselog( 2, "dma_finished( %d ) interrupt not enabled\n", n_channel );
 	}
-	dma_timer( n_channel, 0xffffffff );
+	dma_stop_timer( n_channel );
 }
 
 void psx_dma_install_read_handler( int n_channel, psx_dma_read_handler p_fn_dma_read )
@@ -229,7 +272,7 @@ WRITE32_HANDLER( psx_dma_w )
 					m_p_fn_dma_read[ n_channel ]( n_address, n_size );
 					if( n_channel == 1 )
 					{
-						dma_timer( n_channel, cpu_getscanline() + 16 );
+						dma_start_timer( n_channel, 16384 );
 					}
 					else
 					{
@@ -247,27 +290,9 @@ WRITE32_HANDLER( psx_dma_w )
 					n_channel == 2 &&
 					m_p_fn_dma_write[ n_channel ] != NULL )
 				{
-					UINT32 n_total = 0;
-
 					verboselog( 1, "dma %d write linked list %08x\n",
 						n_channel, m_p_n_dmabase[ n_channel ] );
-					do
-					{
-						n_address &= n_adrmask;
-						n_nextaddress = g_p_n_psxram[ n_address / 4 ];
-						n_size = n_nextaddress >> 24;
-						m_p_fn_dma_write[ n_channel ]( n_address + 4, n_size );
-						n_address = ( n_nextaddress & 0xffffff );
 
-						n_total += n_size;
-						n_total++;
-						if( n_total > ( 8 * 1024 * 1024 ) / 4 )
-						{
-							/* todo: find a better way of detecting this */
-							verboselog( 1, "dma looped\n" );
-							break;
-						}
-					} while( n_address != 0xffffff );
 					dma_finished( n_channel );
 				}
 				else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x11000002 &&
@@ -497,6 +522,7 @@ static psx_sio_handler m_p_f_sio_handler[ 2 ];
 #define SIO_STATUS_DSR ( 1 << 7 )
 #define SIO_STATUS_IRQ ( 1 << 9 )
 
+#define SIO_CONTROL_TX_ENA ( 1 << 0 )
 #define SIO_CONTROL_IACK ( 1 << 4 )
 #define SIO_CONTROL_RESET ( 1 << 6 )
 #define SIO_CONTROL_TX_IENA ( 1 << 10 )
@@ -564,6 +590,7 @@ static void sio_clock( int n_port )
 	for( n_bit = 0; n_bit < BITS_PER_TICK; n_bit++ )
 	{
 		if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
+			( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_ENA ) != 0 &&
 			( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 )
 		{
 			m_p_n_sio_tx_bits[ n_port ] = 8;
@@ -577,11 +604,6 @@ static void sio_clock( int n_port )
 			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
 		}
 
-		if( n_port == 0 )
-		{
-			m_p_n_sio_rx[ n_port ] |= PSX_SIO_IN_DATA;
-		}
-
 		if( m_p_n_sio_tx_bits[ n_port ] != 0 )
 		{
 			m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
@@ -592,7 +614,9 @@ static void sio_clock( int n_port )
 			{
 				if( n_port == 0 )
 				{
-					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] | PSX_SIO_OUT_CLOCK );
+					m_p_n_sio_tx[ n_port ] &= ~PSX_SIO_OUT_CLOCK;
+					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+					m_p_n_sio_tx[ n_port ] |= PSX_SIO_OUT_CLOCK;
 				}
 				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
 			}
@@ -1193,8 +1217,6 @@ static void mdec1_read( UINT32 n_address, INT32 n_size )
 		}
 		else
 		{
-			verboselog( 0, "mdec 24bit not supported\n" );
-
 			while( n_size > 0 )
 			{
 				m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
@@ -1246,7 +1268,7 @@ static void gpu_write( UINT32 n_address, INT32 n_size )
 
 void psx_machine_init( void )
 {
-	int n_channel;
+	int n;
 
 	/* irq */
 	m_n_irqdata = 0;
@@ -1262,9 +1284,27 @@ void psx_machine_init( void )
 	m_n_mdec1_command = 0;
 	m_n_mdec1_status = 0;
 
-	for( n_channel = 0; n_channel < 7; n_channel++ )
+	for( n = 0; n < 7; n++ )
 	{
-		m_p_n_dma_lastscanline[ n_channel ] = 0xffffffff;
+		dma_stop_timer( n );
+	}
+
+	for( n = 0; n < 2; n++ )
+	{
+		m_p_n_sio_status[ n ] = SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
+		m_p_n_sio_mode[ n ] = 0;
+		m_p_n_sio_control[ n ] = 0;
+		m_p_n_sio_baud[ n ] = 0;
+		m_p_n_sio_tx[ n ] = 0;
+		m_p_n_sio_rx[ n ] = 0;
+		m_p_n_sio_tx_prev[ n ] = 0;
+		m_p_n_sio_rx_prev[ n ] = 0;
+		m_p_n_sio_rx_data[ n ] = 0;
+		m_p_n_sio_tx_data[ n ] = 0;
+		m_p_n_sio_rx_shift[ n ] = 0;
+		m_p_n_sio_tx_shift[ n ] = 0;
+		m_p_n_sio_rx_bits[ n ] = 0;
+		m_p_n_sio_tx_bits[ n ] = 0;
 	}
 
 	psx_gpu_reset();
@@ -1278,7 +1318,7 @@ static void psx_postload( void )
 
 	for( n = 0; n < 7; n++ )
 	{
-		dma_timer( n, m_p_n_dma_lastscanline[ n ] );
+		dma_timer( n );
 	}
 
 	for( n = 0; n < 3; n++ )
@@ -1336,20 +1376,6 @@ void psx_driver_init( void )
 
 	for( n = 0; n < 2; n++ )
 	{
-		m_p_n_sio_status[ n ] = SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
-		m_p_n_sio_mode[ n ] = 0;
-		m_p_n_sio_control[ n ] = 0;
-		m_p_n_sio_baud[ n ] = 0;
-		m_p_n_sio_tx[ n ] = 0;
-		m_p_n_sio_rx[ n ] = 0;
-		m_p_n_sio_tx_prev[ n ] = 0;
-		m_p_n_sio_rx_prev[ n ] = 0;
-		m_p_n_sio_rx_data[ n ] = 0;
-		m_p_n_sio_tx_data[ n ] = 0;
-		m_p_n_sio_rx_shift[ n ] = 0;
-		m_p_n_sio_tx_shift[ n ] = 0;
-		m_p_n_sio_rx_bits[ n ] = 0;
-		m_p_n_sio_tx_bits[ n ] = 0;
 		m_p_f_sio_handler[ n ] = NULL;
 	}
 
@@ -1364,7 +1390,8 @@ void psx_driver_init( void )
 	state_save_register_UINT32( "psx", 0, "m_p_n_dmabase", m_p_n_dmabase, 7 );
 	state_save_register_UINT32( "psx", 0, "m_p_n_dmablockcontrol", m_p_n_dmablockcontrol, 7 );
 	state_save_register_UINT32( "psx", 0, "m_p_n_dmachannelcontrol", m_p_n_dmachannelcontrol, 7 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_dma_lastscanline", m_p_n_dma_lastscanline, 7 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_dma_ticks", m_p_n_dma_ticks, 7 );
+	state_save_register_UINT32( "psx", 0, "m_p_b_dma_running", m_p_b_dma_running, 7 );
 	state_save_register_UINT32( "psx", 0, "m_n_dpcp", &m_n_dpcp, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_dicr", &m_n_dicr, 1 );
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_count", m_p_n_root_count, 3 );

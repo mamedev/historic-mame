@@ -292,6 +292,8 @@ Key Index List:
 	O		0E	4		1E	F1		2E	BACKSP	3E	END		4E	RSHIFT	5E
 	P		0F	5		1F	F2		2F	TAB		3F	PGUP	4F	LCTRL	5F
 
+There are similar codes for joystick buttons; look at the table in input.h for those.
+
 Pre-Enable: (01100100 -------- -1------ --------) 0x64004000
 
 Enables a cheat on startup. Put the index of the cheat you want to enable in
@@ -2786,7 +2788,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 
 static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int selection)
 {
-	const char *	kTypeNames[] =
+	static const char *	kTypeNames[] =
 	{
 		"Normal/Delay",
 		"Wait",
@@ -2796,7 +2798,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Select"
 	};
 	
-	const char *	kNumbersTable[] =
+	static const char *	kNumbersTable[] =
 	{
 		"0",	"1",	"2",	"3",	"4",	"5",	"6",	"7",
 		"8",	"9",	"10",	"11",	"12",	"13",	"14",	"15",
@@ -2804,7 +2806,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"24",	"25",	"26",	"27",	"28",	"29",	"30",	"31"
 	};
 
-	const char *	kOperationNames[] =
+	static const char *	kOperationNames[] =
 	{
 		"Write",
 		"Add/Subtract",
@@ -2816,19 +2818,19 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Null"
 	};
 
-	const char *	kAddSubtractNames[] =
+	static const char *	kAddSubtractNames[] =
 	{
 		"Add",
 		"Subtract"
 	};
 
-	const char *	kSetClearNames[] =
+	static const char *	kSetClearNames[] =
 	{
 		"Set",
 		"Clear"
 	};
 
-	const char *	kPrefillNames[] =
+	static const char *	kPrefillNames[] =
 	{
 		"None",
 		"FF",
@@ -2836,13 +2838,13 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"01"
 	};
 
-	const char *	kEndiannessNames[] =
+	static const char *	kEndiannessNames[] =
 	{
 		"Normal",
 		"Swap"
 	};
 
-	const char *	kRegionNames[] =
+	static const char *	kRegionNames[] =
 	{
 		"CPU1",		"CPU2",		"CPU3",		"CPU4",		"CPU5",		"CPU6",		"CPU7",		"CPU8",
 		"GFX1",		"GFX2",		"GFX3",		"GFX4",		"GFX5",		"GFX6",		"GFX7",		"GFX8",
@@ -2851,7 +2853,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"USER1",	"USER2",	"USER3",	"USER4",	"USER5",	"USER6",	"USER7",	"USER8"
 	};
 
-	const char *	kLocationNames[] =
+	static const char *	kLocationNames[] =
 	{
 		"Normal",
 		"Region",
@@ -2863,7 +2865,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Unused (7)"
 	};
 
-	const char *	kCustomLocationNames[] =
+	static const char *	kCustomLocationNames[] =
 	{
 		"Comment",
 		"EEPROM",
@@ -2876,33 +2878,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 		"Unused (28)",	"Unused (29)",	"Unused (30)",	"Unused (31)"
 	};
 
-	const char *	kKeycodeNames[] =
-	{
-		"A",		"B",		"C",		"D",		"E",		"F",
-		"G",		"H",		"I",		"J",		"K",		"L",
-		"M",		"N",		"O",		"P",		"Q",		"R",
-		"S",		"T",		"U",		"V",		"W",		"X",
-		"Y",		"Z",		"0",		"1",		"2",		"3",
-		"4",		"5",		"6",		"7",		"8",		"9",
-		"[0]",		"[1]",		"[2]",		"[3]",		"[4]",
-		"[5]",		"[6]",		"[7]",		"[8]",		"[9]",
-		"F1",		"F2",		"F3",		"F4",		"F5",
-		"F6",		"F7",		"F8",		"F9",		"F10",
-		"F11",		"F12",
-		"ESC",		"~",		"-",		"=",		"BACKSPACE",
-		"TAB",		"[",		"]",		"ENTER",	":",
-		"\'",		"\\",		"\\",		",",		".",
-		"/",		"SPACE",	"INS",		"DEL",
-		"HOME",		"END",		"PGUP",		"PGDN",		"LEFT",
-		"RIGHT",	"UP",		"DOWN",
-		"[/]",		"[*]",		"[-]",		"[+]",
-		"[DEL]",	"[ENT]",	"PTSCR",	"PAUSE",
-		"LSHIFT",	"RSHIFT",	"LCONTROL",	"RCONTROL",
-		"LALT",		"RALT",		"SCRLLK",	"NUMLK",	"CAPSLK",
-		"LWIN",		"RWIN",		"MENU"
-	};
-
-	const char *	kSizeNames[] =
+	static const char *	kSizeNames[] =
 	{
 		"8 Bit",
 		"16 Bit",
@@ -3129,14 +3105,9 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				menuItemInfo[total].fieldType = kType_ActivationKey;
 				menuItem[total] = "Activation Key";
 
-				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_key_last;
-				if(entry->activationKey > __code_key_last)
-					entry->activationKey = __code_key_first;
-
 				if(	(entry->flags & kCheatFlag_HasActivationKey))
 				{
-					menuSubItem[total] = kKeycodeNames[entry->activationKey - __code_key_first];
+					menuSubItem[total] = code_name(entry->activationKey);
 				}
 				else
 				{
@@ -3761,8 +3732,8 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				entry->activationKey--;
 
 				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_key_last;
-				if(entry->activationKey > __code_key_last)
+					entry->activationKey = __code_joy_last;
+				if(entry->activationKey > __code_joy_last)
 					entry->activationKey = __code_key_first;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
@@ -4035,12 +4006,11 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 				entry->activationKey++;
 
 				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_key_last;
-				if(entry->activationKey > __code_key_last)
+					entry->activationKey = __code_joy_last;
+				if(entry->activationKey > __code_joy_last)
 					entry->activationKey = __code_key_first;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
-
 				break;
 
 			case kType_Type:
@@ -4572,7 +4542,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 
 static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int startNew)
 {
-	const char * energyStrings[] =
+	static const char * energyStrings[] =
 	{
 		"Equal",
 		"Less",
@@ -4582,7 +4552,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 		"Not Equal"
 	};
 
-	const char * bitStrings[] =
+	static const char * bitStrings[] =
 	{
 		"Equal",
 		"Not Equal"
@@ -6516,7 +6486,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 
 static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, SearchInfo * search)
 {
-	const char	* kSearchSpeedList[] =
+	static const char	* kSearchSpeedList[] =
 	{
 		"Fast",
 		"Medium",

@@ -74,14 +74,14 @@ Dumped by Uki
 #include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
 
-extern data8_t *bg_vram,*md_vram,*tx_vram,*fg_vram;
+extern data8_t *sm_bgvram,*md_vram,*tx_vram,*fg_vram;
 static UINT8 sengokumj_mux_data;
 
-READ_HANDLER( sengoku_bg_vram_r );
+READ_HANDLER( sengoku_sm_bgvram_r );
 READ_HANDLER( sengoku_fg_vram_r );
 READ_HANDLER( sengoku_md_vram_r );
 READ_HANDLER( sengoku_tx_vram_r );
-WRITE_HANDLER( sengoku_bg_vram_w );
+WRITE_HANDLER( sengoku_sm_bgvram_w );
 WRITE_HANDLER( sengoku_fg_vram_w );
 WRITE_HANDLER( sengoku_md_vram_w );
 WRITE_HANDLER( sengoku_tx_vram_w );
@@ -157,7 +157,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x08000, 0x087ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x08800, 0x097ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x09800, 0x09fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0c000, 0x0c7ff) AM_READ(sengoku_bg_vram_r)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_READ(sengoku_sm_bgvram_r)
 	AM_RANGE(0x0c800, 0x0cfff) AM_READ(sengoku_fg_vram_r)
 	AM_RANGE(0x0d000, 0x0d7ff) AM_READ(sengoku_md_vram_r)
 	AM_RANGE(0x0d800, 0x0e7ff) AM_READ(sengoku_tx_vram_r)
@@ -173,7 +173,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x08000, 0x087ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x08800, 0x097ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x09800, 0x09fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0c000, 0x0c7ff) AM_WRITE(sengoku_bg_vram_w) AM_BASE(&bg_vram)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_WRITE(sengoku_sm_bgvram_w) AM_BASE(&sm_bgvram)
 	AM_RANGE(0x0c800, 0x0cfff) AM_WRITE(sengoku_fg_vram_w) AM_BASE(&fg_vram)
 	AM_RANGE(0x0d000, 0x0d7ff) AM_WRITE(sengoku_md_vram_w) AM_BASE(&md_vram)
 	AM_RANGE(0x0d800, 0x0e7ff) AM_WRITE(sengoku_tx_vram_w) AM_BASE(&tx_vram)

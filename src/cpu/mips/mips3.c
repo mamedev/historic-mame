@@ -47,6 +47,7 @@
 #define COP0_Cause			13
 #define COP0_EPC			14
 #define COP0_PRId			15
+#define COP0_Config			16
 #define COP0_XContext		20
 
 /* Status register bits */
@@ -430,9 +431,11 @@ static void mips3_init(void)
 }
 
 
-static void mips3_reset(void *param, int bigendian)
+static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 {
 	struct mips3_config *config = param;
+	UINT32 configreg;
+	int divisor;
 
 	/* allocate memory */
 	mips3.icache = malloc(config->icache);
@@ -484,37 +487,107 @@ static void mips3_reset(void *param, int bigendian)
 
 	/* adjust for the initial PC */
 	change_pc(mips3.pc);
+	
+	/* config register: set the cache line size to 32 bytes */
+	configreg = 0x00026030;
+
+	/* config register: set the data cache size */
+	     if (config->icache <= 0x01000) configreg |= 0 << 6;
+	else if (config->icache <= 0x02000) configreg |= 1 << 6;
+	else if (config->icache <= 0x04000) configreg |= 2 << 6;
+	else if (config->icache <= 0x08000) configreg |= 3 << 6;
+	else if (config->icache <= 0x10000) configreg |= 4 << 6;
+	else if (config->icache <= 0x20000) configreg |= 5 << 6;
+	else if (config->icache <= 0x40000) configreg |= 6 << 6;
+	else                                configreg |= 7 << 6;
+	
+	/* config register: set the instruction cache size */
+	     if (config->icache <= 0x01000) configreg |= 0 << 9;
+	else if (config->icache <= 0x02000) configreg |= 1 << 9;
+	else if (config->icache <= 0x04000) configreg |= 2 << 9;
+	else if (config->icache <= 0x08000) configreg |= 3 << 9;
+	else if (config->icache <= 0x10000) configreg |= 4 << 9;
+	else if (config->icache <= 0x20000) configreg |= 5 << 9;
+	else if (config->icache <= 0x40000) configreg |= 6 << 9;
+	else                                configreg |= 7 << 9;
+	
+	/* config register: set the endianness bit */
+	if (bigendian) configreg |= 0x00008000;
+	
+	/* config register: set the system clock divider */
+	divisor = 2;
+	if (config->system_clock != 0)
+		divisor = Machine->drv->cpu[cpu_getactivecpu()].cpu_clock / config->system_clock;
+	configreg |= (((divisor < 2) ? 2 : (divisor > 8) ? 8 : divisor) - 2) << 28;
+	
+	/* set up the architecture */
+	mips3.is_mips4 = mips4;
+	mips3.cpr[0][COP0_PRId] = prid;
+	mips3.cpr[0][COP0_Config] = configreg;
 }
+
 
 #if (HAS_R4600)
 static void r4600be_reset(void *param)
 {
-	mips3_reset(param, 1);
-	mips3.cpr[0][COP0_PRId] = 0x2000;
-	mips3.is_mips4 = 0;
+	mips3_reset(param, 1, 0, 0x2000);
 }
 
 static void r4600le_reset(void *param)
 {
-	mips3_reset(param, 0);
-	mips3.cpr[0][COP0_PRId] = 0x2000;
-	mips3.is_mips4 = 0;
+	mips3_reset(param, 0, 0, 0x2000);
 }
 #endif
+
+
+#if (HAS_R4700)
+static void r4700be_reset(void *param)
+{
+	mips3_reset(param, 1, 0, 0x2100);
+}
+
+static void r4700le_reset(void *param)
+{
+	mips3_reset(param, 0, 0, 0x2100);
+}
+#endif
+
 
 #if (HAS_R5000)
 static void r5000be_reset(void *param)
 {
-	mips3_reset(param, 1);
-	mips3.cpr[0][COP0_PRId] = 0x2300;
-	mips3.is_mips4 = 1;
+	mips3_reset(param, 1, 1, 0x2300);
 }
 
 static void r5000le_reset(void *param)
 {
-	mips3_reset(param, 0);
-	mips3.cpr[0][COP0_PRId] = 0x2300;
-	mips3.is_mips4 = 1;
+	mips3_reset(param, 0, 1, 0x2300);
+}
+#endif
+
+
+#if (HAS_QED5271)
+static void qed5271be_reset(void *param)
+{
+	mips3_reset(param, 1, 1, 0x2300);
+}
+
+static void qed5271le_reset(void *param)
+{
+	mips3_reset(param, 1, 0, 0x2300);
+}
+#endif
+
+
+#if (HAS_RM7000)
+static void rm7000be_reset(void *param)
+{
+	mips3_reset(param, 1, 1, 0x2700);
+}
+
+static void rm7000le_reset(void *param)
+{
+	mips3_reset(param, 0, 1, 0x2700);
 }
 #endif
 
@@ -551,7 +624,7 @@ static void update_cycle_counting(void)
 		UINT32 count = (activecpu_gettotalcycles64() - mips3.count_zero_time) / 2;
 		UINT32 compare = mips3.cpr[0][COP0_Compare];
 		UINT32 cyclesleft = compare - count;
-		double newtime = TIME_IN_CYCLES(((UINT64)cyclesleft * 2), cpu_getactivecpu());
+		double newtime = TIME_IN_CYCLES(((INT64)cyclesleft * 2), cpu_getactivecpu());
 		
 		/* due to accuracy issues, don't bother setting timers unless they're for less than 100msec */
 		if (newtime < TIME_IN_MSEC(100))
@@ -626,6 +699,10 @@ INLINE void set_cop0_reg(int idx, UINT64 val)
 			break;
 
 		case COP0_PRId:
+			break;
+		
+		case COP0_Config:
+			mips3.cpr[0][idx] = (mips3.cpr[0][idx] & ~7) | (val & 7);
 			break;
 
 		default:
@@ -1117,19 +1194,19 @@ INLINE void handle_cop1x(UINT32 op)
 	switch (op & 0x3f)
 	{
 		case 0x00:		/* LWXC1 */
-			FDVALS = RLONG(RSVAL32 + RTVAL32);
+			set_cop1_reg(FDREG, RLONG(RSVAL32 + RTVAL32));
 			break;
 
 		case 0x01:		/* LDXC1 */
-			FDVALD = RDOUBLE(RSVAL32 + RTVAL32);
+			set_cop1_reg(FDREG, RDOUBLE(RSVAL32 + RTVAL32));
 			break;
 
 		case 0x08:		/* SWXC1 */
-			WDOUBLE(RSVAL32 + RTVAL32, FSVALS);
+			WLONG(RSVAL32 + RTVAL32, get_cop1_reg(FDREG));
 			break;
 
 		case 0x09:		/* SDXC1 */
-			WDOUBLE(RSVAL32 + RTVAL32, FSVALD);
+			WDOUBLE(RSVAL32 + RTVAL32, get_cop1_reg(FDREG));
 			break;
 
 		case 0x0f:		/* PREFX */
@@ -2105,6 +2182,52 @@ void r4600le_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 
+#if (HAS_R4700)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void r4700be_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r4700be_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4700 (big)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+
+
+void r4700le_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r4700le_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4700 (little)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
 #if (HAS_R5000)
 /**************************************************************************
  * CPU-specific set_info
@@ -2142,6 +2265,98 @@ void r5000le_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R5000 (little)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_QED5271)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void qed5271be_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = qed5271be_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "QED5271 (big)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+
+
+void qed5271le_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = qed5271le_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "QED5271 (little)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+#endif
+
+
+#if (HAS_RM7000)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void rm7000be_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = rm7000be_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "RM7000 (big)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+
+
+void rm7000le_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = rm7000le_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "RM7000 (little)"); break;
 
 		default:
 			mips3_get_info(state, info);

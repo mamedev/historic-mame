@@ -3,14 +3,6 @@
 1945 K-3 driver
 ---------------
 
-todo :
-dipdwitches
-
-sample banking (misisng humming sound on startup, wrong music on select screen)
-
-
-----
-
 1945K-III
 Oriental, 2000
 
@@ -49,7 +41,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "machine/random.h"
 
 static data16_t* k3_spriteram_1;
 static data16_t* k3_spriteram_2;
@@ -101,31 +92,28 @@ static void k3_draw_sprites ( struct mame_bitmap *bitmap, const struct rectangle
 		source++;source2++;
 	}
 }
+
 VIDEO_UPDATE(k3)
 {
 	tilemap_draw(bitmap,cliprect,k3_bg_tilemap,0,0);
 	k3_draw_sprites(bitmap,cliprect);
-
 }
 
 
-WRITE16_HANDLER( k3_0x340000_w )
+WRITE16_HANDLER( k3_scrollx_w )
 {
-//	usrintf_showmessage("%04x",data);
 	tilemap_set_scrollx( k3_bg_tilemap,0, data);
-
 }
 
-WRITE16_HANDLER( k3_0x380000_w )
+WRITE16_HANDLER( k3_scrolly_w )
 {
-//	usrintf_showmessage("%04x",data);
 	tilemap_set_scrolly( k3_bg_tilemap,0, data);
-
 }
 
-WRITE16_HANDLER( k3_0x3c0000_w )
+WRITE16_HANDLER( k3_soundbanks_w )
 {
-//	usrintf_showmessage("%04x",data);
+	OKIM6295_set_bank_base(0, (data & 4) ? 0x40000 : 0 );
+	OKIM6295_set_bank_base(1, (data & 1) ? 0 : 0x40000);
 }
 
 
@@ -137,17 +125,11 @@ static ADDRESS_MAP_START( k3_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x240000, 0x240fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x280000, 0x280fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x2c0000, 0x2c0fff) AM_READ(MRA16_RAM)
-
-
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x440000, 0x440001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x480000, 0x480001) AM_READ(input_port_2_word_r)
-
 	AM_RANGE(0x4c0000, 0x4c0001) AM_READ(OKIM6295_status_1_msb_r)
 	AM_RANGE(0x500000, 0x500001) AM_READ(OKIM6295_status_0_msb_r)
-
-
-
 	AM_RANGE(0x8c0000, 0x8cffff) AM_READ(MRA16_RAM)// not used?
 ADDRESS_MAP_END
 
@@ -157,22 +139,16 @@ static ADDRESS_MAP_START( k3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM) // ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) // Main Ram
-
 	AM_RANGE(0x200000, 0x200fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) // palette
 	AM_RANGE(0x240000, 0x240fff) AM_WRITE(MWA16_RAM) AM_BASE(&k3_spriteram_1)
 	AM_RANGE(0x280000, 0x280fff) AM_WRITE(MWA16_RAM) AM_BASE(&k3_spriteram_2)
 	AM_RANGE(0x2c0000, 0x2c0fff) AM_WRITE(k3_bgram_w) AM_BASE(&k3_bgram)
-
-	AM_RANGE(0x340000, 0x340001) AM_WRITE(k3_0x340000_w) // tilemapscrollx
-	AM_RANGE(0x380000, 0x380001) AM_WRITE(k3_0x380000_w) // tilemapscrolly
-	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(k3_0x3c0000_w) // not sure
-
+	AM_RANGE(0x340000, 0x340001) AM_WRITE(k3_scrollx_w)
+	AM_RANGE(0x380000, 0x380001) AM_WRITE(k3_scrolly_w)
+	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(k3_soundbanks_w)
 	AM_RANGE(0x4c0000, 0x4c0001) AM_WRITE(OKIM6295_data_1_msb_w)
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(OKIM6295_data_0_msb_w)
-
-
 	AM_RANGE(0x8c0000, 0x8cffff) AM_WRITE(MWA16_RAM) // not used?
-
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( k3 )
@@ -204,12 +180,15 @@ INPUT_PORTS_START( k3 )
 
 	PORT_START /* Dipswitch SW1 */
 	PORT_DIPNAME( 0x007,  0x0007, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0003, DEF_STR( Free_Play ) ) /* All other values not listed/defined on dip sheet */
-	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0018, 0x0008, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0000, "Easy" )
 	PORT_DIPSETTING(      0x0008, "Normal" )
 	PORT_DIPSETTING(      0x0010, "Hard" )
@@ -220,29 +199,28 @@ INPUT_PORTS_START( k3 )
 	PORT_DIPSETTING(      0x0020, "4" )
 	PORT_DIPSETTING(      0x0000, "5" )
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
-	/* 2nd bank of dips (unused by game?) */
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x0100, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -270,10 +248,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	2,				/* 1 chip */
+	2,									/* 2 chips */
 	{ 1000000/132, 1000000/132 },		/* frequency (Hz) */
 	{ REGION_SOUND2, REGION_SOUND1 },	/* memory region */
-	{ 47, 47 }
+	{ 100, 100 }
 };
 
 static MACHINE_DRIVER_START( k3 )
@@ -319,4 +297,4 @@ ROM_START( 1945kiii )
 	ROM_LOAD( "m16m-3.u61", 0x00000, 0x200000, CRC(32fc80dd) SHA1(bee32493a250e9f21997114bba26b9535b1b636c) )
 ROM_END
 
-GAMEX( 2000, 1945kiii, 0, k3, k3, 0, ROT270, "Oriental", "1945k III", GAME_IMPERFECT_SOUND )
+GAME( 2000, 1945kiii, 0, k3, k3, 0, ROT270, "Oriental", "1945k III" )

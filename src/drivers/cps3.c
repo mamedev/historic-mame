@@ -149,7 +149,7 @@ ROM_START( sfiii3 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) )
+	ROM_LOAD( "sf33rdbios.rom",  0x000000, 0x080000, BAD_DUMP CRC(9fa37a05) SHA1(22829c03d5109c451fc677a21592407cc09bcaa1) ) // fixed bits
 
 	/* Convert this to CHD? */
 	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
@@ -242,7 +242,39 @@ ROM_START( jojoba )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
 
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
+	// this was from a version which doesn't require the cd to run
 	ROM_LOAD( "jojoba.rom",  0x000000, 0x080000, CRC(4dab19f5) SHA1(ba07190e7662937fc267f07285c51e99a45c061e) )
+
+	/* Convert this to CHD? */
+	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
+	ROM_LOAD( "cap-jjm-110.cue",  0x0000000, 0x000004d, CRC(c9d6c2e8) SHA1(40d72a034b9d1ffa432d73cd7771de9abd0cf613) )
+	ROM_REGION( 0x4a17980, REGION_USER3, 0 ) /* cd bin image */
+	ROM_LOAD( "cap-jjm-110.bin",  0x0000000, 0x4a17980, CRC(6b02c63a) SHA1(66b9a20560bc7d033420adf73e34f26c49893d80) )
+
+	#ifdef LOAD_CD_CONTENT
+	/* Note: These regions contains the rom data extracted from the cd.
+	         This is done only to make analysis easier. Once correct
+	         emulation is possible this region will be removed and the
+	         roms will be loaded into flashram from the CD by the system */
+	ROM_REGION( 0x1000000, REGION_USER4, 0 ) /* cd content region */
+	ROM_LOAD( "10",  0x000000, 0x800000, CRC(6e2490f6) SHA1(75cbf1e39ad6362a21c937c827e492d927b7cf39) )
+	ROM_LOAD( "20",  0x800000, 0x800000, CRC(1293892b) SHA1(b1beafac1a9c4b6d0640658af8a3eb359e76eb25) )
+	ROM_REGION( 0x3000000, REGION_USER5, 0 ) /* cd content region */
+	ROM_LOAD( "30",  0x0000000, 0x800000, CRC(d25c5005) SHA1(93a19a14783d604bb42feffbe23eb370d11281e8) )
+	ROM_LOAD( "31",  0x0800000, 0x800000, CRC(51bb3dba) SHA1(39e95a05882909820b3efa6a3b457b8574012638) )
+	ROM_LOAD( "40",  0x1000000, 0x800000, CRC(94dc26d4) SHA1(5ae2815142972f322886eea4885baf2b82563ab1) )
+	ROM_LOAD( "41",  0x1800000, 0x800000, CRC(1c53ee62) SHA1(e096bf3cb6fbc3d45955787b8f3213abcd76d120) )
+	ROM_LOAD( "50",  0x2000000, 0x800000, CRC(36e416ed) SHA1(58d0e95cc13f39bc171165468ce72f4f17b8d8d6) )
+	ROM_LOAD( "51",  0x2800000, 0x800000, CRC(eedf19ca) SHA1(a7660bf9ff87911afb4f83b64456245059986830) )
+	/* 92,93 are bmp images, not extracted */
+	#endif
+ROM_END
+
+ROM_START( jojobaa )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
+
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
+	ROM_LOAD( "jojobacart.bin",  0x000000, 0x080000,  CRC(3085478c) SHA1(055eab1fc42816f370a44b17fd7e87ffcb10e8b7) )
 
 	/* Convert this to CHD? */
 	ROM_REGION( 0x0000800, REGION_USER2, 0 ) /* cd cue image */
@@ -271,9 +303,11 @@ ROM_END
 
 
 
+
 GAMEX( 1997, sfiii,   0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III - New Generation", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1998, sfiii2,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 2nd Impact - Giant Attack", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1999, sfiii3,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Street Fighter III 3rd Strike -  Fight for the Future", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1996, warzard, 0,        cps3, cps3, nocpu, ROT0,   "Capcom", "Warzard", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1998, jojo,    0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Venture", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1999, jojoba,  0,        cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1999, jojobaa, jojoba,   cps3, cps3, nocpu, ROT0,   "Capcom", "JoJo's Bizarre Adventure (alt)", GAME_NOT_WORKING|GAME_NO_SOUND )

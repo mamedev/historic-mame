@@ -120,6 +120,7 @@ WRITE_HANDLER( gteikob2_flip_screen_y_w );
 DRIVER_INIT( pisces );
 DRIVER_INIT( checkmaj );
 DRIVER_INIT( dingo );
+DRIVER_INIT( dingoe );
 DRIVER_INIT( kingball );
 DRIVER_INIT( mooncrsu );
 DRIVER_INIT( mooncrst );

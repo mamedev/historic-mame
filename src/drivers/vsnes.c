@@ -72,7 +72,6 @@ Needed roms:
 - Family Stadium '88						(by Namco, 1988)
 - Family Tennis								(by Namco, 198?)
 - Head to Head Baseball						(ever finished/released?, by Nintendo, 1986)
-- Japanese version of Vs. Tennis			(1984)
 - Japanese version of Vs. Soccer			(1985)
 - Japanese version of Vs. Super Mario Bros. (1986)
 - Lionex									(prototype by Sunsoft, 1987)
@@ -94,6 +93,11 @@ TO DO:
 	- Top Gun: cpu #0 (PC=00008016): unmapped memory byte read from 00007FFF ???
 
 Changes:
+
+  27/05/2004 Pierpaolo Prazzoli
+
+  - Fixed Vs. Gumshoe (fully working now)
+  - Changed coin inputs to use bit impulse
 
   16/10/2003 Pierpaolo Prazzoli
 
@@ -212,7 +216,6 @@ static WRITE_HANDLER( vsnes_coin_counter_w )
 	coin = data;
 	if( data & 0xfe ) //"bnglngby" and "cluclu"
 	{
-		//do something?
 		logerror("vsnes_coin_counter_w: pc = 0x%04x - data = 0x%02x\n", activecpu_get_pc(), data);
 	}
 }
@@ -271,7 +274,7 @@ ADDRESS_MAP_END
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 ) \
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 ) \
-\
+	\
 	PORT_START	/* IN1 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )	/* BUTTON A on a nes */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )	/* BUTTON B on a nes */ \
@@ -281,16 +284,16 @@ ADDRESS_MAP_END
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 ) \
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 ) \
-\
+	\
 	PORT_START	/* IN2 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */ \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 ) /* service credit? */ \
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 ) \
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
 
 #define VS_CONTROLS_REVERSE( SELECT_IN0, START_IN0, SELECT_IN1, START_IN1 ) \
 	PORT_START	/* IN0 */ \
@@ -316,12 +319,12 @@ ADDRESS_MAP_END
 	PORT_START	/* IN2 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */ \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 ) /* service credit? */ \
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 ) \
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
 
 #define VS_ZAPPER \
 PORT_START	/* IN0 */ \
@@ -347,12 +350,12 @@ PORT_START	/* IN0 */ \
 	PORT_START	/* IN2 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */ \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 ) /* service credit? */ \
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 ) \
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
 
 #define VS_DUAL_CONTROLS_L \
 	PORT_START	/* IN0 */ \
@@ -378,12 +381,12 @@ PORT_START	/* IN0 */ \
 	PORT_START	/* IN2 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */ \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 ) /* service credit? */ \
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 ) \
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */ \
 
 #define VS_DUAL_CONTROLS_R \
 	PORT_START	/* IN3 */ \
@@ -409,11 +412,11 @@ PORT_START	/* IN0 */ \
 	PORT_START	/* IN5 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2 ) /* service credit? */ \
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED ) \
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN4 ) \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2, 1 ) /* service credit? */ \
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN3, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN4, 1 ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */ \
 
 #define VS_DUAL_CONTROLS_REVERSE_L \
@@ -440,12 +443,12 @@ PORT_START	/* IN0 */ \
 	PORT_START	/* IN2 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 ) /* service credit? */ \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 ) /* service credit? */ \
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 ) \
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 ) \
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */ \
 
 #define VS_DUAL_CONTROLS_REVERSE_R \
 	PORT_START	/* IN3 */ \
@@ -471,11 +474,11 @@ PORT_START	/* IN0 */ \
 	PORT_START	/* IN5 */ \
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED ) /* serial pin from controller */ \
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2 ) /* service credit? */ \
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED ) \
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) \
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 ) \
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_COIN4 ) \
+	PORT_BIT_IMPULSE ( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2, 1 ) /* service credit? */ \
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 0 of dsw goes here */ \
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* bit 1 of dsw goes here */ \
+	PORT_BIT_IMPULSE ( 0x20, IP_ACTIVE_HIGH, IPT_COIN3, 1 ) \
+	PORT_BIT_IMPULSE ( 0x40, IP_ACTIVE_HIGH, IPT_COIN4, 1 ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* this bit masks irqs - dont change */ \
 
 INPUT_PORTS_START( vsnes )
@@ -1529,8 +1532,8 @@ INPUT_PORTS_START( vsgshoe )
 	PORT_DIPSETTING(	0x10, "Hard" )
 	PORT_DIPSETTING(	0x18, "Hardest" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPSETTING(	0x20, "3" )
+	PORT_DIPSETTING(	0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x00, "Bullets per Balloon" )
 	PORT_DIPSETTING(	0x00, "3" )
 	PORT_DIPSETTING(	0x40, "2" )
@@ -2193,11 +2196,12 @@ ROM_START( hogalley )
 ROM_END
 
 ROM_START( vsgshoe )
-	ROM_REGION( 0x20000,REGION_CPU1, 0 ) /* 6502 memory */
+	ROM_REGION( 0x14000,REGION_CPU1, 0 ) /* 6502 memory */
+	/* 2 banks mapped at 0x8000 */
 	ROM_LOAD( "mds-gm5.1d",  0x10000, 0x4000, CRC(063b342f) SHA1(66f69de27db5b08969f9250d0a6760e7311bd9bf)  ) // its probably not bad .. just banked somehow
-	ROM_LOAD( "mds-gm5.1c",  0x14000, 0x2000, CRC(e1b7915e) SHA1(ed0fdf74b05a3ccd1645c4f580436fd439f81dea) )
-	ROM_LOAD( "mds-gm5.1b",  0x16000, 0x2000, CRC(5b73aa3c) SHA1(4069a6139091fbff48758953bd894808a8356d46) )
-	ROM_LOAD( "mds-gm5.1a",  0x18000, 0x2000, CRC(70e606bc) SHA1(8207ded20cb9109d605ce73deb722de3514ed9bf) )
+	ROM_LOAD( "mds-gm5.1c",  0x0a000, 0x2000, CRC(e1b7915e) SHA1(ed0fdf74b05a3ccd1645c4f580436fd439f81dea) )
+	ROM_LOAD( "mds-gm5.1b",  0x0c000, 0x2000, CRC(5b73aa3c) SHA1(4069a6139091fbff48758953bd894808a8356d46) )
+	ROM_LOAD( "mds-gm5.1a",  0x0e000, 0x2000, CRC(70e606bc) SHA1(8207ded20cb9109d605ce73deb722de3514ed9bf) )
 
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
 	ROM_LOAD( "mds-gm5.2b",  0x0000, 0x2000, CRC(192c3360) SHA1(5ddbe007d8bc693a0b7c92f33e6ed6b27dc1c08e) )
@@ -2782,7 +2786,8 @@ GAMEX(1985, jajamaru, 0,        vsnes,   jajamaru, jajamaru, ROT0, "Jaleco",    
 GAME( 1987, topgun,   0,        vsnes,   topgun,   topgun,   ROT0, "Konami",    "Vs. Top Gun")
 GAME( 1985, bnglngby, 0,        vsnes,   bnglngby, bnglngby, ROT0, "Nintendo / Broderbund Software Inc.",  "Vs. Raid on Bungeling Bay (Japan)" )
 GAME( 1986, supxevs,  0,        vsnes,   supxevs,  supxevs,  ROT0, "Namco",		"Vs. Super Xevious" )
-GAME( 1988, vsfdf,    0,        vsnes,   vsfdf,    vsfdf,	 ROT0, "Konami",	"Vs. Freedom Force" )
+GAME( 1988, vsfdf,    0,        vsnes,   vsfdf,    vsfdf,	 ROT0, "Sunsoft",	"Vs. Freedom Force" )
+GAME( 1986, vsgshoe,  0,        vsnes,   vsgshoe,  vsgshoe,  ROT0, "Nintendo",  "Vs. Gumshoe" )
 
 /* Dual games */
 GAME( 1984, vstennis, 0,        vsdual,  vstennis, vstennis, ROT0, "Nintendo",  "Vs. Tennis"  )
@@ -2795,9 +2800,6 @@ GAME( 1984, vsbballj, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of 
 GAME( 1984, vsbbalja, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 2)" )
 GAME( 1984, iceclmrj, 0,        vsdual,  iceclmrj, iceclmrj, ROT0, "Nintendo",  "Vs. Ice Climber Dual (Japan)"  )
 
-/* Partially working */
-GAME( 1986, vsgshoe,  0,        vsnes,   vsgshoe,  vsgshoe,  ROT0, "Nintendo",  "Vs. Gumshoe" )
-
-/* Not Working */
+/* Not Working (bad dumps) */
 GAMEX(1985, smgolfb,  smgolf,   vsnes,   golf,     machridr, ROT0, "Nintendo",	"Vs. Stroke and Match Golf (Men set 2)", GAME_NOT_WORKING )
 GAMEX(1984, vsbbaljb, vsbball,  vsdual,  vsbballj, vsbball,  ROT0, "Nintendo of America",  "Vs. BaseBall (Japan set 3)", GAME_NOT_WORKING )

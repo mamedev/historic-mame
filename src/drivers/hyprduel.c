@@ -13,7 +13,7 @@ Imagetek Inc 14220 071
 --
 driver by Eisuke Watanabe
 based on driver from drivers/metro.c by Luca Elia
-spthx to kikur,Cha,teioh,kokkyusan,teruchu
+spthx to kikur,Cha,teioh,kokkyu,teruchu,aya,sgo
 
 Note:
 sub68k is performing not only processing of sound but assistance of main68k.
@@ -130,7 +130,7 @@ static WRITE16_HANDLER( hypr_subcpu_control_w )
 			cpu_set_reset_line(1, CLEAR_LINE);
 			subcpu_resetline = 0;
 			if (pc == 0xbb0 || pc == 0x9d30 || pc == 0xb19c)
-				cpu_spinuntil_time(TIME_IN_USEC(10000));
+				cpu_spinuntil_time(TIME_IN_USEC(15000));		/* sync semaphore */
 		}
 		else if (subcpu_resetline == -1)
 		{
@@ -695,6 +695,7 @@ MACHINE_DRIVER_END
 static DRIVER_INIT( hyprduel )
 {
 	int i;
+	data8_t *ROM = memory_region(REGION_GFX1);
 
 	/*
 	  Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
@@ -703,7 +704,10 @@ static DRIVER_INIT( hyprduel )
 	  for both tile depths.
 	*/
 	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
+		ROM[i] ^= 0xff;
+
+//	ROM[(0x174b9*0x20)+0x1f] |= 0x0e;		/* I */
+//	ROM[(0x174e9*0x20)+0x1f] |= 0x0e;
 
 	install_mem_write16_handler(0, 0xc00000, 0xc07fff, hypr_sharedram1_w);
 	install_mem_write16_handler(1, 0xc00000, 0xc07fff, hypr_sharedram1_w);

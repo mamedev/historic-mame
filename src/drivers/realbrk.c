@@ -34,6 +34,143 @@ To Do:
 - Sometimes sprites are shrinked to end up overlapping the background image
   in the tilemaps, but they are a few pixels off
 
+
+
+Pachinko Gindama Shoubu DX
+Nakanihon Inc. / Dynax, 1998
+
+PCB Layout
+----------
+
+NM522-1-9803
+|----------------------------------------------------------------------|
+||-----|              |--------|                                       |
+||68301| 52202B       |ACTEL   | M548262   YMZ280B          52204      |
+||     | 52201B       |TPC1010 | M548262   32.768kHz 52203  52205      |
+||-----|              |(PLCC68)|           M6242B   3V_BATT            |
+|                     |--------||---------|  PST532A      |---------|  |
+|            TC55257 33.8688MHz |NIKANIHON|               |NIKANIHON|  |
+|            TC55257            |4L10F2468|    32.000MHz  |4L10F2467|  |
+|2            TC55257           |         |               |         |  |
+|8            TC55257           |(QFP160) |               |(QFP160) |  |
+|W                              |---------| PAL           |---------|  |
+|A                           LC3664     52206     52208     52210      |
+|Y      VOL1                 LC3664          52207     52209     52211 |
+|       VOL2                     LC3664                                |
+| TA7252      3404               LC3664                                |
+|     3404                                                             |
+|  YAC516  YM2413        TC55257                                       |
+|            3.579545MHz TC55257                                       |
+| DSW2(10) DSW1(10)                                                    |
+| DSW3(10) DSW4(10)             *    *    *    *    *    *    *    *   |
+|                        TC55257                                       |
+| CN3                    TC55257                                       |
+| CN4                                                                  |
+|----------------------------------------------------------------------|
+
+Notes:
+              *: unpopulated 32 pin sockets
+         PST532: IC for system reset and battery backup switching
+        DIPSW's: Each have 10 switches.
+      VOL1/VOL2: Separate volume levels for sound and voice
+        CN3/CN4: Connectors for player 3 & 4 controls
+        TC55257: 32K x8 SRAM
+         LC3664: 8K x8 SRAM
+        M548262: 256K x8 fastpage VRAM
+          28WAY: Edge connector is JAMMA backwards (GND is pin 28,27; +5V is pins 26,25 etc)
+                 and with RBG locations moved (i.e. not standard JAMMA)
+
+  Vertical Sync: 60Hz
+    Horiz. Sync: 15.81kHz
+    68301 clock: 16.000MHz (32 / 2)
+  YMZ280B clock: 16.9344MHz (33.8688 / 2)
+   YM2413 clock: 3.579545MHz
+OKI M6242 clock: 32.768kHz
+
+
+Pachinko Gindama Shoubu
+Nakanihon Inc. / Dynax, 199x
+
+PCB Layout
+----------
+
+NM5050905-1
+|----------------------------------------------------------------------|
+| TA8201 75074 YM2413          |-----|     |------------------------|  |
+|   PST532A  3V_BATT 32.768kHz |68301|  CN2|------------------------|  |
+|        75074  M6242B         |     |     TC55257   YMZ280B           |
+|  YAC513      3.579545MHz     |-----|     TC55257             TC55257 |
+|                              |--------|                              |
+|                              |ACTEL   |                      TC55257 |
+|                              |A1010B  |                              |
+|                              |(PLCC68)|                      TC55257 |
+|                              |--------|                              |
+|J         TC55257                                             TC55257 |
+|A                                                                     |
+|M         TC55257                                                     |
+|M                                  M548262                            |
+|A                                  M548262         32.000MHz          |
+|                                               TC55257                |
+|                                  |---------|             |---------| |
+|    DSW1(10)                      |NIKANIHON|  TC55257    |NIKANIHON| |
+|                                  |4L10F2468|             |4L10F2467| |
+|    DSW2(10)     TC55257          |         |             |         | |
+|                                  |(QFP160) |             |(QFP160) | |
+|                 TC55257          |---------|             |---------| |
+|   CN6                                    |------------------------|  |
+|   CN7              33.8688MHz         CN3|------------------------|  |
+|----------------------------------------------------------------------|
+Notes:
+              *: unpopulated 32 pin sockets
+         PST532: IC for system reset and battery backup switching
+        DIPSW's: Each have 10 switches.
+        CN2/CN3: ROM daughterboard connectors
+        CN6/CN7: Connectors for player 3 & 4 controls
+        TC55257: 32K x8 SRAM
+        M548262: 256K x8 fastpage VRAM
+
+  Vertical Sync: 60Hz
+    Horiz. Sync: 15.81kHz
+    68301 clock: 16.000MHz (32 / 2)
+  YMZ280B clock: 16.9344MHz (33.8688 / 2)
+   YM2413 clock: 3.579545MHz
+OKI M6242 clock: 32.768kHz
+
+
+ROM Daughterboard
+-----------------
+
+NS5050905-2
+|----------------------------------------|
+|            |------------------------|  |
+|         CN1|------------------------|  |
+|                                        |
+|  50505.1K     50507.1F    50510.1C     |
+|     50506.1H      50508.1E    50511.1B |
+|                                        |
+|              PAL   50509.2D    50512.2A|
+|                                        |
+|              PAL                       |
+|                                        |
+|                                        |
+|50503.3L          *    *    *    *      |
+|      50504.3K                          |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|50501.4L          *    *    *    *      |
+|      50502.4K                          |
+|                                        |
+|                                        |
+|            |------------------------|  |
+|         CN2|------------------------|  |
+|----------------------------------------|
+Notes:
+      *: Unpopulated 32pin sockets
+
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -401,5 +538,61 @@ ROM_START( realbrk )
 	ROM_LOAD( "52303.2e", 0x000000, 0x400000, CRC(d3005b1e) SHA1(3afd10cdbc3aa7605083a9fcf3c4b8276937c2c4) )
 ROM_END
 
-GAMEX( 1998, realbrk, 0, realbrk, realbrk, 0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
+ROM_START( pkgnsh )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
+	ROM_LOAD16_BYTE( "50506.1h", 0x000001, 0x080000, CRC(06949a7d) SHA1(1276c28bc5cebeae749e0cded2da631353efbbb4) )
+	ROM_LOAD16_BYTE( "50505.1k", 0x000000, 0x080000, CRC(26df869f) SHA1(d716e561441da6ae8ca61e17335aab44770157a6) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Backgrounds */
+	ROM_LOAD32_WORD( "50512.2a", 0x0000002, 0x200000, CRC(5adae7bb) SHA1(de7cf952155459f7aab1448620bf26a925ca0572) )
+	ROM_LOAD32_WORD( "50509.2d", 0x0000000, 0x200000, CRC(ad937ab5) SHA1(ebe02c203358787c6b406fe3cbd3eca3b245456e) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text Layer */
+	ROM_LOAD16_BYTE( "50510.1c", 0x000001, 0x020000, CRC(e26f1ad6) SHA1(5713af5fb02885657889cb2df7f58a39987ace6a) )
+	ROM_LOAD16_BYTE( "50511.1b", 0x000000, 0x020000, CRC(3da9af01) SHA1(21313fd5c8cf7ccb72c85422dbddfceedab2542f) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE )	/* Sprites (256 colors) */
+	ROM_LOAD32_WORD( "50502.4k", 0x0000000, 0x400000, CRC(f7c04779) SHA1(fcbc2d166d405d0fe2a4ca67950fe6ec060b9fc1) ) // same as 52206.9f on dx
+	ROM_LOAD32_WORD( "50504.3k", 0x0000002, 0x400000, CRC(8e872be5) SHA1(0568a70ca640624f665b8b92ca5e9239b13ed116) ) // same as 52208.9d on dx
+	ROM_LOAD32_WORD( "50501.4l", 0x0800000, 0x200000, CRC(ca31e1ad) SHA1(7508547de5617f6091fc46f6eb1b45673419c483) )
+	ROM_LOAD32_WORD( "50503.3l", 0x0800002, 0x200000, CRC(80b5e8d0) SHA1(27359affaa84c7cb4dfc019bbfeae0f384602faa) )
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) Not Used */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "50508.1e", 0x000000, 0x080000, CRC(95a1473a) SHA1(d382a9a603711747c2fe5bd5721de5af369ccc42) )
+	ROM_LOAD( "50507.1f", 0x080000, 0x080000, CRC(34a003a1) SHA1(f3fa4de1f75e8fa18a8431a8c2ce495aa47989b9) )
+ROM_END
+
+
+ROM_START( pkgnshdx )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
+	ROM_LOAD16_BYTE( "52202b.1r", 0x000000, 0x080000, CRC(3c1a10de) SHA1(44a13adec64645aa01e216dfd527b59e7298c732) )
+	ROM_LOAD16_BYTE( "52201b.2r", 0x000001, 0x080000, CRC(d63797ce) SHA1(d1b0b57b5426135e36772be296e94e04822e54ac) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Backgrounds */
+	ROM_LOAD32_WORD( "52210.9b", 0x0000000, 0x200000, CRC(6865b76a) SHA1(26215ec38b1fef279b3c3c1453116a0afe938b6b) )
+	ROM_LOAD32_WORD( "52211.9a", 0x0000002, 0x200000, CRC(8e227328) SHA1(200f9e4419dac62b191e5e8c6c32b777a9c08e5e) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text Layer */
+	ROM_LOAD16_BYTE( "52205.1a", 0x000000, 0x020000, CRC(4b7d16c0) SHA1(5f6410121ec13bea2869d61db169dbe2536453ea) )
+	ROM_LOAD16_BYTE( "52204.1b", 0x000001, 0x020000, CRC(47a39496) SHA1(3ac9499b70c63185fb65378c18d4ff30ba1d2f2b) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE )	/* Sprites (256 colors) */
+	ROM_LOAD32_WORD( "52206.9f", 0x0000000, 0x400000, CRC(f7c04779) SHA1(fcbc2d166d405d0fe2a4ca67950fe6ec060b9fc1) )
+	ROM_LOAD32_WORD( "52208.9d", 0x0000002, 0x400000, CRC(8e872be5) SHA1(0568a70ca640624f665b8b92ca5e9239b13ed116) )
+	ROM_LOAD32_WORD( "52207.9e", 0x0800000, 0x200000, CRC(ae7a983f) SHA1(ba8ff28068e21dd24ea2e523a5b4023e86ea26cb) )
+	ROM_LOAD32_WORD( "52209.9c", 0x0800002, 0x200000, CRC(83ac2ea9) SHA1(aa1c45b7a404eed51e950bea3edcd34814f09213) )
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) Not Used */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "52203.2e", 0x000000, 0x100000, CRC(342a193d) SHA1(1e75ec7ac48dcc8396a0fa6db14f2661c28f671c) )
+ROM_END
+
+
+
+GAMEX( 1998, realbrk,  0, realbrk, realbrk, 0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, pkgnsh, 0, realbrk, realbrk, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAMEX( 1998, pkgnshdx, 0, realbrk, realbrk, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
 

@@ -361,7 +361,7 @@ static WRITE16_HANDLER( kof99_bankswitch_w )
 		0x42e800, 0x52e800, 0x431800, 0x531800,
 		0x54d000, 0x551000, 0x567000, 0x592800,
 		0x588800, 0x581800, 0x599800, 0x594800,
-		0x200000,	/* rest not used? */
+		0x598000,	/* rest not used? */
 	};
 
 	/* unscramble bank number */

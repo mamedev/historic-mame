@@ -892,7 +892,7 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-ROM_START( area51 ) /* 68020 based, Area51 Time Warner License  Date: Nov 15, 1995 */
+ROM_START( area51t ) /* 68020 based, Area51 Time Warner License  Date: Nov 15, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
@@ -902,7 +902,7 @@ ROM_START( area51 ) /* 68020 based, Area51 Time Warner License  Date: Nov 15, 19
 	ROM_LOAD32_BYTE( "3k.bin", 0x00003, 0x80000, CRC(94f50c14) SHA1(a54552e3ac5c4f481ba4f2fc7d724534576fe76c) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51", 0, MD5(60d051da941d76aafd47c862e3b6e209) SHA1(fee528eef8a256f87af299499ecf5817218f5202) )
+	DISK_IMAGE( "area51t", 0, MD5(60d051da941d76aafd47c862e3b6e209) SHA1(fee528eef8a256f87af299499ecf5817218f5202) )
 ROM_END
 
 ROM_START( area51a ) /* 68020 based, Area51 Atari Games License  Date: Oct 25, 1995 */
@@ -915,10 +915,10 @@ ROM_START( area51a ) /* 68020 based, Area51 Atari Games License  Date: Oct 25, 1
 	ROM_LOAD32_BYTE( "3k", 0x00003, 0x80000, CRC(729eb1b7) SHA1(21864b4281b1ad17b2903e3aa294e4be74161e80) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51a", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
+	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
 ROM_END
 
-ROM_START( a51r3k ) /* R3000 based, labeled as "Area51 2-C" */
+ROM_START( area51 ) /* R3000 based, labeled as "Area51 2-C"  Date: Nov 11 1996 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
@@ -928,7 +928,7 @@ ROM_START( a51r3k ) /* R3000 based, labeled as "Area51 2-C" */
 	ROM_LOAD32_BYTE( "a51_2-c.ll", 0x00003, 0x80000, CRC(471b15d2) SHA1(4b5f45ee140b03a6be61475cae1c2dbef0f07457) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51a", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
+	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
 ROM_END
 
 ROM_START( maxforce ) /* R3000 based, labeled as "Maximum Force 5-23-97 v1.05" */
@@ -1032,7 +1032,7 @@ static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
 }
 
 
-static DRIVER_INIT( area51 )
+static DRIVER_INIT( area51a )
 {
 	common_init(1, 0x5c4, 0x5a0);
 
@@ -1043,20 +1043,16 @@ static DRIVER_INIT( area51 )
 }
 
 
-static DRIVER_INIT( a51r3k )
+static DRIVER_INIT( area51 )
 {
-	common_init(1, 0x0c0, 0x09e);
-
-	/* patch the protection */
-	rom_base[0x220/4] = 0x03e00008;
+ common_init(1, 0x0c0, 0x09e);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
 	main_speedup_max_cycles = 120;
-	main_speedup = install_mem_read32_handler(0, 0x10006f0c, 0x10006f0f, cojagr3k_main_speedup_r); /* Need to find correct speedup */
+	main_speedup = install_mem_read32_handler(0, 0x100062e8, 0x100062eb, cojagr3k_main_speedup_r);
 #endif
 }
-
 
 static DRIVER_INIT( maxforce )
 {
@@ -1121,9 +1117,9 @@ static DRIVER_INIT( vcircle )
  *
  *************************************/
 
-GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Time Warner", "Area 51 (Time Warner License)" )
-GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Atari Games License)" )
-GAME( 1995, a51r3k,   area51,   r3knarrow, area51,   a51r3k,   ROT0, "Atari Games", "Area 51 (R3000)" )
+GAME( 1996, area51,   0,        r3knarrow, area51,   area51,   ROT0, "Atari Games", "Area 51 (R3000)" )
+GAME( 1995, area51t,  area51,   cojag68k,  area51,   area51a,  ROT0, "Time Warner", "Area 51 (Time Warner License)" )
+GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51a,  ROT0, "Atari Games", "Area 51 (Atari Games License)" )
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05" )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02" )
 GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo v2.0" )

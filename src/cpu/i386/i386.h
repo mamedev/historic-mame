@@ -153,6 +153,9 @@ typedef struct {
 
 	int cycles;
 	UINT8 opcode;
+
+	int irq_line;
+	int (*irq_callback)(int);
 } I386_REGS;
 
 

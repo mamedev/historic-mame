@@ -49,6 +49,7 @@ struct serial_state
 struct pic_state
 {
 	UINT16	latch;
+	mame_time latch_expire_time;
 	UINT8	state;
 	UINT8	index;
 	UINT8	total;
@@ -270,7 +271,10 @@ UINT8 midway_serial_pic2_status_r(void)
 	/* if we're still holding the data ready bit high, do it */
 	if (pic.latch & 0xf00)
 	{
-		pic.latch -= 0x100;
+		if (compare_mame_times(mame_timer_get_time(), pic.latch_expire_time) > 0)
+			pic.latch &= 0xff;
+		else
+			pic.latch -= 0x100;
 		result = 1;
 	}
 
@@ -313,6 +317,7 @@ void midway_serial_pic2_w(UINT8 data)
 
 	/* store in the latch, along with a bit to indicate we have data */
 	pic.latch = (data & 0x00f) | 0x480;
+	pic.latch_expire_time = add_subseconds_to_mame_time(mame_timer_get_time(), DOUBLE_TO_SUBSECONDS(1. / 1000.));
 	if (data & 0x10)
 	{
 		int cmd = pic.state ? (pic.state & 0x0f) : (pic.latch & 0x0f);
@@ -545,6 +550,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		{ 0xf,0xe,0xd,0xc,0x4,0x5,0x6,0x7,0x9,0x8,0xa,0xb,0x2,0x3,0x1,0x0 },	/* Mace */
 		{ 0xc,0xd,0xe,0xf,0x0,0x1,0x2,0x3,0x7,0x8,0x9,0xb,0xa,0x5,0x6,0x4 },	/* Gauntlet Dark Legacy */
 		{ 0x7,0x4,0x5,0x6,0x2,0x0,0x1,0x3,0x8,0x9,0xa,0xb,0xd,0xc,0xe,0xf },	/* Vapor TRX */
+		{ 0x7,0x4,0x5,0x6,0x2,0x0,0x1,0x3,0x8,0x9,0xa,0xb,0xd,0xc,0xe,0xf },	/* San Francisco Rush: The Rock */
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
@@ -561,6 +567,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	
 	/* reset the chip */
 	midway_ioasic_reset();
+	ioasic.reg[IOASIC_SOUNDCTL] = 0x0001;
 	
 	/* configure the fifo */
 	if (ioasic.has_dcs)
@@ -950,10 +957,12 @@ WRITE32_HANDLER( midway_ioasic_w )
 			break;
 
 		case IOASIC_PICOUT:
-			if (ioasic.shuffle_type != MIDWAY_IOASIC_VAPORTRX)
-				midway_serial_pic2_w(newreg);
-			else
+			if (ioasic.shuffle_type == MIDWAY_IOASIC_VAPORTRX)
 				midway_serial_pic2_w(newreg ^ 0x0a);
+			else if (ioasic.shuffle_type == MIDWAY_IOASIC_SFRUSHRK)
+				midway_serial_pic2_w(newreg ^ 0x05);
+			else
+				midway_serial_pic2_w(newreg);
 			break;
 		
 		case IOASIC_INTCTL:

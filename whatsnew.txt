@@ -1,756 +1,361 @@
-0.82
+0.83
 ----
 
 General Source Changes
 ----------------------
 
-6502 cycle count fix [Stefan Jokisch]
+Misc Changes [Nathan Woods]
+	src/inptport.c:
+	src/inptport.h:
+	src/mame.c:
+	    - Switched input_port_allocate() to use auto_malloc(), removing the 
+	need for input_port_free()
+	
+	src/windows/fronthlp.c:
+	    - Added an optional definition for the S_ISDIR macro for when it is 
+	not present
 
-Some cleanups to Flower driver [Pierpaolo Prazzoli]
 
-Fixed 4enraya colours [Pierpaolo Prazzoli]
+STV Update [Mariusz Wojcieszek]
+	- added VDP2 layer disabling based on VRAM cycle pattern registers - fixes
+	gfx glitches in shanhigw title screen
+	- added VDP1 half transparency - improves sprites alpha blending in
+	shanhigw in-game
+	- added VDP1 Gouraud shading (for normal sprites only) - adds highlighting
+	for selected tiles in shanhigw
 
-i960: Added a bunch of fp opcodes, stylistic fixes [Olivier Galibert]
+Changed some names + years in segac2.c and playch10.c [Curt Coder]
 
-Small VC compile fixes [Bryan McPhail]
+Spiders NVRam [Justin Szczap]
 
-Fixed S22 crash [R.Belmont]
+tecmosys.c update [Tomasz Slanina]
+	emulates some parts of vidhrdw but games still don't work due to protection?
 
-i386 improvements [Nathan Woods]
-	- Implemented zeroing out A20 lines
-	- Implemented state save support
-	- Unknown instructions now disassemble as '???'
-	- Implemented XLAT opcode
-	- DAA fixes
+Fixed cheat engine bug preventing assignment of controller buttons as activation keys [Ian Patterson]
 
-Fixed the MEM_DUMP debug code [Nathan Woods]
-
-added MC68008 support to the MC68000 core [Curt Coder]
-
-Simulated protection in FlyBoy [MASH]
-
-PSX sio improvements [smf]
-
-Various DIP fixes [Brian Troha]
-
-Behind the scenes Konami GX improvements [David Haywood]
-
+Sega System 16/18 update [Charles MacDonald]
+	- Added MSM5205 sample playback to tturfbl.
+	- Added MSM5205 sample playback to shdancbl.
+	
+PSX updates [smf]
+	heavens gate graphics issues & correct loading / banking.
+	correct loading for super football champ ( now it's stuck in test mode ) and
+	added later world version.
+	taito fx1 watchdog ( address is unconfirmed, but hopefully soon ).
+	pasted in taito fx1a readme
+	pal support for mess.
+	horizontal start/end
+	
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
 
-Star Gladiator [smf]
-Street Fighter EX [smf]
-
-Street Fighter EX 2 [smf]
-	may have the occasional lockup still
-
-1945k III
-	sample banking needs adding
+Cannonball (Atari, prototype) [Stefan Jokisch]
+	one ROM is missing from the only known PCB causing
+	some GFX problems
 	
-Tylz (prototype) [ENGCameraman]
-	some sound issues
+VS. Gumshoe [Pierpaolo Prazzoli]
+	banking fixed, game now works properly
+
+Miss Puzzle [David Haywood]
+	bad rom causes some gfx glitches
 	
-Dynagears [David Haywood, Tomasz Slanina]
-	-todo: clean up video emulation a bit (uses SSV vidhrdw in a strange way)
-	
-Super World Stadium [David Haywood]
+Greyhound Trivia (various sets) [Pierpaolo Prazzoli, Chris Hardy]
 
-Various Megatech sets [David Haywood]
-	(note megatech is still marked as NON-WORKING anyway due to bios issues)
-
-Agress [David Haywood]
-	some video issues
-
-Time Crisis (Version A) [Phil Stroffolino]
-	some gun aiming problems? (or is it just a calibration issue?)
-	
-One + Two [Pierpaolo Prazzoli]
-	palette problems?
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-Continental Circus (US set 2)
-
+Heaven's Gate
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-Racing Beat [David Graves]
-	serious video emulation issues (raster irq?)
-	
-Mission Craft
-	needs more work on Hyperstone core
+GP500 [R.Belmont]
+	preliminary driver 'Hopeless Hardware' doesn't do anything yet
 	
 
-0.81u9
+0.82u3
 ------
 
 General Source Changes
 ----------------------
 
-Cleanups of i960 core so the disassembler compiles [Olivier Galibert]
+Fixed rendering issue with Magical Date [smf]
 
-Corrected some vsnes filenames [Chack'n]
+Fixed Sonic Wings Limited Lockup [smf]
 
-SCSP Update [ElSemi]
-	- Fixed envelope rates to be correct
-	- Added key rate scaling support
-	- Added ringbuffer support
-
-Added colour proms to Moon Base [Stefan Jokisch]
-
-Changed file handling behavior, adding a one character buffer [Andrea Mazzoleni]
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Strider 2 [smf]
-	but suffers from random lockups on bosses
-	
-
-New Non-Working games / clones supported
-----------------------------------------
-
-Monster Bash (2 board version) [Mash]
-	doesn't work, incomplete decryption?
-	
-One + Two [David Haywood]
-	wip driver, still being worked on
-	
-
-
-	
-0.81u8 (private release due to some code cleanups being needed)
-------
-
-General Source Changes
-----------------------
-
-386 updates [Nathan Woods]
+Various changes [Nathan Woods]
 	src/cpu/i386/i386.c:
-	    - Implemented usage of segment limits (or whatever they are called)
-	    - Implemented 16-bit interrupts
-	    - Initial values of IDTR are now properly specified
-	    - i386_interrupt() is no longer called when i386_set_irq_line() is 
-	called with a state of zero
-	    - Actual cycle count is now returned
-	
-	src/cpu/i386/i386op16.c:
-	    - Partially implemented far CALL and JMP instruction
-
+	src/cpu/i386/i386.h:
 	src/cpu/i386/i386ops.c:
-	    - Implemented PUSH rm8 instruction
-
-i960 cpu core / disassembler [Olivier Galibert, R.Belmont, Farfetch'd]
-
-SPI Improvements [Ville Linde]
-	SPI:
-	- The "old" video hardware (viperp1) does have 3
-	layers after all, but no rowscroll.  Fixed.
- 
-	386:
-	- Bugfixed Nathan's REP
-
-Fixed YMF271 pitch [Ville Linde]
-	improves music in Brave Blade
+	    - Revamped interrupt handling; a bonafide line is now implemented 
+	and also implemented IRQ callback
 	
-Fixed small fileio problem [Nathan Woods]
-
-386 updates [Nathan Woods]
-	-  Added a distinction between maskable and non maskable interrupts 
-	(like int 3, illegal instruction etc)
-	-  Added a distinction between invalid and unimplemented instructions.  
-	Invalid instructions raise an interrupt, and unimplemented instructions 
-	call osd_die() for now
-	-  i386_set_irq_line() will no longer raise an interrupt when passed 
-	with state=0
-	-  Various string intructions now use SI/DI instead of ESI/EDI when in 
-	16-bit mode
-	-  Implemented LOCK and RETF
-	-  Fixed a bug in LMSW
-	-  Minor disassembler fixes
-
-Improved PSX sio [smf]
-
-Various DIP fixes [Brian Troha]
-	Gold Medalist (alpha68k.c)
-	Break Through (brkthru.c)
-	Got-Ya (gotya.c)
-	American Horseshoes & Plotting (taito_l.c)
+	src/cpu/i386op16.c:
+	    - Fixed CALL absolute instruction under 16 bit mode
 	
-Phil's 'if I get hit by a bus' Namco S22 MLE update [Phil Stroffolino]
-
-	TMS32025:
-	bugfix for lst and lst1 opcodes; the "ignore ARP" hack has been replaced with a better hack, that doesn't interfere with indirect addressing.
-
-	Preliminary serial I/O support has been added, to update DRR/DXR on RINT and XINT interrupts.  set_irq_line() no longer masks the lines with 0x7; this allows external triggering of RINT/XINT interrupts.
-
-	System22 driver changes:
-
-	- display list processing is now done by the master DSP
-	- the slave DSP's in-game graphics processing and "custom render devices" are currently simulated, which works only for Prop Cycle
-	- support for PDP block-based memory transfers
-	- support for DSP data/code uploads from main CPU
-	- support for "Point RAM" and "Point ROM" access
-	- most self tests are working in Prop Cycle and Ridge Racer (Japan)
-	- prelim hand-crafted "internal ROMs" for master and slave DSP
-	- various notes regarding DSP ports/addressing
-
-
+	src/drivers/seibuspi.c:
+	    - Fixed i386 interrupt call to use PULSE_LINE instead of always 
+	ASSERT_LINE
 	
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Atari Mini Golf (prototype) [Stefan Jokisch]
-Inca (clone of Maya) [ClawGrip]
-	
-	
-New Non-Working games / clones supported
-----------------------------------------
-
-MACS (Multi Amenity Cassette System) [David Haywood]
-	unknown cpu, seems to be z80 based (16-bit?) with extra opcodes
-	
-Namco FL (Speed Racer / Final Lap R) [R.Belmont]
-	preliminary emulation (doesn't get very far) to test i960 core
-
-0.81u7
-------
-
-General Source Changes
-----------------------
-
-Sound in the ST0016 driver [R.Belmont, Tomasz Slanina]
-	Neratte Chu & Renju Kizoku now have sound
-	
-Misc Cleanups [Lawrence Gold]
-
-Fixed a couple of issues with hard disks without checksums [smf]
-
-Dipswitch corrections for Karate Blazers, Turbo Force, Raiden 2 [Brian Troha]
-
-Megaplay Improvements [Barry Rodewald, GreyRogue]
-
-SPI / 386 Updates [Ville Linde]
-	- Added the missing keys to E-Jan
-	- Added layer enable register
-	- Wrote a new i386 disassembler. Dasm386 wasn't always
-	showing stuff correctly, and now the i386 core can be
-	compiled without i86.
-	- Preliminary Dallas DS2404 (RTC/CMOS) emulation
-	- Added 93C46 eeprom to RF2 single and RF2 2K. It's
-	not hooked up though.
-	- Improved i386/z80 interleaving. This should help
-	with the small pauses.
-	- Fixed some stuff in the i386 core. These don't seem
-	to affect the SPI games, but should help with MESS
-
-386 Improvements [Nathan Woods]
-	src/cpuexec.c:
-	   - Adds a check enabled when MAME_DEBUG is defined that raises an 
-	error if the CPU core executed a negative cycle count
-	
-	src/cpu/i386/i386.c:
-	   - Fixed a bug in i386_set_info() when changing the EIP register
-	
-	src/cpu/i386/i386dasm.c:
-	src/cpu/i386/i386op32.[c|h]:
-	src/cpu/i386/i386op16.[c|h]:
-	src/cpu/i386/i386ops.c:
-	   - Fixed some compilation errors under non-GCC compilers
-	   - Implemented ES, BOUND, DAA, DAS, AAS, INSB, INSW, OUTSB, OUTSW, 
-	LES, LDS, HLT, LSS, LFS, LGS, IMUL with a 32 bit adjustment,
-
-386 Improvements [Ville Linde]
-	- added DS and SS segment prefixes. renamed fs,gs ->
-	segment_FS, segment_GS
-	- added INTO opcode
-	- regression tested and fixed AAS opcode (incorrect
-	behavior in Intel docs)
-	- added AAA opcode (with correct behavior)
-	- added AAD and AAM opcodes
-	- added CMC opcode
-	- added SETALC opcode which is undocumented	
-	- removed a non-existing PUSH8 opcode from groupFE_8.
-	Doh ;-)
-	- regression tested and fixed SHLD and SHRD opcodes
-	- fixed AF flag calculation
-	- fixed AF flag in SUB and DEC opcodes
-	
-Beatorizer (bootleg) improvements [smf]
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Twin Eagle 2 [Olivier Galibert]
-
-Megaplay : Sonic the Hedgehog [Barry Rodewald, GreyRogue]
-Megaplay : Tecmo World Cup [Barry Rodewald, GreyRogue]
-Megaplay : Golden Axe 2 [Barry Rodewald, GreyRogue]
-	Megaplay still has a few issues (continue without extra coins etc.)
-
-New Clones supported or promoted from GAME_NOT_WORKING status:
---------------------------------------------------------------
-
-Ninja (clone of Sega Ninja) [Pierpaolo Prazzoli]
-
-Area 51 (R3000 Version) [Brian Troha]
-	still needs speedup finding
-
-
-New Non-Working games / clones supported
-----------------------------------------
-
-Super Pang (Japan)
-	needs new decryption key
-
-Battle Balls (Asia)
-
-0.81u6
-------
-
-General Source Changes
-----------------------
-
-Fixed missing enemies in noboranb [Stefan Jokisch]
-
-Fixed leprechn service switch broken in the last update [Stefan Jokisch]
-
-Misc Fixes [Nathan Woods]
-	src/cpu/i386/i386ops.c:
-	src/cpu/i386/i386op32.h:
-	src/cpu/i386/i386op16.h:
-	src/cpu/i386/i386op16.c:
-	    - Partially implemented INT, INT3, ES segment override, an IMUL 
-	variant, LMSW, a minor 16 bit bug fix, and coprocessor escape instructions
-	
-	src/cpuintrf.c:
-	src/cpuintrf.h:
-	    - Added the MESS specific TMS7000 core to the list of CPU cores
-
-SPI updates [Ville Linde]
-	* Added sprite flipping and other improved sprite
-	processing
-	* Corrected palette banking on tilemaps
-
-Fixed Kaitei Daisensou speedup [BouKiCHi]
-	note: speedups may soon be removed from the m92 driver as they aren't
-	really that significant on modern hardware
-	
-Model 1 Sound [R.Belmont]
-
-Fixed some ST-V sprite bugs [Mariusz Wojcieszek]
-	(hanagumi intro, othellos title, cottonbm intro, diehard intro, sleague)
-	
-Fixed the GPL12 opcode [smf]
-	(fixes cbaj graphics)
-
-i386 updates [Ville Linde]
-	- Regression tested the i386 core.  Found and fixed
-	bugs in several shift/rotate instructions.  This
-	corrects the bosses in Raiden Fighters.
-	- Completely rewrote REP/REPNE prefix handling.  Fixes
-	the following: Battle Balls attract mode runs
-	correctly now, balls no longer all the same color
-	in-game in Battle Balls, E-Jan now coins up, and Viper
-	Phase 1 is now playable (with encrypted gfx).	
-
-MIPS software interrupt fix [Aaron Giles]
-
-Seattle Update [Aaron Giles]
-	* added a diagram of interrupt sourcing
-	* fixed incorrect checksums on SF Rush: The Rock audio ROMs
-	* added support for DCS HLE downloading via FIFO (used by Vegas games)
-	* fixed incorrect sound pitch in Blitz 99/2k
-
-Hyperstone Fixes [Pierpaolo Prazzoli]
-	- Added h flag handling in the dasm
-	- Fixed wrong interpretation of some opcode bits in the dasm
-	- Fixed Frame instruction when d-code was 0
-	- Always set the new entry table
-
-Minor improvement to Lord of Gun driver (still doesn't work) [Pierpaolo Prazzoli]
-
-YMZ280B update [R.Belmont]
-	(Fixes suprnova073gre)
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Renju Kizoku [Tomasz Slanina]
-Neratte Chu [Tomasz Slanina]
-
-New Non-Working games / clones supported
-----------------------------------------
-
-Mayjinsen [Tomasz Slanina]
-Mayjinsen 2 [Tomasz Slanina]
-	(unemulated v810 cpu, being worked on)
-	
-Super Eagle Shot [Tomasz Slanina]
-Super Real Mahjong P5 [Tomasz Slanina]
-	(r3000 side not finished)
-
-0.81u5
-------
-
-General Source Changes
-----------------------
-
-Removed vblank callback logging left in by mistake [Aaron Giles]
-
-Fixed slow Seattle boot times caused by recent IDE change [Aaron Giles]
-
-DCS2 upload command HLE optimization (to make driver easier to work with) [Aaron Giles]
-
-MIPS core interrupt fixes [Aaron Giles]
-
-MIPS core MIPS3DRC_FLUSH_PC option for accurate PC handling when debugging [Aaron Giles]
-
-Fixed MIPS bug when directly accessing 2-byte values in big endian
-mode [Aaron Giles]
-
-Seattle Update [Aaron Giles]
-	seattle.c:
-	* improved VBLANK interrupt handling
-	* cleaned up handling of DMA operations
-	* DMA operations now properly pause if they can't write to the voodoo
-	* now returning proper PCI IDs for the bridge device
-	* mapped more inputs and DIP switches for Biofreaks
-	* fixed clock speed for Wayne Gretzky's 3D Hockey
-	* cleaned up memory maps
-	* added Vapor TRX to the supported games
-	* added entries for Hyperdrive and SF Rush: The Rock (no hard disks ATM)
-
-	midwayic.c:
-	* added faux support for setting the real time clock (to pass diags)
-	* added shuffle map for Vapor TRX
-	* implemented crude loopback in UART (to pass diags)
-
-	voodoo.c:
-	* added full memory FIFO emulation
-	* removed hack for fastfill operations after a buffer swap
-	* added compile time option to reduce the resolution
-	* added client callbacks for VBLANK synchronization
-	* cleaned up handling of statistics and debugging info
-	* added optional R/B component swapping (for vaportrx)
-	* fixed crashing problems when executing Midway POSTs
-	* now dynamically computing refresh rate based on hSync/vSync registers
-
-Improved Raiden 2 Sprite Drawing [David Haywood]
-	Game still not playable due to banking / protection issues
-	
-Misc Fixes [Nathan Woods]
-	src/osdepend.h:
-	    - Added __attribute__((noreturn)) to osd_die() when compiling under 
-	GCC 2.5 and greater
+	src/inptport.h:
+	    - Added more MESS specific stuff within #ifdef MESS
 	
 	src/memory.c:
-	src/state.c:
-	src/x86drc.c:
-	src/cpu/i386/i386.c:
-	src/cpu/i386/i386op16.c:
-	src/cpu/i386/i386op32.c:
-	src/cpu/i386/i386ops.c:
-	    - Converted printf()/exit() combination of calls to osd_die()
+	    - Added memory_install_*_handler_mirror() calls that I thought that 
+	I submitted earlier
 	
-	src/windows/config.c:
-	    - osd_die() messages now get sent to both logerror and console output
+	src/vidhrdw/tia.c:
+	    - Minor fix from the MESS side
 	
-	src/cpu/i386/i386op16.c:
-	src/cpu/i386/i386op32.c:
-	src/cpu/i386/i386ops.c:
-	    - Implemented i386 in/out instructions
-	    
-Model 1 lighting improvements [ElSemi]
+	src/windows/input.c:
+	src/windows/input.h:
+	    - Changed use_mouse to win_use_mouse and made it non-static
 
-TMS32025 Fixes [Phil Stroffolino, Quench]
+7810 improvements and sound in games on Metro driver :-) [Eisuke Watanabe]
+	* 7810
+	gta, gti, dgt fixed
+	working reg opcodes fixed
+	sio input fixed
 
-SPI System Updates [Ville Linde]
-	* Applied text layer decrypt to the regular tiles, it also improves them a lot
-	* Greatly improved tilemap emulation including scrolling, layer disables, etc.
-	* Improved tilemap emulation further, including tile bank select and palette bank select.
-	* Supports alternate (older?) video hardware in viperp1 with one fewer tilemap and a different VRAM layout.
-	* Added mahjong keyboard controller for ejanhs, but it doesn't coin up yet.
-	* Improved sprite drawing
-	* Sound starting to work in the single-board rf2_us
-
-Konami GX Cleanups [R.Belmont]
-	* Removed Acho's fake dipswitches to avoid confusing real PCB owners
-	* Unified and cleaned up memory maps to latest specs.
-	* Some more protection emulation for rushhero (the spritelist is now copied to the right place), but no visible results
-	* Removed unused routines to stop warnings on GCC 3.3+
-	* Fixed the PSAC tile decode for type 3 and type 4 games.
-	* Fixed the PSAC tilemap flipx/y flags for type 3.
+	* metro.c
+	added sound support
 	
-Rock-ola Improvements [Curt Coder]
-	drivers/rockola.c
-	sndhrdw/rockola.c
-	- More cleanup
-	- Added sn76477 interfaces to other games, not connected yet, needs discrete sound expert (wink wink)
-	- Added vanguard SHOTB sound effect
-	- Added NO_DUMP to vangrdce fake roms
-	- Correct ROM names for nibbler from manual
-
-MegaPlay Improvements allowing it to pass more checks [Barry Rodewald]
+Fixed dariusg (broken by 68008 changes) [Curt Coder]
+	
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
 
-Brave Blade [smf, David Haywood]
-Ray Storm [smf, Olivier Galibert]
-Pirate Treasure [Stefan Jokisch]
+Argus (Gottlieb, Prototype)
+Video Vince and the Game Factory (Mylstar, Prototype)
+Wiz Warz (Mylstar, Prototype)
 
 New Clones supported or promoted from GAME_NOT_WORKING status:
 --------------------------------------------------------------
 
-NBA Maximum Hangtime v1.03 [Asure]
-Leprechaun (Pacific Polytechnical license) [Stefan Jokisch]
+sfex2p (asia version, was usa) [smf]
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-MegaPlay: Tecmo World Cup [David Haywood]
-	MegaPlay emulation is still incomplete
+Pinball Champ '95
+	looks like its probably gambling based
+	doesn't work yet so I don't know if any skill is involved
+
+0.82u2
+------
+
+General Source Changes
+----------------------
+
+onetwo: Fixed glitch on Title screen [Pierpaolo Prazzoli]
+	- colours could do with being checked on this
+	
+goal92: Fixed clock, visible area and found it's missing the adpcm emulation.
+I tried to add it, but i had no luck, so if anyone want to have a look,
+please do it ;-) [Pierpaolo Prazzoli]
+
+I386 and Mame Debugger Enhancements [Nathan Woods]
+	src/mamedbg.c:
+	src/mamedbg.h:
+	    - Attempting to start a trace with non-existant registers will now 
+	raise a warning in the MAME debugger
+	    - Implemented mame_debug_trace_write() call, an API to allow 
+	injecting text into the trace files of the MAME debugger.
+	
+	src/cpu/i386/i386ops.c:
+	src/cpu/i386/i386op16.c:
+	    - CALL16 opcode will now only adjust IP instead of EIP when in 
+	16-bit mode
+	    - Minor bug fix in RETF opcode
+	    - Changed REP and REPNE opcode implementations to use the same code
+	    - INTO will now interrupt even if IF is zero
+
+Misc Improvements [Curt Coder]
+	* Arkanoid et al
+	drivers/arkanoid.c
+	machine/arkanoid.c
+
+	- Memory map merge
+	- Moved paddle2 trickery to machine/
+
+Nintendo 8080 hardware update [Stefan Jokisch]
+
+The driver has now been split into three parts. A few features that have been missing
+in Helifire since my last update are back, i.e. the flickering colors when you're shot
+and the volume decay effect (this affects the melody at the start of a game and a few
+tunes that can be heard during the bonus scenes every twelve attack waves). The
+starfield should now scroll at the correct speed, it's only 75% of what it used to be.
+Finally, I have decided to use the color prom from Space Fever in Space Launcher, I
+think it's correct.
+
+Change to eeprom_interface_93C46 [Tomasz Slanina]
+	please check games using this to make sure non broke
+	
+Debugger: With this patch you can output traces to the console ( or grep etc ) by
+typing: TRACE CONSOLE [smf]
+
+ST-V updates [Mariusz Wojcieszek]
+	- fixed bugs introduced in previous update: RGB sprites bad colors and
+	incorrect sprite clipping
+	- added color offset for RGB sprites
+	- fixed horizontal scrolling for bitmaps (corrects mausuke ingame
+	background)
+	
+Change to EEPROM_interface eeprom_interface_93C46 [Tomasz Slanina]
+	please check games using this ...
+
+Seattle Update [Aaron Giles]
+	x86drc.c:
+	* fleshed out SSE support
+	* made it optional for recompilers to keep the PC/ICount in registers
+	* made append_verify_code work for sizes > 4
+
+	cpu/mips/mips3.c:
+	* added support for the Config register
+	* added support for new variants: R4700, QED5271, RM7000
+	* fixed bug in LWXC1/LDXC1/SWXC1/SDXC1 instructions
+
+	cpu/mips/mips3drc.c
+	* added support for the Config register
+	* added support for new variants: R4700, QED5271, RM7000
+	* extracted core codegen portion into new #include file mdrcold.c
+
+	drivers/seattle.c:
+	* added more extensive documentation on the various boardsets
+	* added constants for the GT64010 and all interrupts
+	* added ethernet device interrupt support
+	* made the IDE controller visible on the PCI bus
+	* formalized support for the "widget" board used in vaportrx & calspeed
+	* hooked up CMOS protection bit
+	* corrected sfrushrk audio CRCs and hooked up hard disk
+	* marked sfrush and vaportrx as working
+
+	machine/midwayic.c:
+	* added support for sfrushrk PIC
+	* added timeout on PIC reads to speed up sfrushrk
+	* fixed missing sound reset latch at startup
+	
+	machine/smc91c9x.c:
+	* new implementation of SMC91C94 ethernet controller
+	* only loopback mode supported
+
+	vidhrdw/voodoo.c:
+	* cleaned up logging
+	* all stats now accessible via the backslash key
+	* got rid of ugly red/blue swap hack
+	* fixed missing truncation on vertex coordinates (fixes vaportrx graphics)
+	* added support for alternate LFB write modes
+
+horshoes: fixed DIPS [Brian Troha]
+
+PreGX Cleanups [R.Belmont]
+
+6532 RIOT patch (fixes some things in MESS) [Judge]
+
+New Games supported or promoted from GAME_NOT_WORKING status:
+-------------------------------------------------------------
+
+Quiz Do Re Mi Fa Grand Prix [Eisuke Watanabe]
+Quiz Do Re Mi Fa Grand Prix 2 [Eisuke Watanabe]
+
+Many ZN Based games [special thanks to Tourniquet, Olivier Galibert, smf, R.Belmont
+           [red], Malice, Renegade, Twisty, Dox, But & many other mame.net board users]
+
+Victorious Nine [BUT]
+
+Golden Par Golf [Brian Troha]
+
+San Francisco Rush [Aaron Giles]
 Vapor TRX [Aaron Giles]
-	locks up when you attempt to start a game
-San Francisco Rush: The Rock [Aaron Giles]
-Hyperdrive [Aaron Giles]
-	missing harddisks
 
-0.81u4
-------
-
-General Source Changes
-----------------------
-
-Hyperstone CPU core fixes [Pierpaolo Prazzoli]
-	- Added addressing of next byte if in load / store instructions using
-	  Displacement Address Mode PC is used as register destination
-	- Added local registers wrap around modulo 64
-	- Added trap instructions to the dasm
-	- Added some debug info when high global registers are written
-	- Fixed some wrong format in the dasm
-	- Changed reset to act as an exception, as the doc claims (before it crashed
-	  if reset was used as an exception)
-
-Killer Instinct Fixes [Aaron Giles]
-	* cleaned up memory maps
-	* found second bitmap page, fixing a bunch of video problems and romoving
-	  the egregious hack I had in there before
-	* fixed sound reset and initialization
-	* all diagnostics pass
-	* fixed coinage dipswitches
-	* added 2 alternate ROM sets for each game
-	Fixes: kinst067gre2, kinst072gre
-
-MIPS DRC fixes [Aaron Giles]
-	Fixes an edge case where a memory access like:
-	  lw  r3,$0(r0)
-	would leave the stack in a funny state and lead to a crash.
-	Fixes kinst067red.
-
-	Instructions of the form:
-	ld   r10,0(r10)
-	Would load the low word into r10 first, and then use the modified r10 (plus
-	4) as the address of the high word. Bad bad bad.
-	Fixes the sky graphics in several of the kinst2 levels. 
-
-ZN Improvements [smf]
-	24-bit rendering support for Judge Dredd
-
-Updates to the 'jalmah' driver [Angelo Salese]
-	kakumei and kakumei2 now boot but neither are playable due to protection
-
-Misc Updates [Nathan Woods]
-	src/windows/windows.mak:
-	- Fixes the afore mentioned problem with x86drc.c
-
-	src/fileio.c:
-	src/windows/fileio.c:
-	- Adds in a new (windows only) mode for opening files whereby files 
-	  can be opened for read/write, but changes are not actually not written 
-	  to the original file but rather to a temporary file.  This trick is used 
-	  by the MESS testing facility so that tests do not mutate the images they 
-	  operate on.
-	- Small cleanups
-
-	src/png.c:
-	- Replaces a #ifdef MESS/#else/#endif combo with a usage of the 
-	  APPNAME macro
-
-SPI / 386 updates [Ville Linde]
-	* raidnfgt now runs normally and correctly through
-	  attract mode and gameplay, modulo the encrypted
-	  graphics.  Still kinda mesmerizing :-)
-	* viperp1 starts to boot now, but doesn't get very far
-	* Hooked up the Z80 bankswitching, so sound started
-	  playing in some games (notably Raiden Fighters). (R.Belmont)
-
-Various ST-V updates [Mariusz Wojcieszek]
-	fixes sprites in groovef which is now playable, adds some RBG0 scrolling
-	which greatly improves background graphics in cotton2, cottonbm, grdforce
-	and othellos
-
-Debugger Fixes [Aaron Giles]
-	This is a quick attempt to make the debugger more useable with the new
-	memory system. The masking of addresses and data should now be working
-	properly again.
-
-	Also, you can go to any memory window and type 'P' to view program address
-	space, or 'T' to view data address space.
-
-OSD 'NO EXECUTE' Support [Aaron Giles]
-	This patch introduces two new OSD functions:
-
-	osd_alloc_executable();
-	osd_free_executable();
-
-	For most platforms, these can just map to malloc and free. However, starting
-	with WinXP SP2, if you are running on a processor that supports the
-	NO_EXECUTE bit (currently only 64-bit AMD chips),
-	standard user-mode memory allocations won't allow you to put code in them
-	and execute it.
-
-	Since this is exactly what x86drc.c does, I've added the two functions
-	above. On Windows, these map to calling VirtualAlloc and VirtualFree, which
-	allow you to specify the read/write/execute states of the pages thus
-	allocated.
-
-Lethal Justice / Egg Venture Cleanups [Aaron Giles]
-	* merged memory maps
-	* fixed video size in Egg Venture to correct flicker
-	* switched to VIDEO_RGB_DIRECT
-	* removed unnecessary ROM regions and memcpy'ing
-
-Rockola Cleanups / Fixes [Curt Coder]
-	* Fantasy/Nibbler/Pioneer Balloon
-	drivers/rockola.c
-	sndhrdw/rockola.c
-	- Correct CPU frequency from schematics
-	- Hooked up SN76477 sound for BOMB effect
-	- Merged memory maps
-	- Cleaned up driver a bit
-	- Fixed dips
-	- Enabled debug inputs
-
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Ghostlop (prototype)
-
-Super Rider [Aaron Giles]
-
-Some ST-V Games
-	these are still very slow ;-)
-	Groove On Fight [Mariusz Wojcieszek]
-	Othello Shiyouyo [Mariusz Wojcieszek]
-	Danchi de Hanafuoda [thanks to Runik/Saturnin]
 
 New Clones supported or promoted from GAME_NOT_WORKING status:
 --------------------------------------------------------------
 
-Driving Force (Galaxian hardware, bootleg) [Pierpaolo Prazzoli]
-Snow Bros (set 4) [Fabrice Arzeno]
+Anteater (German) [Pierpaolo Prazzoli, MASH]
+
+Monster Maulers [R.Belmont]
 
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-Lord of Gun
-	some sort of protection?
+Heaven's Gate [R.Belmont]
+	incomplete banking or psx bugs?
 
-Taito JC System
-	will need 68040 and mc68hc11m0 emulation before its going to work
-	Densya De Go (1, 1ex, 2, 2ex)
-	Side by Side (1 & 2)
-	Landing Gear
+Gals Panic II - Quiz version [Pierpaolo Prazzoli]
 
-0.81u3
+Dingo (encrypted set) [MASH] -- bad rom
+
+
+0.82u1
 ------
-
-clean compile required otherwise things won't work as they should
 
 General Source Changes
 ----------------------
 
-Various ZN updates [smf, R.Belmont]
-	several games are improved (Brave Blade, Judge Dredd etc.) but still need work
+Made R3000 version of Area 51 parent set [smf]
 
-Made Raiden DX display something (but not much)
+memory.c patch [Nathan Woods]
+	src/memory.c:
+	src/memory.h:
+	    - Introduces 
+	memory_install_[read|write][8|16|32|64]_handler_mirror() calls, which 
+	install memory handlers that can mirror similar to the AM_MIRROR macro
 
-i386 Core Fixes + SPI improvements [Ville Linde]
-	senkyu / ejanhs now do something
+STV VDP-1 update [Mariusz Wojcieszek]
+	- converted VDP1 drawing (sprites) to use framebuffer
+	- added sprite priorities (corrects shanhigw ingame and colmns97 title screen)
+	- added color offset for sprites
+	- improved sprites alpha blending (improves ejihon and shienryu intro)
+	- added framebuffer interlace (fixes elandore character selection screen)
+	- added color offset for bitmaps
+	- added vertical scrolling for bitmaps (corrects shanhigw ingame)
+	
+	The main result (visible to user) of these changes is that shanhigw is now
+	playable without problems (apart from gfx glitches on title screen).
 
-Preliminary PGM sound emulation [Olivier Galibert]
-	has bad sounds + causes crashes for now
+STV VDP-2 update [Angelo Salese]
+	fixed a window mode bug
 
-Centipede Driver Cleanup [Aaron Giles]
+Fixed PSX sio bug [smf]
 
-Reset Fix / Timer Bug Fix [Aaron Giles]
+Fixed Z80 RETN / RETI cycle counts [Juergen Buchmueller]
+
+Fixed sound and dips in 1945kIII [Pierpaolo Prazzoli]
+
+hyprduel.c sprite priority fix [Hau]
+
+tecmo16.c flipscreen fix [Hau]
 
 
 New Games supported or promoted from GAME_NOT_WORKING status:
 -------------------------------------------------------------
 
-Cool Boarders Arcade Jam [R.Belmont, smf]
+Bloody Roar 2 [smf]
+	one rom is bad
+
+FireHawk [Pierpaolo Prazzoli]
+	actually still marked as non-working due to
+	standard 'afega' hardware protection issues in attract mode
+
+Shanghai - The Great Wall [Mariusz Wojcieszek]
+	some glitches on the title screen
+	
+Head On (Irem M15 Hardware) [David Haywood]
+	no sound
+	
+New Clones supported or promoted from GAME_NOT_WORKING status:
+--------------------------------------------------------------
+
+Target Ball (no nudity set) [David Haywood]
 
 
 New Non-Working games / clones supported
 ----------------------------------------
 
-CPS-3 System
-	this will never work (encryption etc.) driver does NOTHING, for reference only
-	Street Fighter III etc.
+Open Golf Championship (ver EAE) [R.Belmont]
+	not working
 
-
-0.81u2
-------
-
-Minor Update, just to help me stay in sync
-
-General Source Changes
-----------------------
-
-Various ZN updates [smf, R.Belmont]
-
-Improvements to Raiden 2 decryption
-
-New Games supported or promoted from GAME_NOT_WORKING status:
--------------------------------------------------------------
-
-Rival Schools [smf, R.Belmont]
-Shanghai Matekibuyuu [R.Belmont, smf]
-
-
-0.81u1
-------
-
-Just a dev-sync update, done by request
-
-General Source Changes
-----------------------
-
-Fixed a bug with Beastorizer hi-score portraits [smf]
-
-Fixed another Hyperstone bug [Pierpaolo Prazzoli]
-
-Partial Raiden 2 Sprite Decryption (check sprite gfx with viewer, F4)
-
-New Non-Working games / clones supported
-----------------------------------------
-
-Sega Model 1 [Olivier Galibert]
-	some vital tgp coprocessor functions are not simulated correctly
-	Virtua Fighter
-	Virtua Racing
-	Star Wars Arcade
-	Wing War
-
-Raiden DX
-Zero Team / New Zero Team
-	unemulated protection
+Pachinko Gindama Shoubu DX [Brian Troha]
+Pachinko Gindama Shoubu [Brian Troha]
+	hardware is similar to realbreak but they don't work yet

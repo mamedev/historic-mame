@@ -16,6 +16,7 @@ static int background_priority = 0;
 static int spritebank;
 
 static struct tilemap *bg_tilemap;
+static int swap_bg_ramrom;
 
 /***************************************************************************
 
@@ -144,9 +145,9 @@ WRITE_HANDLER( gottlieb_charram_w )
 	{
 		gottlieb_charram[offset] = data;
 
-		decodechar(Machine->gfx[0], offset / 32, gottlieb_charram, 
+		decodechar(Machine->gfx[0], offset / 32, gottlieb_charram,
 			Machine->drv->gfxdecodeinfo[0].gfxlayout);
-		
+
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
@@ -155,12 +156,12 @@ static void get_bg_tile_info(int tile_index)
 {
 	int code = videoram[tile_index];
 
-	SET_TILE_INFO(0, code, 0, 0)
+	SET_TILE_INFO(0, code^swap_bg_ramrom, 0, 0)
 }
 
-VIDEO_START( gottlieb )
+static int gottlieb_video_start_common(void)
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
@@ -169,6 +170,18 @@ VIDEO_START( gottlieb )
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 
 	return 0;
+}
+
+VIDEO_START( gottlieb )
+{
+	swap_bg_ramrom = 0x00;
+	return gottlieb_video_start_common();
+}
+
+VIDEO_START( vidvince )
+{
+	swap_bg_ramrom = 0x80;
+	return gottlieb_video_start_common();
 }
 
 static void gottlieb_draw_sprites( struct mame_bitmap *bitmap )

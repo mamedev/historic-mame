@@ -847,7 +847,7 @@ READ_HANDLER( tia_r )
 		return data | INPT5;
 	}
 
-	return 0;
+	return offset;
 }
 
 

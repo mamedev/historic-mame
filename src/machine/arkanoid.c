@@ -124,3 +124,82 @@ READ_HANDLER( arkanoid_input_2_r )
 	}
 }
 
+/*
+
+	Paddle 2 MCU simulation
+
+	TODO:
+	\-Fix crashes and level finishing.
+	\-Finish the level pointer table & check the real thing for true level pattern...
+	\-(track_kludge_r)Find a better way to handle the paddle inputs.
+	\-Code optimizations + add this into machine/arkanoid.c
+
+	Notes:
+	\-This game is an Arkanoid 1 bootleg but with level edited to match the Arkanoid 2 ones.
+	\-Returning the right values for commands 0x38,0xff and 0x8a gives the level that has to
+	be played,but I don't have any clue about the true level pattern used.Checking Arkanoid 2
+	doesn't help much BTW...
+
+*/
+
+static int paddle2_prot;
+
+READ_HANDLER( paddle2_prot_r )
+{
+	static UINT8 level_table_a[] =
+	{
+		0xf3,0xf7,0xf9,0xfb,0xfd,0xff,0xf5,0xe3, /* 1- 8*/
+		0xe5,0xe7,0xe9,0xeb,0xed,0xef,0xf1,0xf7, /* 9-16*/
+		0xf9,0xfb,0xfd,0xff,0x00,0x00,0x00,0x00, /*17-24*/
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
+	};
+	static UINT8 level_table_b[] =
+	{
+		0x52,0x52,0x52,0x52,0x52,0x52,0x0e,0x0e, /* 1- 8*/
+		0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e, /* 9-16*/
+		0x0e,0x0e,0x0e,0x0e,0x00,0x00,0x00,0x00, /*17-24*/
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
+	};
+	UINT8 *RAM = memory_region(REGION_CPU1);
+//	usrintf_showmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
+
+	switch (paddle2_prot)
+	{
+		case 0xc3: return 0x1d;
+		case 0x24: return 0x9b;
+		/* Level pointer table */
+		case 0x38:
+		if(RAM[0xed83] == 0)    return level_table_a[RAM[0xed72]];
+		else					return RAM[0xed83];
+		case 0xff:
+		if(RAM[0xed83] == 0)	return level_table_b[RAM[0xed72]];
+		else 					return RAM[0xed83];
+		/* Guess this is used for building level 	   */
+		/* pointers too,but I haven't tested yet...    */
+		case 0x8a: return 0x0a;
+		/* Goes into sub-routine $2050,controls level finishing(WRONG!!!) */
+		case 0xe3:
+		if(RAM[0xed83] != 0)	return 0xff;
+		else					return 0;
+		/* Gives BAD HW message otherwise */
+		case 0x36: return 0x2d;
+		case 0xf7: return 0;
+		default: return paddle2_prot;
+	}
+}
+
+WRITE_HANDLER( paddle2_prot_w )
+{
+	logerror("%04x: prot_w %02x\n",activecpu_get_pc(),data);
+	paddle2_prot = data;
+}
+
+READ_HANDLER( paddle2_track_kludge_r )
+{
+	int track = readinputport(2);
+
+	/* temp kludge,needed to get the right side of the screen */
+	if(track < 0x44)
+		return 0x23;
+	return 0x03;
+}

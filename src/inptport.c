@@ -2831,7 +2831,11 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 
 	total = input_port_count(src);
 
-	base = (struct InputPort*)malloc(total * sizeof(struct InputPort));
+	base = (struct InputPort*) auto_malloc(total * sizeof(struct InputPort));
+	if (!base)
+		return NULL;
+	memset(base, 0, total * sizeof(struct InputPort));
+
 	dst = base;
 
 	while (src->type != IPT_END)
@@ -2929,11 +2933,6 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 	dst->type = IPT_END;
 
 	return base;
-}
-
-void input_port_free(struct InputPort* dst)
-{
-	free(dst);
 }
 
 

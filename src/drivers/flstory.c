@@ -2,6 +2,8 @@
 
 The FairyLand Story
 
+  added Victorious Nine by BUT
+
 TODO:
 - game behaves VERY strangely in attract mode. Wait until the demo game will
   be shown. Insert a coin - game screen will be replaced with "start screen"
@@ -17,6 +19,8 @@ TODO:
 
 VIDEO_START( flstory );
 VIDEO_UPDATE( flstory );
+VIDEO_START( victnine );
+VIDEO_UPDATE( victnine );
 
 extern UINT8 *flstory_scrlram;
 
@@ -26,6 +30,7 @@ WRITE_HANDLER( flstory_palette_w );
 WRITE_HANDLER( flstory_gfxctrl_w );
 READ_HANDLER( flstory_scrlram_r );
 WRITE_HANDLER( flstory_scrlram_w );
+WRITE_HANDLER( victnine_gfxctrl_w );
 
 READ_HANDLER( flstory_68705_portA_r );
 WRITE_HANDLER( flstory_68705_portA_w );
@@ -42,6 +47,9 @@ READ_HANDLER( flstory_mcu_status_r );
 WRITE_HANDLER( onna34ro_mcu_w );
 READ_HANDLER( onna34ro_mcu_r );
 READ_HANDLER( onna34ro_mcu_status_r );
+WRITE_HANDLER( victnine_mcu_w );
+READ_HANDLER( victnine_mcu_r );
+READ_HANDLER( victnine_mcu_status_r );
 
 
 static UINT8 snd_data;
@@ -97,9 +105,9 @@ static WRITE_HANDLER( nmi_enable_w )
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-    AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-    AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* unknown */
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* unknown */
 	AM_RANGE(0xd000, 0xd000) AM_READ(flstory_mcu_r)
 	AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
 	AM_RANGE(0xd401, 0xd401) AM_READ(snd_flag_r)
@@ -113,7 +121,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd806, 0xd806) AM_READ(input_port_5_r)
 	AM_RANGE(0xdc00, 0xdcff) AM_READ(MRA8_RAM) /* spriteram / scrollram */
 	AM_RANGE(0xdd00, 0xdeff) AM_READ(flstory_palette_r)
-    AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -135,9 +143,9 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( onna34ro_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-    AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-    AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* unknown */
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* unknown */
 	AM_RANGE(0xd000, 0xd000) AM_READ(onna34ro_mcu_r)
 	AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
 	AM_RANGE(0xd401, 0xd401) AM_READ(snd_flag_r)
@@ -151,7 +159,7 @@ static ADDRESS_MAP_START( onna34ro_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd806, 0xd806) AM_READ(input_port_5_r)
 	AM_RANGE(0xdc00, 0xdcff) AM_READ(MRA8_RAM) /* spriteram / scrollram */
 	AM_RANGE(0xdd00, 0xdeff) AM_READ(flstory_palette_r)
-    AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( onna34ro_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -169,6 +177,50 @@ static ADDRESS_MAP_START( onna34ro_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xdcc0, 0xdcff) AM_WRITE(MWA8_RAM) /* unknown */
 	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(flstory_palette_w)
 	AM_RANGE(0xdf03, 0xdf03) AM_WRITE(flstory_gfxctrl_w)
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)	/* work RAM */
+ADDRESS_MAP_END
+
+static READ_HANDLER( victnine_port_5_r )
+{
+	return (victnine_mcu_status_r(0) & 3) | (readinputport(5) & ~3);
+}
+
+static ADDRESS_MAP_START( victnine_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) /* unknown */
+	AM_RANGE(0xd000, 0xd000) AM_READ(victnine_mcu_r)
+	AM_RANGE(0xd002, 0xd002) AM_READ(MRA8_NOP)	/* unknown */
+	AM_RANGE(0xd400, 0xd400) AM_READ(from_snd_r)
+	AM_RANGE(0xd401, 0xd401) AM_READ(snd_flag_r)
+	AM_RANGE(0xd403, 0xd403) AM_READ(MRA8_NOP) /* unknown */
+	AM_RANGE(0xd800, 0xd800) AM_READ(input_port_0_r)
+	AM_RANGE(0xd801, 0xd801) AM_READ(input_port_1_r)
+	AM_RANGE(0xd802, 0xd802) AM_READ(input_port_2_r)
+	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_3_r)
+	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_4_r)
+	AM_RANGE(0xd805, 0xd805) AM_READ(victnine_port_5_r)
+	AM_RANGE(0xd806, 0xd806) AM_READ(input_port_6_r)
+	AM_RANGE(0xd807, 0xd807) AM_READ(input_port_7_r)
+	AM_RANGE(0xdc00, 0xdcff) AM_READ(MRA8_RAM) /* spriteram / scrollram */
+	AM_RANGE(0xdd00, 0xdeff) AM_READ(flstory_palette_r)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( victnine_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(flstory_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(victnine_mcu_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(MWA8_NOP)	/* watchdog? */
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(MWA8_NOP)	/* coin lock out? */
+	AM_RANGE(0xd400, 0xd400) AM_WRITE(sound_command_w)
+//	AM_RANGE(0xda00, 0xda00) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xdc00, 0xdc9f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xdca0, 0xdcbf) AM_WRITE(flstory_scrlram_w) AM_BASE(&flstory_scrlram)
+	AM_RANGE(0xdce0, 0xdce0) AM_WRITE(victnine_gfxctrl_w)
+	AM_RANGE(0xdce1, 0xdce1) AM_WRITE(MWA8_NOP)	/* unknown */
+	AM_RANGE(0xdd00, 0xdeff) AM_WRITE(flstory_palette_w)
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)	/* work RAM */
 ADDRESS_MAP_END
 
@@ -513,6 +565,123 @@ INPUT_PORTS_START( onna34ro )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( victnine )
+	PORT_START      /* D800: DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME(0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0xa0, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(   0xa0, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(   0x00, "MA / MB" )
+
+	PORT_START      /* D801: DSW1 */
+	PORT_DIPNAME(0x0f, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(   0x0f, DEF_STR( 9C_1C ) )
+	PORT_DIPSETTING(   0x0e, DEF_STR( 8C_1C ) )
+	PORT_DIPSETTING(   0x0d, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(   0x0c, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(   0x0b, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(   0x0a, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(   0x09, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(   0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(   0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(   0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(   0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(   0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(   0x06, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(   0x07, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME(0xf0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(   0xf0, DEF_STR( 9C_1C ) )
+	PORT_DIPSETTING(   0xe0, DEF_STR( 8C_1C ) )
+	PORT_DIPSETTING(   0xd0, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(   0xc0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(   0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(   0xa0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(   0x90, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(   0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(   0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(   0x60, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(   0x70, DEF_STR( 1C_8C ) )
+
+	PORT_START      /* D802: DSW2 */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME(0x10, 0x10, "Coinage Display" )
+	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Show Year" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME(0x40, 0x40, "No hit" )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x80, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(   0x80, "A and B" )
+	PORT_DIPSETTING(   0x00, "A only" )
+
+	PORT_START      /* D803: START BUTTONS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* D804: P1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )	// A
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )	// C
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* D805: 1P a/b/c/d BUTTONS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	// mcu is ready to receive data from main cpu
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	// mcu has sent data to the main cpu
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* D806: P2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )	// A
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )	// C
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* D807: 2P a/b/c/d BUTTONS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -631,7 +800,7 @@ static MACHINE_DRIVER_START( onna34ro )
 							/* synchronization of the CPUs */
 	MDRV_MACHINE_INIT(ta7630)
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
@@ -640,6 +809,43 @@ static MACHINE_DRIVER_START( onna34ro )
 
 	MDRV_VIDEO_START(flstory)
 	MDRV_VIDEO_UPDATE(flstory)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( victnine )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000/2)		/* 4 MHz */
+	MDRV_CPU_PROGRAM_MAP(victnine_readmem,victnine_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz */
+	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* IRQ generated by ??? */
+						/* NMI generated by the main CPU */
+//	MDRV_CPU_ADD(M68705,4000000/2)	/* ??? */
+//	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(ta7630)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(victnine)
+	MDRV_VIDEO_UPDATE(victnine)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
@@ -731,9 +937,9 @@ ROM_END
 
 ROM_START( onna34ra )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
-	ROM_LOAD( "ry-08.rom", 0x0000, 0x4000, CRC(e4587b85) SHA1(2fc4439953dd086eac11ba6d7937d8075fc39639) )
-	ROM_LOAD( "ry-07.rom", 0x4000, 0x4000, CRC(6ffda515) SHA1(429e7bb22c66eb3c6d31981c2021af61c44ed51b) )
-	ROM_LOAD( "ry-06.rom", 0x8000, 0x4000, CRC(6fefcda8) SHA1(f532e254a8bd7372bd9f8f21c907e44e0f5f4f32) )
+	ROM_LOAD( "ry-08.rom",    0x0000, 0x4000, CRC(e4587b85) SHA1(2fc4439953dd086eac11ba6d7937d8075fc39639) )
+	ROM_LOAD( "ry-07.rom",    0x4000, 0x4000, CRC(6ffda515) SHA1(429e7bb22c66eb3c6d31981c2021af61c44ed51b) )
+	ROM_LOAD( "ry-06.rom",    0x8000, 0x4000, CRC(6fefcda8) SHA1(f532e254a8bd7372bd9f8f21c907e44e0f5f4f32) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "a52-12.08s",   0x0000, 0x2000, CRC(28f48096) SHA1(20aa5041cd71003e0981c32e34005bcbad53f707) )
@@ -756,8 +962,40 @@ ROM_START( onna34ra )
 	ROM_LOAD( "a52-11.32v",   0x1c000, 0x4000, CRC(d1dda6b3) SHA1(fadf1404e8a03ec7e3fafb6281d33bc73bb5c473) )
 ROM_END
 
+ROM_START( victnine )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
+	ROM_LOAD( "a16-19.1",     0x0000, 0x2000, CRC(deb7c439) SHA1(e87c8f95bc31d8450a3deed7a14b5fe139778d47) )
+	ROM_LOAD( "a16-20.2",     0x2000, 0x2000, CRC(60cdb6ae) SHA1(65f09ef624d758b138a87c4cc80bc3539cc89507) )
+	ROM_LOAD( "a16-21.3",     0x4000, 0x2000, CRC(121bea03) SHA1(4925b56a3f5725f1e00bd6aa87949aca5caf476b) )
+	ROM_LOAD( "a16-22.4",     0x6000, 0x2000, CRC(b20e3027) SHA1(fab83afd1010fe6cebbeee06099eb2be9b96ec8a) )
+	ROM_LOAD( "a16-23.5",     0x8000, 0x2000, CRC(95fe9cb7) SHA1(cfd7c0123940f680365500a516c8435330ed5f60) )
+	ROM_LOAD( "a16-24.6",     0xa000, 0x2000, CRC(32b5c155) SHA1(34d25f3d4fae580757b69431b8b58f6f86d2282e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "a16-12.8",     0x0000, 0x2000, CRC(4b9bff43) SHA1(4bcd52d6d72213f8fa7b544dbdd344312a9e2115) )
+	ROM_LOAD( "a16-13.9",     0x2000, 0x2000, CRC(355121b9) SHA1(69cbe31eed53456f49a81c37b6661f7ba4a72fa6) )
+	ROM_LOAD( "a16-14.10",    0x4000, 0x2000, CRC(0f33ef4d) SHA1(6916016d7cf43870d2e19fc1e6f1b20e48e07d76) )
+	ROM_LOAD( "a16-15.37",    0x6000, 0x2000, CRC(f91d63dc) SHA1(4585d0c7ed05249c17385f20b6557e2e4375a6bb) )
+	ROM_LOAD( "a16-16.38",    0x8000, 0x2000, CRC(9395351b) SHA1(8f97bdf03dec47bcaaa62fb66c545566776116be) )
+	ROM_LOAD( "a16-17.39",    0xa000, 0x2000, CRC(872270b3) SHA1(2298cb8ced6c3e9afb430faab1b38ba8f2fa93b5) )
+
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	ROM_LOAD( "a16-18.mcu",   0x0000, 0x0800, NO_DUMP )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "a16-06-1.7",   0x00000, 0x2000, CRC(b708134d) SHA1(9732be463cfbbe81ea0ad06da5a48b660ca429d0) )
+	ROM_LOAD( "a16-07-2.8",   0x02000, 0x2000, CRC(cdaf7f83) SHA1(cf83af1655cb3ffce26c1b015b1e2249f7b12e3f) )
+	ROM_LOAD( "a16-10.90",    0x04000, 0x2000, CRC(e8e42454) SHA1(c4923d4adfc0a48cf5a7d0145de5c9389495cac2) )
+	ROM_LOAD( "a16-11-1.91",  0x06000, 0x2000, CRC(1f766661) SHA1(dfeecb587af7706e0e14539efc3386558f5d6da4) )
+	ROM_LOAD( "a16-04.5",     0x08000, 0x2000, CRC(b2fae99f) SHA1(c8e56815159cd43a94c7e31b764d5bb996551a49) )
+	ROM_LOAD( "a16-05-1.6",   0x0a000, 0x2000, CRC(85dfbb6e) SHA1(3643aab950d54eadded8d952033672aabb1e87c4) )
+	ROM_LOAD( "a16-08.88",    0x0c000, 0x2000, CRC(1ddb6466) SHA1(0ea75c2fb584215f3cd4a7b7dfb3345a303e7e66) )
+	ROM_LOAD( "a16-09-1.89",  0x0e000, 0x2000, CRC(23d4c43c) SHA1(ed0e059d3f97705331fdcc423a7c37aac9f07bb0) )
+ROM_END
+
 
 GAMEX( 1985, flstory,  0,        flstory,  flstory,  0, ROT180, "Taito", "The FairyLand Story", GAME_IMPERFECT_SOUND )
 GAMEX( 1985, flstoryj, flstory,  flstory,  flstory,  0, ROT180, "Taito", "The FairyLand Story (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX( 1985, onna34ro, 0,        onna34ro, onna34ro, 0, ROT0,   "Taito", "Onna Sansirou - Typhoon Gal (set 1)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
 GAMEX( 1985, onna34ra, onna34ro, onna34ro, onna34ro, 0, ROT0,   "Taito", "Onna Sansirou - Typhoon Gal (set 2)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, victnine, 0,        victnine, victnine, 0, ROT0,   "Taito", "Victorious Nine", GAME_IMPERFECT_SOUND )

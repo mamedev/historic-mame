@@ -169,7 +169,7 @@ static UINT8 r6532_read_timer(int n, int enable)
 			r6532[n]->cleared = 1;
 		}
 
-		return (count >= -256) ? count : 0;
+		return count;
 	}
 }
 
@@ -278,10 +278,10 @@ void r6532_init(int n, const struct R6532interface* intf)
 	r6532[n]->DDRA = 0;
 	r6532[n]->DDRB = 0;
 
-	r6532[n]->shift = 0;
+	r6532[n]->shift = 10;
 	r6532[n]->cleared = 0;
 
-	r6532[n]->target = 0;
+	r6532[n]->target = 0xff << 10;
 
 	r6532[n]->pa7_enable = 0;
 	r6532[n]->pa7_direction = 0;

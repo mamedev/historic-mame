@@ -8,12 +8,12 @@ Sengoku Mahjong Video Hardware section
 #include "vidhrdw/generic.h"
 
 static struct tilemap *bg_tilemap,*md_tilemap,*tx_tilemap,*fg_tilemap;
-static data8_t *bg_vram;
+data8_t *sm_bgvram;
 data8_t *md_vram,*tx_vram,*fg_vram;
 
-READ_HANDLER( sengoku_bg_vram_r )
+READ_HANDLER( sengoku_sm_bgvram_r )
 {
-	return bg_vram[offset];
+	return sm_bgvram[offset];
 }
 
 READ_HANDLER( sengoku_md_vram_r )
@@ -31,9 +31,9 @@ READ_HANDLER( sengoku_fg_vram_r )
 	return fg_vram[offset];
 }
 
-WRITE_HANDLER( sengoku_bg_vram_w )
+WRITE_HANDLER( sengoku_sm_bgvram_w )
 {
-	bg_vram[offset] = data;
+	sm_bgvram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
@@ -57,7 +57,7 @@ WRITE_HANDLER( sengoku_fg_vram_w )
 
 static void sengoku_bg_tile_info(int tile_index)
 {
-	int tile = bg_vram[tile_index*2] + (bg_vram[2*tile_index+1] << 8);
+	int tile = sm_bgvram[tile_index*2] + (sm_bgvram[2*tile_index+1] << 8);
 	int color = (tile >> 12) & 0x0f;
 
 	tile &= 0xfff;

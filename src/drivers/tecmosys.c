@@ -3,7 +3,16 @@
 
 can't do anything with this, its protected and expects to read back 68k code :-(
 
+T.Slanina 20040530 :
+ - preliminary gfx decode,
+ - Angel Eyes - patched interrupt level1 vector
+ - EEPROM r/w
+ - txt layer
+ - added hacks to see more gfx (press Z or X)
+ - palette (press X in angel eyes to see 'color bar chack'(!))
+ - watchdog (?) simulation
 */
+
 
 /*
 
@@ -93,6 +102,23 @@ ae500w07.ad1 - M6295 Samples (23c4001)
 */
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+#include "machine/eeprom.h"
+#include "cpu/m68000/m68k.h"
+
+static int gametype;
+
+static struct tilemap *txt_tilemap;
+static void get_tile_info(int tile_index)
+{
+
+	SET_TILE_INFO(
+			0,
+			videoram16[2*tile_index+1],
+			videoram16[2*tile_index]&0xf,
+			0)
+}
+
 
 
 static data16_t* protram;
@@ -115,7 +141,6 @@ static UINT8 device_status = DS_CMD;
 static READ16_HANDLER(reg_f80000_r)
 {
 	UINT16 dt;
-
 	// 0 means ok, no errors. -1 means error
 	if (device_status == DS_CMD)
 		return 0;
@@ -213,21 +238,41 @@ static WRITE16_HANDLER(reg_e80000_w)
 
 }
 
+static READ16_HANDLER( eeprom_r )
+{
+	 return ((EEPROM_read_bit() & 0x01) << 11);
+}
+
+
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x210000, 0x210001) AM_READ(MRA16_RAM)
 	AM_RANGE(0x300000, 0x3013ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x400000, 0x4013ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x500000, 0x5013ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x800000, 0x80ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x880000, 0x880001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x880002, 0x880007) AM_READ(input_port_1_word_r) /* test */
 	AM_RANGE(0x900000, 0x907fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x980000, 0x980fff) AM_READ(MRA16_RAM)
-
 	AM_RANGE(0xb80000, 0xb80001) AM_READ(reg_b80000_r)
+	AM_RANGE(0xd00000, 0xd80003) AM_READ(MRA16_RAM)
+	AM_RANGE(0xd80000, 0xd80001) AM_READ(eeprom_r)
+	AM_RANGE(0xf00000, 0xf00001) AM_READ(MRA16_RAM)
 	AM_RANGE(0xf80000, 0xf80001) AM_READ(reg_f80000_r)
 
 ADDRESS_MAP_END
+
+static WRITE16_HANDLER( eeprom_w )
+{
+	if ( ACCESSING_MSB )
+	{
+		EEPROM_write_bit(data & 0x0800);
+		EEPROM_set_cs_line((data & 0x0200) ? CLEAR_LINE : ASSERT_LINE );
+		EEPROM_set_clock_line((data & 0x0400) ? CLEAR_LINE: ASSERT_LINE );
+	}
+}
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
@@ -235,39 +280,74 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x3013ff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x400000, 0x4013ff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x500000, 0x5013ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x700000, 0x703fff) AM_WRITE(MWA16_RAM) AM_BASE(&videoram16)
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x980000, 0x980fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x980000, 0x980fff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)
 
-AM_RANGE(0x880022, 0x880023) AM_WRITE(MWA16_NOP)
-
+	AM_RANGE(0x880000, 0x88002f) AM_WRITE(MWA16_RAM )
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(eeprom_w	)
+	AM_RANGE(0xa80000, 0xa80005) AM_WRITE(MWA16_RAM	)
+	AM_RANGE(0xb00000, 0xb00005) AM_WRITE(MWA16_RAM	)
+	AM_RANGE(0xb80000, 0xb80005) AM_WRITE(MWA16_RAM	)
+	AM_RANGE(0xc00000, 0xc00005) AM_WRITE(MWA16_RAM	)
+	AM_RANGE(0xc80000, 0xc80005) AM_WRITE(MWA16_RAM	)
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_RAM )
 	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(reg_e80000_w)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( deroon )
+	PORT_START
+	PORT_BIT_IMPULSE(  0x0001, IP_ACTIVE_LOW, IPT_COIN1,1)
+	PORT_BIT(  0x0002, IP_ACTIVE_HIGH,IPT_UNKNOWN )
+
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-/*
-static struct GfxLayout tecmosys_charlayout =
+static struct GfxLayout gfxlayout =
 {
-	8,8,
+   8,8,
+   RGN_FRAC(1,1),
+   4,
+   { 0,1,2,3 },
+   { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
+   { 0*4*8, 1*4*8, 2*4*8, 3*4*8, 4*4*8, 5*4*8, 6*4*8, 7*4*8},
+   8*8*4
+};
+
+static struct GfxLayout gfxlayout2 =
+{
+	16,16,
 	RGN_FRAC(1,1),
 	4,
-	{ 0,1,2,3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	8*32
+	{ 0, 1, 2, 3 },
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+	  8*8*4*1+0*4, 8*8*4*1+1*4, 8*8*4*1+2*4, 8*8*4*1+3*4, 8*8*4*1+4*4, 8*8*4*1+5*4,8*8*4*1+6*4, 8*8*4*1+7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  8*8*4*2+0*32, 8*8*4*2+1*32, 8*8*4*2+2*32, 8*8*4*2+3*32, 8*8*4*2+4*32, 8*8*4*2+5*32, 8*8*4*2+6*32, 8*8*4*2+7*32 },
+	128*8
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tecmosys_charlayout,   0, 1  },
+	{ REGION_GFX2, 0, &gfxlayout,   0x40*16, 16 },
+	{ REGION_GFX3, 0, &gfxlayout2,   0, 16 },
 	{ -1 }
 };
-*/
-
 
 
 
@@ -303,6 +383,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x03, 0x03) AM_WRITE(YMF262_data_B_0_w)
 
 	AM_RANGE(0x10, 0x10) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x20, 0x20) AM_NOP
 
 	AM_RANGE(0x30, 0x30) AM_WRITE(deroon_bankswitch_w)
 
@@ -317,18 +398,24 @@ ADDRESS_MAP_END
 
 VIDEO_START(deroon)
 {
-return 0;
+	txt_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32*2,32*2);
+	tilemap_set_transparent_pen(txt_tilemap,0);
+	return 0;
 }
 
 
-static int command_data=0;
+
 
 VIDEO_UPDATE(deroon)
 {
-/* nothing  - just simulate sound commands writes here ... to test OPL3 emulator */
 
+
+
+#if 0
+/* simulate sound commands writes here ... to test OPL3 emulator */
 	int j,trueorientation;
 	char buf[64];
+	static int command_data=0;
 
 	if (keyboard_pressed_memory(KEYCODE_Q))
 	{
@@ -339,8 +426,6 @@ VIDEO_UPDATE(deroon)
 		command_data--;
 	}
 	command_data &= 0xff;
-
-
 
 	trueorientation = Machine->orientation;
 	Machine->orientation = ROT0;
@@ -360,6 +445,46 @@ VIDEO_UPDATE(deroon)
 		soundlatch_w(0,command_data);
 		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 		usrintf_showmessage("command write=%2x",command_data);
+	}
+#endif
+
+
+
+
+	// bg color , to see text in deroon
+	if(!gametype)
+			palette_set_color(0x800,0x80,0x80,0x80);
+	else
+			palette_set_color(0x800,0x0,0x0,0x0);
+
+	fillbitmap(bitmap,0x800,cliprect);
+
+	tilemap_mark_all_tiles_dirty(txt_tilemap);
+	tilemap_draw(bitmap,cliprect,txt_tilemap,0,0);
+
+
+//hacks
+
+	if(keyboard_pressed_memory(KEYCODE_Z))
+	{
+		if(!gametype)
+			cpunum_set_reg(0, M68K_PC, 0x23ae8); /* deroon */
+		else
+		{
+			data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+			ROM[0x3aaa/2] = 0x4e73; // rte (trap 0)
+			cpunum_set_reg(0, M68K_PC, 0x182a0); /* angel eyes */
+		}
+	}
+
+	if(keyboard_pressed_memory(KEYCODE_X))
+	{
+		if(gametype)
+		{
+			data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+			ROM[0x3aaa/2] = 0x4e73; // rte (trap 0)
+			cpunum_set_reg(0, M68K_PC, 0x17d2a); /* angel eyes */
+		}
 	}
 }
 
@@ -434,7 +559,7 @@ static struct YMZ280Binterface ymz280b_interface =
 static MACHINE_DRIVER_START( deroon )
 	MDRV_CPU_ADD(M68000, 16000000/8) /* the /8 divider is here only for OPL3 testing */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	//MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 16000000/2 )	/* 8 MHz ??? */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
@@ -443,13 +568,14 @@ static MACHINE_DRIVER_START( deroon )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 
-//	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
-	MDRV_SCREEN_SIZE(32*8, 32*8) 	//was:64*8, 64*8
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(0x800+1)
 
 	MDRV_VIDEO_START(deroon)
 	MDRV_VIDEO_UPDATE(deroon)
@@ -471,14 +597,19 @@ ROM_START( deroon )
 	ROM_LOAD( "t003uz1.bin", 0x000000, 0x008000, CRC(8bdfafa0) SHA1(c0cf3eb7a65d967958fe2aace171859b0faf7753) )
 	ROM_CONTINUE(            0x010000, 0x038000 ) /* banked part */
 
-	ROM_REGION( 0xb00000, REGION_GFX1, 0 ) // Graphics - mostly (maybe all?) not tile based
+	ROM_REGION( 0x800000, REGION_GFX1, 0 ) // Graphics - mostly (maybe all?) not tile based
 	ROM_LOAD( "t101uah1.j66", 0x000000, 0x200000, CRC(74baf845) SHA1(935d2954ba227a894542be492654a2750198e1bc) )
 	ROM_LOAD( "t102ual1.j67", 0x200000, 0x200000, CRC(1a02c4a3) SHA1(5155eeaef009fc9a9f258e3e54ca2a7f78242df5) )
 	ROM_LOAD( "t103ubl1.j08", 0x400000, 0x200000, CRC(75431ec5) SHA1(c03e724c15e1fe7a0a385332f849e9ac9d149887) )
 	ROM_LOAD( "t104ucl1.j68", 0x600000, 0x200000, CRC(66eb611a) SHA1(64435d35677fea3c06fdb03c670f3f63ee481c02) )
-	ROM_LOAD( "t201ubb1.w61", 0x800000, 0x100000, CRC(d5a087ac) SHA1(5098160ce7719d93e3edae05f6edd317d4c61f0d) )
-	ROM_LOAD( "t202ubc1.w62", 0x900000, 0x100000, CRC(f051dae1) SHA1(f5677c07fe644b3838657370f0309fb09244c619) )
-	ROM_LOAD( "t301ubd1.w63", 0xa00000, 0x100000, CRC(8b026177) SHA1(3887856bdaec4d9d3669fe3bc958ef186fbe9adb) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) // 8x8 4bpp tiles
+	ROM_LOAD( "t301ubd1.w63", 0x000000, 0x100000, CRC(8b026177) SHA1(3887856bdaec4d9d3669fe3bc958ef186fbe9adb) )
+
+	ROM_REGION( 0x300000, REGION_GFX3, ROMREGION_DISPOSE ) // 16x16 4bpp tiles
+	ROM_LOAD( "t201ubb1.w61", 0x000000, 0x100000, CRC(d5a087ac) SHA1(5098160ce7719d93e3edae05f6edd317d4c61f0d) )
+	ROM_LOAD( "t202ubc1.w62", 0x100000, 0x100000, CRC(f051dae1) SHA1(f5677c07fe644b3838657370f0309fb09244c619) )
+
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) // YMZ280B Samples
 	ROM_LOAD( "t401uya1.w16", 0x000000, 0x200000, CRC(92111992) SHA1(ae27e11ae76dec0b9892ad32e1a8bf6ab11f2e6c) )
@@ -496,7 +627,7 @@ ROM_START( tkdensho )
 	ROM_LOAD( "aesprg-2.z1", 0x000000, 0x008000, CRC(43550ab6) SHA1(2580129ef8ebd9295249175de4ba985c752e06fe) )
 	ROM_CONTINUE(            0x010000, 0x018000 ) /* banked part */
 
-	ROM_REGION( 0x2900000, REGION_GFX1, 0 ) // Graphics - mostly (maybe all?) not tile based
+	ROM_REGION( 0x1e00000, REGION_GFX1, 0 ) // Graphics - mostly (maybe all?) not tile based
 	ROM_LOAD( "ae100h.ah1",    0x0000000, 0x0400000, CRC(06be252b) SHA1(08d1bb569fd2e66e2c2f47da7780b31945232e62) )
 	ROM_LOAD( "ae100.al1",     0x0400000, 0x0400000, CRC(009cdff4) SHA1(fd88f07313d14fd4429b09a1e8d6b595df3b98e5) )
 	ROM_LOAD( "ae101h.bh1",    0x0800000, 0x0400000, CRC(f2469eff) SHA1(ba49d15cc7949437ba9f56d9b425a5f0e62137df) )
@@ -506,10 +637,14 @@ ROM_START( tkdensho )
 	ROM_LOAD( "ae104.el1",     0x1400000, 0x0400000, CRC(e431b798) SHA1(c2c24d4f395bba8c78a45ecf44009a830551e856) )
 	ROM_LOAD( "ae105.fl1",     0x1800000, 0x0400000, CRC(b7f9ebc1) SHA1(987f664072b43a578b39fa6132aaaccc5fe5bfc2) )
 	ROM_LOAD( "ae106.gl1",     0x1c00000, 0x0200000, CRC(7c50374b) SHA1(40865913125230122072bb13f46fb5fb60c088ea) )
-	ROM_LOAD( "ae200w74.ba1",  0x1e00000, 0x0100000, CRC(c1645041) SHA1(323670a6aa2a4524eb968cc0b4d688098ffeeb12) )
-	ROM_LOAD( "ae201w75.bb1",  0x1f00000, 0x0100000, CRC(3f63bdff) SHA1(0d3d57fdc0ec4bceef27c11403b3631d23abadbf) )
-	ROM_LOAD( "ae202w76.bc1",  0x2000000, 0x0100000, CRC(5cc857ca) SHA1(2553fb5220433acc15dfb726dc064fe333e51d88) )
-	ROM_LOAD( "ae300w36.bd1",  0x2100000, 0x0080000, CRC(e829f29e) SHA1(e56bfe2669ed1d1ae394c644def426db129d97e3) )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) // 8x8 4bpp tiles
+	ROM_LOAD( "ae300w36.bd1",  0x000000, 0x0080000, CRC(e829f29e) SHA1(e56bfe2669ed1d1ae394c644def426db129d97e3) )
+
+	ROM_REGION( 0x300000, REGION_GFX3, ROMREGION_DISPOSE ) // 16x16 4bpp tiles
+	ROM_LOAD( "ae200w74.ba1",  0x000000, 0x0100000, CRC(c1645041) SHA1(323670a6aa2a4524eb968cc0b4d688098ffeeb12) )
+	ROM_LOAD( "ae201w75.bb1",  0x100000, 0x0100000, CRC(3f63bdff) SHA1(0d3d57fdc0ec4bceef27c11403b3631d23abadbf) )
+	ROM_LOAD( "ae202w76.bc1",  0x200000, 0x0100000, CRC(5cc857ca) SHA1(2553fb5220433acc15dfb726dc064fe333e51d88) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) // YMZ280B Samples
 	ROM_LOAD( "ae400t23.ya1", 0x000000, 0x200000, CRC(c6ffb043) SHA1(e0c6c5f6b840f63c9a685a2c3be66efa4935cbeb) )
@@ -519,20 +654,47 @@ ROM_START( tkdensho )
 	ROM_LOAD( "ae500w07.ad1", 0x000000, 0x080000, CRC(3734f92c) SHA1(048555b5aa89eaf983305c439ba08d32b4a1bb80) )
 ROM_END
 
+static void reset_callback(int param)
+{
+	cpu_set_reset_line(0, PULSE_LINE);
+}
+
 
 static DRIVER_INIT( deroon )
 {
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	ROM[0x39C2/2] = 0x0001;
+	ROM[0x0448/2] = 0x4E71;
+	ROM[0x044A/2] = 0x4E71;
+	ROM[0x04bc/2] = 0x0000;
+	ROM[0x302c/2] = 0x60a4;
+	timer_set(TIME_IN_SEC(2),0,reset_callback);
+	gametype=0;
+}
 
-	memcpy(protram, ROM+0xC46/2, 0x10);
+static DRIVER_INIT( tkdensho )
+{
+	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	ROM[0x222c/2] = 0x4E71;
+	ROM[0x222c/2] = 0x4E71;
 
-	// Patch the long eeprom write delay to speedup bootstrapping
-	ROM[0x39C2/2] = 0x1;
+	/* interrupt vector */
+	ROM[0x64/2] = 0x0000;
+	ROM[0x66/2] = 0x22c4;
 
-//	ROM[0x448/2] = 0x4E71;
-//	ROM[0x44A/2] = 0x4E71;
+	/* protection ? */
+	ROM[0x3a3c/2] = 0x4E71;
+	ROM[0x3a84/2] = 0x4E71;
+
+	ROM[0x1759a/2] = 0x4E71; //trap 0
+	ROM[0x04822/2] = 0x4E71;
+	ROM[0x04862/2] = 0x4E71;
+
+	timer_set(TIME_IN_SEC(2),0,reset_callback);
+	gametype=1;
+
 }
 
 GAMEX( 1996, deroon,      0, deroon, deroon, deroon,     ROT0, "Tecmo", "Deroon DeroDero", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1996, tkdensho,    0, deroon, deroon, 0,          ROT0, "Tecmo", "Touki Denshou -Angel Eyes-", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, tkdensho,    0, deroon, deroon, tkdensho,   ROT0, "Tecmo", "Touki Denshou -Angel Eyes-", GAME_NOT_WORKING | GAME_NO_SOUND )
 

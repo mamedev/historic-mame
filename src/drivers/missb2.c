@@ -16,7 +16,7 @@ OKI M6295 sound ROM dump is bad.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *bg_paletteram,*bg_vram;
+data8_t *bg_paletteram,*missb2_bgvram;
 
 /* vidhrdw/bublbobl.c */
 extern unsigned char *bublbobl_objectram;
@@ -65,8 +65,8 @@ VIDEO_UPDATE( missb2 )
 	if (!bublbobl_video_enable) return;
 
 	/* background map register */
-	//usrintf_showmessage("%02x",(*bg_vram) & 0x1f);
-	for(bg_offs = ((*bg_vram) << 4);bg_offs<(((*bg_vram)<< 4)|0xf);bg_offs++)
+	//usrintf_showmessage("%02x",(*missb2_bgvram) & 0x1f);
+	for(bg_offs = ((*missb2_bgvram) << 4);bg_offs<(((*missb2_bgvram)<< 4)|0xf);bg_offs++)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
 				bg_offs,
@@ -232,7 +232,7 @@ static ADDRESS_MAP_START( missb2_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0xd000, 0xd000) AM_WRITE(bg_bank_w)
 	AM_RANGE(0xd002, 0xd002) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xd003, 0xd003) AM_WRITE(MWA8_RAM) AM_BASE(&bg_vram)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(MWA8_RAM) AM_BASE(&missb2_bgvram)
 	AM_RANGE(0xe000, 0xf7ff) AM_WRITE(bublbobl_sharedram1_w)
 ADDRESS_MAP_END
 

@@ -29,14 +29,21 @@ static WRITE_HANDLER( findout_bitmap_w )
 {
 	int sx,sy;
 	int fg,bg,mask,bits;
+	static int prevoffset, yadd;
+
+	videoram[offset] = data;
+
+	yadd = (offset==prevoffset) ? (yadd+1):0;
+	prevoffset = offset;
 
 	fg = drawctrl[0] & 7;
 	bg = 2;
 	mask = 0xff;//drawctrl[2];
 	bits = drawctrl[1];
 
-	sx = 8*(offset % 64);
+	sx = 8 * (offset % 64);
 	sy = offset / 64;
+	sy = (sy + yadd) & 0xff;
 
 //if (mask != bits)
 //	usrintf_showmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
@@ -183,7 +190,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6200, 0x6200) AM_WRITE(signature_w)
 	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM)	/* space for diagnostic ROM? */
 	AM_RANGE(0x8000, 0x8002) AM_WRITE(findout_drawctrl_w)
-	AM_RANGE(0xc000, 0xffff) AM_WRITE(findout_bitmap_w)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE(findout_bitmap_w)  AM_BASE(&videoram)
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)	/* overlapped by the above */
 ADDRESS_MAP_END
 
@@ -295,6 +302,59 @@ ROM_START( findout )
 	ROM_LOAD( "82s147.bin",   0x0000, 0x0200, CRC(f3b663bb) SHA1(5a683951c8d3a2baac4b49e379d6e10e35465c8a) )	/* unknown */
 ROM_END
 
+ROM_START( getrv1 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "triv_3_2.bin", 0x00000, 0x4000,  CRC(2d72a081) SHA1(8aa32acf335d027466799b097e0de66bcf13247f) )
+	ROM_LOAD( "rom_ad.bin",   0x08000, 0x2000,  CRC(c81cc847) SHA1(057b7b75a2fe1abf88b23e7b2de230d9f96139f5) )
+	ROM_LOAD( "aeros836.bin",  0x10000, 0x8000, CRC(cb555d46) SHA1(559ae05160d7893ff96311a2177eba039a4cf186) )
+	ROM_LOAD( "engsp838.bin",  0x18000, 0x8000, CRC(6ae8a63d) SHA1(c6018141d8bbe0ed7619980bf7da89dd91d7fcc2) )
+	ROM_LOAD( "genft836.bin", 0x20000, 0x8000,  CRC(f921f108) SHA1(fd72282df5cee0e6ab55268b40785b3dc8e3d65b) )
+	ROM_LOAD( "horor839.bin",  0x28000, 0x8000, CRC(5f7b262a) SHA1(047480d6bf5c6d0603d538b84c996bd226f07f77) )
+	ROM_LOAD( "pop12_57.bin",  0x30000, 0x8000, CRC(884fec7c) SHA1(b389216c17f516df4e15eee46246719dd4acb587) )
+ROM_END
 
+ROM_START( getrv2 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "t_3a-8_1.bin", 0x00000, 0x4000, CRC(02aef306) SHA1(1ffc10c79a55d41ea36bcaab13cb3f02cb3f9712) )
+	ROM_LOAD( "richfa_1.bin", 0x10000, 0x8000, CRC(39e07e4a) SHA1(6e5a0bcefaa1169f313e8818cf50919108b3e121) )
+	ROM_LOAD( "rnr_9.bin",    0x18000, 0x8000, CRC(1be036b1) SHA1(0b262906044950319dd911b956ac2e0b433f6c7f) )
+	ROM_LOAD( "sex_3_11.bin", 0x20000, 0x8000, CRC(2c46e355) SHA1(387ab389abaaea8e870b00039dd884237f7dd9c6) )
+	ROM_LOAD( "sprt_8.bin",   0x28000, 0x8000, CRC(6bd1ba9a) SHA1(7caac1bd438a9b1d11fb33e11814b5d76951211a) )
+	ROM_LOAD( "tv_comd.bin",  0x30000, 0x8000, CRC(992ae38e) SHA1(312780d651a85a1c433f587ff2ede579456d3fd9) )
+ROM_END
+
+ROM_START( getrv3 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "t_3a-8_1.bin", 0x00000, 0x4000,  CRC(02aef306) SHA1(1ffc10c79a55d41ea36bcaab13cb3f02cb3f9712) )
+	ROM_LOAD( "ent_10.bin",   0x10000, 0x8000,  CRC(07068c9f) SHA1(1aedc78d071281ec8b08488cd82655d41a77cf6b) )
+ROM_END
+
+ROM_START( getrv4 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "trvmast3.bin",  0x00000, 0x4000, CRC(9ea277bc) SHA1(f813de572a3b5e2ad601dc6559dc93c30bb7a38c) )
+	ROM_LOAD( "comic416.bin",  0x10000, 0x8000, CRC(193c868e) SHA1(75f18eb6cc6467e927961271374bedaf7736e20b) )
+	ROM_LOAD( "gnrl3_42.bin",  0x18000, 0x8000, CRC(b0376464) SHA1(d1812d6dd42cd7f3753fcc0d2647b56a91bfcc9d) )
+	ROM_LOAD( "scfi2_31.bin",  0x20000, 0x8000, CRC(3c8bc603) SHA1(5e8c1d27fc8ffb9a2a26b749328e09c548da4fca) )
+	ROM_LOAD( "soccr_41.bin",  0x28000, 0x8000, CRC(f821f860) SHA1(b0437ef5d31c507c6499c1fb732d2ba3b9beb151) )
+	ROM_LOAD( "sprt5_13.bin",  0x30000, 0x8000, CRC(02712bc7) SHA1(a07a87c2c37f34a188d7c00acc0d977acc850f00) )
+ROM_END
 
 GAMEX( 1987, findout, 0, findout, findout, 0, ROT0, "Elettronolo", "Find Out", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
+/*
+
+When game is first run a RAM error will occur because the nvram needs initialising.
+
+GETriv1	- Press F2 to get into test mode, then press control/fire1 to continue
+GETriv2-3 - When ERROR appears, press F2 , then F3 to reset, then F2 again and the game will start
+GETriv4 - When RAM Error appears press F3 to reset and the game will start
+
+*/
+
+
+GAMEX( 1986, getrv1, 0, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia 1 (UK Version 5.07)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, getrv2, 0, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia 2 (Version 1.03a)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, getrv3, 0, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia 3 (Version 1.03a)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1986, getrv4, 0, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia 4 (Version 1.03)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
+

@@ -6,7 +6,10 @@
 
 Changes:
 
-03/17/04  Charles MacDonald
+04/28/04  Charles MacDonald
+- Added MSM5205 sample playback to tturfbl.
+
+03/17/04
 - Added correctly dumped ROM set for eswat to replace the old one. Game is encrypted and unplayable.
 - Moved Ace Attacker here from System 18 driver. Game is encrypted and unplayable.
 - Added sound support for tturf, tturfu, tturfbl (no samples), fpointbl, fpointbj
@@ -195,11 +198,8 @@ static INTERRUPT_GEN( sys16_interrupt )
 
 
 /***************************************************************************/
-
 /*
 	Tough Turf (Datsu bootleg) sound emulation
-	I can't tell if it has a DAC or something else (ADPCM?)
-	When treated as a DAC, samples are barely recognizable but generally seem correct.
 
 	Memory map
 
@@ -207,13 +207,13 @@ static INTERRUPT_GEN( sys16_interrupt )
 	8000-bfff : ROM (banked)
 	e000      : Bank control
 	e800      : Sound command latch
-	f000      : DAC? output
+	f000      : MSM5205 sample data buffer
 	f800-ffff : Work RAM
 
 	Interrupts
 
 	IRQ = Read sound command from $E800
-	NMI = Copy data from fixed/banked ROM to $F000 each time
+	NMI = Copy data from fixed/banked ROM to $F000
 
 	Bank control values
 
@@ -223,11 +223,35 @@ static INTERRUPT_GEN( sys16_interrupt )
 	03 = tt0246ff 4000-7fff
 	04 = tt0246ff 8000-bfff
 
-	Implementing samples the same way I did in shdancbl, where a NMI is generated periodically
-	to drive a DAC, doesn't work in tturfbl. It crashes after getting too many NMIs.
-	Maybe only one is generated per write to $f000, but it's not even clear what kind of sound device
-	is being accessed anyway. Sample data looks to be 4-bit but is written 8 bits at a time.
+	The sample sound codes in the sound test are OK, but in-game sample playback is bad.
+	There seems to be more data in the high bits of the ROM bank control word which may be related.
 */
+
+static int sample_buffer = 0;
+static int sample_select = 0;
+
+static WRITE_HANDLER( tturfbl_msm5205_data_w )
+{
+	sample_buffer = data;
+}
+
+static void tturfbl_msm5205_callback(int data)
+{
+	MSM5205_data_w(0, (sample_buffer >> 4) & 0x0F);
+	sample_buffer <<= 4;
+	sample_select ^= 1;
+	if(sample_select == 0)
+		cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct MSM5205interface tturfbl_msm5205_interface =
+{
+	1,
+	220000, /* 220KHz */
+	{ tturfbl_msm5205_callback },
+	{ MSM5205_S48_4B},
+	{ 80 }
+};
 
 
 UINT8 *tturfbl_soundbank_ptr = NULL;		/* Pointer to currently selected portion of ROM */
@@ -270,17 +294,17 @@ static WRITE_HANDLER( tturfbl_soundbank_w )
 }
 
 static ADDRESS_MAP_START( tturfbl_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(tturfbl_soundbank_r)
 	AM_RANGE(0xe800, 0xe800) AM_READ(soundlatch_r)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(tturfbl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_NOP) /* ROM bank */
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(tturfbl_soundbank_w)
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* Sample data output */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(tturfbl_msm5205_data_w)
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
@@ -6155,6 +6179,9 @@ static MACHINE_DRIVER_START( tturfbl )
 	MDRV_CPU_PROGRAM_MAP(tturfbl_sound_readmem,tturfbl_sound_writemem)
 	MDRV_CPU_IO_MAP(tturfbl_sound_readport,tturfbl_sound_writeport)
 
+	MDRV_SOUND_REMOVE("7759")
+	MDRV_SOUND_ADD_TAG("5205", MSM5205, tturfbl_msm5205_interface)
+
 	MDRV_MACHINE_INIT(tturfbl)
 MACHINE_DRIVER_END
 
@@ -7056,7 +7083,7 @@ GAME( 1987, timscanr, 0,        timscanr, timscanr, timscanr, ROT270, "Sega",   
 GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,   "Sega",    "Toryumon" )
 GAME (1989, tturf,    0,        tturf,    tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (Japan)")
 GAME (1989, tturfu,   tturf,    tturfu,   tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (US)")
-GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND)
 GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 1)" ) //*
 GAMEX(1988, wb3a,     wb3,      wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 2)", GAME_NOT_WORKING )
 GAME( 1988, wb3bl,    wb3,      wb3bl,    wb3,      wb3bl,    ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )

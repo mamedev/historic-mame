@@ -1594,8 +1594,15 @@ static void trace_init( const char *filename, UINT8 *regs )
 
 	for( tracecpu = 0; tracecpu < total_cpu; tracecpu++ )
 	{
-		sprintf( name, "%s.%d", filename, tracecpu );
-		TRACE.file = fopen(name,"w");
+		if( strcmp( filename, "CONSOLE" ) == 0 )
+		{
+			TRACE.file = stdout;
+		}
+		else
+		{
+			sprintf( name, "%s.%d", filename, tracecpu );
+			TRACE.file = fopen(name,"w");
+		}
 		if( tracecpu == active_cpu )
 			memcpy( TRACE.regs, regs, MAX_REGS );
 		else
@@ -4648,6 +4655,7 @@ static void cmd_trace_to_file( void )
 	const char *filename;
 	UINT8 regs[MAX_REGS], regcnt = 0;
 	int length;
+	char buf[128];
 
 	filename = get_file_name( &cmd, &length );
 
@@ -4666,6 +4674,18 @@ static void cmd_trace_to_file( void )
 			}
 			else
 			{
+				/* warn about unidentified registers */
+				length = 0;
+				while(length < (sizeof(buf) / sizeof(buf[0]) - 1)
+					&& cmd[length] && !isspace(cmd[length]))
+				{
+					length++;
+				}
+				memcpy(buf, cmd, length);
+				buf[length] = '\0';
+
+				win_msgbox( cur_col[E_ERROR], "Trace",
+					"Warning: Register '%s' not identified", buf);
 				break;
 			}
 		}
@@ -5209,6 +5229,23 @@ static void mame_debug_reset_statics( void )
 
 
 /**************************************************************************
+ *	mame_debug_trace_write
+ *	Writes trace info to the active trace file, if appropriate
+ **************************************************************************/
+void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
+{
+	va_list va;
+
+	if (dbg[cpunum].trace.file)
+	{
+		va_start(va, fmt);
+		vfprintf(dbg[cpunum].trace.file, fmt, va);
+		va_end(va);
+	}
+}
+
+
+/**************************************************************************
  *	mame_debug_init
  *	This function is called from cpu_run to startup the debugger
  **************************************************************************/
@@ -5501,5 +5538,5 @@ void MAME_Debug(void)
 	}
 }
 
-#endif
+#endif /* MAME_DEBUG */
 

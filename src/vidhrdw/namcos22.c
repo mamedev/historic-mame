@@ -647,7 +647,7 @@ SetupWindow( const INT32 *pWindow, int which )
 	}
 	else if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
 	{
-		fov /= 22.0;
+		fov /= 32.0;
 	}
 	fov = fov*3.141592654/180.0; /* degrees to radians */
 	mCamera.zoom = vw/tan(fov/2.0);

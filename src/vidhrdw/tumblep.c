@@ -20,6 +20,7 @@ static data16_t tumblep_control_0[8];
 data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
 static int flipscreen;
+extern data16_t* jumppop_control;
 
 /******************************************************************************/
 
@@ -347,6 +348,16 @@ VIDEO_START( fncywld )
 	return 0;
 }
 
+VIDEO_START( jumppop )
+{
+	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,128,64);
+	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
+	tilemap_set_flip(pf1_tilemap, TILEMAP_FLIPX);
+	tilemap_set_flip(pf1_alt_tilemap, TILEMAP_FLIPX);
+	return 0;
+}
+
+
 /******************************************************************************/
 
 VIDEO_UPDATE( tumblep )
@@ -443,3 +454,19 @@ VIDEO_UPDATE( fncywld )
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	fncywld_drawsprites(bitmap,cliprect);
 }
+
+
+VIDEO_UPDATE( jumppop )
+{
+//	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	if (jumppop_control[7]&2)
+		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+
+//usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x", jumppop_control[0],jumppop_control[1],jumppop_control[2],jumppop_control[3],jumppop_control[4],jumppop_control[5],jumppop_control[6],jumppop_control[7]);
+
+	jumpkids_drawsprites(bitmap,cliprect);
+}
+

@@ -679,32 +679,52 @@ void memory_set_bankptr(int banknum, void *base)
 
 data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 8, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+	return memory_install_read8_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 16, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+	return memory_install_read16_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 32, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+	return memory_install_read32_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read64_handler handler)
 {
+	return memory_install_read64_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
+}
+
+data8_t *memory_install_read8_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
+{
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 0, 64, 0, start, end, mask, 0, (void *)handler, 0);
+	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+}
+
+data16_t *memory_install_read16_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+}
+
+data32_t *memory_install_read32_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+}
+
+data64_t *memory_install_read64_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
@@ -717,32 +737,52 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
 
 data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 8, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+	return memory_install_write8_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 16, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+	return memory_install_write16_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 32, 0, start, end, mask, 0, (void *)handler, 0);
-	mem_dump();
-	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+	return memory_install_write32_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
 }
 
 data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write64_handler handler)
 {
+	return memory_install_write64_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
+}
+
+data8_t *memory_install_write8_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
+{
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	install_mem_handler(space, 1, 64, 0, start, end, mask, 0, (void *)handler, 0);
+	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
+
+data16_t *memory_install_write16_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
+
+data32_t *memory_install_write32_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (void *)handler, 0);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
+
+data64_t *memory_install_write64_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
+{
+	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (void *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }

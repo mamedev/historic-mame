@@ -151,7 +151,7 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_R3000)
 #include "cpu/mips/r3000.h"
 #endif
-#if (HAS_R4600 || HAS_R5000)
+#if (HAS_R4600 || HAS_R4700 || HAS_R5000 || HAS_QED5271 || HAS_RM7000)
 #include "cpu/mips/mips3.h"
 #endif
 #if (HAS_ARM)
@@ -581,9 +581,21 @@ const struct
 	{ CPU_R4600BE, r4600be_get_info },
 	{ CPU_R4600LE, r4600le_get_info },
 #endif
+#if (HAS_R4700)
+	{ CPU_R4700BE, r4700be_get_info },
+	{ CPU_R4700LE, r4700le_get_info },
+#endif
 #if (HAS_R5000)
 	{ CPU_R5000BE, r5000be_get_info },
 	{ CPU_R5000LE, r5000le_get_info },
+#endif
+#if (HAS_QED5271)
+	{ CPU_QED5271BE, qed5271be_get_info },
+	{ CPU_QED5271LE, qed5271le_get_info },
+#endif
+#if (HAS_RM7000)
+	{ CPU_RM7000BE, rm7000be_get_info },
+	{ CPU_RM7000LE, rm7000le_get_info },
 #endif
 #if (HAS_ARM)
 	{ CPU_ARM, arm_get_info },
@@ -1506,7 +1518,7 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 	void m68000_set_reset_callback(void (*callback)(void));
 	void m68020_set_reset_callback(void (*callback)(void));
 
-	if ( cpu[cpunum].cputype != CPU_M68000 && cpu[cpunum].cputype != CPU_M68010 && cpu[cpunum].cputype != CPU_M68020 && cpu[cpunum].cputype != CPU_M68EC020 )
+	if ( cpu[cpunum].cputype != CPU_M68000 && cpu[cpunum].cputype != CPU_M68008 && cpu[cpunum].cputype != CPU_M68010 && cpu[cpunum].cputype != CPU_M68020 && cpu[cpunum].cputype != CPU_M68EC020 )
 	{
 		logerror("Trying to set m68k reset vector on non-68k cpu\n");
 		exit(1);
@@ -1514,7 +1526,7 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 
 	cpuintrf_push_context(cpunum);
 
-	if ( cpu[cpunum].cputype == CPU_M68000 || cpu[cpunum].cputype == CPU_M68010 )
+	if ( cpu[cpunum].cputype == CPU_M68000 || cpu[cpunum].cputype == CPU_M68008 || cpu[cpunum].cputype == CPU_M68010 )
 	{
 #ifdef A68K0
 		m68000_set_reset_callback(resetfn);

@@ -33,6 +33,9 @@ struct InputPort
 	UINT32 type;			/* see defines below */
 	const char *name;		/* name to display */
 	InputSeq seq;                  	/* input sequence affecting the input bits */
+#ifdef MESS
+	UINT16 category;
+#endif /* MESS */
 };
 
 
@@ -72,6 +75,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_KEYBOARD, IPT_UCHAR,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
 	IPT_START, IPT_SELECT,
+	IPT_CATEGORY, IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING,
 #endif /* MESS */
 /* Many games poll an input bit to check for vertical blanks instead of using */
 /* interrupts. This special value allows you to handle that. If you set one of the */
@@ -394,7 +398,6 @@ InputSeq* input_port_type_seq(int type);
 InputSeq* input_port_seq(const struct InputPort *in);
 
 struct InputPort* input_port_allocate(const struct InputPortTiny *src);
-void input_port_free(struct InputPort* dst);
 
 #ifdef MAME_NET
 void set_default_player_controls(int player);

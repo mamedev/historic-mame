@@ -379,6 +379,43 @@ static READ_HANDLER( dingo_3035_r )
 	return 0x8c;
 }
 
+static READ_HANDLER( dingoe_3001_r )
+{
+	return 0xaa;
+}
+
+
+DRIVER_INIT( dingoe )
+{
+	offs_t i;
+	data8_t *rom = memory_region(REGION_CPU1);
+
+	for (i = 0; i < 0x3000; i++)
+	{
+		UINT8 data_xor;
+
+		/* XOR bit 2 with 4 and 5 with 0 */
+		data_xor = BIT(rom[i], 2) << 4 | BIT(rom[i], 5) << 0;
+		rom[i] ^= data_xor;
+
+
+		/* Invert bit 1 */
+		if (~rom[i] & 0x02)
+			rom[i] = rom[i] | 0x02;
+		else
+			rom[i] = rom[i] & 0xfd;
+
+
+		/* Swap bit0 with bit4 */
+		if ((i & 0x0f) == 0x02 || (i & 0x0f) == 0x0a || (i & 0x0f) == 0x03 || (i & 0x0f) == 0x0b || (i & 0x0f) == 0x06 || (i & 0x0f) == 0x0e || (i & 0x0f) == 0x07 || (i & 0x0f) == 0x0f)	/* Swap Bit 0 and 4 */
+			rom[i] = BITSWAP8(rom[i],7,6,5,0,3,2,1,4);
+	}
+
+	install_mem_read_handler(0, 0x3001, 0x3001, dingoe_3001_r);	/* Protection check */
+
+}
+
+
 
 static int kingball_speech_dip;
 
@@ -1071,7 +1108,7 @@ DRIVER_INIT( darkplnt )
 
 DRIVER_INIT( mimonkey )
 {
-	static const UINT8 xortable[16][16] = 
+	static const UINT8 xortable[16][16] =
 	{
 		{ 0x03,0x03,0x05,0x07,0x85,0x00,0x85,0x85,0x80,0x80,0x06,0x03,0x03,0x00,0x00,0x81 },
 		{ 0x83,0x87,0x03,0x87,0x06,0x00,0x06,0x04,0x02,0x00,0x84,0x84,0x04,0x00,0x01,0x83 },

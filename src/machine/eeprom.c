@@ -86,6 +86,7 @@ struct EEPROM_interface eeprom_interface_93C46 =
 	"*111",			// erase		1 11 aaaaaa
 	"*10000xxxx",	// lock			1 00 00xxxx
 	"*10011xxxx",	// unlock		1 00 11xxxx
+	1,
 //	"*10001xxxx"	// write all	1 00 01xxxx dddddddddddddddd
 //	"*10010xxxx"	// erase all	1 00 10xxxx
 };

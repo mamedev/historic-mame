@@ -86,6 +86,7 @@ struct mips3_config
 {
 	size_t		icache;							/* code cache size */
 	size_t		dcache;							/* data cache size */
+	UINT32		system_clock;					/* system clock rate */
 };
 
 
@@ -98,9 +99,24 @@ void r4600be_get_info(UINT32 state, union cpuinfo *info);
 void r4600le_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
+#if (HAS_R4700)
+void r4700be_get_info(UINT32 state, union cpuinfo *info);
+void r4700le_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
 #if (HAS_R5000)
 void r5000be_get_info(UINT32 state, union cpuinfo *info);
 void r5000le_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_QED5271)
+void qed5271be_get_info(UINT32 state, union cpuinfo *info);
+void qed5271le_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#if (HAS_RM7000)
+void rm7000be_get_info(UINT32 state, union cpuinfo *info);
+void rm7000le_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 
@@ -115,6 +131,7 @@ void r5000le_get_info(UINT32 state, union cpuinfo *info);
 #define MIPS3DRC_STRICT_COP2		0x0008			/* validate all COP2 instructions */
 #define MIPS3DRC_DIRECT_RAM			0x0010			/* allow direct RAM access (no bankswitching!) */
 #define MIPS3DRC_FLUSH_PC			0x0020			/* flush the PC value before each memory access */
+#define MIPS3DRC_CHECK_OVERFLOWS	0x0040			/* actually check overflows on add/sub instructions */
 
 #define MIPS3DRC_COMPATIBLE_OPTIONS	(MIPS3DRC_STRICT_VERIFY | MIPS3DRC_STRICT_COP0 | MIPS3DRC_STRICT_COP1 | MIPS3DRC_STRICT_COP2 | MIPS3DRC_FLUSH_PC)
 #define MIPS3DRC_FASTEST_OPTIONS	(MIPS3DRC_DIRECT_RAM)

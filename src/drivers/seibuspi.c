@@ -670,7 +670,7 @@ static NVRAM_HANDLER( sxx2f )
 
 static INTERRUPT_GEN( spi_interrupt )
 {
-	cpu_set_irq_line( 0, 0x20, ASSERT_LINE );
+	cpu_set_irq_line( 0, 0x20, PULSE_LINE );
 }
 
 /* SPI */

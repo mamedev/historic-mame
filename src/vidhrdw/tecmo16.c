@@ -17,6 +17,7 @@ data16_t *tecmo16_colorram2;
 data16_t *tecmo16_charram;
 
 static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
+static int flipscreen;
 
 /******************************************************************************/
 
@@ -70,6 +71,7 @@ VIDEO_START( fstarfrc )
 	tilemap_set_transparent_pen(tx_tilemap,0);
 
 	tilemap_set_scrolly(tx_tilemap,0,-16);
+	flipscreen = 0;
 
 	return 0;
 }
@@ -86,6 +88,7 @@ VIDEO_START( ginkun )
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
+	flipscreen = 0;
 
 	return 0;
 }
@@ -131,6 +134,12 @@ WRITE16_HANDLER( tecmo16_charram_w )
 	COMBINE_DATA(&tecmo16_charram[offset]);
 	if (oldword != tecmo16_charram[offset])
 		tilemap_mark_tile_dirty(tx_tilemap,offset);
+}
+
+WRITE16_HANDLER( tecmo16_flipscreen_w )
+{
+	flipscreen = data & 0x01;
+	flip_screen_set(flipscreen);
 }
 
 /******************************************************************************/
@@ -229,12 +238,26 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				case 0x3: priority_mask = 0xf0|0xcc|0xaa; break; /* obscured by bg and fg */
 			}
 
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
 			for (y = 0;y < sizey;y++)
 			{
 				for (x = 0;x < sizex;x++)
 				{
-					int sx = xpos + 8*(flipx?(sizex-1-x):x);
-					int sy = ypos + 8*(flipy?(sizey-1-y):y);
+					int sx,sy;
+
+					if (!flipscreen)
+					{
+						sx = xpos + 8*(flipx?(sizex-1-x):x);
+						sy = ypos + 8*(flipy?(sizey-1-y):y);
+					} else {
+						sx = 256 - (xpos + 8*(!flipx?(sizex-1-x):x) + 8);
+						sy = 256 - (ypos + 8*(!flipy?(sizey-1-y):y) + 8);
+					}
 					pdrawgfx(bitmap,Machine->gfx[2],
 							code + layout[y][x],
 							color,

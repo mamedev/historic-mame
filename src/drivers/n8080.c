@@ -11,167 +11,30 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/i8039/i8039.h"
-#include <math.h>
+#include "vidhrdw/generic.h"
 
-#define HARDWARE_IS_SPACE_FEVER     ( n8080_hardware == 1 )
-#define HARDWARE_IS_SHERIFF         ( n8080_hardware == 2 )
-#define HARDWARE_IS_HELIFIRE        ( n8080_hardware == 3 )
+extern WRITE_HANDLER( n8080_video_control_w );
 
-static int n8080_hardware;
+extern PALETTE_INIT( n8080 );
+extern PALETTE_INIT( helifire );
 
-static mame_timer* sound_timer[3];
+extern VIDEO_START( spacefev );
+extern VIDEO_START( sheriff );
+extern VIDEO_START( helifire );
+extern VIDEO_UPDATE( spacefev );
+extern VIDEO_UPDATE( sheriff );
+extern VIDEO_UPDATE( helifire );
+extern VIDEO_EOF( helifire );
 
-static int mono_flop[3];
+extern MACHINE_DRIVER_EXTERN( spacefev_sound );
+extern MACHINE_DRIVER_EXTERN( sheriff_sound );
+extern MACHINE_DRIVER_EXTERN( helifire_sound );
 
-static int sheriff_color_mode;
-static int sheriff_color_data;
-
-static int helifire_scroll;
-static int helifire_decay;
-
-static UINT8 helifire_LSFR[63];
-
-static UINT8* n8080_videoram;
-static UINT8* n8080_colorram;
-
-static int spacefev_ufo_frame;
-static int spacefev_ufo_cycle;
-static int spacefev_red_screen;
-static int spacefev_red_cannon;
-
-static mame_timer* spacefev_red_cannon_timer;
+extern WRITE_HANDLER( n8080_sound_1_w );
+extern WRITE_HANDLER( n8080_sound_2_w );
 
 static unsigned shift_data;
 static unsigned shift_bits;
-
-static UINT16 prev_sound_pins;
-static UINT16 curr_sound_pins;
-
-static int flip_screen;
-
-
-/* following data is based on screen shots */
-
-static const UINT8 sheriff_color_PROM[] =
-{
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x0, 0x0, 0x0, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x0, 0x0, 0x0, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x9, 0x9, 0xb,
-	0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xe, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb,
-	0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xe, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xe, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xa, 0xa, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x2, 0x2, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xa, 0xa, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x2, 0x2, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0x9, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xa, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3,
-	0x3, 0x3, 0x3, 0x3, 0x3, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xa, 0xb,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb,
-	0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xa, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x9, 0x9, 0xb,
-	0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0xb, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-	0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x6, 0x6, 0x6, 0xe, 0xe, 0xd, 0xf, 0xf, 0xf,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x0, 0x0, 0x0, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-	0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x0, 0x0, 0x0, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8,
-};
-
-
-static struct DACinterface n8080_dac_interface =
-{
-	1, { 30 }
-};
-
-
-struct SN76477interface sheriff_sn76477_interface =
-{
-	1,
-	{ 35 },
-	{ RES_K(36)  },  /* 04 */
-	{ RES_K(100) },  /* 05 */
-	{ CAP_N(1)   },  /* 06 */
-	{ RES_K(620) },  /* 07 */
-	{ CAP_U(1)   },  /* 08 */
-	{ RES_K(20)  },  /* 10 */
-	{ RES_K(150) },  /* 11 */
-	{ RES_K(47)  },  /* 12 */
-	{ 0          },  /* 16 */
-	{ CAP_N(1)   },  /* 17 */
-	{ RES_M(1.5) },  /* 18 */
-	{ 0          },  /* 19 */
-	{ RES_M(1.5) },  /* 20 */
-	{ CAP_N(47)  },  /* 21 */
-	{ CAP_N(47)  },  /* 23 */
-	{ RES_K(560) },  /* 24 */
-};
-
-
-struct SN76477interface spacefev_sn76477_interface =
-{
-	1,
-	{ 35 },
-	{ RES_K(36)  },  /* 04 */
-	{ RES_K(150) },  /* 05 */
-	{ CAP_N(1)   },  /* 06 */
-	{ RES_M(1)   },  /* 07 */
-	{ CAP_U(1)   },  /* 08 */
-	{ RES_K(20)  },  /* 10 */
-	{ RES_K(150) },  /* 11 */
-	{ RES_K(47)  },  /* 12 */
-	{ 0          },  /* 16 */
-	{ CAP_N(1)   },  /* 17 */
-	{ RES_M(1.5) },  /* 18 */
-	{ 0          },  /* 19 */
-	{ RES_M(1)   },  /* 20 */
-	{ CAP_N(47)  },  /* 21 */
-	{ CAP_N(47)  },  /* 23 */
-	{ RES_K(820) },  /* 24 */
-};
 
 
 static WRITE_HANDLER( n8080_shift_bits_w )
@@ -190,278 +53,6 @@ static READ_HANDLER( n8080_shift_r )
 }
 
 
-static PALETTE_INIT( n8080 )
-{
-	int i;
-
-	for (i = 0; i < 8; i++)
-	{
-		palette_set_color(i,
-			(i & 1) ? 255 : 0,
-			(i & 2) ? 255 : 0,
-			(i & 4) ? 255 : 0);
-	}
-}
-
-
-static PALETTE_INIT( helifire )
-{
-	int i;
-
-	palette_init_n8080(NULL, NULL);
-
-	for (i = 0; i < 0x100; i++)
-	{
-		int level = 0xff * exp(-3 * i / 255.); /* capacitor discharge */
-
-		palette_set_color(0x000 + 8 + i, 0x00, 0x00, level);   /* shades of blue */
-		palette_set_color(0x100 + 8 + i, 0x00, 0xC0, level);   /* shades of blue w/ green star */
-
-		palette_set_color(0x200 + 8 + i, level, 0x00, 0x00);   /* shades of red */
-		palette_set_color(0x300 + 8 + i, level, 0xC0, 0x00);   /* shades of red w/ green star */
-	}
-}
-
-
-static VIDEO_START( spacefev )
-{
-	spacefev_ufo_frame = 0;
-	spacefev_ufo_cycle = 0;
-
-	spacefev_red_screen = 0;
-	spacefev_red_cannon = 0;
-
-	return 0;
-}
-
-
-static VIDEO_START( helifire )
-{
-	UINT8 data = 0;
-
-	int i;
-
-	for (i = 0; i < 63; i++)
-	{
-		int bit =
-			(data >> 6) ^
-			(data >> 7) ^ 1;
-
-		data = (data << 1) | (bit & 1);
-
-		helifire_LSFR[i] = data;
-	}
-
-	helifire_scroll = 0;
-
-	return 0;
-}
-
-
-static VIDEO_UPDATE( spacefev )
-{
-	UINT8 mask = flip_screen ? 0xff : 0x00;
-
-	int x;
-	int y;
-
-	const UINT8* pRAM = n8080_videoram;
-
-	for (y = 0; y < 256; y++)
-	{
-		UINT16* pLine = bitmap->line[y ^ mask];
-
-		for (x = 0; x < 256; x += 8)
-		{
-			int n;
-
-			UINT8 color = 0;
-
-			if (spacefev_red_screen)
-			{
-				color = 1;
-			}
-			else
-			{
-				UINT8 val = memory_region(REGION_PROMS)[x >> 3];
-
-				if ((x >> 3) == 0x06)
-				{
-					color = spacefev_red_cannon ? 1 : 7;
-				}
-
-				if ((x >> 3) == 0x1b)
-				{
-					static const UINT8 ufo_color[] =
-					{
-						1, /* red     */
-						2, /* green   */
-						7, /* white   */
-						3, /* yellow  */
-						5, /* magenta */
-						6, /* cyan    */
-					};
-
-					color = ufo_color[spacefev_ufo_cycle];
-				}
-
-				for (n = color + 1; n < 8; n++)
-				{
-					if (~val & (1 << n))
-					{
-						color = n;
-					}
-				}
-			}
-
-			for (n = 0; n < 8; n++)
-			{
-				pLine[(x + n) ^ mask] = (pRAM[x >> 3] & (1 << n)) ? color : 0;
-			}
-		}
-
-		pRAM += 32;
-	}
-}
-
-
-static VIDEO_UPDATE( sheriff )
-{
-	UINT8 mask = flip_screen ? 0xff : 0x00;
-
-	int x;
-	int y;
-
-	const UINT8* pRAM = n8080_videoram;
-
-	for (y = 0; y < 256; y++)
-	{
-		UINT16* pLine = bitmap->line[y ^ mask];
-
-		for (x = 0; x < 256; x += 8)
-		{
-			int n;
-
-			UINT8 color = sheriff_color_PROM[32 * (y >> 3) + (x >> 3)];
-
-			if (sheriff_color_mode == 1 && !(color & 8))
-			{
-				color = sheriff_color_data ^ 7;
-			}
-
-			if (sheriff_color_mode == 2)
-			{
-				color = sheriff_color_data ^ 7;
-			}
-
-			if (sheriff_color_mode == 3)
-			{
-				color = 7;
-			}
-
-			for (n = 0; n < 8; n++)
-			{
-				pLine[(x + n) ^ mask] = (pRAM[x >> 3] & (1 << n)) ? (color & 7) : 0;
-			}
-		}
-
-		pRAM += 32;
-	}
-}
-
-
-static VIDEO_UPDATE( helifire )
-{
-	UINT8 mask = flip_screen ? 0xff : 0x00;
-
-	int x;
-	int y;
-
-	const UINT8* pRAM = n8080_videoram;
-
-	int SUN_BRIGHTNESS = readinputport(4);
-	int SEA_BRIGHTNESS = readinputport(5);
-
-	static const int wave[8] = { 0, 1, 2, 2, 2, 1, 0, 0 };
-
-	int level;
-
-	int counter = helifire_scroll;
-
-	for (y = 0; y < 256; y++)
-	{
-		UINT16* pLine = bitmap->line[y ^ mask];
-
-		counter = (counter + 1) % 257;
-
-		level = 120 + wave[counter & 7];
-
-		/* draw sky */
-
-		for (x = level; x < 256; x++)
-		{
-			pLine[x] = 0x200 + 8 + SUN_BRIGHTNESS + x - level;
-		}
-
-		/* draw stars */
-
-		if (counter % 8 == 4)
-		{
-			int step = (320 * counter) % sizeof helifire_LSFR;
-
-			int data =
-				((helifire_LSFR[step] & 1) << 6) |
-				((helifire_LSFR[step] & 2) << 4) |
-				((helifire_LSFR[step] & 4) << 2) |
-				((helifire_LSFR[step] & 8) << 0);
-
-			pLine[0x80 + data] |= 0x100;
-		}
-
-		/* draw sea */
-
-		for (x = 0; x < level; x++)
-		{
-			pLine[x] = 8 + SEA_BRIGHTNESS + x;
-		}
-
-		/* draw foreground */
-
-		for (x = 0; x < 256; x += 8)
-		{
-			int n;
-
-			int offset = 32 * y + (x >> 3);
-
-			for (n = 0; n < 8; n++)
-			{
-				if (pRAM[offset] & (1 << n))
-				{
-					pLine[(x + n) ^ mask] = n8080_colorram[offset] & 7;
-				}
-			}
-		}
-	}
-}
-
-
-static VIDEO_EOF( spacefev )
-{
-	spacefev_ufo_frame = (spacefev_ufo_frame + 1) % 32;
-
-	if (spacefev_ufo_frame == 0)
-	{
-		spacefev_ufo_cycle = (spacefev_ufo_cycle + 1) % 6;
-	}
-}
-
-
-static VIDEO_EOF( helifire )
-{
-	helifire_scroll = (helifire_scroll + 256) % 257;
-}
-
-
 static INTERRUPT_GEN( interrupt )
 {
 	if (cpu_getvblank())
@@ -475,373 +66,21 @@ static INTERRUPT_GEN( interrupt )
 }
 
 
-static void spacefev_vco_voltage_timer(int dummy)
-{
-	double voltage = 0;
-
-	if (mono_flop[2])
-	{
-		voltage = 5 * (1 - exp(- timer_timeelapsed(sound_timer[2]) / 0.22));
-	}
-
-	SN76477_set_vco_voltage(0, voltage);
-}
-
-
-static void helifire_decay_timer(int dummy)
-{
-	/* ... */
-}
-
-
-static void spacefev_update_SN76477_status(void)
-{
-	double dblR0 = RES_M(1.0);
-	double dblR1 = RES_M(1.5);
-
-	if (!mono_flop[0])
-	{
-		dblR0 = 1 / (1 / RES_K(150) + 1 / dblR0); /* ? */
-	}
-	if (!mono_flop[1])
-	{
-		dblR1 = 1 / (1 / RES_K(620) + 1 / dblR1); /* ? */
-	}
-
-	SN76477_set_decay_res(0, dblR0);
-
-	SN76477_set_vco_res(0, dblR1);
-
-	SN76477_enable_w(0,
-		!mono_flop[0] &&
-		!mono_flop[1] &&
-		!mono_flop[2]);
-
-	SN76477_vco_w(0, mono_flop[1]);
-
-	SN76477_mixer_b_w(0, mono_flop[0]);
-}
-
-
-static void sheriff_update_SN76477_status(void)
-{
-	if (mono_flop[1])
-	{
-		SN76477_set_vco_voltage(0, 5);
-	}
-	else
-	{
-		SN76477_set_vco_voltage(0, 0);
-	}
-
-	SN76477_enable_w(0,
-		!mono_flop[0] &&
-		!mono_flop[1]);
-
-	SN76477_vco_w(0, mono_flop[0]);
-
-	SN76477_mixer_b_w(0, !mono_flop[0]);
-}
-
-
-static void update_SN76477_status(void)
-{
-	if (HARDWARE_IS_SPACE_FEVER)
-	{
-		spacefev_update_SN76477_status();
-	}
-	if (HARDWARE_IS_SHERIFF)
-	{
-		sheriff_update_SN76477_status();
-	}
-}
-
-
-static void start_mono_flop(int n, double expire)
-{
-	mono_flop[n] = 1;
-
-	update_SN76477_status();
-
-	timer_adjust(sound_timer[n], expire, n, 0);
-}
-
-
-static void stop_mono_flop(int n)
-{
-	mono_flop[n] = 0;
-
-	update_SN76477_status();
-
-	timer_adjust(sound_timer[n], TIME_NEVER, n, 0);
-}
-
-
-static void start_red_cannon(double expire)
-{
-	spacefev_red_cannon = 1;
-
-	timer_adjust(spacefev_red_cannon_timer, expire, 0, 0);
-}
-
-
-static void stop_red_cannon(int dummy)
-{
-	spacefev_red_cannon = 0;
-
-	timer_adjust(spacefev_red_cannon_timer, TIME_NEVER, 0, 0);
-}
-
-
-static void spacefev_sound_pins_changed(void)
-{
-	UINT16 changes = ~curr_sound_pins & prev_sound_pins;
-
-	if (changes & (1 << 0x3))
-	{
-		stop_mono_flop(1);
-	}
-	if (changes & ((1 << 0x3) | (1 << 0x6)))
-	{
-		stop_mono_flop(2);
-	}
-	if (changes & (1 << 0x3))
-	{
-		start_mono_flop(0, TIME_IN_MSEC(0.55 * 36 * 100));
-	}
-	if (changes & (1 << 0x6))
-	{
-		start_mono_flop(1, TIME_IN_MSEC(0.55 * 22 * 33));
-	}
-	if (changes & (1 << 0x4))
-	{
-		start_mono_flop(2, TIME_IN_MSEC(0.55 * 22 * 33));
-	}
-	if (changes & ((1 << 0x2) | (1 << 0x3) | (1 << 0x5)))
-	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
-	}
-}
-
-
-static void sheriff_sound_pins_changed(void)
-{
-	UINT16 changes = ~curr_sound_pins & prev_sound_pins;
-
-	if (changes & (1 << 0x6))
-	{
-		stop_mono_flop(1);
-	}
-	if (changes & (1 << 0x6))
-	{
-		start_mono_flop(0, TIME_IN_MSEC(0.55 * 33 * 33));
-	}
-	if (changes & (1 << 0x4))
-	{
-		start_mono_flop(1, TIME_IN_MSEC(0.55 * 33 * 33));
-	}
-	if (changes & ((1 << 0x2) | (1 << 0x3) | (1 << 0x5)))
-	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
-	}
-}
-
-
-static void helifire_sound_pins_changed(void)
-{
-	UINT16 changes = ~curr_sound_pins & prev_sound_pins;
-
-	/* lacking emulation of sound bits 10, 11, 12 and 4 */
-
-	if (changes & (1 << 6))
-	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
-	}
-}
-
-
-static void sound_pins_changed(void)
-{
-	if (HARDWARE_IS_SPACE_FEVER)
-	{
-		spacefev_sound_pins_changed();
-	}
-	if (HARDWARE_IS_SHERIFF)
-	{
-		sheriff_sound_pins_changed();
-	}
-	if (HARDWARE_IS_HELIFIRE)
-	{
-		helifire_sound_pins_changed();
-	}
-
-	prev_sound_pins = curr_sound_pins;
-}
-
-
-static void delayed_sound_1(int data)
-{
-	static UINT8 prev_data = 0;
-
-	curr_sound_pins &= ~(
-		(1 << 0x7) |
-		(1 << 0x5) |
-		(1 << 0x6) |
-		(1 << 0x3) |
-		(1 << 0x4) |
-		(1 << 0x1));
-
-	if (~data & 0x01) curr_sound_pins |= 1 << 0x7;
-	if (~data & 0x02) curr_sound_pins |= 1 << 0x5; /* pulse */
-	if (~data & 0x04) curr_sound_pins |= 1 << 0x6; /* pulse */
-	if (~data & 0x08) curr_sound_pins |= 1 << 0x3; /* pulse (except in Helifire) */
-	if (~data & 0x10) curr_sound_pins |= 1 << 0x4; /* pulse (except in Helifire) */
-	if (~data & 0x20) curr_sound_pins |= 1 << 0x1;
-
-	if (HARDWARE_IS_SPACE_FEVER)
-	{
-		if (data & ~prev_data & 0x10)
-		{
-			start_red_cannon(TIME_IN_MSEC(0.55 * 68 * 10));
-		}
-
-		spacefev_red_screen = data & 0x08;
-	}
-
-	sound_pins_changed();
-
-	prev_data = data;
-}
-
-
-static void delayed_sound_2(int data)
-{
-	curr_sound_pins &= ~(
-		(1 << 0x8) |
-		(1 << 0x9) |
-		(1 << 0xA) |
-		(1 << 0xB) |
-		(1 << 0x2) |
-		(1 << 0xC));
-
-	if (~data & 0x01) curr_sound_pins |= 1 << 0x8;
-	if (~data & 0x02) curr_sound_pins |= 1 << 0x9;
-	if (~data & 0x04) curr_sound_pins |= 1 << 0xA;
-	if (~data & 0x08) curr_sound_pins |= 1 << 0xB;
-	if (~data & 0x10) curr_sound_pins |= 1 << 0x2; /* pulse */
-	if (~data & 0x20) curr_sound_pins |= 1 << 0xC;
-
-	if (HARDWARE_IS_SPACE_FEVER)
-	{
-		flip_screen = data & 0x20;
-	}
-
-	sound_pins_changed();
-}
-
-
-static WRITE_HANDLER( n8080_sound_1_w )
-{
-	timer_set(TIME_NOW, data, delayed_sound_1); /* force CPUs to sync */
-}
-static WRITE_HANDLER( n8080_sound_2_w )
-{
-	timer_set(TIME_NOW, data, delayed_sound_2); /* force CPUs to sync */
-}
-
-
-static READ_HANDLER( n8080_8035_p1_r )
-{
-	UINT8 val = 0;
-
-	if (curr_sound_pins & (1 << 0xB)) val |= 0x01;
-	if (curr_sound_pins & (1 << 0xA)) val |= 0x02;
-	if (curr_sound_pins & (1 << 0x9)) val |= 0x04;
-	if (curr_sound_pins & (1 << 0x8)) val |= 0x08;
-	if (curr_sound_pins & (1 << 0x5)) val |= 0x10;
-	if (curr_sound_pins & (1 << 0x3)) val |= 0x20;
-	if (curr_sound_pins & (1 << 0x2)) val |= 0x40;
-	if (curr_sound_pins & (1 << 0x1)) val |= 0x80;
-
-	return val;
-}
-
-
-static READ_HANDLER( helifire_8035_extended_ram_r )
-{
-	UINT8 val = 0;
-
-	if (curr_sound_pins & (1 << 0x7)) val |= 0x01;
-	if (curr_sound_pins & (1 << 0x8)) val |= 0x02;
-	if (curr_sound_pins & (1 << 0x9)) val |= 0x04;
-	if (curr_sound_pins & (1 << 0x1)) val |= 0x08;
-
-	return val;
-}
-
-
-static READ_HANDLER( n8080_8035_t0_r )
-{
-	return (curr_sound_pins & (1 << 0x7)) ? 1 : 0;
-}
-static READ_HANDLER( n8080_8035_t1_r )
-{
-	return (curr_sound_pins & (1 << 0xC)) ? 1 : 0;
-}
-
-
-static READ_HANDLER( helifire_8035_t0_r )
-{
-	return (curr_sound_pins & (1 << 0x3)) ? 1 : 0;
-}
-static READ_HANDLER( helifire_8035_t1_r )
-{
-	return (curr_sound_pins & (1 << 0x4)) ? 1 : 0;
-}
-
-
-static WRITE_HANDLER( n8080_dac_w )
-{
-	DAC_data_w(0, data & 0x80);
-}
-
-
-static WRITE_HANDLER( helifire_dac_data_w )
-{
-	DAC_data_w(0, data);
-}
-
-
-static WRITE_HANDLER( helifire_dac_vref_w )
-{
-	helifire_decay = ~data & 0x80;
-}
-
-
-static WRITE_HANDLER( n8080_video_control_w )
-{
-	sheriff_color_mode = (data >> 3) & 3;
-	sheriff_color_data = (data >> 0) & 7;
-
-	flip_screen = data & 0x20;
-}
-
-
 static ADDRESS_MAP_START( main_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&n8080_videoram)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&videoram)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( helifire_main_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&n8080_videoram)
-	AM_RANGE(0xc000, 0xdfff) AM_RAM AM_BASE(&n8080_colorram)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&videoram)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM AM_BASE(&colorram)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( n8080_main_io_map, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_io_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(3) )
 	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
 	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
@@ -857,111 +96,13 @@ static ADDRESS_MAP_START( n8080_main_io_map, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(10) )
-	AM_RANGE(0x0000, 0x03ff) AM_ROM
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( n8080_sound_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(I8039_t0, I8039_t0) AM_READ(n8080_8035_t0_r)
-	AM_RANGE(I8039_t1, I8039_t1) AM_READ(n8080_8035_t1_r)
-	AM_RANGE(I8039_p1, I8039_p1) AM_READ(n8080_8035_p1_r)
-
-	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(n8080_dac_w)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( helifire_sound_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(I8039_t0, I8039_t0) AM_READ(helifire_8035_t0_r)
-	AM_RANGE(I8039_t1, I8039_t1) AM_READ(helifire_8035_t1_r)
-
-	AM_RANGE(0x00, 0x7f) AM_READ(helifire_8035_extended_ram_r)
-
-	AM_RANGE(I8039_p1, I8039_p1) AM_WRITE(helifire_dac_data_w)
-	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(helifire_dac_vref_w)
-ADDRESS_MAP_END
-
-
-static MACHINE_INIT( spacefev )
-{
-	n8080_hardware = 1;
-
-	timer_pulse(TIME_IN_HZ(1000), 0, spacefev_vco_voltage_timer);
-
-	sound_timer[0] = timer_alloc(stop_mono_flop);
-	sound_timer[1] = timer_alloc(stop_mono_flop);
-	sound_timer[2] = timer_alloc(stop_mono_flop);
-
-	spacefev_red_cannon_timer = timer_alloc(stop_red_cannon);
-
-	SN76477_envelope_1_w(0, 1);
-	SN76477_envelope_2_w(0, 0);
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 0);
-	SN76477_mixer_c_w(0, 0);
-	SN76477_noise_clock_w(0, 0);
-
-	mono_flop[0] = 0;
-	mono_flop[1] = 0;
-	mono_flop[2] = 0;
-
-	delayed_sound_1(0);
-	delayed_sound_2(0);
-}
-
-
-static MACHINE_INIT( sheriff )
-{
-	n8080_hardware = 2;
-
-	sound_timer[0] = timer_alloc(stop_mono_flop);
-	sound_timer[1] = timer_alloc(stop_mono_flop);
-
-	SN76477_envelope_1_w(0, 1);
-	SN76477_envelope_2_w(0, 0);
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 0);
-	SN76477_mixer_c_w(0, 0);
-	SN76477_noise_clock_w(0, 0);
-
-	mono_flop[0] = 0;
-	mono_flop[1] = 0;
-
-	delayed_sound_1(0);
-	delayed_sound_2(0);
-
-	n8080_video_control_w(0, 0);
-}
-
-
-static MACHINE_INIT( helifire )
-{
-	n8080_hardware = 3;
-
-	timer_pulse(TIME_IN_HZ(1000), 0, helifire_decay_timer);
-
-	delayed_sound_1(0);
-	delayed_sound_2(0);
-
-	n8080_video_control_w(0, 0);
-
-	helifire_decay = 0;
-}
-
-
-static MACHINE_DRIVER_START( n8080 )
+static MACHINE_DRIVER_START( spacefev )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", 8080, 20160000 / 10)
+	MDRV_CPU_ADD(8080, 20160000 / 10)
 	MDRV_CPU_PROGRAM_MAP(main_cpu_map, 0)
-	MDRV_CPU_IO_MAP(n8080_main_io_map, 0)
+	MDRV_CPU_IO_MAP(main_io_map, 0)
 	MDRV_CPU_VBLANK_INT(interrupt, 2)
-
-	MDRV_CPU_ADD_TAG("sound", I8035, 6000000 / I8039_CLOCK_DIVIDER)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(sound_cpu_map, 0)
-	MDRV_CPU_IO_MAP(n8080_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -972,66 +113,62 @@ static MACHINE_DRIVER_START( n8080 )
 	MDRV_VISIBLE_AREA(0, 255, 16, 239)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(n8080)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, n8080_dac_interface)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( spacefev )
-
-	MDRV_IMPORT_FROM(n8080)
-
-	/* basic machine hardware */
-	MDRV_MACHINE_INIT(spacefev)
-
-	/* video hardware */
 	MDRV_VIDEO_START(spacefev)
 	MDRV_VIDEO_UPDATE(spacefev)
-	MDRV_VIDEO_EOF(spacefev)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, spacefev_sn76477_interface)
+	MDRV_IMPORT_FROM( spacefev_sound )
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( sheriff )
 
-	MDRV_IMPORT_FROM(n8080)
-
 	/* basic machine hardware */
-	MDRV_MACHINE_INIT(sheriff)
+	MDRV_CPU_ADD(8080, 20160000 / 10)
+	MDRV_CPU_PROGRAM_MAP(main_cpu_map, 0)
+	MDRV_CPU_IO_MAP(main_io_map, 0)
+	MDRV_CPU_VBLANK_INT(interrupt, 2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 16, 239)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_INIT(n8080)
+	MDRV_VIDEO_START(sheriff)
 	MDRV_VIDEO_UPDATE(sheriff)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76477, sheriff_sn76477_interface)
+	MDRV_IMPORT_FROM( sheriff_sound )
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( helifire )
 
-	MDRV_IMPORT_FROM(n8080)
-
 	/* basic machine hardware */
-	MDRV_MACHINE_INIT(helifire)
-
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_ADD(8080, 20160000 / 10)
 	MDRV_CPU_PROGRAM_MAP(helifire_main_cpu_map, 0)
-	MDRV_CPU_IO_MAP(n8080_main_io_map, 0)
+	MDRV_CPU_IO_MAP(main_io_map, 0)
+	MDRV_CPU_VBLANK_INT(interrupt, 2)
 
-	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_PROGRAM_MAP(sound_cpu_map, 0)
-	MDRV_CPU_IO_MAP(helifire_sound_io_map, 0)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 16, 239)
+	MDRV_PALETTE_LENGTH(8 + 0x400)
+	MDRV_PALETTE_INIT(helifire)
 	MDRV_VIDEO_START(helifire)
 	MDRV_VIDEO_UPDATE(helifire)
 	MDRV_VIDEO_EOF(helifire)
-	MDRV_PALETTE_LENGTH(0x400 + 8)
-	MDRV_PALETTE_INIT(helifire)
 
+	/* sound hardware */
+	MDRV_IMPORT_FROM( helifire_sound )
 MACHINE_DRIVER_END
 
 
@@ -1454,8 +591,8 @@ ROM_START( spacelnc )
 	ROM_REGION( 0x0400, REGION_CPU2, 0 )
 	ROM_LOAD( "sl.snd",   0x0000, 0x0400, CRC(8e1ff929) SHA1(5c7da97b05fb8fff242158978199f5d35b234426) )
 
-	ROM_REGION( 0x0040, REGION_PROMS, ROMREGION_ERASE00 )
-	ROM_LOAD( "sl.prm",   0x0020, 0x0020, NO_DUMP )
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "sf.prm",   0x0000, 0x0020, CRC(c5914ec1) SHA1(198875fcab36d09c8726bb21e2fdff9882f6721a) )
 ROM_END
 
 ROM_START( sheriff )
@@ -1536,7 +673,7 @@ GAME (1979, spacefev, 0,        spacefev, spacefev, 0, ROT270, "Nintendo", "Spac
 GAME (1979, spacefva, spacefev, spacefev, spacefev, 0, ROT270, "Nintendo", "Space Fever (set 2)" )
 GAME (1979, highsplt, 0,        spacefev, highsplt, 0, ROT270, "Nintendo", "Space Fever High Splitter (set 1)" )
 GAME (1979, highspla, highsplt, spacefev, highsplt, 0, ROT270, "Nintendo", "Space Fever High Splitter (set 2)" )
-GAMEX(1979, spacelnc, 0,        spacefev, spacelnc, 0, ROT270, "Nintendo", "Space Launcher", GAME_WRONG_COLORS )
+GAME (1979, spacelnc, 0,        spacefev, spacelnc, 0, ROT270, "Nintendo", "Space Launcher" )
 GAME (1979, sheriff,  0,        sheriff,  sheriff,  0, ROT270, "Nintendo", "Sheriff" )
 GAME (1980, bandido,  sheriff,  sheriff,  bandido,  0, ROT270, "Exidy",    "Bandido" )
 GAMEX(1980, helifire, 0,        helifire, helifire, 0, ROT270, "Nintendo", "HeliFire (set 1)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )

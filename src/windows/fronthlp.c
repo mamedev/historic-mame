@@ -11,6 +11,10 @@
 #include <unzip.h>
 #include <zlib.h>
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode) ((mode) & _S_IFDIR)
+#endif
+
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,

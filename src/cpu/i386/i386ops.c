@@ -968,7 +968,7 @@ static void I386OP(outsd)(void)				// Opcode 0x6f
 	I386OP(outs_generic)(4);
 }
 
-static void I386OP(rep)(void)				// Opcode 0xf3
+static void I386OP(repeat)(int invert_flag)
 {
 	UINT32 old_eip = I.eip - 1;
 	UINT32 repeated_eip = I.eip;
@@ -1003,6 +1003,14 @@ static void I386OP(rep)(void)				// Opcode 0xf3
 			flag = NULL;
 			break;
 
+		case 0xa6:
+		case 0xa7:
+			/* CMPSB, CMPSW, CMPSD */
+			cycle_base = 5;
+			cycle_adjustment = -1;
+			flag = &I.ZF;
+			break;
+
 		case 0xac:
 		case 0xad:
 			/* LODSB, LODSW, LODSD */
@@ -1017,14 +1025,6 @@ static void I386OP(rep)(void)				// Opcode 0xf3
 			cycle_base = 5;
 			cycle_adjustment = 0;
 			flag = NULL;
-			break;
-
-		case 0xa6:
-		case 0xa7:
-			/* CMPSB, CMPSW, CMPSD */
-			cycle_base = 5;
-			cycle_adjustment = -1;
-			flag = &I.ZF;
 			break;
 
 		case 0xae:
@@ -1064,7 +1064,7 @@ static void I386OP(rep)(void)				// Opcode 0xf3
 		if (I.cycles <= 0)
 			goto outofcycles;
 	}
-	while( count && (!flag || *flag) );
+	while( count && (!flag || (invert_flag ? !*flag : *flag)) );
 	return;
 
 outofcycles:
@@ -1076,109 +1076,14 @@ outofcycles:
 	CYCLES(-cycle_base);
 }
 
-static void I386OP(repne)(void)				// Opcode 0xf2
+static void I386OP(rep)(void)				// Opcode 0xf3
 {
-	UINT8 opcode = FETCH();
-	UINT32 eas, ead;
-	UINT32 src, dst;
-
-	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, REG32(ESI) );
-	} else {
-		eas = i386_translate( DS, REG32(ESI) );
+	I386OP(repeat)(0);
 	}
-	ead = i386_translate( ES, REG32(EDI) );
 
-	switch(opcode)
+static void I386OP(repne)(void)				// Opcode 0xf2
 	{
-		case 0xa6:		/* REPNE CMPSB */
-			CYCLES(5);
-			do {
-				src = READ8(eas);
-				dst = READ8(ead);
-				SUB8(dst, src);
-				REG32(ESI) += ((I.DF) ? -1 : 1);
-				REG32(EDI) += ((I.DF) ? -1 : 1);
-				eas += ((I.DF) ? -1 : 1);
-				ead += ((I.DF) ? -1 : 1);
-				REG32(ECX)--;
-				CYCLES(9);
-			} while( REG32(ECX) != 0 && I.ZF == 0 );
-			break;
-
-		case 0xa7:		/* REPNE CMPSD */
-			if( I.operand_size ) {
-				CYCLES(5);
-				do {
-					src = READ32(eas);
-					dst = READ32(ead);
-					SUB32(dst, src);
-					REG32(ESI) += ((I.DF) ? -4 : 4);
-					REG32(EDI) += ((I.DF) ? -4 : 4);
-					eas += ((I.DF) ? -4 : 4);				
-					ead += ((I.DF) ? -4 : 4);
-					REG32(ECX)--;
-					CYCLES(9);
-				} while( REG32(ECX) != 0 && I.ZF == 0 );
-			} else {	/* REPNE CMPSW */
-				CYCLES(5);
-				do {
-					src = READ16(eas);
-					dst = READ16(ead);
-					SUB16(dst, src);
-					REG32(ESI) += ((I.DF) ? -2 : 2);
-					REG32(EDI) += ((I.DF) ? -2 : 2);
-					eas += ((I.DF) ? -2 : 2);
-					ead += ((I.DF) ? -2 : 2);
-					REG32(ECX)--;
-					CYCLES(9);
-				} while( REG32(ECX) != 0 && I.ZF == 0 );
-			}
-			break;
-
-		case 0xae:		/* REPNE SCASB */
-			CYCLES(5);
-			do {
-				src = READ8(ead);
-				dst = REG8(AL);
-				SUB8(dst, src);
-				REG32(EDI) += ((I.DF) ? -1 : 1);
-				ead += ((I.DF) ? -1 : 1);
-				REG32(ECX)--;
-				CYCLES(8);
-			} while( REG32(ECX) != 0 && I.ZF == 0 );
-			break;
-
-		case 0xaf:		/* REPNE SCASD */
-			if( I.operand_size ) {
-				CYCLES(5);
-				do {
-					src = READ32(ead);
-					dst = REG32(EAX);
-					SUB32(dst, src);
-					REG32(EDI) += ((I.DF) ? -4 : 4);
-					ead += ((I.DF) ? -4 : 4);
-					REG32(ECX)--;
-					CYCLES(8);
-				} while( REG32(ECX) != 0 && I.ZF == 0 );
-			} else {	/* REPNE SCASW */
-				CYCLES(5);
-				do {
-					src = READ16(ead);
-					dst = REG16(AX);
-					SUB16(dst, src);
-					REG32(EDI) += ((I.DF) ? -2 : 2);
-					ead += ((I.DF) ? -2 : 2);
-					REG32(ECX)--;
-					CYCLES(8);
-				} while( REG32(ECX) != 0 && I.ZF == 0 );
-			}
-			break;
-
-		default:
-			osd_die("i386: Invalid REPNE/opcode %02X combination\n",opcode);
-			break;
-	}
+	I386OP(repeat)(1);
 }
 
 static void I386OP(sahf)(void)				// Opcode 0x9e
@@ -1551,6 +1456,7 @@ static void I386OP(std)(void)				// Opcode 0xfd
 static void I386OP(sti)(void)				// Opcode 0xfb
 {
 	I.IF = 1;
+	i386_check_irq_line();
 	CYCLES(8);
 }
 
@@ -2206,7 +2112,7 @@ static void I386OP(int)(void)				// Opcode 0xcd
 static void I386OP(into)(void)				// Opcode 0xce
 {
 	if( I.OF ) {
-		i386_interrupt(4);
+		i386_trap(4);
 		if( PROTECTED_MODE ) {
 			/* TODO: correct cycle count */
 			CYCLES(59);

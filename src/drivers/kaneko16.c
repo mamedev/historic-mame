@@ -270,14 +270,19 @@ void bloodwar_mcu_run(void)
 
 		case 0x02:	// Read from NVRAM
 		{
-			mame_file *f;
-			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
-			{
-				mame_fread(f,&mcu_ram[mcu_offset], 128);
-				mame_fclose(f);
-			}
-			else
+			if (!strcmp(Machine->gamedrv->name,"bonkadv"))
 				memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
+			else
+			{
+				mame_file *f;
+				if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
+				{
+					mame_fread(f,&mcu_ram[mcu_offset], 128);
+					mame_fclose(f);
+				}
+				else
+					memcpy(&mcu_ram[mcu_offset],memory_region(REGION_USER1),128);
+			}
 		}
 		break;
 
@@ -2119,6 +2124,77 @@ INPUT_PORTS_START( bloodwar )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
+/***************************************************************************
+								Bonk
+***************************************************************************/
+
+INPUT_PORTS_START( bonkadv )
+	PORT_START	// IN0 - Player 2 - b00000.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP		|	IPF_PLAYER1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN		|	IPF_PLAYER1 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT		|	IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	|	IPF_PLAYER1 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1			|	IPF_PLAYER1 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2			|	IPF_PLAYER1 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3			|	IPF_PLAYER1 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4			|	IPF_PLAYER1 )
+
+	PORT_START	// IN1 - Player 2 - b00002.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP		|	IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN		|	IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT		|	IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	|	IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON1			|	IPF_PLAYER2 )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON2			|	IPF_PLAYER2 )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3			|	IPF_PLAYER2 )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_BUTTON4			|	IPF_PLAYER2 )
+
+	PORT_START	// IN2 - Coins - b00004.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
+	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_SERVICE2	)	// tested
+
+	PORT_START	// IN3 - ? - b00006.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - DSW from the MCU - $10497e.b <- $208000.b
+	PORT_DIPNAME( 0x0100, 0x0100, "Unk" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0200, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x3800, "1 Easy" )
+	PORT_DIPSETTING(      0x3000, "2" )
+	PORT_DIPSETTING(      0x2800, "3" )
+	PORT_DIPSETTING(      0x2000, "4" )
+	PORT_DIPSETTING(      0x1800, "5" )
+	PORT_DIPSETTING(      0x1000, "6" )
+	PORT_DIPSETTING(      0x0800, "7" )
+	PORT_DIPSETTING(      0x0000, "8 Hard" )
+	PORT_DIPNAME( 0x4000, 0x0000, "Join During Game" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
 
 /***************************************************************************
 							Great 1000 Miles Rally
@@ -2895,6 +2971,9 @@ static MACHINE_DRIVER_START( bonkadv )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gtmr)
+	MDRV_CPU_MODIFY("gtmr")
+	MDRV_CPU_PROGRAM_MAP(bloodwar_readmem,bloodwar_writemem)
+	MDRV_MACHINE_INIT( bloodwar )
 	MDRV_NVRAM_HANDLER(93C46)
 MACHINE_DRIVER_END
 
@@ -4275,6 +4354,9 @@ ROM_START( bonkadv )
 	ROM_REGION( 0x200000, REGION_SOUND2, 0 )	/* Samples */
 	ROM_LOAD( "pc603108.102",		 0x000000, 0x100000, CRC(58458985) SHA1(9a846d604ba901eb2a59d2b6cd9c42e3b43adb6a) )
 	ROM_LOAD( "pc604109.101",		 0x100000, 0x100000, CRC(76025530) SHA1(e0c8192d783057798eea084aa3e87938f6e01cb7) )
+
+	ROM_REGION16_BE( 0x0080, REGION_USER1, 0 )			/* EEPROM */
+	ROM_LOAD16_WORD( "eeprom.126",  0x0000, 0x0080, CRC(d04adc84) SHA1(85415062867605587b09a646ead4700014ebcb5c) )
 ROM_END
 
 /***************************************************************************
@@ -4305,4 +4387,4 @@ GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "
 GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, fjbuster, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
 GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
 GAMEX(1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16, ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
-GAMEX(1994, bonkadv,  0,        bonkadv,  bakubrkr, 0,		  ROT0,  "Kaneko", "Bonks Adventure",		  GAME_NOT_WORKING )
+GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "Bonks Adventure",		  GAME_NOT_WORKING )

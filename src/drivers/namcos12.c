@@ -14,7 +14,7 @@ Known Dumps
 
 Game       Description                              CPU board           Mother board             Daughter board          Keycus
 
-tekken3    Tekken 3 (TET1/VER.E1)                   COH 700             ?                        SYSTEM12 M8F2           ?
+tekken3    Tekken 3 (TET1/VER.E1)                   COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F2           KC006
 soulclbr   Soul Calibur (SOC14/VER.C)               COH 700             SYSTEM12 MOTHER          no markings             -----
 soulclba   Soul Calibur (SOC11/VER.A2)              COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F2           KC020
 ehrgeiz    Ehrgeiz (EG3/VER.A)                      COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M4F6           KC021
@@ -25,7 +25,7 @@ sws99      Super World Stadium '99 (SS91/VER.A3)    COH 700             SYSTEM12
 tekkentt   Tekken Tag Tournament (TEG3/VER.B)       COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F4           KC044
 mrdrillr   Mr Driller (DRI1/VER.A2)                 COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F2           KC048
 aquarush   Aqua Rush (AQ1/VER.A1)                   COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M5F2           KC053
-golgo13    Golgo 13 (GLG1/VER.A)                    COH 700             ?                        SYSTEM12 M8F6           ?
+golgo13    Golgo 13 (GLG1/VER.A)                    COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F6           KC054
 
 COH 700
 
@@ -264,17 +264,12 @@ static MACHINE_DRIVER_START( coh700 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 

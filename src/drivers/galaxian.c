@@ -743,7 +743,7 @@ static ADDRESS_MAP_START( drivfrcg, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1583, 0x1583) AM_MIRROR(0x6000) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x1585, 0x1585) AM_MIRROR(0x6000) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x1586, 0x1587) AM_MIRROR(0x6000) AM_WRITE(galaxian_lfo_freq_w)
-	AM_RANGE(0x1600, 0x1600) AM_MIRROR(0x6000) AM_READWRITE(input_port_2_r, galaxian_pitch_w)	
+	AM_RANGE(0x1600, 0x1600) AM_MIRROR(0x6000) AM_READWRITE(input_port_2_r, galaxian_pitch_w)
 	AM_RANGE(0x1700, 0x1700) AM_MIRROR(0x6000) AM_READWRITE(input_port_3_r, MWA8_NOP)
 	AM_RANGE(0x1701, 0x1701) AM_MIRROR(0x6000) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x1704, 0x1707) AM_MIRROR(0x6000) AM_WRITE(galaxian_vol_w)
@@ -3776,6 +3776,26 @@ static MACHINE_DRIVER_START( checkmaj )
 	MDRV_SOUND_ADD(AY8910, checkmaj_ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( dingoe )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(mooncrst_readmem,checkman_writemem)
+	MDRV_CPU_IO_MAP(0,checkman_writeport)
+
+	MDRV_CPU_ADD(Z80, 1620000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.62 MHz */
+	MDRV_CPU_PROGRAM_MAP(checkman_sound_readmem,checkman_sound_writemem)
+	MDRV_CPU_IO_MAP(checkman_sound_readport,checkman_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMIs are triggered by the main CPU */
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( kingball )
 
@@ -4765,6 +4785,25 @@ ROM_START( dingo )
 	ROM_LOAD( "18s030.l6",	  0x0000, 0x0020, CRC(3061d0f9) SHA1(5af85499c6219137dc57d9fba79cb5afa3548ab1) )
 ROM_END
 
+ROM_START( dingoe )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "unk.2b",       0x0000, 0x1000, CRC(0df7ac6d) SHA1(c1d45a7694848e66426c3510d0749c98e51571cb) )
+	ROM_LOAD( "unk.2d",       0x1000, 0x1000, CRC(0881e204) SHA1(4ba59d73e04b5337cfbd68d6a708e7321cb629f1) )
+	ROM_LOAD( "unk.3b",       0x2000, 0x1000, BAD_DUMP CRC(0b6aeab5) SHA1(ebfab3227dd23e3e1802b881a5662f634f86e382) ) // both halves identical (bad?)
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound code */
+	ROM_LOAD( "unk.1c",       0x0000, 0x0800, CRC(8e354c38) SHA1(87608c1fa55e6fcf482f5d3bcc506a84673719cc) )
+	ROM_LOAD( "unk.1d",       0x0800, 0x0800, CRC(092878d6) SHA1(8a3b25e27df5aee2023a7e1a193ab152df171ede) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "unk.4d",       0x0000, 0x0800, CRC(76a00a56) SHA1(2a696b9ce3e148529c731231852dc104729bb916) )
+	ROM_LOAD( "unk.4b",       0x0800, 0x0800, CRC(5acf57aa) SHA1(bb05be53728e7867085dad5854fcadfa687ff5d7) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123n.001",  0x0000, 0x0020, CRC(02b11865) SHA1(70053db9635a9194e4372835379a82f6ea64ef83) ) /* Unknown */
+ROM_END
+
+
 ROM_START( blkhole )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "bh1",          0x0000, 0x0800, CRC(64998819) SHA1(69fe5dfbe6cde18ef4cae62da12b5c692c2c72b9) )
@@ -5021,14 +5060,14 @@ ROM_START( spctbird )
 	ROM_LOAD( "tssa-6",       0x2800, 0x0800, CRC(4825692c) SHA1(41a7e305c3d93f2245fb0413398d951eab9d16c0) )
 	ROM_LOAD( "tssa-7",       0x3000, 0x0800, CRC(b45af1e8) SHA1(d7020774707234acdaef5c655f667d5ee9e54a13) )
 	ROM_LOAD( "tssa-8",       0x3800, 0x0800, CRC(c9b77b85) SHA1(00797f126b4cdacd9ec2df7e747aa1892933b8b8) )
-	
+
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tssb-2",       0x0000, 0x0800, CRC(7d23e1f2) SHA1(6902e44ff6f805a8d589c57b236e471b7fb609f8) )
 	ROM_LOAD( "tssb-4",       0x0800, 0x0200, CRC(e4977833) SHA1(85aca9bccc6c1a5a2d792a9c4a77ee1b114934c9) )
 	ROM_CONTINUE(             0x0c00, 0x0200 )
 	ROM_CONTINUE(             0x0a00, 0x0200 )
 	ROM_CONTINUE(             0x0e00, 0x0200 )
-	ROM_LOAD( "tssb-1",       0x1000, 0x0800, CRC(9b9267c3) SHA1(2bbbff7a8a2d3e4524634de5e1c5a2426612c18f) )	
+	ROM_LOAD( "tssb-1",       0x1000, 0x0800, CRC(9b9267c3) SHA1(2bbbff7a8a2d3e4524634de5e1c5a2426612c18f) )
 	ROM_LOAD( "tssb-3",       0x1800, 0x0200, CRC(5ca5e233) SHA1(2115faecd07940547d0ee09776da6fcb1a008287) )
 	ROM_CONTINUE(             0x1c00, 0x0200 )
 	ROM_CONTINUE(             0x1a00, 0x0200 )
@@ -5494,7 +5533,7 @@ ROM_START( drivfrcb )
 	ROM_CONTINUE(			  0x4c00, 0x0400 )
 	ROM_CONTINUE(			  0x6000, 0x0400 )
 	ROM_CONTINUE(			  0x6400, 0x0400 )
-	
+
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "df1.bin",      0x1000, 0x1000, CRC(8adc3de0) SHA1(046fb92913171c621bb62edb0174f04298bfd283) )
 	ROM_CONTINUE(			  0x0000, 0x1000 )
@@ -5540,7 +5579,7 @@ ROM_START( hunchbkg )
 	ROM_LOAD( "gal_hb_hj",    0x0800, 0x0800, CRC(db489c3d) SHA1(df08607ad07222c1c1c4b3589b50b785bdeefbf2) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "gal_hb_cp",    0x0000, 0x0020, CRC(cbff6762) SHA1(4515a6e12a0a5c485a55291feee17a571120a549) )	
+	ROM_LOAD( "gal_hb_cp",    0x0000, 0x0020, CRC(cbff6762) SHA1(4515a6e12a0a5c485a55291feee17a571120a549) )
 ROM_END
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
@@ -5583,6 +5622,7 @@ GAME( 19??, orbitron, 0,        galaxian, orbitron, pisces,   ROT270, "Signatron
 GAME( 1982, checkman, 0,        checkman, checkman, checkman, ROT90,  "Zilec-Zenitone", "Check Man" )
 GAME( 1982, checkmaj, checkman, checkmaj, checkmaj, checkmaj, ROT90,  "Jaleco", "Check Man (Japan)" )
 GAME( 1983, dingo,    0,        checkmaj, dingo,    dingo,    ROT90,  "Ashby Computers and Graphics LTD. (Jaleco license)", "Dingo" )
+GAMEX(1983, dingoe,   0,        dingoe,   dingo,    dingoe,   ROT90,  "Ashby Computers and Graphics LTD.", "Dingo (encrypted)", GAME_NOT_WORKING )
 GAME( 1981, blkhole,  0,        galaxian, blkhole,  0,        ROT90,  "TDS", "Black Hole" )
 GAME( 1980, mooncrst, 0,        mooncrst, mooncrst, mooncrst, ROT90,  "Nichibutsu", "Moon Cresta (Nichibutsu)" )
 GAME( 1980, mooncrsu, mooncrst, mooncrst, mooncrst, mooncrsu, ROT90,  "Nichibutsu USA", "Moon Cresta (Nichibutsu, unencrypted)" )

@@ -264,10 +264,10 @@ static const UINT8 cc_ed[0x100] = {
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-12,12,15,20, 8, 8, 8, 9,12,12,15,20, 8, 8, 8, 9,
-12,12,15,20, 8, 8, 8, 9,12,12,15,20, 8, 8, 8, 9,
-12,12,15,20, 8, 8, 8,18,12,12,15,20, 8, 8, 8,18,
-12,12,15,20, 8, 8, 8, 8,12,12,15,20, 8, 8, 8, 8,
+12,12,15,20, 8,14, 8, 9,12,12,15,20, 8,14, 8, 9,
+12,12,15,20, 8,14, 8, 9,12,12,15,20, 8,14, 8, 9,
+12,12,15,20, 8,14, 8,18,12,12,15,20, 8,14, 8,18,
+12,12,15,20, 8,14, 8, 8,12,12,15,20, 8,14, 8, 8,
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
 16,16,16,16, 8, 8, 8, 8,16,16,16,16, 8, 8, 8, 8,
@@ -4343,7 +4343,7 @@ static void z80_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z80_DC1:			Z80.int_state[1] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z80_DC2:			Z80.int_state[2] = info->i;				break;
 		case CPUINFO_INT_REGISTER + Z80_DC3:			Z80.int_state[3] = info->i;				break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					Z80.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_op: cc[Z80_TABLE_op] = info->p;			break;
@@ -4375,7 +4375,7 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

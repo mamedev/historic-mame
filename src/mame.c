@@ -447,10 +447,8 @@ static int init_machine(void)
 
 cant_init_memory:
 cant_load_roms:
-	input_port_free(Machine->input_ports_default);
 	Machine->input_ports_default = 0;
 cant_allocate_input_ports_default:
-	input_port_free(Machine->input_ports);
 	Machine->input_ports = 0;
 cant_allocate_input_ports:
 	code_close();
@@ -620,10 +618,6 @@ static void shutdown_machine(void)
 
 	/* reset the CPU system */
 	cpu_exit();
-
-	/* free the memory allocated for input ports definition */
-	input_port_free(Machine->input_ports);
-	input_port_free(Machine->input_ports_default);
 
 	/* close down the input system */
 	code_close();
