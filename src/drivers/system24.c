@@ -1078,7 +1078,7 @@ GAMEX( 1994, quizmeku, 0, system24, qgh,      quizmeku, ROT0, "Sega", "Quiz Meku
 GAMEX( 1988, hotrod,   0, system24, hotrod,   hotrod,   ROT0, "Sega", "Hot Rod", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* coins up, controls work but not really playable due to serious priority problems */
-GAMEX( 1990, bnzabros, 0, system24, bnzabros, bnzabros, ROT0, "Sega", "Bonanza Bros", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1990, bnzabros, 0, system24, bnzabros, bnzabros, ROT0, "Sega", "Bonanza Bros", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* not working, doesn't boot */
 GAMEX( 1994, qrouka,   0, system24, qgh,      qu,       ROT0, "Sega", "Quiz Rouka Ni Tattenasai", GAME_NOT_WORKING )

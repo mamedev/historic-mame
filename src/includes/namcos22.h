@@ -27,12 +27,18 @@ extern data32_t *namcos22_gamma;
 
 READ32_HANDLER( namcos22_cgram_r );
 WRITE32_HANDLER( namcos22_cgram_w );
+
 READ32_HANDLER( namcos22_paletteram_r );
 WRITE32_HANDLER( namcos22_paletteram_w );
+
 READ32_HANDLER( namcos22_textram_r );
 WRITE32_HANDLER( namcos22_textram_w );
+
 READ32_HANDLER( namcos22_gamma_r );
 WRITE32_HANDLER( namcos22_gamma_w );
+
+READ32_HANDLER( namcos22_dspram_r );
+WRITE32_HANDLER( namcos22_dspram_w );
 
 VIDEO_UPDATE( namcos22 );
 

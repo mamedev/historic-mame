@@ -222,7 +222,7 @@ INPUT_PORTS_START( hasamu )
 //	IREM_COIN_MODE_2
 INPUT_PORTS_END
 
-INPUT_PORTS_START( bombrman )
+INPUT_PORTS_START( dynablst )
 	IREM_JOYSTICK_1_2(1)
 	IREM_JOYSTICK_1_2(2)
 	IREM_COINS
@@ -233,13 +233,12 @@ INPUT_PORTS_START( bombrman )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Probably difficulty */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	/* Manual says "NOT USE" */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
@@ -254,10 +253,58 @@ INPUT_PORTS_START( bombrman )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, "2 Player Upright" )
+	PORT_DIPSETTING(    0x06, "4 Player Upright A" ) /* Seperate Coin Slots */
+	PORT_DIPSETTING(    0x02, "4 Player Upright B" ) /* Shared Coin Slots */
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )  /* This setting shows screen with offset, no cocktail support :-( */
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	/* Coin Mode 1 */
+	IREM_COIN_MODE_1_NEW
+	/* Coin Mode 2, not supported yet */
+//	IREM_COIN_MODE_2
+
+	IREM_JOYSTICK_3_4(3)
+	IREM_JOYSTICK_3_4(4)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( bombrman ) /* Does not appear to support 4 players or cocktail mode */
+	IREM_JOYSTICK_1_2(1)
+	IREM_JOYSTICK_1_2(2)
+	IREM_COINS
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	/* Manual says "NOT USE" */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )	/* Manual says "NOT USE" */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )	/* Manual says "NOT USE" */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
@@ -280,12 +327,11 @@ INPUT_PORTS_START( bbmanw )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Probably difficulty */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -301,12 +347,11 @@ INPUT_PORTS_START( bbmanw )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, "2 Players" )
-	PORT_DIPSETTING(    0x02, "4 Players" )
-	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" )
-	PORT_DIPSETTING(    0x04, "Common" )
-	PORT_DIPSETTING(    0x00, "Separate" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, "2 Player" )
+	PORT_DIPSETTING(    0x06, "4 Player Seprate Coins" )		/* Each player has a seperate Coin Slot */
+	PORT_DIPSETTING(    0x02, "4 Player Shared Coins" )		/* All 4 players Share coin 1&2 */
+	PORT_DIPSETTING(    0x00, "4 Player 1&2 3&4 Share Coins" )	/* Players 1&2 share coin 1&2, Players 3&4 share coin 3&4 */
 	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -671,6 +716,26 @@ ROM_START( bombrman )
 	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, CRC(0fa803fe) SHA1(d2ac1e624de38bed385442ceae09a76f203fa084) )
 ROM_END
 
+
+ROM_START( dynablst )
+	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "bbm-cp1e.d10",   0x00001, 0x20000, CRC(27667681) SHA1(7d5f762026ea01817a65ea13b4b5793640e3e8fd) )
+	ROM_LOAD16_BYTE( "bbm-cp0e.bin",   0x00000, 0x20000, CRC(95db7a67) SHA1(1a224d73615a60530cbcc54fdbb526e8d5a6c555) )
+	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "bbm-sp.bin",    0x0000, 0x10000, CRC(251090cd) SHA1(9245072c1afbfa3e4a1d1549942765d58bd78ed3) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bbm-c0.bin",    0x000000, 0x40000, CRC(695d2019) SHA1(3537e9fb0e7dc13d6113b4af71cba3c73392335a) )
+	ROM_LOAD( "bbm-c1.bin",    0x040000, 0x40000, CRC(4c7c8bbc) SHA1(31ab5557d96c4184a9c02ed1c309f3070d148e25) )
+	ROM_LOAD( "bbm-c2.bin",    0x080000, 0x40000, CRC(0700d406) SHA1(0d43a31a726b0de0004beef41307de2508106b69) )
+	ROM_LOAD( "bbm-c3.bin",    0x0c0000, 0x40000, CRC(3c3613af) SHA1(f9554a73e95102333e449f6e81f2bb817ec00881) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, CRC(0fa803fe) SHA1(d2ac1e624de38bed385442ceae09a76f203fa084) )
+ROM_END
+
 ROM_START( dynablsb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "db2-26.bin",   0x00001, 0x20000, CRC(a78c72f8) )
@@ -877,8 +942,9 @@ static DRIVER_INIT( shisen2 )
 GAMEX(1991, hasamu,   0,        m90,      hasamu,   hasamu,   ROT0, "Irem", "Hasamu (Japan)", GAME_NO_COCKTAIL )
 GAMEX(1991, bbmanw,   0,        bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1991, bbmanwj,  bbmanw,   bombrman, bbmanw,   bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1992, bombrman, 0,        bombrman, bombrman, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomberman (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1992, dynablsb, bombrman, bootleg,  bombrman, 0,        ROT0, "bootleg", "Dynablaster (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1992, dynablst, 0,        bombrman, dynablst, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Dynablaster (World)", GAME_NO_COCKTAIL )
+GAMEX(1992, bombrman, dynablst, bombrman, bombrman, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomberman (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1992, dynablsb, dynablst, bootleg,  bombrman, 0,        ROT0, "bootleg", "Dynablaster (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1992, atompunk, bbmanw,   bbmanw,   bbmanw,   bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1992, quizf1,   0,        quizf1,   quizf1,   quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 GAMEX(1993, riskchal, 0,        m90,      m97,      riskchal, ROT0, "Irem", "Risky Challenge", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

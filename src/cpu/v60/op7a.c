@@ -831,7 +831,7 @@ UINT32 opADDDC(void)
 
 	if (f7cLen != 0)
 	{
-		logWrite(0, "ADDDC %x (pat: %x)\n", f7cOp1, f7cLen);
+		logerror("ADDDC %x (pat: %x)\n", f7cOp1, f7cLen);
 	}
 
 	F7CLOADOP2BYTE(appb);
@@ -870,7 +870,7 @@ UINT32 opSUBDC(void)
 
 	if (f7cLen != 0)
 	{
-		logWrite(0, "SUBDC %x (pat: %x)\n", f7cOp1, f7cLen);
+		logerror("SUBDC %x (pat: %x)\n", f7cOp1, f7cLen);
 	}
 
 	F7CLOADOP2BYTE(appb);
@@ -905,7 +905,7 @@ UINT32 opSUBRDC(void)
 {
 	F7cDecodeOperands(ReadAM, 0, ReadAMAddress, 0);
 
-	logWrite(0, "SUBRDC %x (pat: %x)\n", f7cOp1, f7cLen);
+	logerror("SUBRDC %x (pat: %x)\n", f7cOp1, f7cLen);
 
 	F7CEND();
 }
@@ -935,13 +935,13 @@ UINT32 opCVTDZP(void)
 	if ((f7cOp1 & 0xF0) != (f7cLen & 0xF0) || ((f7cOp1 >> 8) & 0xF0) != (f7cLen & 0xF0))
 	{
 		// Decimal exception
-		logWrite(0, "CVTD.ZP Decimal exception #1!\n");
+		logerror("CVTD.ZP Decimal exception #1!\n");
 	}
 
 	if ((f7cOp1 & 0xF) > 9 || ((f7cOp1 >> 8) & 0xF) > 9)
 	{
 		// Decimal exception
-		logWrite(0, "CVTD.ZP Decimal exception #2!\n");
+		logerror("CVTD.ZP Decimal exception #2!\n");
 	}
 
 	appb = (UINT8)(((f7cOp1 >> 8) & 0xF) | ((f7cOp1 & 0xF) << 4));
@@ -953,37 +953,32 @@ UINT32 opCVTDZP(void)
 
 UINT32 op58UNHANDLED(void)
 {
-	logWrite(0, "Unhandled 58 opcode at PC: /%06x\n", PC);
-
-	return 1;
+	logerror("Unhandled 58 opcode at PC: /%06x\n", PC);
+	abort();
 }
 
 UINT32 op5AUNHANDLED(void)
 {
-	logWrite(0, "Unhandled 5A opcode at PC: /%06x\n", PC);
-
-	return 1;
+	logerror("Unhandled 5A opcode at PC: /%06x\n", PC);
+	abort();
 }
 
 UINT32 op5BUNHANDLED(void)
 {
-	logWrite(0, "Unhandled 5B opcode at PC: /%06x\n", PC);
-
-	return 1;
+	logerror("Unhandled 5B opcode at PC: /%06x\n", PC);
+	abort();
 }
 
 UINT32 op5DUNHANDLED(void)
 {
-	logWrite(0, "Unhandled 5D opcode at PC: /%06x\n", PC);
-
-	return 1;
+	logerror("Unhandled 5D opcode at PC: /%06x\n", PC);
+	abort();
 }
 
 UINT32 op59UNHANDLED(void)
 {
-	logWrite(0, "Unhandled 59 opcode at PC: /%06x\n", PC);
-
-	return 1;
+	logerror("Unhandled 59 opcode at PC: /%06x\n", PC);
+	abort();
 }
 
 UINT32 (*Op59Table[32])(void) =

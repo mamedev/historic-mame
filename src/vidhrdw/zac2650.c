@@ -52,15 +52,6 @@ READ_HANDLER( tinvader_port_0_r )
 	return input_port_0_r(0) - CollisionBackground;
 }
 
-/****************************************************/
-/* Convert from 6x8 based co-ordinates to 8x8 based */
-/****************************************************/
-
-static int remap_x(int x)
-{
-	return ((x * 8) / 6) - 10;
-}
-
 /*****************************************/
 /* Check for Collision between 2 sprites */
 /*****************************************/
@@ -72,8 +63,8 @@ int SpriteCollision(int first,int second)
 
     if((s2636ram[first * 0x10 + 10] < 0xf0) && (s2636ram[second * 0x10 + 10] < 0xf0))
     {
-    	int fx     = remap_x(s2636ram[first * 0x10 + 10]);
-        int fy     = s2636ram[first * 0x10 + 12]+3;
+    	int fx     = (s2636ram[first * 0x10 + 10] * 4)-22;
+        int fy     = (s2636ram[first * 0x10 + 12] * 3)+3;
 		int expand = (first==1) ? 2 : 1;
 
         /* Draw first sprite */
@@ -109,7 +100,7 @@ int SpriteCollision(int first,int second)
 			    second * 2,
 			    1,
 			    0,0,
-			    remap_x(s2636ram[second * 0x10 + 10]),s2636ram[second * 0x10 + 12] + 3,
+			    (s2636ram[second * 0x10 + 10] * 4)-22,(s2636ram[second * 0x10 + 12] * 3) + 3,
 			    0, TRANSPARENCY_PEN, 0);
 
         /* Remove fingerprint */
@@ -152,8 +143,8 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( tinvader )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
+		TILEMAP_OPAQUE, 24, 24, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
@@ -184,14 +175,17 @@ static void tinvader_draw_sprites( struct mame_bitmap *bitmap )
 
     CollisionBackground = 0;	/* Read from 0x1e80 bit 7 */
 
+	// for collision detection checking
+	copybitmap(tmpbitmap,bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
     for(offs=0;offs<0x50;offs+=0x10)
     {
     	if((s2636ram[offs+10]<0xF0) && (offs!=0x30))
 		{
             int spriteno = (offs / 8);
 			int expand   = ((s2636ram[0xc0] & (spriteno*2))!=0) ? 2 : 1;
-            int bx       = remap_x(s2636ram[offs+10]);
-            int by       = s2636ram[offs+12]+3;
+            int bx       = (s2636ram[offs+10] * 4) - 22;
+            int by       = (s2636ram[offs+12] * 3) + 3;
             int x,y;
 
             if(dirtychar[spriteno])

@@ -202,7 +202,7 @@ Windows video options
 
 -[no]window
 
-	Run MAME in either in a window or full screen. The default is OFF
+	Run MAME in either a window or full screen. The default is OFF
 	(-nowindow).
 
 -[no]ddraw / -[no]dd
@@ -573,7 +573,7 @@ Input device options
 -[no]keyboard_leds / -[no]leds
 
 	Since MAME uses an input device (keyboard) for output, this sort of
-	belongs here. Using this option enabes/disables simulation of the game
+	belongs here. Using this option enables/disables simulation of the game
 	LEDs by the keyboard LEDs. This works fine, but can lead to problems
 	after exiting MAME (i.e. CAPS LOCK remains ON), so you can disable it
 	here. The default is ON (-keyboard_leds).
@@ -733,7 +733,7 @@ MAME core misc options
 	This will crop the artwork to the game screen area only. The default is
 	OFF (-noartwork_crop).
 
--artworkresolution / -artres
+-artwork_resolution / -artres
 
 	Scale the game by this factor to accommodate for higher resolution
 	artwork. The default is 0 (auto).

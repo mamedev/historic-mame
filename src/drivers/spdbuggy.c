@@ -506,7 +506,7 @@ ROM_START( spdbuggy )
 
 ROM_END
 
-GAMEX( 1986, spdbuggy, 0, spdbuggy, spdbuggy, 0, ROT0, "Tatsumi", "Speed Buggy", GAME_NO_SOUND )
+GAMEX( 1986, spdbuggy, 0, spdbuggy, spdbuggy, 0, ROT0, "Tatsumi", "Speed Buggy", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 
 

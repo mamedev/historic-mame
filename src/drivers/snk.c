@@ -27,6 +27,17 @@ Bryan McPhail, 27/01/00:
   Triangle (main set).
 
 
+Oct. 5, 2003:
+
+  Added tdfever2, all ROMs are replacements for those in tdfever except
+  td22.6l, td21.6k, and td20.8k. td20.8k is the reason the new gfx code
+  is needed. Though the gfx appear strange on the vs. screens / choose
+  number of players screens eg. the numbers aren't in the boxes, they're
+  in the lower right corners, and there is no background color like
+  there is in tdfever, this is not a bug, we have confirmed it to be
+  correct against my pcb.
+
+
 Stephh's notes (based on the games Z80 code and some tests) :
 
 1)  'ftsoccer'
@@ -108,7 +119,8 @@ AT042903:
 AT08XX03:
  - revamped CPU handshaking, improved clipping and made changes public to
    marvins.c, hal21.c and sgladiat.c
- - fixed shadows in tnk3, athena, fitegolf, countryc, tdfever and ftsoccer
+ - fixed shadows in tnk3, athena, fitegolf, countryc,
+ and ftsoccer
  - added highlights to tdfever and ftsoccer(needs masking at team selection)
  - notes:
 
@@ -695,7 +707,20 @@ static struct GfxLayout tile2048 =
 static struct GfxLayout tdfever_tiles =
 {
 	16,16,
-	512*5,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 4, 0, 12, 8, 20, 16, 28, 24,
+		32+4, 32+0, 32+12, 32+8, 32+20, 32+16, 32+28, 32+24, },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+		8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
+	128*8
+};
+
+static struct GfxLayout tdfever2_tiles =
+{
+	16,16,
+	512*6,
 	4,
 	{ 0, 1, 2, 3 },
 	{ 4, 0, 12, 8, 20, 16, 28, 24,
@@ -888,6 +913,13 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static struct GfxDecodeInfo tdfever2_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
+	{ REGION_GFX2, 0x0, &tdfever2_tiles,				256*2, 16 },
+	{ REGION_GFX3, 0x0, &tdfever_big_sprite1024,	256*1, 16 },
+	{ -1 }
+};
 
 /**********************************************************************/
 
@@ -1210,6 +1242,43 @@ static MACHINE_DRIVER_START( tdfever )
 	MDRV_SCREEN_SIZE(400,224)
 	MDRV_VISIBLE_AREA(8, 399-8, 0, 223)
 	MDRV_GFXDECODE(tdfever_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(snk_4bpp_shadow)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(tdfever)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(Y8950,y8950_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tdfever2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(snk_irq_AB,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+//	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1000)
+	MDRV_INTERLEAVE(300)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(400,224)
+	MDRV_VISIBLE_AREA(8, 399-8, 0, 223)
+	MDRV_GFXDECODE(tdfever2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_PALETTE_INIT(snk_4bpp_shadow)
@@ -2433,6 +2502,49 @@ ROM_START( tdfeverj )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "up02_p6.rom",  0x00000, 0x10000, CRC(04794557) SHA1(94f476e88b089ad98a133e7356fd271601119fdf) )
 	ROM_LOAD( "up02_n6.rom",  0x10000, 0x10000, CRC(155e472e) SHA1(722b4625e6ab796e129daf903386b5b6b1a945cd) )
+ROM_END
+
+ROM_START( tdfever2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
+	ROM_LOAD( "tdmain.6c",	  0x0000,  0x10000, CRC(9e3eaed8) SHA1(4a591767b22a46605747740a1e1de9aada2893fe) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
+	ROM_LOAD( "tdsub.1c",	  0x00000, 0x10000, CRC(0ec294c0) SHA1(b16656e5fef1c78310f20633d25cda6d6018bf52) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for sound code */
+	ROM_LOAD( "td03.2j",	  0x00000, 0x10000, CRC(4092f16c) SHA1(0821a8afc91862e95e742546367724a862fc6c9f) )
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	ROM_LOAD( "up03_e82.rom", 0x000,   0x00400, CRC(1593c302) SHA1(46008b03c76547d57e3c8658f5f00321c2463cd5) )
+	ROM_LOAD( "up03_d82.rom", 0x400,   0x00400, CRC(ac9df947) SHA1(214855e1015f7b519e336159c6ea62ab1f576353) )
+	ROM_LOAD( "up03_e92.rom", 0x800,   0x00400, CRC(73cdf192) SHA1(63d1aa1b00035bbfe5bebd9bc9992a5d6f5abd10) )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "td06.3n",	  0x0000,  0x8000,  CRC(d6521b0d) SHA1(79aba420b2f039d580892fa34de5d63be1a4f222) )
+
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "up01_d8.rom",  0x00000, 0x10000, CRC(ad6e0927) SHA1(dd1c346fbf908af7b3e314f416937f48ade6af4c) )
+	ROM_LOAD( "up01_e8.rom",  0x10000, 0x10000, CRC(181db036) SHA1(2c5ed172950fce1467517490a8ab3b7ac6594121) )
+	ROM_LOAD( "up01_f8.rom",  0x20000, 0x10000, CRC(c5decca3) SHA1(12aff8adc0ad2bf903122ad065d182692d32fb7a) )
+	ROM_LOAD( "td18.8g",	  0x30000, 0x10000, CRC(1a5a2200) SHA1(178f3850fd23d888a3e7d14f44cba3426a16bc94) )
+	ROM_LOAD( "td19.8j",	  0x40000, 0x10000, CRC(f1081329) SHA1(efcc210d50923a8c9125227c741ba4b71cd9f688) )
+	ROM_LOAD( "td20.8k",	  0x50000, 0x10000, CRC(86cbb2e6) SHA1(77ecd6eefc7bb1933374ecd21a5b46798bdbb94d) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* 32x32 sprites */
+	ROM_LOAD( "up01_k2.rom",  0x00000, 0x10000, CRC(72a5590d) SHA1(d8bd664702af9c66a2bda756d8417d1b69b0cab8) )
+	ROM_LOAD( "td08.2j",	  0x10000, 0x10000, CRC(4845e78b) SHA1(360df759a761f28df93250f3a2e4e9366d627240) )
+	ROM_LOAD( "up01_n2.rom",  0x20000, 0x10000, CRC(a8979657) SHA1(ec2f61a24b04437a9abd0a306923ae2aeee3eba9) )
+	ROM_LOAD( "td10.2l",	  0x30000, 0x10000, CRC(c93b6cd3) SHA1(e528d62e998f5682b497e864818c1b50ba314944) )
+	ROM_LOAD( "up01_r2.rom",  0x40000, 0x10000, CRC(a0d53fbd) SHA1(a49f29b3f07ec833651aa0e37b0e87f3f72e0e3a) )
+	ROM_LOAD( "td12.2p",	  0x50000, 0x10000, CRC(d43abc81) SHA1(8d635dfaa7a99863f133cf599b99f2a6afcfc8a6) )
+	ROM_LOAD( "up01_t2.rom",  0x60000, 0x10000, CRC(88e2e819) SHA1(6d5529792dbd2ba63a1bc470e9d3ea63b876cfd8) )
+	ROM_LOAD( "td14.2s",	  0x70000, 0x10000, CRC(c9bb9138) SHA1(955101e343e643320b29a29116bea556a25d696f) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "td05.6p",	  0x00000, 0x10000, CRC(e332e41f) SHA1(3fe41e35c5abbd8f8b9cff91bf85815275c62776) )
+	ROM_LOAD( "td04.6n",	  0x10000, 0x10000, CRC(98af6d2d) SHA1(0f41f53d4143ec54b8e84cd480e3ab34c3e7ea20) )
+	ROM_LOAD( "td22.6l",	  0x20000, 0x10000, CRC(34b4bce9) SHA1(bf9b000995dcbb27450c0ad1a8ef1bcc4feee080) )
+	ROM_LOAD( "td21.6k",	  0x30000, 0x10000, CRC(f5a96d8e) SHA1(33bb2c41426449179fc27ee88b2c8db27b4ed1da) )
 ROM_END
 
 /***********************************************************************/
@@ -3822,6 +3934,15 @@ static DRIVER_INIT( tdfever ){
 	snk_irq_delay = 1000;
 }
 
+static DRIVER_INIT( tdfever2 ){
+	snk_sound_busy_bit = 0x08;
+	snk_io = tdfever_io;
+	hard_flags = 0;
+	snk_bg_tilemap_baseaddr = 0xd800;
+	snk_gamegroup = (!strcmp(Machine->gamedrv->name,"tdfeverj")) ? 5 : 3;
+	snk_irq_delay = 1000;
+}
+
 static DRIVER_INIT( ftsoccer ){
 	snk_sound_busy_bit = 0x08;
 	snk_io = tdfever_io;
@@ -3890,4 +4011,5 @@ GAMEX( 1988, chopperb, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "C
 GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1988, tdfever2, tdfever,  tdfever2, tdfever,  tdfever2, ROT270, "SNK", "TouchDown Fever 2", GAME_NO_COCKTAIL ) /* upgrade kit for Touchdown Fever */
 GAMEX( 1988, ftsoccer, 0,        ftsoccer, ftsoccer, ftsoccer, ROT0,   "SNK", "Fighting Soccer", GAME_NO_COCKTAIL )

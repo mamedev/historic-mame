@@ -873,32 +873,32 @@ static MACHINE_DRIVER_START( aburner )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(aburner_readmem,aburner_writemem)
 	MDRV_CPU_VBLANK_INT(aburner_interrupt,7)
-	
-	MDRV_CPU_ADD(Z80, 4096000)
+
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(aburner_sound_readmem, aburner_sound_writemem)
 	MDRV_CPU_PORTS(aburner_sound_readport, aburner_sound_writeport)
-	
+
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(aburner_readmem2,aburner_writemem2)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
-	
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_MACHINE_INIT(aburner)
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x2010)
-	
+
 	MDRV_VIDEO_START(aburner)
 	MDRV_VIDEO_UPDATE(aburner)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
@@ -910,4 +910,4 @@ GAME( 1987, aburner,  aburner2, aburner,  aburner,  aburner,  ROT0, "Sega", "Aft
 GAME( 1987, aburner2, 0,        aburner,  aburner2, aburner2, ROT0, "Sega", "After Burner II" )
 GAMEX(19??, loffire,  0,        aburner,  aburner,  aburner,  ROT0, "Sega", "Line of Fire", GAME_NOT_WORKING )
 GAMEX(19??, thndrbld, 0,        aburner,  thndrbld, aburner,  ROT0, "Sega", "Thunder Blade", GAME_NOT_WORKING )
-GAME( 19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0, "Sega", "Thunder Blade (Japan)" )
+GAMEX(19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0, "Sega", "Thunder Blade (Japan)", GAME_NOT_WORKING )

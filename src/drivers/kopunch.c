@@ -268,7 +268,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( kopunch )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ???? */
+	MDRV_CPU_ADD(8080, 4000000)	/* 4 MHz ???? appears to use 8080 instructions, not z80 */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
 	MDRV_CPU_VBLANK_INT(kopunch_interrupt,4)	/* ??? */
@@ -325,7 +325,7 @@ ROM_END
 
 static DRIVER_INIT( kopunch )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+//	unsigned char *rom = memory_region(REGION_CPU1);
 
 	/* It looks like there is a security chip, that changes instruction of the form:
 		0334: 3E 0C       ld   a,$0C
@@ -334,12 +334,12 @@ static DRIVER_INIT( kopunch )
 	   from the operand of the JR  NC instruction (in the example above, 0337).
 	   For now, I'm just patching the affected instructions. */
 
-	rom[0x119] = 0;
-	rom[0x336] = 0;
-	rom[0x381] = 0;
-	rom[0xf0b] = 0;
-	rom[0xf33] = 0;
+//	rom[0x119] = 0;
+//	rom[0x336] = 0;
+//	rom[0x381] = 0;
+//	rom[0xf0b] = 0;
+//	rom[0xf33] = 0;
 }
 
 
-GAMEX( 1981, kopunch, 0, kopunch, kopunch, kopunch, ROT270, "Sega", "KO Punch", GAME_NO_SOUND )
+GAMEX( 1981, kopunch, 0, kopunch, kopunch, kopunch, ROT270, "Sega", "KO Punch", GAME_NO_SOUND | GAME_NOT_WORKING)

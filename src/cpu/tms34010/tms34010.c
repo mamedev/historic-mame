@@ -1254,24 +1254,6 @@ int tms34010_execute(int cycles)
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
 
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
-		state.op = ROPCODE();
-		(*opcode_table[state.op >> 4])();
-
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
-		state.op = ROPCODE();
-		(*opcode_table[state.op >> 4])();
-
-		#ifdef	MAME_DEBUG
-		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
-		#endif
-		state.op = ROPCODE();
-		(*opcode_table[state.op >> 4])();
-
 	} while (tms34010_ICount > 0);
 
 	return cycles - tms34010_ICount;
@@ -1557,10 +1539,12 @@ static void update_display_address(int vcount)
 static void vsblnk_callback(int cpunum)
 {
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
-	cpuintrf_push_context(cpunum);
 
-	/* reset timer for next frame */
+	/* reset timer for next frame before going into the CPU context */
 	timer_adjust(vsblnk_timer[cpunum], interval, cpunum, 0);
+
+	/* set the CPU's context and update the display state */
+	cpuintrf_push_context(cpunum);
 	IOREG(REG_DPYADR) = IOREG(REG_DPYSTRT);
 	update_display_address(SMART_IOREG(VSBLNK));
 
@@ -1571,12 +1555,14 @@ static void vsblnk_callback(int cpunum)
 static void dpyint_callback(int cpunum)
 {
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
-	cpuintrf_push_context(cpunum);
 
-logerror("-- dpyint @ %d --\n", cpu_getscanline());
+logerror("-- dpyint(%d) @ %d --\n", cpunum, cpu_getscanline());
 
-	/* reset timer for next frame */
+	/* reset timer for next frame before going into the CPU context */
 	timer_adjust(dpyint_timer[cpunum], interval, cpunum, 0);
+
+	/* set the CPU's context and queue an interrupt */
+	cpuintrf_push_context(cpunum);
 	timer_set(TIME_NOW, cpunum | (TMS34010_DI << 8), internal_interrupt_callback);
 
 	/* allow a callback so we can update before they are likely to do nasty things */

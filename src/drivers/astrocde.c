@@ -944,4 +944,4 @@ GAME( 1980, wow,      0,    wow,      wow,      wow,      ROT0,   "Midway", "Wiz
 GAME( 1981, gorf,     0,    gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf" )
 GAME( 1981, gorfpgm1, gorf, gorf,     gorf,     gorf,     ROT270, "Midway", "Gorf (Program 1)" )
 GAME( 1981, robby,    0,    robby,    robby,    0,        ROT0,   "Bally Midway", "Robby Roto" )
-GAME( 1983, profpac,  0,    profpac,  gorf,     0,        ROT0,   "Bally Midway", "Professor PacMan" )
+GAMEX( 1983,profpac,  0,    profpac,  gorf,     0,        ROT0,   "Bally Midway", "Professor PacMan", GAME_NOT_WORKING )

@@ -46,8 +46,6 @@ static void welltris_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 	/* draw the sprites */
 	for (offs = 0; offs < 0x200 - 4; offs += 4) {
-		if (!(welltris_spriteram[offs + 2] & 0x0080)) continue;
-
 		int data0 = welltris_spriteram[offs + 0];
 		int data1 = welltris_spriteram[offs + 1];
 		int data2 = welltris_spriteram[offs + 2];
@@ -64,6 +62,8 @@ static void welltris_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 		int yflip = (data2 >> 15) & 1;
 		int xflip = (data2 >> 11) & 1;
 		int xt, yt;
+
+		if (!(welltris_spriteram[offs + 2] & 0x0080)) continue;
 
 		/* compute the zoom factor -- stolen from aerofgt.c */
 		xzoom = 16 - zoomtable[xzoom] / 8;

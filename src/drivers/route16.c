@@ -93,6 +93,15 @@ WRITE_HANDLER( stratvox_sn76477_w );
 READ_HANDLER ( speakres_in3_r );
 WRITE_HANDLER ( speakres_out2_w );
 
+READ_HANDLER( routex_prot_read )
+{
+	if (activecpu_get_pc()==0x2f) return 0xFB;
+
+	logerror ("cpu #%d (PC=%08X): unmapped prot read\n", cpu_getactivecpu(), activecpu_get_pc());
+	return 0x00;
+
+}
+
 static MEMORY_READ_START( cpu1_readmem )
 	{ 0x0000, 0x2fff, MRA_ROM },
   /*{ 0x3000, 0x3001, MRA_NOP },	 Route 16 protection device */
@@ -105,7 +114,27 @@ MEMORY_END
 
 static MEMORY_WRITE_START( cpu1_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },
-  /*{ 0x3001, 0x3001, MWA_NOP },	 Route 16 protection device */
+ 	/*{ 0x3001, 0x3001, MWA_NOP },	 Route 16 protection device */
+	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
+	{ 0x4800, 0x4800, route16_out0_w },
+	{ 0x5000, 0x5000, route16_out1_w },
+	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
+	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
+                                 // when clearing the screen
+MEMORY_END
+
+static MEMORY_READ_START( routex_cpu1_readmem )
+	{ 0x0000, 0x37ff, MRA_ROM },
+	{ 0x4000, 0x43ff, route16_sharedram_r },
+	{ 0x4800, 0x4800, input_port_0_r },
+	{ 0x5000, 0x5000, input_port_1_r },
+	{ 0x5800, 0x5800, input_port_2_r },
+ 	{ 0x6400, 0x6400, routex_prot_read },
+	{ 0x8000, 0xbfff, route16_videoram1_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( routex_cpu1_writemem )
+	{ 0x0000, 0x37ff, MWA_ROM },
 	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
 	{ 0x4800, 0x4800, route16_out0_w },
 	{ 0x5000, 0x5000, route16_out1_w },
@@ -409,6 +438,13 @@ static MACHINE_DRIVER_START( route16 )
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( routex )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(route16)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_MEMORY(routex_cpu1_readmem,routex_cpu1_writemem)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( stratvox )
 
@@ -498,6 +534,28 @@ ROM_START( route16b )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
 	ROM_LOAD( "rt16.6",       0x0000, 0x0800, CRC(fef605f3) SHA1(bfbffa0ded3e285c034f0ad832864021ef3f2256) )
+	ROM_LOAD( "rt16.7",       0x0800, 0x0800, CRC(d0d6c189) SHA1(75cec891e20cf05aae354c8950857aea83c6dadc) )
+	ROM_LOAD( "rt16.8",       0x1000, 0x0800, CRC(defc5797) SHA1(aec8179e647de70016e0e63b720f932752adacc1) )
+	ROM_LOAD( "rt16.9",       0x1800, 0x0800, CRC(88d94a66) SHA1(163e952ada7c05110d1f1c681bd57d3b9ea8866e) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, CRC(08793ef7) SHA1(bfc27aaf25d642cd57c0fbe73ab575853bd5f3ca) ) /* bottom bitmap */
+ROM_END
+
+ROM_START( routex )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
+	ROM_LOAD( "routex01.a0",  0x0000, 0x0800, CRC(99b500e7) SHA1(2561c04a1425d7ac3309faf29fcfde63a0cda4da) )
+	ROM_LOAD( "rt16.1",       0x0800, 0x0800, CRC(3ec52fe5) SHA1(451969b5caedd665231ef78cf262679d6d4c8507) )
+	ROM_LOAD( "rt16.2",       0x1000, 0x0800, CRC(a8e92871) SHA1(68a709c14309d2b617997b76ae9d7b80fd326f39) )
+	ROM_LOAD( "rt16.3",       0x1800, 0x0800, CRC(a0fc9fc5) SHA1(7013750c1b3d403b12eac10282a930538ed9c73e) )
+	ROM_LOAD( "routex05.a4",  0x2000, 0x0800, CRC(2fef7653) SHA1(ba3477da249ca402d096704e57ea638fde6abe9c) )
+	ROM_LOAD( "routex06.a5",  0x2800, 0x0800, CRC(a39ef648) SHA1(866095d9880b60b01f7ca66b332f5f6c4b41a5ac) )
+	ROM_LOAD( "routex07.a6",  0x3000, 0x0800, CRC(89f80c1c) SHA1(dff37e0f2446a99890135891c59dc501866a25cc) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
+	ROM_LOAD( "routex11.b0",  0x0000, 0x0800, CRC(b51edd1d) SHA1(1ca10afd6851875c98b1d29aee457234c20ce0bf) )
 	ROM_LOAD( "rt16.7",       0x0800, 0x0800, CRC(d0d6c189) SHA1(75cec891e20cf05aae354c8950857aea83c6dadc) )
 	ROM_LOAD( "rt16.8",       0x1000, 0x0800, CRC(defc5797) SHA1(aec8179e647de70016e0e63b720f932752adacc1) )
 	ROM_LOAD( "rt16.9",       0x1800, 0x0800, CRC(88d94a66) SHA1(163e952ada7c05110d1f1c681bd57d3b9ea8866e) )
@@ -627,6 +685,7 @@ DRIVER_INIT( stratvox )
 GAME( 1981, route16,  0,        route16,  route16,  route16,  ROT270, "Tehkan/Sun (Centuri license)", "Route 16" )
 GAME( 1981, route16a, route16,  route16,  route16,  route16a, ROT270, "Tehkan/Sun (Centuri license)", "Route 16 (set 2)" )
 GAME( 1981, route16b, route16,  route16,  route16,  route16b, ROT270, "bootleg", "Route 16 (bootleg)" )
+GAME( 1981, routex,   route16,  routex,   route16,  route16b, ROT270, "bootleg", "Route X (bootleg)" )
 GAME( 1980, speakres, 0,        speakres, speakres, stratvox, ROT270, "Sun Electronics", "Speak & Rescue" )
 GAME( 1980, stratvox, speakres, stratvox, stratvox, stratvox, ROT270, "[Sun Electronics] (Taito license)", "Stratovox" )
 GAME( 1980, spacecho, speakres, spacecho, spacecho, stratvox, ROT270, "bootleg", "Space Echo" )

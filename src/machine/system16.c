@@ -2167,7 +2167,7 @@ struct SEGAPCMinterface sys16_segapcm_interface_32k = {
 
 struct YM2151interface sys16_ym2151_interface = {
 	1,			/* 1 chip */
-	4096000,	/* 3.58 MHz ? */
+	4000000,	/* 3.58 MHz ? */
 	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -2175,7 +2175,7 @@ struct YM2151interface sys16_ym2151_interface = {
 struct YM2203interface sys16_ym2203_interface =
 {
 	1,	/* 1 chips */
-	4096000,	/* 3.58 MHz ? */
+	4000000,	/* 3.58 MHz ? */
 	{ YM2203_VOL(50,50) },
 	{ 0 },
 	{ 0 },
@@ -2187,7 +2187,7 @@ struct YM2203interface sys16_ym2203_interface =
 struct YM2203interface sys16_3xym2203_interface =
 {
 	3,	/* number of chips */
-	4096000,	/* 3.58 MHz ? */
+	4000000,	/* 3.58 MHz ? */
 	{ YM2203_VOL(50,50),YM2203_VOL(50,50),YM2203_VOL(50,50) },
 	{ 0 },
 	{ 0 },

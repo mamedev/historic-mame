@@ -133,7 +133,7 @@ Notes:
 
 #define VERBOSE_LEVEL ( 0 )
 
-static inline void verboselog( int n_level, const char *s_fmt, ... )
+INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
 	if( VERBOSE_LEVEL >= n_level )
 	{

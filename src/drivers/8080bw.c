@@ -103,6 +103,22 @@ static PORT_WRITE_START( writeport_0_3 )
 PORT_END
 
 static PORT_WRITE_START( writeport_1_2 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	{ 0x01, 0x01, c8080bw_shift_amount_w },
 	{ 0x02, 0x02, c8080bw_shift_data_w },
 PORT_END
@@ -216,6 +232,7 @@ MACHINE_DRIVER_END
 /* Space Invaders TV Version (Taito)                   */
 /*                                                     */
 /*LT 24-12-1998                                        */
+
 /*******************************************************/
 
 /* same as Invaders with a test mode switch */
@@ -267,6 +284,7 @@ INPUT_PORTS_END
 
 /*******************************************************/
 /*                                                     */
+
 /* Midway "Space Invaders Part II"                     */
 /*                                                     */
 /*******************************************************/
@@ -367,6 +385,7 @@ INPUT_PORTS_START( earthinv )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) /* Pence Coin */
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Not bonus */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
@@ -465,6 +484,7 @@ INPUT_PORTS_START( invrvnge )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
+
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
@@ -616,6 +636,7 @@ INPUT_PORTS_START( sstrangr )
 
 	PORT_START		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 
@@ -725,6 +746,7 @@ MACHINE_DRIVER_END
 /*******************************************************/
 /*                                                     */
 /* Taito "Space Laser"                                 */
+
 /*                                                     */
 /*******************************************************/
 
@@ -865,6 +887,7 @@ INPUT_PORTS_START( galxwars )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_DIPSETTING(    0x08, "5000" )
@@ -913,6 +936,7 @@ INPUT_PORTS_START( lrescue )
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
+
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_TILT )
@@ -959,6 +983,7 @@ INPUT_PORTS_START( cosmicmo )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
 
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
@@ -1014,6 +1039,7 @@ MEMORY_END
 INPUT_PORTS_START( rollingc )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) /* Game Select */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) /* Game Select */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1161,6 +1187,7 @@ INPUT_PORTS_START( sheriff )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
@@ -1247,6 +1274,7 @@ static MACHINE_DRIVER_START( sheriff )
 
 	MDRV_CPU_ADD(I8035,6000000/15)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+
 	MDRV_CPU_MEMORY(sheriff_sound_readmem,sheriff_sound_writemem)
 	MDRV_CPU_PORTS(sheriff_sound_readport,sheriff_sound_writeport)
 
@@ -1299,6 +1327,7 @@ INPUT_PORTS_START( spcenctr )
 	PORT_DIPNAME( 0x30, 0x00, "Bonus/Test Mode" )
 	PORT_DIPSETTING(    0x00, "Bonus On" )
 	PORT_DIPSETTING(    0x30, "Bonus Off" )
+
 	PORT_DIPSETTING(    0x20, "Cross Hatch" )
 	PORT_DIPSETTING(    0x10, "Test Mode" )
 	PORT_DIPNAME( 0xc0, 0x00, "Time" )
@@ -1351,6 +1380,7 @@ INPUT_PORTS_START( gunfight )
 #ifdef NOTDEF
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_DIPNAME( 0x0C, 0x00, "Plays" )
 	PORT_DIPSETTING(    0x00, "1" )
@@ -1547,6 +1577,7 @@ INPUT_PORTS_START( schaser )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1598,7 +1629,9 @@ static MACHINE_DRIVER_START( schaser )
 	MDRV_CPU_MEMORY(schaser_readmem,schaser_writemem)
 	MDRV_MACHINE_INIT(schaser)
 
+
 	/* video hardware */
+
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
 	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
@@ -1647,6 +1680,7 @@ INPUT_PORTS_START( schasrcv )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
@@ -1873,6 +1907,7 @@ INPUT_PORTS_START( gmissile )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+
 	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x08, "70" )
@@ -2080,6 +2115,7 @@ INPUT_PORTS_START( helifire )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+
 	PORT_DIPSETTING(    0x0c, "5000" )
 	PORT_DIPSETTING(    0x04, "6000" )
 	PORT_DIPSETTING(    0x08, "8000" )
@@ -2228,6 +2264,7 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
 	MDRV_CPU_MEMORY(schaser_readmem,schaser_writemem)
+
 	MDRV_CPU_PORTS(c8080bw_readport,writeport_0_3)
 	MDRV_CPU_VBLANK_INT(polaris_interrupt,2)
 	MDRV_MACHINE_INIT(polaris)
@@ -2283,7 +2320,9 @@ INPUT_PORTS_START( lagunar )
 INPUT_PORTS_END
 
 
+
 /*******************************************************/
+
 /*                                                     */
 /* Midway "Phantom II"                                 */
 /*                                                     */
@@ -2340,6 +2379,7 @@ static MACHINE_DRIVER_START( phantom2 )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+
 	MDRV_PALETTE_LENGTH(3)
 	MDRV_PALETTE_INIT(phantom2)
 
@@ -2394,6 +2434,7 @@ INPUT_PORTS_END
 /*******************************************************/
 /*                                                     */
 /* Midway "4 Player Bowling"                           */
+
 /*                                                     */
 /*******************************************************/
 
@@ -2445,6 +2486,7 @@ INPUT_PORTS_START( bowler )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( bowler )
+
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
@@ -2847,6 +2889,7 @@ INPUT_PORTS_START( checkmat )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER4 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 )
+
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
 
@@ -2902,6 +2945,7 @@ MACHINE_DRIVER_END
 
 INPUT_PORTS_START( ozmawars )
 	PORT_START		/* IN0 */
+
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -3000,6 +3044,7 @@ INPUT_PORTS_START( sinvemag )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -3050,6 +3095,7 @@ INPUT_PORTS_END
 /*******************************************************/
 
 INPUT_PORTS_START( jspecter )
+
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -3068,12 +3114,9 @@ INPUT_PORTS_START( jspecter )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	/* Note: There must have been a toggle switch on the outside of the unit.
-	   The difficulty can be set by the player */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -3286,6 +3329,15 @@ ROM_START( sinvemag )
 	ROM_LOAD( "emag_si.f",    0x1c00, 0x0400, CRC(077f5ef2) SHA1(625de6839073ac4c904f949efc1b2e0afea5d676) )
 ROM_END
 
+ROM_START( tst_invd )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "test.h",   0x0000, 0x0800, CRC(f86a2eea) SHA1(4a72ff01f3e6d16bbe9bf7f123cd98895bfbed9a) )   /*  The Test ROM */
+	ROM_LOAD( "invaders.g",   0x0800, 0x0800, CRC(6bfaca4a) SHA1(16f48649b531bdef8c2d1446c429b5f414524350) )
+	ROM_LOAD( "invaders.f",   0x1000, 0x0800, CRC(0ccead96) SHA1(537aef03468f63c5b9e11dd61e253f7ae17d9743) )
+	ROM_LOAD( "invaders.e",   0x1800, 0x0800, CRC(14e538b0) SHA1(1d6ca0c99f9df71e2990b610deb9d7da0125e2d8) )
+ROM_END
+
+
 ROM_START( alieninv )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "1h.bin",       0x0000, 0x0800, CRC(c46df7f4) SHA1(eec34b3d5585bae03c7b80585daaa05ddfcc2164) )
@@ -3413,9 +3465,11 @@ ROM_START( invaddlx )
 	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, CRC(f4aa1880) SHA1(995d77b67cb4f2f3781c2c8747cb058b7c1b3412) )
 	ROM_LOAD( "invdelux.e",   0x1800, 0x0800, CRC(408849c1) SHA1(f717e81017047497a2e9f33f0aafecfec5a2ed7d) )
 	ROM_LOAD( "invdelux.d",   0x4000, 0x0800, CRC(e8d5afcd) SHA1(91fde9a9e7c3dd53aac4770bd169721a79b41ed1) )
+
 ROM_END
 
 ROM_START( moonbase )
+
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	   /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, CRC(7288a511) SHA1(ff617872784c28ed03591aefa9f0519e5651701f) )
 	ROM_LOAD( "pv.02",        0x0800, 0x0800, CRC(097dd8d5) SHA1(8d68654d54d075c0f0d7f63c87ff4551ce8b7fbf) )
@@ -3587,6 +3641,7 @@ ROM_START( rollingc )
 	ROM_LOAD( "rc06.bin",     0x1400, 0x0400, CRC(0b98dbe5) SHA1(33cedab82ddccb4caaf681fce553b5230a8d6f92) )
 	ROM_LOAD( "rc07.bin",     0x1800, 0x0400, CRC(6242145c) SHA1(b01bb02835dda89dc02604ec52e423167183e8c9) )
 	ROM_LOAD( "rc08.bin",     0x1c00, 0x0400, CRC(d23c2ef1) SHA1(909e3d53291dbd219f4f9e0047c65317b9f6d5bd) )
+
 	ROM_LOAD( "rc09.bin",     0x4000, 0x0800, CRC(2e2c5b95) SHA1(33f4e2789d67e355ccd99d2c0d07301ec2bd3bc1) )
 	ROM_LOAD( "rc10.bin",     0x4800, 0x0800, CRC(ef94c502) SHA1(07c0504b2ebce0fa6e53e6957e7b6c0e9caab430) )
 	ROM_LOAD( "rc11.bin",     0x5000, 0x0800, CRC(a3164b18) SHA1(7270af25fa4171f86476f5dc409e658da7fba7fc) )
@@ -4127,6 +4182,7 @@ ROM_END
 	  GAME( 1980, spaceat2, invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Space Attack II" )
 	  GAME( 19??, sinvzen,  invaders, invaders, spaceatt, invaders, ROT270, "Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)" )
 	  GAME( 19??, sinvemag, invaders, invaders, sinvemag, invaders, ROT270, "bootleg", "Super Invaders (EMAG)" )
+	  GAME( 19??, tst_invd, invaders, invaders, invaders, invaders, ROT0,   "Test ROM", "Space Invaders Test ROM" )
 	  GAME( 19??, alieninv, invaders, invaders, earthinv, invaders, ROT270, "bootleg", "Alien Invasion Part II" )
 	  GAME( 1978, spceking, invaders, invaders, spceking, invaders, ROT270, "Leijac (Konami)","Space King" )
 	  GAME( 1978, spcewars, invaders, invaders, invadpt2, invaders, ROT270, "Sanritsu", "Space War (Sanritsu)" )
@@ -4142,6 +4198,7 @@ ROM_END
 	  GAMEX(19??, invrvnge, 0,        invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND )
 	  GAMEX(19??, invrvnga, invrvnge, invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd. (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
 	  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "GamePlan (Taito)", "Space Laser" )
+
 	  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser" )
 	  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)" )
 	  GAMEX(1979, rollingc, 0,        rollingc, rollingc, rollingc, ROT270, "Nichibutsu", "Rolling Crash / Moon Base", GAME_NO_SOUND )

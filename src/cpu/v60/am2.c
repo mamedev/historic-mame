@@ -94,13 +94,8 @@ UINT32 bam2Autoincrement(void)
 		v60.reg[modVal&0x1F]+=4;
 		break;
 	default:
-		{
-			char foo[64];
-
-			sprintf(foo, "CPU - AM2 - 7 (t0 PC=%x)", (int)PC);
-
-			messagebox(foo);
-		}
+		logerror("CPU - AM2 - 7 (t0 PC=%x)", PC);
+		abort();
 		break;
 	}
 
@@ -145,7 +140,8 @@ UINT32 bam2Autodecrement(void)
 		v60.reg[modVal&0x1F]-=4;
 		break;
 	default:
-		messagebox("CPU - BAM2 - 7\n");
+		logerror("CPU - BAM2 - 7 (PC=%06x)", PC);
+		abort();
 		break;
 	}
 
@@ -948,36 +944,12 @@ UINT32 am2Immediate(void)
 {
 	// Fuck off LDPR
 	return am1Immediate();
-
-	// Immediate should not be read in ReadAMAddress()
-#if 0
-	messagebox("CPU - AM2 - 6\n");
-	amFlag=1;
-	amOut=0;
-	return 1;
-#endif
 }
 
 UINT32 am2ImmediateQuick(void)
 {
 	// fuck off LDPR
 	return am1ImmediateQuick();
-
-
-	// Immediate should not be read in ReadAMAddress()
-#if 0
-	{
-		char foo[64];
-
-		sprintf(foo, "CPU - AM2 - 7 (t1 PC=%lx)", PC);
-
-		messagebox(foo);
-	}
-
-	amFlag=1;
-	amOut=0;
-	return 1;
-#endif
 }
 
 
@@ -986,68 +958,68 @@ UINT32 am2ImmediateQuick(void)
 
 UINT32 am2Error1(void)
 {
-	messagebox("CPU - AM2 - 1\n");
-	return 1;
+	logerror("CPU - AM2 - 1 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am2Error2(void)
 {
-	messagebox("CPU - AM2 - 2\n");
-	return 1;
+	logerror("CPU - AM2 - 2 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am2Error3(void)
 {
-	messagebox("CPU - AM2 - 3\n");
-	return 1;
+	logerror("CPU - AM2 - 3 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am2Error4(void)
 {
-	messagebox("CPU - AM2 - 4\n");
-	return 1;
+	logerror("CPU - AM2 - 4 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am2Error5(void)
 {
-	messagebox("CPU - AM2 - 5\n");
-	return 1;
+	logerror("CPU - AM2 - 5 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error1(void)
 {
-	messagebox("CPU - BAM2 - 1\n");
-	return 1;
+	logerror("CPU - BAM2 - 1 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error2(void)
 {
-	messagebox("CPU - BAM2 - 2\n");
-	return 1;
+	logerror("CPU - BAM2 - 2 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error3(void)
 {
-	messagebox("CPU - BAM2 - 3\n");
-	return 1;
+	logerror("CPU - BAM2 - 3 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error4(void)
 {
-	messagebox("CPU - BAM2 - 4\n");
-	return 1;
+	logerror("CPU - BAM2 - 4 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error5(void)
 {
-	messagebox("CPU - BAM2 - 5\n");
-	return 1;
+	logerror("CPU - BAM2 - 5 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam2Error6(void)
 {
-	messagebox("CPU - BAM2 - 6\n");
-	return 1;
+	logerror("CPU - BAM2 - 6 (PC=%06x)", PC);
+	abort();
 }
 
 

@@ -34,6 +34,12 @@ Notes of Interest:
 its not displayed in gurus video.Update:It's actually not drawn because his
 priority value is 0.
 
+-Scrolling is screen display wise,meaning that a scrolling value is masked with the
+screen resolution size values.
+
+-VDP1 "general purpose" priority isn't taken into account yet,for now we fix the priority
+value to six...
+
 */
 
 #include "driver.h"
@@ -47,7 +53,7 @@ data8_t*  stv_vdp2_vram_dirty_8x8x8;
 data32_t* stv_vdp2_cram;
 extern void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 extern int stv_vdp1_start ( void );
-
+static void stv_vdp2_dynamic_res_change(void);
 
 /*
 
@@ -97,6 +103,11 @@ extern int stv_vdp1_start ( void );
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | LSMD1    | LSMD0    | VRESO1   | VRESO0   |    --    | HRESO2   | HRESO1   | HRESO0   |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_TVMD ((stv_vdp2_regs[0x000/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_VRES ((STV_VDP2_TVMD & 0x0030) >> 4)
+	#define STV_VDP2_HRES ((STV_VDP2_TVMD & 0x0007) >> 0)
 
 /* 180002 - r/w - EXTEN - External Signal Enable Register
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1455,8 +1466,8 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  supplementary_palette_bits;
 	UINT8  supplementary_character_bits;
 
-	UINT16 scrollx;
-	UINT16 scrolly;
+	INT16 scrollx;
+	INT16 scrolly;
 
 	UINT8  plane_size;
 	UINT8  colour_ram_address_offset;
@@ -1533,13 +1544,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 	stv2_current_tilemap.trans_enabled = stv2_current_tilemap.trans_enabled ? TRANSPARENCY_NONE : TRANSPARENCY_PEN;
 
-	/*Fix here the scroll registers(they are display wise,WEIRD).*/
 	stv2_current_tilemap.scrollx &= 0x1ff;
 	stv2_current_tilemap.scrolly &= 0x1ff;
-	if(stv2_current_tilemap.scrollx > 0x140)/*320*/
-		stv2_current_tilemap.scrollx-= 0x140;
-	if(stv2_current_tilemap.scrollx > 0x100)/*256*/
-		stv2_current_tilemap.scrollx-= 0x100;
 
 	for (y = 0; y<32*(2-stv2_current_tilemap.tile_size+1); y++) {
 		for (x = 0; x<32*(2-(stv2_current_tilemap.tile_size)); x++) {
@@ -1627,39 +1633,44 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 			if (stv2_current_tilemap.tile_size==1)
 			{
-				if (flipyx == 0)
+				/* normal */
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+
+				if (stv2_current_tilemap.scrollx) /* wraparound x */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode  ,pal,0,0,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1,pal,0,0,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2,pal,0,0,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3,pal,0,0,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
-				else if (flipyx == 1)
+				if (stv2_current_tilemap.scrolly) /* wraparound y */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1,pal,1,0,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode  ,pal,1,0,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3,pal,1,0,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2,pal,1,0,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
-				else if (flipyx == 2)
+				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
 				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2,pal,0,1,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3,pal,0,1,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0,pal,0,1,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1,pal,0,1,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-				}
-				else
-				{
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3,pal,1,1,(x*16)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2,pal,1,1,(x*16+8)-stv2_current_tilemap.scrollx,(y*16)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1,pal,1,1,(x*16)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
-					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0,pal,1,1,(x*16+8)-stv2_current_tilemap.scrollx,(y*16+8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+0+(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+1-(flipyx&1)+(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+2+(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode+3-(flipyx&1)-(flipyx&2),pal,flipyx&1,flipyx&2,(x*16+8)-stv2_current_tilemap.scrollx+0x200,(y*16+8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
 				}
 
 			}
 			else
 			{
 				drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx,(y*8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				if (stv2_current_tilemap.scrollx) /* wraparound x */
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx+0x200,(y*8)-stv2_current_tilemap.scrolly,cliprect,stv2_current_tilemap.trans_enabled,0);
+				if (stv2_current_tilemap.scrolly) /* wraparound y */
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx,(y*8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
+				if (stv2_current_tilemap.scrollx && stv2_current_tilemap.scrolly) /* wraparound x & y */
+					drawgfx(bitmap,Machine->gfx[gfx],tilecode,pal,flipyx&1,flipyx&2, (x*8)-stv2_current_tilemap.scrollx+0x200,(y*8)-stv2_current_tilemap.scrolly+0x200,cliprect,stv2_current_tilemap.trans_enabled,0);
 			}
 
 		}
@@ -1998,26 +2009,56 @@ VIDEO_START( stv_vdp2 )
 	stv_vdp2_start();
 	stv_vdp1_start();
 
-return 0;
+	return 0;
+}
+
+static void stv_vdp2_dynamic_res_change()
+{
+	static UINT16 horz,vert;
+
+	switch( STV_VDP2_VRES & 3 )
+	{
+		case 0: vert = 224; break;
+		case 1: vert = 240; break;
+		case 2: vert = 256; break;
+		case 3:
+		logerror("WARNING: V Res setting (3) not allowed!\n");
+		vert = 256;
+		break;
+	}
+	switch( STV_VDP2_HRES & 7 )
+	{
+		case 0: horz = 320; break;
+		case 1: horz = 352; break;
+		case 2: horz = 640; break;
+		case 3: horz = 704; break;
+/*Exclusive modes,they sets the Vertical Resolution without considering the VRES register.*/
+		case 4: horz = 320; vert = 480; break;
+		case 5: horz = 352; vert = 480; break;
+		case 6: horz = 640; vert = 480; break;
+		case 7: horz = 704; vert = 480; break;
+	}
+
+	set_visible_area(0*8, horz-1,0*8, vert-1);
 }
 
 VIDEO_UPDATE( stv_vdp2 )
 {
-	int i;
+	static UINT8 pri;
 
 	fillbitmap(bitmap, get_black_pen(), NULL);
 
 	/*If a plane has a priority value of zero it isn't shown at all.*/
-	for(i=1;i<8;i++)
+	for(pri=1;pri<8;pri++)
 	{
-		if(i==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);
-		if(i==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);
-		if(i==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);
-		if(i==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);
+		if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);
+		if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);
+		if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);
+		if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);
+		if(pri==6)               video_update_vdp1(bitmap,cliprect);
 	}
 
-	video_update_vdp1(bitmap,cliprect);
-
+	stv_vdp2_dynamic_res_change();
 
 /*
 	if ( keyboard_pressed_memory(KEYCODE_W) )
@@ -2412,36 +2453,6 @@ static WRITE32_HANDLER ( stv_vdp2_regs_w32 )
 ** Functions to emulate some aspects of the VDP-2.
 **
 */
-
-static void res_change()
-{
-	static UINT16 horz,vert;
-
-	switch( VRES & 3 )
-	{
-		case 0: vert = 224; break;
-		case 1: vert = 240; break;
-		case 2: vert = 256; break;
-		case 3:
-		usrintf_showmessage("WARNING: V Res setting not allowed");
-		vert = 256;
-		break;
-	}
-	switch( HRES & 7 )
-	{
-		case 0: horz = 320; break;
-		case 1: horz = 352; break;
-		case 2: horz = 640; break;
-		case 3: horz = 704; break;
-		/*Exclusive modes,they sets the Vertical Resolution without considering the VRES register.*/
-		case 4: horz = 320; vert = 480; break;
-		case 5: horz = 352; vert = 480; break;
-		case 6: horz = 640; vert = 480; break;
-		case 7: horz = 704; vert = 480; break;
-	}
-
-	set_visible_area(0*8, horz-1,0*8, vert-1);
-}
 
 /*This is WRONG,the actual brightness control is much more complex than this...*/
 static void stv_bright()

@@ -118,6 +118,7 @@ TO DO :
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "cpu/s2650/s2650.h"
 #include "galaxian.h"
 
 
@@ -136,6 +137,18 @@ static WRITE_HANDLER( checkman_sound_command_w )
 {
 	soundlatch_w (0,data);
 	cpu_set_irq_line (1, IRQ_LINE_NMI, PULSE_LINE);
+}
+
+static READ_HANDLER( drivfrcg_port0_r )
+{
+	switch (activecpu_get_pc())
+	{
+		case 0x002e:
+		case 0x0297:
+			return 0x01;
+	}
+
+    return 0;
 }
 
 
@@ -719,6 +732,54 @@ MEMORY_END
 static PORT_WRITE_START( ozon1_writeport )
 	{ 0x00, 0x00, AY8910_write_port_0_w },
 	{ 0x01, 0x01, AY8910_control_port_0_w },
+PORT_END
+
+
+static MEMORY_READ_START( drivfrcg_readmem )
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x1500, 0x1500, input_port_0_r },
+	{ 0x1580, 0x1580, input_port_1_r },
+	{ 0x1600, 0x1600, input_port_2_r },
+	{ 0x1700, 0x1700, input_port_3_r },
+	{ 0x1c00, 0x1eff, MRA_RAM },
+	{ 0x2000, 0x2fff, MRA_ROM },
+	{ 0x3000, 0x3fff, hunchbks_mirror_r },
+	{ 0x4000, 0x4fff, MRA_ROM },
+	{ 0x5000, 0x5fff, hunchbks_mirror_r },
+	{ 0x6000, 0x6fff, MRA_ROM },
+	{ 0x7000, 0x7fff, hunchbks_mirror_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( drivfrcg_writemem )
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x1480, 0x14bf, galaxian_attributesram_w, &galaxian_attributesram },
+	{ 0x14c0, 0x14ff, MWA_RAM, &galaxian_spriteram, &galaxian_spriteram_size },
+	{ 0x1503, 0x1503, galaxian_coin_counter_w },
+	{ 0x1580, 0x1582, galaxian_background_enable_w },
+	{ 0x1583, 0x1583, MWA_NOP },
+	{ 0x1585, 0x1585, MWA_NOP },
+	{ 0x1586, 0x1587, galaxian_lfo_freq_w },
+	{ 0x1600, 0x1600, galaxian_pitch_w },
+	{ 0x1700, 0x1700, MWA_NOP },
+	{ 0x1701, 0x1701, MWA_NOP },
+	{ 0x1704, 0x1707, galaxian_vol_w },
+	{ 0x1800, 0x1bff, galaxian_videoram_w, &galaxian_videoram },
+	{ 0x1c00, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2fff, MWA_ROM },
+	{ 0x3000, 0x3fff, hunchbks_mirror_w },
+	{ 0x4000, 0x4fff, MWA_ROM },
+	{ 0x5000, 0x5fff, hunchbks_mirror_w },
+	{ 0x6000, 0x6fff, MWA_ROM },
+	{ 0x7000, 0x7fff, hunchbks_mirror_w },
+MEMORY_END
+
+static PORT_READ_START( drivfrcg_readport )
+	{ 0x00, 0x00, drivfrcg_port0_r },
+	{ S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
+PORT_END
+
+static PORT_WRITE_START( drivfrcg_writeport )
+	{ S2650_DATA_PORT, S2650_DATA_PORT, MWA_NOP },
 PORT_END
 
 
@@ -1308,6 +1369,8 @@ INPUT_PORTS_START( exodus )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )		// Not tested due to code removed at 0x1901 and 0x191a
+
+
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -2689,6 +2752,10 @@ INPUT_PORTS_START( bagmanmc )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+
+
+
+
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -2890,6 +2957,7 @@ INPUT_PORTS_START( ozon1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -3023,11 +3091,91 @@ INPUT_PORTS_START( vpool )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( drivfrcg )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, "A 2C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x00, "A 1C/1C  B 1C/5C" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START /* Sense */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
 static struct GfxLayout galaxian_charlayout =
@@ -3393,6 +3541,7 @@ static MACHINE_DRIVER_START( zigzag )
 	MDRV_GFXDECODE(pacmanbl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
 
+
 	MDRV_VIDEO_START(galaxian_plain)
 
 	/* sound hardware */
@@ -3453,6 +3602,7 @@ static MACHINE_DRIVER_START( checkmaj )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.62 MHz? (used the same as Moon Cresta) */
 	MDRV_CPU_MEMORY(checkmaj_sound_readmem,checkmaj_sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,32)	/* NMIs are triggered by the main CPU */
+
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+2+64)	/* 32 for the characters, 2 for the bullets, 64 for the stars */
@@ -3539,6 +3689,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( froggrmc )
 
 	/* basic machine hardware */
+
 	MDRV_IMPORT_FROM(galaxian_base)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_MEMORY(mooncrst_readmem,froggrmc_writemem)
@@ -3589,6 +3740,33 @@ static MACHINE_DRIVER_START( ozon1 )
 
 	MDRV_VIDEO_START(galaxian_plain)
 	MDRV_SOUND_ADD(AY8910, jumpbug_ay8910_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( drivfrcg )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650, 18432000/6)
+	MDRV_CPU_MEMORY(drivfrcg_readmem,drivfrcg_writemem)
+	MDRV_CPU_PORTS(drivfrcg_readport,drivfrcg_writeport)
+	MDRV_CPU_VBLANK_INT(hunchbks_vh_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(8*4)
+	MDRV_GFXDECODE(gmgalax_gfxdecodeinfo)
+
+//	MDRV_PALETTE_INIT(galaxian)
+
+	MDRV_VIDEO_START(drivfrcg)
+	MDRV_VIDEO_UPDATE(galaxian)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -3780,6 +3958,23 @@ ROM_START( zerotime )
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ztc-2.016",    0x0000, 0x0800, CRC(1b13ca05) SHA1(6999068771dacc6bf6c17eb858af593a929d09af) )
 	ROM_LOAD( "ztc-1.016",    0x0800, 0x0800, CRC(5cd7df03) SHA1(77873408c89546a17b1da3f64b7e96e314fadb17) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC(c3ac9467) SHA1(f382ad5a34d282056c78a5ec00c30ec43772bae2) )
+ROM_END
+
+ROM_START( tst_galx )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "test.u",    0x0000, 0x0800, CRC(0614cd7f) SHA1(12440678be8a27a6c3032b6e43c45e27905ffa83) )   /*  The Test ROM */
+	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, CRC(9c999a40) SHA1(02fdcd95d8511e64c0d2b007b874112d53e41045) )
+	ROM_LOAD( "galmidw.w",    0x1000, 0x0800, CRC(b5894925) SHA1(0046b9ed697a34d088de1aead8bd7cbe526a2396) )
+	ROM_LOAD( "galmidw.y",    0x1800, 0x0800, CRC(6b3ca10b) SHA1(18d8714e5ef52f63ba8888ecc5a25b17b3bf17d1) )
+
+	ROM_LOAD( "7l",           0x2000, 0x0800, CRC(1b933207) SHA1(8b44b0f74420871454e27894d0f004859f9e59a9) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1h.bin",       0x0000, 0x0800, CRC(39fb43a4) SHA1(4755609bd974976f04855d51e08ec0d62ab4bc07) )
+	ROM_LOAD( "1k.bin",       0x0800, 0x0800, CRC(7e3f56a2) SHA1(a9795d8b7388f404f3b0e2c6ce15d713a4c5bafa) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC(c3ac9467) SHA1(f382ad5a34d282056c78a5ec00c30ec43772bae2) )
@@ -4261,6 +4456,8 @@ ROM_START( orbitron )
 	ROM_LOAD( "orbitron.3",   0x0600, 0x0200, CRC(419f9c9b) SHA1(788a3920f4270b886b3a578f8c2df33e6314a1c3) )
 	ROM_CONTINUE(			  0x0400, 0x0200)
 	ROM_CONTINUE(			  0x0200, 0x0200)
+
+
 	ROM_CONTINUE(			  0x0000, 0x0200)
 	ROM_LOAD( "orbitron.4",   0x0e00, 0x0200, CRC(44ad56ac) SHA1(3a8339cdee50912a16ac0fb448e6659e32542c0c) )
 	ROM_CONTINUE(			  0x0c00, 0x0200)
@@ -4469,6 +4666,7 @@ ROM_START( mooncrsb )
 	ROM_LOAD( "f03.bin",      0x1000, 0x0800, CRC(29a2b0ab) SHA1(e9fc7161d0566e36307c45b7132e2262c0af4845) )
 	ROM_LOAD( "f04.bin",      0x1800, 0x0800, CRC(4c6a5a6d) SHA1(366516f63c9b5239e703e4dfb672659049ddbf44) )
 	ROM_LOAD( "e5",           0x2000, 0x0800, CRC(06d378a6) SHA1(99dbe9fc7f95f8fdce86eb5c32bd1ca1bea0ca3c) )
+
 	ROM_LOAD( "bepr199",      0x2800, 0x0800, CRC(6e84a927) SHA1(82e8e825d157c3c947a3a222bca059a735169c7d) )
 	ROM_LOAD( "e7",           0x3000, 0x0800, CRC(b45af1e8) SHA1(d7020774707234acdaef5c655f667d5ee9e54a13) )
 	ROM_LOAD( "bepr201",      0x3800, 0x0800, CRC(66da55d5) SHA1(39e2f6107e77ee97860147f64b9673cd9a2ae612) )
@@ -4618,6 +4816,7 @@ ROM_START( moonqsr )
 	ROM_LOAD( "mq8",          0x3800, 0x0800, CRC(4919eed5) SHA1(526aaedd25e0f7c525eb7c66519218ae09b0407e) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+
 	ROM_LOAD( "mqb",          0x0000, 0x0800, CRC(b55ec806) SHA1(fb52e53dfa3ae9dec162622d22de9cfdb0b5f9d6) )
 	ROM_LOAD( "mqd",          0x0800, 0x0800, CRC(9e7d0e13) SHA1(18951080d307ac13344f89745f671595e26d282c) )
 	ROM_LOAD( "mqa",          0x1000, 0x0800, CRC(66eee0db) SHA1(eeb08efd226e15e248999558240488ffd0e39688) )
@@ -4702,6 +4901,7 @@ ROM_START( mshuttlj )
 	ROM_LOAD( "mcs.4",        0x1000, 0x1000, CRC(acdc0f9e) SHA1(8cd6d6566fe3f4090ccb625c3c1e5850a371826f) )
 	ROM_LOAD( "mcs.3",        0x2000, 0x1000, CRC(c1e3f5d8) SHA1(d3af89d485b1ca21ac879dbe15490dcd1cd64f2a) )
 	ROM_LOAD( "mcs.2",        0x3000, 0x1000, CRC(14577703) SHA1(51537982dd06ba44e95e4c7d1f7fa41ff186421d) )
+
 	ROM_LOAD( "mcs.1",        0x4000, 0x1000, CRC(27d46772) SHA1(848a47ba30823a55933bb55792991f0535078f0c) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -4751,6 +4951,7 @@ ROM_START( kingbalj )
 	ROM_LOAD( "kbj2.ic5",     0x0800, 0x0800, CRC(56686a63) SHA1(8e624df57a63a556941fdbebcd886488799fad17) )
 	ROM_LOAD( "kbj3.ic6",     0x1000, 0x0800, CRC(fbc570a5) SHA1(d0dbaf86396bca65e067338a3b5b60b24990b8be) )
 	ROM_LOAD( "kbj2.ic7",     0x1800, 0x0800, CRC(56686a63) SHA1(8e624df57a63a556941fdbebcd886488799fad17) )
+
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, CRC(9cd550e7) SHA1(d2989e6b7a4d7b37a711ef1cfb536fe13e0c5482) )
@@ -4867,6 +5068,7 @@ ROM_START( bagmanmc )
 	ROM_CONTINUE(             0x2800, 0x0800 )
 	ROM_LOAD( "g1-l.bin",     0x0800, 0x0800, CRC(2ae6b5ab) SHA1(59bdebf75d28a247293440ec2ad83eaf30e3de00) )
 	ROM_LOAD( "g2-l.bin",     0x1800, 0x0800, CRC(98b37397) SHA1(29914435a10cebbbce04382c45e13a64a0cd18cb) )
+
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "bagmanmc.clr", 0x0000, 0x0020, NO_DUMP )	// missing
@@ -4990,6 +5192,39 @@ ROM_START( vpool )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, CRC(aa1f7f5e) SHA1(311dd17aa11490a1173c76223e4ccccf8ea29850) )
 ROM_END
 
+ROM_START( drivfrcg )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 ) /* 32k for code */
+	ROM_LOAD( "dfgp1.bin",    0x2800, 0x0400, CRC(52d5e77d) SHA1(4e68ac1274bbc8cb5b6a7dfb511232bd83482453) )
+	ROM_CONTINUE(			  0x2c00, 0x0400 )
+	ROM_CONTINUE(			  0x0000, 0x0400 )
+	ROM_CONTINUE(			  0x0400, 0x0400 )
+	ROM_LOAD( "dfgp2.bin",    0x0800, 0x0400, CRC(9cf4dbce) SHA1(028c168ad0987f21d76c6ac4f756f4fa86c2f8e3) )
+	ROM_CONTINUE(			  0x0c00, 0x0400 )
+	ROM_CONTINUE(			  0x2000, 0x0400 )
+	ROM_CONTINUE(			  0x2400, 0x0400 )
+	ROM_LOAD( "dfgp3.bin",    0x6800, 0x0400, CRC(79763f62) SHA1(2bb8921fcd2a8b9543e398e248fd47d7e03dc24d) )
+	ROM_CONTINUE(			  0x6c00, 0x0400 )
+	ROM_CONTINUE(			  0x4000, 0x0400 )
+	ROM_CONTINUE(			  0x4400, 0x0400 )
+	ROM_LOAD( "dfgp4.bin",    0x4800, 0x0400, CRC(dd95338b) SHA1(9054986f7b8fee36f458362836ae969e7d1e2456) )
+	ROM_CONTINUE(			  0x4c00, 0x0400 )
+	ROM_CONTINUE(			  0x6000, 0x0400 )
+	ROM_CONTINUE(			  0x6400, 0x0400 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "dfgj1.bin",    0x1000, 0x0800, CRC(86b60ca8) SHA1(be266e2d69e12a196c2195d48b495c0fb9ef8a43) )
+	ROM_CONTINUE(			  0x1800, 0x0800 )
+	ROM_LOAD( "dfgj2.bin",    0x0000, 0x0800, CRC(8e19f1e7) SHA1(addd5add2117ef29ce38c0c80584e5d481b9d820) )
+	ROM_CONTINUE(			  0x0800, 0x0800 )
+	ROM_LOAD( "dfgl1.bin",    0x3000, 0x0800, CRC(b7ed195c) SHA1(81b2b444153dacb962a33a5d86a280ed5088637a) )
+	ROM_CONTINUE(			  0x3800, 0x0800 )
+	ROM_LOAD( "dfgl2.bin",    0x2000, 0x0800, CRC(ea5e9959) SHA1(6b638d22adf19224cf741458c8ad34d7f7e17e58) )
+	ROM_CONTINUE(			  0x2800, 0x0800 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "dfg.clr",	  0x0000, 0x0020, NO_DUMP )
+ROM_END
+
 
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
@@ -5003,6 +5238,7 @@ GAME( 1979, galap4,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "G
 GAME( 1979, galturbo, galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Turbo" )
 GAME( 1979, swarm,    galaxian, galaxian, swarm,    0,        ROT90,  "hack", "Swarm" )
 GAME( 1979, zerotime, galaxian, galaxian, zerotime, 0,        ROT90,  "Petaco S.A.", "Zero Time" )
+GAME( 19??, tst_galx, galaxian, galaxian, galaxian, 0,        ROT90,  "Test ROM", "Galaxian Test ROM" )
 GAME( 1981, gmgalax,  0,        gmgalax,  gmgalax,  gmgalax,  ROT90,  "bootleg", "Ghostmuncher Galaxian (bootleg)" )
 GAME( 19??, pisces,   0,        pisces,   pisces,   pisces,	  ROT90,  "Subelectro", "Pisces" )
 GAME( 19??, piscesb,  pisces,   pisces,   piscesb,  pisces,   ROT90,  "bootleg", "Pisces (bootleg)" )
@@ -5060,3 +5296,4 @@ GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,		  ROT180, "Taito", "Rock
 GAME( 1983, ozon1,    0,		ozon1,    ozon1,	0,		  ROT90,  "Proma", "Ozon I" )
 GAME( 1983, ladybugg, ladybug,  batman2,  ladybugg, ladybugg, ROT270, "bootleg", "Ladybug (bootleg on Galaxian hardware)" )
 GAME( 1980, vpool,    hustler,  mooncrst, vpool,    0,        ROT90,  "bootleg", "Video Pool (bootleg on Moon Cresta hardware)" )
+GAMEX(1984, drivfrcg, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "Shinkai Inc. (Magic Eletronics USA licence)", "Driving Force (Galaxian conversion)", GAME_WRONG_COLORS )

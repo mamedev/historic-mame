@@ -336,9 +336,9 @@ VIDEO_UPDATE( fuuki16 )
 	tilemap_set_scrolly(tilemap_1, 0, layer1_scrolly);
 
 	tilemap_set_scrollx(tilemap_2, 0, layer2_scrollx + 0x10);
-	tilemap_set_scrolly(tilemap_2, 0, layer2_scrolly + 0x02);
+	tilemap_set_scrolly(tilemap_2, 0, layer2_scrolly /*+ 0x02*/);
 	tilemap_set_scrollx(tilemap_3, 0, layer2_scrollx + 0x10);
-	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly + 0x02);
+	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly /*+ 0x02*/);
 
 	/* The backmost tilemap decides the background color(s) but sprites can
 	   go below the opaque pixels of that tilemap. We thus need to mark the

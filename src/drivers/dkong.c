@@ -284,6 +284,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
 	{ 0x8000, 0x9fff, MRA_ROM },	/* DK3 and bootleg DKjr only */
 	{ 0xb000, 0xbfff, MRA_ROM },	/* Pest Place only */
+	{ 0xd000, 0xdfff, MRA_ROM },	/* DK3 bootleg only */
 MEMORY_END
 
 static MEMORY_READ_START( dkong3_readmem )
@@ -571,10 +572,12 @@ static MEMORY_WRITE_START( dkongjr_writemem )
 	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },	/* controls pitch of the walk/climb? */
 	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
 	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */
-	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
+	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
+	{ 0xd000, 0xdfff, MWA_ROM },	/* DK3 bootleg only */
 MEMORY_END
 
 static MEMORY_WRITE_START( pestplce_writemem )
@@ -597,8 +600,8 @@ static MEMORY_WRITE_START( pestplce_writemem )
 	{ 0x7d06, 0x7d06, MWA_RAM },
 	{ 0x7d80, 0x7d80, MWA_RAM },
 	{ 0x7d82, 0x7d82, MWA_RAM },
-	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d85, 0x7d85, MWA_RAM },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0xb000, 0xbfff, MWA_ROM },
 MEMORY_END
@@ -797,6 +800,71 @@ INPUT_PORTS_START( dkong3 )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( dkong3b )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( hunchbkd )
 	PORT_START      /* IN0 */
@@ -2144,6 +2212,40 @@ ROM_START( dkong3j )
 	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) )	/* character color codes on a per-column basis */
 ROM_END
 
+ROM_START( dkong3b )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "5b.bin",       0x0000, 0x1000, CRC(549979bc) SHA1(58532f39285db0b081089e54a23041d83bec49aa) )
+	ROM_CONTINUE(             0x3000, 0x1000 )
+	ROM_LOAD( "5c-2.bin",     0x2000, 0x0800, CRC(b9dcbae6) SHA1(a7a7a3d79cb1eed93e54dff508c61cbc24797007) )
+	ROM_CONTINUE(             0x4800, 0x0800 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_CONTINUE(             0x5800, 0x0800 )
+	ROM_LOAD( "5e-2.bin",     0x4000, 0x0800, CRC(5a61868f) SHA1(25c57969c1fbf457d223c4186ed291a1e0f75e14) )
+	ROM_CONTINUE(             0x2800, 0x0800 )
+	ROM_CONTINUE(             0x5000, 0x0800 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
+	ROM_LOAD( "5c-1.bin",     0x9000, 0x1000, CRC(77a012d6) SHA1(334ae2c213acd50eda71b4102d0803bc596973ec) )
+	ROM_LOAD( "5e-1.bin",     0xd000, 0x1000, CRC(745ed767) SHA1(32f4678f3eea9dc88f4c99509719a42292d6833a) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "3h.bin",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "3n.bin",       0x0000, 0x1000, CRC(fed67d35) SHA1(472a378abff96a76aac0e2da06c8d7c3ce172b60) )
+	ROM_LOAD( "3p.bin",       0x1000, 0x1000, CRC(3d1b87ce) SHA1(e0cbeebf8dc291302ab1f039e51e9b409cced340) )
+
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "7c.bin",       0x0000, 0x1000, CRC(8ffa1737) SHA1(fa5896124227d412fbdf83f129ddffa32cf2053b) )
+	ROM_LOAD( "7d.bin",       0x1000, 0x1000, CRC(9ac84686) SHA1(a089376b9c23094490703152ad98ed27f519402d) )
+	ROM_LOAD( "7e.bin",       0x2000, 0x1000, CRC(0c0af3fb) SHA1(03e0c3f51bc3c20f95cb02f76f2d80188d5dbe36) )
+	ROM_LOAD( "7f.bin",       0x3000, 0x1000, CRC(55c58662) SHA1(7f3d5a1b386cc37d466e42392ffefc928666a8dc) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "dk3b-c.1d",    0x0000, 0x0200, BAD_DUMP CRC(df54befc) SHA1(7912dbf0a0c8ef68f4ae0f95e55ab164da80e4a1) ) /* palette red & green component */
+	ROM_LOAD( "dk3b-c.1c",    0x0100, 0x0200, BAD_DUMP CRC(66a77f40) SHA1(c408d65990f0edd78c4590c447426f383fcd2d88) ) /* palette blue component */
+	ROM_LOAD( "dk3b-v.2n",    0x0200, 0x0100, BAD_DUMP CRC(50e33434) SHA1(b63da9bed9dc4c7da78e4c26d4ba14b65f2b7e72) )	/* character color codes on a per-column basis */
+ROM_END
+
 ROM_START( hunchbkd )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 32k for code */
 	ROM_LOAD( "hb.5e",        0x0000, 0x1000, CRC(4c3ac070) SHA1(636843b33f1b7e994b112fa29e65038098528b8c) )
@@ -2388,8 +2490,6 @@ ROM_START( 8ballat2 )
 	ROM_LOAD( "8b.2n",        0x0200, 0x0100, CRC(30586988) SHA1(a9c246fd01cb3ff371ad33b55d5b2fe4898c4d1b) )
 ROM_END
 
-
-
 ROM_START( drakton )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "2764.u2",      0x0000, 0x2000, NO_DUMP )
@@ -2529,6 +2629,7 @@ GAME( 1982, dkngjnrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo o
 
 GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
 GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
+GAMEX(1984, dkong3b,  dkong3,	dkongjr,  dkong3b,  0,        ROT90, "bootleg", "Donkey Kong 3 (bootleg on Donkey Kong Jr. hardware)", GAME_WRONG_COLORS )
 
 GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)")
 

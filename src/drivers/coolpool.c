@@ -79,7 +79,7 @@ WRITE16_HANDLER( coolpool_34010_io_register_w )
 	if (offset == REG_DPYADR || offset == REG_DPYTAP)
 		force_partial_update(cpu_getscanline());
 	tms34010_io_register_w(offset, data, mem_mask);
-	
+
 	/* track writes to the DPYADR register which takes effect on the following scanline */
 	if (offset == REG_DPYADR)
 	{
@@ -130,7 +130,7 @@ INTERRUPT_GEN( coolpool_vblank_start )
 	if (dpyadrscan < Machine->visible_area.max_y)
 		dpyadr = ~tms34010_io_register_r(REG_DPYSTRT, 0) & 0xfffc;
 	dpyadrscan = 0;
-	
+
 	cpuintrf_pop_context();
 }
 
@@ -162,7 +162,7 @@ VIDEO_UPDATE( coolpool )
 	else if (keyboard_pressed(KEYCODE_K)) temp += 2;
 	offset = temp;
 }*/
-	
+
 	/* adjust for when DPYADR was written */
 	if (cliprect->min_y > dpyadrscan)
 		offset += (cliprect->min_y - dpyadrscan) * dudate;
@@ -945,8 +945,8 @@ DRIVER_INIT( 9ballsh3 )
  *
  *************************************/
 
-GAMEX( 1989, amerdart, 0,        amerdart, amerdart, amerdart, ROT0, "Ameri",   "AmeriDarts", GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_NO_SOUND )
+GAMEX( 1989, amerdart, 0,        amerdart, amerdart, amerdart, ROT0, "Ameri",   "AmeriDarts", GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1992, coolpool, 0,        coolpool, 9ballsht, coolpool, ROT0, "Catalina", "Cool Pool", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsht, coolpool,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsh2, 0, 9ballsht, 9ballsht, 9ballsh2, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1993, 9ballsh3, 0, 9ballsht, 9ballsht, 9ballsh3, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1993, 9ballsht, coolpool, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1993, 9ballsh2, coolpool, 9ballsht, 9ballsht, 9ballsh2, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1993, 9ballsh3, coolpool, 9ballsht, 9ballsht, 9ballsh3, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)", GAME_NOT_WORKING | GAME_NO_SOUND )

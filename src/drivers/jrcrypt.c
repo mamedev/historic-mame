@@ -150,11 +150,11 @@ unsigned jrpacman_decode_roms(int address)
 	return RAM[address]; // this should never happen!
 }
 #else
-inline WordBit(word theWord, int theBit)
+INLINE WordBit(word theWord, int theBit)
 {
 	return (theWord >> theBit)&1;
 }
-inline ByteBit(byte theByte, int theBit)
+INLINE ByteBit(byte theByte, int theBit)
 {
 	return (theByte >> theBit)&1;
 }

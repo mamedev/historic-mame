@@ -30,9 +30,43 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/8255ppi.h"
 #include "epos.h"
 
 
+static int counter = 0;
+
+MACHINE_INIT( dealer );
+
+WRITE_HANDLER( dealer_decrypt_rom )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+	if (offset & 0x04)
+	{
+		counter = counter + 1;
+		if (counter < 0)
+			counter = 0x0F;
+	}
+	else
+	{
+		counter = (counter - 1) & 0x0F;
+	}
+
+//	logerror("PC %08x: ctr=%04x\n",activecpu_get_pc(),counter);
+
+	switch(counter)
+	{
+
+		case 0x00:	cpu_setbank(1, &RAM[0x10000]);		break;
+		case 0x01:	cpu_setbank(1, &RAM[0x20000]);		break;
+		case 0x02:	cpu_setbank(1, &RAM[0x30000]);		break;
+		case 0x03:	cpu_setbank(1, &RAM[0x40000]);		break;
+		default:
+			logerror("Invalid counter = %02X\n",counter);
+			break;
+	}
+}
 
 
 /*************************************
@@ -54,6 +88,16 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+static MEMORY_READ_START( dealer_readmem )
+	{ 0x0000, 0x6fff, MRA_BANK1 },
+	{ 0x7000, 0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( dealer_writemem )
+	{ 0x0000, 0x6fff, MWA_ROM },
+	{ 0x7000, 0x7fff, MWA_RAM },
+	{ 0x8000, 0xffff, epos_videoram_w, &videoram, &videoram_size },
+MEMORY_END
 
 /*************************************
  *
@@ -77,6 +121,27 @@ static PORT_WRITE_START( writeport )
 PORT_END
 
 
+static PORT_READ_START( dealer_readport )
+	{ 0x10, 0x13, ppi8255_0_r },
+	{ 0x38, 0x38, input_port_0_r },
+PORT_END
+
+static PORT_WRITE_START( dealer_writeport )
+	{ 0x10, 0x13, ppi8255_0_w },
+	{ 0x20, 0x24, dealer_decrypt_rom },
+//	{ 0x40, 0x40, watchdog_reset_w },
+PORT_END
+
+static ppi8255_interface ppi8255_intf =
+{
+	1, 					/* 1 chip */
+	{ input_port_2_r },	/* Port A read */
+	{ NULL },			/* Port B read */
+	{ NULL },			/* Port C read */
+	{ NULL },			/* Port A write */
+	{ NULL },			/* Port B write */
+	{ NULL },			/* Port C write */
+};
 
 /*************************************
  *
@@ -236,6 +301,54 @@ INPUT_PORTS_START( igmo )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( dealer )
+	PORT_START      /* IN0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) //cancel
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) //draw
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) //stand
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) //play
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) //coin in
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON8 )
+INPUT_PORTS_END
+
 
 /*************************************
  *
@@ -287,6 +400,31 @@ static MACHINE_DRIVER_START( epos )
 	MDRV_SOUND_ADD(AY8910, ay8912_interface)
 MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( dealer )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 11000000/4)	/* 2.75 MHz (see notes) */
+	MDRV_CPU_MEMORY(dealer_readmem,dealer_writemem)
+	MDRV_CPU_PORTS(dealer_readport,dealer_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(272, 241)
+	MDRV_VISIBLE_AREA(0, 271, 0, 235)
+	MDRV_PALETTE_LENGTH(32)
+
+	MDRV_PALETTE_INIT(epos)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(epos)
+	MDRV_MACHINE_INIT(dealer)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+MACHINE_DRIVER_END
 
 
 /*************************************
@@ -406,16 +544,192 @@ ROM_START( igmo )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, NO_DUMP )	/* missing */
 ROM_END
 
+
+ROM_START( dealer )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )
+	ROM_LOAD( "u1.bin",			0x0000, 0x2000, CRC(e06f3563) SHA1(0d58cd1f2e1ca89adb9c64d7dd520bb1f2d50f1a) )
+	ROM_LOAD( "u2.bin",			0x2000, 0x2000, CRC(726bbbd6) SHA1(3538f3d655899c2a0f984c43fb7545ea4be1b231) )
+	ROM_LOAD( "u3.bin",			0x4000, 0x2000, CRC(ab721455) SHA1(a477da0590e0431172baae972e765473e19dcbff) )
+	ROM_LOAD( "u4.bin",			0x6000, 0x2000, BAD_DUMP CRC(ddb903e4) SHA1(4c06a2048b1c6989c363b110a17c33180025b9c8) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, NO_DUMP )	/* missing */
+ROM_END
+
+MACHINE_INIT( dealer )
+{
+	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000);
+
+	ppi8255_init(&ppi8255_intf);
+}
+
+DRIVER_INIT( dealer )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+	int A;
+	int oldbyte,newbyte;
+
+	/* Key 1 */
+	for (A = 0;A < 0x7000;A++)
+	{
+		oldbyte = ROM[A];
+
+		newbyte = 0;
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x10;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x04) * 0x20;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x08) / 0x08;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x02;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x20) / 0x04;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x20;
+
+		ROM[A + 0x10000] = newbyte;
+	}
+
+	/* Key 2 */
+	for (A = 0;A < 0x7000;A++)
+	{
+		oldbyte = ROM[A+0x10000];
+
+		newbyte = 0;
+		newbyte += ((oldbyte & 0x01 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
+
+		ROM[A + 0x20000 ] = newbyte;
+	}
+
+	/* Key 3 */
+	for (A = 0;A < 0x7000;A++)
+	{
+		oldbyte = ROM[A+0x10000];
+
+		newbyte = 0;
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
+
+		ROM[A + 0x30000 ] = newbyte;
+	}
+
+	/* Key 4 */
+	for (A = 0;A < 0x7000;A++)
+	{
+
+/* there is not enough data to determine the last key.
+   the code in question is this:
+
+     55  =   32 		ld (793e),a
+2f59 5c   	  3e
+2f5a 79      78
+
+2f5b 55   32     		ld (79xx),a
+2f5c f7   53 or  D2 or  F3
+2f5d 79   78
+
+2f5e 55    32      		ld (79xx),a
+2f5f cd	1B 56 77 9A BB F6
+     79    78
+It writes data to be read later.
+I don't know the lsb of the writes.  I do know:
+if 2f5c = 53 then 2f5f = 9A or BB or F6
+          d2             1B 77 BB
+          f3             1B 56 9A
+
+Someone will have to check the code to see what it's looking for.
+As usual I've had to make some assumptions so I can't guarantee 100% accuracy
+Dave
+*/
+
+		oldbyte = ROM[A+0x10000];
+
+		newbyte = 0;
+#if 1
+//53:9a
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x08;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x04;
+#endif
+
+#if 0
+//53:bb
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x02) * 0x10;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x10) * 0x08;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x00) / 0x80;
+#endif
+
+#if 0
+//f3:9a
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x00) * 0x01;
+#endif
+
+#if 0
+//f3:1b
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x40;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x00) / 0x80;
+#endif
+
+#if 0
+//d2:1b
+		newbyte += ((oldbyte & 0x01 ) ^ 0x01) * 0x04;
+		newbyte += ((oldbyte & 0x02 ) ^ 0x00) * 0x40;
+		newbyte += ((oldbyte & 0x04 ) ^ 0x00) / 0x02;
+		newbyte += ((oldbyte & 0x08 ) ^ 0x00) * 0x01;
+		newbyte += ((oldbyte & 0x10 ) ^ 0x10) / 0x10;
+		newbyte += ((oldbyte & 0x20 ) ^ 0x00) * 0x02;
+		newbyte += ((oldbyte & 0x40 ) ^ 0x00) / 0x04;
+		newbyte += ((oldbyte & 0x80 ) ^ 0x80) / 0x04;
+#endif
+
+		ROM[A + 0x40000 ] = newbyte;
+	}
+}
+
 /*************************************
  *
  *	Game drivers
  *
  *************************************/
 
-GAME ( 1982, megadon,  0,        epos, megadon,  0, ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
-GAMEX( 1982, catapult, 0,        epos, igmo,     0, ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
-GAME ( 1983, suprglob, 0,        epos, suprglob, 0, ROT270, "Epos Corporation", "Super Glob" )
-GAME ( 1983, theglob,  suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob" )
-GAME ( 1983, theglob2, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (earlier)" )
-GAME ( 1983, theglob3, suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob (set 3)" )
-GAMEX( 1984, igmo,     0,        epos, igmo,     0, ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
+GAME ( 1982, megadon,  0,        epos,  megadon,  0,	  ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
+GAMEX( 1982, catapult, 0,        epos,  igmo,     0,	  ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
+GAME ( 1983, suprglob, 0,        epos,  suprglob, 0,	  ROT270, "Epos Corporation", "Super Glob" )
+GAME ( 1983, theglob,  suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob" )
+GAME ( 1983, theglob2, suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob (earlier)" )
+GAME ( 1983, theglob3, suprglob, epos,  suprglob, 0,	  ROT270, "Epos Corporation", "The Glob (set 3)" )
+GAMEX( 1984, igmo,     0,        epos,  igmo,     0,	  ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
+GAMEX( 19??, dealer,   0,        dealer, dealer,  dealer, ROT270, "Epos Corporation", "The Dealer", GAME_NOT_WORKING)

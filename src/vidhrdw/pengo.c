@@ -19,6 +19,8 @@
 static int gfx_bank;
 static int flipscreen;
 static int xoffsethack;
+static struct tilemap *tilemap;
+data8_t *sprite_bank, *tiles_bankram;
 
 static struct rectangle spritevisiblearea =
 {
@@ -252,56 +254,59 @@ VIDEO_UPDATE( pengo )
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
-    /* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
+	if( spriteram_size )
 	{
-		int sx,sy;
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
+		{
+			int sx,sy;
 
 
-		sx = 272 - spriteram_2[offs + 1];
-		sy = spriteram_2[offs] - 31;
+			sx = 272 - spriteram_2[offs + 1];
+			sy = spriteram_2[offs] - 31;
 
-		drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
-				spriteram[offs] >> 2,
-				spriteram[offs + 1] & 0x1f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx,sy,
-				&spriteclip,TRANSPARENCY_COLOR,0);
+			drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+					spriteram[offs] >> 2,
+					spriteram[offs + 1] & 0x1f,
+					spriteram[offs] & 1,spriteram[offs] & 2,
+					sx,sy,
+					&spriteclip,TRANSPARENCY_COLOR,0);
 
-        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
-				spriteram[offs] >> 2,
-				spriteram[offs + 1] & 0x1f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx - 256,sy,
-				&spriteclip,TRANSPARENCY_COLOR,0);
+			/* also plot the sprite with wraparound (tunnel in Crush Roller) */
+			drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+					spriteram[offs] >> 2,
+					spriteram[offs + 1] & 0x1f,
+					spriteram[offs] & 1,spriteram[offs] & 2,
+					sx - 256,sy,
+					&spriteclip,TRANSPARENCY_COLOR,0);
+		}
+		/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
+		/* one pixel to the left to get a more correct placement */
+		for (offs = 2*2;offs >= 0;offs -= 2)
+		{
+			int sx,sy;
+
+
+			sx = 272 - spriteram_2[offs + 1];
+			sy = spriteram_2[offs] - 31;
+
+			drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+					spriteram[offs] >> 2,
+					spriteram[offs + 1] & 0x1f,
+					spriteram[offs] & 1,spriteram[offs] & 2,
+					sx,sy + xoffsethack,
+					&spriteclip,TRANSPARENCY_COLOR,0);
+
+			/* also plot the sprite with wraparound (tunnel in Crush Roller) */
+			drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+					spriteram[offs] >> 2,
+					spriteram[offs + 1] & 0x1f,
+					spriteram[offs] & 2,spriteram[offs] & 1,
+					sx - 256,sy + xoffsethack,
+					&spriteclip,TRANSPARENCY_COLOR,0);
+		}
 	}
-	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
-	/* one pixel to the left to get a more correct placement */
-	for (offs = 2*2;offs >= 0;offs -= 2)
-	{
-		int sx,sy;
-
-
-		sx = 272 - spriteram_2[offs + 1];
-		sy = spriteram_2[offs] - 31;
-
-        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
-				spriteram[offs] >> 2,
-				spriteram[offs + 1] & 0x1f,
-				spriteram[offs] & 1,spriteram[offs] & 2,
-				sx,sy + xoffsethack,
-				&spriteclip,TRANSPARENCY_COLOR,0);
-
-        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
-        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
-				spriteram[offs] >> 2,
-				spriteram[offs + 1] & 0x1f,
-				spriteram[offs] & 2,spriteram[offs] & 1,
-				sx - 256,sy + xoffsethack,
-				&spriteclip,TRANSPARENCY_COLOR,0);
-    }
 }
 
 
@@ -388,5 +393,110 @@ VIDEO_UPDATE( vanvan )
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx - 256,sy,
 				&spriteclip,TRANSPARENCY_PEN,0);
+	}
+}
+
+static void get_tile_info(int tile_index)
+{
+	int colbank, code, attr;
+
+	colbank = tiles_bankram[tile_index & 0x1f] & 0x3;
+
+
+	code = videoram[tile_index] + (colbank << 8);
+	attr = colorram[tile_index & 0x1f];
+
+	/* remove when we have proms dumps for it */
+	if (!strcmp(Machine->gamedrv->name, "8bpm"))
+	{
+		attr = 1;
+	}
+
+	SET_TILE_INFO(0,code,attr & 0x1f,0)
+}
+
+WRITE_HANDLER( s2650games_videoram_w )
+{
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(tilemap,offset);
+}
+
+WRITE_HANDLER( s2650games_colorram_w )
+{
+	int i;
+	colorram[offset & 0x1f] = data;
+	for (i = offset; i < 0x0400; i += 32)
+		tilemap_mark_tile_dirty(tilemap, i);
+}
+
+WRITE_HANDLER( s2650games_scroll_w )
+{
+	tilemap_set_scrolly(tilemap, offset, data);
+}
+
+WRITE_HANDLER( s2650games_tilesbank_w )
+{
+	tiles_bankram[offset] = data;
+	tilemap_mark_all_tiles_dirty(tilemap);
+}
+
+WRITE_HANDLER( s2650games_flipscreen_w )
+{
+	flip_screen_set(data);
+}
+
+VIDEO_START( s2650games )
+{
+	xoffsethack = 1;
+
+	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+
+	if( !tilemap )
+		return 1;
+
+	colorram = auto_malloc(0x20);
+
+	tilemap_set_scroll_cols(tilemap, 32);
+
+	return 0;
+}
+
+VIDEO_UPDATE( s2650games )
+{
+	int offs;
+
+	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+
+	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = 255 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 15;
+
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] >> 2) | ((sprite_bank[offs] & 3) << 6),
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy,
+				cliprect,TRANSPARENCY_COLOR,0);
+	}
+	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
+	/* one pixel to the left to get a more correct placement */
+	for (offs = 2*2;offs >= 0;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = 255 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 15;
+
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] >> 2) | ((sprite_bank[offs] & 3)<<6),
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy + xoffsethack,
+				cliprect,TRANSPARENCY_COLOR,0);
 	}
 }

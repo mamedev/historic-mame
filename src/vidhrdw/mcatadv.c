@@ -141,6 +141,7 @@ static void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct recta
 					for (xcnt = xstart; xcnt != xend; xcnt += xinc) {
 						drawxpos = x+xcnt-global_x;
 
+						if (offset >= 0x500000*2) offset = 0;
 						pix = sprdata[offset/2];
 
 						if (offset & 1)  pix = pix >> 4;

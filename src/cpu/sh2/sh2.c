@@ -27,6 +27,13 @@
 
 /*****************************************************************************
 	Changes
+    20030915 O. Galibert
+    - fix DMA1 irq vector
+    - ignore writes to DRCRx
+    - fix cpu number issues
+    - fix slave/master recognition
+    - fix wrong-cpu-in-context problem with the timers
+
     20021020 O. Galibert
     - DMA implementation, lightly tested
     - change_pc() crap fixed
@@ -128,9 +135,10 @@ typedef struct
 	INT8  nmi_line_state;
 
 	UINT16 	frc;
-	UINT16 	ocra, ocrb;
+	UINT16 	ocra, ocrb, icr;
 	UINT32 	frc_base;
 
+	int		frt_input;
 	int 	internal_irq_level;
 	int 	internal_irq_vector;
 
@@ -138,7 +146,7 @@ typedef struct
 	void    *dma_timer[2];
 	int     dma_timer_active[2];
 
-	int cpunb;
+	int     is_slave, cpu_number;
 
 	UINT32 total_cycles;
 } SH2;
@@ -149,12 +157,9 @@ static SH2 sh2;
 static int sh2_active = 0;
 static int sh2_cycles;
 
-INLINE UINT32 sh2_gettotalcycles(void)
+INLINE UINT32 sh2_gettotalcycles(SH2 *cpu)
 {
-	if(sh2_active)
-		return sh2.total_cycles + sh2_cycles - sh2_icount;
-	else
-		return sh2.total_cycles;
+	return cpunum_gettotalcycles(cpu->cpu_number);
 }
 
 static const int div_tab[4] = { 3, 5, 7, 0 };
@@ -297,27 +302,27 @@ INLINE void sh2_exception(const char *message, int irqline)
 		if (sh2.internal_irq_level == irqline)
 		{
 			vector = sh2.internal_irq_vector;
-			LOG(("SH-2 #%d exception #%d (internal vector: $%x) after [%s]\n", sh2.cpunb, irqline, vector, message));
+			LOG(("SH-2 #%d exception #%d (internal vector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
 		}
 		else
 		{
 			if(sh2.m[0x38] & 0x00010000)
 			{
 				vector = sh2.irq_callback(irqline);
-				LOG(("SH-2 #%d exception #%d (external vector: $%x) after [%s]\n", sh2.cpunb, irqline, vector, message));
+				LOG(("SH-2 #%d exception #%d (external vector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
 			}
 			else
 			{
 				sh2.irq_callback(irqline);
 				vector = 64 + irqline/2;
-				LOG(("SH-2 #%d exception #%d (autovector: $%x) after [%s]\n", sh2.cpunb, irqline, vector, message));
+				LOG(("SH-2 #%d exception #%d (autovector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
 			}
 		}
 	}
 	else
 	{
 		vector = 11;
-		LOG(("SH-2 #%d nmi exception (autovector: $%x) after [%s]\n", sh2.cpunb, vector, message));
+		LOG(("SH-2 #%d nmi exception (autovector: $%x) after [%s]\n", cpu_getactivecpu(), vector, message));
 	}
 
 	sh2.r[15] -= 4;
@@ -2297,6 +2302,8 @@ void sh2_reset(void *param)
 	void *tsave, *tsaved0, *tsaved1;
 	UINT32 *m;
 
+	struct sh2_config *conf = param;
+
 	m = sh2.m;
 	tsave = sh2.timer;
 	tsaved0 = sh2.dma_timer[0];
@@ -2307,7 +2314,14 @@ void sh2_reset(void *param)
 	sh2.dma_timer[1] = tsaved1;
 	sh2.m = m;
 	memset(sh2.m, 0, 0x200);
-	sh2.cpunb = sh2.cpunb;
+	
+	if(conf)
+		sh2.is_slave = conf->is_slave;
+	else
+		sh2.is_slave = 0;
+
+	sh2.cpu_number = cpu_getactivecpu();
+
 	sh2.pc = RL(0);
 	sh2.r[15] = RL(4);
 	sh2.sr = I;
@@ -2404,123 +2418,144 @@ void sh2_set_context(void *src)
 		memcpy(&sh2, src, sizeof(SH2));
 }
 
-static void sh2_timer_resync(void)
+static void sh2_timer_resync(SH2 *cpu)
 {
-	int divider = div_tab[(sh2.m[5] >> 8) & 3];
-	UINT32 cur_time = sh2_gettotalcycles();
+	int divider = div_tab[(cpu->m[5] >> 8) & 3];
+	UINT32 cur_time = sh2_gettotalcycles(cpu);
+
+	logerror("SH2.%d: cycles %d\n", cpu->cpu_number, cur_time);
+	// The timer system is sometimes off by one, hence the +1
 	if(divider)
-		sh2.frc += (cur_time - sh2.frc_base) >> divider;
-	sh2.frc_base = cur_time;
+		cpu->frc += (cur_time - cpu->frc_base) >> divider;
+	cpu->frc_base = cur_time;
 }
 
-static void sh2_timer_activate(void)
+static void sh2_timer_activate(SH2 *cpu)
 {
 	int max_delta = 0xfffff;
 	UINT16 frc;
 
-	timer_adjust(sh2.timer, TIME_NEVER, 0, 0);
+	timer_adjust(cpu->timer, TIME_NEVER, 0, 0);
 
-	frc = sh2.frc;
-	if(!(sh2.m[4] & OCFA)) {
-		UINT16 delta = sh2.ocra - frc;
+	frc = cpu->frc;
+	if(!(cpu->m[4] & OCFA)) {
+		UINT16 delta = cpu->ocra - frc;
 		if(delta < max_delta)
 			max_delta = delta;
 	}
 
-	if(!(sh2.m[4] & OCFB) && (sh2.ocra <= sh2.ocrb || !(sh2.m[4] & 0x010000))) {
-		UINT16 delta = sh2.ocrb - frc;
+	if(!(cpu->m[4] & OCFB) && (cpu->ocra <= cpu->ocrb || !(cpu->m[4] & 0x010000))) {
+		UINT16 delta = cpu->ocrb - frc;
 		if(delta < max_delta)
 			max_delta = delta;
 	}
 
-	if(!(sh2.m[4] & OVF) && !(sh2.m[4] & 0x010000)) {
+	if(!(cpu->m[4] & OVF) && !(cpu->m[4] & 0x010000)) {
 		int delta = 0x10000 - frc;
 		if(delta < max_delta)
 			max_delta = delta;
 	}
 
 	if(max_delta != 0xfffff) {
-		int divider = div_tab[(sh2.m[5] >> 8) & 3];
+		int divider = div_tab[(cpu->m[5] >> 8) & 3];
 		if(divider) {
 			max_delta <<= divider;
-			sh2.frc_base = sh2_gettotalcycles();
-			timer_adjust(sh2.timer, TIME_IN_CYCLES(max_delta,sh2.cpunb), 0, 0);
+			cpu->frc_base = sh2_gettotalcycles(cpu);
+			logerror("SH2.%d: Adjusting timer, current_cycles=%d, cb at %d\n", cpu->cpu_number, cpu->frc_base, cpu->frc_base+max_delta);
+			timer_adjust(cpu->timer, TIME_IN_CYCLES(max_delta, cpu->cpu_number), cpu->cpu_number, 0);
 		} else {
-			logerror("SH2: Timer event in %d cycles of external clock", max_delta);
+			logerror("SH2.%d: Timer event in %d cycles of external clock", cpu->cpu_number, max_delta);
 		}
 	}
 }
 
-static void sh2_recalc_irq(void)
+static void sh2_recalc_irq(SH2 *cpu)
 {
 	int irq = 0, vector = -1;
 	int i, level;
 
 	// Timer irqs
-	if((sh2.m[4]>>8) & sh2.m[4] & (ICF|OCFA|OCFB|OVF))
+	if((cpu->m[4]>>8) & cpu->m[4] & (ICF|OCFA|OCFB|OVF))
 	{
-		level = (sh2.m[0x18] >> 24) & 15;
+		level = (cpu->m[0x18] >> 24) & 15;
 		if(level > irq)
 		{
+			int mask = (cpu->m[4]>>8) & cpu->m[4];
 			irq = level;
-			if(sh2.m[4] & ICF)
-				vector = (sh2.m[0x19] >> 8) & 0x7f;
-			else if(sh2.m[4] & (OCFA|OCFB))
-				vector = sh2.m[0x19] & 0x7f;
+			if(mask & ICF)
+				vector = (cpu->m[0x19] >> 8) & 0x7f;
+			else if(mask & (OCFA|OCFB))
+				vector = cpu->m[0x19] & 0x7f;
 			else
-				vector = (sh2.m[0x1a] >> 24) & 0x7f;
+				vector = (cpu->m[0x1a] >> 24) & 0x7f;
 		}
 	}
 
 	// DMA irqs
 	for(i=0; i<2; i++)
 	{
-		if((sh2.m[0x63+4*i] & 6) == 6) {
-			level = (sh2.m[0x38] >> 8) & 15;
+		if((cpu->m[0x63+4*i] & 6) == 6) {
+			level = (cpu->m[0x38] >> 8) & 15;
 			if(level > irq) {
 				irq = level;
-				vector = (sh2.m[0x68+i] >> 24) & 0x7f;
+				vector = (cpu->m[0x68+2*i] >> 24) & 0x7f;
 			}
 		}
 	}
 
-	sh2.internal_irq_level = irq;
-	sh2.internal_irq_vector = vector;
-	sh2.test_irq = 1;
+	cpu->internal_irq_level = irq;
+	cpu->internal_irq_vector = vector;
+	cpu->test_irq = 1;
 }
 
-static void sh2_timer_callback(int data)
+static void sh2_timer_callback(int cpunum)
 {
+	SH2 *cpu;
 	UINT16 frc;
+	
+	cpuintrf_push_context(cpunum);
 
-	sh2_timer_resync();
+	cpu = &sh2;
 
-	frc = sh2.frc;
+	sh2_timer_resync(cpu);
 
-	if(frc == sh2.ocrb)
-		sh2.m[4] |= OCFB;
+	frc = cpu->frc;
+
+	logerror("SH2.%d: Timer callback, frc=%04x, ocra=%04x, ocrb=%04x\n", cpunum, frc, cpu->ocra, cpu->ocrb);
+	if(frc == cpu->ocrb)
+		cpu->m[4] |= OCFB;
 
 	if(frc == 0x0000)
-		sh2.m[4] |= OVF;
+		cpu->m[4] |= OVF;
 
-	if(frc == sh2.ocra)
+	if(frc == cpu->ocra)
 	{
-		sh2.m[4] |= OCFA;
+		cpu->m[4] |= OCFA;
 
-		if(sh2.m[4] & 0x010000)
-			sh2.frc = 0;
+		if(cpu->m[4] & 0x010000)
+			cpu->frc = 0;
 	}
 
-	sh2_recalc_irq();
-	sh2_timer_activate();
+	sh2_recalc_irq(cpu);
+	sh2_timer_activate(cpu);
+
+	cpuintrf_pop_context();
 }
 
 static void sh2_dmac_callback(int dma)
 {
-	LOG(("SH2: DMA %d complete\n", dma));
-	sh2.m[0x63+4*dma] |= 2;
-	sh2.dma_timer_active[dma] = 0;
-	sh2_recalc_irq();
+	int cpunum = dma >> 1;
+	SH2 *cpu;
+	dma &= 1;
+
+	cpu = cpunum_get_context_ptr(cpunum);
+	if(!cpu)
+		cpu = &sh2;
+
+	LOG(("SH2.%d: DMA %d complete\n", cpunum, dma));
+	cpu->m[0x63+4*dma] |= 2;
+	cpu->dma_timer_active[dma] = 0;
+	sh2_recalc_irq(cpu);
 }
 
 static void sh2_dmac_check(int dma)
@@ -2551,7 +2586,7 @@ static void sh2_dmac_check(int dma)
 			LOG(("SH2: DMA %d start %x, %x, %x, %04x, %d, %d, %d\n", dma, src, dst, count, sh2.m[0x63+4*dma], incs, incd, size));
 
 			sh2.dma_timer_active[dma] = 1;
-			timer_adjust(sh2.dma_timer[dma], TIME_IN_CYCLES(2*count+1, sh2.cpunb), dma, 0);
+			timer_adjust(sh2.dma_timer[dma], TIME_IN_CYCLES(2*count+1, sh2.cpu_number), (sh2.cpu_number<<1)|dma, 0);
 
 			src &= AM;
 			dst &= AM;
@@ -2626,30 +2661,35 @@ WRITE32_HANDLER( sh2_internal_w )
 		// Timers
 	case 0x04: // TIER, FTCSR, FRC
 		if((mem_mask & 0x00ffffff) != 0xffffff)
-			sh2_timer_resync();
+			sh2_timer_resync(&sh2);
+		logerror("SH2.%d: TIER write %04x @ %04x\n", sh2.cpu_number, data >> 16, mem_mask>>16);
 		sh2.m[4] = (sh2.m[4] & ~(ICF|OCFA|OCFB|OVF)) | (old & sh2.m[4] & (ICF|OCFA|OCFB|OVF));
 		COMBINE_DATA(&sh2.frc);
 		if((mem_mask & 0x00ffffff) != 0xffffff)
-			sh2_timer_activate();
-		sh2_recalc_irq();
+			sh2_timer_activate(&sh2);
+		sh2_recalc_irq(&sh2);
 		break;
 	case 0x05: // OCRx, TCR, TOCR
-		sh2_timer_resync();
+		sh2_timer_resync(&sh2);
 		if(sh2.m[5] & 0x10)
 			sh2.ocrb = (sh2.ocrb & (mem_mask >> 16)) | ((data & ~mem_mask) >> 16);
 		else
 			sh2.ocra = (sh2.ocra & (mem_mask >> 16)) | ((data & ~mem_mask) >> 16);
-		sh2_timer_activate();
+		sh2_timer_activate(&sh2);
 		break;
 
-	case 0x06: // FICR
+	case 0x06: // ICR
 		break;
 
 		// Interrupt vectors
 	case 0x18: // IPRB, VCRA
 	case 0x19: // VCRB, VCRC
 	case 0x1a: // VCRD
-		sh2_recalc_irq();
+		sh2_recalc_irq(&sh2);
+		break;
+
+		// DMA
+	case 0x1c: // DRCR0, DRCR1
 		break;
 
 		// Watchdog
@@ -2673,7 +2713,7 @@ WRITE32_HANDLER( sh2_internal_w )
 		{
 			INT32 a = sh2.m[0x41];
 			INT32 b = sh2.m[0x40];
-			LOG(("SH2 #%d div+mod %d/%d\n", sh2.cpunb, a, b));
+			LOG(("SH2 #%d div+mod %d/%d\n", cpu_getactivecpu(), a, b));
 			if (b)
 			{
 				sh2.m[0x45] = a / b;
@@ -2684,16 +2724,16 @@ WRITE32_HANDLER( sh2_internal_w )
 				sh2.m[0x42] |= 0x00010000;
 				sh2.m[0x45] = 0x7fffffff;
 				sh2.m[0x44] = 0x7fffffff;
-				sh2_recalc_irq();
+				sh2_recalc_irq(&sh2);
 			}
 			break;
 		}
 	case 0x42: // DVCR
 		sh2.m[0x42] = (sh2.m[0x42] & ~0x00001000) | (old & sh2.m[0x42] & 0x00010000);
-		sh2_recalc_irq();
+		sh2_recalc_irq(&sh2);
 		break;
 	case 0x43: // VCRDIV
-		sh2_recalc_irq();
+		sh2_recalc_irq(&sh2);
 		break;
 	case 0x44: // DVDNTH
 		break;
@@ -2701,7 +2741,7 @@ WRITE32_HANDLER( sh2_internal_w )
 		{
 			INT64 a = sh2.m[0x45] | ((UINT64)(sh2.m[0x44]) << 32);
 			INT64 b = sh2.m[0x40];
-			LOG(("SH2 #%d div+mod %lld/%lld\n", sh2.cpunb, a, b));
+			LOG(("SH2 #%d div+mod %lld/%lld\n", cpu_getactivecpu(), a, b));
 			if (b)
 			{
 				INT64 q = a / b;
@@ -2710,7 +2750,7 @@ WRITE32_HANDLER( sh2_internal_w )
 					sh2.m[0x42] |= 0x00010000;
 					sh2.m[0x45] = 0x7fffffff;
 					sh2.m[0x44] = 0x7fffffff;
-					sh2_recalc_irq();
+					sh2_recalc_irq(&sh2);
 				}
 				else
 				{
@@ -2723,7 +2763,7 @@ WRITE32_HANDLER( sh2_internal_w )
 				sh2.m[0x42] |= 0x00010000;
 				sh2.m[0x45] = 0x7fffffff;
 				sh2.m[0x44] = 0x7fffffff;
-				sh2_recalc_irq();
+				sh2_recalc_irq(&sh2);
 			}
 			break;
 		}
@@ -2750,8 +2790,8 @@ WRITE32_HANDLER( sh2_internal_w )
 		sh2_dmac_check(1);
 		break;
 	case 0x68: // VCRDMA0
-	case 0x69: // VCRDMA1
-		sh2_recalc_irq();
+	case 0x6a: // VCRDMA1
+		sh2_recalc_irq(&sh2);
 		break;
 	case 0x6c: // DMAOR
 		sh2.m[0x6c] = (sh2.m[0x6c] & ~6) | (old & sh2.m[0x6c] & 6);
@@ -2781,17 +2821,21 @@ READ32_HANDLER( sh2_internal_r )
 	switch( offset )
 	{
 	case 0x04: // TIER, FTCSR, FRC
+		sh2_timer_resync(&sh2);
 		return (sh2.m[4] & 0xffff0000) | sh2.frc;
 	case 0x05: // OCRx, TCR, TOCR
 		if(sh2.m[5] & 0x10)
 			return (sh2.ocrb << 16) | (sh2.m[5] & 0xffff);
 		else
 			return (sh2.ocra << 16) | (sh2.m[5] & 0xffff);
+	case 0x06: // ICR
+		return sh2.icr << 16;
+
 	case 0x38: // ICR, IPRA
 		return (sh2.m[0x38] & 0x7fffffff) | (sh2.nmi_line_state == ASSERT_LINE ? 0 : 0x80000000);
 
 	case 0x78: // BCR1
-		return sh2.cpunb ? 0x00008000 : 0;
+		return sh2.is_slave ? 0x00008000 : 0;
 
 	case 0x41: // dvdntl mirrors
 	case 0x47:
@@ -2801,6 +2845,42 @@ READ32_HANDLER( sh2_internal_r )
 		return sh2.m[0x44];
 	}
 	return sh2.m[offset];
+}
+
+void sh2_set_frt_input(int cpunum, int state)
+{
+	SH2 *cpu;
+
+	if(state == PULSE_LINE)
+	{
+		sh2_set_frt_input(cpunum, ASSERT_LINE);
+		sh2_set_frt_input(cpunum, CLEAR_LINE);
+		return;
+	}
+
+	cpu = cpunum_get_context_ptr(cpunum);
+
+	if(!cpu)
+		cpu = &sh2;
+
+	if(cpu->frt_input == state)
+		return;
+
+	cpu->frt_input = state;
+
+	if(cpu->m[5] & 0x8000) {
+		if(state == CLEAR_LINE)
+			return;
+	} else {
+		if(state == ASSERT_LINE)
+			return;
+	}
+
+	sh2_timer_resync(cpu);
+	cpu->icr = cpu->frc;
+	cpu->m[4] |= ICF;
+	logerror("SH2.%d: ICF activated\n", cpu->cpu_number);
+	sh2_recalc_irq(cpu);
 }
 
 unsigned sh2_get_reg(int regnum)
@@ -2890,10 +2970,10 @@ void sh2_set_irq_line(int irqline, int state)
 		sh2.nmi_line_state = state;
 
 		if( state == CLEAR_LINE )
-			LOG(("SH-2 #%d cleared nmi\n", sh2.cpunb));
+			LOG(("SH-2 #%d cleared nmi\n", cpu_getactivecpu()));
 		else
         {
-			LOG(("SH-2 #%d assert nmi\n", sh2.cpunb, irqline));
+			LOG(("SH-2 #%d assert nmi\n", cpu_getactivecpu(), irqline));
 			sh2_exception("sh2_set_irq_line/nmi", 16);
         }
 	}
@@ -2905,12 +2985,12 @@ void sh2_set_irq_line(int irqline, int state)
 
 		if( state == CLEAR_LINE )
 		{
-			LOG(("SH-2 #%d cleared irq #%d\n", sh2.cpunb, irqline));
+			LOG(("SH-2 #%d cleared irq #%d\n", cpu_getactivecpu(), irqline));
 			sh2.pending_irq &= ~(1 << irqline);
 		}
 		else
 		{
-			LOG(("SH-2 #%d assert irq #%d\n", sh2.cpunb, irqline));
+			LOG(("SH-2 #%d assert irq #%d\n", cpu_getactivecpu(), irqline));
 			sh2.pending_irq |= 1 << irqline;
 			if(sh2.delay)
 				sh2.test_irq = 1;

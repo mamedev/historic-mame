@@ -105,8 +105,8 @@ UINT32 bam1Autoincrement(void)
 		v60.reg[modVal&0x1F]+=4;
 		break;
 	default:
-		messagebox("CPU - BAM1 - 7\n");
-		break;
+		logerror("CPU - BAM1 - 7\n");
+		abort();
 	}
 	return 1;
 }
@@ -144,8 +144,8 @@ UINT32 bam1Autodecrement(void)
 		v60.reg[modVal&0x1F]-=4;
 		break;
 	default:
-		messagebox("CPU - BAM1 - 7\n");
-		break;
+		logerror("CPU - BAM1 - 7\n");
+		abort();
 	}
 	amOut=MemRead32(v60.reg[modVal&0x1F]);
 	return 1;
@@ -1090,73 +1090,68 @@ UINT32 am1ImmediateQuick(void)
 
 UINT32 am1Error1(void)
 {
-	{
-		char foo[1024];
-
-		sprintf(foo, "CPU - AM1 - 1 (PC=%06x)", (int)PC);
-		messagebox(foo);
-	}
-	return 1;
+	logerror("CPU - AM1 - 1 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error1(void)
 {
-	messagebox("CPU - BAM1 - 1\n");
-	return 1;
+	logerror("CPU - BAM1 - 1 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am1Error2(void)
 {
-	messagebox("CPU - AM1 - 2\n");
-	return 1;
+	logerror("CPU - AM1 - 2 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error2(void)
 {
-	messagebox("CPU - BAM1 - 2\n");
-	return 1;
+	logerror("CPU - BAM1 - 2 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am1Error3(void)
 {
-	messagebox("CPU - AM1 - 3\n");
-	return 1;
+	logerror("CPU - AM1 - 3 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error3(void)
 {
-	messagebox("CPU - BAM1 - 3\n");
-	return 1;
+	logerror("CPU - BAM1 - 3 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am1Error4(void)
 {
-	messagebox("CPU - AM1 - 4\n");
-	return 1;
+	logerror("CPU - AM1 - 4 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error4(void)
 {
-	messagebox("CPU - BAM1 - 4\n");
-	return 1;
+	logerror("CPU - BAM1 - 4 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 am1Error5(void)
 {
-	messagebox("CPU - AM1 - 5\n");
-	return 1;
+	logerror("CPU - AM1 - 5 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error5(void)
 {
-	messagebox("CPU - BAM1 - 5\n");
-	return 1;
+	logerror("CPU - BAM1 - 5 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 bam1Error6(void)
 {
-	messagebox("CPU - BAM1 - 6\n");
-	return 1;
+	logerror("CPU - BAM1 - 6 (PC=%06x)", PC);
+	abort();
 }
 
 UINT32 (*AMTable1_G7a[16])(void) =

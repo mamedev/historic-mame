@@ -1762,7 +1762,7 @@ static DRIVER_INIT( rongrong )
 GAMEX(1992, mmpanic,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon (Taito license)", "Monkey Mole Panic", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1993, quizchq,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon", "Quiz Channel Question (Ver 1.00) (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX(1993, quizchql, quizchq, quizchq,  rongrong, 0,        ROT0, "[Nakanihon] (Laxan license)", "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon", "Quiz 365 (Hong Kong & Taiwan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon", "Quiz 365 (Hong Kong & Taiwan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL  | GAME_NOT_WORKING )
 GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon", "Rong Rong (Germany)", GAME_NO_COCKTAIL )
 GAMEX(1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",     "Don Den Lover Vol. 1 (Hong Kong)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
 

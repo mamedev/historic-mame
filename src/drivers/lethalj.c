@@ -10,6 +10,31 @@
 
 	Known bugs:
 		* some DIP switches not understood
+		* possible timing issue cuasing slight video flicker
+
+
+         EU21     EU18     EU20   32.000MHz
+         M6295    M6295    M6295       Xilinx
+   Dip-8 2.000Mhz 2.000Mhz 2.000Mhz
+J        VC9                 GUNCN
+A  Dip-4 VC8                 Xilinx     EGR4
+M               Mach210                 EGR6.3
+M   M5M442256x4 Mach210 Mach210 Mach210 EGR3
+A          11.2896MHz                   EGR2
+     TMS34010           W241024x4       EGR1
+ 2803A                                  EGR5.3
+    40.000MHz   Bt121 Mach210 Mach210 Mach210
+
+
+Chips:
+ TMS34010FNL-40     Main CPU
+ Xilinx XC3042-70   Field Programmable Gate Array
+ Bt121KPJ80         Triple 8-bit 80MHz VideoDAC
+ AMD Mach210A-10JC  Programmable Logic Device (CPLD)
+ ST ULN2803A        8 Darlington Transistor Array with common emitter
+
+Note 1: Lethal Justice uses a 11.0592MHz OSC instead of the 11.2896MHz
+Note 2: Lethal Justice uses a TMS34010FNL-50 instead of the TMS34010FNL-40
 
 ***************************************************************************/
 
@@ -246,6 +271,19 @@ MACHINE_DRIVER_START( lethalj )
 MACHINE_DRIVER_END
 
 
+MACHINE_DRIVER_START( eggventr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(lethalj)
+	MDRV_CPU_MODIFY("main")
+
+	/* Slightly different resolution then Lethal Justice */
+	MDRV_VBLANK_DURATION((1000000 * (258 - 239)) / (60 * 258))
+	MDRV_SCREEN_SIZE(512, 239)
+	MDRV_VISIBLE_AREA(0, 511, 0, 238)
+
+MACHINE_DRIVER_END
+
 
 /*************************************
  *
@@ -354,6 +392,6 @@ static DRIVER_INIT( lethalj )
  *
  *************************************/
 
-GAME( 1996, lethalj,  0,        lethalj, lethalj,  lethalj, ROT0, "The Game Room", "Lethal Justice" )
-GAME( 1997, eggventr, 0,        lethalj, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture" )
-GAME( 1997, eggvntdx, eggventr, lethalj, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture Deluxe" )
+GAME( 1996, lethalj,  0,        lethalj,  lethalj,  lethalj, ROT0, "The Game Room", "Lethal Justice" )
+GAME( 1997, eggventr, 0,        eggventr, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture" )
+GAME( 1997, eggvntdx, eggventr, eggventr, eggventr, lethalj, ROT0, "The Game Room", "Egg Venture Deluxe" )

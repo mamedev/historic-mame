@@ -62,21 +62,24 @@ Preliminary Memory map:
 -Find a better fix to avoid the hanagumi hang skip kludge.
 -Clean-ups and split up the various chips(SCU,SMPC,SCSP...)into their respective files.
 
-\-Games issues:
--hanagumi:Service mode hangs.
--prikura:Fix the compile bug which makes DMA to not work at all.
--shienryu:Sprite list is missing from VDP1 vram...
+-prikura:Fix the compile bug which makes DMA to not work at all(now fixed?).
 -groovef:Hangs soon after loaded.
--shanhigw:Find idle skip if possible.
+-groovef,shanhigw:Find idle skip if possible.
+-groovef,shanhigw:these increments *intentionally* the credit counter by two
+                  at every start-up.Missing/wrong irq I guess.
+-vmahjong:locks up the emulation due to various DMA/irq issues.
 
 */
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "cpu/sh2/sh2.h"
 
 extern data32_t* stv_vdp2_regs;
 extern data32_t* stv_vdp2_vram;
 extern data32_t* stv_vdp2_cram;
+
+#define USE_SLAVE 1
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -86,6 +89,7 @@ static data8_t *smpc_ram;
 
 static data32_t* stv_workram_l;
 static data32_t* stv_workram_h;
+static data32_t* stv_backupram;
 data32_t* stv_scu;
 static data32_t* ioga;
 static data16_t* scsp_regs;
@@ -93,6 +97,7 @@ static data16_t* scsp_regs;
 int stv_vblank;
 /*SMPC stuff*/
 static UINT8 SCSP_reset;
+static void system_reset(void);
 /*SCU stuff*/
 static int 	  timer_0;				/* Counter for Timer 0 irq*/
 /*Maybe add these in a struct...*/
@@ -285,16 +290,38 @@ UINT8 PDR2;
 #define SMPC_CONTROL_MODE_PORT_1 IOSEL1 = 0
 #define SMPC_CONTROL_MODE_PORT_2 IOSEL2 = 0
 
+static void system_reset()
+{
+	/*Only backup ram and SMPC ram is retained after that this command is issued.*/
+	memset(stv_scu      ,0x00,0x000100);
+	memset(scsp_regs    ,0x00,0x001000);
+	memset(stv_workram_h,0x00,0x100000);
+	memset(stv_workram_l,0x00,0x100000);
+	//vdp1
+	//vdp2
+	//A-Bus
+	/*Order is surely wrong but whatever...*/
+}
+
 static UINT8 stv_SMPC_r8 (int offset)
 {
-//	logerror ("8-bit SMPC Read from Offset %02x Returns %02x\n", offset, smpc_ram[offset]);
+	int return_data;
+
+
+	return_data = smpc_ram[offset];
+
 	if (offset == 0x75)//PDR1 read
-		return readinputport(0);
+		return_data = readinputport(0);
 
 	if (offset == 0x77)//PDR2 read
-		return readinputport(1);
+		return_data = readinputport(1);
 
-	return smpc_ram[offset];
+//	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
+
+	logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
+
+
+	return return_data;
 }
 
 static void stv_SMPC_w8 (int offset, UINT8 data)
@@ -331,7 +358,6 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			logerror("SMPC: M68k off\n");
 			cpu_set_halt_line(2, ASSERT_LINE);
 		}
-
 		PDR2 = (data & 0x60);
 	}
 
@@ -367,7 +393,9 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x02:
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
-	//			cpu_set_halt_line(1,CLEAR_LINE);
+				#if USE_SLAVE
+				cpu_set_halt_line(1,CLEAR_LINE);
+				#endif
 				break;
 			case 0x03:
 				logerror ("SMPC: Slave OFF\n");
@@ -392,6 +420,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: System Reset\n");
 				smpc_ram[0x5f]=0x0d;
 				cpu_set_reset_line(0, PULSE_LINE);
+				system_reset();
 				break;
 			case 0x0e:
 				logerror ("SMPC: Change Clock to 352\n");
@@ -444,13 +473,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x1a;
 				SCSP_reset = 0;
 				break;
-			//default:
-			//	logerror ("SMPC: Unhandled Command %02x\n",data);
+			default:
+				logerror ("cpu #%d (PC=%08X) SMPC: Unhandled Command %02x\n", cpu_getactivecpu(), activecpu_get_pc(), data);
 		}
 
 		// we've processed the command, clear status flag
 		smpc_ram[0x63] = 0x00;
-		/*We have to simulate the timing of each command somehow...*/
+		/*TODO:emulate the timing of each command...*/
 	}
 }
 
@@ -732,10 +761,10 @@ Registers are in long words.
 25    0064
 26    0068
 27    006c
-28    0070	DMA Status Register
+28    0070	<Free>
 29    0074
 30    0078
-31    007c
+31    007c  DMA Status Register
 32    0080	DSP Program Control Port
 33    0084	DSP Program RAM Data Port
 34    0088	DSP Data RAM Address Port
@@ -772,15 +801,63 @@ DMA TODO:
 #define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
 #define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
 #define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
+/*
+DMA Status Register:
+31
+30
+29
+28
+27
+26
+25
+24
+
+23
+22 - DMA DSP-Bus access
+21 - DMA B-Bus access
+20 - DMA A-Bus access
+19
+18
+17 - DMA lv 1 interrupt
+16 - DMA lv 0 interrupt
+
+15
+14
+13 - DMA lv 2 in stand-by
+12 - DMA lv 2 in operation
+11
+10
+09 - DMA lv 1 in stand-by
+08 - DMA lv 1 in operation
+
+07
+06
+05 - DMA lv 0 in stand-by
+04 - DMA lv 0 in operation
+03
+02
+01 - DSP side DMA in stand-by
+00 - DSP side DMA in operation
+*/
+#define DMA_STATUS				(stv_scu[31])
+/*These macros sets the various DMA status flags.*/
+#define SET_D0MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x10))    DMA_STATUS^=0x10
+#define SET_D1MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x100))   DMA_STATUS^=0x100
+#define SET_D2MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x1000))  DMA_STATUS^=0x1000
+#define SET_D0MV_FROM_1_TO_0	if(DMA_STATUS & 0x10) 	    DMA_STATUS^=0x10
+#define SET_D1MV_FROM_1_TO_0	if(DMA_STATUS & 0x100) 	    DMA_STATUS^=0x100
+#define SET_D2MV_FROM_1_TO_0	if(DMA_STATUS & 0x1000)     DMA_STATUS^=0x1000
 
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
+	//usrintf_showmessage("%02x",DMA_STATUS);
 	return stv_scu[offset];
 }
 
 WRITE32_HANDLER( stv_scu_w32 )
 {
+	/*Here we are removing out the read-only registers.*/
 	COMBINE_DATA(&stv_scu[offset]);
 
 	switch(offset)
@@ -794,7 +871,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(stv_scu[3] & 0x100)
 			scu_src_add_0 = 4;
 		else
-			scu_src_add_0 = 0;
+			scu_src_add_0 = 0;//could be 2...
 
 		/*Write address add value for DMA lv 0*/
 		switch(stv_scu[3] & 7)
@@ -834,7 +911,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			logerror("Indirect Mode DMA lv 0 set\n");
 
 		/*Start factor enable bits,bit 2,bit 1 and bit 0*/
-		if(!(stv_scu[5] & 7))
+		if((stv_scu[5] & 7) != 7)
 			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[5] & 7);
 		break;
 		/*LV 1 DMA*/
@@ -876,7 +953,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(INDIRECT_MODE(1))
 			logerror("Indirect Mode DMA lv 1 set\n");
 
-		if(!(stv_scu[13] & 7))
+		if((stv_scu[13] & 7) != 7)
 			logerror("Start factor chosen for lv 1 = %d\n",stv_scu[13] & 7);
 		break;
 		/*LV 2 DMA*/
@@ -918,9 +995,10 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(INDIRECT_MODE(2))
 			logerror("Indirect Mode DMA lv 2 set\n");
 
-		if(!(stv_scu[21] & 7))
+		if((stv_scu[21] & 7) != 7)
 			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[21] & 7);
 		break;
+		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
 		case 36: logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
 		case 40:
 		/*An interrupt is masked when his specific bit is 1.*/
@@ -930,7 +1008,8 @@ WRITE32_HANDLER( stv_scu_w32 )
 		   stv_scu[40] != 0xfffffffc &&
 		   stv_scu[40] != 0xffffffff)
 		{
-			logerror("IRQ mask reg set %08x = %d%d%d%d|%d%d%d%d|%d%d%d%d|%d%d%d%d\n",
+			logerror("cpu #%d (PC=%08X) IRQ mask reg set %08x = %d%d%d%d|%d%d%d%d|%d%d%d%d|%d%d%d%d\n",
+			cpu_getactivecpu(), activecpu_get_pc(),
 			stv_scu[offset],
 			stv_scu[offset] & 0x8000 ? 1 : 0, /*A-Bus irq*/
 			stv_scu[offset] & 0x4000 ? 1 : 0, /*<reserved>*/
@@ -968,6 +1047,8 @@ static void dma_direct_lv0()
 			 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
 
+	SET_D0MV_FROM_0_TO_1;
+
 	tmp_size = scu_size_0;
 	if(!(DRUP(0))) tmp_src = scu_src_0;
 	if(!(DWUP(0))) tmp_dst = scu_dst_0;
@@ -990,6 +1071,8 @@ static void dma_direct_lv0()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	SET_D0MV_FROM_1_TO_0;
 }
 
 static void dma_direct_lv1()
@@ -998,6 +1081,8 @@ static void dma_direct_lv1()
 	logerror("DMA lv 1 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+	SET_D1MV_FROM_0_TO_1;
 
 	tmp_size = scu_size_1;
 	if(!(DRUP(1))) tmp_src = scu_src_1;
@@ -1021,6 +1106,8 @@ static void dma_direct_lv1()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	SET_D1MV_FROM_1_TO_0;
 }
 
 static void dma_direct_lv2()
@@ -1029,6 +1116,8 @@ static void dma_direct_lv2()
 	logerror("DMA lv 2 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
+	SET_D2MV_FROM_0_TO_1;
 
 	tmp_size = scu_size_2;
 	if(!(DRUP(2))) tmp_src = scu_src_2;
@@ -1052,6 +1141,8 @@ static void dma_direct_lv2()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	SET_D2MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv0()
@@ -1060,6 +1151,8 @@ static void dma_indirect_lv0()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D0MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_0;
@@ -1102,6 +1195,8 @@ static void dma_indirect_lv0()
 
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	SET_D0MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv1()
@@ -1110,6 +1205,8 @@ static void dma_indirect_lv1()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D1MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_1;
@@ -1129,7 +1226,7 @@ static void dma_indirect_lv1()
 		//guess,but I believe it's right.
 		scu_src_1 &=0x07ffffff;
 		scu_dst_1 &=0x07ffffff;
-		scu_size_1 &=0x1fff;
+		scu_size_1 &=0xffff;
 
 		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 		{
@@ -1151,6 +1248,8 @@ static void dma_indirect_lv1()
 
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	SET_D1MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv2()
@@ -1159,6 +1258,8 @@ static void dma_indirect_lv2()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D2MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_2;
@@ -1178,7 +1279,7 @@ static void dma_indirect_lv2()
 		//guess,but I believe it's right.
 		scu_src_2 &=0x07ffffff;
 		scu_dst_2 &=0x07ffffff;
-		scu_size_2 &=0x1fff;
+		scu_size_2 &=0xffff;
 
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
@@ -1200,6 +1301,8 @@ static void dma_indirect_lv2()
 
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	SET_D2MV_FROM_1_TO_0;
 }
 
 
@@ -1327,7 +1430,6 @@ offsets
 |SCILV2|SCILV1|SCILV0|
 | bit2 | bit1 | bit0 |
 ----------------------
-"offsets"(in bits)
 15
 14
 13
@@ -1414,7 +1516,18 @@ static void dma_scsp()
  * Enter into Radiant Silver Gun specific menu for a test...                       */
 static WRITE32_HANDLER( minit_w )
 {
-	logerror("MINIT write at %08x = %08x\n",activecpu_get_pc(),data);
+	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
+	// causes data to be written to internal st-2 register + interrupt?
+	// frt input capture (level 1, addr 0x64) (not sure about the 64/164 bits ..might be reversed)
+	sh2_set_frt_input(1, PULSE_LINE);
+}
+
+static WRITE32_HANDLER( sinit_w )
+{
+	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
+	// causes data to be written to internal st-2 register + interrupt?
+	// frt input capture (level 1, addr 0x164) (not sure about the 64/164 bits ..might be reversed)
+	sh2_set_frt_input(0, PULSE_LINE);
 }
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
@@ -1444,14 +1557,14 @@ static READ32_HANDLER( stv_workram_h_mirror_r )
 static MEMORY_READ32_START( stv_master_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
 	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
-	{ 0x00180000, 0x0018ffff, MRA32_RAM },	 /*Back up RAM*/
+	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
 
-	{ 0x00200000, 0x002fffff, MRA32_RAM },
+	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
 	{ 0x00400000, 0x0040001f, stv_io_r32 },
 
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
 //	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
-	{ 0x05000000, 0x058fffff, MRA32_RAM },
+//	{ 0x05000000, 0x058fffff, MRA32_RAM },
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
@@ -1486,7 +1599,7 @@ static MEMORY_READ32_START( stv_master_readmem )
 //	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
 
-	{ 0x06000000, 0x060fffff, MRA32_RAM },
+	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
 	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
 
@@ -1494,13 +1607,13 @@ static MEMORY_WRITE32_START( stv_master_writemem )
 	{ 0x00000000, 0x0007ffff, MWA32_ROM },
 	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
 
-	{ 0x00180000, 0x0018ffff, MWA32_RAM },
+	{ 0x00180000, 0x0018ffff, MWA32_BANK5 }, // backup ram
 
-	{ 0x00200000, 0x002fffff, MWA32_RAM, &stv_workram_l },
+	{ 0x00200000, 0x002fffff, MWA32_BANK4 }, // workram low
 	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
 	{ 0x01000000, 0x01000003, minit_w },
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
-	{ 0x05000000, 0x058fffff, MWA32_RAM },
+//	{ 0x05000000, 0x058fffff, MWA32_RAM },
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
@@ -1516,18 +1629,51 @@ static MEMORY_WRITE32_START( stv_master_writemem )
 
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
 
-	{ 0x06000000, 0x060fffff, MWA32_RAM, &stv_workram_h },
+	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
 //	{ 0x06100000, 0x07ffffff, MWA32_NOP },
 MEMORY_END
 
+/* slave cpu shares all devices with master */
+
 static MEMORY_READ32_START( stv_slave_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
+	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
+	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
+	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
+	{ 0x00400000, 0x0040001f, stv_io_r32 },
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
+//	{ 0x05000000, 0x058fffff, MRA32_RAM },
+	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
+	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_r },
+	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_r },
+	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r },
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
+	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
+	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
 
 static MEMORY_WRITE32_START( stv_slave_writemem )
 	{ 0x00000000, 0x0007ffff, MWA32_ROM },
+	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
+	{ 0x00180000, 0x0018ffff, MWA32_BANK5 },
+	{ 0x00200000, 0x002fffff, MWA32_BANK4 },
+	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
+//	{ 0x01000000, 0x01000003, minit_w },
+	{ 0x01800000, 0x01800003, sinit_w },
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
+//	{ 0x05000000, 0x058fffff, MWA32_RAM },
+	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
+	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_w },
+	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_w },
+	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w },
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
+	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
 MEMORY_END
 
 static MEMORY_READ16_START( sound_readmem )
@@ -1715,10 +1861,28 @@ DRIVER_INIT ( stv )
 	stv_scu = auto_malloc (0x100);
 	scsp_regs = auto_malloc (0x1000);
 
+	stv_workram_h = auto_malloc (0x100000);
+	stv_workram_l = auto_malloc (0x100000);
+	stv_workram_l = auto_malloc (0x100000);
+	stv_backupram = auto_malloc (0x10000);
+
+	cpu_setbank(3,&stv_workram_h[0x000000]);
+	cpu_setbank(4,&stv_workram_l[0x000000]);
+	cpu_setbank(5,&stv_backupram[0x000000]);
+
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
 	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
 	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
 }
+
+static READ32_HANDLER( shienryu_slave_speedup_r )
+{
+ if (activecpu_get_pc()==0x06004410)
+  cpu_spinuntil_time(TIME_IN_USEC(20)); // is this safe... we can't skip till vbl because its not a vbl wait loop
+
+ return stv_workram_h[0x0ae8e4/4];
+}
+
 
 static READ32_HANDLER( shienryu_speedup_r )
 {
@@ -1730,6 +1894,7 @@ static READ32_HANDLER( shienryu_speedup_r )
 DRIVER_INIT(shienryu)
 {
 	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
+	install_mem_read32_handler(1, 0x60ae8e4, 0x60ae8e7, shienryu_slave_speedup_r ); // after you enable sound cpu
 
 	init_stv();
 }
@@ -1763,6 +1928,13 @@ static READ32_HANDLER( hanagumi_speedup_r )
 	return stv_workram_h[0x94188/4];
 }
 
+static READ32_HANDLER( hanagumi_slave_off )
+{
+	/* just turn the slave off, i don't think the game needs it */
+	cpu_set_halt_line(1,ASSERT_LINE);
+
+	return stv_workram_h[0x015438/4];
+}
 
 DRIVER_INIT(hanagumi)
 {
@@ -1784,6 +1956,7 @@ DRIVER_INIT(hanagumi)
    (loops for 288688 instructions)
 */
    	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
+   	install_mem_read32_handler(1, 0x6015438, 0x601543b, hanagumi_slave_off );
 
   	init_stv();
 }
@@ -1877,17 +2050,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+struct sh2_config sh2_conf_master = { 0 };
+struct sh2_config sh2_conf_slave  = { 1 };
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_master_readmem,stv_master_writemem)
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
+	MDRV_CPU_CONFIG(sh2_conf_master)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_slave_readmem,stv_slave_writemem)
-	/* how do the interrupts work..from other cpu? */
+	MDRV_CPU_CONFIG(sh2_conf_slave)
+
 
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
@@ -1900,8 +2078,8 @@ static MACHINE_DRIVER_START( stv )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
 	MDRV_SCREEN_SIZE(32*16, 32*16)
-//	MDRV_VISIBLE_AREA(0*8, 32*16-1, 0*8, 32*16-1)
-	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
+	MDRV_VISIBLE_AREA(0*8, 512-1, 0*8, 512-1) // we need to use a resolution as high as the max size it can change to
+//	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
@@ -1920,6 +2098,7 @@ MACHINE_DRIVER_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 2, "mp17952a.s",     0x000000, 0x080000, CRC(d1be2adf) SHA1(eaf1c3e5d602e1139d2090a78d7e19f04f916794) ) /* us */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* jp alt 2 */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* taiwan */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 5, "mp17954a.s",     0x000000, 0x080000, CRC(f7722da3) SHA1(af79cff317e5b57d49e463af16a9f616ed1eee08) ) /* Europe */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
@@ -1936,7 +2115,7 @@ SYSTEM_BIOS_START( stvbios )
 	SYSTEM_BIOS_ADD( 2, "us",          "USA (bios mp17952a)" )
 	SYSTEM_BIOS_ADD( 3, "japanb",      "Japan (bios 20091)" )
 	SYSTEM_BIOS_ADD( 4, "taiwan",      "Taiwan (bios mp17953a)" )
-	/*Europe*/
+	SYSTEM_BIOS_ADD( 5, "europe",      "Europe (bios mp17954a)" )
 	/*Korea*/
 	/*Asia (Pal Area)*/
 	/*Brazil*/

@@ -324,7 +324,7 @@ static PORT_WRITE_START( sfx_sample_writeport )
 MEMORY_END
 
 
-static MEMORY_READ_START( mimonkey_readmem )
+static MEMORY_READ_START( mimonscr_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, galaxian_videoram_r },	/* mirror address?, probably not */
 	{ 0x4400, 0x4bff, MRA_RAM },
@@ -335,7 +335,7 @@ static MEMORY_READ_START( mimonkey_readmem )
 	{ 0xc000, 0xffff, MRA_ROM },
 MEMORY_END
 
-static MEMORY_WRITE_START( mimonkey_writemem )
+static MEMORY_WRITE_START( mimonscr_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, galaxian_videoram_w },	/* mirror address?, probably not */
 	{ 0x4400, 0x47ff, MWA_RAM },
@@ -1141,7 +1141,8 @@ INPUT_PORTS_START( sfx )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mimonkey )
+/* Same as 'mimonkey' (scobra.c driver) */
+INPUT_PORTS_START( mimonscr )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1542,12 +1543,12 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_SOUND_ADD(DAC, sfx_dac_interface)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( mimonkey )
+static MACHINE_DRIVER_START( mimonscr )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mimonkey_readmem,mimonkey_writemem)
+	MDRV_CPU_MEMORY(mimonscr_readmem,mimonscr_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_START(mimonkey)
@@ -2122,7 +2123,7 @@ ROM_START( sfx )
 	ROM_LOAD( "6331.9g",      0x0000, 0x0020, CRC(ca1d9ccd) SHA1(27124759a06497c1bc1a64b6d3faa6ba924a8447) )
 ROM_END
 
-ROM_START( mimonkey )
+ROM_START( mimonscr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "mm1",          0x0000, 0x1000, CRC(0399a0c4) SHA1(8314124f9b535ce531663625d19cd3a76782ed3b) )
 	ROM_LOAD( "mm2",          0x1000, 0x1000, CRC(2c5e971e) SHA1(39f979b99566e30a19c63115c936bb11fae4c609) )
@@ -2170,4 +2171,4 @@ GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. F
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )
-GAME( 198?, mimonkey, 0,        mimonkey, mimonkey, mimonkey,     ROT90, "bootleg", "Mighty Monkey" )
+GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)" )

@@ -750,6 +750,63 @@ INPUT_PORTS_START( fax )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( phantoma )
+	PORT_START              /* DSW */
+	/* Mode 1*/
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_3C ) )
+	/* Mode 2 */
+//	PORT_DIPSETTING(    0x00, "2F/1 C 5F Coin/3 Cs" )
+//	PORT_DIPSETTING(    0x01, "1F/1 C 5F Coin/6 Cs" )
+//	PORT_DIPSETTING(    0x02, "1F/2 C 5F Coin/12 Cs" )
+//	PORT_DIPSETTING(    0x03, "1F/3 C 5F Coin/18 Cs" )
+	PORT_DIPNAME( 0x04, 0x00, "Top Score Award" )
+	PORT_DIPSETTING(    0x00, "Credit" )
+	PORT_DIPSETTING(    0x04, "Extended Play" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x60, "5" )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Mode" )
+	PORT_DIPSETTING(    0x00, "Mode 1" )
+	PORT_DIPSETTING(    0x80, "Mode 2" )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 /*************************************
@@ -963,6 +1020,14 @@ static MACHINE_DRIVER_START( fax )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( phantoma )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(rallys)
+
+	MDRV_GFXDECODE(gfxdecodeinfo_2bpp)
+MACHINE_DRIVER_END
+
 
 /*************************************
  *
@@ -981,7 +1046,6 @@ ROM_START( sidetrac )
 	ROM_REGION( 0x0200, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "stl11d",      0x0000, 0x0200, CRC(3bd1acc1) SHA1(06f900cb8f56cd4215c5fbf58a852426d390e0c1) )
 ROM_END
-
 
 ROM_START( targ )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -1061,6 +1125,20 @@ ROM_START( rallys )
 	ROM_LOAD( "targ82s.123", 0x0000, 0x0020, CRC(9eb9125c) SHA1(660ad9b2c7c28c3fda4b10c1401c03165d131c61) )	/* unknown */
 ROM_END
 
+ROM_START( phantoma )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "156_a1",       0xf800, 0x0800, CRC(26292c0a) SHA1(d4157e261f6247cfafb948d1a9dbf0b02b2b84de) )
+	ROM_LOAD( "156_a2",       0x1000, 0x0800, CRC(c5af9d34) SHA1(4c9f9a06cc7f6caf13a79fa8491db17b01b24774) )
+	ROM_LOAD( "156_a3",       0x1800, 0x0800, CRC(30121e69) SHA1(1588cfb61eb9aa9598b3ff600cc02b0f1ac622bf) )
+	ROM_LOAD( "156_a4",       0x2000, 0x0800, CRC(02d7fb94) SHA1(634e952a6a0d4c1a42692100e1913ecd5ab9faed) )
+	ROM_LOAD( "156_a5",       0x2800, 0x0800, CRC(0127bc8d) SHA1(c555507f2662d1b45caf0b696147f70749292930) )
+
+	ROM_REGION( 0x800, REGION_GFX1, 0 )
+	ROM_LOAD( "156_d1",       0x0000, 0x0800, CRC(d18e5f14) SHA1(5cd327500e74eca378ad5d0924949f96dd955cf8) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "156_pal",      0x0000, 0x0020, CRC(9fb1daee) SHA1(2ec1189a57c95d7ad820eb12343fcf2c3fb08431) )
+ROM_END
 
 ROM_START( mtrap )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -1389,7 +1467,20 @@ DRIVER_INIT( fax )
 	fax_bank_select_w(0,0);
 }
 
+DRIVER_INIT( phantoma )
+{
+	exidy_palette 			= spectar_palette;
+	exidy_colortable 		= exidy_2bpp_colortable;
+	exidy_collision_mask 	= 0x00;
+	exidy_collision_invert	= 0x00;
 
+	/* there is no sprite enable register so we have to fake it out */
+	*exidy_sprite_enable 	= 0x10;
+	targ_spec_flag 			= 0;
+
+	/* sound is handled directly instead of via a PIA */
+	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+}
 
 /*************************************
  *
@@ -1403,6 +1494,7 @@ GAME( 1980, targc,    targ,    targ,    targ,     targ,     ROT0, "Exidy", "Targ
 GAME( 1980, spectar,  0,       targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 3)" )
 GAME( 1980, spectar1, spectar, targ,    spectar,  spectar,  ROT0, "Exidy", "Spectar (revision 1?)" )
 GAME( 1980, rallys,   spectar, rallys,  rallys,   spectar,  ROT0, "Novar", "Rallys (bootleg?)" )
+GAME( 1980, phantoma, spectar, phantoma,phantoma, phantoma, ROT0, "Jeutel","Phantomas" )
 GAME( 1981, mtrap,    0,       mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 5)" )
 GAME( 1981, mtrap3,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 3)" )
 GAME( 1981, mtrap4,   mtrap,   mtrap,   mtrap,    mtrap,    ROT0, "Exidy", "Mouse Trap (version 4)" )

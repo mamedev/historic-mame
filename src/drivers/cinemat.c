@@ -23,9 +23,6 @@
 		* War of the Worlds
 		* Boxing Bugs
 
-	Known issues:
-		* fix Sundance controls
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -39,13 +36,54 @@
 
 /*************************************
  *
+ *	Sundance inputs
+ *
+ *************************************/
+
+static READ16_HANDLER( sundance_input_port_1_r )
+{
+	UINT16 val = readinputport(1);
+
+	switch (readinputport(4) & 0x1ff) /* player 1 keypad */
+	{
+	case 0x0001: val &= ~0x1201; break;
+	case 0x0002: val &= ~0x1000; break;
+	case 0x0004: val &= ~0x0001; break;
+	case 0x0008: val &= ~0x4000; break;
+	case 0x0010: val &= ~0x1001; break;
+	case 0x0020: val &= ~0x0200; break;
+	case 0x0040: val &= ~0x4001; break;
+	case 0x0080: val &= ~0x1200; break;
+	case 0x0100: val &= ~0x0201; break;
+	}
+
+	switch (readinputport(5) & 0x1ff) /* player 2 keypad */
+	{
+	case 0x0001: val &= ~0x2500; break;
+	case 0x0002: val &= ~0x2000; break;
+	case 0x0004: val &= ~0x0400; break;
+	case 0x0008: val &= ~0x8000; break;
+	case 0x0010: val &= ~0x2400; break;
+	case 0x0020: val &= ~0x0100; break;
+	case 0x0040: val &= ~0x8400; break;
+	case 0x0080: val &= ~0x2100; break;
+	case 0x0100: val &= ~0x0500; break;
+	}
+
+	return val;
+}
+
+
+
+/*************************************
+ *
  *	Speed Freak inputs
  *
  *************************************/
 
 static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
 
-READ16_HANDLER( speedfrk_input_port_1_r )
+static READ16_HANDLER( speedfrk_input_port_1_r )
 {
     static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
 	int val, current_frame;
@@ -552,9 +590,9 @@ INPUT_PORTS_START( sundance )
 	PORT_DIPNAME( SW7,	   SW7OFF,		 DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	   SW7OFF,		 DEF_STR( Off ) )
 	PORT_DIPSETTING(	   SW7ON,		 DEF_STR( On ) )
-	PORT_DIPNAME( SW4,	   SW4ON,		 DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	   SW4ON,		 "1 coin/2 players" )
-	PORT_DIPSETTING(	   SW4OFF,		 "2 coins/2 players" )
+	PORT_DIPNAME( SW4,	   SW4OFF,		 DEF_STR( Unknown ) ) /* supposedly coinage, doesn't work */
+	PORT_DIPSETTING(	   SW4OFF,		 DEF_STR( Off ) )
+	PORT_DIPSETTING(	   SW4ON,		 DEF_STR( On ) )
 	PORT_DIPNAME( SW3,	   SW3ON,		 "Language" )
 	PORT_DIPSETTING(	   SW3OFF,		 "Japanese" )
 	PORT_DIPSETTING(	   SW3ON,		 "English" )
@@ -565,28 +603,50 @@ INPUT_PORTS_START( sundance )
 	PORT_DIPSETTING(	   SW2OFF|SW1OFF, "2:00/coin" )
 
 	PORT_START /* inputs */
-	PORT_BIT ( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 1 motion */
-	PORT_BIT ( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 2 motion */
-	PORT_BIT ( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 1 motion */
-	PORT_BIT ( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 2 motion */
-	PORT_BIT ( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED ) /* 2 suns */
-	PORT_BIT ( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 1 motion */
-	PORT_BIT ( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 2 motion */
-	PORT_BIT ( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 1 motion */
-	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED ) /* 4 suns */
-	PORT_BIT ( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED ) /* Grid */
-	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED ) /* 3 suns */
+	PORT_BIT ( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P2 Pad */
+	PORT_BIT ( 0x4000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P1 Pad */
+	PORT_BIT ( 0x2000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P2 Pad */
+	PORT_BIT ( 0x1000, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P1 Pad */
+	PORT_BITX( 0x0800, IP_ACTIVE_LOW, 0, "2 Suns", KEYCODE_COMMA, IP_JOY_NONE )
+	PORT_BIT ( 0x0400, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P2 Pad */
+	PORT_BIT ( 0x0200, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P1 Pad */
+	PORT_BIT ( 0x0100, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P2 Pad */
+	PORT_BITX( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER2, "P2 Shoot", KEYCODE_LCONTROL, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0040, IP_ACTIVE_LOW, 0, "4 Suns", KEYCODE_SLASH, IP_JOY_NONE )
+	PORT_BITX( 0x0020, IP_ACTIVE_LOW, 0, "Toggle Grid", KEYCODE_G, IP_JOY_NONE )
+	PORT_BITX( 0x0010, IP_ACTIVE_LOW, 0, "3 Suns", KEYCODE_STOP, IP_JOY_NONE )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED ) /* player 2 motion */
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1, "P1 Shoot", KEYCODE_0_PAD, IP_JOY_DEFAULT )
+	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_SPECIAL ) /* P1 Pad */
 
 	PORT_START /* analog stick X - unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* analog stick Y - unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "P1 Pad 1", KEYCODE_7_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "P1 Pad 2", KEYCODE_8_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1, "P1 Pad 3", KEYCODE_9_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1, "P1 Pad 4", KEYCODE_4_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1, "P1 Pad 5", KEYCODE_5_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1, "P1 Pad 6", KEYCODE_6_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER1, "P1 Pad 7", KEYCODE_1_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER1, "P1 Pad 8", KEYCODE_2_PAD, IP_JOY_NONE )
+	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON9 | IPF_PLAYER1, "P1 Pad 9", KEYCODE_3_PAD, IP_JOY_NONE )
+
+	PORT_START
+	PORT_BITX( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "P2 Pad 1", KEYCODE_Q, IP_JOY_NONE )
+	PORT_BITX( 0x0002, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "P2 Pad 2", KEYCODE_W, IP_JOY_NONE )
+	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2, "P2 Pad 3", KEYCODE_E, IP_JOY_NONE )
+	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER2, "P2 Pad 4", KEYCODE_A, IP_JOY_NONE )
+	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER2, "P2 Pad 5", KEYCODE_S, IP_JOY_NONE )
+	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER2, "P2 Pad 6", KEYCODE_D, IP_JOY_NONE )
+	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER2, "P2 Pad 7", KEYCODE_Z, IP_JOY_NONE )
+	PORT_BITX( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON8 | IPF_PLAYER2, "P2 Pad 8", KEYCODE_X, IP_JOY_NONE )
+	PORT_BITX( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON9 | IPF_PLAYER2, "P2 Pad 9", KEYCODE_C, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -1250,6 +1310,8 @@ static DRIVER_INIT( sundance )
 	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
 	cinemat_sound_handler = 0;
 	artwork_set_overlay(sundance_overlay);
+
+	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, sundance_input_port_1_r);
 }
 
 
@@ -1333,7 +1395,7 @@ GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ROT0,   "bootleg", 
 GAMEX(1979, tailg,    0,       cinemat,  tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
 GAMEX(1979, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
-GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NO_SOUND )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
 GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
 GAMEX(1980, armorap,  armora,  armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack (prototype)", GAME_NO_SOUND )

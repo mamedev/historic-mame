@@ -531,6 +531,7 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 
 
 #define GET_CONST_RR(const_val, pc)					\
+{													\
 	INT16 tmp;										\
 	PC += 2;										\
 	tmp = READ_OP(PC);								\
@@ -553,7 +554,8 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 		{											\
 			const_val |= 0xffffc000;				\
 		}											\
-	}
+	}												\
+}
 
 
 static UINT8 e132xs_reg_layout[] =
@@ -1244,8 +1246,9 @@ void e132xs_divu(void)
 				//Rd//Rdf -> undefined
 				//Z -> undefined
 				//N -> undefined
+				UINT32 addr;
 				SET_V(1);
-				UINT32 addr = get_trap_addr(RANGE_ERROR);
+				addr = get_trap_addr(RANGE_ERROR);
 				execute_trap(addr);
 			}
 			else
@@ -1314,8 +1317,9 @@ void e132xs_divs(void)
 				//Rd//Rdf -> undefined
 				//Z -> undefined
 				//N -> undefined
+				UINT32 addr;
 				SET_V(1);
-				UINT32 addr = get_trap_addr(RANGE_ERROR);
+				addr = get_trap_addr(RANGE_ERROR);
 				execute_trap(addr);
 			}
 			else

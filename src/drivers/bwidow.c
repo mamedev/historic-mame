@@ -836,6 +836,22 @@ ROM_END
 ROM_START( lunarbat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* Vector ROM */
+	ROM_LOAD( "010.010",      0x2800, 0x0800, CRC(48fd38aa) SHA1(e6ec31e784c2965369161c33d00903ba027f7f20) )
+	ROM_LOAD( "007.010",      0x3000, 0x1000, CRC(9754830e) SHA1(2e6885155a93d4eaf9a405f3eb740f2f4b30bc23) )
+	ROM_LOAD( "008.010",      0x4000, 0x1000, CRC(084aa8db) SHA1(80050f981b9a673d336bbcf712faf21b7be7e042) )
+	/* Program ROM */
+	ROM_LOAD( "001.010",      0x9000, 0x1000, CRC(cd7e1780) SHA1(92265a548485d140b73ef542ad66dc32cb52d42b) )
+	ROM_LOAD( "002.010",      0xa000, 0x1000, CRC(dc813a54) SHA1(c543cae3a3ba5b00e5a8714a42b2557bc6e730cf) )
+	ROM_LOAD( "003.010",      0xb000, 0x1000, CRC(8e1fecd3) SHA1(a43cb4ea77e095227590fcefa778688093dcf135) )
+	ROM_LOAD( "004.010",      0xc000, 0x1000, CRC(c407764f) SHA1(f202a9fe6c10975bb124b4b1e902341da578da8f) )
+	ROM_LOAD( "005.010",      0xd000, 0x1000, CRC(4feb6f81) SHA1(b852f1093e56343225c1b2b2554a93c88fc58637) )
+	ROM_LOAD( "006.010",      0xe000, 0x1000, CRC(f8ad139d) SHA1(e9e0dcb0872b19af09825a979f8b3747c9632091) )
+	ROM_RELOAD(               0xf000, 0x1000 )	/* for reset/interrupt vectors */
+ROM_END
+
+ROM_START( lunarba1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* Vector ROM */
 	ROM_LOAD( "vrom1.bin",   0x2800, 0x0800, CRC(c60634d9) SHA1(b94f056b5e73a2e015ba9a4be66dc2abee325016) )
 	ROM_LOAD( "vrom2.bin",   0x3000, 0x1000, CRC(53d9a8a2) SHA1(c33766658dd3523e99e664ef42a4ba4ab884fa80) )
 	/* Program ROM */
@@ -886,4 +902,5 @@ GAME( 1982, bwidow,   0,        bwidow,   bwidow,   0, ROT0, "Atari", "Black Wid
 GAME( 1982, gravitar, 0,        gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 3)" )
 GAME( 1982, gravitr2, gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 2)" )
 GAME( 1982, gravp,    gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (prototype)" )
-GAME( 1982, lunarbat, gravitar, lunarbat, lunarbat, 0, ROT0, "Atari", "Lunar Battle (prototype)" )
+GAME( 1982, lunarbat, gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Lunar Battle (prototype, later)" )
+GAME( 1982, lunarba1, gravitar, lunarbat, lunarbat, 0, ROT0, "Atari", "Lunar Battle (prototype, earlier)" )

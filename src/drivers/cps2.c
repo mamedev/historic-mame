@@ -50,7 +50,7 @@
   	 unknown 					Pnickies
 	cmpi.l	#$1F740D12,D0		Pocket Fighters
 	move.w	$00804020,D0		Powered Gear
- 	 unknown 					Progear no Arashi
+  	 unknown 					Progear no Arashi
   	 unknown 					Puzz Loop 2
 	cmpi.l	#$19730827,D1		Quiz Nanairo Dreams
   	cmpi.l	#$05642194,D0		Rockman					(found in CPS1 version)
@@ -2582,32 +2582,6 @@ ROM_START( gwingj )
 	ROM_LOAD16_WORD_SWAP( "ggw.12",   0x400000, 0x400000, CRC(4bee4e8f) SHA1(c440b5a38359ec3b8002f39690b79bf78703f5d0) )
 ROM_END
 
-ROM_START( jgokushi )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "majj.03", 0x000000, 0x80000, CRC(4614a3b2) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "majjx.03", 0x000000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-//	ROMX_LOAD( "maj-sim.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-
-	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "maj.01",   0x00000, 0x08000, CRC(1fe8c213) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-//	ROM_LOAD16_WORD_SWAP( "maj-sim.05a",   0x000000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "maj-sim.05b",   0x200000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-ROM_END
-
 ROM_START( megaman2 )
 	ROM_REGION(CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "rm2u.03", 0x000000, 0x80000, CRC(8ffc2cd1) SHA1(919ef08311008288b31ed42fb13172580d50433a) )
@@ -2750,6 +2724,41 @@ ROM_START( mmatrixj )
 ROM_END
 
 ROM_START( msh )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "mshe.03e", 0x000000, 0x80000, CRC(bd951414) SHA1(5585bdd1484dc18c7630d689f60d91c068aafc97) )
+	ROM_LOAD16_WORD_SWAP( "mshe.04e", 0x080000, 0x80000, CRC(19dd42f2) SHA1(48bd3e4d2d7e9e07275bd9c00530719deb100090) )
+	ROM_LOAD16_WORD_SWAP( "msh.05",   0x100000, 0x80000, CRC(6a091b9e) SHA1(7fa54e69e1a1ca348cb08d892d55023e9a3ff4cb) )
+	ROM_LOAD16_WORD_SWAP( "msh.06b",  0x180000, 0x80000, CRC(803e3fa4) SHA1(0acdeda65002521bf24130cbf06f9faa1dcef9e5) )
+	ROM_LOAD16_WORD_SWAP( "msh.07a",  0x200000, 0x80000, CRC(c45f8e27) SHA1(4d28e0782c31ce56e728ac6ef5edd10437f00637) )
+	ROM_LOAD16_WORD_SWAP( "msh.08a",  0x280000, 0x80000, CRC(9ca6f12c) SHA1(26ad682667b983b805e1f577426e5fca8ee3c82b) )
+	ROM_LOAD16_WORD_SWAP( "msh.09a",  0x300000, 0x80000, CRC(82ec27af) SHA1(caf76268063ba91d28e8af684d60c2d71f29b9b9) )
+	ROM_LOAD16_WORD_SWAP( "msh.10b",  0x380000, 0x80000, CRC(8d931196) SHA1(983e62efcdb4c8db6bce6acf4f86acb9447b565d) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "mshex.03e", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "mshex.04e", 0x080000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROMX_LOAD( "msh.13",   0x0000000, 0x400000, CRC(09d14566) SHA1(c96463654043f22da5e844c6da17aa9273dc3439) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.15",   0x0000002, 0x400000, CRC(ee962057) SHA1(24e359accb5f71a5863d7bad4088719fa547f88c) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.17",   0x0000004, 0x400000, CRC(604ece14) SHA1(880fb62b33ba4cceb38635e4ec056fac11a3c70f) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.19",   0x0000006, 0x400000, CRC(94a731e8) SHA1(1e784a3412e7361e3001494e1daf840ef8c20449) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.14",   0x1000000, 0x400000, CRC(4197973e) SHA1(93aeea1a480b5f452c8a40ae3fff956796b859fa) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.16",   0x1000002, 0x400000, CRC(438da4a0) SHA1(ca93b14c3a570f9dd582efbb3f0536a92e535042) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.18",   0x1000004, 0x400000, CRC(4db92d94) SHA1(f1b25ccc0627139ad5b287a8f2ab3b4a2fb8b8e4) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "msh.20",   0x1000006, 0x400000, CRC(a2b0c6c0) SHA1(71016c01c1a706b73cf5b9ac7e384a030c6cf08d) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "msh.01",   0x00000, 0x08000, CRC(c976e6f9) SHA1(281025e5aaf97c0aeddc8bd0f737d092daadad9e) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "msh.02",   0x28000, 0x20000, CRC(ce67d0d9) SHA1(324226597cc5a11603f04085fef7715a314ecc05) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "msh.11",   0x000000, 0x200000, CRC(37ac6d30) SHA1(ec67421fbf4a08a686e76792cb35e9cbf04d022d) )
+	ROM_LOAD16_WORD_SWAP( "msh.12",   0x200000, 0x200000, CRC(de092570) SHA1(a03d0df901f6ea79685eaed67db65bee14ec29c6) )
+ROM_END
+
+ROM_START( mshu )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "mshu.03", 0x000000, 0x80000, CRC(d2805bdd) SHA1(a6f78c31a82168bb5f7d614dcebbeab8231e2d75) )
 	ROM_LOAD16_WORD_SWAP( "mshu.04", 0x080000, 0x80000, CRC(743f96ff) SHA1(abb82359bb68966028ea33e94996803599f3e273) )
@@ -3218,6 +3227,41 @@ ROM_START( mshvsfb )
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
 //	ROM_LOAD16_WORD_SWAP( "mvsbx.03g", 0x000000, 0x80000, NO_DUMP )
 //	ROM_LOAD16_WORD_SWAP( "mvsbx.04g", 0x080000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
+	ROMX_LOAD( "mvs.13",   0x0000000, 0x400000, CRC(29b05fd9) SHA1(e8fdb1ee5515a560eb4256ae4fd99bb1192e1a87) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.15",   0x0000002, 0x400000, CRC(faddccf1) SHA1(4ed03ea91883a0413325f57edcc1614120b5922c) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.17",   0x0000004, 0x400000, CRC(97aaf4c7) SHA1(6a054921cc14fe080cb3f62c391f8ae3cc7e8ba9) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.19",   0x0000006, 0x400000, CRC(cb70e915) SHA1(da4d2480d348ac6dfd01256a88f4f3db8357ae46) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.14",   0x1000000, 0x400000, CRC(b3b1972d) SHA1(0f2c3fb7de014181ee481ec35d0578b2c116c2dc) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.16",   0x1000002, 0x400000, CRC(08aadb5d) SHA1(3a2c222eca3e7df80ce69951b3db6442312751a4) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.18",   0x1000004, 0x400000, CRC(c1228b35) SHA1(7afdfb552888c79d0fbb30242b3d917b87fad57a) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mvs.20",   0x1000006, 0x400000, CRC(366cc6c2) SHA1(6f2a789087c8e404c5227b927fa8328c03593243) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "mvs.01",   0x00000, 0x08000, CRC(68252324) SHA1(138ef320ef27956b2ab5591d49a1315b7b0a194c) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "mvs.02",   0x28000, 0x20000, CRC(b34e773d) SHA1(3bcf44bf06c35814cff29d244142db7abe05bd39) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "mvs.11",   0x000000, 0x400000, CRC(86219770) SHA1(4e5b68d382a5aa37f8b0b6434c53a2b95f5f9a4d) )
+	ROM_LOAD16_WORD_SWAP( "mvs.12",   0x400000, 0x400000, CRC(f2fd7f68) SHA1(28a30d55d3eaf963006c7cbe7c288099cd3ba536) )
+ROM_END
+
+ROM_START( mshvsfb1 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "mvsb.03f", 0x000000, 0x80000, CRC(9c4bb950) SHA1(85d0026a691682c195d6e617bf28def50029cb03) )
+	ROM_LOAD16_WORD_SWAP( "mvsb.04f", 0x080000, 0x80000, CRC(d3320d13) SHA1(c6fa2b8b727a1192fd21131496067447053b5547) )
+	ROM_LOAD16_WORD_SWAP( "mvs.05a",  0x100000, 0x80000, CRC(1a5de0cb) SHA1(738a27f83704c208d36d73bf766d861ef2d51a89) )
+	ROM_LOAD16_WORD_SWAP( "mvs.06a",  0x180000, 0x80000, CRC(959f3030) SHA1(fbbaa915324815246738f3426232e623f039ce26) )
+	ROM_LOAD16_WORD_SWAP( "mvs.07b",  0x200000, 0x80000, CRC(7f915bdb) SHA1(683da09c5ba55e31b59aa95a8e13c45dc574ab3c) )
+	ROM_LOAD16_WORD_SWAP( "mvs.08a",  0x280000, 0x80000, CRC(c2813884) SHA1(49e5d4bc48f90c8146cb6aafb9240aff0119f1a7) )
+	ROM_LOAD16_WORD_SWAP( "mvs.09b",  0x300000, 0x80000, CRC(3ba08818) SHA1(9ab132a3cac55fcccebe6c99b6fb0ba1305f8f6e) )
+	ROM_LOAD16_WORD_SWAP( "mvs.10b",  0x380000, 0x80000, CRC(cf0dba98) SHA1(f4c1f8a6e7a79ecc6241d5268b3039f8a09ea516) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "mvsbx.03f", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "mvsbx.04f", 0x080000, 0x80000, NO_DUMP )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvs.13",   0x0000000, 0x400000, CRC(29b05fd9) SHA1(e8fdb1ee5515a560eb4256ae4fd99bb1192e1a87) , ROM_GROUPWORD | ROM_SKIP(6) )
@@ -3760,49 +3804,6 @@ ROM_START( smbombr1 )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD16_WORD_SWAP( "smb.11",   0x000000, 0x200000, CRC(c56935f9) SHA1(ca1705e48e31ddc13505e6297bceca2bec1bb209) )
 	ROM_LOAD16_WORD_SWAP( "smb.12",   0x200000, 0x200000, CRC(955b0782) SHA1(ee09500e7b44e923126533613bfe26cdabc7ab5f) )
-ROM_END
-
-ROM_START( rckmanj )
-	ROM_REGION(CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "rcmj.03a", 0x000000, 0x80000, CRC(30559f60) )
-	ROM_LOAD16_WORD_SWAP( "rcmj.04a", 0x080000, 0x80000, CRC(5efc9366) )
-	ROM_LOAD16_WORD_SWAP( "rcmj.05a", 0x100000, 0x80000, CRC(517ccde2) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "rcmjx.03a", 0x000000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-	ROM_FILL(              0x000000, 0x800000, 0 )
-	ROMX_LOAD( "rcm.73",   0x800000, 0x80000, CRC(774c6e04) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.74",   0x880000, 0x80000, CRC(004ec725) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.75",   0x900000, 0x80000, CRC(70a73f99) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.76",   0x980000, 0x80000, CRC(89a889ad) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.63",   0x800002, 0x80000, CRC(acad7c62) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.64",   0x880002, 0x80000, CRC(65c0464e) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.65",   0x900002, 0x80000, CRC(ecedad3d) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.66",   0x980002, 0x80000, CRC(1300eb7b) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.83",   0x800002, 0x80000, CRC(6af30499) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.84",   0x880004, 0x80000, CRC(fb3097cc) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.85",   0x900004, 0x80000, CRC(3d6186d8) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.86",   0x980004, 0x80000, CRC(6d974ebd) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.93",   0x800006, 0x80000, CRC(7a5a5166) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.94",   0x880006, 0x80000, CRC(2e16557a) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.95",   0x900006, 0x80000, CRC(8c7700f1) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.96",   0x980006, 0x80000, CRC(7da4cd24) , ROM_GROUPWORD | ROM_SKIP(6) )
-
-	ROM_REGION(QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "rcm.01",   0x00000, 0x08000, CRC(d60cf8a3) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD16_WORD_SWAP( "rcm.51",   0x000000, 0x80000, CRC(b6d07080) )
-	ROM_LOAD16_WORD_SWAP( "rcm.52",   0x080000, 0x80000, CRC(dfddc493) )
-	ROM_LOAD16_WORD_SWAP( "rcm.53",   0x100000, 0x80000, CRC(6062ae3a) )
-	ROM_LOAD16_WORD_SWAP( "rcm.54",   0x180000, 0x80000, CRC(08c6f3bf) )
-	ROM_LOAD16_WORD_SWAP( "rcm.55",   0x200000, 0x80000, CRC(f97dfccc) )
-	ROM_LOAD16_WORD_SWAP( "rcm.56",   0x280000, 0x80000, CRC(ade475bc) )
-	ROM_LOAD16_WORD_SWAP( "rcm.57",   0x300000, 0x80000, CRC(075effb3) )
-	ROM_LOAD16_WORD_SWAP( "rcm.58",   0x380000, 0x80000, CRC(5b39ea33) )
 ROM_END
 
 ROM_START( sfa )
@@ -6146,7 +6147,8 @@ GAME( 1994, smbomb,   ringdest,cps2, ringdest,cps2, ROT0,   "Capcom", "Super Mus
 GAME( 1994, smbombr1, ringdest,cps2, ringdest,cps2, ROT0,   "Capcom", "Super Muscle Bomber: The International Blowout (Japan 940808)" )
 GAME( 1995, cybots,   0,       cps2, cybots,  cps2, ROT0,   "Capcom", "Cyberbots: Fullmetal Madness (US 950424)" )
 GAME( 1995, cybotsj,  cybots,  cps2, cybots,  cps2, ROT0,   "Capcom", "Cyberbots: Fullmetal Madness (Japan 950420)" )
-GAME( 1995, msh,      0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (US 951024)" )
+GAMEX(1995, msh,      0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (Euro 951024)", GAME_NOT_WORKING )
+GAME( 1995, mshu,     msh,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (US 951024)" )
 GAME( 1995, mshj,     msh,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (Japan 951024)" )
 GAME( 1995, msha,     msh,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (Asia 951024)" )
 GAME( 1995, mshh,     msh,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes (Hispanic 951117)" )
@@ -6156,7 +6158,6 @@ GAMEX(1995, nwarrh,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Night War
 GAMEX(1995, nwarrb,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Night Warriors: Darkstalkers' Revenge (Brazil 950403)", GAME_NOT_WORKING )
 GAME( 1995, vhuntj,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire Hunter: Darkstalkers' Revenge (Japan 950316)" )
 GAME( 1995, vhuntjr1, nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire Hunter: Darkstalkers' Revenge (Japan 950302)" )
-GAMEX(1995, rckmanj,  0,       cps2, sgemf,   cps2, ROT0,   "Capcom", "Rockman: The Power Battle (Japan 950922)", GAME_NOT_WORKING )
 GAME( 1995, sfa,      0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950727)" )
 GAME( 1995, sfar1,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950718)" )
 GAME( 1995, sfar2,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950605)" )
@@ -6218,6 +6219,7 @@ GAMEX(1997, mshvsfh,  mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Su
 GAMEX(1997, mshvsfa,  mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Asia 970625)", GAME_NOT_WORKING )
 GAMEX(1997, mshvsfa1, mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Asia 970620)", GAME_NOT_WORKING )
 GAMEX(1997, mshvsfb,  mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Brazil 970827)", GAME_NOT_WORKING )
+GAMEX(1997, mshvsfb1, mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Brazil 970625)", GAME_NOT_WORKING )
 GAME( 1997, sgemf,    0,       cps2, sgemf,   cps2, ROT0,   "Capcom", "Super Gem Fighter Mini Mix (US 970904)" )
 GAME( 1997, pfghtj,   sgemf,   cps2, sgemf,   cps2, ROT0,   "Capcom", "Pocket Fighter (Japan 970904)" )
 GAME( 1997, sgemfa,   sgemf,   cps2, sgemf,   cps2, ROT0,   "Capcom", "Super Gem Fighter: Mini Mix (Asia 970904)" )
@@ -6240,7 +6242,6 @@ GAME( 1998, sfa3r1,   sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1998, sfz3j,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980727)" )
 GAME( 1998, sfz3jr1,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980629)" )
 GAME( 1998, sfz3a,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Asia 980701)" )
-GAMEX(1999, jgokushi, 0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan 990527)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Takumi */
 

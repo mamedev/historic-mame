@@ -624,6 +624,24 @@ static READ16_HANDLER( controller4_16_r )
 	return (readinputport(6) & ~(readinputport(5) & 0x40));
 }
 
+static READ16_HANDLER( popbounc1_16_r )
+{
+	data16_t res;
+
+	res = (readinputport(ts?0:7) << 8) + readinputport(3);
+
+	return res;
+}
+
+static READ16_HANDLER( popbounc2_16_r )
+{
+	data16_t res;
+
+	res = (readinputport(ts?1:8) << 8);
+
+	return res;
+}
+
 static WRITE16_HANDLER( neo_bankswitch_w )
 {
 	int bankaddress;
@@ -1250,6 +1268,100 @@ INPUT_PORTS_START( irrmaze )
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( popbounc )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x90, IP_ACTIVE_LOW, IPT_BUTTON1 ) // note it needs it from 0x80 when using paddle
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x90, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) // note it needs it from 0x80 when using paddle
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "Next Game",KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "Previous Game",KEYCODE_8, IP_JOY_NONE )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card inserted */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* IN3 */
+	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
+	PORT_DIPSETTING(	0x00, "1?" )
+	PORT_DIPSETTING(	0x02, "2?" )
+	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
+	PORT_DIPSETTING(	0x38, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START		/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	/* Fake  IN 5 */
+	PORT_START
+#if 0
+	PORT_DIPNAME( 0x03, 0x02,"Territory" )
+	PORT_DIPSETTING(	0x00,"Japan" )
+	PORT_DIPSETTING(	0x01,"USA" )
+	PORT_DIPSETTING(	0x02,"Europe" )
+//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
+//	PORT_DIPSETTING(	0x00,"Home" )
+//	PORT_DIPSETTING(	0x04,"Arcade" )
+	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
+	PORT_DIPSETTING(	0x60,"2" )
+//	PORT_DIPSETTING(	0x40,"2" )
+	PORT_DIPSETTING(	0x20,"4" )
+	PORT_DIPSETTING(	0x00,"6" )
+#endif
+
+	PORT_START		/* Test switch */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START		/* IN0 multiplexed */
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 20, 0, 0 )
+
+	PORT_START		/* IN1 multiplexed */
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_PLAYER2 , 10, 20, 0, 0 )
+INPUT_PORTS_END
 
 /******************************************************************************/
 
@@ -2791,8 +2903,34 @@ ROM_START( fatfursp )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "058-p1.bin", 0x000000, 0x100000, CRC(2f585ba2) SHA1(429b4bf43fb9b1082c15d645ca328f9d175b976b) )
 	ROM_LOAD16_WORD_SWAP( "058-p2.bin", 0x100000, 0x080000, CRC(d7c71a6b) SHA1(b3428063031a2e5857da40a5d2ffa87fb550c1bb) )
-	/* rom below is just a modified p1 (no significant changes), doesn't seem to be on any boards */
+	/* rom below is just a modified p1 */
 //	ROM_LOAD16_WORD_SWAP( "058-p3.bin", 0x180000, 0x080000, CRC(9f0c1e1a) SHA1(02861b0f230541becccc3df6a2c85dbe8733e7ce) )
+
+	NEO_SFIX_128K( "058-s1.bin", CRC(2df03197) SHA1(24083cfc97e720ac9e131c9fe37df57e27c49294) )
+
+	NEO_BIOS_SOUND_128K( "058-m1.bin", CRC(ccc5186e) SHA1(cf9091c523c182aebfb928c91640b2d72fd70123) )
+
+	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "058-v1.bin", 0x000000, 0x200000, CRC(55d7ce84) SHA1(05ac6a395d9bf9166925acca176a8d6129f533c8) )
+	ROM_LOAD( "058-v2.bin", 0x200000, 0x200000, CRC(ee080b10) SHA1(29814fc21bbe30d37745c8918fab00c83a309be4) )
+	ROM_LOAD( "058-v3.bin", 0x400000, 0x100000, CRC(f9eb3d4a) SHA1(d1747f9460b965f6daf4f881ed4ecd04c5253434) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "058-c1.bin", 0x000000, 0x200000, CRC(044ab13c) SHA1(569d283638a132bc163faac2a9055497017ee0d2) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "058-c2.bin", 0x000001, 0x200000, CRC(11e6bf96) SHA1(c093a4f93f13e07b276e28b30c2a14dda9135d8f) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "058-c3.bin", 0x400000, 0x200000, CRC(6f7938d5) SHA1(be057b0a3faeb76d5fff161d3e6fea8a26e11d2c) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "058-c4.bin", 0x400001, 0x200000, CRC(4ad066ff) SHA1(4e304646d954d5f7bbabc5d068e85de31d38830f) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "058-c5.bin", 0x800000, 0x200000, CRC(49c5e0bf) SHA1(f3784178f90751990ea47a082a6aa869ee3566c9) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "058-c6.bin", 0x800001, 0x200000, CRC(8ff1f43d) SHA1(6180ceb5412a3e2e34e9513a3283b9f63087f747) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( fatfursa )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "058-ep1.bin", 0x000000, 0x100000, CRC(36be707d) SHA1(59dc26a85f967f07a1a8ce9300e7f0eb52ccf794) )
+	/* the first part of this is the same as p3 in the other set, maybe the other cart was actually an upgraded one? */
+	ROM_LOAD16_WORD_SWAP( "058-p2.bin", 0x100000, 0x080000, CRC(d7c71a6b) SHA1(b3428063031a2e5857da40a5d2ffa87fb550c1bb) )
 
 	NEO_SFIX_128K( "058-s1.bin", CRC(2df03197) SHA1(24083cfc97e720ac9e131c9fe37df57e27c49294) )
 
@@ -2845,6 +2983,29 @@ ROM_START( fightfev )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "060-p1.bin", 0x000000, 0x080000, CRC(3032041b) SHA1(4b8ed2e6f74579ea35a53e06ccac42d6905b0f51) )
 	ROM_LOAD16_WORD_SWAP( "060-p2.bin", 0x080000, 0x080000, CRC(b0801d5f) SHA1(085746d8f5d271d5f84ccbb7f577193c391f88d4) )
+
+	NEO_SFIX_128K( "060-s1.bin", CRC(70727a1e) SHA1(e0d226be0578adbe7c1d41baba79e61d4d8fac39) )
+
+	NEO_BIOS_SOUND_128K( "060-m1.bin", CRC(0b7c4e65) SHA1(999a1e784de18db3f1332b30bc425836ea6970be) )
+
+	ROM_REGION(  0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "060-v1.bin", 0x000000, 0x200000, CRC(f417c215) SHA1(0f53b8dd056f43b5d880628e8b74c2b27881ffac) )
+	ROM_LOAD( "060-v2.bin", 0x200000, 0x100000, CRC(64470036) SHA1(eb2b34b3c01eb5c1a0a40cff6f4c0f2eee7bf7f2) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x0800000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "060-c1.bin", 0x0000000, 0x200000, CRC(8908fff9) SHA1(f8c16ab0248b60f3a62e0d4d65c456e2f8e4da49) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "060-c2.bin", 0x0000001, 0x200000, CRC(c6649492) SHA1(5d39b077387ed6897ac075ede4a2aa94bb64545e) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "060-c3.bin", 0x0400000, 0x200000, CRC(0956b437) SHA1(c70be8b5cebf321afe4c3f5e9a12413c3077694a) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "060-c4.bin", 0x0400001, 0x200000, CRC(026f3b62) SHA1(d608483b70d60e7aa0e41f25a8b3fed508129eb7) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( fightfva )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "060-p1a.bin", 0x0000000, 0x100000, CRC(2a104b50) SHA1(3eb663d3df7074e1cdf4c0e450a35c9cf55d8979) )
+	/* there was also a copy of the 060-p1.bin with the name 060-p2.bin maybe it should be loaded over the top or this
+	   larger rom is an older revision... */
 
 	NEO_SFIX_128K( "060-s1.bin", CRC(70727a1e) SHA1(e0d226be0578adbe7c1d41baba79e61d4d8fac39) )
 
@@ -3916,6 +4077,33 @@ ROM_END
 ROM_START( kof96 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "214-p1.bin", 0x000000, 0x100000, CRC(52755d74) SHA1(4232d627f1d2e6ea9fc8cf01571d77d4d5b8a1bb) )
+	ROM_LOAD16_WORD_SWAP( "214-p2.bin", 0x100000, 0x200000, CRC(002ccb73) SHA1(3ae8df682c75027ca82db25491021eeba00a267e) )
+
+	NEO_SFIX_128K( "214-s1.bin", CRC(1254cbdb) SHA1(fce5cf42588298711a3633e9c9c1d4dcb723ac76) )
+
+	NEO_BIOS_SOUND_128K( "214-m1.bin", CRC(dabc427c) SHA1(b76722ed142ee7addceb4757424870dbd003e8b3) )
+
+	ROM_REGION( 0xa00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "214-v1.bin", 0x000000, 0x400000, CRC(63f7b045) SHA1(1353715f1a8476dca6f8031d9e7a401eacab8159) )
+	ROM_LOAD( "214-v2.bin", 0x400000, 0x400000, CRC(25929059) SHA1(6a721c4cb8f8dc772774023877d4a9f50d5a9e31) )
+	ROM_LOAD( "214-v3.bin", 0x800000, 0x200000, CRC(92a2257d) SHA1(5064aec78fa0d104e5dd5869b95382aa170214ee) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "214-c1.bin", 0x0000000, 0x400000, CRC(7ecf4aa2) SHA1(f773c4c1f05d58dd37e7bb2ac1d1e0ec43998a71) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c2.bin", 0x0000001, 0x400000, CRC(05b54f37) SHA1(cc31653fe4cb05201fba234e080cb9c7a7592b1b) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c3.bin", 0x0800000, 0x400000, CRC(64989a65) SHA1(e6f3749d43be0afa9dad7b085cb782ba694252ca) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c4.bin", 0x0800001, 0x400000, CRC(afbea515) SHA1(ae875052728de33174827705646bd14cf3937b5c) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c5.bin", 0x1000000, 0x400000, CRC(2a3bbd26) SHA1(7c1a7e50a10a1b082e0d0d515c34135ee9f995ac) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c6.bin", 0x1000001, 0x400000, CRC(44d30dc7) SHA1(c8ae001e37224b55d9e4a4d99f6578b4f6eb055f) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c7.bin", 0x1800000, 0x400000, CRC(3687331b) SHA1(2be95caab76d7af51674f93884330ba73a6053e4) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c8.bin", 0x1800001, 0x400000, CRC(fa1461ad) SHA1(6c71a7f08e4044214223a6bf80984582ab5e0328) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof96h )
+	ROM_REGION( 0x300000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "214-pg1.bin",0x000000, 0x100000, CRC(bd3757c9) SHA1(35392a044117e46c088ff0fdd07d69a3faa4f96e) )
 	ROM_LOAD16_WORD_SWAP( "214-p2.bin", 0x100000, 0x200000, CRC(002ccb73) SHA1(3ae8df682c75027ca82db25491021eeba00a267e) )
 
 	NEO_SFIX_128K( "214-s1.bin", CRC(1254cbdb) SHA1(fce5cf42588298711a3633e9c9c1d4dcb723ac76) )
@@ -5824,6 +6012,14 @@ DRIVER_INIT( mjneogeo )
 	init_neogeo();
 }
 
+DRIVER_INIT( popbounc )
+{
+	install_mem_read16_handler (0, 0x300000, 0x300001, popbounc1_16_r);
+	install_mem_read16_handler (0, 0x340000, 0x340001, popbounc2_16_r);
+
+	init_neogeo();
+}
+
 /******************************************************************************/
 
 static UINT32 cpu1_second_bankaddress;
@@ -5929,7 +6125,8 @@ GAMEB( 1992, fatfury2, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK",
 GAMEB( 1992, ssideki,  neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks / Tokuten Ou" )
 GAMEB( 1994, kof94,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '94" )
 GAMEB( 1994, aof2,     neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
-GAMEB( 1993, fatfursp, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury Special / Garou Densetsu Special" )
+GAMEB( 1993, fatfursp, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury Special / Garou Densetsu Special (set 1)" )
+GAMEB( 1993, fatfursa, fatfursp, neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury Special / Garou Densetsu Special (set 2)" )
 GAMEB( 1995, savagere, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Savage Reign / Fu'un Mokushiroku - kakutou sousei" )
 GAMEB( 1994, ssideki2, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
 GAMEB( 1994, samsho2,  neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
@@ -5940,7 +6137,8 @@ GAMEB( 1995, kof95a,   kof95,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK",
 GAMEB( 1995, samsho3,  neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
 GAMEB( 1995, rbff1,    neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
 GAMEB( 1996, aof3,     neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
-GAMEB( 1996, kof96,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96" )
+GAMEB( 1996, kof96,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96 (set 1)" )
+GAMEB( 1996, kof96h,   kof96,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96 (set 2)" )
 GAMEB( 1996, ssideki4, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "SNK", "Ultimate 11 - The SNK Football Championship / Tokuten Ou - Honoo no Libero, The" )
 GAMEB( 1996, kizuna,   neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
 GAMEB( 1996, samsho4,  neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
@@ -6066,13 +6264,14 @@ GAMEB( 1998, blazstar, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Yumek
 GAMEB( 1999, preisle2, neogeo,   neogeo, neogeo, neogeo,  preisle2, ROT0, "Yumekobo", "Prehistoric Isle 2" ) /* Encrypted GFX */
 
 /* Viccom */
-GAMEB( 1994, fightfev, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever / Crystal Legacy" )
+GAMEB( 1994, fightfev, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever (set 1)" )
+GAMEB( 1994, fightfva, fightfev, neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever (set 2)" )
 
 /* Video System Co. */
 GAMEB( 1994, pspikes2, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "Video System Co.", "Power Spikes II" )
 GAMEB( 1994, sonicwi2, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
 GAMEB( 1995, sonicwi3, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
-GAMEB( 1997, popbounc, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Video System Co.", "Pop 'n Bounce / Gapporin" )
+GAMEB( 1997, popbounc, neogeo,   neogeo, neogeo, popbounc,popbounc, ROT0, "Video System Co.", "Pop 'n Bounce / Gapporin" )
 
 /* Visco */
 GAMEB( 1992, androdun, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Andro Dunos" )

@@ -95,6 +95,7 @@ MACHINE_INIT( kaneko16 )
 	0	1	2	S2	3
 	0	1	2	3	S3
 */
+
 	kaneko16_priority.tile[0] = 0;
 	kaneko16_priority.tile[1] = 1;
 	kaneko16_priority.tile[2] = 2;
@@ -151,6 +152,21 @@ static MACHINE_INIT( bloodwar )
 	kaneko16_sprite_type = 1;
 
 	memset(gtmr_mcu_com, 0, 4 * sizeof( data16_t) );
+}
+
+static MACHINE_INIT( bakubrkr )
+{
+	machine_init_kaneko16();
+
+	kaneko16_priority.tile[0] = 0;
+	kaneko16_priority.tile[1] = 1;
+	kaneko16_priority.tile[2] = 2;
+	kaneko16_priority.tile[3] = 3;
+
+	kaneko16_priority.sprite[0] = 0x0000;	// above all
+	kaneko16_priority.sprite[1] = 0x0000;	// above all
+	kaneko16_priority.sprite[2] = 0x0000;	// above all
+	kaneko16_priority.sprite[3] = 0x0000;	// above all
 }
 
 static MACHINE_INIT( gtmr )
@@ -1017,6 +1033,7 @@ static MEMORY_WRITE16_START( bakubrkr_writemem )
 	{ 0x100000, 0x10ffff, MWA16_RAM											},	// Work RAM
 	{ 0x400000, 0x40001f, kaneko16_YM2149_0_w								},	// Sound
 	{ 0x400200, 0x40021f, kaneko16_YM2149_1_w								},	//
+	{ 0x400400, 0x400401, OKIM6295_data_0_lsb_w	},	//
 	{ 0x500000, 0x500fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x501000, 0x501fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
 	{ 0x502000, 0x502fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
@@ -1028,8 +1045,8 @@ static MEMORY_WRITE16_START( bakubrkr_writemem )
 	{ 0x600000, 0x601fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
 	{ 0x700000, 0x700fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x900000, 0x90001f, kaneko16_sprites_regs_w,  &kaneko16_sprites_regs	},	// Sprites Regs
-	{ 0x800000, 0x80001f, kaneko16_layers_1_regs_w, &kaneko16_layers_1_regs	},	// Layers 0 Regs
-	{ 0xb00000, 0xb0001f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers 1 Regs
+	{ 0x800000, 0x80001f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers 1 Regs
+	{ 0xb00000, 0xb0001f, kaneko16_layers_1_regs_w, &kaneko16_layers_1_regs	},	// Layers 0 Regs
 	{ 0xd00000, 0xd00001, kaneko16_eeprom_w									},	// EEPROM
 MEMORY_END
 
@@ -2730,7 +2747,7 @@ static MACHINE_DRIVER_START( bakubrkr )
 	MDRV_FRAMES_PER_SECOND(59)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(kaneko16)
+	MDRV_MACHINE_INIT(bakubrkr)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */

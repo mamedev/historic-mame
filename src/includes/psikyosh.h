@@ -2,7 +2,6 @@
 #define MASTER_CLOCK 57272700	// main oscillator frequency
 
 extern data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
-extern int use_fake_pri;
 
 /* defined in vidhrdw/psiykosh.c */
 VIDEO_START( psikyosh );

@@ -478,7 +478,7 @@ static struct C140interface C140_interface_typeA =
 
 static struct C140interface C140_interface_typeB =
 {
-	C140_TYPE_SYSTEM21_A,
+	C140_TYPE_SYSTEM21_B,
 	8000000/374,
 	REGION_SOUND1,
 	50

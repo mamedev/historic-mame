@@ -12,11 +12,15 @@
 unsigned char *redalert_backram;
 unsigned char *redalert_spriteram1;
 unsigned char *redalert_spriteram2;
+unsigned char *redalert_spriteram3;
 unsigned char *redalert_characterram;
+unsigned char *redalert_characterram2;
 
 static unsigned char redalert_dirtyback[0x400];
 static unsigned char redalert_dirtycharacter[0x100];
+static unsigned char redalert_dirtycharacter2[0x100];
 static unsigned char redalert_backcolor[0x400];
+
 
 /* There might be a color PROM that dictates this? */
 /* These guesses are based on comparing the color bars on the test
@@ -41,7 +45,7 @@ static unsigned char color_lookup[] = {
 	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 };
 
-static int backcolor;
+static int backcolor, flip=0;
 
 WRITE_HANDLER( redalert_c040_w )
 {
@@ -49,6 +53,12 @@ WRITE_HANDLER( redalert_c040_w )
 	/* D0/D1 seem to head off to unconnected circuits */
 	/* D2 connects to a "NL" line, and NOTted to a "NH" line */
 	/* D3 connects to a "YI" line */
+
+	/*
+		D0 == 1				-> 1 player
+		D1 == 1 and D0 == 1 -> 2 players
+	*/
+	flip = !(data & 0x04);
 }
 
 WRITE_HANDLER( redalert_backcolor_w )
@@ -58,6 +68,14 @@ WRITE_HANDLER( redalert_backcolor_w )
 	backcolor = data & 0x07;
 }
 
+WRITE_HANDLER( demoneye_c040_w )
+{
+	/*
+		D0 == 1				-> 1 player
+		D1 == 1 and D0 == 1 -> 2 players
+	*/
+	flip = data & 0x04;
+}
 
 /***************************************************************************
 redalert_backram_w
@@ -102,6 +120,7 @@ WRITE_HANDLER( redalert_spriteram2_w )
 {
 	if (redalert_spriteram2[offset] != data)
 	{
+
 		redalert_dirtycharacter[((offset / 8) % 0x80) + 0x80] = 1;
 
 		redalert_spriteram2[offset] = data;
@@ -121,6 +140,28 @@ WRITE_HANDLER( redalert_characterram_w )
 		redalert_characterram[offset] = data;
 	}
 }
+
+WRITE_HANDLER( redalert_characterram2_w )
+{
+	if (redalert_characterram2[offset] != data)
+	{
+		redalert_dirtycharacter[((offset / 8) % 0x80)] = 1;
+
+		redalert_characterram2[offset] = data;
+	}
+}
+
+WRITE_HANDLER( redalert_spriteram3_w )
+{
+	if (redalert_spriteram3[offset] != data)
+	{
+		redalert_dirtycharacter2[((offset / 8) % 0x80) + 0x80] = 1;
+
+		redalert_spriteram3[offset] = data;
+	}
+
+}
+
 
 /***************************************************************************
 
@@ -143,7 +184,7 @@ VIDEO_UPDATE( redalert )
 
 		charcode = videoram[offs];
 
-		if (dirtybuffer[offs] || redalert_dirtycharacter[charcode])
+		if (dirtybuffer[offs] || redalert_dirtycharacter[charcode] || redalert_dirtycharacter2[charcode])
 		{
 			int sx,sy,color;
 
@@ -168,6 +209,12 @@ VIDEO_UPDATE( redalert )
 				redalert_dirtycharacter[charcode] = 2;
 			}
 
+			if (redalert_dirtycharacter2[charcode] == 1)
+			{
+				decodechar(Machine->gfx[3],charcode-0x80,redalert_spriteram3,
+							Machine->drv->gfxdecodeinfo[3].gfxlayout);
+				redalert_dirtycharacter2[charcode] = 2;
+			}
 
 			dirtybuffer[offs] = 0;
 
@@ -189,6 +236,15 @@ VIDEO_UPDATE( redalert )
 						0,0,
 						8*sx,8*sy,
 						&Machine->visible_area,TRANSPARENCY_NONE,0);
+
+				if( redalert_dirtycharacter2[charcode] != 0 )
+					drawgfx(tmpbitmap,Machine->gfx[3],
+							charcode-0x80,
+							color,
+							0,0,
+							8*sx,8*sy,
+							&Machine->visible_area,TRANSPARENCY_COLOR,0);
+
 			}
 
 			/* Second layer - background */
@@ -220,6 +276,15 @@ VIDEO_UPDATE( redalert )
 						0,0,
 						8*sx,8*sy,
 						&Machine->visible_area,TRANSPARENCY_COLOR,0);
+
+				if( redalert_dirtycharacter2[charcode] != 0 )
+					drawgfx(tmpbitmap,Machine->gfx[3],
+							charcode-0x80,
+							color,
+							0,0,
+							8*sx,8*sy,
+							&Machine->visible_area,TRANSPARENCY_COLOR,0);
+
 			}
 
 		}
@@ -229,6 +294,9 @@ VIDEO_UPDATE( redalert )
 	{
 		if (redalert_dirtycharacter[i] == 2)
 			redalert_dirtycharacter[i] = 0;
+
+		if (redalert_dirtycharacter2[i] == 2)
+			redalert_dirtycharacter2[i] = 0;
 	}
 
 	for (i = 0;i < 0x400;i++)
@@ -238,7 +306,6 @@ VIDEO_UPDATE( redalert )
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,flip,flip,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 }
-

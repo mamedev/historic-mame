@@ -263,7 +263,7 @@ static MACHINE_DRIVER_START( flower )
 
 	MDRV_CPU_ADD(Z80,8000000)
 	MDRV_CPU_MEMORY(flower_sn_readmem,flower_sn_writemem)
-	MDRV_CPU_PERIODIC_INT(sn_irq,120)	/* periodic interrupt, don't know about the frequency */
+	MDRV_CPU_PERIODIC_INT(sn_irq,90)	/* periodic interrupt, don't know about the frequency */
 
 
 	MDRV_FRAMES_PER_SECOND(60)

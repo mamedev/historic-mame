@@ -67,6 +67,8 @@ static WRITE_HANDLER( sidearms_bankswitch_w )
 }
 
 
+
+
 /* Turtle Ship input ports are rotated 90 degrees */
 static READ_HANDLER( turtship_ports_r )
 {
@@ -157,6 +159,73 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf002, 0xf002, YM2203_control_port_1_w },
 	{ 0xf003, 0xf003, YM2203_write_port_1_w },
 MEMORY_END
+
+/* Whizz */
+
+static WRITE_HANDLER( whizz_bankswitch_w )
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	bankaddress = 0x10000 + (data & 0xc0) * 0x100;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+
+static MEMORY_READ_START( whizz_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc800, 0xc800, input_port_0_r },
+	{ 0xc801, 0xc801, input_port_1_r },
+	{ 0xc802, 0xc802, input_port_2_r },
+	{ 0xc803, 0xc803, input_port_3_r },
+	{ 0xc804, 0xc804, input_port_4_r },
+	{ 0xc805, 0xc805, input_port_5_r },
+	{ 0xc806, 0xc806, input_port_6_r },
+	{ 0xc807, 0xc807, input_port_7_r },
+	{ 0xd000, 0xffff, MRA_RAM},
+MEMORY_END
+
+static MEMORY_WRITE_START( whizz_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc3ff, paletteram_xxxxBBBBRRRRGGGG_split1_w, &paletteram },
+	{ 0xc400, 0xc7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
+	{ 0xc800, 0xc800, soundlatch_w },
+	{ 0xc801, 0xc801, whizz_bankswitch_w },
+	{ 0xc802, 0xc802, watchdog_reset_w },
+	{ 0xc804, 0xc804, sidearms_c804_w },
+	{ 0xe805, 0xe805, sidearms_star_scrollx_w },
+	{ 0xe806, 0xe806, sidearms_star_scrolly_w },
+	{ 0xc808, 0xc809, MWA_RAM, &sidearms_bg_scrollx },
+	{ 0xc80a, 0xc80b, MWA_RAM, &sidearms_bg_scrolly },
+	{ 0xc80c, 0xc80c, sidearms_gfxctrl_w },
+	{ 0xd000, 0xd7ff, sidearms_videoram_w, &videoram },
+	{ 0xd800, 0xdfff, sidearms_colorram_w, &colorram },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
+MEMORY_END
+
+static MEMORY_READ_START( whizz_sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( whizz_sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xf800, 0xffff, MWA_RAM },
+MEMORY_END
+
+static PORT_READ_START( whizz_readport )
+	{ 0x01, 0x01, YM2203_status_port_0_r } ,
+	{ 0xc0, 0xc0, soundlatch_r },
+MEMORY_END
+
+static PORT_WRITE_START( whizz_writeport )
+	{ 0x00, 0x00, YM2203_control_port_0_w },
+	{ 0x01, 0x01, YM2203_write_port_0_w },
+	{ 0x40, 0x40, IOWP_NOP },
+MEMORY_END
+
+
 
 
 INPUT_PORTS_START( sidearms )
@@ -401,6 +470,64 @@ INPUT_PORTS_START( dyger )
 	/* 0xc0 1 Coin/1 Credit */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( whizz )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+
+	PORT_START      /* IN2 */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x1, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x2, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x4, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x8, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN5 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN6 */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	PORT_START      /* IN7 */
+	PORT_BIT( 0x1, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x2, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x4, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START      /* IN8 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -505,7 +632,17 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-
+static struct YM2203interface ym2203_whizz_interface =
+{
+	2,			/* 2 chips */
+	4000000,	/* 4 MHz ? (hand tuned) */
+	{ YM2203_VOL(15,25), YM2203_VOL(15,25) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
 static MACHINE_DRIVER_START( sidearms )
 
@@ -565,6 +702,38 @@ static MACHINE_DRIVER_START( turtship )
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( whizz )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(whizz_readmem,whizz_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_MEMORY(whizz_sound_readmem,whizz_sound_writemem)
+	MDRV_CPU_PORTS(whizz_readport,whizz_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(turtship_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(sidearms)
+	MDRV_VIDEO_UPDATE(sidearms)
+	MDRV_INTERLEAVE(1000)
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_whizz_interface)
+MACHINE_DRIVER_END
+
+
 
 
 ROM_START( sidearms )
@@ -794,11 +963,42 @@ ROM_START( dygera )
 	ROM_LOAD( "dyger.016",    0x0000, 0x8000, CRC(0792e8f2) SHA1(3716839502679ecc973571d824065b40771d5bfa) )
 ROM_END
 
+ROM_START( whizz )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + banked ROMs images */
+	ROM_LOAD( "whizz.t15",    0x00000, 0x08000, BAD_DUMP CRC(0cdd0657) SHA1(860a12fa1067c696e20ac3470cb923eba4cbc279)  )
+	ROM_LOAD( "whizz.t14",    0x10000, 0x10000, CRC(bf248879) SHA1(f46f15e3949221e59d8c37de9c23473a74c2927e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "whizz.t1",     0x0000, 0x8000, CRC(b84bc980) SHA1(d2d302a96a9e3197f27144e525a901cfb9da09e4) )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE)// |ROMREGION_INVERT)
+	ROM_LOAD( "whizz.t6",     0x04000, 0x4000, CRC(8e4ca776) SHA1(412a47f030e3b491e23e5696ef88d065f9de0220) )	/* characters */
+	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
+
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "whizz.t8",     0x00000, 0x10000, CRC(41428dac) SHA1(16ae6c178b91e5cd859deb13176b7333f05c378a) )	/* tiles */
+	ROM_LOAD( "whizz.t9",     0x10000, 0x10000, CRC(d7345fb9) SHA1(9da907c2bcacc750426a2989bae3c3e5fcc3e3ab) )	/* tiles */
+	ROM_LOAD( "whizz.t10",    0x20000, 0x10000, CRC(b678ef5b) SHA1(cdddd2a033291585e25839e864e898ef36f4d287) )	/* tiles */
+	ROM_LOAD( "whizz.t11",    0x30000, 0x10000, CRC(51a2c65d) SHA1(a89f46d581d2907b7813454925ce690af007997d) )	/* tiles */
+	ROM_LOAD( "whizz.t12",    0x40000, 0x10000, CRC(c65050ce) SHA1(f90616aa4e1f80d8d7fccf5748f564cb7bc2d83a) )
+	ROM_LOAD( "whizz.t13",    0x50000, 0x10000, CRC(530f1a8a) SHA1(8fba20693f7775edce1697387ffe2884d54d8724) )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "whizz.t2",    0x00000, 0x10000, CRC(9c106835) SHA1(7e032e65e78c380b5f03a4febd6dcd3f0bdb642b) )	/* sprites */
+	ROM_LOAD( "whizz.t3",    0x10000, 0x10000, CRC(9b421ccf) SHA1(0365d48437da0f90c1c146da0605139a3da0b03b) )
+	ROM_LOAD( "whizz.t4",    0x20000, 0x10000, CRC(3a1db986) SHA1(5435e891eebe5b95a5a97ee8743a8a10282e4d19) )
+	ROM_LOAD( "whizz.t5",    0x30000, 0x10000, CRC(9bd22190) SHA1(7a571becde02ea4b64db4138f00408f312bf54c0) )
+
+	ROM_REGION( 0x08000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "whizz.t7",    0x0000, 0x8000, CRC(a8b5f750) SHA1(94eb7af3cb8bee87ce3d31260e3bde062ebbc8f0) )
+
+
+ROM_END
 
 static DRIVER_INIT( sidearms ) { sidearms_gameid = 0; }
 static DRIVER_INIT( turtship ) { sidearms_gameid = 1; }
 static DRIVER_INIT( dyger    ) { sidearms_gameid = 2; }
-
+static DRIVER_INIT( whizz    ) { sidearms_gameid = 3; }
 
 GAMEX(1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_IMPERFECT_GRAPHICS )
@@ -806,3 +1006,5 @@ GAMEX(1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", 
 GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship" )
 GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)" )
 GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)" )
+GAMEX(1989, whizz,    0,        whizz, 	  whizz,    whizz,    ROT0,   "Philko", "Whizz", GAME_NOT_WORKING )
+

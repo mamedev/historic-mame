@@ -641,7 +641,7 @@ INPUT_PORTS_START( harddriv )
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 20, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 1 - clutch pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 100, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2 | IPF_PLAYER2, 25, 100, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 2 - seat */
 	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
@@ -665,7 +665,7 @@ INPUT_PORTS_START( harddriv )
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 5, 0x10, 0xf0 )
 
 	PORT_START		/* b80000 - 12 bit ADC 1 - force brake */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2| IPF_REVERSE, 25, 40, 0x00, 0xff )
 
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -697,7 +697,7 @@ INPUT_PORTS_START( racedriv )
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 20, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 1 - clutch pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 100, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 100, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 2 - seat */
 	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
@@ -720,8 +720,8 @@ INPUT_PORTS_START( racedriv )
 	PORT_START		/* b80000 - 12 bit ADC 0 - steering wheel */
 	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE, 25, 5, 0x10, 0xf0 )
 
-	PORT_START		/* b80000 - 12 bit ADC 1 - force brake */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
+	PORT_START		/* b80000 - 12 bit ADC 1 - force brake hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
 
 	PORT_START		/* b80000 - 12 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -760,7 +760,7 @@ INPUT_PORTS_START( racedrvc )
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 25, 20, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 1 - clutch pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 25, 100, 0x00, 0xff )
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 100, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -774,8 +774,8 @@ INPUT_PORTS_START( racedrvc )
 	PORT_START		/* b00000 - 8 bit ADC 5 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* b00000 - 8 bit ADC 6 - force brake */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
+	PORT_START		/* b00000 - 8 bit ADC 6 - force brake hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 7 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -954,8 +954,8 @@ INPUT_PORTS_START( hdrivair )
 	PORT_START		/* b00000 - 8 bit ADC 5 - canopy */
 	PORT_BIT( 0xff, 0X80, IPT_UNUSED )
 
-	PORT_START		/* b00000 - 8 bit ADC 6 - brake */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2 | IPF_REVERSE, 25, 40, 0x00, 0xff )
+	PORT_START		/* b00000 - 8 bit ADC 6 - brake hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2| IPF_REVERSE, 25, 40, 0x00, 0xff )
 
 	PORT_START		/* b00000 - 8 bit ADC 7 - seat adjust */
 	PORT_BIT( 0xff, 0X80, IPT_UNUSED )
@@ -1029,7 +1029,7 @@ static MACHINE_DRIVER_START( driver_nomsp )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (416 - 384)) / (60 * 416))
-	MDRV_INTERLEAVE(200)
+	MDRV_INTERLEAVE(500)
 
 	MDRV_MACHINE_INIT(harddriv)
 	MDRV_NVRAM_HANDLER(atarigen)
@@ -1125,6 +1125,8 @@ static MACHINE_DRIVER_START( ds3 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("adsp", ADSP2101, 12000000)
 	MDRV_CPU_MEMORY(ds3_readmem,ds3_writemem)
+	
+	MDRV_INTERLEAVE(1000)
 MACHINE_DRIVER_END
 
 

@@ -3,6 +3,36 @@
   Snow Brothers (Toaplan) / SemiCom Hardware
   uses Kaneko's Pandora sprite chip (also used in DJ Boy, Air Buster ..)
 
+Snow Bros Nick & Tom
+Toaplan, 1990
+
+	PCB Layout
+	----------
+	MIN16-02
+
+	|------------------------------------------|
+	| VOL     YM3812  6116  4464  4464         |
+	| LA4460  YM3014        4464  4464         |
+	|       458   SBROS-4.29         SBROS1.40 |
+	|   2003       Z80B     PANDORA            |
+	|J                    D41101C-1 LS07  LS32 |
+	|A SBROS-3A.5 SBROS-2A.6        LS139 LS174|
+	|M                  LS245 LS74  LS04  16MHz|
+	|M   6264     6264  F32   LS74  LS74       |
+	|A      68000       LS20  F138  LS04  12MHz|
+	|                   LS04  LS148 LS251 LS00 |
+	| LS273 LS245 LS245 LS158 LS257 LS257 LS32 |
+	|                                          |
+	| LS273  6116  6116 LS157   DSW2  DSW1     |
+	|------------------------------------------|
+
+	Notes:
+	       68k clock: 8.000MHz
+	      Z80B clock: 6.000MHz
+	    YM3812 clock: 3.000MHz
+	           VSync: 57.5Hz
+	           HSync: 15.68kHz
+
   driver by Mike Coates
 
   Hyper Pacman addition by David Haywood
@@ -174,35 +204,6 @@ static MEMORY_WRITE_START( hyperpac_sound_writemem )
 	{ 0xf001, 0xf001, YM2151_data_port_0_w },
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 //	{ 0xf006, 0xf006,  }, ???
-MEMORY_END
-
-/* Snow Bros 3
-close to SemiCom
-
-*/
-
-static MEMORY_READ16_START( readmem3 )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_RAM },
-//	{ 0x300000, 0x300001, OKIM6295_status_0_msb_r }, // ?
-	{ 0x500000, 0x500001, input_port_0_word_r },
-	{ 0x500002, 0x500003, input_port_1_word_r },
-	{ 0x500004, 0x500005, input_port_2_word_r },
-	{ 0x600000, 0x6003ff, MRA16_RAM },
-	{ 0x700000, 0x7021ff, MRA16_RAM },
-MEMORY_END
-
-static MEMORY_WRITE16_START( writemem3 )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x200000, 0x200001, watchdog_reset16_w },
-//	{ 0x300000, 0x300001, OKIM6295_data_0_msb_w }, // ?
-	{ 0x400000, 0x400001, snowbros_flipscreen_w },
-	{ 0x600000, 0x6003ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x700000, 0x7021ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
-	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
-	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
 MEMORY_END
 
 INPUT_PORTS_START( snowbros )
@@ -501,7 +502,7 @@ static void irqhandler(int irq)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz ? (hand tuned) */
+	3000000,	/* 3 MHz - confirmed */
 	{ 100 },	/* volume */
 	{ irqhandler },
 };
@@ -528,16 +529,16 @@ static struct OKIM6295interface okim6295_interface =
 static MACHINE_DRIVER_START( snowbros )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000) /* 8 Mhz - confirmed */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 3600000) /* 3.6 MHz ??? */
+	MDRV_CPU_ADD_TAG("sound", Z80, 6000000) /* 6 MHz - confirmed */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(57.5) /* ~57.5 - confirmed */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -597,28 +598,27 @@ ROM_START( snowbros )
 	ROM_LOAD16_BYTE( "sn5.bin",  0x00001, 0x20000, CRC(ad310d3f) SHA1(f39295b38d99087dbb9c5b00bf9cb963337a50e2) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
+	ROM_LOAD( "sbros-4.29",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
-	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
-	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
-	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
+	ROM_LOAD( "sbros-1.41",   0x00000, 0x80000, CRC(16f06b3a) SHA1(c64d3b2d32f0f0fcf1d8c5f02f8589d59ddfd428) )
+	/* where were these from, a bootleg? */
+//	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
+//	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
+//	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
+//	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
 ROM_END
 
 ROM_START( snowbroa )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
-	ROM_LOAD16_BYTE( "snowbros.3a",  0x00000, 0x20000, CRC(10cb37e1) SHA1(786be4640f8df2c81a32decc189ea7657ace00c6) )
-	ROM_LOAD16_BYTE( "snowbros.2a",  0x00001, 0x20000, CRC(ab91cc1e) SHA1(8cff61539dc7d35fcbf110d3e54fc1883e7b8509) )
+	ROM_LOAD16_BYTE( "sbros-3a.5",  0x00000, 0x20000, CRC(10cb37e1) SHA1(786be4640f8df2c81a32decc189ea7657ace00c6) )
+	ROM_LOAD16_BYTE( "sbros-2a.6",  0x00001, 0x20000, CRC(ab91cc1e) SHA1(8cff61539dc7d35fcbf110d3e54fc1883e7b8509) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
+	ROM_LOAD( "sbros-4.29",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
-	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
-	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
-	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
+	ROM_LOAD( "sbros-1.41",   0x00000, 0x80000, CRC(16f06b3a) SHA1(c64d3b2d32f0f0fcf1d8c5f02f8589d59ddfd428) )
 ROM_END
 
 ROM_START( snowbrob )
@@ -627,13 +627,10 @@ ROM_START( snowbrob )
 	ROM_LOAD16_BYTE( "sbros2-a",     0x00001, 0x20000, CRC(f6689f41) SHA1(e4fd27b930a31479c0d99e0ddd23d5db34044666) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
+	ROM_LOAD( "sbros-4.29",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
-	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
-	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
-	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
+	ROM_LOAD( "sbros-1.41",   0x00000, 0x80000, CRC(16f06b3a) SHA1(c64d3b2d32f0f0fcf1d8c5f02f8589d59ddfd428) )
 ROM_END
 
 ROM_START( snowbroj )
@@ -642,14 +639,11 @@ ROM_START( snowbroj )
 	ROM_LOAD16_BYTE( "snowbros.2",   0x00001, 0x20000, CRC(854b02bc) SHA1(4ad1548eef94dcb95119cb4a7dcdefa037591b5b) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for z80 sound code */
-	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
+	ROM_LOAD( "sbros-4.29",   0x0000, 0x8000, CRC(e6eab4e4) SHA1(d08187d03b21192e188784cb840a37a7bdb5ad32) )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* The gfx ROM (snowbros.1) was bad, I'm using the ones from the other sets. */
-	ROM_LOAD( "ch0",          0x00000, 0x20000, CRC(36d84dfe) SHA1(5d45a750220930bc409de30f19282bb143fbf94f) )
-	ROM_LOAD( "ch1",          0x20000, 0x20000, CRC(76347256) SHA1(48ec03965905adaba5e50eb3e42a2813f7883bb4) )
-	ROM_LOAD( "ch2",          0x40000, 0x20000, CRC(fdaa634c) SHA1(1271c74df7da7596caf67caae3c51b4c163a49f4) )
-	ROM_LOAD( "ch3",          0x60000, 0x20000, CRC(34024aef) SHA1(003a9b9ee3aaab3d787894d3d4126d372b19d2a8) )
+	ROM_LOAD( "sbros-1.41",   0x00000, 0x80000, CRC(16f06b3a) SHA1(c64d3b2d32f0f0fcf1d8c5f02f8589d59ddfd428) )
 ROM_END
 
 ROM_START( wintbob )

@@ -10,7 +10,7 @@
  *
  *	This code is subject to the MAME license, which besides other
  *	things means it is distributed as is, no warranties whatsoever.
- *	For more details read the readme.txt that comes with MAME.
+ *	For more details read mame.txt that comes with MAME.
  *
  *****************************************************************************/
 

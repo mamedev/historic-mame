@@ -2764,7 +2764,7 @@ static MACHINE_DRIVER_START( mustang )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(mustang_sound)
+	MDRV_MACHINE_INIT(nmk16)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -3292,32 +3292,68 @@ ROM_END
 
 ROM_START( tharrier )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "2" ,   0x00000, 0x20000, CRC(78923aaa) )
-	ROM_LOAD16_BYTE( "3" ,   0x00001, 0x20000, CRC(99cea259) )
+	ROM_LOAD16_BYTE( "2" ,   0x00000, 0x20000, CRC(78923aaa) SHA1(28338f49581180604403e1bd200f524fc4cb8b9f) )
+	ROM_LOAD16_BYTE( "3" ,   0x00001, 0x20000, CRC(99cea259) SHA1(75abfb08b2358dd13809ade5a2dfffeb8b8df82c) )
 
 	ROM_REGION( 0x010000, REGION_CPU2, 0 )
-	ROM_LOAD( "12" ,   0x00000, 0x10000, CRC(b959f837) )
+	ROM_LOAD( "12" ,   0x00000, 0x10000, CRC(b959f837) SHA1(073b14935e7d5b0cad19a3471fd26e9e3a363827) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1" ,        0x000000, 0x10000, CRC(c7402e4a) )
+	ROM_LOAD( "1" ,        0x000000, 0x10000, CRC(c7402e4a) SHA1(25cade2f8d4784887f0f51beb48b1e6b695629c2) )
 
 	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "89050-4" ,  0x000000, 0x80000, CRC(64d7d687) )
+	ROM_LOAD( "89050-4" ,  0x000000, 0x80000, CRC(64d7d687) SHA1(dcfeac71fd577439e31cc1186b720388fbdc6ca0) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, CRC(24db3fa4) )	/* Sprites */
-	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, CRC(7f715421) )
+	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, CRC(24db3fa4) SHA1(e0d76c479dfcacf03c04ec4760caecf3fd1e2ff7) )	/* Sprites */
+	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, CRC(7f715421) SHA1(bde5e0e1e22519e51ca0fd806909e90cc5b1c5b8) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-8",   0x00000, 0x80000, CRC(11ee4c39) )
+	ROM_LOAD( "89050-8",   0x00000, 0x80000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
-	ROM_LOAD( "89050-10",  0x00000, 0x80000, CRC(893552ab) )
+	ROM_LOAD( "89050-10",  0x00000, 0x80000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
 
 	ROM_REGION( 0x140, REGION_PROMS, 0 )
-	ROM_LOAD( "25",  0x00000, 0x100, CRC(e0a009fe) )
-	ROM_LOAD( "23",  0x00100, 0x020, CRC(fc3569f4) )
-	ROM_LOAD( "26",  0x00120, 0x020, CRC(0cbfb33e) )
+	ROM_LOAD( "21.bpr",  0x00000, 0x100, CRC(fcd5efea) SHA1(cbda6b14127dabd1788cc256743cf62efaa5e8c4) )
+	ROM_LOAD( "22.bpr",  0x00000, 0x100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )
+	ROM_LOAD( "23.bpr",  0x00000, 0x020, CRC(fc3569f4) SHA1(e1c498085e4ae9d0a995c94530544b0a5b760fbf) )
+	ROM_LOAD( "24.bpr",  0x00000, 0x100, CRC(e0a009fe) SHA1(a66a27bb405d4ff8e4c0062273ee9b11e76ee520) )
+	ROM_LOAD( "25.bpr",  0x00000, 0x100, CRC(e0a009fe) SHA1(a66a27bb405d4ff8e4c0062273ee9b11e76ee520) ) /* same as 24.bin */
+	ROM_LOAD( "26.bpr",  0x00120, 0x020, CRC(0cbfb33e) SHA1(5dfee031a0a14bcd667fe2af2fa9cdfac3941d22) )
+ROM_END
+
+ROM_START( tharierj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "2.bin" ,   0x00000, 0x20000, CRC(f3887a44) SHA1(4e5b660d33ba1d1e00263030efa67e2db376a234) )
+	ROM_LOAD16_BYTE( "3.bin" ,   0x00001, 0x20000, CRC(65c247f6) SHA1(9f35f2b6f54814b4c4d23e2d78db8043e678fef2) )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )
+	ROM_LOAD( "12" ,   0x00000, 0x10000, CRC(b959f837) SHA1(073b14935e7d5b0cad19a3471fd26e9e3a363827) )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin" ,        0x000000, 0x10000, CRC(005c26c3) SHA1(ee88d8f956b9b0a8ba5fb49c5c05f6ed6f01729c) )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "89050-4" ,  0x000000, 0x80000, CRC(64d7d687) SHA1(dcfeac71fd577439e31cc1186b720388fbdc6ca0) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "89050-13",	0x000000, 0x80000, CRC(24db3fa4) SHA1(e0d76c479dfcacf03c04ec4760caecf3fd1e2ff7) )	/* Sprites */
+	ROM_LOAD16_BYTE( "89050-17",	0x000001, 0x80000, CRC(7f715421) SHA1(bde5e0e1e22519e51ca0fd806909e90cc5b1c5b8) )
+
+	ROM_REGION(0x80000, REGION_SOUND1, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-8",   0x00000, 0x80000, CRC(11ee4c39) SHA1(163295c385cff963a5bf87dc3e7bef6019e10ba8) )
+
+	ROM_REGION(0x80000, REGION_SOUND2, 0 )	/* Oki sample data */
+	ROM_LOAD( "89050-10",  0x00000, 0x80000, CRC(893552ab) SHA1(b0a34291f4e482858ed295203ae031b17c2dbabc) )
+
+	ROM_REGION( 0x140, REGION_PROMS, 0 )
+	ROM_LOAD( "21.bpr",  0x00000, 0x100, CRC(fcd5efea) SHA1(cbda6b14127dabd1788cc256743cf62efaa5e8c4) )
+	ROM_LOAD( "22.bpr",  0x00000, 0x100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )
+	ROM_LOAD( "23.bpr",  0x00000, 0x020, CRC(fc3569f4) SHA1(e1c498085e4ae9d0a995c94530544b0a5b760fbf) )
+	ROM_LOAD( "24.bpr",  0x00000, 0x100, CRC(e0a009fe) SHA1(a66a27bb405d4ff8e4c0062273ee9b11e76ee520) )
+	ROM_LOAD( "25.bpr",  0x00000, 0x100, CRC(e0a009fe) SHA1(a66a27bb405d4ff8e4c0062273ee9b11e76ee520) ) /* same as 24.bin */
+	ROM_LOAD( "26.bpr",  0x00120, 0x020, CRC(0cbfb33e) SHA1(5dfee031a0a14bcd667fe2af2fa9cdfac3941d22) )
 ROM_END
 
 ROM_START( mustang )
@@ -4345,7 +4381,8 @@ static DRIVER_INIT( bjtwin )
 
 
 GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,   "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
-GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1989, tharierj, tharrier,tharrier, tharrier, 0,        ROT270, "UPL",	                        "Task Force Harrier (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND) // Playable but there are Still Protection Problems
 GAMEX( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND ) // Playable but there are Still Protection Problems
 GAMEX( 1990, mustangb, mustang, mustangb, mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION ) // Playable but there are Still Protection Problems
@@ -4361,7 +4398,7 @@ GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   strahl,   ROT0,   "UPL",				
 GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK / Tecmo",					"Thunder Dragon", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING | GAME_NO_SOUND )
 GAME(  1991, tdragonb, tdragon, tdragonb, tdragon,  tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)" )
 GAMEX( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
-GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_NO_SOUND )
 GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_NO_SOUND )
 GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )

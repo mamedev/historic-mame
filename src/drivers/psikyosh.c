@@ -46,7 +46,6 @@ YMF278B-F (80 pin PQFP) & YAC513 (16 pin SOIC)
 To Do:
 
   - see notes in vidhrdw file -
-  Getting the priorities right is a pain ;)
 
   Sol Divid's music is not correct, related to sh-2 timers.
 
@@ -62,7 +61,7 @@ Space Bomber:     PL1 Start (passes all, only if bit 0x40 is set. But then EEPRO
 Gunbird 2:        PL1 Start (passes all, only if bit 0x40 is set. But then EEPROM resets)
 Strikers 1945III: PL1 Start (passes all, only if bit 0x40 is set)
 Dragon Blaze:     PL1 Start (fails on undumped sample rom, bit 0x40 has to be set anyway)
-Gunbarich:        PL1 Start (fails on undumped sample rom, only if bit 0x40 is set)
+Gunbarich:        PL1 Start (passes all, only if bit 0x40 is set)
 
 
 Hold PL1 Button 1 and Test Mode button to get Maintenance mode for:
@@ -136,7 +135,7 @@ static data8_t daraku_eeprom[16]   = { 0x03,0x02,0x00,0x48,0x00,0x00,0x00,0x00,0
 static data8_t s1945iii_eeprom[16] = { 0x00,0x00,0x00,0x00,0x00,0x01,0x11,0x70,0x25,0x25,0x25,0x00,0x01,0x00,0x11,0xe0 };
 static data8_t dragnblz_eeprom[16] = { 0x00,0x01,0x11,0x70,0x25,0x25,0x25,0x00,0x01,0x00,0x11,0xe0,0x00,0x00,0x00,0x00 };
 
-int use_factory_eeprom, use_fake_pri;
+int use_factory_eeprom;
 
 data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
 
@@ -773,7 +772,7 @@ ROM_START( dragnblz )
 	ROM_LOAD32_WORD( "10l.u58",0x2800000, 0x200000, CRC(a3f5c7f8) SHA1(d17478ca3e7ef46270f350ffa35d43acb05b1185) )
 	ROM_LOAD32_WORD( "10h.u59",0x2800002, 0x200000, CRC(30e304c4) SHA1(1d866276bfe7f7524306a880d225aaf11ac2e5dd) )
 
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples - Not Dumped */
 	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, CRC(7fd1b225) SHA1(6aa61021ada51393bbb34fd1aea00b8feccc8197) )
 ROM_END
 
@@ -897,14 +896,12 @@ static DRIVER_INIT( soldivid )
 {
 	install_mem_read32_handler(0, 0x600000c, 0x600000f, soldivid_speedup_r );
 	use_factory_eeprom=EEPROM_0;
-	use_fake_pri=0; /* Fixes fades, breaks pics in intro */
 }
 
 static DRIVER_INIT( s1945ii )
 {
 	install_mem_read32_handler(0, 0x600000c, 0x600000f, s1945ii_speedup_r );
 	use_factory_eeprom=EEPROM_DEFAULT;
-	use_fake_pri=1; /* Breaks small subs, fixes everything else */
 }
 
 static DRIVER_INIT( daraku )
@@ -913,14 +910,12 @@ static DRIVER_INIT( daraku )
 	cpu_setbank(1,&RAM[0x100000]);
 	install_mem_read32_handler(0, 0x600000c, 0x600000f, daraku_speedup_r );
 	use_factory_eeprom=EEPROM_DARAKU;
-	use_fake_pri=0; /* Breaks Character bg to use it, ok without */
 }
 
 static DRIVER_INIT( sbomberb )
 {
 	install_mem_read32_handler(0, 0x600000c, 0x600000f, sbomberb_speedup_r );
 	use_factory_eeprom=EEPROM_DEFAULT;
-	use_fake_pri=1;
 }
 
 static DRIVER_INIT( gunbird2 )
@@ -929,7 +924,6 @@ static DRIVER_INIT( gunbird2 )
 	cpu_setbank(1,&RAM[0x100000]);
 	install_mem_read32_handler(0, 0x604000c, 0x604000f, gunbird2_speedup_r );
 	use_factory_eeprom=EEPROM_DEFAULT;
-	use_fake_pri=1;
 }
 
 static DRIVER_INIT( s1945iii )
@@ -938,27 +932,25 @@ static DRIVER_INIT( s1945iii )
 	cpu_setbank(1,&RAM[0x100000]);
 	install_mem_read32_handler(0, 0x606000c, 0x606000f, s1945iii_speedup_r );
 	use_factory_eeprom=EEPROM_S1945III;
-	use_fake_pri=1;
 }
 
 static DRIVER_INIT( dragnblz )
 {
 	install_mem_read32_handler(0, 0x606000c, 0x606000f, dragnblz_speedup_r );
 	use_factory_eeprom=EEPROM_DRAGNBLZ;
-	use_fake_pri=1;
 }
 
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
-GAMEX( 1997, soldivid, 0,        psikyo3v1, soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) // Music Tempo
-GAMEX( 1997, s1945ii,  0,        psikyo3v1, s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, sbomberb, 0,        psikyo3v1, sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, soldivid, 0,        psikyo3v1, soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_SOUND ) // Music Tempo
+GAMEX( 1997, s1945ii,  0,        psikyo3v1, s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
+GAME ( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels" )
+GAME ( 1998, sbomberb, 0,        psikyo3v1, sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)" )
 
 /* ps5 */
-GAMEX( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, s1945iii, 0,        psikyo5,   s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME ( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2" )
+GAMEX( 1999, s1945iii, 0,        psikyo5,   s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
 
 /* ps5v2 */
 GAMEX( 2000, dragnblz, 0,        psikyo5,   dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze", GAME_IMPERFECT_GRAPHICS )

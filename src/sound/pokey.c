@@ -10,7 +10,7 @@
  *
  *	This code is subject to the MAME license, which besides other
  *  things means it is distributed as is, no warranties whatsoever.
- *	For more details read the readme.txt that comes with MAME.
+ *	For more details read mame.txt that comes with MAME.
  *
  *	4.5:
  *	- changed the 9/17 bit polynomial formulas such that the values
@@ -484,7 +484,7 @@ static void pokey_pot_trigger(int param);
 		}																\
 	}																	\
 	timer_adjust(pokey[chip].rtimer, TIME_NEVER, 0, 0)
-	
+
 void pokey0_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(0); }
 void pokey1_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(1); }
 void pokey2_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(2); }
@@ -633,7 +633,7 @@ int pokey_sh_start(const struct MachineSound *msound)
 		p->KBCODE = 0x09;		 /* Atari 800 'no key' */
 		p->SKCTL = SK_RESET;	 /* let the RNG run after reset */
 		p->rtimer = timer_alloc(NULL);
-		
+
 		p->timer[0] = timer_alloc(pokey_timer_expire);
 		p->timer[1] = timer_alloc(pokey_timer_expire);
 		p->timer[2] = timer_alloc(pokey_timer_expire);

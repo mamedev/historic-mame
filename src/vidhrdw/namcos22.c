@@ -3,10 +3,25 @@
  *
  * TODO:
  *
- * Needs further reverse-engineering:
- * - some unknown display list opcodes
- * - some mysterious Point ROM primitives/codes
- * - locate flag bits to enable lighting effects/depth queuing
+ * Time Crisis:
+ *	"SPOT RAM NG"
+ *  "DSP RAM NG"
+ *  "SUBCPU START WAIT"
+ *
+ * Cyber Cycles:
+ * - some objects are singled out and skipped; if rendered, they cover the entire screen
+ *
+ * Air Combat22:
+ * - missing title?
+ * - missing sprites?
+ * - some unusual matrix selection (0x7fff)
+ * - occasional garbage written to DSP RAM
+ * - background color is bright red (pen#0 is obviously incorrect)
+ * - some texture map glitches (tile flip/swap)
+ * - writes to ROM(?)
+ * - writes to DSP RAM > 0xc20000
+ * - plater plane wings are missing
+ * - glitches if frameskip!=0
  *
  * Prop Cycle bugs:
  * - in Solitar stage, backdrop is not completely covered by polygons (probably should be solid blue)
@@ -15,24 +30,24 @@
  *
  * Unsupported features (not used by Prop Cycle)
  * - window clipping and axis reversal (used in car games for rear view mirror)
- * - polygons can be flagged to appear in front or behind text layer
+ * - polygons can be flagged to appear in front or behind tilemap layer
  *
  * Desirable optimizations:
  * - draw polygons from front to back to avoid expensive overdraw
  *
- * Missing special effects that will be added after driver is changed to use direct RBG color
+ * Missing special effects:
  * - independent fader controls for sprite/polygon/text
- * - gouraud shading (using per-vertex intensity parameter)
- * - improve lighting effects (it's currently mocked up as all or nothing, using two palette banks)
+ * - lighting
  * - depth cueing (fog)
  * - translucency effects for text layer, sprites
  */
-
 #include <assert.h>
 #include "namcos22.h"
 #include "namcos3d.h"
 #include "matrix3d.h"
 #include <math.h>
+
+//#define MAME_DEBUG
 
 static int mbDumpScene; /* used for debugging */
 
@@ -41,6 +56,8 @@ static int mbSuperSystem22; /* used to conditionally support Super System22-spec
 /* mWindowPri and mMasterBias reflect modal polygon rendering parameters */
 static INT32 mWindowPri;
 static INT32 mMasterBias;
+
+#define SPRITERAM_SIZE (0x9b0000-0x980000)
 
 #define CGRAM_SIZE 0x1e000
 #define NUM_CG_CHARS ((CGRAM_SIZE*8)/(64*16)) /* 0x3c0 */
@@ -216,7 +233,7 @@ mydrawgfxzoom(
 				{
 					INT32 *pZBuf = namco_zbuffer + NAMCOS22_SCREEN_WIDTH*y;
 					UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-					UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+					UINT32 *dest = (UINT32 *)dest_bmp->line[y];
 					int x, x_index = x_index_base;
 					for( x=sx; x<ex; x++ )
 					{
@@ -306,7 +323,6 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 	deltax = spriteram32[0x14/4]>>16;
 	deltay = spriteram32[0x18/4]>>16;
 	num_sprites = (spriteram32[0x04/4]>>16)&0x3ff; /* max 1024 sprites? */
-
 	color = 0;
 	flipx = 0;
 	flipy = 0;
@@ -316,6 +332,7 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 	{
 		INT32 zcoord = pPal[0];
 		color = pPal[1]>>16;
+		/* pPal[1]&0xffff  CZ (color z - for depth cueing) */
 
 		xypos = pSource[0];
 		xpos = (xypos>>16)-deltax;
@@ -484,13 +501,13 @@ static void
 ApplyRotation( const INT32 *pSource, double M[4][4] )
 {
 	struct RotParam param;
-	param.thx_sin = (INT16)(pSource[0])/(double)0x7fff;
-	param.thx_cos = (INT16)(pSource[1])/(double)0x7fff;
-	param.thy_sin = (INT16)(pSource[2])/(double)0x7fff;
-	param.thy_cos = (INT16)(pSource[3])/(double)0x7fff;
-	param.thz_sin = (INT16)(pSource[4])/(double)0x7fff;
-	param.thz_cos = (INT16)(pSource[5])/(double)0x7fff;
-	param.rolt = pSource[6];
+	param.thx_sin = ((INT16)pSource[0])/(double)0x7fff;
+	param.thx_cos = ((INT16)pSource[1])/(double)0x7fff;
+	param.thy_sin = ((INT16)pSource[2])/(double)0x7fff;
+	param.thy_cos = ((INT16)pSource[3])/(double)0x7fff;
+	param.thz_sin = ((INT16)pSource[4])/(double)0x7fff;
+	param.thz_cos = ((INT16)pSource[5])/(double)0x7fff;
+	param.rolt = (INT16)pSource[6];
 	namcos3d_Rotate( M, &param );
 } /* ApplyRotation */
 
@@ -503,7 +520,8 @@ LoadMatrix( const INT32 *pSource, double M[4][4] )
 	matrix3d_Identity( M );
 	for(;;)
 	{
-		switch( *pSource++ )
+		INT16 opcode = *pSource++;
+		switch( opcode )
 		{
 		case 0x0000: /* translate */
 			matrix3d_Translate( M, pSource[0], pSource[1], pSource[2] );
@@ -517,6 +535,10 @@ LoadMatrix( const INT32 *pSource, double M[4][4] )
 
 		case 0x0003: /* unknown */
 			pSource += 2;
+			break;
+
+		case 0x0004: /* unknown */
+			pSource += 6;
 			break;
 
 		case 0x0006: /* custom */
@@ -536,8 +558,8 @@ LoadMatrix( const INT32 *pSource, double M[4][4] )
 			return pSource;
 
 		default:
-			logerror( "bad LoadMatrix!!\n" );
-			exit(1);
+			printf( "bad LoadMatrix(0x%08x)!!\n", opcode );
+			return NULL;
 		}
 	}
 } /* LoadMatrix */
@@ -578,8 +600,8 @@ LoadMatrix( const INT32 *pSource, double M[4][4] )
  * +0x78 30	6630, 0001
  * +0x7c 31	7f02
  */
-static double mWindowZoom;
-static namcos22_lighting mLighting;
+//static double mWindowZoom;
+static namcos22_camera mCamera;
 static struct Matrix mWindowTransform;
 
 static int mPrevWindow;
@@ -595,29 +617,35 @@ SetupWindow( const INT32 *pWindow, int which )
 {
 	if( which!=mPrevWindow )
 	{ /* only recompute if we're dealing with a new window */
+		double vw,vh;
+
 		mPrevWindow = which;
 		pWindow += which*0x80/4;
 
-		/*	INT16 vx0  = pWindow[0x54/4];
-			INT16 vy0  = pWindow[0x5c/4];
-			SetClip(
-				float(320 + vx0 - vw),
-				float(240 - vy0 - vh),
-				float(vw * 2),
-				float(vh * 2) );
-		*/
+		vw = pWindow[0x3c/4];
+		vh = pWindow[0x40/4];
+		mCamera.cx  = 320+pWindow[0x54/4];
+		mCamera.cy  = 240-pWindow[0x58/4];
+		mCamera.clip.min_x = mCamera.cx - vw;
+		mCamera.clip.min_y = mCamera.cy - vh;
+		mCamera.clip.max_x = mCamera.cx + vw;
+		mCamera.clip.max_y = mCamera.cy + vh;
+
+		if( mCamera.clip.min_x <   0 ) mCamera.clip.min_x = 0;
+		if( mCamera.clip.min_y <   0 ) mCamera.clip.min_y = 0;
+		if( mCamera.clip.max_x > 640 ) mCamera.clip.max_x = 640;
+		if( mCamera.clip.max_y < 320 ) mCamera.clip.max_y = 320;
 
 		{
-	//		double pi = atan (1.0) * 4.0;
-	//		double vh = pWindow[0x40/4];
-			double vw = pWindow[0x3c/4];
+//			double pi = atan (1.0) * 4.0;
 	        double fov = pWindow[0x38/4];
-	        if( mbSuperSystem22 )
+
+	        if( namcos22_gametype == NAMCOS22_PROP_CYCLE )
 	        {
-				fov /= 32.0; /* Super System22 uses fixed point for field of view angle */
+				fov /= 32.0;
 			}
 			fov = fov*3.141592654/180.0; /* degrees to radians */
-			mWindowZoom = vw/tan(fov/2.0);
+			mCamera.zoom = vw/tan(fov/2.0);
 		}
 
 		mWindowPri = pWindow[0x50/4]&0x7;
@@ -625,13 +653,64 @@ SetupWindow( const INT32 *pWindow, int which )
 		matrix3d_Identity( mWindowTransform.M );
 		ApplyRotation( &pWindow[1], mWindowTransform.M );
 
-		mLighting.power   = (INT16)(pWindow[0x20/4])/(double)0xff;
-		mLighting.ambient = (INT16)(pWindow[0x24/4])/(double)0xff;
-		mLighting.x       = (INT16)(pWindow[0x28/4])/(double)0x7fff;
-		mLighting.y       = (INT16)(pWindow[0x2c/4])/(double)0x7fff;
-		mLighting.z       = (INT16)(pWindow[0x30/4])/(double)0x7fff;
+		mCamera.power   = (INT16)(pWindow[0x20/4])/(double)0xff;
+		mCamera.ambient = (INT16)(pWindow[0x24/4])/(double)0xff;
+		mCamera.x       = (INT16)(pWindow[0x28/4])/(double)0x7fff;
+		mCamera.y       = (INT16)(pWindow[0x2c/4])/(double)0x7fff;
+		mCamera.z       = (INT16)(pWindow[0x30/4])/(double)0x7fff;
 	}
 } /* SetupWindow */
+
+static void
+BlitPolyDirect( struct mame_bitmap *pBitmap, const INT32 *pSource, double m[4][4] )
+{
+	INT32 zcode;
+	unsigned color = (pSource[1]<<8)&0x7f00;
+	INT32 flags = pSource[3];
+	int tpage = pSource[4];
+	double zmin, zmax, zrep;
+	struct VerTex v[5];
+	int i;
+
+	zmin = zmax = 0;
+
+	for( i=0; i<4; i++ )
+	{
+		struct VerTex *pVerTex = &v[i];
+		double lx = pSource[5+i*6+2];
+		double ly = pSource[5+i*6+3];
+		double lz = pSource[5+i*6+4];
+		pVerTex->x = lx;
+		pVerTex->y = ly;
+		pVerTex->z = lz;
+		pVerTex->u = pSource[5+i*6+0];
+		pVerTex->v = pSource[5+i*6+1]+(tpage<<12);
+		pVerTex->i = pSource[5+i*6+5];
+		if( i==0 || pVerTex->z > zmax ) zmax = pVerTex->z;
+		if( i==0 || pVerTex->z < zmin ) zmin = pVerTex->z;
+		/**
+		 * polygons expressed in this fashion don't use perspective projection
+		 * (x,y) are already in screen window coordinates.
+		 * for now, as a quick workaround, we assign an arbitrary z coordinate to all
+		 * four vertexes, big enough to avoid near-plane clipping.
+		 */
+		pVerTex->z = 1000;
+	}
+	zrep = (zmin+zmax)/2.0;
+	zcode = pSource[0]+(INT32)zrep;
+
+	mCamera.zoom = 1000; /* compensate for fake z coordinate */
+	mCamera.cx = 640/2;
+	mCamera.cy = 480/2;
+	mCamera.clip.min_x = 0;
+	mCamera.clip.min_y = 0;
+	mCamera.clip.max_x = 640;
+	mCamera.clip.max_y = 320;
+
+	namcos22_BlitTri( pBitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
+	v[4] = v[0]; /* wrap */
+	namcos22_BlitTri( pBitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
+}
 
 static void
 BlitQuadHelper(
@@ -642,10 +721,12 @@ BlitQuadHelper(
 		INT32 zcode,
 		INT32 flags )
 {
-	double zmin=0, zmax=0, zrep=0;
+	double zmin, zmax, zrep;
 	double kScale = 0.5;
 	struct VerTex v[5];
 	int i;
+
+	zmin = zmax = 0;
 
 	color &= 0x7f00;
 
@@ -658,7 +739,7 @@ BlitQuadHelper(
 		pVerTex->x = m[0][0]*lx + m[1][0]*ly + m[2][0]*lz + m[3][0];
 		pVerTex->y = m[0][1]*lx + m[1][1]*ly + m[2][1]*lz + m[3][1];
 		pVerTex->z = m[0][2]*lx + m[1][2]*ly + m[2][2]*lz + m[3][2];
-		pVerTex->u = GetPolyData( 0+2*i+addr )&0xffff;
+		pVerTex->u = GetPolyData( 0+2*i+addr )&0x0fff;
 		pVerTex->v = GetPolyData( 1+2*i+addr )&0xffff;
 		pVerTex->i = (GetPolyData(i+addr)>>16)&0xff;
 		if( i==0 || pVerTex->z > zmax ) zmax = pVerTex->z;
@@ -686,6 +767,7 @@ BlitQuadHelper(
 	 * ------xx xxxxxxxx xxxxxxxx shift z-representative value
 	 */
 
+	if( namcos22_gametype == NAMCOS22_PROP_CYCLE )
 	{ /* for now, assume all polygons use relative priority */
 		INT32 dw = (zcode&0x1c0000)>>18; /* window (master)priority bias */
 		INT32 dz = (zcode&0x03ffff); /* bias for representative z coordinate */
@@ -712,17 +794,33 @@ BlitQuadHelper(
 		 */
 		zcode = dw|dz;
 	}
+	else if( namcos22_gametype == NAMCOS22_RAVE_RACER ||
+			 namcos22_gametype == NAMCOS22_VICTORY_LAP )
+	{
+		/** Rave Racer:
+		 * 3b7740
+		 * --11.1011.0111.0111.0100.0000
+		 */
+		INT32 dw = mWindowPri<<24;
+		INT32 dz = zcode;
+		dz += (INT32)zrep;
+		zcode = dw|dz;
+	}
+	else
+	{
+		zcode = 0x10000 + (INT32)zrep;
+	}
 
-	BlitTri( pBitmap, &v[0], color, mWindowZoom, zcode, flags, &mLighting ); /* 0,1,2 */
+	namcos22_BlitTri( pBitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
 	v[4] = v[0]; /* wrap */
-	BlitTri( pBitmap, &v[2], color, mWindowZoom, zcode, flags, &mLighting ); /* 2,3,0 */
+	namcos22_BlitTri( pBitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
 } /* BlitQuadHelper */
 
 
 static void
 BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 {
-	INT32 start = addr;
+//	INT32 start = addr;
 	INT32 size = GetPolyData(addr++);
 	INT32 finish = addr + (size&0xff);
 	INT32 flags;
@@ -738,6 +836,7 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 		case 0x17:
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
+			bias = 0;
 			BlitQuadHelper( pBitmap,color,addr+3,m,0,flags );
 			break;
 
@@ -750,10 +849,10 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 			 *
 			 * word 1: (flags)
 			 *		1042 (always set?)
-			 *		0200 lighting enable?
+			 *		0200 ?
 			 *		0100 ?
 			 *		0020 one-sided
-			 *		0001 high priority?
+			 *		0001 ?
 			 *
 			 *		1163 // sky
 			 *		1262 // score (front)
@@ -765,30 +864,39 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 			 * word 2: color
 			 *			-------- xxxxxxxx unused?
 			 *			-xxxxxxx -------- palette select
-			 *			x------- -------- ?
+			 *          x------- -------- palette bank? (normally 0x4000; see Cyber Commando)
 			 *
 			 * word 3: depth bias
 			 */
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias  = GetPolyData(addr+3);
-
 			BlitQuadHelper( pBitmap,color,addr+4,m,bias,flags );
 			break;
 
-		case 0x10:
+		case 0x10: /* apply lighting effects */
+		/*
+			333401 000000 000000 004000 parameters
+			  	000000 000000 007fff normal vector
+			  	000000 000000 007fff normal vector
+			  	000000 000000 007fff normal vector
+  				000000 000000 007fff normal vector
+		*/
+			break;
+
 		case 0x0d:
 			/* unknown! */
 			break;
 
 		default:
-			logerror( "unexpected point data %08x at %08x.%08x\n", size, base, start );
+			//printf( "unexpected point data %08x at %08x.%08x\n", size, base, start );
 			break;
 		}
 
 		if( mbDumpScene )
 		{
 			int q;
+			logerror( "  %06x", size );
 			for( q=0; q<size; q++ )
 			{
 				logerror( " %06x", GetPolyData(addr+q)&0xffffff );
@@ -803,11 +911,14 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 static void
 BlitPolyObject( struct mame_bitmap *pBitmap, int code, double m[4][4] )
 {
-	unsigned addr1 = GetPolyData(code+0x45);
-	if( mbDumpScene )
-	{
-		logerror( "        flags  color  bias   u1     v1     u2     v2     u3     v3     u4     v4     x1     y1     z1     x2     y2     z2     x3     y3     z3     x4     y4     z4\n" );
+	unsigned addr1 = GetPolyData((code&0xffff)+0x45);
+
+	if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
+	{ /* HACK! */
+		if( code == 0x69c || code == 0x69b ||
+		    code == 0x6b1 || code == 0x6b2 ) return;
 	}
+
 	for(;;)
 	{
 		INT32 addr2 = GetPolyData(addr1++);
@@ -819,16 +930,43 @@ BlitPolyObject( struct mame_bitmap *pBitmap, int code, double m[4][4] )
 	}
 } /* BlitPolyObject */
 
+/****************************************************************/
+
+READ32_HANDLER( namcos22_dspram_r )
+{
+	if( keyboard_pressed(KEYCODE_SPACE) )
+	{
+		printf( "pointram_r(%08x)\n", offset*4 );
+		logerror( "%08x pointram_r(%08x)\n", activecpu_get_pc(), offset*4 );
+	}
+	return namcos22_polygonram[offset];
+}
+
+WRITE32_HANDLER( namcos22_dspram_w )
+{
+	if( keyboard_pressed(KEYCODE_SPACE)  )
+	{
+		printf( "pointram_w(%08x,%08x)\n", offset*4, data );
+		logerror( "%08x pointram_w(%08x,%08x)\n", activecpu_get_pc(), offset*4, data );
+	}
+	COMBINE_DATA( &namcos22_polygonram[offset] );
+}
+
 /**
- * c00000:
- *			00000000 00000000
- *			00000004 00000000
- *			00000001				scene bank select
- *			00000001
- *			00000032
- *			00000280
+ * c00000
+ * c00004 set by main CPU; triggers DSP to start drawing scene.  DSP stores zero when finished.
+ * c00008
+ * c0000c
+ * c0002c busy status(?)
+ * c00010 display list bank select
  *
- * c00800..c0ffff: code for DSP, written by main CPU
+ * c00030
+ * c00040	Point RAM Write Enable (ff=enable)
+ * c00044	Point RAM IDC (index count register)
+ * c00058
+ * c0005c
+ *
+ * c00c00..c0ffff  Point RAM Port (Point RAM has 128K words, 512KB space (128K 24bit)
  *
  * c10000..c1007f
  *		0000000f (always?)
@@ -878,16 +1016,28 @@ DrawPolygons( struct mame_bitmap *bitmap )
 	int bShowOnly = 0;
 
 	double M[4][4];
-	INT32 code,mode;
+	UINT16 code, mode;
+	UINT16 window = 0;
 	INT32 xpos,ypos,zpos;
-	INT32 window = 0;
-	INT32 i, iSource0, iSource1, iTarget;
-	INT32 param;
+	int i, iSource0, iSource1, iTarget;
 	const INT32 *pSource, *pDebug;
 	const INT32 *pWindow;
-	namcos22_polygonram[0x4/4] = 0; /* clear busy flag */
 
+	pSource=NULL;
+	pWindow=NULL;
+
+	if( keyboard_pressed(KEYCODE_Z) ) return;
+
+	namcos22_polygonram[0x4/4] = 0; /* clear busy flag */
 	ResetWindow();
+
+	namcos22_polygonram[0x2c/4] = 0; /* see ridge racer */
+	namcos22_polygonram[0x30/4] = 0; /* see ridge racer */
+
+	if( keyboard_pressed(KEYCODE_SPACE)  )
+	{
+		logerror( "DrawPolygons\n" );
+	}
 
 	/*************************************************************************/
 	#ifdef MAME_DEBUG
@@ -915,19 +1065,29 @@ DrawPolygons( struct mame_bitmap *bitmap )
 	#endif /* MAME_DEBUG */
 	/*************************************************************************/
 
-	if( namcos22_polygonram[0x10/4] )
-	{ /* bank#0 */
+	/**
+	 * Ace Driver:
+	 * namcos22_polygonram[0x10/4]:
+	 * - points to end of display list
+	 */
+	switch( namcos22_polygonram[0x10/4]&1 )
+	{
+	case 0:
 		pWindow = (INT32 *)&namcos22_polygonram[0x10000/4];
 		pSource = (INT32 *)&namcos22_polygonram[0x10400/4];
-	}
-	else
-	{ /* bank#1 */
+		break;
+
+	case 1:
 		pWindow = (INT32 *)&namcos22_polygonram[0x18000/4];
 		pSource = (INT32 *)&namcos22_polygonram[0x18400/4];
+		break;
+
+	default:
+		break;
 	}
+
 	if( !pSource[0] ) return;
 
-	param = 0;
 	mode = 0x8000;
 
 	if( mbDumpScene )
@@ -954,7 +1114,7 @@ DrawPolygons( struct mame_bitmap *bitmap )
 			}
 		}
 		code = *pSource++;
-		if( ((UINT32)code) < 0x8000 )
+		if( code<0x8000 )
 		{
 			SetupWindow( pWindow,window );
 			xpos = *pSource++;
@@ -975,7 +1135,12 @@ DrawPolygons( struct mame_bitmap *bitmap )
 			{
 				if( mbDumpScene )
 				{
-					logerror( "\n#%02x:\n", iObject );
+					logerror( "\n#%03x: ", iObject );
+					while( pDebug<pSource )
+					{
+						logerror( "%08x ", *pDebug++ );
+					}
+					logerror("\n");
 				}
 				BlitPolyObject( bitmap, code, M );
 			}
@@ -985,46 +1150,56 @@ DrawPolygons( struct mame_bitmap *bitmap )
 		{
 			switch( code )
 			{
-			case 0x8000: /* Prop Cycle: environment */
-			case 0x8001: /* Prop Cycle: score digits */
-			case 0x8002: /* Prop Cycle: for large decorations, starting platform */
+			case 0x8000: /* global only  (Prop Cycle: environment) */
+			case 0x8001: /* local only   (Prop Cycle: score digits) */
+			case 0x8002: /* local+global (Prop Cycle: for large decorations, starting platform) */
 				mode = code;
 				window = *pSource++;
 				break;
 
-			case 0x8004: /* direct polygon (not used in Prop Cycle) */
-				pSource += 4+4*6;
-				/**
-				 * bias,color,flags,texpage
-				 *
-				 * vertex#0: u, v, x, y, z, intensity
-				 * vertex#1: u, v, x, y, z, intensity
-				 * vertex#2: u, v, x, y, z, intensity
-				 * vertex#3: u, v, x, y, z, intensity
-				 */
+			case 0x8004: /* direct polygon */
+				SetupWindow( pWindow,window );
+				BlitPolyDirect( bitmap, pSource, mWindowTransform.M );
+				pSource += 5+4*6;
+				break;
+
+			case 0x8007:
+				pSource += 10;
+				/*
+				fffffe80 00000000 00001900
+				ffff0000 00007fff
+				ffff0000 00007fff
+				ffff0000 00007fff
+				00000005
+				*/
 				break;
 
 			case 0x8008: /* load transformation matrix */
-				i = *pSource++;
+				i = *pSource++; i &= (MAX_CAMERA-1);
 				assert( i<0x80 );
 				pSource = LoadMatrix( pSource,mpMatrix[i].M );
+				if( !pSource ) return;
 				break;
 
 			case 0x8009: /* matrix composition */
-				iSource0 = pSource[0];
-				iSource1 = pSource[1];
-				iTarget  = pSource[2];
+				iSource0 = *pSource++; iSource0 &= (MAX_CAMERA-1);
+				iSource1 = *pSource++; iSource1 &= (MAX_CAMERA-1);
+				iTarget  = *pSource++; iTarget  &= (MAX_CAMERA-1);
+				if( iSource0>=MAX_CAMERA || iSource1>=MAX_CAMERA || iTarget>=MAX_CAMERA )
+				{
+					printf("illegal compose\n");
+					return;
+				}
 				assert( iSource0<0x80 && iSource1<0x80 && iTarget<0x80 );
-				memcpy( M, mpMatrix[iSource0].M, sizeof(M) );
-				matrix3d_Multiply( M, mpMatrix[iSource1].M );
-				memcpy( mpMatrix[iTarget].M, M, sizeof(M) );
-				pSource += 3;
+				memcpy( M, mpMatrix[iSource0].M, sizeof(M) ); /* M := source0 */
+				matrix3d_Multiply( M, mpMatrix[iSource1].M ); /* M *= source1 */
+				memcpy( mpMatrix[iTarget].M, M, sizeof(M) );  /* target := M */
 				break;
 
 			case 0x800a: /* Prop Cycle: flying bicycle, birds */
 				SetupWindow( pWindow,window );
 				code = *pSource++;
-				i = *pSource++;
+				i = *pSource++; i &= (MAX_CAMERA-1);
 				assert( i<0x80 );
 				memcpy( M, &mpMatrix[i], sizeof(M) );
 				xpos = *pSource++;
@@ -1036,7 +1211,12 @@ DrawPolygons( struct mame_bitmap *bitmap )
 				{
 					if( mbDumpScene )
 					{
-						logerror( "#%02x:\n", iObject );
+						logerror( "\n#%03x: ", iObject );
+						while( pDebug<pSource )
+						{
+							logerror( "%08x ", *pDebug++ );
+						}
+						logerror("\n");
 					}
 					BlitPolyObject( bitmap, code, M );
 				}
@@ -1044,9 +1224,7 @@ DrawPolygons( struct mame_bitmap *bitmap )
 				break;
 
 			case 0x8010: /* Prop Cycle: preceeds balloons */
-				mMasterBias = 0;
-				while( pSource[0] != (INT32)0xffffffff )
-				{ /**
+				  /**
 				   * This opcode is used to set global attributes affecting whole objects.
 				   * It is followed by zero or more (attribute,value) pairs.
 				   *
@@ -1055,30 +1233,42 @@ DrawPolygons( struct mame_bitmap *bitmap )
 				   * Often 0x8010 is immediately followed by 0xffffffff
 				   * This is used to restore default attributes.
 				   */
-					if( pSource[0]==3 )
+				mMasterBias = 0;
+				do{
+					code = *pSource++;
+					switch( code )
 					{
-						mMasterBias = pSource[1]; /* signed depth bias for whole objects */
+					case 3:
+						mMasterBias = *pSource++; /* signed depth bias for whole objects */
+						break;
+
+					case 2: /* unknown; used when Prop Cycle land is rising */
+						pSource++;
+						break;
+
+					case 0: /* unknown; used in Prop Cycle ending */
+						break;
+
+					case 0xffff:
+						break;
+
+					default:
+						printf( "0x8010: unknown attr[%04x]\n", code );
+						break;
 					}
-					else
-					{
-						logerror( "0x8010: unknown attr[%d] = %d\n", pSource[0],pSource[1] );
-					}
-					pSource+=2;
-				}
-				pSource++; /* skip final 0xffffffff */
+				} while( code != 0xffff );
 				break;
 
-			case 0x8017: /* Rave Racer */
+			case 0x8017: /* Rave Racer, Air Combat */
 				pSource += 4; /* ??? */
 				break;
 
-			case (INT32)0xffffffff:
 			case 0xffff:
 				if( mbDumpScene )
 				{
-					int ns_i;
-					logerror( "[eof]\n" );
-					for( ns_i=0; ns_i<32; ns_i++ )
+					int namcos22_i;
+					logerror( "[eof %08x]\n", code );
+					for( namcos22_i=0; namcos22_i<32; namcos22_i++ )
 					{
 						logerror( " %08x", *pSource++ );
 					}
@@ -1086,8 +1276,14 @@ DrawPolygons( struct mame_bitmap *bitmap )
 					logerror( "\n\n" );
 				}
 				return;
+
 			default:
-				logerror( "unknown opcode: %08x\n", code );
+				printf( "unknown opcode: %04x\n", code );
+				printf( "[premature eof = %04x]\n",code );
+				for( i=0; i<32; i++ )
+				{
+					printf( " %08x", *pSource++ );
+				}
 				return;
 			}
 		}
@@ -1113,6 +1309,45 @@ READ32_HANDLER( namcos22_gamma_r )
 	return namcos22_gamma[offset];
 }
 
+/*
+	+0x0002.w	Fader Enable(?) (0: disabled)
+	+0x0011.w	Display Fader (R) (0x0100 = 1.0)
+	+0x0013.w	Display Fader (G) (0x0100 = 1.0)
+	+0x0015.w	Display Fader (B) (0x0100 = 1.0)
+	+0x0100.b	Fog1 Color (R) (world fogging)
+	+0x0101.b	Fog2 Color (R) (used for heating of brake-disc on RV1)
+	+0x0180.b	Fog1 Color (G)
+	+0x0181.b	Fog2 Color (G)
+	+0x0200.b	Fog1 Color (B)
+	+0x0201.b	Fog2 Color (B)
+*/
+
+/**
+ * 0x800000: 08380000
+ *
+ * 0x810000: 0004 0004 0004 0004 4444
+ *           ^^^^ ^^^^ ^^^^ ^^^^      fog thickness? 0 if disabled
+ *
+ * 0x810200..0x8103ff: 0x100 words (depth cueing table)
+ *		0000 0015 002a 003f 0054 0069 007e 0093
+ *		00a8 00bd 00d2 00e7 00fc 0111 0126 013b
+ *
+ * 0x810400..0x810403: (air combat22?)
+ * 0x820000..0x8202ff: ?
+ *
+ * 0x824000..0x8243ff: gamma
+ *	 Prop Cycle: start of stage#2
+ *	 ffffff00 00ffffff 0000007f 00000000
+ *	 0000ff00 0f00ffff ff00017f 00010007
+ *	 00000001
+ *
+ *	 Prop Cycle: submerged in swamp
+ *	 ffffff00 0003ffae 0000007f 00000000
+ *   0000ff00 0f00ffff ff00017f 00010007
+ *   00000001
+ *
+ * 0x860000..0x860007: ?
+ */
 WRITE32_HANDLER( namcos22_gamma_w )
 {
 	data32_t old = namcos22_gamma[offset];
@@ -1123,10 +1358,10 @@ WRITE32_HANDLER( namcos22_gamma_w )
 	}
 	/**
 	 * 824000: ffffff00 00ffffff 0000007f 00000000
+	 *                    ^^^^^^                    RGB(fog)
+	 *
 	 * 824010: 0000ff00 0f00RRGG BBII017f 00010007
-	 *                      ^^                      red
-	 *                        ^^                    green
-	 *                           ^^                 blue
+	 *                      ^^^^ ^^                 RGB(fade)
 	 *                             ^^               fade (zero for none, 0xff for max)
 	 *                               ^^             flags; fader targer
 	 *                                                     1: affects polygon layer
@@ -1194,10 +1429,16 @@ VIDEO_START( namcos22s )
 						cgdirty = auto_malloc( 0x400 );
 						if( cgdirty )
 						{
+							int i;
 							mPtRomSize = memory_region_length(REGION_GFX4)/3;
 							mpPolyL = memory_region(REGION_GFX4);
 							mpPolyM = mpPolyL + mPtRomSize;
 							mpPolyH = mpPolyM + mPtRomSize;
+							for( i=0; i<0x4000/*mPtRomSize*/; i++ )
+							{
+								if( (i&0x7)==0 ) logerror( "\n%06x:", i );
+								logerror( " %06x", GetPolyData(i)&0xffffff );
+							}
 							return 0; /* no error */
 						}
 					}

@@ -24,9 +24,8 @@
         1800-1FFF       OPTIONS
         2000-27FF       ROM1
         2800-2FFF       ROM2
-        3000-37FF       ROM3
+        3000-37FF       ROM3 (Language ROM)
         3800-3FFF       ROM4 (Program ROM)
-       (F800-FFFF)      ROM4 (Program ROM) - only needed for the 6502 vectors
 
 	If you have any questions about how this driver works, don't hesitate to
 	ask.  - Mike Balfour (mab22@po.cwru.edu)
@@ -34,12 +33,14 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern WRITE_HANDLER( canyon_videoram_w );
 
 extern VIDEO_START( canyon );
 extern VIDEO_UPDATE( canyon );
+
+extern UINT8* canyon_videoram;
+
 
 /*************************************
  *
@@ -47,103 +48,96 @@ extern VIDEO_UPDATE( canyon );
  *
  *************************************/
 
-static unsigned short colortable_source[] =
-{
-	0x01, 0x00,
-	0x01, 0x02,
-};
-
 static PALETTE_INIT( canyon )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0x80,0x80,0x80); /* LT GREY */
-	palette_set_color(2,0xff,0xff,0xff); /* WHITE */
-	memcpy(colortable,colortable_source,sizeof(colortable_source));
-}
+	palette_set_color(0, 0x00, 0x00, 0x00); /* BLACK */
+	palette_set_color(1, 0xff, 0xff, 0xff); /* WHITE */
+	palette_set_color(2, 0x80, 0x80, 0x80); /* GREY  */
 
+	colortable[0] = 2;
+	colortable[1] = 0;
+	colortable[2] = 2;
+	colortable[3] = 1;
+}
 
 
 /*************************************
  *
- *	Input ports
+ *	Read handlers
  *
  *************************************/
-
-static READ_HANDLER( canyon_options_r )
-{
-	switch (offset & 0x03)
-	{
-		case 0x00:
-			return ((input_port_0_r(0) >> 6) & 0x03);
-		case 0x01:
-			return ((input_port_0_r(0) >> 4) & 0x03);
-		case 0x02:
-			return ((input_port_0_r(0) >> 2) & 0x03);
-		case 0x03:
-			return ((input_port_0_r(0) >> 0) & 0x03);
-	}
-
-	return 0xFF;
-}
-
 
 static READ_HANDLER( canyon_switches_r )
 {
-	switch (offset & 0x07)
+	UINT8 val = 0;
+
+	if ((readinputport(2) >> (offset & 7)) & 1)
 	{
-		case 0x00:
-			return ((input_port_3_r(0) << 7) & 0x80);
-		case 0x01:
-			return ((input_port_3_r(0) << 6) & 0x80);
-		case 0x02:
-			return ((input_port_3_r(0) << 5) & 0x80) | input_port_1_r(0);
-		case 0x03:
-			return ((input_port_3_r(0) << 4) & 0x80) | input_port_2_r(0);
-		case 0x04:
-			return ((input_port_3_r(0) << 3) & 0x80);
-		case 0x05:
-			return ((input_port_3_r(0) << 2) & 0x80);
-		case 0x06:
-			return ((input_port_3_r(0) << 1) & 0x80) | input_port_1_r(0);
-		case 0x07:
-			return ((input_port_3_r(0) << 0) & 0x80) | input_port_2_r(0);
+		val |= 0x80;
+	}
+	if ((readinputport(1) >> (offset & 3)) & 1)
+	{
+		val |= 0x01;
 	}
 
-	return 0xFF;
+	return val;
+}
+
+
+static READ_HANDLER( canyon_options_r )
+{
+	return (readinputport(0) >> (2 * (~offset & 3))) & 3;
+}
+
+
+static READ_HANDLER( canyon_wram_r )
+{
+	return memory_region(REGION_CPU1)[offset];
 }
 
 
 
 /*************************************
  *
- *	Output ports
+ *	Write handlers
  *
  *************************************/
 
-WRITE_HANDLER( canyon_led_w )
+static WRITE_HANDLER( canyon_led_w )
 {
 	set_led_status(offset & 0x01, offset & 0x02);
 }
 
-WRITE_HANDLER( canyon_motor_w )
+
+static WRITE_HANDLER( canyon_motor_w )
 {
 	discrete_sound_w(offset & 0x01, data & 0x0f);
 }
 
-WRITE_HANDLER( canyon_explode_w )
+
+static WRITE_HANDLER( canyon_explode_w )
 {
 	discrete_sound_w(6, data / 16);
 }
 
-WRITE_HANDLER( canyon_attract_w )
+
+static WRITE_HANDLER( canyon_attract_w )
 {
 	discrete_sound_w(4 + (offset & 0x01), !(offset & 0x02));
 }
 
-WRITE_HANDLER( canyon_whistle_w )
+
+static WRITE_HANDLER( canyon_whistle_w )
 {
 	discrete_sound_w(2 + (offset & 0x01), (offset & 0x02) >> 1);
 }
+
+
+static WRITE_HANDLER( canyon_wram_w )
+{
+	memory_region(REGION_CPU1)[offset] = data;
+}
+
 
 
 /*************************************
@@ -153,31 +147,28 @@ WRITE_HANDLER( canyon_whistle_w )
  *************************************/
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x01ff, MRA_RAM }, /* WRAM */
-	{ 0x0800, 0x0bff, MRA_RAM }, /* DISPLAY RAM */
-	{ 0x1000, 0x17ff, canyon_switches_r }, /* SWITCHES */
-	{ 0x1800, 0x1fff, canyon_options_r }, /* OPTIONS */
-	{ 0x2000, 0x27ff, MRA_NOP }, /* PROM1 */
-	{ 0x2800, 0x2fff, MRA_NOP }, /* PROM2 */
-	{ 0x3000, 0x37ff, MRA_NOP }, /* PROM3 */
-	{ 0x3800, 0x3fff, MRA_ROM }, /* PROM4 */
-	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM4 for 6502 vectors */
+	{ 0x0000, 0x00ff, MRA_RAM },
+	{ 0x0100, 0x01ff, canyon_wram_r },
+	{ 0x0800, 0x0bff, MRA_RAM },
+	{ 0x1000, 0x17ff, canyon_switches_r },
+	{ 0x1800, 0x1fff, canyon_options_r },
+	{ 0x2000, 0x3fff, MRA_ROM },
+	{ 0xe000, 0xffff, MRA_ROM }, /* mirror for 6502 vectors */
 MEMORY_END
 
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
+	{ 0x0000, 0x00ff, MWA_RAM },
+	{ 0x0100, 0x01ff, canyon_wram_w },
 	{ 0x0400, 0x0401, canyon_motor_w },
 	{ 0x0500, 0x0500, canyon_explode_w },
+	{ 0x0501, 0x0501, MWA_NOP }, /* watchdog, disabled in service mode */
 	{ 0x0600, 0x0603, canyon_whistle_w },
 	{ 0x0680, 0x0683, canyon_led_w },
 	{ 0x0700, 0x0703, canyon_attract_w },
-	{ 0x0bd0, 0x0bdf, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x0800, 0x0bff, canyon_videoram_w, &videoram }, /* DISPLAY */
-	{ 0x2000, 0x27ff, MWA_NOP }, /* PROM1 */
-	{ 0x2800, 0x2fff, MWA_NOP }, /* PROM2 */
-	{ 0x3000, 0x37ff, MWA_NOP }, /* PROM3 */
-	{ 0x3800, 0x3fff, MWA_ROM }, /* PROM4 */
+	{ 0x0800, 0x0bff, canyon_videoram_w, &canyon_videoram },
+	{ 0x1000, 0x17ff, MWA_NOP }, /* sloppy code writes here */
+	{ 0x2000, 0x3fff, MWA_ROM },
 MEMORY_END
 
 
@@ -189,39 +180,37 @@ MEMORY_END
  *************************************/
 
 INPUT_PORTS_START( canyon )
-	PORT_START      /* DSW - fake port, gets mapped to Canyon Bomber ports */
+	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x01, "Spanish" )
 	PORT_DIPSETTING(    0x02, "French" )
 	PORT_DIPSETTING(    0x03, "German" )
 	PORT_DIPNAME( 0x30, 0x00, "Misses Per Play" )
-	PORT_DIPSETTING(    0x00, "Three" )
-	PORT_DIPSETTING(    0x10, "Four" )
-	PORT_DIPSETTING(    0x20, "Five" )
-	PORT_DIPSETTING(    0x30, "Six" )
-	PORT_DIPNAME( 0xC0, 0x80, "Game Cost" )
-	PORT_DIPSETTING(    0x80, "1 coin/player" )
-	PORT_DIPSETTING(    0xC0, "2 coins/player" )
-	PORT_DIPSETTING(    0x40, "2 players/coin" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPSETTING(    0x30, "6" )
+	PORT_DIPNAME( 0xC0, 0x80, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0xC0, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
-	PORT_START      /* IN1 - fake port, gets mapped */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT(0xFE, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START      /* IN2 - fake port, gets mapped */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT(0xFE, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START      /* IN3 - fake port, gets mapped */
+	PORT_START      /* IN2 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON7, "Hiscore Reset", KEYCODE_H, IP_JOY_DEFAULT )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_TILT ) /* SLAM */
 
 INPUT_PORTS_END
@@ -234,53 +223,49 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static struct GfxLayout tile_layout =
 {
-	8,8,
+	8, 8,
     64,
     1,
     { 0 },
-    { 4, 5, 6, 7, 12, 13, 14, 15 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8
+    {
+		0x4, 0x5, 0x6, 0x7, 0xC, 0xD, 0xE, 0xF
+	},
+	{
+		0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70
+	},
+	0x80
 };
 
 
-static struct GfxLayout motionlayout =
+static struct GfxLayout sprite_layout =
 {
-	32,16,
+	32, 16,
 	4,
 	1,
 	{ 0 },
-	{ 0x100*8 + 7, 0x100*8 + 6, 0x100*8 + 5, 0x100*8 + 4, 7, 6, 5, 4,
-	  0x100*8 + 15, 0x100*8 + 14, 0x100*8 + 13, 0x100*8 + 12, 15, 14, 13, 12,
-	  0x100*8 + 256+7, 0x100*8 + 256+6, 0x100*8 + 256+5, 0x100*8 + 256+4, 256+7, 256+6, 256+5, 256+4,
-	  0x100*8 + 256+15, 0x100*8 + 256+14, 0x100*8 + 256+13, 0x100*8 + 256+12, 256+15, 256+14, 256+13, 256+12 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-
-static struct GfxLayout bomb_layout =
-{
-	2,2,
-    1,
-    1,
-    { 0 },
-    { 4, 4 },
-	{ 3*16, 3*16 },
-	16*8
+	{
+		0x007, 0x006, 0x005, 0x004, 0x003, 0x002, 0x001, 0x000,
+		0x00F, 0x00E, 0x00D, 0x00C, 0x00B, 0x00A, 0x009, 0x008,
+		0x107, 0x106, 0x105, 0x104, 0x103, 0x102, 0x101, 0x100,
+		0x10F, 0x10E, 0x10D, 0x10C, 0x10B, 0x10A, 0x109, 0x108
+	},
+	{
+		0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70,
+		0x80, 0x90, 0xA0, 0xB0, 0xC0, 0xD0, 0xE0, 0xF0
+	},
+	0x200
 };
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0, 2 },
-	{ REGION_GFX2, 0, &motionlayout, 0, 2 },
-	{ REGION_GFX1, 0, &bomb_layout,  0, 2 },
+	{ REGION_GFX1, 0, &tile_layout,   0, 2 },
+	{ REGION_GFX2, 0, &sprite_layout, 0, 2 },
 	{ -1 }
 };
+
 
 
 /************************************************************************/
@@ -290,16 +275,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 int canyonWhistl555 = DISC_555_ASTBL_CAP | DISC_555_ASTBL_AC;
 
 const struct discrete_lfsr_desc canyon_lfsr={
-	16,			/* Bit Length */
-	0,			/* Reset Value */
-	6,			/* Use Bit 6 as XOR input 0 */
-	8,			/* Use Bit 8 as XOR input 1 */
-	DISC_LFSR_XNOR,		/* Feedback stage1 is XNOR */
-	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
-	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
-	0x000001,		/* Everything is shifted into the first bit only */
-	0,			/* Output is not inverted, Active Low Reset */
-	15			/* Output bit */
+	16,                 /* Bit Length */
+	0,                  /* Reset Value */
+	6,                  /* Use Bit 6 as XOR input 0 */
+	8,                  /* Use Bit 8 as XOR input 1 */
+	DISC_LFSR_XNOR,     /* Feedback stage1 is XNOR */
+	DISC_LFSR_OR,       /* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,  /* Feedback stage3 replaces the shifted register contents */
+	0x000001,           /* Everything is shifted into the first bit only */
+	0,                  /* Output is not inverted, Active Low Reset */
+	15                  /* Output bit */
 };
 
 /* Nodes - Inputs */
@@ -447,12 +432,12 @@ static DISCRETE_SOUND_START(canyon_sound_interface)
 	/* a 68k resistor and 22uf capacitor.           */
 	/************************************************/
 	DISCRETE_ADJUSTMENT(NODE_70, 1, 50000, 100000, 85000, DISC_LINADJ, "Whistle 1 Freq")	/* R59 */
-	DISCRETE_MULTADD(NODE_71, 1, CANYON_WHISTLESND1_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4) 
+	DISCRETE_MULTADD(NODE_71, 1, CANYON_WHISTLESND1_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4)
 	DISCRETE_RCDISC2(NODE_72, CANYON_WHISTLESND1_EN, NODE_71, 1.0, NODE_71, 68000.0, 2.2e-5)	/* CV */
 	DISCRETE_555_ASTABLE(CANYON_WHISTLESND1, CANYON_WHISTLESND1_EN, 519.4, 33000, NODE_70, 1e-8, NODE_72, &canyonWhistl555)
 
 	DISCRETE_ADJUSTMENT(NODE_75, 1, 50000, 100000, 90000, DISC_LINADJ, "Whistle 2 Freq")	/* R69 */
-	DISCRETE_MULTADD(NODE_76, 1, CANYON_WHISTLESND2_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4) 
+	DISCRETE_MULTADD(NODE_76, 1, CANYON_WHISTLESND2_EN, ((3.05-0.33)/5)*519.4, (0.33/5.0)*519.4)
 	DISCRETE_RCDISC2(NODE_77, CANYON_WHISTLESND2_EN, NODE_76, 1.0, NODE_76, 68000.0, 2.2e-5)	/* CV */
 	DISCRETE_555_ASTABLE(CANYON_WHISTLESND2, CANYON_WHISTLESND2_EN, 519.4, 33000, NODE_75, 1e-8, NODE_77, &canyonWhistl555)
 
@@ -480,20 +465,20 @@ DISCRETE_SOUND_END
 static MACHINE_DRIVER_START( canyon )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502,750000)
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+	MDRV_CPU_ADD(M6502, 12096000 / 16)
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(22 * 1000000 / 15750)
 
 	/* video hardware */
-    MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-    MDRV_SCREEN_SIZE(32*8, 30*8)
-    MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(3)
-	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	MDRV_COLORTABLE_LENGTH(4)
 
 	MDRV_PALETTE_INIT(canyon)
 	MDRV_VIDEO_START(canyon)
@@ -513,24 +498,26 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( canyon )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, CRC(8be15080) SHA1(095c15e9ac91623b2d514858dca2e4c261d36fd0) )
-	ROM_RELOAD(             0xF800, 0x0800 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD_NIB_LOW ( "9499-01.j1", 0x3000, 0x0400, CRC(31800767) SHA1(d4aebe12d3c45a2a8a361dc6f63e1a6230a78c17) )
+	ROM_LOAD_NIB_HIGH( "9503-01.p1", 0x3000, 0x0400, CRC(1eddbe28) SHA1(7d30280bf9edff743c16386d7cdec78094477996) )
+	ROM_LOAD         ( "9496-01.d1", 0x3800, 0x0800, CRC(8be15080) SHA1(095c15e9ac91623b2d514858dca2e4c261d36fd0) )
+	ROM_RELOAD(                      0xF800, 0x0800 ) /* for 6502 vectors */
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )
 
-	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
-	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
+	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "9506-01.m5", 0x0000, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
+	ROM_LOAD_NIB_HIGH( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, CRC(b8094b4c) SHA1(82dc6799a19984f3b204ee3aeeb007e55afc8be3) )	/* sync (not used) */
 ROM_END
 
 
-ROM_START( canbprot )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+ROM_START( canyonp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, CRC(49cf29a0) SHA1(b58f024f45f85e5c2a48a95c60e80fd1be60eaac) )
 	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, CRC(b4385c23) SHA1(b550dfe9182f2b29aedba160a0917ca78b82f0e7) )
 	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, CRC(c7ee4431) SHA1(7a0f4454a981c4e9ee27e273e9a8379458e660e5) )
@@ -541,9 +528,9 @@ ROM_START( canbprot )
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9492-01.n8", 0x0000, 0x0400, CRC(7449f754) SHA1(a8ffc39e1a86c94487551f5026eedbbd066b12c9) )
 
-	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
-	ROM_LOAD( "9506-01.m5", 0x0100, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
+	ROM_REGION( 0x0100, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD_NIB_LOW ( "9506-01.m5", 0x0000, 0x0100, CRC(0d63396a) SHA1(147fae3b02a86310c8d022a7e7cfbf71ea511616) )
+	ROM_LOAD_NIB_HIGH( "9505-01.n5", 0x0000, 0x0100, CRC(60507c07) SHA1(fcb76890cbaa37e02392bf8b97f7be9a6fe6a721) )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, CRC(b8094b4c) SHA1(82dc6799a19984f3b204ee3aeeb007e55afc8be3) )	/* sync (not used) */
@@ -557,5 +544,5 @@ ROM_END
  *
  *************************************/
 
-GAME( 1977, canyon,   0,      canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber" )
-GAME( 1977, canbprot, canyon, canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber (prototype)" )
+GAME( 1977, canyon,  0,      canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber" )
+GAME( 1977, canyonp, canyon, canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber (prototype)" )

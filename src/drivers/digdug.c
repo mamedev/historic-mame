@@ -458,6 +458,44 @@ ROM_END
 
 ROM_START( digdugat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code for the first CPU  */
+	ROM_LOAD( "201.007",      0x0000, 0x1000, CRC(23d0b1a4) SHA1(a118d55e03a9ccf069f37c7bac2c9044dccd1f5e) )
+	ROM_LOAD( "202.007",      0x1000, 0x1000, CRC(5453dc1f) SHA1(8be091dd53e9b44e80e1ac9b1751efbe832db78d) )
+	ROM_LOAD( "203.007",      0x2000, 0x1000, CRC(c9077dfa) SHA1(611b3e1b575a51639530917366557773534c80aa) )
+	ROM_LOAD( "204.007",      0x3000, 0x1000, CRC(a8fc8eac) SHA1(7a24197f4ec5989bc4d635b27b6578f4d62cb5f4) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "205.007",      0x0000, 0x1000, CRC(5ba385c5) SHA1(f4577bddff74a14b13b212f5553fa13fe9ae4bcc) )
+	ROM_LOAD( "206.007",      0x1000, 0x1000, CRC(382b4011) SHA1(2b79ddcf48177c99b5fa1f957374f4baa2bec143) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU  */
+	ROM_LOAD( "136007.107",   0x0000, 0x1000, CRC(a41bce72) SHA1(2b9b74f56aa7939d9d47cf29497ae11f10d78598) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136007.108",   0x0000, 0x0800, CRC(3d24a3af) SHA1(857ae93e2a41258a129dcecbaed2df359540b735) )
+
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136007.116",   0x0000, 0x1000, CRC(e22957c8) SHA1(4700c63f4f680cb8ab8c44e6f3e1712aabd5daa4) )
+	ROM_LOAD( "136007.117",   0x1000, 0x1000, CRC(a3bbfd85) SHA1(2105455762e0de120f2d943f9010a7d06c6b6448) )
+	ROM_LOAD( "136007.118",   0x2000, 0x1000, CRC(458499e9) SHA1(578bd839f9218c3cf4feee1223a461144e455df8) )
+	ROM_LOAD( "136007.119",   0x3000, 0x1000, CRC(c58252a0) SHA1(bd79e39e8a572d2b5c205e6de27ca23e43ec9f51) )
+
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "136007.115",   0x0000, 0x1000, CRC(754539be) SHA1(466ae754eb4721df8814d4d33a31d867507d45b3) )
+
+	ROM_REGION( 0x1000, REGION_GFX4, 0 )	/* 4k for the playfield graphics */
+	ROM_LOAD( "136007.114",   0x0000, 0x1000, CRC(d6822397) SHA1(055ca6514141323f1e6dfcf91451507c04114d41) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "digdug.5n",    0x0000, 0x0020, CRC(4cb9da99) SHA1(91a5852a15d4672c29fdcbae75921794651f960c) )
+	ROM_LOAD( "digdug.1c",    0x0020, 0x0100, CRC(00c7c419) SHA1(7ea149e8eb36920c3b84984b5ce623729d492fd3) )
+	ROM_LOAD( "digdug.2n",    0x0120, 0x0100, CRC(e9b3e08e) SHA1(a294cc4da846eb702d61678396bfcbc87d30ea95) )
+
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
+	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, CRC(7a2815b4) SHA1(085ada18c498fdb18ecedef0ea8fe9217edb7b46) )
+ROM_END
+
+ROM_START( digduga1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, CRC(b9198079) SHA1(1d3fe04020f584ed250e32fdc6f6a3b769342884) )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, CRC(b2acbe49) SHA1(c8f713e8cfa70d3bc64d3002ff7bffc65ee138e2) )
 	ROM_LOAD( "136007.103",   0x2000, 0x1000, CRC(d6407b49) SHA1(0e71a8f02778286488865e20439776dbb2a8ec78) )
@@ -538,5 +576,6 @@ ROM_END
 
 GAME( 1982, digdug,   0,      digdug, digdug, 0, ROT90, "Namco", "Dig Dug (set 1)" )
 GAME( 1982, digdugb,  digdug, digdug, digdug, 0, ROT90, "Namco", "Dig Dug (set 2)" )
-GAME( 1982, digdugat, digdug, digdug, digdug, 0, ROT90, "[Namco] (Atari license)", "Dig Dug (Atari)" )
+GAME( 1982, digdugat, digdug, digdug, digdug, 0, ROT90, "[Namco] (Atari license)", "Dig Dug (Atari, rev 2)" )
+GAME( 1982, digduga1, digdug, digdug, digdug, 0, ROT90, "[Namco] (Atari license)", "Dig Dug (Atari, rev 1)" )
 GAME( 1982, dzigzag,  digdug, digdug, digdug, 0, ROT90, "bootleg", "Zig Zag (Dig Dug hardware)" )

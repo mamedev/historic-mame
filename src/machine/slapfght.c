@@ -131,42 +131,6 @@ unsigned char val;
 	return val;
 }
 
-/*
-Tiger Heli MCU simulation.
-The MCU protection in Tiger Heli is very simple.
-It compares for a value to return a specific number,otherwise
-it will give the BAD HW message(stored at locations $10AB-$10B5).The program itself says
-what kind of value is needed (usually,but not always 0x83).This is simulated by reading
-what value the main program asks,then adjusting it to the value really needed
-(as it was managed by a real MCU).
-The bootlegs patches this with different ways:
-\-The first one patches the final 'ret z' opcode check with a 'ret' at 10AAh.
-\-The second one patches the e803 checks with a 'ret' at location 109Dh.
-
--AS 1 may 2k3
-*/
-
-READ_HANDLER( tigerh_e803_r )
-{
-	switch(mcu_val)
-	{
-		/*This controls the background scroll(tigerh & tigerhj only)*/
-		case 0x40:
-		case 0x41:
-		case 0x42: return 0xf0;
-		/*Protection check at start-up*/
-		case 0x73: return (mcu_val+0x10);
-		case 0xf3: return (mcu_val-0x80);
-		default:   return (mcu_val);
-	}
-}
-
-WRITE_HANDLER( tigerh_e803_w )
-{
-	//usrintf_showmessage("PC %04x %02x written",activecpu_get_pc(),data);
-	mcu_val = data;
-}
-
 /* Enable hardware interrupt of sound cpu */
 WRITE_HANDLER( getstar_sh_intenable_w )
 {
@@ -187,3 +151,99 @@ WRITE_HANDLER( getstar_port_04_w )
 {
 //	cpu_halt(0,0);
 }
+
+
+/* Tiger Heli MCU */
+
+static unsigned char from_main,from_mcu;
+static int mcu_sent = 0,main_sent = 0;
+static unsigned char portA_in,portA_out,ddrA;
+static unsigned char portB_in,portB_out,ddrB;
+static unsigned char portC_in,portC_out,ddrC;
+
+READ_HANDLER( tigerh_68705_portA_r )
+{
+	return (portA_out & ddrA) | (portA_in & ~ddrA);
+}
+
+WRITE_HANDLER( tigerh_68705_portA_w )
+{
+	portA_out = data;//?
+	from_mcu = portA_out;
+	mcu_sent = 1;
+}
+
+WRITE_HANDLER( tigerh_68705_ddrA_w )
+{
+	ddrA = data;
+}
+
+READ_HANDLER( tigerh_68705_portB_r )
+{
+	return (portB_out & ddrB) | (portB_in & ~ddrB);
+}
+
+WRITE_HANDLER( tigerh_68705_portB_w )
+{
+
+	if ((ddrB & 0x02) && (~data & 0x02) && (portB_out & 0x02))
+	{
+		portA_in = from_main;
+		if (main_sent) cpu_set_irq_line(2,0,CLEAR_LINE);
+		main_sent = 0;
+	}
+	if ((ddrB & 0x04) && (data & 0x04) && (~portB_out & 0x04))
+	{
+		from_mcu = portA_out;
+		mcu_sent = 1;
+	}
+
+	portB_out = data;
+}
+
+WRITE_HANDLER( tigerh_68705_ddrB_w )
+{
+	ddrB = data;
+}
+
+
+READ_HANDLER( tigerh_68705_portC_r )
+{
+	portC_in = 0;
+	if (!main_sent) portC_in |= 0x01;
+	if (mcu_sent) portC_in |= 0x02;
+	return (portC_out & ddrC) | (portC_in & ~ddrC);
+}
+
+WRITE_HANDLER( tigerh_68705_portC_w )
+{
+	portC_out = data;
+}
+
+WRITE_HANDLER( tigerh_68705_ddrC_w )
+{
+	ddrC = data;
+}
+
+WRITE_HANDLER( tigerh_mcu_w )
+{
+	from_main = data;
+	main_sent = 1;
+	mcu_sent=0;
+	cpu_set_irq_line(2,0,ASSERT_LINE);
+}
+
+READ_HANDLER( tigerh_mcu_r )
+{
+	mcu_sent = 0;
+	return from_mcu;
+}
+
+READ_HANDLER( tigerh_mcu_status_r )
+{
+	int res = 0;
+	if (!main_sent) res |= 0x02;
+	if (!mcu_sent) res |= 0x04;
+	return res;
+}
+

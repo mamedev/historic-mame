@@ -495,6 +495,9 @@ void cpuintrf_push_context(int cpunum);
 /* restore the previous context */
 void cpuintrf_pop_context(void);
 
+/* set the dasm override handler */
+void cpuintrf_set_dasm_override(unsigned (*dasm_override)(int cpunum, char *buffer, unsigned pc));
+
 
 
 /*************************************

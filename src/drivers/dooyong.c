@@ -34,7 +34,7 @@ Blue Hawk:
 Primella:
 - does the game really support cocktail mode as service mode suggests?
 - are buttons 2 and 3 used as service mode suggests?
-R-Shark:
+R-Shark, Super-X:
 - sprite/fg priority is not understood
 
 ***************************************************************************/
@@ -1675,6 +1675,6 @@ GAMEX(1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC l
 GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari" )
 GAME( 1994, gundl94,  0,        primella, primella, 0, ROT0,   "Dooyong", "Gun Dealer '94" )
 GAME( 1994, primella, gundl94,  primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella" )
-GAME (1994, superx,   0,        superx,   rshark,   0, ROT270, "NTC", "Super-X (NTC)" )
-GAME (1994, superxm,  superx,   superx,   rshark,   0, ROT270, "Mitchell", "Super-X (Mitchell)" )
+GAMEX(1994, superx,   0,        superx,   rshark,   0, ROT270, "NTC", "Super-X (NTC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1994, superxm,  superx,   superx,   rshark,   0, ROT270, "Mitchell", "Super-X (Mitchell)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1995, rshark,   0,        rshark,   rshark,   0, ROT270, "Dooyong", "R-Shark", GAME_IMPERFECT_GRAPHICS )

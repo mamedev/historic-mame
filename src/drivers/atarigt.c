@@ -1080,7 +1080,7 @@ static DRIVER_INIT( primrage )
  *
  *************************************/
 
-GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1994, primrage, 0,        atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1994, primrag2, primrage, atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 1.7)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )

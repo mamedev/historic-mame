@@ -120,6 +120,57 @@ NEP-16
        U8 and U10 are socketed 27C040 EPROM
        All other ROMs are surface mounted SOP44 MASK ROM
 
+Cart Layout
+-----------
+
+SUPER KANEKO NOVA SYSTEM
+ROM 4 BOARD
+NEP-16
+
+Top Side:
+ /-                                                    /-
+ ||SS300-00 SS210-00     SS102-00 SS103-00   SS201-00  ||
+ ||U1       U3           U8       U32        U9        ||
+ ||                                                    ||
+ ||                                                    ||
+ || 082*    SG01A  SG01A  #      #                     ||
+ ||          U4     U6    U29    U30                   ||
+ \-                                                    \-
+
+Bottom Side:
+ /-                                                    /-
+ ||SS200-00 SS000-00     SS101-00       ^       ^      ||
+ ||U17      U21          U20            U24     U26    ||
+ ||                                                    ||
+ ||                                                    ||
+ ||                                  NEC     NEC       ||
+ ||                                  D431000 D43100    ||
+ \-                                                    \-
+
+* Kaneko (208 pin PQFP)    # Empty sockets for 27C4001 / 27C040
+  ROM0                     ^ Empty sockets for uPD23C32000
+  082                        Full NEC ram number: D431000AGW-70LL
+  9709PK002
+
+
+Cart Layout
+-----------
+
+SUPER-KANEKO-NOVA-SYSTEM
+ROM-2-BOARD
+NEP-16
+
+
+ /-                                                    /-
+ ||PZL-300-00 * PAL PAL  *   PZL-200-00 PZL-210-00  *  ||
+ ||                                                    ||
+ ||                             D431000 D431000        ||
+ ||                                                    ||
+ ||          PZ01U  PZ01U  #    #                      ||
+ ||          U8     U10    U43  U44   *   * PZL-100-00 ||
+ \-                                                    \-
+
+
 */
 
 #include "driver.h"
@@ -1067,6 +1118,12 @@ static READ32_HANDLER( puzloopj_speedup_r )
 	return skns_main_ram[0x86714/4];
 }
 
+static READ32_HANDLER( puzloopu_speedup_r )
+{
+	if (activecpu_get_pc()==0x401dab2) cpu_spinuntil_int();
+	return skns_main_ram[0x85cec/4];
+}
+
 static READ32_HANDLER( puzzloop_speedup_r )
 {
 /*
@@ -1144,6 +1201,7 @@ static DRIVER_INIT( panicstr ) { skns_sprite_kludge(-1,-1); init_skns(); install
 static DRIVER_INIT( senknow )  { skns_sprite_kludge(+1,+1); init_skns(); install_mem_read32_handler(0, 0x60000dc, 0x60000df, senknow_speedup_r );  }
 static DRIVER_INIT( puzzloop ) { skns_sprite_kludge(-9,-1); init_skns(); install_mem_read32_handler(0, 0x6081d38, 0x6081d3b, puzzloop_speedup_r ); }
 static DRIVER_INIT( puzloopj ) { skns_sprite_kludge(-9,-1); init_skns(); install_mem_read32_handler(0, 0x6086714, 0x6086717, puzloopj_speedup_r ); }
+static DRIVER_INIT( puzloopu ) { skns_sprite_kludge(-9,-1); init_skns(); install_mem_read32_handler(0, 0x6085cec, 0x6085cef, puzloopu_speedup_r ); }
 static DRIVER_INIT( jjparads ) { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6000994, 0x6000997, jjparads_speedup_r );  }
 static DRIVER_INIT( jjparad2 ) { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6000984, 0x6000987, jjparad2_speedup_r );  }
 static DRIVER_INIT( ryouran )  { skns_sprite_kludge(+5,+1); init_skns(); install_mem_read32_handler(0, 0x6000a14, 0x6000a17, ryouran_speedup_r );  }
@@ -1161,6 +1219,7 @@ ROM_START( skns )
 	ROM_LOAD       ( "sknsj1.u10", 0x000000, 0x080000, CRC(7e2b836c) SHA1(92c5a7a2472496028bff0e5980d41dd294f42144) ) /* Japan BIOS */
 	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europ BIOS */
 	ROM_LOAD       ( "sknsa1.u10", 0x000000, 0x080000, CRC(745e5212) SHA1(caba649ab2d83b2d7e007eecee0fc582c019df38) ) /* Asia  BIOS */
+	ROM_LOAD       ( "sknsu1.u10", 0x000000, 0x080000, CRC(384d21ec) SHA1(a27e8a18099d9cea64fa32db28d01101c2a78815) ) /* USA   BIOS */
 ROM_END
 
 ROM_START( cyvern )
@@ -1314,8 +1373,8 @@ ROM_START( puzzloop )
 	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europe BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-	ROM_LOAD16_BYTE( "puzloope.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
-	ROM_LOAD16_BYTE( "puzloope.u4",  0x000001, 0x080000, CRC(14ac2870) SHA1(d1abcfd64d7c0ead67e879c40e1010453fd4da13) )
+	ROM_LOAD16_BYTE( "pl00e1.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
+	ROM_LOAD16_BYTE( "pl00e1.u4",  0x000001, 0x080000, CRC(14ac2870) SHA1(d1abcfd64d7c0ead67e879c40e1010453fd4da13) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
 	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )
@@ -1339,6 +1398,29 @@ ROM_START( puzloopj )
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
 	ROM_LOAD16_BYTE( "pl0j2u6.u10",  0x000000, 0x080000, CRC(23c3bf97) SHA1(77ea1f32bed5709a6ad5b250370f08cfe8036867) )
 	ROM_LOAD16_BYTE( "pl0j2u4.u8",   0x000001, 0x080000, CRC(55b2a3cb) SHA1(d4cbe143fe2ad622af808cbd9eedffeff3b77e0d) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
+	/* 0x040000 - 0x3fffff empty? */
+	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples */
+    ROM_LOAD( "pzl30000.u4", 0x000000, 0x400000, CRC(38604b8d) SHA1(1191cf48a6a7baa58e51509442b40ea67f5252d2) )
+ROM_END
+
+ROM_START( puzloopu )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* SH-2 Code */
+	ROM_LOAD       ( "sknsu1.u10",   0x000000, 0x080000, CRC(384d21ec) SHA1(a27e8a18099d9cea64fa32db28d01101c2a78815) ) /* US BIOS */
+
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
+	ROM_LOAD16_BYTE( "puzloopu.u10",  0x000000, 0x080000, CRC(e6f3f82f) SHA1(ac61dc22fa3c1b1c2f3a41d3a8fb43938b77ca68) )
+	ROM_LOAD16_BYTE( "puzloopu.u8",   0x000001, 0x080000, CRC(0d081d30) SHA1(ec0cdf120126104b9bb706f68c9ba9c3777dd69c) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
 	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )
@@ -1594,6 +1676,7 @@ GAMEX( 1999, senknow , skns,    skns, skns,     senknow,  ROT0,  "Kaneko / Kouyo
 GAMEX( 2000, gutsn,    skns,    skns, skns,     gutsn,    ROT0,  "Kaneko / Kouyousha", "Guts'n (Japan)", GAME_IMPERFECT_GRAPHICS ) // quite fragile, started working of it's own accord in 0.69 :)
 GAMEX( 1998, puzzloop, skns,    skns, skns,     puzzloop, ROT0,  "Mitchell", "Puzz Loop (Europe)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1998, puzloopj, puzzloop,skns, skns,     puzloopj, ROT0,  "Mitchell", "Puzz Loop (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, puzloopu, puzzloop,skns, skns,     puzloopu, ROT0,  "Mitchell", "Puzz Loop (USA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, jjparads, skns,    skns, jjparads, jjparads, ROT0,  "Electro Design", "Jan Jan Paradise", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, jjparad2, skns,    skns, jjparads, jjparad2, ROT0,  "Electro Design", "Jan Jan Paradise 2", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1998, ryouran , skns,    skns, jjparads, ryouran,  ROT0,  "Electro Design", "Otome Ryouran", GAME_IMPERFECT_GRAPHICS )

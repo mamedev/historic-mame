@@ -973,4 +973,4 @@ GAME ( 1980, vautour,  phoenix, phoenix,  phoenixt, 0,        ROT90, "bootleg", 
 GAMEX( 1981, pleiads,  0,       pleiads,  pleiads,  0,        ROT90, "Tehkan", "Pleiads (Tehkan)", GAME_IMPERFECT_COLORS )
 GAMEX( 1981, pleiadbl, pleiads, pleiads,  pleiads,  0,        ROT90, "bootleg", "Pleiads (bootleg)", GAME_IMPERFECT_COLORS )
 GAMEX( 1981, pleiadce, pleiads, pleiads,  pleiadce, 0,        ROT90, "Tehkan (Centuri license)", "Pleiads (Centuri)", GAME_IMPERFECT_COLORS )
-GAMEX( 1982, survival, 0,       survival, survival, survival, ROT90, "Rock-ola", "Survival", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1982, survival, 0,       survival, survival, survival, ROT90, "Rock-ola", "Survival", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

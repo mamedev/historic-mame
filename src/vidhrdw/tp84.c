@@ -212,26 +212,24 @@ static void get_bg_tile_info(int tile_index)
 
 static void get_fg_tile_info(int tile_index)
 {
-	int sx = tile_index % 32;
 	int coloffs = ((col0 & 0x18) << 1) + ((col0 & 0x07) << 6);
 	int attr = tp84_colorram2[tile_index];
-	int code = (sx < 2 || sx > 29) ? tp84_videoram2[tile_index] + ((attr & 0x30) << 4) : 10;
+	int code = tp84_videoram2[tile_index]+ ((attr & 0x30) << 4);
 	int color = (attr & 0x0f) + coloffs;
-	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0) |
-		(sx < 2 || sx > 29) ? TILE_IGNORE_TRANSPARENCY : 0;
+	int flags = ((attr & 0x40) ? TILE_FLIPX : 0) | ((attr & 0x80) ? TILE_FLIPY : 0) | TILE_IGNORE_TRANSPARENCY;
 
 	SET_TILE_INFO(0, code, color, flags)
 }
 
 VIDEO_START( tp84 )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
@@ -292,9 +290,26 @@ static void tp84_draw_sprites(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( tp84 )
 {
+	struct rectangle clip;
+
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	tp84_draw_sprites(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+
+	/* draw top fg_tilemap status layer part */
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.min_x+15;
+	clip.min_y = Machine->visible_area.min_y;
+	clip.max_y = Machine->visible_area.max_y;
+	tilemap_draw(bitmap, &clip, fg_tilemap, 0, 0);
+
+	/* the middle part of fg_tilemap seems to be used as normal ram and is skipped */
+
+	/* draw bottom fg_tilemap status layer part */
+	clip.min_x = Machine->visible_area.max_x-15;
+	clip.max_x = Machine->visible_area.max_x;
+	clip.min_y = Machine->visible_area.min_y;
+	clip.max_y = Machine->visible_area.max_y;
+	tilemap_draw(bitmap, &clip, fg_tilemap, 0, 0);
 }
 
 INTERRUPT_GEN( tp84_6809_interrupt )

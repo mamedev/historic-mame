@@ -697,8 +697,8 @@ INPUT_PORTS_START( crusnusa )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -818,8 +818,8 @@ INPUT_PORTS_START( crusnwld )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 
@@ -913,8 +913,8 @@ INPUT_PORTS_START( offroadc )
 	PORT_START		/* gas pedal */
 	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL, 25, 20, 0x00, 0xff )
 
-	PORT_START		/* brake pedal */
-	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 25, 20, 0x00, 0xff )
+	PORT_START		/* brake pedal hack removed*/
+	PORT_ANALOG( 0xff, 0x00, IPT_PEDAL2, 25, 20, 0x00, 0xff )
 INPUT_PORTS_END
 
 

@@ -300,7 +300,7 @@ static MACHINE_DRIVER_START( system16 )
 	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
 	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 4096000)
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)

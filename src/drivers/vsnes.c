@@ -2175,7 +2175,7 @@ ROM_END
 
 ROM_START( vsgshoe )
 	ROM_REGION( 0x20000,REGION_CPU1, 0 ) /* 6502 memory */
-	ROM_LOAD( "mds-gm5.1d",  0x10000, 0x4000, BAD_DUMP CRC(063b342f) SHA1(66f69de27db5b08969f9250d0a6760e7311bd9bf)  ) //BAD? It's length should be 0x2000?
+	ROM_LOAD( "mds-gm5.1d",  0x10000, 0x4000, CRC(063b342f) SHA1(66f69de27db5b08969f9250d0a6760e7311bd9bf)  ) // its probably not bad .. just banked somehow
 	ROM_LOAD( "mds-gm5.1c",  0x14000, 0x2000, CRC(e1b7915e) SHA1(ed0fdf74b05a3ccd1645c4f580436fd439f81dea) )
 	ROM_LOAD( "mds-gm5.1b",  0x16000, 0x2000, CRC(5b73aa3c) SHA1(4069a6139091fbff48758953bd894808a8356d46) )
 	ROM_LOAD( "mds-gm5.1a",  0x18000, 0x2000, CRC(70e606bc) SHA1(8207ded20cb9109d605ce73deb722de3514ed9bf) )

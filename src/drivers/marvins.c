@@ -565,11 +565,11 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( marvins )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.36 MHz */
 	MDRV_CPU_MEMORY(marvins_readmem_CPUA,marvins_writemem_CPUA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.36 MHz */
 	MDRV_CPU_MEMORY(marvins_readmem_CPUB,marvins_writemem_CPUB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -602,11 +602,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( vangrd2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_ADD_TAG("main", Z80, 3360000)	/* 3.36 MHz */
 	MDRV_CPU_MEMORY(madcrash_readmem_CPUA,madcrash_writemem_CPUA)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD_TAG("sub", Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_ADD_TAG("sub", Z80, 3360000)	/* 3.36 MHz */
 	MDRV_CPU_MEMORY(madcrash_readmem_CPUB,madcrash_writemem_CPUB)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

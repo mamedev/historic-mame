@@ -616,8 +616,8 @@ INPUT_PORTS_START( bradley )
 	PORT_START	/* analog 1 = turret elevation */
 	PORT_ANALOG( 0xff, 0x86, IPT_AD_STICK_Y, 25, 10, 0x46, 0xc6 )
 
-	PORT_START	/* analog 2 = shell firing range */
-	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2 | IPF_REVERSE, 25, 10, 0x10, 0xf0 )
+	PORT_START	/* analog 2 = shell firing range hack removed, now uses Z */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Z | IPF_REVERSE, 25, 10, 0x10, 0xf0 )
 INPUT_PORTS_END
 
 

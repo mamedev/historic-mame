@@ -6,10 +6,49 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/atarigen.h"
 #include "foodf.h"
 
 
-static UINT8 pf_flip;
+static UINT8 playfield_flip;
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = (data & 0xff) | ((data >> 7) & 0x100);
+	int color = (data >> 8) & 0x3f;
+	SET_TILE_INFO(0, code, color, playfield_flip ? (TILE_FLIPX | TILE_FLIPY) : 0);
+}
+
+
+
+/*************************************
+ *
+ *	Video system start
+ *
+ *************************************/
+
+VIDEO_START( foodf )
+{
+	/* initialize the playfield */
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!atarigen_playfield_tilemap)
+		return 1;
+
+	/* adjust the playfield for the 8 pixel offset */
+	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, -8);
+	playfield_flip = 0;
+	return 0;
+}
+
 
 
 /*************************************
@@ -20,31 +59,10 @@ static UINT8 pf_flip;
 
 void foodf_set_flip(int flip)
 {
-	if (flip != pf_flip)
+	if (flip != playfield_flip)
 	{
-		pf_flip = flip;
-		memset(dirtybuffer, 1, videoram_size / 2);
-	}
-}
-
-
-
-/*************************************
- *
- *	Playfield RAM write
- *
- *************************************/
-
-WRITE16_HANDLER( foodf_playfieldram_w )
-{
-	int oldword = videoram16[offset];
-	int newword = oldword;
-	COMBINE_DATA(&newword);
-
-	if (oldword != newword)
-	{
-		videoram16[offset] = newword;
-		dirtybuffer[offset] = 1;
+		playfield_flip = flip;
+		tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 	}
 }
 
@@ -95,27 +113,8 @@ VIDEO_UPDATE( foodf )
 {
 	int offs;
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size / 2 - 1; offs >= 0; offs--)
-		if (dirtybuffer[offs])
-		{
-			int data = videoram16[offs];
-			int color = (data >> 8) & 0x3f;
-			int pict = (data & 0xff) | ((data >> 7) & 0x100);
-			int sx,sy;
-
-			dirtybuffer[offs] = 0;
-
-			sx = (offs / 32 + 1) % 32;
-			sy = offs % 32;
-
-			drawgfx(tmpbitmap, Machine->gfx[0], pict, color, pf_flip, pf_flip,
-					8 * sx, 8 * sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-		}
-
-	/* copy that as the background */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, atarigen_playfield_tilemap, 0,0);
 
 	/* walk the motion object list. */
 	for (offs = 0; offs < spriteram_size / 4; offs += 2)

@@ -88,7 +88,7 @@
 #if PROTECTION_HACK
 
 /* decodebp.c */
-static unsigned char kn_protection_hack[] = 
+static unsigned char kn_protection_hack[] =
 {
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -110,7 +110,7 @@ static unsigned char kn_protection_hack[] =
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	
+
 	/* second test, this byte is ignored */
 	0x00,
 
@@ -128,7 +128,7 @@ static unsigned char kn_protection_hack[] =
 };
 
 /* decodesce.c */
-static unsigned char mg_protection_hack[] = 
+static unsigned char mg_protection_hack[] =
 {
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -168,7 +168,7 @@ static unsigned char mg_protection_hack[] =
 };
 
 /* decodetaito.c */
-static unsigned char tt_protection_hack[] = 
+static unsigned char tt_protection_hack[] =
 {
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -210,7 +210,7 @@ static unsigned char tt_protection_hack[] =
 /* decodecapcon.c */
 static unsigned char cpzn1_protection_hack [] =
 {
-	
+
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -251,7 +251,7 @@ static unsigned char cpzn1_protection_hack [] =
 /* decodecapcon.c */
 static unsigned char cpzn2_protection_hack [] =
 {
-	
+
 	/* unknown */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1396,10 +1396,10 @@ ROM_START( brvblade )
 	/* TSOP56 Flash EEPROMs are not dumped */
 	ROM_LOAD( "tsop56.1",     0x0000000, 0x0400000, NO_DUMP )
 	ROM_LOAD( "tsop56.2",     0x0400000, 0x0400000, NO_DUMP )
-	ROM_LOAD( "rom1u028.bin", 0x0800000, 0x0200000, CRC(cb7bc657) SHA1(e29ec5f5e18a1022757631caa341c5d6ef7b7033) ) 
-	ROM_LOAD( "rom2u336.bin", 0x0a00000, 0x0200000, CRC(4709026a) SHA1(f9e66bb267931b0b5860c92cd5277966f7ecc12f) ) 
-	ROM_LOAD( "spu1u412.bin", 0x0b00000, 0x0080000, CRC(6408b5b2) SHA1(ba60aa1074df87e98fa260211e9ec99cea25023f) ) 
-	ROM_LOAD( "spu0u049.bin", 0x0b80000, 0x0080000, CRC(c9df8ed9) SHA1(00a58522189091c48d781b6703e4378e04343c33) ) 
+	ROM_LOAD( "rom1u028.bin", 0x0800000, 0x0200000, CRC(cb7bc657) SHA1(e29ec5f5e18a1022757631caa341c5d6ef7b7033) )
+	ROM_LOAD( "rom2u336.bin", 0x0a00000, 0x0200000, CRC(4709026a) SHA1(f9e66bb267931b0b5860c92cd5277966f7ecc12f) )
+	ROM_LOAD( "spu1u412.bin", 0x0b00000, 0x0080000, CRC(6408b5b2) SHA1(ba60aa1074df87e98fa260211e9ec99cea25023f) )
+	ROM_LOAD( "spu0u049.bin", 0x0b80000, 0x0080000, CRC(c9df8ed9) SHA1(00a58522189091c48d781b6703e4378e04343c33) )
 ROM_END
 
 
@@ -1493,8 +1493,8 @@ ROM_START( mgcldate )
 	TAITOFX1_BIOS
 
 	ROM_REGION32_LE( 0x00c00000, REGION_USER1, 0 )
-	ROM_LOAD16_BYTE( "e32-08.2",     0x0000000, 0x100000, CRC(3d42cd28) SHA1(9017922e835a359ba5126c8a9e8c27380a5ce081) ) 
-	ROM_LOAD16_BYTE( "e32-09.7",     0x0000001, 0x100000, CRC(db7ec115) SHA1(fa6f18de71ba997389d887d7ffe745aa25e24c20) ) 
+	ROM_LOAD16_BYTE( "e32-08.2",     0x0000000, 0x100000, CRC(3d42cd28) SHA1(9017922e835a359ba5126c8a9e8c27380a5ce081) )
+	ROM_LOAD16_BYTE( "e32-09.7",     0x0000001, 0x100000, CRC(db7ec115) SHA1(fa6f18de71ba997389d887d7ffe745aa25e24c20) )
 	ROM_LOAD( "e32-01.1",            0x0200000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
 	ROM_LOAD( "e32-02.6",            0x0600000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
 	ROM_LOAD( "e32-03.12",           0x0a00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
@@ -1603,15 +1603,15 @@ ROM_END
 /* it in every zip file */
 GAMEX( 1997, cpzn1,    0,        zn,       zn, zn,   ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
 
-GAMEX( 1995, ts2j,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, sfex,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, sfexj,    sfex,     znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, glpracr,  cpzn1,    zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1997, sfexp,    cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1997, sfexpj,   sfexp,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1997, rvschool, cpzn1,    znqsound, zn, zn,   ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1997, jgakuen,  rvschool, znqsound, zn, zn,   ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1998, tgmj,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1995, ts2j,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, sfex,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, sfexj,    sfex,     znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, glpracr,  cpzn1,    zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, sfexp,    cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, sfexpj,   sfexp,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, rvschool, cpzn1,    znqsound, zn, zn,   ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, jgakuen,  rvschool, znqsound, zn, zn,   ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, tgmj,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /* Capcom ZN2 */
 
@@ -1620,12 +1620,12 @@ GAMEX( 1998, tgmj,     cpzn1,    znqsound, zn, zn,   ROT0, "Capcom/Akira", "Tetr
 /* it in every zip file */
 GAMEX( 1997, cpzn2,    0,        zn,       zn, zn,   ROT0, "Sony/Capcom", "ZN2", NOT_A_DRIVER )
 
-GAMEX( 1998, sfex2,    cpzn2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1998, sg2j,     cpzn2,    znqsound, zn, zn,   ROT0, "Capcom","Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1998, techromn, cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1998, kikaioh,  techromn, znqsound, zn, zn,   ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1999, sfex2p,   sfex2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1999, shiryu2,  cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1998, sfex2,    cpzn2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, sg2j,     cpzn2,    znqsound, zn, zn,   ROT0, "Capcom","Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, techromn, cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, kikaioh,  techromn, znqsound, zn, zn,   ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, sfex2p,   sfex2,    znqsound, zn, zn,   ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, shiryu2,  cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /* Tecmo */
 
@@ -1634,14 +1634,14 @@ GAMEX( 1999, shiryu2,  cpzn2,    znqsound, zn, zn,   ROT0, "Capcom", "Strider Hi
 /* it in every zip file */
 GAMEX( 1997, tps,      0,        zn,       zn, zn,   ROT0, "Sony/Tecmo", "TPS", NOT_A_DRIVER )
 
-GAMEX( 1997, glpracr2, tps,      zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1997, glprac2l, glpracr2, znlink,   zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1998, doapp,    tps,      zn,       zn, zn,   ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1999, tondemo,  tps,      zn,       zn, zn,   ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 2000, brvblade, tps,      zn,       zn, zn,   ROT0, "Raizing", "Brave Blade (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1997, glpracr2, tps,      zn,       zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2l, glpracr2, znlink,   zn, zn,   ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, doapp,    tps,      zn,       zn, zn,   ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, tondemo,  tps,      zn,       zn, zn,   ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX( 2000, brvblade, tps,      zn,       zn, zn,   ROT0, "Raizing", "Brave Blade (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Video System */
-GAMEX( 1996, sncwgltd, 0,        zn,       zn, zn,   ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1996, sncwgltd, 0,        zn,       zn, zn,   ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Taito */
 
@@ -1650,14 +1650,14 @@ GAMEX( 1996, sncwgltd, 0,        zn,       zn, zn,   ROT0, "Video System", "Soni
 /* it in every zip file */
 GAMEX( 1995, taitofx1, 0,        fx1b,     zn, zn,   ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
-GAMEX( 1995, psyforce, taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1995, sfchamp,  taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, raystorm, taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1996, ftimpcta, taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1996, mgcldate, taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1996, mgcldtea, mgcldate, fx1a,     zn, fx1b, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1997, gdarius,  taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAMEX( 1997, gdarius2, gdarius,  fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1995, psyforce, taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, sfchamp,  taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, raystorm, taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, ftimpcta, taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, mgcldate, taitofx1, fx1a,     zn, zn,   ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, mgcldtea, mgcldate, fx1a,     zn, fx1b, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, gdarius,  taitofx1, fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, gdarius2, gdarius,  fx1b,     zn, fx1b, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Eighteen Raizing */
-GAMEX( 1997, beastrzb, taitofx1, zn,       zn, zn,   ROT0, "Eighteen Raizing", "Beastorizer (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAMEX( 1997, beastrzb, taitofx1, zn,       zn, zn,   ROT0, "Eighting Raizing", "Beastorizer (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )

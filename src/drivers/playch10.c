@@ -591,6 +591,129 @@ INPUT_PORTS_START( playch10 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+/*Input Ports for gun games*/
+INPUT_PORTS_START( playc10g )
+    PORT_START	/* These are the BIOS buttons */
+    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE2, "Channel Select", KEYCODE_0, JOYCODE_NONE )	/* CHSelect 		*/
+    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE3, "Enter", KEYCODE_MINUS, JOYCODE_NONE )				/* Enter button 	*/
+    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE4, "Reset", KEYCODE_EQUALS, JOYCODE_NONE ) 		/* Reset button 	*/
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )												/* INT Detect		*/
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )												/* N/C				*/
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )													/* Coin 2			*/
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SERVICE1 )												/* Service button	*/
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )													/* Coin 1			*/
+
+    PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x3f, 0x00, "Units of time (coin A/coin B)" )
+	PORT_DIPSETTING(    0x00, "300/0" )
+	PORT_DIPSETTING(    0x01, "300/100" )
+	PORT_DIPSETTING(    0x02, "300/200" )
+	PORT_DIPSETTING(    0x03, "300/300" )
+	PORT_DIPSETTING(    0x04, "300/400" )
+	PORT_DIPSETTING(    0x05, "300/500" )
+	PORT_DIPSETTING(    0x06, "300/600" )
+	PORT_DIPSETTING(    0x07, "300/700" )
+	PORT_DIPSETTING(    0x08, "300/800" )
+	PORT_DIPSETTING(    0x09, "300/900" )
+	PORT_DIPSETTING(    0x0a, "150/0" )
+	PORT_DIPSETTING(    0x0b, "150/200" )
+	PORT_DIPSETTING(    0x0c, "150/400" )
+	PORT_DIPSETTING(    0x0f, "150/500" )
+	PORT_DIPSETTING(    0x0d, "150/600" )
+	PORT_DIPSETTING(    0x0e, "150/800" )
+	PORT_DIPSETTING(    0x10, "300/1000" )
+	PORT_DIPSETTING(    0x11, "300/1100" )
+	PORT_DIPSETTING(    0x12, "300/1200" )
+	PORT_DIPSETTING(    0x13, "300/1300" )
+	PORT_DIPSETTING(    0x14, "300/1400" )
+	PORT_DIPSETTING(    0x15, "300/1500" )
+	PORT_DIPSETTING(    0x16, "300/1600" )
+	PORT_DIPSETTING(    0x17, "300/1700" )
+	PORT_DIPSETTING(    0x18, "300/1800" )
+	PORT_DIPSETTING(    0x19, "300/1900" )
+	PORT_DIPSETTING(    0x1a, "150/1000" )
+	PORT_DIPSETTING(    0x1b, "150/1200" )
+	PORT_DIPSETTING(    0x1c, "150/1400" )
+	PORT_DIPSETTING(    0x1f, "150/1500" )
+	PORT_DIPSETTING(    0x1d, "150/1600" )
+	PORT_DIPSETTING(    0x1e, "150/1800" )
+	PORT_DIPSETTING(    0x20, "300/2000" )
+	PORT_DIPSETTING(    0x21, "300/2100" )
+	PORT_DIPSETTING(    0x22, "300/2200" )
+	PORT_DIPSETTING(    0x23, "300/2300" )
+	PORT_DIPSETTING(    0x24, "300/2400" )
+	PORT_DIPSETTING(    0x25, "300/2500" )
+	PORT_DIPSETTING(    0x26, "300/2600" )
+	PORT_DIPSETTING(    0x27, "300/2700" )
+	PORT_DIPSETTING(    0x28, "300/2800" )
+	PORT_DIPSETTING(    0x29, "300/2900" )
+	PORT_DIPSETTING(    0x2a, "150/2000" )
+	PORT_DIPSETTING(    0x2b, "150/2200" )
+	PORT_DIPSETTING(    0x2c, "150/2400" )
+	PORT_DIPSETTING(    0x2f, "150/2500" )
+	PORT_DIPSETTING(    0x2d, "150/2600" )
+	PORT_DIPSETTING(    0x2e, "150/2800" )
+	PORT_DIPSETTING(    0x30, "300/3000" )
+	PORT_DIPSETTING(    0x31, "300/3100" )
+	PORT_DIPSETTING(    0x32, "300/3200" )
+	PORT_DIPSETTING(    0x33, "300/3300" )
+	PORT_DIPSETTING(    0x34, "300/3400" )
+	PORT_DIPSETTING(    0x35, "300/3500" )
+	PORT_DIPSETTING(    0x36, "300/3600" )
+	PORT_DIPSETTING(    0x37, "300/3700" )
+	PORT_DIPSETTING(    0x38, "300/3800" )
+	PORT_DIPSETTING(    0x39, "300/3900" )
+	PORT_DIPSETTING(    0x3a, "150/3000" )
+	PORT_DIPSETTING(    0x3b, "150/3200" )
+	PORT_DIPSETTING(    0x3c, "150/3400" )
+	PORT_DIPSETTING(    0x3f, "150/3500" )
+	PORT_DIPSETTING(    0x3d, "150/3600" )
+	PORT_DIPSETTING(    0x3e, "150/3800" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+
+	PORT_START /* DSW B */
+	PORT_DIPNAME( 0x40, 0x00, "Coin Mode" )
+	PORT_DIPSETTING(    0x00, "Mode 1" )
+	PORT_DIPSETTING(    0x40, "Mode 2" )
+	PORT_DIPNAME( 0xbf, 0x3f, "Timer speed" )
+	PORT_DIPSETTING(    0x05, "60 units per second" )
+	PORT_DIPSETTING(    0x06, "30 units per second" )
+	PORT_DIPSETTING(    0x07, "20 units per second" )
+	PORT_DIPSETTING(    0x08, "15 units per second" )
+	PORT_DIPSETTING(    0x0a, "10 units per second" )
+	PORT_DIPSETTING(    0x0e, "6 units per second" )
+	PORT_DIPSETTING(    0x10, "5 units per second" )
+	PORT_DIPSETTING(    0x13, "4 units per second" )
+	PORT_DIPSETTING(    0x18, "3 units per second" )
+	PORT_DIPSETTING(    0x22, "2 units per second" )
+	PORT_DIPSETTING(    0x3f, "1 unit per second" )
+	PORT_DIPSETTING(    0x00, "1 unit every 4 seconds" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Free_Play ) )
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_START1, "Select", KEYCODE_1, JOYCODE_NONE )/* select button - masked */
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_START2, "Start", KEYCODE_2, JOYCODE_NONE )	/* start button - masked */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )	/* wired to 1p select button */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* wired to 1p start button */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 
 	PORT_START	/* IN2 - FAKE - Gun X pos */
 	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X, 70, 30, 0, 255 )
@@ -1573,9 +1696,9 @@ GAME( 1986, pc_vball,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "
 GAMEX(1987, pc_1942, playch10, playch10, playch10, pc_hrz,   ROT0, "Capcom", "PlayChoice-10: 1942", GAME_IMPERFECT_GRAPHICS )
 
 /* Gun Games */
-GAME( 1984, pc_duckh,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
-GAME( 1984, pc_hgaly,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Hogan's Alley" )
-GAME( 1984, pc_wgnmn,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Wild Gunman" )
+GAME( 1984, pc_duckh,playch10, playch10, playc10g, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
+GAME( 1984, pc_hgaly,playch10, playch10, playc10g, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Hogan's Alley" )
+GAME( 1984, pc_wgnmn,playch10, playch10, playc10g, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Wild Gunman" )
 
 /* A-Board Games */
 GAME( 1986, pc_grdus,playch10, playch10, playch10, pcaboard, ROT0, "Konami", "PlayChoice-10: Gradius" ) // date: 860917
@@ -1629,7 +1752,7 @@ GAME( 1990, pc_radr2,playch10, playch10, playch10, pcgboard_type2, ROT0, "Square
 GAME( 1985, pc_gntlt,playch10, playch10, playch10, pcgboard_type2, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet" )
 
 /* H-Board Games */
-GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* i-Board Games */
 GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )

@@ -336,6 +336,17 @@ ROM_START( hitme )
     ROM_LOAD( "hmcg.h7", 0x0000, 0x0200, CRC(818f5fbe) SHA1(e2b3349e51ba57d14f3388ba93891bc6274b7a14) )
 ROM_END
 
+ROM_START( mblkjack )
+	ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
+	ROM_LOAD( "mirco1.bin", 0x0000, 0x0200, CRC(aa796ad7) SHA1(2908bdb4ab17a2f5bc4da2f957906bf2b57afa50) )
+	ROM_LOAD( "hm2.c7", 0x0200, 0x0200, CRC(25d47ba4) SHA1(6f3bb4ca6918dc07f37d0c0c7fe5ec53aa7171a5) )
+	ROM_LOAD( "hm4.d7", 0x0400, 0x0200, CRC(f8bfda8d) SHA1(48bbc106f8d80d6c1ad1a2c1575ce7d6452fbe9d) )
+	ROM_LOAD( "hm6.e7", 0x0600, 0x0200, CRC(8aa87118) SHA1(aca395a4f6a1981cd89ca99e05935d72adcb69ca) )
+
+	ROM_REGION( 0x0400, REGION_GFX1, 0 )
+    ROM_LOAD( "hmcg.h7", 0x0000, 0x0200, CRC(818f5fbe) SHA1(e2b3349e51ba57d14f3388ba93891bc6274b7a14) )
+ROM_END
+
 ROM_START( barricad )
    ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
    ROM_LOAD( "550806.7b",   0x0000, 0x0200, CRC(ea7f5da7) SHA1(c0ad37a0ffdb0500e8adc8fb9c4369e461307f84) )
@@ -359,5 +370,6 @@ ROM_START( brickyrd )
 ROM_END
 
 GAMEX( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1976, barricad, 0,        brickyrd, brickyrd, 0, ROT0, "RamTek", "Barricade", GAME_NO_SOUND  )
 GAMEX( 1976, brickyrd, barricad, brickyrd, brickyrd, 0, ROT0, "RamTek", "Brickyard", GAME_NO_SOUND  )

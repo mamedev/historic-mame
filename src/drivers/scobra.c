@@ -163,7 +163,7 @@ static MEMORY_WRITE_START( hustlerb_writemem )
 MEMORY_END
 
 
-static MEMORY_READ_START( mimonksc_readmem )
+static MEMORY_READ_START( mimonkey_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },
 	{ 0x8c00, 0x8fff, galaxian_videoram_r },	/* mirror */
@@ -174,7 +174,7 @@ static MEMORY_READ_START( mimonksc_readmem )
 	{ 0xc000, 0xffff, MRA_ROM },
 MEMORY_END
 
-static MEMORY_WRITE_START( mimonksc_writemem )
+static MEMORY_WRITE_START( mimonkey_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, galaxian_videoram_w, &galaxian_videoram },
@@ -1005,8 +1005,52 @@ INPUT_PORTS_START( hustler )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/* Same as 'mimonkey' (scramble.c driver), but different "Lives" Dip Switch */
-INPUT_PORTS_START( mimonksc )
+INPUT_PORTS_START( mimonkey )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )   /* used, something to do with the bullets */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+/* Same as 'mimonkey' but different "Lives" Dip Switch */
+INPUT_PORTS_START( mimonsco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1049,7 +1093,6 @@ INPUT_PORTS_START( mimonksc )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
-
 
 
 struct AY8910interface scobra_ay8910_interface =
@@ -1159,12 +1202,12 @@ static MACHINE_DRIVER_START( calipso )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( mimonksc )
+static MACHINE_DRIVER_START( mimonkey )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(type1)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(mimonksc_readmem,mimonksc_writemem)
+	MDRV_CPU_MEMORY(mimonkey_readmem,mimonkey_writemem)
 
 	/* video hardware */
 	MDRV_VIDEO_START(mimonkey)
@@ -1779,7 +1822,32 @@ ROM_START( hustlerb )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, CRC(aa1f7f5e) SHA1(311dd17aa11490a1173c76223e4ccccf8ea29850) )
 ROM_END
 
-ROM_START( mimonksc )
+ROM_START( mimonkey )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "mm1.2e",		  0x0000, 0x1000, CRC(9019f1b1) SHA1(0c45f64e39b9a182f6162ab520ced6ef0686466c) )
+	ROM_LOAD( "mm2.2e",		  0x1000, 0x1000, CRC(043e97d6) SHA1(924c0165dfcf01182696b0d259718ac625573d9a) )
+	ROM_LOAD( "mm3.2f",		  0x2000, 0x1000, CRC(1052726a) SHA1(2fdd3064f02babd2d496a38c7aee094cb3666f24) )
+	ROM_LOAD( "mm4.2h",		  0x3000, 0x1000, CRC(7b3f35ff) SHA1(b52c46c3f166346d3b25cd2ab09781afc703de08) )
+	ROM_LOAD( "mm5.2j",		  0xc000, 0x1000, CRC(b4e5c32d) SHA1(18e53519e8f4e813109cfaf45f2f66444e6fa1a2) )
+	ROM_LOAD( "mm6.2l",		  0xd000, 0x1000, CRC(409036c4) SHA1(a9640da91156504bfc8fedcda30f81169b28a0c9) )
+	ROM_LOAD( "mm7.2m",		  0xe000, 0x1000, CRC(119c08fa) SHA1(6e19ab874b735fe7339bcf651111664263ea4ef9) )
+	ROM_LOAD( "mm8.2p",		  0xf000, 0x1000, CRC(f7989f04) SHA1(d6e301414a807f5e9feed92ce53ab73d6bd46c45) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "mm13.11d",	  0x0000, 0x1000, CRC(2d14c527) SHA1(062414ce0415b6c471149319ecae22f465df3a4f) )
+	ROM_LOAD( "mm14.10d",	  0x1000, 0x1000, CRC(35ed0f96) SHA1(5aaacae5c2acf97540b72491f71ea823f5eeae1a) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mm12.5h",      0x0000, 0x1000, CRC(f73a8412) SHA1(9baf4336cceb9b039372b0a1c733910aeab5ec6d) )
+	ROM_LOAD( "mm10.5h",      0x1000, 0x1000, CRC(3828c9db) SHA1(eaf9e81c803ad2be6c2db3104f07f80788378286) )
+	ROM_LOAD( "mm11.5f",      0x2000, 0x1000, CRC(9e0e9289) SHA1(79d412dbceb364bc798feda658b15792feb63338) )
+	ROM_LOAD( "mm9.5f",       0x3000, 0x1000, CRC(92085b0c) SHA1(a791703fa9f17e42450c871d902430fc3c6b10ef) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, CRC(4e3caeab) SHA1(a25083c3e36d28afdefe4af6e6d4f3155e303625) )
+ROM_END
+
+ROM_START( mimonsco )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "fra_1a",       0x0000, 0x1000, CRC(8e7a7379) SHA1(06b945a5d237384bfd1b4c9a7449f5a1701a352c) )
 	ROM_LOAD( "fra_1b",       0x1000, 0x1000, CRC(ab08cbfe) SHA1(edccefefc0ed476d94acccf7f92115c5d6945679) )
@@ -1828,4 +1896,5 @@ GAMEX(198?, superbon, 0,        type1,    superbon, superbon,     ROT90,  "bootl
 GAME( 1981, hustler,  0,        hustler,  hustler,  hustler,      ROT90,  "Konami", "Video Hustler" )
 GAME( 1981, billiard, hustler,  hustler,  hustler,  billiard,     ROT90,  "bootleg", "The Billiards" )
 GAME( 1981, hustlerb, hustler,  hustlerb, hustler,  scramble_ppi, ROT90,  "bootleg", "Video Hustler (bootleg)" )
-GAME( 198?, mimonksc, mimonkey, mimonksc, mimonksc, mimonksc,     ROT90,  "bootleg", "Mighty Monkey (bootleg on Super Cobra hardware)" )
+GAME( 198?, mimonkey, 0,		mimonkey, mimonkey,	mimonkey,	  ROT90,  "Universal Video Games", "Mighty Monkey" )
+GAME( 198?, mimonsco, mimonkey, mimonkey, mimonsco, mimonsco,     ROT90,  "bootleg", "Mighty Monkey (bootleg on Super Cobra hardware)" )

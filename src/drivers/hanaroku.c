@@ -11,14 +11,13 @@ TODO:
 */
 
 #include "driver.h"
-
+#include "vidhrdw/generic.h"
 
 /* vidhrdw */
 
-
-data8_t* hanaroku_vidram1;
-data8_t* hanaroku_vidram2;
-data8_t* hanaroku_vidram3;
+UINT8 *hanaroku_spriteram1;
+UINT8 *hanaroku_spriteram2;
+UINT8 *hanaroku_spriteram3;
 
 
 PALETTE_INIT( hanaroku )
@@ -42,31 +41,79 @@ VIDEO_START(hanaroku)
 	return 0;
 }
 
-VIDEO_UPDATE(hanaroku)
+static void hanaroku_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int spr;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	int i;
 
-	fillbitmap(bitmap, Machine->pens[0x1f0], cliprect);	/* ??? */
-
-	for (spr = 0x1ff; spr >=0x0  ; spr--)
+	for (i = 511; i >= 0; i--)
 	{
-		int tile  = hanaroku_vidram1[0x0000+spr];
-		int xpos  = hanaroku_vidram1[0x0200+spr];
-		int ypos  = hanaroku_vidram3[0x0000+spr];
-		int tile2 = hanaroku_vidram2[0x0000+spr];
-		int xpos2 = hanaroku_vidram2[0x0200+spr] & 0x07;
-//		int ypos2 = hanaroku_vidram2[0x0600+spr];
-		int colr  = (hanaroku_vidram2[0x0200+spr] & 0xf8) >>3;
+		int code = hanaroku_spriteram1[i] | (hanaroku_spriteram2[i] << 8);
+		int color = (hanaroku_spriteram2[i + 0x200] & 0xf8) >> 3;
+		int flipx = 0;
+		int flipy = 0;
+		int sx = hanaroku_spriteram1[i + 0x200] | ((hanaroku_spriteram2[i + 0x200] & 0x07) << 8);
+		int sy = 242 - hanaroku_spriteram3[i];
 
-		tile = tile | (tile2 << 8);
-		xpos = xpos | (xpos2 << 8);
-//		ypos = ypos | (ypos2 << 8);
+		if (flip_screen)
+		{
+			sy = 242 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
 
-		drawgfx(bitmap,gfx,tile,colr,0,0,xpos,242-ypos,cliprect,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy,
+			sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
+VIDEO_UPDATE(hanaroku)
+{
+	fillbitmap(bitmap, Machine->pens[0x1f0], cliprect);	// ???
+	hanaroku_draw_sprites(bitmap, cliprect);
+}
+
+static WRITE_HANDLER( hanaroku_out_0_w )
+{
+	/*
+		bit		description
+
+		 0		meter1 (coin1)
+		 1		meter2 (coin2)
+		 2		meter3 (1/2 d-up)
+		 3		meter4
+		 4		call out (meter)
+		 5		lockout (key)
+		 6		hopper2 (play)
+		 7		meter5 (start)
+	*/
+
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
+	coin_counter_w(2, data & 0x04);
+	coin_counter_w(3, data & 0x08);
+	coin_counter_w(4, data & 0x80);
+}
+
+static WRITE_HANDLER( hanaroku_out_1_w )
+{
+	/*
+		bit		description
+
+		 0		hopper1 (data clear)
+		 1		dis dat
+		 2		dis clk
+		 3		pay out
+		 4		ext in 1
+		 5		ext in 2
+		 6		?
+		 7		?
+	*/
+}
+
+static WRITE_HANDLER( hanaroku_out_2_w )
+{
+	// unused
+}
 
 /* main cpu */
 
@@ -86,132 +133,59 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &hanaroku_vidram1 },
-	{ 0x9000, 0x97ff, MWA_RAM, &hanaroku_vidram2 },
-	{ 0xa000, 0xa1ff, MWA_RAM, &hanaroku_vidram3 },
-//	{ 0xa200, 0xa2ff, MWA_NOP },			// written once during P.O.S.T. - unknown purpose
-	{ 0xc000, 0xc3ff, MWA_RAM },			// main ram
-	{ 0xc400, 0xc4ff, MWA_RAM },			// ?
-	{ 0xb000, 0xb000, MWA_NOP },			// written with 0x40 (but not read back)
+	{ 0x8000, 0x87ff, MWA_RAM, &hanaroku_spriteram1 },
+	{ 0x9000, 0x97ff, MWA_RAM, &hanaroku_spriteram2 },
+	{ 0xa000, 0xa1ff, MWA_RAM, &hanaroku_spriteram3 },
+	{ 0xa200, 0xa2ff, MWA_NOP },	// ??? written once during P.O.S.T.
+	{ 0xa300, 0xa304, MWA_NOP },	// ???
+	{ 0xc000, 0xc3ff, MWA_RAM },				// main ram
+	{ 0xc400, 0xc4ff, MWA_RAM },	// ???
+	{ 0xb000, 0xb000, MWA_NOP },	// ??? always 0x40
 	{ 0xd000, 0xd000, AY8910_control_port_0_w },
 	{ 0xd001, 0xd001, AY8910_write_port_0_w },
-//	{ 0xe000, 0xe000, MWA_NOP },			// unneeded IMO
-//	{ 0xe002, 0xe002, MWA_NOP },			// unneeded IMO
-//	{ 0xe004, 0xe004, MWA_NOP },
+	{ 0xe000, 0xe000, hanaroku_out_0_w },
+	{ 0xe002, 0xe002, hanaroku_out_1_w },
+	{ 0xe004, 0xe004, hanaroku_out_2_w },
 MEMORY_END
 
 
-/* Desceiption of the buttons don't match exactly what is in the "test mode"  */
-/* Buttons 9 and 10 only have an effect when "Game Mode" is set to "1" or "2" */
-
 INPUT_PORTS_START( hanaroku )
-	PORT_START	/* IN0	(0xe000) */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )	// adds n credits depending on "Coinage" Dip Switch
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )	// adds 5 credits
-//	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )	// adds 10 credits (not in this game)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE1, "1/2 D-Up",     KEYCODE_H,        IP_JOY_DEFAULT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	// [0xc06a] = 0x03
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE2, "Analyser",     IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_SERVICE3, "Data Clear",   IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_START2,   "Bet",          IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_START	// IN0	(0xe000)
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1 )		// adds n credits depending on "Coinage" Dip Switch
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2 )		// adds 5 credits
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE,	"1/2 D-Up",		KEYCODE_H,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_SERVICE,	"Reset",		KEYCODE_R,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE,	"Meter",		KEYCODE_M,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE,	"Key",			KEYCODE_K,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_START2,		"Play",			IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_START1,		"Start",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
 
-	PORT_START	/* IN1	(0xe001) */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1,  "Card 1",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON2,  "Card 2",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON3,  "Card 3",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON4,  "Card 4",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON5,  "Card 5",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON6,  "Card 6",       IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON7,  DEF_STR( Yes ), KEYCODE_Y,        IP_JOY_DEFAULT )
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON8,  DEF_STR( No  ), KEYCODE_N,        IP_JOY_DEFAULT )
+	PORT_START	// IN1	(0xe001)
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1,	"Card 1",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2,	"Card 2",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3,	"Card 3",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4,	"Card 4",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5,	"Card 5",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6,	"Card 6",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7,	DEF_STR( Yes ),	KEYCODE_Y,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_BUTTON8,	DEF_STR( No  ),	KEYCODE_N,		IP_JOY_DEFAULT )
 
-	PORT_START	/* IN2	(0xe002) */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	// "Reset" (jump to 0x0000)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON9,  "Sub 1 Credit", KEYCODE_RSHIFT,   IP_JOY_DEFAULT )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON10, "Collect",      KEYCODE_RCONTROL, IP_JOY_DEFAULT )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START	// IN2	(0xe002)
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_SERVICE,	"Data Clear",	KEYCODE_D,		IP_JOY_DEFAULT )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_BUTTON9,	"Medal In",		KEYCODE_I,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_BUTTON10,	"Pay Out",		KEYCODE_O,		IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1,	"Ext In 1",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2,	"Ext In 2",		IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+	PORT_BIT(  0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* DSW1	(0xd000 - Port A) */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START	// DSW1	(0xd000 - Port A)
+	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* DSW2	(0xd000 - Port B) */
-#if 0		// code at 0x0283 NEVER executed !
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x03, "0" )
-	PORT_DIPSETTING(    0x02, "25" )
-	PORT_DIPSETTING(    0x01, "50" )
-	PORT_DIPSETTING(    0x00, "100" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x0c, "0" )
-	PORT_DIPSETTING(    0x08, "25" )
-	PORT_DIPSETTING(    0x04, "50" )
-	PORT_DIPSETTING(    0x00, "100" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x30, "0" )
-	PORT_DIPSETTING(    0x20, "10" )
-	PORT_DIPSETTING(    0x10, "20" )
-	PORT_DIPSETTING(    0x00, "40" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0xc0, "0" )
-	PORT_DIPSETTING(    0x80, "10" )
-	PORT_DIPSETTING(    0x40, "20" )
-	PORT_DIPSETTING(    0x00, "40" )
-#else
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-#endif
+	PORT_START	// DSW2	(0xd000 - Port B)
+	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* DSW3	(0xe004) */
+	PORT_START	// DSW3	(0xe004)
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )		// Stored at 0xc028
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
@@ -223,14 +197,12 @@ INPUT_PORTS_START( hanaroku )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )		// Stored at 0xc078
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x20, "Game Mode" )			// Stored at 0xc02e
-	PORT_DIPSETTING(    0x30, "Mode 0" )			// Collect OFF
-	PORT_DIPSETTING(    0x20, "Mode 1" )			// Collect ON (code at 0x36ea)
-	PORT_DIPSETTING(    0x10, "Mode 2" )			// Collect ON (code at 0x3728)
-	PORT_DIPSETTING(    0x00, "Mode 3" )			// No credit counter
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x20, "Game Mode" )				// Stored at 0xc02e
+	PORT_DIPSETTING(    0x30, "Mode 0" )				// Collect OFF
+	PORT_DIPSETTING(    0x20, "Mode 1" )				// Collect ON (code at 0x36ea)
+	PORT_DIPSETTING(    0x10, "Mode 2" )				// Collect ON (code at 0x3728)
+	PORT_DIPSETTING(    0x00, "Mode 3" )				// No credit counter
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 

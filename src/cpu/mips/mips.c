@@ -2486,7 +2486,7 @@ static void setcp2cr( int n_reg, UINT32 n_value )
 	mipscpu.cp2cr[ n_reg ].d = n_value;
 }
 
-static inline INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, UINT32 n_flag )
+INLINE INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, UINT32 n_flag )
 {
 	if( n_value > n_max )
 	{
@@ -2501,7 +2501,7 @@ static inline INT32 LIM( INT32 n_value, INT32 n_max, INT32 n_min, UINT32 n_flag 
 	return n_value;
 }
 
-static inline INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxflag, INT64 n_min, int n_minflag )
+INLINE INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxflag, INT64 n_min, int n_minflag )
 {
 	if( n_value > n_max )
 	{
@@ -2525,7 +2525,7 @@ static inline INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxflag, INT64 n_m
 #define Lm_C3( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 19 ) )
 #define Lm_D( a ) LIM( ( a ), 0xffff, 0x0000, ( 1 << 31 ) | ( 1 << 18 ) )
 
-static __inline UINT32 Lm_E( UINT32 n_z )
+INLINE UINT32 Lm_E( UINT32 n_z )
 {
 	if( n_z <= H / 2 )
 	{

@@ -317,6 +317,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/taitosj.o $(OBJ)/vidhrdw/taitosj.o $(OBJ)/drivers/taitosj.o \
 	$(OBJ)/machine/grchamp.o $(OBJ)/vidhrdw/grchamp.o $(OBJ)/drivers/grchamp.o \
 	$(OBJ)/machine/pitnrun.o $(OBJ)/vidhrdw/pitnrun.o $(OBJ)/drivers/pitnrun.o \
+	$(OBJ)/drivers/marinedt.o \
 	$(OBJ)/vidhrdw/crbaloon.o $(OBJ)/drivers/crbaloon.o \
 	$(OBJ)/vidhrdw/bking2.o $(OBJ)/drivers/bking2.o \
 	$(OBJ)/vidhrdw/gsword.o $(OBJ)/drivers/gsword.o $(OBJ)/machine/tait8741.o \
@@ -461,6 +462,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/firetrap.o $(OBJ)/drivers/firetrap.o \
 	$(OBJ)/vidhrdw/brkthru.o $(OBJ)/drivers/brkthru.o \
 	$(OBJ)/vidhrdw/metlclsh.o $(OBJ)/drivers/metlclsh.o \
+	$(OBJ)/drivers/compgolf.o \
 	$(OBJ)/vidhrdw/shootout.o $(OBJ)/drivers/shootout.o \
 	$(OBJ)/vidhrdw/sidepckt.o $(OBJ)/drivers/sidepckt.o \
 	$(OBJ)/vidhrdw/exprraid.o $(OBJ)/drivers/exprraid.o \
@@ -576,6 +578,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/rungun.o $(OBJ)/drivers/rungun.o \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
+	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \
 
@@ -674,7 +677,8 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/lasso.o $(OBJ)/drivers/lasso.o \
 	$(OBJ)/drivers/munchmo.o $(OBJ)/vidhrdw/munchmo.o \
 	$(OBJ)/vidhrdw/marvins.o $(OBJ)/drivers/marvins.o \
-	$(OBJ)/drivers/mainsnk.o \
+	$(OBJ)/vidhrdw/jcross.o $(OBJ)/drivers/jcross.o \
+	$(OBJ)/vidhrdw/mainsnk.o $(OBJ)/drivers/mainsnk.o \
 	$(OBJ)/drivers/hal21.o \
 	$(OBJ)/vidhrdw/snk.o $(OBJ)/drivers/snk.o \
 	$(OBJ)/drivers/sgladiat.o \
@@ -751,6 +755,7 @@ $(OBJ)/tms.a: \
 
 $(OBJ)/cinemar.a: \
 	$(OBJ)/vidhrdw/jack.o $(OBJ)/drivers/jack.o \
+	$(OBJ)/drivers/embargo.o \
 
 $(OBJ)/cinemav.a: \
 	$(OBJ)/sndhrdw/cinemat.o $(OBJ)/drivers/cinemat.o \
@@ -793,6 +798,7 @@ $(OBJ)/jaleco.a: \
 	$(OBJ)/vidhrdw/psychic5.o $(OBJ)/drivers/psychic5.o \
 	$(OBJ)/vidhrdw/ginganin.o $(OBJ)/drivers/ginganin.o \
 	$(OBJ)/vidhrdw/skyfox.o $(OBJ)/drivers/skyfox.o \
+	$(OBJ)/vidhrdw/homerun.o $(OBJ)/drivers/homerun.o \
 	$(OBJ)/vidhrdw/cischeat.o $(OBJ)/drivers/cischeat.o \
 	$(OBJ)/vidhrdw/tetrisp2.o $(OBJ)/drivers/tetrisp2.o \
 	$(OBJ)/vidhrdw/megasys1.o $(OBJ)/drivers/megasys1.o \
@@ -992,6 +998,7 @@ $(OBJ)/nihonsys.a: \
 $(OBJ)/alba.a: \
 	$(OBJ)/drivers/rmhaihai.o \
 	$(OBJ)/drivers/hanaroku.o \
+	$(OBJ)/drivers/yumefuda.o \
 
 $(OBJ)/homedata.a: \
 	$(OBJ)/vidhrdw/homedata.o $(OBJ)/drivers/homedata.o \
@@ -1063,6 +1070,8 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/ltcasino.o \
 	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/strvmstr.o \
+	$(OBJ)/vidhrdw/dorachan.o $(OBJ)/drivers/dorachan.o \
+	$(OBJ)/vidhrdw/ladyfrog.o $(OBJ)/drivers/ladyfrog.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

@@ -744,7 +744,7 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap)
 	/* allow the artwork system to override certain parameters */
 	bounds = Machine->visible_area;
 	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
-	artwork_override_screenshot_params(&bitmap, direct_rgb_components);
+	artwork_override_screenshot_params(&bitmap, &bounds, direct_rgb_components);
 
 	/* allow the OSD system to muck with the screenshot */
 	osdcopy = osd_override_snapshot(bitmap, &bounds);

@@ -462,12 +462,12 @@ Dragon Punch?
 The program jumps straight away to an unmapped memory address. I don't know,
 maybe there's a ROM missing.
 
-ladyfrog.001 contains
+roldfrog.001 contains
 VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
 
 ***************************************************************************/
 
-static MEMORY_READ16_START( ladyfrog_readmem )
+static MEMORY_READ16_START( roldfrog_readmem )
 	{ 0x000000, 0x3fffff, MRA16_ROM },
 	{ 0x881800, 0x881fff, MRA16_RAM },
 	{ 0x840000, 0x840001, input_port_0_word_r },
@@ -477,7 +477,7 @@ static MEMORY_READ16_START( ladyfrog_readmem )
 	{ 0xffc000, 0xffffff, MRA16_RAM },
 MEMORY_END
 
-static MEMORY_WRITE16_START( ladyfrog_writemem )
+static MEMORY_WRITE16_START( roldfrog_writemem )
 	{ 0x000000, 0x3fffff, MWA16_ROM },
 	{ 0x800000, 0x83ffff, MWA16_RAM },
 	{ 0x881800, 0x881fff, MWA16_RAM },
@@ -1339,7 +1339,7 @@ MACHINE_DRIVER_END
 								Lady Frog
 ***************************************************************************/
 
-static MACHINE_DRIVER_START( ladyfrog )
+static MACHINE_DRIVER_START( roldfrog )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,22000000 / 4)	/* 5.5MHz */
@@ -1350,7 +1350,7 @@ static MACHINE_DRIVER_START( ladyfrog )
 // Until the protection on the 68000 is figured out (or it will crash)
 #if 0
 	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz??? */
-	MDRV_CPU_MEMORY(ladyfrog_readmem,ladyfrog_writemem)
+	MDRV_CPU_MEMORY(roldfrog_readmem,roldfrog_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 #endif
 
@@ -1640,52 +1640,52 @@ Developers:
 
 ***************************************************************************/
 
-ROM_START( ladyfrog )
+ROM_START( roldfrog )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "ladyfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
 	ROM_RELOAD(               0x20000, 0x20000 )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "ladyfrog.002",	0x000000, 0x080000, CRC(724cf022) )
-	ROM_LOAD16_BYTE( "ladyfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
-	ROM_LOAD16_BYTE( "ladyfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
-	ROM_LOAD16_BYTE( "ladyfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
-	ROM_LOAD16_BYTE( "ladyfrog.004",	0x200000, 0x080000, CRC(709281f5) )
-	ROM_LOAD16_BYTE( "ladyfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
-	ROM_LOAD16_BYTE( "ladyfrog.005",	0x300000, 0x080000, CRC(b683160c) )
-	ROM_LOAD16_BYTE( "ladyfrog.009",	0x300001, 0x080000, CRC(e475fb76) )
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) )
+	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ladyfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
-	ROM_LOAD( "ladyfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
-	ROM_LOAD( "ladyfrog.012",       0x40000, 0x20000, CRC(466ede67) )
-	ROM_LOAD( "ladyfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
 ROM_END
 
-ROM_START( ladyfrga )
+ROM_START( roldfrga )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "ladyfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
 	ROM_RELOAD(               0x20000, 0x20000 )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "ladyfrog.002",	0x000000, 0x080000, CRC(724cf022) )
-	ROM_LOAD16_BYTE( "ladyfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
-	ROM_LOAD16_BYTE( "ladyfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
-	ROM_LOAD16_BYTE( "ladyfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
-	ROM_LOAD16_BYTE( "ladyfrog.004",	0x200000, 0x080000, CRC(709281f5) )
-	ROM_LOAD16_BYTE( "ladyfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
-	ROM_LOAD16_BYTE( "ladyfrog.005",	0x300000, 0x080000, CRC(b683160c) )
-	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) )	// differs with ladyfrog.009 by 1 byte
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) )
+	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) )	// differs with roldfrog.009 by 1 byte
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ladyfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
-	ROM_LOAD( "ladyfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
-	ROM_LOAD( "ladyfrog.012",       0x40000, 0x20000, CRC(466ede67) )
-	ROM_LOAD( "ladyfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
 ROM_END
 
 
@@ -1846,7 +1846,7 @@ GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0,    ROT0,   "Dynax",     "
 GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0,    ROT0,   "Dynax (Fabtek license)", "Sports Match" )
 GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0,    ROT180, "Dynax",     "Mahjong Friday (Japan)" )
 GAMEX(1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0,    ROT180, "Dynax",     "Mahjong Dial Q2 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, ladyfrog, 0,        ladyfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
-GAMEX(1993, ladyfrga, ladyfrog, ladyfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )
+GAMEX(1993, roldfrog, 0,        roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
+GAMEX(1993, roldfrga, roldfrog, roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )
 GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya, ROT0,   "Promat",    "Maya" )
 

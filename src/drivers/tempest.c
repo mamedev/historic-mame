@@ -508,6 +508,19 @@ ROM_START( tempest2 ) /* rev 2 */
 ROM_END
 
 
+ROM_START( tempest3 ) /* rev ? */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "237.002",      0x9000, 0x1000, CRC(1d0cc503) SHA1(7bef95db9b1102d6b1166bda0ccb276ef4cc3764) )
+	ROM_LOAD( "136.002",      0xa000, 0x1000, CRC(c88e3524) SHA1(89144baf1efc703b2336774793ce345b37829ee7) )
+	ROM_LOAD( "235.002",      0xb000, 0x1000, CRC(a4b2ce3f) SHA1(a5f5fb630a48c5d25346f90d4c13aaa98f60b228) )
+	ROM_LOAD( "134.002",      0xc000, 0x1000, CRC(65a9a9f9) SHA1(73aa7d6f4e7093ccb2d97f6344f354872bcfd72a) )
+	ROM_LOAD( "133.002",      0xd000, 0x1000, CRC(de4e9e34) SHA1(04be074e45bf5cd95a852af97cd04e35b7f27fc4) )
+	ROM_RELOAD(               0xf000, 0x1000 ) /* for reset/interrupt vectors */
+	/* Mathbox ROMs */
+	ROM_LOAD( "138.002",      0x3000, 0x1000, CRC(9995256d) SHA1(2b725ee1a57d423c7d7377a1744f48412e0f2f69) )
+ROM_END
+
+
 ROM_START( temptube )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
@@ -552,4 +565,5 @@ ROM_END
 GAME( 1980, tempest,  0,       tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 3)" )
 GAME( 1980, tempest1, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 1)" )
 GAME( 1980, tempest2, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 2)" )
+GAME( 1980, tempest3, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev ?)" )
 GAME( 1980, temptube, tempest, tempest, tempest, 0, ROT270, "hack", "Tempest Tubes" )

@@ -10,11 +10,53 @@
 
 	Known bugs:
 		* perspective on the floor in some levels is not drawn correctly
+		* flip screen not supported
 
 Note:	Police Trainer v1.3B is on the same revision PCB as Sharpshooter - Rev 0.5B
 		If you set the dip to serivce mode and reset the game, all program
 		roms fail the checksum.  However, each checksum listed matches the
 		checksum printed on the ROM label.
+ 
+
+The ATTILA Video System PCB (by EXIT Entertainment):
+
+Sharpshooter PCB is Rev 0.5B
+Police Trainer PCB is Rev 0.3
+
+               JAMMA Connector
+GUN1   XILINX-1
+
+GUN2
+
+LED1 LED2                    93C66
+
+                IDT71024 x 2  Bt481
+   8-way DIP  AT001
+
+U127                 U113       U162
+U125  IDT71256 x 4   U112
+U123                 U111       U160
+U121                 U110
+U126
+U124  OSC    IDT79R3041    XILINX-2
+U122  48.000MHz                 XILINX-3
+U120                             BSMT2000
+
+Chips:
+  CPU: IDT 79R3041-25J (MIPS R3000 core)
+Sound: BSMT2000
+Other: Bt481AKPJ110 (44 Pin PQFP, Brooktree RAMDAC)
+       AT001 (160 Pin PQFP, P & P Marketing Custom)
+       ATMEL 93C66 (EEPROM)
+PLDs:
+       XILINX-1 Labeled as U175A (Rev 3: Not Used)
+       XILINX-2 Labeled as U109A (Rev 3: Lattice - U109.P)
+       XILINX-3 Labeled as U151A (Rev 3: Lattice - U151.P)
+
+
+Note #1: On a Rev 3 PCB, the XILINX PLDs are replace with Lattice PLDs
+Note #2: On a Rev 3 PCB there is a small daughter card to help with gun input
+Note #3: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
 
 ***************************************************************************/
 
@@ -326,15 +368,15 @@ INPUT_PORTS_START( policetr )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x10, DEF_STR( On ))
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown )) /* Manuals show dips 1 through 6 as unused */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x20, DEF_STR( On ))
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x40, 0x40, "Monitor Sync")
+	PORT_DIPSETTING(    0x00, "+")
+	PORT_DIPSETTING(    0x40, "-")
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen )) /* For use with mirrored CRTs - Not supported */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x40, DEF_STR( On ))
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ))
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x80, DEF_STR( On ))
+	PORT_DIPSETTING(    0x80, DEF_STR( On ))	/* Will invert the Y axis of guns */
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */

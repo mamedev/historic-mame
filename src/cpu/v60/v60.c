@@ -62,20 +62,8 @@
 #define ADDW(dst, src)		{ unsigned res=(dst)+(src); SetCFW(res); SetOFW_Add(res,src,dst); SetSZPF_Word(res); dst=(UINT16)res; }
 #define ADDL(dst, src)		{ UINT64 res=(UINT64)(dst)+(UINT64)(src); SetCFL(res); SetOFL_Add(res,src,dst); SetSZPF_Long(res); dst=(UINT32)res; }
 
-#if 1
-// This version may have issues with strict aliasing
-#ifdef LSB_FIRST
-#define SETREG8(a, b)  *(UINT8 *)&(a) = (b)
-#define SETREG16(a, b) *(UINT16 *)&(a) = (b)
-#else
-#define SETREG8(a, b)  ((UINT8 *)&(a))[3] = (b)
-#define SETREG16(a, b) ((UINT16 *)&(a))[1] = (b)
-#endif
-#else
-// This is portable, but beware the double evaluation of a
 #define SETREG8(a, b)  (a) = ((a) & ~0xff) | ((b) & 0xff)
 #define SETREG16(a, b) (a) = ((a) & ~0xffff) | ((b) & 0xffff)
-#endif
 
 // Ultra Function Tables
 static UINT32 (*OpCodeTable[256])(void);
@@ -225,28 +213,13 @@ const char *v60_reg_names[68] = {
 	_CY	= _CY ? 1 : 0; \
 }
 
-static void messagebox(const char *msg)
-{
-	logerror("%s", msg);
-}
-
-static void logWrite(int channel, const char *format, ...)
-{
-	char msg[1024];
-	va_list arg;
-	va_start(arg, format);
-	vsprintf(msg, format, arg);
-	va_end(arg);
-	logerror("%s", msg);
-}
-
 static void v60_try_irq(void);
 
-#define STACK_REG(IS)	((IS)==0?37:36)
+#define STACK_REG(IS,EL)	((IS)==0?37+(EL):36)
 
 static UINT32 v60ReadPSW(void)
 {
-	v60.reg[STACK_REG((v60.reg[33]>>28)&1)] = SP;
+	v60.reg[STACK_REG((v60.reg[33]>>28)&1, (v60.reg[33]>>24)&3)] = SP;
 	UPDATEPSW();
 	return PSW;
 }
@@ -269,12 +242,33 @@ static void v60WritePSW(UINT32 newval)
 
 	if (oldIS != newIS)
 	{
-		v60.reg[STACK_REG(oldIS)] = SP;
-		SP = v60.reg[STACK_REG(newIS)];
+		v60.reg[STACK_REG(oldIS,oldEL)] = SP;
+		SP = v60.reg[STACK_REG(newIS,newEL)];
 	}
 }
 
 #define GETINTVECT(nint)	MemRead32(SBR + (nint)*4)
+
+static float u2f(UINT32 v)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.vv = v;
+	return u.ff;
+}
+
+static UINT32 f2u(float f)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.ff = f;
+	return u.vv;
+}
+
 
 // Addressing mode decoding functions
 #include "am.c"
@@ -291,7 +285,7 @@ static void v60WritePSW(UINT32 newval)
 UINT32 opUNHANDLED(void)
 {
 	logerror("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
-	return 1;
+	abort();
 }
 
 // Opcode jump table
@@ -451,7 +445,7 @@ int v60_execute(int cycles)
 			v60_try_irq();
 	}
 
-	return cycles;
+	return cycles - v60_ICount;
 }
 
 unsigned v60_get_context(void *dst)

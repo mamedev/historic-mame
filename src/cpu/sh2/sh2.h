@@ -57,6 +57,11 @@ enum {
 };
 extern int sh2_icount;				  /* cycle count */
 
+struct sh2_config
+{
+  int is_slave;
+};
+
 extern void sh2_init(void);
 extern void sh2_reset (void *param);		  /* Reset registers to the initial values */
 extern void sh2_exit  (void);				  /* Shut down CPU core */
@@ -71,6 +76,8 @@ extern void sh2_state_save(void *file);
 extern void sh2_state_load(void *file);
 extern const char *sh2_info(void *context, int regnum);
 extern unsigned sh2_dasm(char *buffer, unsigned pc);
+
+extern void sh2_set_frt_input(int cpu, int state);
 
 WRITE32_HANDLER( sh2_internal_w );
 READ32_HANDLER( sh2_internal_r );

@@ -612,13 +612,13 @@ static WRITE_HANDLER(cfb_vbank_w)
 static WRITE_HANDLER(cfb_rom_bank_sel_w)	/* mazer blazer */
 {
 	gfx_rom_bank = data;
-	
+
 	cpu_setbank( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
 }
 static WRITE_HANDLER(cfb_rom_bank_sel_w_gg)	/* great guns */
 {
 	gfx_rom_bank = data>>1;
-	
+
 	cpu_setbank( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
 }
 
@@ -1632,5 +1632,5 @@ ROM_START( greatgun )
 ROM_END
 
 
-GAMEX( 1983, mazerbla, 0, mazerbla,  mazerbla, 0, ROT0, "Stern", "Mazer Blazer", GAME_IMPERFECT_GRAPHICS |GAME_NO_SOUND )
+GAMEX( 1983, mazerbla, 0, mazerbla,  mazerbla, 0, ROT0, "Stern", "Mazer Blazer", GAME_IMPERFECT_GRAPHICS |GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1983, greatgun, 0, greatgun,  greatgun, 0, ROT0, "Stern", "Great Guns", GAME_IMPERFECT_GRAPHICS )

@@ -103,6 +103,7 @@ VIDEO_START( froggers );
 VIDEO_START( newsin7 );
 VIDEO_START( sfx );
 VIDEO_START( rockclim );
+VIDEO_START( drivfrcg );
 
 VIDEO_UPDATE( galaxian );
 
@@ -144,7 +145,8 @@ DRIVER_INIT( losttomb );
 DRIVER_INIT( superbon );
 DRIVER_INIT( hustler );
 DRIVER_INIT( billiard );
-DRIVER_INIT( mimonksc );
+DRIVER_INIT( mimonkey );
+DRIVER_INIT( mimonsco );
 DRIVER_INIT( atlantis );
 DRIVER_INIT( scramble );
 DRIVER_INIT( scrambls );
@@ -157,7 +159,7 @@ DRIVER_INIT( hotshock );
 DRIVER_INIT( cavelon );
 DRIVER_INIT( mrkougar );
 DRIVER_INIT( mrkougb );
-DRIVER_INIT( mimonkey );
+DRIVER_INIT( mimonscr );
 DRIVER_INIT( sfx );
 DRIVER_INIT( gmgalax );
 DRIVER_INIT( ladybugg );

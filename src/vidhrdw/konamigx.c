@@ -15,7 +15,7 @@ static int layer_colorbase[4];
 static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
 static int gx_tilemode, gx_rozenable, psac_colorbase, last_psac_colorbase;
-static struct tilemap *gx_psac_tilemap;
+static struct tilemap *gx_psac_tilemap, *gx_psac_tilemap2;
 extern data32_t *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);
@@ -41,6 +41,42 @@ static void get_gx_psac3_tile_info(int tile_index)
 	colour = (psac_colorbase << 4);
 
 	SET_TILE_INFO(0, tileno, colour, 0)
+}
+
+static void get_gx_psac1a_tile_info(int tile_index)
+{
+	int tileno, colour, flip;
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+
+	tileno = map[1]<<8 | map[0];
+
+//	if (tileno) printf("1a map: %x\n", tileno);
+
+	colour = (psac_colorbase << 4);
+
+	flip = 0;
+	if (map[7] & 0x80) flip |= TILE_FLIPX;
+	if (map[7] & 0x40) flip |= TILE_FLIPY;
+
+	SET_TILE_INFO(1, tileno, colour, flip)
+}		 
+
+static void get_gx_psac1b_tile_info(int tile_index)
+{
+	int tileno, colour, flip;
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+
+	tileno = map[5]<<8 | map[4];
+
+//	if (tileno) printf("1b map: %x\n", tileno);
+
+	colour = (psac_colorbase << 4);
+
+	flip = 0;
+	if (map[7] & 0x20) flip |= TILE_FLIPX;
+	if (map[7] & 0x10) flip |= TILE_FLIPY;
+
+	SET_TILE_INFO(0, tileno, colour, flip)
 }
 
 static void konamigx_type2_tile_callback(int layer, int *code, int *color)
@@ -331,7 +367,7 @@ VIDEO_START(konamigx_6bpp_2)
 	return 0;
 }
 
-VIDEO_START(konamigx_type1)
+VIDEO_START(opengolf)
 {
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_5, 0, NULL, konamigx_type2_tile_callback))
 	{
@@ -345,15 +381,17 @@ VIDEO_START(konamigx_type1)
 
 	if (_gxcommoninitnosprites()) return 1;
 
-	if (!strcmp(Machine->gamedrv->name,"opengolf"))
-	{
-		K056832_set_LayerOffset(0, -2+1, 0);
-		K056832_set_LayerOffset(1,  0+1, 0);
-		K056832_set_LayerOffset(2,  2+1, 0);
-		K056832_set_LayerOffset(3,  3+1, 0);
-	}
+	K056832_set_LayerOffset(0, -2+1, 0);
+	K056832_set_LayerOffset(1,  0+1, 0);
+	K056832_set_LayerOffset(2,  2+1, 0);
+	K056832_set_LayerOffset(3,  3+1, 0);
 
-	gx_rozenable = 1;
+	gx_psac_tilemap = tilemap_create(get_gx_psac1a_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	gx_psac_tilemap2 = tilemap_create(get_gx_psac1b_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	tilemap_set_transparent_pen(gx_psac_tilemap, 0);
+	tilemap_set_transparent_pen(gx_psac_tilemap2, 0);
+
+	gx_rozenable = 0;
 
 	return 0;
 }
@@ -373,11 +411,16 @@ VIDEO_START(racinfrc)
 	if (_gxcommoninitnosprites()) return 1;
 
 	K056832_set_LayerOffset(0, -2+1, 0);
-	K056832_set_LayerOffset(1,  -64, 0);	// something very wrong here...
+	K056832_set_LayerOffset(1,  0+1, 0);
 	K056832_set_LayerOffset(2,  2+1, 0);
 	K056832_set_LayerOffset(3,  3+1, 0);
 
-	gx_rozenable = 1;
+	gx_psac_tilemap = tilemap_create(get_gx_psac1a_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	gx_psac_tilemap2 = tilemap_create(get_gx_psac1b_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128, 128);
+	tilemap_set_transparent_pen(gx_psac_tilemap, 0);
+	tilemap_set_transparent_pen(gx_psac_tilemap2, 0);
+
+	gx_rozenable = 0;
 
 	return 0;
 }
@@ -425,6 +468,10 @@ VIDEO_UPDATE(konamigx)
 		if (psac_colorbase != last_psac_colorbase)
 		{
 			tilemap_mark_all_tiles_dirty(gx_psac_tilemap);
+			if (gx_rozenable == 3)
+			{
+				tilemap_mark_all_tiles_dirty(gx_psac_tilemap2);
+			}
 		}
 	}
 
@@ -543,7 +590,16 @@ WRITE32_HANDLER( konamigx_tilebank_w )
 		gx_tilebanks[offset*4+3] = data&0xff;
 }
 
-WRITE32_HANDLER( konamigx_psacmap_w )
+// type 1 RAM-based PSAC tilemap
+WRITE32_HANDLER(konamigx_t1_psacmap_w)
+{
+	COMBINE_DATA(&gx_psacram[offset]);
+	tilemap_mark_tile_dirty(gx_psac_tilemap, offset/2);
+	tilemap_mark_tile_dirty(gx_psac_tilemap2, offset/2);
+}
+
+// type 4 RAM-based PSAC tilemap
+WRITE32_HANDLER( konamigx_t4_psacmap_w )
 {
 	COMBINE_DATA(&gx_psacram[offset]);
 
