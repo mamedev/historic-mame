@@ -168,6 +168,11 @@ int asteroid_catch_busyloop(int offset);
 int llander_zeropage_r (int offset);
 void llander_zeropage_w (int offset, int data);
 
+void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int llander_start(void);
+void llander_stop(void);
+void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 static struct MemoryReadAddress asteroid_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -640,7 +645,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	255,
+	100,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -733,13 +738,13 @@ static struct MachineDriver llander_machine_driver =
 	400, 300, { 0, 1050, 0, 900 },
 	gfxdecodeinfo,
 	256, 256,
-	avg_init_colors,
+	llander_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	dvg_start,
-	dvg_stop,
-	dvg_screenrefresh,
+	llander_start,
+	llander_stop,
+	llander_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -893,7 +898,7 @@ struct GameDriver astdelux_driver =
 	"Asteroids Deluxe (rev 2)",
 	"1980",
 	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM"Peter Hirschberg (backdrop)\nMathis Rosenhauer (backdrop support)",
 	0,
 	&astdelux_machine_driver,
 	0,

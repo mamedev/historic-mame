@@ -252,7 +252,7 @@ void TMS3617_sh_update(void)
 	TMS3617_update(&outbuffer[sample_pos],buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,outbuffer,buffer_len,emulation_rate,interface->volume);
+	osd_play_streamed_sample(channel,outbuffer,buffer_len,emulation_rate,interface->volume,0);
 }
 
 

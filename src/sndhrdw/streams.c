@@ -9,6 +9,7 @@ static int stream_buffer_len[MAX_STREAM_CHANNELS];
 static int stream_sample_rate[MAX_STREAM_CHANNELS];
 static int stream_sample_bits[MAX_STREAM_CHANNELS];
 static int stream_volume[MAX_STREAM_CHANNELS];
+static int stream_pan[MAX_STREAM_CHANNELS];
 static int stream_buffer_pos[MAX_STREAM_CHANNELS];
 static int stream_sample_length[MAX_STREAM_CHANNELS];	/* in usec */
 static int stream_param[MAX_STREAM_CHANNELS];
@@ -22,9 +23,9 @@ static int r3[MAX_STREAM_CHANNELS];
 static int c[MAX_STREAM_CHANNELS];
 
 /*
-signal >--R1--+--R2--+---> amp
+signal >--R1--+--R2--+
               |      |
-              C      R3
+              C      R3---> amp
               |      |
              GND    GND
 */
@@ -216,14 +217,14 @@ void streams_sh_update(void)
 				for (i = 0;i < stream_joined_channels[channel];i++)
 					osd_play_streamed_sample_16(channel+i,
 							stream_buffer[channel+i],2*stream_buffer_len[channel+i],
-							stream_sample_rate[channel+i],stream_volume[channel+i]);
+							stream_sample_rate[channel+i],stream_volume[channel+i],stream_pan[channel+i]);
 			}
 			else
 			{
 				for (i = 0;i < stream_joined_channels[channel];i++)
 					osd_play_streamed_sample(channel+i,
 							stream_buffer[channel+i],stream_buffer_len[channel+i],
-							stream_sample_rate[channel+i],stream_volume[channel+i]);
+							stream_sample_rate[channel+i],stream_volume[channel+i],stream_pan[channel+i]);
 			}
 		}
 	}
@@ -252,6 +253,7 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 	stream_sample_rate[channel] = sample_rate;
 	stream_sample_bits[channel] = sample_bits;
 	stream_volume[channel] = 100;
+	stream_pan[channel] = 0;
 	stream_buffer_pos[channel] = 0;
 	if (sample_rate)
 		stream_sample_length[channel] = 1000000 / sample_rate;
@@ -288,6 +290,7 @@ int stream_init_multi(int channels,const char **name,int sample_rate,int sample_
 		stream_sample_rate[channel+i] = sample_rate;
 		stream_sample_bits[channel+i] = sample_bits;
 		stream_volume[channel+i] = 100;
+		stream_pan[channel+i] = 0;
 		stream_buffer_pos[channel+i] = 0;
 		if (sample_rate)
 			stream_sample_length[channel+i] = 1000000 / sample_rate;
@@ -366,7 +369,7 @@ void stream_update(int channel,int min_interval)
 void stream_set_volume(int channel,int volume)
 {
 	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 50 / 255;
+	if (volume > 100) volume = volume * 25 / 255;
 
 	stream_volume[channel] = volume;
 }
@@ -375,6 +378,18 @@ void stream_set_volume(int channel,int volume)
 int stream_get_volume(int channel)
 {
 	return stream_volume[channel];
+}
+
+
+void stream_set_pan(int channel,int pan)
+{
+	stream_pan[channel] = pan;
+}
+
+
+int stream_get_pan(int channel)
+{
+	return stream_pan[channel];
 }
 
 

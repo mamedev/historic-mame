@@ -542,9 +542,9 @@ static void build_rgb_to_pen(void)
 			{
 				rgb6_to_pen[rr][gg][bb] = i;
 				rgb5_to_pen[rr >> 1][gg >> 1][bb >> 1] = i;
-				rgb4_to_pen[rr >> 2][gg >> 1][bb >> 2] = i;
-				rgb3_to_pen[rr >> 3][gg >> 1][bb >> 3] = i;
-				rgb2_to_pen[rr >> 4][gg >> 1][bb >> 4] = i;
+				rgb4_to_pen[rr >> 2][gg >> 2][bb >> 2] = i;
+				rgb3_to_pen[rr >> 3][gg >> 3][bb >> 3] = i;
+				rgb2_to_pen[rr >> 4][gg >> 4][bb >> 4] = i;
 			}
 		}
 	}
@@ -839,9 +839,9 @@ retry:
 							{
 								rgb6_to_pen[r][g][b] = i;
 								rgb5_to_pen[r >> 1][g >> 1][b >> 1] = i;
-								rgb4_to_pen[r >> 2][g >> 1][b >> 2] = i;
-								rgb3_to_pen[r >> 3][g >> 1][b >> 3] = i;
-								rgb2_to_pen[r >> 4][g >> 1][b >> 4] = i;
+								rgb4_to_pen[r >> 2][g >> 2][b >> 2] = i;
+								rgb3_to_pen[r >> 3][g >> 3][b >> 3] = i;
+								rgb2_to_pen[r >> 4][g >> 4][b >> 4] = i;
 							}
 						}
 

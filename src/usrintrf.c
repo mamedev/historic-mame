@@ -9,6 +9,7 @@
 #include "driver.h"
 
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
+extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 extern int nocheat;
 
@@ -318,15 +319,17 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 	if (update_screen) osd_update_display();
 }
 
-static inline void drawpixel(int x, int y, unsigned short color)
+INLINE void drawpixel(int x, int y, unsigned short color)
 {
 	if (Machine->scrbitmap->depth == 16)
 		*(unsigned short *)&Machine->scrbitmap->line[y][x*2] = color;
 	else
 		Machine->scrbitmap->line[y][x] = color;
+
+	osd_mark_dirty(x,y,x,y,1);
 }
 
-static inline void drawhline(int x, int w, int y, unsigned short color)
+INLINE void drawhline(int x, int w, int y, unsigned short color)
 {
 	if (Machine->scrbitmap->depth == 16)
 	{
@@ -336,9 +339,11 @@ static inline void drawhline(int x, int w, int y, unsigned short color)
 	}
 	else
 		memset(&Machine->scrbitmap->line[y][x], color, w);
+
+	osd_mark_dirty(x,y,x+w-1,y,1);
 }
 
-static inline void drawvline(int x, int y, int h, unsigned short color)
+INLINE void drawvline(int x, int y, int h, unsigned short color)
 {
 int i;
 	if (Machine->scrbitmap->depth == 16)
@@ -351,6 +356,8 @@ int i;
 		for (i = y; i < y+h; i++)
 			Machine->scrbitmap->line[i][x] = color;
 	}
+
+	osd_mark_dirty(x,y,x,y+h-1,1);
 }
 
 
@@ -377,6 +384,8 @@ static void drawbox(int leftx,int topy,int width,int height)
 	drawvline(leftx+width-1,topy,height,white);
     for (y = topy+1;y < topy+height-1;y++)
 		drawhline(leftx+1,width-2,y,black);
+
+	osd_mark_dirty(leftx,topy,leftx+width-1,topy+height-1,1);
 }
 
 
@@ -640,8 +649,9 @@ static void showcharset(void)
 	int i,cpx,cpy;
 	struct DisplayText dt[2];
 	char buf[80];
-	int bank,color,line, maxline;
+	int bank,color,line, maxline=0;
 	int trueorientation;
+	int changed;
 
 
 	if ((Machine->drv->gfxdecodeinfo == 0) ||
@@ -659,32 +669,42 @@ static void showcharset(void)
 	color = 0;
 	line = 0;
 
+	changed = 1;
+
 	do
 	{
-		osd_clearbitmap(Machine->scrbitmap);
-
-		cpx = Machine->uiwidth / Machine->gfx[bank]->width;
-		cpy = Machine->uiheight / Machine->gfx[bank]->height;
-
-		maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
-
-		for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total ; i++)
+		if (changed)
 		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-				i+(line*cpx),color,  /*sprite num, color*/
-				0,0,
-				(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-				Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-				0,TRANSPARENCY_NONE,0);
+			osd_clearbitmap(Machine->scrbitmap);
+
+			cpx = Machine->uiwidth / Machine->gfx[bank]->width;
+			cpy = Machine->uiheight / Machine->gfx[bank]->height;
+
+			maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
+
+			for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total ; i++)
+			{
+				drawgfx(Machine->scrbitmap,Machine->gfx[bank],
+					i+(line*cpx),color,  /*sprite num, color*/
+					0,0,
+					(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+					Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+					0,TRANSPARENCY_NONE,0);
+			}
+
+			sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
+			dt[0].text = buf;
+			dt[0].color = DT_COLOR_RED;
+			dt[0].x = 0;
+			dt[0].y = 0;
+			dt[1].text = 0;
+			displaytext(dt,0,0);
+
+			changed = 0;
 		}
 
-		sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
-		dt[0].text = buf;
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = 0;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext(dt,0,1);
+		osd_update_display();
+
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
 		{
@@ -692,6 +712,7 @@ static void showcharset(void)
 			{
 				bank++;
 				line = 0;
+				changed = 1;
 			}
 		}
 
@@ -701,28 +722,44 @@ static void showcharset(void)
 			{
 				bank--;
 				line = 0;
+				changed = 1;
 			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
 		{
-			if (line < maxline-1) line++;
+			if (line < maxline-1)
+			{
+				line++;
+				changed = 1;
+			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
 		{
-			if (line > 0) line--;
+			if (line > 0)
+			{
+				line--;
+				changed = 1;
+			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_UP,6))
 		{
 			if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
+			{
 				color++;
+				changed = 1;
+			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,6))
 		{
-			if (color > 0) color--;
+			if (color > 0)
+			{
+				color--;
+				changed = 1;
+			}
 		}
 
 		if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
@@ -1280,7 +1317,7 @@ static int settraksettings(int selected)
 					sel &= 0xff;
 
 					if (key_to_pseudo_code(newkey) != newkey)	/* pseudo key code ? */
-						newkey = 0;//IP_KEY_DEFAULT;
+						newkey = 0;/*IP_KEY_DEFAULT;*/
 
 					if (sel % ENTRIES)
 					{
@@ -1314,7 +1351,7 @@ static int settraksettings(int selected)
 				if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
 				{
 					sel &= 0xff;
-					newjoy = 0;//IP_JOY_DEFAULT;
+					newjoy = 0;/*IP_JOY_DEFAULT;*/
 				}
 
 				/* Allows for "All buttons" */
@@ -1663,17 +1700,18 @@ static int displaygameinfo(int selected)
 		"YM2413",
 		"YM2610",
 		"YM3812",
+		"YM3526",
 		"SN76496",
 		"Pokey",
-		"Namco",
 		"NES",
+		"Astrocade 'IO' chip",
+		"Namco",
 		"TMS5220",
 		"VLM5030",
 		"ADPCM samples",
 		"OKIM6295 ADPCM",
 		"MSM5205 ADPCM",
 		"HC-55516 CVSD",
-		"Astrocade 'IO' chip"
 	};
 	int sel;
 
@@ -1703,17 +1741,17 @@ static int displaygameinfo(int selected)
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
 		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+				Machine->drv->sound[i].sound_type < SOUND_NAMCO)
 			sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->num);
 
 		sprintf(&buf[strlen(buf)],"%s",
 				soundnames[Machine->drv->sound[i].sound_type]);
 
 		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
-				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+				Machine->drv->sound[i].sound_type < SOUND_NAMCO)
 			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
-					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->baseclock / 1000000,
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->baseclock % 1000000);
 
 		strcat(buf,"\n");
 
@@ -2290,36 +2328,30 @@ static int on_screen_display(int selected)
 *********************************************************************/
 
 
-static char messagetext[80];
-static int messagecounter;
-
-static void displaymessage(void)
+static void displaymessage(const char *text)
 {
 	struct DisplayText dt[2];
 	int i,avail;
 
 
-	if (messagecounter > 0)
-	{
-		avail = strlen(messagetext)+2;
+	avail = strlen(text)+2;
 
-		drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
-				Machine->uiheight - 3*Machine->uifont->height,
-				avail * Machine->uifont->width,
-				2*Machine->uifont->height);
+	drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
+			Machine->uiheight - 3*Machine->uifont->height,
+			avail * Machine->uifont->width,
+			2*Machine->uifont->height);
 
-		dt[0].text = messagetext;
-		dt[0].color = DT_COLOR_WHITE;
-		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(messagetext)) / 2;
-		dt[0].y = Machine->uiheight - 5*Machine->uifont->height/2;
-		dt[1].text = 0;	/* terminate array */
-		displaytext(dt,0,0);
-
-		if (--messagecounter == 0)
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
-	}
+	dt[0].text = text;
+	dt[0].color = DT_COLOR_WHITE;
+	dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(text)) / 2;
+	dt[0].y = Machine->uiheight - 5*Machine->uifont->height/2;
+	dt[1].text = 0;	/* terminate array */
+	displaytext(dt,0,0);
 }
+
+
+static char messagetext[80];
+static int messagecounter;
 
 void usrintf_showmessage(const char *text)
 {
@@ -2332,6 +2364,7 @@ void usrintf_showmessage(const char *text)
 
 static int setup_selected;
 static int osd_selected;
+static int jukebox_selected;
 
 int handle_user_interface(void)
 {
@@ -2374,6 +2407,52 @@ int handle_user_interface(void)
 	if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
 
 
+#ifdef MAME_DEBUG
+	if (osd_key_pressed_memory(OSD_KEY_BACKSPACE))
+	{
+		if (jukebox_selected != -1)
+		{
+			jukebox_selected = -1;
+			cpu_halt(0,1);
+		}
+		else
+		{
+			jukebox_selected = 0;
+			cpu_halt(0,0);
+		}
+	}
+
+	if (jukebox_selected != -1)
+	{
+		char buf[40];
+		watchdog_reset_w(0,0);
+		if (osd_key_pressed_memory(OSD_KEY_LCONTROL))
+		{
+			soundlatch_w(0,jukebox_selected);
+			cpu_cause_interrupt(1,Z80_NMI_INT);
+		}
+		if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+		{
+			jukebox_selected = (jukebox_selected + 1) & 0xff;
+		}
+		if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+		{
+			jukebox_selected = (jukebox_selected - 1) & 0xff;
+		}
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+		{
+			jukebox_selected = (jukebox_selected + 16) & 0xff;
+		}
+		if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+		{
+			jukebox_selected = (jukebox_selected - 16) & 0xff;
+		}
+		sprintf(buf,"sound cmd %02x",jukebox_selected);
+		displaymessage(buf);
+	}
+#endif
+
+
 	/* if the user pressed F3, reset the emulation */
 	if (osd_key_pressed_memory(OSD_KEY_RESET_MACHINE))
 		machine_reset();
@@ -2385,7 +2464,7 @@ int handle_user_interface(void)
 		int pressed;
 
 
-//		osd_selected = 0;	/* disable on screen display, since we are going */
+/*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
 
 		osd_sound_enable(0);
@@ -2396,8 +2475,17 @@ int handle_user_interface(void)
 
 		while (pressed || osd_key_pressed_memory(OSD_KEY_UNPAUSE) == 0)
 		{
+#ifdef MAME_NET
+			osd_net_sync();
+#endif /* MAME_NET */
 			osd_profiler(OSD_PROFILE_VIDEO);
-			(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+			if (need_to_clear_bitmap)
+			{
+				osd_clearbitmap(Machine->scrbitmap);
+				need_to_clear_bitmap = 0;
+			}
+			(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);
+			bitmap_dirty = 0;
 			osd_profiler(OSD_PROFILE_END);
 
 			if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
@@ -2429,6 +2517,9 @@ int handle_user_interface(void)
 			}
 			if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
 
+			/* show popup message if any */
+			if (messagecounter > 0) displaymessage(messagetext);
+
 			osd_update_display();
 			osd_update_audio();
 
@@ -2440,7 +2531,15 @@ int handle_user_interface(void)
 	}
 
 
-	displaymessage();	/* show popup message if any */
+	/* show popup message if any */
+	if (messagecounter > 0)
+	{
+		displaymessage(messagetext);
+
+		if (--messagecounter == 0)
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+	}
 
 
 	/* if the user pressed F4, show the character set */
@@ -2467,4 +2566,6 @@ void init_user_interface(void)
 
 	onscrd_init();
 	osd_selected = 0;
+
+	jukebox_selected = -1;
 }

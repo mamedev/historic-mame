@@ -659,7 +659,7 @@ struct GameDriver mranger_driver =
 	"Moon Ranger",
 	"1982",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)\nMarco Cassili",
+	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,

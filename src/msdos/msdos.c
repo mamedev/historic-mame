@@ -9,7 +9,9 @@
 ***************************************************************************/
 
 #include "driver.h"
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
 #include <dos.h>
 #include <signal.h>
 #include <time.h>
@@ -60,24 +62,42 @@ void osd_exit(void)
 	msdos_shutdown_input();
 }
 
-/* fuzzy string compare, compare short string against long string */
-/* e.g. astdel == "Asteroids Deluxe"            return 0 on match */
+/* fuzzy string compare, compare short string against long string        */
+/* e.g. astdel == "Asteroids Deluxe". The return code is the fuzz index, */
+/* we simply count the gaps between maching chars.                       */
 int fuzzycmp (const char *s, const char *l)
 {
+	int gaps = 0;
+	int match = 0;
+	int last = 1;
+
 	for (; *s && *l; l++)
 	{
 		if (*s == *l)
-			s++;
+			match = 1;
 		else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
-			s++;
+			match = 1;
 		else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
+			match = 1;
+		else
+			match = 0;
+
+		if (match)
 			s++;
+
+		if (match != last)
+		{
+			last = match;
+			if (!match)
+				gaps++;
+		}
 	}
 
-	if (*s)
-		return 1;
-	else
-		return 0;
+	/* penalty if short string does not completely fit in */
+	for (; *s; s++)
+		gaps++;
+
+	return gaps;
 }
 
 
@@ -163,17 +183,41 @@ int main (int argc, char **argv)
 			}
 		}
 
+
+		/* educated guess on what the user wants to play */
 		if (game_index == -1)
 		{
-			/* educated guess on what the user wants to play */
-			for (i = 0; drivers[i] && (game_index == -1); i++)
+			int fuzz = 9999; /* best fuzz factor so far */
+
+			for (i = 0; (drivers[i] != 0); i++)
 			{
-				if (fuzzycmp(argv[j], drivers[i]->description) == 0)
+				int tmp;
+				tmp = fuzzycmp(argv[j], drivers[i]->description);
+				/* continue if the fuzz index is worse */
+				if (tmp > fuzz)
+					continue;
+
+				/* on equal fuzz index, we prefer working, original games */
+				if (tmp == fuzz)
 				{
-					game_index = i;
-					break;
+					if (drivers[i]->clone_of != 0) /* game is a clone */
+					{
+						/* if the game we already found works, why bother. */
+						/* and broken clones aren't very helpful either */
+						if ((!drivers[game_index]->flags & GAME_NOT_WORKING) ||
+							(drivers[i]->flags & GAME_NOT_WORKING))
+							continue;
+					}
+					else continue;
 				}
+
+				/* we found a better match */
+				game_index = i;
+				fuzz = tmp;
 			}
+
+			if (game_index != -1)
+				printf("fuzzy name compare, running %s\n",drivers[game_index]->name);
 		}
 	}
 

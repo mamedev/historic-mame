@@ -12,10 +12,10 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "Z80/Z80.h"
-#include "machine/Z80fmly.h"
-#include "M6808/m6808.h"
-#include "M6809/m6809.h"
+#include "z80/z80.h"
+#include "machine/z80fmly.h"
+#include "m6808/m6808.h"
+#include "m6809/m6809.h"
 #include "machine/6821pia.h"
 #include "timer.h"
 
@@ -37,6 +37,7 @@ static int maxrpm_p2_shift;
 static unsigned char soundlatch[4];
 static unsigned char soundstatus;
 
+extern void dotron_change_light (int light);
 
 /* z80 ctc */
 static void ctc_interrupt (int state)
@@ -173,7 +174,7 @@ void mcr_init_machine(void)
    suspended = 0;
 
    /* initialize the CTC */
-   ctc_intf.clock[0] = Machine->drv->cpu[0].cpu_clock;
+   ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
    z80ctc_init (&ctc_intf);
 
    /* daisy chain set */
@@ -260,7 +261,7 @@ void mcr_writeport(int port,int value)
 		case 0:	/* OP0  Write latch OP0 (coin meters, 2 led's and cocktail 'flip') */
 		   if (errorlog)
 		      fprintf (errorlog, "mcr write to OP0 = %02i\n", value);
-			return;
+		   return;
 
 		case 4:	/* Write latch OP4 */
 		   if (errorlog)
@@ -272,8 +273,8 @@ void mcr_writeport(int port,int value)
 		case 0x1e:	/* WIRAM0 - write audio latch 2 */
 		case 0x1f:	/* WIRAM0 - write audio latch 3 */
 			timer_set (TIME_NOW, ((port - 0x1c) << 8) | (value & 0xff), mcr_delayed_write);
-//			mcr_delayed_write (((port - 0x1c) << 8) | (value & 0xff));
-//			soundlatch[port - 0x1c] = value;
+/*			mcr_delayed_write (((port - 0x1c) << 8) | (value & 0xff));*/
+/*			soundlatch[port - 0x1c] = value;*/
 			return;
 
 		case 0xe0:	/* clear watchdog timer */
@@ -300,8 +301,8 @@ void mcr_writeport(int port,int value)
 		case 0xf1:
 		case 0xf2:
 		case 0xf3:
-	      z80ctc_0_w (port - 0xf0, value);
-	      return;
+		  z80ctc_0_w (port - 0xf0, value);
+		  return;
 	}
 
 	/* log all writes that end up here */
@@ -528,6 +529,7 @@ void dotron_delayed_write (int param)
 {
 	pia_1_porta_w (0, ~param & 0x0f);
 	pia_1_cb1_w (0, ~param & 0x10);
+	dotron_change_light (param >> 6);
 }
 
 void dotron_writeport(int port,int value)

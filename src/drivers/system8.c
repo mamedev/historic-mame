@@ -1612,7 +1612,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
 	2000000,	/* 8 MHz / 4 ?*/
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 
@@ -2962,8 +2962,8 @@ static int starjack_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0xc0e1],"\x00\x00\x03",3) == 0)
-	{
+        if (memcmp(&RAM[0xc0e4],"\x53\x2e\x54",3) == 0)
+			{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
                         osd_fread(f,&RAM[0xc0e1],30);
@@ -2987,11 +2987,49 @@ static void starjack_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xc0e1],30);
+        osd_fwrite(f,&RAM[0xc0e1],30);
 		osd_fclose(f);
+		RAM[0xc0e4] = 0;
 	}
 }
 
+static int starjacs_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xc106],"\x53\x2e\x54",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+            osd_fread(f,&RAM[0xc103],30);
+			osd_fclose(f);
+
+			/* copy the high score to the work RAM as well */
+                        RAM[0xc0fc] = RAM[0xc103];
+                        RAM[0xc0dd] = RAM[0xc104];
+                        RAM[0xc0de] = RAM[0xc105];
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void starjacs_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+        osd_fwrite(f,&RAM[0xc103],30);
+		osd_fclose(f);
+		RAM[0xc106] = 0;
+	}
+}
 
 static int upndown_hiload(void)
 {
@@ -3021,6 +3059,7 @@ static void upndown_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xc93f],(6*10)+3);
 		osd_fclose(f);
+		RAM[0xc93f] = 0;
 	}
 }
 
@@ -3155,6 +3194,11 @@ static int pitfall2_hiload(void)
 		{
 			osd_fread(f,&RAM[0xD300],56);
 			osd_fclose(f);
+
+			RAM[0xC000] = RAM[0xD300];
+			RAM[0xC001] = RAM[0xD301];
+			RAM[0xC002] = RAM[0xD302];
+			RAM[0xC003] = RAM[0xD303];
 		}
 		return 1;
 	}
@@ -3187,6 +3231,7 @@ static int seganinj_hiload(void)
 		{
 			osd_fread(f,&RAM[0xEF01],48);
 			osd_fclose(f);
+
 		}
 		return 1;
 	}
@@ -3203,6 +3248,7 @@ static void seganinj_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xEF01],48);
 		osd_fclose(f);
+		RAM[0xEF2E] = 0;
 	}
 }
 
@@ -3341,6 +3387,7 @@ static void myhero_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xD300],61);
 		osd_fclose(f);
+		RAM[0xd339] = 0;
 	}
 }
 
@@ -3386,6 +3433,7 @@ static void wbdeluxe_hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xC100],320);
 		osd_fclose(f);
+		RAM[0xC100] = 0;
 	}
 }
 
@@ -3454,7 +3502,261 @@ static void wbml_hisave(void)
 	}
 }
 
+static int wboy_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
 
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xE820],"\x1c\x08\x1a",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc100],320);
+			osd_fclose(f);
+
+			/* copy top score to the top of the screen */
+			if (memcmp(&RAM[0xC102],"\x20",1 != 0))
+			RAM[0xE858]=(RAM[0xc102]-32);
+			if (memcmp(&RAM[0xC103],"\x20",1 != 0))
+			RAM[0xE85A]=(RAM[0xc103]-32);
+			if (memcmp(&RAM[0xC104],"\x20",1 != 0))
+			RAM[0xE85C]=(RAM[0xc104]-32);
+			if (memcmp(&RAM[0xC105],"\x20",1 != 0))
+			RAM[0xE85E]=(RAM[0xc105]-32);
+			if (memcmp(&RAM[0xC106],"\x20",1 != 0))
+			RAM[0xE860]=(RAM[0xc106]-32);
+			if (memcmp(&RAM[0xC107],"\x20",1 != 0))
+			RAM[0xE862]=(RAM[0xc107]-32);
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void wboy_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc100],320);
+		osd_fclose(f);
+		RAM[0xE820] = 0 ;
+	}
+}
+
+static int regulus_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xce5b],"\x4a\x4a\x4a",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc0e1],3);
+			osd_fread(f,&RAM[0xcd01],30);
+			osd_fread(f,&RAM[0xce40],30);
+			osd_fclose(f);
+
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void regulus_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc0e1],3);
+		osd_fwrite(f,&RAM[0xcd01],30);
+		osd_fwrite(f,&RAM[0xce40],30);
+		osd_fclose(f);
+
+	}
+}
+
+static int swat_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xE9FC],"\x45\x08\x01",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+/* load the high score table */
+			int hi;
+			osd_fread(f,&RAM[0xd300],60);
+			osd_fclose(f);
+
+/* load the top score into its place in ram */
+			RAM[0xC014]=RAM[0xd300];
+			RAM[0xC015]=RAM[0xd301];
+			RAM[0xC016]=RAM[0xd302];
+
+/* force the high score to display in video ram */
+			hi = (RAM[0xd300] & 0x0f) +
+				 (RAM[0xd300] >> 4) * 10 +
+				 (RAM[0xd301] & 0x0f) * 100 +
+				 (RAM[0xd301] >> 4) * 1000 +
+				 (RAM[0xd302] & 0x0f) * 10000 +
+				 (RAM[0xd302] >> 4) * 100000;
+
+			if (hi > 0)
+				RAM[0xEC3A] = (RAM[0xD300] & 0x0F)+'0';
+			if (hi >= 10)
+				RAM[0xEBFA] = (RAM[0xD300] >> 4)+'0';
+			if (hi >= 100)
+				RAM[0xEBBA] = (RAM[0xD301] & 0x0F)+'0';
+			if (hi >= 1000)
+				RAM[0xEB7A] = (RAM[0xD301] >> 4)+'0';
+			if (hi >= 10000)
+				RAM[0xEB3A] = (RAM[0xD302] & 0x0F)+'0';
+			if (hi >= 100000)
+				RAM[0xEAFA] = (RAM[0xD302] >> 4)+'0';
+
+
+		}
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void swat_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xd300],60);
+		osd_fclose(f);
+		/* dirty area we check against so that it loads high score on reset */
+		RAM[0xE9FC] = 0;
+	}
+}
+
+static int hvymetal_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xD335],"\x4d\x49\x59",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+				osd_fread(f,&RAM[0xd300],56);
+				RAM[0xc00c] = RAM[0xd300];
+				RAM[0xc00d] = RAM[0xd301];
+				RAM[0xc00e] = RAM[0xd302];
+				osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hvymetal_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xd300],56);
+		osd_fclose(f);
+		RAM[0xD335] = 0;
+	}
+}
+
+static int brain_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xD339],"\x59\x2E\x49",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+				osd_fread(f,&RAM[0xd300],60);
+				RAM[0xc017] = RAM[0xd300];
+				RAM[0xc018] = RAM[0xd301];
+				RAM[0xc019] = RAM[0xd302];
+				osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void brain_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xd300],60);
+		osd_fclose(f);
+		RAM[0xD339] = 0;
+	}
+}
+
+static int tokisens_hiload(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xC09A],"\x02\x42\x41",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+				osd_fread(f,&RAM[0xc04D],81);
+				RAM[0xc0A3] = RAM[0xC04F];
+				RAM[0xc0A4] = RAM[0xC050];
+				RAM[0xc0A5] = RAM[0xC051];
+				osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void tokisens_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[0];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc04D],81);
+		osd_fclose(f);
+		RAM[0xC09A] = 0;
+	}
+}
 
 #define BASE_CREDITS "Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)"
 
@@ -3505,7 +3807,7 @@ struct GameDriver starjacs_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	starjacs_hiload, starjacs_hisave
 };
 
 struct GameDriver regulus_driver =
@@ -3530,7 +3832,7 @@ struct GameDriver regulus_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	regulus_hiload, regulus_hisave
 };
 
 struct GameDriver regulusu_driver =
@@ -3555,7 +3857,7 @@ struct GameDriver regulusu_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	regulus_hiload, regulus_hisave
 };
 
 struct GameDriver upndown_driver =
@@ -3630,7 +3932,7 @@ struct GameDriver swat_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	swat_hiload, swat_hisave
 };
 
 struct GameDriver flicky_driver =
@@ -3955,7 +4257,7 @@ struct GameDriver hvymetal_driver =
 
 	PROM_MEMORY_REGION(4),0,0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hvymetal_hiload, hvymetal_hisave
 };
 
 struct GameDriver myhero_driver =
@@ -4130,7 +4432,7 @@ struct GameDriver brain_driver =
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	brain_hiload, brain_hisave
 };
 
 struct GameDriver wboy_driver =
@@ -4155,7 +4457,7 @@ struct GameDriver wboy_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wboy2_driver =
@@ -4180,7 +4482,7 @@ struct GameDriver wboy2_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wboy3_driver =
@@ -4205,7 +4507,7 @@ struct GameDriver wboy3_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wboy4_driver =
@@ -4230,7 +4532,7 @@ struct GameDriver wboy4_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wboyu_driver =
@@ -4255,7 +4557,7 @@ struct GameDriver wboyu_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wboy4u_driver =
@@ -4280,7 +4582,7 @@ struct GameDriver wboy4u_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	wboy_hiload, wboy_hisave
 };
 
 struct GameDriver wbdeluxe_driver =
@@ -4380,7 +4682,7 @@ struct GameDriver tokisens_driver =
 
 	PROM_MEMORY_REGION(4),0,0,
 	ORIENTATION_ROTATE_90,
-	0, 0
+	tokisens_hiload,tokisens_hisave
 };
 
 struct GameDriver dakkochn_driver =

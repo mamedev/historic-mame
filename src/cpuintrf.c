@@ -669,6 +669,7 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 		case CPU_Z80:
 		case CPU_I8039:
 		case CPU_M6502:
+		case CPU_M6809:
 		case CPU_M68000:	/* ASG 980413 */
 			return previouspc;
 			break;
@@ -971,6 +972,51 @@ int nmi_interrupt(void)
 	if (interrupt_enable[cpunum] == 0)
 		return INT_TYPE_NONE (cpunum);
 	return INT_TYPE_NMI (cpunum);
+}
+
+
+
+int m68_level1_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_1;
+}
+int m68_level2_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_2;
+}
+int m68_level3_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_3;
+}
+int m68_level4_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_4;
+}
+int m68_level5_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_5;
+}
+int m68_level6_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_6;
+}
+int m68_level7_irq(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
+	else return MC68000_IRQ_7;
 }
 
 

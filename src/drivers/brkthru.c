@@ -717,7 +717,7 @@ struct GameDriver brkthru_driver =
 	"Break Thru",
 	"1986",
 	"Data East USA",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nGerrit Van Goethem (high score save)\nBryan McPhail (sound)",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
 	0,
 	&brkthru_machine_driver,
 	0,

@@ -93,7 +93,7 @@ int blstroid_vh_start(void)
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_new_bitmap (XDIM, YDIM, Machine->scrbitmap->depth);
+		playfieldbitmap = osd_new_bitmap (2*XDIM, YDIM, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
 		blstroid_vh_stop ();
@@ -323,7 +323,7 @@ void blstroid_render_mo (struct osd_bitmap *bitmap, struct rectangle *clip, unsi
 
 		/* draw the sprite */
 		drawgfx (bitmap, Machine->gfx[1], pict, color, hflip, vflip,
-					xpos, sy, clip, TRANSPARENCY_PEN, 0);
+					2*xpos, sy, clip, TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -411,7 +411,7 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int color = data >> 13;
 
 				drawgfx (playfieldbitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
-						8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
+						16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				playfielddirty[offs] = 0;
 			}
 		}
@@ -441,8 +441,8 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (ypos > YDIM) ypos -= 0x200;
 
 		/* make a clip */
-		clip.min_x = xpos;
-		clip.max_x = xpos + 7;
+		clip.min_x = 2*xpos;
+		clip.max_x = 2*xpos + 15;
 		clip.min_y = ypos;
 		clip.max_y = ypos + h * 8 - 1;
 
@@ -474,7 +474,7 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				/* the logic is more complicated than this, but this is close */
 				if (!priority[color])
 					drawgfx (bitmap, Machine->gfx[0], data & 0x1fff, color, 0, 0,
-							sx, sy, &clip, TRANSPARENCY_NONE, 0);
+							2*sx, sy, &clip, TRANSPARENCY_NONE, 0);
 			}
 		}
 	}

@@ -7,8 +7,12 @@
   07/15/1998 Created by Mathis Rosenhauer
   10/02/1998 Code clean up and abstraction by Mike Balfour
              and Mathis Rosenhauer
+  10/15/1998 Image filtering. MLR
+  11/09/1998 Bit depths 1-8 MLR
+  11/10/1998 Some additional PNG chunks recognized MLR
 
-  TODO : Add support for other color types and bit depths
+  TODO : Fully comply with the "Recommendations for Decoders"
+         of the W3C
 
 *********************************************************************/
 
@@ -17,10 +21,6 @@
 
 /* These are the only two functions that should be needed */
 int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
-
-/* obsolete */
-int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette);
-
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -81,12 +81,6 @@ struct png_info {
 	unsigned char *fimage;
 };
 
-static void error (char *msg)
-{
-	if (errorlog)
-		fprintf(errorlog,"PNG - Error/Warning reading file: %s\n", msg);
-}
-
 /* read_uint is here so we don't have to deal with byte-ordering issues */
 static unsigned int read_uint (void *fp)
 {
@@ -94,7 +88,8 @@ static unsigned int read_uint (void *fp)
 	unsigned int i;
 
 	if (osd_fread(fp, v, 4) != 4)
-        error("unexpected EOF");
+        if (errorlog)
+		fprintf(errorlog,"Unexpected EOF in PNG\n");
 	i = (v[0]<<24) | (v[1]<<16) | (v[2]<<8) | (v[3]);
 	return i;
 }
@@ -116,7 +111,8 @@ static int unfilter(struct png_info *p)
 
 	if((p->image = (unsigned char *)malloc (p->height*p->rowbytes))==NULL)
 	{
-		error("out of memory");
+		if (errorlog)
+			fprintf(errorlog,"Out of memory\n");
 		free (p->fimage);
 		return 0;
 	}
@@ -130,7 +126,7 @@ static int unfilter(struct png_info *p)
 		filter = *src++;
 		if (!filter)
 		{
-			memcpy (dst, src, p->width);
+			memcpy (dst, src, p->rowbytes);
 			src += p->rowbytes;
 			dst += p->rowbytes;
 		}
@@ -162,7 +158,8 @@ static int unfilter(struct png_info *p)
 					else prediction = pC;
 					break;
 				default:
-					error ("unknown filter type");
+					if (errorlog)
+						fprintf(errorlog,"Unknown filter type %i\n",filter);
 					prediction = 0;
 				}
 				*dst = 0xff & (*src + prediction);
@@ -179,7 +176,8 @@ static int verify_signature (void *fp)
 
 	if (osd_fread (fp, signature, 8) != 8)
 	{
-		error("unable to read signature (EOF)");
+		if (errorlog)
+			fprintf(errorlog,"Unable to read PNG signature (EOF)\n");
 		return 0;
 	}
 
@@ -187,7 +185,9 @@ static int verify_signature (void *fp)
 
 	if (strcmp(signature, PNG_Signature))
 	{
-		error("PNG signature mismatch");
+		if (errorlog)
+			fprintf(errorlog,"PNG signature mismatch found: %s expected: %s\n",
+				signature,PNG_Signature);
 		return 0;
 	}
 	return 1;
@@ -204,18 +204,19 @@ static int inflate_image (struct png_info *p)
 
 	if((p->fimage = (unsigned char *)malloc (p->height*(p->rowbytes+2)))==NULL)
 	{
-		error("out of memory");
+		if (errorlog)
+			fprintf(errorlog,"Out of memory\n");
 		free (p->zimage);
 		return 0;
 	}
-
 
 	/* Note: We have to strip the first 2 bytes (Compression method/flags code and
 	   additional flags/check bits) and the last 4 bytes (check value) to
 	   make inflate_memory happy. */
 	if ( inflate_memory(p->zimage+2, p->zlength-6, p->fimage, p->height*(p->rowbytes+1) ) )
 	{
-		error ("error inflating compressed data");
+		if (errorlog)
+			fprintf(errorlog,"Error inflating compressed PNG data\n");
 		free (p->zimage);
 		free (p->fimage);
 		return 0;
@@ -226,30 +227,36 @@ static int inflate_image (struct png_info *p)
 
 static int read_chunks(void *fp, struct png_info *p)
 {
-	unsigned int IEND_read=0, i;
-	unsigned int chunk_length, chunk_type, chunk_crc, crc;
+	unsigned int i;
+	unsigned int chunk_length, chunk_type=0, chunk_crc, crc;
 	unsigned int tot_idat=0, num_idat=0, l_idat[256];
 	unsigned char *chunk_data, *zimage, *idat[256], *temp;
-	unsigned char str_chunk_type[4];
+	unsigned char str_chunk_type[5];
 
-	while (!IEND_read)
+	while (chunk_type != PNG_CN_IEND)
 	{
 		chunk_length=read_uint(fp);
 		if (osd_fread(fp, str_chunk_type, 4) != 4)
-		    error("unexpected EOF");
+			if (errorlog)
+				fprintf(errorlog,"Unexpected EOF in PNG file\n");
+
+		str_chunk_type[4]=0; /* terminate string */
+
 		crc=crc32(0,str_chunk_type, 4);
 		chunk_type = convert_uint(str_chunk_type);
 
 		if (chunk_length)
 		{
-			if ((chunk_data = (unsigned char *)malloc(chunk_length))==NULL)
+			if ((chunk_data = (unsigned char *)malloc(chunk_length+1))==NULL)
 			{
-				error("out of memory");
+				if (errorlog)
+					fprintf(errorlog,"Out of memory\n");
 				return 0;
 			}
 			if (osd_fread (fp, chunk_data, chunk_length) != chunk_length)
 			{
-				error("unexpected EOF");
+				if (errorlog)
+					fprintf(errorlog,"Unexpected EOF in PNG file\n");
 				free(chunk_data);
 				return 0;
 			}
@@ -262,14 +269,21 @@ static int read_chunks(void *fp, struct png_info *p)
 		chunk_crc=read_uint(fp);
 		if (crc != chunk_crc)
 		{
-			error ("CRC check failed");
-			if (errorlog) fprintf(errorlog,"Found: %08X  Expected: %08X\n",crc,chunk_crc);
+			if (errorlog)
+			{
+				fprintf(errorlog,"CRC check failed while reading PNG chunk %s\n",
+					str_chunk_type);
+				fprintf(errorlog,"Found: %08X  Expected: %08X\n",crc,chunk_crc);
+			}
 			return 0;
 		}
 
-		switch (chunk_type) {
-		case PNG_CN_IHDR:
+		if (errorlog)
+			fprintf(errorlog,"Reading PNG chunk %s\n", str_chunk_type);
+
+		switch (chunk_type)
 		{
+		case PNG_CN_IHDR:
 			p->width = convert_uint(chunk_data);
 			p->height = convert_uint(chunk_data+4);
 			p->bit_depth = *(chunk_data+8);
@@ -279,61 +293,101 @@ static int read_chunks(void *fp, struct png_info *p)
 			p->interlace_method = *(chunk_data+12);
 			free (chunk_data);
 
-			if ((p->bit_depth != 8) && (p->bit_depth != 4) && (p->bit_depth != 2))
+			if (errorlog)
 			{
-				error ("unsupported bit depth (has to be 4 or 8)");
-				return 0;
-			}
-
-			if (p->color_type != 3)
-			{
-				error ("unsupported color type (has to be 3)");
-				return 0;
-			}
-			if (p->interlace_method != 0)
-			{
-				error ("interlace unsupported");
-				return 0;
+				fprintf(errorlog,"PNG IHDR information:\n");
+				fprintf(errorlog,"Width: %i, Height: %i\n", p->width, p->height);
+				fprintf(errorlog,"Bit depth %i, color type: %i\n", p->bit_depth, p->color_type);
+				fprintf(errorlog,"Compression method: %i, filter: %i, interlace: %i\n",
+					p->compression_method, p->filter_method, p->interlace_method);
 			}
 			break;
-		}
+
 		case PNG_CN_PLTE:
-		{
 			p->num_palette=chunk_length/3;
 			p->palette=chunk_data;
+			if (errorlog)
+				fprintf(errorlog,"%i palette entries\n", p->num_palette);
 			break;
-		}
+
 		case PNG_CN_tRNS:
-		{
 			p->num_trans=chunk_length;
 			p->trans=chunk_data;
+			if (errorlog)
+				fprintf(errorlog,"%i transparent palette entries\n", p->num_trans);
 			break;
-		}
+
 		case PNG_CN_IDAT:
-		{
 			idat[num_idat]=chunk_data;
 			l_idat[num_idat]=chunk_length;
 			num_idat++;
 			tot_idat += chunk_length;
 			break;
-		}
-		case PNG_CN_IEND:
-		{
-			IEND_read=1;
+
+		case PNG_CN_tEXt:
+			if (errorlog)
+			{
+				unsigned char *text=chunk_data;
+
+				while(*text++);
+				chunk_data[chunk_length]=0;
+				fprintf(errorlog, "Keyword: %s\n", chunk_data);
+				fprintf(errorlog, "Text: %s\n", text);
+			}
+			free(chunk_data);
 			break;
-		}
+
+		case PNG_CN_tIME:
+			if (errorlog)
+			{
+				unsigned char *t=chunk_data;
+				fprintf(errorlog, "Image last-modification time: %i/%i/%i (%i:%i:%i) GMT\n",
+					((short)(*t+1) << 8)+ (short)(*(t+1)), *(t+2), *(t+3), *(t+4), *(t+5), *(t+6));
+				/* (*t+1) is _very_ strange probably a bug */
+			}
+
+			free(chunk_data);
+			break;
+
+		case PNG_CN_gAMA:
+			p->source_gamma  = convert_uint(chunk_data)/100000.0;
+			if (errorlog)
+				fprintf(errorlog, "Source gamma: %f\n",p->source_gamma);
+
+			free(chunk_data);
+			break;
+
+		case PNG_CN_pHYs:
+			p->xres = convert_uint(chunk_data);
+			p->yres = convert_uint(chunk_data+4);
+			p->resolution_unit = *(chunk_data+8);
+			if (errorlog)
+			{
+				fprintf(errorlog, "Pixel per unit, X axis: %i\n",p->xres);
+				fprintf(errorlog, "Pixel per unit, Y axis: %i\n",p->yres);
+				if (p->resolution_unit)
+					fprintf(errorlog, "Unit is meter\n");
+				else
+					fprintf(errorlog, "Unit is unknown\n");
+			}
+			free(chunk_data);
+			break;
+
+		case PNG_CN_IEND:
+			break;
+
 		default:
-		{
-			error ("Unknown chunk name");
+			if (errorlog)
+				fprintf (errorlog, "Ignoring unsupported chunk name %s\n",str_chunk_type);
 			if (chunk_data)
 				free(chunk_data);
 			break;
 		}
-		}
 	}
 	if ((zimage = (unsigned char *)malloc(tot_idat))==NULL)
 	{
-		error("out of memory");
+		if (errorlog)
+			fprintf(errorlog,"Out of memory\n");
 		return 0;
 	}
 
@@ -357,14 +411,13 @@ static int read_png(const char *file_name, struct png_info *p)
 
 	p->num_palette = 0;
 	p->num_trans = 0;
+	p->trans = NULL;
+	p->palette = NULL;
 
-#ifdef MESS
-	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_IMAGE, 0)))
-#else
 	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
-#endif
 	{
-		error("unable to open overlay");
+		if (errorlog)
+			fprintf(errorlog,"Unable to open PNG %s\n", file_name);
 		return 0;
 	}
 
@@ -395,40 +448,25 @@ static void expand_buffer (unsigned char *inbuf, unsigned char *outbuf, int widt
 {
 	int i,j, k;
 
-	switch (bit_depth)
+	if (bit_depth==8)
+		memcpy (outbuf, inbuf, width*height);
+	else
 	{
-	case 2: /* expand 2 bit to 8 bit */
 		for (i=0; i<height; i++)
 		{
-			for(j=0; j<(width/4); j++)
+			for(j=0; j<width/(8/bit_depth); j++)
 			{
-				for (k=3; k>=0; k--)
-					*outbuf++ = (*inbuf>>(k*2))&0x03;
+				for (k=8/bit_depth-1; k>=0; k--)
+					*outbuf++ = (*inbuf>>k*bit_depth) & (0xff >> (8-bit_depth));
 				inbuf++;
 			}
-			if (width % 4)
-				for (k=((width%4)-1); k>=0; k--)
-					*outbuf++ = (*inbuf>>(k*2))&0x03;
-		}
-		break;
-	case 4: /* expand 4 bit to 8 bit */
-		for (i=0; i<height; i++)
-		{
-			for(j=0; j<(width/2); j++)
+			if (width % (8/bit_depth))
 			{
-				*outbuf++=*inbuf>>4;
-				*outbuf++=*inbuf++ & 0x0f;
+				for (k=width%(8/bit_depth)-1; k>=0; k--)
+					*outbuf++ = (*inbuf>>k*bit_depth) & (0xff >> (8-bit_depth));
+				inbuf++;
 			}
-			if (width % 2)
-				*outbuf++=*inbuf++>>4;
 		}
-		break;
-	case 8: /* we have already 8 bit so just copy */
-		memcpy (outbuf, inbuf, width*height);
-		break;
-	default:
-		error ("Unsupported bit depth");
-		break;
 	}
 }
 
@@ -441,9 +479,30 @@ static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, st
 	if (!read_png(file_name, p))
 		return 0;
 
+	if (p->bit_depth > 8)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unsupported bit depth %i (8 bit max.)\n", p->bit_depth);
+		return 0;
+	}
+
+	if (p->color_type != 3)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Unsupported color type %i (has to be 3)\n", p->color_type);
+		return 0;
+	}
+	if (p->interlace_method != 0)
+	{
+		if (errorlog)
+			fprintf(errorlog,"Interlace unsupported\n");
+		return 0;
+	}
+
 	if ((pixmap8 = (unsigned char *)malloc(p->width*p->height))==NULL)
 	{
-		error("out of memory");
+		if (errorlog)
+			fprintf(errorlog,"Out of memory\n");
 		free (p->fimage);
 		return 0;
 	}
@@ -454,7 +513,8 @@ static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, st
 
 	if (!(*bitmap=osd_new_bitmap(p->width,p->height,8)))
 	{
-		error("unable to allocate memory for overlay");
+		if (errorlog)
+			fprintf(errorlog,"Unable to allocate memory for artwork\n");
 		free (pixmap8);
 		return 0;
 	}
@@ -503,16 +563,5 @@ int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned
 	*palette = p.palette;
 	*trans = p.trans;
 
-	return 1;
-}
-
-int png_read_backdrop(char *file_name, struct osd_bitmap **ovl_bitmap, unsigned char *palette, int *num_palette)
-{
-	unsigned char *trans, *ovl_palette;
-	int num_trans;
-
-	if (!png_read_artwork(file_name, ovl_bitmap, &ovl_palette, num_palette, &trans, &num_trans))
-		return 0;
-	memcpy (palette, ovl_palette, 3*(*num_palette));
 	return 1;
 }

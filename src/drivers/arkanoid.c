@@ -1,6 +1,30 @@
 /***************************************************************************
 
+	Arkanoid driver (Preliminary)
 
+
+	The location BFFFh can be changed to indicate the country:
+
+	0x33 - Probably the world version (Copyright Taito Corp. Japan)
+	0x76 - Japan (Copyright Taito Corporation with Japanese only warning)
+	0x92 - USA (Copyright Taito America Corp. - Licensed to ROMSTAR for U.S.A)
+
+	Japanese version support cocktail mode (DSW #7), the others don't.
+
+	Here are the versions we have:
+
+	arkanoid	World version, probably an earlier revision
+	arknoidu	USA version, probably a later revision; There has been code
+			    inserted, NOT patched, so I don't think it's a bootleg
+	arkbl2		Bootleg of the early Japanese version we don't have.
+				The only difference is that the warning text has been replaced
+				by "WAIT"
+				ROM	E2.6F should be identical to the real Japanese one.
+				(It only differs in the country byte from A75_11.ROM)
+				This version works fine with the real MCU ROM
+	arkatayt	Another bootleg of the early Japanese one, more heavily modified
+	arkblock	Another bootleg of the early Japanese one, more heavily modified
+	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
 
 ***************************************************************************/
 
@@ -24,7 +48,9 @@ void arkanoid_68705_mcu_w (int offset, int value);
 int arkanoid_68705_stat_r (int offset);
 void arkanoid_68705_stat_w (int offset, int data);
 
+int arkanoid_68705_input_0_r (int offset);
 int arkanoid_input_0_r (int offset);
+int arkanoid_input_2_r (int offset);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -32,7 +58,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xd00c, 0xd00c, arkanoid_input_0_r },  /* mainly an input port, with 2 bits from the 68705 */
+	{ 0xd00c, 0xd00c, arkanoid_68705_input_0_r },  /* mainly an input port, with 2 bits from the 68705 */
 	{ 0xd010, 0xd010, input_port_1_r },
 	{ 0xd018, 0xd018, arkanoid_Z80_mcu_r },  /* input from the 68705 */
 	{ 0xe000, 0xefff, MRA_RAM },
@@ -61,9 +87,9 @@ static struct MemoryReadAddress boot_readmem[] =
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd001, 0xd001, AY8910_read_port_0_r },
-	{ 0xd00c, 0xd00c, input_port_0_r },
+	{ 0xd00c, 0xd00c, arkanoid_input_0_r },
 	{ 0xd010, 0xd010, input_port_1_r },
-	{ 0xd018, 0xd018, input_port_2_r },
+	{ 0xd018, 0xd018, arkanoid_input_2_r },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
@@ -89,7 +115,7 @@ static struct MemoryWriteAddress boot_writemem[] =
 static struct MemoryReadAddress mcu_readmem[] =
 {
 	{ 0x0000, 0x0000, arkanoid_68705_mcu_r },
-	{ 0x0001, 0x0001, input_port_2_r },
+	{ 0x0001, 0x0001, arkanoid_input_2_r },
 	{ 0x0002, 0x0002, arkanoid_68705_stat_r, &arkanoid_stat },
 	{ 0x0003, 0x000f, MRA_RAM },
 	{ 0x0010, 0x007f, MRA_RAM },
@@ -117,8 +143,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably input from the 68705 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably input from the 68705 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )	/* input from the 68705 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* input from the 68705 */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -126,8 +152,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
+	PORT_START      /* IN2 - spinner Player 1 */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+
+	PORT_START      /* IN3 - spinner Player 2  */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 20, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
@@ -155,7 +184,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( arkatayt_input_ports )
+/* These are the input ports of the real Japanese ROM set (we don't have it yet) */
+/* 'Block' uses the these ones as well.	The Tayto bootleg is different			 */
+/*  in coinage and # of lives.                    								 */
+
+INPUT_PORTS_START( japan_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -163,8 +196,8 @@ INPUT_PORTS_START( arkatayt_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably input from the 68705 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably input from the 68705 */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -174,6 +207,9 @@ INPUT_PORTS_START( arkatayt_input_ports )
 
 	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+
+	PORT_START      /* IN3 - spinner Player 2  */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 20, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
@@ -185,17 +221,17 @@ INPUT_PORTS_START( arkatayt_input_ports )
 	PORT_BITX ( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING ( 0x04, "Off" )
 	PORT_DIPSETTING ( 0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Difficulty?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Easy?" )
-	PORT_DIPSETTING(    0x00, "Hard?" )
-	PORT_DIPNAME( 0x10, 0x10, "Bonus Life?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "20000 60000?" )
+	PORT_DIPNAME( 0x08, 0x08, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x10, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "20000 60000" )
 	PORT_DIPSETTING(    0x00, "20000?" )
 	PORT_DIPNAME( 0x20, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x40, 0x40, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coins/2 Credit" )
 	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
 	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
@@ -232,7 +268,7 @@ static struct AY8910interface ay8910_interface =
 	1500000,	/* 1.5 MHz ???? */
 	{ 255 },
 	{ 0 },
-	{ input_port_3_r },
+	{ input_port_4_r },
 	{ 0 },
 	{ 0 }
 };
@@ -387,6 +423,22 @@ ROM_START( arkbl2_rom )
 	ROM_LOAD( "68705p3.6i",   0x0080, 0x0780, 0xe3c5024e )
 ROM_END
 
+ROM_START( arkbl3_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "arkanunk.1",   0x0000, 0x8000, 0xb0f73900 )
+	ROM_LOAD( "arkanunk.2",   0x8000, 0x8000, 0x9827f297 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
+
 ROM_START( arkatayt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "arkanoid.1",   0x0000, 0x8000, 0x6e0a2b6f )
@@ -403,6 +455,21 @@ ROM_START( arkatayt_rom )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
+ROM_START( arkblock_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "block01.bin",  0x0000, 0x8000, 0x5be667e1 )
+	ROM_LOAD( "block02.bin",  0x8000, 0x8000, 0x4f883ef1 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
 
 
 static int hiload(void)
@@ -452,10 +519,10 @@ struct GameDriver arkanoid_driver =
 	__FILE__,
 	0,
 	"arkanoid",
-	"Arkanoid (Taito)",
+	"Arkanoid (World)",
 	"1986",
-	"Taito",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	"Taito Corp Japan",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
 	0,
 	&machine_driver,
 	0,
@@ -478,10 +545,10 @@ struct GameDriver arknoidu_driver =
 	__FILE__,
 	&arkanoid_driver,
 	"arknoidu",
-	"Arkanoid (Romstar)",
+	"Arkanoid (USA)",
 	"1986",
-	"Taito of America (Romstar license)",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	"Taito America Corp (Romstar license)",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
 	0,
 	&machine_driver,
 	0,
@@ -504,10 +571,11 @@ struct GameDriver arkbl2_driver =
 	__FILE__,
 	&arkanoid_driver,
 	"arkbl2",
-	"Arkanoid (bootleg)",
+	"Arkanoid (Japanese bootleg Set 2)",
 	"1986",
+	//"Taito Corporation",
 	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
 	GAME_NOT_WORKING,
 	&machine_driver,
 	0,
@@ -517,7 +585,33 @@ struct GameDriver arkbl2_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	japan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver arkbl3_driver =
+{
+	__FILE__,
+	&arkanoid_driver,
+	"arkbl3",
+	"Arkanoid (Japanese bootleg Set 3)",
+	"1986",
+	"bootleg",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
+	GAME_NOT_WORKING,
+	&bootleg_machine_driver,
+	0,
+
+	arkbl3_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	japan_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -530,10 +624,10 @@ struct GameDriver arkatayt_driver =
 	__FILE__,
 	&arkanoid_driver,
 	"arkatayt",
-	"Arkanoid (Tayto bootleg)",
+	"Arkanoid (Tayto bootleg, Japanese)",
 	"1986",
 	"bootleg",
-	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nChris Moore (high score save)",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
 	0,
 	&bootleg_machine_driver,
 	0,
@@ -543,7 +637,33 @@ struct GameDriver arkatayt_driver =
 	0,
 	0,	/* sound_prom */
 
-	arkatayt_input_ports,
+	japan_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver arkblock_driver =
+{
+	__FILE__,
+	&arkanoid_driver,
+	"arkblock",
+	"Block (bootleg, Japanese)",
+	"1986",
+	"bootleg",
+	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
+	GAME_NOT_WORKING,
+	&bootleg_machine_driver,
+	0,
+
+	arkblock_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	japan_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,

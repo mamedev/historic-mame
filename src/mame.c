@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 BETA 7 ("__DATE__")";
+char mameversion[] = "0.34 BETA 8 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -15,7 +15,7 @@ int frameskip;
 int VolumePTR = 0;
 static int settingsloaded;
 
-int bitmap_dirty;	/* set by layer_mark_full_screen_dirty() */
+int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 unsigned char *ROM;
 
@@ -346,9 +346,8 @@ int updatescreen(void)
 			need_to_clear_bitmap = 0;
 		}
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
-		osd_profiler(OSD_PROFILE_END);
-
 		bitmap_dirty = 0;
+		osd_profiler(OSD_PROFILE_END);
 	}
 
 	/* the user interface must be called between vh_update() and update_display(), */
@@ -363,7 +362,6 @@ int updatescreen(void)
 
 	return 0;
 }
-
 
 
 /***************************************************************************
@@ -383,11 +381,19 @@ int run_machine(void)
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-				/* free the graphics ROMs, they are no longer needed */
-				/* TODO: instead of hardcoding region 1, use a flag to mark regions */
-				/*       which can be freed after initialization. */
-				free(Machine->memory_region[1]);
-				Machine->memory_region[1] = 0;
+				const struct RomModule *romp = gamedrv->rom;
+				int	region;
+
+				/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+				for (region = 0; romp->name || romp->offset || romp->length; region++)
+				{
+					if (romp->offset & ROMFLAG_DISPOSE)
+					{
+						free (Machine->memory_region[region]);
+						Machine->memory_region[region] = 0;
+					}
+					do { romp++; } while (romp->length);
+				}
 
 				if (settingsloaded == 0)
 				{

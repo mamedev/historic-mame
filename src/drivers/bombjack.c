@@ -315,7 +315,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 40, 40, 40 },
+	{ 18, 18, 18 },
 	{ 0 },
 	{ 0 },
 	{ 0 },

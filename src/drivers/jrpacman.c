@@ -461,7 +461,7 @@ struct GameDriver jrpacman_driver =
 	"jrpacman",
 	"Jr. Pac Man",
 	"1983",
-	"[Namco] (Bally Midway license)",
+	"Bally Midway",
 	"David Caldwell\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,

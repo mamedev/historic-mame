@@ -1,7 +1,9 @@
 #include "driver.h"
 #include "unzip.h"
 #include <sys/stat.h>
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
 #include <unistd.h>
 
 #define MAXPATHC 20 /* at most 20 path entries */

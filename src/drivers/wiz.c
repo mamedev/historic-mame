@@ -287,7 +287,7 @@ static struct AY8910interface ay8910_interface =
 {
 	3,      /* 3 chips */
 	14318000/8,	/* ? */
-	{ 100, 100, 100 },	/* with 255 the SEAL audio library distorts */
+	{ 10, 10, 10 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -363,11 +363,11 @@ ROM_START( wiz_rom )
 	ROM_LOAD( "ic02_08.bin",  0xa000, 0x4000, 0xede77d37 )
 	ROM_LOAD( "ic03_07.bin",  0xe000, 0x4000, 0x297c02fc )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGION(0x0300)      /* color proms */
 	/* These proms are all $200 bytes but only the first $100 is used */
-	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0200, 0x09b3c4bf ) /* palette red component */
-	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0200, 0x241f2769 ) /* palette green component */
-	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0200, 0x3ea24f09 ) /* palette blue component */
+	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0100, 0x2dd52fb2 ) /* palette red component */
+	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0100, 0x8c2880c9 ) /* palette green component */
+	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0100, 0xa488d761 ) /* palette blue component */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )

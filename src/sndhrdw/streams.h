@@ -16,6 +16,8 @@ int stream_init_multi(int channels,const char **name,int sample_rate,int sample_
 void stream_update(int channel,int min_interval);	/* min_interval is in usec */
 void stream_set_volume(int channel,int volume);
 int stream_get_volume(int channel);
+void stream_set_pan(int channel,int pan);
+int stream_get_pan(int channel);
 const char *stream_get_name(int channel);
 
 #endif

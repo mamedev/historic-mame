@@ -16,17 +16,27 @@
 FILE	*sprite_log;
 #endif
 
-/* video/control register 1  */
-static unsigned char videoctlreg;
 
-/* use this to select palette */
-static unsigned char palreg;
-
-/* used to select video bank */
-static int bankreg;
+static int char_palette,sprite_palette;
+static int char_bank;
 
 
+/***************************************************************************
 
+  Convert the color PROMs into a more useable format.
+
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
 void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -58,9 +68,30 @@ void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 		color_prom++;
 	}
 
+	/* color_prom now points to the beginning of the char lookup table */
 
+	/* fg chars */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = (*(color_prom++) & 0x0f);
+	{
+		COLOR(0,i) = (color_prom[(i / 64) * 64 + ((i / 4) & 0x0f) + (i % 4) * 16] & 0x0f) + 0x10;
+	}
+	color_prom += 256;
+
+	/* color_prom now points to the beginning of the sprite lookup table */
+
+	/* sprites */
+	for (i = 0;i < TOTAL_COLORS(2);i++)
+	{
+		COLOR(2,i) = (color_prom[(i / 64) * 64 + ((i / 4) & 0x0f) + (i % 4) * 16] & 0x0f) + 0x10;
+	}
+	color_prom += 256;
+
+	/* bg chars (this is not the full story... there are four layers mixed */
+	/* using another PROM */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+	{
+		COLOR(1,i) = *(color_prom++) & 0x0f;
+	}
 }
 
 
@@ -82,6 +113,23 @@ void exerion_vh_stop (void)
 }
 
 
+void exerion_videoreg_w (int offset,int data)
+{
+	/* bit 0 = flip screen and joystick input multiplexor */
+
+	/* bits 1-2 char lookup table bank */
+	char_palette = (data & 0x06) >> 1;
+
+	/* bits 3 char bank */
+	char_bank = (data & 0x08) >> 3;
+
+	/* bits 4-5 unused */
+
+	/* bits 6-7 sprite lookup table bank */
+	sprite_palette = (data & 0xc0) >> 6;
+}
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -91,23 +139,10 @@ void exerion_vh_stop (void)
 ***************************************************************************/
 void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-   int sx,sy,offs,i;
+	int sx,sy,offs,i;
 
-	for (offs = videoram_size - 1;offs >= 0;offs -- )
-	{
-		dirtybuffer[offs] = 0;
 
-		sx = offs % 64;
-		sy = offs / 64;
-
-		drawgfx(tmpbitmap,Machine->gfx[0],
-			videoram[offs] + 256*bankreg,
-			1,
-			0,0,
-			8*sx,8*sy,
-			0,TRANSPARENCY_NONE,0);
-
-	}
+	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 #ifdef DEBUG_SPRITES
 	if (sprite_log)
@@ -142,7 +177,8 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		wide = spriteram[i] & 0x08;
 		doubled = spriteram[i] & 0x10;
 
-		color = 1;
+		color = ((spriteram[i] & 0x06) >> 1) + ((spriteram[i+2] & 0x80) >> 5) +
+				(spriteram[i+2] & 0x08) + sprite_palette * 16;
 
 		if (wide)
 		{
@@ -153,60 +189,57 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			if (doubled)
 			{
-				drawgfx (tmpbitmap,Machine->gfx[2],
-					s2,
-					color,
-					xflip,yflip,
-					x,y+32,
-					0, TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[3],
+						s2,
+						color,
+						xflip,yflip,
+						x,y+32,
+						0, TRANSPARENCY_PEN,0);
 			}
 			else
 			{
-				drawgfx (tmpbitmap,Machine->gfx[1],
-					s2,
-					color,
-					xflip,yflip,
-					x,y+16,
-					0, TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[2],
+						s2,
+						color,
+						xflip,yflip,
+						x,y+16,
+						0, TRANSPARENCY_PEN,0);
 			}
 		}
 
 		if (doubled)
 		{
-			drawgfx (tmpbitmap,Machine->gfx[2],
-			s,
-			color,
-			xflip,yflip,
-			x,y,
-			0, TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[3],
+					s,
+					color,
+					xflip,yflip,
+					x,y,
+					0, TRANSPARENCY_PEN,0);
 		}
 		else
 		{
-			drawgfx (tmpbitmap,Machine->gfx[1],
-			s,
-			color,
-			xflip,yflip,
-			x,y,
-			0, TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[2],
+					s,
+					color,
+					xflip,yflip,
+					x,y,
+					0, TRANSPARENCY_PEN,0);
 		}
 
 		if (doubled) i += 4;
 	}
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		sx = offs % 64;
+		sy = offs / 64;
+
+		drawgfx(bitmap,Machine->gfx[0],
+			videoram[offs] + 256 * char_bank,
+			((videoram[offs] & 0xf0) >> 4) + char_palette * 16,
+			0,0,
+			8*sx,8*sy,
+			0,TRANSPARENCY_PEN,0);
+	}
 }
-
-/* JB 971127 */
-void exerion_videoreg_w (int offset,int data)
-{
-	videoctlreg = data;
-
-	/*   REMEMBER - both bits 1&2 are used to set the palette
-	 *   Don't forget to add in bit 2, which doubles as the bank
-	 *   select
-	 */
-
-	palreg  = (videoctlreg >> 1) & 0x01;	/* palette sel is bit 1 */
-	bankreg = (videoctlreg >> 2) & 0x01;	/* banksel is bit 2 */
-}
-

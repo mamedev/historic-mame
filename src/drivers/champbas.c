@@ -43,8 +43,7 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void champbas_dac_w(int offset,int data)
 {
-	/* only bits 0-5 seem to be used */
-	DAC_data_w(0,data<<2);
+	DAC_signed_data_w(0,data<<2);
 }
 
 
@@ -199,7 +198,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ 30 },
+	{ 40 },
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },

@@ -486,7 +486,7 @@ static struct MachineDriver machine_driver =
 	bosco_init_machine,
 
 	/* video hardware */
-	36*8, 28*8, { 0*8+3, 36*8-1, 0*8, 28*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	32+64,64*4+64*4,	/* 32 for the characters, 64 for the stars */
 	bosco_vh_convert_color_prom,

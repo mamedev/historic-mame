@@ -455,7 +455,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 MHz */
 			0,
 			readmem,writemem,readport,writeport,
 			nmi_interrupt,1
@@ -1149,7 +1149,7 @@ struct GameDriver ckong_driver =
 	"Crazy Kong (set 1)",
 	"1981",
 	"Falcon",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -1175,7 +1175,7 @@ struct GameDriver ckonga_driver =
 	"Crazy Kong (set 2)",
 	"1981",
 	"Falcon",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -1201,7 +1201,7 @@ struct GameDriver ckongjeu_driver =
 	"Crazy Kong (Jeutel bootleg)",
 	"1981",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -1227,7 +1227,7 @@ struct GameDriver ckongalc_driver =
 	"Crazy Kong (Alca bootleg)",
 	"1981",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	0,
 	&machine_driver,
 	0,
@@ -1253,7 +1253,7 @@ struct GameDriver monkeyd_driver =
 	"Monkey Donkey",
 	"1981",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
+	"Nicola Salmoria (MAME driver)\nVille Laitinen\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
@@ -1587,7 +1587,7 @@ static struct GfxDecodeInfo swimmer_gfxdecodeinfo[] =
 static struct AY8910interface swimmer_ay8910_interface =
 {
 	2,      /* 2 chips */
-	2000000,	/* 2 MHz? (hand tuned for Guzzler) */
+	4000000/2,	/* 2 MHz */
 	{ 255, 255 },
 	{ 0 },
 	{ 0 },
@@ -1603,17 +1603,18 @@ static struct MachineDriver swimmer_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			3072000,	/* 3.072 MHz */
 			0,
 			swimmer_readmem,swimmer_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 Mhz????? */
+			4000000/2,	/* 2 MHz */
 			3,      /* memory region #2 */
 			sound_readmem,sound_writemem,0,sound_writeport,
-			nmi_interrupt,4 /* IRQs are triggered by the main CPU */
+			0,0,
+			nmi_interrupt,4000000/16384 /* IRQs are triggered by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */

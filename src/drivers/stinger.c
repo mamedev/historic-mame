@@ -1,3 +1,67 @@
+/***************************************************************************
+
+Wiz memory map (preliminary)
+
+This board is similar to a Galaxian board in the way it handles scrolling
+and sprites, but the similarities pretty much end there. The most notable
+difference is that there are 2 independently scrollable playfields.
+
+Strangely, one of the foreground character banks have a Seibu logo, the
+other one a Taito logo. There are other differences as well, so you can't
+just switch one for the other.
+
+
+Main CPU:
+
+0000-BFFF  ROM
+C000-C7FF  RAM
+D000-D3FF  Video RAM (Foreground)
+D400-D7FF  Color RAM (Foreground)
+D800-D83F  Scroll RAM (Foreground)
+D840-D85F  Sprite RAM 1
+E000-E3FF  Video RAM (Background)
+E400-E7FF  Color RAM (Background) (I don't think it's used)
+E800-E83F  Scroll RAM (Background)
+E840-E85F  Sprite RAM 2
+
+I/O read:
+f000 DIP SW#1
+f008 DIP SW#2
+f010 Input Port 1
+f010 Input Port 2
+
+I/O write:
+c800 Puslated to 1 when a coin is inserted into Chute A
+c801 Puslated to 1 when a coin is inserted into Chute B
+f000 Sprite bank select
+f001 NMI enable
+f002 \ (?) Set based on current level (C6E9)
+f003 / (?) Possibly palette select
+f004 \ Character bank select
+f005 /
+f800 Sound Command write
+f818 (?) Sound (Is there some other sound circuit??)
+
+
+Sound CPU:
+
+0000-1FFF  ROM
+2000-23FF  RAM
+
+I/O read:
+7000 Sound Command Read
+
+I/O write:
+4000 AY8910 Control Port #1
+4001 AY8910 Write Port #1
+5000 AY8910 Control Port #2
+5001 AY8910 Write Port #2
+6000 AY8910 Control Port #3
+6001 AY8910 Write Port #3
+7000 NMI enable
+
+***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -35,10 +99,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xd800, 0xd85f, MRA_RAM },
 	{ 0xe000, 0xe3ff, MRA_RAM },
 	{ 0xe800, 0xe85f, MRA_RAM },
-	{ 0xf000, 0xf000, input_port_2_r },	/* DSW0 */
-	{ 0xf008, 0xf008, input_port_3_r },	/* DSW1 */
-	{ 0xf010, 0xf010, input_port_0_r },	/* IN0 */
-	{ 0xf018, 0xf018, input_port_1_r },	/* IN1 */
+	{ 0xf000, 0xf000, input_port_0_r },	/* DSW0 */
+	{ 0xf008, 0xf008, input_port_1_r },	/* DSW1 */
+	{ 0xf010, 0xf010, input_port_2_r },	/* IN0 */
+	{ 0xf018, 0xf018, input_port_3_r },	/* IN1 */
 	{ 0xf800, 0xf800, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
@@ -88,26 +152,6 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 INPUT_PORTS_START( stinger_input_ports )
-	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-
-	PORT_START	/* IN1 */
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "4 Coins/1 Credit" )
@@ -158,9 +202,7 @@ INPUT_PORTS_START( stinger_input_ports )
 	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-INPUT_PORTS_END
 
-INPUT_PORTS_START( scion_input_ports )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -174,13 +216,15 @@ INPUT_PORTS_START( scion_input_ports )
 	PORT_START	/* IN1 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( scion_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Upright" )
@@ -230,6 +274,26 @@ INPUT_PORTS_START( scion_input_ports )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* IN1 */
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 
@@ -346,8 +410,8 @@ ROM_START( stinger_rom )
 	ROM_LOAD( "12.bin",       0xa000, 0x2000, 0xb60fa88c )
 
 	ROM_REGION(0x0300)	/* color PROMs */
-	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x92e5a16d )	/* red component */
-	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0xc60229a5 )	/* green component */
+	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x52c06fc2 )	/* red component */
+	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0x9985e575 )	/* green component */
 	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
@@ -371,7 +435,9 @@ ROM_START( scion_rom )
 	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
 	ROM_REGION(0x0300)	/* color PROMs */
-	/* missing! */
+	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
+	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
+	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
@@ -394,7 +460,9 @@ ROM_START( scionc_rom )
 	ROM_LOAD( "12.15h",       0xa000, 0x2000, 0xc82c28bf )
 
 	ROM_REGION(0x0300)	/* color PROMs */
-	/* missing! */
+	ROM_LOAD( "82s129.7a",    0x0000, 0x0100, 0x2f89d9ea )	/* red component */
+	ROM_LOAD( "82s129.7b",    0x0100, 0x0100, 0xba151e6a )	/* green component */
+	ROM_LOAD( "82s129.8a",    0x0200, 0x0100, 0xf681ce59 )	/* blue component */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "6.9f",         0x0000, 0x2000, 0xa66a0ce6 )
@@ -479,7 +547,7 @@ struct GameDriver scion_driver =
 	"1984",
 	"Seibu Denshi",
 	"Nicola Salmoria",
-	GAME_WRONG_COLORS,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
@@ -490,7 +558,7 @@ struct GameDriver scion_driver =
 
 	scion_input_ports,
 
-	0, 0, 0,	//	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
@@ -500,11 +568,11 @@ struct GameDriver scionc_driver =
 	__FILE__,
 	&scion_driver,
 	"scionc",
-	"Scion",
+	"Scion (Cinematronics)",
 	"1984",
 	"Seibu Denshi [Cinematronics license]",
 	"Nicola Salmoria",
-	GAME_WRONG_COLORS,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,
 
@@ -515,7 +583,7 @@ struct GameDriver scionc_driver =
 
 	scion_input_ports,
 
-	0, 0, 0,	//	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };

@@ -8,39 +8,42 @@
 #include <ctype.h>
 #include <time.h>
 
-
-#if defined (UNIX) | defined (macintosh)	/* JB 980208 */
+#ifdef macintosh /* JB 980208 */
 #define uclock_t clock_t
 #define	uclock clock
 #define UCLOCKS_PER_SEC CLOCKS_PER_SEC
-#else
-#if defined(WIN32)
-#include "uclock.h"
 #endif
+
+#ifdef UNIX
+#include "xmame.h" /* defines uclock types depending on arch */
 #endif
 
 #ifndef macintosh
 #ifndef WIN32
+#ifndef UNIX
 	#include <conio.h>
+	#define inline __inline__	/* keep allegro.h happy */
 	#include <allegro.h>
+	#undef inline
+#endif
 #endif
 #endif
 
 #include "osdepend.h"
 #include "osd_dbg.h"
 #include "cpuintrf.h"
-#include "Z80/Z80.h"
-#include "Z80/Z80Dasm.h"
-#include "M6502/m6502.h"
-#include "I86/i86intrf.h"
-#include "I8039/i8039.h"
-#include "I8085/i8085.h"
-#include "M6808/m6808.h"
-#include "M6805/m6805.h"
-#include "M6809/m6809.h"
-#include "M68000/M68000.h"
-#include "TMS34010/tms34010.h"
-#include "S2650/s2650.h" /* HJB 110698 */
+#include "z80/z80.h"
+#include "z80/z80dasm.h"
+#include "m6502/m6502.h"
+#include "i86/i86intrf.h"
+#include "i8039/i8039.h"
+#include "i8085/i8085.h"
+#include "m6808/m6808.h"
+#include "m6805/m6805.h"
+#include "m6809/m6809.h"
+#include "m68000/m68000.h"
+#include "tms34010/tms34010.h"
+#include "s2650/s2650.h"
 #include "t11/t11.h"    /* ASG 030598 */
 #include "tms9900/tms9900.h"
 
@@ -86,7 +89,11 @@ extern int CurrentVolume;
 #define	FLAG_COLOUR             WHITE
 #define	BREAKPOINT_COLOUR       YELLOW
 #define	PC_COLOUR               (WHITE+BLUE*16)	/* MB 980103 */
+#ifndef UNIX
 #define	CURSOR_COLOUR           (WHITE+RED*16)	/* MB 980103 */
+#else
+#define	CURSOR_COLOUR           MAGENTA
+#endif
 #define COMMANDINFO_COLOUR		(BLACK+7*16)	/* MB 980201 */
 #define	CODE_COLOUR             WHITE
 #define	MEM1_COLOUR             WHITE

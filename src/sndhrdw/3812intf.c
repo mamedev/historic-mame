@@ -98,7 +98,7 @@ int nonemu_YM3812_sh_start(struct YM3812interface *interface)
 	timer1_val = timer2_val = 256;
 	intf = interface;
 
-	timer_scale = (double)MASTER_CLOCK_BASE / (double)interface->clock;
+	timer_scale = (double)MASTER_CLOCK_BASE / (double)interface->baseclock;
 
 	return 0;
 }
@@ -248,7 +248,7 @@ int emu_YM3812_sh_start( struct YM3812interface *interface ) {
 
 	sample_bits = Machine->sample_bits;
 
-    ym = ym3812_Init( rate, intf->clock, ( sample_bits == 16 ) );
+    ym = ym3812_Init( rate, intf->baseclock, ( sample_bits == 16 ) );
 
 	if ( ym == NULL )
 		return -1;

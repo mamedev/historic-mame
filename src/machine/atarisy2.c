@@ -62,10 +62,21 @@ static void atarisys2_soundint (void)
 
 static void atarisys2_init_machine (int slapstic)
 {
+	int ch;
+
+
 	atarigen_init_machine (atarisys2_soundint, slapstic);
 	last_sound_reset = 0;
 	irq_hold0 = irq_hold2 = irq_hold3 = 1;
 	tms5220_data_strobe = 1;
+	/* set panning for the two pokey chips */
+	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
+	{
+		if (!strcmp(stream_get_name(ch),"Pokey #0"))
+			stream_set_pan(ch,-100);
+		if (!strcmp(stream_get_name(ch),"Pokey #1"))
+			stream_set_pan(ch,100);
+	}
 	which_adc = 0;
 	pedal_value[0] = pedal_value[1] = pedal_value[2] = 0;
 	pedal_count = 0;

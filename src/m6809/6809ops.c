@@ -130,6 +130,12 @@ INLINE void jmp_di( void )
 	DIRECT; pcreg=eaddr;change_pc(pcreg);/* ASG 971005 */
 }
 
+/* $0E JMP direct ----- */
+INLINE void jmp_di_slap( void )
+{
+	DIRECT; pcreg=eaddr;cpu_setOPbase16(pcreg); /* LBO 092898 */
+}
+
 /* $0F CLR direct -0100 */
 INLINE void clr_di( void )
 {
@@ -981,6 +987,12 @@ INLINE void jmp_ix( void )
 	pcreg=eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
+/* $6E JMP indexed ----- */
+INLINE void jmp_ix_slap( void )
+{
+	pcreg=eaddr;cpu_setOPbase16(pcreg);	/* LBO 092898 */
+}
+
 /* $6F CLR indexed -0100 */
 INLINE void clr_ix( void )
 {
@@ -1094,6 +1106,12 @@ INLINE void tst_ex( void )
 INLINE void jmp_ex( void )
 {
 	EXTENDED; pcreg=eaddr;change_pc(pcreg);	/* TS 971002 */
+}
+
+/* $7E JMP extended ----- */
+INLINE void jmp_ex_slap( void )
+{
+	EXTENDED; pcreg=eaddr;cpu_setOPbase16(pcreg);	/* LBO 092898 */
 }
 
 /* $7F CLR extended -0100 */
@@ -1435,6 +1453,13 @@ INLINE void jsr_di( void )
 	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
 }
 
+/* $9D JSR direct ----- */
+INLINE void jsr_di_slap( void )
+{
+	DIRECT; PUSHWORD(pcreg);
+	pcreg = eaddr;cpu_setOPbase16(pcreg);	/* LBO 092898 */
+}
+
 /* $9E LDX (LDY) direct -**0- */
 INLINE void ldx_di( void )
 {
@@ -1609,6 +1634,13 @@ INLINE void jsr_ix( void )
 {
 	PUSHWORD(pcreg);
 	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
+}
+
+/* $aD JSR indexed ----- */
+INLINE void jsr_ix_slap( void )
+{
+	PUSHWORD(pcreg);
+	pcreg = eaddr;cpu_setOPbase16(pcreg);	/* LBO 092898 */
 }
 
 /* $aE LDX (LDY) indexed -**0- */
@@ -1787,6 +1819,13 @@ INLINE void jsr_ex( void )
 {
 	EXTENDED; PUSHWORD(pcreg);
 	pcreg = eaddr;change_pc(pcreg);	/* TS 971002 */
+}
+
+/* $bD JSR extended - Slapstic ----- */
+INLINE void jsr_ex_slap( void )
+{
+	EXTENDED; PUSHWORD(pcreg);
+	pcreg = eaddr;cpu_setOPbase16(pcreg);	/* LBO 092898 */
 }
 
 /* $bE LDX (LDY) extended -**0- */

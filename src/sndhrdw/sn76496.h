@@ -6,7 +6,7 @@
 struct SN76496interface
 {
 	int num;	/* total number of 76496 in the machine */
-	int clock;
+	int baseclock;
 	int volume[MAX_76496];
 };
 
@@ -18,6 +18,6 @@ void SN76496_2_w(int offset,int data);
 void SN76496_3_w(int offset,int data);
 void SN76496_sh_update(void);
 
-void SN76496_set_clock(int chip,int clock);
+void SN76496_set_clock(int chip,int _clock);
 
 #endif

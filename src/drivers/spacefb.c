@@ -460,7 +460,7 @@ struct GameDriver spacefb_driver =
 	"Space Firebird",
 	"1980",
 	"Nintendo",
-	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
 	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	0,

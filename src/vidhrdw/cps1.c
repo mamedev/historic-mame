@@ -8,7 +8,6 @@
   Scroll 2 to scroll 3 priority (not quite right in Strider).
   Layer-sprite priority (almost there... masking not correct)
   Loads of unknown attribute bits on scroll 2.
-  Entire unknown graphic RAM region
   Speed, speed, speed...
 
   OUTPUT PORTS (preliminary)
@@ -51,6 +50,40 @@
 
 #include "osdepend.h"
 
+/*#define LAYER_DEBUG*/
+
+struct CPS1VIDCFG
+{
+        int layer_control;
+        int s2_priority1;
+        int s2_priority2;
+        int s2_priority3;
+        int s3_priority1;
+        int s3_priority2;
+        int s3_priority3;
+};
+
+/* Configuration tables */
+static struct CPS1VIDCFG cps1_vid_cfg[]=
+{
+        {0x66,0x6a,0x6c,0x6e,0x72,0x70,0x6e}, /* 00 = Un Squad */
+        {0x70,0x6c,0x6a,0x68,0x62,0x64,0x66}, /* 01 = Willow */
+        {0x6e,0x70,0x72,0x74,0x74,0x72,0x70}, /* 02 = Final Fight */
+        {0x52,0x56,0x58,0x5a,0x5c,0x5e,0x60}, /* 03 = Mega Twins */
+        {0x66,0x6c,0x6a,0x68,0x72,0x70,0x6e}, /* 04 = Strider */
+        {0x66,0x6a,0x6c,0x6e,0x72,0x70,0x6e}, /* 05 = Ghouls */
+        {0x68,0x00,0x00,0x00,0x00,0x00,0x00}, /* 06 = 1941 */
+        {0x62,0x66,0x68,0x6a,0x6c,0x6e,0x70}, /* 07 = Magic Sword */
+        {0x42,0x46,0x48,0x4a,0x46,0x48,0x4a}, /* 08 = Nemo */
+        {0x6c,0x68,0x66,0x64,0x00,0x00,0x00}, /* 09 = DWJ / Mercs */
+        {0x60,0x00,0x00,0x00,0x00,0x00,0x00}, /* 10 = */
+        {0x4c,0x00,0x00,0x00,0x00,0x00,0x00}, /* 11 = */
+        {0x54,0x00,0x00,0x00,0x00,0x00,0x00}, /* 12 = */
+        {0x66,0x6c,0x6a,0x68,0x72,0x70,0x6e}, /* 13 = */
+        {0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 14 = */
+};
+
+
 /* Public variables */
 unsigned char *cps1_gfxram;
 unsigned char *cps1_output;
@@ -73,7 +106,9 @@ static unsigned char *cps1_palette;
 static unsigned char *cps1_other;
 static unsigned char *cps1_old_palette;
 
+/* Working variables */
 static int cps1_last_sprite_offset;     /* Offset of the last sprite */
+static int cps1_layer_control;          /* Layer control register */
 
 int scroll1x, scroll1y, scroll2x, scroll2y, scroll3x, scroll3y;
 struct CPS1config *cps1_game_config;
@@ -92,7 +127,32 @@ struct CPS1config *cps1_game_config;
 #define CPS1_SCROLL3_SCROLLX    0x14    /* Scroll 3 X */
 #define CPS1_SCROLL3_SCROLLY    0x16    /* Scroll 3 Y */
 
+#define CPS1_TRANSP_SCROLL2_1   2
+#define CPS1_TRANSP_SCROLL2_2   1
+#define CPS1_TRANSP_SCROLL2_3   0
+#define CPS1_TRANSP_SCROLL3_1   5
+#define CPS1_TRANSP_SCROLL3_2   4
+#define CPS1_TRANSP_SCROLL3_3   3
+
+
 #define CPS1_LAYER_CONTROL      0x66    /* (or maybe not) */
+
+static int cps1_transparency_scroll2[4]=
+{
+        0xffff, /* 0x0000 */
+        0xffff, /* 0x0800 */
+        0xffff, /* 0x1000 */
+        0xffff  /* 0x1800 */
+};
+
+static int cps1_transparency_scroll3[4]=
+{
+        0xffff, /* 0x0000 */
+        0xffff, /* 0x0800 */
+        0xffff, /* 0x1000 */
+        0xffff  /* 0x1800 */
+};
+
 
 INLINE int cps1_port(int offset)
 {
@@ -134,10 +194,10 @@ void cps1_dump_video(void)
 		fclose(fp);
 	}
 
-        fp=fopen("OTHER.DMP", "w+b");
+	fp=fopen("OTHER.DMP", "w+b");
 	if (fp)
 	{
-                fwrite(cps1_other, cps1_other_size, 1, fp);
+		fwrite(cps1_other, cps1_other_size, 1, fp);
 		fclose(fp);
 	}
 
@@ -147,6 +207,7 @@ void cps1_dump_video(void)
 		fwrite(cps1_palette, cps1_palette_size, 1, fp);
 		fclose(fp);
 	}
+
 	fp=fopen("OUTPUT.DMP", "w+b");
 	if (fp)
 	{
@@ -164,28 +225,41 @@ void cps1_dump_video(void)
 #endif
 
 
-INLINE void cps1_get_video_base(void)
+INLINE void cps1_get_video_base(void )
 {
+        struct CPS1VIDCFG *pCFG;
         static unsigned char *cps1_obj_old;
-        static unsigned char *cps1_other_old;
+	static unsigned char *cps1_other_old;
 
 	/* Re-calculate the VIDEO RAM base */
-        cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
+	cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
 	cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
 	cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
-        cps1_obj=cps1_obj_old;
-        cps1_obj_old=cps1_base(CPS1_OBJ_BASE);
+	cps1_obj=cps1_obj_old;
+	cps1_obj_old=cps1_base(CPS1_OBJ_BASE);
 	cps1_palette=cps1_base(CPS1_PALETTE_BASE);
-        cps1_other=cps1_other_old;
-        cps1_other_old=cps1_base(CPS1_OTHER_BASE);
+	cps1_other=cps1_other_old;
+	cps1_other_old=cps1_base(CPS1_OTHER_BASE);
 
 	/* Get scroll values */
-        scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
-        scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
-        scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
-        scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
-        scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
-        scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+	scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+	scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+	scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+	scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+	scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+	scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+
+        /* Get transparency registers */
+        pCFG=&cps1_vid_cfg[cps1_game_config->alternative];
+        if (pCFG->s2_priority1)
+        {
+                cps1_transparency_scroll2[1]=~cps1_port(pCFG->s2_priority1);
+                cps1_transparency_scroll2[2]=~cps1_port(pCFG->s2_priority2);
+                cps1_transparency_scroll2[3]=~cps1_port(pCFG->s2_priority3);
+                cps1_transparency_scroll3[1]=~cps1_port(pCFG->s3_priority1);
+                cps1_transparency_scroll3[2]=~cps1_port(pCFG->s3_priority2);
+                cps1_transparency_scroll3[3]=~cps1_port(pCFG->s3_priority3);
+         }
 }
 
 /***************************************************************************
@@ -196,6 +270,9 @@ INLINE void cps1_get_video_base(void)
 
 int cps1_vh_start(void)
 {
+
+        int i;
+
 	cps1_old_palette=(unsigned char *)malloc(cps1_palette_size);
 	if (!cps1_old_palette)
 	{
@@ -206,10 +283,6 @@ int cps1_vh_start(void)
 	memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
 	memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
-        /* Set up old base */
-        cps1_get_video_base();   /* Calculate base pointers */
-        cps1_get_video_base();   /* Calculate old base pointers */
-
 	if (!cps1_game_config)
 	{
 		if (errorlog)
@@ -218,6 +291,24 @@ int cps1_vh_start(void)
 		}
 		return -1;
 	}
+
+        if (cps1_game_config->alternative >
+                sizeof(cps1_vid_cfg) / sizeof(cps1_vid_cfg[0]))
+        {
+		if (errorlog)
+		{
+                        fprintf(errorlog, "cps1_game_config out of range value");
+		}
+                return -1;
+        }
+
+
+        cps1_layer_control=cps1_vid_cfg[cps1_game_config->alternative].layer_control;
+
+        /* Set up old base */
+        cps1_get_video_base();   /* Calculate base pointers */
+        cps1_get_video_base();   /* Calculate old base pointers */
+
 
 	/*
 		Some games interrogate a couple of registers on bootup.
@@ -235,6 +326,12 @@ int cps1_vh_start(void)
 		WRITE_WORD(&cps1_output[cps1_game_config->cpsb_addr],
 			   cps1_game_config->cpsb_value);
 	}
+
+        for (i=0; i<4; i++)
+        {
+               cps1_transparency_scroll2[i]=0xffff;
+               cps1_transparency_scroll3[i]=0xffff;
+        }
 
 	return 0;
 }
@@ -480,12 +577,12 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 		int y=READ_WORD(&cps1_obj[i+2]);
 		if (x && y )
 		{
-                        unsigned int code=READ_WORD(&cps1_obj[i+4]);
+			unsigned int code=READ_WORD(&cps1_obj[i+4]);
 			int colour=READ_WORD(&cps1_obj[i+6]);
 			int col=colour&0x1f;
 
 			x-=0x40;
-                        if (code >= base_obj && !(colour & 0x8000))
+			if (code >= base_obj && !(colour & 0x8000))
 			{
 				code -= base_obj;
 
@@ -514,7 +611,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-                                                                        drawgfx(bitmap,Machine->gfx[bank],
+									drawgfx(bitmap,Machine->gfx[bank],
 										code+(nx-1)-nxs+0x10*(ny-1-nys),
 										col&0x1f,
 										1,1,
@@ -529,7 +626,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-                                                                        drawgfx(bitmap,Machine->gfx[bank],
+									drawgfx(bitmap,Machine->gfx[bank],
 										code+nxs+0x10*(ny-1-nys),
 										col&0x1f,
 										0,1,
@@ -547,7 +644,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-                                                                        drawgfx(bitmap,Machine->gfx[bank],
+									drawgfx(bitmap,Machine->gfx[bank],
 										code+(nx-1)-nxs+0x10*nys,
 										col&0x1f,
 										1,0,
@@ -562,7 +659,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 							{
 								for (nxs=0; nxs<nx; nxs++)
 								{
-                                                                        drawgfx(bitmap,Machine->gfx[bank],
+									drawgfx(bitmap,Machine->gfx[bank],
 										code+nxs+0x10*nys,
 										col&0x1f,
 										0,0,
@@ -576,7 +673,7 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 				else
 				{
 					/* Simple case... 1 sprite */
-                                        drawgfx(bitmap,Machine->gfx[bank],
+					drawgfx(bitmap,Machine->gfx[bank],
 						   code,
 						   col&0x1f,
 						   colour&0x20,colour&0x40,
@@ -589,564 +686,6 @@ INLINE void cps1_render_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-#if 0
-void cps1_debug(int colour)
-{
-	static int s;
-	static int reset;
-	int pressed=0;
-	int n=0;
-	int i;
-	int keys[]={OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, OSD_KEY_4,
-			OSD_KEY_5, OSD_KEY_6, OSD_KEY_7, OSD_KEY_8};
-
-	for (i=0; i<8; i++)
-	{
-		if (osd_key_pressed(i))
-		{
-			int no=0;
-			if (osd_key_pressed(OSD_KEY_LSHIFT))
-			{
-				no+=8;
-			}
-			s++;
-//                      setgfxcolorentry (Machine->gfx[2], colour*16+i-1+no, s,s,s);
-			reset=1;
-			pressed=1;
-		}
-	}
-	if (!pressed)
-	{
-		if (reset)
-		{
-			reset=0;
-			memset(cps1_old_palette, 0xff, cps1_palette_size);
-			cps1_build_palette();
-		}
-	}
-}
-#endif
-
-/*
-This is a test table.
-*/
-
-int cps1_transparency_table[512]=
-{
-   0x0000,                                                /* 0000 */
-   ~(0x0010|0x0008|0x0004|0x0002|0x0001),                 /* 0080 */
-   ~(0x0020|0x0010|0x0008),                               /* 0100 */
-   ~(0x1000|0x0800|0x0400|0x0200|0x0080|0x0040|0x0002),   /* 0180 .??X???? ??....?. */
-   0x8000,                                                /* 0200 */
-   0x8000,      /* 0280 */
-   0x8000,      /* 0300 */
-   0x8000,      /* 0380 */
-   0x8000,      /* 0400 */
-   0x8000,      /* 0480 */
-   0x8000,      /* 0500 */
-   0x8000,      /* 0580 */
-   0x8000,      /* 0600 */
-   0x8000,      /* 0680 */
-   0x8000,      /* 0700 */
-   0x8000,      /* 0780 */
-   0x8000,      /* 0800 */
-   0x8000,      /* 0880 */
-   ~(0x20|0x0010|0x0008|0x0004|0x0002),      /* 0900 - Willow forest floor */
-   0x8000,      /* 0980 */
-   0x8000,      /* 0a00 */
-   0x8000,      /* 0a80 */
-   0x8000,      /* 0b00 */
-   0x8000,      /* 0b80 */
-   0x8000,      /* 0c00 */
-   0x8000,      /* 0c80 */
-   0x8000,      /* 0d00 */
-   0x8000,      /* 0d80 */
-   0x8000,      /* 0e00 */
-   0x8000,      /* 0e80 */
-   0x8000,      /* 0f00 */
-   0x8000,      /* 0f80 */
-   0x8000,      /* 1000 */
-   0x8000,      /* 1080 */
-   0x8000,      /* 1100 */
-   0x8000,      /* 1180 */
-   0x8000,      /* 1200 */
-   0x8000,      /* 1280 */
-   0x8000,      /* 1300 */
-   0x8000,      /* 1380 */
-   0x8000,      /* 1400 */
-   0x8000,      /* 1480 */
-   0x8000,      /* 1500 */
-   0x8000,      /* 1580 */
-   0x8000,      /* 1600 */
-   0x8000,      /* 1680 */
-   0x8000,      /* 1700 */
-   0x8000,      /* 1780 */
-   0x8000,      /* 1800 */
-   0x0000,      /* 1880 */
-   0x8000,      /* 1900 */
-   0x8000,      /* 1980 */
-   0x8000,      /* 1a00 */
-   0x8000,      /* 1a80 */
-   0x8000,      /* 1b00 */
-   0x8000,      /* 1b80 */
-   0x8000,      /* 1c00 */
-   0x8000,      /* 1c80 */
-   0x8000,      /* 1d00 */
-   0x8000,      /* 1d80 */
-   0x8000,      /* 1e00 */
-   0x8000,      /* 1e80 */
-   0x8000,      /* 1f00 */
-   0x8000,      /* 1f80 */
-   0x8000,      /* 2000 */
-   0x8000,      /* 2080 */
-   0x8000,      /* 2100 */
-   0x8000,      /* 2180 */
-   0x8000,      /* 2200 */
-   0x8000,      /* 2280 */
-   0x8000,      /* 2300 */
-   0x8000,      /* 2380 */
-   0x8000,      /* 2400 */
-   0x8000,      /* 2480 */
-   0x8000,      /* 2500 */
-   0x8000,      /* 2580 */
-   0x8000,      /* 2600 */
-   0x8000,      /* 2680 */
-   0x8000,      /* 2700 */
-   0x8000,      /* 2780 */
-   0x8000,      /* 2800 */
-   0x8000,      /* 2880 */
-   0x8000,      /* 2900 */
-   0x8000,      /* 2980 */
-   0x8000,      /* 2a00 */
-   0x8000,      /* 2a80 */
-   0x8000,      /* 2b00 */
-   0x8000,      /* 2b80 */
-   0x8000,      /* 2c00 */
-   0x8000,      /* 2c80 */
-   0x8000,      /* 2d00 */
-   0x8000,      /* 2d80 */
-   0x8000,      /* 2e00 */
-   0x8000,      /* 2e80 */
-   0x8000,      /* 2f00 */
-   0x8000,      /* 2f80 */
-   0x8000,      /* 3000 */
-   0x8000,      /* 3080 */
-   0x8000,      /* 3100 */
-   0x8000,      /* 3180 */
-   0x8000,      /* 3200 */
-   0x8000,      /* 3280 */
-   0x8000,      /* 3300 */
-   0x8000,      /* 3380 */
-   0x8000,      /* 3400 */
-   0x8000,      /* 3480 */
-   0x8000,      /* 3500 */
-   0x8000,      /* 3580 */
-   0x8000,      /* 3600 */
-   0x8000,      /* 3680 */
-   0x8000,      /* 3700 */
-   0x8000,      /* 3780 */
-   0x8000,      /* 3800 */
-   0x8000,      /* 3880 */
-   0x8000,      /* 3900 */
-   0x8000,      /* 3980 */
-   0x8000,      /* 3a00 */
-   0x8000,      /* 3a80 */
-   0x8000,      /* 3b00 */
-   0x8000,      /* 3b80 */
-   0x8000,      /* 3c00 */
-   0x8000,      /* 3c80 */
-   0x8000,      /* 3d00 */
-   0x8000,      /* 3d80 */
-   0x8000,      /* 3e00 */
-   0x8000,      /* 3e80 */
-   0x8000,      /* 3f00 */
-   0x8000,      /* 3f80 */
-   0x8000,      /* 4000 */
-   0x8000,      /* 4080 */
-   0x8000,      /* 4100 */
-   0x8000,      /* 4180 */
-   0x8000,      /* 4200 */
-   0x8000,      /* 4280 */
-   0x8000,      /* 4300 */
-   0x8000,      /* 4380 */
-   0x8000,      /* 4400 */
-   0x8000,      /* 4480 */
-   0x8000,      /* 4500 */
-   0x8000,      /* 4580 */
-   0x8000,      /* 4600 */
-   0x8000,      /* 4680 */
-   0x8000,      /* 4700 */
-   0x8000,      /* 4780 */
-   0x8000,      /* 4800 */
-   0x8000,      /* 4880 */
-   0x8000,      /* 4900 */
-   0x8000,      /* 4980 */
-   0x8000,      /* 4a00 */
-   0x8000,      /* 4a80 */
-   0x8000,      /* 4b00 */
-   0x8000,      /* 4b80 */
-   0x8000,      /* 4c00 */
-   0x8000,      /* 4c80 */
-   0x8000,      /* 4d00 */
-   0x8000,      /* 4d80 */
-   0x8000,      /* 4e00 */
-   0x8000,      /* 4e80 */
-   0x8000,      /* 4f00 */
-   0x8000,      /* 4f80 */
-   0x8000,      /* 5000 */
-   0x8000,      /* 5080 */
-   0x8000,      /* 5100 */
-   0x8000,      /* 5180 */
-   0x8000,      /* 5200 */
-   0x8000,      /* 5280 */
-   0x8000,      /* 5300 */
-   0x8000,      /* 5380 */
-   0x8000,      /* 5400 */
-   0x8000,      /* 5480 */
-   0x8000,      /* 5500 */
-   0x8000,      /* 5580 */
-   0x8000,      /* 5600 */
-   0x8000,      /* 5680 */
-   0x8000,      /* 5700 */
-   0x8000,      /* 5780 */
-   0x8000,      /* 5800 */
-   0x8000,      /* 5880 */
-   0x8000,      /* 5900 */
-   0x8000,      /* 5980 */
-   0x8000,      /* 5a00 */
-   0x8000,      /* 5a80 */
-   0x8000,      /* 5b00 */
-   0x8000,      /* 5b80 */
-   0x8000,      /* 5c00 */
-   0x8000,      /* 5c80 */
-   0x8000,      /* 5d00 */
-   0x8000,      /* 5d80 */
-   0x8000,      /* 5e00 */
-   0x8000,      /* 5e80 */
-   0x8000,      /* 5f00 */
-   0x8000,      /* 5f80 */
-   0x8000,      /* 6000 */
-   0x8000,      /* 6080 */
-   0x8000,      /* 6100 */
-   0x8000,      /* 6180 */
-   0x8000,      /* 6200 */
-   0x8000,      /* 6280 */
-   0x8000,      /* 6300 */
-   0x8000,      /* 6380 */
-   0x8000,      /* 6400 */
-   0x8000,      /* 6480 */
-   0x8000,      /* 6500 */
-   0x8000,      /* 6580 */
-   0x8000,      /* 6600 */
-   0x8000,      /* 6680 */
-   0x8000,      /* 6700 */
-   0x8000,      /* 6780 */
-   0x8000,      /* 6800 */
-   0x8000,      /* 6880 */
-   0x8000,      /* 6900 */
-   0x8000,      /* 6980 */
-   0x8000,      /* 6a00 */
-   0x8000,      /* 6a80 */
-   0x8000,      /* 6b00 */
-   0x8000,      /* 6b80 */
-   0x8000,      /* 6c00 */
-   0x8000,      /* 6c80 */
-   0x8000,      /* 6d00 */
-   0x8000,      /* 6d80 */
-   0x8000,      /* 6e00 */
-   0x8000,      /* 6e80 */
-   0x8000,      /* 6f00 */
-   0x8000,      /* 6f80 */
-   0x8000,      /* 7000 */
-   0x8000,      /* 7080 */
-   0x8000,      /* 7100 */
-   0x8000,      /* 7180 */
-   0x8000,      /* 7200 */
-   0x8000,      /* 7280 */
-   0x8000,      /* 7300 */
-   0x8000,      /* 7380 */
-   0x8000,      /* 7400 */
-   0x8000,      /* 7480 */
-   0x8000,      /* 7500 */
-   0x8000,      /* 7580 */
-   0x8000,      /* 7600 */
-   0x8000,      /* 7680 */
-   0x8000,      /* 7700 */
-   0x8000,      /* 7780 */
-   0x8000,      /* 7800 */
-   0x8000,      /* 7880 */
-   0x8000,      /* 7900 */
-   0x8000,      /* 7980 */
-   0x8000,      /* 7a00 */
-   0x8000,      /* 7a80 */
-   0x8000,      /* 7b00 */
-   0x8000,      /* 7b80 */
-   0x8000,      /* 7c00 */
-   0x8000,      /* 7c80 */
-   0x8000,      /* 7d00 */
-   0x8000,      /* 7d80 */
-   0x8000,      /* 7e00 */
-   0x8000,      /* 7e80 */
-   0x8000,      /* 7f00 */
-   0x8000,      /* 7f80 */
-   0x8000,      /* 8000 */
-   0x8000,      /* 8080 */
-   0x8000,      /* 8100 */
-   0x0000,      /* 8180 - Un Squadron bottom of screen */
-   0x8000,      /* 8200 */
-   0x8000,      /* 8280 */
-   0x8000,      /* 8300 */
-   0x8000,      /* 8380 */
-   0x8000,      /* 8400 */
-   0x8000,      /* 8480 */
-   0x8000,      /* 8500 */
-   0x8000,      /* 8580 */
-   0x8000,      /* 8600 */
-   0x8000,      /* 8680 */
-   0x8000,      /* 8700 */
-   0x8000,      /* 8780 */
-   0x8000,      /* 8800 */
-   0x8000,      /* 8880 */
-   0x8000,      /* 8900 */
-   0x8000,      /* 8980 */
-   0x8000,      /* 8a00 */
-   0x8000,      /* 8a80 */
-   0x8000,      /* 8b00 */
-   0x8000,      /* 8b80 */
-   0x8000,      /* 8c00 */
-   0x8000,      /* 8c80 */
-   0x8000,      /* 8d00 */
-   0x8000,      /* 8d80 */
-   0x8000,      /* 8e00 */
-   0x8000,      /* 8e80 */
-   0x8000,      /* 8f00 */
-   0x8000,      /* 8f80 */
-   0x8000,      /* 9000 */
-   0x8000,      /* 9080 */
-   0x8000,      /* 9100 */
-   0x8000,      /* 9180 */
-   0x8000,      /* 9200 */
-   0x8000,      /* 9280 */
-   0x8000,      /* 9300 */
-   0x8000,      /* 9380 */
-   0x8000,      /* 9400 */
-   0x8000,      /* 9480 */
-   0x8000,      /* 9500 */
-   0x8000,      /* 9580 */
-   0x8000,      /* 9600 */
-   0x8000,      /* 9680 */
-   0x8000,      /* 9700 */
-   0x8000,      /* 9780 */
-   0x8000,      /* 9800 */
-   0x8000,      /* 9880 */
-   0x8000,      /* 9900 */
-   0x8000,      /* 9980 */
-   0x8000,      /* 9a00 */
-   0x8000,      /* 9a80 */
-   0x8000,      /* 9b00 */
-   0x8000,      /* 9b80 */
-   0x8000,      /* 9c00 */
-   0x8000,      /* 9c80 */
-   0x8000,      /* 9d00 */
-   0x8000,      /* 9d80 */
-   0x8000,      /* 9e00 */
-   0x8000,      /* 9e80 */
-   0x8000,      /* 9f00 */
-   0x8000,      /* 9f80 */
-   0x8000,      /* a000 */
-   0x0000,      /* a080 */
-   0x8000,      /* a100 */
-   0x0000,      /* a180 */
-   0x8000,      /* a200 */
-   0x8000,      /* a280 */
-   0x8000,      /* a300 */
-   0x8000,      /* a380 */
-   0x8000,      /* a400 */
-   0x8000,      /* a480 */
-   0x8000,      /* a500 */
-   0x8000,      /* a580 */
-   0x8000,      /* a600 */
-   0x8000,      /* a680 */
-   0x8000,      /* a700 */
-   0x8000,      /* a780 */
-   0x8000,      /* a800 */
-   0x8000,      /* a880 */
-   0x8000,      /* a900 */
-   0x8000,      /* a980 */
-   0x8000,      /* aa00 */
-   0x8000,      /* aa80 */
-   0x8000,      /* ab00 */
-   0x8000,      /* ab80 */
-   0x8000,      /* ac00 */
-   0x8000,      /* ac80 */
-   0x8000,      /* ad00 */
-   0x8000,      /* ad80 */
-   0x8000,      /* ae00 */
-   0x8000,      /* ae80 */
-   0x8000,      /* af00 */
-   0x8000,      /* af80 */
-   0x8000,      /* b000 */
-   0x8000,      /* b080 */
-   0x8000,      /* b100 */
-   0x8000,      /* b180 */
-   0x8000,      /* b200 */
-   0x8000,      /* b280 */
-   0x8000,      /* b300 */
-   0x8000,      /* b380 */
-   0x8000,      /* b400 */
-   0x8000,      /* b480 */
-   0x8000,      /* b500 */
-   0x8000,      /* b580 */
-   0x8000,      /* b600 */
-   0x8000,      /* b680 */
-   0x8000,      /* b700 */
-   0x8000,      /* b780 */
-   0x8000,      /* b800 */
-   0x8000,      /* b880 */
-   0x8000,      /* b900 */
-   0x8000,      /* b980 */
-   0x8000,      /* ba00 */
-   0x8000,      /* ba80 */
-   0x8000,      /* bb00 */
-   0x8000,      /* bb80 */
-   0x8000,      /* bc00 */
-   0x8000,      /* bc80 */
-   0x8000,      /* bd00 */
-   0x8000,      /* bd80 */
-   0x8000,      /* be00 */
-   0x8000,      /* be80 */
-   0x8000,      /* bf00 */
-   0x8000,      /* bf80 */
-   0x8000,      /* c000 */
-   0x8000,      /* c080 */
-   0x8000,      /* c100 */
-   0x8000,      /* c180 */
-   0x8000,      /* c200 */
-   0x8000,      /* c280 */
-   0x8000,      /* c300 */
-   0x8000,      /* c380 */
-   0x8000,      /* c400 */
-   0x8000,      /* c480 */
-   0x8000,      /* c500 */
-   0x8000,      /* c580 */
-   0x8000,      /* c600 */
-   0x8000,      /* c680 */
-   0x8000,      /* c700 */
-   0x8000,      /* c780 */
-   0x8000,      /* c800 */
-   0x8000,      /* c880 */
-   0x8000,      /* c900 */
-   0x8000,      /* c980 */
-   0x8000,      /* ca00 */
-   0x8000,      /* ca80 */
-   0x8000,      /* cb00 */
-   0x8000,      /* cb80 */
-   0x8000,      /* cc00 */
-   0x8000,      /* cc80 */
-   0x8000,      /* cd00 */
-   0x8000,      /* cd80 */
-   0x8000,      /* ce00 */
-   0x8000,      /* ce80 */
-   0x8000,      /* cf00 */
-   0x8000,      /* cf80 */
-   0x8000,      /* d000 */
-   0x8000,      /* d080 */
-   0x8000,      /* d100 */
-   0x8000,      /* d180 */
-   0x8000,      /* d200 */
-   0x8000,      /* d280 */
-   0x8000,      /* d300 */
-   0x8000,      /* d380 */
-   0x8000,      /* d400 */
-   0x8000,      /* d480 */
-   0x8000,      /* d500 */
-   0x8000,      /* d580 */
-   0x8000,      /* d600 */
-   0x8000,      /* d680 */
-   0x8000,      /* d700 */
-   0x8000,      /* d780 */
-   0x8000,      /* d800 */
-   0x8000,      /* d880 */
-   0x8000,      /* d900 */
-   0x8000,      /* d980 */
-   0x8000,      /* da00 */
-   0x8000,      /* da80 */
-   0x8000,      /* db00 */
-   0x8000,      /* db80 */
-   0x8000,      /* dc00 */
-   0x8000,      /* dc80 */
-   0x8000,      /* dd00 */
-   0x8000,      /* dd80 */
-   0x8000,      /* de00 */
-   0x8000,      /* de80 */
-   0x8000,      /* df00 */
-   0x8000,      /* df80 */
-   0x8000,      /* e000 */
-   0x8000,      /* e080 */
-   0x8000,      /* e100 */
-   0x8000,      /* e180 */
-   0x8000,      /* e200 */
-   0x8000,      /* e280 */
-   0x8000,      /* e300 */
-   0x8000,      /* e380 */
-   0x8000,      /* e400 */
-   0x8000,      /* e480 */
-   0x8000,      /* e500 */
-   0x8000,      /* e580 */
-   0x8000,      /* e600 */
-   0x8000,      /* e680 */
-   0x8000,      /* e700 */
-   0x8000,      /* e780 */
-   0x8000,      /* e800 */
-   0x8000,      /* e880 */
-   0x8000,      /* e900 */
-   0x8000,      /* e980 */
-   0x8000,      /* ea00 */
-   0x8000,      /* ea80 */
-   0x8000,      /* eb00 */
-   0x8000,      /* eb80 */
-   0x8000,      /* ec00 */
-   0x8000,      /* ec80 */
-   0x8000,      /* ed00 */
-   0x8000,      /* ed80 */
-   0x8000,      /* ee00 */
-   0x8000,      /* ee80 */
-   0x8000,      /* ef00 */
-   0x8000,      /* ef80 */
-   0x8000,      /* f000 */
-   0x8000,      /* f080 */
-   0x8000,      /* f100 */
-   0x8000,      /* f180 */
-   0x8000,      /* f200 */
-   0x8000,      /* f280 */
-   0x8000,      /* f300 */
-   0x8000,      /* f380 */
-   0x8000,      /* f400 */
-   0x8000,      /* f480 */
-   0x8000,      /* f500 */
-   0x8000,      /* f580 */
-   0x8000,      /* f600 */
-   0x8000,      /* f680 */
-   0x8000,      /* f700 */
-   0x8000,      /* f780 */
-   0x8000,      /* f800 */
-   0x8000,      /* f880 */
-   0x8000,      /* f900 */
-   0x8000,      /* f980 */
-   0x8000,      /* fa00 */
-   0x8000,      /* fa80 */
-   0x8000,      /* fb00 */
-   0x8000,      /* fb80 */
-   0x8000,      /* fc00 */
-   0x8000,      /* fc80 */
-   0x8000,      /* fd00 */
-   0x8000,      /* fd80 */
-   0x8000,      /* fe00 */
-   0x8000,      /* fe80 */
-   0x8000,      /* ff00 */
-   0x8000,      /* ff80 */
-
-};
 
 
 
@@ -1212,6 +751,9 @@ INLINE void cps1_palette_scroll2(unsigned short *base)
 
 INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 {
+#ifdef LAYER_DEBUG
+        static int s=0;
+#endif
 	int base_scroll2=cps1_game_config->base_scroll2;
 	int space_char=cps1_game_config->space_scroll2;
 	int sx, sy;
@@ -1228,7 +770,7 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 			int n;
 			n=ny+sy;
 			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
-                        offsx=((nx+sx)*0x040)&0xfff;
+			offsx=((nx+sx)*0x040)&0xfff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
@@ -1239,20 +781,11 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 				colour=READ_WORD(&cps1_scroll2[offs+2]);
 				if (priority)
 				{
-					int mask=colour & 0x0180;
-
-					if (mask)
+                                        int mask=colour & 0x0180;
+                                        if (mask)
 					{
-
-						int transp=0;
-#if 0
-						cps1_debug(colour & 0x1f);
-						if (errorlog && osd_key_pressed(OSD_KEY_L))
-						{
-							fprintf(errorlog, "%04x\n", colour);
-						}
-#endif
-						transp=cps1_transparency_table[colour>>7];
+                                                int transp;
+                                                transp=cps1_transparency_scroll2[mask>>7];
 
 						drawgfx(bitmap,Machine->gfx[2],
 								code,
@@ -1273,7 +806,42 @@ INLINE void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 						16*sx-nxoffset,16*sy-nyoffset,
 						&Machine->drv->visible_area,
 						TRANSPARENCY_PEN,15);
+
+
 				}
+#ifdef LAYER_DEBUG
+                                        {
+
+                                        if (osd_key_pressed(OSD_KEY_T))
+                                        {
+                                                while (osd_key_pressed(OSD_KEY_T));
+                                                s=~s;
+                                        }
+                                        if (s)
+                                        {
+                                            char szBuffer[10];
+                                            int x,y;
+                                            sprintf(szBuffer, "%x",colour&0x180>>7);
+                                            x = 16*sx-nxoffset;
+                                            y = 16*sy-nyoffset ;
+
+                                            drawgfx(bitmap,Machine->uifont,
+                                                szBuffer[0], 1,
+                                                0,0,x,y,0,TRANSPARENCY_NONE,0);
+                                            x += Machine->uifont->width;
+                                            /*
+                                            drawgfx(bitmap,Machine->uifont,
+                                                szBuffer[1], 1,
+                                                0,0,x,y,0,TRANSPARENCY_NONE,0);
+                                            x += Machine->uifont->width;
+                                            drawgfx(bitmap,Machine->uifont,
+                                                szBuffer[2], 1,
+                                                0,0,x,y,0,TRANSPARENCY_NONE,0);
+                                            */
+                                        }
+                                        }
+#endif
+
 			}
 		}
 	}
@@ -1292,17 +860,17 @@ INLINE void cps1_palette_scroll2_distort(unsigned short *base)
 
 	for (sx=0; sx<0x32/2+1; sx++)
 	{
-                int other=ny*0x20;  /* scroll2y * 2 */
+		int other=ny*0x20;  /* scroll2y * 2 */
 
 		for (sy=0; sy<0x09*2; sy++)
 		{
 			int offsy, offsx, offs, colour, code;
 			int n;
-                        int xdistort=READ_WORD(&cps1_other[other]);
+			int xdistort=READ_WORD(&cps1_other[other]);
 
 			n=ny+sy;
 			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
-                        offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
+			offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
@@ -1314,8 +882,8 @@ INLINE void cps1_palette_scroll2_distort(unsigned short *base)
 
 				base[colour&0x1f] |= Machine->gfx[2]->pen_usage[code % elements];
 			}
-                        other+=32;
-                        other&=0x1fff;
+			other+=32;
+			other&=0x1fff;
 		}
 
 	}
@@ -1327,8 +895,8 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 	int base_scroll2=cps1_game_config->base_scroll2;
 	int space_char=cps1_game_config->space_scroll2;
 	int sx, sy;
-        int nxoffset;
-        int nxo=scroll2x&0x0f;    /* Smooth X */
+	int nxoffset;
+	int nxo=scroll2x&0x0f;    /* Smooth X */
 	int nyoffset=scroll2y&0x0f;    /* Smooth Y */
 
 	int nx=(scroll2x>>4)+4;        /* Rough X */
@@ -1336,16 +904,16 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 
 	for (sx=0; sx<0x32/2+1; sx++)
 	{
-                int other=ny*0x20;  /* scroll2y * 2 */
+		int other=ny*0x20;  /* scroll2y * 2 */
 		for (sy=0; sy<0x09*2; sy++)
 		{
 			int offsy, offsx, offs, colour, code;
 			int n;
-                        int xdistort=READ_WORD(&cps1_other[other]);
-                        nxoffset=nxo+(xdistort&0x0f);
+			int xdistort=READ_WORD(&cps1_other[other]);
+			nxoffset=nxo+(xdistort&0x0f);
 			n=ny+sy;
 			offsy  = ((n&0x0f)*4 | ((n&0x30)*0x100))&0x3fff;
-                        offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
+			offsx=((nx+sx+(xdistort>>4))*0x040)&0xfff;
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 
@@ -1356,21 +924,11 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 				colour=READ_WORD(&cps1_scroll2[offs+2]);
 				if (priority)
 				{
-					int mask=colour & 0x0180;
-
-					if (mask)
+                                        int mask=colour & 0x0180;
+                                        if (mask)
 					{
-
-						int transp=0;
-#if 0
-						cps1_debug(colour & 0x1f);
-						if (errorlog && osd_key_pressed(OSD_KEY_L))
-						{
-							fprintf(errorlog, "%04x\n", colour);
-						}
-#endif
-						transp=cps1_transparency_table[colour>>7];
-
+                                                int transp;
+                                                transp=cps1_transparency_scroll2[mask>>7];
 						drawgfx(bitmap,Machine->gfx[2],
 								code,
 								colour&0x1f,
@@ -1392,8 +950,8 @@ INLINE void cps1_render_scroll2_distort(struct osd_bitmap *bitmap, int priority)
 						TRANSPARENCY_PEN,15);
 				}
 			}
-                        other+=32;
-                        other&=0x1fff;
+			other+=32;
+			other&=0x1fff;
 		}
 
 	}
@@ -1487,36 +1045,18 @@ INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 				colour=READ_WORD(&cps1_scroll3[offs+2]);
 				if (priority)
 				{
-					int mask=colour & 0x0180;
-					if (mask)
+                                        int mask=colour & 0x0180;
+                                        if (mask)
 					{
-						int transp=0;
-						switch (mask)
-						{
-							case 0x080:
-								transp=0xf001;
-								break;
-							case 0x0100:
-								transp=0x8000;
-								break;
-							case 0x0180:
-								transp=0x8000;
-								break;
-							case 0x0200:
-								transp=0x8000;
-								break;
-						}
-
-						if (transp)
-						{
-							drawgfx(bitmap,Machine->gfx[3],
+                                                int transp;
+                                                transp=cps1_transparency_scroll3[mask>>7];
+                                                drawgfx(bitmap,Machine->gfx[3],
 								 code,
 								colour&0x1f,
 								colour&0x20,colour&0x40,
 								32*sx-nxoffset,32*sy-nyoffset,
 								&Machine->drv->visible_area,
 								TRANSPARENCY_PENS,transp);
-						}
 					}
 				}
 				else
@@ -1546,71 +1086,51 @@ INLINE void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	unsigned short palette_usage[32*4];
-	int layercontrolport;
 	int layercontrol;
 	int scrl1on, scrl2on, scrl3on;
 	int scroll1priority;
 	int scroll2priority;
 	int i,offset;
-        int distort_scroll2;
+        int distort_scroll2=0;
 
-	/* Get video memory base registers */
-	cps1_get_video_base();
 
-        distort_scroll2=0;
+        layercontrol=READ_WORD(&cps1_output[cps1_layer_control]);
+        scroll2priority=(layercontrol&0x040);
+        scrl1on=1;
+        scrl2on=1;
+        scrl3on=1;
+
 	/*
 	 Welcome to kludgesville... I have no idea how this is supposed
 	 to work. The layer priority register is different from machine
 	 to machine.
 	*/
+
 	switch (cps1_game_config->alternative)
 	{
 		/* Wandering video control ports */
 		case 0:
-			/* default */
-			layercontrolport=0x66;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
+                        /* Layers on / off */
 			scrl2on=layercontrol&0x08;      /* Not quite should probably */
 			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
-
-			scroll2priority=(layercontrol&0x040);
 			break;
 		case 1:
-			/* Willow */
-			layercontrolport=0x70;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
 			scrl2on=layercontrol&0x08;      /* Not quite should probably */
 			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
-
-			/* Scroll 2 / 3 priority */
-			scroll2priority=(layercontrol&0x040);
 			break;
 		case 2:
-			layercontrolport=0x6e;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
 			scrl2on=layercontrol&0x08;      /* Not quite should probably */
 			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
-
-			/* Scroll 2 / 3 priority */
-			scroll2priority=(layercontrol&0x040);
+			break;
+                case 3:
+			layercontrol=0xffff;
+			scroll2priority=1;
 			break;
 
+
 		case 4:
-			/* Strider (completely kludged) */
-			layercontrolport=0x66;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
 			scrl2on=layercontrol&0x08;      /* Not quite should probably */
 			scrl3on=layercontrol&0x08;      /* be individually turn-offable  */
-
-			/* Priority */
 			scroll2priority=(layercontrol&0x060)==0x40;
 			if (layercontrol == 0x0e4e )
 			{
@@ -1620,10 +1140,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			break;
 
 		case 5: /* Ghouls and Ghosts */
-			layercontrolport=0x66;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-
-			/* Layers on / off */
 			scrl1on=layercontrol&0x02;
 			scrl2on=layercontrol&0x04;
 			scrl3on=layercontrol&0x08;
@@ -1635,140 +1151,61 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 			break;
 		case 6: /* 1941 */
-			layercontrolport=0x68;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
 			scrl1on=1;
 			scrl2on=1;
 			scrl3on=layercontrol&0x20;
-			scroll2priority=(layercontrol&0x040);
 			break;
 
 		case 7: /* Magic sword */
-			layercontrolport=0x62;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
 			scrl2on=layercontrol&0x04;
 			scrl3on=layercontrol&0x06;
-			/* Priority */
-			scroll2priority=(layercontrol&0x040);
+			scroll2priority=1; //(layercontrol&0x060)==0x40;
 			break;
 
 		case 8: /* Nemo */
-			layercontrolport=0x42;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
-			scrl2on=1; //layercontrol&0x04;
-			scrl3on=1; //layercontrol&0x06;
-			/* Priority */
-			scroll2priority=(layercontrol&0x040);
 			break;
 
 		case 9:
-			layercontrolport=0x6c;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
-			scrl1on=1;
 			scrl2on=layercontrol&0x04;
 			scrl3on=layercontrol&0x08;
-
-			/* Scroll 2 / 3 priority */
-                        scroll2priority=(layercontrol&0x040);
 			break;
 
 		case 10:
-                        /* KOD Captain Commando */
-			layercontrolport=0x60;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
-			scrl2on=layercontrol&0x04;
-			scrl3on=layercontrol&0x08;
-	       scrl2on=1;
-	       scrl3on=1;
-			/* Scroll 2 / 3 priority */
-			scroll2priority=(layercontrol&0x040);
+			/* KOD Captain Commando */
 			break;
 
 		case 11:
-			layercontrolport=0x4c;
-			layercontrol=READ_WORD(&cps1_output[layercontrolport]);
 			/* Layers on / off */
-			scrl1on=1;
-                        scrl2on=layercontrol&0x04;
-                        scrl3on=layercontrol&0x08;
-			/* Scroll 2 / 3 priority */
-			scroll2priority=(layercontrol&0x040);
+			scrl2on=layercontrol&0x04;
+			scrl3on=layercontrol&0x08;
 			break;
 
-                case 12:
-                        /* Street Fighter 2 */
-                        layercontrolport=0x54;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
-                        scrl2on=1;
-                        scrl3on=1;
-			/* Scroll 2 / 3 priority */
-                        scroll2priority=(layercontrol&0x600)==0x200;
-                        distort_scroll2=1;
+		case 12:
+			/* Street Fighter 2 */
+			scroll2priority=(layercontrol&0x600)==0x200;
+			distort_scroll2=1;
 			break;
 
-                case 13:
-                        /* Street Fighter 2 (turbo )*/
-                        layercontrolport=0x66;
-                        layercontrol=READ_WORD(&cps1_output[layercontrolport]);
-			/* Layers on / off */
-			scrl1on=1;
-                        scrl2on=1;
-                        scrl3on=1;
-			/* Scroll 2 / 3 priority */
-                        scroll2priority=(layercontrol&0x600)==0x200;
-                        distort_scroll2=1;
+		case 13:
+			/* Street Fighter 2 (turbo )*/
+			scroll2priority=(layercontrol&0x600)==0x200;
+			distort_scroll2=1;
 			break;
-
-
-                case 14:
-                        {
-                                static int s;
-                                static int s1;
-
-                                if (osd_key_pressed(OSD_KEY_L))
-                                {
-                                   while (osd_key_pressed(OSD_KEY_L)) ;
-                                   s=~s;
-                                }
-                                if (osd_key_pressed(OSD_KEY_K))
-                                {
-                                   while (osd_key_pressed(OSD_KEY_K)) ;
-                                   s1^=0x80;
-                                }
-                                layercontrol=s1;
-
-
-			/* Layers on / off */
-			scrl1on=1;
-                        scrl2on=1;
-                        scrl3on=1;
-			/* Scroll 2 / 3 priority */
-                        scroll2priority=s;
-                        }
-			break;
-
 
 		default:
-			layercontrolport=0;
 			layercontrol=0xffff;
 			scrl1on=1;
-	    scrl2on=1;
-	    scrl3on=1;
-
-			/* Scroll 2 / 3 priority */
+                        scrl2on=1;
+                        scrl3on=1;
 			scroll2priority=1;
 			break;
 	}
+
+
+
+	/* Get video memory base registers */
+        cps1_get_video_base();
 
 	/* Find the offset of the last sprite in the sprite table */
 	cps1_find_last_sprite();
@@ -1782,16 +1219,16 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (scrl1on)
 		cps1_palette_scroll1 (&palette_usage[32]);
 	if (scrl2on)
-        {
-                if (distort_scroll2)
-                {
-                       cps1_palette_scroll2_distort (&palette_usage[32+32]);
-                }
-                else
-                {
-                        cps1_palette_scroll2 (&palette_usage[32+32]);
-                }
-        }
+	{
+		if (distort_scroll2)
+		{
+		       cps1_palette_scroll2_distort (&palette_usage[32+32]);
+		}
+		else
+		{
+			cps1_palette_scroll2 (&palette_usage[32+32]);
+		}
+	}
 	if (scrl3on)
 		cps1_palette_scroll3 (&palette_usage[32+32+32]);
 	for (i = offset = 0; i < 32*4; i++)
@@ -1817,7 +1254,6 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Blank screen */
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
-
 	/* Scroll 1 priority */
 	scroll1priority=(layercontrol&0x0080);
 
@@ -1835,28 +1271,28 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		if (scrl2on)
 		{
-                        if (distort_scroll2)
-                        {
-                                cps1_render_scroll2_distort(bitmap, 0);
-                        }
-                        else
-                        {
-                                cps1_render_scroll2(bitmap, 0);
-                        }
+			if (distort_scroll2)
+			{
+				cps1_render_scroll2_distort(bitmap, 0);
+			}
+			else
+			{
+				cps1_render_scroll2(bitmap, 0);
+			}
 		}
 	}
 	else
 	{
 		if (scrl2on)
 		{
-                        if (distort_scroll2)
-                        {
-                                cps1_render_scroll2_distort(bitmap, 0);
-                        }
-                        else
-                        {
-                                cps1_render_scroll2(bitmap, 0);
-                        }
+			if (distort_scroll2)
+			{
+				cps1_render_scroll2_distort(bitmap, 0);
+			}
+			else
+			{
+				cps1_render_scroll2(bitmap, 0);
+			}
 		}
 		if (scrl3on)
 		{
@@ -1864,10 +1300,10 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-        if (distort_scroll2 && scroll1priority && scrl1on)
+	if (distort_scroll2 && scroll1priority && scrl1on)
 	{
-                /* Street fighter 2 scroll 1 never has priority over
-                sprites */
+		/* Street fighter 2 scroll 1 never has priority over
+		sprites */
 		cps1_render_scroll1(bitmap);
 	}
 
@@ -1881,29 +1317,29 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		if (scrl2on)
 		{
-                        if (distort_scroll2)
-                        {
-                                cps1_render_scroll2_distort(bitmap, 0x0100);
-                        }
-                        else
-                        {
-                                cps1_render_scroll2(bitmap, 0x0100);
-                        }
+			if (distort_scroll2)
+			{
+				cps1_render_scroll2_distort(bitmap, 0x0100);
+			}
+			else
+			{
+				cps1_render_scroll2(bitmap, 0x0100);
+			}
 		}
 	}
 	else
 	{
 		if (scrl2on)
 		{
-                        if (distort_scroll2)
-                        {
-                                cps1_render_scroll2_distort(bitmap, 0x0100);
-                        }
-                        else
-                        {
+			if (distort_scroll2)
+			{
+				cps1_render_scroll2_distort(bitmap, 0x0100);
+			}
+			else
+			{
 
-                                cps1_render_scroll2(bitmap, 0x0100);
-                        }
+				cps1_render_scroll2(bitmap, 0x0100);
+			}
 		}
 		if (scrl3on)
 		{
@@ -1911,7 +1347,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-        if (!distort_scroll2 && scroll1priority && scrl1on)
+	if (!distort_scroll2 && scroll1priority && scrl1on)
 	{
 		cps1_render_scroll1(bitmap);
 	}
@@ -1920,7 +1356,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #if 0
 	{
 		int i;
-		int nReg=layercontrolport;
+                int nReg=cps1_layer_control;
 		int nVal=cps1_port(nReg);
 		struct DisplayText dt[2];
 		char szBuffer[40];

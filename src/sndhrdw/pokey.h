@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Simulator Includes, V2.3                              */
+/* Module:	POKEY Chip Simulator Includes, V3.1 							 */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /* Date:    August 8, 1997                                                   */
@@ -34,26 +34,14 @@
 #ifndef _TYPEDEF_H
 #define _TYPEDEF_H
 
-/* define some data types to keep it platform independent */
-#ifdef COMP16                 /* if 16-bit compiler defined */
-#define int8  char
-#define int16 int
-#define int32 long
-#else                         /* else default to 32-bit compiler */
-#define int8  char
-#define int16 short
-#define int32 int
-#endif
-
-#define uint8  unsigned int8
-#define uint16 unsigned int16
-#define uint32 unsigned int32
+/* switched to the global declarations of INT8...UINT32 */
+#include "osd_cpu.h"
 
 #ifdef __MWERKS__
 #define BIG_ENDIAN
 #endif
 
-#endif
+#endif	/* _TYPEDEF_H */
 
 /* CONSTANT DEFINITIONS */
 
@@ -106,28 +94,91 @@
    the pitch of the output.  With these numbers, the pitch will be low
    by 0.127%.  (More than likely, an actual unit will vary by this much!) */
 
-#define FREQ_17_EXACT     1789790  /* exact 1.79 MHz clock freq */
-#define FREQ_17_APPROX    1787520  /* approximate 1.79 MHz clock freq */
+#define FREQ_17_EXACT	  1789790	/* exact 1.79 MHz clock freq */
+#define FREQ_17_APPROX	  1787520	/* approximate 1.79 MHz clock freq */
 
-#define MAXPOKEYS         4        /* max number of emulated chips */
+#define MAXPOKEYS		  4 		/* max number of emulated chips */
 
-#define CLIP                       /* required to force clipping */
+#define CLIP						/* required to force clipping */
+
+#define NO_CLIP   0
+#define USE_CLIP  1
+
+#define POKEY_DEFAULT_GAIN 6
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct POKEYinterface {
+    int num;    /* total number of pokeys in the machine */
+	int baseclock;
+    int volume;
+    int gain;
+    int clip;               /* determines if pokey.c will clip the sample range */
+    /*******************************************
+     * Handlers for reading the pot values.
+     * Some Atari games use ALLPOT to return
+     * dipswitch settings and other things
+	 * New function pointers for serin/serout
+	 * and a interrupt callback.
+     *******************************************/
+    int (*pot0_r[MAXPOKEYS])(int offset);
+    int (*pot1_r[MAXPOKEYS])(int offset);
+    int (*pot2_r[MAXPOKEYS])(int offset);
+    int (*pot3_r[MAXPOKEYS])(int offset);
+    int (*pot4_r[MAXPOKEYS])(int offset);
+    int (*pot5_r[MAXPOKEYS])(int offset);
+    int (*pot6_r[MAXPOKEYS])(int offset);
+    int (*pot7_r[MAXPOKEYS])(int offset);
+    int (*allpot_r[MAXPOKEYS])(int offset);
+	int (*serin_r[MAXPOKEYS])(int offset);
+	void (*serout_w[MAXPOKEYS])(int offset, int data);
+	void (*interrupt_cb[MAXPOKEYS])(int mask);
+};
+
 /* ASG 980126 - added a return parameter to indicate failure */
-int Pokey_sound_init (uint32 freq17, uint16 playback_freq,
-                       uint8 num_pokeys, uint8 use_clip);
+int Pokey_sound_init (int freq17, int playback_freq, int volume, int num_pokeys, int use_clip);
 /* ASG 980126 - added this function for cleanup */
 void Pokey_sound_exit (void);
-void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
-void Pokey_process (register signed char *buffer, register uint16 n);
-int Read_pokey_regs (uint16 addr, uint8 chip);
+void Update_pokey_sound (int addr, int val, int chip, int gain);
+void Pokey_process (int chip, void *buffer, int n);
+int Read_pokey_regs (int addr, int chip);
+
+int pokey_sh_start (struct POKEYinterface *interface);
+void pokey_sh_stop (void);
+
+int pokey1_r (int offset);
+int pokey2_r (int offset);
+int pokey3_r (int offset);
+int pokey4_r (int offset);
+int quad_pokey_r (int offset);
+
+void pokey1_w (int offset,int data);
+void pokey2_w (int offset,int data);
+void pokey3_w (int offset,int data);
+void pokey4_w (int offset,int data);
+void quad_pokey_w (int offset,int data);
+
+void pokey1_serin_ready (int after);
+void pokey2_serin_ready (int after);
+void pokey3_serin_ready (int after);
+void pokey4_serin_ready (int after);
+
+void pokey1_break_w (int shift);
+void pokey2_break_w (int shift);
+void pokey3_break_w (int shift);
+void pokey4_break_w (int shift);
+
+void pokey1_kbcode_w (int kbcode, int make);
+void pokey2_kbcode_w (int kbcode, int make);
+void pokey3_kbcode_w (int kbcode, int make);
+void pokey4_kbcode_w (int kbcode, int make);
+
+void pokey_sh_update (void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif	/* POKEYSOUND_H */

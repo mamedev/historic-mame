@@ -768,6 +768,9 @@ static int kchampvs_hiload(void)
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0) {
                 /* Load and set hiscore table. */
                 osd_fread(f,&RAM[0xc040],0x6f);
+		RAM[0xc0c0] = RAM[0xc040];
+		RAM[0xc0c1] = RAM[0xc041];
+		RAM[0xc0c2] = RAM[0xc042];
                 osd_fclose(f);
         }
         return 1;
@@ -800,6 +803,9 @@ static int kchamp_hiload(void)
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0) {
                 /* Load and set hiscore table. */
                 osd_fread(f,&RAM[0xc040],0x6c);
+		RAM[0xc0c0] = RAM[0xc040];
+		RAM[0xc0c1] = RAM[0xc041];
+		RAM[0xc0c2] = RAM[0xc042];
                 osd_fclose(f);
         }
         return 1;
@@ -821,78 +827,78 @@ static void kchamp_hisave(void)
 
 struct GameDriver kchamp_driver =
 {
-        __FILE__,
-        0,
-        "kchamp",
-        "Karate Champ",
-        "1984",
-        "Data East USA",
-        "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-        0,
-        &kchamp_machine_driver,
+	__FILE__,
+	0,
+	"kchamp",
+	"Karate Champ",
+	"1984",
+	"Data East USA",
+	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
+	0,
+	&kchamp_machine_driver,
 	0,
 
-        kchamp_rom,
-        0, 0,
-        0,
-        0,
+	kchamp_rom,
+	0, 0,
+	0,
+	0,
 
-        kc_input_ports,
+	kc_input_ports,
 
-        PROM_MEMORY_REGION(2), 0, 0,
-        ORIENTATION_ROTATE_90,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
 
-        kchamp_hiload, kchamp_hisave
+	kchamp_hiload, kchamp_hisave
 };
 
 struct GameDriver kchampvs_driver =
 {
-        __FILE__,
-        0,
-        "kchampvs",
-        "Karate Champ (VS version)",
-        "1984",
-        "Data East USA",
-        "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-        0,
-        &kchampvs_machine_driver,
+	__FILE__,
+	0,
+	"kchampvs",
+	"Karate Champ (VS version)",
+	"1984",
+	"Data East USA",
+	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
+	0,
+	&kchampvs_machine_driver,
 	0,
 
-        kchampvs_rom,
-        0, kchampvs_decode,
-        0,
-        0,
+	kchampvs_rom,
+	0, kchampvs_decode,
+	0,
+	0,
 
-        input_ports,
+	input_ports,
 
-        PROM_MEMORY_REGION(2), 0, 0,
-        ORIENTATION_ROTATE_90,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
 
-        kchampvs_hiload, kchampvs_hisave
+	kchampvs_hiload, kchampvs_hisave
 };
 
 struct GameDriver karatedo_driver =
 {
-        __FILE__,
-        &kchampvs_driver,
-        "karatedo",
-        "Karate Champ (VS Version - Japanese)",
-        "1984",
-        "Data East Corporation",
-        "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
-        0,
-        &kchampvs_machine_driver,
+	__FILE__,
+	&kchampvs_driver,
+	"karatedo",
+	"Taisen Karate Dou (VS version)",
+	"1984",
+	"Data East Corporation",
+	"Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
+	0,
+	&kchampvs_machine_driver,
 	0,
 
-        karatedo_rom,
-        0, karatedo_decode,
-        0,
-        0,
+	karatedo_rom,
+	0, karatedo_decode,
+	0,
+	0,
 
-        input_ports,
+	input_ports,
 
-        PROM_MEMORY_REGION(2), 0, 0,
-        ORIENTATION_ROTATE_90,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
 
-        kchampvs_hiload, kchampvs_hisave
+	kchampvs_hiload, kchampvs_hisave
 };

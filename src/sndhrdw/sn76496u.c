@@ -81,6 +81,8 @@
 		out = vol[0] * R->Volume[0] + vol[1] * R->Volume[1] +
 				vol[2] * R->Volume[2] + vol[3] * R->Volume[3];
 
+		if (out > MAX_OUTPUT * STEP) out = MAX_OUTPUT * STEP;
+
 		*(buf++) = DATACONV(out);
 
 		length--;

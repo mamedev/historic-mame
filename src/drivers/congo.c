@@ -273,7 +273,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	4000000,	/* 4 Mhz??? */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 static struct Samplesinterface samples_interface =

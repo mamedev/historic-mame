@@ -43,7 +43,7 @@ int tms5220_sh_start (struct TMS5220interface *interface)
     intf = interface;
 
     /* determine the output sample rate and buffer size */
-    buffer_len = intf->clock / 80 / Machine->drv->frames_per_second;
+    buffer_len = intf->baseclock / 80 / Machine->drv->frames_per_second;
     emulation_rate = buffer_len * Machine->drv->frames_per_second;
     sample_pos = 0;
 
@@ -94,7 +94,7 @@ void tms5220_sh_update (void)
     sample_pos = 0;
 
     /* play this sample */
-    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume);
+    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume,0);
 }
 
 

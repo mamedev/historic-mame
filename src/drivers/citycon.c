@@ -191,7 +191,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,	/* 2.0 MHz ??? */
-	{ YM2203_VOL(128,255), YM2203_VOL(128,255) },
+	{ YM2203_VOL(20,0x2014), YM2203_VOL(20,0x2014) },
 	{ soundlatch_r },
 	{ soundlatch2_r },
 	{ 0 },

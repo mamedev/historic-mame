@@ -5,10 +5,7 @@
   Trojan
   Avengers
 
-  Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  Please do not send anything large to this address without asking me
-  first.
+  Driver provided by Paul Leaman
 
   Trojan contains a third Z80 to drive the game samples. This third
   Z80 outputs the ADPCM data byte at a time to the sound hardware. Since
@@ -445,7 +442,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,                      /* 2 chips */
 	1500000,        /* 1.5 MHz (?) */
-	{ YM2203_VOL(30,60), YM2203_VOL(30,60) },
+	{ YM2203_VOL(15,30), YM2203_VOL(15,30) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -531,6 +528,31 @@ ROM_START( lwings_rom )
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
+ROM_START( lwings2_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "u13-l",        0x00000, 0x8000, 0x3069c01c )
+	ROM_LOAD( "u14-k",        0x10000, 0x8000, 0x5d91c828 )
+	ROM_LOAD( "9c_lw03.bin",  0x18000, 0x8000, 0xec5cc201 )
+
+	ROM_REGION_DISPOSE(0x70000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9h_lw05.bin",  0x00000, 0x4000, 0x091d923c )  /* characters */
+	ROM_LOAD( "b_03e.rom",    0x10000, 0x8000, 0x176e3027 )  /* tiles */
+	ROM_LOAD( "b_01e.rom",    0x18000, 0x8000, 0xf5d25623 )
+	ROM_LOAD( "b_03d.rom",    0x20000, 0x8000, 0x001caa35 )
+	ROM_LOAD( "b_01d.rom",    0x28000, 0x8000, 0x0ba008c3 )
+	ROM_LOAD( "b_03b.rom",    0x30000, 0x8000, 0x4f8182e9 )
+	ROM_LOAD( "b_01b.rom",    0x38000, 0x8000, 0xf1617374 )
+	ROM_LOAD( "b_03f.rom",    0x40000, 0x8000, 0x9b374dcc )
+	ROM_LOAD( "b_01f.rom",    0x48000, 0x8000, 0x23654e0a )
+	ROM_LOAD( "b_03j.rom",    0x50000, 0x8000, 0x8f3c763a )  /* sprites */
+	ROM_LOAD( "b_01j.rom",    0x58000, 0x8000, 0x7cc90a1d )
+	ROM_LOAD( "b_03h.rom",    0x60000, 0x8000, 0x7d58f532 )
+	ROM_LOAD( "b_01h.rom",    0x68000, 0x8000, 0x3e396eda )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
+ROM_END
+
 ROM_START( lwingsjp_rom )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "a_06c.rom",    0x00000, 0x8000, 0x2068a738 )
@@ -606,7 +628,7 @@ struct GameDriver lwings_driver =
 	__FILE__,
 	0,
 	"lwings",
-	"Legendary Wings (US)",
+	"Legendary Wings (US set 1)",
 	"1986",
 	"Capcom",
 	"Paul Leaman\nMarco Cassili (dip switches)",
@@ -615,6 +637,31 @@ struct GameDriver lwings_driver =
 	0,
 
 	lwings_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	lwings_input_ports,
+
+	NULL, 0, 0,
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
+};
+
+struct GameDriver lwings2_driver =
+{
+	__FILE__,
+	&lwings_driver,
+	"lwings2",
+	"Legendary Wings (US set 2)",
+	"1986",
+	"Capcom",
+	"Paul Leaman\nMarco Cassili (dip switches)",
+	0,
+	&machine_driver,
+	0,
+
+	lwings2_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */
@@ -650,6 +697,8 @@ struct GameDriver lwingsjp_driver =
 	ORIENTATION_ROTATE_270,
 	hiload, hisave
 };
+
+
 
 /***************************************************************
 

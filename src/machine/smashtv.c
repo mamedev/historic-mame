@@ -155,77 +155,31 @@ int wms_dma_r(int offset)
 {
 	if (wms_dma_stat&0x8000)
 	{
-		if (cpu_getpc() == 0xfff7aa20) /* narc */
+		switch (cpu_getpc())
 		{
+		case 0xfff7aa20: /* narc */
+		case 0xffe1c970: /* trog */
+		case 0xffe1c9a0: /* trog3 */
+		case 0xffe1d4a0: /* trogp */
+		case 0xffe07690: /* smashtv */
+		case 0xffe00450: /* hiimpact */
+		case 0xffe14930: /* strkforc */
+		case 0xffe02c20: /* strkforc */
+		case 0xffc79890: /* mk */
+		case 0xffc7a5a0: /* mk */
+		case 0xffc063b0: /* term2 */
+		case 0xffc00720: /* term2 */
+		case 0xffc07a60: /* totcarn/totcarnp */
+		case 0xff805200: /* mk2 */
+		case 0xff8044e0: /* mk2 */
+		case 0xff82e200: /* nbajam */
 			cpu_spinuntil_int();
 			wms_dma_stat=0;
+			break;
+
+		default:
+			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_getpc());
 		}
-		else if (cpu_getpc() == 0xffe1c970) /* trog */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffe1d4a0) /* trogp */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffe07690) /* smashtv */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffe00450) /* hiimpact */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffe14930) /* strkforc */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffe02c20) /* strkforc */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffc79890) /* mk */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffc7a5a0) /* mk */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffc063b0) /* term2 */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xffc00720) /* term2 */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xff805200) /* mk2 */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xff8044e0) /* mk2 */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (cpu_getpc() == 0xff82e200) /* nbajam */
-		{
-			cpu_spinuntil_int();
-			wms_dma_stat=0;
-		}
-		else if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_getpc());
 	}
 	return wms_dma_stat;
 }
@@ -280,7 +234,7 @@ int wms_dma_r(int offset)
 			rda+=dma_skip;                                 \
 			wrva+=line_skip;                               \
 		}												   \
-	}												
+	}
 
 void wms_dma_w(int offset, int data)
 {
@@ -876,7 +830,7 @@ void wms_load_code_roms(void)
 	DEREF_INT32(a0) = DEREF_INT32(a2);						\
 	DEREF_INT32(a2) = BIG_DWORD_LE(a0);						\
 	a4 = a2; 												\
-	BURN_TIME(17);															
+	BURN_TIME(17);
 
 
 /* Speedup catch for games using 1 location */
@@ -960,7 +914,7 @@ void wms_load_code_roms(void)
 			}												\
 			DO_SPEEDUP_LOOP(0xc0, 0xa0, INT32, INT32);		\
 		} while (a2);										\
-	}																		
+	}
 
 
 static int narc_speedup_r(int offset)
@@ -1054,6 +1008,24 @@ static int trog_speedup_r(int offset)
 		return value1;
 	}
 }
+static int trog3_speedup_r(int offset)
+{
+	if (offset)
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0xa2090)]);
+
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_getpc() == 0xffe20660 && !value1)
+		{
+			DO_SPEEDUP_LOOP_1(0x1000040, 0xc0, 0xa0, INT32, INT32);
+		}
+		return value1;
+	}
+	else
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0xa2080)]);
+	}
+}
 static int mk_speedup_r(int offset)
 {
 	if (offset)
@@ -1129,7 +1101,7 @@ static int shimpact_speedup_r(int offset)
 	a6xa7x = (INT64)a6x * a3x / a5x;				/* MPYS   A3,A6			*/  \
 													/* DIVS   A5,A6			*/  \
 	DEREF_INT32(a1+0x140) = a6xa7x & 0xffffffff;	/* MOVE   A6,*A1(140h),1*/
-	
+
 static int term2_speedup_r(int offset)
 {
 	if (offset)
@@ -1150,10 +1122,10 @@ static int term2_speedup_r(int offset)
 			b1 = 0;			 									// CLR    B1
 			b2 = (INT32)(DEREF_INT16(0x100F640));				// MOVE   @100F640h,B2,0
 			if (!b2)											// JREQ   FFC029F0h
-			{													
+			{
 				cpu_spinuntil_int();
 				return value1;
-			}			
+			}
 			b2--;												// DEC    B2
 			b0  = 0x01008000;									// MOVI   1008000h,B0
 			a4  = 0x7fffffff;									// MOVI   7FFFFFFFh,A4
@@ -1164,13 +1136,13 @@ static int term2_speedup_r(int offset)
 				a10 = b0;										// MOVE   B0,A10
 				a0  = a10;										// MOVE   A10,A0
 				a3  = a4;										// MOVE   A4,A3
-																// CMP    B2,B1																
+																// CMP    B2,B1
 				if (b1 < b2)									// JRLT   FFC07800h
 				{
 					// FFC07800
 					a4 = (INT32)(DEREF_INT16(a10+0xc0));		// MOVE   *A10(C0h),A4,0
 					a4 <<= 16;									// SLL    10h,A4
-				}												
+				}
 				else
 				{
                     // FFC077C0
@@ -1231,18 +1203,18 @@ static int term2_speedup_r(int offset)
 
 			t2_FFC07C50:
 				if (a8 > a6) 									// CMP    A6,A8
-				{ 														
-					a1 = a0; 									// MOVE   A1,A0		
-					a6 = a8; 									// MOVE   A8,A6		
-					a5 = a7; 									// MOVE   A7,A5		
+				{
+					a1 = a0; 									// MOVE   A1,A0
+					a6 = a8; 									// MOVE   A8,A6
+					a5 = a7; 									// MOVE   A7,A5
 					goto t2_FFC07DD0;
-				} 														
-																	
-				if ((a8 == a6) && (a7 >= a5)) 					// CMP    A5,A7		
-				{ 														
-					a1 = a0; 									// MOVE   A1,A0		
-					a6 = a8; 									// MOVE   A8,A6		
-					a5 = a7; 									// MOVE   A7,A5		
+				}
+
+				if ((a8 == a6) && (a7 >= a5)) 					// CMP    A5,A7
+				{
+					a1 = a0; 									// MOVE   A1,A0
+					a6 = a8; 									// MOVE   A8,A6
+					a5 = a7; 									// MOVE   A7,A5
 					goto t2_FFC07DD0;
 				}
 
@@ -1260,7 +1232,7 @@ static int term2_speedup_r(int offset)
 				BURN_TIME(50);
 				if (TMS34010_ICount <= 0)
 				{
-					break;					
+					break;
 				}
 
 				a1 = DEREF_INT32(a0);							// MOVE   *A0,A1,1
@@ -1447,6 +1419,23 @@ static void load_gfx_roms_8bit(void)
 	Machine->memory_region[2] = 0;
 }
 
+static void load_adpcm_roms_512k(void)
+{
+	unsigned char *mem_reg4;
+	unsigned char *mem_reg5;
+	unsigned char *mem_reg6;
+	mem_reg4 = Machine->memory_region[4];
+	mem_reg5 = Machine->memory_region[5];
+	mem_reg6 = Machine->memory_region[6];
+	memcpy(mem_reg4+0x40000, mem_reg4+0x00000, 0x40000); /* copy u12 */
+	memcpy(mem_reg5+0x60000, mem_reg4+0x00000, 0x20000); /* copy u12 */
+	memcpy(mem_reg5+0x20000, mem_reg4+0x20000, 0x20000); /* copy u12 */
+	memcpy(mem_reg6+0x60000, mem_reg4+0x00000, 0x20000); /* copy u12 */
+	memcpy(mem_reg6+0x20000, mem_reg4+0x20000, 0x20000); /* copy u12 */
+	memcpy(mem_reg6+0x40000, mem_reg5+0x00000, 0x20000); /* copy u13 */
+	memcpy(mem_reg6+0x00000, mem_reg5+0x40000, 0x20000); /* copy u13 */
+}
+
 static void wms_modify_pen(int i, int rgb)
 {
 	extern unsigned short *shrinked_pens;
@@ -1454,7 +1443,7 @@ static void wms_modify_pen(int i, int rgb)
 #define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
 
 	int r,g,b;
-	
+
 	r = (rgb >> 10) & 0x1f;
 	g = (rgb >>  5) & 0x1f;
 	b = (rgb >>  0) & 0x1f;
@@ -1463,7 +1452,7 @@ static void wms_modify_pen(int i, int rgb)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];		
+	Machine->pens[i] = shrinked_pens[rgbpenindex(r,g,b)];
 }
 
 static void wms_8bit_paletteram_xRRRRRGGGGGBBBBB_word_w(int offset,int data)
@@ -1585,6 +1574,16 @@ void trog_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 }
+void trog3_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x010a2080), TOBYTE(0x010a209f), trog3_speedup_r);
+	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
+	wms_protect_s = 0xffe47c70;
+	wms_protect_d = 0xffe47b20;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+}
 void trogp_driver_init(void)
 {
 	/* set up speedup loops */
@@ -1664,6 +1663,16 @@ void totcarn_driver_init(void)
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 }
+void totcarnp_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
+	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+	wms_protect_s = 0xffd1edd0;
+	wms_protect_d = 0xffd1ec90;
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+}
 void mk2_driver_init(void)
 {
 	/* set up speedup loops */
@@ -1737,7 +1746,7 @@ void smashtv_init_machine(void)
 
 	/* get rid of unmapped access errors during tests */
 	remove_access_errors();
-	
+
 	/* set up sound board */
 	smashtv_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;
@@ -1761,6 +1770,7 @@ void mk_init_machine(void)
 	{
 		wms_load_code_roms();
 		load_gfx_roms_6bit();
+		load_adpcm_roms_512k();
 		wms_rom_loaded = 1;
 	}
 
@@ -1769,7 +1779,7 @@ void mk_init_machine(void)
 
 	/* get rid of unmapped access errors during tests */
 	remove_access_errors();
-	
+
 	/* set up sound board */
 	mk_sound_bank_select_w(0,0);
 	m6809_Flags = M6809_FAST_NONE;

@@ -24,7 +24,7 @@ XYBOTS 6502 MEMORY MAP
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
+#include "sndhrdw/pokey.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
@@ -327,7 +327,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1789790,	/* 1.5 MHz??? */
-	128,
+	40,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -347,7 +347,7 @@ static struct POKEYinterface pokey_interface =
 static struct TMS5220interface tms5220_interface =
 {
     640000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
+    100,        /* volume */
     0           /* irq handler */
 };
 
@@ -356,7 +356,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4MHz */
-	{ 255 },
+	{ 40 },
 	{ 0 }
 };
 

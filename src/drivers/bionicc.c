@@ -33,6 +33,9 @@ ToDo:
 
 #include "driver.h"
 
+static unsigned char *ram_bc; /* used by high scores */
+static unsigned char *ram_bcvid; /* used by high scores */
+
 extern int bionicc_videoreg_r( int offset );
 extern void bionicc_videoreg_w( int offset, int value );
 
@@ -127,11 +130,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfe0d00, 0xfe3fff, MRA_BANK3 },              /* RAM? */
 	{ 0xfe4000, 0xfe4003, bionicc_inputs_r },       /* dipswitches */
 	{ 0xfe8010, 0xfe8017, bionicc_videoreg_r },     /* scroll registers */
-	{ 0xfec000, 0xfecfff, MRA_BANK4 },              /* fixed text layer */
+	{ 0xfec000, 0xfecfff, MRA_BANK4, &ram_bcvid },              /* fixed text layer */
 	{ 0xff0000, 0xff3fff, MRA_BANK5 },              /* SCROLL1 layer */
 	{ 0xff4000, 0xff7fff, MRA_BANK6 },              /* SCROLL2 layer */
 	{ 0xff8000, 0xff86ff, MRA_BANK7 },              /* palette RAM */
-	{ 0xffc000, 0xfffff7, MRA_BANK8 },               /* working RAM */
+	{ 0xffc000, 0xfffff7, MRA_BANK8, &ram_bc },               /* working RAM */
 	{ 0xfffff8, 0xfffff9, hacked_soundcommand_r },      /* hack */
 	{ 0xfffffa, 0xffffff, hacked_controls_r },      /* hack */
 	{ -1 }
@@ -451,6 +454,79 @@ ROM_START( bionicc2_rom )
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
+/* hi load / save added 11/20/98 HSC */
+
+#ifdef LSB_FIRST
+#define ENDIAN_ALIGN(a)	(a)
+#else
+#define ENDIAN_ALIGN(a) (a^1)
+#endif
+
+static int hiload(void)
+{
+
+    void *f;
+    /* check if the hi score table has already been initialized */
+    if (READ_WORD(&ram_bc[0x39e2])==0x2 && READ_WORD(&ram_bc[0x39e4])==0 && READ_WORD(&ram_bc[0x3a2e])==0x434f && READ_WORD(&ram_bc[0x3a30])==0x4d20)
+    {
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+			int hi;
+			osd_fread(f,&ram_bc[0x39e2],10*8);
+			osd_fclose(f);
+			ram_bc[0x57a]=ram_bc[0x39e2];
+            ram_bc[0x57b]=ram_bc[0x39e3];
+            ram_bc[0x57c]=ram_bc[0x39e4];
+            ram_bc[0x57d]=ram_bc[0x39e5];
+
+			hi =(ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0f) +
+				(ram_bc[ENDIAN_ALIGN(0x57c)] >> 4) * 10 +
+				(ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0f) * 100 +
+				(ram_bc[ENDIAN_ALIGN(0x57d)] >> 4) * 1000 +
+				(ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0f) * 10000 +
+				(ram_bc[ENDIAN_ALIGN(0x57a)] >> 4) * 100000 +
+				(ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0f) * 1000000 +
+				(ram_bc[ENDIAN_ALIGN(0x57b)] >> 4) * 10000000;
+
+			if (hi >= 10000000)
+				ram_bcvid[ENDIAN_ALIGN(0x0d8)] = ram_bc[ENDIAN_ALIGN(0x57b)] >> 4;
+			if (hi >= 1000000)
+				ram_bcvid[ENDIAN_ALIGN(0x0da)] = ram_bc[ENDIAN_ALIGN(0x57b)] & 0x0F;
+			if (hi >= 100000)
+				ram_bcvid[ENDIAN_ALIGN(0x0dc)] = ram_bc[ENDIAN_ALIGN(0x57a)] >> 4;
+			if (hi >= 10000)
+				ram_bcvid[ENDIAN_ALIGN(0x0de)] = ram_bc[ENDIAN_ALIGN(0x57a)] & 0x0F;
+			if (hi >= 1000)
+				ram_bcvid[ENDIAN_ALIGN(0x0e0)] = ram_bc[ENDIAN_ALIGN(0x57d)] >> 4;
+			if (hi >= 100)
+				ram_bcvid[ENDIAN_ALIGN(0x0e2)] = ram_bc[ENDIAN_ALIGN(0x57d)] & 0x0F;
+			if (hi >= 10)
+				ram_bcvid[ENDIAN_ALIGN(0x0e4)] = ram_bc[ENDIAN_ALIGN(0x57c)] >> 4;
+			if (hi >= 0)
+				ram_bcvid[ENDIAN_ALIGN(0x0e6)] = ram_bc[ENDIAN_ALIGN(0x57c)] & 0x0F;
+
+        	if (errorlog)
+				fprintf(errorlog,"hi score: %i\n", hi);
+		}
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+        {
+
+
+				osd_fwrite(f,&ram_bc[0x39e2],10*8);
+				osd_fclose(f);
+        }
+}
+
+
 
 
 struct GameDriver bionicc_driver =
@@ -475,7 +551,7 @@ struct GameDriver bionicc_driver =
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,
-	NULL, NULL
+	hiload,hisave
 };
 
 struct GameDriver bionicc2_driver =
@@ -500,5 +576,5 @@ struct GameDriver bionicc2_driver =
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,
-	NULL, NULL
+	hiload, hisave
 };

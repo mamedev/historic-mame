@@ -39,8 +39,6 @@
 
             - Properly emulate the uP4990.
 
-            - Compile list of bad roms.. (DONE?!)
-
             - Bankswitching for the Z80!
 
             - What does 0x3c0006-7 *REALLY* do?
@@ -133,8 +131,8 @@ int  neogeo_mgd2_vh_start(void);
 void neogeo_vh_stop(void);
 void neogeo_paletteram_w(int offset,int data);
 int  neogeo_paletteram_r(int offset);
-void setpalbank0(int offset, int data);
-void setpalbank1(int offset, int data);
+void neogeo_setpalbank0(int offset, int data);
+void neogeo_setpalbank1(int offset, int data);
 
 void neo_board_fix(int offset, int data);
 void neo_game_fix(int offset, int data);
@@ -145,7 +143,6 @@ void vidram_offset_w(int offset, int data);
 
 int vidram_data_r(int offset);
 int vidram_modulo_r(int offset);
-int vidram_offset_r(int offset);
 
 /* debug, used to 'see' the locations mapped in ROM space */
 /* with the debugger */
@@ -163,57 +160,24 @@ void neo_unknown4(int offset, int data);
 void neogeo_init_machine(void);
 void neogeo_onetime_init_machine(void);
 
-/* debug defined in vidhrdw/neogeo.c */
-extern int dotiles;
-extern int screen_offs;
-/* end debug */
 
 /******************************************************************************/
 
-static int irq_acknowledge;
-static int vblankcount=0;
-static int neo_z80_byte;
 
 unsigned int neogeo_frame_counter;
 unsigned int neogeo_frame_counter_speed=4;
-int neogeo_irq2;
 
 /******************************************************************************/
+
+static int irq2_enable;
 
 static int neogeo_interrupt(void)
 {
 	static int fc=0;
 
-#if 0
-	int key=readinputport(6);
-
-	/* debug setting, tile view mode connected to '8' */
-	if (key & 0x01) {
-		while (osd_key_pressed(OSD_KEY_8)) ;
-		dotiles ^= 1;
-	}
-
-	/* tile view - 0x80, connected to '9' */
-	if (key & 0x02) {
-		if (screen_offs > 0)
-			screen_offs -= 0x80;
-	}
-
-	/* tile view + 0x80, connected to '0' */
-	if (key & 0x04) {
-		if (screen_offs < 0x10000)
-			screen_offs += 0x80;
-	}
-	/* end debugging */
-#endif
-
 
 	/* Add a timer tick to the pd4990a */
 	addretrace();
-#if 0
-	/* internal counter, probably used for 0x3c0006 */
-	vblankcount--;
-#endif
 
 	/* Animation counter, 1 once per frame is too fast, every 4 seems good */
         if  (fc>=neogeo_frame_counter_speed) {
@@ -222,17 +186,10 @@ static int neogeo_interrupt(void)
         }
         fc++;
 
-	if (neogeo_irq2)
-		cpu_cause_interrupt(0,2);
+	if (irq2_enable || osd_key_pressed(OSD_KEY_F1)) cpu_cause_interrupt(0,2);
 
 	/* return a standard vblank interrupt */
 	return(1);      /* vertical blank */
-}
-
-static void irq_trigger(int offset, int data)
-{
-	if (errorlog) fprintf(errorlog,"*** IRQ TRIGGER %04x\n",data);
-	neogeo_irq2=1;
 }
 
 /* Move to calendar file later */
@@ -242,24 +199,15 @@ static void neo_pd4990a_control_w(int offset, int data)
     a++;
 }
 
-/* Remove later */
-#if 0
-void write_irq(int offset, int data) {
-	irq_acknowledge = data;
-}
 
-int vblankc_r(int offset) {
-	return (vblankcount);
-}
-
-void vblankc_w(int offset,int data) {
-	vblankcount = data;
-}
-#endif
+static int pending_command;
+static int result_code;
 
 /* Calendar, coins + Z80 communication */
 static int timer_r (int offset)
 {
+	int res;
+
 
 	/* This is just for testing purposes */
 	/* not real correct code */
@@ -267,21 +215,32 @@ static int timer_r (int offset)
 
    //	 if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_getpc());
 
-	return (  readinputport(4) ^ (coinflip << 6) ^ (coinflip << 7) )
-    		+ (neo_z80_byte<<8);
+	res = readinputport(4) ^ (coinflip << 6) ^ (coinflip << 7);
+
+	if (Machine->sample_rate)
+	{
+		res |= result_code << 8;
+		if (pending_command) res &= 0x7fff;
+	}
+	else
+		res |= 0x0100;
+
+	return res;
 }
 
 static void neo_z80_w(int offset, int data)
 {
-	neo_z80_byte=((data)>>8)&0xff;
-	soundlatch_w(0,neo_z80_byte);
+	soundlatch_w(0,(data>>8)&0xff);
+	pending_command = 1;
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
+
+
 
 static int controller1_r (int offset) { return ( (readinputport(0) << 8) + readinputport(3) ); }
 static int controller2_r (int offset) { return (readinputport(1) << 8); }
 static int controller3_r (int offset) {	return (readinputport(2) << 8); }
-static int controller4_r (int offset) { return readinputport(7); }
+static int controller4_r (int offset) { return readinputport(6); }
 
 static void neo_bankswitch_w(int offset, int data)
 {
@@ -306,6 +265,8 @@ if (errorlog) fprintf(errorlog,"warning: bankswitch to empty bank %02x\n",data);
 	cpu_setbank(4,&RAM[bankaddress]);
 }
 
+
+
 extern int neogeo_game_fix;
 
 /* Temporary, Todo: Figure out how this really works! :) */
@@ -327,6 +288,8 @@ static int neo_control_r(int offset)
                         return 0x7000; /* Fix for KOF97 */
                 case 6:
                         return 0x8000; /* Money Idol Exchanger */
+                case 8:
+                        return 0xffff; /* Ninja Command */
         }
         return(0x8000);              /* anything 0x8000 seems better than 0*/
 }
@@ -334,6 +297,19 @@ static int neo_control_r(int offset)
 /* this does much more than this, but I'm not sure exactly what */
 void neo_control_w(int offset, int data)
 {
+if (errorlog) fprintf(errorlog,"PC %06x: 3c0006 = %02x\n",cpu_getpc(),data);
+	/* I'm waving my hands in a big way here... */
+	/* Games which definitely need IRQ2:
+	   sengoku2
+	   spinmast
+	   ridhero
+	   turfmast
+	*/
+	if ((data & 0xff) == 0xd0)	/* certainly wrong, but fixes spinmast & sengoku2 */
+		irq2_enable = 1;
+	else
+		irq2_enable = 0;
+
 	if((data & 0xf0ff) == 0)
 	{
 		/* Auto-Anim Speed Control ? */
@@ -342,11 +318,27 @@ void neo_control_w(int offset, int data)
 	}
 }
 
+static void neo_irq2pos_w(int offset,int data)
+{
+	static int value;
+
+if (errorlog) fprintf(errorlog,"PC %06x: %06x = %02x\n",cpu_getpc(),0x3c0008+offset,data);
+
+	if (offset == 0)
+		value = (value & 0x0000ffff) | (data << 16);
+	else
+		value = (value & 0xffff0000) | data;
+
+if (errorlog && offset == 2)
+	fprintf(errorlog,"should trigger IRQ2 at raster line %d, horiz offset %d?\n",(value / 0x180) - 0x24,value % 0x180);
+}
+
+
 /******************************************************************************/
 
 static struct MemoryReadAddress neogeo_readmem[] =
 {
-	{ 0x000000, 0x0FFFFF, MRA_ROM },   /* Rom bank 1 */
+	{ 0x000000, 0x0fffff, MRA_ROM },   /* Rom bank 1 */
 	{ 0x100000, 0x10ffff, MRA_BANK1 }, /* Ram bank 1 */
 	{ 0x200000, 0x2fffff, MRA_BANK4 }, /* Rom bank 2 */
 
@@ -355,28 +347,28 @@ static struct MemoryReadAddress neogeo_readmem[] =
 	{ 0x320000, 0x320001, timer_r }, /* Coins, Calendar, Z80 communication */
 	{ 0x340000, 0x340001, controller2_r },
 	{ 0x380000, 0x380001, controller3_r },
-	{ 0x3C0000, 0x3C0001, vidram_offset_r },
-	{ 0x3C0002, 0x3C0003, vidram_data_r },
-	{ 0x3C0004, 0x3C0005, vidram_modulo_r },
+	{ 0x3c0000, 0x3c0001, vidram_data_r },	/* Baseball Stars */
+	{ 0x3c0002, 0x3c0003, vidram_data_r },
+	{ 0x3c0004, 0x3c0005, vidram_modulo_r },
 
-    { 0x3C0006, 0x3C0007, neo_control_r }, /* for kof97 */
+	{ 0x3c0006, 0x3c0007, neo_control_r }, /* for kof97 */
 	{ 0x3c000a, 0x3c000b, vidram_data_r },	/* Puzzle de Pon */
 
 	{ 0x400000, 0x401fff, neogeo_paletteram_r },
-   	{ 0x600000, 0x61ffff, mish_vid_r },
-	{ 0x800000, 0x800FFF, MRA_BANK5 }, /* memory card */
-	{ 0xC00000, 0xC1FFFF, MRA_BANK3 }, /* system bios rom */
-	{ 0xD00000, 0xD0FFFF, MRA_BANK2 }, /* 64k battery backed SRAM */
+	{ 0x600000, 0x61ffff, mish_vid_r },
+//	{ 0x800000, 0x800fff, MRA_ }, /* memory card */
+	{ 0xc00000, 0xc1ffff, MRA_BANK3 }, /* system bios rom */
+	{ 0xd00000, 0xd0ffff, MRA_BANK2 }, /* 64k battery backed SRAM */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress neogeo_writemem[] =
 {
-	{ 0x000000, 0x0FFFFF, MWA_ROM },    /* ghost pilots writes to ROM */
-	{ 0x100000, 0x10FFFF, MWA_BANK1 },
+	{ 0x000000, 0x0fffff, MWA_ROM },    /* ghost pilots writes to ROM */
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x280050, 0x280051, neo_pd4990a_control_w },
 	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },      /* NOTE THIS CHANGE TO END AT FF !!! */
-	{ 0x300000, 0x300001, MWA_NOP },	/* Watchdog */
+	{ 0x300000, 0x300001, watchdog_reset_w },
 	{ 0x320000, 0x320001, neo_z80_w },	/* Sound CPU */
 	{ 0x380000, 0x380001, MWA_NOP },	/* Used by bios, unknown */
 	{ 0x380030, 0x380031, MWA_NOP },    /* Used by bios, unknown */
@@ -385,7 +377,7 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 	{ 0x380060, 0x380063, MWA_NOP },	/* Used by bios, unknown */
 	{ 0x3800e0, 0x3800e3, MWA_NOP },	/* Used by bios, unknown */
 
-    { 0x3a0000, 0x3a0001, MWA_NOP },
+	{ 0x3a0000, 0x3a0001, MWA_NOP },
 	{ 0x3a0010, 0x3a0011, MWA_NOP },
 	{ 0x3a0002, 0x3a0003, MWA_NOP },
 	{ 0x3a0012, 0x3a0013, MWA_NOP },
@@ -393,41 +385,35 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 	{ 0x3a001a, 0x3a001b, neo_game_fix },  /* Select game FIX char rom */
 	{ 0x3a000c, 0x3a000d, MWA_NOP },
 	{ 0x3a001c, 0x3a001d, MWA_NOP },
-	{ 0x3a000e, 0x3a000f, setpalbank1 },
-	{ 0x3a001e, 0x3a001f, setpalbank0 },    /* Palette banking */
+	{ 0x3a000e, 0x3a000f, neogeo_setpalbank1 },
+	{ 0x3a001e, 0x3a001f, neogeo_setpalbank0 },    /* Palette banking */
 
-	{ 0x3C0000, 0x3C0001, vidram_offset_w },
-	{ 0x3C0002, 0x3C0003, vidram_data_w },
-	{ 0x3C0004, 0x3C0005, vidram_modulo_w },
+	{ 0x3c0000, 0x3c0001, vidram_offset_w },
+	{ 0x3c0002, 0x3c0003, vidram_data_w },
+	{ 0x3c0004, 0x3c0005, vidram_modulo_w },
 
-    { 0x3C0006, 0x3C0007, neo_control_w },  /* See level 2 of spinmasters, rowscroll data? */
-	{ 0x3C0008, 0x3C0009, MWA_NOP },  /* row scroll enable? (or MSB?) */
-	{ 0x3C000a, 0x3C000b, MWA_NOP },  /* row scroll column offset? (or LSB?) */
+	{ 0x3c0006, 0x3c0007, neo_control_w },  /* See level 2 of spinmasters, rowscroll data? */
+	{ 0x3c0008, 0x3c000b, neo_irq2pos_w },  /* IRQ2 x/y position? */
 
 	{ 0x3c000c, 0x3c000d, MWA_NOP },     /* IRQ Acknowledge */
-	{ 0x3c000e, 0x3c000f, irq_trigger }, /* IRQ 2 Trigger??  See spinmast */
+//	{ 0x3c000e, 0x3c000f, irq_trigger }, /* IRQ 2 Trigger??  See spinmast */
 
-	{ 0x400000, 0x401FFF, neogeo_paletteram_w },
+	{ 0x400000, 0x401fff, neogeo_paletteram_w },
 	{ 0x600000, 0x61ffff, mish_vid_w },	/* Debug only, not part of real NeoGeo */
- 	{ 0x800000, 0x800FFF, MWA_BANK5 },	/* mem card */
-	{ 0xD00000, 0xD0FFFF, MWA_BANK2 },	/* SRAM */
+//	{ 0x800000, 0x800fff, MWA_ },	/* mem card */
+	{ 0xd00000, 0xd0ffff, MWA_BANK2 },	/* SRAM */
 	{ -1 }  /* end of table */
 };
 
 /******************************************************************************/
 
-/* RAM: 4 distinct parts
-
-f800 - ff29 (RAM) & ff2a - ffbf (shared RAM ?)
-ffc0 - ffcf (stack) & fffc - ffff (bank switch ?)
-
-We also have pan & bankswitch values written somewhere
-
-*/
-
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0xf7ff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK5 },
+	{ 0xc000, 0xdfff, MRA_BANK6 },
+	{ 0xe000, 0xefff, MRA_BANK7 },
+	{ 0xf000, 0xf7ff, MRA_BANK8 },
 	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -439,22 +425,114 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOReadPort neo_readio[] = {
-	{ 0x00, 0x00, soundlatch_r },
-	{ 0x04, 0x04, YM2610_status_port_0_A_r },
-	{ 0x05, 0x05, YM2610_read_port_0_r },
-	{ 0x06, 0x06, YM2610_status_port_0_B_r },
-	{ 0x08, 0x0b, MRA_NOP }, /* Unknown */
+
+static int z80_port_r(int offset)
+{
+	switch (offset & 0xff)
+	{
+		case 0x00:
+			pending_command = 0;
+			return soundlatch_r(0);
+			break;
+
+		case 0x04:
+			return YM2610_status_port_0_A_r(0);
+			break;
+
+		case 0x05:
+			return YM2610_read_port_0_r(0);
+			break;
+
+		case 0x06:
+			return YM2610_status_port_0_B_r(0);
+			break;
+
+		case 0x08:
+			{
+				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+				cpu_setbank(8,&RAM[0x00800 * ((offset >> 8) & 0x3f)]);
+				return 0;
+				break;
+			}
+
+		case 0x09:
+			{
+				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+				cpu_setbank(7,&RAM[0x01000 * ((offset >> 8) & 0x1f)]);
+				return 0;
+				break;
+			}
+
+		case 0x0a:
+			{
+				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+				cpu_setbank(6,&RAM[0x02000 * ((offset >> 8) & 0x0f)]);
+				return 0;
+				break;
+			}
+
+		case 0x0b:
+			{
+				unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+				cpu_setbank(5,&RAM[0x04000 * ((offset >> 8) & 0x07)]);
+				return 0;
+				break;
+			}
+
+		default:
+if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: read unmapped port %02x\n",cpu_getpc(),offset&0xff);
+			return 0;
+			break;
+	}
+}
+
+static void z80_port_w(int offset,int data)
+{
+	switch (offset & 0xff)
+	{
+		case 0x04:
+			YM2610_control_port_0_A_w(0,data);
+			break;
+
+		case 0x05:
+			YM2610_data_port_0_A_w(0,data);
+			break;
+
+		case 0x06:
+			YM2610_control_port_0_B_w(0,data);
+			break;
+
+		case 0x07:
+			YM2610_data_port_0_B_w(0,data);
+			break;
+
+		case 0x08:
+			/* NMI enable / acknowledge? (the data written doesn't matter) */
+			break;
+
+		case 0x0c:
+			result_code = data;
+			break;
+
+		case 0x18:
+			/* NMI disable? (the data written doesn't matter) */
+			break;
+
+		default:
+if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_getpc(),data,offset&0xff);
+			break;
+	}
+}
+
+static struct IOReadPort neo_readio[] =
+{
+	{ 0x0000, 0xffff, z80_port_r },
 	{ -1 }
 };
 
-static struct IOWritePort neo_writeio[] = {
-	{ 0x00, 0x00, MWA_NOP }, /* Soundlatch acknowledge (same value as written in) */
-	{ 0x04, 0x04, YM2610_control_port_0_A_w  },
-	{ 0x05, 0x05, YM2610_data_port_0_A_w },
-	{ 0x06, 0x06, YM2610_control_port_0_B_w },
-	{ 0x07, 0x07, YM2610_data_port_0_B_w },
- 	{ 0x0c, 0x0c, MWA_NOP }, /* Mirror of 0 */
+static struct IOWritePort neo_writeio[] =
+{
+	{ 0x0000, 0xffff, z80_port_w },
 	{ -1 }
 };
 
@@ -493,26 +571,26 @@ INPUT_PORTS_START( neogeo_ports )
 
 	PORT_START      /* IN3 */
 	PORT_DIPNAME( 0x01, 0x01, "Test Switch", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x38, 0x38, "COMM Setting", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x30, "1" )
 	PORT_DIPSETTING(    0x38, "Off" )
-	PORT_DIPNAME( 0x40, 0x40, "Freeplay", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Stop mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -529,13 +607,6 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_DIPSETTING(    0x00,"Home" )
 	PORT_DIPSETTING(    0x04,"Arcade" )
 
-	/* debug */
-	PORT_START      /* IN6 */
-	PORT_BITX( 0x01, IP_ACTIVE_HIGH, 0, "tiles ram view", OSD_KEY_8, IP_JOY_NONE, 0)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, 0, "tile ram - 0x80", OSD_KEY_9, IP_JOY_NONE, 0)
-	PORT_BITX( 0x04, IP_ACTIVE_HIGH, 0, "tile ram + 0x80", OSD_KEY_0, IP_JOY_NONE, 0)
-	/* end debug */
-
 	PORT_START      /* Test switch */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -545,7 +616,6 @@ INPUT_PORTS_START( neogeo_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* This bit is used.. */
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", OSD_KEY_F2, IP_JOY_NONE, 0)
-
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -619,8 +689,8 @@ static void neogeo_sound_irq( void )
 struct YM2610interface neogeo_ym2610_interface =
 {
 	1,
-	2000000,
-    { YM2203_VOL(220,0x20ff) },
+	8000000,
+	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -643,7 +713,7 @@ static struct MachineDriver neogeo_mgd2_machine_driver =
 			neogeo_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
 			4000000,
 			5,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
@@ -686,7 +756,7 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 			neogeo_interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
 			4000000,
 			5,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
@@ -1748,9 +1818,9 @@ ROM_START( sengoku2_rom )
     ROM_LOAD( "n138001c.53c", 0x140000, 0x40000, 0x22633905 ) /* Plane 0,1 */
 	ROM_CONTINUE(             0x340000, 0x40000 )
 //	ROM_LOAD( "n138001d.538", 0x180000, 0x40000, 0x891b6386 ) /* Plane 0,1 - remove? */
-//	ROM_CONTINUE(             0x280000, 0x40000 )
+//	ROM_CONTINUE(             0x380000, 0x40000 )
 //	ROM_LOAD( "n138001d.53c", 0x1c0000, 0x40000, 0x891b6386 ) /* Plane 0,1 - remove? */
-//	ROM_CONTINUE(             0x280000, 0x40000 )
+//	ROM_CONTINUE(             0x380000, 0x40000 )
 
     ROM_REGION(0x400000)
     ROM_LOAD( "n138001a.638", 0x000000, 0x40000, 0x5b27c829 ) /* Plane 2,3 */
@@ -1765,10 +1835,10 @@ ROM_START( sengoku2_rom )
 	ROM_CONTINUE(             0x300000, 0x40000 )
     ROM_LOAD( "n138001c.63c", 0x140000, 0x40000, 0xba3f54b2 ) /* Plane 2,3 */
 	ROM_CONTINUE(             0x340000, 0x40000 )
-//	ROM_LOAD( "n138001d.638", 0x080000, 0x40000, 0x93d25955 ) /* Plane 2,3 - remove? */
-//	ROM_CONTINUE(             0x280000, 0x40000 )
-//	ROM_LOAD( "n138001d.63c", 0x0c0000, 0x40000, 0x93d25955 ) /* Plane 2,3 - remove? */
-//	ROM_CONTINUE(             0x280000, 0x40000 )
+//	ROM_LOAD( "n138001d.638", 0x180000, 0x40000, 0x93d25955 ) /* Plane 2,3 - remove? */
+//	ROM_CONTINUE(             0x380000, 0x40000 )
+//	ROM_LOAD( "n138001d.63c", 0x1c0000, 0x40000, 0x93d25955 ) /* Plane 2,3 - remove? */
+//	ROM_CONTINUE(             0x380000, 0x40000 )
 
 	NEO_BIOS_SOUND_128K( "n138001a.4f8", 0x9902dfa2 )
 
@@ -1938,15 +2008,17 @@ ROM_START( tpgolf_rom )
 
 	NEO_SFIX_128K( "topg_s1.rom", 0x7b3eb9b1 )
 
-	ROM_REGION(0x180000)
+	ROM_REGION(0x200000)
     ROM_LOAD( "topg_c1.rom", 0x000000, 0x80000, 0x0315fbaf )
     ROM_LOAD( "topg_c3.rom", 0x080000, 0x80000, 0xb09f1612 )
     ROM_LOAD( "topg_c5.rom", 0x100000, 0x80000, 0x9a7146da )
+    ROM_LOAD( "topg_c7.rom", 0x180000, 0x80000, 0x2886710c )
 
-	ROM_REGION(0x180000)
+	ROM_REGION(0x200000)
     ROM_LOAD( "topg_c2.rom", 0x000000, 0x80000, 0xb4c15d59 )
     ROM_LOAD( "topg_c4.rom", 0x080000, 0x80000, 0x150ea7a1 )
     ROM_LOAD( "topg_c6.rom", 0x100000, 0x80000, 0x1e63411a )
+    ROM_LOAD( "topg_c8.rom", 0x180000, 0x80000, 0x422af22d )
 
 	NEO_BIOS_SOUND_64K( "topg_m1.rom", 0x7851d0d9 )
 
@@ -2278,7 +2350,7 @@ ROM_START( neodrift_rom )
 	ROM_LOAD( "drift_c2.rom", 0x200000, 0x200000, 0x9dc9c72a ) /* Plane 2,3 */
 	ROM_CONTINUE(             0x000000, 0x200000 )
 
-	NEO_BIOS_SOUND_128K( "drift_m1.rom", 0x25a528ce )
+	NEO_BIOS_SOUND_128K( "drift_m1.rom", 0x00000000 )
 
 	ROM_REGION_OPTIONAL(0x400000) /* sound samples */
 	ROM_LOAD( "drift_v1.rom", 0x000000, 0x200000, 0xa421c076 )
@@ -2402,9 +2474,6 @@ ROM_START( spinmast_rom )
     ROM_LOAD( "spnm_c8.rom", 0x300000, 0x100000, 0x8d7be933 ) /* Plane 2,3 */
 
 	NEO_BIOS_SOUND_64K( "spnm_m1.rom", 0x43e5271e )
-
-    ROM_REGION_OPTIONAL(0x0) /* sound samples */ // Verify: Can this be 0x0, no memory faults?
-    /* empty region */
 
     ROM_REGION_OPTIONAL(0x100000) /* sound samples */
     ROM_LOAD( "spnm_v1.rom", 0x000000, 0x100000, 0xcc281aef )
@@ -2593,11 +2662,9 @@ ROM_START( sonicwi3_rom )
 
 	NEO_BIOS_SOUND_128K( "sonw3_m1.rom", 0xb20e4291 )
 
-    ROM_REGION_OPTIONAL(0x100000) /* sound samples */
-    ROM_LOAD( "sonw3_v2.rom", 0x000000, 0x100000, 0x32187ccd )
-
-    ROM_REGION_OPTIONAL(0x400000) /* sound samples */
+    ROM_REGION_OPTIONAL(0x500000) /* sound samples */
 	ROM_LOAD( "sonw3_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
+    ROM_LOAD( "sonw3_v2.rom", 0x000000, 0x100000, 0x32187ccd )
 ROM_END
 
 ROM_START( goalx3_rom )
@@ -2777,6 +2844,31 @@ ROM_START( samsho2_rom )
 	ROM_LOAD( "sams2_v2.rom", 0x200000, 0x200000, 0x0142bde8 )
 	ROM_LOAD( "sams2_v3.rom", 0x400000, 0x200000, 0xd07fa5ca )
 	ROM_LOAD( "sams2_v4.rom", 0x600000, 0x100000, 0x24aab4bb )
+ROM_END
+
+ROM_START( sskick3_rom )
+	ROM_REGION(0x200000)
+    ROM_LOAD_WIDE_SWAP( "side3_p1.rom", 0x100000, 0x100000, 0x6bc27a3d )
+	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+
+	NEO_SFIX_128K( "side3_s1.rom", 0x7626da34 )
+
+	ROM_REGION(0x600000)
+    ROM_LOAD( "side3_c1.rom", 0x000000, 0x200000, 0x1fb68ebe ) /* Plane 0,1 */
+    ROM_LOAD( "side3_c3.rom", 0x200000, 0x200000, 0x3b2572e8 ) /* Plane 0,1 */
+    ROM_LOAD( "side3_c5.rom", 0x400000, 0x200000, 0x17d42f0d ) /* Plane 0,1 */
+
+	ROM_REGION(0x600000)
+    ROM_LOAD( "side3_c2.rom", 0x000000, 0x200000, 0xb28d928f ) /* Plane 2,3 */
+    ROM_LOAD( "side3_c4.rom", 0x200000, 0x200000, 0x47d26a7c ) /* Plane 2,3 */
+    ROM_LOAD( "side3_c6.rom", 0x400000, 0x200000, 0x6b53fb75 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "side3_m1.rom", 0x82fcd863 )
+
+	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
+	ROM_LOAD( "side3_v1.rom", 0x000000, 0x200000, 0x201fa1e1 )
+	ROM_LOAD( "side3_v2.rom", 0x200000, 0x200000, 0xacf29d96 )
+	ROM_LOAD( "side3_v3.rom", 0x400000, 0x200000, 0xe524e415 )
 ROM_END
 
 ROM_START( aof2_rom )
@@ -3206,7 +3298,7 @@ ROM_START( pulstar_rom )
 
 	NEO_BIOS_SOUND_128K( "pstar_m1.rom", 0xff3df7c7 )
 
-	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_REGION_OPTIONAL(0x400000) /* sound samples */
 	ROM_LOAD( "pstar_v1.rom", 0x000000, 0x200000, 0x00000000 )	/* bad! odd bytes all 0xff */
 	ROM_LOAD( "pstar_v2.rom", 0x200000, 0x200000, 0x00000000 )	/* bad! odd bytes all 0xff */
 ROM_END
@@ -3810,12 +3902,12 @@ struct GameDriver neogeo_bios =
 /* SNK */
 NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(ridhero, "Riding Hero","1990","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(bstars,  "Baseball Stars","1990","SNK","",&neogeo_mgd2_machine_driver)
+NEODRIVER(bstars,  "Baseball Stars Professional","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(lbowling,"League Bowling","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(superspy,"Super Spy","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVERX(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
 NEODRIVER(alpham2, "Alpha Mission 2 / ASD Last Guardian 2","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(eightman,"Eight Man","1991","SNK / Palla","",&neogeo_mgd2_machine_driver)
+NEODRIVER(eightman,"Eight Man","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
 NEODRIVER(ararmy,  "Robo Army","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(burningf,"Burning Fight","1991","SNK","",&neogeo_mgd2_machine_driver)
@@ -3828,6 +3920,7 @@ NEODRIVER(fbfrenzy,"Football Frenzy","1992","SNK","",&neogeo_mgd2_machine_driver
 NEODRIVER(mutnat,  "Mutation Nation","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(artfight,"Art of Fighting / Ryuu Ko No Ken","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVERX(countb, "3countb","3 Count Bout / Fire Suplex","1993","SNK","",&neogeo_mgd2_machine_driver)
+NEODRIVER(sengoku2,"Sengoku 2","1993","SNK","",&neogeo_mgd2_machine_driver)
 
 /* Alpha Denshi Co */
 NEODRIVER(ncombat, "Ninja Combat","1990","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
@@ -3835,7 +3928,6 @@ NEODRIVER(crsword, "Crossed Swords","1991","Alpha Denshi Co","",&neogeo_mgd2_mac
 NEODRIVER(trally,  "Thrash Rally","1991","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 NEODRIVER(ncommand,"Ninja Commando","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 NEODRIVER(wheroes, "World Heroes","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(sengoku2,"Sengoku 2","1993","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 
 /* Visco */
 NEODRIVER(androdun,"Andro Dunos","1992","Visco","",&neogeo_mgd2_machine_driver)
@@ -3862,9 +3954,9 @@ NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito","",&neogeo_mvs_m
 NEODRIVER(puzzledp,"Puzzle de Pon","1995","Taito (Visco license)","",&neogeo_mvs_machine_driver)
 
 /* Visco */
-NEODRIVER(pspikes2,"Power Spikes 2","1994","Visco","",&neogeo_mvs_machine_driver)
-NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Visco","Santeri Saarimaa\nAtila Mert",&neogeo_mvs_machine_driver)
-NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Visco","",&neogeo_mvs_machine_driver)
+NEODRIVER(pspikes2,"Power Spikes 2","1994","Video System Co.","",&neogeo_mvs_machine_driver)
+NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Video System Co.","Santeri Saarimaa\nAtila Mert",&neogeo_mvs_machine_driver)
+NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.","",&neogeo_mvs_machine_driver)
 NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco","",&neogeo_mvs_machine_driver)
 NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco","Marko Pusljar (SI)",&neogeo_mvs_machine_driver)
 NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco","",&neogeo_mvs_machine_driver)
@@ -3924,7 +4016,7 @@ NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face","Santeri Saarimaa",&ne
 /* SNK */
 NEODRIVER(nam_1975,"NAM 1975","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(cyberlip,"Cyber Lip","1990","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(legendos,"Legend of Success Joe / Ashita No Joe Densetsu","1991","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury2,"Fatal Fury 2","1992","SNK","",&neogeo_mvs_machine_driver)
@@ -3938,6 +4030,7 @@ NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK","Santeri Saarimaa",&n
 NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(sskick3, "Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(savagere,"Savage Reign","1995","SNK","Rodimus Prime",&neogeo_mvs_machine_driver)

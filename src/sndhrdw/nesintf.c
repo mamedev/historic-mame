@@ -53,7 +53,7 @@ int NESPSG_sh_start(struct NESinterface *interface)
 			return 1;
 		}
 	}
-	if (NESInit(intf->num,intf->clock,emulation_rate,sample_bits,buffer_len,buffer) == 0)
+	if (NESInit(intf->num,intf->baseclock,emulation_rate,sample_bits,buffer_len,buffer) == 0)
 	{
 		channel = get_play_channels( intf->num );
 
@@ -129,8 +129,8 @@ void NESPSG_sh_update(void)
 	{
 		sample_pos[i] = 0;
 		if( sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+i,buffer[i],2*buffer_len,emulation_rate,volume[i]);
+			osd_play_streamed_sample_16(channel+i,buffer[i],2*buffer_len,emulation_rate,volume[i],0);
 		else
-			osd_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate,volume[i]);
+			osd_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate,volume[i],0);
 	}
 }

@@ -543,6 +543,7 @@ int frontend_help (int argc, char **argv)
 										case SOUND_YM2151_ALT: printf("YM-2151a"); break;
 										case SOUND_YM2413:     printf("YM-2413 "); break;
 										case SOUND_YM2610:     printf("YM-2610 "); break;
+										case SOUND_YM3526:     printf("YM-3526 "); break;
 										case SOUND_YM3812:     printf("YM-3812 "); break;
 										case SOUND_SN76496:    printf("SN76496 "); break;
 										case SOUND_POKEY:      printf("Pokey   "); break;

@@ -207,7 +207,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	4000000,	/* 4 MHz */
-	{ 255, 255 }
+	{ 70, 70 }
 };
 
 
@@ -300,11 +300,32 @@ ROM_START( mrdot_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
+ROM_START( mrdofix_rom )
+    ROM_REGION(0x10000) /* 64k for code */
+    ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
+    ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+    ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
+    ROM_LOAD( "dofix.d4",     0x6000, 0x2000, 0x32db845f )
+
+    ROM_REGION_DISPOSE(0x6000)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
+    ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
+    ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+    ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+    ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+    ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+    ROM_REGION(0x0060)  /* color PROMs */
+    ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )  /* palette (high bits) */
+    ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )  /* palette (low bits) */
+    ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )  /* sprite color lookup table */
+ROM_END
+
 ROM_START( mrlo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mrlo01.bin",   0x0000, 0x2000, 0x6f455e7d )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
-	ROM_LOAD( "mrlo03.bin",   0x4000, 0x2000, 0x3a7d039b )
+	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
 	ROM_LOAD( "mrlo04.bin",   0x6000, 0x2000, 0x49c10274 )
 
 	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
@@ -356,6 +377,27 @@ ROM_START( mrdoy_rom )
 	ROM_LOAD( "dosnow.7",     0x3000, 0x1000, 0xac8ffddf )
 	ROM_LOAD( "dosnow.5",     0x4000, 0x1000, 0x7662d828 )
 	ROM_LOAD( "dosnow.6",     0x5000, 0x1000, 0x413f88d1 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
+ROM_END
+
+ROM_START( yankeedo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
+	ROM_LOAD( "yd_d2.c4",     0x2000, 0x2000, 0x7c9d7ce0 )
+	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
+	ROM_LOAD( "f4-04.bin",    0x6000, 0x2000, 0xf4190cfc )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin",    0x0000, 0x1000, 0xaa80c5b6 )
+	ROM_LOAD( "u8-10.bin",    0x1000, 0x1000, 0xd20ec85b )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "yd_d5.h5",     0x4000, 0x1000, 0xf530b79b )
+	ROM_LOAD( "yd_d6.k5",     0x5000, 0x1000, 0x790579aa )
 
 	ROM_REGION(0x0060)	/* color PROMs */
 	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
@@ -455,6 +497,32 @@ struct GameDriver mrdot_driver =
 	hiload, hisave
 };
 
+struct GameDriver mrdofix_driver =
+{
+    __FILE__,
+    &mrdo_driver,
+    "mrdofix",
+    "Mr. Do! (bugfixed)",
+    "1982",
+    "Universal (Taito license)",
+    "Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+    0,
+    &machine_driver,
+    0,
+
+    mrdofix_rom,
+    0, 0,
+    0,
+    0,  /* sound_prom */
+
+    input_ports,
+
+    PROM_MEMORY_REGION(2), 0, 0,
+    ORIENTATION_ROTATE_270,
+
+    hiload, hisave
+};
+
 struct GameDriver mrlo_driver =
 {
 	__FILE__,
@@ -489,7 +557,7 @@ struct GameDriver mrdu_driver =
 	"Mr. Du!",
 	"1982",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
@@ -516,12 +584,38 @@ struct GameDriver mrdoy_driver =
 	"Mr. Do! (Yukidaruma)",
 	"1982",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
 
 	mrdoy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver yankeedo_driver =
+{
+	__FILE__,
+	&mrdo_driver,
+	"yankeedo",
+	"Yankee DO! (Two Bit Score)",
+	"1982",
+	"bootleg",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	yankeedo_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -454,7 +454,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1789790,	/* 1.5 MHz??? */
-	128,
+	40,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -475,7 +475,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
+	{ 40 },
 	{ 0 }
 };
 

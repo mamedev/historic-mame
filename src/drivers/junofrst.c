@@ -610,7 +610,7 @@ struct GameDriver junofrst_driver =
 	"Juno First",
 	"1983",
 	"Konami",
-	"Chris Hardy (MAME driver) Mirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
+	"Chris Hardy (MAME driver)\nMirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,

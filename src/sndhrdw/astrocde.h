@@ -7,7 +7,7 @@
 struct astrocade_interface
 {
 	int num;			/* total number of sound chips in the machine */
-	int clock;			/* astrocade clock rate  */
+	int baseclock;			/* astrocade clock rate  */
 	int volume;			/* master volume */
 };
 

@@ -11,7 +11,7 @@ extern char *dirty_new;
 #define osd_mark_vector_dirty(x,y) dirty_new[(y)/16 * DIRTY_H + (x)/16] = 1
 
 #define vec_mult _vec_mult
-inline int _vec_mult(int x, int y)
+INLINE int _vec_mult(int x, int y)
 {
 	int result;
 	asm (

@@ -13,6 +13,9 @@
 #define MCU_DEBUG 0
 
 
+int arkanoid_coin_lockout;
+int arkanoid_paddle_select;
+
 static int fromz80, toz80;
 static int z80write, m68705write;
 static int stickybits;
@@ -100,6 +103,18 @@ int arkanoid_input_0_r (int offset)
 {
 	int result = input_port_0_r (offset);
 
+	if (arkanoid_coin_lockout)
+	{
+		result &= 0xcf;
+	}
+
+	return result;
+}
+
+int arkanoid_68705_input_0_r (int offset)
+{
+	int result = arkanoid_input_0_r (offset);
+
 	/* bit 0x40 comes from the sticky bit */
 	result |= (stickybits & 0x04) << 4;
 
@@ -111,3 +126,16 @@ int arkanoid_input_0_r (int offset)
 
 	return result;
 }
+
+int arkanoid_input_2_r (int offset)
+{
+	if (arkanoid_paddle_select)
+	{
+		return input_port_3_r(offset);
+	}
+	else
+	{
+		return input_port_2_r(offset);
+	}
+}
+

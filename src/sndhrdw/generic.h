@@ -8,7 +8,7 @@
 #include "3812intf.h"
 #include "2413intf.h"
 #include "sn76496.h"
-#include "pokyintf.h"
+#include "pokey.h"
 #include "namco.h"
 #include "nesintf.h"
 #include "5220intf.h"

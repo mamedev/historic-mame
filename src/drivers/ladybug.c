@@ -49,11 +49,11 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x8000, 0x8fff, MRA_NOP },
 	{ 0x9000, 0x9000, input_port_0_r },	/* IN0 */
+	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
 	{ 0x9002, 0x9002, input_port_3_r },	/* DSW0 */
 	{ 0x9003, 0x9003, input_port_4_r },	/* DSW1 */
 	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
@@ -419,7 +419,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	4000000,	/* 4 MHz */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 
@@ -739,7 +739,7 @@ struct GameDriver snapjack_driver =
 	"Snap Jack",
 	"1981?",
 	"Universal",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&machine_driver,
 	0,
@@ -765,7 +765,7 @@ struct GameDriver cavenger_driver =
 	"Cosmic Avenger",
 	"1981",
 	"Universal",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&machine_driver,
 	0,

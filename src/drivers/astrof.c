@@ -338,13 +338,23 @@ ROM_START( tomahaw5_rom )
 ROM_END
 
 
-static int hiload(void)
+static int astrof_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
+	static int firsttime = 0;
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0000],"\x0c",1) == 0)
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x0084],0xff,2);
+		firsttime = 1;
+	}
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0084],"\x00\x00",2) == 0)
 	{
 		void *f;
 
@@ -354,12 +364,13 @@ static int hiload(void)
 			osd_fread(f,&RAM[0x0084],2);
 			osd_fclose(f);
 		}
+		firsttime = 0 ;
 		return 1;
 	}
 	else return 0;   /* we can't load the hi scores yet */
 }
 
-static void hisave(void)
+static void astrof_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -372,8 +383,55 @@ static void hisave(void)
 	}
 }
 
+static int tomahawk_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime = 0;
 
-#define CREDITS "Lee Taylor\nLucy Anne Taylor(Whose birth 27/11/1997 made this driver possible)\nSanteri Saarimaa (high score save)\nZsolt Vasvari"
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x000d],0xff,2);
+		firsttime = 1;
+	}
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x000d],"\x00\x00",2) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x000d],2);
+			osd_fclose(f);
+		}
+		firsttime = 0 ;
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void tomahawk_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x000d],2);
+		osd_fclose(f);
+	}
+}
+
+
+
+#define CREDITS "Lee Taylor\nLucy Anne Taylor(Whose birth 27/11/1997 made this driver possible)\nZsolt Vasvari"
 
 struct GameDriver astrof_driver =
 {
@@ -398,7 +456,7 @@ struct GameDriver astrof_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	astrof_hiload, astrof_hisave
 };
 
 struct GameDriver astrof2_driver =
@@ -424,7 +482,7 @@ struct GameDriver astrof2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	astrof_hiload, astrof_hisave
 };
 
 struct GameDriver astrof3_driver =
@@ -450,7 +508,7 @@ struct GameDriver astrof3_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	astrof_hiload, astrof_hisave
 };
 
 struct GameDriver tomahawk_driver =
@@ -476,8 +534,8 @@ struct GameDriver tomahawk_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	//hiload, hisave
-	0, 0
+	tomahawk_hiload, tomahawk_hisave
+
 };
 
 struct GameDriver tomahaw5_driver =
@@ -503,6 +561,6 @@ struct GameDriver tomahaw5_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
-	//hiload, hisave
-	0, 0
+
+	tomahawk_hiload, tomahawk_hisave
 };

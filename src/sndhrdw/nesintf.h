@@ -7,7 +7,7 @@
 struct NESinterface
 {
 	int num;	/* total number of chips in the machine */
-	int clock;
+	int baseclock;
 	int volume[MAX_NESPSG];
 };
 

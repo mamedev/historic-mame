@@ -7,8 +7,14 @@
 #include "M68000.H"
 #include "osd_dbg.h"
 
-extern void M68KRUN(void);
-extern void M68KRESET(void);
+#ifdef WIN32
+#define CONVENTION __cdecl
+#else
+#define CONVENTION
+#endif
+
+extern void CONVENTION M68KRUN(void);
+extern void CONVENTION M68KRESET(void);
 
 
 /********************************************/

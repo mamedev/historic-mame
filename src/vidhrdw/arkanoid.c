@@ -13,6 +13,8 @@
 
 static int flipscreen[2];
 static int gfxbank,palettebank;
+extern int arkanoid_paddle_select;
+extern int arkanoid_coin_lockout;
 
 
 
@@ -78,9 +80,11 @@ void arkanoid_d008_w(int offset,int data)
 		memset(dirtybuffer,1,videoram_size);
 	}
 
-	/* bit 2 selects the input paddle - not supported */
+	/* bit 2 selects the input paddle */
+    arkanoid_paddle_select = data & 0x04;
 
-	/* bit 3 is unknown */
+	/* bit 3 is coin lockout */
+    arkanoid_coin_lockout = !(data & 0x08);
 
 	/* bit 4 is unknown */
 

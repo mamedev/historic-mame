@@ -913,9 +913,9 @@ ROM_START( tmnt_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26",      0x00000, 0x10000, 0xfebae232 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x10000, 0x10000, 0x8567a007 ) /* samples for UPD7759C */
+	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmntj_rom )
@@ -943,9 +943,9 @@ ROM_START( tmntj_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26",      0x00000, 0x10000, 0xfebae232 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x10000, 0x10000, 0x8567a007 ) /* samples for UPD7759C */
+	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmht2p_rom )
@@ -973,9 +973,9 @@ ROM_START( tmht2p_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26",      0x00000, 0x10000, 0xfebae232 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x10000, 0x10000, 0x8567a007 ) /* samples for UPD7759C */
+	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( tmnt2pj_rom )
@@ -1003,9 +1003,9 @@ ROM_START( tmnt2pj_rom )
 	ROM_REGION(0x80000)	/* 512k for the title music sample */
 	ROM_LOAD( "963-a25",      0x00000, 0x80000, 0xfca078c7 )
 
-	ROM_REGION(0x20000)	/* 64k+64k+512k for the samples */
-	ROM_LOAD( "963-a26",      0x00000, 0x10000, 0xfebae232 ) /* samples for 007232 */
-	ROM_LOAD( "963-a27",      0x10000, 0x10000, 0x8567a007 ) /* samples for UPD7759C */
+	ROM_REGION(0x40000)	/* 128k+128k for the samples */
+	ROM_LOAD( "963-a26",      0x00000, 0x20000, 0xe2ac3063 ) /* samples for 007232 */
+	ROM_LOAD( "963-a27",      0x20000, 0x20000, 0x2dfd674b ) /* samples for UPD7759C */
 ROM_END
 
 ROM_START( punkshot_rom )

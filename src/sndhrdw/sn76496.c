@@ -15,8 +15,6 @@
 #include "driver.h"
 
 
-//#define DEBUG_PITCH
-
 #ifdef SIGNED_SAMPLES
 	#define MAX_OUTPUT 0x7fff
 	#define AUDIO_CONV(A) (A)
@@ -39,7 +37,8 @@
 
 /* noise feedback for periodic noise mode */
 /* it is correct maybe (it was in the Megadrive sound manual) */
-#define FB_PNOISE 0x10000	/* 16bit rorate */
+//#define FB_PNOISE 0x10000	/* 16bit rorate */
+#define FB_PNOISE 0x08000   /* JH 981127 - fixes Do Run Run */
 
 /* noise generator start preset (for periodic noise) */
 #define NG_PRESET 0x0f35
@@ -70,18 +69,6 @@ static void SN76496Write(int chip,int data)
 {
 	struct SN76496 *R = &sn[chip];
 
-#ifdef DEBUG_PITCH
-static int base = 5000;
-if (osd_key_pressed(OSD_KEY_Z))
-{
-	if (base > 0) base--;
-}
-if (osd_key_pressed(OSD_KEY_X))
-{
-	if (base < 10000) base++;
-}
-osd_on_screen_display("PITCH",base/100);
-#endif
 
 	/* update the output buffer before changing the registers */
 	stream_update(R->Channel,0);
@@ -102,13 +89,9 @@ osd_on_screen_display("PITCH",base/100);
 				if (R->Period[c] == 0) R->Period[c] = R->UpdateStep;
 				if (r == 4)
 				{
+					/* update noise shift frequency */
 					if ((R->Register[6] & 0x03) == 0x03)
-{
 						R->Period[3] = 2 * R->Period[2];
-#ifdef DEBUG_PITCH
-if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
-#endif
-}
 				}
 				break;
 			case 1:	/* tone 0 : volume */
@@ -123,10 +106,8 @@ if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
 					R->NoiseFB = (n & 4) ? FB_WNOISE : FB_PNOISE;
 					n &= 3;
 					/* N/512,N/1024,N/2048,Tone #3 output */
-					R->Period[3] = (n == 3) ? 2 * R->Period[2] : R->UpdateStep << (5+n);
-#ifdef DEBUG_PITCH
-if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
-#endif
+					R->Period[3] = (n == 3) ? 2 * R->Period[2] : (R->UpdateStep << (5+n));
+
 					/* reset noise shifter */
 					R->RNG = NG_PRESET;
 					R->Output[3] = R->RNG & 1;
@@ -149,13 +130,9 @@ if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
 				if (R->Period[c] == 0) R->Period[c] = R->UpdateStep;
 				if (r == 4)
 				{
+					/* update noise shift frequency */
 					if ((R->Register[6] & 0x03) == 0x03)
-{
 						R->Period[3] = 2 * R->Period[2];
-#ifdef DEBUG_PITCH
-if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
-#endif
-}
 				}
 				break;
 		}
@@ -218,7 +195,7 @@ static void SN76496_set_volume(int chip,int volume,int gain)
 	gain &= 0xff;
 
 	/* increase max output basing on gain (0.2 dB per step) */
-	out = MAX_OUTPUT;
+	out = MAX_OUTPUT / 3;
 	while (gain-- > 0)
 		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
 
@@ -226,7 +203,7 @@ static void SN76496_set_volume(int chip,int volume,int gain)
 	for (i = 0;i < 15;i++)
 	{
 		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT / 4) R->VolTable[i] = MAX_OUTPUT / 4;
+		if (out > MAX_OUTPUT / 3) R->VolTable[i] = MAX_OUTPUT / 3;
 		else R->VolTable[i] = out;
 
 		out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
@@ -284,7 +261,7 @@ int SN76496_sh_start(struct SN76496interface *interface)
 
 	for (chip = 0;chip < interface->num;chip++)
 	{
-		if (SN76496_init(chip,interface->clock,Machine->sample_rate,Machine->sample_bits) != 0)
+		if (SN76496_init(chip,interface->baseclock,Machine->sample_rate,Machine->sample_bits) != 0)
 			return 1;
 
 		SN76496_set_volume(chip,interface->volume[chip] & 0xff,(interface->volume[chip] >> 8) & 0xff);

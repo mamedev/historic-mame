@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "osd_cpu.h"
 
 /* #define MEM_DUMP */
 
@@ -36,10 +37,10 @@ static void mem_dump( void );
 	#define SHIFT3 8
 #else
 	#define BYTE_XOR_BE(a) (a)
-	#define BYTE_XOR_LE(a) ( (char*) ((unsigned int) (a) ^ 1) )
+	#define BYTE_XOR_LE(a) ((a) ^ 1)
 	#define BIG_DWORD_BE(x) (x)
 	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
-	/* GSL 980224 Shift values for bytes within a word, used by the misaligned word load/store code */
+	/* GSL 980224 Shift values for bytes within a word, used by the  misaligned word load/store code */
 	#define SHIFT0 24
 	#define SHIFT1 16
 	#define SHIFT2 8
@@ -2007,7 +2008,11 @@ void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
 	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
 	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+#ifdef linux_alpha
+	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
+#else
 	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+#endif
 	abitsmin = ABITSMIN (cpu);
 
 	/* see if this function is already registered */
@@ -2104,7 +2109,11 @@ void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int,
 	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
 	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
 	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+#ifdef linux_alpha
+	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
+#else
 	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+#endif
 	abitsmin = ABITSMIN (cpu);
 
 	/* see if this function is already registered */

@@ -676,7 +676,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             else
             	middle = 168;
 
-           	osd_mark_dirty(25,0,46,319,0);
+           	osd_mark_dirty(middle-10,1,middle+10,318,0);
 	        for(y=middle-10;y<middle+11;y++)
 				bitmap->line[centre][y] = Machine->pens[0x77];
 
@@ -694,7 +694,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             else
             	middle = 35;
 
-           	osd_mark_dirty(middle-10,0,middle+10,319,0);
+           	osd_mark_dirty(1,middle-10,318,middle+10,0);
 	        for(y=middle-10;y<middle+11;y++)
 				bitmap->line[y][centre] = Machine->pens[0x77];
 
@@ -722,6 +722,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	            else
     	        	middle = 170;
 
+           		osd_mark_dirty(middle-10,1,middle+10,318,0);
 	            for(y=middle-10;y<middle+11;y++)
                	    bitmap->line[centre][y] = Machine->pens[0x58];
 
@@ -739,11 +740,12 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         	    else
             		middle = 33;
 
+           		osd_mark_dirty(1,middle-10,318,middle+10,0);
 	            for(y=middle-10;y<middle+11;y++)
 			        bitmap->line[y][centre] = Machine->pens[0x58];
 
     	        for(x=centre-20;x<centre+21;x++)
-        	        if((x>0) && (x<=319))
+        	        if((x>0) && (x<319))
                         bitmap->line[middle][x] = Machine->pens[0x58];
             }
         }

@@ -87,20 +87,21 @@ static void tecmo_sound_command_w(int offset,int data)
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
 
-static int tecmo_adpcm_start;
+static int adpcm_start,adpcm_end;
 
-static void tecmo_adpcm_lo_w(int offset,int data)
+static void tecmo_adpcm_start_w(int offset,int data)
 {
-	tecmo_adpcm_start = (tecmo_adpcm_start & 0xff00) | data;
+	adpcm_start = data << 8;
 }
-static void tecmo_adpcm_hi_w(int offset,int data)
+static void tecmo_adpcm_end_w(int offset,int data)
 {
-	tecmo_adpcm_start = (tecmo_adpcm_start & 0x00ff) | (data << 8);
+	adpcm_end = (data + 1) << 8;
 }
 static void tecmo_adpcm_trigger_w(int offset,int data)
 {
+	ADPCM_setvol(0,(data & 0x0f) * 100 / 0x0f);
 	if (data & 0x0f)	/* maybe this selects the volume? */
-		ADPCM_trigger(0,tecmo_adpcm_start);
+		ADPCM_play(0,adpcm_start,(adpcm_end - adpcm_start)*2);
 }
 
 
@@ -223,8 +224,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, YM3812_control_port_0_w },
 	{ 0xa001, 0xa001, YM3812_write_port_0_w },
-	{ 0xc000, 0xc000, tecmo_adpcm_lo_w },
-	{ 0xc400, 0xc400, tecmo_adpcm_hi_w },
+	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
+	{ 0xc400, 0xc400, tecmo_adpcm_end_w },
 	{ 0xc800, 0xc800, tecmo_adpcm_trigger_w },
 	{ 0xcc00, 0xcc00, MWA_NOP },	/* NMI acknowledge? */
 	{ -1 }	/* end of table */
@@ -244,8 +245,8 @@ static struct MemoryWriteAddress rygar_sound_writemem[] =
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, YM3812_control_port_0_w },
 	{ 0x8001, 0x8001, YM3812_write_port_0_w },
-	{ 0xc000, 0xc000, tecmo_adpcm_hi_w },
-	{ 0xd000, 0xd000, tecmo_adpcm_lo_w },
+	{ 0xc000, 0xc000, tecmo_adpcm_start_w },
+	{ 0xd000, 0xd000, tecmo_adpcm_end_w },
 	{ 0xe000, 0xe000, tecmo_adpcm_trigger_w },
 	{ 0xf000, 0xf000, MWA_NOP },	/* NMI acknowledge? */
 	{ -1 }	/* end of table */
@@ -996,68 +997,6 @@ ROM_END
 
 
 
-ADPCM_SAMPLES_START(rygar_samples)
-	ADPCM_SAMPLE(0x0005, 0x0005, (0x060b-0x0005)*2)
-	ADPCM_SAMPLE(0x060b, 0x060b, (0x0c1a-0x060b)*2)
-	ADPCM_SAMPLE(0x0c1a, 0x0c1a, (0x1a3f-0x0c1a)*2)
-	ADPCM_SAMPLE(0x1a3f, 0x1a3f, (0x4000-0x1a3f)*2)
-ADPCM_SAMPLES_END
-
-/* We are probably missing some samples here. The first half of the ADPCM ROMs */
-/* of Silkworm and Gemini Wing is identical, and it is the only part used here. */
-ADPCM_SAMPLES_START(silkworm_samples)
-	ADPCM_SAMPLE(0x0000, 0x0000, 0x0100*2)
-	ADPCM_SAMPLE(0x0100, 0x0100, 0x0200*2)
-	ADPCM_SAMPLE(0x0300, 0x0300, 0x0100*2)
-	ADPCM_SAMPLE(0x0404, 0x0404, 0x0100*2)
-	ADPCM_SAMPLE(0x0504, 0x0504, 0x0200*2)
-	ADPCM_SAMPLE(0x0704, 0x0704, 0x0100*2)
-	ADPCM_SAMPLE(0x0808, 0x0808, 0x0100*2)
-	ADPCM_SAMPLE(0x0908, 0x0908, 0x0200*2)
-	ADPCM_SAMPLE(0x0b08, 0x0b08, 0x0100*2)
-	ADPCM_SAMPLE(0x0c0c, 0x0c0c, 0x0100*2)
-	ADPCM_SAMPLE(0x0d0c, 0x0d0c, 0x0200*2)
-	ADPCM_SAMPLE(0x0f0c, 0x0f0c, 0x0100*2)
-	ADPCM_SAMPLE(0x1010, 0x1010, 0x0100*2)
-	ADPCM_SAMPLE(0x1110, 0x1110, 0x0200*2)
-	ADPCM_SAMPLE(0x1310, 0x1310, 0x0100*2)
-	ADPCM_SAMPLE(0x1414, 0x1414, 0x0100*2)
-	ADPCM_SAMPLE(0x1514, 0x1514, 0x0200*2)
-	ADPCM_SAMPLE(0x1714, 0x1714, 0x0100*2)
-	ADPCM_SAMPLE(0x1818, 0x1818, 0x0100*2)
-	ADPCM_SAMPLE(0x1918, 0x1918, 0x0200*2)
-	ADPCM_SAMPLE(0x1b18, 0x1b18, 0x0100*2)
-	ADPCM_SAMPLE(0x1c1c, 0x1c1c, 0x0100*2)
-	ADPCM_SAMPLE(0x1d1c, 0x1d1c, 0x0200*2)
-	ADPCM_SAMPLE(0x1f1c, 0x1f1c, 0x0100*2)
-	ADPCM_SAMPLE(0x2020, 0x2020, 0x0100*2)
-	ADPCM_SAMPLE(0x2120, 0x2120, 0x0200*2)
-	ADPCM_SAMPLE(0x2320, 0x2320, 0x0100*2)
-	ADPCM_SAMPLE(0x2424, 0x2424, 0x0100*2)
-	ADPCM_SAMPLE(0x2524, 0x2524, 0x0200*2)
-	ADPCM_SAMPLE(0x2724, 0x2724, 0x0100*2)
-	ADPCM_SAMPLE(0x2828, 0x2828, 0x0100*2)
-	ADPCM_SAMPLE(0x2928, 0x2928, 0x0200*2)
-	ADPCM_SAMPLE(0x2b28, 0x2b28, 0x0100*2)
-	ADPCM_SAMPLE(0x2c2c, 0x2c2c, 0x0100*2)
-	ADPCM_SAMPLE(0x2d2c, 0x2d2c, 0x0200*2)
-	ADPCM_SAMPLE(0x2f2c, 0x2f2c, 0x0100*2)
-	ADPCM_SAMPLE(0x3030, 0x3030, 0x0100*2)
-	ADPCM_SAMPLE(0x3130, 0x3130, 0x0200*2)
-	ADPCM_SAMPLE(0x3330, 0x3330, 0x0100*2)
-	ADPCM_SAMPLE(0x3434, 0x3434, 0x0100*2)
-	ADPCM_SAMPLE(0x3534, 0x3534, 0x0200*2)
-	ADPCM_SAMPLE(0x3734, 0x3734, 0x0100*2)
-	ADPCM_SAMPLE(0x3838, 0x3838, 0x0100*2)
-	ADPCM_SAMPLE(0x3938, 0x3938, 0x0200*2)
-	ADPCM_SAMPLE(0x3b38, 0x3b38, 0x0100*2)
-	ADPCM_SAMPLE(0x3c3c, 0x3c3c, 0x0100*2)
-	ADPCM_SAMPLE(0x3d3c, 0x3d3c, 0x0200*2)
-	ADPCM_SAMPLE(0x3f3c, 0x3f3c, 0x0100*2)
-ADPCM_SAMPLES_END
-
-
-
 static int rygar_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1211,7 +1150,7 @@ struct GameDriver rygar_driver =
 	rygar_rom,
 	0, 0,
 	0,
-	(void *)rygar_samples,	/* sound_prom */
+	0,
 
 	rygar_input_ports,
 
@@ -1237,7 +1176,7 @@ struct GameDriver rygar2_driver =
 	rygar2_rom,
 	0, 0,
 	0,
-	(void *)rygar_samples,	/* sound_prom */
+	0,
 
 	rygar_input_ports,
 
@@ -1263,7 +1202,7 @@ struct GameDriver rygarj_driver =
 	rygarj_rom,
 	0, 0,
 	0,
-	(void *)rygar_samples,	/* sound_prom */
+	0,
 
 	rygar_input_ports,
 
@@ -1289,7 +1228,7 @@ struct GameDriver gemini_driver =
 	gemini_rom,
 	0, 0,
 	0,
-	(void *)silkworm_samples,	/* sound_prom */
+	0,
 
 	gemini_input_ports,
 
@@ -1315,7 +1254,7 @@ struct GameDriver silkworm_driver =
 	silkworm_rom,
 	0, 0,
 	0,
-	(void *)silkworm_samples,	/* sound_prom */
+	0,
 
 	silkworm_input_ports,
 
@@ -1341,7 +1280,7 @@ struct GameDriver silkwrm2_driver =
 	silkwrm2_rom,
 	0, 0,
 	0,
-	(void *)silkworm_samples,	/* sound_prom */
+	0,
 
 	silkworm_input_ports,
 

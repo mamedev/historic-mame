@@ -820,7 +820,7 @@ struct GameDriver locomotn_driver =
 	"Loco-Motion",
 	"1982",
 	"Konami (Centuri license)",
-	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
+	"Nicola Salmoria\nKevin Klopp (color info)",
 	0,
 	&locomotn_machine_driver,
 	0,

@@ -2,10 +2,7 @@
 
   Black Tiger
 
-  Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  Please do not send anything large to this address without asking me
-  first.
+  Driver provided by Paul Leaman
 
   Thanks to Ishmair for providing information about the screen
   layout on level 3.
@@ -419,7 +416,9 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe204],"\x02\x00\x00",3) == 0 &&
-			memcmp(&RAM[0xe244],"\x01\x02\x00",3) == 0)
+			memcmp(&RAM[0xe244],"\x01\x02\x00",3) == 0 &&
+			memcmp(&RAM[0xe012],"\x6a\x81\x00",3) == 0)
+
 	{
 		void *f;
 
@@ -459,7 +458,7 @@ struct GameDriver blktiger_driver =
 	"Black Tiger",
 	"1987",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
 	0,
 	&machine_driver,
 	0,
@@ -485,7 +484,7 @@ struct GameDriver bktigerb_driver =
 	"Black Tiger (bootleg)",
 	"1987",
 	"bootleg",
-	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
 	0,
 	&machine_driver,
 	0,
@@ -511,7 +510,7 @@ struct GameDriver blkdrgon_driver =
 	"Black Dragon",
 	"1987",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
 	0,
 	&machine_driver,
 	0,

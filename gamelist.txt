@@ -2,7 +2,8 @@ Supported Games
 ---------------
 
 Here is a quick list of the currently supported games; read on for details.
-The list doesn't include variants of the same game.
+The list doesn't include variants of the same game; use the -listclones command
+to list them.
 
 
 ================================================================================
@@ -33,7 +34,7 @@ The list doesn't include variants of the same game.
 | Asteroids Deluxe     |  Yes   |  Yes   |  Yes   |  Yes   |   No   | astdelux |
 | Astro Blaster        |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | astrob   |
 | Astro Fighter        |  Yes   |  Yes   |   No   |  Yes   |  Yes   | astrof   |
-| Astro Invader        |  Yes   |  Yes   |  Yes   |   No   |   No   | astinvad |
+| Astro Invader        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | astinvad |
 | Atari Basketball     |  Yes   |  b/w   |Partial |  n/a   |   No   | bsktball |
 | Aurail               |   No   |  Yes   |   No   |   No   |   No   | aurail   |
 | Avalanche            |  Yes   |  b/w   |  Yes   |  Yes   |  n/a   | avalnche |
@@ -46,13 +47,13 @@ The list doesn't include variants of the same game.
 | Battle of Atlantis   |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | atlantis |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
-| Bionic Commando      |  Yes   |  Yes   |  Yes   |   No   |   No   | bionicc  |
+| Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bionicc  |
 | Birdie King 2        |   No   |   No   |   No   |   No   |   No   | bking2   |
 | Black Tiger          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blktiger |
-| Black Widow          |  Yes   | Close  |  Yes   |   No   |   No   | bwidow   |
+| Black Widow          |  Yes   | Close  |  Yes   |  Yes   |   No   | bwidow   |
 | Blaster              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blaster  |
 | Blasteroids          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blstroid |
-| Blasto               |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blasto   |
+| Blasto               |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | blasto   |
 | Block Gal            |   No   |  Yes   |  Yes   |   No   |   No   | blockgal |
 | Block Out            |  Yes   |  Yes   |  Yes   |   No   |   No   | blockout |
 | Blockade             |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blockade |
@@ -61,7 +62,7 @@ The list doesn't include variants of the same game.
 | Boot Hill            |  Yes   |  b/w   | Yes(1) |  n/a   |   No   | boothill |
 | Bosconian            |  Yes   |  Yes   |  Yes   |   No   |   No   | bosco    |
 | Bowl-O-Rama          |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | bowlrama |
-| Brain                |  Yes   |   No   |  Yes   |   No   |   No   | brain    |
+| Brain                |  Yes   |   No   |  Yes   |  Yes   |   No   | brain    |
 | Break Thru           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | brkthru  |
 | Bubble Bobble        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bublbobl |
 | Bubbles              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bubbles  |
@@ -78,19 +79,20 @@ The list doesn't include variants of the same game.
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
 | Championship Sprint  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csprint  |
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
-| Chelnov              |Partial |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
+| Cheeky Mouse         |   No   |   No   |   No   |   No   |   No   | cheekyms |
+| Chelnov              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
 | Choplifter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chplftb  |
 | Circus               |  Yes   |Overlay |Partial |  Yes   |   No   | circus   |
 | Circus Charlie       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | circusc  |
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
-| Cloak & Dagger       |  Yes   |  Yes   |  Yes   |   No   |   No   | cloak    |
+| Cloak & Dagger       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cloak    |
 | Cobra Command        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cobracom |
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
 | Commando (Sega)      |   No   |   No   |  Yes   |  Yes   |  Yes   | commsega |
 | Congo Bongo          |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | congo    |
 | Contra               |  Yes   | Close  |  Yes   |  Yes   |   No   | contra   |
-| Cop 01               |  Yes   | Close  |  Yes   |   No   |   No   | cop01    |
+| Cop 01               |  Yes   | Close  |  Yes   |  Yes   |   No   | cop01    |
 | Cops'n Robbers       |  Yes   |Overlay |   No   |  n/a   |  n/a   | copsnrob |
 | Cosmic Alien         |  Yes   |   No   |   No   |   No   |   No   | cosmica  |
 | Cosmic Avenger       |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | cavenger |
@@ -133,7 +135,7 @@ The list doesn't include variants of the same game.
 | Escape from the Planet  Yes   |  Yes   |  Yes   |  Yes   |   No   | eprom    |
 | Espial               |  Yes   |  Yes?  |  Yes   |   No   |   No   | espial   |
 | Exed Exes            |  Yes   |  Yes   |Partial |  Yes   |   No   | exedexes |
-| Exciting Soccer      |  Yes   |  Yes?  |  Yes   |   No   |   No   | exctsccr |
+| Exciting Soccer      |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | exctsccr |
 | Exerion              |  Yes   |   No   |  Yes   |  Yes   |   No   | exerion  |
 | Express Raider       |  Yes   |  Yes   |  Yes   |   No   |   No   | exprraid |
 | Exterminator         |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | exterm   |
@@ -151,12 +153,13 @@ The list doesn't include variants of the same game.
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
 | Food Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | foodf    |
 | Formation Z          |   No   |   No   |  Yes   |   No   |   No   | formatz  |
-| Frenzy               |  Yes   |  Yes   | Yes(1) |   No   |   No   | frenzy   |
+| Frenzy               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | frenzy   |
 | Frisky Tom           |   No   |  Yes   |  Yes   |   No   |   No   | friskyt  |
 | Frogger              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | frogger  |
 | Frogs                |  Yes   |  b/w   |   No   |   No   |   No   | frogs    |
 | Front Line           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | frontlin |
-| Future Spy           |  Yes   |  Yes   |   No   |   No   |   No   | futspy   |
+| Future Spy           |  Yes   |  Yes   |   No   |  Yes   |   No   | futspy   |
+| Galactic Warriors    |  Yes   |  Yes   |  Yes   |   No   |   No   | gwarrior |
 | Galaga               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | galaga   |
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
 | Gardia               |   No   |  Yes   |  Yes   |   No   |   No   | gardia   |
@@ -174,6 +177,7 @@ The list doesn't include variants of the same game.
 | Great Swordsman      |  Yes   |   No   |   No   |  Yes   |   No   | gsword   |
 | Green Beret          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
 | Gridiron Fight       |  Yes   |  Yes   |  Yes   |   No   |   No   | gridiron |
+| Growl                |  Yes   |  Yes   |  Yes   |   No   |   No   | growl    |
 | Gun Dealer           |  Yes   |  Yes   |  Yes   |   No   |   No   | gundealr |
 | Gunsmoke             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gunsmoke |
 | Guzzler              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | guzzler  |
@@ -181,9 +185,10 @@ The list doesn't include variants of the same game.
 | Gyruss               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gyruss   |
 | Hard Hat             |  Yes   |  Yes   |   No   |   No   |   No   | hardhat  |
 | Head On              |  Yes   |  b/w   |   No   |   No   |   No   | headon   |
-| Heavy Barrel         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | heavyb   |
-| Heavy Metal          |  Yes   |  Yes   |  Yes   |   No   |   No   | hvymetal |
+| Heavy Barrel         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hbarrel  |
+| Heavy Metal          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hvymetal |
 | Heavyweight Champ    |   No   |  Yes   |   No   |   No   |   No   | hwchamp  |
+| Heiankyo Alien       |  Yes   |  Yes   |   No   |   No   |  Yes   | heiankyo |
 | Hexa                 |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | hexa     |
 | Hi Impact Football   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hiimpact |
 | HigeMaru             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | higemaru |
@@ -193,15 +198,16 @@ The list doesn't include variants of the same game.
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
 | I, Robot             |   No   |   No   |   No   |   No   |   No   | irobot   |
 | Indiana Jones        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | indytemp |
-| Intrepid             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | intrepid |
+| Intrepid             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | intrepid |
 | Invinco              |  Yes   |  Yes?  |   No   |   No   |   No   | invinco  |
 | Invinco / Deep Scan  |  Yes   |  Yes   |   No   |   No   |   No   | invds    |
 | Invinco / Head On 2  |  Yes   |  Yes   |   No   |   No   |   No   | invho2   |
 | Iron Horse           |  Yes   |  Yes   |  Yes   |   No   |   No   | ironhors |
-| Jack Rabbit          |  Yes   |  Yes   |   No   |   No   |   No   | jackrabt |
+| Jack Rabbit          |  Yes   |  Yes   |   No   |  Yes   |   No   | jackrabt |
 | Jack the Giant Killer|  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | jack     |
 | Jackal               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jackal   |
-| Journey              |  Yes   |  Yes   |Partial.|  Yes   |   No   | journey  |
+| Jail Break           |  Yes   |  Yes?  |Partial |   No   |   No   | jailbrek |
+| Journey              |  Yes   |  Yes   |Partial |  Yes   |   No   | journey  |
 | Joust                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | joust    |
 | Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
 | Jump Bug             |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | jumpbug  |
@@ -219,6 +225,7 @@ The list doesn't include variants of the same game.
 | Kick                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kick     |
 | Kick Rider           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kickridr |
 | Kicker               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kicker   |
+| Kid Niki             |  Yes   |  Yes   |  Yes   |   No   |   No   | kidniki  |
 | Killer Comet         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | killcom  |
 | King & Balloon       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kingball |
 | King of Boxer        |  Yes   |  Yes?  |  Yes   |   No   |   No   | kingofb  |
@@ -226,6 +233,7 @@ The list doesn't include variants of the same game.
 | Knights of the Round |   No   |  Yes   |  Yes   |   No   |   No   | knights  |
 | Konami GT            |   No   |  Yes   |   No   |   No   |   No   | konamigt |
 | Kosmik Krooz'r       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kroozr   |
+| Kram                 |   No   |  Yes   |  Yes   |  Yes   |   No   | kram     |
 | Krull                |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | krull    |
 | Kung Fu Master       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kungfum  |
 | Lady Bug             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
@@ -234,6 +242,7 @@ The list doesn't include variants of the same game.
 | Legendary Wings      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lwings   |
 | Leprechaun           |  Yes   |  Yes?? |  Yes   |  Yes   |  Yes   | leprechn |
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
+| Liquid Kids          |  Yes   |  Yes   |  Yes   |   No   |   No   | liquidk  |
 | Lizard Wizard        |  Yes   |  Yes   |  Yes   |   No   |   No   | lizwiz   |
 | Lock'n'Chase         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | lnc      |
 | Loco-Motion          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | locomotn |
@@ -256,6 +265,8 @@ The list doesn't include variants of the same game.
 | Mario Bros.          |  Yes   |  Yes   |Partl(1)|  Yes   |   No   | mario    |
 | Mat Mania            |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | matmania |
 | Max RPM              |  Yes   |  Yes   |   No   |  Yes   |  n/a   | maxrpm   |
+| Maze Hunter          |  Yes   |  Yes   |  Yes   |   No   |   No   | mazeh    |
+| Meadows Lanes        |  Yes   |  b/w   |   No   |   No   |   No   | medlanes |
 | Mega Man             |  Yes   |  Yes   |   No   |   No   |   No   | megaman  |
 | Mega Twins           |  Yes   |  Yes   |  Yes   |   No   |   No   | mtwins   |
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
@@ -266,7 +277,7 @@ The list doesn't include variants of the same game.
 | Minefield            |  Yes   |  Yes   |  Yes   |   No   |  n/a   | minefld  |
 | Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | missile  |
 | Mister Viking        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mrviking |
-| Money Money          |  Yes   |  Yes   |   No   |   No   |   No   | monymony |
+| Money Money          |  Yes   |  Yes   |   No   |  Yes   |   No   | monymony |
 | Monster Bash         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | monsterb |
 | Moon Alien Part 2    |  Yes   |  Yes   |  Yes   |   No   |  Yes   | moonal2  |
 | Moon Cresta          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mooncrst |
@@ -305,7 +316,7 @@ The list doesn't include variants of the same game.
 | Paper Boy            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | paperboy |
 | Passing Shot         |  Yes   |  Yes   |  Yes   |   No   |   No   | passshtb |
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
-| Penguin-Kun Wars     |  Yes   |  Yes   |  Yes   |   No   |  Yes   | pkunwar  |
+| Penguin-Kun Wars     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pkunwar  |
 | Pepper II            |  Yes   |  Yes   |   No   |  Yes   |   No   | pepper2  |
 | Peter Packrat        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | peterpak |
 | Phoenix              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | phoenix  |
@@ -320,9 +331,12 @@ The list doesn't include variants of the same game.
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pooyan               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pooyan   |
+| P.O.W.               |  Yes   |  Yes   |Partial |   No   |   No   | pow      |
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
+| Port Man             |  Yes   | Close  |  Yes   |   No   |  Yes   | portman  |
 | Psychic 5            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
+| Psycho-Nics Oscar    |  Yes   |  Yes   |   No   |   No   |   No   | oscar    |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
 | Punch Out            |  Yes   |  Yes   |Partial |  Yes   |  n/a   | punchout |
 | Punk Shot            |  Yes   |  Yes   |Partial |   No   |   No   | punkshot |
@@ -340,7 +354,7 @@ The list doesn't include variants of the same game.
 | Reactor              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | reactor  |
 | Red Alert            |  Yes   |   No   | Wrong  |   No   |   No   | redalert |
 | Red Baron            |  Yes   | Close  | Yes(1) |  Yes   |   No   | redbaron |
-| Regulus              |  Yes   |  Yes   |  Yes   |   No   |   No   | regulus  |
+| Regulus              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | regulus  |
 | Renegade             |  Yes   |  Yes   |  Yes   |   No   |   No   | renegade |
 | Rescue               |  Yes   |  Yes   |  Yes   |   No   |  n/a   | rescue   |
 | Return of the Jedi   |  Yes   |   No   |  Yes   |  Yes   |   No   | jedi     |
@@ -353,15 +367,16 @@ The list doesn't include variants of the same game.
 | Robotron             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | robotron |
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
-| Round-Up             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | roundup  |
+| Round-Up             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | roundup  |
 | Route 16             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | route16  |
 | Rygar                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rygar    |
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
 | Samurai              |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
 | Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
-| Satan of Saturn      |  Yes   |  Yes?  |   No   |   No   |  Yes   | satansat |
+| Satan of Saturn      |  Yes   |  Yes?  |Partial |   No   |  Yes   | satansat |
 | Satan's Hollow       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shollow  |
+| Sauro                |  Yes   | Close  |  Yes   |  Yes   |  Yes   | sauro    |
 | Scion                |  Yes   |   No   | Wrong  |   No   |  Yes   | scion    |
 | Scramble             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | scramble |
 | SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
@@ -400,7 +415,9 @@ The list doesn't include variants of the same game.
 | Space Trek           |  Yes   |  Yes   |   No   |   No   |   No   | spacetrk |
 | Space Zap            |  Yes   | Maybe  |   No   |  Yes   |   No   | spacezap |
 | Spectar              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | spectar  |
+| Speed Ball           |  Yes   |  Yes   |  Yes   |   No   |   No   | speedbal |
 | Speed Rumbler        |  Yes   |  Yes   |  Yes   |   No   |   No   | srumbler |
+| Spelunker II         |  Yes   |   No   |  Yes   |   No   |   No   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
 | Splat                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | splat    |
 | Sprint 2             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint2  |
@@ -432,7 +449,7 @@ The list doesn't include variants of the same game.
 | Super Sprint         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ssprint  |
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | szaxxon  |
 | Superman             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superman |
-| SWAT                 |  Yes   |  Yes   |  Yes   |   No   |   No   | swat     |
+| SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Swimmer              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | swimmer  |
 | T.M.N.T.             |  Yes   |  Yes   |Partial |   No   |   No   | tmnt     |
 | Tac/Scan             |  Yes   | Close  | Yes(1) |  Yes   |   No   | tacscan  |
@@ -452,11 +469,13 @@ The list doesn't include variants of the same game.
 | Tetris (Sega)        |  Yes   |  Yes   |  Yes   |   No   |   No   | tetrisbl |
 | The Adv.of Robby Roto|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | The Amazing Maze Game|  Yes   |  b/w   |   No   |  n/a   |   No   | maze     |
+| The Empire Strikes Back  No   |  Yes   |  Yes   |   No   |   No   | empire   |
 | The End              |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | theend   |
 | The Glob             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
 | The King of Dragons  |  Yes   |  Yes   |  Yes   |   No   |   No   | kod      |
 | The Main Event       |  Yes   |  Yes   |   No   |   No   |   No   | mainevt  |
-| The Pit              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | thepit   |
+| The Pit              |  Yes   | Close  |  Yes   |  Yes   |  Yes   | thepit   |
+| The Real Ghostbusters|  Yes   |  Yes   |   No   |   No   |   No   | ghostb   |
 | The Tin Star         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | tinstar  |
 | The Tower of Druaga  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | todruaga |
 | Three Stooges        |  Yes   |  Yes   |Partial |  Yes   |   No   | 3stooges |
@@ -468,9 +487,9 @@ The list doesn't include variants of the same game.
 | Time Scanner         |  Yes   |  Yes   |  Yes   |   No   |   No   | timscanr |
 | Time Tunnel          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | timetunl |
 | Toki                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toki     |
-| Toki no Senshi       |  Yes   |  Yes   |  Yes   |   No   |   No   | tokisens |
+| Toki no Senshi       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tokisens |
 | Tokio                |  Yes   |  Yes   |   No   |   No   |   No   | tokio    |
-| Tomahawk 777         |  Yes   |  Yes   |   No   |   No   |  Yes   | tomahawk |
+| Tomahawk 777         |  Yes   |  Yes   |   No   |  Yes   |  Yes   | tomahawk |
 | Toobin'              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toobin   |
 | Tornado Baseball     |  Yes   |  b/w   |   No   |  n/a   |   No   | tornbase |
 | Total Carnage        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | totcarn  |
@@ -487,13 +506,14 @@ The list doesn't include variants of the same game.
 | Turtles              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | turtles  |
 | Tutankham            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tutankhm |
 | Twin Cobra           |Partial |  Yes   |  Yes   |   No   |   No   | twincobr |
+| TwinBee              |  Yes   |  Yes   |  Yes   |   No   |   No   | twinbee  |
 | Two Tigers           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | twotiger |
 | UN Squadron          |  Yes   |  Yes   |  Yes   |   No   |   No   | unsquad  |
 | Ufo Senshi Yohko Chan|   No   |  Yes   |  Yes   |   No   |   No   | ufosensi |
 | Uniwars              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | uniwars  |
 | Up'n Down            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | upndown  |
 | Us vs Them           |Partial.|  Yes   |  Yes   |  Yes   |  n/a   | usvsthem |
-| Vanguard             |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | vanguard |
+| Vanguard             |  Yes   |  Yes   |No Speech  Yes   |  Yes   | vanguard |
 | Varth                |  Yes   |  Yes   |  Yes   |   No   |   No   | varth    |
 | Vastar               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | vastar   |
 | Venture              |  Yes   |  Yes   |   No   |  Yes   |   No   | venture  |
@@ -510,13 +530,13 @@ The list doesn't include variants of the same game.
 | Willow               |  Yes   |  Yes   |  Yes   |   No   |   No   | willow   |
 | Wiz                  |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wiz      |
 | Wizard of Wor        |  Yes   | Maybe  | Yes(1) |  Yes   |  n/a   | wow      |
-| Wonder Boy           |  Yes   |  Yes   |  Yes   |   No   |   No   | wboy     |
+| Wonder Boy           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wboy     |
 | Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
 | Wonder Boy 3         |   No   |  Yes   |   No   |   No   |   No   | wb3bl    |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wc90     |
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xsleena  |
-| Xenophobe            |  Yes   |  Yes   |  Yes   |   No   |   No   | xenophob |
+| Xenophobe            |  Yes   |  Yes   |  Yes   |  n/a   |   No   | xenophob |
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | xevious  |
 | Xybots               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xybots   |
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
@@ -541,13 +561,6 @@ Clones supported:
 Known issues:
 - Vs. mode runs only in cocktail mode (second player controls inverted).
   That's probably how the game is designed.
-
-
-
-1941 ("1941")
-=============
-Clones supported:
-  Japanese version ("1941j")
 
 
 
@@ -613,22 +626,12 @@ Clones supported:
   bootleg version called Amigo ("amigo")
 version running on Scramble hardware ("amidars")
 
-Known issues:
-- What do the dip switches do?
-
 
 
 Anteater ("anteater")
 =====================
 Known issues:
 - cocktail mode doesn't work. This might well be a bug in the original.
-
-
-
-APB ("apb")
-===========
-Clones supported:
-  alternate version ("apb2")
 
 
 
@@ -650,26 +653,12 @@ Known issues:
 
 
 
-Arkanoid 2 ("arkanoi2")
-=======================
-Clones supported:
-  Romstar license ("ark2us")
-
-
-
 Armored Car ("armorcar")
 ========================
 Press the second player button #2 (default: S) + F3 to enter test mode
 
 Clones supported:
   alternate version ("armorca2")
-
-
-
-Asteroids ("asteroid")
-======================
-Clones supported:
-  revision 1 ("asteroi1")
 
 
 
@@ -688,33 +677,11 @@ up-- the more coins you put in, the more ships you get to start with.
 
 
 
-Astro Fighter ("astrof")
-========================
-Clones supported:
-  alternate version ("astrof2")
-  another alternate version ("astrof3")
-
-
-
-Astro Invader ("astinvad")
-=============================
-Clones supported:
-  Kamikaze ("kamikaze")
-
-
-
 Atari Basketball ("bsktball")
 =============================
 The original hardware uses the Player 1 and Player 2 Start buttons
 as the Jump/Shoot buttons.  I've taken button 1 and mapped it to the Start
 buttons to keep people from getting confused.
-
-
-
-Bad Dudes ("baddudes")
-======================
-Clones supported:
-  Dragon Ninja ("drgninja")
 
 
 
@@ -744,25 +711,10 @@ Clones supported:
 
 
 
-Bio Attack("bioatack")
-======================
+Bio Attack ("bioatack")
+=======================
 Known issues:
 - Collision detection doesn't work.
-
-
-
-Bionic Commando ("bionicc")
-===========================
-Clones supported:
-  alternate version ("bionicc2")
-
-
-
-Black Tiger ("blktiger")
-========================
-Clones supported:
-  Black Dragon ("blkdrgon")
-  bootleg version ("bktigerb")
 
 
 
@@ -773,13 +725,6 @@ Press F2 to proceed.
 
 F2 tests
 F1+F2 bookkeeping/setup
-
-
-
-Blockade ("blockade")
-=====================
-Clones supported:
-  Comotion ("comotion")
 
 
 
@@ -900,13 +845,6 @@ Known issues:
 
 
 
-Carrier Air Wing ("cawing")
-===========================
-Clones supported:
-  Japanese version called U.S.Navy ("cawingj")
-
-
-
 Centipede ("centipede")
 =======================
 Clones supported:
@@ -929,8 +867,6 @@ Clones supported:
   Japanese version ("chelnovj")
 
 Known issues:
-- Partially working due to copy protection. After you lose the first life,
-  no more enemies appear.
 - One color PROM is different in the two sets, so one copy is most likely bad,
   but we don't know which one.
 
@@ -964,13 +900,6 @@ City Connection ("citycon")
 Known issues:
 - In cocktail mode, player 2 uses the same controls as player 1. Maybe the
   port is multiplexed.
-
-
-
-Colony 7 ("colony7")
-====================
-Clones supported:
-  alternate version ("colony7a")
 
 
 
@@ -1008,28 +937,6 @@ Contra ("contra")
 Clones supported:
   bootleg version ("contrab")
   a Japanese bootleg ("gryzorb")
-
-
-
-Cop 01 ("cop01")
-================
-Clones supported:
-  alternate version ("cop01a")
-
-
-
-Crazy Balloon ("crbaloon")
-==========================
-Clones supported:
-  alternate version ("crbalon2")
-
-
-
-Crazy Climber ("cclimber")
-==========================
-Clones supported:
-  Japanese version ("ccjap")
-  bootleg version ("ccboot")
 
 
 
@@ -1072,13 +979,6 @@ To play, you have to press the two buttons alternatively like in Track & Field.
 
 
 
-Dark Seal ("darkseal")
-======================
-Clones supported:
-  Gate of Doom ("gatedoom")
-
-
-
 D-Day ("dday")
 ==============
 Press button 1 to fire. Press and hold button 2 to determine the
@@ -1112,24 +1012,6 @@ ALT     Accelerate backward
 Known issues:
 - Players 2-4 aren't fully supported
 - Due to missing ROMs from the Turbo Cheap Squeak board, sound doesn't work.
-
-
-
-Dig Dug ("digdug")
-====================
-Atari license
-
-Clones supported:
-  Namco copyright ("digdugnm")
-
-
-
-Discs of Tron ("dotron")
-========================
-Upright version
-
-Clones supported:
-  Environmental version ("dotrone")
 
 
 
@@ -1173,13 +1055,6 @@ Known issues:
 
 
 
-Eggs ("eggs")
-=============
-Clones supported:
-  Scrambled Egg ("scregg")
-
-
-
 Electric Yo-Yo ("elecyoyo")
 ===========================
 Keep F2 pressed to enter test mode, then F1 to advance to the next test.
@@ -1211,35 +1086,6 @@ Known issues:
   see an 8 at the bottom of the screen, or the game resets, it's caused by
   that.
 - Some sprite priority problems (people half disappearing behind doors etc.)
-
-
-
-Eliminator ("elim2")
-====================
-Two players version
-Clones supported:
-  four players version ("elim4")
-
-
-
-Espial ("espial")
-=================
-Clones supported:
-  European version ("espiale")
-
-
-
-Exciting Soccer ("exctsccr")
-============================
-Clones supported:
-  bootleg version ("exctsccb")
-
-
-
-Exed Exes ("exedexes")
-======================
-Clones supported:
-  Savage Bees ("savgbees")
 
 
 
@@ -1304,13 +1150,6 @@ http://www.coinop.org/features/qbstory.html
 
 
 
-Final Fight ("ffight")
-======================
-Clones supported:
-  Japanese version ("ffightj")
-
-
-
 Fire Trap ("firetrap")
 ======================
 Clones supported:
@@ -1322,24 +1161,10 @@ Known issues:
 
 
 
-Flicky ("flicky")
-=================
-Clones supported:
-  alternate version ("flicky2")
-
-
-
 Food Fight ("foodf")
 ====================
 The first time you run the game, press Button 1 to advance from the "NVRAM
 test fail" screen. The NVRAM will be automatically initialized.
-
-
-
-Formation Z ("formatz")
-=======================
-Clones supported:
-  Williams license, called Aeroboto ("aeroboto")
 
 
 
@@ -1429,13 +1254,6 @@ Known issues:
 
 
 
-Ghouls'n Ghosts ("ghouls")
-==========================
-Clones supported:
-  Japanese version ("ghoulsj")
-
-
-
 Gladiator ("gladiatr")
 ======================
 Clones supported:
@@ -1495,16 +1313,6 @@ Clones supported:
 
 
 
-Gyruss ("gyruss")
-===================
-Konami copyright
-
-Clones supported:
-  licensed to Centuri ("gyrussce")
-  bootleg called Venus ("venus")
-
-
-
 Gunsmoke ("gunsmoke")
 ====================
 Capcom copyright
@@ -1512,11 +1320,17 @@ Capcom copyright
 Clones supported:
   Romstar license ("gunsmrom")
   Japanese version ("gunsmokj")
+  another Romstar license, later (1986 instead of 1985) ("gunsmoka")
+
+  All the sets are almost identical apart from gunsmoka which is quite
+  different: the levels are in a different order, amd the "Demonstration" dip
+  switch has no effect.
 
 Known issues:
 - At the end of level 3 (Ninja Stars), if you go to the extreme right of the
-  screen, the game resets. This could well be a bug of the original. The game
-  doesn't seem to reset if you stay away from the right of the screen.
+  screen, the game resets. The game doesn't reset if you stay away from the
+  right of the screen. This is probably a bug of the original, since the
+  "gunsmoka" set doesn't seem to have it.
 
 
 
@@ -1527,10 +1341,10 @@ Known issues:
 
 
 
-Heavy Barrel ("heavyb")
+Heavy Barrel ("hbarrel")
 =======================
 Clones supported:
-  Japanese version ("heavybj")
+  Japanese version ("hbarrelj")
 
 Known issues:
 - The game is playable to the end, however there are some problems due to
@@ -1552,13 +1366,6 @@ Clones supported:
 
 Known issues:
 - Sometimes the game crashes after you beat the first enemy.
-
-
-
-I'm Sorry ("imsorry")
-=====================
-Clones supported:
-  Japanese version ("imsorryj")
 
 
 
@@ -1597,13 +1404,6 @@ works.
 Clones supported:
   alternate version labeled "Master Jackrabbit USA2" ("jackrab2")
   alternate version labeled "Special Jackrabbit Do Not Ship" ("jackrabs")
-
-
-
-Jack the Giant Killer ("jack")
-==============================
-Clones supported:
-  alternate version ("jacka")
 
 
 
@@ -1664,26 +1464,8 @@ Known issues:
 
 
 
-Jungle King ("junglek")
-=======================
-Clones supported:
-  Jungle Hunt ("jhunt")
-
-
-
-Jungler ("jungler")
-===================
-Konami copyright
-
-Clones supported:
-  Stern copyright ("junglers")
-
-
-
 Kangaroo ("kangaroo")
 ============================
-This runs on hardware very similar to Arabian.
-
 In test mode, to test sound press 1 and 2 player start simultaneously.
 Punch + 1 player start moves to the crosshatch pattern.
 
@@ -1709,15 +1491,6 @@ Karnov ("karnov")
 =================
 Clones supported:
   Japanese version. Gameplay is different in this version. ("karnovj")
-
-
-
-Kick ("kick")
-=============
-Mirror version
-
-Clones supported:
-  Upright version ("kicka")
 
 
 
@@ -1801,26 +1574,12 @@ Clones supported:
 
 
 
-Lady Bug ("ladybug")
-====================
-Clones supported:
-  bootleg version ("ladybugb")
-
-
-
 Last Duel ("lastduel")
 ======================
 Clones supported:
   bootleg version, the only difference in the code is a branch over some
     startup routines (including the "not for use outside of the US" screen)
     ("lstduelb")
-
-
-
-Legendary Wings ("lwings")
-==========================
-Clones supported:
-  Japanese version ("lwingsjp")
 
 
 
@@ -1841,15 +1600,6 @@ Clones supported:
 
 
 
-Lost Tomb ("losttomb")
-======================
-Easy version
-
-Clones supported:
-  Hard version ("losttmbh")
-
-
-
 Lotto Fun ("lottofun")
 ======================
 Known issues:
@@ -1866,7 +1616,8 @@ Known issues:
 - Selftest does not work. It seems page 0 and 1 are mirrored, and
   the cpu emulation can't handle this correctly
 - The language dip switch has no effect, this ROM set doesn't have support
-  for that.
+  for that (034597.01 is empty).
+
 
 
 Lunar Rescue ("lrescue")
@@ -1886,21 +1637,6 @@ it is not playable.
 
 
 
-Magic Sword ("msword")
-======================
-Clones supported:
-  Japanese version ("mswordj")
-
-
-
-Major Havoc ("mhavoc")
-=======================
-Clones supported:
-  revision 1 ("mhavoc1")
-  Return to Vax ("mhavocrv")
-
-
-
 Make Trax ("maketrax")
 ======================
 Clones supported:
@@ -1916,13 +1652,6 @@ Mania Challenge ("maniach")
 ===========================
 Clones supported:
   alternate version, probably earlier ("maniach2")
-
-
-
-Mappy ("mappy")
-===============
-Clones supported:
-  Japanese version ("mappyjp")
 
 
 
@@ -1954,35 +1683,6 @@ Clones supported:
 Known issues:
 - Most colors seem correct, but the audience graphics use purple instead of
   blue?
-
-
-
-Mega man ("megaman")
-====================
-Clones supported:
-  Rockman ("rockmanj")
-
-
-
-Mega Twins ("mtwins")
-=====================
-Clones supported:
-  Chiki Chiki Boys ("chikij")
-
-
-
-Mercs ("mercs")
-===============
-Clones supported:
-  US version ("mercsu")
-  Japanese version ("mercsj")
-
-
-
-Midnight Resistance ("midres")
-==============================
-Clones supported:
-  Japanese version ("midresj")
 
 
 
@@ -2042,7 +1742,7 @@ Clones supported:
 Known issues:
 - Dip switches for the alternate sets might be inaccurate.
 - The star background is probably not entirely accurate.
-- Wrong graphics and dip switches in "mooncrgx".
+- Wrong dip switches in "mooncrgx".
 
 
 
@@ -2092,9 +1792,11 @@ CTRL+F3 Test mode
 
 Clones supported:
   Version with additional Taito copyright ("mrdot")
+  Version with a fixed bug which would allow to get 255 lives ("mrdofix")
   Mr. Lo! ("mrlo")
   Mr. Du! ("mrdu")
   bootleg with different graphics and music ("mrdoy")
+  bootleg with different graphics ("yankeedo")
 
 
 
@@ -2159,20 +1861,6 @@ Known issues:
 
 
 
-Nemesis ("nemesis")
-==================
-Clones supported:
-  UK version ("nemesuk")
-
-
-
-Nemo ("nemo")
-=============
-Clones supported:
-  Japanese version ("nemoj")
-
-
-
 New Zealand Story ("tnzs")
 ==========================
 Clones supported:
@@ -2199,13 +1887,6 @@ added for playability.
 
 
 
-Ninja Gai Den ("gaiden")
-========================
-Clones supported:
-  Shadow Warriors ("shadoww")
-
-
-
 Ninja Kid 2 ("ninjakd2")
 ========================
 Clones supported:
@@ -2213,16 +1894,6 @@ Clones supported:
 
 Known issues:
 - Due to encryption, sound works only in the alternate version.
-
-
-
-Pac-Land ("pacland")
-====================
-Midway version
-
-Clones supported:
-  Namco version ("paclandn")
-  Alternate Namco version ("paclanda")
 
 
 
@@ -2248,13 +1919,6 @@ Clones supported:
     ("pengo2")
   same as pengo2, but not encrypted ("pengo2u")
   bootleg called Penta, encrypted ("penta")
-
-
-
-Penguin-Kun Wars ("pkunwar")
-============================
-Clones supported:
-  Japanese version ("pkunwarj")
 
 
 
@@ -2308,23 +1972,6 @@ Pitfall II ("pitfall2")
 Clones supported:
   not encrypted version. This version allows you to select the starting stage
     using the dip switches. ("pitfallu")
-
-
-
-Pleiads ("pleiads")
-===================
-Clones supported:
-  Centuri license ("pleiadce")
-
-
-
-Pooyan ("pooyan")
-=================
-Konami copyright.
-
-Clones supported:
-  Stern copyright ("pooyans")
-  bootleg version called Pootan ("pootan")
 
 
 
@@ -2385,13 +2032,6 @@ Known Issues:
 
 
 
-Quantum ("quantum")
-===================
-Clones supported:
-  revision 1 ("quantum1")
-
-
-
 Q*Bert ("qbert")
 ================
 To enter your name in the high score list, use 1 or 2.
@@ -2440,17 +2080,6 @@ Known issues:
 
 
 
-Rastan ("rastan")
-=================
-Clones supported:
-  Rastan Saga ("rastsaga")
-
-Known issues:
-- Crashes often.
-- Rastan Saga doesn't always boot, use F3 to make it start.
-
-
-
 Reactor ("reactor")
 ===================
 1       Player 2 Energy
@@ -2468,13 +2097,6 @@ Red Baron ("redbaron")
 ======================
 - Red Baron tries to calibrate its analog joystick at the start, so you'll
   have to move the "joystick" a bit before you can fly in all four directions.
-
-
-
-Regulus ("regulus")
-===================
-Clones supported:
-  not encrypted version ("regulusu")
 
 
 
@@ -2520,13 +2142,6 @@ Clones supported:
 
 
 
-Road Fighter ("roadf")
-======================
-Clones supported:
-  alternate version ("roadf2")
-
-
-
 Robotron ("robotron")
 ===============
 The first time you run the game, it will say "factory settings restored".
@@ -2555,7 +2170,7 @@ Known issues:
 Rygar ("rygar")
 ===============
 Clones supported:
-  alternate version. This has a type on the title screen: ALL RIGHT RESERVED
+  alternate version. This has a typo on the title screen: ALL RIGHT RESERVED
     instead of ALL RIGHT*S* RESERVED. ("rygar2")
   Japanese version ("rygarj")
 
@@ -2567,13 +2182,6 @@ Known issues:
 - This game needs the overlay bad. The white rectangle on the screen is used
   to simulate the tree visible on the flyer.
   The flyer is at www.gamearchive.com/flyers/video/segagremlin/safari_b.jpg
-
-
-
-Satan of Saturn ("satansat")
-============================
-Clones supported:
-  the Taito licensed version, called Zarzon ("zarzon")
 
 
 
@@ -2649,7 +2257,9 @@ F1+F2 bookkeeping/setup
 
 Clones supported:
   older version, allegedly from a prototype machine that was displayed at the
-    1982 AMOA show in Las Vegas ("oldsin")
+    1982 AMOA show in Las Vegas ("sinista1")
+  revision 2 ("sinista2")
+
 
 
 Slap Fight ("slapfigh")
@@ -2663,6 +2273,14 @@ Known issues:
   bootlegs instead.
 - Scrolling is jerky.
 - Music tempo is too slow.
+
+
+
+Snow Bros ("snowbros")
+======================
+Clones supported:
+  alternate version, probably earlier ("snowbro2")
+
 
 
 Space Attack ("sspaceat")
@@ -2715,15 +2333,6 @@ Bugs which aren't:
 
 
 
-Space Fury ("spacfury")
-=======================
-Revision C
-
-Clones supported:
-  revision A ("spacfura")
-
-
-
 Space Invaders ("invaders")
 ===========================
 Clones supported:
@@ -2772,20 +2381,6 @@ HIGH SCORE AND NAME DISPLAY PROGRAM
 
 
 
-Space Panic ("panic")
-=====================
-Clones supported:
-  alternate version ("panica")
-
-
-
-Space Trek ("spacetrk")
-=======================
-Clones supported:
-  cocktail version ("sptrekct")
-
-
-
 Speed Rumbler ("srumbler")
 ==========================
 Clones supported:
@@ -2808,6 +2403,12 @@ Revision 3
 
 Clones supported:
   revision 1 ?? ("spectar1")
+
+
+
+Speed Ball ("speedbal")
+=======================
+Keep 3 and 4 pressed during boot to enter service mode.
 
 
 
@@ -2850,13 +2451,6 @@ ENTER   Toggle gearshift (note you can't start in high gear)
 Known issues:
 - Steering and acceleration should be via analog controls
 - Palette seems to be slightly off
-
-
-
-Star Force ("starforc")
-=======================
-Clones supported:
-  Mega Force ("megaforc")
 
 
 
@@ -2906,27 +2500,6 @@ Known issues:
 
 
 
-Stratovox ("stratvox")
-======================
-Clones supported:
-  Speak & Rescue ("speakres")
-
-
-
-Street Fighter 2 ("sf2")
-========================
-Clones supported:
-  Japanese version ("sf2j")
-
-
-
-Strider ("strider")
-===================
-Clones supported:
-  Japanese version ("striderj")
-
-
-
 Subs ("subs")
 =============
 This game uses two monitors, one for each player, aimed away from each
@@ -2937,13 +2510,6 @@ single-monitor computer.  Also, Subs is mildly dependent on its overlay.
 Without the overlay, it might not be obvious that the playfield is circular
 in shape, and the blinking white box actually illuminates a box labelled
 "Sonar".
-
-
-
-Super Bagman ("sbagman")
-========================
-Clones supported:
-  Stern license ("sbagmans")
 
 
 
@@ -2965,13 +2531,6 @@ Clones supported:
 Known issues:
 - The star background is probably not entirely accurate. Also, maybe it should
   be clipped at the top and bottom of the screen?
-
-
-
-Super Pacman ("superpac")
-=========================
-Clones supported:
-  Namco copyright ("superpcn")
 
 
 
@@ -3011,15 +2570,7 @@ Clones supported:
 
 Known issues:
 - The side panel should be light green / blue ( turquoise ) throughout the
-  game, instead it is black.
-
-
-
-Tapper ("tapper")
-=================
-Clones supported:
-  Root Beer Tapper ("rbtapper")
-  Suntory Tapper ("sutapper")
+  game, not black as it is now.
 
 
 
@@ -3038,13 +2589,6 @@ Known issues:
 - There might be some misbehaviours caused by imperfect emulation of the
   protection.
 - Some gfx glitches caused by missing support of 8x8 sprites.
-
-
-
-Teddy Boy Blues ("teddybb")
-===========================
-Known issues:
-- Wrong priority in the woman bonus screen.
 
 
 
@@ -3078,6 +2622,7 @@ Clones supported:
   alternate version ("atetrisa")
   bootleg version ("atetrisb")
   cocktail version ("atetcktl")
+  cocktail version, probably earlier ("atetckt2")
 
 
 
@@ -3095,13 +2640,6 @@ To enter service mode, press Player 2 Button 2. It works only in Upright mode.
 
 Clones supported:
   Beastie Feastie ("beastf")
-
-
-
-The King of Dragons ("kod")
-===========================
-Clones supported:
-  bootleg version ("kodb")
 
 
 
@@ -3135,14 +2673,6 @@ Clones supported:
 
 Known issues:
 - The original versions don't work, use the bootlegs.
-
-
-
-Time Pilot ("timeplt")
-======================
-Clones supported:
-  Centuri license ("timepltc")
-  bootleg version ("spaceplt")
 
 
 
@@ -3214,20 +2744,6 @@ Known issues:
 
 
 
-Trojan ("trojan")
-=================
-Clones supported:
-  Japanese version ("trojanj")
-
-
-
-Tron ("tron")
-=============
-Clones supported:
-  alternate version ("tron2")
-
-
-
 Turtles ("turtles")
 ===================
 Clones supported:
@@ -3236,15 +2752,6 @@ Clones supported:
 
 Known issues:
 - Colors in 600 might be wrong.
-
-
-
-Tutankham ("tutankhm")
-======================
-Konami copyright.
-
-Clones supported:
-  Stern copyright ("tutankst")
 
 
 
@@ -3268,13 +2775,6 @@ Known issues:
 
 
 
-UN Squadron ("unsquad")
-=======================
-Clones supported:
-  Area 88 ("area88")
-
-
-
 Uniwars ("uniwars")
 ===================
 Clones supported:
@@ -3289,20 +2789,6 @@ Us vs Them ("usvsthem")
 =======================
 This is a laser disc game; it is playable, but of course you can't see the
 backgrounds that were stored on the laser disc.
-
-
-
-Vanguard ("vanguard")
-=====================
-Clones supported:
-  Centuri license ("vanguardce")
-
-
-
-Vastar ("vastar")
-=================
-Clones supported:
-  alternate version ("vastar2")
 
 
 
@@ -3327,32 +2813,11 @@ Known issues:
 
 
 
-Vigilante ("vigilant")
-======================
-Clones supported:
-  Japanese version ("vigilntj")
-
-
-
-Vulgus ("vulgus")
-=================
-Clones supported:
-  alternate version ("vulgus2")
-
-
-
 Warlords ("warlords")
 =====================
 This game was designed to run either in a cocktail cabinet with color monitor,
 or in an upright cabinet with b/w monitor, mirror and painted background.
 By default, the driver runs in cocktail mode.
-
-
-
-Warp Warp ("warpwarp")
-======================
-Clones supported:
-  alternate version ("warpwar2")
 
 
 
@@ -3368,13 +2833,6 @@ Wild Western ("wwestern")
 =========================
 Known issues:
 - Probably due to copy protection, the game is not playable and resets often.
-
-
-
-Willow ("willow")
-=================
-Clones supported:
-  Japanese version ("willowj")
 
 
 
@@ -3458,13 +2916,6 @@ Use F2 to enter test mode, then 1 to advance from one test to the following.
 
 
 
-Zig Zag ("zigzag")
-==================
-Clones supported:
-  alternate version ("zigzag2")
-
-
-
 Zoo Keeper ("zookeep")
 ======================
 Keep F2 pressed to enter test mode, then F1 to advance to the next test.
@@ -3485,10 +2936,3 @@ Clones supported:
 Known issues:
 - Every time you start the emulation, you get a free credit. This is the
   correct behavior and has been verified on a real machine.
-
-
-
-Zzyzzyxx ("zzyzzyxx")
-=====================
-Clones supported:
-  Brix ("brix")

@@ -465,8 +465,9 @@ static int DumpToFile(char *param)
 {
 	FILE *f;
 	int	i,nCorrectParams = 0, rv = 0, first;
-	char s1[128], s2[20], s3[20];
+	char s1[128], s2[20], s3[20], asc[20];
 	char *pr = param;
+	int b;
 
 	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
 	i = strlen(pr);
@@ -485,6 +486,7 @@ static int DumpToFile(char *param)
 		}
 
 		first = 1;
+		asc[0] = '\0';
 		while (StartAd <= EndAd)
 		{
 			if (first || (StartAd % 16 == 0))
@@ -500,11 +502,23 @@ static int DumpToFile(char *param)
 				}
 			}
 
-			fprintf(f, " %02x",	cpuintf[cputype].memory_read(StartAd & DebugInfo[cputype].AddMask));
+			b = cpuintf[cputype].memory_read(StartAd & DebugInfo[cputype].AddMask);
+			fprintf(f, " %02x",	b);
+			if ((b >= 0x20) && (b <= 0x7e))
+			{
+				sprintf(asc, "%s%c", asc, b);
+			}
+			else
+			{
+				sprintf(asc, "%s.", asc);
+			}
 
 			StartAd++;
 			if (StartAd % 16 == 0)
-				fprintf(f, "\n");
+			{
+				fprintf(f, "  %s\n", asc);
+				asc[0] = '\0';
+			}
 		}
 
 		fprintf(f, "\n");

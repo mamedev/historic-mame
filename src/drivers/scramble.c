@@ -960,7 +960,7 @@ struct GameDriver scramble_driver =
 	"Scramble",
 	"1981",
 	"Stern",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&scramble_machine_driver,
 	0,

@@ -206,11 +206,18 @@ ROM_END
 
 static int hiload(void)
 {
+	static int firsttime = 0;
+
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x009b],0xff,2);
+		firsttime = 1;
+	}
 
 
 	/* check for a value written to RAM shortly after hi scores are initialized */
-	if (RAM[0x011F] == 0x01)
+	if (memcmp(&RAM[0x009b],"\x00\x00",2) == 0)
 	{
 		void *f;
 
@@ -220,7 +227,7 @@ static int hiload(void)
 			osd_fread(f,&RAM[0x009B],0x2);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */

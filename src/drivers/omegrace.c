@@ -264,6 +264,19 @@ int omegrace_spinner1_r(int offset)
 	return (spinnerTable[res&0x3f]);
 }
 
+void omegrace_leds_w (int offset, int data)
+{
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+
+	/* bits 2 to 5 are the start leds (4 and 5 cocktail only, not supported) */
+	osd_led_w(0,~data >> 2);
+	osd_led_w(1,~data >> 3);
+
+	/* bit 6 flips screen (not supported) */
+}
+
 void omegrace_soundlatch_w (int offset, int data)
 {
 	soundlatch_w (offset, data);
@@ -325,7 +338,7 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
   	{ 0x0a, 0x0a, avgdvg_reset },
- 	{ 0x13, 0x13, IOWP_NOP }, /* diverse outputs */
+ 	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
 	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
 	{ -1 }	/* end of table */
 };

@@ -188,7 +188,7 @@ int astrocade_sh_start(struct astrocade_interface *interface)
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
-	div_by_N_factor = intf->clock/emulation_rate;
+	div_by_N_factor = intf->baseclock/emulation_rate;
 
 	channel = get_play_channels(intf->num);
 	/* reserve buffer */
@@ -364,10 +364,10 @@ void astrocade_sh_update(void)
 		sample_pos[num] = 0;
 		/* play sound */
 		if( Machine->sample_bits == 16 )
-			osd_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate,volume[num]);
+			osd_play_streamed_sample_16(channel+num,astrocade_buffer[num],2*buffer_len,emulation_rate,volume[num],0);
 		else
 		{
-			osd_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate,volume[num]);
+			osd_play_streamed_sample(channel+num,astrocade_buffer[num],buffer_len,emulation_rate,volume[num],0);
 
 
 		}

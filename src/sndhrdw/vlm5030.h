@@ -3,7 +3,7 @@
 
 struct VLM5030interface
 {
-	int clock;          /* master clock (normaly 3.58MHz) */
+	int baseclock;          /* master clock (normaly 3.58MHz) */
 	int volume;         /* volume                         */
 	int memory_region;  /* memory region of speech rom    */
 	int vcu;            /* vcu pin level                  */

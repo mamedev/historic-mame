@@ -143,8 +143,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,      /* 2 chips */
 	1789790,	/* ? */
-	128,
-	POKEY_DEFAULT_GAIN/4,
+	50,
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -231,6 +231,14 @@ ROM_START( atetrisb_rom )
 ROM_END
 
 ROM_START( atetcktl_rom )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "tetcktl1.rom", 0x0000, 0x10000, 0x9afd1f4a )
+
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
+ROM_END
+
+ROM_START( atetckt2_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
 
@@ -372,7 +380,7 @@ struct GameDriver atetcktl_driver =
 	__FILE__,
 	&atetris_driver,
 	"atetcktl",
-	"Tetris (Cocktail version)",
+	"Tetris (Cocktail set 1)",
 	"1989",
 	"Atari Games",
 	"Zsolt Vasvari",
@@ -381,6 +389,32 @@ struct GameDriver atetcktl_driver =
 	0,
 
 	atetcktl_rom,
+	atetris_rom_move,
+	0,
+	0,
+	0,      /* sound_prom */
+
+	atetcktl_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
+};
+
+struct GameDriver atetckt2_driver =
+{
+	__FILE__,
+	&atetris_driver,
+	"atetckt2",
+	"Tetris (Cocktail set 2)",
+	"1989",
+	"Atari Games",
+	"Zsolt Vasvari",
+	0,
+	&machine_driver,
+	0,
+
+	atetckt2_rom,
 	atetris_rom_move,
 	0,
 	0,

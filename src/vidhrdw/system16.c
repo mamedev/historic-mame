@@ -115,6 +115,17 @@ void memcpy0( unsigned char *dest, const unsigned char *source,
 	const unsigned char *finish = source+numbytes;
 	const unsigned char *finishw = finish-(numbytes&0x3);
 
+#ifdef ACORN
+	while( source<finishw ){
+		if( *mask )
+			*dest = ( *dest++ & *mask ) | ( *source++ & ~*mask++ );
+		else
+		{
+			*dest++ = *source++;
+			mask++;
+		}
+	}
+#else
 	while( source<finishw ){
 		int m = *(int *)mask;
 		if( m )
@@ -124,7 +135,7 @@ void memcpy0( unsigned char *dest, const unsigned char *source,
 
 		dest += 4; source += 4; mask += 4;
 	}
-
+#endif
 	while( source<finish ){
 		if( *mask==0 ) *dest = *source;
 		dest++; source++; mask++;
@@ -339,14 +350,22 @@ static void draw_background(struct osd_bitmap *bitmap){
 	int page;
 	int scrollx = 320+sys16_bg_scrollx;
 	int scrolly = 256-sys16_bg_scrolly;
+	static int old_scrollx = -1, old_scrolly = -1;
 
-	if (scrollx < 0) scrollx = 1024 - (-scrollx) % 1024;
+    if (scrollx < 0) scrollx = 1024 - (-scrollx) % 1024;
 	else scrollx = scrollx % 1024;
 
 	if (scrolly < 0) scrolly = 512 - (-scrolly) % 512;
 	else scrolly = scrolly % 512;
 
-	for (page=0; page < 4; page++){
+	if (old_scrollx != scrollx || old_scrolly != scrolly)
+	{
+		old_scrollx = scrollx;
+		old_scrolly = scrolly;
+		osd_mark_dirty(clip->min_x, clip->min_y, clip->max_x, clip->max_y, 0);
+	}
+
+    for (page=0; page < 4; page++){
 		int sx = (page&1)*512+scrollx;
 		int sy = (page>>1)*256+scrolly;
 
@@ -366,6 +385,7 @@ static void draw_foreground(struct osd_bitmap *bitmap, int priority ){
 
 	int scrollx = 320+sys16_fg_scrollx;
 	int scrolly = 256-sys16_fg_scrolly;
+	static int old_scrollx = -1, old_scrolly = -1;
 
 	if (scrollx < 0) scrollx = 1024 - (-scrollx) % 1024;
 	else scrollx = scrollx % 1024;
@@ -373,7 +393,14 @@ static void draw_foreground(struct osd_bitmap *bitmap, int priority ){
 	if (scrolly < 0) scrolly = 512 - (-scrolly) % 512;
 	else scrolly = scrolly % 512;
 
-	for (page=0; page < 4; page++){
+	if (old_scrollx != scrollx || old_scrolly != scrolly)
+	{
+		old_scrollx = scrollx;
+        old_scrolly = scrolly;
+        osd_mark_dirty(clip->min_x, clip->min_y, clip->max_x, clip->max_y, 0);
+	}
+
+    for (page=0; page < 4; page++){
 		int sx = (page&1)*512+scrollx;
 		int sy = (page>>1)*256+scrolly;
 		if( sx>320 ) sx-=1024;	/* wraparound */
@@ -420,6 +447,7 @@ static void update_background( void ){
 						sx, sy,
 						0, /* no need to clip */
 						TRANSPARENCY_NONE, 0);
+					osd_mark_dirty(sx, sy, sx+TILEMAP_WIDTH-1, sy+TILEMAP_HEIGHT-1, 0);
 
 					*old_source = data;
 				}
@@ -491,6 +519,7 @@ static void update_foreground( void ){
 							sx, sy,
 							0, /* no need to clip */
 							TRANSPARENCY_PEN, 0 );
+						osd_mark_dirty(sx, sy, sx+TILEMAP_WIDTH-1, sy+TILEMAP_HEIGHT-1, 0);
 
 						{ /* now, update the fatmask - one byte (0x00 or 0xff) for each pixel */
 							int x,y;
@@ -649,7 +678,8 @@ void sys16_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 						zoom,
 						clip
 					);
-				}
+					osd_mark_dirty(sx, sy, sx+width-1, end_line-1, 0);
+                }
 			}
 
 			source += 8;
@@ -709,7 +739,8 @@ void sys16_draw_sprites( struct osd_bitmap *bitmap, int priority ){
 						zoom,
 						clip
 					);
-				}
+					osd_mark_dirty(sx, sy, sx+width*4-1, end_line-1, 0);
+                }
 			}
 
 			source += 8;
@@ -756,7 +787,8 @@ static void draw_text(struct osd_bitmap *bitmap){
 					sx,sy,
 					0, /* no need to clip */
 					TRANSPARENCY_PEN,0);
-			}
+				osd_mark_dirty(sx, sy, sx+8-1, sy+8-1, 0);
+            }
 		}
 	}
 }

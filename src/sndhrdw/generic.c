@@ -210,6 +210,7 @@ int sound_start(void)
 				if (YM2151_sh_start(Machine->drv->sound[totalsound].sound_interface,1) != 0)
 					goto getout;
 				break;
+			case SOUND_YM3526:
 			case SOUND_YM3812:
 				if (YM3812_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
@@ -312,6 +313,7 @@ void sound_stop(void)
 			case SOUND_YM2151_ALT:
 				YM2151_sh_stop();
 				break;
+			case SOUND_YM3526:
 			case SOUND_YM3812:
 				YM3812_sh_stop();
 				break;
@@ -401,6 +403,7 @@ void sound_update(void)
 			case SOUND_YM2151_ALT:
 				YM2151_sh_update();
 				break;
+			case SOUND_YM3526:
 			case SOUND_YM3812:
 				YM3812_sh_update();
 				break;

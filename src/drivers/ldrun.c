@@ -2,6 +2,8 @@
 
 Lode Runner
 
+There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
+
 **************************************************************************/
 
 #include "driver.h"
@@ -102,7 +104,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x001f, mpatrol_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -649,6 +651,565 @@ struct GameDriver ldrun2p_driver =
 	ldrun2p_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+
+
+/***************************************************************************
+
+Kid Niki
+1986 Irem (licensed to Data East)
+
+Spelunker (needs fixed colors)
+1986 Irem (licensed from Broderbund)
+
+Z80 (main CPU)
+sound: 6803 + YM2149(2) + OKI M5205(2)
+
+***************************************************************************/
+extern void irem_background_hscroll_w( int offset, int data );
+extern void irem_background_vscroll_w( int offset, int data );
+extern void irem_text_vscroll_w( int offset, int data );
+extern void irem_background_bank_w( int offset, int data );
+extern void irem_vh_stop( void );
+
+extern int kidniki_vh_start( void );
+extern int spelunk2_vh_start( void );
+
+extern void kidniki_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+
+extern unsigned char *irem_textram;
+
+/* memory regions */
+#define MEM_MAIN_CPU	0
+#define MEM_SOUND_CPU	1
+#define MEM_TILES		2
+#define MEM_CHARS		3
+#define MEM_SPRITES		4
+#define MEM_COLOR		5
+#define MEM_SPR_SIZE	6
+
+/* graphics banks */
+#define GFX_TILES		0
+#define GFX_CHARS		1
+#define GFX_SPRITES		2
+
+static void background_tilemap_w( int offset, int data ){
+	videoram[offset] = data;
+	dirtybuffer[offset/2] = 1;
+}
+
+INPUT_PORTS_START( irem_input_ports )
+	PORT_START
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT(0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL  )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_UNKNOWN | IPF_COCKTAIL )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_UNKNOWN | IPF_COCKTAIL )
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START /* coinage not yet verified - copied from Vigilante */
+	PORT_DIPNAME( 0xF0, 0xF0, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(	0xA0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(	0xB0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(	0xC0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(	0xD0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(	0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(	0xE0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(	0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(	0x30, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(	0xF0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(	0x40, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(	0x90, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(	0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(	0x70, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(	0x60, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(	0x50, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(	0x00, "Free Play" )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x01, "Off" )
+	PORT_DIPSETTING(	0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x04, "Mode 1" )
+	PORT_DIPSETTING(	0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, "Game Repeats", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "Yes" )
+	PORT_DIPSETTING(	0x08, "No" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x00, "No" )
+	PORT_DIPSETTING(	0x10, "Yes" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME /* | IPF_CHEAT*/, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(	0x80, "Off" )
+	PORT_DIPSETTING(	0x00, "On" )
+INPUT_PORTS_END
+
+static struct IOReadPort irem_readport[] = {
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, input_port_3_r },
+	{ 0x04, 0x04, input_port_4_r },
+	{ -1 }	/* end of table */
+};
+
+static void kidniki_bankswitch_w(int offset,int data){
+	static int bank_table[16] = {
+		0,1,2,3, 4,5,6,7,
+		12,12,12,12, 8,9,10,11
+	};
+
+	int base = bank_table[data&0xf] * 0x2000;
+	unsigned char *mem = &Machine->memory_region[MEM_MAIN_CPU][0x10000];
+	cpu_setbank( 1,&mem[base] );
+}
+
+static struct IOWritePort kidniki_writeport[] =
+{
+	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	/* 0x01 is most likely screen flip */
+	{ 0x80, 0x81, irem_background_hscroll_w },
+	{ 0x82, 0x83, irem_text_vscroll_w },
+	{ 0x84, 0x84, irem_background_bank_w },
+	{ 0x85, 0x85, kidniki_bankswitch_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress kidniki_readmem[] = {
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_BANK1 },
+	{ 0xa000, 0xafff, MRA_RAM, &videoram },
+	{ 0xc000, 0xc0ff, MRA_RAM },
+	{ 0xd000, 0xdfff, MRA_RAM, &irem_textram },
+	{ 0xe000, 0xe3ff, MRA_RAM },
+	{ 0xe400, 0xffff, MRA_RAM, &spriteram },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress kidniki_writemem[] = {
+	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xafff, background_tilemap_w },
+	{ 0xc000, 0xffff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+/*************************************************************/
+
+static struct GfxLayout kidniki_tile_layout =
+{
+	8,8, /* character size */
+	0x1000, /* number of characters */
+	3, /* 3 bits per pixel */
+	{ 0, 0x8000*8,0x8000*8*2 },
+	{ 0, 1, 2, 3, 4,5,6,7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	64	/* character offset */
+};
+
+static struct GfxLayout kidniki_char_layout =
+{
+	12,8, /* character size */
+	0x400, /* number of characters */
+	3, /* bits per pixel */
+	{ 0, 0x4000*8,0x4000*8*2 },
+	{ 0, 1, 2, 3, 64+0,64+1,64+2,64+3,64+4,64+5,64+6,64+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	128	/* character offset */
+};
+
+static struct GfxLayout kidniki_sprite_layout =
+{
+	16,16,	/* character size */
+	0x800,	/* number of characters */
+	3,	/* bits per pixel */
+	{ 0,0x80000,0x80000*2 },
+	{ 0, 1, 2, 3, 4,5,6,7,
+		128+0,128+1,128+2,128+3,128+4,128+5,128+6,128+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+		8*8,9*8,10*8,11*8,12*8,13*8,14*8,15*8 },
+
+	256 /* sprite offset */
+};
+
+static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
+{
+	{ MEM_TILES, 	0, &kidniki_tile_layout,		256,	32 },
+	{ MEM_CHARS,	0, &kidniki_char_layout,		256,	32 },
+	{ MEM_SPRITES,	0, &kidniki_sprite_layout,		0,		32 },
+	{ -1 } /* end of array */
+};
+
+static struct MachineDriver kidniki_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			6000000,	/* unknown, but 4Mhz causes crashes when fighting the final boss */
+			MEM_MAIN_CPU,
+			kidniki_readmem,kidniki_writemem,
+			irem_readport,kidniki_writeport,
+			interrupt,1
+		},
+		{
+			CPU_M6803 | CPU_AUDIO_CPU,
+			1000000,	/* 1.0 Mhz ? */
+			MEM_SOUND_CPU,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1	/* interrupts are generated by the ADPCM hardware */
+		}
+	},
+	60, 0, /* frames per second and vblank duration from the Lode Runner manual */
+	1, /* cpu slices */
+	0, /* init machine */
+
+	/* video hardware */
+	32*12,	/* screen width */
+	32*8,	/* screen height */
+	{ 0*8, 32*12-1, 0*8, 32*8-1 }, /* viewport clip */
+	kidniki_gfxdecodeinfo,
+	512,512,
+	ldrun_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	kidniki_vh_start,
+	irem_vh_stop,
+	kidniki_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		},
+	}
+};
+
+ROM_START( kidniki_rom )
+	ROM_REGION( 0x30000 )	/* main CPU */
+	ROM_LOAD( "dr04.4e",	0x0000, 0x4000, 0x80431858 )
+	ROM_LOAD( "dr03.4cd",	0x4000, 0x4000, 0xdba20934 )
+
+	ROM_LOAD( "dr11.8k",	0x10000, 0x08000, 0x04d82d93 )
+	ROM_LOAD( "dr12.8l",	0x18000, 0x10000, 0xc0b255fd )
+
+	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_LOAD( "dr00.3a",	0x4000, 0x04000, 0x458309f7 )
+	ROM_LOAD( "dr01.3cd",	0x8000, 0x04000, 0xe66897bd )
+	ROM_LOAD( "dr02.3f",	0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
+
+	ROM_REGION_DISPOSE( 0x18000 ) /* tiles */
+	ROM_LOAD( "dr07.2dc",	0x08000, 0x8000, 0xab59a4c4 )
+	ROM_LOAD( "dr06.2b",	0x10000, 0x8000, 0x4d9a970f )
+	ROM_LOAD( "dr05.2a",	0x00000, 0x8000, 0x2e6dad0c )
+
+	ROM_REGION_DISPOSE( 0xc000 ) /* characters */
+	ROM_LOAD( "dr08.4l",	0x0000, 0x4000, 0x32d50643 )
+	ROM_LOAD( "dr09.4m",	0x4000, 0x4000, 0x17df6f95 )
+	ROM_LOAD( "dr10.4n",	0x8000, 0x4000, 0x820ce252 )
+
+	ROM_REGION_DISPOSE( 0x30000 ) /* sprites */
+	ROM_LOAD( "dr16.4cb",	0x00000, 0x4000, 0xf1d1bb93 ) /* plane0 */
+	ROM_LOAD( "dr18.4e",	0x04000, 0x4000, 0xedb7f25b )
+	ROM_LOAD( "dr17.4dc",	0x08000, 0x4000, 0x4fb87868 )
+	ROM_LOAD( "dr15.4a",	0x0c000, 0x4000, 0xe0b88de5 )
+	ROM_LOAD( "dr14.3p",	0x10000, 0x4000, 0x76cfbcbc ) /* plane 1 */
+	ROM_LOAD( "dr24.4p",	0x14000, 0x4000, 0xd51c8db5 )
+	ROM_LOAD( "dr23.4nm",	0x18000, 0x4000, 0x03469df8 )
+	ROM_LOAD( "dr13.3nm",	0x1c000, 0x4000, 0xd5c3dfe0 )
+	ROM_LOAD( "dr21.4k",	0x20000, 0x4000, 0xa06cea9a ) /* plane 2 */
+	ROM_LOAD( "dr19.4f",	0x24000, 0x4000, 0xb34605ad )
+	ROM_LOAD( "dr22.4l",	0x28000, 0x4000, 0x41303de8 )
+	ROM_LOAD( "dr20.4jh",	0x2c000, 0x4000, 0x5fbe6f61 )
+
+	ROM_REGION( 3*512 ) /* color proms */
+	/* sprites */
+	ROM_LOAD( "dr30.1m",	0*256,	256, 0x28c73263 )//red
+	ROM_LOAD( "dr31.1n",	2*256,	256, 0x3529210e )//green
+	ROM_LOAD( "dr29.1l",	4*256,	256, 0x1173a754 )//blue
+	/* tile colors */
+	ROM_LOAD( "dr25.3f",	1*256,	256, 0x8e91430b )//red
+	ROM_LOAD( "dr26.3h",	3*256,	256, 0xb563b93f )//green
+	ROM_LOAD( "dr27.3j",	5*256,	256, 0x70d668ef )//blue
+
+	ROM_REGION( 32 ) /* sprite height table */
+	ROM_LOAD( "dr32.5p",	0, 32,	0x11cd1f2e )
+
+/* unknown:
+	ROM_LOAD( "dr28.8f",	0, 512, 0x6cef0fbd )
+	ROM_LOAD( "dr33.6f",	0, 256, 0x34d88d3c )
+*/
+ROM_END
+
+struct GameDriver kidniki_driver =
+{
+	__FILE__,
+	0,
+	"kidniki",
+	"Kid Niki, Radical Ninja",
+	"1986",
+	"Irem (Data East USA license)",
+	"Phil Stroffolino\nAaron Giles (sound)",
+	0,
+	&kidniki_machine_driver,
+	0,
+
+	kidniki_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	irem_input_ports,
+
+	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+static struct GfxLayout spelunk2_char_layout =
+{
+	12,8, /* character size */
+	256, /* number of characters */
+	3, /* bits per pixel */
+	{ 0, 0x2000*8, 0x2000*8*2 },
+	{
+		0,1,2,3,
+		0x800*8+0,0x800*8+1,0x800*8+2,0x800*8+3,
+		0x800*8+4,0x800*8+5,0x800*8+6,0x800*8+7
+	},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	64	/* character offset */
+};
+static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
+{
+	{ MEM_TILES, 	0,		&kidniki_tile_layout,	256, 32 },
+	{ MEM_CHARS,	0x0000,	&spelunk2_char_layout,	256,32 },
+	{ MEM_SPRITES,	0,		&kidniki_sprite_layout,	0, 32 },
+	{ MEM_CHARS,	0x1000, &spelunk2_char_layout,	256,32 },
+	{ -1 } /* end of array */
+};
+
+void spelunk2_port_w( int offset, int data ){
+	switch( offset ){
+		case 0:
+		irem_background_vscroll_w(0,data);
+		break;
+
+		case 1:
+		irem_background_hscroll_w(0,data);
+		break;
+
+		case 2:
+		irem_background_hscroll_w(1,(data&2)>>1);
+		irem_background_vscroll_w(1,(data&1));
+		break;
+
+		case 3:
+		{
+			unsigned char *mem = Machine->memory_region[MEM_MAIN_CPU];
+			cpu_setbank( 1,&mem[0x20000+0x1000*(data>>6)] );
+			cpu_setbank( 2,&mem[0x10000+0x400*(data&0x3c)] );
+		}
+		break;
+	}
+}
+
+static struct MemoryReadAddress spelunk2_readmem[] = {
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x8fff, MRA_BANK1 },
+	{ 0x9000, 0x9fff, MRA_BANK2 },
+	{ 0xa000, 0xafff, MRA_RAM, &videoram },
+	{ 0xb000, 0xc7ff, MRA_RAM },
+	{ 0xc800, 0xdfff, MRA_RAM, &irem_textram },
+	{ 0xe000, 0xe3ff, MRA_RAM },
+	{ 0xe400, 0xffff, MRA_RAM, &spriteram },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress spelunk2_writemem[] = {
+	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xbfff, background_tilemap_w },
+	{ 0xc000, 0xcfff, MWA_RAM },
+	{ 0xd000, 0xd003, spelunk2_port_w },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort spelunk2_writeport[] =
+{
+	{ 0x00, 0x00, mpatrol_sound_cmd_w },
+	/* 0x01: flip? */
+	{ -1 }	/* end of table */
+};
+
+static struct MachineDriver spelunk2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			6000000,	/* 4.0 Mhz (?) */
+			MEM_MAIN_CPU,
+			spelunk2_readmem,spelunk2_writemem,
+			irem_readport,spelunk2_writeport,
+			interrupt,1
+		},
+		{
+			CPU_M6803 | CPU_AUDIO_CPU,
+			1000000,	/* 1.0 Mhz ? */
+			MEM_SOUND_CPU,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1	/* interrupts are generated by the ADPCM hardware */
+		}
+	},
+	60, 0, /* frames per second and vblank duration */
+	1, /* cpu slices */
+	0, /* init machine */
+
+	/* video hardware */
+	32*12,	/* screen width */
+	32*8,	/* screen height */
+	{ 0*8, 32*12-1, 0*8, 32*8-1 }, /* viewport clip */
+	spelunk2_gfxdecodeinfo,
+	512,512,
+	ldrun_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	spelunk2_vh_start,
+	irem_vh_stop,
+	spelunk2_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		},
+	}
+};
+
+ROM_START( spelunk2_rom )
+	ROM_REGION( 0x24000 )	/* main CPU */
+	ROM_LOAD( "sp2-a.4e",	0x0000, 0x4000, 0x96c04bbb )
+	ROM_LOAD( "sp2-a.4d",	0x4000, 0x4000, 0xcb38c2ff )
+	/* banked switched ROMs */
+	ROM_LOAD( "sp2-r.7d",	0x10000, 0x8000, 0x558837ea )
+	ROM_LOAD( "sp2-r.7c",	0x18000, 0x8000, 0x4b380162 )
+	ROM_LOAD( "sp2-r.7b",	0x20000, 0x4000, 0x7709a1fe )
+
+	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_LOAD( "sp2-a.3d",	0x8000, 0x04000, 0x839ec7e2 ) /* adpcm data */
+	ROM_LOAD( "sp2-a.3f",	0xc000, 0x04000, 0xad3ce898 ) /* 6803 code */
+
+	ROM_REGION_DISPOSE( 0x18000 ) /* tiles */
+	ROM_LOAD( "sp2-r.1b",	0x00000, 0x8000, 0x3a0c4d47 )
+	ROM_LOAD( "sp2-r.1d",	0x08000, 0x8000, 0xc19fa4c9 )
+	ROM_LOAD( "sp2-r.3b",	0x10000, 0x8000, 0x366604af )
+
+	ROM_REGION_DISPOSE( 0x10000 ) /* characters */
+	ROM_LOAD( "sp2-r.4m",	0x00000, 0x2000, 0x5591f22c )
+	ROM_LOAD( "sp2-r.4p",	0x02000, 0x2000, 0x32967081 )
+	ROM_LOAD( "sp2-r.4l",	0x04000, 0x2000, 0xb12f939a )
+
+	ROM_REGION_DISPOSE( 0x30000 ) /* sprites */
+	ROM_LOAD( "sp2-b.3n",	0x00000, 0x4000, 0xf59e8b76 ) // plane0
+	ROM_LOAD( "sp2-b.4e",	0x04000, 0x4000, 0x780a463b )
+
+	ROM_LOAD( "sp2-b.4c",	0x10000, 0x4000, 0x1caf7013 ) // plane1
+	ROM_LOAD( "sp2-b.4f",	0x14000, 0x4000, 0xe4a1166f )
+
+	ROM_LOAD( "sp2-b.4k",	0x20000, 0x4000, 0x6cb67a17 ) // plane2
+	ROM_LOAD( "sp2-b.4n",	0x24000, 0x4000, 0xfa65bac9 )
+
+	ROM_REGION( 3*512 ) /* color proms */
+	/* sprites */
+	ROM_LOAD( "sp2-b.1m",	0*256,	256, 0x906104c7 )//red
+	ROM_LOAD( "sp2-b.1n",	2*256,	256, 0x5a564c06 )//green
+	ROM_LOAD( "sp2-b.1l",	4*256,	256, 0x8f4a2e3c )//blue
+	/* tile colors */
+	/* red - missing? */
+	ROM_LOAD( "sp2-r.2k",	3*256,	256, 0x1cf5987e )//green
+	ROM_LOAD( "sp2-r.2j",	5*256,	256, 0x1acbe2a5 )//blue
+
+	ROM_REGION( 32 ) /* sprite height table */
+	ROM_LOAD( "sp2-b.5p",	0, 32,	0xcd126f6a )
+
+/*
+	unknown:
+	ROM_LOAD( "sp2-r.8j",	0, 512, 0x875cc442 )
+	ROM_LOAD( "sp2-r.1k",	0,	512, 0 )
+*/
+ROM_END
+
+struct GameDriver spelunk2_driver =
+{
+	__FILE__,
+	0,
+	"spelunk2",
+	"Spelunker II",
+	"1986",
+	"Irem (licensed from Broderbund)",
+	"Phil Stroffolino\nAaron Giles (sound)",
+	GAME_WRONG_COLORS,
+	&spelunk2_machine_driver,
+	0,
+
+	spelunk2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

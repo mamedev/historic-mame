@@ -44,14 +44,14 @@ void    TMS9900_Reset(void)
 	I.WP=RDMEMW(0);
 	I.PC=RDMEMW(2);
 
-	if (errorlog) fprintf(errorlog, "TMS9900.C: Reset : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: Reset : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
 }
 
 int     TMS9900_Execute(int cycles)
 {
         TMS9900_ICount = cycles;
 
-	if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : Entry : Cycles = %04x\n", cycles ) ;
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : Entry : Cycles = %04x\n", cycles ) ;
 
         do
         {
@@ -65,7 +65,8 @@ int     TMS9900_Execute(int cycles)
 #endif
 
 		I.IR=RDMEMW(I.PC);		/* fetch instruction		*/
-		if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : PC: %04x IR: %04x WP: %04x ST: %04x R0: %04x R1: %04x R2: %04x R3: %04x R4: %04x R5: %04x R6: %04x R7: %04x R8: %04x R9: %04x R10: %04x R11: %04x R12: %04x R13: %04x R14: %04x R15: %04x\n", I.PC, I.IR, I.WP, get_status(), RDMEMW(R0), RDMEMW(R1), RDMEMW(R2), RDMEMW(R3), RDMEMW(R4), RDMEMW(R5), RDMEMW(R6), RDMEMW(R7), RDMEMW(R8), RDMEMW(R9), RDMEMW(R10), RDMEMW(R11), RDMEMW(R12), RDMEMW(R13), RDMEMW(R14), RDMEMW(R15)) ;
+//		if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : PC: %04x IR: %04x WP: %04x ST: %04x R0: %04x R1: %04x R2: %04x R3: %04x R4: %04x R5: %04x R6: %04x R7: %04x R8: %04x R9: %04x R10: %04x R11: %04x R12: %04x R13: %04x R14: %04x R15: %04x\n", I.PC, I.IR, I.WP, get_status(), RDMEMW(R0), RDMEMW(R1), RDMEMW(R2), RDMEMW(R3), RDMEMW(R4), RDMEMW(R5), RDMEMW(R6), RDMEMW(R7), RDMEMW(R8), RDMEMW(R9), RDMEMW(R10), RDMEMW(R11), RDMEMW(R12), RDMEMW(R13), RDMEMW(R14), RDMEMW(R15)) ;
+//		if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : PC: %04x IR: %04x WP: %04x ST: %04x\n", I.PC, I.IR, I.WP, get_status()) ;
 		I.PC+=2;                  	/* update program counter 	*/
 		(*opcode_table[I.IR>>8])();	/* execute instruction 		*/
 
@@ -73,7 +74,7 @@ int     TMS9900_Execute(int cycles)
 
 	} while (TMS9900_ICount > 0);
 
-	if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : Exit : Cycles = %04x\n", cycles - TMS9900_ICount ) ;
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: Execute : Exit : Cycles = %04x\n", cycles - TMS9900_ICount ) ;
 
         return cycles - TMS9900_ICount;
 }
@@ -82,7 +83,7 @@ void    TMS9900_GetRegs(TMS9900_Regs * regs)
 {
 	I.STATUS = get_status();
 
-/*	if (errorlog) fprintf(errorlog, "TMS9900.C: GetRegs : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;*/
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: GetRegs : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
 
         *regs = I;
 }
@@ -93,19 +94,56 @@ void    TMS9900_SetRegs(TMS9900_Regs * regs)
 
 	set_status (I.STATUS);
 
-/*	if (errorlog) fprintf(errorlog, "TMS9900.C: SetRegs : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;*/
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: SetRegs : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
 }
 
 int     TMS9900_GetPC(void)
 {
-/*	if (errorlog) fprintf(errorlog, "TMS9900.C: GetPC : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;*/
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: GetPC : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
 
         return I.PC;
 }
 
-void    TMS9900_Cause_Interrupt(int type)
+/*********************************************************/
+// there are 4 levels of interupt + reset
+// PC vector and WP location are stored as follows
+// 0000 PC,WP Reset (level 0)
+// 0004 PC,WP Interupt level 1
+// 0008 PC,WP Interupt level 2
+// 000C PC,WP Interupt level 3
+// 0010 PC,WP Interupt level 4
+// Lower 4 bits of the status register are the interupt mask
+// Only interupts with a value lower than or equal to the mask are enabled
+// So if the mask is set to 3 only interupts 1,2 and 3 occur. Level 0 is always enabled.
+// When the CPU is interupted -
+// WP set to appropriate location
+// PC set to appropriate vector
+// Old WP stored in R13
+// Old PC stored in R14
+// Old ST stored in R15
+// Interupt mask decremented by 1 (this will stop the cpu being interepted unless its higher priority)
+/*********************************************************/
+
+void    TMS9900_Cause_Interrupt(int intlevel)
 {
-	if (errorlog) fprintf(errorlog, "TMS9900.C: Cause_Interrupt : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
+	if (intlevel <= IMASK)
+	{
+
+		word oldwp;
+
+		oldwp=I.WP;
+		I.STATUS = get_status();	/* Make sure status us uptodate before we store it */
+		I.WP=RDMEMW(intlevel*4);	/* get new workspace */
+		WRMEMW(R13,oldwp);        	/* store old WP in new R13 */
+		WRMEMW(R14,I.PC);		/* store old PC in new R14 */
+		WRMEMW(R15,I.STATUS);		/* store old STATUS in R15 */
+
+		set_mask((IMASK&0xF)-1);	/* Decrement the interupt mask */
+
+		I.STATUS = get_status();	/* Update the status again */
+
+		I.PC=RDMEMW((intlevel*4)+2);	/* get new PC */
+	}
 }
 
 void    TMS9900_Clear_Pending_Interrupts(void)
@@ -131,8 +169,8 @@ void typeIoperands(void)
 	get_source_operand();
 	get_dest_operand();
 	if (BYTE_OPERATION)
-        { 
-		if (errorlog) fprintf(errorlog, "TMS9900.C: TypeIoperand : Byte operation\n" ) ;
+        {
+//		if (errorlog) fprintf(errorlog, "TMS9900.C: TypeIoperand : Byte operation\n" ) ;
 
 		SourceVal=RDMEMB(SourceOpAdr);
 	        DestVal=RDMEMB(DestOpAdr);
@@ -160,6 +198,7 @@ void typeIVoperands(void)
 	get_source_operand();
 	SourceVal=RDMEMW(SourceOpAdr&=0xFFFE);
 	DestVal=(I.IR>>6)&0xF;
+	CRUBaseAdr = ((RDMEMW(R12)&0x1FFE)>>1);
 }
 
 void typeVoperands(void)
@@ -233,7 +272,7 @@ void get_source_operand(void)
 			break;
 	}
 
-	if (errorlog) fprintf(errorlog, "TMS9900.C: get_source_operand : Address Mode = %1x, Srce Address = %04x\n", (I.IR>>4)&3, SourceOpAdr ) ;
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: get_source_operand : Address Mode = %1x, Srce Address = %04x\n", (I.IR>>4)&3, SourceOpAdr ) ;
 
 }
 
@@ -253,7 +292,7 @@ void get_dest_operand(void)
 			break;
 	}
 
-	if (errorlog) fprintf(errorlog, "TMS9900.C: get_dest_operand : Address Mode = %1x, Dest Address = %04x\n", (I.IR>>10)&3, DestOpAdr ) ;
+//	if (errorlog) fprintf(errorlog, "TMS9900.C: get_dest_operand : Address Mode = %1x, Dest Address = %04x\n", (I.IR>>10)&3, DestOpAdr ) ;
 }
 
 /********************************************************************************/
@@ -414,15 +453,31 @@ void JOP() { if (OP==1) 		do_jmp(); }
 void do_jmp(void)
 {
 	I.PC+=(I.IR&0xFF)<<1;
-/*	if (errorlog && I.IR&0x0080) fprintf (errorlog, "do_jmp address modification\n") ;*/
 	if (I.IR&0x0080) I.PC-=0x200;
 }
 
-void SBO() {}
+void SBO()
+{
+	CRUBaseAdr = ((RDMEMW(R12)&0x1FFE)>>1);
 
-void SBZ() {}
+	if (errorlog) fprintf(errorlog, "TMS9900.C: PC = %04x : SBO : BaseAddress = %04x, Offset = %x\n", I.PC-2, CRUBaseAdr, (I.IR&0xFF)) ;
+}
 
-void TB() { EQ=0; }
+void SBZ()
+{
+	CRUBaseAdr = ((RDMEMW(R12)&0x1FFE)>>1);
+
+	if (errorlog) fprintf(errorlog, "TMS9900.C: PC = %04x : SBZ : BaseAddress = %04x, Offset = %x\n", I.PC-2, CRUBaseAdr, (I.IR&0xFF)) ;
+}
+
+void TB()
+{
+	CRUBaseAdr = ((RDMEMW(R12)&0x1FFE)>>1);
+
+	if (errorlog) fprintf(errorlog, "TMS9900.C: PC = %04x : TB : BaseAddress = %04x, Offset = %x\n", I.PC-2, CRUBaseAdr, (I.IR&0xFF)) ;
+
+	EQ=0;
+}
 
 void COC()
 {
@@ -465,13 +520,18 @@ void LDCR()
 	EQ=0;
 	typeIVoperands();
 	set_status(SourceVal);
+
+	if (errorlog) fprintf(errorlog, "TMS9900.C: PC = %04x : LDCR : Value = %04x, Count = %x -> BaseAddress = %04x\n", I.PC-2, SourceVal, DestVal, CRUBaseAdr ) ;
 }
 
 void STCR()
 {
 	typeIVoperands();
-	WRMEMW(SourceOpAdr,0xFFFF);
+//	WRMEMW(SourceOpAdr,0xFFFF);
+	WRMEMW(SourceOpAdr,0x0E00);
 	set_status(SourceVal);
+
+	if (errorlog) fprintf(errorlog, "TMS9900.C: PC = %04x : STCR : Address = %04x, Count = %x <- BaseAddress = %04x\n", I.PC-2, SourceOpAdr, DestVal, CRUBaseAdr ) ;
 }
 
 void MPY()
@@ -556,25 +616,30 @@ void LWPI()
 void LIMI()
 {
 	typeXoperands();
-	IMASK=SourceVal&0xF;
+	set_mask(SourceVal);
 }
 
 void RTWP()
 {
-	I.PC= RDMEMW(R14);
-	I.STATUS= RDMEMW(R15);
-	I.WP= RDMEMW(R13);
+	I.PC = RDMEMW(R14);
+	I.STATUS = RDMEMW(R15);
+	I.WP = RDMEMW(R13);
+
+	set_status(I.STATUS);				//Done for interupt stuff
+	set_parity(I.STATUS);				//Done for interupt stuff
+	set_mask(I.STATUS);				//Done for interupt stuff
 }
 
 void BLWP()
 {
 	word oldwp;
+	I.STATUS = get_status();
 	typeVIoperands();
 	oldwp=I.WP;
 	I.WP=SourceVal;			/* get new workspace */
-	WRMEMW(R13,oldwp);        /* store old WP in new R13 */
+	WRMEMW(R13,oldwp);        	/* store old WP in new R13 */
 	WRMEMW(R14,I.PC);		/* store old PC in new R14 */
-	WRMEMW(R15,I.STATUS);	/* store old STATUS in R15 */
+	WRMEMW(R15,I.STATUS);		/* store old STATUS in R15 */
 	I.PC=RDMEMW(SourceOpAdr+2);	/* get new PC :-) */
 }
 
@@ -708,6 +773,11 @@ void ILL()
 /* This part provides the status register handling                              */
 /********************************************************************************/
 
+word get_status(void)
+{
+	return (LGT<<15)|(AGT<<14)|(EQ<<13)|(CY<<12)|(OV<<11)|(OP<<10)|(X<<9)|(IMASK&0xf);
+}
+
 void set_status(word value)
 {
 	EQ=(value==0);
@@ -715,14 +785,14 @@ void set_status(word value)
 	AGT=LGT && (!(value&SIGN));
 }
 
-word get_status(void)
-{
-	return (LGT<<15)|(AGT<<14)|(EQ<<13)|(CY<<12)|(OV<<11)|(OP<<10)|(X<<9)|(IMASK&0xf);
-}
-
 void set_parity(word value)
 {
 	OP= ((PARCHECK >> (value>>12)) ^ (PARCHECK >> ((value>>8)&15))) &1;
+}
+
+void set_mask(word value)
+{
+	IMASK = value&0xf;
 }
 
 /********************************************************************************/

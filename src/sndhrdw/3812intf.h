@@ -12,7 +12,7 @@ extern int use_emulated_ym3812;
 struct YM3812interface
 {
 	int num;
-	int clock;
+	int baseclock;
 	int volume[MAX_3812];
 	void (*handler)(void);
 };

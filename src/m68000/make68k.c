@@ -17,6 +17,10 @@
  * 02.11.98 MJC - cmpm bug, overwriting first value
  * 04.11.98 MJC - Debug timing - same as C core
  *                save PC on calls to C memory routines
+ * 05.11.98 NS  - Re-insert changes to make work on OS/2
+ * 06.11.98 MJC - Flags saved on ADDA commands
+ *                X set on ADD commands
+ * 23.11.98 MJC - Alternate Memory Read/Write for non DOS
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -83,6 +87,23 @@
 #define REG_IRQ		"R_IRQ"
 #define REG_SR		"R_SR"
 
+#define FASTCALL_CPU_READMEM24        "@cpu_readmem24@4"
+#define FASTCALL_CPU_READMEM24_WORD   "@cpu_readmem24_word@4"
+#define FASTCALL_CPU_READMEM24_DWORD  "@cpu_readmem24_dword@4"
+#define FASTCALL_CPU_WRITEMEM24       "@cpu_writemem24@8"
+#define FASTCALL_CPU_WRITEMEM24_WORD  "@cpu_writemem24_word@8"
+#define FASTCALL_CPU_WRITEMEM24_DWORD "@cpu_writemem24_dword@8"
+#define FASTCALL_CPU_SETOPBASE24      "@cpu_setOPbase24@4"
+#define FASTCALL_FIRST_REG            "ecx"
+#define FASTCALL_SECOND_REG           "edx"
+
+#define CPU_READMEM24                "_cpu_readmem24"
+#define CPU_READMEM24_WORD           "_cpu_readmem24_word"
+#define CPU_READMEM24_DWORD          "_cpu_readmem24_dword"
+#define CPU_WRITEMEM24               "_cpu_writemem24"
+#define CPU_WRITEMEM24_WORD          "_cpu_writemem24_word"
+#define CPU_WRITEMEM24_DWORD         "_cpu_writemem24_dword"
+#define CPU_SETOPBASE24              "_cpu_setOPbase24"
 
 /* Global Variables */
 
@@ -95,10 +116,25 @@ int  TimingCycles   = 0;
 
 unsigned char *codebuf;
 
+
+#ifdef DOS
+
 /* Registers normally saved around C routines anyway */
 /* GCC (dos) seems to preserve EBX,EDI,ESI and EBP   */
 
 static char SavedRegs[] = "-B--SDB";
+
+#else
+
+
+#ifdef WIN32
+/* visual C++, win32, says it preserves ebx, edi, esi, and ebp */
+static char SavedRegs[] = "-B--SDB";
+#else
+/* Assume nothing preserved */
+static char SavedRegs[] = "-------";
+#endif
+#endif
 
 /* Jump Table */
 
@@ -114,6 +150,24 @@ static char* regnamesword[] =
 
 static char* regnamesshort[] =
 { "AL","BL","CL","DL" };
+
+#ifdef FASTCALL
+char *name_cpu_readmem24 = FASTCALL_CPU_READMEM24;
+char *name_cpu_readmem24_word = FASTCALL_CPU_READMEM24_WORD;
+char *name_cpu_readmem24_dword = FASTCALL_CPU_READMEM24_DWORD;
+char *name_cpu_writemem24 = FASTCALL_CPU_WRITEMEM24;
+char *name_cpu_writemem24_word = FASTCALL_CPU_WRITEMEM24_WORD;
+char *name_cpu_writemem24_dword = FASTCALL_CPU_WRITEMEM24_DWORD;
+char *name_cpu_setOPbase24 = FASTCALL_CPU_SETOPBASE24;
+#else
+char *name_cpu_readmem24 = CPU_READMEM24;
+char *name_cpu_readmem24_word = CPU_READMEM24_WORD;
+char *name_cpu_readmem24_dword = CPU_READMEM24_DWORD;
+char *name_cpu_writemem24 = CPU_WRITEMEM24;
+char *name_cpu_writemem24_word = CPU_WRITEMEM24_WORD;
+char *name_cpu_writemem24_dword = CPU_WRITEMEM24_DWORD;
+char *name_cpu_setOPbase24 = CPU_SETOPBASE24;
+#endif
 
 /*********************************/
 /* Conversion / Utility Routines */
@@ -297,7 +351,10 @@ void MemoryBanking(int BaseCode)
 
     fprintf(fp, "\t\t push   edx\n");
     fprintf(fp, "\t\t push   esi\n");
-	fprintf(fp, "\t\t call   _cpu_setOPbase24\n");
+#ifdef FASTCALL
+    fprintf(fp, "\t\t mov    %s,esi\n",FASTCALL_FIRST_REG);
+#endif
+	fprintf(fp, "\t\t call   %s\n",name_cpu_setOPbase24);
     fprintf(fp, "\t\t pop    esi\n");
     fprintf(fp, "\t\t pop    edx\n");
 
@@ -605,6 +662,7 @@ void WriteCCR(char Size)
     fprintf(fp, "\t\t and   edx,0EFFh\n");
 }
 
+
 /*
  * Interface to Mame memory commands
  *
@@ -617,6 +675,12 @@ void WriteCCR(char Size)
  *        1 : Mask top byte, but preserve register
  *        2 : Mask top byte, preserve masked register
  */
+
+/****************/
+/* DOS VERSIONS */
+/****************/
+
+#ifdef DOS
 
 void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 {
@@ -681,15 +745,15 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
     switch(Size)
     {
     	case 66 :
-			fprintf(fp, "\t\t call  _cpu_readmem24\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24);
             break;
 
         case 87 :
-			fprintf(fp, "\t\t call  _cpu_readmem24_word\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_word);
             break;
 
         case 76 :
-			fprintf(fp, "\t\t call  _cpu_readmem24_dword\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_dword);
             break;
     }
 
@@ -787,15 +851,15 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
     switch(Size)
     {
     	case 66 :
-			fprintf(fp, "\t\t call  _cpu_writemem24\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24);
             break;
 
         case 87 :
-			fprintf(fp, "\t\t call  _cpu_writemem24_word\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_word);
             break;
 
         case 76 :
-			fprintf(fp, "\t\t call  _cpu_writemem24_dword\n");
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_dword);
             break;
     }
 
@@ -824,6 +888,266 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 			if (SavedRegs[Count] == '-')
 	   			fprintf(fp, "\t\t pop   %s\n",regnameslong[Count]);
 }
+
+#else
+
+/******************/
+/* OTHER VERSIONS */
+/******************/
+
+/*
+ * Longer winded version, but should be easier to understand
+ * and does not assume that variables pushed onto stack will
+ * be intact at end of routine. Uses normal store locations
+ * where possible, otherwise uses safe memory variables.
+ *
+ */
+
+void Memory_Read(char Size,int AReg,char *Flags,int Mask)
+{
+	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+
+    /* Save PC */
+
+  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
+
+    /* Check for special mask condition */
+
+    if (Mask == 2)
+    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+
+    /* Check to see if registers need saving */
+
+    if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_EBX],EBX\n");
+    }
+
+    if ((Flags[ECX] != '-') && (SavedRegs[ECX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_ECX],ECX\n");
+    }
+
+    if ((Flags[EDX] != '-') && (SavedRegs[EDX] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
+    }
+
+    if ((Flags[EDI] != '-') && (SavedRegs[EDI] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_EDI],EDI\n");
+    }
+
+	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+
+
+#ifdef FASTCALL
+    /* Sort Address out */
+
+    if (Mask == 1)
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+
+    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
+#else
+    /* Sort Address out */
+
+    if (Mask == 1)
+    {
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    }
+    else
+    {
+    	/* Just push it onto stack */
+
+	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    }
+#endif
+
+    /* Call Mame memory routine */
+
+    switch(Size)
+    {
+    	case 66 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24);
+            break;
+
+        case 87 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_word);
+            break;
+
+        case 76 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24_dword);
+            break;
+    }
+
+    /* Correct Stack */
+#ifndef FASTCALL
+	fprintf(fp, "\t\t add   esp,byte 4\n");
+#endif
+    /* Restore registers */
+
+    /* Check to see if registers need restoring */
+
+    if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   EBX,[Safe_EBX]\n");
+    }
+
+    if ((Flags[ECX] != '-') && (SavedRegs[ECX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   ECX,[Safe_ECX]\n");
+    }
+
+    if ((Flags[EDX] != '-') && (SavedRegs[EDX] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   EDX,[%s]\n",REG_CCR);
+    }
+
+    if ((Flags[ESI] != '-') && (SavedRegs[ESI] == '-'))
+    {
+	  	fprintf(fp, "\t\t mov   ESI,[%s]\n",REG_PC);
+    }
+
+    if ((Flags[EDI] != '-') && (SavedRegs[EDI] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   EDI,[Safe_EDI]\n");
+    }
+
+    if ((Flags[EBP] != '-') && (SavedRegs[EBP] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   ebp,dword [_OP_ROM]\n");
+    }
+}
+
+void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
+{
+	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+
+    /* Save PC */
+
+  	fprintf(fp, "\t\t mov   [%s],ESI\n",REG_PC);
+
+    /* Check for special mask condition */
+
+    if (Mask == 2)
+    	fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+
+    /* Check to see if registers need saving */
+
+    if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_EBX],EBX\n");
+    }
+
+    if ((Flags[ECX] != '-') && (SavedRegs[ECX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_ECX],ECX\n");
+    }
+
+    if ((Flags[EDX] != '-') && (SavedRegs[EDX] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   [%s],edx\n",REG_CCR);
+    }
+
+    if ((Flags[EDI] != '-') && (SavedRegs[EDI] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   [Safe_EDI],EDI\n");
+    }
+
+	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+
+
+#ifdef FASTCALL
+    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_SECOND_REG,regnameslong[DReg]);
+
+    /* Sort Address out */
+
+    if (Mask == 1)
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+
+    fprintf(fp,"\t\t mov  %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
+#else
+    /* push data onto stack */
+
+	fprintf(fp, "\t\t push  %s\n",regnameslong[DReg]);
+
+    /* Sort Address out */
+
+    if (Mask == 1)
+    {
+        fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    }
+    else
+    {
+    	/* Just push it onto stack */
+
+	    fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
+    }
+#endif
+
+    /* Call Mame Routine */
+
+    switch(Size)
+    {
+    	case 66 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24);
+            break;
+
+        case 87 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_word);
+            break;
+
+        case 76 :
+			fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24_dword);
+            break;
+    }
+
+
+    /* Correct Stack - Pop Dreg if needed */
+
+#ifndef FASTCALL
+	fprintf(fp, "\t\t add   esp,byte 8\n");
+#endif
+
+    /* Restore registers */
+
+    /* Check to see if registers need restoring */
+
+    if ((Flags[EBX] != '-') && (SavedRegs[EBX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   EBX,[Safe_EBX]\n");
+    }
+
+    if ((Flags[ECX] != '-') && (SavedRegs[ECX] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   ECX,[Safe_ECX]\n");
+    }
+
+    if ((Flags[EDX] != '-') && (SavedRegs[EDX] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   EDX,[%s]\n",REG_CCR);
+    }
+
+    if ((Flags[ESI] != '-') && (SavedRegs[ESI] == '-'))
+    {
+	  	fprintf(fp, "\t\t mov   ESI,[%s]\n",REG_PC);
+    }
+
+    if ((Flags[EDI] != '-') && (SavedRegs[EDI] == '-'))
+    {
+    	fprintf(fp, "\t\t mov   EDI,[Safe_EDI]\n");
+    }
+
+    if ((Flags[EBP] != '-') && (SavedRegs[EBP] == '-'))
+    {
+	    fprintf(fp, "\t\t mov   ebp,dword [_OP_ROM]\n");
+    }
+}
+
+#endif
+
 
 /*
  * Fetch data from Code area
@@ -3997,7 +4321,7 @@ void link(void)
 	}
 }
 
-void unlink(void)
+void unlinkasm(void)
 {
 	int	sreg ;
 	int	Opcode, BaseCode ;
@@ -4661,7 +4985,6 @@ void abcd_sbcd(void)
 {
 	int	Opcode, BaseCode ;
 	int	regx,type,rm,regy,mode ;
-	char  Size ;
 	char * Regname ;
 	char * RegnameECX ;
 
@@ -4706,7 +5029,7 @@ void abcd_sbcd(void)
 				fprintf(fp, "\t\t daa\n");
 			}
 
-			SetFlags(Size,EAX,FALSE,TRUE,TRUE);
+			SetFlags('B',EAX,FALSE,TRUE,TRUE);
 
   			EffectiveAddressWrite(mode,'B',ECX,EAX,"----S-B",FALSE);
 			Completed();
@@ -5503,14 +5826,14 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t GLOBAL _MC68000_ICount\n");
     fprintf(fp, "\t\t GLOBAL _regs\n");
 
-    fprintf(fp, "\t\t EXTERN _cpu_readmem24\n");
-    fprintf(fp, "\t\t EXTERN _cpu_readmem24_word\n");
-    fprintf(fp, "\t\t EXTERN _cpu_readmem24_dword\n\n");
+    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24);
+    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24_word);
+    fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_readmem24_dword);
 
-    fprintf(fp, "\t\t EXTERN _cpu_writemem24\n");
-    fprintf(fp, "\t\t EXTERN _cpu_writemem24_word\n");
-    fprintf(fp, "\t\t EXTERN _cpu_writemem24_dword\n");
-	fprintf(fp, "\t\t EXTERN _cpu_setOPbase24\n\n");
+    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24);
+    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24_word);
+    fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24_dword);
+	fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_setOPbase24);
 
     fprintf(fp, "; Vars Mame declares / needs access to\n\n");
 
@@ -5773,6 +6096,12 @@ void CodeSegmentEnd(void)
 
     fprintf(fp, "asmbank\t DD 0\n\n");
 
+    /* Safe Memory Locations */
+
+	fprintf(fp, "Safe_EBX\t DD 0\n");
+	fprintf(fp, "Safe_ECX\t DD 0\n");
+	fprintf(fp, "Safe_EDI\t DD 0\n\n");
+
     fprintf(fp, "\t\t ALIGN 16\n");
 
 	fprintf(fp, "\n\nIntelFlag\t\t\t\t; Intel Flag Lookup Table\n");
@@ -5845,7 +6174,7 @@ void EmitCode(void)
 	movem_reg_ea();
 	movem_ea_reg();
     link();
-    unlink();
+    unlinkasm();
 	asl_asr();							/* E### Shift Commands */
 	asl_asr_ea();
 	roxl_roxr();

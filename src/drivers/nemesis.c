@@ -45,6 +45,7 @@ extern unsigned char *nemesis_videoram1;
 extern unsigned char *nemesis_videoram2;
 extern unsigned char *nemesis_characterram;
 extern unsigned char *nemesis_xscroll1,*nemesis_xscroll2, *nemesis_yscroll;
+extern int  nemesis_characterram_size;
 
 int  nemesis_videoram1_r(int offset);
 void nemesis_videoram1_w(int offset,int data);
@@ -57,28 +58,66 @@ int  nemesis_vh_start(void);
 void nemesis_vh_stop(void);
 
 void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void nemesis_init_machine(void);
 
 
 
 int irq_on = 0;
-
-int nemesis_interrupt(void)
-{
-	if (irq_on)
-		return(1);
-	else
-		return(0);
-}
-
 int irq1_on = 0;
 int irq2_on = 0;
 int irq4_on = 0;
 
+
+void nemesis_init_machine(void)
+{
+	irq_on = 0;
+	irq1_on = 0;
+	irq2_on = 0;
+	irq4_on = 0;
+}
+
+
+
+int nemesis_interrupt(void)
+{
+	if (irq_on) return 1;
+
+	return 0;
+}
+
+
+int konamigt_interrupt(void)
+{
+	if (cpu_getiloops() == 0)
+	{
+		if (irq_on)	return 1;
+	}
+	else
+	{
+		if (irq2_on) return 2;
+	}
+
+	return 0;
+}
+
+
 int gx400_interrupt(void)
 {
-	if (irq1_on) return 1;
-	if (irq2_on) return 2;
-	if (irq4_on) return 4;
+	switch (cpu_getiloops())
+	{
+		case 0:
+			if (irq1_on) return 1;
+			break;
+
+		case 1:
+			if (irq2_on) return 2;
+			break;
+
+		case 2:
+			if (irq4_on) return 4;
+			break;
+	}
+
 	return 0;
 }
 
@@ -86,27 +125,33 @@ void gx400_irq1_enable_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		irq1_on = data & 0x0001;
-	else
-if (errorlog) fprintf(errorlog,"irq1en = %08x\n",data);
+/*	else
+if (errorlog) fprintf(errorlog,"irq1en = %08x\n",data);*/
 }
 
 void gx400_irq2_enable_w(int offset,int data)
 {
 	if ((data & 0x00ff0000) == 0)
 		irq2_on = data & 0x0001;
-	else
-if (errorlog) fprintf(errorlog,"irq2en = %08x\n",data);
+/*	else
+if (errorlog) fprintf(errorlog,"irq2en = %08x\n",data);*/
 }
 
 void gx400_irq4_enable_w(int offset,int data)
 {
 	if ((data & 0xff000000) == 0)
 		irq4_on = data & 0x0100;
-	else
-if (errorlog) fprintf(errorlog,"irq4en = %08x\n",data);
+/*	else
+if (errorlog) fprintf(errorlog,"irq4en = %08x\n",data);*/
 }
 
 static unsigned char *gx400_shared_ram;
+
+
+int gx400_sharedram_nosoundfix_r(int offset)
+{
+	return 2;
+}
 
 int gx400_sharedram_r(int offset)
 {
@@ -131,6 +176,39 @@ int salamand_interrupt(void)
 void nemesis_irq_enable_w(int offset,int data)
 {
 	irq_on = data & 0xff;
+}
+
+void konamigt_irq_enable_w(int offset,int data)
+{
+	if ((data & 0x00ff0000) == 0)
+	{
+		irq_on = data & 0xff;
+	}
+}
+void konamigt_irq2_enable_w(int offset,int data)
+{
+	if ((data & 0x00ff0000) == 0)
+	{
+		irq2_on = data & 0xff;
+	}
+}
+
+int konamigt_input_r(int offset)
+{
+	int data=readinputport(1);
+	int data2=readinputport(6);
+
+	int ret=0;
+
+	if(data&0x10) ret|=0x0800;			// turbo/gear?
+	if(data&0x80) ret|=0x0400;			// turbo?
+	if(data&0x20) ret|=0x0300;			// brake		(0-3)
+
+	if(data&0x40) ret|=0xf000;			// accel		(0-f)
+
+	ret|=data2&0x7f;					// steering wheel, not exactly sure if DIAL works ok.
+
+	return ret;
 }
 
 void nemesis_soundlatch_w (int offset, int data)
@@ -180,12 +258,13 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },	/* ROM */
 
-	{ 0x040000, 0x04ffff, nemesis_characterram_w, &nemesis_characterram },
+	{ 0x040000, 0x04ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
 
 	{ 0x050000, 0x0503ff, MWA_BANK1, &nemesis_xscroll1 },
 	{ 0x050400, 0x0507ff, MWA_BANK2, &nemesis_xscroll2 },
 	{ 0x050800, 0x050bff, MWA_BANK3 },
 	{ 0x050c00, 0x050fff, MWA_BANK4, &nemesis_yscroll },
+	{ 0x051000, 0x051fff, MWA_NOP },		/* used, but written to with 0's */
 
 	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
 	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
@@ -197,7 +276,7 @@ static struct MemoryWriteAddress writemem[] =
 
 	{ 0x05e000, 0x05e001, &nemesis_irq_enable_w },	/* Nemesis */
 	{ 0x05e002, 0x05e003, &nemesis_irq_enable_w },	/* Konami GT */
-/*	{ 0x05e004, 0x05e005, },	bit 8 of the word probably triggers IRQ on sound board */
+	{ 0x05e004, 0x05e005, MWA_NOP},	/* bit 8 of the word probably triggers IRQ on sound board */
 	{ 0x060000, 0x067fff, MWA_BANK6, &ram },	/* WORK RAM */
 	{ -1 }  /* end of table */
 };
@@ -224,7 +303,117 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
+static struct MemoryReadAddress konamigt_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x040000, 0x04ffff, nemesis_characterram_r },
+	{ 0x050000, 0x0503ff, MRA_BANK1 },
+	{ 0x050400, 0x0507ff, MRA_BANK2 },
+	{ 0x050800, 0x050bff, MRA_BANK3 },
+	{ 0x050c00, 0x050fff, MRA_BANK4 },
+
+	{ 0x052000, 0x053fff, nemesis_videoram1_r },
+	{ 0x054000, 0x055fff, nemesis_videoram2_r },
+	{ 0x056000, 0x056fff, MRA_BANK5 },
+	{ 0x05a000, 0x05afff, paletteram_word_r },
+
+	{ 0x05c400, 0x05c401, input_port_4_r },	/* DSW0 */
+	{ 0x05c402, 0x05c403, input_port_5_r },	/* DSW1 */
+
+	{ 0x05cc00, 0x05cc01, input_port_0_r },	/* IN0 */
+	{ 0x05cc02, 0x05cc03, input_port_1_r },	/* IN1 */
+	{ 0x05cc04, 0x05cc05, input_port_2_r },	/* IN2 */
+	{ 0x05cc06, 0x05cc07, input_port_3_r },	/* TEST */
+
+	{ 0x060000, 0x067fff, MRA_BANK6 },
+	{ 0x070000, 0x070001, konamigt_input_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress konamigt_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },	/* ROM */
+
+	{ 0x040000, 0x04ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
+
+	{ 0x050000, 0x0503ff, MWA_BANK1, &nemesis_xscroll1 },
+	{ 0x050400, 0x0507ff, MWA_BANK2, &nemesis_xscroll2 },
+	{ 0x050800, 0x050bff, MWA_BANK3 },
+	{ 0x050c00, 0x050fff, MWA_BANK4, &nemesis_yscroll },
+	{ 0x051000, 0x051fff, MWA_NOP },		/* used, but written to with 0's */
+
+	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
+	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
+	{ 0x056000, 0x056fff, MWA_BANK5, &spriteram, &spriteram_size },
+	{ 0x05a000, 0x05afff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+
+	{ 0x05c000, 0x05c001, nemesis_soundlatch_w },
+	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
+
+	{ 0x05e000, 0x05e001, &konamigt_irq2_enable_w },
+	{ 0x05e002, 0x05e003, &konamigt_irq_enable_w },
+	{ 0x05e004, 0x05e005, MWA_NOP},	/* bit 8 of the word probably triggers IRQ on sound board */
+	{ 0x060000, 0x067fff, MWA_BANK6, &ram },	/* WORK RAM */
+	{ -1 }  /* end of table */
+};
+
+
 static struct MemoryReadAddress gx400_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x010000, 0x01ffff, MRA_RAM },
+	{ 0x020000, 0x027ff9, gx400_sharedram_r },
+	{ 0x027ffa, 0x027fff, gx400_sharedram_nosoundfix_r },
+	{ 0x030000, 0x03ffff, nemesis_characterram_r },
+	{ 0x050000, 0x0503ff, MRA_RAM },
+	{ 0x050400, 0x0507ff, MRA_RAM },
+	{ 0x050800, 0x050bff, MRA_RAM },
+	{ 0x050c00, 0x050fff, MRA_RAM },
+	{ 0x052000, 0x053fff, nemesis_videoram1_r },
+	{ 0x054000, 0x055fff, nemesis_videoram2_r },
+	{ 0x056000, 0x056fff, MRA_RAM },
+	{ 0x057000, 0x057fff, MRA_RAM },
+	{ 0x05a000, 0x05afff, paletteram_word_r },
+	{ 0x05c402, 0x05c403, input_port_4_r },	/* DSW0 */
+	{ 0x05c404, 0x05c405, input_port_5_r },	/* DSW1 */
+	{ 0x05c406, 0x05c407, input_port_3_r },	/* TEST */
+	{ 0x05cc00, 0x05cc01, input_port_0_r },	/* IN0 */
+	{ 0x05cc02, 0x05cc03, input_port_1_r },	/* IN1 */
+	{ 0x05cc04, 0x05cc05, input_port_2_r },	/* IN2 */
+	{ 0x060000, 0x07ffff, MRA_RAM },
+	{ 0x080000, 0x0cffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress gx400_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x010000, 0x01ffff, MWA_RAM },
+	{ 0x020000, 0x027fff, gx400_sharedram_w },
+	{ 0x030000, 0x03ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
+	{ 0x050000, 0x0503ff, MWA_RAM, &nemesis_xscroll1 },
+	{ 0x050400, 0x0507ff, MWA_RAM, &nemesis_xscroll2 },
+	{ 0x050800, 0x050bff, MWA_RAM },
+	{ 0x050c00, 0x050fff, MWA_RAM, &nemesis_yscroll },
+	{ 0x051000, 0x051fff, MWA_NOP },		/* used, but written to with 0's */
+	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
+	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
+	{ 0x056000, 0x056fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x057000, 0x057fff, MWA_RAM},										/* needed for twinbee */
+	{ 0x05a000, 0x05afff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x05c000, 0x05c001, nemesis_soundlatch_w },
+	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
+	{ 0x05e000, 0x05e001, &gx400_irq2_enable_w },	/* ?? */
+	{ 0x05e002, 0x05e003, &gx400_irq1_enable_w },	/* ?? */
+	{ 0x05e004, 0x05e005, MWA_NOP},	/* bit 8 of the word probably triggers IRQ on sound board */
+	{ 0x05e008, 0x05e009, MWA_NOP },	/* IRQ acknowledge??? */
+	{ 0x05e00e, 0x05e00f, &gx400_irq4_enable_w },	/* ?? */
+	{ 0x060000, 0x07ffff, MWA_RAM, &ram },
+	{ 0x080000, 0x0cffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress rf2_gx400_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x010000, 0x01ffff, MRA_RAM },
@@ -245,20 +434,22 @@ static struct MemoryReadAddress gx400_readmem[] =
 	{ 0x05cc02, 0x05cc03, input_port_1_r },	/* IN1 */
 	{ 0x05cc04, 0x05cc05, input_port_2_r },	/* IN2 */
 	{ 0x060000, 0x067fff, MRA_RAM },
+	{ 0x070000, 0x070001, konamigt_input_r },
 	{ 0x080000, 0x0cffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress gx400_writemem[] =
+static struct MemoryWriteAddress rf2_gx400_writemem[] =
 {
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x010000, 0x01ffff, MWA_RAM },
 	{ 0x020000, 0x027fff, gx400_sharedram_w },
-	{ 0x030000, 0x03ffff, nemesis_characterram_w, &nemesis_characterram },
+	{ 0x030000, 0x03ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
 	{ 0x050000, 0x0503ff, MWA_RAM, &nemesis_xscroll1 },
 	{ 0x050400, 0x0507ff, MWA_RAM, &nemesis_xscroll2 },
 	{ 0x050800, 0x050bff, MWA_RAM },
 	{ 0x050c00, 0x050fff, MWA_RAM, &nemesis_yscroll },
+	{ 0x051000, 0x051fff, MWA_NOP },		/* used, but written to with 0's */
 	{ 0x052000, 0x053fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
 	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
 	{ 0x056000, 0x056fff, MWA_RAM, &spriteram, &spriteram_size },
@@ -267,7 +458,7 @@ static struct MemoryWriteAddress gx400_writemem[] =
 	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
 	{ 0x05e000, 0x05e001, &gx400_irq2_enable_w },	/* ?? */
 	{ 0x05e002, 0x05e003, &gx400_irq1_enable_w },	/* ?? */
-/*	{ 0x05e004, 0x05e005, },	bit 8 of the word probably triggers IRQ on sound board */
+	{ 0x05e004, 0x05e005, MWA_NOP}, /*	bit 8 of the word probably triggers IRQ on sound board */
 	{ 0x05e008, 0x05e009, MWA_NOP },	/* IRQ acknowledge??? */
 	{ 0x05e00e, 0x05e00f, &gx400_irq4_enable_w },	/* ?? */
 	{ 0x060000, 0x067fff, MWA_RAM, &ram },	/* WORK RAM */
@@ -296,35 +487,71 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+int zero_r(int o)
+{
+	return 0;
+}
+
+int ff_r(int o)
+{
+	return 0xff;
+}
+
 static struct MemoryReadAddress salamand_readmem[] =
 {
-	{ 0x000000, 0x03ffff, MRA_ROM },  /* ROM BIOS */
-	{ 0x040000, 0x07ffff, MRA_ROM },  /* not all banks filled */
+	{ 0x000000, 0x07ffff, MRA_ROM },  /* ROM BIOS */
 	{ 0x080000, 0x087fff, MRA_RAM },
-	{ 0x120000, 0x12ffff, MRA_RAM },
-	{ 0x190000, 0x190FFF, MRA_RAM },
-	{ 0x100000, 0x101FFF, MRA_RAM },
-	{ 0x102000, 0x103FFF, MRA_RAM },
+	{ 0x090000, 0x091fff, MRA_RAM },
+
+//	{ 0x0c0000, 0x0c0001, input_port_3_r },	/* TEST */
+//	{ 0x0c0002, 0x0c0003, input_port_4_r },	/* DSW0 */
+
+//	{ 0x0c2000, 0x0c2001, input_port_0_r },	/* IN0 */
+//	{ 0x0c2002, 0x0c2003, input_port_1_r },	/* IN1 */
+//	{ 0x0c2004, 0x0c2005, input_port_2_r },	/* IN2 */
+//	{ 0x0c2006, 0x0c2007, input_port_5_r },	/* DSW1 */
+
+	{ 0x0c0000, 0x0c0001, zero_r },	/* TEST */
+	{ 0x0c0002, 0x0c0003, zero_r },	/* DSW0 */
+
+	{ 0x0c2000, 0x0c2001, input_port_3_r },	/* TEST */
+	{ 0x0c2002, 0x0c2003, zero_r },	/* IN1 */
+	{ 0x0c2004, 0x0c2005, zero_r },	/* IN2 */
+	{ 0x0c2006, 0x0c2007, zero_r },	/* DSW1 */
+
+
+	{ 0x100000, 0x101fff, nemesis_videoram1_r },
+	{ 0x102000, 0x103fff, nemesis_videoram2_r },
+
+	{ 0x120000, 0x12ffff, nemesis_characterram_r },
+	{ 0x180000, 0x180fff, paletteram_word_r },
+	{ 0x190000, 0x190fff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress salamand_writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x080000, 0x087fff, MWA_RAM },
-	{ 0x090000, 0x09ffff, MWA_RAM },
+
+	{ 0x290000, 0x2903ff, MWA_RAM, &nemesis_xscroll1 },
+	{ 0x290400, 0x2907ff, MWA_RAM, &nemesis_xscroll2 },
+	{ 0x290800, 0x290bff, MWA_RAM },
+	{ 0x290c00, 0x290fff, MWA_RAM, &nemesis_yscroll },
+
+	{ 0x090000, 0x091fff, MWA_RAM },
 	{ 0x0A0000, 0x0A0001, nemesis_irq_enable_w },          /* irq enable */
 	{ 0x0C0004, 0x0C0007, MWA_NOP },        /* Watchdog at $c0005 */
-	{ 0x120000, 0x12ffff, MWA_RAM },
-	{ 0x180000, 0x180FFF, MWA_RAM },
-	{ 0x190000, 0x190FFF, MWA_RAM },
+	{ 0x100000, 0x101fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
+	{ 0x102000, 0x103fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
 
-	{ 0x100000, 0x101FFF, MWA_RAM },
-	{ 0x102000, 0x103FFF, MWA_RAM },
+	{ 0x120000, 0x12ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
+	{ 0x180000, 0x180fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x190000, 0x190fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x191000, 0x191FFF, MWA_RAM },		/* more sprite ram ??? */
+
 	{ -1 }  /* end of table */
 };
-
-
 
 INPUT_PORTS_START( nemesis_input_ports )
 	PORT_START	/* IN0 */
@@ -338,20 +565,20 @@ INPUT_PORTS_START( nemesis_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -419,15 +646,15 @@ INPUT_PORTS_START( nemesis_input_ports )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x04, "Cocktail" )
 	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "50000 100000" )
-	PORT_DIPSETTING(    0x10, "30000" )
-	PORT_DIPSETTING(    0x08, "50000" )
-	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPSETTING(    0x10, "30k" )
+	PORT_DIPSETTING(    0x18, "50k and every 100k" )
+	PORT_DIPSETTING(    0x08, "50k" )
+	PORT_DIPSETTING(    0x00, "100k" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -445,20 +672,20 @@ INPUT_PORTS_START( nemesuk_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -526,10 +753,330 @@ INPUT_PORTS_START( nemesuk_input_ports )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x04, "Cocktail" )
 	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "20000 80000" )
-	PORT_DIPSETTING(    0x10, "30000 80000" )
-	PORT_DIPSETTING(    0x08, "20000" )
-	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x18, "20k and every 70k" )
+	PORT_DIPSETTING(    0x10, "30k and every 80k" )
+	PORT_DIPSETTING(    0x08, "20k" )
+	PORT_DIPSETTING(    0x00, "30k" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+
+/* This needs to be sorted */
+INPUT_PORTS_START( konamigt_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "Easy" )
+	PORT_DIPSETTING(    0x20, "Normal" )
+	PORT_DIPSETTING(    0x10, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+
+	PORT_START	/* IN6 */
+	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL , 25, 0, 0x00, 0x7f )
+INPUT_PORTS_END
+
+/* This needs to be sorted */
+INPUT_PORTS_START( rf2_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "Easy" )
+	PORT_DIPSETTING(    0x20, "Normal" )
+	PORT_DIPSETTING(    0x10, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+
+	PORT_START	/* IN6 */
+	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL , 25, 0, 0x00, 0x7f )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( salamand_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY| IPF_8WAY  )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode 80", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "30000" )
+	PORT_DIPSETTING(    0x08, "50000" )
+	PORT_DIPSETTING(    0x18, "50000 100000" )
+	PORT_DIPSETTING(    0x00, "100000" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
@@ -538,9 +1085,6 @@ INPUT_PORTS_START( nemesuk_input_ports )
 	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( salamand_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gwarrior_input_ports )
@@ -555,20 +1099,20 @@ INPUT_PORTS_START( gwarrior_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN |  IPF_8WAY |IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
@@ -632,24 +1176,131 @@ INPUT_PORTS_START( gwarrior_input_ports )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "30k 100k 200k 400k" )
-	PORT_DIPSETTING(    0x10, "40k 120k 240k 480k" )
-	PORT_DIPSETTING(    0x08, "50k 150k 300k 600k" )
-	PORT_DIPSETTING(    0x00, "100k 200k 400k 800k" )
+	PORT_DIPSETTING(    0x18, "30k and every 70k" )
+	PORT_DIPSETTING(    0x10, "40k and every 80k" )
+	PORT_DIPSETTING(    0x08, "50k and every 100k" )
+	PORT_DIPSETTING(    0x00, "100k and every 100k" )
 	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( gradius_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* TEST */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Version", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x00, "Vs" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Disable" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "20k and every 70k" )
+	PORT_DIPSETTING(    0x08, "20k only" )
+	PORT_DIPSETTING(    0x10, "30k and every 80k" )
+	PORT_DIPSETTING(    0x00, "30k only" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -676,10 +1327,74 @@ static struct GfxLayout spritelayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
+static struct GfxLayout spritelayout3216 =
+{
+	32,16,	/* 32*16 sprites */
+	256,	/* 256 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
+		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
+		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4},
+	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
+			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128 },
+	256*8     /* every sprite takes 128 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout1632 =
+{
+	16,32,	/* 16*32 sprites */
+	256,	/* 256 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4},
+	{ 0*64,  1*64,  2*64,  3*64,  4*64,  5*64,  6*64,  7*64,
+	  8*64,  9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64,
+	 16*64, 17*64, 18*64, 19*64, 20*64, 21*64, 22*64, 23*64,
+	 24*64, 25*64, 26*64, 27*64, 28*64, 29*64, 30*64, 31*64},
+	256*8     /* every sprite takes 128 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout3232 =
+{
+	32,32,	/* 32*32 sprites */
+	129,	/* 128 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
+			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
+		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
+		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4},
+	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
+			8*128,  9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128,
+		   16*128, 17*128, 18*128, 19*128, 20*128, 21*128, 22*128, 23*128,
+		   24*128, 25*128, 26*128, 27*128, 28*128, 29*128, 30*128, 31*128},
+	512*8     /* every sprite takes 128 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout816 =
+{
+	8,16,	/* 16*16 sprites */
+	1024,	/* 512 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	64*8     /* every sprite takes 128 consecutive bytes */
+};
+
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
     { 0, 0x0, &charlayout,   0, 0x80 },	/* the game dynamically modifies this */
     { 0, 0x0, &spritelayout, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout3216, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout816, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout3232, 0, 0x80 },	/* the game dynamically modifies this */
+    { 0, 0x0, &spritelayout1632, 0, 0x80 },	/* the game dynamically modifies this */
 	{ -1 }
 };
 
@@ -689,7 +1404,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chip */
 	14318000/8,	/* 1.78975 Mhz?? */
-	{ 255, 255 },
+	{ 0x20ff, 0x20ff },
 	{ nemesis_portA_r, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
@@ -720,7 +1435,54 @@ static struct MachineDriver nemesis_machine_driver =
 
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	nemesis_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048, 2048,
 	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	nemesis_vh_start,
+	nemesis_vh_stop,
+	nemesis_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
+
+static struct MachineDriver konamigt_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			14318180/2,	/* ??? guess */
+			0,
+			konamigt_readmem,konamigt_writemem,0,0,
+			konamigt_interrupt,2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* 3.579545 MHz */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		},
+	},
+
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	nemesis_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -759,11 +1521,11 @@ static struct MachineDriver salamand_machine_driver =
 
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	nemesis_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	0,
+	gfxdecodeinfo,
 	2048, 2048,
 	0,
 
@@ -771,7 +1533,8 @@ static struct MachineDriver salamand_machine_driver =
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
-	salamand_vh_screenrefresh,
+//	salamand_vh_screenrefresh,
+	nemesis_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -792,7 +1555,7 @@ static struct MachineDriver gx400_machine_driver =
 			14318180/2,	/* ??? guess */
 			0,
 			gx400_readmem,gx400_writemem,0,0,
-			gx400_interrupt,1
+			gx400_interrupt,3
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -805,7 +1568,53 @@ static struct MachineDriver gx400_machine_driver =
 
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	nemesis_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	2048, 2048,
 	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	nemesis_vh_start,
+	nemesis_vh_stop,
+	nemesis_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
+static struct MachineDriver rf2_gx400_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			14318180/2,	/* ??? guess */
+			0,
+			rf2_gx400_readmem,rf2_gx400_writemem,0,0,
+			gx400_interrupt,3
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* 3.579545 MHz */
+			2,
+			gx400_sound_readmem,gx400_sound_writemem,0,0,
+			nmi_interrupt,1	/* interrupts are triggered by the main CPU */
+		},
+	},
+
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	nemesis_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -894,11 +1703,15 @@ ROM_END
 
 ROM_START( salamand_rom )
 	ROM_REGION(0x200000)    /* 64k for code */
-	ROM_LOAD_EVEN ( "18b_d02.bin",  0x00000, 0x10000, 0x0 )
-	ROM_LOAD_ODD  ( "18c_d05.bin",  0x00000, 0x10000, 0x0 )
-	ROM_LOAD_EVEN ( "17b_u.bin",    0x20000, 0x10000, 0x0 )
-	ROM_LOAD_ODD  ( "17c_u.bin",    0x20000, 0x10000, 0x0 )
+	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
+	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
+	ROM_LOAD_EVEN ( "17b.bin",    0x40000, 0x20000, 0xe5caf6e6 )
+	ROM_LOAD_ODD  ( "17c.bin",    0x40000, 0x20000, 0xc2f567ea )
 
+//	ROM_LOAD_EVEN ( "18b_d02.bin",  0x00000, 0x10000, 0x0 )
+//	ROM_LOAD_ODD  ( "18c_d05.bin",  0x00000, 0x10000, 0x0 )
+//	ROM_LOAD_EVEN ( "17b_u.bin",    0x20000, 0x10000, 0x0 )
+//	ROM_LOAD_ODD  ( "17c_u.bin",    0x20000, 0x10000, 0x0 )
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
@@ -1060,9 +1873,9 @@ struct GameDriver konamigt_driver =
 	"Konami GT",
 	"1985",
 	"Konami",
-	"Allard van der Bas",
-	GAME_NOT_WORKING,
-	&nemesis_machine_driver,
+	"Allard van der Bas\nAndrew Prime",
+	0,
+	&konamigt_machine_driver,
 	0,
 
 	konamigt_rom,
@@ -1070,7 +1883,7 @@ struct GameDriver konamigt_driver =
 	0,
 	0,      /* sound_prom */
 
-	nemesis_input_ports,
+	konamigt_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1087,7 +1900,7 @@ struct GameDriver salamand_driver =
 	"????",
 	"?????",
 	"68K test",
-	GAME_NOT_WORKING,
+	0,
 	&salamand_machine_driver,
 	0,
 
@@ -1107,14 +1920,14 @@ struct GameDriver salamand_driver =
 struct GameDriver rf2_driver =
 {
 	__FILE__,
-	0,
+	&konamigt_driver,
 	"rf2",
 	"RF2",
 	"1985",
 	"Konami",
-	"Allard van der Bas\nNicola Salmoria",
-	GAME_NOT_WORKING,
-	&gx400_machine_driver,
+	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
+	0,
+	&rf2_gx400_machine_driver,
 	0,
 
 	rf2_rom,
@@ -1122,7 +1935,7 @@ struct GameDriver rf2_driver =
 	0,
 	0,      /* sound_prom */
 
-	gwarrior_input_ports,
+	rf2_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1135,11 +1948,11 @@ struct GameDriver twinbee_driver =
 	__FILE__,
 	0,
 	"twinbee",
-	"Twinbee",
-	"????",
+	"TwinBee",
+	"1985",
 	"Konami",
-	"Allard van der Bas\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
+	0,
 	&gx400_machine_driver,
 	0,
 
@@ -1159,13 +1972,13 @@ struct GameDriver twinbee_driver =
 struct GameDriver gradius_driver =
 {
 	__FILE__,
-	0,
+	&nemesis_driver,
 	"gradius",
 	"Gradius",
-	"????",
+	"1985",
 	"Konami",
-	"Allard van der Bas\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
+	0,
 	&gx400_machine_driver,
 	0,
 
@@ -1174,7 +1987,7 @@ struct GameDriver gradius_driver =
 	0,
 	0,      /* sound_prom */
 
-	gwarrior_input_ports,
+	gradius_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1190,8 +2003,8 @@ struct GameDriver gwarrior_driver =
 	"Galactic Warriors",
 	"1985",
 	"Konami",
-	"Allard van der Bas\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	"Allard van der Bas\nNicola Salmoria\nAndrew Prime",
+	0,
 	&gx400_machine_driver,
 	0,
 

@@ -51,6 +51,7 @@ static int pending_interrupts;	/* NS 970908 */
 /* public globals */
 int	m6809_ICount=50000;
 int m6809_Flags;	/* flags for speed optimization */
+int m6809_slapstic;
 
 /* flag, handlers for speed optimization */
 static int (*rd_u_handler)(int);
@@ -500,6 +501,10 @@ int m6809_execute(int cycles)	/* NS 970908 */
 
 	do
 	{
+		extern int previouspc;
+
+		previouspc = pcreg;
+
 		if (pending_interrupts != 0)
 			Interrupt();	/* NS 970908 */
 
@@ -530,7 +535,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x0b: illegal(); break;
 				case 0x0c: inc_di(); break;
 				case 0x0d: tst_di(); break;
-				case 0x0e: jmp_di(); break;
+				case 0x0e: jmp_di(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0x0f: clr_di(); break;
 				case 0x10: illegal(); break;
 				case 0x11: illegal(); break;
@@ -626,7 +631,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x6b: illegal(); break;
 				case 0x6c: inc_ix(); break;
 				case 0x6d: tst_ix(); break;
-				case 0x6e: jmp_ix(); break;
+				case 0x6e: jmp_ix(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0x6f: clr_ix(); break;
 				case 0x70: neg_ex(); break;
 				case 0x71: illegal(); break;
@@ -642,7 +647,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x7b: illegal(); break;
 				case 0x7c: inc_ex(); break;
 				case 0x7d: tst_ex(); break;
-				case 0x7e: jmp_ex(); break;
+				case 0x7e: jmp_ex(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0x7f: clr_ex(); break;
 				case 0x80: suba_im(); break;
 				case 0x81: cmpa_im(); break;
@@ -673,7 +678,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x9a: ora_di(); break;
 				case 0x9b: adda_di(); break;
 				case 0x9c: cmpx_di(); break;
-				case 0x9d: jsr_di(); break;
+				case 0x9d: jsr_di(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0x9e: ldx_di(); break;
 				case 0x9f: stx_di(); break;
 				case 0xa0: suba_ix(); break;
@@ -689,7 +694,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0xaa: ora_ix(); break;
 				case 0xab: adda_ix(); break;
 				case 0xac: cmpx_ix(); break;
-				case 0xad: jsr_ix(); break;
+				case 0xad: jsr_ix(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0xae: ldx_ix(); break;
 				case 0xaf: stx_ix(); break;
 				case 0xb0: suba_ex(); break;
@@ -705,7 +710,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0xba: ora_ex(); break;
 				case 0xbb: adda_ex(); break;
 				case 0xbc: cmpx_ex(); break;
-				case 0xbd: jsr_ex(); break;
+				case 0xbd: jsr_ex(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
 				case 0xbe: ldx_ex(); break;
 				case 0xbf: stx_ex(); break;
 				case 0xc0: subb_im(); break;

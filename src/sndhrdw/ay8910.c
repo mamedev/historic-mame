@@ -446,7 +446,7 @@ int AY8910_sh_start(struct AY8910interface *interface,const char *chipname)
 
 	for (chip = 0;chip < interface->num;chip++)
 	{
-		if (AY8910_init(chip,chipname,interface->clock,Machine->sample_rate,Machine->sample_bits,
+		if (AY8910_init(chip,chipname,interface->baseclock,Machine->sample_rate,Machine->sample_bits,
 				interface->portAread[chip],interface->portBread[chip],
 				interface->portAwrite[chip],interface->portBwrite[chip]) != 0)
 			return 1;

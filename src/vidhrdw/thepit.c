@@ -45,6 +45,17 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 {
 	int i;
 
+
+
+	/* first of all, allocate primary colors for the background and foreground */
+	/* this is wrong, but I don't know where to pick the colors from */
+	for (i = 0;i < 8;i++)
+	{
+		*(palette++) = 0xff * ((i >> 2) & 1);
+		*(palette++) = 0xff * ((i >> 1) & 1);
+		*(palette++) = 0xff * ((i >> 0) & 1);
+	}
+
 	/* Get out if color PROM is not available (Super Mouse)	*/
 	if (!color_prom)
 	{
@@ -59,20 +70,20 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i]     = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 	}
 
 	for (i = 0;i < 4 * 8;i++)
 	{
-		colortable[i] = i;
+		colortable[i] = i + 8;
 	}
 }
 
@@ -165,37 +176,73 @@ void thepit_AY8910_1_w(int offset, int data)
   the main emulation engine.
 
 ***************************************************************************/
-void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void drawtiles(struct osd_bitmap *bitmap,int priority)
 {
-	int offs;
+	int offs,spacechar=0;
+
+
+	if (priority == 1)
+	{
+		/* find the space character */
+		while (Machine->gfx[0]->pen_usage[spacechar] & ~1) spacechar++;
+	}
+
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (dirtybuffer[offs])
+		int bgcolor;
+
+
+		bgcolor = (colorram[offs] & 0x70) >> 4;
+
+		if ((priority == 0 && dirtybuffer[offs]) ||
+				(priority == 1 && bgcolor != 0 && (colorram[offs] & 0x80) == 0))
 		{
-			int sx,sy;
+			int sx,sy,code,bank,color;
+
 
 			dirtybuffer[offs] = 0;
 
 			sx = (offs % 32);
-			sy = (offs / 32);
+			sy = 8*(offs / 32);
+
+			if (priority == 0)
+			{
+				code = videoram[offs];
+				bank = graphics_bank;
+			}
+			else
+			{
+				code = spacechar;
+				bank = 0;
+
+				sy = (sy - galaxian_attributesram[2 * sx]) & 0xff;
+			}
 
 			if (*flip_screen_x) sx = 31 - sx;
-			if (*flip_screen_y) sy = 31 - sy;
+			if (*flip_screen_y) sy = 248 - sy;
 
-			drawgfx(tmpbitmap,Machine->gfx[graphics_bank],
-					videoram[offs],
-					colorram[offs] & 0x07,
+			color = colorram[offs] & 0x07;
+
+			/* set up the background color */
+			Machine->gfx[bank]->
+					colortable[color * Machine->gfx[graphics_bank]->color_granularity] =
+					Machine->pens[bgcolor];
+
+			drawgfx(priority == 0 ? tmpbitmap : bitmap,Machine->gfx[bank],
+					code,
+					color,
 					*flip_screen_x,*flip_screen_y,
-					8*sx,8*sy,
+					8*sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the temporary bitmap to the screen */
+	if (priority == 0)
 	{
 		int i, scroll[32];
 
@@ -218,45 +265,70 @@ void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
+}
+
+static void drawsprites(struct osd_bitmap *bitmap,int priority)
+{
+	int offs;
 
 
-	/* draw the sprites */
+	/* draw low priority sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,flipx,flipy;
-
-		if (spriteram[offs + 0] == 0 ||
-		    spriteram[offs + 3] == 0)
+		if (((spriteram[offs + 2] & 0x08) >> 3) == priority)
 		{
-		    continue;
+			int sx,sy,flipx,flipy;
+
+
+			if (spriteram[offs + 0] == 0 ||
+				spriteram[offs + 3] == 0)
+			{
+				continue;
+			}
+
+			sx = (spriteram[offs+3] + 1) & 0xff;
+			sy = 240 - spriteram[offs];
+
+			flipx = spriteram[offs + 1] & 0x40;
+			flipy = spriteram[offs + 1] & 0x80;
+
+			if (*flip_screen_x)
+			{
+				sx = 242 - sx;
+				flipx = !flipx;
+			}
+
+			if (*flip_screen_y)
+			{
+				sy = 240 - sy;
+				flipy = !flipy;
+			}
+
+			/* Sprites 0-3 are drawn one pixel to the left */
+			if (offs <= 3*4) sy++;
+
+			drawgfx(bitmap,Machine->gfx[graphics_bank | 1],
+					spriteram[offs + 1] & 0x3f,
+					spriteram[offs + 2] & 0x07,
+					flipx,flipy,
+					sx,sy,
+					*flip_screen_x & 1 ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 		}
-
-		sx = (spriteram[offs+3] + 1) & 0xff;
-		sy = 240 - spriteram[offs];
-
-		flipx = spriteram[offs + 1] & 0x40;
-		flipy = spriteram[offs + 1] & 0x80;
-
-		if (*flip_screen_x)
-		{
-		    sx = 242 - sx;
-		    flipx = !flipx;
-		}
-
-		if (*flip_screen_y)
-		{
-		    sy = 240 - sy;
-		    flipy = !flipy;
-		}
-
-		/* Sprites 0-3 are drawn one pixel to the left */
-		if (offs <= 3*4) sy++;
-
-		drawgfx(bitmap,Machine->gfx[graphics_bank | 1],
-				spriteram[offs + 1] & 0x3f,
-				spriteram[offs + 2] & 0x07,
-				flipx,flipy,
-				sx,sy,
-				*flip_screen_x & 1 ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
+}
+
+
+void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	/* low priority tiles */
+	drawtiles(bitmap,0);
+
+	/* low priority sprites */
+	drawsprites(bitmap,0);
+
+	/* high priority tiles */
+	drawtiles(bitmap,1);
+
+	/* high priority sprites */
+	drawsprites(bitmap,1);
 }

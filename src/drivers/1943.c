@@ -254,7 +254,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(20,25), YM2203_VOL(20,25) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -594,7 +594,7 @@ struct GameDriver c1943_driver =
 	"1943 (US)",
 	"1987",
 	"Capcom",
-	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)",
+	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -620,7 +620,7 @@ struct GameDriver c1943jap_driver =
 	"1943 (Japan)",
 	"1987",
 	"Capcom",
-	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)",
+	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -646,7 +646,7 @@ struct GameDriver c1943kai_driver =
 	"1943 Kai",
 	"1987",
 	"Capcom",
-	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)\nGerrit Van Goethem (high score fix)",
+	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
 	0,

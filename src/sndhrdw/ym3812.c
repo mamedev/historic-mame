@@ -195,7 +195,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#if !defined(macintosh) || !defined(ACORN)
+#if !defined(macintosh) && !defined(ACORN)
 #include <malloc.h>
 #include <memory.h>
 #endif

@@ -4,13 +4,6 @@
 
 #include "fm.h"
 
-#define  OPNB_ADPCM_MIX
-
-#ifndef OPNB_ADPCM_MIX
-#define   YM2610_NUMBUF  (2+2+6)
-#else
-#define   YM2610_NUMBUF  (2+2+2)
-#endif
 
 #define   MAX_2610    (2)
 

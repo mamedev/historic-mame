@@ -327,7 +327,7 @@ static struct MachineDriver contra_machine_driver =
 		},
 		{
  			CPU_M6809 | CPU_AUDIO_CPU,
-			1000000,
+			2000000,
 			3,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
@@ -354,7 +354,7 @@ static struct MachineDriver contra_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,
 			&ym2151_interface
 		}
 	}

@@ -12,7 +12,7 @@
 
 struct YM2610interface{
 	int num;	/* total number of 8910 in the machine */
-	int clock;
+	int baseclock;
 	int volume[MAX_2610];
 	int ( *portAread[MAX_2610] )( int offset );
 	int ( *portBread[MAX_2610] )( int offset );

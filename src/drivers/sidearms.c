@@ -3,10 +3,7 @@
   Sidearms
   ========
 
-  Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  Please do not send anything large to this address without asking me
-  first.
+  Driver provided by Paul Leaman
 
   There is an additional ROM which seems to contain code for a third Z80,
   however the board only has two. The ROM is related to the missing star
@@ -289,7 +286,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(15,35), YM2203_VOL(15,35) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -517,7 +514,7 @@ struct GameDriver sidearms_driver =
 	"Sidearms (World)",
 	"1986",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&sidearms_machine_driver,
 	0,
@@ -542,7 +539,7 @@ struct GameDriver sidearmr_driver =
 	"Sidearms (US)",
 	"1986",
 	"Capcom (Romstar license)",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&sidearms_machine_driver,
 	0,
@@ -567,7 +564,7 @@ struct GameDriver sidearjp_driver =
 	"Sidearms (Japan)",
 	"1986",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&sidearms_machine_driver,
 	0,

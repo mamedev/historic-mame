@@ -483,28 +483,125 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-#if 0
 	int offs;
+	int scrollx,scrolly;
 
-	if (palette_recalc())
-		layer_mark_full_screen_dirty();
+    memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
-	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */
-			READ_WORD(&rastan_scrollx[0]) - 16,-READ_WORD(&rastan_scrolly[0]),		/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
+    /* TODO: we are using the same table for background and foreground tiles, but this */
+    /* causes the sly to be black instead of blue. */
+    {
+	    int color,code,i;
+	    int colmask[128];
+	    int pal_base;
 
 
-    /* Scroll Registers seem strange for this screen */
-    /* X always seems to be 0                        */
-	/* Y is either 0,0x164 or 0x264 ?                */
+	    pal_base = 0;
 
-	set_tile_layer_attributes(0,bitmap,					/* layer number, bitmap */
-			-16,0,										/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
+	    for (color = 0;color < 128;color++) colmask[color] = 0;
 
-	update_tile_layer(1,bitmap);
+	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	    {
+		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
+		    color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
+
+		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	    }
+
+	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	    {
+		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3fff;
+		    color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
+
+		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	    }
+
+	    for (offs = 0x800-8; offs >= 0; offs -= 8)
+	    {
+		    code = READ_WORD (&rastan_spriteram[offs]);
+
+		    if (code)
+		    {
+			    int data1;
+
+			    data1 = READ_WORD (&rastan_spriteram[offs+8]);
+
+			    color = (data1 + 0x10) & 0x7f;
+			    colmask[color] |= Machine->gfx[1]->pen_usage[code];
+		    }
+	    }
+
+	    for (color = 0;color < 128;color++)
+	    {
+		    if (colmask[color] & (1 << 15))
+			    palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_TRANSPARENT;
+		    for (i = 0;i < 15;i++)
+		    {
+			    if (colmask[color] & (1 << i))
+				    palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		    }
+	    }
+
+
+	    if (palette_recalc())
+	    {
+		    memset(rastan_dirty1,1,rastan_videoram_size / 4);
+		    memset(rastan_dirty3,1,rastan_videoram_size / 4);
+	    }
+    }
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty1[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
+
+			rastan_dirty1[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram1[offs]);
+			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap1, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty3[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
+
+
+			rastan_dirty3[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram3[offs]);
+			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	scrollx = READ_WORD(&rastan_scrollx[0]) - 16;
+	scrolly = -READ_WORD(&rastan_scrolly[0]);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. 128 sprites in total */
 
@@ -525,35 +622,17 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			data1 = READ_WORD(&rastan_spriteram[offs+6]);
 			col   = (READ_WORD(&rastan_spriteram[offs+8]) + 0x10) & 0x7F;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[1],
 					num,
 					col,
 					data1 & 0x40, data1 & 0x80,
 					sx,sy+1,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-
-			layer_mark_rectangle_dirty(Machine->layer[0],sx,sx+15,sy+1,sy+16);
 		}
 	}
 
-	update_tile_layer(0,bitmap);
+	scrollx = - 16;
+	scrolly = 0;
+	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	for (offs = 0x07F0; offs >= 0; offs -= 16)
-	{
-		int num = READ_WORD (&rastan_spriteram[offs]);
-
-		if (num)
-		{
-			int  sx,col,data1;
-            word sy;
-
-			sy = ((READ_WORD(&rastan_spriteram[offs+2]) - 0xFFF1) ^ 0xFFFF) & 0x1FF;
-  			if (sy > 400) sy = sy - 512;
-			sx = (READ_WORD(&rastan_spriteram[offs+4]) - 0x38) & 0x1ff;
-			if (sx > 400) sx = sx - 512;
-
-			layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy+1,sy+16);
-		}
-	}
-#endif
 }

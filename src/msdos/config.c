@@ -14,7 +14,9 @@
 \*|*/
 
 #include "driver.h"
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
 #include <ctype.h>
 
 /* from main() */
@@ -31,7 +33,7 @@ extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
 /* from sound.c */
-extern int usefm, soundcard;
+extern int usefm, soundcard, usestereo;
 extern int use_emulated_ym3812;
 
 /* from input.c */
@@ -297,6 +299,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  1);
 	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
+	usestereo           = get_bool ("config", "stereo",  NULL,  1);
 
 	/* read input configuration */
 	use_mouse = get_bool ("config", "mouse",   NULL,  1);

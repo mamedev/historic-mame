@@ -3,7 +3,9 @@
 #include <conio.h>
 #include <time.h>
 #include <audio.h>
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
 #include "ym2203.h"
 
 /* cut down Allegro size */
@@ -19,7 +21,7 @@ unsigned char No_FM = 1;
 unsigned char No_OPL = 1;
 unsigned char RegistersYM[264*5];  /* MAX 5 YM-2203 */
 int nominal_sample_rate;
-int soundcard,usefm;
+int soundcard,usefm,usestereo;
 
 AUDIOINFO info;
 AUDIOCAPS caps;
@@ -77,6 +79,25 @@ int msdos_init_sound(void)
 	info.nDeviceId = soundcard;
 	/* always use 16 bit mixing if possible - better quality and same speed of 8 bit */
 	info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_MONO;
+
+	/* use stereo output for YM2151 and YM2610 */
+	if (usestereo)
+	{
+		int totalsound = 0;
+
+
+		while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
+		{
+			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM2151
+					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM2610)
+			{
+				info.wFormat = AUDIO_FORMAT_16BITS | AUDIO_FORMAT_STEREO;
+			}
+
+			totalsound++;
+		}
+	}
+
 	info.nSampleRate = Machine->sample_rate;
 	if (AOpenAudio(&info) != AUDIO_ERROR_NONE)
 	{
@@ -183,16 +204,15 @@ int msdos_init_sound(void)
 					((struct YM2203interface *)Machine->drv->sound[totalsound].sound_interface)->handler[0])
 				No_OPL = No_FM = 1;      /* YM2203 must trigger interrupts, cannot emulate it with the OPL */
 
-			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM3812)
-                        {
-                                No_FM = 1;      /* can't use the OPL chip to emulate the YM2203 */
-                                No_OPL = 0;     /* but the OPL chip is used */
-                        }
+			if (Machine->drv->sound[totalsound].sound_type == SOUND_YM3812
+					|| Machine->drv->sound[totalsound].sound_type == SOUND_YM3526)
+			{
+				No_FM = 1;      /* can't use the OPL chip to emulate the YM2203 */
+				No_OPL = 0;     /* but the OPL chip is used */
+			}
 
-                        totalsound++;
+			totalsound++;
 		}
-
-		osd_update_audio();
 	}
 
 	if (!No_FM) {
@@ -270,7 +290,7 @@ static void playsample(int channel,signed char *data,int len,int freq,int volume
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
 	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 50 / 255;
+	if (volume > 100) volume = volume * 25 / 255;
 
 	if (lpWave[channel] && lpWave[channel]->dwLength != len)
 	{
@@ -331,14 +351,14 @@ void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volu
 
 
 
-static void playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int bits)
+static void playstreamedsample(int channel,signed char *data,int len,int freq,int volume,int pan,int bits)
 {
 	static int playing[NUMVOICES];
 	static int c[NUMVOICES];
 
 
 	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 50 / 255;
+	if (volume > 100) volume = volume * 25 / 255;
 
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
@@ -388,7 +408,7 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 
 		if (throttle)   /* sync with audio only when speed throttling is not turned off */
 		{
-			osd_profiler(OSD_PROFILE_SOUND);
+			osd_profiler(OSD_PROFILE_IDLE);
 			for(;;)
 			{
 				AGetVoicePosition(hVoice[channel],&pos);
@@ -406,17 +426,19 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 		if (c[channel] == 3) c[channel] = 0;
 	}
 
+
 	ASetVoiceVolume(hVoice[channel],volume * 64 / 100);
+	ASetVoicePanning(hVoice[channel],(pan + 100) * 255 / 200);
 }
 
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume)
+void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan)
 {
-	playstreamedsample(channel,data,len,freq,volume,8);
+	playstreamedsample(channel,data,len,freq,volume,pan,8);
 }
 
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume)
+void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan)
 {
-	playstreamedsample(channel,(signed char *)data,len,freq,volume,16);
+	playstreamedsample(channel,(signed char *)data,len,freq,volume,pan,16);
 }
 
 
@@ -426,7 +448,7 @@ void osd_adjust_sample(int channel,int freq,int volume)
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return;
 
 	/* backwards compatibility with old 0-255 volume range */
-	if (volume > 100) volume = volume * 50 / 255;
+	if (volume > 100) volume = volume * 25 / 255;
 
 	/* need to cast to double because freq*nominal_sample_rate can exceed the size of an int */
 	if (freq != -1)

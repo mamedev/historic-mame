@@ -39,14 +39,17 @@
 
 #if LAZY_FLAGS
 
-#define NZ	m6502.nz
-#define SET_NZ(n)				\
-    NZ = ((n & _fN) << 8) | n
+#define NZ  m6502.nz
+
+#define SET_NZ(n)   NZ = (((n) & _fN) << 8) | (n)
+#define SET_Z(n)	NZ = (NZ & 0x100) | (n)
 
 #else
 
 #define SET_NZ(n)				\
-	P = (P & ~(_fN | _fZ)) |  (n & _fN) | ((n == 0) ? _fZ : 0)
+	P = (P & ~(_fN | _fZ)) |  ((n) & _fN) | (((n) == 0) ? _fZ : 0)
+#define SET_Z(n)				\
+    P = (P & ~_fZ) | ((n) == 0) ? _fZ : 0)
 
 #endif
 
@@ -109,7 +112,7 @@ extern	byte	*RAM;
  *	BRA  branch relative
  *	extra cycle if page boundary is crossed
  ***************************************************************/
-#define BRA(cond)												\
+#define BRA(cond)                                               \
 	if (cond)													\
 	{															\
 		tmp = RDOPARG();										\
@@ -160,22 +163,16 @@ extern	byte	*RAM;
 
 /***************************************************************
  *  EA = absolute address + X
- *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
-#define EA_ABX                                                  \
-	EA_ABS; 													\
-	if (EAL + X > 0xff) 										\
-		M6502_ICount--; 										\
-	EAW += X
+#define EA_ABX													\
+    EA_ABS;                                                     \
+    EAW += X
 
 /***************************************************************
  *	EA = absolute address + Y
- *	subtract 1 cycle if page boundary is crossed
  ***************************************************************/
-#define EA_ABY													\
+#define EA_ABY                                                  \
 	EA_ABS; 													\
-	if (EAL + Y > 0xff) 										\
-		M6502_ICount--; 										\
 	EAW += Y
 
 /***************************************************************
@@ -913,15 +910,15 @@ extern	byte	*RAM;
  * TRB	Test and reset bits
  ***************************************************************/
 #define TRB                                                     \
-    tmp &= ~A;                                                  \
-    SET_NZ(tmp)
+	SET_Z(tmp&A);												\
+	tmp &= ~A
 
 /* 65C02 *******************************************************
  * TSB	Test and set bits
  ***************************************************************/
 #define TSB 													\
-	tmp |= A;													\
-    SET_NZ(tmp)
+	SET_NZ(tmp&A);												\
+	tmp |= A
 
 /***************************************************************
  ***************************************************************

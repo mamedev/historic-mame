@@ -29,28 +29,7 @@ CPU 1 : 68000, uses irq 6
     0c00 - 0fff : tile color (bit mask 0xf800)
 0xe01000 - 0xe03fff : unused(?) portion of object RAM
 
-According to Richard Bush, the C-Chip is an encrypted Z80 which communicates
-with the main board as a protection feature.
-
-In Superman, it's main purpose is to handle player inputs and coins and
-pass commands along to the sound chip.
-
-The 68k queries the c-chip, which passes back $100 bytes of 68k code which
-are then executed in RAM. To get around this, we hack in our own code to
-communicate with the sound board, since we are familiar with the interface
-as it's used in Rastan and Super Space Invaders '91.
-
-The ROM set we are using appears to be a hacked image - there are all kinds
-of NOPs in critical pieces of code - beyond what we're placing there :)
-
-*EHC 10/26/98*: I personally no longer think this is a bootleg. The nop's
-seem to be there to supply the necessary cycles to the cchip to switch
-banks.
-
 TODO:
-	* Fix y-scrolling glitch (visible on part 2 of Round 1)
-	* Investigate "COIN ERROR" at end of Round 3 (Las Vegas). (c-chip)
-	*EHC 10/26/98* This "COIN ERROR" didnt happen to me with the latest patches. Fixed?
 	* Optimize rendering
 	* Does high score save work consistently?
 
@@ -85,35 +64,9 @@ int rastan_sound_r(int offset);
 
 static unsigned char *ram; /* for high score save */
 
-static int superman_cchip_bank;
-
-static int cchip[3];
-
-/* Circular buffer, not FILO. Doh!. */
-static unsigned char cchip_code[256] = {
-	0x48, 0xe7, 0x80, 0x80,				/* MOVEM.L D0/A0,-(A7)    ( Preserve Regs ) */
-	0x20, 0x6d, 0x1c, 0x40,				/* MOVEA.L ($1C40,A5),A0  ( Load sound pointer in A0 ) */
-	0x30, 0x2f, 0x00, 0x0c,				/* MOVE.W ($0C,A7),D0	  ( Fetch sound number ) */
-	0x10, 0x80,							/* MOVE.B D0,(A0)		  ( Store it on sound pointer ) */
-	0x52, 0x88,							/* ADDQ.W #1,A0			  ( Increment sound pointer ) */
-	0x20, 0x3c, 0x00, 0xf0, 0x1c, 0x40, /* MOVE.L #$F01C40,D0	  ( Load top of buffer in D0 ) */
-    0xb1, 0xc0,							/* CMPA.L   D0,A0		  ( Are we there yet? ) */
-    0x66, 0x04,							/* BNE.S    *+$6		  ( No, we arent, skip next line ) */
-	0x41, 0xed, 0x1c, 0x20,				/* LEA      ($1C20,A5),A0 ( Point to the start of the buffer ) */
-	0x2b, 0x48, 0x1c, 0x40,				/* MOVE.L A0,($1C40,A5)   ( Store new sound pointer ) */
-	0x4c, 0xdf, 0x01, 0x01,				/* MOVEM.L (A7)+, D0/A0	  ( Restore Regs ) */
-	0x4e, 0x75,							/* RTS					  ( Return ) */
-};
-
-void superman_init_machine(void)
-{
-	/* init custom cchip values */
-	cchip[0] = cchip[1] = cchip[2] = 0;
-
-	/* make sure we point to controls */
-	superman_cchip_bank = 0;
-}
-
+void cchip1_init_machine(void);
+int cchip1_r (int offset);
+void cchip1_w (int offset, int data);
 
 int superman_input_r (int offset)
 {
@@ -133,97 +86,7 @@ int superman_input_r (int offset)
 	}
 }
 
-int superman_interrupt (void)
-{
-	return MC68000_IRQ_6;
-}
 
-int superman_cchip_r (int offset)
-{
-	int ret = 0;
-
-	switch (offset)
-	{
-		case 0x000:
-			/* Player 1 */
-			if ( superman_cchip_bank == 1 )
-				ret = cchip_code[offset/2];
-			else
-				if ( cchip[0] ) {
-					ret = cchip[0];
-					cchip[0] = 0;
-				} else
-					ret = readinputport (4);
-		break;
-		case 0x002:
-			/* Player 2 */
-			if ( superman_cchip_bank == 1 )
-				ret = cchip_code[offset/2];
-			else
-				if ( cchip[1] ) {
-					ret = cchip[1];
-					cchip[1] = 0;
-				} else
-					ret = readinputport (5);
-		break;
-		case 0x004:
-			/* Coins */
-			if (errorlog) fprintf (errorlog, "superman_cchip_r (coin) pc: %06x, offset: %04x\n", cpu_getpc(), offset);
-			if ( superman_cchip_bank == 1 )
-				ret = cchip_code[offset/2];
-			else
-				if ( cchip[2] ) {
-					ret = cchip[2];
-					cchip[2] = 0;
-				} else
-					ret = readinputport (6);
-		break;
-		case 0x802:
-			/* C-Chip ID */
-			ret =  0x01;
-		break;
-		case 0xc00:
-			ret =  superman_cchip_bank;
-		break;
-		default:
-			if ( offset < 0x1f0 && superman_cchip_bank == 1 )
-				ret = cchip_code[offset/2];
-			else {
-				if (errorlog) fprintf (errorlog, "superman_cchip_r offset: %04x\n", offset);
-				ret = 0xff;
-			}
-		break;
-	}
-
-	return ret;
-}
-
-void superman_cchip_w (int offset, int data)
-{
-	if (errorlog) fprintf (errorlog, "superman_cchip_w pc: %06x, %04x:%02x\n", cpu_getpc(), offset, data);
-	switch (offset)
-	{
-		case 0x0000:
-			if ( ( data & 0xff ) == 0x4a )
-				cchip[0] = 0x47;
-		break;
-
-		case 0x0002:
-			if ( ( data & 0xff ) == 0x46 )
-				cchip[1] = 0x57;
-		break;
-
-		case 0x0004:
-			if ( ( data & 0xff ) == 0x34 )
-				cchip[2] = 0x4b;
-		break;
-		case 0xc00:
-			superman_cchip_bank = data & 0x07;
-			break;
-		default:
-			break;
-	}
-}
 
 static void taito68k_sound_bankswitch_w ( int offset, int data )
 {
@@ -240,7 +103,7 @@ static struct MemoryReadAddress superman_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x500000, 0x50000f, superman_input_r },	/* DSW A/B */
 	{ 0x800000, 0x800003, rastan_sound_r },
-	{ 0x900000, 0x900fff, superman_cchip_r } ,
+	{ 0x900000, 0x900fff, cchip1_r } ,
 	{ 0xb00000, 0xb00fff, paletteram_word_r },
 	{ 0xd00000, 0xd007ff, supes_attribram_r },
 	{ 0xe00000, 0xe03fff, supes_videoram_r },
@@ -252,7 +115,7 @@ static struct MemoryWriteAddress superman_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x800000, 0x800003, rastan_sound_w },
-	{ 0x900000, 0x900fff, superman_cchip_w },
+	{ 0x900000, 0x900fff, cchip1_w },
 	{ 0xb00000, 0xb00fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
 	{ 0xd00000, 0xd007ff, supes_attribram_w, &supes_attribram, &supes_attribram_size },
 	{ 0xe00000, 0xe03fff, supes_videoram_w, &supes_videoram, &supes_videoram_size },
@@ -385,7 +248,6 @@ INPUT_PORTS_START( superman_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 INPUT_PORTS_END
 
 #define NUM_TILES 16384
@@ -420,7 +282,7 @@ static void irqhandler(void)
 static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
-	2000000,	/* 2 MHz ?????? */
+	8000000,	/* 8 MHz ?????? */
 	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
@@ -441,10 +303,10 @@ static struct MachineDriver machine_driver =
 			6000000,	/* 6 Mhz */
 			0,
 			superman_readmem,superman_writemem,0,0,
-			superman_interrupt,1
+			m68_level6_irq,1
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			4000000,	/* 4 MHz ??? */
 			2,
 			sound_readmem, sound_writemem,0,0,
@@ -453,7 +315,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	superman_init_machine,
+	cchip1_init_machine,
 
 	/* video hardware */
 	48*8, 32*8, { 2*8, 46*8-1, 2*8, 32*8-1 },

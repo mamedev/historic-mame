@@ -103,7 +103,7 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
+#include "sndhrdw/pokey.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
@@ -613,7 +613,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1789790,	/* 1.78 MHz */
-	128,
+	40,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -632,9 +632,9 @@ static struct POKEYinterface pokey_interface =
 
 static struct TMS5220interface tms5220_interface =
 {
-    650826, /*640000,     * clock speed (80*samplerate) */
-    255,        /* volume */
-    0 /* irq handler */
+	650826, /*640000,     * clock speed (80*samplerate) */
+	100,        /* volume */
+	0 /* irq handler */
 };
 
 
@@ -642,7 +642,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
+	{ 20 },
 	{ atarisys1_sound_interrupt }
 };
 

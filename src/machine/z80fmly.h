@@ -12,7 +12,7 @@
 typedef struct
 {
 	int num;                                      /* number of CTCs to emulate */
-	int clock[MAX_CTC];                           /* timer clock */
+	int baseclock[MAX_CTC];                           /* timer clock */
 	int notimer[MAX_CTC];                         /* timer disablers */
 	void (*intr[MAX_CTC])(int which);             /* callback when change interrupt status */
 	void (*zc0[MAX_CTC])(int offset, int data);   /* ZC/TO0 callback */

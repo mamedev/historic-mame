@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *rastan_ram;
+extern unsigned char *rastan_ram;
 extern unsigned char *rastan_videoram1,*rastan_videoram3;
 extern int rastan_videoram_size;
 extern unsigned char *rastan_spriteram;
@@ -63,7 +63,6 @@ void rastan_vh_stop(void);
 /* Jumping Extras */
 
 void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void jumping_updatehook0(int offset);
 
 static struct MemoryReadAddress rainbow_readmem[] =
 {

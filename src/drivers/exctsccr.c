@@ -12,6 +12,7 @@ Ernesto Corvi
 ernesto@imagina.com
 
 Jarek Parchanski
+jpdev@friko6.onet.pl
 
 
 NOTES:
@@ -20,11 +21,7 @@ as Coin 1. Basically, this allowed to select an alternative coin table
 based on wich Coin input was connected.
 
 KNOWN ISSUES/TODO:
-- The song that should be played during the match is selected through the
-Alpha MCU. The bootleg mutilated the audio part, so information about this
-table is not available.
 - Cocktail mode is unsupported.
-- Sprites colors/banking?
 
 ***************************************************************************/
 
@@ -32,14 +29,23 @@ table is not available.
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern void exctsccr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void exctsccr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void exctsccr_gfx_bank_w( int offset, int data );
+extern int exctsccr_vh_start( void );
+extern void exctsccr_vh_stop( void );
 
 /* from machine */
 extern unsigned char *exctsccr_mcu_ram;
 extern void exctsccr_mcu_w( int offs, int data );
 extern void exctsccr_mcu_control_w( int offs, int data );
+
+
+void exctsccr_DAC_data_w(int offset,int data)
+{
+	DAC_signed_data_w(offset,data << 2);
+}
+
 
 /***************************************************************************
 
@@ -94,7 +100,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x8fff, MWA_ROM },
 	{ 0xa000, 0xa7ff, MWA_RAM },
-	{ 0xc008, 0xc009, DAC_data_w },
+	{ 0xc008, 0xc009, exctsccr_DAC_data_w },
 	{ 0xc00c, 0xc00c, soundlatch_w }, /* used to clear the latch */
 	{ 0xc00f, 0xc00f, MWA_NOP }, /* ??? */
 	{ -1 }	/* end of table */
@@ -160,7 +166,7 @@ static struct MemoryWriteAddress bl_sound_writemem[] =
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x8000, MWA_NOP }, /* 0 = DAC sound off, 1 = DAC sound on */
 	{ 0xa000, 0xa000, soundlatch_w }, /* used to clear the latch */
-	{ 0xc000, 0xc000, DAC_data_w },
+	{ 0xc000, 0xc000, exctsccr_DAC_data_w },
 	{ 0xe000, 0xe3ff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -223,7 +229,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x60, 0x60, "Game Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x00, "Game Time", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x60, "3 Min." )
 	PORT_DIPSETTING(    0x40, "4 Min." )
 	PORT_DIPSETTING(    0x20, "1 Min." )
@@ -318,7 +324,7 @@ static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 64, 64, 64, 64 },
+	{ 15, 15, 15, 15 }, /* volume */
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, /* it writes 0s thru port A, no clue what for */
@@ -328,7 +334,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	2,
-	{ 0x7fbf, 0x7fbf } /* gain = 127, volume = 191 */
+	{ 50, 50 }
 };
 
 /* Bootleg */
@@ -336,7 +342,7 @@ static struct AY8910interface bl_ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ 255 },
+	{ 50 }, /* volume */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -346,7 +352,7 @@ static struct AY8910interface bl_ay8910_interface =
 static struct DACinterface bl_dac_interface =
 {
 	1,
-	{ 0x7fff } /* gain = 127, volume = 255 */
+	{ 100 }
 };
 
 /***************************************************************************
@@ -361,22 +367,22 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3500000,	/* 3.5 Mhz (?) */
+			4000000,	/* 4.0 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			3500000,	/* 3.5 Mhz (?) */
+			4000000,	/* 4.0 Mhz (?) */
 			3,
 			sound_readmem,sound_writemem,0,sound_writeport,
-			interrupt,1, /* updates fm */
+			ignore_interrupt,0,
 			nmi_interrupt, 4000 /* 4 khz, updates the dac */
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -387,8 +393,8 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	exctsccr_vh_start,
+	exctsccr_vh_stop,
 	exctsccr_vh_screenrefresh,
 
 	/* sound hardware */
@@ -412,21 +418,21 @@ static struct MachineDriver bl_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3500000,	/* 3.0 Mhz (?) */
+			4000000,	/* 4.0 Mhz (?) */
 			0,
 			bl_readmem,bl_writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			3500000,	/* 3.0 Mhz (?) */
+			3072000,	/* 3.072 Mhz ? */
 			3,
 			bl_sound_readmem,bl_sound_writemem,0,0,
 			ignore_interrupt,0
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -438,7 +444,7 @@ static struct MachineDriver bl_machine_driver =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
-	generic_vh_stop,
+	exctsccr_vh_stop,
 	exctsccr_vh_screenrefresh,
 
 	/* sound hardware */
@@ -512,6 +518,90 @@ ROM_START( exctsccb_rom )
 	ROM_LOAD( "ES-C.M2", 0x4000, 0x2000, 0x7bed2f81 )
 ROM_END
 
+
+static int hiload_es(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if (memcmp(&RAM[0x7c60],"\x02\x00\x00",3) == 0)
+	{
+		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+		if (f)
+		{
+			osd_fread(f,&RAM[0x7c90],48);
+			osd_fclose(f);
+
+			/* Copy the high score to the work ram as well */
+
+			RAM[0x7c60] = RAM[0x7c93];
+			RAM[0x7c61] = RAM[0x7c94];
+			RAM[0x7c62] = RAM[0x7c95];
+		}
+		return 1;
+	}
+	return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave_es(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
+
+	if (f)
+	{
+		osd_fwrite(f,&RAM[0x7c90],48);
+		osd_fclose(f);
+	}
+}
+
+static int hiload_esb(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if (memcmp(&RAM[0x8c60],"\x02\x00\x00",3) == 0)
+	{
+		void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
+		if (f)
+		{
+			osd_fread(f,&RAM[0x8c90],48);
+			osd_fclose(f);
+
+			/* Copy the high score to the work ram as well */
+
+			RAM[0x8c60] = RAM[0x8c93];
+			RAM[0x8c61] = RAM[0x8c94];
+			RAM[0x8c62] = RAM[0x8c95];
+		}
+		return 1;
+	}
+	return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave_esb(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	void *f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
+
+	if (f)
+	{
+		osd_fwrite(f,&RAM[0x8c90],48);
+		osd_fclose(f);
+	}
+}
+
+
+
+
 struct GameDriver exctsccr_driver =
 {
 	__FILE__,
@@ -520,7 +610,7 @@ struct GameDriver exctsccr_driver =
 	"Exciting Soccer",
 	"1983",
 	"Alpha Denshi Co.",
-	"Ernesto Corvi\nJarek Parchanski\n",
+	"Ernesto Corvi\nJarek Parchanski\nDedicated to Paolo Nicoletti",
 	0,
 	&machine_driver,
 	0,
@@ -534,7 +624,7 @@ struct GameDriver exctsccr_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload_es, hisave_es
 };
 
 /* Bootleg */
@@ -546,7 +636,7 @@ struct GameDriver exctsccb_driver =
 	"Exciting Soccer (bootleg)",
 	"1984",
 	"Kazutomi",
-	"Ernesto Corvi\nJarek Parchanski\n",
+	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
 	0,
 	&bl_machine_driver,
 	0,
@@ -559,6 +649,5 @@ struct GameDriver exctsccb_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
-
-	0, 0
+	hiload_esb, hisave_esb
 };

@@ -7,7 +7,7 @@
 struct AY8910interface
 {
 	int num;	/* total number of 8910 in the machine */
-	int clock;
+	int baseclock;
 	int volume[MAX_8910];
 	int (*portAread[MAX_8910])(int offset);
 	int (*portBread[MAX_8910])(int offset);
@@ -19,7 +19,7 @@ struct AY8910interface
 
 void AY8910_reset(int chip);
 
-void AY8910_set_clock(int chip,int clock);
+void AY8910_set_clock(int chip,int _clock);
 
 /*
 ** set output gain

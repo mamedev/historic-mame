@@ -269,8 +269,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
-	255,
-	POKEY_DEFAULT_GAIN/2,
+	50,
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -364,6 +364,52 @@ ROM_START( cloak_rom )
 	ROM_LOAD( "136023.515",   0xe000, 0x2000, 0x835438a0 )
 ROM_END
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* wait for "HIGH SCORE" to be on screen */
+             if (memcmp(&RAM[0x04AC],"GAM",3) == 0)
+	{
+		void *f;
+
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+	 	        osd_fread(f,&RAM[0x2800],512); /* saves the NV RAM */
+                        osd_fread(f,&RAM[0x0f35],160); /* bottom 2/3 of the high score table (not saved by nvram) */
+
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x2800],512); /* saves the NV RAM */
+                osd_fwrite(f,&RAM[0x0f35],160); /* bottom 2/3 of the high score table (not saved by nvram) */
+		osd_fclose(f);
+                RAM[0x04AC] = 0;
+	}
+}
+
+
 struct GameDriver cloak_driver =
 {
 	__FILE__,
@@ -387,6 +433,7 @@ struct GameDriver cloak_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
+
 };
 

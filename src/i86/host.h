@@ -3,17 +3,8 @@
 
 #define BIGCASE
 
-typedef signed char INT8;
-typedef unsigned char UINT8;
-typedef signed short INT16;
-typedef unsigned short UINT16;
-#ifdef linux_alpha
-typedef signed int INT32;
-typedef unsigned int UINT32;
-#else
-typedef signed long INT32;
-typedef unsigned long UINT32;
-#endif
+#include "osd_cpu.h"
+
 typedef char BOOLEAN;
 
 typedef UINT8 BYTE;

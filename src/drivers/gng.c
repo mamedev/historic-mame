@@ -565,7 +565,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(25,100), YM2203_VOL(25,100) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -680,9 +680,11 @@ ROM_END
 
 ROM_START( gngcross_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
-	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
+	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
+	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
+	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
+	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
 
 	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
@@ -692,10 +694,10 @@ ROM_START( gngcross_rom )
 	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
 	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "cross17.bin",  0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "cross14.bin",  0x28000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
 	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
@@ -929,7 +931,7 @@ struct GameDriver gngjap_driver =
 	__FILE__,
 	&gng_driver,
 	"gngjap",
-	"Makai-mura (Japan)",
+	"Makai-Mura",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",

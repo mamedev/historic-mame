@@ -847,37 +847,6 @@ static struct GfxDecodeInfo zoar_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-/* The original Burger Time has color RAM, but the bootleg uses a PROM. */
-static unsigned char hamburge_color_prom[] =
-{
-	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7,
-	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7
-};
-
-static unsigned char zoar_color_prom[] =
-{
-	// z20-1l
-	0x00,0x2c,0x21,0x6d,0x25,0x0b,0xc0,0x80,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
-	0x00,0x26,0x22,0x6d,0x1d,0x0a,0x80,0x80,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
-
-	// z21-2l
-	0xff,0x42,0x6b,0x2c,0x14,0x01,0x40,0x40,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff,
-	0xff,0x60,0x75,0x2c,0x14,0x00,0x40,0x40,0x00,0x07,0x30,0x3f,0x00,0x25,0xb6,0xff
-};
-
-static unsigned char lnc_color_prom[] =
-{
-	/* palette SC-5M */
-    0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff
-
-	/* PROM SB-4C. This PROM is in the RAS/CAS logic. Nothing to do with
-	   colors, but I'm leaving it here for documentation purposed
-	0xf7,0xf7,0xf5,0xfd,0xf9,0xf9,0xf0,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,
-	0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6 */
-};
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
@@ -1094,6 +1063,9 @@ ROM_START( hamburge_rom )
 
 	ROM_REGION(0x0800)      /* background graphics */
 	/* this ROM is missing? maybe the hardware works differently */
+
+    ROM_REGION(0x0020)
+    ROM_LOAD( "hamburge.clr", 0x0000, 0x0020, 0xc2348c1d )
 ROM_END
 
 ROM_START( eggs_rom )
@@ -1158,6 +1130,10 @@ ROM_START( lnc_rom )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "sa-1h",        0xf000, 0x1000, 0x379387ec )
+
+    ROM_REGION(0x0040)	/* PROMs */
+    ROM_LOAD( "sc-5m",        0x0000, 0x0020, 0x2a976ebe )	/* palette */
+    ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
 ROM_START( bnj_rom )
@@ -1238,6 +1214,10 @@ ROM_START( zoar_rom )
 
 	ROM_REGION(0x1000)      /* background graphics */
 	ROM_LOAD( "zoar13",       0x0000, 0x1000, 0x8fefa960 )
+
+    ROM_REGION(0x40)
+    ROM_LOAD( "z20-1l",       0x0000, 0x0020, 0xa63f0a07 )
+    ROM_LOAD( "z21-1l",       0x0020, 0x0020, 0x5e1e5788 )
 ROM_END
 
 
@@ -1369,11 +1349,23 @@ static void eggs_hisave(void)
 static int lnc_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
+	static int firsttime=0;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x0008],0xff,3);
+		memset(&RAM[0x0294],0xff,16);
+		memset(&RAM[0x02a6],0xff,16);
+		firsttime = 1;
+	}
 
 	/*   Check if the hi score table has already been initialized.
 	 */
-	if (RAM[0x02b7] == 0xff)
+	if ((memcmp(&RAM[0x0008],"\x00\x00\x00",3)==0) &&
+			(memcmp(&RAM[0x02a6],"\x00\x00\x00",3) == 0))
+
 	{
 		void *f;
 
@@ -1411,7 +1403,7 @@ static int lnc_hiload(void)
 
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 
@@ -1443,14 +1435,22 @@ static int bnj_hiload(void)
 
 	/*   Check if the hi score table has already been initialized.
 	 */
-	if (RAM[0x0640] == 0x4d)
+	if ((memcmp(&RAM[0x0500],"\x01\x00\x12",3)==0) &&
+		(memcmp(&RAM[0x050c],"\x00\x19\x82",3) == 0))
+
+	//if (RAM[0x0640] == 0x4d)
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x0500],640);
+			osd_fread(f,&RAM[0x0500],15);
+			osd_fread(f,&RAM[0x0640],15);
 			osd_fclose(f);
+			/* copy top score to top of screen */
+			RAM[0x000c] = RAM[0x0500];
+			RAM[0x000b] = RAM[0x0501];
+			RAM[0x000a] = RAM[0x0502];
 		}
 
 		return 1;
@@ -1470,7 +1470,8 @@ static void bnj_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x0500],640);
+		osd_fwrite(f,&RAM[0x0500],15);
+		osd_fwrite(f,&RAM[0x0640],15);
 		osd_fclose(f);
 	}
 }
@@ -1596,7 +1597,7 @@ struct GameDriver hamburge_driver =
 
 	btime_input_ports,
 
-	hamburge_color_prom, 0, 0,
+    PROM_MEMORY_REGION(4), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	btime_hiload, btime_hisave
@@ -1610,7 +1611,7 @@ struct GameDriver eggs_driver =
 	"Eggs",
 	"1983",
 	"Universal USA",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&eggs_machine_driver,
 	0,
@@ -1636,7 +1637,7 @@ struct GameDriver scregg_driver =
 	"Scrambled Egg",
 	"1983",
 	"Technos",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&eggs_machine_driver,
 	0,
@@ -1674,7 +1675,7 @@ struct GameDriver lnc_driver =
 
 	lnc_input_ports,
 
-	lnc_color_prom, 0, 0,
+    PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	lnc_hiload, lnc_hisave
@@ -1778,7 +1779,7 @@ struct GameDriver zoar_driver =
 
 	zoar_input_ports,
 
-	zoar_color_prom, 0, 0,
+    PROM_MEMORY_REGION(4), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	zoar_hiload, zoar_hisave

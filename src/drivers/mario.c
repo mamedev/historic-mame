@@ -358,7 +358,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
-			670000,         /* 670 khz (?) */
+                        730000,         /* 730 khz */
 			3,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1

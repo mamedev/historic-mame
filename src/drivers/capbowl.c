@@ -214,8 +214,8 @@ INPUT_PORTS_END
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz ??? */
-	{ YM2203_VOL(100,100) },
+	3000000,	/* 3 MHz ??? */
+	{ YM2203_VOL(40,40) },
 	{ ticket_dispenser_r },
 	{ 0 },
 	{ 0 },

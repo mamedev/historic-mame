@@ -509,7 +509,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			2,			/* memory region #2 */
+			1,			/* memory region #1 */
 			readmem_video, writemem_video, 0, 0,
 			ignore_interrupt,
 			1
@@ -517,7 +517,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,	/* 0.92 MHz */
-			3,			/* memory region #3 */
+			2,			/* memory region #2 */
 			readmem_sound, writemem_sound, 0, 0,
 			ignore_interrupt,
 			1
@@ -570,7 +570,7 @@ static struct MachineDriver mcu_machine_driver =
 		{
 			CPU_M6809,
 			1250000,	/* 1.25 MHz */
-			2,			/* memory region #2 */
+			1,			/* memory region #1 */
 			readmem_video, writemem_video, 0, 0,
 			ignore_interrupt,
 			1
@@ -578,7 +578,7 @@ static struct MachineDriver mcu_machine_driver =
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,	/* 0.92 MHz */
-			3,			/* memory region #3 */
+			2,			/* memory region #2 */
 			readmem_sound, writemem_sound, 0, 0,
 			ignore_interrupt,
 			1
@@ -586,7 +586,7 @@ static struct MachineDriver mcu_machine_driver =
 		{
 			CPU_M68705,
 			4000000,	/* 4 MHz */
-			4,	/* memory region #4 */
+			3,	/* memory region #3 */
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,1      /* No periodic interrupt */
 		}
@@ -638,7 +638,7 @@ static struct MachineDriver zoo_machine_driver =
 		{
 			CPU_M6809,
 			1250000,		/* 1.25 MHz */
-			2,				/* memory region #2 */
+			1,				/* memory region #1 */
 			zoo_readmem_video, zoo_writemem_video, 0, 0,
 			ignore_interrupt,
             1
@@ -646,11 +646,11 @@ static struct MachineDriver zoo_machine_driver =
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
 			3680000/4,		/* 0.92 MHz */
-			3,				/* memory region #3 */
+			2,				/* memory region #2 */
 			zoo_readmem_sound, zoo_writemem_sound, 0, 0,
 			ignore_interrupt,
 			1
-                }
+		}
 
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -701,10 +701,6 @@ ROM_START( qix_rom )
 	ROM_LOAD( "u18",          0xF000, 0x800, 0xde77728b )
 	ROM_LOAD( "u19",          0xF800, 0x800, 0xc0994776 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "u4",           0xC800, 0x800, 0x5b906a09 )
 	ROM_LOAD( "u5",           0xD000, 0x800, 0x254a3587 )
@@ -729,10 +725,6 @@ ROM_START( qix2_rom )
 	ROM_LOAD( "u18.rmb",      0xF000, 0x800, 0x1f91ed7a )
 	ROM_LOAD( "u19.rmb",      0xF800, 0x800, 0x68e8d5a6 )
 
-	ROM_REGION_DISPOSE(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
 	ROM_LOAD( "u3.rmb",       0xC000, 0x800, 0x19cebaca )
 	ROM_LOAD( "u4.rmb",       0xC800, 0x800, 0x6cfb4185 )
@@ -755,10 +747,6 @@ ROM_START( sdungeon_rom )
     ROM_LOAD( "sd17.u17",     0xD000, 0x1000, 0x4663e4b8 )
     ROM_LOAD( "sd18.u18",     0xE000, 0x1000, 0x7ef1ffc0 )
     ROM_LOAD( "sd19.u19",     0xF000, 0x1000, 0x7b20b7ac )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "sd05.u5",      0x0A000, 0x1000, 0x0b2bf48e )
@@ -787,10 +775,6 @@ ROM_START( zookeep_rom )
 	ROM_LOAD( "za17",         0xD000, 0x1000, 0x358013f4 )
 	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
 	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
 	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
@@ -823,10 +807,6 @@ ROM_START( zookeepa_rom )
 	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
 	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
 	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
 	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
@@ -856,10 +836,6 @@ ROM_START( elecyoyo_rom )
     ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
     ROM_LOAD( "yy19-1",       0xF000, 0x1000, 0x95b8b244 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
     ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
@@ -885,10 +861,6 @@ ROM_START( elecyoy2_rom )
     ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
     ROM_LOAD( "yy19",         0xF000, 0x1000, 0xd0215d2e )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
     ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
     ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
@@ -907,52 +879,50 @@ ROM_END
 
 ROM_START( kram_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "ks14-1",       0xA000, 0x1000, 0x0 )
-    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x0 )
-    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x0 )
-    ROM_LOAD( "ks17",         0xD000, 0x1000, 0x0 )
-    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x0 )
-    ROM_LOAD( "ks19-1",       0xF000, 0x1000, 0x0 )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
+    ROM_LOAD( "ks14-1",       0xA000, 0x1000, 0xfe69ac79 )
+    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
+    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
+    ROM_LOAD( "ks17",         0xD000, 0x1000, 0xc752a3a1 )
+    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
+    ROM_LOAD( "ks19-1",       0xF000, 0x1000, 0x759ea6ce )
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x0 )
-    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0x0 )
-    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0x0 )
-    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x0 )
-    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0x0 )
-    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0x0 )
+    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
+    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
+    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
+    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "ks27",         0xF800, 0x0800, 0x0 )
+    ROM_LOAD( "ks27",         0xF800, 0x0800, 0xc46530c8 )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller */
+	ROM_LOAD( "ks101",        0x0000, 0x0800, 0x639927cc )
 ROM_END
 
 ROM_START( kram2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "ks14",         0xA000, 0x1000, 0x0 )
-    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x0 )
-    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x0 )
-    ROM_LOAD( "ks17",         0xD000, 0x1000, 0x0 )
-    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x0 )
-    ROM_LOAD( "ks19",         0xF000, 0x1000, 0x0 )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
+    ROM_LOAD( "ks14",         0xA000, 0x1000, 0xa2eac1ff )
+    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
+    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
+    ROM_LOAD( "ks17",         0xD000, 0x1000, 0xc752a3a1 )
+    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
+    ROM_LOAD( "ks19",         0xF000, 0x1000, 0x053c5e09 )
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x0 )
-    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0x0 )
-    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0x0 )
-    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x0 )
-    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0x0 )
-    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0x0 )
+    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
+    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
+    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
+    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "ks27",         0xF800, 0x0800, 0x0 )
+    ROM_LOAD( "ks27",         0xF800, 0x0800, 0xc46530c8 )
+
+	ROM_REGION(0x0800)	/* 8k for the 68705 microcontroller */
+	ROM_LOAD( "ks101",        0x0000, 0x0800, 0x639927cc )
 ROM_END
 
 
@@ -1180,11 +1150,11 @@ struct GameDriver kram_driver =
 	0,
 	"kram",
 	"Kram (set 1)",
-	"????",
-	"Taito",
+	"1982",
+	"Taito America",
 	"John Butler\nEd Mueller\nAaron Giles",
 	GAME_NOT_WORKING,
-	&machine_driver,
+	&mcu_machine_driver,
 	0,
 
 	kram_rom,
@@ -1195,7 +1165,7 @@ struct GameDriver kram_driver =
 	sdungeon_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave	       /* High score load and save */
 };
@@ -1206,11 +1176,11 @@ struct GameDriver kram2_driver =
 	&kram_driver,
 	"kram2",
 	"Kram (set 2)",
-	"????",
-	"Taito",
+	"1982",
+	"Taito America",
 	"John Butler\nEd Mueller\nAaron Giles",
 	GAME_NOT_WORKING,
-	&machine_driver,
+	&mcu_machine_driver,
 	0,
 
 	kram2_rom,
@@ -1221,7 +1191,7 @@ struct GameDriver kram2_driver =
 	sdungeon_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_DEFAULT,
 
 	hiload, hisave	       /* High score load and save */
 };

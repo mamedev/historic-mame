@@ -4,13 +4,7 @@
   ===============
 
   Driver provided by:
-        Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  If you want to add any new drivers, or want to make any major changes it
-  would be worth contacting me beforehand. This code is still being
-  worked on.
-
-  Please do not send any large emails without asking first.
+        Paul Leaman
 
   M680000 for game, Z80, YM-2151 and OKIM6295 for sound.
 
@@ -52,7 +46,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
         1,              /* 1 chip */
-        8000,           /* 8000Hz ??? TODO: find out the real frequency */
+        7600,           /* hand tuned to match the real SF2 */
         3,              /* memory region 3 */
         { 255 }
 };
@@ -279,6 +273,7 @@ static struct CPS1config cps1_config_table[]=
   {"kod",     0xc000,     0,0x4800,0x1b00,10, 0xc020,0x4800,0x1b00,0x72,0x0800},
   {"kodb",    0xc000,     0,0x4800,0x1b00,10, 0xc020,0x4800,0x1b00,0x72,0x0800},
   {"msword",       0,     0,0x2800,0x0e00, 7,     -1,    -1,    -1,0x00,0x0000},
+  {"mswordu",      0,     0,0x2800,0x0e00, 7,     -1,    -1,    -1,0x00,0x0000},
   {"mswordj",      0,     0,0x2800,0x0e00, 7,     -1,    -1,    -1,0x00,0x0000},
   {"nemo",         0,     0,0x2400,0x0d00, 8, 0x4020,0x2400,0x0d00,0x4e,0x0405},
   {"nemoj",        0,     0,0x2400,0x0d00, 8, 0x4020,0x2400,0x0d00,0x4e,0x0405},
@@ -564,7 +559,7 @@ ROM_START( strider_rom )
         ROM_LOAD_ODD ( "strider.36",   0x40000, 0x20000, 0x21aa2863 )
         ROM_LOAD_WIDE_SWAP( "strider.32",   0x80000, 0x80000, 0x9b3cfc08 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "strider.02",   0x000000, 0x80000, 0x7705aa46 )
         ROM_LOAD( "strider.06",   0x080000, 0x80000, 0x4eee9aea )
         ROM_LOAD( "strider.04",   0x100000, 0x80000, 0x5b18b722 )
@@ -588,7 +583,7 @@ ROM_START( striderj_rom )
         ROM_LOAD_WIDE_SWAP( "sthj23.bin",   0x00000, 0x80000, 0x046e7b12 )
         ROM_LOAD_WIDE_SWAP( "strider.32",   0x80000, 0x80000, 0x9b3cfc08 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "strider.02",   0x000000, 0x80000, 0x7705aa46 )
         ROM_LOAD( "strider.06",   0x080000, 0x80000, 0x4eee9aea )
         ROM_LOAD( "strider.04",   0x100000, 0x80000, 0x5b18b722 )
@@ -804,7 +799,7 @@ ROM_START( willow_rom )
         ROM_LOAD_ODD ( "wlu_36.rom",   0x40000, 0x20000, 0x36100209 )
         ROM_LOAD_WIDE_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 
         ROM_LOAD         ( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
         ROM_LOAD_GFX_EVEN( "wl_20.rom",    0x080000, 0x20000, 0x84992350 )
@@ -839,7 +834,7 @@ ROM_START( willowj_rom )
         ROM_LOAD_ODD ( "wl43.bin",     0x40000, 0x20000, 0xd0dddc9e )
         ROM_LOAD_WIDE_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD         ( "wl_gfx1.rom",  0x000000, 0x80000, 0xc6f2abce )
         ROM_LOAD_GFX_EVEN( "wl_20.rom",    0x080000, 0x20000, 0x84992350 )
         ROM_LOAD_GFX_ODD ( "wl_10.rom",    0x080000, 0x20000, 0xb87b5a36 )
@@ -1059,7 +1054,7 @@ ROM_START( ffight_rom )
         ROM_LOAD_ODD ( "ff36-43.bin",  0x40000, 0x20000, 0x995e968a )
         ROM_LOAD_WIDE_SWAP( "ff32-32m.bin", 0x80000, 0x80000, 0xc747696e ) /* Tile map */
 
-        ROM_REGION(0x500000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x500000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ff01-01m.bin", 0x000000, 0x80000, 0x0b605e44 )
         ROM_LOAD( "ff05-05m.bin", 0x080000, 0x80000, 0x9c284108 )
         ROM_LOAD( "ff03-03m.bin", 0x100000, 0x80000, 0x52291cd2 )
@@ -1082,7 +1077,7 @@ ROM_START( ffightj_rom )
         ROM_LOAD_ODD ( "ff43.bin",     0x40000, 0x20000, 0xb6dee1c3 )
         ROM_LOAD_WIDE_SWAP( "ff32-32m.bin", 0x80000, 0x80000, 0xc747696e ) /* Tile map */
 
-        ROM_REGION(0x500000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x500000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD_GFX_EVEN( "ff24.bin",     0x000000, 0x20000, 0xa1ab607a )
         ROM_LOAD_GFX_ODD ( "ff17.bin",     0x000000, 0x20000, 0x2dc18cf4 )
         ROM_LOAD_GFX_EVEN( "ff25.bin",     0x040000, 0x20000, 0x6e8181ea )
@@ -1290,7 +1285,7 @@ ROM_START( unsquad_rom )
         ROM_LOAD_ODD ( "unsquad.36",   0x40000, 0x20000, 0x7cc8fb9e )
         ROM_LOAD_WIDE_SWAP( "unsquad.32",   0x80000, 0x80000, 0xae1d7fb0 ) /* tiles + chars */
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "unsquad.01",   0x000000, 0x80000, 0x5965ca8d )
         ROM_LOAD( "unsquad.05",   0x080000, 0x80000, 0xbf4575d8 )
         ROM_LOAD( "unsquad.03",   0x100000, 0x80000, 0xac6db17d )
@@ -1331,7 +1326,7 @@ struct GameDriver unsquad_driver =
         __FILE__,
         0,
         "unsquad",
-        "UN Squadron / Area 88 (US)",
+        "UN Squadron",
         "1989",
         "Capcom",
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
@@ -1356,7 +1351,7 @@ struct GameDriver area88_driver =
         __FILE__,
         &unsquad_driver,
         "area88",
-        "UN Squadron / Area 88 (Japan)",
+        "Area 88",
         "1989",
         "Capcom",
         CPS1_CREDITS("Santeri Saarimaa (Game Driver)\nMarco Cassili (dip switches)"),
@@ -1521,7 +1516,7 @@ ROM_START( mtwins_rom )
         ROM_LOAD_ODD ( "che_36.rom",   0x40000, 0x20000, 0x0fa00c39 )
         ROM_LOAD_WIDE_SWAP( "ch_32.rom",    0x80000, 0x80000, 0x9b70bd41 ) /* tiles + chars */
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ch_gfx1.rom",  0x000000, 0x80000, 0xf33ca9d4 )
         ROM_LOAD( "ch_gfx5.rom",  0x080000, 0x80000, 0x4ec75f15 )
         ROM_LOAD( "ch_gfx3.rom",  0x100000, 0x80000, 0x0ba2047f )
@@ -1544,7 +1539,7 @@ ROM_START( chikij_rom )
         ROM_LOAD_ODD ( "chj43a.bin",   0x40000, 0x20000, 0x8d387fe8 )
         ROM_LOAD_WIDE_SWAP( "ch_32.rom",    0x80000, 0x80000, 0x9b70bd41 ) /* tiles + chars */
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ch_gfx1.rom",  0x000000, 0x80000, 0xf33ca9d4 )
         ROM_LOAD( "ch_gfx5.rom",  0x080000, 0x80000, 0x4ec75f15 )
         ROM_LOAD( "ch_gfx3.rom",  0x100000, 0x80000, 0x0ba2047f )
@@ -1754,7 +1749,7 @@ ROM_START( nemo_rom )
         ROM_LOAD_ODD ( "nme_36a.rom",  0x40000, 0x20000, 0xee9450e3 )
         ROM_LOAD_WIDE_SWAP( "nm_32.rom",    0x80000, 0x80000, 0xd6d1add3 ) /* Tile map */
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "nm_gfx1.rom",  0x000000, 0x80000, 0x9e878024 )
         ROM_LOAD( "nm_gfx5.rom",  0x080000, 0x80000, 0x487b8747 )
         ROM_LOAD( "nm_gfx3.rom",  0x100000, 0x80000, 0xbb01e6b6 )
@@ -1777,7 +1772,7 @@ ROM_START( nemoj_rom )
         ROM_LOAD_ODD ( "nm43.bin",     0x40000, 0x20000, 0xa948a53b )
         ROM_LOAD_WIDE_SWAP( "nm_32.rom",    0x80000, 0x80000, 0xd6d1add3 ) /* Tile map */
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "nm_gfx1.rom",  0x000000, 0x80000, 0x9e878024 )
         ROM_LOAD( "nm_gfx5.rom",  0x080000, 0x80000, 0x487b8747 )
         ROM_LOAD( "nm_gfx3.rom",  0x100000, 0x80000, 0xbb01e6b6 )
@@ -1987,7 +1982,7 @@ ROM_START( c1941_rom )
         ROM_LOAD_ODD ( "41e_36.rom",   0x40000, 0x20000, 0x816a818f )
         ROM_LOAD_WIDE_SWAP( "41_32.rom",    0x80000, 0x80000, 0x4e9648ca )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "41_gfx1.rom",  0x000000, 0x80000, 0xff77985a )
         ROM_LOAD( "41_gfx5.rom",  0x080000, 0x80000, 0x01d1cb11 )
         ROM_LOAD( "41_gfx3.rom",  0x100000, 0x80000, 0x983be58f )
@@ -2010,7 +2005,7 @@ ROM_START( c1941j_rom )
         ROM_LOAD_ODD ( "4143.bin",     0x40000, 0x20000, 0x440fc0b5 )
         ROM_LOAD_WIDE_SWAP( "41_32.rom",    0x80000, 0x80000, 0x4e9648ca )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "41_gfx1.rom",  0x000000, 0x80000, 0xff77985a )
         ROM_LOAD( "41_gfx5.rom",  0x080000, 0x80000, 0x01d1cb11 )
         ROM_LOAD( "41_gfx3.rom",  0x100000, 0x80000, 0x983be58f )
@@ -2228,7 +2223,7 @@ ROM_START( dwj_rom )
         ROM_LOAD_EVEN( "35.bin",       0xc0000, 0x20000, 0x9db93d7a )
         ROM_LOAD_ODD ( "41.bin",       0xc0000, 0x20000, 0x1aae69a4 )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD_GFX_EVEN( "24.bin",       0x000000, 0x20000, 0xc6909b6f )
         ROM_LOAD_GFX_ODD ( "17.bin",       0x000000, 0x20000, 0x2e2f8320 )
         ROM_LOAD_GFX_EVEN( "25.bin",       0x040000, 0x20000, 0x152ea74a )
@@ -2285,7 +2280,7 @@ struct GameDriver dwj_driver =
         __FILE__,
         0,
         "dwj",
-        "Dynasty Wars / Tenchi o Kurau (Japan)",
+        "Tenchi o Kurau (Japan)",
         "1989",
         "Capcom",
         CPS1_CREDITS("Paul Leaman"),
@@ -2450,7 +2445,30 @@ ROM_START( msword_rom )
         ROM_LOAD_ODD ( "mse_36.rom",   0x40000, 0x20000, 0x8f7d6ce9 )
         ROM_LOAD_WIDE_SWAP( "ms_32.rom",    0x80000, 0x80000, 0x2475ddfc )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "ms_gfx1.rom",  0x000000, 0x80000, 0x0d2bbe00 )
+        ROM_LOAD( "ms_gfx5.rom",  0x080000, 0x80000, 0xc00fe7e2 )
+        ROM_LOAD( "ms_gfx3.rom",  0x100000, 0x80000, 0x3a1a5bf4 )
+        ROM_LOAD( "ms_gfx7.rom",  0x180000, 0x80000, 0x4ccacac5 )
+
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "ms_9.rom",     0x00000, 0x10000, 0x57b29519 )
+        ROM_RELOAD(           0x08000, 0x10000 )
+
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD( "ms_18.rom",    0x00000, 0x20000, 0xfb64e90d )
+        ROM_LOAD( "ms_19.rom",    0x20000, 0x20000, 0x74f892b9 )
+ROM_END
+
+ROM_START( mswordu_rom )
+        ROM_REGION(0x100000)      /* 68000 code */
+        ROM_LOAD_EVEN( "msu30",   0x00000, 0x20000, 0xd963c816 )
+        ROM_LOAD_ODD ( "msu35",   0x00000, 0x20000, 0x72f179b3 )
+        ROM_LOAD_EVEN( "msu31",   0x40000, 0x20000, 0x20cd7904 )
+        ROM_LOAD_ODD ( "msu36",   0x40000, 0x20000, 0xbf88c080 )
+        ROM_LOAD_WIDE_SWAP( "ms_32.rom",    0x80000, 0x80000, 0x2475ddfc )
+
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ms_gfx1.rom",  0x000000, 0x80000, 0x0d2bbe00 )
         ROM_LOAD( "ms_gfx5.rom",  0x080000, 0x80000, 0xc00fe7e2 )
         ROM_LOAD( "ms_gfx3.rom",  0x100000, 0x80000, 0x3a1a5bf4 )
@@ -2473,7 +2491,7 @@ ROM_START( mswordj_rom )
         ROM_LOAD_ODD ( "msj_36.rom",   0x40000, 0x20000, 0xaec77787 )
         ROM_LOAD_WIDE_SWAP( "ms_32.rom",    0x80000, 0x80000, 0x2475ddfc )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ms_gfx1.rom",  0x000000, 0x80000, 0x0d2bbe00 )
         ROM_LOAD( "ms_gfx5.rom",  0x080000, 0x80000, 0xc00fe7e2 )
         ROM_LOAD( "ms_gfx3.rom",  0x100000, 0x80000, 0x3a1a5bf4 )
@@ -2491,52 +2509,77 @@ ROM_END
 
 struct GameDriver msword_driver =
 {
-        __FILE__,
-        0,
-        "msword",
-        "Magic Sword (World)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &msword_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"msword",
+	"Magic Sword (World)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&msword_machine_driver,
+	0,
 
-        msword_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	msword_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_msword,
-        NULL, 0, 0,
+	input_ports_msword,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
+};
+
+struct GameDriver mswordu_driver =
+{
+	__FILE__,
+	&msword_driver,
+	"mswordu",
+	"Magic Sword (US)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&msword_machine_driver,
+	0,
+
+	mswordu_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
+
+	input_ports_msword,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver mswordj_driver =
 {
-        __FILE__,
-        &msword_driver,
-        "mswordj",
-        "Magic Sword (Japan)",
-        "1990",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
-        0,
-        &msword_machine_driver,
-                0,
+	__FILE__,
+	&msword_driver,
+	"mswordj",
+	"Magic Sword (Japan)",
+	"1990",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+	0,
+	&msword_machine_driver,
+	0,
 
-        mswordj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	mswordj_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_msword,
-        NULL, 0, 0,
+	input_ports_msword,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -2688,7 +2731,7 @@ ROM_START( mercs_rom )
 	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
 	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
 
-	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
 	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
 	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
@@ -2723,7 +2766,7 @@ ROM_START( mercsu_rom )
 	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
 	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
 
-	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
 	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
 	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
@@ -2758,7 +2801,7 @@ ROM_START( mercsj_rom )
 	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
 	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
 
-	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
 	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
 	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
@@ -2791,7 +2834,7 @@ struct GameDriver mercs_driver =
 	__FILE__,
 	0,
 	"mercs",
-	"Mercs / Senjo no Ohkami II (World)",
+	"Mercs (World)",
 	"1990",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman\n"),
@@ -2816,7 +2859,7 @@ struct GameDriver mercsu_driver =
 	__FILE__,
 	&mercs_driver,
 	"mercsu",
-	"Mercs / Senjo no Ohkami II (US)",
+	"Senjo no Ookami II (US)",
 	"1990",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman\n"),
@@ -2841,7 +2884,7 @@ struct GameDriver mercsj_driver =
 	__FILE__,
 	&mercs_driver,
 	"mercsj",
-	"Mercs / Senjo no Ohkami II (Japan)",
+	"Senjo no Ookami II (Japan)",
 	"1990",
 	"Capcom",
 	CPS1_CREDITS("Paul Leaman\n"),
@@ -3010,7 +3053,7 @@ ROM_START( pnickj_rom )
         ROM_LOAD_EVEN( "pnij36.bin",   0x00000, 0x20000, 0x2d4ffb2b )
         ROM_LOAD_ODD( "pnij42.bin",   0x00000, 0x20000, 0xc085dfaf )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
 
         ROM_LOAD_GFX_EVEN( "pnij26.bin",   0x000000, 0x20000, 0xe2af981e )
         ROM_LOAD_GFX_ODD ( "pnij18.bin",   0x000000, 0x20000, 0xf17a0e56 )
@@ -3216,7 +3259,7 @@ ROM_START( knights_rom )
         ROM_LOAD_WIDE_SWAP( "kr_23e.rom",   0x00000, 0x80000, 0x1b3997eb )
         ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "kr_gfx2.rom",  0x000000, 0x80000, 0xf095be2d )
         ROM_LOAD( "kr_gfx6.rom",  0x080000, 0x80000, 0x0200bc3d )
         ROM_LOAD( "kr_gfx1.rom",  0x100000, 0x80000, 0x9e36c1a4 )
@@ -3403,7 +3446,7 @@ ROM_START( ghouls_rom )
         ROM_LOAD_ODD ( "ghl28.bin",    0x40000, 0x20000, 0x03d3e714 ) /* 68000 code */
         ROM_LOAD_WIDE( "ghl17.bin",    0x80000, 0x80000, 0x3ea1b0f2 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 
         ROM_LOAD     ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
         ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x080000, 0x10000, 0xda088d61 )
@@ -3444,7 +3487,7 @@ ROM_START( ghoulsj_rom )
         ROM_LOAD_ODD ( "ghlj28.bin",   0x40000, 0x20000, 0x6af0b391 ) /* 68000 code */
         ROM_LOAD_WIDE( "ghl17.bin",    0x80000, 0x80000, 0x3ea1b0f2 ) /* Tile map */
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 
         ROM_LOAD         ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 ) /* Sprites / tiles */
         ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x080000, 0x10000, 0xda088d61 )
@@ -3480,52 +3523,52 @@ ROM_END
 
 struct GameDriver ghouls_driver =
 {
-        __FILE__,
-        0,
-        "ghouls",
-        "Ghouls'n Ghosts (US?)",
-        "1988",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        0,
-        &ghouls_machine_driver,
-                0,
+	__FILE__,
+	0,
+	"ghouls",
+	"Ghouls'n Ghosts",
+	"1988",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	0,
+	&ghouls_machine_driver,
+			0,
 
-        ghouls_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	ghouls_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_ghouls,
-        NULL, 0, 0,
+	input_ports_ghouls,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 struct GameDriver ghoulsj_driver =
 {
-        __FILE__,
-        &ghouls_driver,
-        "ghoulsj",
-        "Ghouls'n Ghosts (Japan)",
-        "1988",
-        "Capcom",
-        CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
-        0,
-        &ghouls_machine_driver,
-                0,
+	__FILE__,
+	&ghouls_driver,
+	"ghoulsj",
+	"Dai Makai-Mura",
+	"1988",
+	"Capcom",
+	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
+	0,
+	&ghouls_machine_driver,
+			0,
 
-        ghoulsj_rom,
-        0,
-        0,0,
-        0,      /* sound_prom */
+	ghoulsj_rom,
+	0,
+	0,0,
+	0,      /* sound_prom */
 
-        input_ports_ghouls,
-        NULL, 0, 0,
+	input_ports_ghouls,
+	NULL, 0, 0,
 
-        ORIENTATION_DEFAULT,
-        cps1_hiload, cps1_hisave
+	ORIENTATION_DEFAULT,
+	cps1_hiload, cps1_hisave
 };
 
 /********************************************************************
@@ -3680,14 +3723,14 @@ MACHINE_DRIVER(
 ROM_START( cawing_rom )
         ROM_REGION(0x100000)      /* 68000 code */
 
-        ROM_LOAD_EVEN( "cae_30a.bin",  0x00000, 0x20000, 0x91fceacd )
+        ROM_LOAD_EVEN( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
         ROM_LOAD_ODD ( "cae_35a.rom",  0x00000, 0x20000, 0x3ef03083 )
-        ROM_LOAD_EVEN( "cae_31a.bin",  0x40000, 0x20000, 0xe5b75caf )
-        ROM_LOAD_ODD ( "cae_36a.bin",  0x40000, 0x20000, 0xc73fd713 )
+        ROM_LOAD_EVEN( "cae_31a.rom",  0x40000, 0x20000, 0xe5b75caf )
+        ROM_LOAD_ODD ( "cae_36a.rom",  0x40000, 0x20000, 0xc73fd713 )
 
         ROM_LOAD_WIDE_SWAP( "ca_32.rom", 0x80000, 0x80000, 0x0c4837d4 )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "ca_gfx1.rom",  0x000000, 0x80000, 0x4d0620fd )
         ROM_LOAD( "ca_gfx5.rom",  0x080000, 0x80000, 0x66d4cc37 )
         ROM_LOAD( "ca_gfx3.rom",  0x100000, 0x80000, 0x0b0341c3 )
@@ -3705,17 +3748,17 @@ ROM_END
 ROM_START( cawingj_rom )
         ROM_REGION(0x100000)      /* 68000 code */
 
-        ROM_LOAD_EVEN( "cae_30a.bin",  0x00000, 0x20000, 0x91fceacd )
+        ROM_LOAD_EVEN( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
         ROM_LOAD_ODD ( "caj42a.bin",   0x00000, 0x20000, 0x039f8362 )
-        ROM_LOAD_EVEN( "cae_31a.bin",  0x40000, 0x20000, 0xe5b75caf )
-        ROM_LOAD_ODD ( "cae_36a.bin",  0x40000, 0x20000, 0xc73fd713 )
+        ROM_LOAD_EVEN( "cae_31a.rom",  0x40000, 0x20000, 0xe5b75caf )
+        ROM_LOAD_ODD ( "cae_36a.rom",  0x40000, 0x20000, 0xc73fd713 )
 
         ROM_LOAD_EVEN( "caj34.bin",    0x80000, 0x20000, 0x51ea57f4 )
         ROM_LOAD_ODD ( "caj40.bin",    0x80000, 0x20000, 0x2ab71ae1 )
         ROM_LOAD_EVEN( "caj35.bin",    0xc0000, 0x20000, 0x01d71973 )
         ROM_LOAD_ODD ( "caj41.bin",    0xc0000, 0x20000, 0x3a43b538 )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD_GFX_EVEN( "caj24.bin",    0x000000, 0x20000, 0xe356aad7 )
         ROM_LOAD_GFX_ODD ( "caj17.bin",    0x000000, 0x20000, 0x540f2fd8 )
         ROM_LOAD_GFX_EVEN( "caj25.bin",    0x040000, 0x20000, 0xcdd0204d )
@@ -3955,7 +3998,7 @@ ROM_START( sf2_rom )
         ROM_LOAD_EVEN( "SF2_29B.ROM",    0xc0000, 0x20000, 0xbb4af315 )
         ROM_LOAD_ODD ( "SF2_36B.ROM",    0xc0000, 0x20000, 0xc02a13eb )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "SF2GFX01.ROM",       0x000000, 0x80000, 0xba529b4f ) /* sprites (left half)*/
         ROM_LOAD( "SF2GFX10.ROM",       0x080000, 0x80000, 0x14b84312 ) /* sprites */
@@ -4018,7 +4061,7 @@ ROM_START( sf2j_rom )
         ROM_LOAD_EVEN( "SF2_29B.ROM",   0xc0000, 0x20000, 0xbb4af315 )
         ROM_LOAD_ODD ( "SF2_36B.ROM",   0xc0000, 0x20000, 0xc02a13eb )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 
                 /* Plane 1+2 */
         ROM_LOAD( "SF2GFX01.ROM",       0x000000, 0x80000, 0xba529b4f ) /* sprites (left half)*/
@@ -4075,7 +4118,7 @@ ROM_START( sf2t_rom )
         ROM_LOAD_WIDE_SWAP( "sf2.22",       0x080000, 0x80000, 0xaea6e035 )
         ROM_LOAD_WIDE_SWAP( "sf2.21",       0x100000, 0x80000, 0xfd200288 )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 ) /* sprites (left half)*/
         ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d ) /* sprites */
@@ -4131,7 +4174,7 @@ ROM_START( sf2tj_rom )
         ROM_LOAD_WIDE_SWAP( "sf2tj.22",   0x080000, 0x80000, 0xaea6e035 )
         ROM_LOAD_WIDE_SWAP( "sf2tj.21",   0x100000, 0x80000, 0xfd200288 )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 ) /* sprites (left half)*/
         ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d ) /* sprites */
@@ -4188,7 +4231,7 @@ ROM_START( sf2ce_rom )
         ROM_LOAD_WIDE_SWAP( "sf2ce.22",     0x080000, 0x80000, 0x99f1cca4 )
         ROM_LOAD_WIDE_SWAP( "sf2ce.21",     0x100000, 0x80000, 0x925a7877 )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 ) /* sprites (left half)*/
         ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d ) /* sprites */
@@ -4243,7 +4286,7 @@ ROM_START( sf2cej_rom )
         ROM_LOAD_WIDE( "sf2cej.22",    0x080000, 0x80000, 0x6628f6a6 )
         ROM_LOAD_WIDE( "sf2cej.21",    0x100000, 0x80000, 0xfcb8fe8f )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 ) /* sprites (left half)*/
         ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d ) /* sprites */
@@ -4299,7 +4342,7 @@ ROM_START( sf2rb_rom )
         ROM_LOAD_WIDE( "sf2d__22.ROM",   0x080000, 0x80000, 0xfe9d9cf5 )
         ROM_LOAD_WIDE( "sf2cej.21",     0x100000, 0x80000, 0xfcb8fe8f )
 
-        ROM_REGION(0x600000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 ) /* sprites (left half)*/
         ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d ) /* sprites */
@@ -4488,7 +4531,7 @@ ROM_START( megaman_rom )
         ROM_LOAD_WIDE_SWAP( "rcma_22b.rom",   0x80000, 0x80000, 0x708268c4 )
         ROM_LOAD_WIDE_SWAP( "rcma_21a.rom",   0x100000, 0x80000, 0x4376ea95 )
 
-        ROM_REGION(0x800000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x800000)     /* temporary space for graphics (disposed after conversion) */
 
         /* Plane 1+2 */
         ROM_LOAD( "rcm_03.rom",    0x000000, 0x80000, 0x36f3073c ) /* sprites (left half)*/
@@ -4528,7 +4571,7 @@ ROM_START( rockmanj_rom )
         ROM_LOAD_WIDE_SWAP( "rcm22a.bin",   0x80000, 0x80000, 0x8729a689 )
         ROM_LOAD_WIDE_SWAP( "rcm21a.bin",   0x100000, 0x80000, 0x517ccde2 )
 
-        ROM_REGION(0x800000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x800000)     /* temporary space for graphics (disposed after conversion) */
 
         /* Plane 1+2 */
         ROM_LOAD( "rcm_03.rom",    0x000000, 0x80000, 0x36f3073c ) /* sprites (left half)*/
@@ -4728,7 +4771,7 @@ INPUT_PORTS_END
 CHAR_LAYOUT(charlayout_captcomm, 2*4096, 0x200000*8)
 SPRITE_LAYOUT(spritelayout_captcomm, 4096*5,  0x100000*8, 0x200000*8)
 TILE32_LAYOUT(tile32layout_captcomm, 1024,    0x100000*8, 0x200000*8)
-SPRITE_LAYOUT(tilelayout_captcomm, 4096*3,    0x100000*8, 0x200000*8 )
+SPRITE_LAYOUT(tilelayout_captcomm, 0x1800,    0x100000*8, 0x200000*8 )
 
 static struct GfxDecodeInfo gfxdecodeinfo_captcomm[] =
 {
@@ -4753,7 +4796,7 @@ ROM_START( captcomm_rom )
         ROM_LOAD_EVEN( "cc_24d.rom",   0x100000, 0x20000, 0x680e543f )
         ROM_LOAD_ODD ( "cc_28d.rom",   0x100000, 0x20000, 0x8820039f )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "gfx_02.rom",   0x000000, 0x80000, 0x00637302 ) /* sprites (left half)*/
         ROM_LOAD( "gfx_06.rom",   0x080000, 0x80000, 0x0c69f151 ) /* sprites */
@@ -4818,19 +4861,73 @@ INPUT_PORTS_START( input_ports_3wonders )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
         PORT_START      /* DSWA */
-        PORT_DIPNAME( 0xff, 0x00, "DIP A", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xff, "On" )
+        PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
+        PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
+        PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
+        PORT_DIPSETTING(    0x18, "1 Coin/6 Credits" )
+        PORT_DIPNAME( 0x40, 0x40, "Force 2 Coins/1 Credit (1 to continue if On)", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off" )
+        PORT_DIPNAME( 0x80, 0x80, "Freeze Game", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x80, "Off" )
 
         PORT_START      /* DSWB */
-        PORT_DIPNAME( 0xff, 0x00, "DIP B", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xff, "On" )
-
+        PORT_DIPNAME( 0x03, 0x03, "Action Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x03, "1")
+        PORT_DIPSETTING(    0x02, "2" )
+        PORT_DIPSETTING(    0x01, "3")
+        PORT_DIPSETTING(    0x00, "5" )
+        PORT_DIPNAME( 0x0c, 0x0c, "Action Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x0c, "Easy")
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard")
+        PORT_DIPSETTING(    0x00, "Hardest" )
+        PORT_DIPNAME( 0x30, 0x30, "Shooting Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x30, "1")
+        PORT_DIPSETTING(    0x20, "2" )
+        PORT_DIPSETTING(    0x10, "3")
+        PORT_DIPSETTING(    0x00, "5" )
+        PORT_DIPNAME( 0xc0, 0xc0, "Shooting Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0xc0, "Easy")
+        PORT_DIPSETTING(    0x80, "Normal" )
+        PORT_DIPSETTING(    0x40, "Hard")
+        PORT_DIPSETTING(    0x00, "Hardest" )
         PORT_START      /* DSWC */
-        PORT_DIPNAME( 0xff, 0x00, "DIP C", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0xff, "On" )
+        PORT_DIPNAME( 0x03, 0x03, "Puzzle Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x03, "1")
+        PORT_DIPSETTING(    0x02, "2" )
+        PORT_DIPSETTING(    0x01, "3")
+        PORT_DIPSETTING(    0x00, "5" )
+        PORT_DIPNAME( 0x0c, 0x0c, "Puzzle Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x0c, "Easy")
+        PORT_DIPSETTING(    0x08, "Normal" )
+        PORT_DIPSETTING(    0x04, "Hard")
+        PORT_DIPSETTING(    0x00, "Hardest" )
+        PORT_DIPNAME( 0x10, 0x10, "Flip Screen", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x10, "Off")
+        PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x20, "Off")
+        PORT_DIPNAME( 0x40, 0x40, "Continue", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPSETTING(    0x40, "Off")
+        PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 
         PORT_START      /* Player 1 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -4887,7 +4984,7 @@ ROM_START( c3wonders_rom )
         ROM_LOAD_EVEN( "3wonders.29",  0xc0000, 0x20000, 0x37ba3e20 )
         ROM_LOAD_ODD ( "3wonders.34",  0xc0000, 0x20000, 0xf99f46c0 )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "3wonders.01",  0x000000, 0x80000, 0x902489d0 ) /* sprites (right half) */
         ROM_LOAD( "3wonders.02",  0x080000, 0x80000, 0xe9a034f4 ) /* sprites (left half)*/
@@ -5090,7 +5187,7 @@ ROM_START( kod_rom )
         ROM_LOAD_EVEN( "kod29.rom",    0xc0000, 0x20000, 0x6a0ba878 )
         ROM_LOAD_ODD ( "kod36.rom",    0xc0000, 0x20000, 0xb509b39d )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
                 /* Plane 1+2 */
         ROM_LOAD( "kod01.rom",    0x000000, 0x80000, 0x5f74bf78 ) /* sprites (right half) */
         ROM_LOAD( "kod10.rom",    0x080000, 0x80000, 0x9ef36604 ) /* sprites */
@@ -5141,7 +5238,7 @@ ROM_START( kodb_rom )
         ROM_LOAD_EVEN( "kod.17",    0x00000, 0x80000, 0x036dd74c )
         ROM_LOAD_ODD ( "kod.18",    0x00000, 0x80000, 0x3e4b7295 )
 
-        ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
         /* Plane 1+2 */
         ROM_LOAD_EVEN( "KOD.DI",   0x000000, 0x80000, 0xab031763 ) /* Gfx D-Odd */
         ROM_LOAD_ODD ( "KOD.CI",   0x000000, 0x80000, 0x22228bc5 ) /* Gfx C-Odd */
@@ -5330,7 +5427,7 @@ ROM_START( varth_rom )
         ROM_LOAD_EVEN( "vae_29a.rom",  0xc0000, 0x20000, 0x5e2cd2c3 )
         ROM_LOAD_ODD ( "vae_34a.rom",  0xc0000, 0x20000, 0x3d9bdf83 )
 
-        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
         ROM_LOAD( "va_gfx1.rom",  0x000000, 0x80000, 0x0b1ace37 )
         ROM_LOAD( "va_gfx5.rom",  0x080000, 0x80000, 0xb1fb726e )
         ROM_LOAD( "va_gfx3.rom",  0x100000, 0x80000, 0x44dfe706 )

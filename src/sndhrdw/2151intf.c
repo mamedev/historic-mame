@@ -13,8 +13,7 @@
 extern unsigned char No_FM;
 
 /* for stream system */
-static int streamR[MAX_2151];
-static int streamL[MAX_2151];
+static int stream[MAX_2151];
 static void *FMBuf[2];
 
 #define MIN_SLICE 44
@@ -49,7 +48,7 @@ static void timer_callback_2151(int param)
 	if( YM2151TimerOver(n,c) )
 	{	/* IRQ is active */;
 		/* User Interrupt call */
-		if(intf->handler[n]) intf->handler[n]();
+		if(intf->irqhandler[n]) intf->irqhandler[n]();
 	}
 }
 
@@ -76,26 +75,16 @@ static void TimerHandler(int n,int c,double timeSec)
 /* update request from fm.c */
 void YM2151UpdateRequest(int chip)
 {
-	stream_update(streamR[chip],0); /* latch R-ch */
-	stream_update(streamL[chip],0); /* update R & L */
-}
-
-static void YM2151UpdateCallbackR(int chip,void *buffer,int length)
-{
-	FMBuf[1] = buffer;
-}
-
-/* update callback from stream.c */
-static void YM2151UpdateCallbackL(int chip,void *buffer,int length)
-{
-	FMBuf[0] = buffer;
-	OPMUpdateOne(chip,FMBuf,length);
+	stream_update(stream[chip],0);
 }
 
 int YM2151_sh_start(struct YM2151interface *interface,int mode)
 {
 	int i,j;
 	int rate = Machine->sample_rate;
+	char buf[YM2151_NUMBUF][40];
+	const char *name[YM2151_NUMBUF];
+	int vol;
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
 
@@ -115,24 +104,33 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 		/* stream system initialize */
 		for (i = 0;i < intf->num;i++)
 		{
-			int vol;
-			char name[20];
-			sprintf(name,"YM2151 Right #%d",i);
-			streamR[i] = stream_init(name,rate,Machine->sample_bits,i,YM2151UpdateCallbackR);
-			sprintf(name,"YM2151 Left  #%d",i);
-			streamL[i] = stream_init(name,rate,Machine->sample_bits,i,YM2151UpdateCallbackL);
+			/* stream setup */
+			for (j = 0 ; j < YM2151_NUMBUF ; j++)
+			{
+				name[j] = buf[j];
+				sprintf(buf[j],"YM2151 #%d %s",i,(j&1)?"Rt":"Lt");
+			}
+			stream[i] = stream_init_multi(YM2151_NUMBUF,
+				name,rate,Machine->sample_bits,
+				i,OPMUpdateOne);
 			/* volume setup */
 			vol = intf->volume[i];
 			if( vol > 255 ) vol = 255;
-			stream_set_volume(streamR[i],vol);
-			stream_set_volume(streamL[i],vol);
+			for( j=0 ; j < YM2151_NUMBUF ; j++ )
+			{
+				stream_set_volume(stream[i]+j,vol);
+				stream_set_pan(stream[i]+j,(j&1)?100:-100);
+			}
 		}
 		/* Set Timer handler */
 		for (i = 0; i < intf->num; i++)
 			Timer[i][0] =Timer[i][1] = 0;
 		FMSetTimerHandler( TimerHandler , 0);
-		if (OPMInit(intf->num,intf->clock,Machine->sample_rate,sample_bits) == 0)
+		if (OPMInit(intf->num,intf->baseclock,Machine->sample_rate,sample_bits) == 0)
 		{
+			/* set port handler */
+			for (i = 0; i < intf->num; i++)
+				OPMSetPortHander(i,intf->portwritehandler[i]);
 			return 0;
 		}
 		/* error */
@@ -152,11 +150,14 @@ int YM2151_sh_start(struct YM2151interface *interface,int mode)
 			}
 			memset(bufferFM[i],0, buffer_len);
 		}
-		if (YMInit(intf->num,intf->clock,emulation_rate,sample_bits,buffer_len,bufferFM) == 0)
+		if (YMInit(intf->num,intf->baseclock,emulation_rate,sample_bits,buffer_len,bufferFM) == 0)
 		{
 			channel=get_play_channels(intf->num);
 			for (i = 0; i < intf->num; i++)
-				YMSetIrqHandler(i,intf->handler[i]);
+			{
+				YMSetIrqHandler(i,intf->irqhandler[i]);
+				YMSetPortWriteHandler(i,intf->portwritehandler[i]);
+			}
 			return 0;
 		}
 		return 1;
@@ -326,9 +327,9 @@ void YM2151_sh_update(void)
 		YM2151Update();
 		for (i = 0;i < intf->num;i++)
 			if (sample_bits==16)
-				osd_play_streamed_sample_16(channel+i,bufferFM[i],2*buffer_len,emulation_rate,intf->volume[i]);
+				osd_play_streamed_sample_16(channel+i,bufferFM[i],2*buffer_len,emulation_rate,intf->volume[i],0);
 			else
-				osd_play_streamed_sample(channel+i,bufferFM[i],buffer_len,emulation_rate,intf->volume[i]);
+				osd_play_streamed_sample(channel+i,bufferFM[i],buffer_len,emulation_rate,intf->volume[i],0);
 		/* reset sample position */
 		for (i = 0;i < intf->num;i++)
 			sample_posFM[i] = 0;

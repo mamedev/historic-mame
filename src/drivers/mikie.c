@@ -255,7 +255,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	1789750,	/* 1.78975 Mhz ??? */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 
@@ -443,7 +443,7 @@ struct GameDriver mikie_driver =
 	"Mikie",
 	"1984",
 	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
 	&mikie_machine_driver,
 	0,
@@ -469,7 +469,7 @@ struct GameDriver mikiej_driver =
 	"Shinnyuushain Tooru-kun",
 	"1984",
 	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
 	&mikie_machine_driver,
 	0,
@@ -495,7 +495,7 @@ struct GameDriver mikiehs_driver =
 	"Mikie (High School Graffiti)",
 	"1984",
 	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
 	0,
 	&mikie_machine_driver,
 	0,

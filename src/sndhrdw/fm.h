@@ -1,9 +1,5 @@
 /*
-
   File: fm.h -- header file for software emuration for FM sound generator
-
-   Copyright(c) 1998 Tatsuyuki Satoh
-
 */
 #ifndef _H_FM_FM_
 #define _H_FM_FM_
@@ -20,8 +16,8 @@
 
 /* stereo mixing / separate */
 //#define FM_STEREO_MIX
-/* ADPCM mixing / separate */
-#define  OPNB_ADPCM_MIX
+/* YM2610 FM and adpcm separate output */
+#define YM2610_SEPARATE_ADPCM
 
 #define YM2203_NUMBUF 1
 
@@ -29,19 +25,19 @@
   #define YM2151_NUMBUF 1
   #define YM2608_NUMBUF 1
   #define YM2612_NUMBUF 1
- #ifdef OPNB_ADPCM_MIX
-  #define   YM2610_NUMBUF  (1+1+1)
+ #ifdef YM2610_SEPARATE_ADPCM
+  #define   YM2610_NUMBUF  (1+1)
  #else
-  #define   YM2610_NUMBUF  (1+1+3)
+  #define   YM2610_NUMBUF  1
  #endif
 #else
   #define YM2151_NUMBUF 2    /* FM L+R */
   #define YM2608_NUMBUF 2    /* FM L+R+ADPCM+RYTHM */
   #define YM2612_NUMBUF 2    /* FM L+R */
- #ifdef OPNB_ADPCM_MIX
-  #define   YM2610_NUMBUF  (2+2+2)
+ #ifdef YM2610_SEPARATE_ADPCM
+  #define   YM2610_NUMBUF  (2+2)
  #else
-  #define   YM2610_NUMBUF  (2+2+6)
+  #define   YM2610_NUMBUF  2
  #endif
 #endif
 
@@ -89,7 +85,7 @@ unsigned char OPNReadStatus(int n);
 ** 'bufsiz' is the size of the buffer
 ** return    0 = success
 */
-int YM2203Init(int num, int clock, int rate, int bitsize );
+int YM2203Init(int num, int baseclock, int rate, int bitsize );
 
 /*
 ** shutdown the YM2203 emulators .. make sure that no sound system stuff
@@ -122,7 +118,7 @@ int YM2203TimerOver(int n, int c);
 #ifdef BUILD_YM2608
 /* -------------------- YM2608(OPNA) Interface -------------------- */
 
-int YM2608Init(int num, int clock, int rate, int bitsize );
+int YM2608Init(int num, int baseclock, int rate, int bitsize );
 void YM2608Shutdown(void);
 void YM2608ResetChip(int num);
 void YM2608UpdateOne(int num, FMSAMPLE **buffer, int length);
@@ -138,7 +134,7 @@ int YM2608TimerOver(int n, int c );
 
 #define   MAX_2610    (2)
 
-int YM2610Init(int num, int clock, int rate,  int bitsize, int *pcmroma, int *pcmromb );
+int YM2610Init(int num, int baseclock, int rate,  int bitsize, int *pcmroma, int *pcmromb );
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);
 void YM2610UpdateOne(int num, FMSAMPLE **buffer, int length);
@@ -147,10 +143,14 @@ int YM2610Write(int n, int a,int v);
 unsigned char YM2610Read(int n,int a);
 int YM2610TimerOver(int n, int c );
 /*int YM2610SetBuffer(int n, FMSAMPLE **buf );*/
+
+#ifdef __RAINE__
+void Set_YM2610_ADPCM_Buffers(int num, UBYTE *bufa, UBYTE *bufb, ULONG sizea, ULONG sizeb);
+#endif
 #endif /* BUILD_YM2610 */
 
 #ifdef BUILD_YM2612
-int YM2612Init(int num, int clock, int rate, int bitsize );
+int YM2612Init(int num, int baseclock, int rate, int bitsize );
 void YM2612Shutdown(void);
 void YM2612ResetChip(int num);
 void YM2612UpdateOne(int num, FMSAMPLE **buffer, int length);
@@ -172,7 +172,7 @@ FMSAMPLE *YM2612Buffer(int n);
 ** 'bitsize' is sampling bits (8 or 16)
 ** 'bufsiz' is the size of the buffer
 */
-int OPMInit(int num, int clock, int rate, int bitsize);
+int OPMInit(int num, int baseclock, int rate, int bitsize);
 void OPMShutdown(void);
 void OPMResetChip(int num);
 
@@ -185,6 +185,10 @@ FMSAMPLE *OPMBuffer(int n,int c );
 /*int OPMSetBuffer(int n, FMSAMPLE **buf );*/
 /* ---- set user interrupt handler ----- */
 void OPMSetIrqHandler(int n, void (*handler)(void) );
+/* ---- set callback hander when port CT0/1 write ----- */
+/* CT.bit0 = CT0 , CT.bit1 = CT1 */
+void OPMSetPortHander(int n,void (*PortWrite)(int offset,int CT) );
+/* JB 981119  - so it will match MAME's memory write functions scheme*/
 
 int YM2151Write(int n,int a,int v);
 unsigned char YM2151Read(int n,int a);

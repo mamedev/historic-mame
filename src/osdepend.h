@@ -267,8 +267,9 @@ void osd_save_snapshot(void);
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume);
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume);
+/* pan is in the range -100..100. 0 = center; -100 = full left; 100 = full right */
+void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
+void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
 void osd_adjust_sample(int channel,int freq,int volume);
 void osd_stop_sample(int channel);
 void osd_restart_sample(int channel);
@@ -364,18 +365,8 @@ osd_profiler(OSD_PROFILE_END);
 
 void osd_profiler(int type);
 
-
 #ifdef MAME_NET
-/* Network */
-void osd_update_keys(char keys[OSD_MAX_KEY+1], char globkeys[OSD_MAX_KEY+1]);
-void osd_build_global_keys(void);
-int osd_send_msg(void *msg, int size);
-int osd_receive_msg(void *msg, int size);
-void osd_network_synchronise(void);
-void osd_cleanup_network(void);
-void osd_net_init(void);
-int osd_net_map_key(int keycode, int playermask);
-void osd_build_global_inputs(void *inputs, int inputsize);
+void osd_net_sync(void);
 #endif /* MAME_NET */
 
 #endif

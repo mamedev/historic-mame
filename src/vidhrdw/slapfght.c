@@ -105,7 +105,7 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
-		scrolly = -*slapfight_scrolly;
+		scrolly = -*slapfight_scrolly+1;
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 

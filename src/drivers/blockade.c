@@ -696,6 +696,43 @@ static const char *blockade_sample_name[] =
     0   /* end of array */
 };
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score has already been initialized */
+    if (memcmp(&RAM[0xff3a],"\x30\x30\x30",3) == 0)
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0xff3a],5);
+			osd_fclose(f);
+
+        }
+
+        return 1;
+    }
+    else
+        return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+
+        osd_fwrite(f,&RAM[0xff3a],5);
+        osd_fclose(f);
+	}
+}
+
+
 struct GameDriver blockade_driver =
 {
 	__FILE__,
@@ -774,7 +811,7 @@ struct GameDriver blasto_driver =
     0, palette, colortable,
 
     ORIENTATION_DEFAULT,
-    0, 0
+	hiload, hisave
 };
 
 struct GameDriver hustle_driver =

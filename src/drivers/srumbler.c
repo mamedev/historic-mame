@@ -2,10 +2,7 @@
 
   Speed Rumbler
 
-  Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  Please do not send anything large (>500K) to this address without asking
-  me first.
+  Driver provided by Paul Leaman
 
   M6809 for game, Z80 and YM-2203 for sound.
 

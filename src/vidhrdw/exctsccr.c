@@ -15,6 +15,27 @@ void exctsccr_gfx_bank_w( int offset, int data ) {
 	gfx_bank = data & 1;
 }
 
+void *exctsccr_fm_timer;
+
+static void exctsccr_fm_callback( int param ) {
+	cpu_cause_interrupt( 1, 0xff );
+}
+
+int exctsccr_vh_start( void ) {
+	exctsccr_fm_timer = timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
+
+	return generic_vh_start();
+}
+
+void exctsccr_vh_stop( void ) {
+	if ( exctsccr_fm_timer ) {
+		timer_remove( exctsccr_fm_timer );
+		exctsccr_fm_timer = 0;
+	}
+
+	generic_vh_stop();
+}
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -60,7 +81,7 @@ void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(0,idx++) = color_prom[256+128+3+(i*4)];
 	}
 
-/* sprites */
+	/* sprites */
 
 	idx=0;
 
@@ -92,13 +113,9 @@ void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(2,idx++) = color_prom[256+128+3+(i*4)]+16;
 	}
 
-#if 0
-	/* Patch for ball */
-	COLOR(2,15*8) = 16;
-
-	/* Patch for goalkeeper(not good, since his foots & eyes are transparent now */
+	/* Patch for goalkeeper */
 	COLOR(2,29*8+7) = 16;
-#endif
+
 }
 
 static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
@@ -151,7 +168,8 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 		if ( color < 0x10 )
 			bank++;
 
-		if ( color > 0x10 && color < 0x17 ) {
+		if ( color > 0x10 && color < 0x17 )
+		{
 			drawgfx(bitmap,Machine->gfx[4],
 				code,
 				0x0e,
@@ -162,7 +180,25 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 
 			color += 6;
 		}
+		if ( color==0x1d && gfx_bank==1 )
+		{
+			drawgfx(bitmap,Machine->gfx[3],
+				code,
+				color,
+				flipx, flipy,
+				sx,sy,
+				&Machine->drv->visible_area,
+				TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[4],
+				code,
+				color,
+				flipx, flipy,
+				sx,sy,
+				&Machine->drv->visible_area,
+				TRANSPARENCY_COLOR, 16);
 
+		} else
+		{
 		drawgfx(bitmap,Machine->gfx[bank],
 				code,
 				color,
@@ -170,6 +206,7 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				sx,sy,
 				&Machine->drv->visible_area,
 				TRANSPARENCY_PEN,0);
+		}
 	}
 }
 
@@ -182,6 +219,8 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 ***************************************************************************/
 void exctsccr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 	int offs;
+
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 	/* background chars */
 	for (offs = 0;offs < ( videoram_size - 0x10 );offs++) {
@@ -211,4 +250,5 @@ void exctsccr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 
 	/* draw sprites */
 	exctsccr_drawsprites( bitmap );
+
 }

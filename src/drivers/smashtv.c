@@ -14,7 +14,6 @@
 	 - Strike Force
 	 - Trog (prototype and release versions)
 	 - Hi Impact Football
-	 - Super Hi Impact
 
 
   Not Playable:
@@ -23,6 +22,7 @@
      - Terminator 2	    (no gun support)
 	 - Mortal Kombat II (newer version of DMA chip)
 	 - NBA Jam          (newer version of DMA chip)
+	 - Super Hi Impact  (plays end immaturely, TMS34010 core problem?)
 
 
   Known Bugs:
@@ -57,13 +57,13 @@
 
 	 - Verify screen sizes
 
+	 - Verify unknown DIP switches
+
 	 - Terminator 2 gun
 
 	 - Verify inputs
 
 	 - More cleanups
-
-	 - The OKIM6295 has a bankswitched ROM <-- broken - need clean fix
 
 	 - CVSD chip is not very accurate. Once working properly abstract it
 	   out so it can be used by other drivers, such as Sinistar
@@ -136,11 +136,13 @@ void mk_sound_bank_select_w (int offset,int data);
 void narc_driver_init(void);
 void smashtv_driver_init(void);
 void trog_driver_init(void);
+void trog3_driver_init(void);
 void trogp_driver_init(void);
 void mk_driver_init(void);
 void mk2_driver_init(void);
 void nbajam_driver_init(void);
 void totcarn_driver_init(void);
+void totcarnp_driver_init(void);
 void hiimpact_driver_init(void);
 void shimpact_driver_init(void);
 void strkforc_driver_init(void);
@@ -454,7 +456,7 @@ INPUT_PORTS_START( trog_input_ports )
 	PORT_DIPNAME( 0x07, 0x07, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x07, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	
+
 	PORT_START	    /* DS2 */
 	PORT_DIPNAME( 0xc0, 0xc0, "Country", IP_KEY_NONE )
 	PORT_DIPSETTING(    0xc0, "USA" )
@@ -527,7 +529,7 @@ INPUT_PORTS_START( smashtv_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 ) /* coin4 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	    /* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -618,7 +620,7 @@ INPUT_PORTS_START( strkforc_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, "Coin Meter", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "1?" )
 	PORT_DIPSETTING(    0x00, "0?" )
-	
+
 	PORT_START	    /* DS2 */
 	PORT_DIPNAME( 0x80, 0x80, "Test Switch", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
@@ -709,7 +711,7 @@ INPUT_PORTS_START( mk_input_ports )
 	PORT_DIPNAME( 0x08, 0x08, "Comic Book Offer", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
-	
+
 	PORT_START	    /* DS2 */
 	PORT_DIPNAME( 0x80, 0x00, "Coinage Source", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Dipswitch" )
@@ -784,7 +786,7 @@ INPUT_PORTS_START( term2_input_ports )
 
 	PORT_START	    /* IN5 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	    /* DS1 */
 	PORT_DIPNAME( 0x80, 0x00, "Normal Display", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
@@ -808,7 +810,7 @@ INPUT_PORTS_START( term2_input_ports )
 	PORT_DIPSETTING(    0x02, "3 Start/2 Continue" )
 	PORT_DIPSETTING(    0x01, "3 Start/1 Continue" )
 	PORT_DIPSETTING(    0x00, "3 Start/3 Continue" )
-	
+
 	PORT_START	    /* DS2 */
 	PORT_DIPNAME( 0xc0, 0xc0, "Country", IP_KEY_NONE )
 	PORT_DIPSETTING(    0xc0, "USA" )
@@ -881,7 +883,7 @@ INPUT_PORTS_START( totcarn_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED ) /* video freeze */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 ) /* coin4 */
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-	
+
 	PORT_START	    /* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -984,7 +986,7 @@ INPUT_PORTS_START( mk2_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, "Test Switch", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	
+
 	PORT_START	    /* DS2 */
 	PORT_DIPNAME( 0x80, 0x80, "Violence", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
@@ -1131,7 +1133,7 @@ INPUT_PORTS_START( nbajam_input_ports )
 	PORT_DIPSETTING(    0x02, "1 Counter, Totalizing" )
 	PORT_DIPSETTING(    0x01, "2 Counters, 1 count/coin" )
 	PORT_DIPSETTING(    0x00, "1 Counter, 1 count/coin" )
-	
+
 
 	PORT_START	    /* IN8 */
 	PORT_DIPNAME( 0xff, 0xff, "IN8", IP_KEY_NONE )
@@ -1209,7 +1211,7 @@ static struct MachineDriver smashtv_machine_driver =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			8000000,	/* 8 Mhz */
 			3,
 			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -1317,7 +1319,7 @@ static struct MachineDriver trog_machine_driver =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			8000000,	/* 8 Mhz */
 			3,
 			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -1368,7 +1370,7 @@ static struct MachineDriver mk_machine_driver =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
+			8000000,	/* 8 Mhz */
 			3,
 			mk_sound_readmem,mk_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -1667,8 +1669,37 @@ ROM_END
 
 ROM_START( trog_rom )	/* released version */
 	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD( "trogu105.bin",  0xc0000, 0x20000, 0xe6095189 ) /* even */
-	ROM_LOAD_EVEN( "trogu89.bin",  0xc0000, 0x20000, 0xfdd7cc65 ) /* odd */
+	ROM_LOAD_ODD ( "trogu105.bin",  0xc0000, 0x20000, 0xe6095189 ) /* even */
+	ROM_LOAD_EVEN( "trogu89.bin",   0xc0000, 0x20000, 0xfdd7cc65 ) /* odd */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+
+	ROM_REGION(0x800000)      /* graphics */
+	ROM_LOAD ( "trogu111.bin",  0x000000, 0x20000, 0x9ded08c1 )  /* even */
+	ROM_LOAD ( "trogu112.bin",  0x020000, 0x20000, 0x42293843 )  /* even */
+	ROM_LOAD ( "trogu113.bin",  0x040000, 0x20000, 0x77f50cbb )  /* even */
+
+	ROM_LOAD (  "trogu95.bin",  0x200000, 0x20000, 0xf3ba2838 )  /* odd  */
+	ROM_LOAD (  "trogu96.bin",  0x220000, 0x20000, 0xcfed2e77 )  /* odd  */
+	ROM_LOAD (  "trogu97.bin",  0x240000, 0x20000, 0x3262d1f8 )  /* odd  */
+
+	ROM_LOAD ( "trogu106.bin",  0x080000, 0x20000, 0xaf2eb0d8 )  /* even */
+ 	ROM_LOAD ( "trogu107.bin",  0x0a0000, 0x20000, 0x88a7b3f6 )  /* even */
+
+	ROM_LOAD (  "trogu90.bin",  0x280000, 0x20000, 0x16e06753 )  /* odd  */
+	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )  /* odd  */
+
+	ROM_REGION(0x70000) /* sound CPU */
+	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
+	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
+	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
+
+ROM_END
+
+ROM_START( trog3_rom )	/* released version */
+	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_LOAD_ODD ( "u105-la3",  0xc0000, 0x20000, 0xd09cea97 ) /* even */
+	ROM_LOAD_EVEN( "u89-la3",   0xc0000, 0x20000, 0xa61e3572 ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1697,8 +1728,8 @@ ROM_END
 ROM_START( trogp_rom )   /* prototype version */
 	ROM_REGION(0x100000)     /* 34010 code */
 
-	ROM_LOAD_ODD( "trog105.dat",  0xc0000, 0x20000, 0x526a3f5b ) /* even */
-	ROM_LOAD_EVEN( "trog89.dat",  0xc0000, 0x20000, 0x38d68685 ) /* odd */
+	ROM_LOAD_ODD ( "trog105.dat",  0xc0000, 0x20000, 0x526a3f5b ) /* even */
+	ROM_LOAD_EVEN( "trog89.dat",   0xc0000, 0x20000, 0x38d68685 ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1726,8 +1757,35 @@ ROM_END
 
 ROM_START( smashtv_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD( "u105.l8",  0xc0000, 0x20000, 0x48cd793f ) /* even */
-	ROM_LOAD_EVEN( "u89.l8",  0xc0000, 0x20000, 0x8e7fe463 ) /* odd */
+	ROM_LOAD_ODD ( "u105.l8",  0xc0000, 0x20000, 0x48cd793f ) /* even */
+	ROM_LOAD_EVEN( "u89.l8",   0xc0000, 0x20000, 0x8e7fe463 ) /* odd */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+
+	ROM_REGION(0x800000)      /* graphics */
+	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
+	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
+	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
+
+	ROM_LOAD (  "u95.gam",  0x200000, 0x20000, 0xe864a44b )  /* odd  */
+	ROM_LOAD (  "u96.gam",  0x220000, 0x20000, 0x15555ea7 )  /* odd  */
+	ROM_LOAD (  "u97.gam",  0x240000, 0x20000, 0xccac9d9e )  /* odd  */
+
+ 	ROM_LOAD ( "u106.gam",  0x400000, 0x20000, 0x5c718361 )  /* even */
+ 	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
+ 	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
+
+	ROM_REGION(0x70000) /* sound CPU */
+	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
+	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
+	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
+
+ROM_END
+
+ROM_START( smashtv5_rom )
+	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_LOAD_ODD ( "u105-v5",  0xc0000, 0x20000, 0x81f564b9 ) /* even */
+	ROM_LOAD_EVEN( "u89-v5",   0xc0000, 0x20000, 0xe5017d25 ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1753,8 +1811,8 @@ ROM_END
 
 ROM_START( hiimpact_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD( "la3u105.bin",  0xc0000, 0x20000, 0xb9190c4a ) /* even */
-	ROM_LOAD_EVEN( "la3u89.bin",  0xc0000, 0x20000, 0x1cbc72a5 ) /* odd */
+	ROM_LOAD_ODD ( "la3u105.bin",  0xc0000, 0x20000, 0xb9190c4a ) /* even */
+	ROM_LOAD_EVEN( "la3u89.bin",   0xc0000, 0x20000, 0x1cbc72a5 ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1783,8 +1841,8 @@ ROM_END
 
 ROM_START( shimpact_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD( "shiu105.bin",  0xc0000, 0x20000, 0xf2cf8de3 ) /* even */
-	ROM_LOAD_EVEN( "shiu89.bin",  0xc0000, 0x20000, 0xf97d9b01 ) /* odd */
+	ROM_LOAD_ODD ( "shiu105.bin",  0xc0000, 0x20000, 0xf2cf8de3 ) /* even */
+	ROM_LOAD_EVEN( "shiu89.bin",   0xc0000, 0x20000, 0xf97d9b01 ) /* odd */
 
 	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1813,8 +1871,8 @@ ROM_END
 
 ROM_START( strkforc_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD( "sfu105.bin",  0xc0000, 0x20000, 0x7895e0e3 ) /* even */
-	ROM_LOAD_EVEN( "sfu89.bin",  0xc0000, 0x20000, 0x26114d9e ) /* odd */
+	ROM_LOAD_ODD ( "sfu105.bin",  0xc0000, 0x20000, 0x7895e0e3 ) /* even */
+	ROM_LOAD_EVEN( "sfu89.bin",   0xc0000, 0x20000, 0x26114d9e ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1870,26 +1928,26 @@ ROM_START( mk_rom )
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "mks-u12.rom", 0x00000, 0x40000, 0x258bd7f9 )
-	ROM_LOAD ( "mks-u12.rom", 0x40000, 0x40000, 0x258bd7f9 )
+/*	ROM_LOAD ( "mks-u12.rom", 0x40000, 0x40000, 0x258bd7f9 ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "mks-u13.rom", 0x00000, 0x20000, 0x7b7ec3b6 )
 	ROM_CONTINUE            ( 0x40000, 0x20000 )
-	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 )
-	ROM_CONTINUE            ( 0x20000, 0x20000 )
+/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
+/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x20000, 0x7b7ec3b6 )
-	ROM_CONTINUE            ( 0x00000, 0x20000 )
-	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 )
-	ROM_CONTINUE            ( 0x20000, 0x20000 )
+/*	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x20000, 0x7b7ec3b6 ) */
+/*	ROM_CONTINUE            ( 0x00000, 0x20000 ) */
+/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
+/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
 
 ROM_END
 
 ROM_START( term2_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "t2.105",  0x00000, 0x80000, 0x34142b28 )  /* even */
-	ROM_LOAD_EVEN(  "t2.89",  0x00000, 0x80000, 0x5ffea427 )  /* odd  */
+	ROM_LOAD_EVEN( "t2.89",   0x00000, 0x80000, 0x5ffea427 )  /* odd  */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1915,26 +1973,26 @@ ROM_START( term2_rom )
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "t2_snd.12", 0x00000, 0x40000, 0xe192a40d )
-	ROM_LOAD ( "t2_snd.12", 0x40000, 0x40000, 0xe192a40d )
+/*	ROM_LOAD ( "t2_snd.12", 0x40000, 0x40000, 0xe192a40d ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "t2_snd.13", 0x00000, 0x20000, 0x956fa80b )
 	ROM_CONTINUE          ( 0x40000, 0x20000             )
-	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d )
-	ROM_CONTINUE          ( 0x20000, 0x20000             )
+/*	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "t2_snd.13", 0x40000, 0x20000, 0x956fa80b )
-	ROM_CONTINUE          ( 0x00000, 0x20000             )
-	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d )
-	ROM_CONTINUE          ( 0x20000, 0x20000             )
+/*	ROM_LOAD ( "t2_snd.13", 0x40000, 0x20000, 0x956fa80b ) */
+/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
+/*	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
 
 ROM_END
 
 ROM_START( totcarn_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "tcu105.bin",  0x80000, 0x40000, 0x7c651047 )  /* even */
-	ROM_LOAD_EVEN(  "tcu89.bin",  0x80000, 0x40000, 0x6761daf3 )  /* odd  */
+	ROM_LOAD_EVEN( "tcu89.bin",   0x80000, 0x40000, 0x6761daf3 )  /* odd  */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -1955,23 +2013,69 @@ ROM_START( totcarn_rom )
  	ROM_LOAD ( "tcu109.bin",  0x4c0000, 0x40000, 0x80715252 )  /* even */
 
 	ROM_REGION(0x50000) /* sound CPU */
-	ROM_LOAD (  "tcu3.bin", 0x10000, 0x40000, 0x2b2a7034 )
+	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
+/*	ROM_RELOAD (            0x30000, 0x20000 ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )
-	ROM_LOAD ( "tcu12.bin", 0x40000, 0x40000, 0xd0000ac7 )
+/*	ROM_LOAD ( "tcu12.bin", 0x40000, 0x40000, 0xd0000ac7 ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
 	ROM_LOAD ( "tcu13.bin", 0x00000, 0x20000, 0xe48e6f0c )
 	ROM_CONTINUE          ( 0x40000, 0x20000             )
-	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 )
-	ROM_CONTINUE          ( 0x20000, 0x20000             )
+/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
 
 	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "tcu13.bin", 0x40000, 0x20000, 0xe48e6f0c )
-	ROM_CONTINUE          ( 0x00000, 0x20000             )
-	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 )
-	ROM_CONTINUE          ( 0x20000, 0x20000             )
+/*	ROM_LOAD ( "tcu13.bin", 0x40000, 0x20000, 0xe48e6f0c ) */
+/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
+/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
+
+ROM_END
+
+ROM_START( totcarnp_rom )
+	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_LOAD_ODD ( "u105",  0x80000, 0x40000, 0x7a782cae )  /* even */
+	ROM_LOAD_EVEN( "u89",   0x80000, 0x40000, 0x1c899a8d )  /* odd  */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+
+	ROM_REGION(0x800000)      /* graphics */
+	ROM_LOAD ( "tcu111.bin",  0x000000, 0x40000, 0x13f3f231 )  /* even */
+	ROM_LOAD ( "tcu112.bin",  0x040000, 0x40000, 0x72e45007 )  /* even */
+	ROM_LOAD ( "tcu113.bin",  0x080000, 0x40000, 0x2c8ec753 )  /* even */
+	ROM_LOAD ( "tcu114.bin",  0x0c0000, 0x40000, 0x6210c36c )  /* even */
+
+	ROM_LOAD (  "tcu95.bin",  0x200000, 0x40000, 0x579caeba )  /* odd  */
+	ROM_LOAD (  "tcu96.bin",  0x240000, 0x40000, 0xf43f1ffe )  /* odd  */
+	ROM_LOAD (  "tcu97.bin",  0x280000, 0x40000, 0x1675e50d )  /* odd  */
+	ROM_LOAD (  "tcu98.bin",  0x2c0000, 0x40000, 0xab06c885 )  /* odd  */
+
+	ROM_LOAD ( "tcu106.bin",  0x400000, 0x40000, 0x146e3863 )  /* even */
+ 	ROM_LOAD ( "tcu107.bin",  0x440000, 0x40000, 0x95323320 )  /* even */
+ 	ROM_LOAD ( "tcu108.bin",  0x480000, 0x40000, 0xed152acc )  /* even */
+ 	ROM_LOAD ( "tcu109.bin",  0x4c0000, 0x40000, 0x80715252 )  /* even */
+
+	ROM_REGION(0x50000) /* sound CPU */
+	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
+/*	ROM_RELOAD (            0x30000, 0x20000 ) */
+
+	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )
+/*	ROM_LOAD ( "tcu12.bin", 0x40000, 0x40000, 0xd0000ac7 ) */
+
+	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_LOAD ( "tcu13.bin", 0x00000, 0x20000, 0xe48e6f0c )
+	ROM_CONTINUE          ( 0x40000, 0x20000             )
+/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
+
+	ROM_REGION(0x80000) /* ADPCM samples */
+/*	ROM_LOAD ( "tcu13.bin", 0x40000, 0x20000, 0xe48e6f0c ) */
+/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
+/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
+/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
 
 ROM_END
 
@@ -2051,7 +2155,7 @@ struct GameDriver narc_driver =
 	__FILE__,
 	0,
 	"narc",
-	"Narc",
+	"Narc (rev 7.00)",
 	"1988",
 	"Williams",
 	BASE_CREDITS,
@@ -2076,7 +2180,7 @@ struct GameDriver trog_driver =
 	__FILE__,
 	0,
 	"trog",
-	"Trog",
+	"Trog (rev LA4 03/11/91)",
 	"1990",
 	"Midway",
 	BASE_CREDITS,
@@ -2096,12 +2200,37 @@ struct GameDriver trog_driver =
 	hiload, hisave
 };
 
+struct GameDriver trog3_driver =
+{
+	__FILE__,
+	&trog_driver,
+	"trog3",
+	"Trog (rev LA3 02/14/91)",
+	"1990",
+	"Midway",
+	BASE_CREDITS,
+	0,
+	&trog_machine_driver,
+	trog3_driver_init,
+
+	trog3_rom,
+	wms_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	trog_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
 struct GameDriver trogp_driver =
 {
 	__FILE__,
 	&trog_driver,
 	"trogp",
-	"Trog (original prototype)",
+	"Trog (prototype, rev 4.00 07/27/90)",
 	"1990",
 	"Midway",
 	BASE_CREDITS,
@@ -2126,7 +2255,7 @@ struct GameDriver smashtv_driver =
 	__FILE__,
 	0,
 	"smashtv",
-	"Smash TV",
+	"Smash TV (rev 8.00)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2146,12 +2275,37 @@ struct GameDriver smashtv_driver =
 	hiload, hisave
 };
 
+struct GameDriver smashtv5_driver =
+{
+	__FILE__,
+	&smashtv_driver,
+	"smashtv5",
+	"Smash TV (rev 5.00)",
+	"1990",
+	"Williams",
+	BASE_CREDITS,
+	0,
+	&smashtv_machine_driver,
+	smashtv_driver_init,
+
+	smashtv5_rom,
+	wms_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	smashtv_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
 struct GameDriver hiimpact_driver =
 {
 	__FILE__,
 	0,
 	"hiimpact",
-	"High Impact Football",
+	"High Impact Football (rev LA3 12/27/90)",
 	"1990",
 	"Williams",
 	BASE_CREDITS,
@@ -2176,11 +2330,11 @@ struct GameDriver shimpact_driver =
 	__FILE__,
 	0,
 	"shimpact",
-	"Super High Impact",
+	"Super High Impact (rev LA1 09/30/91)",
 	"1991",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&smashtv_machine_driver,
 	shimpact_driver_init,
 
@@ -2201,7 +2355,7 @@ struct GameDriver strkforc_driver =
 	__FILE__,
 	0,
 	"strkforc",
-	"Strike Force",
+	"Strike Force (rev 1 02/25/91)",
 	"1991",
 	"Midway",
 	BASE_CREDITS,
@@ -2226,7 +2380,7 @@ struct GameDriver mk_driver =
 	__FILE__,
 	0,
 	"mk",
-	"Mortal Kombat",
+	"Mortal Kombat (rev 3.0 08/31/92)",
 	"1992",
 	"Midway",
 	BASE_CREDITS,
@@ -2251,7 +2405,7 @@ struct GameDriver term2_driver =
 	__FILE__,
 	0,
 	"term2",
-	"Terminator 2",
+	"Terminator 2 (rev LA3 03/27/92)",
 	"1991",
 	"Midway",
 	BASE_CREDITS,
@@ -2276,7 +2430,7 @@ struct GameDriver totcarn_driver =
 	__FILE__,
 	0,
 	"totcarn",
-	"Total Carnage",
+	"Total Carnage (rev LA1 03/10/92)",
 	"1992",
 	"Midway",
 	BASE_CREDITS,
@@ -2285,6 +2439,31 @@ struct GameDriver totcarn_driver =
 	totcarn_driver_init,
 
 	totcarn_rom,
+	wms_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	totcarn_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver totcarnp_driver =
+{
+	__FILE__,
+	&totcarn_driver,
+	"totcarnp",
+	"Total Carnage (prototype, rev 1.0 01/25/92)",
+	"1992",
+	"Midway",
+	BASE_CREDITS,
+	0,
+	&mk_machine_driver,
+	totcarnp_driver_init,
+
+	totcarnp_rom,
 	wms_decode, 0,
 	0,
 	0,	/* sound_prom */

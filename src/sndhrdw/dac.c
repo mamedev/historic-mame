@@ -1,20 +1,17 @@
 #include "driver.h"
 
 
-#ifdef SIGNED_SAMPLES
-	#define MAX_OUTPUT 0x7fff
-#else
-	#define MAX_OUTPUT 0xffff
-#endif
+#define MAX_OUTPUT 0x7fff
 
 static int channel[MAX_DAC];
 static unsigned char latch[MAX_DAC];
 static unsigned char VolTable[MAX_DAC][256];
+static unsigned char SignedVolTable[MAX_DAC][256];
 
 
 static void DAC_update(int num,void *buffer,int length)
 {
-	memset(buffer,VolTable[num][latch[num]],length);
+	memset(buffer,latch[num],length);
 }
 
 
@@ -24,7 +21,17 @@ void DAC_data_w(int num,int data)
 	if (latch[num] != data)
 		stream_update(channel[num],0);
 
-	latch[num] = data;
+	latch[num] = VolTable[num][data];
+}
+
+
+void DAC_signed_data_w(int num,int data)
+{
+	/* update the output buffer before changing the registers */
+	if (latch[num] != data)
+		stream_update(channel[num],0);
+
+	latch[num] = SignedVolTable[num][data];
 }
 
 
@@ -47,6 +54,13 @@ void DAC_set_volume(int num,int volume,int gain)
 		else VolTable[num][i] = out / 256;
 	}
 	VolTable[num][0] = 0;
+
+	for (i = 0;i < 128;i++)
+	{
+		SignedVolTable[num][0x80 + i] = VolTable[num][2*i];
+		SignedVolTable[num][0x80 - i] = -VolTable[num][2*i];
+	}
+	SignedVolTable[num][0] = -VolTable[num][255];
 }
 
 

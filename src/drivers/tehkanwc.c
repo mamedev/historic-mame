@@ -282,85 +282,85 @@ static struct IOWritePort sound_writeport[] =
 INPUT_PORTS_START( input_ports )
 	PORT_START /* DSW1 - Active LOW */
 	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING ( 0x06, "1 Coin/2 Credits" )
-	PORT_DIPSETTING ( 0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING ( 0x04, "1 Coin/4 Credits" )
-	PORT_DIPSETTING ( 0x03, "1 Coin/5 Credits" )
-	PORT_DIPSETTING ( 0x02, "1 Coin/6 Credits" )
-	PORT_DIPSETTING ( 0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING ( 0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x07, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING (   0x06, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x05, "1 Coin/3 Credits" )
+	PORT_DIPSETTING (   0x04, "1 Coin/4 Credits" )
+	PORT_DIPSETTING (   0x03, "1 Coin/5 Credits" )
+	PORT_DIPSETTING (   0x02, "1 Coin/6 Credits" )
 	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x38, "1 Coin/1 Credit" )
-	PORT_DIPSETTING ( 0x30, "1 Coin/2 Credits" )
-	PORT_DIPSETTING ( 0x28, "1 Coin/3 Credits" )
-	PORT_DIPSETTING ( 0x20, "1 Coin/4 Credits" )
-	PORT_DIPSETTING ( 0x18, "1 Coin/5 Credits" )
-	PORT_DIPSETTING ( 0x10, "1 Coin/6 Credits" )
-	PORT_DIPSETTING ( 0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING ( 0x00, "2 Coins/3 Credits" )
-	PORT_DIPNAME( 0x40, 0x40, "Extra Time/Extra Coin", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x40, "Normal" )
-	PORT_DIPSETTING ( 0x00, "Double" )
-	PORT_DIPNAME( 0x80, 0x80, "1P Start", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x80, "1 Credit" )
-	PORT_DIPSETTING ( 0x00, "2 Credits" )
+	PORT_DIPSETTING (   0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x38, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x00, "2 Coins/3 Credits" )
+	PORT_DIPSETTING (   0x30, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x28, "1 Coin/3 Credits" )
+	PORT_DIPSETTING (   0x20, "1 Coin/4 Credits" )
+	PORT_DIPSETTING (   0x18, "1 Coin/5 Credits" )
+	PORT_DIPSETTING (   0x10, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x40, 0x40, "Extra Time per Coin", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "Normal" )
+	PORT_DIPSETTING (   0x00, "Double" )
+	PORT_DIPNAME( 0x80, 0x80, "1 Player Start", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2 Credits" )
+	PORT_DIPSETTING (   0x80, "1 Credit" )
 
 	PORT_START /* DSW2 - Active LOW */
 	PORT_DIPNAME( 0x03, 0x03, "1P Game Time", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x03, "1:30" )
-	PORT_DIPSETTING ( 0x02, "1:00" )
-	PORT_DIPSETTING ( 0x01, "2:00" )
-	PORT_DIPSETTING ( 0x00, "2:30" )
+	PORT_DIPSETTING (   0x00, "2:30" )
+	PORT_DIPSETTING (   0x01, "2:00" )
+	PORT_DIPSETTING (   0x03, "1:30" )
+	PORT_DIPSETTING (   0x02, "1:00" )
 	PORT_DIPNAME( 0x7c, 0x7c, "2P Game Time", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x7c, "3:30/2:00 Extra" )
-	PORT_DIPSETTING ( 0x78, "1:00/0:45 Extra" )
-	PORT_DIPSETTING ( 0x74, "1:30/1:00 Extra" )
-	PORT_DIPSETTING ( 0x70, "2:00/1:15 Extra" )
-	PORT_DIPSETTING ( 0x6c, "2:30/1:30 Extra" )
-	PORT_DIPSETTING ( 0x68, "3:00/1:45 Extra" )
-	PORT_DIPSETTING ( 0x64, "4:00/2:15 Extra" )
-	PORT_DIPSETTING ( 0x60, "5:00/2:45 Extra" )
-	PORT_DIPSETTING ( 0x5c, "3:30/1:45 Extra" )
-	PORT_DIPSETTING ( 0x58, "1:00/0:30 Extra" )
-	PORT_DIPSETTING ( 0x54, "1:30/0:45 Extra" )
-	PORT_DIPSETTING ( 0x50, "2:00/1:00 Extra" )
-	PORT_DIPSETTING ( 0x4c, "2:30/1:15 Extra" )
-	PORT_DIPSETTING ( 0x48, "3:00/1:30 Extra" )
-	PORT_DIPSETTING ( 0x44, "4:00/2:00 Extra" )
-	PORT_DIPSETTING ( 0x40, "5:00/2:30 Extra" )
-	PORT_DIPSETTING ( 0x3c, "3:30/1:50 Extra" )
-	PORT_DIPSETTING ( 0x38, "1:00/0:35 Extra" )
-	PORT_DIPSETTING ( 0x34, "1:30/0:50 Extra" )
-	PORT_DIPSETTING ( 0x30, "2:00/1:05 Extra" )
-	PORT_DIPSETTING ( 0x2c, "2:30/1:20 Extra" )
-	PORT_DIPSETTING ( 0x28, "3:00/1:35 Extra" )
-	PORT_DIPSETTING ( 0x24, "4:00/2:05 Extra" )
-	PORT_DIPSETTING ( 0x20, "5:00/2:35 Extra" )
-	PORT_DIPSETTING ( 0x1c, "3:30/2:15 Extra" )
-	PORT_DIPSETTING ( 0x18, "1:00/1:00 Extra" )
-	PORT_DIPSETTING ( 0x14, "1:30/1:15 Extra" )
-	PORT_DIPSETTING ( 0x10, "2:00/1:30 Extra" )
-	PORT_DIPSETTING ( 0x0c, "2:30/1:45 Extra" )
-	PORT_DIPSETTING ( 0x08, "3:00/2:00 Extra" )
-	PORT_DIPSETTING ( 0x04, "4:00/2:30 Extra" )
-	PORT_DIPSETTING ( 0x00, "5:00/3:00 Extra" )
+	PORT_DIPSETTING (   0x00, "5:00/3:00 Extra" )
+	PORT_DIPSETTING (   0x60, "5:00/2:45 Extra" )
+	PORT_DIPSETTING (   0x20, "5:00/2:35 Extra" )
+	PORT_DIPSETTING (   0x40, "5:00/2:30 Extra" )
+	PORT_DIPSETTING (   0x04, "4:00/2:30 Extra" )
+	PORT_DIPSETTING (   0x64, "4:00/2:15 Extra" )
+	PORT_DIPSETTING (   0x24, "4:00/2:05 Extra" )
+	PORT_DIPSETTING (   0x44, "4:00/2:00 Extra" )
+	PORT_DIPSETTING (   0x1c, "3:30/2:15 Extra" )
+	PORT_DIPSETTING (   0x7c, "3:30/2:00 Extra" )
+	PORT_DIPSETTING (   0x3c, "3:30/1:50 Extra" )
+	PORT_DIPSETTING (   0x5c, "3:30/1:45 Extra" )
+	PORT_DIPSETTING (   0x08, "3:00/2:00 Extra" )
+	PORT_DIPSETTING (   0x68, "3:00/1:45 Extra" )
+	PORT_DIPSETTING (   0x28, "3:00/1:35 Extra" )
+	PORT_DIPSETTING (   0x48, "3:00/1:30 Extra" )
+	PORT_DIPSETTING (   0x0c, "2:30/1:45 Extra" )
+	PORT_DIPSETTING (   0x6c, "2:30/1:30 Extra" )
+	PORT_DIPSETTING (   0x2c, "2:30/1:20 Extra" )
+	PORT_DIPSETTING (   0x4c, "2:30/1:15 Extra" )
+	PORT_DIPSETTING (   0x10, "2:00/1:30 Extra" )
+	PORT_DIPSETTING (   0x70, "2:00/1:15 Extra" )
+	PORT_DIPSETTING (   0x30, "2:00/1:05 Extra" )
+	PORT_DIPSETTING (   0x50, "2:00/1:00 Extra" )
+	PORT_DIPSETTING (   0x14, "1:30/1:15 Extra" )
+	PORT_DIPSETTING (   0x74, "1:30/1:00 Extra" )
+	PORT_DIPSETTING (   0x34, "1:30/0:50 Extra" )
+	PORT_DIPSETTING (   0x54, "1:30/0:45 Extra" )
+	PORT_DIPSETTING (   0x18, "1:00/1:00 Extra" )
+	PORT_DIPSETTING (   0x78, "1:00/0:45 Extra" )
+	PORT_DIPSETTING (   0x38, "1:00/0:35 Extra" )
+	PORT_DIPSETTING (   0x58, "1:00/0:30 Extra" )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x80, "Timer In" )
-	PORT_DIPSETTING ( 0x00, "Credit In" )
+	PORT_DIPSETTING (   0x80, "Timer In" )
+	PORT_DIPSETTING (   0x00, "Credit In" )
 
 	PORT_START /* DSW3 - Active LOW */
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x03, "Moderate" )
-	PORT_DIPSETTING ( 0x02, "Easy" )
-	PORT_DIPSETTING ( 0x01, "Hard" )
-	PORT_DIPSETTING ( 0x00, "Very Hard" )
+	PORT_DIPSETTING (   0x02, "Easy" )
+	PORT_DIPSETTING (   0x03, "Normal" )
+	PORT_DIPSETTING (   0x01, "Hard" )
+	PORT_DIPSETTING (   0x00, "Very Hard" )
 	PORT_DIPNAME( 0x04, 0x04, "Timer Speed", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x04, "60/60" )
-	PORT_DIPSETTING ( 0x00, "55/60" )
+	PORT_DIPSETTING (   0x04, "60/60" )
+	PORT_DIPSETTING (   0x00, "55/60" )
 	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING ( 0x08, "On" )
-	PORT_DIPSETTING ( 0x00, "Off" )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
 
 	PORT_START /* IN0 - X AXIS */
 	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 63 )
@@ -386,6 +386,177 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
+
+
+INPUT_PORTS_START( gridiron_input_ports )
+	PORT_START /* DSW1 - Active LOW */
+	PORT_DIPNAME( 0x01, 0x01, "1 Player Start", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2 Credits" )
+	PORT_DIPSETTING (   0x01, "1 Credit" )
+	PORT_DIPNAME( 0x02, 0x02, "2 Players Start", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x02, "2 Credits" )
+	PORT_DIPSETTING (   0x00, "1 Credit" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x20, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+
+	PORT_START /* DSW2 - Active LOW */
+	PORT_DIPNAME( 0x03, 0x03, "1P Game Time", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "2:30" )
+	PORT_DIPSETTING (   0x01, "2:00" )
+	PORT_DIPSETTING (   0x03, "1:30" )
+	PORT_DIPSETTING (   0x02, "1:00" )
+	PORT_DIPNAME( 0x7c, 0x7c, "2P Game Time", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x60, "5:00/3:00 Extra" )
+	PORT_DIPSETTING (   0x00, "5:00/2:45 Extra" )
+	PORT_DIPSETTING (   0x20, "5:00/2:35 Extra" )
+	PORT_DIPSETTING (   0x40, "5:00/2:30 Extra" )
+	PORT_DIPSETTING (   0x64, "4:00/2:30 Extra" )
+	PORT_DIPSETTING (   0x04, "4:00/2:15 Extra" )
+	PORT_DIPSETTING (   0x24, "4:00/2:05 Extra" )
+	PORT_DIPSETTING (   0x44, "4:00/2:00 Extra" )
+	PORT_DIPSETTING (   0x68, "3:30/2:15 Extra" )
+	PORT_DIPSETTING (   0x08, "3:30/2:00 Extra" )
+	PORT_DIPSETTING (   0x28, "3:30/1:50 Extra" )
+	PORT_DIPSETTING (   0x48, "3:30/1:45 Extra" )
+	PORT_DIPSETTING (   0x6c, "3:00/2:00 Extra" )
+	PORT_DIPSETTING (   0x0c, "3:00/1:45 Extra" )
+	PORT_DIPSETTING (   0x2c, "3:00/1:35 Extra" )
+	PORT_DIPSETTING (   0x4c, "3:00/1:30 Extra" )
+	PORT_DIPSETTING (   0x7c, "2:30/1:45 Extra" )
+	PORT_DIPSETTING (   0x1c, "2:30/1:30 Extra" )
+	PORT_DIPSETTING (   0x3c, "2:30/1:20 Extra" )
+	PORT_DIPSETTING (   0x5c, "2:30/1:15 Extra" )
+	PORT_DIPSETTING (   0x70, "2:00/1:30 Extra" )
+	PORT_DIPSETTING (   0x10, "2:00/1:15 Extra" )
+	PORT_DIPSETTING (   0x30, "2:00/1:05 Extra" )
+	PORT_DIPSETTING (   0x50, "2:00/1:00 Extra" )
+	PORT_DIPSETTING (   0x74, "1:30/1:15 Extra" )
+	PORT_DIPSETTING (   0x14, "1:30/1:00 Extra" )
+	PORT_DIPSETTING (   0x34, "1:30/0:50 Extra" )
+	PORT_DIPSETTING (   0x54, "1:30/0:45 Extra" )
+	PORT_DIPSETTING (   0x78, "1:00/1:00 Extra" )
+	PORT_DIPSETTING (   0x18, "1:00/0:45 Extra" )
+	PORT_DIPSETTING (   0x38, "1:00/0:35 Extra" )
+	PORT_DIPSETTING (   0x58, "1:00/0:30 Extra" )
+	PORT_DIPNAME( 0x80, 0x80, "Game Type?", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "Timer In" )
+	PORT_DIPSETTING (   0x00, "Credit In" )
+
+	PORT_START /* DSW3 - Active LOW */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x02, "Easy" )
+	PORT_DIPSETTING (   0x03, "Normal" )
+	PORT_DIPSETTING (   0x01, "Hard" )
+	PORT_DIPSETTING (   0x00, "Very Hard" )
+	PORT_DIPNAME( 0x04, 0x04, "Timer Speed?", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "60/60" )
+	PORT_DIPSETTING (   0x00, "55/60" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds?", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+
+	PORT_START /* IN0 - X AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 63 )
+
+	PORT_START /* IN0 - Y AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 63, 0, 0, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 63 )
+
+	PORT_START /* IN0 - BUTTON */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+
+	PORT_START /* IN1 - X AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 63, 0, 0, OSD_KEY_D, OSD_KEY_G, 0, 0, 63 )
+
+	PORT_START /* IN1 - Y AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 63, 0, 0, OSD_KEY_R, OSD_KEY_F, 0, 0, 63 )
+
+	PORT_START /* IN1 - BUTTON */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+
+	PORT_START /* IN2 - Active LOW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( teedoff_input_ports )
+	PORT_START /* DSW1 - Active LOW */
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x02, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x00, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x0c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x04, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x00, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x10, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x20, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "On" )
+	PORT_DIPSETTING (   0x00, "Off" )
+
+	PORT_START /* DSW2 - Active LOW */
+	PORT_DIPNAME( 0xff, 0xff, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0xff, "Off" )
+
+	PORT_START /* DSW3 - Active LOW */
+	PORT_DIPNAME( 0x0f, 0x0f, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING (   0x0f, "Off" )
+
+	PORT_START /* IN0 - X AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 63, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 63 )
+
+	PORT_START /* IN0 - Y AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 63, 0, 0, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 63 )
+
+	PORT_START /* IN0 - BUTTON */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+
+	PORT_START /* IN1 - X AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 63, 0, 0, OSD_KEY_D, OSD_KEY_G, 0, 0, 63 )
+
+	PORT_START /* IN1 - Y AXIS */
+	PORT_ANALOGX( 0xff, 0x80, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 63, 0, 0, OSD_KEY_R, OSD_KEY_F, 0, 0, 63 )
+
+	PORT_START /* IN1 - BUTTON */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+
+	PORT_START /* IN2 - Active LOW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
 
 
 
@@ -668,7 +839,7 @@ struct GameDriver gridiron_driver =
 	__FILE__,
 	0,
 	"gridiron",
-	"Gridiron",
+	"Gridiron Fight",
 	"1985",
 	"Tehkan",
 	"Ernesto Corvi\nRoberto Fresca",
@@ -681,7 +852,7 @@ struct GameDriver gridiron_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	gridiron_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -707,7 +878,7 @@ struct GameDriver teedoff_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	teedoff_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

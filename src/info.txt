@@ -1,0 +1,103 @@
+Description of the -listinfo output.
+------------------------------------
+
+Grammar:
+--------
+	start -> ENTRY*
+	ENTRY -> ENTRYNAME ENTRYVALUE
+	ENTRYNAME -> SYMBOL
+	ENTRYVALUE -> SYMBOL | STRING | ENTRYLIST
+	ENTRYLIST -> '(' ENTRY* ')'
+
+	SYMBOL -> any char except separator, '"', '(', ')'
+	STRING -> default C string in double quote ""
+
+Any space (specifically any char which C function ispace() tells is a
+space) is considered a separator and must be ignored.
+
+
+Semantic:
+---------
+game (...)
+Definition of all games emulated.
+
+resource (...)
+Definition of a resource. Actually the only two resource are
+the NeoGeo BIOS roms (named 'neogeo') and the YM-3812 samples
+(named 'ym3812').
+
+
+Entries common for 'game' and 'resource'
+----------------------------------------
+name NAME
+Name of the game or resource. This is the only required item.
+The specified NAME is unique in all file.
+
+description DESCRIPTION
+Generic description.
+
+manufacturer MANUFACTURER
+Manufacturer of the game or resource.
+
+year YEAR
+Year of the game or resource.
+
+romof NAME
+The game or resource use rom of another game or resource named NAME.
+[Equal to cloneof entry in GameDriver specification.]
+
+sampleof NAME
+The game or resource use sample of another game or resource named NAME.
+[Is the first element with starting * in the samplenames array.]
+
+rom '(' name NAME size SIZE crc CRC ')'
+Rom specification his name, size and crc.
+
+sample NAME
+Sample specification.
+
+
+Entries specific for 'game'
+-------------------------
+cloneof NAME
+Clone-of relathionship. This is intended to express an abstract
+clone-of relathionship.	[It's equal to the cloneof entry in gamedriver
+specification with the exception of the neogeo game wihch is not resported
+has a parent of any game.]
+
+chip '(' type (cpu | audio) name NAME [clock CLOCK] ')'
+List of hardware chips which the game use.
+[A MAME cpu used for sound is typed as 'audio'.]
+
+video '(' (screen raster | vector) [x X y Y] colors NCOLORS freq NFREQ ')'
+Many information of the game video hardware.
+
+input '(' players NPLAYERS [control TYPE] [buttons NBUTTONS] coins NCOINS ')'
+Many information of the game input hardware.
+
+driver '(' status (preliminary | good) color (preliminary | imperfect | good)
+  hiscore (preliminary | good) colordeep NCOLORBITS credits CREDITS ')'
+Many information of the MAME driver status and requirements.
+
+
+How to read the file
+--------------------
+If you have the necessity to read the output of -listinfo option
+you must do attention of these issues:
+
+1) You can't do any assumption of space indentation.
+2) You can't do any assumption of max line length. All output can be
+   in a very long line.
+3) You can't do any assumption of order of the entries.
+4) You can't do any assumption of the presence of any entry except the
+   game.name and resource.name which are mandatory and unique.
+5) You must skip entry unknow.
+6) Spaces are required only for separing SYMBOL.
+7) Lists of entry empty are valid.
+
+For example:
+
+game(description"Pac Man (Midway)"unknowentry()name pacman rom(name pacman.6e size 4096 crc c1e6ab10)rom( ...
+
+is a valid output.
+

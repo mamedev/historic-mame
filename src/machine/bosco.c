@@ -286,6 +286,9 @@ void bosco_customio_w_1 (int offset,int data)
 				case 0x88:
 					Score += 60;
 					break;
+				case 0x89:
+					Score += 70;
+					break;
 				case 0x8D:
 					Score += 200;
 					break;
@@ -310,16 +313,11 @@ void bosco_customio_w_1 (int offset,int data)
 				case 0xB7:
 					Score += 500;
 					break;
+				case 0xB8:
+					Score += 600;	/* ? center ship of a V-shaped formation */
+					break;
 				case 0xC3:	/*	??	*/
 					break;
-#if 0
-				case 0x89:
-					Score += ???;
-					break;
-				case 0xB8:
-					Score += ???;
-					break;
-#endif
 				default:
 					if (errorlog)
 						fprintf(errorlog,"unknown score: %02x\n",

@@ -655,6 +655,7 @@ void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)
 void write_YM_CT1_CT2_W(unsigned char n, unsigned char r, unsigned char v)
 {
 	YMPSG[n].Regs[r]=v;
+	if (YMPSG[n].portwrite) (*YMPSG[n].portwrite)(0,v>>6); /*bit 0=ct1, bit 1=ct2*/
 }
 
 
@@ -1367,4 +1368,9 @@ SAMPLE *YMBuffer(int n)
 void YMSetIrqHandler(int n, void(*handler)(void))
 {
     YMPSG[n].handler = handler;
+}
+
+void YMSetPortWriteHandler(int n, void(*handler)(int,int))
+{
+    YMPSG[n].portwrite = handler;
 }

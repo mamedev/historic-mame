@@ -218,15 +218,19 @@ int arkanoi2_sh_f000_r(int offs)
 static int pos=0;
 static int lastval=0;
 int val;
-unsigned char diff;
+int cur_pos;
+char diff;
 
+	cur_pos=pos;
 	val = readinputport(0)&0xff;
-	diff = val-lastval;
+	diff = (char)val-(char)lastval;
 	lastval = val;
 
-	pos += (signed char) diff;
+	pos += diff;
 
-	val = (readinputport(4)<<8)+(pos&0x0fff);
+	if(offs==0) cur_pos=pos;
+
+	val = (readinputport(4)<<8)+(cur_pos&0x0fff);
 	if (offs==0)
 		return val&0xff;
 	else
@@ -366,7 +370,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,					/* chips */
-	1500000,				/* ?? Mhz */
+	3000000,				/* ?? Mhz */
 	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
 	{ input_port_2_r 	},		/* DSW1 connected to port A */
 	{ input_port_3_r	},		/* DSW2 connected to port B */
@@ -472,10 +476,18 @@ static int arkanoi2_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0xeca5], "\x54\x4b\x4e\xff", 4) == 0)
-	{
 		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f, &RAM[0xe3a8], 3);
+			osd_fclose(f);
+		}
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xeca5], "\x54\x4b\x4e\xff", 4) == 0 && memcmp(&RAM[0xec81], "\x01\x00\x00\x05", 4) == 0 )
+	{
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -497,6 +509,7 @@ static void arkanoi2_hisave(void)
 	{
 		osd_fwrite(f, &RAM[0xec81], 8*5);
 		osd_fclose(f);
+		RAM[0xeca5] = 0;
 	}
 }
 

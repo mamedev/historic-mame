@@ -101,8 +101,7 @@ static struct MemoryReadAddress pickin_readmem[] =
 	{ 0x8800, 0x8bff, MRA_RAM },
 	{ 0x9800, 0x9bff, MRA_RAM },
 //	{ 0xa000, 0xa000, bagman_pal16r6_r },
-	{ 0xa800, 0xa800, MRA_NOP },
-//	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
+	{ 0xa800, 0xa800, input_port_2_r },
 	{ 0xb800, 0xb800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
@@ -263,25 +262,26 @@ INPUT_PORTS_START( pickin_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x01, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(    0x01, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPNAME( 0x06, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x18, 0x18, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x18, "Easy" )
-	PORT_DIPSETTING(    0x10, "Medium" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x20, 0x20, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "English" )
+	PORT_DIPNAME( 0x08, 0x08, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Language", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "English" )
 	PORT_DIPSETTING(    0x00, "French" )
-	PORT_DIPNAME( 0x40, 0x40, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "30000" )
-	PORT_DIPSETTING(    0x00, "40000" )
 	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
@@ -455,7 +455,7 @@ ROM_START( bagmans_rom )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
-	ROM_LOAD( "a2_1j.bin",    0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
 
@@ -583,18 +583,20 @@ ROM_END
 
 static int hiload(void)
 {
+
+
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* wait for "HIGH SCORE" to be on screen */
-        if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0)
+		/* wait for "HIGH SCORE" to be on screen */
+        if (memcmp(&RAM[0x6257],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x6217],"\x00\x42\x01",3) == 0)
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 
-                        /* The game only allows to enter three letters but
+                        /* Bagman allows for 13 letters */
+						/* The rest only allow to enter three letters but
                          * we could enter until thirteen by accesing to memory
                          * directly. In Super Bagman the default high-score
                          * names have more than three letters */
@@ -603,7 +605,6 @@ static int hiload(void)
 
 			osd_fclose(f);
 		}
-
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -619,10 +620,54 @@ static void hisave(void)
 	{
 
                 osd_fwrite(f,&RAM[0x6217],5*16);
-		osd_fclose(f);
+				osd_fclose(f);
+				memset(&RAM[0x6217],0xff,5*16);
 	}
 }
 
+static int pickin_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+		/* wait for "HIGH SCORE" to be on screen */
+
+        if (memcmp(&RAM[0x71da],"\x00\x89\x01",3) == 0&& memcmp(&RAM[0x719a],"\x00\x42\x01",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        /* Bagman allows for 13 letters */
+						/* The rest only allow to enter three letters but
+                         * we could enter until thirteen by accesing to memory
+                         * directly. In Super Bagman the default high-score
+                         * names have more than three letters */
+                        osd_fread(f,&RAM[0x719a],80);
+
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void pickin_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+
+                osd_fwrite(f,&RAM[0x719a],80);
+				osd_fclose(f);
+				memset(&RAM[0x719a],0xff,80);
+	}
+}
 
 
 struct GameDriver bagman_driver =
@@ -633,7 +678,7 @@ struct GameDriver bagman_driver =
 	"Bagman",
 	"1982",
 	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -659,7 +704,7 @@ struct GameDriver bagmans_driver =
 	"Bagman (Stern set 1)",
 	"1982",
 	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -685,7 +730,7 @@ struct GameDriver bagmans2_driver =
 	"Bagman (Stern set 2)",
 	"1982",
 	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -711,7 +756,7 @@ struct GameDriver sbagman_driver =
 	"Super Bagman",
 	"1984",
 	"Valadon Automation",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -737,7 +782,7 @@ struct GameDriver sbagmans_driver =
 	"Super Bagman (Stern)",
 	"1984",
 	"Valadon Automation (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score)\nAndrew Deschenes (protection info)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
 	0,
@@ -778,5 +823,5 @@ struct GameDriver pickin_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	pickin_hiload,pickin_hisave
 };

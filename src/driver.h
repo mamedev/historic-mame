@@ -231,18 +231,18 @@ struct MachineSound
 #define SOUND_YM2413     8
 #define SOUND_YM2610     9
 #define SOUND_YM3812    10
-#define SOUND_YM3526    SOUND_YM3812	/* 100% compatible, less features */
-#define SOUND_SN76496   11
-#define SOUND_POKEY     12
-#define SOUND_NAMCO     13
+#define SOUND_YM3526    11	//SOUND_YM3812	/* 100% compatible, less features */
+#define SOUND_SN76496   12
+#define SOUND_POKEY     13
 #define SOUND_NES       14
-#define SOUND_TMS5220   15
-#define SOUND_VLM5030   16
-#define SOUND_ADPCM     17
-#define SOUND_OKIM6295  18	/* ROM-based ADPCM system */
-#define SOUND_MSM5205   19	/* CPU-based ADPCM system */
-#define SOUND_HC55516   20	/* Harris family of CVSD CODECs */
-#define SOUND_ASTROCADE 21	/* Custom I/O chip from Bally/Midway */
+#define SOUND_ASTROCADE 15	/* Custom I/O chip from Bally/Midway */
+#define SOUND_NAMCO     16
+#define SOUND_TMS5220   17
+#define SOUND_VLM5030   18
+#define SOUND_ADPCM     19
+#define SOUND_OKIM6295  20	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   21	/* CPU-based ADPCM system */
+#define SOUND_HC55516   22	/* Harris family of CVSD CODECs */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -383,7 +383,7 @@ struct GameDriver
 #define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
 
 
-#define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)
+#define PROM_MEMORY_REGION(region) ((const unsigned char *)((-(region))-1))
 
 
 #define	ORIENTATION_DEFAULT		0x00

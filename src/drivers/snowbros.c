@@ -17,14 +17,14 @@ int  snowbros_spriteram_r(int offset);
 
 
 
-int snowbros_interrupt(void)
+static int snowbros_interrupt(void)
 {
 	return cpu_getiloops() + 2;	/* IRQs 4, 3, and 2 */
 }
 
 
 
-int snowbros_input_r (int offset)
+static int snowbros_input_r (int offset)
 {
 	int ans = 0xff;
 
@@ -48,12 +48,24 @@ int snowbros_input_r (int offset)
 
 int snowbros_68000_sound_r(int offset)
 {
-	/* Passes test if answer is 3 - only read until this is so */
+	int ret;
 
-	return 3;
+	/* If the sound CPU is running, read the YM3812 status, otherwise
+	   just make it pass the test */
+	if (Machine->sample_rate != 0)
+	{
+		ret = soundlatch_r(offset);
+	}
+	else
+	{
+		ret = 3;
+	}
+
+	return ret;
 }
 
-void snowbros_68000_sound_w(int offset, int data)
+
+static void snowbros_68000_sound_w(int offset, int data)
 {
 	soundlatch_w(offset,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
@@ -296,6 +308,21 @@ static struct MachineDriver machine_driver =
 
 ROM_START( snowbros_rom )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "sn6.bin",  0x00000, 0x20000, 0x4899ddcf )
+	ROM_LOAD_ODD ( "sn5.bin",  0x00000, 0x20000, 0xad310d3f )
+
+	ROM_REGION_DISPOSE(0x80000)
+	ROM_LOAD( "ch0",          0x00000, 0x20000, 0x36d84dfe )
+	ROM_LOAD( "ch1",          0x20000, 0x20000, 0x76347256 )
+	ROM_LOAD( "ch2",          0x40000, 0x20000, 0xfdaa634c )
+	ROM_LOAD( "ch3",          0x60000, 0x20000, 0x34024aef )
+
+	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
+ROM_END
+
+ROM_START( snowbro2_rom )
+	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
 
@@ -349,7 +376,7 @@ struct GameDriver snowbros_driver =
 	__FILE__,
 	0,
 	"snowbros",
-	"Snow Bros",
+	"Snow Bros (set 1)",
 	"1990",
 	"Toaplan (Romstar license)",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
@@ -368,3 +395,29 @@ struct GameDriver snowbros_driver =
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
+
+struct GameDriver snowbro2_driver =
+{
+	__FILE__,
+	&snowbros_driver,
+	"snowbro2",
+	"Snow Bros (set 2)",
+	"1990",
+	"Toaplan (Romstar license)",
+	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
+	0,
+	&machine_driver,
+	0,
+
+	snowbro2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	snowbros_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+

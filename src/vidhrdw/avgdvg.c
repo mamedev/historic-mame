@@ -77,6 +77,10 @@ int vector_updates; /* avgdvg_go()'s per Mame frame, should be 1 */
 static int vg_step = 0;    /* single step the vector generator */
 static int total_length;   /* length of all lines drawn in a frame */
 
+/* Use overlay if present MLR OCT0598 */
+static struct artwork *backdrop = NULL;
+static struct artwork *overlay = NULL;
+
 #define MAXSTACK 8 	/* Tempest needs more than 4     BW 210797 */
 
 /* AVG commands */
@@ -549,6 +553,7 @@ static void avg_generate_vector_list (void)
 				{
 					color = rand() & 0x07;
 				}
+
 				if ((vectorEngine == USE_AVG_BZONE) && (bz_col != 0))
 				{
 					if (currenty < (BZONE_TOP<<16))
@@ -934,15 +939,50 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
 		case  VEC_PAL_MONO_AQUA:
-			shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
+			/* Use overlay if present MLR OCT0598 */
+			if ((backdrop=artwork_load("astdelux.png", 32, Machine->drv->total_colors-32))!=NULL)
+			{
+				shade_fill (palette, GREEN|BLUE, 8, 23, 1, 254);
+				/* Some more anti-aliasing colors. */
+				shade_fill (palette, GREEN|BLUE, 24, 31, 1, 254);
+				for (i=0; i<8; i++)
+					palette[(24+i)*3]=80;
+				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette,
+					3*backdrop->num_pens_used);
+			}
+			else
+				shade_fill (palette, GREEN|BLUE, 8, 128+8, 1, 254);
 			colorram[1] =  3; /* for Asteroids */
 			colorram[0] =  3; /* for Red Baron */
 			break;
 
 		/* Monochrome Green/Red vector colors (Battlezone) .ac JAN2498 */
 		case  VEC_PAL_BZONE:
-			shade_fill (palette, RED  ,     8, 128+4, 1, 254);
-			shade_fill (palette, GREEN, 128+5, 254  , 1, 254);
+			/* Use overlay if present MLR OCT0598 */
+			if ((backdrop=artwork_load("bzone_b.png", 8, Machine->drv->total_colors-8))!=NULL)
+			{
+				memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette,
+					3*backdrop->num_pens_used);
+				if ((overlay = artwork_load("bzone.png",
+							     8+backdrop->num_pens_used,
+							     Machine->drv->total_colors -
+							    (8+backdrop->num_pens_used)))!=NULL)
+				{
+					overlay_set_palette (overlay, palette, Machine->drv->total_colors
+							     -9-backdrop->num_pens_used);
+					colorram[2] = 7;
+					colorram[4] = 7;
+				}
+			}
+			else
+			{
+				if (backdrop)
+					artwork_free(backdrop);
+				backdrop = NULL;
+				overlay = NULL;
+				shade_fill (palette, RED  ,     8, 128+4, 1, 254);
+				shade_fill (palette, GREEN, 128+5, 254  , 1, 254);
+			}
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
@@ -977,7 +1017,6 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 			break;
 	}
 }
-
 
 /* If you want to use the next two functions, please make sure that you have
  * a fake GfxLayout, otherwise you'll crash */
@@ -1059,16 +1098,27 @@ level # - green
 
 void avg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	vector_vh_update(bitmap,full_refresh);
+	if (overlay && backdrop)
+		vector_vh_update_artwork(bitmap, overlay, backdrop, full_refresh);
+	else if (backdrop)
+		vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
+	else
+		vector_vh_update(bitmap,full_refresh);
 }
 
 void dvg_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	vector_vh_update(bitmap,full_refresh);
+	if (backdrop)
+		vector_vh_update_backdrop(bitmap, backdrop, full_refresh);
+	else
+		vector_vh_update(bitmap,full_refresh);
 }
 
 int dvg_start(void)
 {
+	if (backdrop)
+		backdrop_refresh(backdrop);
+
 	return avgdvg_init (USE_DVG);
 }
 
@@ -1092,14 +1142,20 @@ int avg_start_mhavoc(void)
 	return avgdvg_init (USE_AVG_MHAVOC);
 }
 
+int avg_start_bzone(void)
+{
+	if (backdrop)
+		backdrop_refresh(backdrop);
+
+	if (overlay)
+		overlay_remap(overlay);
+
+	return avgdvg_init (USE_AVG_BZONE);
+}
+
 int avg_start_quantum(void)
 {
 	return avgdvg_init (USE_AVG_QUANTUM);
-}
-
-int avg_start_bzone(void)
-{
-	return avgdvg_init (USE_AVG_BZONE);
 }
 
 int avg_start_redbaron(void)

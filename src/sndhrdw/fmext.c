@@ -36,13 +36,13 @@
 /* update request callback */
 
 #ifdef BUILD_YM2203
-static inline void YM2203UpdateReq(int chip)
+INLINE void YM2203UpdateReq(int chip)
 {
 	YM2203UpdateRequest(chip); /* in psgintf.c */
 }
 #endif
 #ifdef BUILD_YM2608
-static inline void YM2608UpdateReq(int chip)
+INLINE void YM2608UpdateReq(int chip)
 {
 #if 0
 	YM2608UpdateRequest(chip); /* in 2608intf.c */
@@ -50,7 +50,7 @@ static inline void YM2608UpdateReq(int chip)
 }
 #endif
 #ifdef BUILD_YM2610
-static inline void YM2610UpdateReq(int chip)
+INLINE void YM2610UpdateReq(int chip)
 {
 	YM2610UpdateRequest(chip); /* in 2610intf.c */
 }
@@ -58,7 +58,7 @@ static inline void YM2610UpdateReq(int chip)
 
 
 #ifdef BUILD_YM2612
-static inline void YM2612UpdateReq(int chip)
+INLINE void YM2612UpdateReq(int chip)
 {
 #if 0
 	YM2612UpdateRequest(chip); /* in 2612intf.c */
@@ -67,7 +67,7 @@ static inline void YM2612UpdateReq(int chip)
 #endif
 
 #ifdef BUILD_YM2151
-static inline void YM2151UpdateReq(int chip)
+INLINE void YM2151UpdateReq(int chip)
 {
 	YM2151UpdateRequest(chip); /* in 2151intf.c */
 }

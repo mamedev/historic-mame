@@ -423,6 +423,17 @@ void pisces_gfxbank_w(int offset,int data)
 	gfx_bank = data & 1;
 }
 
+void mooncrgx_gfxextend_w(int offset,int data)
+{
+  /* for the Moon Cresta bootleg on Galaxian H/W the gfx_extend is
+     located at 0x6000-0x6002.  Also, 0x6000 and 0x6001 are reversed. */
+     if(offset == 1)
+       offset = 0;
+     else if(offset == 0)
+       offset = 1;    /* switch 0x6000 and 0x6001 */
+	if (data) gfx_extend |= (1 << offset);
+	else gfx_extend &= ~(1 << offset);
+}
 
 
 void mooncrst_gfxextend_w(int offset,int data)
@@ -657,7 +668,7 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* proving that this is a hardware related "feature" */
 		/* This is not Amidar, it is Galaxian/Scramble/hundreds of clones, and I'm */
 		/* not sure it should be the same. A good game to test alignment is Armored Car */
-//		if (offs <= 2*4) sy++;
+/*		if (offs <= 2*4) sy++;*/
 
 		spritecode = spriteram[offs + 1];
 		if (!sprite_bank) spritecode &= 0x3f;

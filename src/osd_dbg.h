@@ -4,18 +4,10 @@ extern void ScreenSetCursor (int x, int y);
 extern int /* key */ osd_debug_readkey (void);	/* JB 980103 */
 extern void MAME_Debug(void);
 
-#ifdef WIN32
+#if defined WIN32 || defined macintosh || defined UNIX
 #define GFX_TEXT 0
 enum {	BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY,	/* JB 980208 */
 		DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, YELLOW, WHITE };
 
 extern void set_gfx_mode (int mode, int width, int height, int u1, int u2);
 #endif
-
-#ifdef macintosh
-#define GFX_TEXT 0
-enum {	BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY,	/* JB 980208 */
-		DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, YELLOW, WHITE };
-
-extern void set_gfx_mode (int mode, int width, int height, int u1, int u2);
-#endif	/* macintosh */

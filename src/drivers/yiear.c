@@ -298,13 +298,13 @@ struct SN76496interface sn76496_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/*  1.5 MHz ? (hand tuned) */
-	{ 255 }
+	{ 100 }
 };
 
 struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock  */
-	255,        /* volume        */
+	100,        /* volume        */
 	3,         /* memory region  */
 	0,         /* VCU            */
 };
@@ -438,7 +438,7 @@ struct GameDriver yiear_driver =
 	"Yie Ar Kung Fu",
 	"1985",
 	"Konami",
-	"Enrique Sanchez\nPhilip Stroffolino\nMike Balfour (high score)\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
+	"Enrique Sanchez\nPhilip Stroffolino\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,

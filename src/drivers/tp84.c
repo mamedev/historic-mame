@@ -334,7 +334,7 @@ static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
 	1789750,	/* 1.78975 Mhz ? */
-	{ 255, 255, 255 }
+	{ 75, 75, 75 }
 };
 
 
@@ -513,7 +513,7 @@ struct GameDriver tp84_driver =
 	"Time Pilot 84 (set 1)",
 	"1984",
 	"Konami",
-	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	"Marc Lafontaine (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,	/* MachineDriver */
 	0,
@@ -541,7 +541,7 @@ struct GameDriver tp84a_driver =
 	"Time Pilot 84 (set 2)",
 	"1984",
 	"Konami",
-	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	"Marc Lafontaine (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,	/* MachineDriver */
 	0,

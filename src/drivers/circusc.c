@@ -241,13 +241,13 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	14318180/8,	/*  1.7897725 Mhz */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255, 255 }
+	{ 100 }
 };
 
 
@@ -436,7 +436,7 @@ struct GameDriver circusc_driver =
 	"Circus Charlie",
 	"1984",
 	"Konami",
-	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
 	0,
@@ -462,7 +462,7 @@ struct GameDriver circusc2_driver =
 	"Circus Charlie (level select)",
 	"1984",
 	"Konami",
-	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
+	"Chris Hardy (MAME driver)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
 	0,

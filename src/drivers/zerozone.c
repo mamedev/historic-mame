@@ -49,10 +49,6 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0x00;
 }
 
-int zerozone_interrupt(void)
-{
-	return MC68000_IRQ_1;
-}
 
 void zerozone_sound_w (int offset, int data)
 {
@@ -224,7 +220,7 @@ static struct MachineDriver machine_driver =
 			10000000,	/* 10 MHz */
 			0,
 			readmem,writemem,0,0,
-			zerozone_interrupt,1
+			m68_level1_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,

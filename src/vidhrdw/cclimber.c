@@ -99,25 +99,25 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
   Swimmer has two 256x4 char/sprite palette PROMs and one 32x8 big sprite
   palette PROM.
-  I don't know for sure how the palette PROMs are connected to the RGB
-  output, but it's probably the usual:
+  The palette PROMs are connected to the RGB output this way:
+  (the 500 and 250 ohm resistors are made of 1 kohm resistors in parallel)
 
-  bit 3 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-  bit 0 -- 470 ohm resistor  -- GREEN
+  bit 3 -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+        -- 250 ohm resistor  -- GREEN
+  bit 0 -- 500 ohm resistor  -- GREEN
   bit 3 -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
+        -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
+  bit 7 -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+        -- 250 ohm resistor  -- GREEN
+        -- 500 ohm resistor  -- GREEN
         -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
+        -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
@@ -172,17 +172,17 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 			bit0 = (color_prom[i] >> 0) & 0x01;
 			bit1 = (color_prom[i] >> 1) & 0x01;
 			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* green component */
 			bit0 = (color_prom[i] >> 3) & 0x01;
 			bit1 = (color_prom[i+256] >> 0) & 0x01;
 			bit2 = (color_prom[i+256] >> 1) & 0x01;
-			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* blue component */
 			bit0 = 0;
 			bit1 = (color_prom[i+256] >> 2) & 0x01;
 			bit2 = (color_prom[i+256] >> 3) & 0x01;
-			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		}
 
 		COLOR(0,i) = j;
@@ -221,17 +221,17 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 			bit0 = (color_prom[i] >> 0) & 0x01;
 			bit1 = (color_prom[i] >> 1) & 0x01;
 			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* green component */
 			bit0 = (color_prom[i] >> 3) & 0x01;
 			bit1 = (color_prom[i] >> 4) & 0x01;
 			bit2 = (color_prom[i] >> 5) & 0x01;
-			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* blue component */
 			bit0 = 0;
 			bit1 = (color_prom[i] >> 6) & 0x01;
 			bit2 = (color_prom[i] >> 7) & 0x01;
-			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		}
 
 		if (i % 8 == 0) j = 0;  /* enforce transparency */
@@ -243,6 +243,22 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
+/***************************************************************************
+
+  Swimmer can directly set the background color.
+  The latch is connected to the RGB output this way:
+  (the 500 and 250 ohm resistors are made of 1 kohm resistors in parallel)
+
+  bit 7 -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
+        -- 250 ohm resistor  -- GREEN
+        -- 500 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+  bit 0 -- 1  kohm resistor  -- BLUE
+
+***************************************************************************/
 void swimmer_bgcolor_w(int offset,int data)
 {
 	int bit0,bit1,bit2;
@@ -253,19 +269,19 @@ void swimmer_bgcolor_w(int offset,int data)
 	bit0 = 0;
 	bit1 = (data >> 6) & 0x01;
 	bit2 = (data >> 7) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	/* green component */
 	bit0 = (data >> 3) & 0x01;
 	bit1 = (data >> 4) & 0x01;
 	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	/* blue component */
 	bit0 = (data >> 0) & 0x01;
 	bit1 = (data >> 1) & 0x01;
 	bit2 = (data >> 2) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	palette_change_color(0,r,g,b);
 }

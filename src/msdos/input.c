@@ -1,5 +1,7 @@
 #include "driver.h"
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
 
 
 void my_textout (char *buf);
@@ -109,6 +111,8 @@ int osd_key_pressed(int keycode)
 
 			case OSD_KEY_SNAPSHOT:
 				return key[KEY_PRTSCR];
+			default:
+				return 0;
 		}
 #else
 		switch (keycode)
@@ -156,13 +160,13 @@ int osd_key_pressed(int keycode)
 			}
 
             case OSD_KEY_PAUSE:
-				return key[OSD_KEY_P];
-
             case OSD_KEY_UNPAUSE:
 				return key[OSD_KEY_P];
 
 			case OSD_KEY_SNAPSHOT:
 				return key[KEY_F12];
+			default:
+				return 0;
         }
 #endif
     }
@@ -178,6 +182,8 @@ static char memory[256];
 int osd_key_pressed_memory(int keycode)
 {
 	int res = 0;
+
+	if (keycode == OSD_KEY_UNPAUSE) keycode = OSD_KEY_PAUSE;	/* we use the same key */
 
 	if (osd_key_pressed(keycode))
 	{

@@ -252,18 +252,6 @@ INPUT_PORTS_START( exterm_input_ports )
 INPUT_PORTS_END
 
 
-static void machine_init(void)
-{
-	static int copied = 0;
-
-	if (!copied)
-	{
-		memcpy (exterm_code_rom, Machine->memory_region[Machine->drv->cpu[0].memory_region],code_rom_size);
-		copied = 1;
-	}
-}
-
-
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
@@ -316,7 +304,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	machine_init,
+	0,
 
 	/* video hardware, the reason for 263 is that the VCOUNT register is
 	   supposed to go from 0 to the value in VEND-1, which is 263 */
@@ -424,6 +412,8 @@ ROM_END
 
 void driver_init(void)
 {
+	memcpy (exterm_code_rom,Machine->memory_region[Machine->drv->cpu[0].memory_region],code_rom_size);
+
 	TMS34010_set_stack_base(0, cpu_bankbase[1], TOBYTE(0x00c00000));
 	TMS34010_set_stack_base(1, cpu_bankbase[4], TOBYTE(0xff800000));
 }

@@ -32,8 +32,8 @@ M68KDEF  =
 endif
 
 # add -DMAME_DEBUG to include the debugger
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DINLINE="static __inline__" -Dasm=__asm__
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DINLINE="static __inline__" -Dasm=__asm__ \
 	-DMAME_DEBUG
 
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
@@ -66,19 +66,21 @@ LIBS   = -lalleg $(DJDIR)/lib/audiodjf.a \
 	 obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarisy1.a \
 	 obj/atarisy2.a obj/atari.a obj/rockola.a obj/technos.a \
 	 obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
-	 obj/upl.a obj/tms.a obj/cinemar.a obj/neogeo.a obj/other.a
+	 obj/upl.a obj/tms.a obj/cinemar.a obj/thepit.a obj/valadon.a \
+	 obj/seibu.a obj/nichibut.a obj/neogeo.a obj/other.a
+
 OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
-         obj/audit.o obj/crc32.o obj/png.o obj/artwork.o \
+         obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
          obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
-         obj/sndhrdw/ym2610.o obj/sndhrdw/2610intf.o \
+         obj/sndhrdw/2610intf.o \
          obj/sndhrdw/ym3812.o obj/sndhrdw/3812intf.o \
 		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
-		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
+		 obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
 		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
 		 obj/sndhrdw/streams.o \
@@ -118,7 +120,7 @@ obj/m6808/m6808.asm:  src/m6808/make6808.c
 	 obj/m6808/make6808 obj/m6808/m6808.asm -s -m -h
 
 obj/m68000/68kem.asm:  src/M68000/make68k.c
-	 $(CC) $(DEFS) $(CFLAGS) -o obj/M68000/make68k.exe src/M68000/make68k.c
+	 $(CC) $(DEFS) $(CFLAGS) -DDOS -o obj/M68000/make68k.exe src/M68000/make68k.c
 	 obj/M68000/make68k obj/M68000/68kem.asm
 
 obj/%.oa:  obj/%.asm
@@ -170,6 +172,7 @@ obj/namco.a: \
 
 obj/univers.a: \
          obj/vidhrdw/cosmica.o obj/drivers/cosmica.o \
+         obj/vidhrdw/cheekyms.o obj/drivers/cheekyms.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/vidhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
@@ -191,7 +194,8 @@ obj/midwz80.a: \
 
 obj/meadows.a: \
          obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
-         obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o
+         obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o \
+         obj/drivers/medlanes.o obj/vidhrdw/medlanes.o \
 
 obj/astrocde.a: \
          obj/machine/wow.o obj/vidhrdw/wow.o obj/sndhrdw/wow.o obj/drivers/wow.o \
@@ -228,7 +232,7 @@ obj/taito2.a: \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
          obj/vidhrdw/tokio.o obj/drivers/tokio.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
-         obj/machine/rastan.o obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
+         obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
@@ -236,7 +240,8 @@ obj/taito2.a: \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
-         obj/vidhrdw/superman.o obj/drivers/superman.o \
+         obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
+         obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
 
 obj/williams.a: \
@@ -337,6 +342,7 @@ obj/konami.a: \
          obj/vidhrdw/shaolins.o obj/drivers/shaolins.o \
          obj/vidhrdw/pingpong.o obj/drivers/pingpong.o \
          obj/vidhrdw/gberet.o obj/drivers/gberet.o \
+         obj/vidhrdw/jailbrek.o obj/drivers/jailbrek.o \
          obj/vidhrdw/ironhors.o obj/drivers/ironhors.o \
          obj/machine/jackal.o obj/vidhrdw/jackal.o obj/drivers/jackal.o \
          obj/vidhrdw/contra.o obj/drivers/contra.o \
@@ -355,8 +361,9 @@ obj/exidy.a: \
          obj/machine/starfire.o obj/vidhrdw/starfire.o obj/drivers/starfire.o
 
 obj/atarivg.a: \
+         obj/machine/atari_vg.o \
          obj/machine/asteroid.o obj/sndhrdw/asteroid.o \
-         obj/machine/atari_vg.o obj/drivers/asteroid.o \
+		 obj/vidhrdw/llander.o obj/drivers/asteroid.o \
          obj/drivers/bwidow.o \
          obj/sndhrdw/bzone.o  obj/drivers/bzone.o \
          obj/sndhrdw/redbaron.o \
@@ -440,11 +447,25 @@ obj/tms.a: \
 obj/cinemar.a: \
          obj/vidhrdw/jack.o obj/drivers/jack.o
 
+obj/thepit.a: \
+         obj/vidhrdw/thepit.o obj/drivers/thepit.o
+
+obj/valadon.a: \
+         obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o
+
+obj/seibu.a: \
+         obj/vidhrdw/stinger.o obj/drivers/stinger.o \
+         obj/vidhrdw/wiz.o obj/drivers/wiz.o
+
+obj/nichibut.a: \
+         obj/vidhrdw/cop01.o obj/drivers/cop01.o \
+         obj/vidhrdw/terracre.o obj/drivers/terracre.o \
+         obj/vidhrdw/galivan.o obj/drivers/galivan.o \
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o
 
 obj/other.a: \
-         obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o \
          obj/machine/spacefb.o obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
          obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/drivers/junofrst.o \
@@ -466,9 +487,6 @@ obj/other.a: \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
          obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
-         obj/vidhrdw/stinger.o obj/drivers/stinger.o \
-         obj/vidhrdw/wiz.o obj/drivers/wiz.o \
-         obj/vidhrdw/thepit.o obj/drivers/thepit.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
          obj/vidhrdw/toki.o obj/drivers/toki.o \
          obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
@@ -481,13 +499,14 @@ obj/other.a: \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
-         obj/vidhrdw/cop01.o obj/drivers/cop01.o \
-         obj/vidhrdw/terracre.o obj/drivers/terracre.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
          obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
          obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
          obj/machine/exctsccr.o obj/vidhrdw/exctsccr.o obj/drivers/exctsccr.o \
+         obj/vidhrdw/speedbal.o obj/drivers/speedbal.o \
+         obj/vidhrdw/sauro.o obj/drivers/sauro.o \
+         obj/vidhrdw/pow.o obj/drivers/pow.o \
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h

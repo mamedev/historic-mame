@@ -116,7 +116,7 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
+#include "sndhrdw/pokey.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
@@ -369,7 +369,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1789790,	/* 1.5 MHz??? */
-	20,
+	40,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */

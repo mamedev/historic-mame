@@ -91,6 +91,7 @@ void mooncrst_vol_w(int offset,int data);
 void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
+void mooncrgx_gfxextend_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
 int mooncrst_sh_start(void);
 void mooncrst_sh_stop(void);
@@ -155,6 +156,27 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryWriteAddress mooncrgx_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
+	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x6000, 0x6002, mooncrgx_gfxextend_w },
+	{ 0x6004, 0x6007, mooncrst_lfo_freq_w },
+	{ 0x6800, 0x6800, mooncrst_background_w },
+	{ 0x6803, 0x6803, mooncrst_noise_w },
+	{ 0x6805, 0x6805, mooncrst_shoot_w },
+	{ 0x6806, 0x6807, mooncrst_vol_w },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7004, 0x7004, galaxian_stars_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7800, 0x7800, mooncrst_pitch_w },
+	{ -1 }	/* end of table */
+};
 
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
 static void zigzag_sillyprotection_w(int offset,int data)
@@ -767,6 +789,45 @@ static struct MachineDriver pisces_machine_driver =
 		}
 	}
 };
+
+static struct MachineDriver mooncrgx_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			readmem,mooncrgx_writemem,0,0,
+			galaxian_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	pisces_gfxdecodeinfo,
+	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
+
 
 static struct MachineDriver pacmanbl_machine_driver =
 {
@@ -1642,7 +1703,7 @@ struct GameDriver redufo_driver =
 	"Defend the Terra Attack on the Red UFO",
 	"????",
 	"hack",
-	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
 	0,
@@ -1669,7 +1730,7 @@ struct GameDriver pacmanbl_driver =
 	"Pac Man (bootleg on Pisces hardware)",
 	"1981",
 	"bootleg",
-	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&pacmanbl_machine_driver,
 	0,
@@ -1750,7 +1811,7 @@ struct GameDriver mooncrgx_driver =
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
-	&pisces_machine_driver,
+	&mooncrgx_machine_driver,
 	0,
 
 	mooncrgx_rom,
@@ -1765,3 +1826,11 @@ struct GameDriver mooncrgx_driver =
 
 	0, 0
 };
+
+
+
+
+
+
+
+

@@ -104,7 +104,6 @@ Chris Moore        chris.moore@writeme.com
 Brad Oliver        bradman@primenet.com
 Andrew Scott       ascott@utkux.utcc.utk.edu
 Zsolt Vasvari      vaszs01@banet.net
-Valerio Verrando   v.verrando@mclink.it
 Bernd Wiebelt      bernardo@studi.mathematik.hu-berlin.de
 
 DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
@@ -304,6 +303,8 @@ options:
               16 will increase quality with certain games, but decrease speed.
               This is a software setting, not hardware. The sound card will
               always be used in 16 bit mode, if possible.
+-stereo/-nostereo (default: -stereo)
+              enables stereo output for games supporting it.
 -joy n/-nojoy (default: -nojoy) allows joystick input, n can be:
               0 - no joystick
               1 - normal 2 button joystick
@@ -336,6 +337,8 @@ options:
 -listroms     display selected game required roms
 -listsamples  display selected game required samples
 -listdetails  display a detailed list of drivers and the hardware they use
+-listgames    list the supported games, year, manufacturer
+-listinfo     list comprehensive details for all of the supported games
 -verifyroms   check selected game for missing and invalid ROMs.
 -verifysamples check selected game for missing samples.
 -romdir       specify an alternate directory/zip name where to load the ROMs

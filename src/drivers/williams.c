@@ -2324,19 +2324,19 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
 ROM_END
 
-ROM_START( oldsin_rom )
+ROM_START( sinista1_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "sinold01.rom", 0x0000, 0x1000, 0x3810d7b8 )
-	ROM_LOAD( "sinold02.rom", 0x1000, 0x1000, 0xcab3185c )
-	ROM_LOAD( "sinold03.rom", 0x2000, 0x1000, 0x7c984ca9 )
-	ROM_LOAD( "sinold04.rom", 0x3000, 0x1000, 0xcc6c4f24 )
-	ROM_LOAD( "sinold05.rom", 0x4000, 0x1000, 0x12285bfe )
-	ROM_LOAD( "sinold06.rom", 0x5000, 0x1000, 0x7a675f35 )
-	ROM_LOAD( "sinold07.rom", 0x6000, 0x1000, 0xb0463243 )
-	ROM_LOAD( "sinold08.rom", 0x7000, 0x1000, 0x909040d4 )
-	ROM_LOAD( "sinold09.rom", 0x8000, 0x1000, 0xcc949810 )
-	ROM_LOAD( "sinold10.rom", 0xe000, 0x1000, 0xea87a53f )
-	ROM_LOAD( "sinold11.rom", 0xf000, 0x1000, 0x88d36e80 )
+	ROM_LOAD( "sinrev1.01",   0x0000, 0x1000, 0x3810d7b8 )
+	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
+	ROM_LOAD( "sinrev1.03",   0x2000, 0x1000, 0x7c984ca9 )
+	ROM_LOAD( "sinrev1.04",   0x3000, 0x1000, 0xcc6c4f24 )
+	ROM_LOAD( "sinrev1.05",   0x4000, 0x1000, 0x12285bfe )
+	ROM_LOAD( "sinrev1.06",   0x5000, 0x1000, 0x7a675f35 )
+	ROM_LOAD( "sinrev1.07",   0x6000, 0x1000, 0xb0463243 )
+	ROM_LOAD( "sinrev1.08",   0x7000, 0x1000, 0x909040d4 )
+	ROM_LOAD( "sinrev1.09",   0x8000, 0x1000, 0xcc949810 )
+	ROM_LOAD( "sinrev1.10",   0xe000, 0x1000, 0xea87a53f )
+	ROM_LOAD( "sinrev1.11",   0xf000, 0x1000, 0x88d36e80 )
 
 	ROM_REGION_DISPOSE(0x1000) /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -2345,6 +2345,29 @@ ROM_START( oldsin_rom )
 	ROM_REGION(0x10000) /* 64k for the sound CPU */
 	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
 ROM_END
+
+ROM_START( sinista2_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "sinistar.01",  0x0000, 0x1000, 0xf6f3a22c )
+	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
+	ROM_LOAD( "sinistar.03",  0x2000, 0x1000, 0x1ce1b3cc )
+	ROM_LOAD( "sinistar.04",  0x3000, 0x1000, 0x6da632ba )
+	ROM_LOAD( "sinistar.05",  0x4000, 0x1000, 0xb662e8fc )
+	ROM_LOAD( "sinistar.06",  0x5000, 0x1000, 0x2306183d )
+	ROM_LOAD( "sinistar.07",  0x6000, 0x1000, 0xe5dd918e )
+	ROM_LOAD( "sinrev2.08",   0x7000, 0x1000, 0xd7ecee45 )
+	ROM_LOAD( "sinistar.09",  0x8000, 0x1000, 0x50cb63ad )
+	ROM_LOAD( "sinistar.10",  0xe000, 0x1000, 0x3d670417 )
+	ROM_LOAD( "sinrev2.11",   0xf000, 0x1000, 0x792c8b00 )
+
+	ROM_REGION_DISPOSE(0x1000) /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000) /* 64k for the sound CPU */
+	ROM_LOAD( "sinistar.snd", 0xf000, 0x1000, 0xb82f4ddb )
+ROM_END
+
 
 /* Sinistar speech samples */
 const char *sinistar_sample_names[]=
@@ -2366,7 +2389,7 @@ struct GameDriver sinistar_driver =
 	__FILE__,
 	0,
 	"sinistar",
-	"Sinistar",
+	"Sinistar (revision 3)",
 	"1982",
 	"Williams",
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence",
@@ -2387,11 +2410,11 @@ struct GameDriver sinistar_driver =
 	cmos_load, cmos_save
 };
 
-struct GameDriver oldsin_driver =
+struct GameDriver sinista1_driver =
 {
 	__FILE__,
 	&sinistar_driver,
-	"oldsin",
+	"sinista1",
 	"Sinistar (prototype version)",
 	"1982",
 	"Williams",
@@ -2400,7 +2423,7 @@ struct GameDriver oldsin_driver =
 	&sinistar_machine_driver, /* MachineDriver * */
 	0,
 
-	oldsin_rom, /* RomModule * */
+	sinista1_rom, /* RomModule * */
 	0, 0, /* ROM decrypt routines; not sure if these are needed here */
 	sinistar_sample_names, /* samplenames */
 	0, /* sound_prom */
@@ -2413,6 +2436,31 @@ struct GameDriver oldsin_driver =
 	cmos_load, cmos_save
 };
 
+struct GameDriver sinista2_driver =
+{
+	__FILE__,
+	&sinistar_driver,
+	"sinista2",
+	"Sinistar (revision 2)",
+	"1982",
+	"Williams",
+	"\nSinistar team:\nMarc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence\nBrian Deuel (prototype driver)\n\nSpecial thanks to Peter Freeman",
+	0,
+	&sinistar_machine_driver, /* MachineDriver * */
+	0,
+
+	sinista2_rom, /* RomModule * */
+	0, 0, /* ROM decrypt routines; not sure if these are needed here */
+	sinistar_sample_names, /* samplenames */
+	0, /* sound_prom */
+
+	sinistar_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	cmos_load, cmos_save
+};
 
 
 

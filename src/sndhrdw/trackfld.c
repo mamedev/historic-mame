@@ -12,13 +12,13 @@ struct SN76496interface konami_sn76496_interface =
 {
 	1,	/* 1 chip */
 	14318180/8,	/*  1.7897725 Mhz */
-	{ 255 }
+	{ 0x2064 }
 };
 
 struct DACinterface konami_dac_interface =
 {
 	1,
-	{ 100 }
+	{ 50 }
 };
 
 struct ADPCMinterface hyprolyb_adpcm_interface =
@@ -27,7 +27,7 @@ struct ADPCMinterface hyprolyb_adpcm_interface =
 	4000,       /* 4000Hz playback */
 	4,			/* memory region 4 */
 	0,			/* init function */
-	{ 255 }
+	{ 100 }
 };
 
 
@@ -169,5 +169,5 @@ void hyprolyb_ADPCM_data_w(int offset,int data)
 	start = RAM[cmd + 1] + 256 * RAM[cmd];
 	end = RAM[cmd + 3] + 256 * RAM[cmd + 2];
 	if (end > start)
-		ADPCM_play(0,start,(end - start - 1)*2);
+		ADPCM_play(0,start,(end - start)*2);
 }

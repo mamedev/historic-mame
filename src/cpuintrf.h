@@ -120,6 +120,13 @@ void interrupt_enable_w(int offset,int data);
 void interrupt_vector_w(int offset,int data);
 int interrupt(void);
 int nmi_interrupt(void);
+int m68_level1_irq(void);
+int m68_level2_irq(void);
+int m68_level3_irq(void);
+int m68_level4_irq(void);
+int m68_level5_irq(void);
+int m68_level6_irq(void);
+int m68_level7_irq(void);
 int ignore_interrupt(void);
 
 void* cpu_getcontext (int _activecpu);

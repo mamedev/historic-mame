@@ -226,7 +226,7 @@ static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
 	3072000,	/* 3.072 Mhz???? */
-	{ 255, 255 }
+	{ 100, 100 }
 };
 
 
@@ -370,7 +370,7 @@ struct GameDriver kicker_driver =
 	"Kicker",
 	"1985",
 	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
 	&shaolins_machine_driver,
 	0,
@@ -396,7 +396,7 @@ struct GameDriver shaolins_driver =
 	"Shao-Lin's Road",
 	"1985",
 	"Konami",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerald Vanderick (color info)",
 	0,
 	&shaolins_machine_driver,
 	0,

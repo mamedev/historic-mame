@@ -1,6 +1,8 @@
 #ifndef __VECTOR__
 #define __VECTOR__
 
+#include "artwork.h"
+
 #define VECTOR_TEAM \
 	"-* Vector Heads *-\n" \
 	"Brad Oliver\n" \
@@ -18,6 +20,7 @@
 
 #define MAX_PIXELS 250000  /* Maximum of pixels we can remember */
 
+
 extern int translucency;  /* translucent vectors  */
 
 extern unsigned char *vectorram;
@@ -31,6 +34,10 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);
 void vector_add_clip (int minx, int miny, int maxx, int maxy);
 void vector_set_shift (int shift);
+
+void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);
+void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh);
+void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh);
 
 #endif
 

@@ -182,7 +182,7 @@ static struct SN76496interface sn76496_interface =
 {
 	1,			/* 1 chip */
 	18432000/8,	/* 2.304 MHz */
-	{ 255 }
+	{ 100 }
 };
 
 
@@ -309,7 +309,7 @@ struct GameDriver pingpong_driver =
 	"1985",
 	"Konami",
 	"Jarek Parchanski (MAME driver)\nMartin Binder (color info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 

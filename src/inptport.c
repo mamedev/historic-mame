@@ -421,66 +421,6 @@ int default_joy(const struct InputPort *in)
 
 	return inputport_defaults[i].joystick;
 }
-#ifdef MAME_NET
-int osd_net_map_key(int keycode, int playermask)
-{
-  struct InputPort *in = Machine->input_ports, *start = Machine->input_ports;
-  int port, found, event = 0;
-
-  if (in->type == IPT_END) return -1;   /* nothing to do */
-
-    /* make sure the InputPort definition is correct */
-  if (in->type != IPT_PORT)
-    {
-      if (errorlog) fprintf(errorlog,"Error in InputPort definition: expecting PORT_START\n");
-      return -1;
-    }
-  else start = ++in;
-
-  found = 0;
-  port = 0;
-  while ((found ==0) && (in->type != IPT_END) && (port < MAX_INPUT_PORTS))
-    {
-      while (in->type != IPT_END && in->type != IPT_PORT)
-        {
-          if (default_key(in)==keycode)
-            {
-              event = in->type;
-              found = 1;
-              break;
-            }
-          in++;
-        }
-      if (found == 0)
-      {
-        port++;
-        if (in->type == IPT_PORT) in++;
-      }
-    }
-
-  if (found == 0) return -1;
-
-  in = start;
-  port = 0;
-  while (in->type != IPT_END && port < MAX_INPUT_PORTS)
-    {
-      while (in->type != IPT_END && in->type != IPT_PORT)
-        {
-          if ((in->type & IPF_PLAYERMASK)== playermask)
-            if ((in->type & (~IPF_MASK)) == (event & (~IPF_MASK)))
-              {
-                return default_key(in);
-              }
-          in++;
-        }
-
-      port++;
-      if (in->type == IPT_PORT) in++;
-    }
-
-  return -1;
-}
-#endif /* MAME_NET */
 
 void update_analog_port(int port)
 {
@@ -688,7 +628,7 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 #endif
 
 #ifdef MAME_NET
-osd_build_global_keys();
+osd_net_sync();
 #endif /* MAME_NET */
 
 	/* clear all the values before proceeding */
@@ -943,10 +883,6 @@ if (errorlog && in->arg == 0)
 		port++;
 		if (in->type == IPT_PORT) in++;
 	}
-
-#ifdef MAME_NET
-osd_build_global_inputs(input_port_value,sizeof(input_port_value));
-#endif /* MAME_NET */
 
 	if (playback)
 		osd_fread(playback,input_port_value,MAX_INPUT_PORTS);

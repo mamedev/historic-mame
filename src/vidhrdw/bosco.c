@@ -308,7 +308,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 		else
 		{
-			scrollx = -(*bosco_scrollx - 3);
+			scrollx = -(*bosco_scrollx);
 			scrolly = -(*bosco_scrolly + 16);
 		}
 

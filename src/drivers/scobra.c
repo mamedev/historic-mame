@@ -498,9 +498,9 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2265,7 +2265,7 @@ struct GameDriver scobra_driver =
 	"Super Cobra (Stern)",
 	"1981",
 	"Stern",
-	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
@@ -2291,7 +2291,7 @@ struct GameDriver scobrak_driver =
 	"Super Cobra (Konami)",
 	"1981",
 	"Konami",
-	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
@@ -2317,7 +2317,7 @@ struct GameDriver scobrab_driver =
 	"Super Cobra (bootleg)",
 	"1981",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
@@ -2393,7 +2393,7 @@ struct GameDriver armorcar_driver =
 	"Armored Car (set 1)",
 	"1981",
 	"Stern",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&armorcar_machine_driver,
 	0,
@@ -2419,7 +2419,7 @@ struct GameDriver armorca2_driver =
 	"Armored Car (set 2)",
 	"1981",
 	"Stern",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&armorcar_machine_driver,
 	0,
@@ -2523,7 +2523,7 @@ struct GameDriver tazmania_driver =
 	"Tazz-Mania",
 	"1982",
 	"Stern",
-	"Chris Hardy\nChris Moore (high score save)",
+	"Chris Hardy",
 	0,
 	&machine_driver,
 	0,

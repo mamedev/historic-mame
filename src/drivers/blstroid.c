@@ -102,7 +102,7 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
+#include "sndhrdw/pokey.h"
 #include "sndhrdw/5220intf.h"
 #include "sndhrdw/2151intf.h"
 
@@ -258,11 +258,11 @@ INPUT_PORTS_END
 
 static struct GfxLayout blstroid_pflayout =
 {
-	8,8,	/* 8*8 chars */
+	16,8,	/* 16*8 chars (doubled horizontally) */
 	8192,	/* 8192 chars */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0,0, 4,4, 8,8, 12,12, 16,16, 20,20, 24,24, 28,28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
@@ -270,11 +270,12 @@ static struct GfxLayout blstroid_pflayout =
 
 static struct GfxLayout blstroid_molayout =
 {
-	8,8,	/* 8*8 chars */
-	16384,/* 16384 chars */
+	16,8,	/* 16*8 chars */
+	16384,	/* 16384 chars */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0x80000*8+0, 0x80000*8+4, 0, 4, 0x80000*8+8, 0x80000*8+12, 8, 12,
+			0x80000*8+16, 0x80000*8+20, 16, 20, 0x80000*8+24, 0x80000*8+28, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
@@ -344,7 +345,7 @@ static struct MachineDriver blstroid_machine_driver =
 	blstroid_init_machine,
 
 	/* video hardware */
-	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
+	80*8, 30*8, { 0*8, 80*8-1, 0*8, 30*8-1 },
 	blstroid_gfxdecodeinfo,
 	512,512,
 	0,

@@ -122,7 +122,7 @@ int YM2203_sh_start(struct YM2203interface *interface)
 		stream_set_volume(stream[i],volume);
 	}
 	/* Initialize FM emurator */
-	if (YM2203Init(intf->num,intf->clock,Machine->sample_rate,Machine->sample_bits) == 0)
+	if (YM2203Init(intf->num,intf->baseclock,Machine->sample_rate,Machine->sample_bits) == 0)
 	{
 		/* Ready */
 		return 0;

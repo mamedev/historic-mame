@@ -67,7 +67,7 @@ int starforc_sh_start(void)
 		return 1;
 
 	/* z80 ctc init */
-	ctc_intf.clock[0] = Machine->drv->cpu[1].cpu_clock;
+	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
 	z80ctc_init (&ctc_intf);
 
 	/* z80 pio init */

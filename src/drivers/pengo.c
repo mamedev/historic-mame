@@ -587,7 +587,7 @@ struct GameDriver pengo2u_driver =
 	"Pengo (set 2 not encrypted)",
 	"1982",
 	"Sega",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
 	0,

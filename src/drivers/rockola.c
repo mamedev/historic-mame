@@ -106,8 +106,10 @@ void rockola_flipscreen_w(int offset,int data);
 void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void rockola_sound0_w(int offset,int data);
-void rockola_sound1_w(int offset,int data);
+void satansat_sound0_w(int offset,int data);
+void satansat_sound1_w(int offset,int data);
+void vanguard_sound0_w(int offset,int data);
+void vanguard_sound1_w(int offset,int data);
 void fantasy_sound0_w(int offset,int data);
 void fantasy_sound1_w(int offset,int data);
 void fantasy_sound2_w(int offset,int data);
@@ -115,6 +117,21 @@ int rockola_sh_start(void);
 void rockola_sh_update(void);
 
 
+
+static struct MemoryWriteAddress sasuke_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x0400, 0x07ff, MWA_RAM, &rockola_videoram2 },
+	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size },
+	{ 0x0c00, 0x0fff, colorram_w, &colorram },
+	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
+	{ 0x4000, 0x97ff, MWA_ROM },
+	{ 0x3000, 0x3000, crtc6845_address_w },
+	{ 0x3001, 0x3001, crtc6845_register_w },
+	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
+	{ 0xb003, 0xb003, satansat_backcolor_w },
+	{ -1 }	/* end of table */
+};
 
 static struct MemoryReadAddress satansat_readmem[] =
 {
@@ -138,8 +155,8 @@ static struct MemoryWriteAddress satansat_writemem[] =
 	{ 0x4000, 0x97ff, MWA_ROM },
 	{ 0x3000, 0x3000, crtc6845_address_w },
 	{ 0x3001, 0x3001, crtc6845_register_w },
-//	{ 0xb000, 0xb000, satansat_sound0_w },
-//	{ 0xb001, 0xb001, satansat_sound1_w },
+	{ 0xb000, 0xb000, satansat_sound0_w },
+	{ 0xb001, 0xb001, satansat_sound1_w },
 	{ 0xb002, 0xb002, satansat_b002_w },	/* flip screen & irq enable */
 	{ 0xb003, 0xb003, satansat_backcolor_w },
 	{ -1 }	/* end of table */
@@ -166,8 +183,9 @@ static struct MemoryWriteAddress vanguard_writemem[] =
 	{ 0x1000, 0x1fff, rockola_characterram_w, &rockola_characterram },
 	{ 0x3000, 0x3000, crtc6845_address_w },
 	{ 0x3001, 0x3001, crtc6845_register_w },
-	{ 0x3100, 0x3100, rockola_sound0_w },
-	{ 0x3101, 0x3101, rockola_sound1_w },
+	{ 0x3100, 0x3100, vanguard_sound0_w },
+	{ 0x3101, 0x3101, vanguard_sound1_w },
+//	{ 0x3102, 0x3102, },	/* TODO: music channels #0 and #1 volume */
 	{ 0x3103, 0x3103, rockola_flipscreen_w },
 	{ 0x3200, 0x3200, MWA_RAM, &rockola_scrolly },
 	{ 0x3300, 0x3300, MWA_RAM, &rockola_scrollx },
@@ -198,7 +216,8 @@ static struct MemoryWriteAddress fantasy_writemem[] =
 	{ 0x2001, 0x2001, crtc6845_register_w },
 	{ 0x2100, 0x2100, fantasy_sound0_w },
 	{ 0x2101, 0x2101, fantasy_sound1_w },
-	{ 0x2103, 0x2103, fantasy_sound2_w },	/* + flipscreen etc */
+//	{ 0x2102, 0x2102, },	/* TODO: music channels #0 and #1 volume */
+	{ 0x2103, 0x2103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
 	{ 0x2200, 0x2200, MWA_RAM, &rockola_scrolly },
 	{ 0x2300, 0x2300, MWA_RAM, &rockola_scrollx },
 	{ 0x3000, 0xbfff, MWA_ROM },
@@ -229,7 +248,8 @@ static struct MemoryWriteAddress pballoon_writemem[] =
 	{ 0xb001, 0xb001, crtc6845_register_w },
 	{ 0xb100, 0xb100, fantasy_sound0_w },
 	{ 0xb101, 0xb101, fantasy_sound1_w },
-	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen etc */
+//	{ 0xb102, 0xb102, },	/* TODO: music channels #0 and #1 volume */
+	{ 0xb103, 0xb103, fantasy_sound2_w },	/* + flipscreen, gfx bank, bg color */
 	{ 0xb200, 0xb200, MWA_RAM, &rockola_scrolly },
 	{ 0xb300, 0xb300, MWA_RAM, &rockola_scrollx },
 	{ -1 }	/* end of table */
@@ -656,6 +676,38 @@ static struct GfxDecodeInfo fantasy_gfxdecodeinfo[] =
 
 
 
+static struct MachineDriver sasuke_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			11289000/16,    /* 700 kHz */
+			0,
+			satansat_readmem,sasuke_writemem,0,0,
+			satansat_interrupt,2
+		},
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	satansat_gfxdecodeinfo,
+	32,4*4 + 4*4,
+	satansat_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	satansat_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
+};
+
 static struct MachineDriver satansat_machine_driver =
 {
 	/* basic machine hardware */
@@ -685,7 +737,10 @@ static struct MachineDriver satansat_machine_driver =
 	satansat_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0
+	0,
+	rockola_sh_start,
+	0,
+	rockola_sh_update
 };
 
 static struct MachineDriver vanguard_machine_driver =
@@ -904,6 +959,11 @@ ROM_START( vanguard_rom )
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* sound ROM 1 */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* sound ROM 2 */
+
+	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, 0x2b7cbae9 )
+	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, 0x3b7e9d7c )
+	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, 0xc36df041 )
 ROM_END
 
 ROM_START( vangrdce_rom )
@@ -929,6 +989,11 @@ ROM_START( vangrdce_rom )
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
 	ROM_LOAD( "sk4_ic51.bin", 0x0000, 0x0800, 0xd2a64006 )  /* missing, using the SNK one */
 	ROM_LOAD( "sk4_ic52.bin", 0x0800, 0x0800, 0xcc4a0b6f )  /* missing, using the SNK one */
+
+	ROM_REGION(0x1800)	/* space for the speech ROMs (not supported) */
+	ROM_LOAD( "sk6_ic07.bin", 0x0000, 0x0800, 0x2b7cbae9 )
+	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, 0x3b7e9d7c )
+	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, 0xc36df041 )
 ROM_END
 
 
@@ -1191,7 +1256,7 @@ struct GameDriver sasuke_driver =
 	"SNK",
 	"Dan Boris\nTheo Philips",
 	GAME_WRONG_COLORS,
-	&satansat_machine_driver,
+	&sasuke_machine_driver,
 	0,
 
 	sasuke_rom,
@@ -1222,7 +1287,7 @@ struct GameDriver satansat_driver =
 
 	satansat_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	satansat_input_ports,
@@ -1248,7 +1313,7 @@ struct GameDriver zarzon_driver =
 
 	zarzon_rom,
 	0, 0,
-	0,
+	fantasy_sample_names,
 	0,	/* sound_prom */
 
 	satansat_input_ports,
@@ -1267,7 +1332,7 @@ struct GameDriver vanguard_driver =
 	"Vanguard (SNK)",
 	"1981",
 	"SNK",
-	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
+	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
 	0,
 	&vanguard_machine_driver,
 	0,
@@ -1293,7 +1358,7 @@ struct GameDriver vangrdce_driver =
 	"Vanguard (Centuri)",
 	"1981",
 	"SNK (Centuri license)",
-	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
+	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
 	0,
 	&vanguard_machine_driver,
 	0,
@@ -1319,7 +1384,7 @@ struct GameDriver fantasy_driver =
 	"Fantasy",
 	"1981",
 	"Rock-ola",
-	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nDani Portillo (high score save)",
+	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
 	0,
 	&fantasy_machine_driver,
 	0,

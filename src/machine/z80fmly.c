@@ -91,9 +91,9 @@ void z80ctc_init (z80ctc_interface *intf)
 
 	for (i = 0; i < intf->num; i++)
 	{
-		ctcs[i].clock = intf->clock[i];
-		ctcs[i].invclock16 = 16.0 / (double)intf->clock[i];
-		ctcs[i].invclock256 = 256.0 / (double)intf->clock[i];
+		ctcs[i].clock = intf->baseclock[i];
+		ctcs[i].invclock16 = 16.0 / (double)intf->baseclock[i];
+		ctcs[i].invclock256 = 256.0 / (double)intf->baseclock[i];
 		ctcs[i].notimer = intf->notimer[i];
 		ctcs[i].intr = intf->intr[i];
 		ctcs[i].zc[0] = intf->zc0[i];

@@ -1,6 +1,8 @@
 /*
 	DECODE(*addr,*op,*s,*d,*ts,*td)
 
+	Based on original TMS9900 dissassembler by Edward Swartz
+	Adapted for use with DJGPP\MAME by Andy Jones
 
 	Disassemble instruction at ADDR, print out disassembly.
 
@@ -297,7 +299,7 @@ int Dasm9900 (char *buffer, int pc)
 		os = 0;
 
 		ts=(op&0x30)>>4;
-		s=(op&15);
+		s=(op&0xf);
 		td=(op&0x0c00)>>10;
 		d=(op&0x3c0)>>6;
 
@@ -321,8 +323,8 @@ int Dasm9900 (char *buffer, int pc)
 
 		switch (ts)
 		{
-			case REG  : { sprintf(buffer,"%s R%d",inst,s) ; os = 8 ; } break;//arj//
-			case IND  : { sprintf(buffer,"%s *R%d",inst,s); os = 8 ; } break;
+			case REG  : { sprintf(buffer,"%s R%d",inst,s) ; os = ( s<10 ? 7 : 8 ) ; } break;
+			case IND  : { sprintf(buffer,"%s *R%d",inst,s); os = ( s<10 ? 8 : 9 ) ; } break;
 
 			case ADDR :
 			{
@@ -334,12 +336,12 @@ int Dasm9900 (char *buffer, int pc)
 				}
 				else
 				{
-					sprintf(buffer,"%s @>%04X(R%d)",inst,sa,s); os = 15 ;
+					sprintf(buffer,"%s @>%04X(R%d)",inst,sa,s); os = ( s<10 ? 15 : 16 ) ;
 				}
 			}
 			break;
 
-			case INC  : { sprintf(buffer,"%s *R%d+",inst,s); os = 9 ; } break;
+			case INC  : { sprintf(buffer,"%s *R%d+",inst,s); os = ( s<10 ? 9 : 10 ) ; } break;
 		}
 
 		switch (td)

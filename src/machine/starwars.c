@@ -56,6 +56,11 @@ int starwars_input_bank_1_r(int offset)
 	if (cpu_getpc() == 0xf978)
 		x|=0x80;
 
+	/* Kludge to enable Empire Mathbox Self-test                  */
+	/* The mathbox looks like it's running, from this address... :) */
+	if (cpu_getpc() == 0xf655)
+		x|=0x80;
+
 	if (avgdvg_done())
 		x|=0x40;
 	else

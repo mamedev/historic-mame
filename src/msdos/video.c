@@ -1,12 +1,14 @@
 #include "driver.h"
-#include <math.h>
 #include <pc.h>
 #include <conio.h>
 #include <sys/farptr.h>
 #include <go32.h>
 #include <time.h>
 #include "TwkUser.c"
+#define inline __inline__	/* keep allegro.h happy */
 #include <allegro.h>
+#undef inline
+#include <math.h>
 #include "vgafreq.h"
 #include "vidhrdw/vector.h"
 
@@ -236,7 +238,10 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 
 	if (bitmap == scrbitmap)
 	{
+		extern int bitmap_dirty;	/* in mame.c */
+
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
+		bitmap_dirty = 1;
 	}
 }
 
@@ -283,7 +288,7 @@ static void init_dirty(char dirty)
 	memset(dirty_new, dirty, MAX_GFX_WIDTH/16 * MAX_GFX_HEIGHT/16);
 }
 
-static inline void swap_dirty(void)
+INLINE void swap_dirty(void)
 {
     char *tmp;
 
@@ -1138,7 +1143,7 @@ void my_textout(char *buf,int x,int y)
 }
 
 
-inline void double_pixels(unsigned long *lb, short seg,
+INLINE void double_pixels(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
 {
 	__asm__ __volatile__ (
@@ -1167,7 +1172,7 @@ inline void double_pixels(unsigned long *lb, short seg,
 	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
 }
 
-inline void double_pixels16(unsigned long *lb, short seg,
+INLINE void double_pixels16(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
 {
 	__asm__ __volatile__ (
@@ -1721,7 +1726,7 @@ void clear_screen(void)
 	osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 }
 
-static inline void pan_display(void)
+INLINE void pan_display(void)
 {
 	/* horizontal panning */
 	if (osd_key_pressed(OSD_KEY_LSHIFT))

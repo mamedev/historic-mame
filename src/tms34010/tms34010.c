@@ -22,7 +22,7 @@ extern int debug_key_pressed;
 #define CPU_SLAVE   1
 
 static TMS34010_Regs state;
-static int *TMS34010_timer[MAX_CPU] = {0,0,0,0}; /* Display interrupt timer */
+static int *TMS34010_timer[MAX_CPU];          /* Display interrupt timer */
 static UINT8* stackbase[MAX_CPU] = {0,0,0,0};
 static UINT32 stackoffs[MAX_CPU] = {0,0,0,0};
 static void (*to_shiftreg  [MAX_CPU])(UINT32, UINT16*) = {0,0,0,0};
@@ -59,7 +59,7 @@ static INT32 (*rfield_functions_s[32]) (UINT32 bitaddr) =
 };
 
 /* public globals */
-int	TMS34010_ICount=50000;
+int	TMS34010_ICount;
 
 /* register definitions and shortcuts */
 #define PC (state.pc)
@@ -657,9 +657,14 @@ TMS34010_Regs* TMS34010_GetState(void)
 void TMS34010_Reset(void)
 {
 	int i;
-	extern unsigned char *RAM;
+
 	memset (&state, 0, sizeof (state));
-	state.lastpixaddr = INVALID_PIX_ADDRESS;					
+	state.lastpixaddr = INVALID_PIX_ADDRESS;
+	for (i = 0; i < MAX_CPU; i ++)
+	{
+		TMS34010_timer[i] = 0;
+	}
+
 	PC = RLONG(0xffffffe0);
 	change_pc29(PC)
 	RESET_ST();

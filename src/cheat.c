@@ -210,7 +210,6 @@
 |*|			Changed keys in the matches list :
 |*|			  - OSD_KEY_F1 adds the selected match to the cheat list (old key was OSD_KEY_ENTER)
 |*|			  - OSD_KEY_F6 adds all the matches to the cheat list    (old key was OSD_KEY_F2)
-|*|			  instead of OSD_KEY_F2
 |*|			Changed function SelectValue :
 |*|			  - int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 |*|						  int Mini, int Maxi, char *fmt, char *msg, int ClrScr, int yPos)
@@ -239,7 +238,7 @@
 |*|			  - int ContinueSearchMatchHeader(int count)
 |*|			  - int ContinueSearchMatchFooter(int count, int idx, int y)
 |*|
-|*|	JCK 981026:	New define : FIRSTPOS 10 (yPos of the 1st string displayed)
+|*|	JCK 981026:	New define : FIRSTPOS (FontHeight*3/2) (yPos of the 1st string displayed)
 |*|			Display [S] instead of (Saved) to fit the screen when OSD_KEY_F1 is pressed
 |*|			Display [W] instead of (Watch) to fit the screen when OSD_KEY_F2 is pressed
 |*|			Corrected digit change in function ChooseWatch : based on CPU instead of 0
@@ -257,13 +256,31 @@
 |*|			  - void EditCheatHelp (void)
 |*|			  - void ChooseWatchHelp (void)
 |*|
-|*|	Questions : How can you use a #define (which is a number) in a string ?
+|*|	JCK 981030:	Fixed a bug to scroll through descriptions of cheats
+|*|			The active cheats are displayed with a check
+|*|			Added the possibility to add a watch when result of a search is displayed
+|*|			New functions :
+|*|			  - void AddCheckToName(int NoCheat,char *buffer)
+|*|
+|*|	JCK 981123:	Removed ParamCpuNo in function build_tables (now use the static SearchCpuNo)
+|*|			Added new #define : JCK - Please do not remove ! Just comment it out !
+|*|
+|*|	JCK 981125:	MEMORY_WRITE instead of memory_find_base in function write_gameram
+|*|			New functions :
+|*|			  - int ConvertAddr(int ParamCpuNo, int ParamAddr) :
+|*|				returns a converted address to fit low endianess
+|*|
+|*|	JCK 981126:	The region of ext tables is the one of the CPU (no more crash)
+|*|			However you still search in CPU 0 :(
 |*|
 \*|*/
 
 #include "driver.h"
 #include <stdarg.h>
 #include <ctype.h>  /* for toupper() and tolower() */
+
+/* JCK 981123 Please do not remove ! Just comment it out ! */
+/* #define JCK */
 
 /*#define ram_size 65536    JB 980407   */
 
@@ -387,7 +404,11 @@ struct cheat_struct {
 
 #define NOVALUE 			-0x0100		/* No value has been selected */ /* JCK 981023 */
 
-#define FIRSTPOS			10			/* yPos of the 1st string displayed */ /* JCK 981026 */
+#define FIRSTPOS			(FontHeight*3/2)	/* yPos of the 1st string displayed */ /* JCK 981026 */
+
+#ifdef JCK
+#define CHECK_ADDRESS		0x100000
+#endif
 
 
 static int CheatTotal;
@@ -399,12 +420,6 @@ static unsigned int WatchesCpuNo[MAX_WATCHES];    /* JCK 981008 */
 static unsigned int Watches[MAX_WATCHES];    /* JCK 980917 */
 static int WatchesFlag;
 static int WatchX,WatchY;
-
-#if 0 /* JB 980407 */
-static unsigned char *StartRam;
-static unsigned char *BackupRam;
-static unsigned char *FlagTable;
-#endif
 
 static int StartValue;
 static int CurrentMethod;
@@ -418,15 +433,6 @@ void		EditCheatHelp( void );
 void		StartSearchHelp( void );
 void		ChooseWatchHelp( void );		/* JCK 981022 */
 /* JRT5 */
-
-#if 0
-/* JRT6 */
-static int	iCPUType = 0x0; 					/* removed JB 980424 */
-static int	iWatchUnusedValue = 0x0;			/* removed JB 980424 */
-char		*pAddrTemplate = "Addr:    %04X\0\0";	/* removed JB 980424 */
-char		*pShortAddrTemplate = "  $%04X";		/* removed JB 980424 */
-/* JRT6 */
-#endif
 
 static int CheatEnabled;
 int he_did_cheat;
@@ -446,6 +452,12 @@ int ManyCpus;
 /* JCK 981022 END */
 
 static int ValTmp;			/* JCK 981023 */
+
+/* JCK 981030 BEGIN */
+char Check[2]	= "\x8C";
+char NoCheck[2]	= "\x20";
+/* JCK 981030 END */
+
 
 /* START JB 980506 */
 static unsigned char osd_key_chars[] =
@@ -616,15 +628,6 @@ static struct ExtMemory FlagTable[MAX_EXT_MEMORY];
 
 extern unsigned char *memory_find_base (int cpu, int offset);
 
-#if 0
-/* removed JB 980424 */
-/* read a byte from CPU 0 ram at address <add> */
-static unsigned char read_gameram (int cpu, int add)
-{
-	return *(unsigned char *)memory_find_base (cpu, add);
-}
-#endif
-
 /* modified JB 980424 */
 /* read a byte from cpu at address <add> */
 static unsigned char read_gameram (int cpu, int add)
@@ -640,7 +643,8 @@ static unsigned char read_gameram (int cpu, int add)
 /*	if (cpu != save)*/
 		memorycontextswap(cpu);
 
-	data = MEMORY_READ(cpu,add);
+	data = MEMORY_READ(cpu,add);    /* JCK 981125 */
+	/* data = *(unsigned char *)memory_find_base (cpu, add); */
 
 	if (cpu != save)
 		memorycontextswap(save);
@@ -651,7 +655,8 @@ static unsigned char read_gameram (int cpu, int add)
 /* write a byte to CPU 0 ram at address <add> */
 static void write_gameram (int cpu, int add, unsigned char data)
 {
-	*(unsigned char *)memory_find_base (cpu, add) = data;
+	MEMORY_WRITE(cpu,add,data);    /* JCK 981125 */
+	/* *(unsigned char *)memory_find_base (cpu, add) = data; */
 }
 
 /* read a byte representing the address <offset> from one of the tables */
@@ -675,8 +680,29 @@ static void backup_ram (struct ExtMemory *table)
 
 	for (ext = table; ext->data; ext++)
 	{
+
+		#ifdef JCK
+		if (errorlog)
+		{
+			fprintf(errorlog,"backup_ram : start = %X - end = %X \n",ext->start,ext->end);
+		}
+		#endif
+
 		gameram = memory_find_base (SearchCpuNo, ext->start);    /* JCK 981006 */
 		memcpy (ext->data, gameram, ext->end - ext->start + 1);
+
+		#ifdef JCK
+		if (errorlog)
+		{
+			int i;
+			if (ext->start == CHECK_ADDRESS)
+			{
+				for (i=0; i <= ext->end - ext->start; i++)
+					fprintf(errorlog,"  C : start = %06X - data = %02X\n",ext->start+i,ext->data[i]);
+			}
+		}
+		#endif
+
 	}
 }
 
@@ -686,7 +712,17 @@ static void memset_ram (struct ExtMemory *table, unsigned char data)
 	struct ExtMemory *ext;
 
 	for (ext = table; ext->data; ext++)
+	{
+
+		#ifdef JCK
+		if (errorlog)
+		{
+			fprintf(errorlog,"memset_ram : start = %X - end = %X - data = %02X\n",ext->start,ext->end,data);
+		}
+		#endif
+
 		memset (ext->data, data, ext->end - ext->start + 1);
+	}
 }
 
 /* free all the memory and init the table */
@@ -700,7 +736,7 @@ static void reset_table (struct ExtMemory *table)
 }
 
 /* create tables for storing copies of all MRA_RAM areas of CPU 0 */
-static int build_tables (int ParamCpuNo)
+static int build_tables (void)    /* JCK 981123 */
 {
 	const struct MemoryReadAddress *memoryread;
 	const struct MemoryReadAddress *mra;
@@ -708,12 +744,22 @@ static int build_tables (int ParamCpuNo)
 	struct ExtMemory *ext_br = BackupRam;
 	struct ExtMemory *ext_ft = FlagTable;
 
+	int region = Machine->drv->cpu[SearchCpuNo].memory_region;    /* JCK 981126 */
+
 	memoryread = Machine->drv->cpu[0].memory_read;
-	/* memoryread = Machine->drv->cpu[ParamCpuNo].memory_read;    bug if ParamCpuNo != 0    JCK 981021 */
+	/* memoryread = Machine->drv->cpu[SearchCpuNo].memory_read; */    /* bug if SearchCpuNo != 0    JCK 981021 */
 
 	/* memory read handler build */
 	mra = memoryread;
-	while (mra->start != -1) mra++;
+	while (mra->start != -1)
+	{
+		mra++;
+
+		#ifdef JCK
+		if (errorlog) fprintf(errorlog,"build_tables 1 : cpu = %d - handler = %d - start = %X - end = %X\n",
+						SearchCpuNo, (int)mra->handler, mra->start,mra->end);
+		#endif
+	}
 	mra--;
 
 	/* JCK 981021 BEGIN */
@@ -731,6 +777,7 @@ static int build_tables (int ParamCpuNo)
 		switch ((FPTR)handler)
 		{
 			/* only track RAM areas */
+
 			case (FPTR)MRA_RAM:
 			case (FPTR)MRA_BANK1:
 			case (FPTR)MRA_BANK2:
@@ -740,14 +787,20 @@ static int build_tables (int ParamCpuNo)
 			case (FPTR)MRA_BANK6:
 			case (FPTR)MRA_BANK7:
 			case (FPTR)MRA_BANK8:
+
 			/* default: */
 
 				size = mra->end - mra->start + 1;
 
+				#ifdef JCK
+				if (errorlog) fprintf(errorlog,"build_tables 2 : cpu = %d - handler = %d - start = %X - end = %X\n",
+									SearchCpuNo, (FPTR)handler, mra->start,mra->end);
+				#endif
+
 				/* time to allocate */
 				ext_sr->start = ext_br->start = ext_ft->start = mra->start;
 				ext_sr->end = ext_br->end = ext_ft->end = mra->end;
-				ext_sr->region = ext_br->region = ext_ft->region = 0;
+				ext_sr->region = ext_br->region = ext_ft->region = region;    /* JCK 981126 */
 				ext_sr->data = malloc (size);
 				ext_br->data = malloc (size);
 				ext_ft->data = malloc (size);
@@ -779,6 +832,25 @@ static int build_tables (int ParamCpuNo)
 /* END JB 980407 */
 
 
+/* JCK 981125 BEGIN */
+/* This function returns the correct address on low-endian machines */
+int ConvertAddr(int ParamCpuNo, int ParamAddr)
+{
+  int ResultAddr = ParamAddr;
+
+  /* I currently use a switch statement because some other CPUs might be added */
+  #ifdef LSB_FIRST
+  switch (Machine->drv->cpu[ParamCpuNo].cpu_type & ~CPU_FLAGS_MASK)
+  {
+	case CPU_M68000:
+		ResultAddr ^= 1;
+  }
+  #endif
+
+  return (ResultAddr);
+}
+/* JCK 981125 END */
+
 /* JCK 981016 BEGIN */
 /* Function to rename the cheatfile (returns 1 if the file has been renamed else 0)*/
 int RenameCheatFile(void)
@@ -788,7 +860,7 @@ int RenameCheatFile(void)
   int EditYPos;
   char buffer[32];
 
-  EditYPos = FIRSTPOS + 4 * FontHeight;    /* JCK 981026 */
+  EditYPos = FIRSTPOS + 3 * FontHeight;    /* JCK 981026 */
 
   osd_clearbitmap (Machine->scrbitmap);
   xprintf (0, 0, EditYPos-(FontHeight*2), "Enter the Cheat Filename:");
@@ -846,7 +918,7 @@ int RenameCheatFile(void)
   if (done == 1)
   {
 	osd_clearbitmap (Machine->scrbitmap);
-      xprintf (0, 0, EditYPos-(FontHeight*3), "Cheat Filename is now:");
+      xprintf (0, 0, EditYPos-(FontHeight*2), "Cheat Filename is now:");
 	xprintf (0, 0, EditYPos, "%s", buffer);    /* JCK 981022 */
 	EditYPos += 4*FontHeight;
 	xprintf(0, 0,EditYPos,"Press A Key To Continue...");
@@ -897,6 +969,9 @@ int SelectMenu(int *s, struct DisplayText *dt, int ArrowsOnly, int WaitForKey,
 
   if (Maxi<Mini)
   {
+	xprintf(0,0,0,"SM : Mini = %d - Maxi = %d",Mini,Maxi);
+	key = osd_read_keyrepeat(0);
+	while (osd_key_pressed(key)) ; /* wait for key release */
 	*done = 2;
 	*s = NOVALUE;
 	return (NOVALUE);
@@ -970,6 +1045,9 @@ int SelectValue(int v, int BCDOnly, int ZeroPoss, int WrapPoss, int DispTwice,
 
   if (Maxi<Mini)
   {
+	xprintf(0,0,0,"SV : Mini = %d - Maxi = %d",Mini,Maxi);
+	key = osd_read_keyrepeat(0);
+	while (osd_key_pressed(key)) ; /* wait for key release */
 	return (NOVALUE);
   }
 
@@ -1188,9 +1266,6 @@ void LoadCheat(void)
  */
 void InitCheat(void)
 {
-  /* FILE *f;			Removed by JCK 981016 */
-  /* char *ptr;			Removed by JCK 981016 */
-  /* char str[80];		Removed by JCK 981016 */
   int i;
 
   he_did_cheat = 0;
@@ -1198,8 +1273,6 @@ void InitCheat(void)
 
   WatchEnabled = 0;    /* JCK 980917 */
 
-  /* CheatTotal = 0;		Removed by JCK 981016 */
-  /* LoadedCheatTotal = 0;	Removed by JCK 981016 */
   CurrentMethod = 0;
   SaveMethod = 0;    /* JCK 981023 */
 
@@ -1212,15 +1285,9 @@ void InitCheat(void)
   /* JCK 981022 END */
 
 /* JB 980407 */
-#if 0
-  StartRam = NULL;
-  BackupRam = NULL;
-  FlagTable = NULL;
-#else
-  reset_table (StartRam);
-  reset_table (BackupRam);
-  reset_table (FlagTable);
-#endif
+reset_table (StartRam);
+reset_table (BackupRam);
+reset_table (FlagTable);
 
 /* JRT6	- modified JB 980424 */
 	for(i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
@@ -1244,20 +1311,10 @@ void InitCheat(void)
  */
 void StopCheat(void)
 {
-
 /* JB 980407 */
-#if 0
-	if(StartRam != NULL)
-		free(StartRam);
-	if(BackupRam != NULL)
-		free(BackupRam);
-	if(FlagTable != NULL)
-	free(FlagTable);
-#else
-	reset_table (StartRam);
-	reset_table (BackupRam);
-	reset_table (FlagTable);
-#endif
+reset_table (StartRam);
+reset_table (BackupRam);
+reset_table (FlagTable);
 }
 
 /*****************
@@ -1509,13 +1566,40 @@ void DoCheat(void)
 						break;
 					/* JCK 980917 END */
 
-					/* JCK 981016 BEGIN */
+					/* JCK 981030 BEGIN */
 					case 60:
+					case 61:
+					case 62:
+					case 63:
+					case 64:
+					case 65:
 						CheatTable[i].Count = 1;
 						CheatTable[i].Special = 107;
 						CheatTable[i].Backup = RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address);
 						break;
-					/* JCK 981016 END */
+					case 70:
+					case 71:
+					case 72:
+					case 73:
+					case 74:
+					case 75:
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							CheatTable[i].Data);
+						/*Delete this cheat from the table*/
+						for(j = i;j<CheatTotal-1;j++)
+						{
+							CheatTable[j].CpuNo = CheatTable[j+1].CpuNo;
+							CheatTable[j].Address = CheatTable[j+1].Address;
+							CheatTable[j].Data = CheatTable[j+1].Data;
+							CheatTable[j].Special = CheatTable[j+1].Special;
+							CheatTable[j].Count = CheatTable[j+1].Count;
+							strcpy(CheatTable[j].Name,CheatTable[j+1].Name);
+							CheatTable[j].Minimum = CheatTable[j+1].Minimum;
+							CheatTable[j].Maximum = CheatTable[j+1].Maximum;
+						}
+						CheatTotal--;
+						break;
+					/* JCK 981030 END */
 
 						/*Special case, linked with 5,6,7 */
 					case 100:
@@ -1562,7 +1646,7 @@ void DoCheat(void)
 						break;
 
 					/* JCK 981020 BEGIN */
-					/*Special case, linked with 60 */
+					/*Special case, linked with 60 .. 65 */
 					/* Change the memory only if the memory has changed since the last backup */
 					case 107:
 						if (RD_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Backup)
@@ -1581,17 +1665,6 @@ void DoCheat(void)
 
 
   /* ` continue cheat, to accelerate the search for new cheat */
-  #if 0
-  if (osd_key_pressed(OSD_KEY_TILDE))
-  {
-	osd_set_mastervolume(0);
-	while (osd_key_pressed(OSD_KEY_TILDE))
-		osd_update_audio(); /* give time to the sound hardware to apply the volume change */
-	ContinueSearch();
-	osd_set_mastervolume(CurrentVolume);
-	(Machine->drv->vh_update)(Machine->scrbitmap);  /* Make Game Redraw Screen */
-  }
-  #endif
 
   /* F6 Enable/Disable the active cheats on the fly. Required for some cheat */
   if( osd_key_pressed( OSD_KEY_CHEAT_TOGGLE ) && CheatTotal )    /* JCK 981021 */
@@ -1671,20 +1744,6 @@ int EditCheatHeader(void)
 
 void EditCheat(int CheatNo)
 {
-/*  char	*paDisplayText[] = {			Removed by JCK 981022
-		"To edit a Cheat name, press",
-		"<ENTER> while Cheat name",
-		"is selected.",
-		"To edit Cheat values,  or to",
-		"select a pre-defined Cheat",
-		"Name, use:",
-		"<+> and Right arrow key: +1",
-		"<-> and Left  arrow key: -1",
-		"<1>/<2>/<3>/<4>: +1 digit",
-		"",
-		"<F10>: Show Help",
-		"\0" }; */
-
   char *CheatNameList[] = {
 	"Infinite Lives",
 	"Infinite Lives PL1",
@@ -1704,23 +1763,6 @@ void EditCheat(int CheatNo)
   int EditYPos;
 
   osd_clearbitmap(Machine->scrbitmap);
-
-  /* Removed by JCK 981022 */
-  /* for(i=0;i<EDIT_CHEAT_LINES;i++)
-  {
-	if(i)
-		dt[i].y = (dt[i - 1].y + FontHeight + 2);
-	else
-		dt[i].y = FIRSTPOS;
-	dt[i].color = DT_COLOR_WHITE;
-	dt[i].text = paDisplayText[i];
-	dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-	if(dt[i].x > MachWidth)
-		dt[i].x = 0;
-  }
-  y = ( dt[ EDIT_CHEAT_LINES - 1 ].y + ( 3 * FontHeight ) );
-  total = EDIT_CHEAT_LINES;
-  */
 
   y = EditCheatHeader();    /* JCK 981022 */
   total = 0;
@@ -1791,6 +1833,12 @@ void EditCheat(int CheatNo)
 			switch (s)
 			{
 				case 0:	/* Name */
+
+					/* JCK 981030 BEGIN */
+					if (CurrentName < 0)
+						CurrentName = 0;
+					/* JCK 981030 END */
+
 					if (CurrentName == 0)						/* wrap if necessary*/
 						while (CheatNameList[CurrentName][0])
 							CurrentName++;
@@ -2133,6 +2181,43 @@ void DisplayActiveCheats(int x,int y)
   }
 }
 
+/* JCK 981030 BEGIN */
+void AddCheckToName(int NoCheat,char *buffer)
+{
+  int i = 0;
+  int flag = 0;
+
+  for (i=0;i<CheatTotal && !flag;i++)
+  {
+	if (CheatTable[i].Special < 60)
+	{
+		if (	(CheatTable[i].Address 	== LoadedCheatTable[NoCheat].Address)	&&
+			(CheatTable[i].Special	== LoadedCheatTable[NoCheat].Special)	&&
+			(CheatTable[i].Data	== LoadedCheatTable[NoCheat].Data	)	)
+			flag = 1;
+	}
+	else if (CheatTable[i].Special < 70)
+	{
+		if (	(CheatTable[i].Address 	== LoadedCheatTable[NoCheat].Address)	&&
+			(70				>  LoadedCheatTable[NoCheat].Special)	)
+			flag = 1;
+	}
+	else
+	{
+		if (	(CheatTable[i].Address 	== LoadedCheatTable[NoCheat].Address)	&&
+			(70				<= LoadedCheatTable[NoCheat].Special)	)
+			flag = 1;
+	}
+  }
+  strcpy(buffer,(flag ? Check : NoCheck));
+  strcat(buffer," ");
+  strcat(buffer,LoadedCheatTable[NoCheat].Name);
+  for(i=strlen(buffer);i<CHEAT_NAME_MAXLEN+2;i++)
+	buffer[i]=' ';
+  buffer[CHEAT_NAME_MAXLEN+2]=0;
+}
+/* JCK 981030 END */
+
 void SelectCheat(void)
 {
   int i,x,y,s,key,done,total;
@@ -2144,6 +2229,9 @@ void SelectCheat(void)
   int StartY,EndY;
 
   int BCDOnly, ZeroPoss;	/* JCK 981020 */
+
+  char str2[MAX_DISPLAYCHEATS+1][40];    /* JCK 981030 */
+  int j;    /* JCK 981030 */
 
 HardRefresh:
   osd_clearbitmap(Machine->scrbitmap);
@@ -2168,18 +2256,24 @@ HardRefresh:
 /* Make the list */
   for (i = 0;i < total;i++)
   {
-    dt[i].text = LoadedCheatTable[i].Name;
-    dt[i].x = x;
-    dt[i].y = y;
-    dt[i].color = DT_COLOR_WHITE;
-    y += FontHeight;
+
+	/* JCK 981030 BEGIN */
+	/* dt[i].text = LoadedCheatTable[i].Name; */
+	AddCheckToName(i, str2[ i ]);
+	dt[i].text = str2[i];
+	/* JCK 981030 END */
+
+	dt[i].x = x;
+	dt[i].y = y;
+	dt[i].color = DT_COLOR_WHITE;
+	y += FontHeight;
   }
 
   dt[total].text = 0; /* terminate array */
 
   x += 4*FontWidth;
   y += (FontHeight * 2);    /* JCK 981026 */
-  DisplayActiveCheats(x,y);
+  /* DisplayActiveCheats(x,y); */ /* Removed by JCK 981030 */
 
   EndY = y;
 
@@ -2188,9 +2282,7 @@ HardRefresh:
   do
   {
     for (i = 0;i < total;i++)
-    {
       dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-    }
 
     if(LoadedCheatTotal == 0){
       iWhereY = 0;
@@ -2236,8 +2328,10 @@ HardRefresh:
 	}
 
 	displaytext(dt,0,1);
-	key = osd_read_keyrepeat(0);
 
+	key = osd_read_keyrepeat(0);
+	for (i=EndY+4; i<MachHeight; i++)
+		memset (Machine->scrbitmap->line[i], 0, MachWidth);
 	switch (key)
 	{
       case OSD_KEY_DOWN:
@@ -2264,7 +2358,13 @@ End of list
           for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
           }
           dt[total].text = 0; /* terminate array */
@@ -2304,7 +2404,13 @@ End of list
           for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
           }
           dt[total].text = 0; /* terminate array */
@@ -2327,7 +2433,13 @@ End of list
 	  {
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
         }
         dt[total].text = 0; /* terminate array */
@@ -2345,7 +2457,13 @@ End of list
 	  {
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
         }
         dt[total].text = 0; /* terminate array */
@@ -2369,7 +2487,13 @@ End of list
 	  {
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
         }
         dt[total].text = 0; /* terminate array */
@@ -2392,7 +2516,13 @@ End of list
 	  {
             if(Index+i >= LoadedCheatTotal)
               break;
-            dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
             total++;
         }
         dt[total].text = 0; /* terminate array */
@@ -2469,7 +2599,13 @@ End of list
         for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
           if(Index+i >= LoadedCheatTotal)
             break;
-          dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
           total++;
         }
         dt[total].text = 0; /* terminate array */
@@ -2492,7 +2628,13 @@ End of list
             for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
               if(Index+i >= LoadedCheatTotal)
                 break;
-              dt[i].text = LoadedCheatTable[i+Index].Name;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
               total++;
             }
             dt[total].text = 0; /* terminate array */
@@ -2502,7 +2644,7 @@ End of list
 
 /* Redisplay all */
         osd_clearbitmap(Machine->scrbitmap);
-        DisplayActiveCheats(x,y);
+        /* DisplayActiveCheats(x,y); */ /* Removed by JCK 981030 */
 
         break;
 
@@ -2546,9 +2688,7 @@ End of list
 				LoadedCheatTable[s+Index].Address, LoadedCheatTable[s+Index].Data,
 				LoadedCheatTable[s+Index].Special, LoadedCheatTable[s+Index].Name);
 
-			/* xprintf (0, dt[s].x + (strlen(LoadedCheatTable[s+Index].Name) *
-				FontWidth) + FontWidth, dt[s].y, "(Saved)"); */
-           		xprintf(0, dt[s].x+(CHEAT_NAME_MAXLEN+1)*FontWidth, dt[s].y,"[S]");    /* JCK 981026 */
+			xprintf (0, 0, EndY+4, "Saved to File ...."); /* JCK 981030 */
 			fclose (f);
         }
         break;
@@ -2566,9 +2706,7 @@ End of list
             		WatchesCpuNo[i] = LoadedCheatTable[s+Index].CpuNo;    /* JCK 981008 */
             		Watches[i] = LoadedCheatTable[s+Index].Address;
 
-            		/* xprintf(0, dt[s].x+(strlen(LoadedCheatTable[s+Index].Name) *
-            			FontWidth)+FontWidth,dt[s].y,"(W)"); */
-            		xprintf(0, dt[s].x+(CHEAT_NAME_MAXLEN+1)*FontWidth, dt[s].y,"[W]");    /* JCK 981026 */
+				xprintf (0, 0, EndY+4, "Added as Watch ..."); /* JCK 981030 */
 
             		WatchesFlag = 1;
 				WatchEnabled = 1;    /* JCK 980917 */
@@ -2583,6 +2721,27 @@ End of list
 /* JRT6 */
 		if( LoadedCheatTotal )								/* If At Least One Cheat*/
 			EditCheat(s+Index);								/* Edit It*/
+
+/* Make the list */
+          total = 0;
+          for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
+            if(Index+i >= LoadedCheatTotal)
+              break;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
+            total++;
+          }
+          dt[total].text = 0; /* terminate array */
+
+/* Clear old list */
+          for (i = StartY;i < ( EndY + FontHeight );i++)
+            memset(Machine->scrbitmap->line[i],0,MachWidth);
+
         break;
 /* JRT6 */
 
@@ -2688,7 +2847,7 @@ End of list
           break;
 	  CheatTotal=0;
         osd_clearbitmap(Machine->scrbitmap);
-        DisplayActiveCheats(x,y);
+        /* DisplayActiveCheats(x,y); */ /* Removed by JCK 981030 */
         break;
 
 /* JCK 981006 END */
@@ -2751,8 +2910,7 @@ End of list
 
 /* No more than MAX_ACTIVECHEATS cheat at the time */
         if(CheatTotal > MAX_ACTIVECHEATS-1){    /* JCK 980917 */
-					xprintf( 0, 0, ( ( EndY - FontHeight ) - 4 ),
-						"(Limit Of Active Cheats)" );
+					xprintf( 0, 0, EndY+4, "(Limit Of Active Cheats)" );
           break;
         }
 
@@ -2793,10 +2951,13 @@ End of list
 	    }
 	    if (ValTmp != NOVALUE)
 	    {
+		/* Removed by JCK 981030 */
+		/*
 	    	if ((CheatTable[CheatTotal].Special>=60) && (CheatTable[CheatTotal].Special<=65))
           		CheatTable[CheatTotal].Special = 60;
 	    	if ((CheatTable[CheatTotal].Special>=70) && (CheatTable[CheatTotal].Special<=75))
-          		CheatTable[CheatTotal].Special = 1;
+          		CheatTable[CheatTotal].Special = 70;
+		*/
             CheatTotal++;
             CheatEnabled = 1;
             he_did_cheat = 1;
@@ -2805,9 +2966,24 @@ End of list
 
         }
 
-        osd_clearbitmap(Machine->scrbitmap);
-        DisplayActiveCheats(x,y);
-        break;
+		osd_clearbitmap(Machine->scrbitmap);
+		/* DisplayActiveCheats(x,y); */ /* Removed by JCK 981030 */
+/* Make the list */
+            total = 0;
+            for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
+              if(Index+i >= LoadedCheatTotal)
+                break;
+
+		/* JCK 981030 BEGIN */
+            /* dt[i].text = LoadedCheatTable[i+Index].Name; */
+		AddCheckToName(i+Index, str2[ i ]);
+		dt[i].text = str2[i];
+		/* JCK 981030 END */
+
+              total++;
+            }
+            dt[total].text = 0; /* terminate array */
+		break;
 
       case OSD_KEY_ESC:
       case OSD_KEY_TAB:
@@ -2912,6 +3088,7 @@ int ContinueSearchMatchHeader(int count)
 int ContinueSearchMatchFooter(int count, int idx, int y)
 {
   int i = 0;
+  int FreeWatch = 0;
 
   y += FontHeight;
   if (LoadedCheatTotal > MAX_LOADEDCHEATS-1)
@@ -2931,6 +3108,18 @@ int ContinueSearchMatchFooter(int count, int idx, int y)
 	for (i=y; i< ( y + 2 * FontHeight + 1 ); i++)
 		memset (Machine->scrbitmap->line[i], 0, MachWidth);
   y += FontHeight;
+
+  /* JCK 981030 BEGIN */
+  for (i=0;i<MAX_WATCHES;i++)
+	if (Watches[i] == MAX_ADDRESS(WatchesCpuNo[i]))
+		FreeWatch = 1;
+  if (FreeWatch)
+	xprintf(0, 0,y,"<F2>: Add Entry To Watches");
+  else
+	for (i=y; i< ( y + 2 * FontHeight + 1 ); i++)
+		memset (Machine->scrbitmap->line[i], 0, MachWidth);
+  y += FontHeight;
+  /* JCK 981030 END */
 
   if (LoadedCheatTotal < MAX_LOADEDCHEATS)
   {
@@ -2994,28 +3183,6 @@ void StartSearch(void)
 
   y = StartSearchHeader();
   /* JCK 981023 END */
-
-  /* total = 9;			Removed by JCK 981023
-  dt[0].text = "Lives, Or Some Other Value";
-  dt[1].text = "Timers (+/- Some Value)";
-  dt[2].text = "Energy (Greater Or Less)";
-  dt[3].text = "Status (A Bit Or Flag)";
-  dt[4].text = "Slow But Sure (Changed Or Not)";
-  dt[5].text = "";
-  dt[6].text = "<F10>: Show Help";
-  dt[7].text = "";
-  dt[8].text = "Return To Cheat Menu";
-  dt[9].text = 0;
-  y += 3*FontHeight;
-  for (i = 0;i < total;i++)
-  {
-	dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-	if(dt[i].x > MachWidth)
-		dt[i].x = 0;
-	dt[i].y = i * ( FontHeight + 2 ) + y;
-	if (i == total-1)
-		dt[i].y += 2*FontHeight;
-  } */
 
   /* JCK 981023 BEGIN */
   total = CreateMenu(paDisplayText, dt, y);
@@ -3088,52 +3255,6 @@ void StartSearch(void)
   /* if(cpu_gettotalcpu() > 1) */
   if (ManyCpus)    /* JCK 981022 */
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* y = 25;
-	xprintf(0, 0,y,"Enter CPU To Search In:");
-	y += FontHeight;
-	xprintf(0, 0,y,"(Arrow Keys Change Value)");
-	y += 2*FontHeight;
-	s = 0;
-	done = 0;
-	do
-	{
-		xprintf(0, 0,y,"%01X", s);
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_RIGHT:
-			case OSD_KEY_UP:
-				if(s < cpu_gettotalcpu()-1)
-					s++;
-				else
-					s=0;
-				break;
-
-			case OSD_KEY_LEFT:
-			case OSD_KEY_DOWN:
-				if(s != 0)
-					s--;
-				else
-					s=cpu_gettotalcpu()-1;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-	while (osd_key_pressed(key)) ;
-	osd_clearbitmap(Machine->scrbitmap);
-	if(done == 2)
-		return; */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	ValTmp = SelectValue(0, 0, 1, 1, 0, 0, cpu_gettotalcpu()-1,
 					"%01X", "Enter CPU To Search In:", 1, FIRSTPOS + 3 * FontHeight);
@@ -3158,44 +3279,6 @@ void StartSearch(void)
   /* If the method 1 is selected, ask for a number */
   if(CurrentMethod == Method_1)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* y = 25;
-	xprintf(0, 0,y,"Enter Value To Search For:");
-	y += FontHeight;
-	xprintf(0, 0,y,"(Arrow Keys Change Value)");
-	y += 2*FontHeight;
-	s = 0;
-	done = 0;
-	do
-	{
-      	xprintf(0, 0,y,"%03d  (0x%02X)",s, s);
-		key = osd_read_keyrepeat(0);
-	 	switch (key)
-		{
-			case OSD_KEY_RIGHT:
-			case OSD_KEY_UP:
-				if(s < 0xFF)
-					s++;
-				else
-					s=0;
-				break;
-			case OSD_KEY_LEFT:
-			case OSD_KEY_DOWN:
-				if(s != 0)
-					s--;
-				else
-					s=0xFF;
-				break;
-			case OSD_KEY_ENTER:
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 1;
-				break;
-		}
-	} while (done == 0);
-        StartValue = s; */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	ValTmp = SelectValue(0, 0, 1, 1, 1, 0, 0xFF,
 					"%03d  (0x%02X)", "Enter Value To Search For:", 1, FIRSTPOS + 3 * FontHeight);
@@ -3217,7 +3300,8 @@ void StartSearch(void)
   /* JB 980407 */
   /* build ram tables to match game ram */
   /* JCK 981027 BEGIN */
-  TrapBuild = (build_tables (SearchCpuNo));
+  TrapBuild = (build_tables ());    /* JCK 981123 */
+
   if (TrapBuild)
   {
 	y = FIRSTPOS;
@@ -3251,30 +3335,25 @@ void StartSearch(void)
   }
   /* JCK 981027 END */
 
-  #if 0
-  /* Allocate array if not already allocated */
-  if(StartRam == NULL)
-	if ((StartRam = malloc(ram_size)) == 0)
-		return ;
-  if(BackupRam == NULL)
-	if ((BackupRam = malloc(ram_size)) == 0)
-		return ;
-  if(FlagTable == NULL)
-	if ((FlagTable = malloc(ram_size)) == 0)
-	return ;
-  #endif
-
   /* JB 980407 */
   /* Backup the ram */
-  backup_ram (StartRam);
-  backup_ram (BackupRam);
-  memset_ram (FlagTable, 0xFF); /* At start, all location are good */
 
-  #if 0
-  memcpy (StartRam, Machine->memory_region[0], ram_size);
-  memcpy (BackupRam, Machine->memory_region[0], ram_size);
-  memset(FlagTable,0xFF,ram_size); /* At start, all location are good */
+  #ifdef JCK
+  if (errorlog) fprintf(errorlog,"StartSearch 0 : srs = %X - sre = %X \n",StartRam->start,StartRam->end);
   #endif
+
+  backup_ram (StartRam);
+
+  #ifdef JCK
+  if (errorlog) fprintf(errorlog,"StartSearch 0 : brs = %X - bre = %X \n",BackupRam->start,BackupRam->end);    /* JCK 981123 */
+  #endif
+
+  backup_ram (BackupRam);
+  #ifdef JCK
+  if (errorlog) fprintf(errorlog,"StartSearch 0 : fts = %X - fte = %X \n",FlagTable->start,FlagTable->end);    /* JCK 981123 */
+  #endif
+
+  memset_ram (FlagTable, 0xFF); /* At start, all location are good */
 
   osd_clearbitmap(Machine->scrbitmap);
 
@@ -3287,30 +3366,50 @@ void StartSearch(void)
 	struct ExtMemory *ext, *ext_ft;
 	for (ext = StartRam, ext_ft = FlagTable; ext->data; ext++, ext_ft++)
 	{
+
+		#ifdef JCK
+		if (errorlog)
+		{
+			fprintf(errorlog,"StartSearch 1 : start = %X - end = %X \n",ext->start,ext->end);
+		}
+		#endif
+
+
 		for (i=0; i <= ext->end - ext->start; i++)
+		{
+
+			#ifdef JCK
+			if (errorlog)
+			{
+				if (ext->start == CHECK_ADDRESS)
+				{
+					fprintf(errorlog,"  srs = %06X - data = %02X - fts = %06X - table = %02X\n",
+							ext->start+i,ext->data[i],ext_ft->start+i,ext_ft->data[i]);
+				}
+			}
+			#endif
+
 			if ((ext->data[i] != s) && (ext->data[i] != s-1))
 				ext_ft->data[i] = 0;
+		}
 	}
-
-	#if 0
-	for (i=0;i<ram_size;i++)
-		if((StartRam[i] != s) && (StartRam[i] != s-1))
-			FlagTable[i] = 0;
-	#endif
 
 	/* JB 980407 */
 	count = 0;
 	for (ext = FlagTable; ext->data; ext++)
+	{
+
+		#ifdef JCK
+		if (errorlog)
+		{
+			fprintf(errorlog,"StartSearch 2 : start = %X - end = %X \n",ext->start,ext->end);
+		}
+		#endif
+
 		for (i=0; i<= ext->end - ext->start; i++)
 			if (ext->data[i] != 0)
 				count++;
-
-	#if 0
-	count = 0;
-	for (i=0;i<ram_size;i++)
-		if(FlagTable[i] != 0)
-			count++;
-	#endif
+	}
 
 	y += 4*FontHeight;
 	xprintf(0, 0,y,"Matches Found: %d",count);
@@ -3354,6 +3453,12 @@ void ContinueSearch(void)
 
   char fmt[20];    /* JCK 981022 */
 
+  /* JCK 981125 BEGIN */
+  char buf[20];
+  char *ptr;
+  int TrueAddr, TrueData;
+  /* JCK 981125 END */
+
   osd_clearbitmap(Machine->scrbitmap);
 
   if (CurrentMethod == 0)
@@ -3369,62 +3474,6 @@ void ContinueSearch(void)
   /* Ask new value if method 1 */
   if (CurrentMethod == Method_1)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* xprintf(0, 0,y,"Enter The New Value:");
-	y += FontHeight;
-	xprintf(0, 0,y,"(Arrow Keys Change Value)");
-	y += FontHeight;
-	xprintf(0, 0,y,"Press <ENTER> When Done.");
-	y += FontHeight;
-	xprintf(0, 0,y,"<F1> Starts A New Search.");
-	y += 2*FontHeight;
-
-	s = StartValue;
-	done = 0;
-	do
-	{
-		xprintf(0, 0,y,"%03d  (0x%02X)",s, s);
-
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_RIGHT:
-			case OSD_KEY_UP:
-				if(s < 0xFF)
-					s++;
-				break;
-
-			case OSD_KEY_LEFT:
-			case OSD_KEY_DOWN:
-				if(s != 0)
-					s--;
-				break;
-
-			case OSD_KEY_F1:
-				StartSearch();
-				return;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key)) ;
-
-	if (done == 2)
-	{
-		osd_clearbitmap(Machine->scrbitmap);
-		return;
-	} */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	ValTmp = SelectValue(StartValue, 0, 1, 1, 1, 0, 0xFF, "%03d  (0x%02X)", "", 0, y);
 	osd_clearbitmap(Machine->scrbitmap);
@@ -3445,13 +3494,6 @@ void ContinueSearch(void)
 					ext->data[i] = 0;
 	}
 
-	#if 0
-	/* Flag the value */
-	for (i=0;i<ram_size;i++)
-		if(FlagTable[i] != 0)
-			if((Machine->memory_region[0][i] != s) && (Machine->memory_region[0][i] != s-1))
-				FlagTable[i] = 0;
-	#endif
   }
 
 
@@ -3459,75 +3501,6 @@ void ContinueSearch(void)
   /* Ask new value if method 2 */
   if (CurrentMethod == Method_2)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* xprintf(0, 0,y,"Enter How Much The Value");
-	y += FontHeight;
-	if( iCheatInitialized )
-	{
-		xprintf(0, 0,y,"Has Changed Since You");
-		y += FontHeight;
-		xprintf(0, 0,y,"Started The Search:");
-	}
-	else
-	{
-		xprintf(0, 0,y,"Has Changed Since The");
-		y += FontHeight;
-		xprintf(0, 0,y,"Last Check:");
-	}
-	y += FontHeight;
-	xprintf(0, 0,y,"(Arrow Keys Change Value)");
-	y += FontHeight;
-	xprintf(0, 0,y,"Press <ENTER> When Done.");
-	y += FontHeight;
-	xprintf(0, 0,y,"<F1> Starts A New Search.");
-	y += 2*FontHeight;
-
-	s = StartValue;
-	done = 0;
-	do
-	{
-		xprintf(0, 0,y,"%+04d  (0x%02X)",s, (unsigned char)s);
-
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_RIGHT:
-			case OSD_KEY_UP:
-				if(s < 128)
-					s++;
-				break;
-
-			case OSD_KEY_LEFT:
-			case OSD_KEY_DOWN:
-				if(s > -127)
-					s--;
-				break;
-
-			case OSD_KEY_F1:
-				StartSearch();
-				return;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key)) ;
-
-	if (done == 2)
-	{
-		osd_clearbitmap(Machine->scrbitmap);
-		return;
-	} */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	ValTmp = SelectValue(StartValue, 0, 1, 0, 0, -127, 128, "%+04d", "", 0, y);
 	osd_clearbitmap(Machine->scrbitmap);
@@ -3552,14 +3525,6 @@ void ContinueSearch(void)
 					ext->data[i] = 0;
 	}
 
-	#if 0
-	/* Flag the value */
-	for (i=0;i<ram_size;i++)
-		if(FlagTable[i] != 0)
-			if(Machine->memory_region[0][i] != (BackupRam[i] + s))
-				FlagTable[i] = 0;
-	#endif
-
 	/* Backup the ram because we ask how much the value changed since the last time,
 	not in relation of the start value */
 	/*memcpy (BackupRam, Machine->memory_region[0], ram_size);*/
@@ -3570,84 +3535,6 @@ void ContinueSearch(void)
   /******** Method 3 ***********/
   if (CurrentMethod == Method_3)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* xprintf(0, 0,y,"Choose The Expression That");
-	y += FontHeight;
-	xprintf(0, 0,y,"Specifies What Occured Since");
-	y += FontHeight;
-	if( iCheatInitialized )
-		xprintf(0, 0,y,"You Started The Search:");
-	else
-		xprintf(0, 0,y,"The Last Check:");
-	y += 2*FontHeight;
-	xprintf(0, 0,y,"<F1> Starts A New Search.");
-	y += FontHeight;
-
-	y += 2*FontHeight;
-	total = 3;
-	dt[0].text = "New Value is Less";
-	dt[1].text = "New Value is Equal";
-	dt[2].text = "New value is Greater";
-	dt[3].text = 0;
-	for (i = 0;i < total;i++)
-	{
-		dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-		if(dt[i].x > MachWidth)
-			dt[i].x = 0;
-		dt[i].y = y;
-		y += FontHeight;
-	}
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-			dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-		displaytext(dt,0,1);
-
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1)
-					s++;
-				else
-					s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0)
-					s--;
-				else
-					s = total - 1;
-				break;
-
-			case OSD_KEY_F1:
-				StartSearch();
-				return;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key)) ;
-
-	if (done == 2)
-	{
-		osd_clearbitmap(Machine->scrbitmap);
-		return;
-	} */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	char *paDisplayText[] = {
 		"New Value is Less",
@@ -3703,12 +3590,6 @@ void ContinueSearch(void)
 						ext->data[i] = 0;
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-				if(Machine->memory_region[0][i] >= BackupRam[i])
-					FlagTable[i] = 0;
-		#endif
 	}
 	else if (s==1)
 	{
@@ -3725,12 +3606,6 @@ void ContinueSearch(void)
 						ext->data[i] = 0;
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-				if(Machine->memory_region[0][i] != BackupRam[i])
-					FlagTable[i] = 0;
-		#endif
 	}
 	else
 	{
@@ -3747,12 +3622,6 @@ void ContinueSearch(void)
 						ext->data[i] = 0;
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-				if(Machine->memory_region[0][i] <= BackupRam[i])
-					FlagTable[i] = 0;
-		#endif
 	}
 
 	/* Backup the ram because we ask how much the value changed since the last
@@ -3766,75 +3635,6 @@ void ContinueSearch(void)
   /* Ask if the value is the same as when we start or the opposite */
   if (CurrentMethod == Method_4)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* xprintf(0, 0,y,"Choose One Of The Following:");
-	y += FontHeight;
-	xprintf(0, 0,y,"<F1> Starts A New Search.");
-
-	y += 2*FontHeight;
-	total = 2;
-	dt[0].text = "Bit is Same as Start";
-	dt[1].text = "Bit is Opposite from Start";
-	dt[2].text = 0;
-	for (i = 0;i < total;i++)
-	{
-		dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-		if(dt[i].x > MachWidth)
-			dt[i].x = 0;
-		dt[i].y = y;
-		y += FontHeight;
-	}
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-			dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-		displaytext(dt,0,1);
-
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1)
-					s++;
-				else
-					s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0)
-					s--;
-				else
-					s = total - 1;
-				break;
-
-			case OSD_KEY_F1:
-				StartSearch();
-				return;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key)) ;
-
-	if (done == 2)
-	{
-		osd_clearbitmap(Machine->scrbitmap);
-		return;
-	} */
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	char *paDisplayText[] = {
 		"Bit is Same as Start",
@@ -3890,14 +3690,6 @@ void ContinueSearch(void)
 				}
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-			{
-				j = Machine->memory_region[0][i] ^ (StartRam[i] ^ 0xFF);
-				FlagTable[i] = j & FlagTable[i];
-			}
-		#endif
 	}
 	else
 	{
@@ -3916,14 +3708,6 @@ void ContinueSearch(void)
 				}
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-			{
-				j = Machine->memory_region[0][i] ^ StartRam[i];
-				FlagTable[i] = j & FlagTable[i];
-			}
-		#endif
 	}
   }
 
@@ -3932,76 +3716,6 @@ void ContinueSearch(void)
   /* Ask if the value is the same as when we start or different */
   if(CurrentMethod == Method_5)
   {
-	/* Removed by JCK 981023 BEGIN */
-	/* xprintf(0, 0,y,"Choose One Of The Following:");
-	y += FontHeight;
-	xprintf(0, 0,y,"<F1> Starts A New Search.");
-
-	y += 2*FontHeight;
-	total = 2;
-	dt[0].text = "Memory is Same as Start";
-	dt[1].text = "Memory is Different from Start";
-	dt[2].text = 0;
-	for (i = 0;i < total;i++)
-	{
-		dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-		if(dt[i].x > MachWidth)
-			dt[i].x = 0;
-		dt[i].y = y;
-		y += FontHeight;
-	}
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0;i < total;i++)
-			dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-		displaytext(dt,0,1);
-
-		key = osd_read_keyrepeat(0);
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1)
-					s++;
-				else
-					s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0)
-					s--;
-				else
-					s = total - 1;
-				break;
-
-			case OSD_KEY_F1:
-				StartSearch();
-				return;
-				break;
-
-			case OSD_KEY_ENTER:
-				done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_TAB:
-				done = 2;
-				break;
-		}
-	} while (done == 0);
-
-	while (osd_key_pressed(key)) ;
-
-	if (done == 2)
-	{
-		osd_clearbitmap(Machine->scrbitmap);
-		return;
-	} */
-
-	/* Removed by JCK 981023 END */
-
 	/* JCK 981023 BEGIN */
 	char *paDisplayText[] = {
 		"Memory is Same as Start",
@@ -4055,12 +3769,6 @@ void ContinueSearch(void)
 						ext->data[i] = 0;
 		}
 
-		#if 0
-			for (i=0;i<ram_size;i++)
-				if(FlagTable[i] != 0)
-					if(Machine->memory_region[0][i] != StartRam[i])
-						FlagTable[i] = 0;
-		#endif
 	}
 	else
 	{
@@ -4077,12 +3785,6 @@ void ContinueSearch(void)
 						ext->data[i] = 0;
 		}
 
-		#if 0
-		for (i=0;i<ram_size;i++)
-			if(FlagTable[i] != 0)
-				if(Machine->memory_region[0][i] == StartRam[i])
-					FlagTable[i] = 0;
-		#endif
 	}
   }
 
@@ -4090,7 +3792,8 @@ void ContinueSearch(void)
   /* For all method:
     - Display how much location the search
     - Display them
-    - The user can press ENTER or F1 to add one to the cheat list
+    - The user can press F2 to add one to the watches
+    - The user can press F1 to add one to the cheat list
     - The user can press F6 to add all to the cheat list */
 
   osd_clearbitmap(Machine->scrbitmap);
@@ -4105,13 +3808,6 @@ void ContinueSearch(void)
 	for (i=0; i <= ext->end - ext->start; i++)
 		if (ext->data[i] != 0)
 			count++;
-
-  #if 0
-  count = 0;
-  for (i=0;i<ram_size;i++)
-	if(FlagTable[i] != 0)
-		count++;
-  #endif
 
   /* JCK 981023 BEGIN */
   y = ContinueSearchMatchHeader(count);
@@ -4130,7 +3826,6 @@ void ContinueSearch(void)
 
   yFoot = y + FontHeight * (MAX_MATCHES + 3);    /* JCK 981023 */
 
-  /* x = (MachWidth - FontWidth * 9) / 2; */    /* Removed by JCK 981026 */
   y += 2*FontHeight;
 
   yTemp = y;
@@ -4148,8 +3843,17 @@ void ContinueSearch(void)
 			/* sprintf (str2[total], "%04X = %02X", i+ext->start, ext_sr->data[i]); */
 			strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
 			strcat(fmt," = %02X");
-			sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]);
 			/* JCK 981026 END */
+
+			/* JCK 981125 BEGIN */
+			/* sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]); */
+			/* LoadedCheatTable[LoadedCheatTotal].Address = i+ext->start; */
+			/* I convert the address because I scan the memory region */
+			TrueAddr = ConvertAddr(SearchCpuNo, i+ext->start);
+			TrueData = ext_sr->data[i];
+			sprintf (str2[total], fmt, TrueAddr, TrueData);
+			/* JCK 981125 END */
+
 			dt[total].text = str2[total];
 			/* dt[total].x = x; */
 			dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
@@ -4165,115 +3869,7 @@ void ContinueSearch(void)
 		}
   }
 
-  #if 0
-  for (i=0;i<ram_size;i++)
-  {
-	if(FlagTable[i] != 0)
-	{
-		/* JCK 981026 BEGIN */
-		/* sprintf (str2[total], "%04X = %02X", i, StartRam[i]); */
-		strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
-		strcat(fmt," = %02X");
-		sprintf (str2[total], fmt, i, StartRam[i]);
-		/* JCK 981026 END */
-		dt[total].text = str2[total];
-		/* dt[total].x = x; */
-		dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
-		dt[total].y = y;
-		dt[total].color = DT_COLOR_WHITE;
-		total++;
-		y += FontHeight;
-		if(total >= MAX_MATCHES)    /* JCK 980917 */
-		{
-			Continue = i;
-			break;
-		}
-	}
-  }
-  #endif
-
   dt[total].text = 0; /* terminate array */
-
-  /* Removed by JCK 981023 BEGIN */
-  /* s = 0;
-  done = 0;
-  do
-  {
-	int Begin = 0;
-
-	for (i = 0;i < total;i++)
-		dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-	displaytext(dt,0,1);
-
-	key = osd_read_keyrepeat(0);
-	switch (key)
-	{
-		case OSD_KEY_DOWN:
-			if (s < total - 1)
-				s++;
-			else
-			{
-				s = 0;
-
-				if (total < MAX_MATCHES)
-					break;
-				total = 0;
-
-				Begin = Continue+1;
-				Continue = 0;
-				for (ext = FlagTable, ext_sr = StartRam; ext->data && Continue==0; ext++, ext_sr++)
-				{
-					if (ext->start <= Begin && ext->end >= Begin)
-						for (i = Begin - ext->start; i <= ext->end - ext->start; i++)
-							if (ext->data[i] != 0)
-							{
-								sprintf (str2[total],"%04X = %02X", i+ext->start, ext_sr->data[i]);
-								dt[total].text = str2[total];
-								total++;
-								if (total >= MAX_MATCHES)
-								{
-									Continue = i+ext->start;
-									break;
-								}
-							}
-				}
-
-				#if 0
-				for (i=Continue+1;i<ram_size;i++)
-				{
-					if(FlagTable[i] != 0)
-					{
-						sprintf(str2[total],"%06X = %02X",i,StartRam[i]);
-						dt[total].text = str2[total];
-						total++;
-						if (total >= MAX_MATCHES)
-						{
-							Continue = i;
-							break;
-						}
-					}
-				}
-				#endif
-
-				dt[total].text = 0;
-			}
-			break;
-
-		case OSD_KEY_UP:
-			if (s > 0)
-				s--;
-			else
-				s = total - 1;
-			break;
-
-		case OSD_KEY_ESC:
-		case OSD_KEY_TAB:
-		default:
-			done = 2;
-			break;
-	}
-  } while (done == 0); */
-  /* Removed by JCK 981023 END */
 
   /* JCK 981023 BEGIN */
   yTemp = ContinueSearchMatchHeader(count);
@@ -4318,8 +3914,17 @@ void ContinueSearch(void)
 						/* sprintf (str2[total], "%04X = %02X", i+ext->start, ext_sr->data[i]); */
 						strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
 						strcat(fmt," = %02X");
-						sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]);
 						/* JCK 981026 END */
+
+						/* JCK 981125 BEGIN */
+						/* sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]); */
+						/* LoadedCheatTable[LoadedCheatTotal].Address = i+ext->start; */
+						/* I convert the address because I scan the memory region */
+						TrueAddr = ConvertAddr(SearchCpuNo, i+ext->start);
+						TrueData = ext_sr->data[i];
+						sprintf (str2[total], fmt, TrueAddr, TrueData);
+						/* JCK 981125 END */
+
 						dt[total].text = str2[total];
 						dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
 						total++;
@@ -4330,29 +3935,6 @@ void ContinueSearch(void)
 						}
 					}
 			}
-
-			#if 0
-			for (i=0;i<ram_size;i++)
-			{
-				if(FlagTable[i] != 0)
-				{
-					/* JCK 981026 BEGIN */
-					/* sprintf (str2[total], "%04X = %02X", i, StartRam[i]); */
-					strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
-					strcat(fmt," = %02X");
-					sprintf (str2[total], fmt, i, StartRam[i]);
-					/* JCK 981026 END */
-					dt[total].text = str2[total];
-					dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
-					total++;
-					if (total >= MAX_MATCHES)    /* JCK 980917 */
-					{
-						Continue = i;
-						break;
-					}
-				}
-			}
-			#endif
 
 			dt[total].text = 0; /* terminate array */
 			break;
@@ -4386,8 +3968,14 @@ void ContinueSearch(void)
 							/* sprintf (str2[total], "%04X = %02X", i+ext->start, ext_sr->data[i]); */
 							strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
 							strcat(fmt," = %02X");
-							sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]);
 							/* JCK 981026 END */
+
+							/* JCK 981125 BEGIN */
+							/* I convert the address because I scan the memory region */
+							/* sprintf (str2[total], fmt, i+ext->start, ext_sr->data[i]); */
+							sprintf (str2[total], fmt, ConvertAddr(SearchCpuNo, i+ext->start), ext_sr->data[i]);
+							/* JCK 981125 END */
+
 							dt[total].text = str2[total];
 							dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
 							total++;
@@ -4399,33 +3987,17 @@ void ContinueSearch(void)
 						}
 			}
 
-			#if 0
-			for (i=Continue+1;i<ram_size;i++)
-			{
-				if(FlagTable[i] != 0)
-				{
-					/* JCK 981026 BEGIN */
-					/* sprintf (str2[total], "%04X = %02X", i, StartRam[i]); */
-					strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
-					strcat(fmt," = %02X");
-					sprintf (str2[total], fmt, i, StartRam[i]);
-					/* JCK 981026 END */
-					dt[total].text = str2[total];
-					dt[total].x = (MachWidth - FontWidth * strlen(dt[total].text)) / 2;    /* JCK 981026 */
-					total++;
-					if(total >= MAX_MATCHES)    /* JCK 980917 */
-					{
-						Continue = i;
-						break;
-					}
-				}
-			}
-			#endif
-
 			dt[total].text = 0; /* terminate array */
 			break;
 
 		case OSD_KEY_F1:    /* JCK 981023 */
+			while (osd_key_pressed(key)) ;
+
+			/* JCK 981030 BEGIN */
+			for (i=yFoot; i< ( yFoot + 2 * FontHeight + 1 ); i++)
+				memset (Machine->scrbitmap->line[i], 0, MachWidth);
+			/* JCK 981030 END */
+
 			if (count == 0)    /* JCK 981023 */
 				break;
 			/* Add the selected address to the LoadedCheatTable */
@@ -4435,22 +4007,35 @@ void ContinueSearch(void)
 				LoadedCheatTable[LoadedCheatTotal].CpuNo = SearchCpuNo;    /* JCK 981008 */
 				LoadedCheatTable[LoadedCheatTotal].Special = 0;
 				LoadedCheatTable[LoadedCheatTotal].Count = 0;
-				sscanf(dt[s].text,"%X",&i);
+
+				/* JCK 981125 BEGIN */
+				/* sscanf(dt[s].text,"%X",&i);
 				LoadedCheatTable[LoadedCheatTotal].Address = i;
-				/* LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i]; */
-				LoadedCheatTable[LoadedCheatTotal].Data = RD_STARTRAM(i); /* JB 980407 */
+				LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
+				LoadedCheatTable[LoadedCheatTotal].Data = RD_STARTRAM(i); */
+				strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
+				strcpy(buf, dt[s].text);
+				ptr = strtok(buf, "=");
+				sscanf(ptr,"%X", &TrueAddr);
+				ptr = strtok(NULL, "=");
+				sscanf(ptr,"%02X", &TrueData);
+				LoadedCheatTable[LoadedCheatTotal].Address = TrueAddr;
+				LoadedCheatTable[LoadedCheatTotal].Data = TrueData;
+				/* JCK 981125 END */
+
 				/* strcpy(LoadedCheatTable[LoadedCheatTotal].Name,dt[s].text); */
 				/* JCK 981026 BEGIN */
-				strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
 				if (ManyCpus)
 				{
 					strcat(fmt," (%01X) = %02X");
-					sprintf (str2[11], fmt, i, SearchCpuNo, RD_STARTRAM(i));
+					/* sprintf (str2[11], fmt, i, SearchCpuNo, RD_STARTRAM(i)); */
+					sprintf (str2[11], fmt, TrueAddr, SearchCpuNo, TrueData);    /* JCK 981125 */
 				}
 				else
 				{
 					strcat(fmt," = %02X");
-					sprintf (str2[11], fmt, i, RD_STARTRAM(i));
+					/* sprintf (str2[11], fmt, i, RD_STARTRAM(i)); */
+					sprintf (str2[11], fmt, TrueAddr, TrueData);    /* JCK 981125 */
 				}
 				/* JCK 981026 END */
 				strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
@@ -4465,7 +4050,45 @@ void ContinueSearch(void)
 				xprintf(0, 0,yFoot,"%s Not Added",dt[s].text);    /* JCK 981023 */
 			break;
 
+		case OSD_KEY_F2:
+			/* JCK 981030 BEGIN */
+			while (osd_key_pressed(key)) ;
+
+			for (i=yFoot; i< ( yFoot + 2 * FontHeight + 1 ); i++)
+				memset (Machine->scrbitmap->line[i], 0, MachWidth);
+
+			for (j=0;j<MAX_WATCHES;j++)
+			{
+				if (Watches[j] == MAX_ADDRESS(WatchesCpuNo[j]))
+				{
+					/* JCK 981125 BEGIN */
+					/* sscanf(dt[s].text,"%X",&i); */
+					strcpy(buf, dt[s].text);
+					ptr = strtok(buf, "=");
+					sscanf(ptr,"%X", &TrueAddr);
+					/* JCK 981125 END */
+
+					WatchesCpuNo[j] = SearchCpuNo;
+					Watches[j] = TrueAddr;    /* JCK 981125 */
+					WatchesFlag = 1;
+					WatchEnabled = 1;
+					strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
+					sprintf (str2[11], fmt, Watches[j]);
+					xprintf(0, 0,yFoot,"%s Added as Watch %d",str2[11],j+1);
+					break;
+				}
+			}
+			break;
+			/* JCK 981030 END */
+
 		case OSD_KEY_F6:    /* JCK 981023 */
+			while (osd_key_pressed(key)) ;
+
+			/* JCK 981030 BEGIN */
+			for (i=yFoot; i< ( yFoot + 2 * FontHeight + 1 ); i++)
+				memset (Machine->scrbitmap->line[i], 0, MachWidth);
+			/* JCK 981030 END */
+
 			if (count == 0)    /* JCK 981023 */
 				break;
 			/* Add all the list to the LoadedCheatTable */
@@ -4485,19 +4108,33 @@ void ContinueSearch(void)
 						LoadedCheatTable[LoadedCheatTotal].Count = 0;
 						/* LoadedCheatTable[LoadedCheatTotal].CpuNo = 0; */
 						LoadedCheatTable[LoadedCheatTotal].CpuNo = SearchCpuNo;    /* JCK 981008 */
-						LoadedCheatTable[LoadedCheatTotal].Address = i+ext->start;
-						LoadedCheatTable[LoadedCheatTotal].Data = ext_sr->data[i];
+
+						/* JCK 981125 BEGIN */
+						/* LoadedCheatTable[LoadedCheatTotal].Address = i+ext->start; */
+						/* I convert the address because I scan the memory region */
+						TrueAddr = ConvertAddr(SearchCpuNo, i+ext->start);
+						TrueData = ext_sr->data[i];
+						LoadedCheatTable[LoadedCheatTotal].Address = TrueAddr;
+						LoadedCheatTable[LoadedCheatTotal].Data = TrueData;
+						/* JCK 981125 END */
+
 						/* JCK 981026 BEGIN */
 						strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
 						if (ManyCpus)
 						{
 							strcat(fmt," (%01X) = %02X");
-							sprintf (str2[11], fmt, i+ext->start, SearchCpuNo, ext_sr->data[i]);
+							/* JCK 981125 BEGIN */
+							/* sprintf (str2[11], fmt, i+ext->start, SearchCpuNo, ext_sr->data[i]); */
+							sprintf (str2[11], fmt, TrueAddr, SearchCpuNo, TrueData);
+							/* JCK 981125 END */
 						}
 						else
 						{
 							strcat(fmt," = %02X");
-							sprintf (str2[11], fmt, i+ext->start, ext_sr->data[i]);
+							/* JCK 981125 BEGIN */
+							/* sprintf (str2[11], fmt, i+ext->start, ext_sr->data[i]); */
+							sprintf (str2[11], fmt, TrueAddr, TrueData);
+							/* JCK 981125 END */
 						}
 						/* JCK 981026 END */
 						strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
@@ -4510,56 +4147,7 @@ void ContinueSearch(void)
 				}
 			}
 
-			#if 0
-			for (i=0;i<ram_size;i++)
-			{
-				if(LoadedCheatTotal > MAX_LOADEDCHEATS-1)    /* JCK 980917 */
-					break;
-				if(FlagTable[i] != 0)
-				{
-					countAdded++;    /* JCK 981023 */
-					LoadedCheatTable[LoadedCheatTotal].Special = 0;
-					LoadedCheatTable[LoadedCheatTotal].Count = 0;
-					LoadedCheatTable[LoadedCheatTotal].CpuNo = 0;
-					LoadedCheatTable[LoadedCheatTotal].Address = i;
-					LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
-					/* JCK 981026 BEGIN */
-					strcpy(fmt, pShortAddrTemplate(SearchCpuNo));
-					if (ManyCpus)
-					{
-						strcat(fmt," (%01X) = %02X");
-						sprintf (str2[11], fmt, i, SearchCpuNo, StartRam[i]);
-					}
-					else
-					{
-						strcat(fmt," = %02X");
-						sprintf (str2[11], fmt, i, StartRam[i]);
-					}
-					/* JCK 981026 END */
-					strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
-					/* JCK 981023 BEGIN */
-					LoadedCheatTable[LoadedCheatTotal].Minimum = 0;
-					LoadedCheatTable[LoadedCheatTotal].Maximum = 0xFF;
-					/* JCK 981023 END */
-					LoadedCheatTotal++;
-				}
-			}
-			#endif
-
-			/* JCK 981023 BEGIN */
-			for (i=yFoot; i< ( yFoot + 2 * FontHeight + 1 ); i++)
-				memset (Machine->scrbitmap->line[i], 0, MachWidth);
-			/* JCK 981023 END */
-
 			xprintf(0, 0,yFoot,"%d Added",countAdded);    /* JCK 981023 */
-
-			/* JRT5 Print Message If Cheat List Is Full */
-			if(LoadedCheatTotal > MAX_LOADEDCHEATS-1)    /* JCK 980917 */
-			{
-				/* y += FontHeight;
-				xprintf(0, 0,y,"(Cheat List Is Full.)"); */ /* Removed by JCK 981023 */
-			}
-			/* JRT5 */
 			break;
 
 	}
@@ -4634,24 +4222,12 @@ int ChooseWatchFooter(int y)
 
 void ChooseWatch(void)
 {
- /* char *paDisplayText[] = {			Removed by JCK 981022
-                "<+> and Right arrow key: +1",
-                "<-> and Left  arrow key: -1",
-                "<1/2/3/4/5/6>: +1 digit",
-                "<9>: Prev CPU    <0>: Next CPU",
-                "<Delete> to disable a watch",
-                "<Enter> to copy previous watch",
-                "<I>, <J>, <K>, and <L> move",
-                "the watch positions",
-                "(All \"F\"s means watch disabled)",
-                "\0" }; */
-
   int i,s,y,key,done;
   int total;
   struct DisplayText dt[20];
-  char str2[MAX_WATCHES][15];    /* JCK 981027 */
+  char str2[MAX_WATCHES+1][15];    /* JCK 981027 */
   char buf[40];
-  char buf2[15];    /* JCK 981027 */
+  char buf2[20];    /* JCK 981030 */
   int trueorientation;
 
   int yFoot,yTemp,countAdded;    /* JCK 981022 */
@@ -4666,23 +4242,6 @@ void ChooseWatch(void)
   Machine->orientation = ORIENTATION_DEFAULT;
 
   osd_clearbitmap(Machine->scrbitmap);
-
-  /* Removed by JCK 981022 */
-  /* for( i = 0; i < 9; i++ )
-  {
-    if( i )
-      dt[ i ].y = ( dt[ i - 1 ].y + FontHeight + 2 );
-    else
-      dt[ i ].y = 35;
-    dt[ i ].color = DT_COLOR_WHITE;
-    dt[ i ].text = paDisplayText[ i ];
-    dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-    if(dt[i].x > MachWidth)
-      dt[i].x = 0;
-  }
-  y = ( dt[ 8 ].y + ( 3 * FontHeight ) );
-  total = 9;
-  */
 
   /* JCK 981022 BEGIN */
   y = ChooseWatchHeader();
@@ -4758,34 +4317,6 @@ void ChooseWatch(void)
 	for (i = 0;i < (int)strlen(buf);i++)
 		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
 			WatchX+(i*FontWidth),WatchY,0,TRANSPARENCY_NONE,0);
-
-	/* Removed by JCK 981023 BEGIN */
-	/* for (i = 0;i < total;i++)
-		dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-	displaytext(dt,0,1);
-
-	key = osd_read_keyrepeat(0);
-	switch (key)
-	{
-		case OSD_KEY_DOWN:
-			if (s < total - 1)
-				s++;
-			else
-				s = 0;
-			break;
-		case OSD_KEY_UP:
-			if (s > 0)
-				s--;
-			else
-				s = total - 1;
-			break;
-
-		case OSD_KEY_ESC:
-		case OSD_KEY_TAB:
-			done = 2;
-			break;
-	} */
-	/* Removed by JCK 981023 END */
 
 	yTemp = ChooseWatchFooter(yFoot);    /* JCK 981022 */
 
@@ -5065,13 +4596,6 @@ void ChooseWatch(void)
 				LoadedCheatTable[LoadedCheatTotal].Address = Watches[s];
 				LoadedCheatTable[LoadedCheatTotal].Special = 0;
 				LoadedCheatTable[LoadedCheatTotal].Data = RD_GAMERAM(WatchesCpuNo[s], Watches[s]);
-				/* JCK 981022 BEGIN */
-				if (ManyCpus)
-					sprintf (buf,"%04X (%01X) = %02X", Watches[s], WatchesCpuNo[s],
-						RD_GAMERAM(WatchesCpuNo[s], Watches[s]));
-				else
-					sprintf (buf,"%04X = %02X", Watches[s], RD_GAMERAM(WatchesCpuNo[s], Watches[s]));
-				/* JCK 981022 END */
 				strcpy(LoadedCheatTable[LoadedCheatTotal].Name,buf);
 				LoadedCheatTable[LoadedCheatTotal].Minimum = 0;
 				LoadedCheatTable[LoadedCheatTotal].Maximum = 0;
@@ -5237,24 +4761,6 @@ int cheat_menu(void)
   struct DisplayText dt[10];
   /* JCK 981022 END */
 
-/* Cheat menu */
-/*total = 6;			Removed by JCK 981022
-  dt[0].text = "Load And/Or Enable A Cheat";
-  dt[1].text = "Start A New Cheat Search";
-  dt[2].text = "Continue Search";
-  dt[3].text = "Memory Watch";
-  dt[4].text = "";
-  dt[5].text = "Return To Main Menu";
-  dt[6].text = 0; (terminate array)
-  for (i = 0;i < total;i++)
-  {
-    dt[i].x = (MachWidth - FontWidth * strlen(dt[i].text)) / 2;
-    if(dt[i].x > MachWidth)
-      dt[i].x = 0;
-    dt[i].y = i * ( FontHeight + 2 );
-    if (i == total-1) dt[i].y += FontHeight;
-  } */
-
   /* JCK 981023 BEGIN */
   total = CreateMenu(paDisplayText, dt, FIRSTPOS);
   x = dt[total-1].x;
@@ -5305,7 +4811,7 @@ int cheat_menu(void)
 			}
 			break;
 	}
-  } while (done == 0);
+  } while ((done != 1) && (done != 2));    /* JCK 981030 */
 
   /* clear the screen before returning */
   osd_clearbitmap(Machine->scrbitmap);

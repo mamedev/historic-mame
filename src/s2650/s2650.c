@@ -9,6 +9,7 @@
 /* define this to have some interrupt information logged */
 #define VERBOSE
 
+#include "strings.h"
 #include "memory.h"
 #include "types.h"
 #include "S2650/s2650.h"
@@ -1128,4 +1129,3 @@ extern FILE * errorlog;
 	} while (S2650_ICount > 0);
 	return cycles - S2650_ICount;
 }
-

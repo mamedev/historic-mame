@@ -111,7 +111,7 @@ typedef struct ym2151_f {
     signed int TimAVal,TimBVal;
     void *TimATimer,*TimBTimer;  /* ASG 980324 -- added for tracking timers */
     void (*handler)(void);
-
+    void (*portwrite)(int, int);
 } YM2151;
 
 
@@ -159,5 +159,7 @@ unsigned char YMReadReg(unsigned char n);
 SAMPLE *YMBuffer(int n);
 
 void YMSetIrqHandler(int n, void (*handler)(void));
+
+void YMSetPortWriteHandler(int n, void (*handler)(int,int));
 
 #endif /* _H_YM2151_ */

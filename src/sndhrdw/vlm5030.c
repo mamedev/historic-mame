@@ -487,7 +487,7 @@ void VLM5030_update(void)
 		/* sampling mode (check  busy flag) */
 		if( pin_ST == 0 && pin_BSY == 1 )
 		{
-			if( osd_get_sample_status(channel) )
+			if( osd_get_sample_status(channel+1) )
 				pin_BSY = 0;
 		}
 	}
@@ -526,7 +526,7 @@ void VLM5030_RST (int pin )
 			if( pin_BSY )
 			{
 				if( sampling_mode )
-					osd_stop_sample( channel );
+					osd_stop_sample( channel+1 );
 				phase = PH_RESET;
 				pin_BSY = 0;
 			}
@@ -606,7 +606,7 @@ int VLM5030_sh_start( struct VLM5030interface *interface )
 {
     intf = interface;
 
-	buffer_len = intf->clock / 440 / Machine->drv->frames_per_second;
+	buffer_len = intf->baseclock / 440 / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_pos = 0;
 	pin_BSY = pin_RST = pin_ST  = 0;
@@ -619,7 +619,7 @@ int VLM5030_sh_start( struct VLM5030interface *interface )
 	}
 	memset(outbuffer,0x80,buffer_len);
 
-	channel = get_play_channels(2);	/* one for stream, one for samples */
+	channel = get_play_channels(2);
 	return 0;
 }
 
@@ -633,7 +633,7 @@ void VLM5030_sh_update( void )
 		if (sample_pos < buffer_len)
 			vlm5030_process (outbuffer + sample_pos, buffer_len - sample_pos);
 		sample_pos = 0;
-		osd_play_streamed_sample(channel,(signed char *)outbuffer,buffer_len,emulation_rate,intf->volume);
+		osd_play_streamed_sample(channel,(signed char *)outbuffer,buffer_len,emulation_rate,intf->volume,0);
 	}
 }
 

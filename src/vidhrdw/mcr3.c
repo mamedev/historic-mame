@@ -4,7 +4,6 @@
 
 	Functions to emulate the video hardware of an mcr3-style machine.
 
-	TODO: Add fluorescent light support to brighten/darken the backdrop.
 ***************************************************************************/
 
 #include "driver.h"
@@ -14,21 +13,26 @@
 #include "artwork.h"
 
 static struct artwork *dotron_backdrop = NULL;
+static unsigned char dotron_palettes[3][3*256];
+
+#ifndef MIN
+#define MIN(x,y) (x)<(y)?(x):(y)
+#endif
 
 /* These are used to align Discs of Tron with the backdrop */
 #define DOTRON_X_START 144
 #define DOTRON_Y_START 40
+#define DOTRON_HORIZON 138
 
 /* We've got two different ways to get the backdrop to the screen */
 /* Feel free to try each one and see what's best */
 /* Only uncomment ONE of these! */
 #define BLIT_METHOD_1 1
-//#define BLIT_METHOD_2 1
+/*#define BLIT_METHOD_2 1*/
 /* --- */
 
 
 static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
-
 static int scroll_offset;
 static int draw_lamps;
 
@@ -87,7 +91,6 @@ void mcr3_paletteram_w(int offset,int data)
 	b = (b << 5) | (b << 2) | (b >> 1);
 
 	palette_change_color(offset/2,r,g,b);
-
 }
 
 
@@ -470,18 +473,38 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 int dotron_vh_start(void)
 {
+	int i,x,y;
+
 	if (generic_vh_start())
 		return 1;
 
-	/* Get background - it better have 190 colors or less */
-    dotron_backdrop = backdrop_load("dotron.png",64,190);
+	/* Get background - it better have 95 colors or less */
+	dotron_backdrop = artwork_load("dotron.png",64,95);
 
-    if (dotron_backdrop != NULL)
+	if (dotron_backdrop != NULL)
 	{
+		/* From the horizon upwards, use the second palette */
+		for (y=0; y<DOTRON_HORIZON; y++)
+			for (x=0; x<dotron_backdrop->artwork->width; x++)
+				dotron_backdrop->orig_artwork->line[y][x] += 95;
+		backdrop_refresh(dotron_backdrop);
+
+		/* Create palettes with different levels of brightness */
+		memcpy ( dotron_palettes[0], dotron_backdrop->orig_palette,
+			 3*dotron_backdrop->num_pens_used);
+		for (i=0; i<dotron_backdrop->num_pens_used; i++)
+		{
+			/* only boost red and blue */
+			dotron_palettes[1][i*3] = MIN(dotron_backdrop->orig_palette[i*3]*2, 255);
+			dotron_palettes[1][i*3+1] = dotron_backdrop->orig_palette[i*3+1];
+			dotron_palettes[1][i*3+2] = MIN(dotron_backdrop->orig_palette[i*3+2]*2, 255);
+			dotron_palettes[2][i*3] = MIN(dotron_backdrop->orig_palette[i*3]*3, 255);
+			dotron_palettes[2][i*3+1] = dotron_backdrop->orig_palette[i*3+1];
+			dotron_palettes[2][i*3+2] = MIN(dotron_backdrop->orig_palette[i*3+2]*3, 255);
+		}
 
 		/* NOTE: Without this, our extra borders might never get drawn */
 		copybitmap(tmpbitmap,dotron_backdrop->artwork,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
 		if (errorlog) fprintf(errorlog,"Backdrop loaded.\n");
 	}
 
@@ -497,6 +520,38 @@ void dotron_vh_stop(void)
     dotron_backdrop = NULL;
 }
 
+static void dotron_change_palette(int which)
+{
+	int i, offset;
+	unsigned char *new_palette;
+
+	offset = dotron_backdrop->start_pen+95;
+	new_palette = dotron_palettes [which];
+	for (i = 0; i < dotron_backdrop->num_pens_used; i++)
+		palette_change_color(i + offset, new_palette[i*3],
+				     new_palette[i*3+1], new_palette[i*3+2]);
+}
+
+void dotron_change_light (int light)
+{
+	static int light_status=4;
+
+	if (dotron_backdrop != NULL)
+	{
+		light = (light & 0x01) + ((light>>1) & 0x01);
+		if (light != light_status)
+		{
+			dotron_change_palette(light);
+			if (light>light_status)
+			{
+				/* only flash if the light is turned on */
+				timer_set (0.05, light_status, dotron_change_palette);
+				timer_set (0.1, light, dotron_change_palette);
+			}
+			light_status = light;
+		}
+	}
+}
 
 void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -513,10 +568,11 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	sclip.max_y = DOTRON_Y_START + 30*16 - 1;
 
 	/* This is necessary because Discs of Tron modifies the palette */
-    if (dotron_backdrop != NULL)
+	if (dotron_backdrop != NULL)
 	{
 		if (backdrop_black_recalc())
 			memset(dirtybuffer,1,videoram_size);
+
 	}
 
 	if (full_refresh)
@@ -585,7 +641,7 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         }
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&sclip,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)

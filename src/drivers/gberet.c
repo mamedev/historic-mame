@@ -236,7 +236,7 @@ static struct SN76496interface sn76496_interface =
 	1,	/* 1 chip */
 	1500000,	/* hand tuned, however other sources claim that */
 				/* the schematics mention a 1.78975 MHz freq) */
-	{ 255 }
+	{ 100 }
 };
 
 

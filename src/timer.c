@@ -402,7 +402,7 @@ double timer_timeleft (void *which)
  */
 double timer_get_time (void)
 {
-	return getabsolutetime ();
+	return global_offset + getabsolutetime ();
 }
 
 
@@ -412,7 +412,7 @@ double timer_get_time (void)
 double timer_starttime (void *which)
 {
 	timer_entry *timer = which;
-	return timer->start;
+	return global_offset + timer->start;
 }
 
 
@@ -422,7 +422,7 @@ double timer_starttime (void *which)
 double timer_firetime (void *which)
 {
 	timer_entry *timer = which;
-	return timer->expire;
+	return global_offset + timer->expire;
 }
 
 

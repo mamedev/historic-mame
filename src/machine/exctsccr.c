@@ -10,13 +10,12 @@ onto the stack one after the other. Basically then the program
 runs and when it returns on one of these subroutines, it expects
 to land on the proper 'next' subroutine.
 
-The only read/write with unknown meaning yet is the one at
-0x62f8. I confirmed its related to sound tho.
-
-
 Ernesto Corvi - 10/30/98
 
 *************************************************************************************/
+
+#include "strings.h"
+
 
 #define MCU_KEY_TABLE_SIZE 16
 
@@ -112,7 +111,7 @@ void exctsccr_mcu_control_w( int offs, int data ) {
 		exctsccr_mcu_ram[0x0005] = 0x08;
 		exctsccr_mcu_ram[0x0380] = 0xf1;
 		exctsccr_mcu_ram[0x0381] = 0x01;
-//		exctsccr_mcu_ram[0x02f8] = 0x1f; /* Selects song to play during gameplay */
+		exctsccr_mcu_ram[0x02f8] = 0x1f; /* Selects song to play during gameplay */
 
 		exctsccr_mcu_ram[0x0009] = 0x08;
 		memcpy( &exctsccr_mcu_ram[0x0170], mcu_table1, MCU_KEY_TABLE_SIZE );

@@ -516,7 +516,7 @@ struct GameDriver commandj_driver =
 	__FILE__,
 	&commando_driver,
 	"commandj",
-	"Commando (Japan)",
+	"Senjo no Ookami",
 	"1985",
 	"Capcom",
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",

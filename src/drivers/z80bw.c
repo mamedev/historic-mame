@@ -44,6 +44,7 @@ void astinvad_sh_port5_w(int offset,int data);
 void astinvad_sh_update(void);
 
 
+
 static struct MemoryWriteAddress astinvad_writemem[] = /* L.T */ /* Whole function */
 {
 	{ 0x1c00, 0x23ff, MWA_RAM },
@@ -203,6 +204,55 @@ static const char *astinvad_sample_names[] =
 	0       /* end of array */
 };
 
+/*****************************************************************************/
+/* Highscore save and load HSC 11/04/98										 */
+
+
+static int astinvad_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+/*		RAM[0x1fc9]=1;
+		RAM[0x1fca]=1;
+		RAM[0x1fcb]=1;
+*/
+
+
+
+
+	if (memcmp(&RAM[0x1cff],"\x08\x20\x03",3) == 0 )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x1fc9],19);
+            osd_fclose(f);
+        }
+
+        return 1;
+    }
+
+    else
+    return 0;  /* we can't load the hi scores yet */
+}
+
+static void astinvad_hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+		osd_fwrite(f,&RAM[0x1fc9],19);
+        //osd_fwrite(f,&RAM[0x1c00],2047);
+		//{ 0x4000, 0x4fff, MWA_RAM, },
+		//osd_fwrite(f,&RAM[0x4000],4095);
+        osd_fclose(f);
+    }
+}
+
 /* LT 20-3-1998 */
 struct GameDriver astinvad_driver =
 {
@@ -227,7 +277,7 @@ struct GameDriver astinvad_driver =
 	0, astinvad_palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	0,0
+	astinvad_hiload,astinvad_hisave
 };
 
 /* LT 20 - 3 19978 */

@@ -6,9 +6,10 @@
 struct YM2151interface
 {
 	int num;
-	int clock;
+	int baseclock;
 	int volume[MAX_2151];
-	void (*handler[MAX_2151])(void);
+	void (*irqhandler[MAX_2151])(void);
+	void (*portwritehandler[MAX_2151])(int,int);
 };
 
 int YM2151_status_port_0_r(int offset);

@@ -176,7 +176,7 @@ static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
 	3867120,	/* ?? the main oscillator is 15.46848 Mhz */
-	{ 255, 255, 255 }
+	{ 100, 100, 100 }
 };
 
 

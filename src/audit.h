@@ -16,7 +16,7 @@
 #define AUD_LENGTH_MISMATCH	4
 
 #define AUD_MAX_ROMS		100	/* maximum roms per driver */
-#define AUD_MAX_SAMPLES		100	/* maximum samples per driver */
+#define AUD_MAX_SAMPLES		200	/* maximum samples per driver */
 
 typedef struct
 {

@@ -86,7 +86,7 @@ Note3: Addresses with a * next to them have been deduced, but not verified on re
 Chip #     Game                Bank Select Addresses      Disable Mask Ignore Mask   Secondary    Secondary Bank Select
                                 (0)    (1)    (2)    (3)  (MS 10 bits) (LS 7 bits)    Enable    (0)    (1)    (2)    (3)
 ----------------------------------------------------------------------------------------------------------------------------
-137412-101 ESB/Tetris         *$0080,*$0090,*$00a0,*$00b0    $???0        $00??        $????   $????, $????, $????, $????
+137412-101 ESB/Tetris          $0080, $0090, $00a0, $00b0    $1540        $00??        $????   $????, $????, $????, $????
 137412-103 Marble Madness      $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
 137412-104 Gauntlet            $0020, $0028, $0030, $0038    $3d90        $0069        $????   $????, $????, $????, $????
 137412-105 Indiana Jones &     $0010, $0014, $0018, $001c    $35b0        $003d        $0092,  $00a4, $00a5, $00a6, $00a7
@@ -132,6 +132,7 @@ documented in the MAME code.
 
 
 #include <stdio.h>
+#include "driver.h"
 
 
 /*************************************
@@ -177,7 +178,7 @@ enum state_type { ENABLED, DISABLED, IGNORE, SPECIAL };
 static struct slapstic_params slapstic_table[18] =
 {
 	/* 137412-101 ESB/Tetris */
-	{ 0x0000, 0x0080, 0x0090, 0x00a0, 0x00b0,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0080, 0x0090, 0x00a0, 0x00b0, 0x1540,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-102 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-103 Marble Madness */
@@ -226,15 +227,19 @@ static enum state_type state;
 static int next_bank;
 static int extra_bank;
 static int current_bank;
-
+static int version;
 
 #if LOG_SLAPSTIC
 	static void slapstic_log (int offset);
 	static FILE *slapsticlog;
+	extern FILE *errorlog;
 #else
 	#define slapstic_log(o)
 #endif
 
+
+extern unsigned char *atarigen_slapstic;
+extern unsigned char *slapstic_area;
 
 
 /*************************************
@@ -249,13 +254,23 @@ void slapstic_init (int chip)
 	if (chip < 101 || chip > 118)
 		return;
 
+	version = chip;
 	/* set up a pointer to the parameters */
 	slapstic = slapstic_table + (chip - 101);
 
 	/* reset the chip */
 	state = ENABLED;
 	next_bank = extra_bank = -1;
-	current_bank = 3;
+	if (chip == 101)
+		current_bank = 3;
+	else
+		current_bank = 3;
+
+	if (version == 101)
+	{
+		/* Super ugly hack for ESB */
+		memcpy (slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
+	}
 }
 
 
@@ -278,7 +293,6 @@ int slapstic_bank (void)
  *		Call this before every access
  *
  *************************************/
-
 int slapstic_tweak (int offset)
 {
 	/* switch banks now if one is pending */
@@ -287,6 +301,11 @@ int slapstic_tweak (int offset)
 		current_bank = next_bank;
 		next_bank = -1;
 		extra_bank = -1;
+		if (version == 101)
+		{
+			/* Super ugly hack for ESB */
+			memcpy (slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
+		}
 	}
 
 	/* state machine */
@@ -422,9 +441,26 @@ int slapstic_tweak (int offset)
 #if LOG_SLAPSTIC
 static void slapstic_log (int offset)
 {
-	if (!slapsticlog)
-		slapsticlog = fopen ("slapstic.log", "w");
-	if (slapsticlog)
-		fprintf (slapsticlog, "Slapstic bank %d @ %04X (PC=%08X)\n", current_bank, offset, cpu_getpc ());
+//	if (!slapsticlog)
+//		slapsticlog = fopen ("slapstic.log", "w");
+	if (errorlog)
+	{
+		fprintf (errorlog, "Slapstic bank %d @ %04X (PC=%08X), STATE: ", current_bank, offset, cpu_getpc ());
+		switch (state)
+		{
+			case ENABLED:
+				fprintf (errorlog, "ENABLED\n");
+				break;
+			case DISABLED:
+				fprintf (errorlog, "DISABLED\n");
+				break;
+			case SPECIAL:
+				fprintf (errorlog, "SPECIAL\n");
+				break;
+			case IGNORE:
+				fprintf (errorlog, "IGNORE\n");
+				break;
+		}
+	}
 }
 #endif

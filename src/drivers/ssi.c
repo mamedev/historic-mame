@@ -53,11 +53,6 @@ if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory a
 	return 0xff;
 }
 
-int ssi_interrupt(void)
-{
-	return MC68000_IRQ_5;
-}
-
 void ssi_sound_w(int offset,int data)
 {
 	if (offset == 0)
@@ -237,7 +232,7 @@ static struct GfxDecodeInfo ssi_gfxdecodeinfo[] =
 static struct YM2610interface ym2610_interface =
 {
 	1,	/* 1 chip */
-	2000000,	/* 2 MHz ?????? */
+	8000000,	/* 8 MHz ?????? */
 	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },
@@ -256,10 +251,10 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 MHz ??? */
+			12000000,	/* 6 MHz ??? */
 			0,
 			readmem,writemem,0,0,
-			ssi_interrupt,1
+			m68_level5_irq,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -269,7 +264,7 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 1800,	/* frames per second, vblank duration hand tuned to avoid flicker */
 	10,
 	0,
 

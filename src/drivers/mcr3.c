@@ -2015,8 +2015,8 @@ ROM_START( rampage_rom )
 	ROM_LOAD( "pro-1.rv3",    0x8000, 0x8000, 0xd89bd9a4 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xc0d8b7a5 )
-	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x2f6e3aa1 )
+	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
+	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
 	ROM_LOAD( "fg-3",         0x08000, 0x10000, 0x81e1de40 )
 	ROM_LOAD( "fg-2",         0x18000, 0x10000, 0x9489f714 )
 	ROM_LOAD( "fg-1",         0x28000, 0x10000, 0x8728532b )
@@ -2062,6 +2062,54 @@ struct GameDriver rampage_driver =
 	ORIENTATION_DEFAULT,
 
 	rampage_hiload, rampage_hisave
+};
+
+
+ROM_START( powerdrv_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pdrv3b.bin",   0x0000, 0x8000, 0xd870b704 )
+	ROM_LOAD( "pdrv5b.bin",   0x8000, 0x8000, 0xfa0544ad )
+
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pdrv15a.bin",  0x00000, 0x04000, 0xb858b5a8 )
+	ROM_LOAD( "pdrv14b.bin",  0x04000, 0x04000, 0x12ee7fc2 )
+	ROM_LOAD( "pdrv4e.bin",   0x08000, 0x10000, 0xde400335 )
+	ROM_LOAD( "pdrv5e.bin",   0x18000, 0x10000, 0x4cb4780e )
+	ROM_LOAD( "pdrv6e.bin",   0x28000, 0x10000, 0x1a1f7f81 )
+	ROM_LOAD( "pdrv8e.bin",   0x38000, 0x10000, 0xdd3a2adc )
+
+	ROM_REGION(0x20000)  /* 128k for the Sounds Good board */
+	ROM_LOAD_EVEN( "pdsndu7.bin",  0x00000, 0x8000, 0x78713e78 )
+	ROM_LOAD_ODD ( "pdsndu17.bin", 0x00000, 0x8000, 0xc41de6e4 )
+	ROM_LOAD_EVEN( "pdsndu8.bin",  0x10000, 0x8000, 0x15714036 )
+	ROM_LOAD_ODD ( "pdsndu18.bin", 0x10000, 0x8000, 0xcae14c70 )
+ROM_END
+
+
+struct GameDriver powerdrv_driver =
+{
+	__FILE__,
+	0,
+	"powerdrv",
+	"Power Drive",
+	"????",
+	"Bally Midway",
+	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
+	0,
+	&rampage_machine_driver,
+	0,
+
+	powerdrv_rom,
+	rampage_rom_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	rampage_input_ports,
+
+	0, 0,0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 
 

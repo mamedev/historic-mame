@@ -525,7 +525,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,		/* 2 chips   */
-	2500000,	/* 5000000/2 */
+	1500000,    /* 6000000/4 */
 	{ YM2203_VOL(255,127), YM2203_VOL(255,127) },
 	{ 0 },
 	{ 0 },
@@ -546,7 +546,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000,
+			4000000,
 			2,
 			sound_readmem,sound_writemem,0,sound_writeport,
 			interrupt,3

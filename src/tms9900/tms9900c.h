@@ -120,7 +120,8 @@ word	LGT,AGT,EQ,CY,OV,OP,X,IMASK;	/* Individual bits in the status reg. */
 word	SourceOpAdr,	/* address in memory of source operand */
 	SourceVal,	/* contents of source operand */
 	DestOpAdr,	/* address in memory of destination operand */
-	DestVal;	/* value of destination operand */
+	DestVal,	/* value of destination operand */
+	CRUBaseAdr;	/* value of CRU base address (R12&1FFE)>>1 */
 
 void	typeIoperands(void);
 void	typeIIIoperands(void);
@@ -140,6 +141,7 @@ void	do_jmp(void);
 void	set_status(word);
 word	get_status(void);
 void	set_parity(word);
+void	set_mask(word);
 word	add(word,word);
 void	compare(word,word);
 

@@ -130,10 +130,10 @@ void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 	/* second bank character lookup table */
 	/* sprites use the same color lookup table as characters */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
+	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if (*color_prom) COLOR(1,i) = (*color_prom & 0x0f) + 0x10;	/* second palette bank */
-		else COLOR(1,i) = 0;	/* preserve transparency */
+		if (*color_prom) COLOR(2,i) = (*color_prom & 0x0f) + 0x10;	/* second palette bank */
+		else COLOR(2,i) = 0;	/* preserve transparency */
 
 		color_prom++;
 	}
