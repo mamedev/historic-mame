@@ -123,7 +123,7 @@ WRITE_HANDLER( kangaroo_bank_select_w )
 	/* this is a VERY crude way to handle the banked ROMs - but it's */
 	/* correct enough to pass the self test */
 	if (data & 0x05)
-		cpu_setbank(1,&RAM[0x10000])
+		cpu_setbank(1,&RAM[0x10000]);
 	else
 		cpu_setbank(1,&RAM[0x12000]);
 

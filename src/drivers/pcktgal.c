@@ -366,117 +366,117 @@ static const struct MachineDriver machine_driver_bootleg =
 /***************************************************************************/
 
 ROM_START( pcktgal )
-	ROM_REGION( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	 /* 64k for code + 16k for banks */
 	ROM_LOAD( "eb04.rom",	   0x10000, 0x4000, 0x8215d60d )
 	ROM_CONTINUE(			   0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 2*0x18000, REGION_CPU2 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 2*0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "eb03.rom",	   0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(			   0x08000, 0x8000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb01.rom",	   0x00000, 0x10000, 0x63542c3d )
 	ROM_LOAD( "eb02.rom",	   0x10000, 0x10000, 0xa9dcd339 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb00.rom",	   0x00000, 0x10000, 0x6c1a14a8 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
 	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( pcktgalb )
-	ROM_REGION( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	 /* 64k for code + 16k for banks */
 	ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
 	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 2*0x18000, REGION_CPU2 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 2*0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "eb03.rom",	  0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(			  0x08000, 0x8000 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sexybill.005", 0x00000, 0x10000, 0x3128dc7b )
 	ROM_LOAD( "sexybill.006", 0x10000, 0x10000, 0x0fc91eeb )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sexybill.003", 0x00000, 0x08000, 0x58182daa )
 	ROM_LOAD( "sexybill.004", 0x08000, 0x08000, 0x33a67af6 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
 	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( pcktgal2 )
-	ROM_REGION( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	 /* 64k for code + 16k for banks */
 	ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )	 /* audio cpu */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(			  0x08000, 0x8000)
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb01-2.rom",   0x00000, 0x10000, 0xe52b1f97 )
 	ROM_LOAD( "eb02-2.rom",   0x10000, 0x10000, 0xf30d965d )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
 	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( spool3 )
-	ROM_REGION( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	 /* 64k for code + 16k for banks */
 	ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )	 /* audio cpu */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(			  0x08000, 0x8000)
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "deco2.bin",	  0x00000, 0x10000, 0x0a23f0cf )
 	ROM_LOAD( "deco3.bin",	  0x10000, 0x10000, 0x55ea7c45 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
 	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( spool3i )
-	ROM_REGION( 0x14000, REGION_CPU1 )	 /* 64k for code + 16k for banks */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	 /* 64k for code + 16k for banks */
 	ROM_LOAD( "de1.bin",	  0x10000, 0x4000, 0xa59980fe )
 	ROM_CONTINUE(			  0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )	 /* audio cpu */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* audio cpu */
 	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
 	ROM_CONTINUE(			  0x08000, 0x8000)
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "deco2.bin",	  0x00000, 0x10000, 0x0a23f0cf )
 	ROM_LOAD( "deco3.bin",	  0x10000, 0x10000, 0x55ea7c45 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "eb00.rom",	  0x00000, 0x10000, 0x6c1a14a8 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "eb05.rom",     0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
 	ROM_LOAD( "eb06.rom",     0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END

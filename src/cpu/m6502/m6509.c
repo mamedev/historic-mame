@@ -121,7 +121,7 @@ WRITE_HANDLER( m6509_write_00000 )
 {
 	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 WRITE_HANDLER( m6509_write_00001 )
@@ -167,7 +167,7 @@ void m6509_set_context (void *src)
 	if( src )
 	{
 		m6509 = *(m6509_Regs*)src;
-		change_pc(PCD);
+		change_pc16(PCD);
 	}
 }
 
@@ -180,7 +180,7 @@ unsigned m6509_get_pc (void)
 void m6509_set_pc (unsigned val)
 {
 	PCW = val&0xffff;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 unsigned m6509_get_sp (void)

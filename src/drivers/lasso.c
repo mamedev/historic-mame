@@ -307,27 +307,27 @@ WM2     IC66       "      "				graphics
 WM1     IC65       "      "				graphics
 */
 ROM_START( lasso )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 6502 code (main cpu) */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6502 code (main cpu) */
 	ROM_LOAD( "wm3",       0x8000, 0x2000, 0xf93addd6 )
 	ROM_RELOAD(            0xc000, 0x2000)
 	ROM_LOAD( "wm4",       0xe000, 0x2000, 0x77719859 )
 	ROM_RELOAD(            0xa000, 0x2000)
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 6502 code (lasso image blitter) */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 6502 code (lasso image blitter) */
 	ROM_LOAD( "wm5",       0xf000, 0x1000, 0x7dc3ff07 )
 	ROM_RELOAD(            0x8000, 0x1000)
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 6502 code (sound) */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 6502 code (sound) */
 	ROM_LOAD( "wmc",       0x5000, 0x1000, 0x8b4eb242 )
 	ROM_LOAD( "wmb",       0x6000, 0x1000, 0x4658bcb9 )
 	ROM_LOAD( "wma",       0x7000, 0x1000, 0x2e7de3e9 )
 	ROM_RELOAD(            0xf000, 0x1000 )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "wm1",       0x0000, 0x2000, 0x7db77256 )
 	ROM_LOAD( "wm2",       0x2000, 0x2000, 0x9e7d0b6f )
 
-	ROM_REGION( 0x40, REGION_PROMS )
+	ROM_REGION( 0x40, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.69", 0x0000, 0x0020, 0x1eabb04d )
 	ROM_LOAD( "82s123.70", 0x0020, 0x0020, 0x09060f8c )
 ROM_END

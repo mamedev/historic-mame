@@ -21,10 +21,10 @@ int CollisionSprite;
 
 static const struct artwork_element tinv2650_overlay[]=
 {
-	{{	 0, 255,   0, 255}, WHITE,  0xff},
-	{{  16,  71,   0, 255}, GREEN,  0xff},
-	{{   0,  15,  48, 133}, GREEN,  0xff},
-	{{ 192, 208,   0, 255}, PURPLE, 0xff},
+	{{	 0, 255,   0, 255}, WHITE,  OVERLAY_DEFAULT_OPACITY},
+	{{  16,  71,   0, 255}, GREEN,  OVERLAY_DEFAULT_OPACITY},
+	{{   0,  15,  48, 133}, GREEN,  OVERLAY_DEFAULT_OPACITY},
+	{{ 192, 208,   0, 255}, PURPLE, OVERLAY_DEFAULT_OPACITY},
 	{{  -1,  -1,  -1,  -1}, 0,0,0,0}
 };
 
@@ -34,7 +34,7 @@ static const struct artwork_element tinv2650_overlay[]=
 /* once it's workings are fully understood.                   */
 /**************************************************************/
 
-WRITE_HANDLER( s2636_w )
+WRITE_HANDLER( zac_s2636_w )
 {
 	if (s2636ram[offset] != data)
     {
@@ -43,7 +43,7 @@ WRITE_HANDLER( s2636_w )
     }
 }
 
-READ_HANDLER( s2636_r )
+READ_HANDLER( zac_s2636_r )
 {
 	if(offset!=0xCB) return s2636ram[offset];
     else return CollisionSprite;
@@ -147,7 +147,7 @@ int SpriteCollision(int first,int second)
 
 int tinvader_vh_start(void)
 {
-	overlay_create(tinv2650_overlay, 1, 4);
+// 	overlay_create(tinv2650_overlay, 1, 8);
 
 	generic_vh_start();
 

@@ -3,7 +3,8 @@
 
 unsigned char *jailbrek_scroll_x;
 
-void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) {
+void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 	int i;
@@ -42,8 +43,8 @@ void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(1,i) = *color_prom++;
 }
 
-int jailbrek_vh_start( void ) {
-
+int jailbrek_vh_start( void )
+{
 	if ( ( dirtybuffer = malloc( videoram_size ) ) == 0 )
 		return 1;
 	memset( dirtybuffer, 1, videoram_size );
@@ -56,13 +57,14 @@ int jailbrek_vh_start( void ) {
 	return 0;
 }
 
-void jailbrek_vh_stop( void ) {
-
+void jailbrek_vh_stop( void )
+{
 	free( dirtybuffer );
 	bitmap_free( tmpbitmap );
 }
 
-static void drawsprites( struct osd_bitmap *bitmap ) {
+static void drawsprites( struct osd_bitmap *bitmap )
+{
 	int i;
 
 	for ( i = 0; i < spriteram_size; i += 4 ) {
@@ -77,6 +79,14 @@ static void drawsprites( struct osd_bitmap *bitmap ) {
 		flipy = spriteram[i+1] & 0x20;
 		color = spriteram[i+1] & 0x0f;
 
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				tile,color,
 				flipx,flipy,
@@ -85,13 +95,15 @@ static void drawsprites( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
+void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	int i;
 
 	if ( full_refresh )
 		memset( dirtybuffer, 1, videoram_size );
 
-	for ( i = 0; i < videoram_size; i++ ) {
+	for ( i = 0; i < videoram_size; i++ )
+	{
 		if ( dirtybuffer[i] ) {
 			int sx,sy, code;
 
@@ -102,10 +114,16 @@ void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 
 			code = videoram[i] + ( ( colorram[i] & 0xc0 ) << 2 );
 
+			if (flip_screen)
+			{
+				sx = 63 - sx;
+				sy = 31 - sy;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					code,
 					colorram[i] & 0x0f,
-					0,0,
+					flip_screen,flip_screen,
 					sx*8,sy*8,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -114,8 +132,16 @@ void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 	{
 		int scrollx[32];
 
-		for ( i = 0; i < 32; i++ )
-			scrollx[i] = -( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
+		if (flip_screen)
+		{
+			for ( i = 0; i < 32; i++ )
+				scrollx[i] = 256 + ( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
+		}
+		else
+		{
+			for ( i = 0; i < 32; i++ )
+				scrollx[i] = -( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}

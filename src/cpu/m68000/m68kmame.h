@@ -27,7 +27,7 @@
 #define M68K_SET_FC_CALLBACK(A)
 
 #define M68K_MONITOR_PC             OPT_SPECIFY_HANDLER
-#define M68K_SET_PC_CALLBACK(A)     change_pc32bew(A)
+#define M68K_SET_PC_CALLBACK(A)     (*m68k_memory_intf.changepc)(A)
 
 #define M68K_INSTRUCTION_HOOK       OPT_SPECIFY_HANDLER
 #define M68K_INSTRUCTION_CALLBACK() CALL_MAME_DEBUG
@@ -44,34 +44,34 @@
 
 
 /* Redirect memory calls */
-#define m68k_read_memory_8(address)          cpu_readmem32bew(address)
-#define m68k_read_memory_16(address)         cpu_readmem32bew_word(address)
-INLINE unsigned int m68k_read_memory_32(unsigned int address)
+struct m68k_memory_interface
 {
-	return (cpu_readmem32bew_word(address)<<16) | cpu_readmem32bew_word((address)+2);
-}
+	offs_t		opcode_xor;
+	data8_t		(*read8)(offs_t);
+	data16_t	(*read16)(offs_t);
+	data32_t	(*read32)(offs_t);
+	void		(*write8)(offs_t, data8_t);
+	void		(*write16)(offs_t, data16_t);
+	void		(*write32)(offs_t, data32_t);
+	void		(*changepc)(offs_t);
+};
+extern struct m68k_memory_interface m68k_memory_intf;
 
-#define m68k_read_immediate_16(address)      cpu_readop_arg16(address)
-INLINE unsigned int m68k_read_immediate_32(unsigned int address)
-{
-	return (cpu_readop_arg16(address)<<16) | cpu_readop_arg16((address)+2);
-}
+#define m68k_read_memory_8(address)          (*m68k_memory_intf.read8)(address)
+#define m68k_read_memory_16(address)         (*m68k_memory_intf.read16)(address)
+#define m68k_read_memory_32(address)         (*m68k_memory_intf.read32)(address)
 
-#define m68k_read_disassembler_8(address)    cpu_readmem32bew(address)
-#define m68k_read_disassembler_16(address)   cpu_readmem32bew_word(address)
-INLINE unsigned int m68k_read_disassembler_32(unsigned int address)
-{
-	return (cpu_readmem32bew_word(address)<<16) | cpu_readmem32bew_word((address)+2);
-}
+#define m68k_read_immediate_16(address)      cpu_readop_arg16((address) ^ m68k_memory_intf.opcode_xor)
+#define m68k_read_immediate_32(address)		 ((m68k_read_immediate_16(address) << 16) | m68k_read_immediate_16((address)+2))
+
+#define m68k_read_disassembler_8(address)    (*m68k_memory_intf.read8)(address)
+#define m68k_read_disassembler_16(address)   (*m68k_memory_intf.read16)(address)
+#define m68k_read_disassembler_32(address)   (*m68k_memory_intf.read32)(address)
 
 
-#define m68k_write_memory_8(address, value)  cpu_writemem32bew(address, value)
-#define m68k_write_memory_16(address, value) cpu_writemem32bew_word(address, value)
-INLINE void m68k_write_memory_32(unsigned int address, unsigned int value)
-{
-	cpu_writemem32bew_word(address, value >> 16);
-	cpu_writemem32bew_word(address+2, value & 0xffff);
-}
+#define m68k_write_memory_8(address, value)  (*m68k_memory_intf.write8)(address, value)
+#define m68k_write_memory_16(address, value) (*m68k_memory_intf.write16)(address, value)
+#define m68k_write_memory_32(address, value) (*m68k_memory_intf.write32)(address, value)
 
 
 /* Redirect ICount */

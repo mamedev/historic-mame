@@ -659,26 +659,26 @@ static const struct MachineDriver machine_driver_blocken =
 ***************************************************************************/
 
 ROM_START( shangha3 )
-	ROM_REGION( 0x80000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "s3j_ic3.v11",  0x0000, 0x40000, 0xe98ce9c8 )
-	ROM_LOAD_ODD ( "s3j_ic2.v11",  0x0000, 0x40000, 0x09174620 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "s3j_ic3.v11",  0x0000, 0x40000, 0xe98ce9c8 )
+	ROM_LOAD16_BYTE( "s3j_ic2.v11",  0x0001, 0x40000, 0x09174620 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "s3j_ic43.chr", 0x0000, 0x200000, 0x2dbf9d17 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples for M6295 */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* samples for M6295 */
 	ROM_LOAD( "s3j_ic75.v10", 0x0000, 0x40000, 0xf0cdc86a )
 ROM_END
 
 ROM_START( heberpop )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "hbpic31.bin",  0x0000, 0x80000, 0xc430d264 )
-	ROM_LOAD_ODD ( "hbpic32.bin",  0x0000, 0x80000, 0xbfa555a8 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "hbpic31.bin",  0x0000, 0x80000, 0xc430d264 )
+	ROM_LOAD16_BYTE( "hbpic32.bin",  0x0001, 0x80000, 0xbfa555a8 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "hbpic34.bin",  0x0000, 0x10000, 0x0cf056c6 )
 
-	ROM_REGION( 0x380000, REGION_GFX1 )	/* don't dispose, read during tests */
+	ROM_REGION( 0x380000, REGION_GFX1, 0 )	/* don't dispose, read during tests */
 	ROM_LOAD( "hbpic98.bin",  0x000000, 0x80000, 0xa599100a )
 	ROM_LOAD( "hbpic99.bin",  0x080000, 0x80000, 0xfb8bb12f )
 	ROM_LOAD( "hbpic100.bin", 0x100000, 0x80000, 0x05a0f765 )
@@ -687,26 +687,26 @@ ROM_START( heberpop )
 	ROM_LOAD( "hbpic103.bin", 0x280000, 0x80000, 0xefa0e745 )
 	ROM_LOAD( "hbpic104.bin", 0x300000, 0x80000, 0xbb896bbb )
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples for M6295 */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples for M6295 */
 	ROM_LOAD( "hbpic53.bin",  0x0000, 0x80000, 0xa4483aa0 )
 ROM_END
 
 ROM_START( blocken )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "ic31j.bin",    0x0000, 0x20000, 0xec8de2a3 )
-	ROM_LOAD_ODD ( "ic32j.bin",    0x0000, 0x20000, 0x79b96240 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ic31j.bin",    0x0000, 0x20000, 0xec8de2a3 )
+	ROM_LOAD16_BYTE( "ic32j.bin",    0x0001, 0x20000, 0x79b96240 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "ic34.bin",     0x0000, 0x10000, 0x23e446ff )
 
-	ROM_REGION( 0x380000, REGION_GFX1 )	/* don't dispose, read during tests */
+	ROM_REGION( 0x380000, REGION_GFX1, 0 )	/* don't dispose, read during tests */
 	ROM_LOAD( "ic98j.bin",    0x000000, 0x80000, 0x35dda273 )
 	ROM_LOAD( "ic99j.bin",    0x080000, 0x80000, 0xce43762b )
 	/* 100000-1fffff empty */
 	ROM_LOAD( "ic100j.bin",   0x200000, 0x80000, 0xa34786fd )
 	/* 280000-37ffff empty */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples for M6295 */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples for M6295 */
 	ROM_LOAD( "ic53.bin",     0x0000, 0x80000, 0x86108c56 )
 ROM_END
 

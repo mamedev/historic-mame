@@ -13,13 +13,14 @@ static int back_enable,fore_enable,sprite_enable;
 WRITE_HANDLER( dynduke_paletteram_w )
 {
 	int r,g,b;
+	int color;
 
 	paletteram[offset]=data;
-	data=paletteram[offset&0xffe]|(paletteram[offset|1]<<8);
+	color=paletteram[offset&0xffe]|(paletteram[offset|1]<<8);
 
-	r = (data >> 0) & 0x0f;
-	g = (data >> 4) & 0x0f;
-	b = (data >> 8) & 0x0f;
+	r = (color >> 0) & 0x0f;
+	g = (color >> 4) & 0x0f;
+	b = (color >> 8) & 0x0f;
 
 	r = (r << 4) | r;
 	g = (g << 4) | g;

@@ -112,8 +112,6 @@ extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
-extern unsigned char *memory_find_base (int cpu, int offset);
-
 /******************************************
  *
  * Cheats
@@ -1635,9 +1633,9 @@ static int build_tables (int cpu)
 #endif
 
 	NoMemArea = 0;
-	while (!IS_MEMORY_END(mwa))
+	while (!IS_MEMPORT_END(mwa))
 	{
-		if (!IS_MEMORY_MARKER(mwa))
+		if (!IS_MEMPORT_MARKER(mwa))
 		{
 			/* int (*handler)(int) = mra->handler; */
 			mem_write_handler handler = mwa->handler;

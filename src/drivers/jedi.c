@@ -358,31 +358,31 @@ static const struct MachineDriver machine_driver_jedi =
 ***************************************************************************/
 
 ROM_START( jedi )
-	ROM_REGION( 0x1C000, REGION_CPU1 )	/* 64k for code + 48k for banked ROMs */
+	ROM_REGION( 0x1C000, REGION_CPU1, 0 )	/* 64k for code + 48k for banked ROMs */
 	ROM_LOAD( "14f_221.bin",  0x08000, 0x4000, 0x414d05e3 )
 	ROM_LOAD( "13f_222.bin",  0x0c000, 0x4000, 0x7b3f21be )
 	ROM_LOAD( "13d_123.bin",  0x10000, 0x4000, 0x877f554a ) /* Page 0 */
 	ROM_LOAD( "13b_124.bin",  0x14000, 0x4000, 0xe72d41db ) /* Page 1 */
 	ROM_LOAD( "13a_122.bin",  0x18000, 0x4000, 0xcce7ced5 ) /* Page 2 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* space for the sound ROMs */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* space for the sound ROMs */
 	ROM_LOAD( "01c_133.bin",  0x8000, 0x4000, 0x6c601c69 )
 	ROM_LOAD( "01a_134.bin",  0xC000, 0x4000, 0x5e36c564 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "11t_215.bin",  0x00000, 0x2000, 0x3e49491f ) /* Alphanumeric */
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "06r_126.bin",  0x00000, 0x8000, 0x9c55ece8 ) /* Playfield */
 	ROM_LOAD( "06n_127.bin",  0x08000, 0x8000, 0x4b09dcc5 )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "01h_130.bin",  0x00000, 0x8000, 0x2646a793 ) /* Sprites */
 	ROM_LOAD( "01f_131.bin",  0x08000, 0x8000, 0x60107350 )
 	ROM_LOAD( "01m_128.bin",  0x10000, 0x8000, 0x24663184 )
 	ROM_LOAD( "01k_129.bin",  0x18000, 0x8000, 0xac86b98c )
 
-	ROM_REGION( 0x0800, REGION_PROMS )	/* background smoothing */
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )	/* background smoothing */
 	ROM_LOAD( "136030.117",   0x0000, 0x0400, 0x9831bd55 )
 	ROM_LOAD( "136030.118",   0x0400, 0x0400, 0x261fbfe7 )
 ROM_END

@@ -9,7 +9,7 @@
           Zektor uses some Eliminator sounds.
 
  * 2/5/99 Extra Life sound constant found $1C after fixing main driver. (Jim Hernandez)
- * 1/29/99 Supports Tac Scan new 44.1Khz sample set.                    (Jim Hernandez)
+ * 1/29/99 Supports Tac Scan new 44.1 kHz sample set.                    (Jim Hernandez)
 
  * -Stuff to do -
  * Find hex bit for warp.wav sound calls.

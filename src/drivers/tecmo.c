@@ -633,204 +633,204 @@ MACHINE_DRIVER( silkworm, 6000000 /* ? */, tecmo )
 ***************************************************************************/
 
 ROM_START( rygar )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "5.5p",         0x00000, 0x08000, 0x062cd55d ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
 	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
 	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
 	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
 	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
 	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
 	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
 	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
 	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
 
-	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x4000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( rygar2 )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "cpu_5p.bin",   0x00000, 0x08000, 0xe79c054a ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
 	ROM_LOAD( "cpu_5j.bin",   0x10000, 0x08000, 0xed76d606 ) /* banked at f000-f7ff */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cpu_8k.bin",   0x00000, 0x08000, 0x4d482fb6 )	/* characters */
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
 	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
 	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
 	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
 	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
 	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
 	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
 	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
 	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
 
-	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x4000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( rygarj )
-	ROM_REGION( 0x18000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* 64k for code */
 
 	ROM_LOAD( "cpuj_5p.bin",  0x00000, 0x08000, 0xb39698ba ) /* code */
 	ROM_LOAD( "cpuj_5m.bin",  0x08000, 0x04000, 0x3f180979 ) /* code */
 	ROM_LOAD( "cpuj_5j.bin",  0x10000, 0x08000, 0x69e44e8f ) /* banked at f000-f7ff */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "cpu_4h.bin",   0x0000, 0x2000, 0xe4a2fa87 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cpuj_8k.bin",  0x00000, 0x08000, 0x45047707 )	/* characters */
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6k.bin",   0x00000, 0x08000, 0xaba6db9e )	/* sprites */
 	ROM_LOAD( "vid_6j.bin",   0x08000, 0x08000, 0xae1f2ed6 )	/* sprites */
 	ROM_LOAD( "vid_6h.bin",   0x10000, 0x08000, 0x46d9e7df )	/* sprites */
 	ROM_LOAD( "vid_6g.bin",   0x18000, 0x08000, 0x45839c9a )	/* sprites */
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6p.bin",   0x00000, 0x08000, 0x9eae5f8e )
 	ROM_LOAD( "vid_6o.bin",   0x08000, 0x08000, 0x5a10a396 )
 	ROM_LOAD( "vid_6n.bin",   0x10000, 0x08000, 0x7b12cf3f )
 	ROM_LOAD( "vid_6l.bin",   0x18000, 0x08000, 0x3cea7eaa )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "vid_6f.bin",   0x00000, 0x08000, 0x9840edd8 )
 	ROM_LOAD( "vid_6e.bin",   0x08000, 0x08000, 0xff65e074 )
 	ROM_LOAD( "vid_6c.bin",   0x10000, 0x08000, 0x89868c85 )
 	ROM_LOAD( "vid_6b.bin",   0x18000, 0x08000, 0x35389a7b )
 
-	ROM_REGION( 0x4000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x4000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
 ROM_START( silkworm )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "silkworm.4",   0x00000, 0x10000, 0xa5277cce )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
-	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "silkworm.3",   0x0000, 0x8000, 0xb589f587 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.6",   0x00000, 0x10000, 0x1138d159 )	/* sprites */
 	ROM_LOAD( "silkworm.7",   0x10000, 0x10000, 0xd96214f7 )	/* sprites */
 	ROM_LOAD( "silkworm.8",   0x20000, 0x10000, 0x0494b38e )	/* sprites */
 	ROM_LOAD( "silkworm.9",   0x30000, 0x10000, 0x8ce3cdf5 )	/* sprites */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.10",  0x00000, 0x10000, 0x8c7138bb )	/* tiles #1 */
 	ROM_LOAD( "silkworm.11",  0x10000, 0x10000, 0x6c03c476 )	/* tiles #1 */
 	ROM_LOAD( "silkworm.12",  0x20000, 0x10000, 0xbb0f568f )	/* tiles #1 */
 	ROM_LOAD( "silkworm.13",  0x30000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.14",  0x00000, 0x10000, 0x409df64b )	/* tiles #2 */
 	ROM_LOAD( "silkworm.15",  0x10000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.16",  0x20000, 0x10000, 0x9292ed63 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.17",  0x30000, 0x10000, 0x3fa4563d )	/* tiles #2 */
 
-	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
 ROM_START( silkwrm2 )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "r4",           0x00000, 0x10000, 0x6df3df22 )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
 
-	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r3",           0x0000, 0x8000, 0xb79848d0 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.2",   0x00000, 0x08000, 0xe80a1cd9 )	/* characters */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.6",   0x00000, 0x10000, 0x1138d159 )	/* sprites */
 	ROM_LOAD( "silkworm.7",   0x10000, 0x10000, 0xd96214f7 )	/* sprites */
 	ROM_LOAD( "silkworm.8",   0x20000, 0x10000, 0x0494b38e )	/* sprites */
 	ROM_LOAD( "silkworm.9",   0x30000, 0x10000, 0x8ce3cdf5 )	/* sprites */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.10",  0x00000, 0x10000, 0x8c7138bb )	/* tiles #1 */
 	ROM_LOAD( "silkworm.11",  0x10000, 0x10000, 0x6c03c476 )	/* tiles #1 */
 	ROM_LOAD( "silkworm.12",  0x20000, 0x10000, 0xbb0f568f )	/* tiles #1 */
 	ROM_LOAD( "silkworm.13",  0x30000, 0x10000, 0x773ad0a4 )	/* tiles #1 */
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "silkworm.14",  0x00000, 0x10000, 0x409df64b )	/* tiles #2 */
 	ROM_LOAD( "silkworm.15",  0x10000, 0x10000, 0x6e4052c9 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.16",  0x20000, 0x10000, 0x9292ed63 )	/* tiles #2 */
 	ROM_LOAD( "silkworm.17",  0x30000, 0x10000, 0x3fa4563d )	/* tiles #2 */
 
-	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
 ROM_START( gemini )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "gw04-5s.rom",  0x00000, 0x10000, 0xff9de855 )	/* c000-ffff is not used */
 	ROM_LOAD( "gw05-6s.rom",  0x10000, 0x10000, 0x5a6947a9 )	/* banked at f000-f7ff */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gw03-5h.rom",  0x0000, 0x8000, 0x9bc79596 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gw02-3h.rom",  0x00000, 0x08000, 0x7acc8d35 )	/* characters */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gw06-1c.rom",  0x00000, 0x10000, 0x4ea51631 )	/* sprites */
 	ROM_LOAD( "gw07-1d.rom",  0x10000, 0x10000, 0xda42637e )	/* sprites */
 	ROM_LOAD( "gw08-1f.rom",  0x20000, 0x10000, 0x0b4e8d70 )	/* sprites */
 	ROM_LOAD( "gw09-1h.rom",  0x30000, 0x10000, 0xb65c5e4c )	/* sprites */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gw10-1n.rom",  0x00000, 0x10000, 0x5e84cd4f )	/* tiles #1 */
 	ROM_LOAD( "gw11-2na.rom", 0x10000, 0x10000, 0x08b458e1 )	/* tiles #1 */
 	ROM_LOAD( "gw12-2nb.rom", 0x20000, 0x10000, 0x229c9714 )	/* tiles #1 */
 	ROM_LOAD( "gw13-3n.rom",  0x30000, 0x10000, 0xc5dfaf47 )	/* tiles #1 */
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "gw14-1r.rom",  0x00000, 0x10000, 0x9c10e5b5 )	/* tiles #2 */
 	ROM_LOAD( "gw15-2ra.rom", 0x10000, 0x10000, 0x4cd18cfa )	/* tiles #2 */
 	ROM_LOAD( "gw16-2rb.rom", 0x20000, 0x10000, 0xf911c7be )	/* tiles #2 */
 	ROM_LOAD( "gw17-3r.rom",  0x30000, 0x10000, 0x79a9ce25 )	/* tiles #2 */
 
-	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "gw01-6a.rom",  0x0000, 0x8000, 0xd78afa05 )
 ROM_END
 

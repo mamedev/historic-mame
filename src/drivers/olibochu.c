@@ -395,7 +395,7 @@ static const struct MachineDriver machine_driver_olibochu =
 ***************************************************************************/
 
 ROM_START( olibochu )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main CPU */
 	ROM_LOAD( "1b.3n",        0x0000, 0x1000, 0xbf17f4f4 )
 	ROM_LOAD( "2b.3lm",       0x1000, 0x1000, 0x63833b0d )
 	ROM_LOAD( "3b.3k",        0x2000, 0x1000, 0xa4038e8b )
@@ -405,25 +405,25 @@ ROM_START( olibochu )
 	ROM_LOAD( "7c.3e",        0x6000, 0x1000, 0x89c26fb4 )
 	ROM_LOAD( "8b.3d",        0x7000, 0x1000, 0xaf19e5a5 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "17.4j",        0x0000, 0x1000, 0x57f07402 )
 	ROM_LOAD( "18.4l",        0x1000, 0x1000, 0x0a903e9c )
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* samples? */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* samples? */
 	ROM_LOAD( "15.1k",        0x0000, 0x1000, 0xfb5dd281 )
 	ROM_LOAD( "16.1m",        0x1000, 0x1000, 0xc07614a5 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "13.6n",        0x0000, 0x1000, 0xb4fcf9af )
 	ROM_LOAD( "14.4n",        0x1000, 0x1000, 0xaf54407e )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "9.6a",         0x0000, 0x1000, 0xfa69e16e )
 	ROM_LOAD( "10.2a",        0x1000, 0x1000, 0x10359f84 )
 	ROM_LOAD( "11.4a",        0x2000, 0x1000, 0x1d968f5f )
 	ROM_LOAD( "12.2a",        0x3000, 0x1000, 0xd8f0c157 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "c-1",          0x0000, 0x0020, 0xe488e831 )	/* palette */
 	ROM_LOAD( "c-2",          0x0020, 0x0100, 0x698a3ba0 )	/* sprite lookup table */
 	ROM_LOAD( "c-3",          0x0120, 0x0100, 0xefc4e408 )	/* char lookup table */

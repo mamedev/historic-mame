@@ -101,11 +101,9 @@ void mcr12_vh_stop(void)
  *
  *************************************/
 
-WRITE_HANDLER( mcr2_paletteram_w )
+static WRITE_HANDLER( mcr2_paletteram_w )
 {
 	int r, g, b;
-
-	paletteram[offset] = data;
 
 	/* bit 2 of the red component is taken from bit 0 of the address */
 	r = ((offset & 1) << 2) + (data >> 6);
@@ -138,12 +136,40 @@ WRITE_HANDLER( mcr1_videoram_w )
 }
 
 
+READ_HANDLER( mcr2_videoram_r )
+{
+	return videoram[offset];
+}
+
+READ_HANDLER( twotigra_videoram_r )
+{
+	return videoram[((offset & 0x400) >> 10) | ((offset & 0x3ff) << 1)];
+}
+
 WRITE_HANDLER( mcr2_videoram_w )
 {
-	if (videoram[offset] != data)
-	{
+	videoram[offset] = data;
+	if ((offset & 0x780) != 0x780)
 		dirtybuffer[offset & ~1] = 1;
-		videoram[offset] = data;
+	else
+	{
+		offset -= 0x780;
+		mcr2_paletteram_w(offset,data);
+	}
+}
+
+WRITE_HANDLER( twotigra_videoram_w )
+{
+	offset = ((offset & 0x400) >> 10) | ((offset & 0x3ff) << 1);
+
+	videoram[offset] = data;
+	if ((offset & 0x780) != (0x780))
+		dirtybuffer[offset & ~1] = 1;
+	else
+	{
+		offset -= 0x780;
+		offset = ((offset & 0x7e) >> 1) | ((offset & 0x01) << 6);
+		mcr2_paletteram_w(offset,data);
 	}
 }
 

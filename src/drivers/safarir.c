@@ -253,7 +253,7 @@ static const struct MachineDriver machine_driver_safarir =
 ***************************************************************************/
 
 ROM_START( safarir )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "rl01",		0x0000, 0x0400, 0xcf7703c9 )
 	ROM_LOAD( "rl02",		0x0400, 0x0400, 0x1013ecd3 )
 	ROM_LOAD( "rl03",		0x0800, 0x0400, 0x84545894 )
@@ -261,10 +261,10 @@ ROM_START( safarir )
 	ROM_LOAD( "rl05",		0x1000, 0x0400, 0x935ed469 )
 	ROM_LOAD( "rl06",		0x1400, 0x0400, 0x24c1cd42 )
 
-	ROM_REGION( 0x0400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rl08",		0x0000, 0x0400, 0xd6a50aac )
 
-	ROM_REGION( 0x0400, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0400, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rl07",		0x0000, 0x0400, 0xba525203 )
 ROM_END
 

@@ -1,13 +1,49 @@
 /*********************************************************************
 
-  common.c
+	common.c
 
-  Generic functions, mostly ROM and graphics related.
+	Generic functions, mostly ROM and graphics related.
 
 *********************************************************************/
 
 #include "driver.h"
 #include "png.h"
+#include <stdarg.h>
+
+
+//#define LOG_LOAD
+
+
+/***************************************************************************
+
+	Type definitions
+
+***************************************************************************/
+
+struct rom_load_data
+{
+	int 		warnings;				/* warning count during processing */
+	int 		errors;					/* error count during processing */
+
+	int 		romsloaded;				/* current ROMs loaded count */
+	int			romstotal;				/* total number of ROMs to read */
+
+	void *		file;					/* current file */
+
+	UINT8 *		regionbase;				/* base of current region */
+	UINT32		regionlength;			/* length of current region */
+
+	char		errorbuf[4096];			/* accumulated errors */
+	UINT8		tempbuf[65536];			/* temporary buffer */
+};
+
+
+
+/***************************************************************************
+
+	Global variables
+
+***************************************************************************/
 
 /* These globals are only kept on a machine basis - LBO 042898 */
 unsigned int dispensed_tickets;
@@ -18,6 +54,22 @@ unsigned int coinlockedout[COIN_COUNTERS];
 int flip_screen_x, flip_screen_y;
 
 
+
+/***************************************************************************
+
+	Prototypes
+
+***************************************************************************/
+
+static int rom_load_new(const struct RomModule *romp);
+
+
+
+/***************************************************************************
+
+	Functions
+
+***************************************************************************/
 
 void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 {
@@ -44,388 +96,68 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 
 int readroms(void)
 {
-	int region;
-	const struct RomModule *romp;
-	int warning = 0;
-	int fatalerror = 0;
-	int total_roms,current_rom;
-	char buf[4096] = "";
-
-
-	total_roms = current_rom = 0;
-	romp = Machine->gamedrv->rom;
-
-	if (!romp) return 0;
-
-	while (romp->name || romp->offset || romp->length)
-	{
-		if (romp->name && romp->name != (char *)-1)
-			total_roms++;
-
-		romp++;
-	}
-
-
-	romp = Machine->gamedrv->rom;
-
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-		Machine->memory_region[region] = 0;
-
-	region = 0;
-
-	while (romp->name || romp->offset || romp->length)
-	{
-		unsigned int region_size;
-		const char *name;
-
-		/* Mish:  An 'optional' rom region, only loaded if sound emulation is turned on */
-		if (Machine->sample_rate==0 && (romp->crc & REGIONFLAG_SOUNDONLY)) {
-			logerror("readroms():  Ignoring rom region %d\n",region);
-			Machine->memory_region_type[region] = romp->crc;
-			region++;
-
-			romp++;
-			while (romp->name || romp->length)
-				romp++;
-
-			continue;
-		}
-
-		if (romp->name || romp->length)
-		{
-			printf("Error in RomModule definition: expecting ROM_REGION\n");
-			goto getout;
-		}
-
-		region_size = romp->offset;
-		if ((Machine->memory_region[region] = malloc(region_size)) == 0)
-		{
-			printf("readroms():  Unable to allocate %d bytes of RAM\n",region_size);
-			goto getout;
-		}
-		Machine->memory_region_length[region] = region_size;
-		Machine->memory_region_type[region] = romp->crc;
-
-		/* some games (i.e. Pleiades) want the memory clear on startup */
-		if (region_size <= 0x400000)	/* don't clear large regions which will be filled anyway */
-			memset(Machine->memory_region[region],0,region_size);
-
-		romp++;
-
-		while (romp->length)
-		{
-			void *f;
-			int expchecksum = romp->crc;
-			int	explength = 0;
-
-
-			if (romp->name == 0)
-			{
-				printf("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
-				goto getout;
-			}
-			else if (romp->name == (char *)-1)
-			{
-				printf("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
-				goto getout;
-			}
-
-			name = romp->name;
-
-			/* update status display */
-			if (osd_display_loading_rom_message(name,++current_rom,total_roms) != 0)
-               goto getout;
-
-			{
-				const struct GameDriver *drv;
-
-				drv = Machine->gamedrv;
-				do
-				{
-					f = osd_fopen(drv->name,name,OSD_FILETYPE_ROM,0);
-					drv = drv->clone_of;
-				} while (f == 0 && drv);
-
-				if (f == 0)
-				{
-					/* NS981003: support for "load by CRC" */
-					char crc[9];
-
-					sprintf(crc,"%08x",romp->crc);
-					drv = Machine->gamedrv;
-					do
-					{
-						f = osd_fopen(drv->name,crc,OSD_FILETYPE_ROM,0);
-						drv = drv->clone_of;
-					} while (f == 0 && drv);
-				}
-			}
-
-			if (f)
-			{
-				do
-				{
-					unsigned char *c;
-					unsigned int i;
-					int length = romp->length & ~ROMFLAG_MASK;
-
-
-					if (romp->name == (char *)-1)
-						osd_fseek(f,0,SEEK_SET);	/* ROM_RELOAD */
-					else
-						explength += length;
-
-					if (romp->offset + length > region_size ||
-						(!(romp->length & ROMFLAG_NIBBLE) && (romp->length & ROMFLAG_ALTERNATE)
-								&& (romp->offset&~1) + 2*length > region_size))
-					{
-						printf("Error in RomModule definition: %s out of memory region space\n",name);
-						osd_fclose(f);
-						goto getout;
-					}
-
-					if (romp->length & ROMFLAG_NIBBLE)
-					{
-						unsigned char *temp;
-
-
-						temp = malloc(length);
-
-						if (!temp)
-						{
-							printf("Out of memory reading ROM %s\n",name);
-							osd_fclose(f);
-							goto getout;
-						}
-
-						if (osd_fread(f,temp,length) != length)
-						{
-							printf("Unable to read ROM %s\n",name);
-						}
-
-						/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
-						c = Machine->memory_region[region] + romp->offset;
-						if (romp->length & ROMFLAG_ALTERNATE)
-						{
-							/* Load into the high nibble */
-							for (i = 0;i < length;i ++)
-							{
-								c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
-							}
-						}
-						else
-						{
-							/* Load into the low nibble */
-							for (i = 0;i < length;i ++)
-							{
-								c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
-							}
-						}
-
-						free (temp);
-					}
-					else if (romp->length & ROMFLAG_ALTERNATE)
-					{
-						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
-						/* copy the ROM data */
-					#ifdef LSB_FIRST
-						c = Machine->memory_region[region] + (romp->offset ^ 1);
-					#else
-						c = Machine->memory_region[region] + romp->offset;
-					#endif
-
-						if (osd_fread_scatter(f,c,length,2) != length)
-						{
-							printf("Unable to read ROM %s\n",name);
-						}
-					}
-					else if (romp->length & ROMFLAG_QUAD) {
-						static int which_quad=0; /* This is multi session friendly, as we only care about the modulus */
-						unsigned char *temp;
-						int base=0;
-
-						temp = malloc(length);	/* Need to load rom to temporary space */
-						osd_fread(f,temp,length);
-
-						/* Copy quad to region */
-						c = Machine->memory_region[region] + romp->offset;
-
-					#ifdef LSB_FIRST
-						switch (which_quad%4) {
-							case 0: base=1; break;
-							case 1: base=0; break;
-							case 2: base=3; break;
-							case 3: base=2; break;
-						}
-					#else
-						switch (which_quad%4) {
-							case 0: base=0; break;
-							case 1: base=1; break;
-							case 2: base=2; break;
-							case 3: base=3; break;
-						}
-					#endif
-
-						for (i=base; i< length*4; i += 4)
-							c[i]=temp[i/4];
-
-						which_quad++;
-						free(temp);
-					}
-					else
-					{
-						int wide = romp->length & ROMFLAG_WIDE;
-					#ifdef LSB_FIRST
-						int swap = (romp->length & ROMFLAG_SWAP) ^ ROMFLAG_SWAP;
-					#else
-						int swap = romp->length & ROMFLAG_SWAP;
-					#endif
-
-						osd_fread(f,Machine->memory_region[region] + romp->offset,length);
-
-						/* apply swappage */
-						c = Machine->memory_region[region] + romp->offset;
-						if (wide && swap)
-						{
-							for (i = 0; i < length; i += 2)
-							{
-								int temp = c[i];
-								c[i] = c[i+1];
-								c[i+1] = temp;
-							}
-						}
-					}
-
-					romp++;
-				} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-				if (explength != osd_fsize (f))
-				{
-					sprintf (&buf[strlen(buf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n",
-							name,explength,osd_fsize(f));
-					warning = 1;
-				}
-
-				if (expchecksum != osd_fcrc (f))
-				{
-					warning = 1;
-					if (expchecksum == 0)
-						sprintf(&buf[strlen(buf)],"%-12s NO GOOD DUMP KNOWN\n",name);
-					else if (expchecksum == BADCRC(osd_fcrc(f)))
-						sprintf(&buf[strlen(buf)],"%-12s ROM NEEDS REDUMP\n",name);
-					else
-						sprintf(&buf[strlen(buf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n",
-								name,expchecksum,osd_fcrc(f));
-				}
-
-				osd_fclose(f);
-			}
-			else if (romp->length & ROMFLAG_OPTIONAL)
-			{
-				sprintf (&buf[strlen(buf)], "OPTIONAL %-12s NOT FOUND\n",name);
-				romp ++;
-			}
-			else
-			{
-				/* allow for a NO GOOD DUMP KNOWN rom to be missing */
-				if (expchecksum == 0)
-				{
-					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n",name);
-					warning = 1;
-				}
-				else
-				{
-					sprintf (&buf[strlen(buf)], "%-12s NOT FOUND\n",name);
-					fatalerror = 1;
-				}
-
-				do
-				{
-					if (fatalerror == 0)
-					{
-						int i;
-
-						/* fill space with random data */
-						if (romp->length & ROMFLAG_ALTERNATE)
-						{
-							unsigned char *c;
-
-							/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
-						#ifdef LSB_FIRST
-							c = Machine->memory_region[region] + (romp->offset ^ 1);
-						#else
-							c = Machine->memory_region[region] + romp->offset;
-						#endif
-
-							for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
-								c[2*i] = rand();
-						}
-						else
-						{
-							for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
-								Machine->memory_region[region][romp->offset + i] = rand();
-						}
-					}
-					romp++;
-				} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-			}
-		}
-
-		region++;
-	}
-
-	/* final status display */
-	osd_display_loading_rom_message(0,current_rom,total_roms);
-
-	if (warning || fatalerror)
-	{
-		extern int bailing;
-
-		if (fatalerror)
-		{
-			strcat (buf, "ERROR: required files are missing, the game cannot be run.\n");
-			bailing = 1;
-		}
-		else
-			strcat (buf, "WARNING: the game might not run correctly.\n");
-		printf ("%s", buf);
-
-		if (!options.gui_host && !bailing)
-		{
-			int k;
-
-			printf ("Press any key to continue\n");
-			do
-			{
-				k = code_read_async();
-			}
-			while (k == CODE_NONE || k == KEYCODE_LCONTROL);
-
-			if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
-				return 1;
-		}
-	}
-
-	if (fatalerror) return 1;
-	else return 0;
-
-
-getout:
-	/* final status display */
-	osd_display_loading_rom_message(0,current_rom,total_roms);
-
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-	{
-		free(Machine->memory_region[region]);
-		Machine->memory_region[region] = 0;
-	}
-
-	return 1;
+	return rom_load_new(Machine->gamedrv->rom);
 }
 
 
+/***************************************************************************
+
+	ROM parsing helpers
+
+***************************************************************************/
+
+const struct RomModule *rom_first_region(const struct GameDriver *drv)
+{
+	return drv->rom;
+}
+
+const struct RomModule *rom_next_region(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISEND(romp) ? NULL : romp;
+}
+
+const struct RomModule *rom_first_file(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
+}
+
+const struct RomModule *rom_next_file(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
+}
+
+const struct RomModule *rom_first_chunk(const struct RomModule *romp)
+{
+	return (ROMENTRY_ISFILE(romp)) ? romp : NULL;
+}
+
+const struct RomModule *rom_next_chunk(const struct RomModule *romp)
+{
+	romp++;
+	return (ROMENTRY_ISCONTINUE(romp)) ? romp : NULL;
+}
+
+
+
+/***************************************************************************
+
+	printromlist
+
+***************************************************************************/
+
 void printromlist(const struct RomModule *romp,const char *basename)
 {
+	const struct RomModule *region, *rom, *chunk;
+
 	if (!romp) return;
 
 #ifdef MESS
@@ -435,31 +167,16 @@ void printromlist(const struct RomModule *romp,const char *basename)
 	printf("This is the list of the ROMs required for driver \"%s\".\n"
 			"Name              Size       Checksum\n",basename);
 
-	while (romp->name || romp->offset || romp->length)
+	for (region = romp; region; region = rom_next_region(region))
 	{
-		romp++;	/* skip memory region definition */
-
-		while (romp->length)
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			const char *name;
-			int length,expchecksum;
+			const char *name = ROM_GETNAME(rom);
+			int expchecksum = ROM_GETCRC(rom);
+			int length = 0;
 
-
-			name = romp->name;
-			expchecksum = romp->crc;
-
-			length = 0;
-
-			do
-			{
-				/* ROM_RELOAD */
-				if (romp->name == (char *)-1)
-					length = 0;	/* restart */
-
-				length += romp->length & ~ROMFLAG_MASK;
-
-				romp++;
-			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+				length += ROM_GETLENGTH(chunk);
 
 			if (expchecksum)
 				printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
@@ -668,57 +385,58 @@ unsigned char *memory_region(int num)
 	int i;
 
 	if (num < MAX_MEMORY_REGIONS)
-		return Machine->memory_region[num];
+		return Machine->memory_region[num].base;
 	else
 	{
 		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 		{
-			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
-				return Machine->memory_region[i];
+			if (Machine->memory_region[i].type == num)
+				return Machine->memory_region[i].base;
 		}
 	}
 
 	return 0;
 }
 
-int memory_region_length(int num)
+size_t memory_region_length(int num)
 {
 	int i;
 
 	if (num < MAX_MEMORY_REGIONS)
-		return Machine->memory_region_length[num];
+		return Machine->memory_region[num].length;
 	else
 	{
 		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 		{
-			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
-				return Machine->memory_region_length[i];
+			if (Machine->memory_region[i].type == num)
+				return Machine->memory_region[i].length;
 		}
 	}
 
 	return 0;
 }
 
-int new_memory_region(int num, int length)
+int new_memory_region(int num, size_t length, UINT32 flags)
 {
     int i;
 
     if (num < MAX_MEMORY_REGIONS)
     {
-        Machine->memory_region_length[num] = length;
-        Machine->memory_region[num] = malloc(length);
-        return (Machine->memory_region[num] == NULL) ? 1 : 0;
+        Machine->memory_region[num].length = length;
+        Machine->memory_region[num].base = malloc(length);
+        return (Machine->memory_region[num].base == NULL) ? 1 : 0;
     }
     else
     {
         for (i = 0;i < MAX_MEMORY_REGIONS;i++)
         {
-            if (Machine->memory_region[i] == NULL)
+            if (Machine->memory_region[i].base == NULL)
             {
-                Machine->memory_region_length[i] = length;
-                Machine->memory_region_type[i] = num;
-                Machine->memory_region[i] = malloc(length);
-                return (Machine->memory_region[i] == NULL) ? 1 : 0;
+                Machine->memory_region[i].length = length;
+                Machine->memory_region[i].type = num;
+                Machine->memory_region[i].flags = flags;
+                Machine->memory_region[i].base = malloc(length);
+                return (Machine->memory_region[i].base == NULL) ? 1 : 0;
             }
         }
     }
@@ -731,17 +449,17 @@ void free_memory_region(int num)
 
 	if (num < MAX_MEMORY_REGIONS)
 	{
-		free(Machine->memory_region[num]);
-		Machine->memory_region[num] = 0;
+		free(Machine->memory_region[num].base);
+		memset(&Machine->memory_region[num], 0, sizeof(Machine->memory_region[num]));
 	}
 	else
 	{
 		for (i = 0;i < MAX_MEMORY_REGIONS;i++)
 		{
-			if ((Machine->memory_region_type[i] & ~REGIONFLAG_MASK) == num)
+			if (Machine->memory_region[i].type == num)
 			{
-				free(Machine->memory_region[i]);
-				Machine->memory_region[i] = 0;
+				free(Machine->memory_region[i].base);
+				memset(&Machine->memory_region[i], 0, sizeof(Machine->memory_region[i]));
 				return;
 			}
 		}
@@ -1001,4 +719,686 @@ void save_screen_snapshot(struct osd_bitmap *bitmap)
 		save_screen_snapshot_as(fp,bitmap);
 		osd_fclose(fp);
 	}
+}
+
+
+
+
+
+/*-------------------------------------------------
+	debugload - log data to a file
+-------------------------------------------------*/
+
+void debugload(const char *string, ...)
+{
+#ifdef LOG_LOAD
+	static int opened;
+	va_list arg;
+	FILE *f;
+
+	f = fopen("romload.log", opened++ ? "a" : "w");
+	if (f)
+	{
+		va_start(arg, string);
+		vfprintf(f, string, arg);
+		va_end(arg);
+		fclose(f);
+	}
+#endif
+}
+
+
+/*-------------------------------------------------
+	count_roms - counts the total number of ROMs
+	that will need to be loaded
+-------------------------------------------------*/
+
+static int count_roms(const struct RomModule *romp)
+{
+	const struct RomModule *region, *rom;
+	int count = 0;
+
+	/* loop over regions, then over files */
+	for (region = romp; region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			count++;
+
+	/* return the total count */
+	return count;
+}
+
+
+/*-------------------------------------------------
+	fill_random - fills an area of memory with
+	random data
+-------------------------------------------------*/
+
+static void fill_random(UINT8 *base, UINT32 length)
+{
+	while (length--)
+		*base++ = rand();
+}
+
+
+/*-------------------------------------------------
+	handle_missing_file - handles error generation
+	for missing files
+-------------------------------------------------*/
+
+static void handle_missing_file(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	/* optional files are okay */
+	if (ROM_ISOPTIONAL(romp))
+	{
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "OPTIONAL %-12s NOT FOUND\n", ROM_GETNAME(romp));
+		romdata->warnings++;
+	}
+
+	/* no good dumps are okay */
+	else if (ROM_NOGOODDUMP(romp))
+	{
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n", ROM_GETNAME(romp));
+		romdata->warnings++;
+	}
+
+	/* anything else is bad */
+	else
+	{
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", ROM_GETNAME(romp));
+		romdata->errors++;
+	}
+}
+
+
+/*-------------------------------------------------
+	verify_length_and_crc - verify the length
+	and CRC of a file
+-------------------------------------------------*/
+
+static void verify_length_and_crc(struct rom_load_data *romdata, const char *name, UINT32 explength, UINT32 expcrc)
+{
+	UINT32 actlength, actcrc;
+
+	/* we've already complained if there is no file */
+	if (!romdata->file)
+		return;
+
+	/* get the length and CRC from the file */
+	actlength = osd_fsize(romdata->file);
+	actcrc = osd_fcrc(romdata->file);
+
+	/* verify length */
+	if (explength != actlength)
+	{
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n", name, explength, actlength);
+		romdata->warnings++;
+	}
+
+	/* verify CRC */
+	if (expcrc != actcrc)
+	{
+		/* expected CRC == 0 means no good dump known */
+		if (expcrc == 0)
+			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NO GOOD DUMP KNOWN\n", name);
+
+		/* inverted CRC means needs redump */
+		else if (expcrc == BADCRC(actcrc))
+			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s ROM NEEDS REDUMP\n",name);
+
+		/* otherwise, it's just bad */
+		else
+			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CRC (expected: %08x found: %08x)\n", name, expcrc, actcrc);
+		romdata->warnings++;
+	}
+}
+
+
+/*-------------------------------------------------
+	display_rom_load_results - display the final
+	results of ROM loading
+-------------------------------------------------*/
+
+static int display_rom_load_results(struct rom_load_data *romdata)
+{
+	int region;
+
+	/* final status display */
+	osd_display_loading_rom_message(NULL, romdata->romsloaded, romdata->romstotal);
+
+	/* only display if we have warnings or errors */
+	if (romdata->warnings || romdata->errors)
+	{
+		extern int bailing;
+
+		/* display either an error message or a warning message */
+		if (romdata->errors)
+		{
+			strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
+			bailing = 1;
+		}
+		else
+			strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
+
+		/* display the result */
+		printf("%s", romdata->errorbuf);
+
+		/* if we're not getting out of here, wait for a keypress */
+		if (!options.gui_host && !bailing)
+		{
+			int k;
+
+			/* loop until we get one */
+			printf ("Press any key to continue\n");
+			do
+			{
+				k = code_read_async();
+			}
+			while (k == CODE_NONE || k == KEYCODE_LCONTROL);
+
+			/* bail on a control + C */
+			if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
+				return 1;
+		}
+	}
+
+	/* clean up any regions */
+	if (romdata->errors)
+		for (region = 0; region < MAX_MEMORY_REGIONS; region++)
+			free_memory_region(region);
+
+	/* return true if we had any errors */
+	return (romdata->errors != 0);
+}
+
+
+/*-------------------------------------------------
+	region_post_process - post-process a region,
+	byte swapping and inverting data as necessary
+-------------------------------------------------*/
+
+static void region_post_process(struct rom_load_data *romdata, const struct RomModule *regiondata)
+{
+	int type = ROMREGION_GETTYPE(regiondata);
+	int datawidth = ROMREGION_GETWIDTH(regiondata) / 8;
+	int littleendian = ROMREGION_ISLITTLEENDIAN(regiondata);
+	UINT8 *base;
+	int i, j;
+
+	debugload("+ datawidth=%d little=%d\n", datawidth, littleendian);
+
+	/* if this is a CPU region, override with the CPU width and endianness */
+	if (type >= REGION_CPU1 && type < REGION_CPU1 + MAX_CPU)
+	{
+		int cputype = Machine->drv->cpu[type - REGION_CPU1].cpu_type & ~CPU_FLAGS_MASK;
+		if (cputype != 0)
+		{
+			datawidth = cpuintf[cputype].databus_width / 8;
+			littleendian = (cpuintf[cputype].endianess == CPU_IS_LE);
+			debugload("+ CPU region #%d: datawidth=%d little=%d\n", type - REGION_CPU1, datawidth, littleendian);
+		}
+	}
+
+	/* if the region is inverted, do that now */
+	if (ROMREGION_ISINVERTED(regiondata))
+	{
+		debugload("+ Inverting region\n");
+		for (i = 0, base = romdata->regionbase; i < romdata->regionlength; i++)
+			*base++ ^= 0xff;
+	}
+
+	/* swap the endianness if we need to */
+#ifdef LSB_FIRST
+	if (datawidth > 1 && !littleendian)
+#else
+	if (datawidth > 1 && littleendian)
+#endif
+	{
+		debugload("+ Byte swapping region\n");
+		for (i = 0, base = romdata->regionbase; i < romdata->regionlength; i += datawidth)
+		{
+			UINT8 temp[8];
+			memcpy(temp, base, datawidth);
+			for (j = datawidth - 1; j >= 0; j--)
+				*base++ = temp[j];
+		}
+	}
+}
+
+
+/*-------------------------------------------------
+	open_rom_file - open a ROM file, searching
+	up the parent and loading via CRC
+-------------------------------------------------*/
+
+static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	const struct GameDriver *drv;
+	char crc[9];
+
+	/* update status display */
+	if (osd_display_loading_rom_message(ROM_GETNAME(romp), ++romdata->romsloaded, romdata->romstotal) != 0)
+       return 0;
+
+	/* first attempt reading up the chain through the parents */
+	romdata->file = NULL;
+	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
+		romdata->file = osd_fopen(drv->name, ROM_GETNAME(romp), OSD_FILETYPE_ROM, 0);
+
+	/* if that failed, attempt to open via CRC */
+	sprintf(crc, "%08x", ROM_GETCRC(romp));
+	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
+		romdata->file = osd_fopen(drv->name, crc, OSD_FILETYPE_ROM, 0);
+
+	/* return the result */
+	return (romdata->file != NULL);
+}
+
+
+/*-------------------------------------------------
+	rom_fread - cheesy fread that fills with
+	random data for a NULL file
+-------------------------------------------------*/
+
+static int rom_fread(struct rom_load_data *romdata, UINT8 *buffer, int length)
+{
+	/* files just pass through */
+	if (romdata->file)
+		return osd_fread(romdata->file, buffer, length);
+
+	/* otherwise, fill with randomness */
+	else
+		fill_random(buffer, length);
+
+	return length;
+}
+
+
+/*-------------------------------------------------
+	read_rom_data - read ROM data for a single
+	entry
+-------------------------------------------------*/
+
+static int read_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	int datashift = ROM_GETBITSHIFT(romp);
+	int datamask = ((1 << ROM_GETBITWIDTH(romp)) - 1) << datashift;
+	int numbytes = ROM_GETLENGTH(romp);
+	int groupsize = ROM_GETGROUPSIZE(romp);
+	int skip = ROM_GETSKIPCOUNT(romp);
+	int reversed = ROM_ISREVERSED(romp);
+	int numgroups = (numbytes + groupsize - 1) / groupsize;
+	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
+	int i;
+
+	debugload("Loading ROM data: offs=%X len=%X mask=%02X group=%d skip=%d reverse=%d\n", ROM_GETOFFSET(romp), numbytes, datamask, groupsize, skip, reversed);
+
+	/* make sure the length was an even multiple of the group size */
+	if (numbytes % groupsize != 0)
+	{
+		printf("Error in RomModule definition: %s length not an even multiple of group size\n", ROM_GETNAME(romp));
+		return -1;
+	}
+
+	/* make sure we only fill within the region space */
+	if (ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > romdata->regionlength)
+	{
+		printf("Error in RomModule definition: %s out of memory region space\n", ROM_GETNAME(romp));
+		return -1;
+	}
+
+	/* make sure the length was valid */
+	if (numbytes == 0)
+	{
+		printf("Error in RomModule definition: %s has an invalid length\n", ROM_GETNAME(romp));
+		return -1;
+	}
+
+	/* special case for simple loads */
+	if (datamask == 0xff && (groupsize == 1 || !reversed) && skip == 0)
+		return rom_fread(romdata, base, numbytes);
+
+	/* chunky reads for complex loads */
+	skip += groupsize;
+	while (numbytes)
+	{
+		int evengroupcount = (sizeof(romdata->tempbuf) / groupsize) * groupsize;
+		int bytesleft = (numbytes > evengroupcount) ? evengroupcount : numbytes;
+		UINT8 *bufptr = romdata->tempbuf;
+
+		/* read as much as we can */
+		debugload("  Reading %X bytes into buffer\n", bytesleft);
+		if (rom_fread(romdata, romdata->tempbuf, bytesleft) != bytesleft)
+			return 0;
+		numbytes -= bytesleft;
+
+		debugload("  Copying to %08X\n", (UINT32)base);
+
+		/* unmasked cases */
+		if (datamask == 0xff)
+		{
+			/* non-grouped data */
+			if (groupsize == 1)
+				for (i = 0; i < bytesleft; i++, base += skip)
+					*base = *bufptr++;
+
+			/* grouped data -- non-reversed case */
+			else if (!reversed)
+				while (bytesleft)
+				{
+					for (i = 0; i < groupsize && bytesleft; i++, bytesleft--)
+						base[i] = *bufptr++;
+					base += skip;
+				}
+
+			/* grouped data -- reversed case */
+			else
+				while (bytesleft)
+				{
+					for (i = groupsize - 1; i >= 0 && bytesleft; i--, bytesleft--)
+						base[i] = *bufptr++;
+					base += skip;
+				}
+		}
+
+		/* masked cases */
+		else
+		{
+			/* non-grouped data */
+			if (groupsize == 1)
+				for (i = 0; i < bytesleft; i++, base += skip)
+					*base = (*base & ~datamask) | ((*bufptr++ << datashift) & datamask);
+
+			/* grouped data -- non-reversed case */
+			else if (!reversed)
+				while (bytesleft)
+				{
+					for (i = 0; i < groupsize && bytesleft; i++, bytesleft--)
+						base[i] = (base[i] & ~datamask) | ((*bufptr++ << datashift) & datamask);
+					base += skip;
+				}
+
+			/* grouped data -- reversed case */
+			else
+				while (bytesleft)
+				{
+					for (i = groupsize - 1; i >= 0 && bytesleft; i--, bytesleft--)
+						base[i] = (base[i] & ~datamask) | ((*bufptr++ << datashift) & datamask);
+					base += skip;
+				}
+		}
+	}
+	debugload("  All done\n");
+	return ROM_GETLENGTH(romp);
+}
+
+
+/*-------------------------------------------------
+	fill_rom_data - fill a region of ROM space
+-------------------------------------------------*/
+
+static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	UINT32 numbytes = ROM_GETLENGTH(romp);
+	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
+
+	/* make sure we fill within the region space */
+	if (ROM_GETOFFSET(romp) + numbytes > romdata->regionlength)
+	{
+		printf("Error in RomModule definition: FILL out of memory region space\n");
+		return 0;
+	}
+
+	/* make sure the length was valid */
+	if (numbytes == 0)
+	{
+		printf("Error in RomModule definition: FILL has an invalid length\n");
+		return 0;
+	}
+
+	/* fill the data */
+	memset(base, ROM_GETCRC(romp) & 0xff, numbytes);
+	return 1;
+}
+
+
+/*-------------------------------------------------
+	copy_rom_data - copy a region of ROM space
+-------------------------------------------------*/
+
+static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
+	int srcregion = ROM_GETFLAGS(romp) >> 24;
+	UINT32 numbytes = ROM_GETLENGTH(romp);
+	UINT32 srcoffs = ROM_GETCRC(romp);
+	UINT8 *srcbase;
+
+	/* make sure we copy within the region space */
+	if (ROM_GETOFFSET(romp) + numbytes > romdata->regionlength)
+	{
+		printf("Error in RomModule definition: COPY out of target memory region space\n");
+		return 0;
+	}
+
+	/* make sure the length was valid */
+	if (numbytes == 0)
+	{
+		printf("Error in RomModule definition: COPY has an invalid length\n");
+		return 0;
+	}
+
+	/* make sure the source was valid */
+	srcbase = memory_region(srcregion);
+	if (!srcbase)
+	{
+		printf("Error in RomModule definition: COPY from an invalid region\n");
+		return 0;
+	}
+
+	/* make sure we find within the region space */
+	if (srcoffs + numbytes > memory_region_length(srcregion))
+	{
+		printf("Error in RomModule definition: COPY out of source memory region space\n");
+		return 0;
+	}
+
+	/* fill the data */
+	memcpy(base, srcbase + srcoffs, numbytes);
+	return 1;
+}
+
+
+/*-------------------------------------------------
+	process_rom_entries - process all ROM entries
+	for a region
+-------------------------------------------------*/
+
+static int process_rom_entries(struct rom_load_data *romdata, const struct RomModule *romp)
+{
+	UINT32 lastflags = 0;
+
+	/* loop until we hit the end of this region */
+	while (!ROMENTRY_ISREGIONEND(romp))
+	{
+		/* if this is a continue entry, it's invalid */
+		if (ROMENTRY_ISCONTINUE(romp))
+		{
+			printf("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
+			goto fatalerror;
+		}
+
+		/* if this is a reload entry, it's invalid */
+		if (ROMENTRY_ISRELOAD(romp))
+		{
+			printf("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
+			goto fatalerror;
+		}
+
+		/* handle fills */
+		if (ROMENTRY_ISFILL(romp))
+		{
+			if (!fill_rom_data(romdata, romp++))
+				goto fatalerror;
+		}
+
+		/* handle copies */
+		else if (ROMENTRY_ISCOPY(romp))
+		{
+			if (!copy_rom_data(romdata, romp++))
+				goto fatalerror;
+		}
+
+		/* handle files */
+		else if (ROMENTRY_ISFILE(romp))
+		{
+			const struct RomModule *baserom = romp;
+			int explength = 0;
+
+			/* open the file */
+			debugload("Opening ROM file: %s\n", ROM_GETNAME(romp));
+			if (!open_rom_file(romdata, romp))
+				handle_missing_file(romdata, romp);
+
+			/* loop until we run out of reloads */
+			do
+			{
+				/* loop until we run out of continues */
+				do
+				{
+					struct RomModule modified_romp = *romp++;
+					int readresult;
+
+					/* handle flag inheritance */
+					if (!ROM_INHERITSFLAGS(&modified_romp))
+						lastflags = modified_romp._length & ROM_INHERITEDFLAGS;
+					else
+						modified_romp._length = (modified_romp._length & ~ROM_INHERITEDFLAGS) | lastflags;
+
+					/* attempt to read using the modified entry */
+					readresult = read_rom_data(romdata, &modified_romp);
+					if (readresult == -1)
+						goto fatalerror;
+					explength += readresult;
+				}
+				while (ROMENTRY_ISCONTINUE(romp));
+
+				/* if this was the first use of this file, verify the length and CRC */
+				if (baserom)
+				{
+					debugload("Verifying length (%X) and CRC (%08X)\n", explength, ROM_GETCRC(baserom));
+					verify_length_and_crc(romdata, ROM_GETNAME(baserom), explength, ROM_GETCRC(baserom));
+					debugload("Verify succeeded\n");
+				}
+
+				/* reseek to the start and clear the baserom so we don't reverify */
+				if (romdata->file)
+					osd_fseek(romdata->file, 0, SEEK_SET);
+				baserom = NULL;
+			}
+			while (ROMENTRY_ISRELOAD(romp));
+
+			/* close the file */
+			if (romdata->file)
+			{
+				debugload("Closing ROM file\n");
+				osd_fclose(romdata->file);
+				romdata->file = NULL;
+			}
+		}
+	}
+	return 1;
+
+	/* error case */
+fatalerror:
+	if (romdata->file)
+		osd_fclose(romdata->file);
+	romdata->file = NULL;
+	return 0;
+}
+
+
+/*-------------------------------------------------
+	rom_load_new - new, more flexible ROM
+	loading system
+-------------------------------------------------*/
+
+int rom_load_new(const struct RomModule *romp)
+{
+	const struct RomModule *regionlist[REGION_MAX];
+	const struct RomModule *region;
+	static struct rom_load_data romdata;
+	int regnum;
+
+	/* reset the region list */
+	memset(regionlist, 0, sizeof(regionlist));
+
+	/* reset the romdata struct */
+	memset(&romdata, 0, sizeof(romdata));
+	romdata.romstotal = count_roms(romp);
+
+	/* loop until we hit the end */
+	for (region = romp, regnum = 0; region; region = rom_next_region(region), regnum++)
+	{
+		int regiontype = ROMREGION_GETTYPE(region);
+
+		debugload("Processing region %02X (length=%X)\n", regiontype, ROMREGION_GETLENGTH(region));
+
+		/* the first entry must be a region */
+		if (!ROMENTRY_ISREGION(region))
+		{
+			printf("Error: missing ROM_REGION header\n");
+			return 1;
+		}
+
+		/* if sound is disabled and it's a sound-only region, skip it */
+		if (Machine->sample_rate == 0 && ROMREGION_ISSOUNDONLY(region))
+			continue;
+
+		/* allocate memory for the region */
+		if (new_memory_region(regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)))
+		{
+			printf("Error: unable to allocate memory for region %d\n", regiontype);
+			return 1;
+		}
+
+		/* remember the base and length */
+		romdata.regionlength = memory_region_length(regiontype);
+		romdata.regionbase = memory_region(regiontype);
+		debugload("Allocated %X bytes @ %08X\n", romdata.regionlength, (UINT32)romdata.regionbase);
+
+		/* clear the region if it's requested */
+		if (ROMREGION_ISERASE(region))
+			memset(romdata.regionbase, ROMREGION_GETERASEVAL(region), romdata.regionlength);
+
+		/* or if it's sufficiently small (<= 4MB) */
+		else if (romdata.regionlength <= 0x400000)
+			memset(romdata.regionbase, 0, romdata.regionlength);
+
+#ifdef MAME_DEBUG
+		/* if we're debugging, fill region with random data to catch errors */
+		else
+			fill_random(romdata.regionbase, romdata.regionlength);
+#endif
+
+		/* now process the entries in the region */
+		if (!process_rom_entries(&romdata, region + 1))
+			return 1;
+
+		/* add this region to the list */
+		if (regiontype < REGION_MAX)
+			regionlist[regiontype] = region;
+	}
+
+	/* post-process the regions */
+	for (regnum = 0; regnum < REGION_MAX; regnum++)
+		if (regionlist[regnum])
+		{
+			debugload("Post-processing region %02X\n", regnum);
+			romdata.regionlength = memory_region_length(regnum);
+			romdata.regionbase = memory_region(regnum);
+			region_post_process(&romdata, regionlist[regnum]);
+		}
+
+	/* display the results and exit */
+	return display_rom_load_results(&romdata);
 }

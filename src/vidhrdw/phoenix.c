@@ -7,21 +7,18 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-/* from sndhrdw/pleiads.c */
+
+/* in sndhrdw/pleiads.c */
 WRITE_HANDLER( pleiads_sound_control_c_w );
 
-static unsigned char *ram_page1;
-static unsigned char *ram_page2;
-static unsigned char *current_ram_page;
-static int current_ram_page_index;
-static unsigned char bg_scroll;
-static int palette_bank;
+static unsigned char *videoram_pg1;
+static unsigned char *videoram_pg2;
+static unsigned char *current_videoram_pg;
+static int current_videoram_pg_index;
+static int fg_palette_bank, bg_palette_bank;
 static int protection_question;
-
-
-#define BACKGROUND_VIDEORAM_OFFSET   0x0800
+static struct tilemap *fg_tilemap, *bg_tilemap;
 
 
 /***************************************************************************
@@ -45,10 +42,10 @@ static int protection_question;
   plus 270 ohm pullup and pulldown resistors on all lines
 
 ***************************************************************************/
+
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
@@ -101,27 +98,115 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
+void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1;
+
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 2) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		bit0 = (color_prom[0] >> 1) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+
+		color_prom++;
+	}
+
+	/* first bank of characters use colors 0x00-0x1f, 0x40-0x5f, 0x80-0x9f and 0xc0-0xdf */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(0,4*i + j*4*8 + 0) = 0*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 1) = 1*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 2) = 2*8 + i + (3-j)*64;
+			COLOR(0,4*i + j*4*8 + 3) = 3*8 + i + (3-j)*64;
+		}
+	}
+
+	/* second bank of characters use colors 0x20-0x3f, 0x60-0x7f, 0xa0-0xbf and 0xe0-0xff */
+	for (i = 0;i < 8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 4;j++)
+		{
+			COLOR(1,4*i + j*4*8 + 0) = 0*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 1) = 1*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 2) = 2*8 + i + 32 + (3-j)*64;
+			COLOR(1,4*i + j*4*8 + 3) = 3*8 + i + 32 + (3-j)*64;
+		}
+	}
+}
+
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code;
+
+	code = current_videoram_pg[tile_index];
+	SET_TILE_INFO(1, code, (code >> 5) | (fg_palette_bank << 3));
+	tile_info.flags = (tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY;	/* first row (column) is opaque */
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int code;
+
+	code = current_videoram_pg[tile_index + 0x800];
+	SET_TILE_INFO(0, code, (code >> 5) | (bg_palette_bank << 3));
+}
+
 
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int phoenix_vh_start(void)
 {
-	if ((ram_page1 = malloc(0x1000)) == 0)
+	if ((videoram_pg1 = malloc(0x1000)) == 0)
 		return 1;
 
-	if ((ram_page2 = malloc(0x1000)) == 0)
+	if ((videoram_pg2 = malloc(0x1000)) == 0)
 		return 1;
 
-    current_ram_page = 0;
-    current_ram_page_index = -1;
+    current_videoram_pg_index = -1;
+	current_videoram_pg = videoram_pg1;		/* otherwise, hiscore loading crashes */
 
-	videoram_size = 0x0340;
-	return generic_vh_start();
+
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
+
+	if (!fg_tilemap || !bg_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fg_tilemap,0);
+
+	return 0;
 }
-
 
 
 /***************************************************************************
@@ -129,64 +214,89 @@ int phoenix_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
+
 void phoenix_vh_stop(void)
 {
-	free(ram_page1);
-	free(ram_page2);
+	free(videoram_pg1);
+	free(videoram_pg2);
 
-	ram_page1 = 0;
-	ram_page2 = 0;
-
-	generic_vh_stop();
+	videoram_pg1 = 0;
+	videoram_pg2 = 0;
 }
 
 
+/***************************************************************************
 
-READ_HANDLER( phoenix_paged_ram_r )
+  Memory handlers
+
+***************************************************************************/
+
+READ_HANDLER( phoenix_videoram_r )
 {
-	return current_ram_page[offset];
+	return current_videoram_pg[offset];
 }
 
-
-WRITE_HANDLER( phoenix_paged_ram_w )
+WRITE_HANDLER( phoenix_videoram_w )
 {
-	if ((offset >= BACKGROUND_VIDEORAM_OFFSET) &&
-		(offset <  BACKGROUND_VIDEORAM_OFFSET + videoram_size))
+	current_videoram_pg[offset] = data;
+
+	if ((offset & 0x7ff) < 0x340)
 	{
-		/* Background video RAM */
-		if (data != current_ram_page[offset])
-		{
-			dirtybuffer[offset - BACKGROUND_VIDEORAM_OFFSET] = 1;
-		}
+		if (offset & 0x800)
+			tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
+		else
+			tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 	}
-
-	current_ram_page[offset] = data;
 }
 
 
 WRITE_HANDLER( phoenix_videoreg_w )
 {
-    if (current_ram_page_index != (data & 1))
+    if (current_videoram_pg_index != (data & 1))
 	{
-		/* Set memory bank */
-		current_ram_page_index = data & 1;
+		/* set memory bank */
+		current_videoram_pg_index = data & 1;
+		current_videoram_pg = current_videoram_pg_index ? videoram_pg2 : videoram_pg1;
 
-		current_ram_page = current_ram_page_index ? ram_page2 : ram_page1;
-
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
-	if (palette_bank != ((data >> 1) & 1))
+	/* Phoenix has only one palette select effecting both layers */
+	if (fg_palette_bank != ((data >> 1) & 1))
 	{
-		palette_bank = (data >> 1) & 1;
+		fg_palette_bank = bg_palette_bank = (data >> 1) & 1;
 
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+}
+
+WRITE_HANDLER( pleiads_videoreg_w )
+{
+    if (current_videoram_pg_index != (data & 1))
+	{
+		/* set memory bank */
+		current_videoram_pg_index = data & 1;
+		current_videoram_pg = current_videoram_pg_index ? videoram_pg2 : videoram_pg1;
+
+		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
+	}
+
+	/* Pleiads has seperate palette selects for each layer */
+    if (bg_palette_bank != ((data >> 2) & 1))
+	{
+		bg_palette_bank = (data >> 2) & 1;
+
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+
+	if (fg_palette_bank != ((data >> 3) & 1))
+	{
+		fg_palette_bank = (data >> 3) & 1;
+
+		tilemap_mark_all_tiles_dirty(fg_tilemap);
 	}
 
 	protection_question = data & 0xfc;
-
-	/* I think bits 2 and 3 are used for something else in Pleiads as well,
-	   they are set in the routine starting at location 0x06bc */
 
 	/* send two bits to sound control C (not sure if they are there) */
 	pleiads_sound_control_c_w(offset, data);
@@ -195,11 +305,11 @@ WRITE_HANDLER( phoenix_videoreg_w )
 
 WRITE_HANDLER( phoenix_scroll_w )
 {
-	bg_scroll = data;
+	tilemap_set_scrollx(bg_tilemap,0,data);
 }
 
 
-READ_HANDLER( phoenix_input_port_0_r )
+READ_HANDLER( pleiads_input_port_0_r )
 {
 	int ret = input_port_0_r(0) & 0xf7;
 
@@ -225,77 +335,14 @@ READ_HANDLER( phoenix_input_port_0_r )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
+
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	tilemap_update(ALL_TILEMAPS);
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,code;
-
-
-			dirtybuffer[offs] = 0;
-
-			code = current_ram_page[offs + BACKGROUND_VIDEORAM_OFFSET];
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					code,
-					(code >> 5) + 8 * palette_bank,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	{
-		int scroll;
-
-
-		scroll = -bg_scroll;
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy,code;
-
-
-		code = current_ram_page[offs];
-
-		sx = offs % 32;
-		sy = offs / 32;
-
-		if (sx >= 1)
-			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					(code >> 5) + 8 * palette_bank,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		else
-			drawgfx(bitmap,Machine->gfx[1],
-					code,
-					(code >> 5) + 8 * palette_bank,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
+	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,fg_tilemap,0,0);
 }

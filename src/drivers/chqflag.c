@@ -45,22 +45,22 @@ static WRITE_HANDLER( chqflag_bankswitch_w )
 
 	/* bit 5 = memory bank select */
 	if (data & 0x20){
-		cpu_setbankhandler_r (2, paletteram_r);							/* palette */
-		cpu_setbankhandler_w (2, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
+		memory_set_bankhandler_r (2, 0, paletteram_r);							/* palette */
+		memory_set_bankhandler_w (2, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
 		if (K051316_readroms){
-			cpu_setbankhandler_r (1, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
-			cpu_setbankhandler_w (1, K051316_0_w);		/* 051316 #1 */
+			memory_set_bankhandler_r (1, 0, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
+			memory_set_bankhandler_w (1, 0, K051316_0_w);		/* 051316 #1 */
 		}
 		else{
-			cpu_setbankhandler_r (1, K051316_0_r);		/* 051316 #1 */
-			cpu_setbankhandler_w (1, K051316_0_w);		/* 051316 #1 */
+			memory_set_bankhandler_r (1, 0, K051316_0_r);		/* 051316 #1 */
+			memory_set_bankhandler_w (1, 0, K051316_0_w);		/* 051316 #1 */
 		}
 	}
 	else{
-		cpu_setbankhandler_r (1, MRA_RAM);				/* RAM */
-		cpu_setbankhandler_w (1, MWA_RAM);				/* RAM */
-		cpu_setbankhandler_r (2, MRA_RAM);				/* RAM */
-		cpu_setbankhandler_w (2, MWA_RAM);				/* RAM */
+		memory_set_bankhandler_r (1, 0, MRA_RAM);				/* RAM */
+		memory_set_bankhandler_w (1, 0, MWA_RAM);				/* RAM */
+		memory_set_bankhandler_r (2, 0, MRA_RAM);				/* RAM */
+		memory_set_bankhandler_w (2, 0, MWA_RAM);				/* RAM */
 	}
 
 	/* other bits unknown/unused */
@@ -74,10 +74,10 @@ static WRITE_HANDLER( chqflag_vreg_w )
 
 	/* bit 4 = enable rom reading thru K051316 #1 & #2 */
 	if ((K051316_readroms = (data & 0x10))){
-		cpu_setbankhandler_r (3, K051316_rom_1_r);	/* 051316 (ROM test) */
+		memory_set_bankhandler_r (3, 0, K051316_rom_1_r);	/* 051316 (ROM test) */
 	}
 	else{
-		cpu_setbankhandler_r (3, K051316_1_r);		/* 051316 */
+		memory_set_bankhandler_r (3, 0, K051316_1_r);		/* 051316 */
 	}
 
 	/* other bits unknown/unused */
@@ -381,62 +381,62 @@ static const struct MachineDriver machine_driver_chqflag =
 };
 
 ROM_START( chqflag )
-	ROM_REGION( 0x58800, REGION_CPU1 )	/* 052001 code */
+	ROM_REGION( 0x58800, REGION_CPU1, 0 )	/* 052001 code */
 	ROM_LOAD( "717h02",		0x050000, 0x008000, 0xf5bd4e78 )	/* banked ROM */
 	ROM_CONTINUE(			0x008000, 0x008000 )				/* fixed ROM */
 	ROM_LOAD( "717e10",		0x010000, 0x040000, 0x72fc56f6 )	/* banked ROM */
 	/* extra memory for banked RAM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "717e01",		0x000000, 0x008000, 0x966b8ba8 )
 
-    ROM_REGION( 0x100000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+    ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e04",		0x000000, 0x080000, 0x1a50a1cc )	/* sprites */
 	ROM_LOAD( "717e05",		0x080000, 0x080000, 0x46ccb506 )	/* sprites */
 
-	ROM_REGION( 0x020000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e06",		0x000000, 0x020000, 0x1ec26c7a )	/* zoom/rotate (N16) */
 
-	ROM_REGION( 0x100000, REGION_GFX3 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e07",		0x000000, 0x040000, BADCRC (0xa8d538a8) )	/* BAD DUMP! */
 	ROM_LOAD( "717e08",		0x040000, 0x040000, 0xb68a212e )	/* zoom/rotate (L22) */
 	ROM_LOAD( "717e11",		0x080000, 0x040000, BADCRC (0x84f8de54) )	/* BAD DUMP! */
 	ROM_LOAD( "717e12",		0x0c0000, 0x040000, 0x9269335d )	/* zoom/rotate (N22) */
 
-	ROM_REGION( 0x080000, REGION_SOUND1 )	/* 007232 data (chip 1) */
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "717e03",		0x000000, 0x080000, 0xebe73c22 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2 )	/* 007232 data (chip 2) */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* 007232 data (chip 2) */
 	ROM_LOAD( "717e09",		0x000000, 0x080000, 0xd74e857d )
 ROM_END
 
 ROM_START( chqflagj )
-	ROM_REGION( 0x58800, REGION_CPU1 )	/* 052001 code */
+	ROM_REGION( 0x58800, REGION_CPU1, 0 )	/* 052001 code */
 	ROM_LOAD( "717j02.bin",	0x050000, 0x008000, 0x1 )	/* banked ROM */
 	ROM_CONTINUE(			0x008000, 0x008000 )				/* fixed ROM */
 	ROM_LOAD( "717e10",		0x010000, 0x040000, 0x72fc56f6 )	/* banked ROM */
 	/* extra memory for banked RAM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the SOUND CPU */
 	ROM_LOAD( "717e01",		0x000000, 0x008000, 0x966b8ba8 )
 
-    ROM_REGION( 0x100000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+    ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e04",		0x000000, 0x080000, 0x1a50a1cc )	/* sprites */
 	ROM_LOAD( "717e05",		0x080000, 0x080000, 0x46ccb506 )	/* sprites */
 
-	ROM_REGION( 0x020000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x020000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e06",		0x000000, 0x020000, 0x1ec26c7a )	/* zoom/rotate (N16) */
 
-	ROM_REGION( 0x100000, REGION_GFX3 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX3, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "717e07",		0x000000, 0x040000, BADCRC (0xa8d538a8) )	/* BAD DUMP! */
 	ROM_LOAD( "717e08",		0x040000, 0x040000, 0xb68a212e )	/* zoom/rotate (L22) */
 	ROM_LOAD( "717e11",		0x080000, 0x040000, BADCRC (0x84f8de54) )	/* BAD DUMP! */
 	ROM_LOAD( "717e12",		0x0c0000, 0x040000, 0x9269335d )	/* zoom/rotate (N22) */
 
-	ROM_REGION( 0x080000, REGION_SOUND1 )	/* 007232 data (chip 1) */
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* 007232 data (chip 1) */
 	ROM_LOAD( "717e03",		0x000000, 0x080000, 0xebe73c22 )
 
-	ROM_REGION( 0x080000, REGION_SOUND2 )	/* 007232 data (chip 2) */
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* 007232 data (chip 2) */
 	ROM_LOAD( "717e09",		0x000000, 0x080000, 0xd74e857d )
 ROM_END
 

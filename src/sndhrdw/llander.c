@@ -32,8 +32,8 @@ static INT16 *sample_buffer;
 static unsigned short *lfsr_buffer;
 
 static int volume;
-static int tone_6khz;
-static int tone_3khz;
+static int tone_6kHz;
+static int tone_3kHz;
 static int llander_explosion;
 
 int llander_sh_start(const struct MachineSound *msound)
@@ -47,15 +47,15 @@ int llander_sh_start(const struct MachineSound *msound)
 	/* Initialise the simple vars */
 
 	volume=0;
-	tone_3khz=0;
-	tone_6khz=0;
+	tone_3kHz=0;
+	tone_6kHz=0;
 	llander_explosion=0;
 
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_pos = 0;
 
-	/* Calculate the multipler to convert output sample number to the oversample rate (768khz) number */
+	/* Calculate the multipler to convert output sample number to the oversample rate (768kHz) number */
 	/* multipler is held as a fixed point number 16:16                                                */
 
 	multiplier=LANDER_OVERSAMPLE_RATE/(long)emulation_rate;
@@ -109,15 +109,15 @@ void llander_sh_stop(void)
 
   Sample Generation code.
 
-  Lander has 4 sound sources: 3khz, 6khz, thrust, explosion
+  Lander has 4 sound sources: 3kHz, 6kHz, thrust, explosion
 
   As the filtering removes a lot of the signal amplitute on thrust and
   explosion paths the gain is partitioned unequally:
 
-  3khz (tone)             Gain 1
-  6khz (tone)             Gain 1
-  thrust (12khz noise)    Gain 2
-  explosion (12khz noise) Gain 4
+  3kHz (tone)             Gain 1
+  6kHz (tone)             Gain 1
+  thrust (12kHz noise)    Gain 2
+  explosion (12kHz noise) Gain 4
 
   After combining the sources the output is scaled accordingly. (Div 8)
 
@@ -130,28 +130,28 @@ void llander_sh_stop(void)
      oversample_number = sample_number * ---------------
                                          sample_rate
 
-     e.g for sample rate=44100 hz and oversample_rate=768000 hz
+     e.g for sample rate=44100 Hz and oversample_rate=768000 Hz
 
      oversample_number = sample_number * 17.41487
 
   The calculations are all done in fixed point 16.16 format. The oversample is
   mapped to the sinewave in the following manner
 
-     e.g for 3khz (12khz / 4)
+     e.g for 3kHz (12kHz / 4)
 
      sine point = ( oversample_number / 4 ) & 0b00111111
 
-     this coverts the oversample down to 3khz x 64 then wraps the buffer mod
+     this coverts the oversample down to 3kHz x 64 then wraps the buffer mod
      64 to give the sample point.
 
-  The oversample rate chosen in lander is 12khz * 64 = 768khz as 12khz is a
+  The oversample rate chosen in lander is 12kHz * 64 = 768kHz as 12kHz is a
   binary multiple of the all the frequencies involved.
 
   The noise generation is done by linear feedback shift register which I've
   modelled with an array, the array value at the current index points to the
   next index to be used, the table is precalulated at startup.
 
-  The output of noise is taken evertime we cross a 12khz boundary, the code
+  The output of noise is taken evertime we cross a 12kHz boundary, the code
   then sets a target value (noisetarg), we then scan the gap between the last
   oversample point and the current oversample point at the oversample rate
   using the following algorithm:
@@ -189,7 +189,7 @@ void llander_process(INT16 *buffer,int start, int n)
 
 //		logerror("LANDER: sampnum=%x oversampnum=%lx\n",sampnum, oversampnum);
 
-		/* Pick up new noise target value whenever 12khz changes */
+		/* Pick up new noise target value whenever 12kHz changes */
 
 		if(lastoversampnum>>6!=oversampnum>>6)
 		{
@@ -209,11 +209,11 @@ void llander_process(INT16 *buffer,int start, int n)
 		sample=(int)(noisecurrent>>16);
 		sample<<=1;	/* Gain = 2 */
 
-		if(tone_3khz)
+		if(tone_3kHz)
 		{
 			sample+=sinetable[(oversampnum>>2)&0x3f];
 		}
-		if(tone_6khz)
+		if(tone_6kHz)
 		{
 			sample+=sinetable[(oversampnum>>1)&0x3f];
 		}
@@ -276,8 +276,8 @@ WRITE_HANDLER( llander_sounds_w )
 	/* Lunar Lander sound breakdown */
 
 	volume    = data & 0x07;
-	tone_3khz = data & 0x10;
-	tone_6khz = data & 0x20;
+	tone_3kHz = data & 0x10;
+	tone_6kHz = data & 0x20;
 	llander_explosion = data & 0x08;
 }
 

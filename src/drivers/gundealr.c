@@ -444,51 +444,51 @@ static const struct MachineDriver machine_driver_gundealr =
 ***************************************************************************/
 
 ROM_START( gundealr )
-	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundealr.1",   0x00000, 0x10000, 0x5797e830 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gundealr.3",   0x00000, 0x10000, 0x01f99de2 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gundealr.2",   0x00000, 0x20000, 0x7874ec41 )
 ROM_END
 
 ROM_START( gundeala )
-	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundeala.1",   0x00000, 0x10000, 0xd87e24f1 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gundeala.3",   0x00000, 0x10000, 0x836cf1a3 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gundeala.2",   0x00000, 0x20000, 0x4b5fb53c )
 ROM_END
 
 ROM_START( yamyam )
-	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b2.d16",       0x00000, 0x10000, 0xcb4f84ee )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "b1.a16",       0x00000, 0x20000, 0xb122828d )
 ROM_END
 
 /* only gfx are different, code is the same */
 ROM_START( wiseguy )
-	ROM_REGION( 0x30000, REGION_CPU1 )	/* 64k for code + 128k for banks */
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "wguyb2.bin",   0x00000, 0x10000, 0x1c684c46 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "b1.a16",       0x00000, 0x20000, 0xb122828d )
 ROM_END
 

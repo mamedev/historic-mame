@@ -327,7 +327,7 @@ static const struct MachineDriver machine_driver_irobot =
 ***************************************************************************/
 
 ROM_START( irobot )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* 64k for code + 48K Banked ROM*/
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64k for code + 48K Banked ROM*/
 	ROM_LOAD( "136029.208",     0x06000, 0x2000, 0xb4d0be59 )
 	ROM_LOAD( "136029.209",     0x08000, 0x4000, 0xf6be3cd0 )
 	ROM_LOAD( "136029.210",     0x0c000, 0x4000, 0xc0eb2133 )
@@ -335,32 +335,32 @@ ROM_START( irobot )
 	ROM_LOAD( "136029.206",     0x14000, 0x4000, 0xe114a526 )
 	ROM_LOAD( "136029.207",     0x18000, 0x4000, 0xb4556cb0 )
 
-	ROM_REGION( 0x14000, REGION_CPU2 )  /* mathbox region */
-	ROM_LOAD_ODD ( "ir103.bin", 0x0000,  0x2000, 0x0c83296d )	/* ROM data from 0000-bfff */
-	ROM_LOAD_EVEN( "ir104.bin", 0x0000,  0x2000, 0x0a6cdcca )
-	ROM_LOAD_ODD ( "ir101.bin", 0x4000,  0x4000, 0x62a38c08 )
-	ROM_LOAD_EVEN( "ir102.bin", 0x4000,  0x4000, 0x9d588f22 )
-	ROM_LOAD( "ir111.bin",      0xc000,  0x0400, 0x9fbc9bf3 )	/* program ROMs from c000-f3ff */
-	ROM_LOAD( "ir112.bin",      0xc400,  0x0400, 0xb2713214 )
-	ROM_LOAD( "ir113.bin",      0xc800,  0x0400, 0x7875930a )
-	ROM_LOAD( "ir114.bin",      0xcc00,  0x0400, 0x51d29666 )
-	ROM_LOAD( "ir115.bin",      0xd000,  0x0400, 0x00f9b304 )
-	ROM_LOAD( "ir116.bin",      0xd400,  0x0400, 0x326aba54 )
-	ROM_LOAD( "ir117.bin",      0xd800,  0x0400, 0x98efe8d0 )
-	ROM_LOAD( "ir118.bin",      0xdc00,  0x0400, 0x4a6aa7f9 )
-	ROM_LOAD( "ir119.bin",      0xe000,  0x0400, 0xa5a13ad8 )
-	ROM_LOAD( "ir120.bin",      0xe400,  0x0400, 0x2a083465 )
-	ROM_LOAD( "ir121.bin",      0xe800,  0x0400, 0xadebcb99 )
-	ROM_LOAD( "ir122.bin",      0xec00,  0x0400, 0xda7b6f79 )
-	ROM_LOAD( "ir123.bin",      0xf000,  0x0400, 0x39fff18f )
-	/* RAM data from 10000-11fff */
-	/* COMRAM from   12000-13fff */
+	ROM_REGION16_BE( 0x10000, REGION_CPU2, 0 )  /* mathbox region */
+	ROM_LOAD16_BYTE( "ir104.bin", 0x0000,  0x2000, 0x0a6cdcca )
+	ROM_LOAD16_BYTE( "ir103.bin", 0x0001,  0x2000, 0x0c83296d )	/* ROM data from 0000-bfff */
+	ROM_LOAD16_BYTE( "ir102.bin", 0x4000,  0x4000, 0x9d588f22 )
+	ROM_LOAD16_BYTE( "ir101.bin", 0x4001,  0x4000, 0x62a38c08 )
+	/* RAM data from c000-dfff */
+	/* COMRAM from   e000-ffff */
 
-	ROM_REGION( 0x800, REGION_GFX1 | REGIONFLAG_DISPOSE)
+	ROM_REGION( 0x800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136029.124",     0x0000,  0x0800, 0x848948b6 )
 
-	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x3420, REGION_PROMS, 0 )
 	ROM_LOAD( "ir125.bin",      0x0000,  0x0020, 0x446335ba )
+	ROM_LOAD( "ir111.bin",      0x0020,  0x0400, 0x9fbc9bf3 )	/* program ROMs from c000-f3ff */
+	ROM_LOAD( "ir112.bin",      0x0420,  0x0400, 0xb2713214 )
+	ROM_LOAD( "ir113.bin",      0x0820,  0x0400, 0x7875930a )
+	ROM_LOAD( "ir114.bin",      0x0c20,  0x0400, 0x51d29666 )
+	ROM_LOAD( "ir115.bin",      0x1020,  0x0400, 0x00f9b304 )
+	ROM_LOAD( "ir116.bin",      0x1420,  0x0400, 0x326aba54 )
+	ROM_LOAD( "ir117.bin",      0x1820,  0x0400, 0x98efe8d0 )
+	ROM_LOAD( "ir118.bin",      0x1c20,  0x0400, 0x4a6aa7f9 )
+	ROM_LOAD( "ir119.bin",      0x2020,  0x0400, 0xa5a13ad8 )
+	ROM_LOAD( "ir120.bin",      0x2420,  0x0400, 0x2a083465 )
+	ROM_LOAD( "ir121.bin",      0x2820,  0x0400, 0xadebcb99 )
+	ROM_LOAD( "ir122.bin",      0x2c20,  0x0400, 0xda7b6f79 )
+	ROM_LOAD( "ir123.bin",      0x3020,  0x0400, 0x39fff18f )
 ROM_END
 
 	/*  Colorprom from John's driver. ? */

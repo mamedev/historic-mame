@@ -374,19 +374,19 @@ static const struct MachineDriver machine_driver_shootouj =
 
 
 ROM_START( shootout )
-	ROM_REGION( 2*0x20000, REGION_CPU1 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_REGION( 2*0x20000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
 	ROM_LOAD( "cu00.b1",        0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
 	ROM_LOAD( "cu01.c1",        0x18000, 0x4000, 0x8843c3ae ) /* opcodes encrypted */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for code */
 	ROM_LOAD( "cu09.j1",        0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
-	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 )   /* sprites */
 	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
 	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f )
@@ -394,63 +394,63 @@ ROM_START( shootout )
 	ROM_LOAD( "cu08.c13",       0x20000, 0x8000, 0x91290933 )
 	ROM_LOAD( "cu07.c12",       0x28000, 0x8000, 0x19b6b94f )
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
 	ROM_CONTINUE(				0x04000, 0x2000 )
 	ROM_CONTINUE(				0x02000, 0x2000 )
 	ROM_CONTINUE(				0x06000, 0x2000 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
 ROM_START( shootouj )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* 2 * 128k for code  */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 2 * 128k for code  */
 	ROM_LOAD( "cg02.bin",    0x08000, 0x8000, 0x8fc5d632 )
 	ROM_LOAD( "cg00.bin",    0x10000, 0x8000, 0xef6ced1e )
 	ROM_LOAD( "cg01.bin",    0x18000, 0x4000, 0x74cf11ca )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
-	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "cg03.bin",    0x00000, 0x8000, 0x5252ec19 )  /* sprites */
 	ROM_LOAD( "cg04.bin",    0x10000, 0x8000, 0xdb06cfe9 )
 	ROM_LOAD( "cg05.bin",    0x20000, 0x8000, 0xd634d6b8 )
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
 	ROM_CONTINUE(				0x04000, 0x2000 )
 	ROM_CONTINUE(				0x02000, 0x2000 )
 	ROM_CONTINUE(				0x06000, 0x2000 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
 ROM_START( shootoub )
-	ROM_REGION( 2 * 0x20000, REGION_CPU1 )	/* 128k for code  */
+	ROM_REGION( 2 * 0x20000, REGION_CPU1, 0 )	/* 128k for code  */
 	ROM_LOAD( "shootout.006", 0x08000, 0x8000, 0x2c054888 )
 	ROM_LOAD( "shootout.008", 0x10000, 0x8000, 0x9651b656 )
 	ROM_LOAD( "cg01.bin",     0x18000, 0x4000, 0x74cf11ca )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* foreground characters */
 
-	ROM_REGION( 0x30000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "shootout.005",   0x00000, 0x8000, 0xe6357ba3 )   /* sprites */
 	ROM_LOAD( "shootout.004",   0x10000, 0x8000, 0x7f422c93 )
 	ROM_LOAD( "shootout.003",   0x20000, 0x8000, 0xeea94535 )
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "cu10.h17",       0x00000, 0x2000, 0x3854c877 ) /* background tiles */
 	ROM_CONTINUE(				0x04000, 0x2000 )
 	ROM_CONTINUE(				0x02000, 0x2000 )
 	ROM_CONTINUE(				0x06000, 0x2000 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END

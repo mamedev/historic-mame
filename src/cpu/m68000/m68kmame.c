@@ -5,6 +5,212 @@
 #include "state.h"
 
 
+/****************************************************************************
+ * 24-bit address, 16-bit data memory interface
+ ****************************************************************************/
+
+static data32_t readlong_a24_d16(offs_t address)
+{
+	data32_t result = cpu_readmem24bew_word(address) << 16;
+	return result | cpu_readmem24bew_word(address + 2);
+}
+
+static void writelong_a24_d16(offs_t address, data32_t data)
+{
+	cpu_writemem24bew_word(address, data >> 16);
+	cpu_writemem24bew_word(address + 2, data);
+}
+
+static void changepc_a24_d16(offs_t pc)
+{
+	change_pc24bew(pc);
+}
+
+/* interface for 24-bit address bus, 16-bit data bus (68000, 68010) */
+static const struct m68k_memory_interface interface_a24_d16 =
+{
+	0,
+	cpu_readmem24bew,
+	cpu_readmem24bew_word,
+	readlong_a24_d16,
+	cpu_writemem24bew,
+	cpu_writemem24bew_word,
+	writelong_a24_d16,
+	changepc_a24_d16
+};
+	
+
+/****************************************************************************
+ * 24-bit address, 32-bit data memory interface
+ ****************************************************************************/
+
+/* potentially misaligned 16-bit reads with a 32-bit data bus (and 24-bit address bus) */
+static data16_t readword_a24_d32(offs_t address)
+{
+	data16_t result;
+	
+	if (!(address & 1))
+		return cpu_readmem24bedw_word(address);
+	result = cpu_readmem24bedw(address) << 8;
+	return result | cpu_readmem24bedw(address + 1);
+}
+
+/* potentially misaligned 16-bit writes with a 32-bit data bus (and 24-bit address bus) */
+static void writeword_a24_d32(offs_t address, data16_t data)
+{
+	if (!(address & 1))
+	{
+		cpu_writemem24bedw_word(address, data);
+		return;
+	}
+	cpu_writemem24bedw(address, data >> 8);
+	cpu_writemem24bedw(address + 1, data);
+}
+
+/* potentially misaligned 32-bit reads with a 32-bit data bus (and 24-bit address bus) */
+static data32_t readlong_a24_d32(offs_t address)
+{
+	data32_t result;
+	
+	if (!(address & 3))
+		return cpu_readmem24bedw_dword(address);
+	else if (!(address & 1))
+	{
+		result = cpu_readmem24bedw_word(address) << 16;
+		return result | cpu_readmem24bedw_word(address + 2);
+	}
+	result = cpu_readmem24bedw(address) << 24;
+	result |= cpu_readmem24bedw_word(address + 1) << 8;
+	return result | cpu_readmem24bedw(address + 3);
+}
+
+/* potentially misaligned 32-bit writes with a 32-bit data bus (and 24-bit address bus) */
+static void writelong_a24_d32(offs_t address, data32_t data)
+{
+	if (!(address & 3))
+	{
+		cpu_writemem24bedw_dword(address, data);
+		return;
+	}
+	else if (!(address & 1))
+	{
+		cpu_writemem24bedw_word(address, data >> 16);
+		cpu_writemem24bedw_word(address + 2, data);
+		return;
+	}
+	cpu_writemem24bedw(address, data >> 24);
+	cpu_writemem24bedw_word(address + 1, data >> 8);
+	cpu_writemem24bedw(address + 3, data);
+}
+
+static void changepc_a24_d32(offs_t pc)
+{
+	change_pc24bedw(pc);
+}
+
+/* interface for 24-bit address bus, 32-bit data bus (68EC020) */
+static const struct m68k_memory_interface interface_a24_d32 =
+{
+	WORD_XOR_BE(0),
+	cpu_readmem24bedw,
+	readword_a24_d32,
+	readlong_a24_d32,
+	cpu_writemem24bedw,
+	writeword_a24_d32,
+	writelong_a24_d32,
+	changepc_a24_d32
+};
+
+
+/****************************************************************************
+ * 32-bit address, 32-bit data memory interface
+ ****************************************************************************/
+
+/* potentially misaligned 16-bit reads with a 32-bit data bus (and 32-bit address bus) */
+static data16_t readword_a32_d32(offs_t address)
+{
+	data16_t result;
+	
+	if (!(address & 1))
+		return cpu_readmem32bedw_word(address);
+	result = cpu_readmem32bedw(address) << 8;
+	return result | cpu_readmem32bedw(address + 1);
+}
+
+/* potentially misaligned 16-bit writes with a 32-bit data bus (and 32-bit address bus) */
+static void writeword_a32_d32(offs_t address, data16_t data)
+{
+	if (!(address & 1))
+	{
+		cpu_writemem32bedw_word(address, data);
+		return;
+	}
+	cpu_writemem32bedw(address, data >> 8);
+	cpu_writemem32bedw(address + 1, data);
+}
+
+/* potentially misaligned 32-bit reads with a 32-bit data bus (and 32-bit address bus) */
+static data32_t readlong_a32_d32(offs_t address)
+{
+	data32_t result;
+	
+	if (!(address & 3))
+		return cpu_readmem32bedw_dword(address);
+	else if (!(address & 1))
+	{
+		result = cpu_readmem32bedw_word(address) << 16;
+		return result | cpu_readmem32bedw_word(address + 2);
+	}
+	result = cpu_readmem32bedw(address) << 24;
+	result |= cpu_readmem32bedw_word(address + 1) << 8;
+	return result | cpu_readmem32bedw(address + 3);
+}
+
+/* potentially misaligned 32-bit writes with a 32-bit data bus (and 32-bit address bus) */
+static void writelong_a32_d32(offs_t address, data32_t data)
+{
+	if (!(address & 3))
+	{
+		cpu_writemem32bedw_dword(address, data);
+		return;
+	}
+	else if (!(address & 1))
+	{
+		cpu_writemem32bedw_word(address,     data >> 16);
+		cpu_writemem32bedw_word(address + 2, data);
+		return;
+	}
+	cpu_writemem32bedw(address, data >> 24);
+	cpu_writemem32bedw_word(address + 1, data >> 8);
+	cpu_writemem32bedw(address + 3, data);
+}
+
+static void changepc_a32_d32(offs_t pc)
+{
+	change_pc32bedw(pc);
+}
+
+/* interface for 24-bit address bus, 32-bit data bus (68020) */
+static const struct m68k_memory_interface interface_a32_d32 =
+{
+	WORD_XOR_BE(0),
+	cpu_readmem32bedw,
+	readword_a32_d32,
+	readlong_a32_d32,
+	cpu_writemem32bedw,
+	writeword_a32_d32,
+	writelong_a32_d32,
+	changepc_a32_d32
+};
+
+/* global access */
+struct m68k_memory_interface m68k_memory_intf;
+
+
+/****************************************************************************
+ * 68000 section
+ ****************************************************************************/
+
 static UINT8 m68000_reg_layout[] = {
 	M68K_PC, M68K_ISP, -1,
 	M68K_SR, M68K_USP, -1,
@@ -29,6 +235,8 @@ static UINT8 m68000_win_layout[] = {
 void m68000_reset(void* param)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68000);
+	if (m68k_memory_intf.read8 != cpu_readmem24bew)
+		m68k_memory_intf = interface_a24_d16;
 	m68k_pulse_reset();
 }
 
@@ -49,6 +257,8 @@ unsigned m68000_get_context(void *dst)
 
 void m68000_set_context(void *src)
 {
+	if (m68k_memory_intf.read8 != cpu_readmem24bew)
+		m68k_memory_intf = interface_a24_d16;
 	m68k_set_context(src);
 }
 
@@ -321,6 +531,8 @@ static UINT8 m68010_win_layout[] = {
 void m68010_reset(void* param)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68010);
+	if (m68k_memory_intf.read8 != cpu_readmem24bew)
+		m68k_memory_intf = interface_a24_d16;
 	m68k_pulse_reset();
 }
 
@@ -341,6 +553,8 @@ unsigned m68010_get_context(void *dst)
 
 void m68010_set_context(void *src)
 {
+	if (m68k_memory_intf.read8 != cpu_readmem24bew)
+		m68k_memory_intf = interface_a24_d16;
 	m68k_set_context(src);
 }
 
@@ -622,6 +836,8 @@ static UINT8 m68ec020_win_layout[] = {
 void m68ec020_reset(void* param)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68EC020);
+	if (m68k_memory_intf.read8 != cpu_readmem24bedw)
+		m68k_memory_intf = interface_a24_d32;
 	m68k_pulse_reset();
 }
 
@@ -642,6 +858,8 @@ unsigned m68ec020_get_context(void *dst)
 
 void m68ec020_set_context(void *src)
 {
+	if (m68k_memory_intf.read8 != cpu_readmem24bedw)
+		m68k_memory_intf = interface_a24_d32;
 	m68k_set_context(src);
 }
 
@@ -930,6 +1148,8 @@ static UINT8 m68020_win_layout[] = {
 void m68020_reset(void* param)
 {
 	m68k_set_cpu_type(M68K_CPU_TYPE_68020);
+	if (m68k_memory_intf.read8 != cpu_readmem32bedw)
+		m68k_memory_intf = interface_a32_d32;
 	m68k_pulse_reset();
 }
 
@@ -950,6 +1170,8 @@ unsigned m68020_get_context(void *dst)
 
 void m68020_set_context(void *src)
 {
+	if (m68k_memory_intf.read8 != cpu_readmem32bedw)
+		m68k_memory_intf = interface_a32_d32;
 	m68k_set_context(src);
 }
 

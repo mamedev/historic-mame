@@ -248,14 +248,14 @@ static const struct MachineDriver machine_driver_qwakprot =
 ***************************************************************************/
 
 ROM_START( qwakprot )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, 0x4d002d8a )
 	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, 0xe0c78fd7 )
 	ROM_LOAD( "qwaka000.bin", 0xa000, 0x1000, 0xe5770fc9 )
 	ROM_LOAD( "qwakb000.bin", 0xb000, 0x1000, 0x90771cc0 )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "qwakgfx0.bin", 0x0000, 0x1000, 0xbed2c067 )
 	ROM_LOAD( "qwakgfx1.bin", 0x1000, 0x1000, 0x73a31d28 )
 	ROM_LOAD( "qwakgfx2.bin", 0x2000, 0x1000, 0x07fd9e80 )

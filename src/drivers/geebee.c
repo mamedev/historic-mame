@@ -589,26 +589,26 @@ static const struct MachineDriver machine_driver_sos =
 
 
 ROM_START( geebee )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, 0x8a5577e0 )
 	ROM_LOAD( "geebee.3a",      0x3000, 0x0400, 0xf257b21b )
 ROM_END
 
 ROM_START( geebeeg )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "geebee.1k",      0x0000, 0x1000, 0x8a5577e0 )
 	ROM_LOAD( "geebeeg.3a",     0x3000, 0x0400, 0xa45932ba )
 ROM_END
 
 ROM_START( navalone )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "navalone.p1",    0x0000, 0x0800, 0x5a32016b )
 	ROM_LOAD( "navalone.p2",    0x0800, 0x0800, 0xb1c86fe3 )
 	ROM_LOAD( "navalone.chr",   0x3000, 0x0800, 0xb26c6170 )
 ROM_END
 
 ROM_START( kaitei )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "kaitei_7.1k",    0x0000, 0x0800, 0x32f70d48 )
 	ROM_RELOAD( 				0x0800, 0x0800 )
     ROM_LOAD( "kaitei_1.1m",    0x1000, 0x0400, 0x9a7ab3b9 )
@@ -620,14 +620,14 @@ ROM_START( kaitei )
 ROM_END
 
 ROM_START( kaitein )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "kaitein.p1",     0x0000, 0x0800, 0xd88e10ae )
 	ROM_LOAD( "kaitein.p2",     0x0800, 0x0800, 0xaa9b5763 )
 	ROM_LOAD( "kaitein.chr",    0x3000, 0x0800, 0x3125af4d )
 ROM_END
 
 ROM_START( sos )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sos.p1",         0x0000, 0x0800, 0xf70bdafb )
 	ROM_LOAD( "sos.p2",         0x0800, 0x0800, 0x58e9c480 )
 	ROM_LOAD( "sos.chr",        0x3000, 0x0800, 0x66f983e4 )

@@ -318,50 +318,50 @@ static const struct MachineDriver machine_driver_goindol =
 ***************************************************************************/
 
 ROM_START( goindol )
-	ROM_REGION( 0x20000, REGION_CPU1 )     /* 2*64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
 	ROM_LOAD( "r1", 0x00000, 0x8000, 0x3111c61b ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
 	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
 	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
 	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
 	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
 ROM_END
 
 ROM_START( homo )
-	ROM_REGION( 0x20000, REGION_CPU1 )     /* 2*64k for code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 2*64k for code */
 	ROM_LOAD( "homo.01", 0x00000, 0x8000, 0x28c539ad ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
 	ROM_LOAD( "r3", 0x18000, 0x8000, 0xe9eec24a ) /* Paged data */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "r4", 0x00000, 0x8000, 0x1ab84225 ) /* Characters */
 	ROM_LOAD( "r5", 0x08000, 0x8000, 0x4997d469 )
 	ROM_LOAD( "r6", 0x10000, 0x8000, 0x752904b0 )
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "r7", 0x00000, 0x8000, 0x362f2a27 )
 	ROM_LOAD( "r8", 0x08000, 0x8000, 0x9fc7946e )
 	ROM_LOAD( "r9", 0x10000, 0x8000, 0xe6212fe4 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */

@@ -74,7 +74,7 @@ INPUT_PORTS_START( beezer )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Bonus_Life ) )
@@ -145,7 +145,7 @@ static const struct MachineDriver machine_driver_beezer =
 ***************************************************************************/
 
 ROM_START( beezer )
-	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "g1",   0x0d000, 0x1000, 0x3467a0ec )
 	ROM_LOAD( "g3",   0x0e000, 0x1000, 0x9950cdf2 )
 	ROM_LOAD( "g5",   0x0f000, 0x1000, 0xa4b09879 )
@@ -158,16 +158,16 @@ ROM_START( beezer )
 	ROM_LOAD( "f5",   0x1c000, 0x1000, 0x4b11f572 )
 	ROM_LOAD( "f7",   0x1e000, 0x1000, 0xbef67473 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound CPU */
 	ROM_LOAD( "d7",   0xf000, 0x1000, 0x23b0782e )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "d1.cpu", 0x000, 0x0100, 0x8db17a40 )
 	ROM_LOAD( "e1.cpu", 0x100, 0x0100, 0x3c775c5e )
 ROM_END
 
 ROM_START( beezer1 )
-	ROM_REGION( 0x20000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "g1.32",   0x0d000, 0x1000, 0x3134cb93 )
 	ROM_LOAD( "g3.32",   0x0e000, 0x1000, 0xa3cb2c2d )
 	ROM_LOAD( "g5.32",   0x0f000, 0x1000, 0x5e559bf9 )
@@ -180,10 +180,10 @@ ROM_START( beezer1 )
 	ROM_LOAD( "f5.32",   0x1c000, 0x1000, 0x4b11f572 )
 	ROM_LOAD( "f7.32",   0x1e000, 0x1000, 0xbef67473 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound CPU */
 	ROM_LOAD( "d7.32",   0xf000, 0x1000, 0xb11028b5 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "d1.cpu", 0x000, 0x0100, 0x8db17a40 )
 	ROM_LOAD( "e1.cpu", 0x100, 0x0100, 0x3c775c5e )
 ROM_END

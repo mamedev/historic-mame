@@ -1,8 +1,8 @@
 /*********************************************************************
 
-  common.h
+	common.h
 
-  Generic functions, mostly ROM related.
+	Generic functions, mostly ROM related.
 
 *********************************************************************/
 
@@ -13,36 +13,48 @@
 extern "C" {
 #endif
 
+
+
+/***************************************************************************
+
+	Type definitions
+
+***************************************************************************/
+
 struct RomModule
 {
-	const char *name;	/* name of the file to load */
-	UINT32 offset;		/* offset to load it to */
-	UINT32 length;		/* length of the file */
-	UINT32 crc;			/* standard CRC-32 checksum */
+	const char *_name;	/* name of the file to load */
+	UINT32 _offset;		/* offset to load it to */
+	UINT32 _length;		/* length of the file */
+	UINT32 _crc;		/* standard CRC-32 checksum */
 };
 
-/* there are some special cases for the above. name, offset and size all set to 0 */
-/* mark the end of the array. If name is 0 and the others aren't, that means "continue */
-/* reading the previous rom from this address". If length is 0 and offset is not 0, */
-/* that marks the start of a new memory region. Confused? Well, don't worry, just use */
-/* the macros below. */
 
-#define ROMFLAG_MASK          0xfc000000           /* 6 bits worth of flags in the high nibble */
+struct GameSample
+{
+	int length;
+	int smpfreq;
+	int resolution;
+	signed char data[1];	/* extendable */
+};
 
-/* Masks for individual ROMs */
-#define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd, or nibbles, low or high */
-#define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
-#define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
-#define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
-#define ROMFLAG_QUAD          0x08000000           /* 32-bit data arranged as 4 interleaved 8-bit roms */
-#define ROMFLAG_OPTIONAL      0x04000000           /* Optional ROM, not needed for basic emulation */
 
-/* start of table */
-#define ROM_START(name) static struct RomModule rom_##name[] = {
-/* start of memory region */
-#define ROM_REGION(length,type) { 0, length, 0, type },
+struct GameSamples
+{
+	int total;	/* total number of samples */
+	struct GameSample *sample[1];	/* extendable */
+};
 
-enum {
+
+
+/***************************************************************************
+
+	Constants and macros
+
+***************************************************************************/
+
+enum
+{
 	REGION_INVALID = 0x80,
 	REGION_CPU1,
 	REGION_CPU2,
@@ -80,91 +92,223 @@ enum {
 	REGION_MAX
 };
 
-#define REGIONFLAG_MASK			0xf8000000
-#define REGIONFLAG_DISPOSE		0x80000000           /* Dispose of this region when done */
-#define REGIONFLAG_SOUNDONLY	0x40000000           /* load only if sound emulation is turned on */
-
-
 #define BADCRC( crc ) (~(crc))
 
-/* ROM to load */
-#define ROM_LOAD(name,offset,length,crc) { name, offset, length, crc },
-
-/* continue loading the previous ROM to a new address */
-#define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
-/* restart loading the previous ROM to a new address */
-#define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
-
-/* These are for nibble-wide ROMs, can be used with code or data */
-#define ROM_LOAD_NIB_LOW(name,offset,length,crc) { name, offset, (length) | ROMFLAG_NIBBLE, crc },
-#define ROM_LOAD_NIB_HIGH(name,offset,length,crc) { name, offset, (length) | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_NIB_LOW(offset,length) { (char *)-1, offset, (length) | ROMFLAG_NIBBLE, 0 },
-#define ROM_RELOAD_NIB_HIGH(offset,length) { (char *)-1, offset, (length) | ROMFLAG_NIBBLE | ROMFLAG_ALTERNATE, 0 },
-
-/* The following ones are for code ONLY - don't use for graphics data!!! */
-/* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_EVEN(name,offset,length,crc) { name, (offset) & ~1, (length) | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_EVEN(offset,length) { (char *)-1, (offset) & ~1, (length) | ROMFLAG_ALTERNATE, 0 },
-#define ROM_LOAD_ODD(name,offset,length,crc)  { name, (offset) |  1, (length) | ROMFLAG_ALTERNATE, crc },
-#define ROM_RELOAD_ODD(offset,length)  { (char *)-1, (offset) |  1, (length) | ROMFLAG_ALTERNATE, 0 },
-/* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_WIDE(name,offset,length,crc) { name, offset, (length) | ROMFLAG_WIDE, crc },
-#define ROM_RELOAD_WIDE(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE, 0 },
-#define ROM_LOAD_WIDE_SWAP(name,offset,length,crc) { name, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, crc },
-#define ROM_RELOAD_WIDE_SWAP(offset,length) { (char *)-1, offset, (length) | ROMFLAG_WIDE | ROMFLAG_SWAP, 0 },
-/* Data is split between 4 roms, always use this in groups of 4! */
-#define ROM_LOAD_QUAD(name,offset,length,crc) { name, offset, length | ROMFLAG_QUAD, crc },
-
-#define ROM_LOAD_OPTIONAL(name,offset,length,crc) { name, offset, length | ROMFLAG_OPTIONAL, crc },
-
-#ifdef LSB_FIRST
-#define ROM_LOAD_V20_EVEN	ROM_LOAD_EVEN
-#define ROM_RELOAD_V20_EVEN  ROM_RELOAD_EVEN
-#define ROM_LOAD_V20_ODD	ROM_LOAD_ODD
-#define ROM_RELOAD_V20_ODD   ROM_RELOAD_ODD
-#define ROM_LOAD_V20_WIDE	ROM_LOAD_WIDE
-#else
-#define ROM_LOAD_V20_EVEN	ROM_LOAD_ODD
-#define ROM_RELOAD_V20_EVEN  ROM_RELOAD_ODD
-#define ROM_LOAD_V20_ODD	ROM_LOAD_EVEN
-#define ROM_RELOAD_V20_ODD   ROM_RELOAD_EVEN
-#define ROM_LOAD_V20_WIDE	ROM_LOAD_WIDE_SWAP
-#endif
-
-/* Use THESE ones for graphics data */
-#ifdef LSB_FIRST
-#define ROM_LOAD_GFX_EVEN    ROM_LOAD_ODD
-#define ROM_LOAD_GFX_ODD     ROM_LOAD_EVEN
-#define ROM_LOAD_GFX_SWAP    ROM_LOAD_WIDE
-#else
-#define ROM_LOAD_GFX_EVEN    ROM_LOAD_EVEN
-#define ROM_LOAD_GFX_ODD     ROM_LOAD_ODD
-#define ROM_LOAD_GFX_SWAP    ROM_LOAD_WIDE_SWAP
-#endif
-
-/* end of table */
-#define ROM_END { 0, 0, 0, 0 } };
 
 
+/***************************************************************************
 
-struct GameSample
-{
-	int length;
-	int smpfreq;
-	int resolution;
-	signed char data[1];	/* extendable */
-};
+	Core macros for the ROM loading system
 
-struct GameSamples
-{
-	int total;	/* total number of samples */
-	struct GameSample *sample[1];	/* extendable */
-};
+***************************************************************************/
+
+/* ----- length compaction macros ----- */
+#define INVALID_LENGTH 				0x7ff
+#define COMPACT_LENGTH(x)									\
+	((((x) & 0xffffff00) == 0) ? (0x000 | ((x) >> 0)) :		\
+	 (((x) & 0xfffff00f) == 0) ? (0x100 | ((x) >> 4)) :		\
+	 (((x) & 0xffff00ff) == 0) ? (0x200 | ((x) >> 8)) :		\
+	 (((x) & 0xfff00fff) == 0) ? (0x300 | ((x) >> 12)) : 	\
+	 (((x) & 0xff00ffff) == 0) ? (0x400 | ((x) >> 16)) : 	\
+	 (((x) & 0xf00fffff) == 0) ? (0x500 | ((x) >> 20)) : 	\
+	 (((x) & 0x00ffffff) == 0) ? (0x600 | ((x) >> 24)) : 	\
+	 INVALID_LENGTH)
+#define UNCOMPACT_LENGTH(x)	(((x) == INVALID_LENGTH) ? 0 : (((x) & 0xff) << (((x) & 0x700) >> 6)))
+
+
+/* ----- per-entry constants ----- */
+#define ROMENTRYTYPE_REGION			1					/* this entry marks the start of a region */
+#define ROMENTRYTYPE_END			2					/* this entry marks the end of a region */
+#define ROMENTRYTYPE_RELOAD			3					/* this entry reloads the previous ROM */
+#define ROMENTRYTYPE_CONTINUE		4					/* this entry continues loading the previous ROM */
+#define ROMENTRYTYPE_FILL			5					/* this entry fills an area with a constant value */
+#define ROMENTRYTYPE_COPY			6					/* this entry copies data from another region/offset */
+#define ROMENTRYTYPE_COUNT			7
+
+#define ROMENTRY_REGION				((const char *)ROMENTRYTYPE_REGION)
+#define ROMENTRY_END				((const char *)ROMENTRYTYPE_END)
+#define ROMENTRY_RELOAD				((const char *)ROMENTRYTYPE_RELOAD)
+#define ROMENTRY_CONTINUE			((const char *)ROMENTRYTYPE_CONTINUE)
+#define ROMENTRY_FILL				((const char *)ROMENTRYTYPE_FILL)
+#define ROMENTRY_COPY				((const char *)ROMENTRYTYPE_COPY)
+
+/* ----- per-entry macros ----- */
+#define ROMENTRY_GETTYPE(r)			((FPTR)(r)->_name)
+#define ROMENTRY_ISSPECIAL(r)		(ROMENTRY_GETTYPE(r) < ROMENTRYTYPE_COUNT)
+#define ROMENTRY_ISFILE(r)			(!ROMENTRY_ISSPECIAL(r))
+#define ROMENTRY_ISREGION(r)		((r)->_name == ROMENTRY_REGION)
+#define ROMENTRY_ISEND(r)			((r)->_name == ROMENTRY_END)
+#define ROMENTRY_ISRELOAD(r)		((r)->_name == ROMENTRY_RELOAD)
+#define ROMENTRY_ISCONTINUE(r)		((r)->_name == ROMENTRY_CONTINUE)
+#define ROMENTRY_ISFILL(r)			((r)->_name == ROMENTRY_FILL)
+#define ROMENTRY_ISCOPY(r)			((r)->_name == ROMENTRY_COPY)
+#define ROMENTRY_ISREGIONEND(r)		(ROMENTRY_ISREGION(r) || ROMENTRY_ISEND(r))
+
+
+/* ----- per-region constants ----- */
+#define ROMREGION_WIDTHMASK			0x00000003			/* native width of region, as power of 2 */
+#define		ROMREGION_8BIT			0x00000000			/*    (non-CPU regions only) */
+#define		ROMREGION_16BIT			0x00000001
+#define		ROMREGION_32BIT			0x00000002
+#define		ROMREGION_64BIT			0x00000003
+
+#define ROMREGION_ENDIANMASK		0x00000004			/* endianness of the region */
+#define		ROMREGION_LE			0x00000000			/*    (non-CPU regions only) */
+#define		ROMREGION_BE			0x00000004
+
+#define ROMREGION_INVERTMASK		0x00000008			/* invert the bits of the region */
+#define		ROMREGION_NOINVERT		0x00000000
+#define		ROMREGION_INVERT		0x00000008
+
+#define ROMREGION_DISPOSEMASK		0x00000010			/* dispose of the region after init */
+#define		ROMREGION_NODISPOSE		0x00000000
+#define		ROMREGION_DISPOSE		0x00000010
+
+#define ROMREGION_SOUNDONLYMASK		0x00000020			/* load only if sound is enabled */
+#define		ROMREGION_NONSOUND		0x00000000
+#define		ROMREGION_SOUNDONLY		0x00000020
+
+#define ROMREGION_LOADUPPERMASK		0x00000040			/* load into the upper part of CPU space */
+#define		ROMREGION_LOADLOWER		0x00000000			/*     (CPU regions only) */
+#define		ROMREGION_LOADUPPER		0x00000040
+
+#define ROMREGION_ERASEMASK			0x00000080			/* erase the region before loading */
+#define		ROMREGION_NOERASE		0x00000000
+#define		ROMREGION_ERASE			0x00000080
+
+#define ROMREGION_ERASEVALMASK		0x0000ff00			/* value to erase the region to */
+#define		ROMREGION_ERASEVAL(x)	(((x) & 0xff) << 8)
+#define		ROMREGION_ERASE00		ROMREGION_ERASEVAL(0)
+#define		ROMREGION_ERASEFF		ROMREGION_ERASEVAL(0xff)
+
+/* ----- per-region macros ----- */
+#define ROMREGION_GETTYPE(r)		((r)->_crc)
+#define ROMREGION_GETLENGTH(r)		((r)->_length)
+#define ROMREGION_GETFLAGS(r)		((r)->_offset)
+#define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
+#define ROMREGION_ISLITTLEENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
+#define ROMREGION_ISBIGENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE)
+#define ROMREGION_ISINVERTED(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_INVERTMASK) == ROMREGION_INVERT)
+#define ROMREGION_ISDISPOSE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_DISPOSEMASK) == ROMREGION_DISPOSE)
+#define ROMREGION_ISSOUNDONLY(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_SOUNDONLYMASK) == ROMREGION_SOUNDONLY)
+#define ROMREGION_ISLOADUPPER(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_LOADUPPERMASK) == ROMREGION_LOADUPPER)
+#define ROMREGION_ISERASE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEMASK) == ROMREGION_ERASE)
+#define ROMREGION_GETERASEVAL(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEVALMASK) >> 8)
+
+
+/* ----- per-ROM constants ----- */
+#define ROM_LENGTHMASK				0x000007ff			/* the compacted length of the ROM */
+#define		ROM_INVALIDLENGTH		INVALID_LENGTH
+
+#define ROM_OPTIONALMASK			0x00000800			/* optional - won't hurt if it's not there */
+#define		ROM_REQUIRED			0x00000000
+#define		ROM_OPTIONAL			0x00000800
+
+#define ROM_GROUPMASK				0x0000f000			/* load data in groups of this size + 1 */
+#define		ROM_GROUPSIZE(n)		((((n) - 1) & 15) << 12)
+#define		ROM_GROUPBYTE			ROM_GROUPSIZE(1)
+#define		ROM_GROUPWORD			ROM_GROUPSIZE(2)
+#define		ROM_GROUPDWORD			ROM_GROUPSIZE(4)
+
+#define ROM_SKIPMASK				0x000f0000			/* skip this many bytes after each group */
+#define		ROM_SKIP(n)				(((n) & 15) << 16)
+#define		ROM_NOSKIP				ROM_SKIP(0)
+
+#define ROM_REVERSEMASK				0x00100000			/* reverse the byte order within a group */
+#define		ROM_NOREVERSE			0x00000000
+#define		ROM_REVERSE				0x00100000
+
+#define ROM_BITWIDTHMASK			0x00e00000			/* width of data in bits */
+#define		ROM_BITWIDTH(n)			(((n) & 7) << 21)
+#define		ROM_NIBBLE				ROM_BITWIDTH(4)
+#define		ROM_FULLBYTE			ROM_BITWIDTH(8)
+
+#define ROM_BITSHIFTMASK			0x07000000			/* left-shift count for the bits */
+#define		ROM_BITSHIFT(n)			(((n) & 7) << 24)
+#define		ROM_NOSHIFT				ROM_BITSHIFT(0)
+#define		ROM_SHIFT_NIBBLE_LO		ROM_BITSHIFT(0)
+#define		ROM_SHIFT_NIBBLE_HI		ROM_BITSHIFT(4)
+
+#define ROM_INHERITFLAGSMASK		0x08000000			/* inherit all flags from previous definition */
+#define		ROM_INHERITFLAGS		0x08000000
+
+#define ROM_INHERITEDFLAGS			(ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK)
+
+/* ----- per-ROM macros ----- */
+#define ROM_GETNAME(r)				((r)->_name)
+#define ROM_SAFEGETNAME(r)			(ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
+#define ROM_GETOFFSET(r)			((r)->_offset)
+#define ROM_GETCRC(r)				((r)->_crc)
+#define ROM_GETLENGTH(r)			(UNCOMPACT_LENGTH((r)->_length & ROM_LENGTHMASK))
+#define ROM_GETFLAGS(r)				((r)->_length & ~ROM_LENGTHMASK)
+#define ROM_ISOPTIONAL(r)			((ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL)
+#define ROM_GETGROUPSIZE(r)			(((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 12) + 1)
+#define ROM_GETSKIPCOUNT(r)			((ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 16)
+#define ROM_ISREVERSED(r)			((ROM_GETFLAGS(r) & ROM_REVERSEMASK) == ROM_REVERSE)
+#define ROM_GETBITWIDTH(r)			(((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) >> 21) + 8 * ((ROM_GETFLAGS(r) & ROM_BITWIDTHMASK) == 0))
+#define ROM_GETBITSHIFT(r)			((ROM_GETFLAGS(r) & ROM_BITSHIFTMASK) >> 24)
+#define ROM_INHERITSFLAGS(r)		((ROM_GETFLAGS(r) & ROM_INHERITFLAGSMASK) == ROM_INHERITFLAGS)
+#define ROM_NOGOODDUMP(r)			(ROM_GETCRC(r) == 0)
 
 
 
+/***************************************************************************
+
+	Derived macros for the ROM loading system
+
+***************************************************************************/
+
+/* ----- start/stop macros ----- */
+#define ROM_START(name)								static const struct RomModule rom_##name[] = {
+#define ROM_END										{ ROMENTRY_END, 0, 0, 0 } };
+
+/* ----- ROM region macros ----- */
+#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, flags, length, type },
+#define ROM_REGION16_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_LE)
+#define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
+#define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
+#define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
+
+/* ----- core ROM loading macros ----- */
+#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, (flags) | COMPACT_LENGTH(length), crc },
+#define ROM_LOAD(name,offset,length,crc)			ROMX_LOAD(name, offset, length, crc, 0)
+#define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
+#define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)
+#define ROM_RELOAD(offset,length)					ROMX_LOAD(ROMENTRY_RELOAD, offset, length, 0, ROM_INHERITFLAGS)
+#define ROM_FILL(offset,length,value)				ROM_LOAD(ROMENTRY_FILL, offset, length, 0)
+#define ROM_COPY(rgn,srcoffset,offset,length)		ROMX_LOAD(ROMENTRY_COPY, offset, length, srcoffset, (rgn) << 24)
+
+/* ----- nibble loading macros ----- */
+#define ROM_LOAD_NIB_HIGH(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
+#define ROM_LOAD_NIB_LOW(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
+
+/* ----- new-style 16-bit loading macros ----- */
+#define ROM_LOAD16_BYTE(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_SKIP(1))
+#define ROM_LOAD16_WORD(name,offset,length,crc)		ROM_LOAD(name, offset, length, crc)
+#define ROM_LOAD16_WORD_SWAP(name,offset,length,crc)ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_REVERSE)
+
+/* ----- new-style 32-bit loading macros ----- */
+#define ROM_LOAD32_BYTE(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_SKIP(3))
+#define ROM_LOAD32_WORD(name,offset,length,crc)		ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_SKIP(2))
+#define ROM_LOAD32_WORD_SWAP(name,offset,length,crc)ROMX_LOAD(name, offset, length, crc, ROM_GROUPWORD | ROM_REVERSE | ROM_SKIP(2))
+
+
+
+/***************************************************************************
+
+	Function prototypes
+
+***************************************************************************/
 
 void showdisclaimer(void);
+
+const struct RomModule *rom_first_region(const struct GameDriver *drv);
+const struct RomModule *rom_next_region(const struct RomModule *romp);
+const struct RomModule *rom_first_file(const struct RomModule *romp);
+const struct RomModule *rom_next_file(const struct RomModule *romp);
+const struct RomModule *rom_first_chunk(const struct RomModule *romp);
+const struct RomModule *rom_next_chunk(const struct RomModule *romp);
+
 
 /* LBO 042898 - added coin counters */
 #define COIN_COUNTERS	4	/* total # of coin counters */
@@ -183,11 +327,11 @@ void freesamples(struct GameSamples *samples);
 
 /* return a pointer to the specified memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */
-unsigned char *memory_region(int num);
-int memory_region_length(int num);
+UINT8 *memory_region(int num);
+size_t memory_region_length(int num);
 /* allocate a new memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */
-int new_memory_region(int num, int length);
+int new_memory_region(int num, size_t length, UINT32 flags);
 void free_memory_region(int num);
 
 extern int flip_screen_x, flip_screen_y;

@@ -349,19 +349,19 @@ static struct MachineDriver machine_driver_toypop =
 	{
 		{
 			CPU_M6809,
-			1536000,	/* 1.5 Mhz (?) */
+			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
 			toypop_readmem_mainCPU,toypop_writemem_mainCPU,0,0,
 			toypop_main_interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1536000,	/* 1.5 Mhz (?) */
+			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
 			toypop_readmem_soundCPU,toypop_writemem_soundCPU,0,0,
 			toypop_sound_interrupt,1
 		},
 		{
 			CPU_M68000,
-			8192000,	/* 8 Mhz (?) */
+			6144000,	/* 6.144 MHz (measured on Libble Rabble board) */
 			toypop_readmem_68k,toypop_writemem_68k,0,0,
 			toypop_m68000_interrupt,1
 		}
@@ -398,19 +398,19 @@ static struct MachineDriver machine_driver_liblrabl =
 	{
 		{
 			CPU_M6809,
-			1024000,	// 1 Mhz (?)
+			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
 			liblrabl_readmem_mainCPU,liblrabl_writemem_mainCPU,0,0,
 			toypop_main_interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1024000,	// 1 Mhz (?)
+			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
 			toypop_readmem_soundCPU,toypop_writemem_soundCPU,0,0,
 			toypop_sound_interrupt,1
 		},
 		{
 			CPU_M68000,
-			8192000,	// 8 Mhz (?)
+			6144000,	/* 6.144 MHz (measured on Libble Rabble board) */
 			toypop_readmem_68k,toypop_writemem_68k,0,0,
 			toypop_m68000_interrupt,1
 		}
@@ -445,62 +445,62 @@ static struct MachineDriver machine_driver_liblrabl =
 
 
 ROM_START( liblrabl )
-	ROM_REGION(0x10000, REGION_CPU1)	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
 	ROM_LOAD( "5b.rom",   0x8000, 0x4000, 0xda7a93c2 )
 	ROM_LOAD( "5c.rom",   0xc000, 0x4000, 0x6cae25dc )
 
-	ROM_REGION(0x10000, REGION_CPU2)	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "2c.rom",   0xe000, 0x2000, 0x7c09e50a )
 
-	ROM_REGION(0x8000, REGION_CPU3)		/* 32k for the third CPU */
-	ROM_LOAD_EVEN( "8c.rom",   0x0000, 0x4000, 0xa00cd959 )
-	ROM_LOAD_ODD( "10c.rom",   0x0000, 0x4000, 0x09ce209b )
+	ROM_REGION( 0x8000, REGION_CPU3, 0 )		/* 32k for the third CPU */
+	ROM_LOAD16_BYTE( "8c.rom",   0x0000, 0x4000, 0xa00cd959 )
+	ROM_LOAD16_BYTE("10c.rom",   0x0001, 0x4000, 0x09ce209b )
 
 	/* temporary space for graphics (disposed after conversion) */
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "5p.rom",   0x0000, 0x2000, 0x3b4937f0 )	/* characters */
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "9t.rom",   0x0000, 0x4000, 0xa88e24ca )	/* sprites */
 
-	ROM_REGION(0x0600, REGION_PROMS)	/* color proms */
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )	/* color proms */
 	ROM_LOAD( "lr1-3.1r", 0x0000, 0x0100, 0xf3ec0d07 )	// palette: red component
 	ROM_LOAD( "lr1-2.1s", 0x0100, 0x0100, 0x2ae4f702 )	// palette: green component
 	ROM_LOAD( "lr1-1.1t", 0x0200, 0x0100, 0x7601f208 )	// palette: blue component
 	ROM_LOAD( "lr1-5.5l", 0x0300, 0x0100, 0x940f5397 )	/* characters */
 	ROM_LOAD( "lr1-6.2p", 0x0400, 0x0200, 0xa6b7f850 )	/* sprites */
 
-	ROM_REGION(0x0100, REGION_SOUND1)	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "lr1-4.3d", 0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
 ROM_START( toypop )
-	ROM_REGION(0x10000, REGION_CPU1)	/* 64k for the first CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
 	ROM_LOAD( "tp1-2.5b", 0x8000, 0x4000, 0x87469620 )
 	ROM_LOAD( "tp1-1.5c", 0xc000, 0x4000, 0xdee2fd6e )
 
-	ROM_REGION(0x10000, REGION_CPU2)	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "tp1-3.2c", 0xe000, 0x2000, 0x5f3bf6e2 )
 
-	ROM_REGION(0x8000, REGION_CPU3)		/* 32k for the third CPU */
-	ROM_LOAD_EVEN( "tp1-4.8c", 0x0000, 0x4000, 0x76997db3 )
-	ROM_LOAD_ODD( "tp1-5.10c", 0x0000, 0x4000, 0x37de8786 )
+	ROM_REGION( 0x8000, REGION_CPU3, 0 )		/* 32k for the third CPU */
+	ROM_LOAD16_BYTE( "tp1-4.8c", 0x0000, 0x4000, 0x76997db3 )
+	ROM_LOAD16_BYTE("tp1-5.10c", 0x0001, 0x4000, 0x37de8786 )
 
 	/* temporary space for graphics (disposed after conversion) */
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp1-7.5p", 0x0000, 0x2000, 0x95076f9e )	/* characters */
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp1-6.9t", 0x0000, 0x4000, 0x481ffeaf )	/* sprites */
 
-	ROM_REGION(0x0600, REGION_PROMS)	/* color proms */
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )	/* color proms */
 	ROM_LOAD( "tp1-3.1r", 0x0000, 0x0100, 0xcfce2fa5 )	// palette: red component
 	ROM_LOAD( "tp1-2.1s", 0x0100, 0x0100, 0xaeaf039d )	// palette: green component
 	ROM_LOAD( "tp1-1.1t", 0x0200, 0x0100, 0x08e7cde3 )	// palette: blue component
 	ROM_LOAD( "tp1-4.5l", 0x0300, 0x0100, 0x74138973 )	/* characters */
 	ROM_LOAD( "tp1-5.2p", 0x0400, 0x0200, 0x4d77fa5a )	/* sprites */
 
-	ROM_REGION(0x0100, REGION_SOUND1)	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "lr1-4.3d", 0x0000, 0x0100, 0x16a9166a )
 ROM_END
 

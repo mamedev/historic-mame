@@ -151,7 +151,7 @@ static PAIR ea;         /* effective address */
 		}																\
 		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */		\
 		PCD = RM16(0xfff6); 											\
-		change_pc(PC);					/* TS 971002 */ 				\
+		change_pc16(PC);					/* TS 971002 */ 				\
 		(void)(*konami.irq_callback)(KONAMI_FIRQ_LINE);					\
 	}																	\
 	else																\
@@ -179,7 +179,7 @@ static PAIR ea;         /* effective address */
 		}																\
 		CC |= CC_II;					/* inhibit IRQ */				\
 		PCD = RM16(0xfff8); 											\
-		change_pc(PC);					/* TS 971002 */ 				\
+		change_pc16(PC);					/* TS 971002 */ 				\
 		(void)(*konami.irq_callback)(KONAMI_IRQ_LINE);					\
 	}
 
@@ -308,7 +308,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	if( f ) 							\
 	{									\
 		PC += SIGNED(t);				\
-		change_pc(PC);	/* TS 971002 */ \
+		change_pc16(PC);	/* TS 971002 */ \
 	}									\
 }
 
@@ -319,7 +319,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	{									\
 		konami_ICount -= 1;				\
 		PC += t.w.l;					\
-		change_pc(PC);	/* TS 971002 */ \
+		change_pc16(PC);	/* TS 971002 */ \
 	}									\
 }
 
@@ -399,7 +399,7 @@ void konami_set_context(void *src)
 {
 	if( src )
 		konami = *(konami_Regs*)src;
-    change_pc(PC);    /* TS 971002 */
+    change_pc16(PC);    /* TS 971002 */
 
     CHECK_IRQ_LINES;
 }
@@ -419,7 +419,7 @@ unsigned konami_get_pc(void)
 void konami_set_pc(unsigned val)
 {
 	PC = val;
-	change_pc(PC);
+	change_pc16(PC);
 }
 
 
@@ -480,7 +480,7 @@ void konami_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case KONAMI_PC: PC = val; change_pc(PC); break;
+		case KONAMI_PC: PC = val; change_pc16(PC); break;
 		case KONAMI_S: S = val; break;
 		case KONAMI_CC: CC = val; CHECK_IRQ_LINES; break;
 		case KONAMI_U: U = val; break;
@@ -522,7 +522,7 @@ void konami_reset(void *param)
     CC |= CC_IF;        /* FIRQ disabled */
 
 	PCD = RM16(0xfffe);
-    change_pc(PC);    /* TS 971002 */
+    change_pc16(PC);    /* TS 971002 */
 }
 
 void konami_exit(void)
@@ -567,7 +567,7 @@ void konami_set_nmi_line(int state)
 	}
 	CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
 	PCD = RM16(0xfffc);
-	change_pc(PC);					/* TS 971002 */
+	change_pc16(PC);					/* TS 971002 */
 }
 
 /****************************************************************************

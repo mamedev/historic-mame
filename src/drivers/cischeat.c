@@ -1,7 +1,7 @@
 /***************************************************************************
 
-						Cisco Heat & F1 GrandPrix Star
-							(c) 1990 & 1991 Jaleco
+				Cisco Heat & F1 GrandPrix Star, Scud Hammer
+						(c) 1990 & 1991, 1994 Jaleco
 
 
 				    driver by Luca Elia (eliavit@unina.it)
@@ -23,30 +23,64 @@ Hardware		Main 	Sub#1	Sub#2	Sound	Sound Chips
 	MB - Middle board  (GFX)               GP-9189  EB90015-20038
 	LB - Lower board   (CPU/GFX)           GP-9188A EB90015-20037-1
 
+	Chips:
+
+		GS90015-02 (100 pin PQFP)	x 3		- Tilemaps
+		GS-9000406 (80 pin PQFP)	x 3
+
+		GS900151   (44 pin PQFP) (too small for the full part No.)
+		GS90015-03 (80 pin PQFP)	x 3  + 2x LH52258D-45 (32kx8 SRAM)
+		GS90015-06 (100 pin PQFP)	x 2  + 2x LH52250AD-90L (32kx8 SRAM)
+		GS90015-07 (64 pin PQFP)
+		GS90015-08 (64 pin PQFP)
+		GS90015-09 (64 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
+		GS90015-10 (64 pin PQFP)
+		GS90015-12 (80 pin PQFP)  + 2x MCM2018AN45 (2kx8 SRAM)
+		GS90015-11 (100 pin PQFP)
+
+		CS90015-04 x 2 (64 pin PQFP)		- Road
+		GS90015-05 x 2 (100 pin PQFP)
+
+[Scud Hammer]	68000	-		-		-		2xM6295
+
+	Board CF-92128B Chips:
+		GS9001501
+		GS90015-02 x 2	GS600406   x 2		- Tilemaps
+		GS90015-03
+
+	Board GP-9189 Chips:
+		GS90015-03 x 2						- Sprites
+		GS90015-06 x 2
+		GS90015-07
+		GS90015-08
+		GS90015-09
+		GS90015-10
+		GS90015-11
+		MR90015-35 x 2
 ----------------------------------------------------------------------
 
 
-----------------------------------------------------------------
-Main CPU					[Cisco Heat]		[F1 GP Star]
-----------------------------------------------------------------
-ROM					R		000000-07ffff		<
-							100000-17ffff		<
-Work RAM			RW		0f0000-0fffff		<
-Hardware Regs		RW		080000-087fff		<
-Units Linking RAM	RW		088000-88ffff		<
-Shared RAM #2		RW		090000-097fff		<
-Shared RAM #1		RW		098000-09ffff		<
-Scroll RAM 0		RW		0a0000-0a7fff		<
-Scroll RAM 1		RW		0a8000-0affff		<
-Scroll RAM 2		RW		0b0000-0b7fff		<
-Palette RAM			RW		0b8000-0bffff		<
-	Palette Scroll 0		0b9c00-0b9fff		0b9e00-0b9fff
-	Palette Scroll 1		0bac00-0bafff		0bae00-0bafff
-	Palette Road 0			0bb800-0bbfff		<
-	Palette Road 1			0bc800-0bcfff		<
-	Palette Sprites			0bd000-0bdfff		<
-	Palette Scroll 2		0bec00-0befff0		bee00-0befff
-----------------------------------------------------------------
+----------------------------------------------------------------------------------
+Main CPU					[Cisco Heat]		[F1 GP Star]		[Scud Hammer]
+----------------------------------------------------------------------------------
+ROM					R		000000-07ffff		<					<
+							100000-17ffff		<					RW : I / O + Sound
+Work RAM + Sprites	RW		0f0000-0fffff		<					<
+Hardware Regs		RW		080000-087fff		<					<
+Units Linking RAM	RW		088000-88ffff		<					-
+Shared RAM #2		RW		090000-097fff		<					-
+Shared RAM #1		RW		098000-09ffff		<					-
+Scroll RAM 0		RW		0a0000-0a7fff		<					<
+Scroll RAM 1		RW		0a8000-0affff		<					-
+Scroll RAM 2		RW		0b0000-0b7fff		<					<
+Palette RAM			RW		0b8000-0bffff		<					<
+	Palette Scroll 0		0b9c00-0b9fff		0b9e00-0b9fff		<
+	Palette Scroll 1		0bac00-0bafff		0bae00-0bafff		-
+	Palette Road 0			0bb800-0bbfff		<					-
+	Palette Road 1			0bc800-0bcfff		<					-
+	Palette Sprites			0bd000-0bdfff		<					0bb000-0bbfff
+	Palette Scroll 2		0bec00-0befff0		0bee00-0befff		0bce00-0bcfff
+----------------------------------------------------------------------------------
 
 
 ----------------------------------------------------------------
@@ -153,12 +187,14 @@ READ16_HANDLER( f1gpstar_vregs_r );
 
 WRITE16_HANDLER( cischeat_vregs_w );
 WRITE16_HANDLER( f1gpstar_vregs_w );
+WRITE16_HANDLER( scudhamm_vregs_w );
 
 int cischeat_vh_start(void);
 int f1gpstar_vh_start(void);
 
 void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 /*
@@ -331,6 +367,147 @@ static MEMORY_WRITE16_START( f1gpstar_writemem )
 	{ 0x0b8000, 0x0bffff, f1gpstar_paletteram16_w, &paletteram16	},	// Palettes
 MEMORY_END
 
+
+
+
+
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+WRITE16_HANDLER( scudhamm_paletteram16_w )
+{
+	int newword = COMBINE_DATA(&paletteram16[offset]);
+
+	int r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
+	int g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
+	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
+
+	// Scroll 0
+	if ( (offset >= 0x1e00/2) && (offset <= 0x1fff/2) ) { palette_change_color(0x000 + offset - 0x1e00/2, r,g,b ); return;}
+	// Scroll 2
+	if ( (offset >= 0x4e00/2) && (offset <= 0x4fff/2) ) { palette_change_color(0x100 + offset - 0x4e00/2, r,g,b ); return;}
+	// Sprites
+	if ( (offset >= 0x3000/2) && (offset <= 0x3fff/2) ) { palette_change_color(0x200 + offset - 0x3000/2, r,g,b ); return;}
+}
+
+
+
+data16_t scudhamm_motor_command;
+
+/*	Motor Status.
+
+	f--- ---- ---- ----		Rotation Limit (R?)
+	-e-- ---- ---- ----		Rotation Limit (L?)
+	--dc ba98 7654 32--
+	---- ---- ---- --1-		Up Limit
+	---- ---- ---- ---0		Down Limit	*/
+
+READ16_HANDLER( scudhamm_motor_status_r )
+{
+//	return 1 << (rand()&1);			// Motor Status
+	return scudhamm_motor_command;	// Motor Status
+}
+
+
+READ16_HANDLER( scudhamm_motor_pos_r )
+{
+	return 0x00 << 8;
+}
+
+
+/*	Move the motor.
+
+	fedc ba98 7654 32--
+	---- ---- ---- --1-		Move Up
+	---- ---- ---- ---0		Move Down
+
+	Within $20 vblanks the motor must reach the target.	*/
+
+WRITE16_HANDLER( scudhamm_motor_command_w )
+{
+	COMBINE_DATA( &scudhamm_motor_command );
+}
+
+
+READ16_HANDLER( scudhamm_analog_r )
+{
+	return readinputport(1);
+}
+
+
+/*
+	I don't know how many leds are there, but each bit in the buttons input
+	port (coins, tilt, buttons, select etc.) triggers the corresponding bit
+	in this word. I mapped the 3 buttons to the first 3 led.
+*/
+WRITE16_HANDLER( scudhamm_leds_w )
+{
+	if (ACCESSING_MSB)
+	{
+ 		set_led_status(0, data & 0x0100);	// 3 buttons
+		set_led_status(1, data & 0x0200);
+		set_led_status(2, data & 0x0400);
+	}
+
+	if (ACCESSING_LSB)
+	{
+//		set_led_status(3, data & 0x0010);	// if we had more leds..
+//		set_led_status(4, data & 0x0020);
+	}
+}
+
+
+/*
+	$FFFC during self test, $FFFF onwards.
+	It could be audio(L/R) or layers(0/2) enable.
+*/
+WRITE16_HANDLER( scudhamm_enable_w )
+{
+}
+
+
+WRITE16_HANDLER( scudhamm_oki_bank_w )
+{
+	if (ACCESSING_LSB)
+	{
+		OKIM6295_set_bank_base(0, 0x40000 * ((data >> 0) & 0x3) );
+		OKIM6295_set_bank_base(1, 0x40000 * ((data >> 4) & 0x3) );
+	}
+}
+
+
+static MEMORY_READ16_START( readmem_scudhamm )
+	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
+	{ 0x0f0000, 0x0fffff, MRA16_RAM					},	// Work RAM + Spriteram
+	{ 0x082000, 0x082fff, MRA16_RAM					},	// Video Registers + RAM
+	{ 0x0a0000, 0x0a3fff, MRA16_RAM					},	// Scroll RAM 0
+	{ 0x0b0000, 0x0b3fff, MRA16_RAM					},	// Scroll RAM 2
+	{ 0x0b8000, 0x0bffff, MRA16_RAM					},	// Palette
+	{ 0x100008, 0x100009, input_port_0_word_r		},	// Buttons
+	{ 0x100014, 0x100015, OKIM6295_status_0_lsb_r	},	// Sound
+	{ 0x100018, 0x100019, OKIM6295_status_1_lsb_r	},	//
+	{ 0x100040, 0x100041, scudhamm_analog_r			},	// A / D
+	{ 0x100044, 0x100045, scudhamm_motor_pos_r		},	// Motor Position
+	{ 0x100050, 0x100051, scudhamm_motor_status_r	},	// Motor Limit Switches
+	{ 0x10005c, 0x10005d, input_port_2_word_r		},	// 2 x DSW
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem_scudhamm )
+ 	{ 0x000000, 0x07ffff, MWA16_ROM					},	// ROM
+	{ 0x0f0000, 0x0fffff, MWA16_RAM,				&megasys1_ram			},	// Work RAM + Spriteram
+	{ 0x082000, 0x082fff, scudhamm_vregs_w,			&megasys1_vregs			},	// Video Registers + RAM
+	{ 0x0a0000, 0x0a3fff, megasys1_scrollram_0_w,	&megasys1_scrollram_0	},	// Scroll RAM 0
+	{ 0x0b0000, 0x0b3fff, megasys1_scrollram_2_w,	&megasys1_scrollram_2	},	// Scroll RAM 2
+	{ 0x0b8000, 0x0bffff, scudhamm_paletteram16_w,	&paletteram16			},	// Palette
+ 	{ 0x100000, 0x100001, scudhamm_oki_bank_w		},	// Sound
+ 	{ 0x100008, 0x100009, scudhamm_leds_w			},	// Leds
+	{ 0x100014, 0x100015, OKIM6295_data_0_lsb_w		},	// Sound
+	{ 0x100018, 0x100019, OKIM6295_data_1_lsb_w		},	//
+	{ 0x10001c, 0x10001d, scudhamm_enable_w			},	// ?
+	{ 0x100040, 0x100041, MWA16_NOP					},	// ? 0 written before reading
+	{ 0x100050, 0x100051, scudhamm_motor_command_w	},	// Move Motor
+MEMORY_END
 
 
 
@@ -544,14 +721,14 @@ INPUT_PORTS_START( cischeat )
 
 
 	PORT_START	// IN1 - Coins - $80000.w
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1   )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2   )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_COIN3   )	// operator's facility
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) 	// called "Test"
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_START1  )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START2  )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 
 	PORT_START	// IN2 - Controls - $80002.w
@@ -697,14 +874,14 @@ INPUT_PORTS_START( f1gpstar )
 
 
 	PORT_START	// IN2 - Controls - $80004.w -> !f9016
-	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1   )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2   )
-	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_COIN3   )	// operator's facility
-	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) 	// -> f0100 (called "Test")
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1  )
-//	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift -> !f900e - We handle it with 2 buttons
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 )	// Brake -> !f9010
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )	// "Race Together"
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) // -> f0100 (called "Test")
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1   )
+//	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Shift -> !f900e - We handle it with 2 buttons
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2  ) // Brake -> !f9010
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2   ) // "Race Together"
 
 
 	PORT_START	// IN3 - ? Read at boot only - $80006.w
@@ -795,6 +972,84 @@ INPUT_PORTS_END
 
 
 
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+INPUT_PORTS_START( scudhamm )
+
+	PORT_START	// IN0 - Buttons
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // GAME OVER if pressed on the selection screen
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) 	// called "Test"
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Select
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_BIT(  0x0100, IP_ACTIVE_HIGH, IPT_BUTTON1 ) // Gu
+	PORT_BIT(  0x0200, IP_ACTIVE_HIGH, IPT_BUTTON2 ) // Choki
+	PORT_BIT(  0x0400, IP_ACTIVE_HIGH, IPT_BUTTON3 ) // Pa
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_HIGH, IPT_TILT    )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// IN1 - A/D
+	PORT_ANALOG( 0x00ff, 0x0000, IPT_PADDLE | IPF_CENTER, 1, 0, 0x0000, 0x00ff )
+
+	PORT_START	// IN2 - DSW
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, "Easy" )
+	PORT_DIPSETTING(      0x0003, "Normal" )
+	PORT_DIPSETTING(      0x0002, "Hard" )
+	PORT_DIPSETTING(      0x0001, "Hardest" )
+	PORT_DIPNAME( 0x000c, 0x000c, "Time To Hit" )
+	PORT_DIPSETTING(      0x000c, "2 s" )
+	PORT_DIPSETTING(      0x0008, "3 s" )
+	PORT_DIPSETTING(      0x0004, "4 s" )
+	PORT_DIPSETTING(      0x0000, "5 s" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 1-7" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown 2-3" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Unknown 2-4" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, "Unknown 2-5" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Unknown 2-6" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Unknown 2-7" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+INPUT_PORTS_END
 
 
 
@@ -850,9 +1105,9 @@ static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &tiles_8x8_04,	32*16*0, 32  }, // [0] Scroll 0
 	{ REGION_GFX2, 0, &tiles_8x8_04,	32*16*1, 32  }, // [1] Scroll 1
 	{ REGION_GFX3, 0, &tiles_8x8_01,	32*16*2, 32  }, // [2] Scroll 2
-	{ REGION_GFX4, 0, &road_layout_1M,	32*16*3, 64  }, // [3] Road 0
-	{ REGION_GFX4, 0, &road_layout_1M,	32*16*5, 64  }, // [4] Road 1
-	{ REGION_GFX5, 0, &tiles_16x16_4M,	32*16*7, 128 }, // [5] Sprites
+	{ REGION_GFX4, 0, &tiles_16x16_4M,	32*16*7, 128 }, // [3] Sprites
+	{ REGION_GFX5, 0, &road_layout_1M,	32*16*3, 64  }, // [4] Road 0
+	{ REGION_GFX5, 0, &road_layout_1M,	32*16*5, 64  }, // [5] Road 1
 	{ -1 }
 };
 
@@ -866,15 +1121,44 @@ static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &tiles_8x8_08,	0x0000, 16  }, // [0] Scroll 0
 	{ REGION_GFX2, 0, &tiles_8x8_08,	0x0100, 16  }, // [1] Scroll 1
 	{ REGION_GFX3, 0, &tiles_8x8_02,	0x0200, 16  }, // [2] Scroll 2
-	{ REGION_GFX4, 0, &road_layout_2M,	0x0300, 64  }, // [3] Road 0
-	{ REGION_GFX5, 0, &road_layout_1M,	0x0700, 64  }, // [4] Road 1
-	{ REGION_GFX6, 0, &tiles_16x16_5M,	0x0b00, 128 }, // [5] Sprites
+	{ REGION_GFX4, 0, &tiles_16x16_5M,	0x0b00, 128 }, // [3] Sprites
+	{ REGION_GFX5, 0, &road_layout_2M,	0x0300, 64  }, // [4] Road 0
+	{ REGION_GFX6, 0, &road_layout_1M,	0x0700, 64  }, // [5] Road 1
+	{ -1 }
+};
+
+
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+MEGASYS1_LAYOUT_16x16_QUAD(tiles_16x16_quad_5M, 0x500000)
+
+static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
+{
+	{ REGION_GFX1, 0, &tiles_8x8_08,		256*0, 16  },	// [0] Scroll 0
+	{ REGION_GFX1, 0, &tiles_8x8_08,		256*0, 16  },	// [1] UNUSED
+	{ REGION_GFX3, 0, &tiles_8x8_02,		256*1, 16  },	// [2] Scroll 2
+	{ REGION_GFX4, 0, &tiles_16x16_quad_5M,	256*2, 128 },	// [3] sprites
+	// No Road Layers
 	{ -1 }
 };
 
 
 
 
+
+/***************************************************************************
+
+
+								Machine Drivers
+
+
+**************************************************************************/
+
+/**************************************************************************
+						[ Cisco Heat & F1 GrandPrix Star ]
+**************************************************************************/
 /* CPU # 1 */
 #define CISCHEAT_INTERRUPT_NUM	3
 
@@ -993,9 +1277,88 @@ static const struct MachineDriver machine_driver_##_shortname_ = \
 };
 
 
+
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+static struct OKIM6295interface okim6295_interface_scudhamm =
+{
+	2,
+	{ 16000,16000 },
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
+};
+
+/*
+	1, 5-7] 	busy loop
+	2]			clr.w   $fc810.l + rte
+	3]			game
+	4]	 		== 3
+*/
+#define INTERRUPT_NUM_SCUDHAMM		2
+int interrupt_scudhamm(void)
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:		return 2;	// "real" vblank. It just sets a flag that
+								// the main loop polls before updating the sprites.
+
+		case 1:		return 3;	// update palette, layers etc. Not the sprites.
+
+		default:	return ignore_interrupt();
+	}
+}
+
+
+static const struct MachineDriver machine_driver_scudhamm =
+{
+	{
+		{
+			CPU_M68000,
+			12000000,
+			readmem_scudhamm,writemem_scudhamm,0,0,
+			interrupt_scudhamm,INTERRUPT_NUM_SCUDHAMM
+		},
+	},
+	30, DEFAULT_REAL_30HZ_VBLANK_DURATION * 3 ,
+
+	1,
+	0,
+
+	/* video hardware */
+	256, 256,{ 0, 256-1, 0 +16, 256-1 -16},
+	gfxdecodeinfo_scudhamm,
+	16*16+16*16+128*16, 16*16+16*16+128*16,
+	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK,
+	0,
+	megasys1_vh_start,
+	0,
+	scudhamm_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface_scudhamm
+		}
+	}
+};
+
+
+
+
+
+
+
+
 /***************************************************************************
 
-  Game driver(s)
+
+								ROMs Loading
+
 
 **************************************************************************/
 
@@ -1084,58 +1447,58 @@ Sound:		Amplified Stereo (two channel)
 ***************************************************************************/
 
 ROM_START( cischeat )
-	ROM_REGION( 0x080000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "ch9071v2.03", 0x000000, 0x040000, 0xdd1bb26f )
-	ROM_LOAD_ODD(  "ch9071v2.01", 0x000000, 0x040000, 0x7b65276a )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ch9071v2.03", 0x000000, 0x040000, 0xdd1bb26f )
+	ROM_LOAD16_BYTE( "ch9071v2.01", 0x000001, 0x040000, 0x7b65276a )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )
-	ROM_LOAD_EVEN( "ch9073.01",  0x000000, 0x040000, 0xba331526 )
-	ROM_LOAD_ODD(  "ch9073.02",  0x000000, 0x040000, 0xb45ff10f )
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "ch9073.01",  0x000000, 0x040000, 0xba331526 )
+	ROM_LOAD16_BYTE( "ch9073.02",  0x000001, 0x040000, 0xb45ff10f )
 
-	ROM_REGION( 0x80000, REGION_CPU3 )
-	ROM_LOAD_EVEN( "ch9073v1.03", 0x000000, 0x040000, 0xbf1d1cbf )
-	ROM_LOAD_ODD(  "ch9073v1.04", 0x000000, 0x040000, 0x1ec8a597 )
+	ROM_REGION( 0x80000, REGION_CPU3, 0 )
+	ROM_LOAD16_BYTE( "ch9073v1.03", 0x000000, 0x040000, 0xbf1d1cbf )
+	ROM_LOAD16_BYTE( "ch9073v1.04", 0x000001, 0x040000, 0x1ec8a597 )
 
-	ROM_REGION( 0x40000, REGION_CPU4 )
-	ROM_LOAD_EVEN( "ch9071.11", 0x000000, 0x020000, 0xbc137bea )
-	ROM_LOAD_ODD(  "ch9071.10", 0x000000, 0x020000, 0xbf7b634d )
+	ROM_REGION( 0x40000, REGION_CPU4, 0 )
+	ROM_LOAD16_BYTE( "ch9071.11", 0x000000, 0x020000, 0xbc137bea )
+	ROM_LOAD16_BYTE( "ch9071.10", 0x000001, 0x020000, 0xbf7b634d )
 
-	ROM_REGION( 0x100000, REGION_USER1 )	/* second halves of program ROMs */
-	ROM_LOAD_EVEN( "ch9071.04",   0x000000, 0x040000, 0x7fb48cbc )	// cpu #1
-	ROM_LOAD_ODD(  "ch9071.02",   0x000000, 0x040000, 0xa5d0f4dc )
+	ROM_REGION16_BE( 0x100000, REGION_USER1, 0 )	/* second halves of program ROMs */
+	ROM_LOAD16_BYTE( "ch9071.04",   0x000000, 0x040000, 0x7fb48cbc )	// cpu #1
+	ROM_LOAD16_BYTE( "ch9071.02",   0x000001, 0x040000, 0xa5d0f4dc )
 	// cpu #2 (0x40000 bytes will be copied here)
 	// cpu #3 (0x40000 bytes will be copied here)
 
-	ROM_REGION( 0x040000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch9071.a14",  0x000000, 0x040000, 0x7a6d147f ) // scroll 0
 
-	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch9071.t74",  0x000000, 0x040000, 0x735a2e25 ) // scroll 1
 
-	ROM_REGION( 0x010000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch9071.07",   0x000000, 0x010000, 0x3724ccc3 ) // scroll 2
 
-	ROM_REGION( 0x100000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "ch9072.r15",  0x000000, 0x080000, 0x38af4aea )
+	ROM_LOAD16_BYTE(  "ch9072.r16", 0x000001, 0x080000, 0x71388dad )
+	ROM_LOAD16_BYTE( "ch9072.r17",  0x100000, 0x080000, 0x9d052cf3 )
+	ROM_LOAD16_BYTE(  "ch9072.r18", 0x100001, 0x080000, 0xfe402a56 )
+	ROM_LOAD16_BYTE( "ch9072.r25",  0x200000, 0x080000, 0xbe8cca47 )
+	ROM_LOAD16_BYTE(  "ch9072.r26", 0x200001, 0x080000, 0x2f96f47b )
+	ROM_LOAD16_BYTE( "ch9072.r19",  0x300000, 0x080000, 0x4e996fa8 )
+	ROM_LOAD16_BYTE(  "ch9072.r20", 0x300001, 0x080000, 0xfa70b92d )
+
+	ROM_REGION( 0x100000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch9073.r21",  0x000000, 0x080000, 0x2943d2f6 ) // Road
 	ROM_LOAD( "ch9073.r22",  0x080000, 0x080000, 0x2dd44f85 )
 
-	ROM_REGION( 0x400000, REGION_GFX5 | REGIONFLAG_DISPOSE )	/* sprites */
-	ROM_LOAD_GFX_EVEN( "ch9072.r15",  0x000000, 0x080000, 0x38af4aea )
-	ROM_LOAD_GFX_ODD(  "ch9072.r16",  0x000000, 0x080000, 0x71388dad )
-	ROM_LOAD_GFX_EVEN( "ch9072.r17",  0x100000, 0x080000, 0x9d052cf3 )
-	ROM_LOAD_GFX_ODD(  "ch9072.r18",  0x100000, 0x080000, 0xfe402a56 )
-	ROM_LOAD_GFX_EVEN( "ch9072.r25",  0x200000, 0x080000, 0xbe8cca47 )
-	ROM_LOAD_GFX_ODD(  "ch9072.r26",  0x200000, 0x080000, 0x2f96f47b )
-	ROM_LOAD_GFX_EVEN( "ch9072.r19",  0x300000, 0x080000, 0x4e996fa8 )
-	ROM_LOAD_GFX_ODD(  "ch9072.r20",  0x300000, 0x080000, 0xfa70b92d )
-
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "ch9071.r23", 0x000000, 0x080000, 0xc7dbb992 ) // 2 x 0x40000
 
-	ROM_REGION( 0x80000, REGION_SOUND2 )	/* samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* samples */
 	ROM_LOAD( "ch9071.r24", 0x000000, 0x080000, BADCRC(0xe87ca4d7) ) // 2 x 0x40000 (FIRST AND SECOND HALF IDENTICAL)
 
-	ROM_REGION( 0x40000, REGION_USER2 )		/* ? Unused ROMs ? */
+	ROM_REGION( 0x40000, REGION_USER2, 0 )		/* ? Unused ROMs ? */
 	ROM_LOAD( "ch9072.01",  0x000000, 0x020000, 0xb2efed33 ) // FIXED BITS (xxxxxxxx0xxxxxxx)
 	ROM_LOAD( "ch9072.02",  0x000000, 0x040000, 0x536edde4 )
 	ROM_LOAD( "ch9072.03",  0x000000, 0x040000, 0x7e79151a )
@@ -1158,7 +1521,7 @@ void init_cischeat(void)
 	memset(rom_3, 0, 0x40000);
 	rom_3 = (data16_t *) (memory_region(REGION_USER1) + 0xc0000);
 
-	cischeat_untangle_sprites(REGION_GFX5);	// Untangle sprites
+	cischeat_untangle_sprites(REGION_GFX4);	// Untangle sprites
 	astyanax_rom_decode(3);					// Decrypt sound cpu code
 }
 
@@ -1298,66 +1661,66 @@ GFX & Misc       - GS90015-02 (100 pin PQFP),  uses ROM 90015-31-R56
 ***************************************************************************/
 
 ROM_START( f1gpstar )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "9188a-27.v20", 0x000000, 0x040000, 0x0a9d3896 )
-	ROM_LOAD_ODD(  "9188a-22.v20", 0x000000, 0x040000, 0xde15c9ca )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "9188a-27.v20", 0x000000, 0x040000, 0x0a9d3896 )
+	ROM_LOAD16_BYTE( "9188a-22.v20", 0x000001, 0x040000, 0xde15c9ca )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )
 	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
-	ROM_LOAD_EVEN( "9188a-16.v10",  0x000000, 0x020000, 0xef0f7ca9 )
-	ROM_LOAD_ODD(  "9188a-11.v10",  0x000000, 0x020000, 0xde292ea3 )
+	ROM_LOAD16_BYTE( "9188a-16.v10",  0x000000, 0x020000, 0xef0f7ca9 )
+	ROM_LOAD16_BYTE( "9188a-11.v10",  0x000001, 0x020000, 0xde292ea3 )
 
-	ROM_REGION( 0x80000, REGION_CPU3 )
+	ROM_REGION( 0x80000, REGION_CPU3, 0 )
 	/* Should Use ROMs:	90015-01.W06, 90015-02.W07, 90015-03.W08, 90015-04.W09 */
-	ROM_LOAD_EVEN( "9188a-6.v10",  0x000000, 0x020000, 0x18ba0340 )
-	ROM_LOAD_ODD(  "9188a-1.v10",  0x000000, 0x020000, 0x109d2913 )
+	ROM_LOAD16_BYTE( "9188a-6.v10",  0x000000, 0x020000, 0x18ba0340 )
+	ROM_LOAD16_BYTE( "9188a-1.v10",  0x000001, 0x020000, 0x109d2913 )
 
-	ROM_REGION( 0x40000, REGION_CPU4 )
-	ROM_LOAD_EVEN( "9190a-2.v11", 0x000000, 0x020000, 0xacb2fd80 )
-	ROM_LOAD_ODD(  "9190a-1.v11", 0x000000, 0x020000, 0x7cccadaf )
+	ROM_REGION( 0x40000, REGION_CPU4, 0 )
+	ROM_LOAD16_BYTE( "9190a-2.v11", 0x000000, 0x020000, 0xacb2fd80 )
+	ROM_LOAD16_BYTE( "9190a-1.v11", 0x000001, 0x020000, 0x7cccadaf )
 
-	ROM_REGION( 0x80000, REGION_USER1 )	/* second halves of program ROMs */
-	ROM_LOAD_EVEN( "9188a-26.v10", 0x000000, 0x040000, 0x0b76673f )	// cpu #1
-	ROM_LOAD_ODD(  "9188a-21.v10", 0x000000, 0x040000, 0x3e098d77 )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )	/* second halves of program ROMs */
+	ROM_LOAD16_BYTE( "9188a-26.v10", 0x000000, 0x040000, 0x0b76673f )	// cpu #1
+	ROM_LOAD16_BYTE( "9188a-21.v10", 0x000001, 0x040000, 0x3e098d77 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "90015-31.r56",  0x000000, 0x080000, 0x0c8f0e2b ) // scroll 0
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "90015-32.r57",  0x000000, 0x080000, 0x9c921cfb ) // scroll 1
 
-	ROM_REGION( 0x020000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "9188a-30.v10",  0x000000, 0x020000, 0x0ef1fbf1 ) // scroll 2
 
-	ROM_REGION( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x500000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD16_BYTE( "90015-21.r46",  0x000000, 0x080000, 0x6f30211f )
+	ROM_LOAD16_BYTE( "90015-22.r47",  0x000001, 0x080000, 0x05a9a5da )
+	ROM_LOAD16_BYTE( "90015-23.r48",  0x100000, 0x080000, 0x58e9c6d2 )
+	ROM_LOAD16_BYTE( "90015-24.r49",  0x100001, 0x080000, 0xabd6c91d )
+	ROM_LOAD16_BYTE( "90015-25.r50",  0x200000, 0x080000, 0x7ded911f )
+	ROM_LOAD16_BYTE( "90015-26.r51",  0x200001, 0x080000, 0x18a6c663 )
+	ROM_LOAD16_BYTE( "90015-27.r52",  0x300000, 0x080000, 0x7378c82f )
+	ROM_LOAD16_BYTE( "90015-28.r53",  0x300001, 0x080000, 0x9944dacd )
+	ROM_LOAD16_BYTE( "90015-29.r54",  0x400000, 0x080000, 0x2cdec370 )
+	ROM_LOAD16_BYTE( "90015-30.r55",  0x400001, 0x080000, 0x47e37604 )
+
+	ROM_REGION( 0x200000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "90015-05.w10",  0x000000, 0x080000, 0x8eb48a23 ) // Road 0
 	ROM_LOAD( "90015-06.w11",  0x080000, 0x080000, 0x32063a68 )
 	ROM_LOAD( "90015-07.w12",  0x100000, 0x080000, 0x0d0d54f3 )
 	ROM_LOAD( "90015-08.w14",  0x180000, 0x080000, 0xf48a42c5 )
 
-	ROM_REGION( 0x100000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX6, ROMREGION_DISPOSE )
 	ROM_LOAD( "90015-09.w13",  0x000000, 0x080000, 0x55f49315 ) // Road 1
 	ROM_LOAD( "90015-10.w15",  0x080000, 0x080000, 0x678be0cb )
 
-	ROM_REGION( 0x500000, REGION_GFX6 | REGIONFLAG_DISPOSE )	/* sprites */
-	ROM_LOAD_GFX_EVEN( "90015-21.r46",  0x000000, 0x080000, 0x6f30211f )
-	ROM_LOAD_GFX_ODD(  "90015-22.r47",  0x000000, 0x080000, 0x05a9a5da )
-	ROM_LOAD_GFX_EVEN( "90015-23.r48",  0x100000, 0x080000, 0x58e9c6d2 )
-	ROM_LOAD_GFX_ODD(  "90015-24.r49",  0x100000, 0x080000, 0xabd6c91d )
-	ROM_LOAD_GFX_EVEN( "90015-25.r50",  0x200000, 0x080000, 0x7ded911f )
-	ROM_LOAD_GFX_ODD(  "90015-26.r51",  0x200000, 0x080000, 0x18a6c663 )
-	ROM_LOAD_GFX_EVEN( "90015-27.r52",  0x300000, 0x080000, 0x7378c82f )
-	ROM_LOAD_GFX_ODD(  "90015-28.r53",  0x300000, 0x080000, 0x9944dacd )
-	ROM_LOAD_GFX_EVEN( "90015-29.r54",  0x400000, 0x080000, 0x2cdec370 )
-	ROM_LOAD_GFX_ODD(  "90015-30.r55",  0x400000, 0x080000, 0x47e37604 )
-
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "90015-34.w32", 0x000000, 0x080000, 0x2ca9b062 ) // 2 x 0x40000
 
-	ROM_REGION( 0x80000, REGION_SOUND2 )	/* samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* samples */
 	ROM_LOAD( "90015-33.w31", 0x000000, 0x080000, 0x6121d247 ) // 2 x 0x40000
 
-	ROM_REGION( 0x80000, REGION_USER2 )		/* ? Unused ROMs ? */
+	ROM_REGION( 0x80000, REGION_USER2, 0 )		/* ? Unused ROMs ? */
 // "I know that one of the ROM images in the archive looks bad (90015-04.W09)
 //  however, it is good as far as I can tell. There were two of those ROMs
 // (soldered) onto the board and I checked them both against each other. "
@@ -1388,7 +1751,7 @@ void init_f1gpstar(void)
 /* Split ROMs */
 	rom_1 = (data16_t *) memory_region(REGION_USER1);
 
-	cischeat_untangle_sprites(REGION_GFX6);
+	cischeat_untangle_sprites(REGION_GFX4);
 }
 
 
@@ -1404,5 +1767,79 @@ GAME_DRIVER(	f1gpstar,
 
 
 
-GAME( 1990, cischeat, 0, cischeat, cischeat, cischeat, ROT0_16BIT, "Jaleco", "Cisco Heat" )
+/***************************************************************************
+
+								[ Scud Hammer ]
+
+CF-92128B:
+
+                                                      GS9001501
+ 2-H 2-L  6295            62256 62256
+ 1-H 1-L  6295  68000-12  3     4       6  GS90015-02 8464 8464 GS600406
+
+                    24MHz               5  GS90015-02 8464 8464 GS900406
+
+                                                       7C199
+                                                       7C199 GS90015-03
+
+GP-9189:
+
+ 1     2      62256                            62256
+ 3     4      62256    GS90015-06 GS90015-06   62256
+ 5     6      62256                            62256
+ 7     8      62256    GS90015-03 GS90015-03   62256
+ 9     10
+
+                  GS90015-08            GS90015-07 GS90015-10
+
+          GS90015-11
+
+
+                      MR90015-35
+                      MR90015-35              GS90015-09
+
+***************************************************************************/
+
+ROM_START( scudhamm )
+
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "3", 0x000000, 0x040000, 0xa908e7bd )
+	ROM_LOAD16_BYTE( "4", 0x000001, 0x040000, 0x981c8b02 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "5", 0x000000, 0x080000, 0x714c115e )
+
+//	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+//	UNUSED
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "6", 0x000000, 0x020000, 0xb39aab63 ) // 1xxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x500000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "1.bot",  0x000000, 0x080000, 0x46450d73 )
+	ROM_LOAD16_BYTE( "2.bot",  0x000001, 0x080000, 0xfb7b66dd )
+	ROM_LOAD16_BYTE( "3.bot",  0x100000, 0x080000, 0x7d45960b )
+	ROM_LOAD16_BYTE( "4.bot",  0x100001, 0x080000, 0x393b6a22 )
+	ROM_LOAD16_BYTE( "5.bot",  0x200000, 0x080000, 0x7a3c33ad )
+	ROM_LOAD16_BYTE( "6.bot",  0x200001, 0x080000, 0xd19c4bf7 )
+	ROM_LOAD16_BYTE( "7.bot",  0x300000, 0x080000, 0x9e5edf59 )
+	ROM_LOAD16_BYTE( "8.bot",  0x300001, 0x080000, 0x4980051e )
+	ROM_LOAD16_BYTE( "9.bot",  0x400000, 0x080000, 0xc1b301f1 )
+	ROM_LOAD16_BYTE( "10.bot", 0x400001, 0x080000, 0xdab4528f )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )		/* Samples (4x40000) */
+	ROM_LOAD( "2.l",  0x000000, 0x080000, 0x889311da )
+	ROM_LOAD( "2.h",  0x080000, 0x080000, 0x347928fc )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 )		/* Samples (4x40000) */
+	ROM_LOAD( "1.l",  0x000000, 0x080000, 0x3c94aa90 )
+	ROM_LOAD( "1.h",  0x080000, 0x080000, 0x5caee787 )	// 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+ROM_END
+
+
+
+
+GAME( 1990, cischeat, 0, cischeat, cischeat, cischeat, ROT0_16BIT, "Jaleco", "Cisco Heat"         )
 GAME( 1991, f1gpstar, 0, f1gpstar, f1gpstar, f1gpstar, ROT0_16BIT, "Jaleco", "F1 Grand Prix Star" )
+GAME( 1994, scudhamm, 0, scudhamm, scudhamm, 0,        ROT270,     "Jaleco", "Scud Hammer"        )

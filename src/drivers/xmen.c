@@ -378,77 +378,77 @@ static const struct MachineDriver machine_driver_xmen =
 ***************************************************************************/
 
 ROM_START( xmen )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "065ubb04.10d",  0x00000, 0x20000, 0xf896c93b )
-	ROM_LOAD_ODD ( "065ubb05.10f",  0x00000, 0x20000, 0xe02e5d64 )
-	ROM_LOAD_EVEN( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
-	ROM_LOAD_ODD ( "xmen17j.bin",   0x80000, 0x40000, 0x13842fe6 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "065ubb04.10d",  0x00000, 0x20000, 0xf896c93b )
+	ROM_LOAD16_BYTE( "065ubb05.10f",  0x00001, 0x20000, 0xe02e5d64 )
+	ROM_LOAD16_BYTE( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
+	ROM_LOAD16_BYTE( "xmen17j.bin",   0x80001, 0x40000, 0x13842fe6 )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )		/* 64k+128k fpr sound cpu */
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )		/* 64k+128k fpr sound cpu */
 	ROM_LOAD( "065-a01.6f",   0x00000, 0x20000, 0x147d3a4d )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen1l.bin",   0x000000, 0x100000, 0x6b649aca )	/* tiles */
 	ROM_LOAD( "xmen1h.bin",   0x100000, 0x100000, 0xc5dc8fc4 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen12l.bin",  0x000000, 0x100000, 0xea05d52f )	/* sprites */
 	ROM_LOAD( "xmen17l.bin",  0x100000, 0x100000, 0x96b91802 )
 	ROM_LOAD( "xmen22h.bin",  0x200000, 0x100000, 0x321ed07a )
 	ROM_LOAD( "xmen22l.bin",  0x300000, 0x100000, 0x46da948e )
 
-	ROM_REGION( 0x200000, REGION_SOUND1 )	/* samples for the 054544 */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* samples for the 054544 */
 	ROM_LOAD( "xmenc25.bin",  0x000000, 0x200000, 0x5adbcee0 )
 ROM_END
 
 ROM_START( xmen6p )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "xmenb04.bin",   0x00000, 0x20000, 0x0f09b8e0 )
-	ROM_LOAD_ODD ( "xmenb05.bin",   0x00000, 0x20000, 0x867becbf )
-	ROM_LOAD_EVEN( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
-	ROM_LOAD_ODD ( "xmen17j.bin",   0x80000, 0x40000, 0x13842fe6 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "xmenb04.bin",   0x00000, 0x20000, 0x0f09b8e0 )
+	ROM_LOAD16_BYTE( "xmenb05.bin",   0x00001, 0x20000, 0x867becbf )
+	ROM_LOAD16_BYTE( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
+	ROM_LOAD16_BYTE( "xmen17j.bin",   0x80001, 0x40000, 0x13842fe6 )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )		/* 64k+128k fpr sound cpu */
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )		/* 64k+128k fpr sound cpu */
 	ROM_LOAD( "065-a01.6f",   0x00000, 0x20000, 0x147d3a4d )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen1l.bin",   0x000000, 0x100000, 0x6b649aca )	/* tiles */
 	ROM_LOAD( "xmen1h.bin",   0x100000, 0x100000, 0xc5dc8fc4 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen12l.bin",  0x000000, 0x100000, 0xea05d52f )	/* sprites */
 	ROM_LOAD( "xmen17l.bin",  0x100000, 0x100000, 0x96b91802 )
 	ROM_LOAD( "xmen22h.bin",  0x200000, 0x100000, 0x321ed07a )
 	ROM_LOAD( "xmen22l.bin",  0x300000, 0x100000, 0x46da948e )
 
-	ROM_REGION( 0x200000, REGION_SOUND1 )	/* samples for the 054544 */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* samples for the 054544 */
 	ROM_LOAD( "xmenc25.bin",  0x000000, 0x200000, 0x5adbcee0 )
 ROM_END
 
 ROM_START( xmen2pj )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "065jaa04.10d",  0x00000, 0x20000, 0x66746339 )
-	ROM_LOAD_ODD ( "065jaa05.10f",  0x00000, 0x20000, 0x1215b706 )
-	ROM_LOAD_EVEN( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
-	ROM_LOAD_ODD ( "xmen17j.bin",   0x80000, 0x40000, 0x13842fe6 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "065jaa04.10d",  0x00000, 0x20000, 0x66746339 )
+	ROM_LOAD16_BYTE( "065jaa05.10f",  0x00001, 0x20000, 0x1215b706 )
+	ROM_LOAD16_BYTE( "xmen17g.bin",   0x80000, 0x40000, 0xb31dc44c )
+	ROM_LOAD16_BYTE( "xmen17j.bin",   0x80001, 0x40000, 0x13842fe6 )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )		/* 64k+128k fpr sound cpu */
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )		/* 64k+128k fpr sound cpu */
 	ROM_LOAD( "065-a01.6f",   0x00000, 0x20000, 0x147d3a4d )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen1l.bin",   0x000000, 0x100000, 0x6b649aca )	/* tiles */
 	ROM_LOAD( "xmen1h.bin",   0x100000, 0x100000, 0xc5dc8fc4 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "xmen12l.bin",  0x000000, 0x100000, 0xea05d52f )	/* sprites */
 	ROM_LOAD( "xmen17l.bin",  0x100000, 0x100000, 0x96b91802 )
 	ROM_LOAD( "xmen22h.bin",  0x200000, 0x100000, 0x321ed07a )
 	ROM_LOAD( "xmen22l.bin",  0x300000, 0x100000, 0x46da948e )
 
-	ROM_REGION( 0x200000, REGION_SOUND1 )	/* samples for the 054544 */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* samples for the 054544 */
 	ROM_LOAD( "xmenc25.bin",  0x000000, 0x200000, 0x5adbcee0 )
 ROM_END
 

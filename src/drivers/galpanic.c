@@ -456,25 +456,25 @@ MACHINEDRIVER(comad,   10000000,comad)		/* 10 MHz ??? */
 ***************************************************************************/
 
 ROM_START( galpanic )
-	ROM_REGION( 0x400000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
-	ROM_LOAD_ODD ( "pm109.4m1",    0x000000, 0x080000, 0xb85d792d )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
+	ROM_LOAD16_BYTE( "pm109.4m1",    0x000001, 0x080000, 0xb85d792d )
 	/* The above two ROMs contain valid 68000 code, but the game doesn't */
 	/* work. I think there might be a protection (addressed at e00000). */
 	/* The two following ROMs replace the code with a working version. */
-	ROM_LOAD_EVEN( "pm112.6",      0x000000, 0x20000, 0x7b972b58 )
-	ROM_LOAD_ODD ( "pm111.5",      0x000000, 0x20000, 0x4eb7298d )
-	ROM_LOAD_ODD ( "pm004e.8",     0x100000, 0x80000, 0xd3af52bc )
-	ROM_LOAD_EVEN( "pm005e.7",     0x100000, 0x80000, 0xd7ec650c )
-	ROM_LOAD_ODD ( "pm000e.15",    0x200000, 0x80000, 0x5d220f3f )
-	ROM_LOAD_EVEN( "pm001e.14",    0x200000, 0x80000, 0x90433eb1 )
-	ROM_LOAD_ODD ( "pm002e.17",    0x300000, 0x80000, 0x713ee898 )
-	ROM_LOAD_EVEN( "pm003e.16",    0x300000, 0x80000, 0x6bb060fd )
+	ROM_LOAD16_BYTE( "pm112.6",      0x000000, 0x20000, 0x7b972b58 )
+	ROM_LOAD16_BYTE( "pm111.5",      0x000001, 0x20000, 0x4eb7298d )
+	ROM_LOAD16_BYTE( "pm004e.8",     0x100001, 0x80000, 0xd3af52bc )
+	ROM_LOAD16_BYTE( "pm005e.7",     0x100000, 0x80000, 0xd7ec650c )
+	ROM_LOAD16_BYTE( "pm000e.15",    0x200001, 0x80000, 0x5d220f3f )
+	ROM_LOAD16_BYTE( "pm001e.14",    0x200000, 0x80000, 0x90433eb1 )
+	ROM_LOAD16_BYTE( "pm002e.17",    0x300001, 0x80000, 0x713ee898 )
+	ROM_LOAD16_BYTE( "pm003e.16",    0x300000, 0x80000, 0x6bb060fd )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "pm006e.67",    0x000000, 0x100000, 0x57aec037 )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "pm008e.l",     0x00000, 0x80000, 0xd9379ba8 )
 	ROM_RELOAD(               0x40000, 0x80000 )
@@ -482,51 +482,51 @@ ROM_START( galpanic )
 ROM_END
 
 ROM_START( fantasia )
-	ROM_REGION( 0x500000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "prog2_16.rom", 0x000000, 0x80000, 0xe27c6c57 )
-	ROM_LOAD_ODD ( "prog1_13.rom", 0x000000, 0x80000, 0x68d27413 )
-	ROM_LOAD_EVEN( "iscr6_09.rom", 0x100000, 0x80000, 0x2a588393 )
-	ROM_LOAD_ODD ( "iscr5_05.rom", 0x100000, 0x80000, 0x6160e0f0 )
-	ROM_LOAD_EVEN( "iscr4_08.rom", 0x200000, 0x80000, 0xf776b743 )
-	ROM_LOAD_ODD ( "iscr3_04.rom", 0x200000, 0x80000, 0x5df0dff2 )
-	ROM_LOAD_EVEN( "iscr2_07.rom", 0x300000, 0x80000, 0x5707d861 )
-	ROM_LOAD_ODD ( "iscr1_03.rom", 0x300000, 0x80000, 0x36cb811a )
-	ROM_LOAD_EVEN( "imag2_10.rom", 0x400000, 0x80000, 0x1f14a395 )
-	ROM_LOAD_ODD ( "imag1_06.rom", 0x400000, 0x80000, 0xfaf870e4 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "prog2_16.rom", 0x000000, 0x80000, 0xe27c6c57 )
+	ROM_LOAD16_BYTE( "prog1_13.rom", 0x000001, 0x80000, 0x68d27413 )
+	ROM_LOAD16_BYTE( "iscr6_09.rom", 0x100000, 0x80000, 0x2a588393 )
+	ROM_LOAD16_BYTE( "iscr5_05.rom", 0x100001, 0x80000, 0x6160e0f0 )
+	ROM_LOAD16_BYTE( "iscr4_08.rom", 0x200000, 0x80000, 0xf776b743 )
+	ROM_LOAD16_BYTE( "iscr3_04.rom", 0x200001, 0x80000, 0x5df0dff2 )
+	ROM_LOAD16_BYTE( "iscr2_07.rom", 0x300000, 0x80000, 0x5707d861 )
+	ROM_LOAD16_BYTE( "iscr1_03.rom", 0x300001, 0x80000, 0x36cb811a )
+	ROM_LOAD16_BYTE( "imag2_10.rom", 0x400000, 0x80000, 0x1f14a395 )
+	ROM_LOAD16_BYTE( "imag1_06.rom", 0x400001, 0x80000, 0xfaf870e4 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "obj1_17.rom",  0x00000, 0x80000, 0xaadb6eb7 )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "mus-1_01.rom", 0x00000, 0x80000, 0x22955efb )
 	ROM_RELOAD(               0x40000, 0x80000 )
 	ROM_LOAD( "mus-2_02.rom", 0xc0000, 0x80000, 0x4cd4d6c3 )
 
-	ROM_REGION( 0x200000, REGION_USER1 )	/* unknown */
-	ROM_LOAD_EVEN( "gscr2_15.rom", 0x000000, 0x80000, 0x46666768 )
-	ROM_LOAD_ODD ( "gscr1_12.rom", 0x000000, 0x80000, 0x4bd25be6 )
-	ROM_LOAD_EVEN( "gscr4_14.rom", 0x100000, 0x80000, 0x4e7e6ed4 )
-	ROM_LOAD_ODD ( "gscr3_11.rom", 0x100000, 0x80000, 0x6d00a4c5 )
+	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 )	/* unknown */
+	ROM_LOAD16_BYTE( "gscr2_15.rom", 0x000000, 0x80000, 0x46666768 )
+	ROM_LOAD16_BYTE( "gscr1_12.rom", 0x000001, 0x80000, 0x4bd25be6 )
+	ROM_LOAD16_BYTE( "gscr4_14.rom", 0x100000, 0x80000, 0x4e7e6ed4 )
+	ROM_LOAD16_BYTE( "gscr3_11.rom", 0x100001, 0x80000, 0x6d00a4c5 )
 ROM_END
 
 ROM_START( newfant )
-	ROM_REGION( 0x500000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "prog2_12.rom", 0x000000, 0x80000, 0xde43a457 )
-	ROM_LOAD_ODD ( "prog1_07.rom", 0x000000, 0x80000, 0x370b45be )
-	ROM_LOAD_EVEN( "iscr2_10.rom", 0x100000, 0x80000, 0x4f2da2eb )
-	ROM_LOAD_ODD ( "iscr1_05.rom", 0x100000, 0x80000, 0x63c6894f )
-	ROM_LOAD_EVEN( "iscr4_09.rom", 0x200000, 0x80000, 0x725741ec )
-	ROM_LOAD_ODD ( "iscr3_04.rom", 0x200000, 0x80000, 0x51d6b362 )
-	ROM_LOAD_EVEN( "iscr6_08.rom", 0x300000, 0x80000, 0x178b2ef3 )
-	ROM_LOAD_ODD ( "iscr5_03.rom", 0x300000, 0x80000, 0xd2b5c5fa )
-	ROM_LOAD_EVEN( "iscr8_11.rom", 0x400000, 0x80000, 0xf4148528 )
-	ROM_LOAD_ODD ( "iscr7_06.rom", 0x400000, 0x80000, 0x2dee0c31 )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "prog2_12.rom", 0x000000, 0x80000, 0xde43a457 )
+	ROM_LOAD16_BYTE( "prog1_07.rom", 0x000001, 0x80000, 0x370b45be )
+	ROM_LOAD16_BYTE( "iscr2_10.rom", 0x100000, 0x80000, 0x4f2da2eb )
+	ROM_LOAD16_BYTE( "iscr1_05.rom", 0x100001, 0x80000, 0x63c6894f )
+	ROM_LOAD16_BYTE( "iscr4_09.rom", 0x200000, 0x80000, 0x725741ec )
+	ROM_LOAD16_BYTE( "iscr3_04.rom", 0x200001, 0x80000, 0x51d6b362 )
+	ROM_LOAD16_BYTE( "iscr6_08.rom", 0x300000, 0x80000, 0x178b2ef3 )
+	ROM_LOAD16_BYTE( "iscr5_03.rom", 0x300001, 0x80000, 0xd2b5c5fa )
+	ROM_LOAD16_BYTE( "iscr8_11.rom", 0x400000, 0x80000, 0xf4148528 )
+	ROM_LOAD16_BYTE( "iscr7_06.rom", 0x400001, 0x80000, 0x2dee0c31 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "obj1_13.rom",  0x00000, 0x80000, 0xe6d1bc71 )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "musc1_01.rom", 0x00000, 0x80000, 0x10347fce )
 	ROM_RELOAD(               0x40000, 0x80000 )
@@ -534,20 +534,20 @@ ROM_START( newfant )
 ROM_END
 
 ROM_START( missw96 )
-	ROM_REGION( 0x400000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "mw96_10.bin",  0x000000, 0x80000, 0xb1309bb1 )
-	ROM_LOAD_ODD ( "mw96_06.bin",  0x000000, 0x80000, 0xa5892bb3 )
-	ROM_LOAD_EVEN( "mw96_09.bin",  0x100000, 0x80000, 0x7032dfdf )
-	ROM_LOAD_ODD ( "mw96_05.bin",  0x100000, 0x80000, 0x91de5ab5 )
-	ROM_LOAD_EVEN( "mw96_08.bin",  0x200000, 0x80000, 0xb8e66fb5 )
-	ROM_LOAD_ODD ( "mw96_04.bin",  0x200000, 0x80000, 0xe77a04f8 )
-	ROM_LOAD_EVEN( "mw96_07.bin",  0x300000, 0x80000, 0x26112ed3 )
-	ROM_LOAD_ODD ( "mw96_03.bin",  0x300000, 0x80000, 0xe9374a46 )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "mw96_10.bin",  0x000000, 0x80000, 0xb1309bb1 )
+	ROM_LOAD16_BYTE( "mw96_06.bin",  0x000001, 0x80000, 0xa5892bb3 )
+	ROM_LOAD16_BYTE( "mw96_09.bin",  0x100000, 0x80000, 0x7032dfdf )
+	ROM_LOAD16_BYTE( "mw96_05.bin",  0x100001, 0x80000, 0x91de5ab5 )
+	ROM_LOAD16_BYTE( "mw96_08.bin",  0x200000, 0x80000, 0xb8e66fb5 )
+	ROM_LOAD16_BYTE( "mw96_04.bin",  0x200001, 0x80000, 0xe77a04f8 )
+	ROM_LOAD16_BYTE( "mw96_07.bin",  0x300000, 0x80000, 0x26112ed3 )
+	ROM_LOAD16_BYTE( "mw96_03.bin",  0x300001, 0x80000, 0xe9374a46 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "mw96_11.bin",  0x00000, 0x80000, 0x3983152f )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
 	ROM_LOAD( "mw96_01.bin",  0x00000, 0x80000, 0xe78a659e )
 	ROM_RELOAD(               0x40000, 0x80000 )

@@ -502,46 +502,46 @@ static const struct MachineDriver machine_driver_bladestl =
 ***************************************************************************/
 
 ROM_START( bladestl )
-	ROM_REGION( 0x18000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x18000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "797t01.bin", 0x10000, 0x08000, 0x89d7185d )	/* fixed ROM */
 	ROM_CONTINUE(			0x08000, 0x08000 )				/* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "797c02", 0x08000, 0x08000, 0x65a331ea )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
 	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e ) /* sprites lookup table */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 ) /* uPD7759 data (chip 1) */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* uPD7759 data (chip 1) */
 	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
 
-	ROM_REGION( 0x40000, REGION_SOUND2 ) /* uPD7759 data (chip 2) */
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 ) /* uPD7759 data (chip 2) */
 	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
 ROM_END
 
 ROM_START( bladstle )
-	ROM_REGION( 0x18000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x18000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "797e01", 0x10000, 0x08000, 0xf8472e95 )	/* fixed ROM */
 	ROM_CONTINUE(		0x08000, 0x08000 )				/* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "797c02", 0x08000, 0x08000, 0x65a331ea )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "797a05",	0x000000, 0x40000, 0x5491ba28 )	/* tiles */
 	ROM_LOAD( "797a06",	0x040000, 0x40000, 0xd055f5cc )	/* sprites */
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e ) /* sprites lookup table */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 ) /* uPD7759 data (chip 1) */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* uPD7759 data (chip 1) */
 	ROM_LOAD( "797a03", 0x00000, 0x80000, 0x9ee1a542 )
 
-	ROM_REGION( 0x40000, REGION_SOUND2 ) /* uPD7759 data (chip 2) */
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 ) /* uPD7759 data (chip 2) */
 	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
 ROM_END
 

@@ -531,22 +531,22 @@ static const struct MachineDriver machine_driver_farwest =
 ***************************************************************************/
 
 ROM_START( ironhors )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
 	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "09f_h07.bin",  0x00000, 0x8000, 0xc761ec73 )
 	ROM_LOAD( "06f_h04.bin",  0x08000, 0x8000, 0xc1486f61 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "08f_h06.bin",  0x00000, 0x8000, 0xf21d8c93 )
 	ROM_LOAD( "07f_h05.bin",  0x08000, 0x8000, 0x60107859 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
 	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
 	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
@@ -555,22 +555,22 @@ ROM_START( ironhors )
 ROM_END
 
 ROM_START( dairesya )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "560-k03.13c",  0x4000, 0x8000, 0x2ac6103b )
 	ROM_LOAD( "560-k02.12c",  0xc000, 0x4000, 0x07bc13a9 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
 	ROM_LOAD( "560-j01.10c",  0x0000, 0x4000, 0xa203b223 )
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "560-k07.9f",   0x00000, 0x8000, 0xc8a1b840 )
 	ROM_LOAD( "560-k04.6f",   0x08000, 0x8000, 0xc883d856 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "560-j06.8f",   0x00000, 0x8000, 0xa6e8248d )
 	ROM_LOAD( "560-j05.7f",   0x08000, 0x8000, 0xf75893d4 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
 	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
 	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
@@ -579,25 +579,25 @@ ROM_START( dairesya )
 ROM_END
 
 ROM_START( farwest )
-	ROM_REGION( 0x12000, REGION_CPU1 )	/* 64k for code + 8k for extra ROM */
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64k for code + 8k for extra ROM */
 	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
 	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )
 	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0x471182b7 )	/* don't know what this is for */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio cpu */
 	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ironhors.005", 0x00000, 0x8000, 0xf77e5b83 )
 	ROM_LOAD( "ironhors.006", 0x08000, 0x8000, 0x7bbc0b51 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ironhors.001", 0x00000, 0x4000, 0xa8fc21d3 )
 	ROM_LOAD( "ironhors.002", 0x04000, 0x4000, 0x9c1e5593 )
 	ROM_LOAD( "ironhors.003", 0x08000, 0x4000, 0x3a0bf799 )
 	ROM_LOAD( "ironhors.004", 0x0c000, 0x4000, 0x1fab18a3 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "ironcol.003",  0x0000, 0x0100, 0x3e3fca11 ) /* palette red */
 	ROM_LOAD( "ironcol.001",  0x0100, 0x0100, 0xdfb13014 ) /* palette green */
 	ROM_LOAD( "ironcol.002",  0x0200, 0x0100, 0x77c88430 ) /* palette blue */

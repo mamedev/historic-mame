@@ -504,7 +504,7 @@ static const struct MachineDriver machine_driver_mhavoc =
 
 ROM_START( mhavoc )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
+	ROM_REGION( 0x21000, REGION_CPU1, 0 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -521,14 +521,14 @@ ROM_START( mhavoc )
 	ROM_LOAD( "136025.107",   0x1c000, 0x4000, 0x5f81c5f3 ) /* page 2+3 */
 
 	/* Gamma Processor ROM */
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 16k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavoc2 )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1 )
+	ROM_REGION( 0x21000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.110",   0x05000, 0x2000, 0x16eef583 )
 
@@ -547,14 +547,14 @@ ROM_START( mhavoc2 )
 	/* the last 0x1000 is used for the 2 RAM pages */
 
 	/* Gamma Processor ROM */
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 16k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavocrv )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1 )	/* 152KB for ROMs */
+	ROM_REGION( 0x21000, REGION_CPU1, 0 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
@@ -571,14 +571,14 @@ ROM_START( mhavocrv )
 	ROM_LOAD( "136025.907",   0x1c000, 0x4000, 0x4deea2c9 ) /* page 2+3 */
 
 	/* Gamma Processor ROM */
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 16k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.908",   0x08000, 0x4000, 0xc52ec664 )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavocp )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1 )
+	ROM_REGION( 0x21000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
 
@@ -597,7 +597,7 @@ ROM_START( mhavocp )
 	/* the last 0x1000 is used for the 2 RAM pages */
 
 	/* Gamma Processor ROM */
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 16k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
 	ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
 ROM_END

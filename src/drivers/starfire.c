@@ -344,7 +344,7 @@ static const struct MachineDriver machine_driver_starfire =
  *************************************/
 
 ROM_START( starfire )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "sfire.1a",     0x0000, 0x0800, 0x9990af64 )
 	ROM_LOAD( "sfire.2a",     0x0800, 0x0800, 0x6e17ba33 )
 	ROM_LOAD( "sfire.1b",     0x1000, 0x0800, 0x946175d0 )
@@ -359,7 +359,7 @@ ROM_START( starfire )
 ROM_END
 
 ROM_START( fireone )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "fo-ic13.7b",     0x0000, 0x0800, 0xf927f086 )
 	ROM_LOAD( "fo-ic24.7c",     0x0800, 0x0800, 0x0d2d8723 )
 	ROM_LOAD( "fo-ic12.6b",     0x1000, 0x0800, 0xac7783d9 )

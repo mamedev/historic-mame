@@ -298,22 +298,22 @@ static const struct MachineDriver machine_driver_circusc =
 ***************************************************************************/
 
 ROM_START( circusc )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
 	ROM_LOAD( "q03",          0xa000, 0x2000, 0xe90c0e86 )
 	ROM_LOAD( "q02",          0xc000, 0x2000, 0x4d847dc6 )
 	ROM_LOAD( "q01",          0xe000, 0x2000, 0x18c20adf )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
 	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
 	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
@@ -321,29 +321,29 @@ ROM_START( circusc )
 	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 ROM_END
 
 ROM_START( circusc2 )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
 	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
 	ROM_LOAD( "h05_n03.bin",  0xa000, 0x2000, 0x5ef5b3b5 )
 	ROM_LOAD( "h06_n02.bin",  0xc000, 0x2000, 0xa5a5e796 )
 	ROM_LOAD( "h07_n01.bin",  0xe000, 0x2000, 0x70d26721 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
 	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
 	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
@@ -351,29 +351,29 @@ ROM_START( circusc2 )
 	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 ROM_END
 
 ROM_START( circuscc )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "cc_u05.h3",    0x6000, 0x2000, 0x964c035a )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
 	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
 	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
 	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
 	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
@@ -381,29 +381,29 @@ ROM_START( circuscc )
 	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
 ROM_END
 
 ROM_START( circusce )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
 	ROM_LOAD( "p03",          0xa000, 0x2000, 0x190247af )
 	ROM_LOAD( "p02",          0xc000, 0x2000, 0x7e63725e )
 	ROM_LOAD( "p01",          0xe000, 0x2000, 0xeedaa5b2 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "cd05_l14.bin", 0x0000, 0x2000, 0x607df0fb )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a04_j12.bin",  0x0000, 0x2000, 0x56e5b408 )
 	ROM_LOAD( "a05_k13.bin",  0x2000, 0x2000, 0x5aca0193 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "e11_j06.bin",  0x0000, 0x2000, 0xdf0405c6 )
 	ROM_LOAD( "e12_j07.bin",  0x2000, 0x2000, 0x23dfe3a6 )
 	ROM_LOAD( "e13_j08.bin",  0x4000, 0x2000, 0x3ba95390 )
@@ -411,7 +411,7 @@ ROM_START( circusce )
 	ROM_LOAD( "e15_j10.bin",  0x8000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xa000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */

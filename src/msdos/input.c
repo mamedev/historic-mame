@@ -1,8 +1,18 @@
 #include "mamalleg.h"
 #include "driver.h"
 
-
+/* Main mouse activation flag */
 int use_mouse;
+
+/* Sub mouse activation flag */
+/* assert(use_mouse == use_mouse_1 || use_mouse_2) */
+static int use_mouse_1; /* Allegro mouse, mapped on player 1 */
+static int use_mouse_2; /* OptiMAME mouse extension, mapped on player 2 */
+
+/* Mouse button mask */
+#define mouse_button_1 mouse_b /* Allegro mouse */
+static int mouse_button_2; /* OptiMAME mouse extension */
+
 int joystick;
 int use_hotrod;
 
@@ -181,8 +191,7 @@ int osd_readkey_unicode(int flush)
 #define GET_JOYCODE_DIR(code) (((code)>>14)&0x03)
 
 /* use otherwise unused joystick codes for the three mouse buttons */
-#define MOUSE_BUTTON(button) JOYCODE(1,0,button,1)
-
+#define MOUSECODE(mouse,button) JOYCODE(1,0,((mouse)-1)*3+(button),1)
 
 #define MAX_JOY 256
 #define MAX_JOY_NAME_LEN 40
@@ -250,14 +259,17 @@ static void init_joy_list(void)
 	tot = 0;
 
 	/* first of all, map mouse buttons */
-	for (j = 0;j < 3;j++)
+	for (k = 0;k < 2;k++)
 	{
-		sprintf(buf,"MOUSE B%d",j+1);
-		strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
-		joynames[tot][MAX_JOY_NAME_LEN] = 0;
-		joylist[tot].name = joynames[tot];
-		joylist[tot].code = MOUSE_BUTTON(j+1);
-		tot++;
+		for (j = 0;j < 3;j++)
+		{
+			sprintf(buf,"MOUSE%d B%d",k+1,j+1);
+			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+			joynames[tot][MAX_JOY_NAME_LEN] = 0;
+			joylist[tot].name = joynames[tot];
+			joylist[tot].code = MOUSECODE(k+1,j+1);
+			tot++;
+		}
 	}
 
 	for (i = 0;i < num_joysticks;i++)
@@ -331,12 +343,18 @@ int osd_is_joy_pressed(int joycode)
 	/* special case for mouse buttons */
 	switch (joycode)
 	{
-		case MOUSE_BUTTON(1):
-			return mouse_b & 1; break;
-		case MOUSE_BUTTON(2):
-			return mouse_b & 2; break;
-		case MOUSE_BUTTON(3):
-			return mouse_b & 4; break;
+		case MOUSECODE(1,1):
+			return mouse_button_1 & 1; break;
+		case MOUSECODE(1,2):
+			return mouse_button_1 & 2; break;
+		case MOUSECODE(1,3):
+			return mouse_button_1 & 4; break;
+                case MOUSECODE(2,1):
+                        return mouse_button_2 & 1; break;
+                case MOUSECODE(2,2):
+                        return mouse_button_2 & 2; break;
+                case MOUSECODE(2,3):
+                        return mouse_button_2 & 4; break;
 	}
 
 	joy_num = GET_JOYCODE_JOY(joycode);
@@ -461,8 +479,7 @@ void osd_joystick_end_calibration (void)
 
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
-	if (player != 0 || use_mouse == 0) *deltax = *deltay = 0;
-	else
+	if (player == 0 && use_mouse && use_mouse_1)
 	{
 		static int skip;
 		static int mx,my;
@@ -485,6 +502,44 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 			my -= *deltay;
 		}
 		skip ^= 1;
+	}
+	else if (player == 1 && use_mouse && use_mouse_2)
+	{
+                static int skip2;
+                static int mx2,my2;
+                static __dpmi_regs r;
+
+                /* Get mouse button state */
+                r.x.ax = 103;
+                __dpmi_int(0x33, &r);
+                mouse_button_2 = r.x.bx;
+
+		/* get_mouse_mickeys() doesn't work when called 60 times per second,
+		   it often returns 0, so I have to call it every other frame and split
+		   the result between two frames.
+		  */
+                if (skip2)
+		{
+                        *deltax = mx2;
+                        *deltay = my2;
+                }
+                else  /* Poll secondary mouse */
+		{
+                        r.x.ax = 111;
+                        __dpmi_int(0x33, &r);
+
+                        mx2 = (signed short)r.x.cx>>1;
+                        my2 = (signed short)r.x.dx>>1;
+
+                        *deltax = mx2;
+                        *deltay = my2;
+		}
+                skip2 ^= 1;
+	}
+	else
+	{
+		*deltax = 0;
+		*deltay = 0;
 	}
 }
 
@@ -616,10 +671,26 @@ void msdos_init_input (void)
 
 	init_joy_list();
 
-	if (use_mouse && install_mouse() != -1)
-		use_mouse = 1;
+	if (use_mouse)
+	{
+                __dpmi_regs r;
+
+		/* Initialize the Allegro mouse */
+		use_mouse_1 = install_mouse() != -1;
+
+		/* Initialize the custom MAME mouse driver extension */
+                r.x.ax = 100;
+                __dpmi_int(0x33, &r);
+                use_mouse_2 = r.x.ax != 100 && r.x.ax != 0;
+
+		if (!use_mouse_1 && !use_mouse_2)
+			use_mouse = 0;
+	}
 	else
-		use_mouse = 0;
+	{
+		use_mouse_1 = 0;
+		use_mouse_2 = 0;
+	}
 }
 
 

@@ -1,6 +1,7 @@
 /***************************************************************************
 
-Oh My God! (c) 1993 Atlus
+Oh My God!       (c) 1993 Atlus
+Naname de Magic! (c) 1994 Atlus
 
 driver by Nicola Salmoria
 
@@ -24,8 +25,8 @@ int ohmygod_vh_start(void);
 void ohmygod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-
-int sndbank;
+static int adpcm_bank_shift;
+static int sndbank;
 
 static void ohmygod_init_machine(void)
 {
@@ -46,9 +47,9 @@ WRITE16_HANDLER( ohmygod_ctrl_w )
 		unsigned char *rom = memory_region(REGION_SOUND1);
 
 		/* ADPCM bank switch */
-		if (sndbank != ((data & 0xf0) >> 4))
+		if (sndbank != ((data >> adpcm_bank_shift) & 0x0f))
 		{
-			sndbank = ((data & 0xf0) >> 4);
+			sndbank = (data >> adpcm_bank_shift) & 0x0f;
 			memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
 		}
 	}
@@ -68,7 +69,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x308000, 0x30ffff, MRA16_RAM },
 	{ 0x700000, 0x703fff, MRA16_RAM },
 	{ 0x704000, 0x707fff, MRA16_RAM },
-	{ 0x708000, 0x70bfff, MRA16_RAM },
+	{ 0x708000, 0x70ffff, MRA16_RAM },
 	{ 0x800000, 0x800001, input_port_0_word_r },
 	{ 0x800002, 0x800003, input_port_1_word_r },
 	{ 0xa00000, 0xa00001, input_port_2_word_r },
@@ -87,7 +88,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x600000, 0x6007ff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },
 	{ 0x700000, 0x703fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x704000, 0x707fff, MWA16_RAM },
-	{ 0x708000, 0x70bfff, MWA16_RAM },	/* work RAM */
+	{ 0x708000, 0x70ffff, MWA16_RAM },	/* work RAM */
 	{ 0x900000, 0x900001, ohmygod_ctrl_w },
 	{ 0xb00000, 0xb00001, OKIM6295_data_0_lsb_w },
 	{ 0xd00000, 0xd00001, ohmygod_spritebank_w },
@@ -120,8 +121,8 @@ INPUT_PORTS_START( ohmygod )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -187,10 +188,110 @@ INPUT_PORTS_START( ohmygod )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Balls Have Eyes" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Test Mode" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( naname )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0f00, 0x0f00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0500, "6 Coins/3 Credits" )
+	PORT_DIPSETTING(      0x0900, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x0f00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0300, "5 Coins/6 Credits" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 4C_5C ) )
+//	PORT_DIPSETTING(      0x0600, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0e00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0d00, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0b00, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0a00, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x7000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x5000, "6 Coins/3 Credits" )
+	PORT_DIPSETTING(      0x9000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x3000, "5 Coins/6 Credits" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 4C_5C ) )
+//	PORT_DIPSETTING(      0x6000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0xd000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0xb000, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0200, "Easy" )
+	PORT_DIPSETTING(      0x0300, "Normal" )
+	PORT_DIPSETTING(      0x0100, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Time Difficulty" )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x0c00, "Normal" )
+	PORT_DIPSETTING(      0x0400, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x1000, 0x1000, "Vs Matches/Credit" )
+	PORT_DIPSETTING(      0x1000, "1" )
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Test Mode" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Freeze" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -233,7 +334,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
-	{ 16000 },	/* 16 kHz ??? */
+	{ 14000000/8/132 },	/* 13.257 kHz ??? COMPLETE GUESS!! (not even sure about the xtal) */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }
 };
@@ -246,7 +347,7 @@ static const struct MachineDriver machine_driver_ohmygod =
 	{
 		{
 			CPU_M68000,
-			12000000,	/* ??? */
+			12000000,
 			readmem,writemem,0,0,
 			m68_level1_irq,1
 		}
@@ -278,7 +379,6 @@ static const struct MachineDriver machine_driver_ohmygod =
 };
 
 
-
 /***************************************************************************
 
   Game driver(s)
@@ -286,21 +386,49 @@ static const struct MachineDriver machine_driver_ohmygod =
 ***************************************************************************/
 
 ROM_START( ohmygod )
-	ROM_REGION( 0x80000, REGION_CPU1 )
-	ROM_LOAD_WIDE_SWAP( "omg-p.114", 0x00000, 0x80000, 0x48fa40ca )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "omg-p.114", 0x00000, 0x80000, 0x48fa40ca )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "omg-b.117",    0x00000, 0x80000, 0x73621fa6 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "omg-s.120",    0x00000, 0x80000, 0x6413bd36 )
 
-	ROM_REGION( 0x240000, REGION_SOUND1 )
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )
 	ROM_LOAD( "omg-g.107",    0x00000, 0x200000, 0x7405573c )
+	/* 00000-1ffff is fixed, 20000-3ffff is banked */
+	ROM_RELOAD(               0x40000, 0x200000 )
+ROM_END
+
+ROM_START( naname )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "036-prg.114", 0x00000, 0x80000, 0x3b7362f7 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "036-bg.117",    0x00000, 0x80000, 0xf53e8da5 )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "036-spr.120",   0x00000, 0x80000, 0xe36d8731 )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )
+	ROM_LOAD( "036-snd.107",  0x00000, 0x200000, 0xa3e0caf4 )
 	/* 00000-1ffff is fixed, 20000-3ffff is banked */
 	ROM_RELOAD(               0x40000, 0x200000 )
 ROM_END
 
 
 
-GAME( 1993, ohmygod, 0, ohmygod, ohmygod, 0, ROT0, "Atlus", "Oh My God! (Japan)" )
+static void init_ohmygod(void)
+{
+	adpcm_bank_shift = 4;
+}
+
+static void init_naname(void)
+{
+	adpcm_bank_shift = 0;
+}
+
+
+GAMEX( 1993, ohmygod, 0, ohmygod, ohmygod, ohmygod, ROT0, "Atlus", "Oh My God! (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1994, naname,  0, ohmygod, naname,  naname,  ROT0, "Atlus", "Naname de Magic! (Japan)", GAME_NO_COCKTAIL )

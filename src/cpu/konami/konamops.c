@@ -151,7 +151,7 @@ INLINE void jmp_di( void )
 {
     DIRECT;
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $0F CLR direct -0100 */
@@ -200,7 +200,7 @@ INLINE void lbra( void )
 {
 	IMMWORD(ea);
 	PC += EA;
-	change_pc(PCD);
+	change_pc16(PCD);
 
 	/* EHC 980508 speed up busy loop */
 	if( EA == 0xfffd && konami_ICount > 0 )
@@ -213,7 +213,7 @@ INLINE void lbsr( void )
 	IMMWORD(ea);
 	PUSHWORD(pPC);
 	PC += EA;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $18 ILLEGAL */
@@ -315,7 +315,7 @@ INLINE void bra( void )
 	UINT8 t;
 	IMMBYTE(t);
 	PC += SIGNED(t);
-	change_pc(PCD);
+	change_pc16(PCD);
 	/* JB 970823 - speed up busy loops */
 	if( t == 0xfe && konami_ICount > 0 )
 		konami_ICount = 0;
@@ -562,7 +562,7 @@ INLINE void puls( void )
 	if( t&0x10 ) { PULLWORD(XD); konami_ICount -= 2; }
 	if( t&0x20 ) { PULLWORD(YD); konami_ICount -= 2; }
 	if( t&0x40 ) { PULLWORD(UD); konami_ICount -= 2; }
-	if( t&0x80 ) { PULLWORD(PCD); change_pc(PCD); konami_ICount -= 2; }
+	if( t&0x80 ) { PULLWORD(PCD); change_pc16(PCD); konami_ICount -= 2; }
 
 	/* check after all PULLs */
 	if( t&0x01 ) { CHECK_IRQ_LINES; }
@@ -595,7 +595,7 @@ INLINE void pulu( void )
 	if( t&0x10 ) { PULUWORD(XD); konami_ICount -= 2; }
 	if( t&0x20 ) { PULUWORD(YD); konami_ICount -= 2; }
 	if( t&0x40 ) { PULUWORD(SD); konami_ICount -= 2; }
-	if( t&0x80 ) { PULUWORD(PCD); change_pc(PCD); konami_ICount -= 2; }
+	if( t&0x80 ) { PULUWORD(PCD); change_pc16(PCD); konami_ICount -= 2; }
 
 	/* check after all PULLs */
 	if( t&0x01 ) { CHECK_IRQ_LINES; }
@@ -607,7 +607,7 @@ INLINE void pulu( void )
 INLINE void rts( void )
 {
 	PULLWORD(PCD);
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $3A ABX inherent ----- */
@@ -631,7 +631,7 @@ INLINE void rti( void )
 		PULLWORD(UD);
 	}
 	PULLWORD(PCD);
-	change_pc(PCD);
+	change_pc16(PCD);
 	CHECK_IRQ_LINES;
 }
 
@@ -686,7 +686,7 @@ INLINE void swi( void )
 	PUSHBYTE(CC);
 	CC |= CC_IF | CC_II;	/* inhibit FIRQ and IRQ */
 	PCD=RM16(0xfffa);
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $103F SWI2 absolute indirect ----- */
@@ -702,7 +702,7 @@ INLINE void swi2( void )
 	PUSHBYTE(A);
     PUSHBYTE(CC);
 	PCD=RM16(0xfff4);
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $113F SWI3 absolute indirect ----- */
@@ -718,7 +718,7 @@ INLINE void swi3( void )
 	PUSHBYTE(A);
     PUSHBYTE(CC);
 	PCD=RM16(0xfff2);
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 #if macintosh
@@ -1072,7 +1072,7 @@ INLINE void tst_ix( void )
 INLINE void jmp_ix( void )
 {
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $6F CLR indexed -0100 */
@@ -1189,7 +1189,7 @@ INLINE void jmp_ex( void )
 {
 	EXTENDED;
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $7F CLR extended -0100 */
@@ -1399,7 +1399,7 @@ INLINE void bsr( void )
 	IMMBYTE(t);
 	PUSHWORD(pPC);
 	PC += SIGNED(t);
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $8E LDX (LDY) immediate -**0- */
@@ -1634,7 +1634,7 @@ INLINE void jsr_di( void )
 	DIRECT;
 	PUSHWORD(pPC);
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $9E LDX (LDY) direct -**0- */
@@ -1858,7 +1858,7 @@ INLINE void jsr_ix( void )
 {
 	PUSHWORD(pPC);
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $aE LDX (LDY) indexed -**0- */
@@ -2088,7 +2088,7 @@ INLINE void jsr_ex( void )
 	EXTENDED;
 	PUSHWORD(pPC);
 	PCD=EAD;
-	change_pc(PCD);
+	change_pc16(PCD);
 }
 
 /* $bE LDX (LDY) extended -**0- */

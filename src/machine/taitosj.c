@@ -215,9 +215,9 @@ logerror("%04x: 68705 -> Z80 %02x\n",cpu_get_pc(),portA_out);
 #if DEBUG_MCU
 logerror("%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
 #endif
-        memorycontextswap(0);
+        memory_set_context(0);
 		cpu_writemem16(address, portA_out);
-        memorycontextswap(2);
+        memory_set_context(2);
 
 		/* increase low 8 bits of latched address for burst writes */
 		address = (address & 0xff00) | ((address + 1) & 0xff);
@@ -227,9 +227,9 @@ logerror("%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,addre
 #if DEBUG_MCU
 logerror("%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),portA_in,address);
 #endif
-        memorycontextswap(0);
+        memory_set_context(0);
 		portA_in = cpu_readmem16(address);
-        memorycontextswap(2);
+        memory_set_context(2);
 	}
 	if (~data & 0x40)
 	{

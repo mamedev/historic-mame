@@ -27,7 +27,6 @@ int ADPCM_playing(int num);
 /* an interface for the OKIM6295 and similar chips */
 
 #define MAX_OKIM6295 			2
-#define MAX_OKIM6295_VOICES		4
 
 /*
   Note about the playback frequency: the external clock is internally divided,

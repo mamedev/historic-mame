@@ -173,7 +173,7 @@ static const struct MachineDriver machine_driver_m79amb =
 
 
 ROM_START( m79amb )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "m79.10t",      0x0000, 0x0200, 0xccf30b1e )
 	ROM_LOAD( "m79.9t",       0x0200, 0x0200, 0xdaf807dd )
 	ROM_LOAD( "m79.8t",       0x0400, 0x0200, 0x79fafa02 )

@@ -450,84 +450,84 @@ static const struct MachineDriver machine_driver_gradius3 =
 ***************************************************************************/
 
 ROM_START( gradius3 )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "945s13.f15",   0x00000, 0x20000, 0x70c240a2 )
-	ROM_LOAD_ODD ( "945s12.e15",   0x00000, 0x20000, 0xbbc300d4 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "945s13.f15",   0x00000, 0x20000, 0x70c240a2 )
+	ROM_LOAD16_BYTE( "945s12.e15",   0x00001, 0x20000, 0xbbc300d4 )
 
-	ROM_REGION( 0x100000, REGION_CPU2 )
-	ROM_LOAD_EVEN( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
-	ROM_LOAD_ODD ( "g3_n17.rom",   0x000000, 0x20000, 0x74e981d2 )
-	ROM_LOAD_EVEN( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
-	ROM_LOAD_ODD ( "g3_n11.rom",   0x040000, 0x20000, 0xe1fd75b6 )
-	ROM_LOAD_EVEN( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
-	ROM_LOAD_ODD ( "g3_n15.rom",   0x080000, 0x20000, 0x96222d04 )
-	ROM_LOAD_EVEN( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
-	ROM_LOAD_ODD ( "g3_n13.rom",   0x0c0000, 0x20000, 0x5e209d01 )
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
+	ROM_LOAD16_BYTE( "g3_n17.rom",   0x000001, 0x20000, 0x74e981d2 )
+	ROM_LOAD16_BYTE( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
+	ROM_LOAD16_BYTE( "g3_n11.rom",   0x040001, 0x20000, 0xe1fd75b6 )
+	ROM_LOAD16_BYTE( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
+	ROM_LOAD16_BYTE( "g3_n15.rom",   0x080001, 0x20000, 0x96222d04 )
+	ROM_LOAD16_BYTE( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
+	ROM_LOAD16_BYTE( "g3_n13.rom",   0x0c0001, 0x20000, 0x5e209d01 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 )	/* fake */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
-	ROM_REGION( 0x200000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "945a02.l3",             0x000000, 0x80000, 0x4dfffd74 )
-	ROM_LOAD_GFX_EVEN( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
-	ROM_LOAD_GFX_ODD ( "g3_m6.rom",    0x080000, 0x20000, 0x45bcd921 )
-	ROM_LOAD_GFX_EVEN( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
-	ROM_LOAD_GFX_ODD ( "g3_m8.rom",    0x0c0000, 0x20000, 0x0a98d08e )
+	ROM_LOAD16_BYTE( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
+	ROM_LOAD16_BYTE( "g3_m6.rom",    0x080001, 0x20000, 0x45bcd921 )
+	ROM_LOAD16_BYTE( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
+	ROM_LOAD16_BYTE( "g3_m8.rom",    0x0c0001, 0x20000, 0x0a98d08e )
 	ROM_LOAD( "945a01.h3",             0x100000, 0x80000, 0x339d6dd2 )
-	ROM_LOAD_GFX_EVEN( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
-	ROM_LOAD_GFX_ODD ( "g3_h6.rom",    0x180000, 0x20000, 0xa56be17a )
-	ROM_LOAD_GFX_EVEN( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
-	ROM_LOAD_GFX_ODD ( "g3_h8.rom",    0x1c0000, 0x20000, 0xf375e87b )
+	ROM_LOAD16_BYTE( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
+	ROM_LOAD16_BYTE( "g3_h6.rom",    0x180001, 0x20000, 0xa56be17a )
+	ROM_LOAD16_BYTE( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
+	ROM_LOAD16_BYTE( "g3_h8.rom",    0x1c0001, 0x20000, 0xf375e87b )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 007232 samples */
 	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
 	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
 	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
 ROM_END
 
 ROM_START( grdius3a )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "g3_f15.rom",   0x00000, 0x20000, 0x9974fe6b )
-	ROM_LOAD_ODD ( "g3_e15.rom",   0x00000, 0x20000, 0xe9771b91 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "g3_f15.rom",   0x00000, 0x20000, 0x9974fe6b )
+	ROM_LOAD16_BYTE( "g3_e15.rom",   0x00001, 0x20000, 0xe9771b91 )
 
-	ROM_REGION( 0x100000, REGION_CPU2 )
-	ROM_LOAD_EVEN( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
-	ROM_LOAD_ODD ( "g3_n17.rom",   0x000000, 0x20000, 0x74e981d2 )
-	ROM_LOAD_EVEN( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
-	ROM_LOAD_ODD ( "g3_n11.rom",   0x040000, 0x20000, 0xe1fd75b6 )
-	ROM_LOAD_EVEN( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
-	ROM_LOAD_ODD ( "g3_n15.rom",   0x080000, 0x20000, 0x96222d04 )
-	ROM_LOAD_EVEN( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
-	ROM_LOAD_ODD ( "g3_n13.rom",   0x0c0000, 0x20000, 0x5e209d01 )
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
+	ROM_LOAD16_BYTE( "g3_n17.rom",   0x000001, 0x20000, 0x74e981d2 )
+	ROM_LOAD16_BYTE( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
+	ROM_LOAD16_BYTE( "g3_n11.rom",   0x040001, 0x20000, 0xe1fd75b6 )
+	ROM_LOAD16_BYTE( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
+	ROM_LOAD16_BYTE( "g3_n15.rom",   0x080001, 0x20000, 0x96222d04 )
+	ROM_LOAD16_BYTE( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
+	ROM_LOAD16_BYTE( "g3_n13.rom",   0x0c0001, 0x20000, 0x5e209d01 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 )	/* fake */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
-	ROM_REGION( 0x200000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "945a02.l3",             0x000000, 0x80000, 0x4dfffd74 )
-	ROM_LOAD_GFX_EVEN( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
-	ROM_LOAD_GFX_ODD ( "g3_m6.rom",    0x080000, 0x20000, 0x45bcd921 )
-	ROM_LOAD_GFX_EVEN( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
-	ROM_LOAD_GFX_ODD ( "g3_m8.rom",    0x0c0000, 0x20000, 0x0a98d08e )
+	ROM_LOAD16_BYTE( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
+	ROM_LOAD16_BYTE( "g3_m6.rom",    0x080001, 0x20000, 0x45bcd921 )
+	ROM_LOAD16_BYTE( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
+	ROM_LOAD16_BYTE( "g3_m8.rom",    0x0c0001, 0x20000, 0x0a98d08e )
 	ROM_LOAD( "945a01.h3",             0x100000, 0x80000, 0x339d6dd2 )
-	ROM_LOAD_GFX_EVEN( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
-	ROM_LOAD_GFX_ODD ( "g3_h6.rom",    0x180000, 0x20000, 0xa56be17a )
-	ROM_LOAD_GFX_EVEN( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
-	ROM_LOAD_GFX_ODD ( "g3_h8.rom",    0x1c0000, 0x20000, 0xf375e87b )
+	ROM_LOAD16_BYTE( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
+	ROM_LOAD16_BYTE( "g3_h6.rom",    0x180001, 0x20000, 0xa56be17a )
+	ROM_LOAD16_BYTE( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
+	ROM_LOAD16_BYTE( "g3_h8.rom",    0x1c0001, 0x20000, 0xf375e87b )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 007232 samples */
 	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
 	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
 	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )

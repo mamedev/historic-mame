@@ -362,70 +362,70 @@ static const struct MachineDriver machine_driver_battlane =
 ***************************************************************************/
 
 ROM_START( battlane )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-5",    0x8000, 0x8000, 0x7a6c3f02 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
 	ROM_LOAD( "da00-5",    0x00000, 0x8000, 0x85b4ed73 )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
 	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
 	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
 	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END
 
 ROM_START( battlan2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "da01-3",    0x8000, 0x8000, 0xd9e40800 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
 	ROM_LOAD( "da00-3",    0x00000, 0x8000, 0x7a0a5d58 )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
 	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
 	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
 	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END
 
 ROM_START( battlan3 )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
 	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, 0x001c4bbe )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64K for slave CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
 	ROM_LOAD( "bl_04.rom", 0x00000, 0x8000, 0x5681564c )	/* ...second half goes here */
 	ROM_LOAD( "da02-2",    0x08000, 0x8000, 0x69d8dafe )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, 0x834829d4 ) /* Sprites Plane 1+2 */
 	ROM_LOAD( "da04",      0x08000, 0x8000, 0xf083fd4c ) /* Sprites Plane 3+4 */
 	ROM_LOAD( "da03",      0x10000, 0x8000, 0xcf187f25 ) /* Sprites Plane 5+6 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "da06",      0x00000, 0x8000, 0x9c6a51b3 ) /* Tiles*/
 	ROM_LOAD( "da07",      0x08000, 0x4000, 0x56df4077 ) /* Tiles*/
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7h", 0x00000, 0x0020, 0xb9933663 )	/* palette? */
 	ROM_LOAD( "82s123.9n", 0x00020, 0x0020, 0x06491e53 )	/* palette? */
 ROM_END

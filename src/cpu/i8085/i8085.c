@@ -1217,7 +1217,7 @@ void i8085_set_context(void *src)
 	if( src )
 	{
 		I = *(i8085_Regs*)src;
-		change_pc(I.PC.d);
+		change_pc16(I.PC.d);
 	}
 }
 
@@ -1235,7 +1235,7 @@ unsigned i8085_get_pc(void)
 void i8085_set_pc(unsigned val)
 {
 	I.PC.w.l = val;
-	change_pc(I.PC.d);
+	change_pc16(I.PC.d);
 }
 
 /****************************************************************************

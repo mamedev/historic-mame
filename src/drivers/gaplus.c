@@ -616,30 +616,30 @@ static const struct MachineDriver machine_driver_galaga3 =
 
 
 ROM_START( gaplus )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.64",   0xa000, 0x2000, 0x484f11e0 )
 	ROM_LOAD( "gp2-3.64",   0xc000, 0x2000, 0xa74b0266 )
 	ROM_LOAD( "gp2-2.64",   0xe000, 0x2000, 0x69fdfdb7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.64",   0xa000, 0x2000, 0xbff601a6 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.64",   0xe000, 0x2000, 0x14cd61ea )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
 
-	ROM_REGION( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xa000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
 	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
 	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
 	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -647,35 +647,35 @@ ROM_START( gaplus )
 	ROM_LOAD( "gp2-6p.bin",   0x0400, 0x0200, 0x6f99c2da )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "gp2-6n.bin",   0x0600, 0x0200, 0xc7d31657 )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 ) /* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
 ROM_START( gaplusa )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.8d",   0xa000, 0x2000, 0xe525d75d )
 	ROM_LOAD( "gp2-3b.8c",  0xc000, 0x2000, 0xd77840a4 )
 	ROM_LOAD( "gp2-2b.8b",  0xe000, 0x2000, 0xb3cb90db )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gp2-8.11d",  0xa000, 0x2000, 0x42b9fd7c )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gp2-6.11b",  0xe000, 0x2000, 0x75b18652 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-5.64",   0x0000, 0x2000, 0xf3d19987 )	/* characters */
 
-	ROM_REGION( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xa000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
 	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
 	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
 	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -683,35 +683,35 @@ ROM_START( gaplusa )
 	ROM_LOAD( "gp2-6p.bin",   0x0400, 0x0200, 0x6f99c2da )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "gp2-6n.bin",   0x0600, 0x0200, 0xc7d31657 )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 ) /* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
 ROM_START( galaga3 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
 
-	ROM_REGION( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xa000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
 	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
 	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
 	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -719,35 +719,35 @@ ROM_START( galaga3 )
 	ROM_LOAD( "g3_3f.bin",    0x0400, 0x0200, 0xd48c0eef )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "g3_3e.bin",    0x0600, 0x0200, 0x417ba0dc )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 ) /* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
 ROM_START( galaga3a )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for the MAIN CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for the MAIN CPU */
 	ROM_LOAD( "mi.9e",         0xa000, 0x2000, 0xe392704e )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
 	ROM_LOAD( "gal3_9c.bin",   0xe000, 0x2000, 0xf1b00073 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the SUB CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the SUB CPU */
 	ROM_LOAD( "gal3_6l.bin",0xa000, 0x2000, 0x9ec3dce5 )
 	ROM_LOAD( "gp2-7.64",   0xc000, 0x2000, 0x0621f7df )
 	ROM_LOAD( "gal3_6n.bin",0xe000, 0x2000, 0x6a2942c5 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for the SOUND CPU */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for the SOUND CPU */
 	ROM_LOAD( "gp2-1.64",   0xe000, 0x2000, 0xed8aa206 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gal3_9l.bin",0x0000, 0x2000, 0x8d4dcebf )	/* characters */
 
-	ROM_REGION( 0xa000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0xa000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gp2-9.64",   0x0000, 0x2000, 0xe6a9ae67 )	/* objects */
 	ROM_LOAD( "gp2-11.64",  0x2000, 0x2000, 0x57740ff9 )	/* objects */
 	ROM_LOAD( "gp2-10.64",  0x4000, 0x2000, 0x6cd8ce11 )	/* objects */
 	ROM_LOAD( "gp2-12.64",  0x6000, 0x2000, 0x7316a1f1 )	/* objects */
 	/* 0xa000-0xbfff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	ROM_LOAD( "gp2-1p.bin",   0x0000, 0x0100, 0xa5091352 )  /* red palette ROM (4 bits) */
 	ROM_LOAD( "gp2-1n.bin",   0x0100, 0x0100, 0x8bc8022a )  /* green palette ROM (4 bits) */
 	ROM_LOAD( "gp2-2n.bin",   0x0200, 0x0100, 0x8dabc20b )  /* blue palette ROM (4 bits) */
@@ -755,7 +755,7 @@ ROM_START( galaga3a )
 	ROM_LOAD( "g3_3f.bin",    0x0400, 0x0200, 0xd48c0eef )  /* sprite color ROM (lower 4 bits) */
 	ROM_LOAD( "g3_3e.bin",    0x0600, 0x0200, 0x417ba0dc )  /* sprite color ROM (upper 4 bits) */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 ) /* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 ) /* sound prom */
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 

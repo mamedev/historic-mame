@@ -446,22 +446,22 @@ static const struct MachineDriver machine_driver_magix =
 
 ROM_START( magix )
 
-	ROM_REGION( 0x24000+0x4000, REGION_CPU1 )		/* Main Z80 Code */
+	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "magix.07", 0x00000, 0x0c000, 0xd4d0b68b )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 	/* $2000 bytes for bank 0 of video ram (text) */
 	/* $2000 bytes for bank 1 of video ram (background) */
 
-	ROM_REGION( 0x24000, REGION_CPU2 )		/* Sound Z80 Code */
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "magix.08", 0x00000, 0x0c000, 0x6fd60be9 )
 	ROM_CONTINUE(         0x10000, 0x14000             )
 
-	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Background */
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
 	ROM_LOAD( "magix.01",  0x000000, 0x80000, 0x4590d782 )
 	ROM_LOAD( "magix.02",  0x080000, 0x80000, 0x09efb8e5 )
 	ROM_LOAD( "magix.03",  0x100000, 0x80000, 0xc8cb0373 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* Text */
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
 	ROM_LOAD( "magix.05", 0x00000, 0x20000, 0x862d378c )	// only first $8000 bytes != 0
 	ROM_LOAD( "magix.06", 0x20000, 0x20000, 0x8b2ab901 )	// only first $8000 bytes != 0
 

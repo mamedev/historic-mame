@@ -49,12 +49,15 @@ read-only:
 #include "driver.h"
 
 
-READ_HANDLER( phoenix_paged_ram_r );
-WRITE_HANDLER( phoenix_paged_ram_w );
+
+READ_HANDLER( phoenix_videoram_r );
+WRITE_HANDLER( phoenix_videoram_w );
 WRITE_HANDLER( phoenix_videoreg_w );
+WRITE_HANDLER( pleiads_videoreg_w );
 WRITE_HANDLER( phoenix_scroll_w );
-READ_HANDLER( phoenix_input_port_0_r );
+READ_HANDLER( pleiads_input_port_0_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -72,27 +75,37 @@ void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
 
 
-static MEMORY_READ_START( readmem )
+static MEMORY_READ_START( phoenix_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4fff, phoenix_paged_ram_r },	/* 2 pages selected by Bit 0 of videoregister */
-	{ 0x7000, 0x73ff, phoenix_input_port_0_r }, /* IN0 */
+	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x7000, 0x73ff, input_port_0_r }, 		/* IN0 */
 	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
 MEMORY_END
 
-
-#define WRITEMEM(GAMENAME)										\
-																\
-static MEMORY_WRITE_START( GAMENAME##_writemem )				\
-	{ 0x0000, 0x3fff, MWA_ROM },								\
-	{ 0x4000, 0x4fff, phoenix_paged_ram_w },  /* 2 pages selected by Bit 0 of the video register */ \
-	{ 0x5000, 0x53ff, phoenix_videoreg_w }, 					\
-	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */ 	\
-	{ 0x6000, 0x63ff, GAMENAME##_sound_control_a_w },			\
-	{ 0x6800, 0x6bff, GAMENAME##_sound_control_b_w },			\
+static MEMORY_READ_START( pleiads_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4fff, phoenix_videoram_r },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x7000, 0x73ff, pleiads_input_port_0_r }, /* IN0 + protection */
+	{ 0x7800, 0x7bff, input_port_1_r }, 		/* DSW */
 MEMORY_END
 
-WRITEMEM(phoenix)
-WRITEMEM(pleiads)
+static MEMORY_WRITE_START( phoenix_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x4fff, phoenix_videoram_w },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x5000, 0x53ff, phoenix_videoreg_w },
+	{ 0x5800, 0x5bff, phoenix_scroll_w },
+	{ 0x6000, 0x63ff, phoenix_sound_control_a_w },
+	{ 0x6800, 0x6bff, phoenix_sound_control_b_w },
+MEMORY_END
+
+static MEMORY_WRITE_START( pleiads_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x4fff, phoenix_videoram_w },		/* 2 pages selected by bit 0 of the video register */
+	{ 0x5000, 0x53ff, pleiads_videoreg_w },
+	{ 0x5800, 0x5bff, phoenix_scroll_w },
+	{ 0x6000, 0x63ff, pleiads_sound_control_a_w },
+	{ 0x6800, 0x6bff, pleiads_sound_control_b_w },
+MEMORY_END
 
 
 
@@ -165,7 +178,6 @@ INPUT_PORTS_START( phoenixa )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( phoenixt )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -210,6 +222,7 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
@@ -233,17 +246,17 @@ INPUT_PORTS_START( phoenix3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( pleiads )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	   /* Protection. See 0x0552 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL )	   /* Protection. See 0x0552 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
 	PORT_START		/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x00, "3" )
@@ -279,13 +292,19 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static struct GfxDecodeInfo phoenix_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 16 },
 	{ REGION_GFX2, 0, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo pleiads_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
+	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },
+	{ -1 } /* end of array */
+};
 
 
 static struct TMS36XXinterface phoenix_tms36xx_interface =
@@ -327,16 +346,19 @@ static struct CustomSound_interface pleiads_custom_interface =
 	pleiads_sh_update
 };
 
-#define MACHINE_DRIVER(GAMENAME)									\
+
+
+
+#define MACHINE_DRIVER(NAME, PENS)									\
 																	\
-static const struct MachineDriver machine_driver_##GAMENAME = 			\
+static struct MachineDriver machine_driver_##NAME = 				\
 {																	\
 	/* basic machine hardware */									\
 	{																\
 		{															\
 			CPU_8080,												\
 			3072000,	/* 3 MHz ? */								\
-			readmem,GAMENAME##_writemem,0,0,						\
+			NAME##_readmem,NAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
 	},																\
@@ -346,9 +368,9 @@ static const struct MachineDriver machine_driver_##GAMENAME = 			\
 																	\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },						\
-	gfxdecodeinfo,													\
-	256,16*4+16*4,													\
-	phoenix_vh_convert_color_prom,									\
+	NAME##_gfxdecodeinfo,											\
+	256,PENS*4+PENS*4,												\
+	NAME##_vh_convert_color_prom,									\
 																	\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
@@ -361,19 +383,18 @@ static const struct MachineDriver machine_driver_##GAMENAME = 			\
 	{																\
 		{															\
 			SOUND_TMS36XX,											\
-			&GAMENAME##_tms36xx_interface							\
+			&NAME##_tms36xx_interface								\
 		},															\
 		{															\
 			SOUND_CUSTOM,											\
-			&GAMENAME##_custom_interface							\
+			&NAME##_custom_interface								\
 		}															\
 	}																\
 };
 
 
-MACHINE_DRIVER(phoenix)
-MACHINE_DRIVER(pleiads)
-
+MACHINE_DRIVER(phoenix,16)
+MACHINE_DRIVER(pleiads,32)
 
 
 /***************************************************************************
@@ -383,7 +404,7 @@ MACHINE_DRIVER(pleiads)
 ***************************************************************************/
 
 ROM_START( phoenix )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic45",         0x0000, 0x0800, 0x9f68086b )
 	ROM_LOAD( "ic46",         0x0800, 0x0800, 0x273a4a82 )
 	ROM_LOAD( "ic47",         0x1000, 0x0800, 0x3d4284b9 )
@@ -393,21 +414,21 @@ ROM_START( phoenix )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixa )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic45.k1",      0x0000, 0x0800, 0xc7a9b499 )
 	ROM_LOAD( "ic46.k2",      0x0800, 0x0800, 0xd0e6ae1b )
 	ROM_LOAD( "ic47.k3",      0x1000, 0x0800, 0x64bf463a )
@@ -417,21 +438,21 @@ ROM_START( phoenixa )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "ic52",         0x3800, 0x0800, 0xaff8e9c5 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
 	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -441,21 +462,21 @@ ROM_START( phoenixt )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenix.52",   0x3800, 0x0800, 0xb9915263 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenix3 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
 	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -465,21 +486,21 @@ ROM_START( phoenix3 )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenix3.52",  0x3800, 0x0800, 0xd2c5c984 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39",         0x0000, 0x0800, 0x53413e8f )
 	ROM_LOAD( "ic40",         0x0800, 0x0800, 0x0be2ba91 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
 ROM_END
 
 ROM_START( phoenixc )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
 	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
@@ -489,21 +510,21 @@ ROM_START( phoenixc )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenixc.52",  0x3800, 0x0800, 0x8424d7c4 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
 	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "phoenixc.39",  0x0000, 0x0800, 0xbb0525ed )
 	ROM_LOAD( "phoenixc.40",  0x0800, 0x0800, 0x4178aa4f )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )  /* palette low bits */
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )  /* palette high bits */
 ROM_END
 
 ROM_START( pleiads )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
 	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb ) /* IC 49 on real board */
@@ -513,21 +534,21 @@ ROM_START( pleiads )
 	ROM_LOAD( "ic53.r7",      0x3000, 0x0800, 0xb5f07fbc )
 	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 ) /* IC 54 on real board */
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 ) /* IC 45 on real board */
 	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 ) /* IC 44 on real board */
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 ) /* IC 27 on real board */
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadbl )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
 	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -537,21 +558,21 @@ ROM_START( pleiadbl )
 	ROM_LOAD( "ic51.bin",     0x3000, 0x0800, 0x6f56f317 )
 	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 )
 	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
 ROM_END
 
 ROM_START( pleiadce )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, 0x711e2ba0 )
 	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, 0x93a36943 )
 	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb )
@@ -561,15 +582,15 @@ ROM_START( pleiadce )
 	ROM_LOAD( "pleiades.53",  0x3000, 0x0800, 0x037b319c )
 	ROM_LOAD( "pleiades.54",  0x3800, 0x0800, 0xca264c7c )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pleiades.45",  0x0000, 0x0800, 0x8dbd3785 )
 	ROM_LOAD( "pleiades.44",  0x0800, 0x0800, 0x0db3e436 )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic39.bin",     0x0000, 0x0800, 0x85866607 )
 	ROM_LOAD( "ic40.bin",     0x0800, 0x0800, 0xa841d511 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )   /* palette low bits */
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )   /* palette high bits */
 ROM_END

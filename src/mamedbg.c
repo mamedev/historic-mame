@@ -1781,7 +1781,7 @@ static unsigned get_register_id( char **parg, int *size )
 	for( i = 0; i < DBGREGS.count; i++ )
 	{
 		l = strlen( DBGREGS.name[i] );
-		if( l > 0 && !strncmp( *parg, DBGREGS.name[i], l ) )
+		if( l > 0 && !strnicmp( *parg, DBGREGS.name[i], l ) )
 		{
 			if( !isalnum( (*parg)[l] ) )
 			{
@@ -2068,38 +2068,22 @@ static int hit_brk_regs(void)
  * name_rom
  * Find the name for a rom from the drivers list
  **************************************************************************/
-static const char *name_rom( const char *type, int region, unsigned *base, unsigned start )
+static const char *name_rom( const char *type, int regnum, unsigned *base, unsigned start )
 {
-	const struct RomModule *romp = Machine->gamedrv->rom;
+	const struct RomModule *region, *rom, *chunk;
 	unsigned offset = *base;
 
-	while( romp && (romp->name || romp->offset || romp->length ) )
-	{
-		romp++; /* skip memory region definition */
-
-		while( romp->length )
+	for (region = rom_first_region(Machine->gamedrv); region; region = rom_next_region(region))
+		if (ROMREGION_GETTYPE(region) == regnum)
 		{
-			const char *name;
-			int length;
-
-			name = romp->name;
-			length = 0;
-
-			do
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
-				/* ROM_RELOAD */
-				if (romp->name == (char *)-1)
-					length = 0; /* restart */
+				const char *name = ROM_GETNAME(rom);
+				int length = 0;
 
-				length += romp->length & ~ROMFLAG_MASK;
+				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+					length += ROM_GETLENGTH(chunk);
 
-				romp++;
-
-			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-			/* region found already ? */
-			if( region == 0 )
-			{
 				/* address inside that range ? */
 				if( offset < length )
 				{
@@ -2110,10 +2094,8 @@ static const char *name_rom( const char *type, int region, unsigned *base, unsig
 				/* subtract length of that ROM */
 				offset -= length;
 			}
-
+			break;
 		}
-		--region;
-	}
 
 	/* default to ROM + xxxx (base - start) */
 	*base -= start;
@@ -2138,9 +2120,9 @@ static const char *name_rdmem( unsigned base )
 	dst = buffer[which];
 	*dst = '\0';
 
-	while( *dst == '\0' && !IS_MEMORY_END(mr))
+	while( *dst == '\0' && !IS_MEMPORT_END(mr))
 	{
-		if (!IS_MEMORY_MARKER(mr))
+		if (!IS_MEMPORT_MARKER(mr))
 		{
 			if( base >= mr->start && base <= mr->end )
 			{
@@ -2264,9 +2246,9 @@ static const char *name_wrmem( unsigned base )
 	*dst = '\0';
 
 	ram_cnt = nop_cnt = 1;
-	while( *dst == '\0' && !IS_MEMORY_END(mw))
+	while( *dst == '\0' && !IS_MEMPORT_END(mw))
 	{
-		if (!IS_MEMORY_MARKER(mw))
+		if (!IS_MEMPORT_MARKER(mw))
 		{
 			if( base >= mw->start && base <= mw->end )
 			{
@@ -2688,6 +2670,7 @@ static void dump_regs( void )
 			{
 				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
 			}
+			y++;
 		}
 		else
 		{
@@ -2708,6 +2691,7 @@ static void dump_regs( void )
 					else
 						win_printf( win, "%s\n", flags );
 				}
+				y++;
 			}
 			else
 			{
@@ -2726,9 +2710,12 @@ static void dump_regs( void )
 					win_printf( win, "%s\n", flags );
 				}
 				y++;
-				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				if( y < h )
+				{
+					win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				}
+				y++;
 			}
-			y++;
 		}
 	}
 	regs->top = y;
@@ -2767,15 +2754,14 @@ static void dump_regs( void )
 			/* edit structure not yet initialized? */
 			if( regs->count == 0 )
 			{
-				char *p;
+				const char *p;
 				/* Get the cursor position */
 				pedit->x = x;
 				pedit->y = y + regs->base;
-				strncpy( regs->name[j], name, sizeof(regs->name[j]) - 1 );
 				if( strlen(name) >= regs->max_width )
 					regs->max_width = strlen(name) + 1;
 				/* Find a colon */
-				p = strchr( regs->name[j], ':');
+				p = strchr( name, ':' );
 				if( p )
 				{
 					pedit->w = strlen( p + 1 );
@@ -2783,30 +2769,36 @@ static void dump_regs( void )
 				else
 				{
 					/* Or else find an apostrophe */
-					p = strchr( regs->name[j], '\'' );
+					p = strchr( name, '\'' );
 					if( p )
 					{
 						/* Include the apostrophe in the name! */
 						++p;
 						pedit->w = strlen( p );
 					}
+					else
+					{
+						/* TODO: other characters to delimit a register name from it's value? */
+						/* this is certainly wrong :( */
+						p = name;
+						pedit->w = strlen( p );
+					}
 				}
-				/* TODO: other characters to delimit a register name from it's value? */
-				if( p )
+				/* length of the name (total length - length of nibbles) */
+				pedit->n = strlen( name ) - pedit->w;
+
+				/* strip trailing spaces */
+				l = p - name;
+				while( l != 0 && name[ l - 1 ] == ' ' )
 				{
-					/* length of the name (total length - length of nibbles) */
-					pedit->n = strlen( name ) - pedit->w;
-					/* terminate name at (or after) the delimiting character */
-					*p = '\0';
-					/* eventually strip trailing spaces */
-					while( *--p == ' ' ) *p = '\0';
+					l--;
 				}
-				else
+				if( l > sizeof( regs->name[ j ] ) - 1 )
 				{
-					/* this is certainly wrong :( */
-					pedit->w = strlen(regs->name[j]);
-					pedit->n = 0;
+					l = sizeof( regs->name[ j ] ) - 1;
 				}
+				memcpy( regs->name[ j ], name, l );
+				regs->name[ j ][ l ] = 0;
 			}
 			if( y >= regs->base && y < regs->base + h - regs->top )
 			{
@@ -3057,15 +3049,11 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		if( (column * 2 / len_data) & 1 )
 			color ^= dim_bright;
 
-		/* edit structure not yet initialized? */
-		if( pedit->w == 0 )
-		{
-			/* store memory edit x,y */
-			pedit->x = win_get_cx( win );
-			pedit->y = win_get_cy( win );
-			pedit->w = 2;
-			pedit->n = order(column % (len_data / 2), len_data / 2);
-		}
+		/* store memory edit x,y */
+		pedit->x = win_get_cx( win );
+		pedit->y = win_get_cy( win );
+		pedit->w = 2;
+		pedit->n = order(column % (len_data / 2), len_data / 2);
 		pedit++;
 
 		win_set_color( win, color );
@@ -3161,7 +3149,7 @@ static void edit_regs( void )
 	i = readkey();
 	k = keyboard_name(i);
 
-	shift = (pedit->w - 1 - regs->nibble) * 4;
+	shift = ( pedit[ regs->idx ].w - 1 - regs->nibble ) * 4;
 	mask = ~(0x0000000f << shift);
 
 	if( strlen(k) == 1 )
@@ -3960,7 +3948,7 @@ static void cmd_brk_regs_set( void )
 	int length;
 
 	DBG.brk_regs = get_register_id( &cmd, &length );
-	if( DBG.brk_regs != INVALID )
+	if( DBG.brk_regs > 0 )
 	{
 		DBG.brk_regs_oldval = cpu_get_reg(DBG.brk_regs);
 		data = get_register_or_value( &cmd, &length );
@@ -4895,7 +4883,14 @@ static void cmd_trace_to_file( void )
 		while( *cmd )
 		{
 			regs[regcnt] = get_register_id( &cmd, &length );
-			if( length ) regcnt++;
+			if( regs[ regcnt ] > 0 )
+			{
+				regcnt++;
+			}
+			else
+			{
+				break;
+			}
 		}
 		regs[regcnt] = 0;
 

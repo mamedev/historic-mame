@@ -4,26 +4,26 @@ Thse are some of the CPS-B chip numbers:
 
 NAME                                        CPS-B #                     C-board PAL's  B-board PAL's
 Forgotten Worlds / Lost Worlds              CPS-B-01  ?                 None           ? & LW10
-Ghouls 'n Ghosts                            CPS-B-01                    None           DM620, LW10
+Ghouls 'n Ghosts                            CPS-B-01  DL-0411-10001     None           DM620, LW10
 Strider                                     CPS-B-01  DL-0411-10001     None           ST24N1 & LW10
-Final Fight                                 CPS-B-04  ?                 None           ?
+Final Fight (World / Japan)                 CPS-B-04  DL-0411-10005     None           ?
+Final Fight (US)                            CPS-B-04* DL-0411-10001     None           S224B & LW10
+                                            *the original number was scratched out and "04" stamped over it
 UN Squadron / Area 88                       CPS-B-11  DL-0411-10004     None           AR24B & LW10
-Mercs (US)                                  CPS-B-12  DL-0411-10007     C626orC628?    ?
+Mercs (US)                                  CPS-B-12  DL-0411-10007     C628           0224B & 10B1
 Magic Sword (US)                            CPS-B-13  ?                 None           ?
 Carrier Air Wing                            CPS-B-16  DL-0411-10011     ?              ?
 Street Fighter II                           CPS-B-17  DL-0411-10012     C632           STF29 & 10B1
 Street Fighter II (US Revision I)           CPS-B-14  DL-0411-10029     C632           ?
 Captain Commando*(US)                       CPS-B-21  DL-0921-10014     10C1 & C632    CC63B, CCPRG & 10B1
-King of Dragons*                            CPS-B-21  DL-0921-10014     10C1 & C632    KR63B, BPRG1 & 10B1
-Knights of the Round*                       CPS-B-21  DL-0921-10014     10C1 & C632    ?
+King of Dragons*                            CPS-B-21  DL-0921-10014     10C1 & C632    KD29B & 10B1
+Knights of the Round*                       CPS-B-21  DL-0921-10014     10C1 & C632    KR63B, BPRG1 & 10B1
 Street Fighter II' Champion Edition         CPS-B-21  DL-0921-10014     10C1 & C632    ?
 Street Fighter II Turbo Hyper Fighting      CPS-B-21  DL-0921-10014     10C1 & C632    S9263B, BPRG1 & 10B1
 Warriors of Fate*                           CPS-B-21  DL-0921-10014     10C1           TK263B, BPRG1 & 10B1
 Saturday Night Slam Masters*                CPS-B-21  DL-0921-10014     10C1           MB63B, BPRG1 & 10B1
 
 *denotes Suicide Battery
-
-
 
 
 
@@ -250,15 +250,15 @@ static struct CPS1config cps1_config_table[]=
 	{"mercs",   CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsu",  CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsj",  CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
-	{"mtwins",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
-	{"chikij",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
 	{"msword",  CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mswordu", CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
 	{"mswordj", CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"cawing",  CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
-	{"cawingj", CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
+	{"mtwins",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
+	{"chikij",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
 	{"nemo",    CPS_B_15, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"nemoj",   CPS_B_15, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"cawing",  CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
+	{"cawingj", CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
 	{"sf2",     CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"sf2a",    CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"sf2b",    CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
@@ -270,6 +270,7 @@ static struct CPS1config cps1_config_table[]=
 	{"3wonders",BATTRY_1, 0,1,1,     -1,0x0000,0xffff,0x0000,0xffff, 2},
 	{"wonder3", BATTRY_1, 0,1,1,     -1,0x0000,0xffff,0x0000,0xffff, 2},
 	{"kod",     BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
+	{"kodu",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"kodj",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
 	{"kodb",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* bootleg, doesn't use multiply protection */
 	{"captcomm",BATTRY_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
@@ -346,8 +347,8 @@ static void cps1_init_machine(void)
 		   by the cpu core as a 32-bit branch. This branch would make the
 		   game crash (address error, since it would branch to an odd address)
 		   if location 180ca6 (outside ROM space) isn't 0. Protection check? */
-//		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-//		rom[0x11756/2] = 0x4e71;
+		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+		rom[0x11756/2] = 0x4e71;
 	}
 #if 0
 	else if (strcmp(gamename, "ghouls" )==0)

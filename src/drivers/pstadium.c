@@ -1118,7 +1118,7 @@ static struct YM3812interface pstadium_ym3812_interface =
 static struct YM3812interface galkoku_ym3812_interface =
 {
 	1,				/* 1 chip */
-	25000000/10,			/* 2.50 Mhz */
+	25000000/10,			/* 2.50 MHz */
 	{ 50 }
 };
 
@@ -1141,14 +1141,14 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80, \
-			6000000/2,		/* 3.00 Mhz */ \
+			6000000/2,		/* 3.00 MHz */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, 1 \
 		}, \
 		{ \
 			CPU_Z80 | CPU_AUDIO_CPU, \
-		/*	4000000,	*/	/* 4.00 Mhz */ \
-			3900000,		/* 4.00 Mhz */ \
+		/*	4000000,	*/	/* 4.00 MHz */ \
+			3900000,		/* 4.00 MHz */ \
 			sound_readmem_pstadium, sound_writemem_pstadium, sound_readport_pstadium, sound_writeport_pstadium, \
 			interrupt, 128 \
 		} \
@@ -1190,7 +1190,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			25000000/6.25,		/* 4.00 Mhz ? */ \
+			25000000/6.25,		/* 4.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, 128 \
 		} \
@@ -1244,14 +1244,14 @@ NBMJDRV1(  av2mj1,   av2mj1,   av2mj1, pstadium, pstadium, 0)
 
 
 ROM_START( pstadium )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "psdm_01.bin",  0x00000,  0x10000, 0x4af81589 )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "psdm_03.bin",  0x00000,  0x10000, 0xac17cef2 )
 	ROM_LOAD( "psdm_02.bin",  0x10000,  0x10000, 0xefefe881 )
 
-	ROM_REGION( 0x110000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "psdm_04.bin",  0x000000, 0x10000, 0x01957a76 )
 	ROM_LOAD( "psdm_05.bin",  0x010000, 0x10000, 0xf5dc1d20 )
 	ROM_LOAD( "psdm_06.bin",  0x020000, 0x10000, 0x6fc89b50 )
@@ -1272,14 +1272,14 @@ ROM_START( pstadium )
 ROM_END
 
 ROM_START( triplew1 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "tpw1_01.bin",  0x00000,  0x10000, 0x2542958a )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "tpw1_03.bin",  0x00000,  0x10000, 0xd86cc7d2 )
 	ROM_LOAD( "tpw1_02.bin",  0x10000,  0x10000, 0x857656a7 )
 
-	ROM_REGION( 0x160000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x160000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "tpw1_04.bin",  0x000000, 0x20000, 0xca26ccb3 )
 	ROM_LOAD( "tpw1_05.bin",  0x020000, 0x20000, 0x26501af0 )
 	ROM_LOAD( "tpw1_06.bin",  0x040000, 0x10000, 0x789bbacd )
@@ -1303,14 +1303,14 @@ ROM_START( triplew1 )
 ROM_END
 
 ROM_START( triplew2 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "tpw2_01.bin",  0x00000,  0x10000, 0x2637f19d )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "tpw2_03.bin",  0x00000,  0x10000, 0x8e7922c3 )
 	ROM_LOAD( "tpw2_02.bin",  0x10000,  0x10000, 0x5339692d )
 
-	ROM_REGION( 0x200000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "tpw2_04.bin",  0x000000, 0x20000, 0xd4af2c04 )
 	ROM_LOAD( "tpw2_05.bin",  0x020000, 0x20000, 0xfff198c8 )
 	ROM_LOAD( "tpw2_06.bin",  0x040000, 0x20000, 0x4966b15b )
@@ -1332,14 +1332,14 @@ ROM_START( triplew2 )
 ROM_END
 
 ROM_START( ntopstar )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "ntsr_01.bin",  0x00000,  0x10000, 0x3a4325f2 )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "ntsr_03.bin",  0x00000,  0x10000, 0x747ba06a )
 	ROM_LOAD( "ntsr_02.bin",  0x10000,  0x10000, 0x12334718 )
 
-	ROM_REGION( 0x140000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "ntsr_04.bin",  0x000000, 0x20000, 0x06edf3a4 )
 	ROM_LOAD( "ntsr_05.bin",  0x020000, 0x20000, 0xb3f014fa )
 	ROM_LOAD( "ntsr_06.bin",  0x040000, 0x10000, 0x9333ebcb )
@@ -1361,14 +1361,14 @@ ROM_START( ntopstar )
 ROM_END
 
 ROM_START( mjlstory )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "mjls_01.bin",  0x00000,  0x10000, 0xa9febe8b )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "mjls_03.bin",  0x00000,  0x10000, 0x15e54af0 )
 	ROM_LOAD( "mjls_02.bin",  0x10000,  0x10000, 0xda976e4f )
 
-	ROM_REGION( 0x190000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x190000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mjls_04.bin",  0x000000, 0x20000, 0xd3e642ee )
 	ROM_LOAD( "mjls_05.bin",  0x020000, 0x20000, 0xdc888639 )
 	ROM_LOAD( "mjls_06.bin",  0x040000, 0x20000, 0x8a191142 )
@@ -1385,14 +1385,14 @@ ROM_START( mjlstory )
 ROM_END
 
 ROM_START( vanilla )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "vanilla.01",   0x00000,  0x10000, 0x2a3341a8 )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "vanilla.03",   0x00000,  0x10000, 0xe035842f )
 	ROM_LOAD( "vanilla.02",   0x10000,  0x10000, 0x93d8398a )
 
-	ROM_REGION( 0x200000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "vanilla.04",   0x000000, 0x20000, 0xf21e1ff4 )
 	ROM_LOAD( "vanilla.05",   0x020000, 0x20000, 0x15d6ff78 )
 	ROM_LOAD( "vanilla.06",   0x040000, 0x20000, 0x90da7b35 )
@@ -1416,14 +1416,14 @@ ROM_START( vanilla )
 ROM_END
 
 ROM_START( qmhayaku )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* main program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "1.4e",    0x00000,  0x10000, 0x5a73cdf8 )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "3.4t",    0x00000,  0x10000, 0xd420dac8 )
 	ROM_LOAD( "2.4s",    0x10000,  0x10000, 0xf88cb623 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "4.9b",    0x000000, 0x20000, 0x2fba26fe )
 	ROM_LOAD( "5.9d",    0x020000, 0x20000, 0x105f9930 )
 	ROM_LOAD( "6.9e",    0x040000, 0x20000, 0x5e8f0177 )
@@ -1444,14 +1444,14 @@ ROM_START( qmhayaku )
 ROM_END
 
 ROM_START( galkoku )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "gkok_01.bin",  0x00000,  0x10000, 0x254c526c )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "gkok_02.bin",  0x00000,  0x10000, 0x3dec7469 )
 	ROM_LOAD( "gkok_03.bin",  0x10000,  0x10000, 0x66f51b21 )
 
-	ROM_REGION( 0x110000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "gkok_04.bin",  0x000000, 0x10000, 0x741815a5 )
 	ROM_LOAD( "gkok_05.bin",  0x010000, 0x10000, 0x28a17cd8 )
 	ROM_LOAD( "gkok_06.bin",  0x020000, 0x10000, 0x8eac2143 )
@@ -1472,14 +1472,14 @@ ROM_START( galkoku )
 ROM_END
 
 ROM_START( galkaika )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "gkai_01.bin",  0x00000,  0x10000, 0x81b89559 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "gkai_02.bin",  0x00000,  0x10000, 0xdb899dd5 )
 	ROM_LOAD( "gkai_03.bin",  0x10000,  0x10000, 0xa66a1c52 )
 
-	ROM_REGION( 0x120000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x120000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "gkai_04.bin",  0x000000, 0x20000, 0xb1071e49 )
 	ROM_LOAD( "gkai_05.bin",  0x020000, 0x20000, 0xe5162326 )
 	ROM_LOAD( "gkai_06.bin",  0x040000, 0x20000, 0xe0cebb15 )
@@ -1493,13 +1493,13 @@ ROM_START( galkaika )
 ROM_END
 
 ROM_START( tokyogal )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "tgal_21.bin",  0x00000,  0x10000, 0xad4eecec )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "tgal_22.bin",  0x00000,  0x10000, 0x36be0868 )
 
-	ROM_REGION( 0x140000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "tgal_01.bin",  0x000000, 0x10000, 0x6a7a5c13 )
 	ROM_LOAD( "tgal_02.bin",  0x010000, 0x10000, 0x31e052e6 )
 	ROM_LOAD( "tgal_03.bin",  0x020000, 0x10000, 0xd4bbf1e6 )
@@ -1523,13 +1523,13 @@ ROM_START( tokyogal )
 ROM_END
 
 ROM_START( tokimbsj )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "tmbj_01.bin",  0x00000,  0x10000, 0xb335c300 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "tmbj_02.bin",  0x00000,  0x10000, 0x36be0868 )
 
-	ROM_REGION( 0x140000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "tmbj_03.bin",  0x000000, 0x10000, 0x6a7a5c13 )
 	ROM_LOAD( "tmbj_04.bin",  0x010000, 0x10000, 0x09e3f23d )
 	ROM_LOAD( "tmbj_05.bin",  0x020000, 0x10000, 0xd4bbf1e6 )
@@ -1553,14 +1553,14 @@ ROM_START( tokimbsj )
 ROM_END
 
 ROM_START( mcontest )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mcon_01.bin",  0x00000, 0x10000, 0x79a30028 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mcon_02.bin",  0x00000, 0x10000, 0x236b8fdc )
 	ROM_LOAD( "mcon_03.bin",  0x10000, 0x10000, 0x6d6bdefb )
 
-	ROM_REGION( 0x160000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x160000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mcon_04.bin",  0x000000, 0x20000, 0xadb6e002 )
 	ROM_LOAD( "mcon_05.bin",  0x020000, 0x20000, 0xea8ceb49 )
 	ROM_LOAD( "mcon_06.bin",  0x040000, 0x10000, 0xd3fee691 )
@@ -1584,14 +1584,14 @@ ROM_START( mcontest )
 ROM_END
 
 ROM_START( av2mj1 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "1.bin",       0x00000, 0x10000, 0xdf0f03fb )
 
-	ROM_REGION( 0x20000, REGION_CPU2 ) /* sub program */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sub program */
 	ROM_LOAD( "3.bin",       0x00000, 0x10000, 0x0cdc9489 )
 	ROM_LOAD( "2.bin",       0x10000, 0x10000, 0x6283a444 )
 
-	ROM_REGION( 0x200000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "4.bin",       0x000000, 0x20000, 0x18fe29c3 )
 	ROM_LOAD( "5.bin",       0x020000, 0x20000, 0x0eff4bbf )
 	ROM_LOAD( "6.bin",       0x040000, 0x20000, 0xac351796 )

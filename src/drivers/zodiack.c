@@ -472,87 +472,87 @@ MACHINE_DRIVER(percuss)
 
 ***************************************************************************/
 ROM_START( zodiack )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "ovg30c.2",     0x0000, 0x2000, 0xa2125e99 )
 	ROM_LOAD( "ovg30c.3",     0x2000, 0x2000, 0xaee2b77f )
 	ROM_LOAD( "ovg30c.6",     0x4000, 0x0800, 0x1debb278 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
 
-	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ovg40c.7",     0x0000, 0x0800, 0xed9d3be7 )
 	ROM_LOAD( "orca40c.8",    0x0800, 0x1000, 0x88269c94 )
 	ROM_LOAD( "orca40c.9",    0x1800, 0x1000, 0xa3bd40c9 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "ovg40c.2a",    0x0000, 0x0020, 0x703821b8 )
 	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )
 ROM_END
 
 ROM_START( dogfight )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "df-2",         0x0000, 0x2000, 0xad24b28b )
 	ROM_LOAD( "df-3",         0x2000, 0x2000, 0xcd172707 )
 	ROM_LOAD( "df-5",         0x4000, 0x1000, 0x874dc6bf )
 	ROM_LOAD( "df-4",         0xc000, 0x1000, 0xd8aa3d6d )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
 
-	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "df-6",         0x0000, 0x0800, 0x3059b515 )
 	ROM_LOAD( "df-7",         0x0800, 0x1000, 0xffe05fee )
 	ROM_LOAD( "df-8",         0x1800, 0x1000, 0x2cb51793 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0x69a35aa5 )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )
 ROM_END
 
 ROM_START( moguchan )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "2.5r",         0x0000, 0x1000, 0x85d0cb7e )
 	ROM_LOAD( "4.5m",         0x1000, 0x1000, 0x359ef951 )
 	ROM_LOAD( "3.5np",        0x2000, 0x1000, 0xc8776f77 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "1.7hj",        0x0000, 0x1000, 0x1a88d35f )
 
-	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "5.4r",         0x0000, 0x0800, 0x1b7febd8 )
 	ROM_LOAD( "6.7p",         0x0800, 0x1000, 0xc8060ffe )
 	ROM_LOAD( "7.7m",         0x1800, 0x1000, 0xbfca00f4 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "moguchan.2a",  0x0000, 0x0020, 0xe83daab3 )
 	ROM_LOAD( "moguchan.2b",  0x0020, 0x0020, 0x9abfdf40 )
 ROM_END
 
 ROM_START( percuss )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "percuss.1",    0x0000, 0x1000, 0xff0364f7 )
 	ROM_LOAD( "percuss.3",    0x1000, 0x1000, 0x7f646c59 )
 	ROM_LOAD( "percuss.2",    0x2000, 0x1000, 0x6bf72dd2 )
 	ROM_LOAD( "percuss.4",    0x3000, 0x1000, 0xfb1b15ba )
 	ROM_LOAD( "percuss.5",    0x4000, 0x1000, 0x8e5a9692 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "percuss.8",    0x0000, 0x0800, 0xd63f56f3 )
 	ROM_LOAD( "percuss.9",    0x0800, 0x0800, 0xe08fef2f )
 
-	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "percuss.10",   0x0000, 0x0800, 0x797598aa )
 	ROM_LOAD( "percuss.6",    0x0800, 0x1000, 0x5285a580 )
 	ROM_LOAD( "percuss.7",    0x1800, 0x1000, 0x8fc4175d )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "percus2a.prm", 0x0000, 0x0020, 0xe2ee9637 )
 	ROM_LOAD( "percus2b.prm", 0x0020, 0x0020, 0xe561b029 )
 ROM_END
 
 ROM_START( bounty )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	/* first 256 bytes are missing due to protection - they are replaced */
 	/* with stub code that draws the Orca logo on screen */
 	ROM_LOAD( "1.4f",      0x0000, 0x1000, BADCRC( 0xb3776ecb ) )
@@ -560,16 +560,16 @@ ROM_START( bounty )
 	ROM_LOAD( "2.4h",      0x2000, 0x1000, 0x52ab5314 )
 	ROM_LOAD( "4.4m",      0x3000, 0x1000, 0x5c9d3f07 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "7.4n",      0x0000, 0x1000, 0x45e369b8 )
 	ROM_LOAD( "8.4r",      0x1000, 0x1000, 0x4f52c87d )
 
-	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9.4r",      0x0000, 0x0800, 0x4b4acde5 )
 	ROM_LOAD( "5.7m",      0x0800, 0x1000, 0xa5ce2a24 )
 	ROM_LOAD( "6.7p",      0x1800, 0x1000, 0x43183301 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7051.2a",   0x0000, 0x0020, 0x0de11a46 )
 	ROM_LOAD( "mb7051.2b",   0x0020, 0x0020, 0x465e31d4 )
 ROM_END

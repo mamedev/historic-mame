@@ -391,77 +391,77 @@ static const struct MachineDriver machine_driver_battlnts =
 ***************************************************************************/
 
 ROM_START( battlnts )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "g02.7e",      0x08000, 0x08000, 0xdbd8e17e ) /* fixed ROM */
 	ROM_LOAD( "g03.8e",      0x10000, 0x10000, 0x7bd44fef ) /* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "777c01.bin",  0x00000, 0x08000, 0xc21206e9 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "777c04.bin",  0x00000, 0x40000, 0x45d92347 ) /* tiles */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "777c05.bin",  0x00000, 0x40000, 0xaeee778c ) /* sprites */
 ROM_END
 
 ROM_START( battlntj )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "777e02.bin",  0x08000, 0x08000, 0xd631cfcb ) /* fixed ROM */
 	ROM_LOAD( "777e03.bin",  0x10000, 0x10000, 0x5ef1f4ef ) /* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "777c01.bin",  0x00000, 0x08000, 0xc21206e9 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "777c04.bin",  0x00000, 0x40000, 0x45d92347 ) /* tiles */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "777c05.bin",  0x00000, 0x40000, 0xaeee778c ) /* sprites */
 ROM_END
 
 ROM_START( thehustl )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "765-m02.7e",  0x08000, 0x08000, 0x934807b9 ) /* fixed ROM */
 	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 ) /* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "765-e04.13a", 0x00000, 0x40000, 0x08c2b72e ) /* tiles */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "765-e05.13e", 0x00000, 0x40000, 0xef044655 ) /* sprites */
 ROM_END
 
 ROM_START( thehustj )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "765-j02.7e",  0x08000, 0x08000, 0x2ac14c75 ) /* fixed ROM */
 	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 ) /* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "765-e04.13a", 0x00000, 0x40000, 0x08c2b72e ) /* tiles */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "765-e05.13e", 0x00000, 0x40000, 0xef044655 ) /* sprites */
 ROM_END
 
 ROM_START( rackemup )
-	ROM_REGION( 0x20000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "765l02",      0x08000, 0x08000, 0x3dfc48bd ) /* fixed ROM */
 	ROM_LOAD( "765-j03.8e",  0x10000, 0x10000, 0xa13fd751 ) /* banked ROM */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "765-j01.10a", 0x00000, 0x08000, 0x77ae753e )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "765l04",      0x00000, 0x40000, 0xacfbeee2 ) /* tiles */
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "765l05",      0x00000, 0x40000, 0x1bb6855f ) /* sprites */
 ROM_END
 

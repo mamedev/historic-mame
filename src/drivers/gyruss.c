@@ -550,99 +550,99 @@ static const struct MachineDriver machine_driver_gyruss =
 ***************************************************************************/
 
 ROM_START( gyruss )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.1",    0x0000, 0x2000, 0xc673b43d )
 	ROM_LOAD( "gyrussk.2",    0x2000, 0x2000, 0xa4ec03e4 )
 	ROM_LOAD( "gyrussk.3",    0x4000, 0x2000, 0x27454a98 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 
-	ROM_REGION( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
 	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
 	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 ROM_END
 
 ROM_START( gyrussce )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "gya-1.bin",    0x0000, 0x2000, 0x85f8b7c2 )
 	ROM_LOAD( "gya-2.bin",    0x2000, 0x2000, 0x1e1a970f )
 	ROM_LOAD( "gya-3.bin",    0x4000, 0x2000, 0xf6dbb33b )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 
-	ROM_REGION( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
 	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
 	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
 ROM_END
 
 ROM_START( venus )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x2000, 0xd030abb1 )
 	ROM_LOAD( "r2",           0x2000, 0x2000, 0xdbf65d4d )
 	ROM_LOAD( "r3",           0x4000, 0x2000, 0xdb246fcd )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "gyrussk.1a",   0x0000, 0x2000, 0xf4ae1c17 )
 	ROM_LOAD( "gyrussk.2a",   0x2000, 0x2000, 0xba498115 )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 
-	ROM_REGION( 2*0x10000, REGION_CPU4 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU4, 0 )	/* 64k for code + 64k for the decrypted opcodes */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, 0x822bf27e )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.4",    0x0000, 0x2000, 0x27d8329b )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gyrussk.6",    0x0000, 0x2000, 0xc949db10 )
 	ROM_LOAD( "gyrussk.5",    0x2000, 0x2000, 0x4f22411a )
 	ROM_LOAD( "gyrussk.8",    0x4000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x6000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */

@@ -894,19 +894,19 @@
  *  ST0 Store at hardware address 0
  ***************************************************************/
 #define ST0                                                     \
-    cpu_writeport(0x0000,tmp)
+    cpu_writeport16(0x0000,tmp)
 
 /* 6280 ********************************************************
  *  ST1 Store at hardware address 2
  ***************************************************************/
 #define ST1                                                     \
-    cpu_writeport(0x0002,tmp)
+    cpu_writeport16(0x0002,tmp)
 
 /* 6280 ********************************************************
  *  ST2 Store at hardware address 3
  ***************************************************************/
 #define ST2                                                     \
-    cpu_writeport(0x0003,tmp)
+    cpu_writeport16(0x0003,tmp)
 
 /* 6280 ********************************************************
  *	STA Store accumulator

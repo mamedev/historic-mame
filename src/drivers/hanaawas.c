@@ -217,19 +217,19 @@ static const struct MachineDriver machine_driver_hanaawas =
 ***************************************************************************/
 
 ROM_START( hanaawas )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "1.1e",    	0x0000, 0x2000, 0x618dc1e3 )
 	ROM_LOAD( "2.3e",    	0x2000, 0x1000, 0x5091b67f )
 	ROM_LOAD( "3.4e",    	0x4000, 0x1000, 0xdcb65067 )
 	ROM_LOAD( "4.6e",    	0x6000, 0x1000, 0x24bee0dc )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "5.9a",		0x0000, 0x1000, 0x304ae219 )
 	ROM_LOAD( "6.10a",		0x1000, 0x1000, 0x765a4e5f )
 	ROM_LOAD( "7.12a",		0x2000, 0x1000, 0x5245af2d )
 	ROM_LOAD( "8.13a",		0x3000, 0x1000, 0x3356ddce )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "13j.bpr",	0x0000, 0x0020, 0x99300d85 )	/* color PROM */
 	ROM_LOAD( "2a.bpr",		0x0020, 0x0100, 0xe26f21a2 )	/* lookup table */
 	ROM_LOAD( "6g.bpr",		0x0120, 0x0100, 0x4d94fed5 )	/* I don't know what this is */

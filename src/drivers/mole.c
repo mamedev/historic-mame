@@ -177,7 +177,7 @@ const struct MachineDriver machine_driver_mole =
 };
 
 ROM_START( mole ) /* ALL ROMS ARE 2732 */
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for 6502 code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for 6502 code */
 	ROM_LOAD( "m3a.5h",	0x5000, 0x1000, 0x5fbbdfef )
 	ROM_RELOAD(			0xd000, 0x1000)
 	ROM_LOAD( "m2a.7h",	0x6000, 0x1000, 0xf2a90642 )
@@ -185,7 +185,7 @@ ROM_START( mole ) /* ALL ROMS ARE 2732 */
 	ROM_LOAD( "m1a.8h",	0x7000, 0x1000, 0xcff0119a )
 	ROM_RELOAD(			0xf000, 0x1000 )
 
-	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mea.4a",	0x0000, 0x1000, 0x49d89116 )
 	ROM_LOAD( "mca.6a",	0x1000, 0x1000, 0x04e90300 )
 	ROM_LOAD( "maa.9a",	0x2000, 0x1000, 0x6ce9442b )

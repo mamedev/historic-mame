@@ -256,24 +256,24 @@ static const struct MachineDriver machine_driver_solomon =
 ***************************************************************************/
 
 ROM_START( solomon )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, 0xe4d421ff )
 	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, 0xd52d7e38 )
 	ROM_CONTINUE(             0x04000, 0x4000 )
 	ROM_LOAD( "slmn_08.bin",  0x0f000, 0x1000, 0xb924d162 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "slmn_01.bin",  0x0000, 0x4000, 0xfa6e562e )
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "slmn_12.bin",  0x00000, 0x08000, 0xaa26dfcb )	/* characters */
 	ROM_LOAD( "slmn_11.bin",  0x08000, 0x08000, 0x6f94d2af )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "slmn_10.bin",  0x00000, 0x08000, 0x8310c2a1 )
 	ROM_LOAD( "slmn_09.bin",  0x08000, 0x08000, 0xab7e6c42 )
 
-	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "slmn_02.bin",  0x00000, 0x04000, 0x80fa2be3 )	/* sprites */
 	ROM_LOAD( "slmn_03.bin",  0x04000, 0x04000, 0x236106b4 )
 	ROM_LOAD( "slmn_04.bin",  0x08000, 0x04000, 0x088fe5d9 )

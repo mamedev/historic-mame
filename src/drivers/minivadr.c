@@ -85,7 +85,7 @@ static const struct MachineDriver machine_driver_minivadr =
 ***************************************************************************/
 
 ROM_START( minivadr )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "d26-01.bin",	0x0000, 0x2000, 0xa96c823d )
 ROM_END
 

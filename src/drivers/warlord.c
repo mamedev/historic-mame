@@ -286,7 +286,7 @@ static const struct MachineDriver machine_driver_warlord =
 ***************************************************************************/
 
 ROM_START( warlord )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
 	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )
 	ROM_LOAD( "037158.1j",    0x6000, 0x0800, 0x1f043a86 )
@@ -295,10 +295,10 @@ ROM_START( warlord )
 	ROM_LOAD( "037155.1d",    0x7800, 0x0800, 0x23b94210 )
 	ROM_RELOAD( 		   0xf800, 0x0800 ) /* for the reset and interrupt vectors */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
 	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
 	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */

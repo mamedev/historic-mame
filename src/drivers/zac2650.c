@@ -1,7 +1,11 @@
 /*
- * Zaccaria/Zelco 2650 Games
+ * Signetics 2650 CPU Games
  *
- * The Invaders
+ * Zaccaria - The Invaders
+ * Zaccaria - Super Invader Attack
+ * Cinematronics - Embargo
+ *
+ * Mame@btinternet.com
  */
 
 #include "driver.h"
@@ -14,11 +18,12 @@ int  tinvader_vh_start(void);
 void tinvader_vh_stop(void);
 void tinvader_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-WRITE_HANDLER( s2636_w );
+WRITE_HANDLER( zac_s2636_w );
 WRITE_HANDLER( tinvader_sound_w );
 
-READ_HANDLER( s2636_r );
+READ_HANDLER( zac_s2636_r );
 READ_HANDLER( tinvader_port_0_r );
+
 
 
 static MEMORY_READ_START( readmem )
@@ -28,16 +33,21 @@ static MEMORY_READ_START( readmem )
     { 0x1E81, 0x1E81, input_port_1_r },
     { 0x1E82, 0x1E82, input_port_2_r },
     { 0x1D00, 0x1Dff, MRA_RAM },
-    { 0x1F00, 0x1FFF, s2636_r },			/* S2636 Chip */
+    { 0x1F00, 0x1FFF, zac_s2636_r },			/* S2636 Chip */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x17FF, MWA_ROM },
 	{ 0x1800, 0x1bff, videoram_w, &videoram, &videoram_size },
     { 0x1D00, 0x1dff, MWA_RAM },
     { 0x1E80, 0x1E80, tinvader_sound_w },
-    { 0x1F00, 0x1FFF, s2636_w, &s2636ram },
+    { 0x1F00, 0x1FFF, zac_s2636_w, &s2636ram },
 MEMORY_END
+
+static PORT_READ_START( readport )
+    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
+PORT_END
 
 INPUT_PORTS_START( tinvader )
 
@@ -83,6 +93,9 @@ INPUT_PORTS_START( tinvader )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* SENSE */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 INPUT_PORTS_END
 
@@ -130,6 +143,9 @@ INPUT_PORTS_START( sinvader )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* SENSE */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 INPUT_PORTS_END
 
@@ -192,22 +208,11 @@ static struct GfxLayout s2636_character16 =
 
 static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tinvader_character,  0, 1 },
-  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 2 },	/* dynamic */
-  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 2 },	/* dynamic */
+	{ REGION_GFX1, 0, &tinvader_character,  0, 8 },
+  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 8 },	/* dynamic */
+  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 8 },	/* dynamic */
 	{ -1 } /* end of array */
 };
-
-static int tinvader_interrupt(void)
-{
-    /* Sense line is VBL */
-	if (cpu_getiloops() == 0)
-		cpu_set_irq_line( 0, 1, ASSERT_LINE);
-	else if (cpu_getiloops() == 15)
-		cpu_set_irq_line( 0, 1, CLEAR_LINE );
-
-    return ignore_interrupt();
-}
 
 static const struct MachineDriver machine_driver_tinvader =
 {
@@ -215,18 +220,18 @@ static const struct MachineDriver machine_driver_tinvader =
 		{
 			CPU_S2650,
 			3800000,
-			readmem,writemem,0,0,
-			tinvader_interrupt,16,
+			readmem,writemem,readport,0,
+			ignore_interrupt,1,
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, 1041,
 	1, /* CPU slices */
 	0, /* init machine */
 
 	/* video hardware */
 	30*8, 32*8, { 0, 239, 0, 255 },
 	tinvader_gfxdecodeinfo,
-	32768+5,4,
+	8,8,
 	init_palette,
 	VIDEO_TYPE_RASTER,
 	0,
@@ -253,25 +258,90 @@ WRITE_HANDLER( tinvader_sound_w )
 }
 
 ROM_START( sia2650 )
-	ROM_REGION( 0x2000, REGION_CPU1 )
+	ROM_REGION( 0x2000, REGION_CPU1, 0 )
 	ROM_LOAD( "42_1.bin",   0x0000, 0x0800, 0xa85550a9 )
 	ROM_LOAD( "44_2.bin",   0x0800, 0x0800, 0x48d5a3ed )
 	ROM_LOAD( "46_3.bin",   0x1000, 0x0800, 0xd766e784 )
 
-	ROM_REGION( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "06_inv.bin", 0x0000, 0x0400, 0x7bfed23e )
 ROM_END
 
 ROM_START( tinv2650 )
-	ROM_REGION( 0x2000, REGION_CPU1 )
+	ROM_REGION( 0x2000, REGION_CPU1, 0 )
 	ROM_LOAD( "42_1.bin",   0x0000, 0x0800, 0xa85550a9 )
 	ROM_LOAD( "44_2t.bin",  0x0800, 0x0800, 0x083c8621 )
 	ROM_LOAD( "46_3t.bin",  0x1000, 0x0800, 0x12c0934f )
 
-	ROM_REGION( 0x400, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "06_inv.bin", 0x0000, 0x0400, 0x7bfed23e )
 ROM_END
 
+/*
+ * Embargo
+ *
+ */
 
-GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0, ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
-GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, 0, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
+int  invaders_vh_start(void);
+void invaders_vh_stop(void);
+void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void init_8080bw(void);
+
+WRITE_HANDLER( invaders_videoram_w );
+
+static MEMORY_READ_START( emb_readmem )
+	{ 0x0000, 0x0fff, MRA_ROM },
+    { 0x1e00, 0x3dff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( emb_writemem )
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x1e00, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x3dff, invaders_videoram_w, &videoram, &videoram_size },
+MEMORY_END
+
+static struct MachineDriver machine_driver_embargo = {
+	{
+		{
+			CPU_S2650,
+			625000,
+			emb_readmem,emb_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1, /* CPU slices */
+	0, /* init machine */
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	8,0,
+	init_palette,
+	VIDEO_TYPE_RASTER,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+    invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+};
+
+ROM_START( embargo )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+	ROM_LOAD( "emb1", 0x0000, 0x0200, 0x00dcbc24 )
+	ROM_LOAD( "emb2", 0x0200, 0x0200, 0xe7069b11 )
+	ROM_LOAD( "emb3", 0x0400, 0x0200, 0x1af7a966 )
+	ROM_LOAD( "emb4", 0x0600, 0x0200, 0xd9c75da0 )
+	ROM_LOAD( "emb5", 0x0800, 0x0200, 0x15960b58 )
+	ROM_LOAD( "emb6", 0x0A00, 0x0200, 0x7ba23058 )
+	ROM_LOAD( "emb7", 0x0C00, 0x0200, 0x6d46a593 )
+	ROM_LOAD( "emb8", 0x0E00, 0x0200, 0xf0b00634 )
+ROM_END
+
+
+GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,      ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
+GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, 0,      ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
+GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw, ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

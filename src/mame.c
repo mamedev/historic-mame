@@ -124,14 +124,13 @@ static int validitychecks(void)
 				region_length[j] = 0;
 			}
 
-			while (romp->name || romp->offset || romp->length)
+			while (!ROMENTRY_ISEND(romp))
 			{
 				const char *c;
 
-				if (romp->name == 0 && romp->length == 0)	/* ROM_REGION() */
+				if (ROMENTRY_ISREGION(romp))
 				{
-					int type = romp->crc & ~REGIONFLAG_MASK;
-
+					int type = ROMREGION_GETTYPE(romp);
 
 					count++;
 					if (type && (type >= REGION_MAX || type <= REGION_INVALID))
@@ -141,24 +140,24 @@ static int validitychecks(void)
 					}
 
 					region_type_used[type]++;
-					region_length[type] = region_length[count] = romp->offset;
+					region_length[type] = region_length[count] = ROMREGION_GETLENGTH(romp);
 				}
-				if (romp->name && romp->name != (char *)-1)
+				if (ROMENTRY_ISFILE(romp))
 				{
 					int pre,post;
 
-					last_name = c = romp->name;
+					last_name = c = ROM_GETNAME(romp);
 					while (*c)
 					{
 						if (tolower(*c) != *c)
 						{
-							printf("%s: %s has upper case ROM name %s\n",drivers[i]->source_file,drivers[i]->name,romp->name);
+							printf("%s: %s has upper case ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
 							error = 1;
 						}
 						c++;
 					}
 
-					c = romp->name;
+					c = ROM_GETNAME(romp);
 					pre = 0;
 					post = 0;
 					while (*c && *c != '.')
@@ -173,13 +172,13 @@ static int validitychecks(void)
 					}
 					if (pre > 8 || post > 4)
 					{
-						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,romp->name);
+						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
 						error = 1;
 					}
 				}
-				if (romp->length != 0)						/* ROM_LOAD_XXX() */
+				if (!ROMENTRY_ISREGIONEND(romp))						/* ROM_LOAD_XXX() */
 				{
-					if (romp->offset + (romp->length & ~ROMFLAG_MASK) > region_length[count])
+					if (ROM_GETOFFSET(romp) + ROM_GETLENGTH(romp) > region_length[count])
 					{
 						printf("%s: %s has ROM %s extending past the defined memory region\n",drivers[i]->source_file,drivers[i]->name,last_name);
 						error = 1;
@@ -212,31 +211,30 @@ static int validitychecks(void)
 					{
 						const struct Memory_ReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
 
-						if (mra->start != MEMORY_MARKER ||
-								(mra->end & MEMORY_DIRECTION_MASK) != MEMORY_DIRECTION_READ)
+						if (!IS_MEMPORT_MARKER(mra) || (mra->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_READ)
 						{
-							printf("%s: %s wrong MEMORY_READ_START\n",drivers[i]->source_file,drivers[i]->name);
+							printf("%s: %s wrong MEMPORT_READ_START\n",drivers[i]->source_file,drivers[i]->name);
 							error = 1;
 						}
 
 						switch (databus_width)
 						{
 							case 8:
-								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_8)
+								if ((mra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_8)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
 									error = 1;
 								}
 								break;
 							case 16:
-								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_16)
+								if ((mra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
 //									error = 1;
 								}
 								break;
 							case 32:
-								if ((mra->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_32)
+								if ((mra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_32)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
 									error = 1;
@@ -244,9 +242,9 @@ static int validitychecks(void)
 								break;
 						}
 
-						while (!IS_MEMORY_END(mra))
+						while (!IS_MEMPORT_END(mra))
 						{
-							if (!IS_MEMORY_MARKER(mra))
+							if (!IS_MEMPORT_MARKER(mra))
 							{
 								if (mra->end < mra->start)
 								{
@@ -266,31 +264,31 @@ static int validitychecks(void)
 					{
 						const struct Memory_WriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
 
-						if (mwa->start != MEMORY_MARKER ||
-								(mwa->end & MEMORY_DIRECTION_MASK) != MEMORY_DIRECTION_WRITE)
+						if (mwa->start != MEMPORT_MARKER ||
+								(mwa->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_WRITE)
 						{
-							printf("%s: %s wrong MEMORY_WRITE_START\n",drivers[i]->source_file,drivers[i]->name);
+							printf("%s: %s wrong MEMPORT_WRITE_START\n",drivers[i]->source_file,drivers[i]->name);
 							error = 1;
 						}
 
 						switch (databus_width)
 						{
 							case 8:
-								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_8)
+								if ((mwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_8)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
 									error = 1;
 								}
 								break;
 							case 16:
-								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_16)
+								if ((mwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
 //									error = 1;
 								}
 								break;
 							case 32:
-								if ((mwa->end & MEMORY_WIDTH_MASK) != MEMORY_WIDTH_32)
+								if ((mwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_32)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
 									error = 1;
@@ -298,9 +296,9 @@ static int validitychecks(void)
 								break;
 						}
 
-						while (!IS_MEMORY_END(mwa))
+						while (!IS_MEMPORT_END(mwa))
 						{
-							if (!IS_MEMORY_MARKER(mwa))
+							if (!IS_MEMPORT_MARKER(mwa))
 							{
 								if (mwa->end < mwa->start)
 								{
@@ -424,6 +422,14 @@ static int validitychecks(void)
 						printf("%s: %s has wrong Flip Screen option %s\n",drivers[i]->source_file,drivers[i]->name,(inp+1)->name);
 						error = 1;
 					}
+
+					if (inp->name == DEF_STR( Demo_Sounds ) && (inp+2)->name == DEF_STR( On )
+							&& inp->default_value != (inp+2)->default_value)
+					{
+						printf("%s: %s Demo Sounds must default to On\n",drivers[i]->source_file,drivers[i]->name);
+						error = 1;
+					}
+
 				}
 
 				inp++;
@@ -569,8 +575,6 @@ int run_game(int game)
 ***************************************************************************/
 int init_machine(void)
 {
-	int i;
-
 	/* LBO 042400 start */
 	if (uistring_init (options.language_file) != 0)
 	{
@@ -585,12 +589,7 @@ int init_machine(void)
 		goto out;
 	}
 
-	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
-	{
-		Machine->memory_region[i] = 0;
-		Machine->memory_region_length[i] = 0;
-		Machine->memory_region_type[i] = 0;
-	}
+	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));
 
 	if (gamedrv->input_ports)
 	{
@@ -680,12 +679,7 @@ void shutdown_machine(void)
 
 	/* free the memory allocated for ROM and RAM */
 	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
-	{
-		free(Machine->memory_region[i]);
-		Machine->memory_region[i] = 0;
-		Machine->memory_region_length[i] = 0;
-		Machine->memory_region_type[i] = 0;
-	}
+		free_memory_region(i);
 
 	/* free the memory allocated for input ports definition */
 	input_port_free(Machine->input_ports);
@@ -1071,15 +1065,15 @@ int run_machine(void)
 				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
 				{
-					if (Machine->memory_region_type[region] & REGIONFLAG_DISPOSE)
+					if (Machine->memory_region[region].flags & ROMREGION_DISPOSE)
 					{
 						int i;
 
 						/* invalidate contents to avoid subtle bugs */
 						for (i = 0;i < memory_region_length(region);i++)
 							memory_region(region)[i] = rand();
-						free(Machine->memory_region[region]);
-						Machine->memory_region[region] = 0;
+						free(Machine->memory_region[region].base);
+						Machine->memory_region[region].base = 0;
 					}
 				}
 

@@ -127,7 +127,7 @@ void sc61860_reset(void *param)
 	sc61860.timer.t512ms=0;
 	sc61860.timer.count=256;
 	sc61860.pc=0;
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 }
 
 void sc61860_exit(void)
@@ -147,7 +147,7 @@ void sc61860_set_context (void *src)
 	if( src )
 	{
 		sc61860 = *(SC61860_Regs*)src;
-		change_pc(sc61860.pc);
+		change_pc16(sc61860.pc);
 	}
 }
 
@@ -159,7 +159,7 @@ unsigned sc61860_get_pc (void)
 void sc61860_set_pc (unsigned val)
 {
 	sc61860.pc = val;
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 }
 
 unsigned sc61860_get_sp (void)
@@ -235,7 +235,7 @@ int sc61860_execute(int cycles)
 {
 	sc61860_icount = cycles;
 
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 
 	do
 	{

@@ -259,77 +259,77 @@ static const struct MachineDriver machine_driver_grobda =
 
 
 ROM_START( grobda )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
 	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )
 	ROM_LOAD( "gr2-1",     0xe000, 0x2000, 0x0089b13a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-7.c3",  0x0000, 0x1000, 0x4ebfabfd )	/* characters */
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-5.f3",  0x0000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x2000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
 ROM_START( grobda2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr2-2.a",   0xc000, 0x2000, 0xf93e82ae )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-7.c3",  0x0000, 0x1000, 0x4ebfabfd )	/* characters */
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-5.f3",  0x0000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x2000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
 ROM_START( grobda3 )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code for the first CPU  */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
 	ROM_LOAD( "gr1-1.b1",  0xe000, 0x2000, 0x32d42f22 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "gr1-4.k1",  0xe000, 0x2000, 0x3fe78c08 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-7.c3",  0x0000, 0x1000, 0x4ebfabfd )	/* characters */
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gr1-5.f3",  0x0000, 0x2000, 0xeed43487 )	/* sprites */
 	ROM_LOAD( "gr1-6.e3",  0x2000, 0x2000, 0xcebb7362 )	/* sprites */
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.4c", 0x0000, 0x0020, 0xc65efa77 )	/* palette */
 	ROM_LOAD( "mb7052.4e", 0x0020, 0x0100, 0xa0f66911 )	/* characters */
 	ROM_LOAD( "mb7052.3l", 0x0120, 0x0100, 0xf1f2c234 )	/* sprites */
 
-	ROM_REGION( 0x0100, REGION_SOUND1 )	/* sound prom */
+	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 

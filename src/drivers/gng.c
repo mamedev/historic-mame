@@ -468,18 +468,18 @@ static const struct MachineDriver machine_driver_gng =
 ***************************************************************************/
 
 ROM_START( gng )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb ) /* 4000-5fff is page 4 */
 	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
 	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b ) /* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -487,7 +487,7 @@ ROM_START( gng )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg17.bin",     0x00000, 0x4000, 0x93e50a8f ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -495,26 +495,26 @@ ROM_START( gng )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( gnga )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
 	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
 	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
 	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
 	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -522,7 +522,7 @@ ROM_START( gnga )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg17.bin",     0x00000, 0x4000, 0x93e50a8f ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -530,24 +530,24 @@ ROM_START( gnga )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( gngt )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 ) /* 4000-5fff is page 4 */
 	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
 	ROM_LOAD( "mm05",         0x10000, 0x8000, 0x8f7cff61 ) /* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -555,7 +555,7 @@ ROM_START( gngt )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg17.bin",     0x00000, 0x4000, 0x93e50a8f ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -563,24 +563,24 @@ ROM_START( gngt )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( makaimur )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 ) /* 4000-5fff is page 4 */
 	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
 	ROM_LOAD( "12n.rom",      0x10000, 0x8000, 0x65a6a97b ) /* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -588,7 +588,7 @@ ROM_START( makaimur )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gng13.n4",     0x00000, 0x4000, 0x4613afdc ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -596,24 +596,24 @@ ROM_START( makaimur )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( makaimuc )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )   /* 4000-5fff is page 4 */
 	ROM_LOAD( "mj03c.bin",      0x08000, 0x8000, 0xd343332d )
 	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )   /* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -621,7 +621,7 @@ ROM_START( makaimuc )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gng13.n4",     0x00000, 0x4000, 0x4613afdc ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -629,24 +629,24 @@ ROM_START( makaimuc )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( makaimug )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )   /* 4000-5fff is page 4 */
 	ROM_LOAD( "mj03g.bin",      0x08000, 0x8000, 0x61b043bb )
 	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )   /* page 0, 1, 2, 3 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gg11.bin",     0x00000, 0x4000, 0xddd56fa9 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "gg10.bin",     0x04000, 0x4000, 0x7302529d ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "gg9.bin",      0x08000, 0x4000, 0x20035bda ) /* tiles 0-1 Plane 2*/
@@ -654,7 +654,7 @@ ROM_START( makaimug )
 	ROM_LOAD( "gg7.bin",      0x10000, 0x4000, 0xe525207d ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "gg6.bin",      0x14000, 0x4000, 0x2d77e9b2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x18000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gng13.n4",     0x00000, 0x4000, 0x4613afdc ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "gg16.bin",     0x04000, 0x4000, 0x06d7e5ca ) /* sprites 1 Plane 1-2 */
 	ROM_LOAD( "gg15.bin",     0x08000, 0x4000, 0xbc1fe02d ) /* sprites 2 Plane 1-2 */
@@ -662,25 +662,25 @@ ROM_START( makaimug )
 	ROM_LOAD( "gg13.bin",     0x10000, 0x4000, 0xe80c3fca ) /* sprites 1 Plane 3-4 */
 	ROM_LOAD( "gg12.bin",     0x14000, 0x4000, 0x7780a925 ) /* sprites 2 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "tbp24s10.14k", 0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
 	ROM_LOAD( "63s141.2e",    0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 ROM_START( diamond )
-	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "d3o",          0x04000, 0x4000, 0xba4bf9f1 ) /* 4000-5fff is page 4 */
 	ROM_LOAD( "d3",           0x08000, 0x8000, 0xf436d6fa )
 	ROM_LOAD( "d5o",          0x10000, 0x8000, 0xae58bd3a ) /* page 0, 1, 2, 3 */
 	ROM_LOAD( "d5",           0x18000, 0x8000, 0x453f3f9e ) /* is this supposed to be used? */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "d2",           0x0000, 0x8000, 0x615f5b6f )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "d1",           0x00000, 0x4000, 0x3a24e504 ) /* characters */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "d11",          0x00000, 0x4000, 0x754357d7 ) /* tiles 0-1 Plane 1*/
 	ROM_LOAD( "d10",          0x04000, 0x4000, 0x7531edcd ) /* tiles 2-3 Plane 1*/
 	ROM_LOAD( "d9",           0x08000, 0x4000, 0x22eeca08 ) /* tiles 0-1 Plane 2*/
@@ -688,13 +688,13 @@ ROM_START( diamond )
 	ROM_LOAD( "d7",           0x10000, 0x4000, 0xfd595274 ) /* tiles 0-1 Plane 3*/
 	ROM_LOAD( "d6",           0x14000, 0x4000, 0x7f51dcd2 ) /* tiles 2-3 Plane 3*/
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "d17",          0x00000, 0x4000, 0x8164b005 ) /* sprites 0 Plane 1-2 */
 	ROM_LOAD( "d14",          0x04000, 0x4000, 0x6f132163 ) /* sprites 0 Plane 3-4 */
 
-	ROM_REGION( 0x0200, REGION_PROMS )
-	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )  /* video timing (not used) */
-	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )  /* priority (not used) */
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x0eaf5158 )  /* video timing (not used) */
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x4a1285a4 )  /* priority (not used) */
 ROM_END
 
 

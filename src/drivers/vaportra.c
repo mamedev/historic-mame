@@ -70,7 +70,7 @@ static MEMORY_READ16_START( vaportra_readmem )
 
 	{ 0x300000, 0x300fff, MRA16_RAM },
 	{ 0x304000, 0x304fff, MRA16_RAM },
-	{ 0x308000, 0x308001, MRA_NOP },
+	{ 0x308000, 0x308001, MRA16_NOP },
 	{ 0xff8000, 0xff87ff, MRA16_RAM },
 	{ 0xffc000, 0xffffff, MRA16_RAM },
 MEMORY_END
@@ -90,7 +90,7 @@ static MEMORY_WRITE16_START( vaportra_writemem )
 
 	{ 0x300000, 0x3009ff, vaportra_palette_24bit_rg_w, &paletteram16 },
 	{ 0x304000, 0x3049ff, vaportra_palette_24bit_b_w, &paletteram16_2 },
-	{ 0x308000, 0x308001, MWA_NOP },
+	{ 0x308000, 0x308001, MWA16_NOP },
 	{ 0x30c000, 0x30c001, buffer_spriteram16_w },
 	{ 0xff8000, 0xff87ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0xffc000, 0xffffff, MWA16_RAM },
@@ -378,86 +378,86 @@ static const struct MachineDriver machine_driver_vaportra =
 /******************************************************************************/
 
 ROM_START( vaportra )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-  	ROM_LOAD_EVEN( "fl_02-1.bin", 0x00000, 0x20000, 0x9ae36095 )
-  	ROM_LOAD_ODD ( "fl_00-1.bin", 0x00000, 0x20000, 0xc08cc048 )
-	ROM_LOAD_EVEN( "fl_03.bin",   0x40000, 0x20000, 0x80bd2844 )
- 	ROM_LOAD_ODD ( "fl_01.bin",   0x40000, 0x20000, 0x9474b085 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+  	ROM_LOAD16_BYTE( "fl_02-1.bin", 0x00000, 0x20000, 0x9ae36095 )
+  	ROM_LOAD16_BYTE( "fl_00-1.bin", 0x00001, 0x20000, 0xc08cc048 )
+	ROM_LOAD16_BYTE( "fl_03.bin",   0x40000, 0x20000, 0x80bd2844 )
+ 	ROM_LOAD16_BYTE( "fl_01.bin",   0x40001, 0x20000, 0x9474b085 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
 	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
 
-	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
-	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
 ROM_START( vaportru )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-  	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
-  	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
-	ROM_LOAD_EVEN( "fj03",   0x40000, 0x20000, 0x44893379 )
- 	ROM_LOAD_ODD ( "fj01",   0x40000, 0x20000, 0x97fbc107 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+  	ROM_LOAD16_BYTE( "fj02",   0x00000, 0x20000, 0xa2affb73 )
+  	ROM_LOAD16_BYTE( "fj00",   0x00001, 0x20000, 0xef05e07b )
+	ROM_LOAD16_BYTE( "fj03",   0x40000, 0x20000, 0x44893379 )
+ 	ROM_LOAD16_BYTE( "fj01",   0x40001, 0x20000, 0x97fbc107 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
 	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
 
-	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
-	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 
 ROM_START( kuhga )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-  	ROM_LOAD_EVEN( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
-  	ROM_LOAD_ODD ( "fp00-3.bin", 0x00000, 0x20000, 0x1da92e48 )
-	ROM_LOAD_EVEN( "fp03.bin",   0x40000, 0x20000, 0xea0da0f1 )
- 	ROM_LOAD_ODD ( "fp01.bin",   0x40000, 0x20000, 0xe3ecbe86 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+  	ROM_LOAD16_BYTE( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
+  	ROM_LOAD16_BYTE( "fp00-3.bin", 0x00001, 0x20000, 0x1da92e48 )
+	ROM_LOAD16_BYTE( "fp03.bin",   0x40000, 0x20000, 0xea0da0f1 )
+ 	ROM_LOAD16_BYTE( "fp01.bin",   0x40001, 0x20000, 0xe3ecbe86 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
 	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
 
-	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
   	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 
-	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND2, 0 )	/* ADPCM samples */
 	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
 ROM_END
 

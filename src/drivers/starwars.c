@@ -80,8 +80,8 @@ WRITE_HANDLER( starwars_out_w )
 //			logerror("bank_switch_w, %02x\n", data);
 			if (data & 0x80)
 			{
-				cpu_setbank(1,&RAM[0x10000])
-				cpu_setbank(2,&RAM[0x1c000])
+				cpu_setbank(1,&RAM[0x10000]);
+				cpu_setbank(2,&RAM[0x1c000]);
 			}
 			else
 			{
@@ -167,7 +167,7 @@ void esb_init_machine (void)
 {
 	/* Set up the slapstic */
 	slapstic_init (101);
-	cpu_setOPbaseoverride (0,esb_setopbase);
+	memory_set_opbase_handler (0,esb_setopbase);
 	/* ASG - added the following: */
 	memcpy(slapstic_area, &slapstic_base[slapstic_bank() * 0x2000], 0x2000);
 
@@ -608,7 +608,7 @@ static const struct MachineDriver machine_driver_esb =
 ***************************************************************************/
 
 ROM_START( starwar1 )
-	ROM_REGION( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -626,7 +626,7 @@ ROM_START( starwar1 )
 	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 
 	/* Sound ROMS */
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
@@ -634,7 +634,7 @@ ROM_START( starwar1 )
 ROM_END
 
 ROM_START( starwars )
-	ROM_REGION( 0x12000, REGION_CPU1 )     /* 2 64k ROM spaces */
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(            0x10000, 0x2000 )
@@ -652,7 +652,7 @@ ROM_START( starwars )
 	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 
 	/* Sound ROMS */
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* Really only 32k, but it looks like 64K */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* Really only 32k, but it looks like 64K */
 	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(               0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
@@ -660,7 +660,7 @@ ROM_START( starwars )
 ROM_END
 
 ROM_START( esb )
-	ROM_REGION( 0x22000, REGION_CPU1 )     /* 64k for code and a buttload for the banked ROMs */
+	ROM_REGION( 0x22000, REGION_CPU1, 0 )     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
 	ROM_CONTINUE(             0x10000, 0x2000 )
@@ -684,7 +684,7 @@ ROM_START( esb )
 	ROM_LOAD( "136031.107",   0x0c00, 0x0400, 0xafbf6e01 ) /* PROM 3 */
 
 	/* Sound ROMS */
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "136031.113",   0x4000, 0x2000, 0x24ae3815 ) /* Sound ROM 0 */
 	ROM_CONTINUE(             0xc000, 0x2000 ) /* Copied again for */
 	ROM_LOAD( "136031.112",   0x6000, 0x2000, 0xca72d341 ) /* Sound ROM 1 */

@@ -653,15 +653,15 @@ WRITE_HANDLER( defender_bank_select_w )
 	/* if the bank maps into normal RAM, it represents I/O space */
 	if (bank_offset < 0x10000)
 	{
-		cpu_setbankhandler_r(2, defender_io_r);
-		cpu_setbankhandler_w(2, defender_io_w);
+		memory_set_bankhandler_r(2, 0, defender_io_r);
+		memory_set_bankhandler_w(2, 0, defender_io_w);
 	}
 
 	/* otherwise, it's ROM space */
 	else
 	{
-		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_w(2, MWA_ROM);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_w(2, 0, MWA_ROM);
 	}
 }
 

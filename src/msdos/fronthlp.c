@@ -102,37 +102,32 @@ void identify_rom(const char* name, int checksum, int length)
 
 	for (i = 0; drivers[i]; i++)
 	{
-		const struct RomModule *romp;
+		const struct RomModule *region, *rom;
 
-		romp = drivers[i]->rom;
-
-		while (romp && (romp->name || romp->offset || romp->length))
-		{
-			if (romp->name && romp->name != (char *)-1)
+		for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
-				if (checksum == romp->crc)
+				if (checksum == ROM_GETCRC(rom))
 				{
 					if (!silentident)
 					{
 						if (found != 0)
 							printf("             ");
-						printf("= %-12s  %s\n",romp->name,drivers[i]->description);
+						printf("= %-12s  %s\n",ROM_GETNAME(rom),drivers[i]->description);
 					}
 					found++;
 				}
-				if (BADCRC(checksum) == romp->crc)
+				if (BADCRC(checksum) == ROM_GETCRC(rom))
 				{
 					if (!silentident)
 					{
 						if (found != 0)
 							printf("             ");
-						printf("= (BAD) %-12s  %s\n",romp->name,drivers[i]->description);
+						printf("= (BAD) %-12s  %s\n",ROM_GETNAME(rom),drivers[i]->description);
 					}
 					found++;
 				}
 			}
-			romp++;
-		}
 	}
 	if (found == 0)
 	{
@@ -165,22 +160,19 @@ void identify_rom(const char* name, int checksum, int length)
 	int i;
 	printf("%s\n",name);
 
-	for (i = 0; drivers[i]; i++) {
-		const struct RomModule *romp;
+	for (i = 0; drivers[i]; i++)
+	{
+		const struct RomModule *region, *rom;
 
-		romp = drivers[i]->rom;
-
-		while (romp && (romp->name || romp->offset || romp->length))
-		{
-			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
-			{
-				printf("\t%s/%s %s, %s, %s\n",drivers[i]->name,romp->name,
-					drivers[i]->description,
-					drivers[i]->manufacturer,
-					drivers[i]->year);
-			}
-			romp++;
-		}
+		for (region = rom_first_region(drivers[i]; region; region = rom_next_region(region))
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+				if (checksum == ROM_GETCRC(romp))
+				{
+					printf("\t%s/%s %s, %s, %s\n",drivers[i]->name,ROM_GETNAME(rom),
+						drivers[i]->description,
+						drivers[i]->manufacturer,
+						drivers[i]->year);
+				}
 	}
 #endif
 }
@@ -471,9 +463,7 @@ int frontend_help (int argc, char **argv)
 			#else
 			printf("\nMESS currently supports the following systems:\n\n");
 			#endif
-			i = 0; j = 0;
-			while (drivers[i])
-			{
+			for (i = j = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
@@ -483,8 +473,6 @@ int frontend_help (int argc, char **argv)
 					if (!(j % 8)) printf("\n");
 					else printf("  ");
 				}
-				i++;
-			}
 			if (j % 8) printf("\n");
 			printf("\n");
 			if (j != i) printf("Total ROM sets displayed: %4d - ", j);
@@ -498,9 +486,7 @@ int frontend_help (int argc, char **argv)
 
 		case LIST_LISTFULL: /* games list with descriptions */
 			printf("Name:     Description:\n");
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
@@ -529,16 +515,12 @@ int frontend_help (int argc, char **argv)
 					}
 					printf("\"\n");
 				}
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_LISTSAMDIR: /* games list with samples directories */
 			printf("Name:     Samples dir:\n");
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
@@ -566,8 +548,6 @@ int frontend_help (int argc, char **argv)
 					}
 #endif
 				}
-				i++;
-			}
 			return 0;
 			break;
 
@@ -659,10 +639,7 @@ int frontend_help (int argc, char **argv)
 
 			/* Let's cycle through the drivers */
 
-			i = 0;
-
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
@@ -712,8 +689,6 @@ int frontend_help (int argc, char **argv)
 
 					printf("%s\n",drivers[i]->description);
 				}
-				i++;
-			}
 			return 0;
 			break;
 
@@ -787,10 +762,7 @@ int frontend_help (int argc, char **argv)
 			break;
 
 		case LIST_GAMELIST: /* GAMELIST.TXT */
-			i = 0;
-
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
@@ -902,15 +874,11 @@ int frontend_help (int argc, char **argv)
 
 					printf("| %-8s |\n",drivers[i]->name);
 				}
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_LISTGAMES: /* list games, production year, manufacturer */
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->description))
@@ -939,28 +907,21 @@ int frontend_help (int argc, char **argv)
 					}
 					printf("\n");
 				}
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_LISTCLONES: /* list clones */
 			printf("Name:    Clone of:\n");
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
 						(!strwildcmp(gamename,drivers[i]->name)
 								|| !strwildcmp(gamename,drivers[i]->clone_of->name)))
 					printf("%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_WRONGORIENTATION: /* list drivers which incorrectly use the orientation and visible area fields */
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
@@ -1021,14 +982,11 @@ int frontend_help (int argc, char **argv)
 								drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1,
 								drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1);
 				}
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_WRONGFPS: /* list drivers with too high frame rate */
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
@@ -1041,182 +999,108 @@ int frontend_help (int argc, char **argv)
 							drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1,
 							drivers[i]->drv->frames_per_second);
 				}
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_SOURCEFILE:
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if (!strwildcmp(gamename,drivers[i]->name))
 					printf("%-8s %s\n",drivers[i]->name,drivers[i]->source_file);
-				i++;
-			}
 			return 0;
 			break;
 
 		case LIST_LISTCRC: /* list all crc-32 */
-			i = 0;
-			while (drivers[i])
+			for (i = 0; drivers[i]; i++)
 			{
-				const struct RomModule *romp;
+				const struct RomModule *region, *rom;
 
-				romp = drivers[i]->rom;
-
-				while (romp && (romp->name || romp->offset || romp->length))
-				{
-					if (romp->name && romp->name != (char *)-1)
-						printf("%08x %-12s %s\n",romp->crc,romp->name,drivers[i]->description);
-
-					romp++;
-				}
-
-				i++;
+				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+						printf("%08x %-12s %s\n",ROM_GETCRC(rom),ROM_GETNAME(rom),drivers[i]->description);
 			}
 			return 0;
 			break;
 
 		case LIST_LISTDUPCRC: /* list duplicate crc-32 (with different ROM name) */
-			i = 0;
-			while (drivers[i])
+			for (i = 0; drivers[i]; i++)
 			{
-				const struct RomModule *romp;
+				const struct RomModule *region, *rom;
 
-				romp = drivers[i]->rom;
-
-				while (romp && (romp->name || romp->offset || romp->length))
-				{
-					if (romp->name && romp->name != (char *)-1 && romp->crc)
-					{
-						j = i+1;
-						while (drivers[j])
-						{
-							const struct RomModule *romp1;
-
-							romp1 = drivers[j]->rom;
-
-							while (romp1 && (romp1->name || romp1->offset || romp1->length))
+				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+						if (ROM_GETCRC(rom))
+							for (j = i + 1; drivers[j]; j++)
 							{
-								if (romp1->name && romp1->name != (char *)-1 &&
-										strcmp(romp->name,romp1->name) &&
-										romp1->crc == romp->crc)
-								{
-									printf("%08x %-12s %-8s <-> %-12s %-8s\n",romp->crc,
-											romp->name,drivers[i]->name,
-											romp1->name,drivers[j]->name);
-								}
+								const struct RomModule *region1, *rom1;
 
-								romp1++;
+								for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+									for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+										if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+										{
+											printf("%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom),
+													ROM_GETNAME(rom),drivers[i]->name,
+													ROM_GETNAME(rom1),drivers[j]->name);
+										}
 							}
-
-							j++;
-						}
-					}
-
-					romp++;
-				}
-
-				i++;
 			}
 			return 0;
 			break;
 
 
 		case LIST_WRONGMERGE: /* list duplicate crc-32 with different ROM name in clone sets */
-			i = 0;
-			while (drivers[i])
+			for (i = 0; drivers[i]; i++)
 			{
-				const struct RomModule *romp;
+				const struct RomModule *region, *rom;
 
-				romp = drivers[i]->rom;
-
-				while (romp && (romp->name || romp->offset || romp->length))
-				{
-					if (romp->name && romp->name != (char *)-1 && romp->crc)
-					{
-						j = 0;
-						while (drivers[j])
-						{
-							if (j != i &&
-								drivers[j]->clone_of &&
-								(drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 &&
-								(drivers[j]->clone_of == drivers[i] ||
-								(i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
-							{
-								const struct RomModule *romp1;
-								int match;
-
-
-								romp1 = drivers[j]->rom;
-								match = 0;
-
-								while (romp1 && (romp1->name || romp1->offset || romp1->length))
+				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+						if (ROM_GETCRC(rom))
+							for (j = 0; drivers[j]; j++)
+								if (j != i &&
+									drivers[j]->clone_of &&
+									(drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 &&
+									(drivers[j]->clone_of == drivers[i] ||
+									(i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
 								{
-									if (romp1->name && romp1->name != (char *)-1 &&
-											!strcmp(romp->name,romp1->name))
-									{
-										match = 1;
-										break;
-									}
+									const struct RomModule *region1, *rom1;
+									int match = 0;
 
-									romp1++;
+									for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+										for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+											if (!strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)))
+											{
+												match = 1;
+												break;
+											}
+
+									if (match == 0)
+										for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+												{
+													printf("%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom),
+															ROM_GETNAME(rom),drivers[i]->name,
+															ROM_GETNAME(rom1),drivers[j]->name);
+												}
 								}
-
-								if (match == 0)
-								{
-									romp1 = drivers[j]->rom;
-
-									while (romp1 && (romp1->name || romp1->offset || romp1->length))
-									{
-										if (romp1->name && romp1->name != (char *)-1 &&
-												strcmp(romp->name,romp1->name) &&
-												romp1->crc == romp->crc)
-										{
-											printf("%08x %-12s %-8s <-> %-12s %-8s\n",romp->crc,
-													romp->name,drivers[i]->name,
-													romp1->name,drivers[j]->name);
-										}
-
-										romp1++;
-									}
-								}
-							}
-							j++;
-						}
-					}
-
-					romp++;
-				}
-
-				i++;
 			}
 			return 0;
 			break;
 
 		case LIST_LISTROMSIZE: /* I used this for statistical analysis */
-			i = 0;
-			while (drivers[i])
-			{
+			for (i = 0; drivers[i]; i++)
 				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 				{
-					const struct RomModule *romp;
+					const struct RomModule *region, *rom, *chunk;
+
 					j = 0;
+					for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+						for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+							for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+								j += ROM_GETLENGTH(chunk);
 
-					romp = drivers[i]->rom;
-
-					while (romp && (romp->name || romp->offset || romp->length))
-					{
-						j += romp->length & ~ROMFLAG_MASK;
-
-						romp++;
-					}
 					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
 				}
-
-				i++;
-			}
 			return 0;
 			break;
 

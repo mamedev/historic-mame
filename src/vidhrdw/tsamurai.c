@@ -9,7 +9,8 @@
 ** prototypes
 */
 WRITE_HANDLER( tsamurai_bgcolor_w );
-WRITE_HANDLER( tsamurai_textbank_w );
+WRITE_HANDLER( tsamurai_textbank1_w );
+WRITE_HANDLER( tsamurai_textbank2_w );
 WRITE_HANDLER( tsamurai_scrolly_w );
 WRITE_HANDLER( tsamurai_scrollx_w );
 
@@ -25,7 +26,7 @@ int tsamurai_vh_start( void );
 */
 unsigned char *tsamurai_videoram;
 static int bgcolor;
-static int textbank;
+static int textbank1, textbank2;
 
 static struct tilemap *background, *foreground;
 
@@ -64,6 +65,7 @@ void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 		color_prom++;
 	}
+
 }
 
 
@@ -76,14 +78,17 @@ void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colorta
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attributes = tsamurai_videoram[2*tile_index+1];
-	int color = (attributes&0x1f);
-	SET_TILE_INFO(0,tsamurai_videoram[2*tile_index]+4*(attributes&0xc0),color )
+	int tile_number = tsamurai_videoram[2*tile_index];
+	tile_number += (( attributes & 0xc0 ) >> 6 ) * 256;	 /* legacy */
+	tile_number += (( attributes & 0x20 ) >> 5 ) * 1024; /* Mission 660 add-on*/
+	SET_TILE_INFO(0,tile_number,attributes & 0x1f)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int tile_number = videoram[tile_index];
-	if( textbank&1 ) tile_number += 256;
+	if (textbank1 & 0x01) tile_number += 256; /* legacy */
+	if (textbank2 & 0x01) tile_number += 512; /* Mission 660 add-on */
 	SET_TILE_INFO(1,tile_number,colorram[((tile_index&0x1f)*2)+1] & 0x1f )
 }
 
@@ -104,6 +109,7 @@ int tsamurai_vh_start(void)
 
 	tilemap_set_transparent_pen(background,0);
 	tilemap_set_transparent_pen(foreground,0);
+
 	return 0;
 }
 
@@ -129,11 +135,20 @@ WRITE_HANDLER( tsamurai_bgcolor_w )
 	bgcolor = data;
 }
 
-WRITE_HANDLER( tsamurai_textbank_w )
+WRITE_HANDLER( tsamurai_textbank1_w )
 {
-	if( textbank!=data )
+	if( textbank1!=data )
 	{
-		textbank = data;
+		textbank1 = data;
+		tilemap_mark_all_tiles_dirty( foreground );
+	}
+}
+
+WRITE_HANDLER( tsamurai_textbank2_w )
+{
+	if( textbank2!=data )
+	{
+		textbank2 = data;
 		tilemap_mark_all_tiles_dirty( foreground );
 	}
 }
@@ -222,6 +237,16 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
+	int i;
+
+/* Do the column scroll used for the "660" logo on the title screen */
+	tilemap_set_scroll_cols(foreground, 32);
+	for (i = 0 ; i < 32 ; i++)
+	{
+		tilemap_set_scrolly(foreground, i, colorram[i*2]);
+	}
+/* end of column scroll code */
+
 	tilemap_update( ALL_TILEMAPS );
 
 	/*
@@ -232,10 +257,8 @@ void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		Note that the background color register isn't well understood
 		(screenshots would be helpful)
 	*/
-	fillbitmap( bitmap, Machine->pens[bgcolor], 0 );
-	tilemap_draw( bitmap, background, 0 ,0);
-
-	draw_sprites( bitmap );
-
-	tilemap_draw( bitmap, foreground, 0 ,0);
+	fillbitmap(bitmap,Machine->pens[bgcolor],&Machine->visible_area);
+	tilemap_draw(bitmap,background,0,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,foreground,0,0);
 }

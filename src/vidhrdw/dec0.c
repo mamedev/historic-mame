@@ -1337,7 +1337,7 @@ int dec0_nodma_vh_start (void)
 int dec0_vh_start (void)
 {
 	dec0_nodma_vh_start();
-	dec0_spriteram=malloc(0x400);
+	dec0_spriteram=malloc(0x800);
 
 	return 0;
 }

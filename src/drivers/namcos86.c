@@ -1293,36 +1293,36 @@ MACHINE_DRIVER( wndrmomo, 2048_2048_512 )
 ***************************************************************************/
 
 ROM_START( hopmappy )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "hm1",         0x08000, 0x8000, 0x1a83914e )
 	/* 9d empty */
 
 	/* the CPU1 ROM expansion board is not present in this game */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "hm2",         0xc000, 0x4000, 0xc46cda65 )
 	/* 12d empty */
 
-	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm6",         0x00000, 0x04000, 0xfd0e8887 )	/* plane 1,2 */
 	/* no plane 3 */
 
-	ROM_REGION( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm5",         0x00000, 0x04000, 0x9c4f31ae )	/* plane 1,2 */
 	/* no plane 3 */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "hm4",         0x00000, 0x8000, 0x78719c52 )
 	/* 12k/l/m/p/r/t/u empty */
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "hm11.bpr",    0x0000, 0x0200, 0xcc801088 )	/* red & green components */
 	ROM_LOAD( "hm12.bpr",    0x0200, 0x0200, 0xa1cb71c5 )	/* blue component */
 	ROM_LOAD( "hm13.bpr",    0x0400, 0x0800, 0xe362d613 )	/* tiles colortable */
 	ROM_LOAD( "hm14.bpr",    0x0c00, 0x0800, 0x678252b4 )	/* sprites colortable */
 	ROM_LOAD( "hm15.bpr",    0x1400, 0x0020, 0x475bf500 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "hm3",         0x08000, 0x2000, 0x6496e1db )
 	ROM_LOAD( "pl1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1330,37 +1330,37 @@ ROM_START( hopmappy )
 ROM_END
 
 ROM_START( skykiddx )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "sk3_1b.9c", 0x08000, 0x8000, 0x767b3514 )
 	ROM_LOAD( "sk3_2.9d",  0x10000, 0x8000, 0x74b8f8e2 )
 
 	/* the CPU1 ROM expansion board is not present in this game */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "sk3_3.12c", 0x8000, 0x8000, 0x6d1084c4 )
 	/* 12d empty */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_9.7r",  0x00000, 0x08000, 0x48675b17 )	/* plane 1,2 */
 	ROM_LOAD( "sk3_10.7s", 0x08000, 0x04000, 0x7418465a )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_7.4r",  0x00000, 0x08000, 0x4036b735 )	/* plane 1,2 */
 	ROM_LOAD( "sk3_8.4s",  0x08000, 0x04000, 0x044bfd21 )	/* plane 3 */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_5.12h",  0x00000, 0x8000, 0x5c7d4399 )
 	ROM_LOAD( "sk3_6.12k",  0x08000, 0x8000, 0xc908a3b2 )
 	/* 12l/m/p/r/t/u empty */
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "sk3-1.3r", 0x0000, 0x0200, 0x9e81dedd )	/* red & green components */
 	ROM_LOAD( "sk3-2.3s", 0x0200, 0x0200, 0xcbfec4dd )	/* blue component */
 	ROM_LOAD( "sk3-3.4v", 0x0400, 0x0800, 0x81714109 )	/* tiles colortable */
 	ROM_LOAD( "sk3-4.5v", 0x0c00, 0x0800, 0x1bf25acc )	/* sprites colortable */
 	ROM_LOAD( "sk3-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "sk3_4.6b",    0x08000, 0x4000, 0xe6cae2d6 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1368,37 +1368,37 @@ ROM_START( skykiddx )
 ROM_END
 
 ROM_START( skykiddo )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "sk3-1.9c",  0x08000, 0x8000, 0x5722a291 )
 	ROM_LOAD( "sk3_2.9d",  0x10000, 0x8000, 0x74b8f8e2 )
 
 	/* the CPU1 ROM expansion board is not present in this game */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "sk3_3.12c", 0x8000, 0x8000, 0x6d1084c4 )
 	/* 12d empty */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_9.7r",  0x00000, 0x08000, 0x48675b17 )	/* plane 1,2 */
 	ROM_LOAD( "sk3_10.7s", 0x08000, 0x04000, 0x7418465a )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_7.4r",  0x00000, 0x08000, 0x4036b735 )	/* plane 1,2 */
 	ROM_LOAD( "sk3_8.4s",  0x08000, 0x04000, 0x044bfd21 )	/* plane 3 */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk3_5.12h",  0x00000, 0x8000, 0x5c7d4399 )
 	ROM_LOAD( "sk3_6.12k",  0x08000, 0x8000, 0xc908a3b2 )
 	/* 12l/m/p/r/t/u empty */
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "sk3-1.3r", 0x0000, 0x0200, 0x9e81dedd )	/* red & green components */
 	ROM_LOAD( "sk3-2.3s", 0x0200, 0x0200, 0xcbfec4dd )	/* blue component */
 	ROM_LOAD( "sk3-3.4v", 0x0400, 0x0800, 0x81714109 )	/* tiles colortable */
 	ROM_LOAD( "sk3-4.5v", 0x0c00, 0x0800, 0x1bf25acc )	/* sprites colortable */
 	ROM_LOAD( "sk3-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "sk3_4.6b",    0x08000, 0x4000, 0xe6cae2d6 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
@@ -1406,25 +1406,25 @@ ROM_START( skykiddo )
 ROM_END
 
 ROM_START( roishtar )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "ri1-1c.9c", 0x08000, 0x8000, 0x14acbacb )
 	ROM_LOAD( "ri1-2.9d",  0x14000, 0x2000, 0xfcd58d91 )
 
 	/* the CPU1 ROM expansion board is not present in this game */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "ri1-3.12c", 0x8000, 0x8000, 0xa39829f7 )
 	/* 12d empty */
 
-	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ri1-14.7r", 0x00000, 0x04000, 0xde8154b4 )	/* plane 1,2 */
 	ROM_LOAD( "ri1-15.7s", 0x04000, 0x02000, 0x4298822b )	/* plane 3 */
 
-	ROM_REGION( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ri1-12.4r", 0x00000, 0x04000, 0x557e54d3 )	/* plane 1,2 */
 	ROM_LOAD( "ri1-13.4s", 0x04000, 0x02000, 0x9ebe8e32 )	/* plane 3 */
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "ri1-5.12h",  0x00000, 0x8000, 0x46b59239 )
 	ROM_LOAD( "ri1-6.12k",  0x08000, 0x8000, 0x94d9ef48 )
 	ROM_LOAD( "ri1-7.12l",  0x10000, 0x8000, 0xda802b59 )
@@ -1434,14 +1434,14 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-11.12t", 0x30000, 0x8000, 0xfb6bc533 )
 	/* 12u empty */
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "ri1-1.3r", 0x0000, 0x0200, 0x29cd0400 )	/* red & green components */
 	ROM_LOAD( "ri1-2.3s", 0x0200, 0x0200, 0x02fd278d )	/* blue component */
 	ROM_LOAD( "ri1-3.4v", 0x0400, 0x0800, 0xcbd7e53f )	/* tiles colortable */
 	ROM_LOAD( "ri1-4.5v", 0x0c00, 0x0800, 0x22921617 )	/* sprites colortable */
 	ROM_LOAD( "ri1-5.6u", 0x1400, 0x0020, 0xe2188075 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "ri1-4.6b",    0x00000, 0x4000, 0x552172b8 )
 	ROM_CONTINUE(            0x08000, 0x4000 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
@@ -1450,29 +1450,29 @@ ROM_START( roishtar )
 ROM_END
 
 ROM_START( genpeitd )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "gt1-1b.9c", 0x08000, 0x8000, 0x75396194 )
 	/* 9d empty */
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* bank switched data for CPU1 */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "gt1-10b.f1",  0x00000, 0x10000, 0x5721ad0d )
 	/* h1 empty */
 	/* k1 empty */
 	/* m1 empty */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "gt1-2.12c", 0xc000, 0x4000, 0x302f2cb6 )
 	/* 12d empty */
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gt1-7.7r", 0x00000, 0x10000, 0xea77a211 )	/* plane 1,2 */
 	ROM_LOAD( "gt1-6.7s", 0x10000, 0x08000, 0x1b128a2e )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gt1-5.4r", 0x00000, 0x08000, 0x44d58b06 )	/* plane 1,2 */
 	ROM_LOAD( "gt1-4.4s", 0x08000, 0x04000, 0xdb8d45b0 )	/* plane 3 */
 
-	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gt1-11.12h",  0x00000, 0x20000, 0x3181a5fe )
 	ROM_LOAD( "gt1-12.12k",  0x20000, 0x20000, 0x76b729ab )
 	ROM_LOAD( "gt1-13.12l",  0x40000, 0x20000, 0xe332a36e )
@@ -1482,18 +1482,18 @@ ROM_START( genpeitd )
 	ROM_LOAD( "gt1-8.12t",   0xc0000, 0x10000, 0xad7bc770 )
 	ROM_LOAD( "gt1-9.12u",   0xe0000, 0x10000, 0xd95a5fd7 )
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "gt1-1.3r", 0x0000, 0x0200, 0x2f0ddddb )	/* red & green components */
 	ROM_LOAD( "gt1-2.3s", 0x0200, 0x0200, 0x87d27025 )	/* blue component */
 	ROM_LOAD( "gt1-3.4v", 0x0400, 0x0800, 0xc178de99 )	/* tiles colortable */
 	ROM_LOAD( "gt1-4.5v", 0x0c00, 0x0800, 0x9f48ef17 )	/* sprites colortable */
 	ROM_LOAD( "gt1-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "gt1-3.6b",    0x04000, 0x8000, 0x315cd988 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
-	ROM_REGION( 0x80000, REGION_SOUND1 ) /* PCM samples for Hitachi CPU */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* PCM samples for Hitachi CPU */
 	ROM_LOAD( "gt1-17.f3",  0x00000, 0x20000, 0x26181ff8 )
 	ROM_LOAD( "gt1-18.h3",  0x20000, 0x20000, 0x7ef9e5ea )
 	ROM_LOAD( "gt1-19.k3",  0x40000, 0x20000, 0x38e11f6c )
@@ -1501,29 +1501,29 @@ ROM_START( genpeitd )
 ROM_END
 
 ROM_START( rthunder )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "rt3-1b.9c",  0x8000, 0x8000, 0x7d252a1b )
 	/* 9d empty */
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* bank switched data for CPU1 */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "rt1-17.f1",  0x00000, 0x10000, 0x766af455 )
 	ROM_LOAD( "rt1-18.h1",  0x10000, 0x10000, 0x3f9f2f5d )
 	ROM_LOAD( "rt1-19.k1",  0x20000, 0x10000, 0xc16675e9 )
 	ROM_LOAD( "rt1-20.m1",  0x30000, 0x10000, 0xc470681b )
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "rt3-2b.12c", 0x08000, 0x8000, 0xa7ea46ee )
 	ROM_LOAD( "rt3-3.12d",  0x10000, 0x8000, 0xa13f601c )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-7.7r",  0x00000, 0x10000, 0xa85efa39 )	/* plane 1,2 */
 	ROM_LOAD( "rt1-8.7s",  0x10000, 0x08000, 0xf7a95820 )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-5.4r",  0x00000, 0x08000, 0xd0fc470b )	/* plane 1,2 */
 	ROM_LOAD( "rt1-6.4s",  0x08000, 0x04000, 0x6b57edb2 )	/* plane 3 */
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-9.12h",  0x00000, 0x10000, 0x8e070561 )
 	ROM_LOAD( "rt1-10.12k", 0x10000, 0x10000, 0xcb8fb607 )
 	ROM_LOAD( "rt1-11.12l", 0x20000, 0x10000, 0x2bdf5ed9 )
@@ -1533,18 +1533,18 @@ ROM_START( rthunder )
 	ROM_LOAD( "rt1-15.12t", 0x60000, 0x10000, 0x1d8bf2ca )
 	ROM_LOAD( "rt1-16.12u", 0x70000, 0x10000, 0x1bbcf37b )
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7124e.3r", 0x0000, 0x0200, 0x8ef3bb9d )	/* red & green components */
 	ROM_LOAD( "mb7116e.3s", 0x0200, 0x0200, 0x6510a8f2 )	/* blue component */
 	ROM_LOAD( "mb7138h.4v", 0x0400, 0x0800, 0x95c7d944 )	/* tiles colortable */
 	ROM_LOAD( "mb7138h.6v", 0x0c00, 0x0800, 0x1391fec9 )	/* sprites colortable */
 	ROM_LOAD( "mb7112e.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "rt1-4.6b",    0x04000, 0x8000, 0x00cf293f )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 ) /* PCM samples for Hitachi CPU */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* PCM samples for Hitachi CPU */
 	ROM_LOAD( "rt1-21.f3",  0x00000, 0x10000, 0x454968f3 )
 	ROM_LOAD( "rt1-22.h3",  0x10000, 0x10000, 0xfe963e72 )
 	/* k3 empty */
@@ -1552,29 +1552,29 @@ ROM_START( rthunder )
 ROM_END
 
 ROM_START( rthundro )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "r1",         0x8000, 0x8000, 0x6f8c1252 )
 	/* 9d empty */
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* bank switched data for CPU1 */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "rt1-17.f1",  0x00000, 0x10000, 0x766af455 )
 	ROM_LOAD( "rt1-18.h1",  0x10000, 0x10000, 0x3f9f2f5d )
 	ROM_LOAD( "r19",        0x20000, 0x10000, 0xfe9343b0 )
 	ROM_LOAD( "r20",        0x30000, 0x10000, 0xf8518d4f )
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "r2",        0x08000, 0x8000, 0xf22a03d8 )
 	ROM_LOAD( "r3",        0x10000, 0x8000, 0xaaa82885 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-7.7r",  0x00000, 0x10000, 0xa85efa39 )	/* plane 1,2 */
 	ROM_LOAD( "rt1-8.7s",  0x10000, 0x08000, 0xf7a95820 )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-5.4r",  0x00000, 0x08000, 0xd0fc470b )	/* plane 1,2 */
 	ROM_LOAD( "rt1-6.4s",  0x08000, 0x04000, 0x6b57edb2 )	/* plane 3 */
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "rt1-9.12h",  0x00000, 0x10000, 0x8e070561 )
 	ROM_LOAD( "rt1-10.12k", 0x10000, 0x10000, 0xcb8fb607 )
 	ROM_LOAD( "rt1-11.12l", 0x20000, 0x10000, 0x2bdf5ed9 )
@@ -1584,18 +1584,18 @@ ROM_START( rthundro )
 	ROM_LOAD( "rt1-15.12t", 0x60000, 0x10000, 0x1d8bf2ca )
 	ROM_LOAD( "rt1-16.12u", 0x70000, 0x10000, 0x1bbcf37b )
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7124e.3r", 0x0000, 0x0200, 0x8ef3bb9d )	/* red & green components */
 	ROM_LOAD( "mb7116e.3s", 0x0200, 0x0200, 0x6510a8f2 )	/* blue component */
 	ROM_LOAD( "mb7138h.4v", 0x0400, 0x0800, 0x95c7d944 )	/* tiles colortable */
 	ROM_LOAD( "mb7138h.6v", 0x0c00, 0x0800, 0x1391fec9 )	/* sprites colortable */
 	ROM_LOAD( "mb7112e.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "r4",          0x04000, 0x8000, 0x0387464f )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 ) /* PCM samples for Hitachi CPU */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* PCM samples for Hitachi CPU */
 	ROM_LOAD( "rt1-21.f3",  0x00000, 0x10000, 0x454968f3 )
 	ROM_LOAD( "rt1-22.h3",  0x10000, 0x10000, 0xfe963e72 )
 	/* k3 empty */
@@ -1603,29 +1603,29 @@ ROM_START( rthundro )
 ROM_END
 
 ROM_START( wndrmomo )
-	ROM_REGION( 0x18000, REGION_CPU1 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "wm1-1.9c", 0x8000, 0x8000, 0x34b50bf0 )
 	/* 9d empty */
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* bank switched data for CPU1 */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "wm1-16.f1", 0x00000, 0x10000, 0xe565f8f3 )
 	/* h1 empty */
 	/* k1 empty */
 	/* m1 empty */
 
-	ROM_REGION( 0x18000, REGION_CPU2 )
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
 	ROM_LOAD( "wm1-2.12c", 0x8000, 0x8000, 0x3181efd0 )
 	/* 12d empty */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "wm1-6.7r", 0x00000, 0x08000, 0x93955fbb )	/* plane 1,2 */
 	ROM_LOAD( "wm1-7.7s", 0x08000, 0x04000, 0x7d662527 )	/* plane 3 */
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "wm1-4.4r", 0x00000, 0x08000, 0xbbe67836 )	/* plane 1,2 */
 	ROM_LOAD( "wm1-5.4s", 0x08000, 0x04000, 0xa81b481f )	/* plane 3 */
 
-	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "wm1-8.12h",  0x00000, 0x10000, 0x14f52e72 )
 	ROM_LOAD( "wm1-9.12k",  0x10000, 0x10000, 0x16f8cdae )
 	ROM_LOAD( "wm1-10.12l", 0x20000, 0x10000, 0xbfbc1896 )
@@ -1635,18 +1635,18 @@ ROM_START( wndrmomo )
 	ROM_LOAD( "wm1-14.12t", 0x60000, 0x10000, 0x2ae21a53 )
 	ROM_LOAD( "wm1-15.12u", 0x70000, 0x10000, 0xb5c98be0 )
 
-	ROM_REGION( 0x1420, REGION_PROMS )
+	ROM_REGION( 0x1420, REGION_PROMS, 0 )
 	ROM_LOAD( "wm1-1.3r", 0x0000, 0x0200, 0x1af8ade8 )	/* red & green components */
 	ROM_LOAD( "wm1-2.3s", 0x0200, 0x0200, 0x8694e213 )	/* blue component */
 	ROM_LOAD( "wm1-3.4v", 0x0400, 0x0800, 0x2ffaf9a4 )	/* tiles colortable */
 	ROM_LOAD( "wm1-4.5v", 0x0c00, 0x0800, 0xf4e83e0b )	/* sprites colortable */
 	ROM_LOAD( "wm1-5.6u", 0x1400, 0x0020, 0xe4130804 )	/* tile address decoder (used at runtime) */
 
-	ROM_REGION( 0x10000, REGION_CPU3 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "wm1-3.6b",    0x04000, 0x8000, 0x55f01df7 )
 	ROM_LOAD( "rt1-mcu.bin", 0x0f000, 0x1000, 0x6ef08fb3 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 ) /* PCM samples for Hitachi CPU */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* PCM samples for Hitachi CPU */
 	ROM_LOAD( "wm1-17.f3", 0x00000, 0x10000, 0xbea3c318 )
 	ROM_LOAD( "wm1-18.h3", 0x10000, 0x10000, 0x6d73bcc5 )
 	ROM_LOAD( "wm1-19.k3", 0x20000, 0x10000, 0xd288e912 )

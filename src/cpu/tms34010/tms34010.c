@@ -763,7 +763,7 @@ static void check_interrupt(void)
 		/* leap to the vector */
 		RESET_ST();
 		PC = RLONG(0xfffffee0);
-		change_pc29lew(PC);
+		change_pc29lew(TOBYTE(PC));
 		return;
 	}
 
@@ -816,7 +816,7 @@ static void check_interrupt(void)
 		PUSH(GET_ST());
 		RESET_ST();
 		PC = RLONG(vector);
-		change_pc29lew(PC);
+		change_pc29lew(TOBYTE(PC));
 
 		/* call the callback for externals */
 		if (irqline >= 0)
@@ -843,7 +843,7 @@ void tms34010_reset(void *param)
 
 	/* fetch the initial PC and reset the state */
 	PC = RLONG(0xffffffe0);
-	change_pc29lew(PC)
+	change_pc29lew(TOBYTE(PC));
 	RESET_ST();
 
 	/* reset the host interface */
@@ -941,7 +941,7 @@ void tms34010_set_context(void *src)
 		for (i = 0; i < 15; i++)
 			BREG(BINDEX(i)) = state.flat_bregs[i];
 	}
-	change_pc29lew(PC)
+	change_pc29lew(TOBYTE(PC));
 	check_interrupt();
 }
 
@@ -957,7 +957,7 @@ void tms34020_set_context(void *src)
 		for (i = 0; i < 15; i++)
 			BREG(BINDEX(i)) = state.flat_bregs[i];
 	}
-	change_pc29lew(PC)
+	change_pc29lew(TOBYTE(PC));
 	check_interrupt();
 }
 
@@ -986,7 +986,7 @@ unsigned tms34020_get_pc(void)
 void tms34010_set_pc(unsigned val)
 {
 	PC = val;
-	change_pc29lew(PC)
+	change_pc29lew(TOBYTE(PC));
 }
 
 void tms34020_set_pc(unsigned val)
@@ -1248,7 +1248,7 @@ int tms34010_execute(int cycles)
 
 	/* execute starting now */
 	tms34010_ICount = cycles;
-	change_pc29lew(PC);
+	change_pc29lew(TOBYTE(PC));
 	do
 	{
 		#ifdef	MAME_DEBUG
@@ -1994,7 +1994,7 @@ void tms34010_state_load(int cpunum, void *f)
 
 	osd_fread(f,context,sizeof(state));
 	osd_fread(f,&tms34010_ICount,sizeof(tms34010_ICount));
-	change_pc29lew(PC);
+	change_pc29lew(TOBYTE(PC));
 	SET_FW();
 	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
 	set_raster_op(&state);
@@ -2035,7 +2035,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 			/* swap to the target cpu */
 			oldcpu = cpu_getactivecpu();
-			memorycontextswap(cpunum);
+			memory_set_context(cpunum);
 
 			/* write to the address */
 			host_interface_cpu = cpunum;
@@ -2053,7 +2053,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 			}
 
 			/* swap back */
-			memorycontextswap(oldcpu);
+			memory_set_context(oldcpu);
 			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
 			(*interface->set_op_base)((*interface->get_pc)());
 			break;
@@ -2099,7 +2099,7 @@ int tms34010_host_r(int cpunum, int reg)
 
 			/* swap to the target cpu */
 			oldcpu = cpu_getactivecpu();
-			memorycontextswap(cpunum);
+			memory_set_context(cpunum);
 
 			/* read from the address */
 			host_interface_cpu = cpunum;
@@ -2118,7 +2118,7 @@ int tms34010_host_r(int cpunum, int reg)
 			}
 
 			/* swap back */
-			memorycontextswap(oldcpu);
+			memory_set_context(oldcpu);
 			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
 			(*interface->set_op_base)((*interface->get_pc)());
 			return result;

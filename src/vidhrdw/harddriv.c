@@ -18,10 +18,8 @@
 #define ENABLE_RASTERIZER_OPTS		1
 
 #ifdef LSB_FIRST
-#define LSB_BYTE_XOR(a) (a)
 #define MASK(n)			(0x000000ffUL << ((n) * 8))
 #else
-#define LSB_BYTE_XOR(a) ((a) ^ 1)
 #define MASK(n)			(0xff000000UL >> (((n) ^ 1) * 8))
 #endif
 
@@ -710,13 +708,13 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			if (pattern == 0xffffffff)										\
 			{																\
 				for (x = sx; x < ex; x++)									\
-					dst[LSB_BYTE_XOR(x)] = color;							\
+					dst[BYTE_XOR_LE(x)] = color;							\
 			}																\
 			else															\
 			{																\
 				for (x = sx; x < ex; x++)									\
 					if (pattern & (((1 << BPP) - 1) << ((x * BPP) & 31)))	\
-						dst[LSB_BYTE_XOR(x)] = color;						\
+						dst[BYTE_XOR_LE(x)] = color;						\
 			}																\
 			cycles_to_eat += 11 + 2 * (ex - sx) / (8 / BPP);				\
 		}																	\

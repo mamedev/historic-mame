@@ -400,175 +400,175 @@ static const struct MachineDriver machine_driver_bootleg =
 ***************************************************************************/
 
 ROM_START( arkanoid )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a75_01-1.rom", 0x0000, 0x8000, 0x5bcda3b0 )
 	ROM_LOAD( "a75_11.rom",   0x8000, 0x8000, 0xeafd7191 )
 
-	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "arkanoid.uc",  0x0000, 0x0800, 0x515d77b6 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arknoidu )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a75-19.bin",   0x0000, 0x8000, 0xd3ad37d7 )
 	ROM_LOAD( "a75-18.bin",   0x8000, 0x8000, 0xcdc08301 )
 
-	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "arknoidu.uc",  0x0000, 0x0800, BADCRC( 0xde518e47 ) )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkatour )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "t_ark1.bin",   0x0000, 0x8000, 0xe3b8faf5 )
 	ROM_LOAD( "t_ark2.bin",   0x8000, 0x8000, 0x326aca4d )
 
-	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "arkatour.uc",  0x0000, 0x0800, BADCRC( 0xd3249559 ) )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "t_ark3.bin",   0x00000, 0x8000, 0x5ddea3cf )
 	ROM_LOAD( "t_ark4.bin",   0x08000, 0x8000, 0x5fcf2e85 )
 	ROM_LOAD( "t_ark5.bin",   0x10000, 0x8000, 0x7b76b192 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arknoidj )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a75-21.rom",   0x0000, 0x8000, 0xbf0455fc )
 	ROM_LOAD( "a75-22.rom",   0x8000, 0x8000, 0x3a2688d3 )
 
-	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "arknoidj.uc",  0x0000, 0x0800, BADCRC( 0x0a4abef6 ) )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkbl2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "e1.6d",        0x0000, 0x8000, 0xdd4f2b72 )
 	ROM_LOAD( "e2.6f",        0x8000, 0x8000, 0xbbc33ceb )
 
-	ROM_REGION( 0x0800, REGION_CPU2 )	/* 8k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "68705p3.6i",   0x0000, 0x0800, 0x389a8cfb )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkbl3 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "arkanunk.1",   0x0000, 0x8000, 0xb0f73900 )
 	ROM_LOAD( "arkanunk.2",   0x8000, 0x8000, 0x9827f297 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkatayt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "arkanoid.1",   0x0000, 0x8000, 0x6e0a2b6f )
 	ROM_LOAD( "arkanoid.2",   0x8000, 0x8000, 0x5a97dd56 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkblock )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "block01.bin",  0x0000, 0x8000, 0x5be667e1 )
 	ROM_LOAD( "block02.bin",  0x8000, 0x8000, 0x4f883ef1 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkbloc2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ark-6.bin",    0x0000, 0x8000, 0x0be015de )
 	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
 ROM_START( arkangc )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "arkgc.1",      0x0000, 0x8000, 0xc54232e6 )
 	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, 0x9f0d4754 )
 
-	ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION( 0x0600, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */

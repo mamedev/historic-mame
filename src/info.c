@@ -269,63 +269,49 @@ static void print_game_input(FILE* out, const struct GameDriver* game) {
 	fprintf(out, L2E L1N);
 }
 
-static void print_game_rom(FILE* out, const struct GameDriver* game) {
-	const struct RomModule *rom = game->rom, *p_rom = NULL;
+static void print_game_rom(FILE* out, const struct GameDriver* game)
+{
+	const struct RomModule *region, *rom, *chunk;
+	const struct RomModule *pregion, *prom = NULL;
 	extern struct GameDriver driver_0;
 
-	if (!rom) return;
+	if (!game->rom) return;
 
-	if (game->clone_of && game->clone_of != &driver_0) {
+	if (game->clone_of && game->clone_of != &driver_0)
 		fprintf(out, L1P "romof %s" L1N, game->clone_of->name);
-	}
 
-	while (rom->name || rom->offset || rom->length) {
-		int region = rom->crc;
-		rom++;
-
-		while (rom->length) {
+	for (region = rom_first_region(game); region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+		{
 			char name[100];
 			int offset, length, crc, in_parent;
 
-			sprintf(name,rom->name,game->name);
-			offset = rom->offset;
-			crc = rom->crc;
+			sprintf(name,ROM_GETNAME(rom),game->name);
+			offset = ROM_GETOFFSET(rom);
+			crc = ROM_GETCRC(rom);
 
 			in_parent = 0;
 			length = 0;
-			do {
-				if (rom->name == (char *)-1)
-					length = 0; /* restart */
-				length += rom->length & ~ROMFLAG_MASK;
-				rom++;
-			} while (rom->length && (rom->name == 0 || rom->name == (char *)-1));
+			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+				length += ROM_GETLENGTH(chunk);
 
-			if(game->clone_of && crc)
+			if (crc && game->clone_of)
 			{
-				p_rom = game->clone_of->rom;
-				if (p_rom)
-					while( !in_parent && (p_rom->name || p_rom->offset || p_rom->length) )
-					{
-						p_rom++;
-						while(!in_parent && p_rom->length) {
-							do {
-								if (p_rom->crc == crc)
-									in_parent = 1;
-								else
-									p_rom++;
-							} while (!in_parent && p_rom->length && (p_rom->name == 0 || p_rom->name == (char *)-1));
-						}
-					}
+
+				for (pregion = rom_first_region(game->clone_of); pregion && !in_parent; pregion = rom_next_region(pregion))
+					for (prom = rom_first_file(pregion); prom && !in_parent; prom = rom_next_file(prom))
+						if (ROM_GETCRC(prom) == crc)
+							in_parent = 1;
 			}
 
 			fprintf(out, L1P "rom" L2B);
 			if (*name)
 				fprintf(out, L2P "name %s" L2N, name);
-			if(in_parent && p_rom && p_rom->name)
-				fprintf(out, L2P "merge %s" L2N, p_rom->name);
+			if(in_parent && prom && ROM_GETNAME(prom))
+				fprintf(out, L2P "merge %s" L2N, ROM_GETNAME(prom));
 			fprintf(out, L2P "size %d" L2N, length);
 			fprintf(out, L2P "crc %08x" L2N, crc);
-			switch (region & ~REGIONFLAG_MASK)
+			switch (ROMREGION_GETTYPE(region))
 			{
 			case REGION_CPU1: fprintf(out, L2P "region cpu1" L2N); break;
 			case REGION_CPU2: fprintf(out, L2P "region cpu2" L2N); break;
@@ -360,25 +346,24 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 			case REGION_USER6: fprintf(out, L2P "region user6" L2N); break;
 			case REGION_USER7: fprintf(out, L2P "region user7" L2N); break;
 			case REGION_USER8: fprintf(out, L2P "region user8" L2N); break;
-			default: fprintf(out, L2P "region 0x%x" L2N, region & ~REGIONFLAG_MASK);
+			default: fprintf(out, L2P "region 0x%x" L2N, ROMREGION_GETTYPE(region));
             }
-			switch (region & REGIONFLAG_MASK)
+			switch (ROMREGION_GETFLAGS(region))
 			{
 			case 0:
 				break;
-			case REGIONFLAG_SOUNDONLY:
+			case ROMREGION_SOUNDONLY:
 				fprintf(out, L2P "flags soundonly" L2N);
                 break;
-			case REGIONFLAG_DISPOSE:
+			case ROMREGION_DISPOSE:
 				fprintf(out, L2P "flags dispose" L2N);
 				break;
 			default:
-				fprintf(out, L2P "flags 0x%x" L2N, region & REGIONFLAG_MASK);
+				fprintf(out, L2P "flags 0x%x" L2N, ROMREGION_GETFLAGS(region));
             }
 			fprintf(out, L2P "offs %x", offset);
             fprintf(out, L2E L1N);
 		}
-	}
 }
 
 static void print_game_sample(FILE* out, const struct GameDriver* game) {

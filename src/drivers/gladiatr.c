@@ -335,14 +335,14 @@ static PORT_WRITE_START( writeport )
 	{ 0x02, 0x02, gladiatr_bankswitch_w},
 	{ 0x04, 0x04, gladiatr_irq_patch_w}, /* !!! patch to 2nd CPU IRQ !!! */
 	{ 0x9e, 0x9f, TAITO8741_0_w },
-	{ 0xbf, 0xbf, IORP_NOP },
+	{ 0xbf, 0xbf, IOWP_NOP },
 PORT_END
 
 static PORT_READ_START( readport_cpu2 )
 	{ 0x00, 0x00, YM2203_status_port_0_r },
 	{ 0x01, 0x01, YM2203_read_port_0_r },
 	{ 0x20, 0x21, TAITO8741_1_r },
-	{ 0x40, 0x40, IOWP_NOP },
+	{ 0x40, 0x40, IORP_NOP },
 	{ 0x60, 0x61, TAITO8741_2_r },
 	{ 0x80, 0x81, TAITO8741_3_r },
 PORT_END
@@ -628,29 +628,29 @@ static const struct MachineDriver machine_driver_gladiatr =
 ***************************************************************************/
 
 ROM_START( gladiatr )
-	ROM_REGION( 0x1c000, REGION_CPU1 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
 	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
 	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
 	ROM_LOAD( "qc0-3",          0x14000, 0x8000, 0x8d182326 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* Code for the 2nd CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
-	ROM_REGION( 0x28000, REGION_CPU3 )  /* 6809 Code & ADPCM data */
+	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
 	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
 	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
 	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "qc0-15",       	0x00000, 0x2000, 0xa7efa340 ) /* (monochrome) */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
 	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
 	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
 
-	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "qc1-6",        	0x00000, 0x4000, 0x651e6e44 ) /* plane 3 */
 	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
 	ROM_LOAD( "qc1-9",        	0x10000, 0x4000, 0x01043e03 ) /* planes 1,2 */
@@ -660,29 +660,29 @@ ROM_START( gladiatr )
 ROM_END
 
 ROM_START( ogonsiro )
-	ROM_REGION( 0x1c000, REGION_CPU1 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "qb0-5",          0x00000, 0x4000, 0x25b19efb )
 	ROM_LOAD( "qb0-4",          0x04000, 0x2000, 0x347ec794 )
 	ROM_LOAD( "qb0-1",          0x10000, 0x4000, 0x040c9839 )
 	ROM_LOAD( "qb0_3",          0x14000, 0x8000, 0xd6a342e7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* Code for the 2nd CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
-	ROM_REGION( 0x28000, REGION_CPU3 )  /* 6809 Code & ADPCM data */
+	ROM_REGION( 0x28000, REGION_CPU3, 0 )  /* 6809 Code & ADPCM data */
 	ROM_LOAD( "qb0-20",         0x10000, 0x8000, 0x15916eda )
 	ROM_LOAD( "qb0-19",         0x18000, 0x8000, 0x79caa7ed )
 	ROM_LOAD( "qb0-18",         0x20000, 0x8000, 0xe9591260 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "qb0_15",       	0x00000, 0x2000, 0x5e1332b8 ) /* (monochrome) */
 
-	ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "qb0-12",       	0x00000, 0x8000, 0x0585d9ac ) /* plane 3 */
 	ROM_LOAD( "qb0-13",       	0x08000, 0x8000, 0xa6bb797b ) /* planes 1,2 */
 	ROM_LOAD( "qb0-14",       	0x10000, 0x8000, 0x85b71211 ) /* planes 1,2 */
 
-	ROM_REGION( 0x30000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "qb0_6",        	0x00000, 0x4000, 0x1a2bc769 ) /* plane 3 */
 	ROM_LOAD( "qc0-8",        	0x08000, 0x4000, 0x1c7ffdad ) /* planes 1,2 */
 	ROM_LOAD( "qb0_9",        	0x10000, 0x4000, 0x38f5152d ) /* planes 1,2 */

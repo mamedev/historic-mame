@@ -61,14 +61,6 @@ UINT8 irobot_alphamap;
 static void irmb_run(void);
 
 
-/* mathbox and vector data is stored in big-endian format */
-#ifdef LSB_FIRST
-#define BYTE_XOR_LE(x)	((x) ^ 1)
-#else
-#define BYTE_XOR_LE(x)	(x)
-#endif
-
-
 /***********************************************************************/
 
 
@@ -76,16 +68,16 @@ static void irmb_run(void);
 READ_HANDLER( irobot_sharedmem_r )
 {
 	if (irobot_outx == 3)
-		return mbRAM[BYTE_XOR_LE(offset)];
+		return mbRAM[BYTE_XOR_BE(offset)];
 
 	if (irobot_outx == 2)
-		return irobot_combase[BYTE_XOR_LE(offset & 0xFFF)];
+		return irobot_combase[BYTE_XOR_BE(offset & 0xFFF)];
 
 	if (irobot_outx == 0)
-		return mbROM[((irobot_mpage & 1) << 13) + BYTE_XOR_LE(offset)];
+		return mbROM[((irobot_mpage & 1) << 13) + BYTE_XOR_BE(offset)];
 
 	if (irobot_outx == 1)
-		return mbROM[0x4000 + ((irobot_mpage & 3) << 13) + BYTE_XOR_LE(offset)];
+		return mbROM[0x4000 + ((irobot_mpage & 3) << 13) + BYTE_XOR_BE(offset)];
 
 	return 0xFF;
 }
@@ -94,10 +86,10 @@ READ_HANDLER( irobot_sharedmem_r )
 WRITE_HANDLER( irobot_sharedmem_w )
 {
 	if (irobot_outx == 3)
-		mbRAM[BYTE_XOR_LE(offset)] = data;
+		mbRAM[BYTE_XOR_BE(offset)] = data;
 
 	if (irobot_outx == 2)
-		irobot_combase[BYTE_XOR_LE(offset & 0xFFF)] = data;
+		irobot_combase[BYTE_XOR_BE(offset & 0xFFF)] = data;
 }
 
 static void irvg_done_callback (int param)
@@ -389,7 +381,7 @@ void irmb_dout(const irmb_ops *curop, UINT32 d)
 /* Convert microcode roms to a more usable form */
 void load_oproms(void)
 {
-	UINT8 *MB = memory_region(REGION_CPU2);
+	UINT8 *MB = memory_region(REGION_PROMS) + 0x20;
 	int i;
 
 	/* allocate RAM */
@@ -400,25 +392,25 @@ void load_oproms(void)
 	{
 		int nxtadd, func, ramsel, diradd, latchmask, dirmask, time;
 
-		mbops[i].areg = &irmb_regs[MB[0xC000 + i] & 0x0F];
-		mbops[i].breg = &irmb_regs[MB[0xC400 + i] & 0x0F];
-		func = (MB[0xC800 + i] & 0x0F) << 5;
-		func |= ((MB[0xCC00 +i] & 0x0F) << 1);
-		func |= (MB[0xD000 + i] & 0x08) >> 3;
-		time = MB[0xD000 + i] & 0x03;
-		mbops[i].flags = (MB[0xD000 + i] & 0x04) >> 2;
-		nxtadd = (MB[0xD400 + i] & 0x0C) >> 2;
-		diradd = MB[0xD400 + i] & 0x03;
-		nxtadd |= ((MB[0xD800 + i] & 0x0F) << 6);
-		nxtadd |= ((MB[0xDC00 + i] & 0x0F) << 2);
-		diradd |= (MB[0xE000 + i] & 0x0F) << 2;
-		func |= (MB[0xE400 + i] & 0x0E) << 9;
-		mbops[i].flags |= (MB[0xE400 + i] & 0x01) << 1;
-		mbops[i].flags |= (MB[0xE800 + i] & 0x0F) << 2;
-		mbops[i].flags |= ((MB[0xEC00 + i] & 0x01) << 6);
-		mbops[i].flags |= (MB[0xEC00 + i] & 0x08) << 4;
-		ramsel = (MB[0xEC00 + i] & 0x06) >> 1;
-		diradd |= (MB[0xF000 + i] & 0x03) << 6;
+		mbops[i].areg = &irmb_regs[MB[0x0000 + i] & 0x0F];
+		mbops[i].breg = &irmb_regs[MB[0x0400 + i] & 0x0F];
+		func = (MB[0x0800 + i] & 0x0F) << 5;
+		func |= ((MB[0x0C00 +i] & 0x0F) << 1);
+		func |= (MB[0x1000 + i] & 0x08) >> 3;
+		time = MB[0x1000 + i] & 0x03;
+		mbops[i].flags = (MB[0x1000 + i] & 0x04) >> 2;
+		nxtadd = (MB[0x1400 + i] & 0x0C) >> 2;
+		diradd = MB[0x1400 + i] & 0x03;
+		nxtadd |= ((MB[0x1800 + i] & 0x0F) << 6);
+		nxtadd |= ((MB[0x1C00 + i] & 0x0F) << 2);
+		diradd |= (MB[0x2000 + i] & 0x0F) << 2;
+		func |= (MB[0x2400 + i] & 0x0E) << 9;
+		mbops[i].flags |= (MB[0x2400 + i] & 0x01) << 1;
+		mbops[i].flags |= (MB[0x2800 + i] & 0x0F) << 2;
+		mbops[i].flags |= ((MB[0x2C00 + i] & 0x01) << 6);
+		mbops[i].flags |= (MB[0x2C00 + i] & 0x08) << 4;
+		ramsel = (MB[0x2C00 + i] & 0x06) >> 1;
+		diradd |= (MB[0x3000 + i] & 0x03) << 6;
 
 		if (mbops[i].flags & FL_shift) func |= 0x200;
 

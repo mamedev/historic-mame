@@ -548,7 +548,7 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 		}
 
 		/* clear ALL bitmap, including safety area, to avoid garbage on right */
-		/* side of screen is width is not a multiple of 4 */
+		/* side of screen if width is not a multiple of 4 */
 		memset(bm,0,(height + 2 * safety) * rowlen);
 
 		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)

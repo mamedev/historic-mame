@@ -10,25 +10,13 @@ static tAuditRecord *gAudits = NULL;
 /* returns 1 if rom is defined in this set */
 int RomInSet (const struct GameDriver *gamedrv, unsigned int crc)
 {
-	const struct RomModule *romp = gamedrv->rom;
+	const struct RomModule *region, *rom;
 
-	if (!romp) return 0;
+	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			if (ROM_GETCRC(rom) == crc)
+				return 1;
 
-	while (romp->name || romp->offset || romp->length)
-	{
-		romp++;	/* skip ROM_REGION */
-
-		while (romp->length)
-		{
-			if (romp->crc == crc) return 1;
-			do
-			{
-				romp++;
-				/* skip ROM_CONTINUEs and ROM_RELOADs */
-			}
-			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-		}
-	}
 	return 0;
 }
 
@@ -68,7 +56,7 @@ int RomsetMissing (int game)
    in the romset (same as number of audit records), 0 if romset missing. */
 int AuditRomSet (int game, tAuditRecord **audit)
 {
-	const struct RomModule *romp;
+	const struct RomModule *region, *rom, *chunk;
 	const char *name;
 	const struct GameDriver *gamedrv;
 
@@ -86,9 +74,8 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 
 	gamedrv = drivers[game];
-	romp = gamedrv->rom;
 
-	if (!romp) return -1;
+	if (!gamedrv->rom) return -1;
 
 	/* check for existence of romset */
 	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
@@ -99,29 +86,18 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			return 0;
 	}
 
-	while (romp->name || romp->offset || romp->length)
-	{
-		if (romp->name || romp->length) return 0; /* expecting ROM_REGION */
-
-		romp++;
-
-		while (romp->length)
+	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
 			const struct GameDriver *drv;
 
-
-			if (romp->name == 0)
-				return 0;	/* ROM_CONTINUE not preceded by ROM_LOAD */
-			else if (romp->name == (char *)-1)
-				return 0;	/* ROM_RELOAD not preceded by ROM_LOAD */
-
-			name = romp->name;
+			name = ROM_GETNAME(rom);
 			strcpy (aud->rom, name);
 			aud->explength = 0;
 			aud->length = 0;
-			aud->expchecksum = romp->crc;
+			aud->expchecksum = ROM_GETCRC(rom);
 			/* NS981003: support for "load by CRC" */
-			aud->checksum = romp->crc;
+			aud->checksum = ROM_GETCRC(rom);
 			count++;
 
 			/* obtain CRC-32 and length of ROM file */
@@ -132,14 +108,9 @@ int AuditRomSet (int game, tAuditRecord **audit)
 				drv = drv->clone_of;
 			} while (err && drv);
 
-			/* spin through ROM_CONTINUEs and ROM_RELOADs, totaling length */
-			do
-			{
-				if (romp->name != (char *)-1) /* ROM_RELOAD */
-					aud->explength += romp->length & ~ROMFLAG_MASK;
-				romp++;
-			}
-			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+			/* spin through ROM_CONTINUEs, totaling length */
+			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+				aud->explength += ROM_GETLENGTH(chunk);
 
 			if (err)
 			{
@@ -167,7 +138,6 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 			aud++;
 		}
-	}
 
         #ifdef MESS
         if (!count)

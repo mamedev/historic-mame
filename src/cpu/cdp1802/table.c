@@ -251,7 +251,7 @@ static void cdp1802_instruction(void)
 	case 0x90: cdp1802.d=cdp1802.reg[oper&0xf].b.h;break;
 	case 0xa0: cdp1802.reg[oper&0xf].b.l=cdp1802.d;break;
 	case 0xb0: cdp1802.reg[oper&0xf].b.h=cdp1802.d;break;
-	case 0xd0: cdp1802.p=oper&0xf;change_pc(PC);break;
+	case 0xd0: cdp1802.p=oper&0xf;change_pc16(PC);break;
 	case 0xe0: cdp1802.x=oper&0xf;break;
 		break;
 	default: 		

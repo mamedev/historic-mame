@@ -205,7 +205,7 @@ static const struct MachineDriver machine_driver_mermaid =
 
 ***************************************************************************/
 ROM_START( mermaid )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "g960_32.15",	  0x0000, 0x1000, 0x8311f090 )
 	ROM_LOAD( "g960_33.16",	  0x1000, 0x1000, 0x9f274fc4 )
 	ROM_LOAD( "g960_34.17",	  0x2000, 0x1000, 0x5f910179 )
@@ -217,20 +217,20 @@ ROM_START( mermaid )
 	ROM_LOAD( "g960_40.23",	  0x8000, 0x1000, 0xfb7aba3f )
 	ROM_LOAD( "g960_41.24",	  0x9000, 0x1000, 0xd022981d )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "g960_45.77",	  0x0000, 0x1000, 0x1f6b735e )
 	ROM_LOAD( "g960_44.76",	  0x1000, 0x1000, 0xfd76074e )
 	ROM_LOAD( "g960_47.79",	  0x2000, 0x1000, 0x3b7d4ad0 )
 	ROM_LOAD( "g960_46.78",	  0x3000, 0x1000, 0x50c117cd )
 
-	ROM_REGION( 0x1000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "g960_43.26",	  0x0000, 0x1000, 0x6f077417 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "col_a", 	      0x0000, 0x0020, 0xef87bcd6 )
 	ROM_LOAD( "col_b", 	      0x0020, 0x0020, 0xca48abdd )
 
-	ROM_REGION( 0x1000, REGION_USER1 )	/* unknown */
+	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* unknown */
 	ROM_LOAD( "g960_42.39",	  0x0000, 0x1000, 0x287840bb )
 ROM_END
 

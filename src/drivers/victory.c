@@ -468,7 +468,7 @@ static const struct MachineDriver machine_driver_victory =
  *************************************/
 
 ROM_START( victory )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "vic3.j2",  0x0000, 0x1000, 0x4b614440 )
 	ROM_LOAD( "vic3.k2",  0x1000, 0x1000, 0x9f9eb12b )
 	ROM_LOAD( "vic3.kl2", 0x2000, 0x1000, 0xa0db4bf9 )
@@ -482,13 +482,13 @@ ROM_START( victory )
 	ROM_LOAD( "vic3.kl1", 0xa000, 0x1000, 0x2b7e626f )
 	ROM_LOAD( "vic3.l1",  0xb000, 0x1000, 0x7bb8e1f5 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "vic1.7bc", 0xc000, 0x1000, 0xd4927560 )
 	ROM_LOAD( "vic1.7c",  0xd000, 0x1000, 0x059efab5 )
 	ROM_LOAD( "vic1.7d",  0xe000, 0x1000, 0x82c4767c )
 	ROM_LOAD( "vic1.7e",  0xf000, 0x1000, 0xa19be034 )
 
-	ROM_REGION( 0x1e0, REGION_PROMS )
+	ROM_REGION( 0x1e0, REGION_PROMS, 0 )
 	ROM_LOAD( "hsc17l",   0x0000, 0x0100, 0xb2c75dee )
 	ROM_LOAD( "hsc13e",   0x0100, 0x0020, 0xa107c4f5 )
 	ROM_LOAD( "hsc16a",   0x0120, 0x0020, 0x5f06ad26 )
@@ -501,7 +501,7 @@ ROM_END
 
 
 ROM_START( victorba )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "j2.rom",  0x0000, 0x1000, 0xdd788e93 )
 	ROM_LOAD( "k2.rom",  0x1000, 0x1000, 0xf47bf046 )
 	ROM_LOAD( "kl2.rom", 0x2000, 0x1000, 0xbaef885e )
@@ -515,13 +515,13 @@ ROM_START( victorba )
 	ROM_LOAD( "kl1.rom", 0xa000, 0x1000, 0x6c82ebca )
 	ROM_LOAD( "l1.rom",  0xb000, 0x1000, 0x03b89d8a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "vic1.7bc", 0xc000, 0x1000, 0xd4927560 )
 	ROM_LOAD( "vic1.7c",  0xd000, 0x1000, 0x059efab5 )
 	ROM_LOAD( "vic1.7d",  0xe000, 0x1000, 0x82c4767c )
 	ROM_LOAD( "vic1.7e",  0xf000, 0x1000, 0xa19be034 )
 
-	ROM_REGION( 0x1e0, REGION_PROMS )
+	ROM_REGION( 0x1e0, REGION_PROMS, 0 )
 	ROM_LOAD( "hsc17l",   0x0000, 0x0100, 0xb2c75dee )
 	ROM_LOAD( "hsc13e",   0x0100, 0x0020, 0xa107c4f5 )
 	ROM_LOAD( "hsc16a",   0x0120, 0x0020, 0x5f06ad26 )

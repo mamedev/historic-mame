@@ -317,72 +317,72 @@ static const struct MachineDriver machine_driver_tail2nos =
 
 
 ROM_START( tail2nos )
-	ROM_REGION( 0x40000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
-	ROM_LOAD_ODD ( "v7",           0x00000, 0x10000, 0x0fb70066 )
-	ROM_LOAD_EVEN( "v3",           0x20000, 0x10000, 0xe2e0abad )
-	ROM_LOAD_ODD ( "v6",           0x20000, 0x10000, 0x069817a7 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "v4",           0x00000, 0x10000, 0x1d4240c2 )
+	ROM_LOAD16_BYTE( "v7",           0x00001, 0x10000, 0x0fb70066 )
+	ROM_LOAD16_BYTE( "v3",           0x20000, 0x10000, 0xe2e0abad )
+	ROM_LOAD16_BYTE( "v6",           0x20001, 0x10000, 0x069817a7 )
 
-	ROM_REGION( 0x80000, REGION_USER1 )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	/* extra ROM mapped at 200000 */
-	ROM_LOAD_WIDE_SWAP( "a23",     0x00000, 0x80000, 0xd851cf04 )
+	ROM_LOAD16_WORD_SWAP( "a23",     0x00000, 0x80000, 0xd851cf04 )
 
-	ROM_REGION( 0x20000, REGION_USER2 )
+	ROM_REGION16_BE( 0x20000, REGION_USER2, 0 )
 	/* extra ROM mapped at 2c0000 */
-	ROM_LOAD_EVEN( "v5",           0x00000, 0x10000, 0xa9fe15a1 )
-	ROM_LOAD_ODD ( "v8",           0x00000, 0x10000, 0x4fb6a43e )
+	ROM_LOAD16_BYTE( "v5",           0x00000, 0x10000, 0xa9fe15a1 )
+	ROM_LOAD16_BYTE( "v8",           0x00001, 0x10000, 0x4fb6a43e )
 
-	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v2",           0x00000, 0x08000, 0x920d8920 )
 	ROM_LOAD( "v1",           0x10000, 0x10000, 0xbf35c1a4 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a24",          0x00000, 0x80000, 0xb1e9de43 )
 	ROM_LOAD( "o1s",          0x80000, 0x40000, 0xe27a8eb4 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "oj1",          0x000000, 0x40000, 0x39c36b35 )
 	ROM_LOAD( "oj2",          0x040000, 0x40000, 0x77ccaea2 )
 
-	ROM_REGION( 0x20000, REGION_GFX3 )	/* gfx data for the 051316 */
+	ROM_REGION( 0x20000, REGION_GFX3, 0 )	/* gfx data for the 051316 */
 	/* RAM, not ROM - handled at run time */
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* sound samples */
 	ROM_LOAD( "osb",          0x00000, 0x20000, 0xd49ab2f5 )
 ROM_END
 
 ROM_START( sformula )
-	ROM_REGION( 0x40000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "ic129.4",      0x00000, 0x10000, 0x672bf690 )
-	ROM_LOAD_ODD ( "ic130.7",      0x00000, 0x10000, 0x73f0c91c )
-	ROM_LOAD_EVEN( "v3",           0x20000, 0x10000, 0xe2e0abad )
-	ROM_LOAD_ODD ( "v6",           0x20000, 0x10000, 0x069817a7 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "ic129.4",      0x00000, 0x10000, 0x672bf690 )
+	ROM_LOAD16_BYTE( "ic130.7",      0x00001, 0x10000, 0x73f0c91c )
+	ROM_LOAD16_BYTE( "v3",           0x20000, 0x10000, 0xe2e0abad )
+	ROM_LOAD16_BYTE( "v6",           0x20001, 0x10000, 0x069817a7 )
 
-	ROM_REGION( 0x80000, REGION_USER1 )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 )
 	/* extra ROM mapped at 200000 */
-	ROM_LOAD_WIDE_SWAP( "a23",     0x00000, 0x80000, 0xd851cf04 )
+	ROM_LOAD16_WORD_SWAP( "a23",     0x00000, 0x80000, 0xd851cf04 )
 
-	ROM_REGION( 0x20000, REGION_USER2 )
+	ROM_REGION16_BE( 0x20000, REGION_USER2, 0 )
 	/* extra ROM mapped at 2c0000 */
-	ROM_LOAD_EVEN( "v5",           0x00000, 0x10000, 0xa9fe15a1 )
-	ROM_LOAD_ODD ( "v8",           0x00000, 0x10000, 0x4fb6a43e )
+	ROM_LOAD16_BYTE( "v5",           0x00000, 0x10000, 0xa9fe15a1 )
+	ROM_LOAD16_BYTE( "v8",           0x00001, 0x10000, 0x4fb6a43e )
 
-	ROM_REGION( 0x20000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v2",           0x00000, 0x08000, 0x920d8920 )
 	ROM_LOAD( "v1",           0x10000, 0x10000, 0xbf35c1a4 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a24",          0x00000, 0x80000, 0xb1e9de43 )
 	ROM_LOAD( "o1s",          0x80000, 0x40000, 0xe27a8eb4 )
 
-	ROM_REGION( 0x080000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "oj1",          0x000000, 0x40000, 0x39c36b35 )
 	ROM_LOAD( "oj2",          0x040000, 0x40000, 0x77ccaea2 )
 
-	ROM_REGION( 0x20000, REGION_GFX3 )	/* gfx data for the 051316 */
+	ROM_REGION( 0x20000, REGION_GFX3, 0 )	/* gfx data for the 051316 */
 	/* RAM, not ROM - handled at run time */
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* sound samples */
 	ROM_LOAD( "osb",          0x00000, 0x20000, 0xd49ab2f5 )
 ROM_END
 

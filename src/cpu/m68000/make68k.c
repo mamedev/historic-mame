@@ -221,7 +221,7 @@ int      DisOp;
 #define FASTCALL_CPU_WRITEMEM24BEW        "@cpu_writemem24bew@8"
 #define FASTCALL_CPU_WRITEMEM24BEW_WORD   "@cpu_writemem24bew_word@8"
 #define FASTCALL_CPU_WRITEMEM24BEW_DWORD  "@m68_writemem24bew_dword@8"
-#define FASTCALL_CPU_SETOPBASE24BEW       "@cpu_setOPbase24bew@4"
+#define FASTCALL_CPU_SETOPBASE24BEW       "@cpu_setopbase24bew@4"
 #define FASTCALL_FIRST_REG                "ecx"
 #define FASTCALL_SECOND_REG               "edx"
 
@@ -231,7 +231,7 @@ int      DisOp;
 #define CPU_WRITEMEM24BEW                 "_cpu_writemem24bew"
 #define CPU_WRITEMEM24BEW_WORD            "_cpu_writemem24bew_word"
 #define CPU_WRITEMEM24BEW_DWORD           "_m68_writemem24bew_dword"
-#define CPU_SETOPBASE24BEW                "_cpu_setOPbase24bew"
+#define CPU_SETOPBASE24BEW                "_cpu_setopbase24bew"
 
 
 
@@ -504,7 +504,7 @@ void MemoryBanking(int BaseCode)
    fprintf(fp, "\t\t mov   ecx,esi\n");
    fprintf(fp, "\t\t mov   ebx,[_cur_mrhard]\n");
    fprintf(fp, "\t\t shr   ecx,9\n");
-   fprintf(fp, "\t\t mov   al,byte [_ophw]\n");
+   fprintf(fp, "\t\t mov   al,byte [_opcode_entry]\n");
    fprintf(fp, "\t\t cmp   al,[ecx+ebx]\n");
    fprintf(fp, "\t\t je    OP_%5.5x_Bank\n",BaseCode);
 #endif
@@ -7341,7 +7341,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t EXTERN _OP_ROM\n");
    fprintf(fp, "\t\t EXTERN _OP_RAM\n");
 
-   fprintf(fp, "\t\t EXTERN _ophw\n");
+   fprintf(fp, "\t\t EXTERN _opcode_entry\n");
    fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
 
 #ifdef OS2

@@ -40,19 +40,19 @@ static struct
 void computer_writemem_byte(int cpu, int addr, int value)
 {
     int oldcpu = cpu_getactivecpu();
-    memorycontextswap(cpu);
+    memory_set_context(cpu);
     MEMORY_WRITE(cpu, addr, value);
     if (oldcpu != cpu)
-		memorycontextswap(oldcpu);
+		memory_set_context(oldcpu);
 }
 
 int computer_readmem_byte(int cpu, int addr)
 {
     int oldcpu = cpu_getactivecpu(), result;
-    memorycontextswap(cpu);
+    memory_set_context(cpu);
     result = MEMORY_READ(cpu, addr);
     if (oldcpu != cpu)
-    	memorycontextswap(oldcpu);
+    	memory_set_context(oldcpu);
     return result;
 }
 

@@ -374,18 +374,19 @@ unsigned char *RAM = memory_region(REGION_CPU2);
 
 WRITE_HANDLER( airbustr_paletteram_w )
 {
-int r,g,b;
+	int r,g,b;
+	int val;
 
 	/*	! byte 1 ! ! byte 0 !	*/
 	/*	xGGG GGRR 	RRRB BBBB	*/
 	/*	x432 1043 	2104 3210	*/
 
 	paletteram[offset] = data;
-	data = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
+	val = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
 
-	g = (data >> 10) & 0x1f;
-	r = (data >>  5) & 0x1f;
-	b = (data >>  0) & 0x1f;
+	g = (val >> 10) & 0x1f;
+	r = (val >>  5) & 0x1f;
+	b = (val >>  0) & 0x1f;
 
 	palette_change_color(offset/2,	(r * 0xff) / 0x1f,
 									(g * 0xff) / 0x1f,
@@ -756,26 +757,26 @@ static const struct MachineDriver machine_driver_airbustr =
 ***************************************************************************/
 
 ROM_START( airbustr )
-	ROM_REGION( 0x24000, REGION_CPU1 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
 	ROM_LOAD( "pr-14j.bin", 0x00000, 0x0c000, 0x6b9805bd )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION( 0x24000, REGION_CPU2 )
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )
 	ROM_LOAD( "pr-11j.bin", 0x00000, 0x0c000, 0x85464124 )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION( 0x24000, REGION_CPU3 )
+	ROM_REGION( 0x24000, REGION_CPU3, 0 )
 	ROM_LOAD( "pr-21.bin",  0x00000, 0x0c000, 0x6e0a5df0 )
 	ROM_CONTINUE(           0x10000, 0x14000 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pr-000.bin", 0x000000, 0x80000, 0x8ca68f0d ) // scrolling layers
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pr-001.bin", 0x000000, 0x80000, 0x7e6cb377 ) // sprites
 	ROM_LOAD( "pr-02.bin",  0x080000, 0x10000, 0x6bbd5e46 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* OKI-M6295 samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI-M6295 samples */
 	ROM_LOAD( "pr-200.bin", 0x00000, 0x40000, 0xa4dd3390 )
 ROM_END
 

@@ -203,6 +203,8 @@ to use Retrocade's game history database.
 
 Thanks to Richard Bush for info on several games.
 
+Thanks to Dave (www.finalburn.com) for info on After Burner.
+
 and thanks to everyone else I forgot.
 
 

@@ -750,13 +750,13 @@ static const struct MachineDriver machine_driver_shanghai =
 ***************************************************************************/
 
 ROM_START( shanghai )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
-	ROM_LOAD_V20_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
-	ROM_LOAD_V20_EVEN( "shg-28a.rom", 0xc0000, 0x10000, 0x983ec112 )
-	ROM_LOAD_V20_ODD ( "shg-27a.rom", 0xc0000, 0x10000, 0x41af0945 )
-	ROM_LOAD_V20_EVEN( "shg-37b.rom", 0xe0000, 0x10000, 0x3f192da0 )
-	ROM_LOAD_V20_ODD ( "shg-36b.rom", 0xe0000, 0x10000, 0xa1d6af96 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "shg-22a.rom", 0xa0001, 0x10000, 0xe0a085be )
+	ROM_LOAD16_BYTE( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )
+	ROM_LOAD16_BYTE( "shg-28a.rom", 0xc0001, 0x10000, 0x983ec112 )
+	ROM_LOAD16_BYTE( "shg-27a.rom", 0xc0000, 0x10000, 0x41af0945 )
+	ROM_LOAD16_BYTE( "shg-37b.rom", 0xe0001, 0x10000, 0x3f192da0 )
+	ROM_LOAD16_BYTE( "shg-36b.rom", 0xe0000, 0x10000, 0xa1d6af96 )
 ROM_END
 
 

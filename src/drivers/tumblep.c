@@ -85,15 +85,15 @@ static MEMORY_WRITE16_START( tumblepop_writemem )
 	{ 0x100000, 0x100001, tumblep_sound_w },
 	{ 0x120000, 0x123fff, MWA16_RAM },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x18000c, 0x18000d, MWA_NOP },
+	{ 0x18000c, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA16_RAM, &spriteram16 },
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
 	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
-	{ 0x340000, 0x3401ff, MWA_NOP }, /* Unused row scroll */
-	{ 0x340400, 0x34047f, MWA_NOP }, /* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA_NOP },
-	{ 0x342400, 0x34247f, MWA_NOP },
+	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
+	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
+	{ 0x342000, 0x3421ff, MWA16_NOP },
+	{ 0x342400, 0x34247f, MWA16_NOP },
 MEMORY_END
 
 static MEMORY_READ16_START( tumblepopb_readmem )
@@ -112,15 +112,15 @@ static MEMORY_WRITE16_START( tumblepopb_writemem )
 	{ 0x120000, 0x123fff, MWA16_RAM },
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x160000, 0x160807, MWA16_RAM, &spriteram16 }, /* Bootleg sprite buffer */
-	{ 0x18000c, 0x18000d, MWA_NOP },
+	{ 0x18000c, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA16_RAM },
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
 	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
-	{ 0x340000, 0x3401ff, MWA_NOP }, /* Unused row scroll */
-	{ 0x340400, 0x34047f, MWA_NOP }, /* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA_NOP },
-	{ 0x342400, 0x34247f, MWA_NOP },
+	{ 0x340000, 0x3401ff, MWA16_NOP }, /* Unused row scroll */
+	{ 0x340400, 0x34047f, MWA16_NOP }, /* Unused col scroll */
+	{ 0x342000, 0x3421ff, MWA16_NOP },
+	{ 0x342400, 0x34247f, MWA16_NOP },
 MEMORY_END
 
 /******************************************************************************/
@@ -412,84 +412,84 @@ static const struct MachineDriver machine_driver_tumblepb =
 /******************************************************************************/
 
 ROM_START( tumblep )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_ODD ("hl01-1.f13", 0x00000, 0x40000, 0xd5a62a3f )
-	ROM_LOAD_EVEN("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE("hl01-1.f13", 0x00001, 0x40000, 0xd5a62a3f )
+	ROM_LOAD16_BYTE("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* Sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound cpu */
 	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* Oki samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
 ROM_END
 
 ROM_START( tumblepj )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_ODD ("hk01-1.f13", 0x00000, 0x40000, 0x56912a00 )
-	ROM_LOAD_EVEN("hk00-1.f12", 0x00000, 0x40000, 0x2d3e4d3d )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE("hk01-1.f13", 0x00001, 0x40000, 0x56912a00 )
+	ROM_LOAD16_BYTE("hk00-1.f12", 0x00000, 0x40000, 0x2d3e4d3d )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* Sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound cpu */
 	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* Oki samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
 ROM_END
 
 ROM_START( tumblepb )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
-	ROM_LOAD_ODD ( "thumbpop.13", 0x00000, 0x40000, 0x864c4053 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
+	ROM_LOAD16_BYTE( "thumbpop.13", 0x00001, 0x40000, 0x864c4053 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.15",  0x00000,  0x40000, 0xac3d8349 )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_REGION( 0x80000, REGION_SOUND1 ) /* Oki samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
 ROM_END
 
 ROM_START( tumblep2 )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
-	ROM_LOAD_ODD ( "thumbpop.3", 0x00000, 0x40000, 0x89501c71 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
+	ROM_LOAD16_BYTE( "thumbpop.3", 0x00001, 0x40000, 0x89501c71 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.19",  0x000000, 0x40000, 0x0795aab4 )
 	ROM_LOAD( "thumbpop.18",  0x040000, 0x40000, 0xad58df43 )
 
- 	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+ 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "thumbpop.5",   0x00000,  0x40000, 0xdda8932e )
 	ROM_LOAD( "thumbpop.14",  0x40000,  0x40000, 0x79a29725 )
 	ROM_LOAD( "thumbpop.17",  0x80000,  0x40000, 0x87cffb06 )
 	ROM_LOAD( "thumbpop.16",  0xc0000,  0x40000, 0xee91db18 )
 
-	ROM_REGION( 0x80000, REGION_SOUND1 ) /* Oki samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
 ROM_END
 

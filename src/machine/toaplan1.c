@@ -10,10 +10,6 @@
 #define ASSERT 1
 
 
-READ_HANDLER( video_ofs3_r );
-WRITE_HANDLER( video_ofs3_w );
-WRITE_HANDLER( toaplan1_videoram3_w );
-
 int toaplan1_coin_count; /* coin count increments on startup ? , so dont count it */
 
 int toaplan1_int_enable;
@@ -23,11 +19,11 @@ static int latch;
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
 
-extern unsigned char *toaplan1_sharedram;
+unsigned char *toaplan1_sharedram;
 
 
 
-READ_HANDLER( demonwld_dsp_r )
+READ16_HANDLER( demonwld_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
@@ -42,7 +38,7 @@ READ_HANDLER( demonwld_dsp_r )
 	return input_data;
 }
 
-WRITE_HANDLER( demonwld_dsp_w )
+WRITE16_HANDLER( demonwld_dsp_w )
 {
 	if (offset == 0) {
 		/* This sets the main CPU RAM address the DSP should */
@@ -89,25 +85,33 @@ WRITE_HANDLER( demonwld_dsp_w )
 	}
 }
 
-WRITE_HANDLER( demonwld_dsp_ctrl_w )
+WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 {
 #if 0
 	logerror("68000:%08x  Writing %08x to %08x.\n",cpu_get_pc() ,data ,0xe0000a + offset);
 #endif
 
-	switch (data) {
-		case 0x0000: 	/* This means assert the INT line to the DSP */
+	if (ACCESSING_LSB)
+	{
+		switch (data)
+		{
+			case 0x00: 	/* This means assert the INT line to the DSP */
 						logerror("Turning DSP on and 68000 off\n");
 						timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, ASSERT_LINE);
 						timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
 						break;
-		case 0x0001: 	/* This means inhibit the INT line to the DSP */
+			case 0x01:	/* This means inhibit the INT line to the DSP */
 						logerror("Turning DSP off\n");
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
 						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 						break;
-		default:		logerror("68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
+			default:	logerror("68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
+		}
+	}
+	else
+	{
+		logerror("68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
 	}
 }
 
@@ -122,34 +126,38 @@ int toaplan1_interrupt(void)
 	return MC68000_INT_NONE;
 }
 
-WRITE_HANDLER( toaplan1_int_enable_w )
+WRITE16_HANDLER( toaplan1_int_enable_w )
 {
-	toaplan1_int_enable = data;
+	if (ACCESSING_LSB)
+	{
+		toaplan1_int_enable = data & 0xff;
+	}
 }
 
-READ_HANDLER( toaplan1_unk_r )
+READ16_HANDLER( toaplan1_unk_r )
 {
-	return unk ^= 1;
+	unk ^= 1;
+	return unk & 0xff;
 }
 
-READ_HANDLER( samesame_port_6_r )
+READ16_HANDLER( samesame_port_6_word_r )
 {
 	/* Bit 0x80 is secondary CPU (HD647180) ready signal */
 	logerror("PC:%04x Warning !!! IO reading from $14000a\n",cpu_getpreviouspc());
-	return (0x80 | input_port_6_r(0));
+	return (0x80 | input_port_6_word_r(0)) & 0xff;
 }
 
-READ_HANDLER( vimana_input_port_5_r )
+READ16_HANDLER( vimana_input_port_5_word_r )
 {
 	int data, p;
 
-	p = input_port_5_r(0);
+	p = input_port_5_word_r(0);
 
 	latch ^= p;
 	data = (latch & p );
 
 	/* simulate the mcu keeping track of credits */
-	/* latch is so is doesn't add more than one */
+	/* latch so it doesn't add more than one */
 	/* credit per keypress */
 
 	if (data & 0x18)
@@ -159,13 +167,13 @@ READ_HANDLER( vimana_input_port_5_r )
 
 	latch = p;
 
-	return p;
+	return p & 0xffff;
 }
 
-READ_HANDLER( vimana_mcu_r )
+READ16_HANDLER( vimana_mcu_r )
 {
 	int data = 0 ;
-	switch (offset >> 1)
+	switch (offset)
 	{
 		case 0:
 			data = 0xff;
@@ -177,30 +185,33 @@ READ_HANDLER( vimana_mcu_r )
 			data = credits;
 			break;
 	}
-	return data;
+	return data & 0xff;
 }
-WRITE_HANDLER( vimana_mcu_w )
+WRITE16_HANDLER( vimana_mcu_w )
 {
-	switch (offset >> 1)
+	switch (offset)
 	{
 		case 0:
 			break;
 		case 1:
 			break;
 		case 2:
-			credits = data;
+			if (ACCESSING_LSB) credits = data & 0xff;
 			break;
 	}
 }
 
-READ_HANDLER( toaplan1_shared_r )
+READ16_HANDLER( toaplan1_shared_r )
 {
-	return toaplan1_sharedram[offset>>1];
+	return toaplan1_sharedram[offset] & 0xff;
 }
 
-WRITE_HANDLER( toaplan1_shared_w )
+WRITE16_HANDLER( toaplan1_shared_w )
 {
-	toaplan1_sharedram[offset>>1] = data;
+	if (ACCESSING_LSB)
+	{
+		toaplan1_sharedram[offset] = data & 0xff;
+	}
 }
 
 void toaplan1_init_machine(void)
@@ -226,6 +237,7 @@ WRITE_HANDLER( rallybik_coin_w )
 		case 0x0d: coin_lockout_w(0,0); coin_lockout_w(2,0); break;
 		case 0x0e: coin_lockout_w(1,1); coin_lockout_w(3,1); break;
 		case 0x0f: coin_lockout_w(1,0); coin_lockout_w(3,0); toaplan1_coin_count=1; break;
+		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data); break;
 	}
 }
 
@@ -255,5 +267,18 @@ WRITE_HANDLER( toaplan1_coin_w )
 		case 0x02: coin_lockout_w(1,1); break;	/* Lock coin slot B */
 		case 0x01: coin_lockout_w(0,1); break;	/* Lock coin slot A */
 		case 0x00: coin_lockout_global_w(1); break;	/* Lock all coin slots */
+		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data); break;
+	}
+}
+
+WRITE16_HANDLER( samesame_coin_w )
+{
+	if (ACCESSING_LSB)
+	{
+		toaplan1_coin_w(offset, data & 0xff);
+	}
+	if (ACCESSING_MSB && (data&0xff00))
+	{
+		logerror("PC:%04x  Writing unknown MSB data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data);
 	}
 }

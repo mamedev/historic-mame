@@ -314,17 +314,17 @@ static const struct MachineDriver machine_driver_tankbatt =
 ***************************************************************************/
 
 ROM_START( tankbatt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tb1-1.bin",    0x6000, 0x0800, 0x278a0b8c )
 	ROM_LOAD( "tb1-2.bin",    0x6800, 0x0800, 0xe0923370 )
 	ROM_LOAD( "tb1-3.bin",    0x7000, 0x0800, 0x85005ea4 )
 	ROM_LOAD( "tb1-4.bin",    0x7800, 0x0800, 0x3dfb5bcf )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tb1-5.bin",    0x0000, 0x0800, 0xaabd4fb1 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "tankbatt.clr", 0x0000, 0x0100, 0x1150d613 )
 ROM_END
 

@@ -21,6 +21,9 @@ enum {
 /* extended i/o ports  M/~IO=0 D/~C=x E/~NE=1 */
 #define S2650_EXT_PORT	0xff
 
+/* Fake Sense Line */
+#define S2650_SENSE_PORT 0x102
+
 extern int s2650_ICount;
 
 extern void s2650_reset(void *param);

@@ -15,9 +15,9 @@ Namco System II
 #include "machine/namcos2.h"
 #include "vidhrdw/generic.h"
 
-unsigned char *namcos2_68k_master_ram=NULL;
-unsigned char *namcos2_68k_slave_ram=NULL;
-unsigned char *namcos2_68k_mystery_ram=NULL;
+data16_t *namcos2_68k_master_ram=NULL;
+data16_t *namcos2_68k_slave_ram=NULL;
+data16_t *namcos2_68k_mystery_ram=NULL;
 
 int namcos2_gametype=0;
 
@@ -25,8 +25,7 @@ int namcos2_gametype=0;
 /* Perform basic machine initialisation 					 */
 /*************************************************************/
 
-void namcos2_init_machine(void)
-{
+void namcos2_init_machine(void){
 	int loop;
 
 	if(namcos2_dpram==NULL) namcos2_dpram = malloc(0x800);
@@ -40,24 +39,26 @@ void namcos2_init_machine(void)
 	memset( namcos2_68k_serial_comms_ram, 0, 0x4000 );
 
 	/* Initialise the bank select in the sound CPU */
-	namcos2_sound_bankselect_w(0,0);		/* Page in bank 0 */
+	namcos2_sound_bankselect_w(0,0); /* Page in bank 0 */
 
 	/* Place CPU2 & CPU3 into the reset condition */
-	namcos2_68k_master_C148_w(0x1e2000-0x1c0000,0);
-	namcos2_68k_master_C148_w(0x1e4000-0x1c0000,0);
+//	namcos2_68k_master_C148_w(0x1e2000-0x1c0000,0);
+//	namcos2_68k_master_C148_w(0x1e4000-0x1c0000,0);
+	cpu_set_reset_line(NAMCOS2_CPU3, ASSERT_LINE);
+	cpu_set_reset_line(NAMCOS2_CPU2, ASSERT_LINE);
+	cpu_set_reset_line(NAMCOS2_CPU4, ASSERT_LINE);
 
 	/* Initialise interrupt handlers */
-	for(loop=0;loop<20;loop++)
-	{
+	for(loop=0;loop<20;loop++){
 		namcos2_68k_master_C148[loop]=0;
 		namcos2_68k_slave_C148[loop]=0;
 	}
 
 	/* Initialise the video control registers */
-	for(loop=0;loop<0x40;loop+=2) namcos2_68k_vram_ctrl_w(loop,0);
+//	for(loop=0;loop<0x20;loop++) namcos2_68k_vram_ctrl_w(loop,0);
 
 	/* Initialise ROZ */
-	for(loop=0;loop<0x10;loop+=2) namcos2_68k_roz_ctrl_w(loop,0);
+//	for(loop=0;loop<0x8;loop++) namcos2_68k_roz_ctrl_w(loop,0);
 
 	/* Initialise the Roadway generator */
 //	for(loop=0;loop<0x10;loop+=2) namcos2_68k_road_ctrl_w(loop,0);
@@ -67,15 +68,14 @@ void namcos2_init_machine(void)
 /* EEPROM Load/Save and read/write handling 				 */
 /*************************************************************/
 
-unsigned char *namcos2_eeprom;
+data16_t *namcos2_eeprom;
 size_t namcos2_eeprom_size;
 
-void namcos2_nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
+void namcos2_nvram_handler(void *file,int read_or_write){
+	if( read_or_write ){
 		osd_fwrite (file, namcos2_eeprom, namcos2_eeprom_size);
-	else
-	{
+	}
+	else {
 		if (file)
 			osd_fread (file, namcos2_eeprom, namcos2_eeprom_size);
 		else
@@ -83,28 +83,22 @@ void namcos2_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-WRITE_HANDLER( namcos2_68k_eeprom_w )
-{
-	int oldword = READ_WORD (&namcos2_eeprom[offset]);
-	int newword = COMBINE_WORD (oldword, data);
-	WRITE_WORD (&namcos2_eeprom[offset], newword);
+WRITE16_HANDLER( namcos2_68k_eeprom_w ){
+	COMBINE_DATA( &namcos2_eeprom[offset] );
 }
 
-READ_HANDLER( namcos2_68k_eeprom_r )
-{
-	return READ_WORD(&namcos2_eeprom[offset]);
+READ16_HANDLER( namcos2_68k_eeprom_r ){
+	return namcos2_eeprom[offset];
 }
 
 /*************************************************************/
 /* 68000 Shared memory area - Data ROM area 				 */
 /*************************************************************/
 
-READ_HANDLER( namcos2_68k_data_rom_r )
-{
-	unsigned char *ROM=memory_region(REGION_USER1);
-	return READ_WORD(&ROM[offset]);
+READ16_HANDLER( namcos2_68k_data_rom_r ){
+	data16_t *ROM = (data16_t *)memory_region(REGION_USER1);
+	return ROM[offset];
 }
-
 
 /*************************************************************/
 /* 68000 Shared memory area - Video RAM control 			 */
@@ -112,132 +106,110 @@ READ_HANDLER( namcos2_68k_data_rom_r )
 
 size_t namcos2_68k_vram_size;
 
-WRITE_HANDLER( namcos2_68k_vram_w )
-{
-	int oldword = READ_WORD(&videoram[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&videoram[offset],newword);
-
-		/* Some games appear to use the 409000 region as SRAM to */
-		/* communicate between master/slave processors ??		 */
-
-		if(offset<0x9000)
-		{
-			switch(offset&0xe000)
-			{
-				case 0x0000:
-					tilemap_mark_tile_dirty(namcos2_tilemap0,(offset>>1)&0xfff);
-					break;
-
-				case 0x2000:
-					tilemap_mark_tile_dirty(namcos2_tilemap1,(offset>>1)&0xfff);
-					break;
-
-				case 0x4000:
-					tilemap_mark_tile_dirty(namcos2_tilemap2,(offset>>1)&0xfff);
-					break;
-
-				case 0x6000:
-					tilemap_mark_tile_dirty(namcos2_tilemap3,(offset>>1)&0xfff);
-					break;
-
-				case 0x8000:
-					if(offset>=0x8010 && offset<0x87f0)
-					{
-						offset-=0x10;	/* Fixed plane offsets */
-						tilemap_mark_tile_dirty(namcos2_tilemap4,(offset&0x7ff)>>1);
-					}
-					else if(offset>=0x8810 && offset<0x8ff0)
-					{
-						offset-=0x10;	/* Fixed plane offsets */
-						tilemap_mark_tile_dirty(namcos2_tilemap5,(offset&0x7ff)>>1);
-					}
-					break;
-
-				default:
-					break;
+WRITE16_HANDLER( namcos2_68k_vram_w ){
+	data16_t oldword = videoram16[offset];
+	COMBINE_DATA( &videoram16[offset] );
+	/* Note: some games appear to use the 409000 region as SRAM to */
+	/* communicate between master/slave processors ??		       */
+	
+	if( oldword != videoram16[offset] ){
+		if( offset<0x4000 ){
+			switch( offset&0x3000 ){
+			case 0x0000:
+				tilemap_mark_tile_dirty(namcos2_tilemap0,offset&0xfff);
+				break;
+			case 0x1000:
+				tilemap_mark_tile_dirty(namcos2_tilemap1,offset&0xfff);
+				break;
+			case 0x2000:
+				tilemap_mark_tile_dirty(namcos2_tilemap2,offset&0xfff);
+				break;
+			case 0x3000:
+				tilemap_mark_tile_dirty(namcos2_tilemap3,offset&0xfff);
+				break;
 			}
+		}
+		else if( offset>=0x8010/2 && offset<0x87f0/2 ){
+			offset-=0x8010/2;	/* Fixed plane offsets */
+			tilemap_mark_tile_dirty( namcos2_tilemap4, offset );
+		}
+		else if( offset>=0x8810/2 && offset<0x8ff0/2 ){
+			offset-=0x8810/2;	/* Fixed plane offsets */
+			tilemap_mark_tile_dirty( namcos2_tilemap5, offset );
 		}
 	}
 }
 
-READ_HANDLER( namcos2_68k_vram_r )
-{
-	int data=READ_WORD(&videoram[offset]);
-	return data;
+READ16_HANDLER( namcos2_68k_vram_r ){
+	return videoram16[offset];
 }
 
+data16_t namcos2_68k_vram_ctrl[0x20];
 
-
-unsigned char namcos2_68k_vram_ctrl[0x40];
-
-WRITE_HANDLER( namcos2_68k_vram_ctrl_w )
+WRITE16_HANDLER( namcos2_68k_vram_ctrl_w )
 {
-	int oldword = READ_WORD(&namcos2_68k_vram_ctrl[offset&0x3f]);
-	int newword = COMBINE_WORD(oldword,data);
+	data16_t oldword, newword;
+	offset &= 0x1f;
+	oldword = namcos2_68k_vram_ctrl[offset];
+	COMBINE_DATA( &namcos2_68k_vram_ctrl[offset] );
+	newword = namcos2_68k_vram_ctrl[offset];
 
-	if (oldword != newword)
-	{
-		WRITE_WORD(&namcos2_68k_vram_ctrl[offset&0x3f],newword);
-
-		switch(offset&0x3f)
+	if (oldword != newword){
+		switch( offset )
 		{
-			case 0x02:
+			case 0x02/2:
 				/* All planes are flipped X+Y from D15 of this word */
 				tilemap_set_flip(ALL_TILEMAPS,(newword & 0x8000) ? (TILEMAP_FLIPX|TILEMAP_FLIPY) : 0);
 
 				tilemap_set_scrollx( namcos2_tilemap0, 0, (newword+44+4)&0x1ff );
 				break;
-			case 0x06:
+			case 0x06/2:
 				tilemap_set_scrolly( namcos2_tilemap0, 0, (newword+24)&0x1ff );
 				break;
-			case 0x0a:
+			case 0x0a/2:
 				tilemap_set_scrollx( namcos2_tilemap1, 0, (newword+44+2)&0x1ff );
 				break;
-			case 0x0e:
+			case 0x0e/2:
 				tilemap_set_scrolly( namcos2_tilemap1, 0, (newword+24)&0x1ff );
 				break;
-			case 0x12:
+			case 0x12/2:
 				tilemap_set_scrollx( namcos2_tilemap2, 0, (newword+44+1)&0x1ff );
 				break;
-			case 0x16:
+			case 0x16/2:
 				tilemap_set_scrolly( namcos2_tilemap2, 0, (newword+24)&0x1ff );
 				break;
-			case 0x1a:
+			case 0x1a/2:
 				tilemap_set_scrollx( namcos2_tilemap3, 0, (newword+44)&0x1ff );
 				break;
-			case 0x1e:
+			case 0x1e/2:
 				tilemap_set_scrolly( namcos2_tilemap3, 0, (newword+24)&0x1ff );
 				break;
-			case 0x30:
+			case 0x30/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
 				break;
-			case 0x32:
+			case 0x32/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
 				break;
-			case 0x34:
+			case 0x34/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
 				break;
-			case 0x36:
+			case 0x36/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
 				break;
-			case 0x38:
+			case 0x38/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
 				break;
-			case 0x3a:
+			case 0x3a/2:
 				/* Change of colour bank needs to force a tilemap redraw */
 				if ((newword & 7) != (oldword & 7))
 					tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
@@ -248,9 +220,8 @@ WRITE_HANDLER( namcos2_68k_vram_ctrl_w )
 	}
 }
 
-READ_HANDLER( namcos2_68k_vram_ctrl_r )
-{
-	return READ_WORD(&namcos2_68k_vram_ctrl[offset&0x3f]);
+READ16_HANDLER( namcos2_68k_vram_ctrl_r ){
+	return namcos2_68k_vram_ctrl[offset & 0x1f];
 }
 
 
@@ -258,17 +229,15 @@ READ_HANDLER( namcos2_68k_vram_ctrl_r )
 /* 68000 Shared memory area - Video palette control 		 */
 /*************************************************************/
 
-unsigned char *namcos2_68k_palette_ram;
+data16_t *namcos2_68k_palette_ram;
 size_t namcos2_68k_palette_size;
 
-READ_HANDLER( namcos2_68k_video_palette_r )
-{
-	if((offset&0xf000)==0x3000)
-	{
+READ16_HANDLER( namcos2_68k_video_palette_r ){
+	offset*=2;
+	if( (offset & 0xf000) == 0x3000 ){
 		/* Palette chip control registers */
 		offset&=0x001f;
-		switch(offset)
-		{
+		switch( offset ){
 			case 0x1a:
 			case 0x1e:
 				return 0xff;
@@ -277,28 +246,24 @@ READ_HANDLER( namcos2_68k_video_palette_r )
 				break;
 		}
 	}
-	return READ_WORD(&namcos2_68k_palette_ram[offset&0xffff]);
+	return namcos2_68k_palette_ram[(offset/2)&0x7fff];
 }
 
-WRITE_HANDLER( namcos2_68k_video_palette_w )
+WRITE16_HANDLER( namcos2_68k_video_palette_w )
 {
-	int oldword = READ_WORD(&namcos2_68k_palette_ram[offset&0xffff]);
-	int newword = COMBINE_WORD(oldword, data);
-	int pen,red,green,blue;
-
-	if(oldword != newword)
-	{
-		WRITE_WORD(&namcos2_68k_palette_ram[offset&0xffff],newword);
-
+	data16_t oldword, newword;
+	offset &= 0x7fff;
+	oldword = namcos2_68k_palette_ram[offset];
+	COMBINE_DATA( &namcos2_68k_palette_ram[offset] );
+	newword = namcos2_68k_palette_ram[offset];
+	if( oldword != newword ){
+		offset*=2;
 		/* 0x3000 offset is control registers */
-		if((offset&0x3000)!=0x3000)
-		{
-			pen=(((offset&0xc000)>>2) | (offset&0x0fff))>>1;
-
-			red  =(READ_WORD(&namcos2_68k_palette_ram[offset&0xcfff]))&0x00ff;
-			green=(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x1000]))&0x00ff;
-			blue =(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x2000]))&0x00ff;
-
+		if( (offset&0x3000) != 0x3000 ){
+			int pen = (((offset&0xc000)>>2) | (offset&0x0fff))>>1;
+			int red  = namcos2_68k_palette_ram[((offset&0xcfff)+0x0000)/2]&0x00ff;
+			int green= namcos2_68k_palette_ram[((offset&0xcfff)+0x1000)/2]&0x00ff;
+			int blue = namcos2_68k_palette_ram[((offset&0xcfff)+0x2000)/2]&0x00ff;
 			palette_change_color(pen,red,green,blue);
 		}
 	}
@@ -310,25 +275,21 @@ WRITE_HANDLER( namcos2_68k_video_palette_w )
 
 unsigned char *namcos2_dpram=NULL;	/* 2Kx8 */
 
-READ_HANDLER( namcos2_68k_dpram_word_r )
-{
-	offset = offset/2;
+READ16_HANDLER( namcos2_68k_dpram_word_r ){
 	return namcos2_dpram[offset&0x7ff];
 }
 
-WRITE_HANDLER( namcos2_68k_dpram_word_w )
-{
-	offset = offset/2;
-	if(!(data & 0x00ff0000)) namcos2_dpram[offset&0x7ff] = data & 0xff;
+WRITE16_HANDLER( namcos2_68k_dpram_word_w ){
+	if( ACCESSING_LSB ){
+		namcos2_dpram[offset&0x7ff] = data&0xff;
+	}
 }
 
-READ_HANDLER( namcos2_dpram_byte_r )
-{
+READ_HANDLER( namcos2_dpram_byte_r ){
 	return namcos2_dpram[offset&0x7ff];
 }
 
-WRITE_HANDLER( namcos2_dpram_byte_w )
-{
+WRITE_HANDLER( namcos2_dpram_byte_w ){
 	namcos2_dpram[offset&0x7ff] = data;
 }
 
@@ -337,30 +298,27 @@ WRITE_HANDLER( namcos2_dpram_byte_w )
 /* 68000 Shared serial communications processor (CPU5?) 	  */
 /**************************************************************/
 
-unsigned char  namcos2_68k_serial_comms_ctrl[0x10];
-unsigned char *namcos2_68k_serial_comms_ram=NULL;
+data16_t  namcos2_68k_serial_comms_ctrl[0x8];
+data16_t *namcos2_68k_serial_comms_ram=NULL;
 
-READ_HANDLER( namcos2_68k_serial_comms_ram_r )
-{
+READ16_HANDLER( namcos2_68k_serial_comms_ram_r ){
 	logerror("Serial Comms read  Addr=%08x\n",offset);
-	return READ_WORD(&namcos2_68k_serial_comms_ram[offset&0x3fff]);
+	return namcos2_68k_serial_comms_ram[offset&0x1fff];
 }
 
-WRITE_HANDLER( namcos2_68k_serial_comms_ram_w )
-{
-	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ram[offset&0x3fff],data&0x1ff);
-	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
+WRITE16_HANDLER( namcos2_68k_serial_comms_ram_w ){
+	COMBINE_DATA( &namcos2_68k_serial_comms_ram[offset&0x1fff] );
+	logerror( "Serial Comms write Addr=%08x, Data=%04x\n",offset,data );
 }
 
 
-READ_HANDLER( namcos2_68k_serial_comms_ctrl_r )
+READ16_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 {
-	int retval=READ_WORD(&namcos2_68k_serial_comms_ctrl[offset&0x0f]);
+	data16_t retval = namcos2_68k_serial_comms_ctrl[offset&0x07];
 
-	switch(offset)
-	{
+	switch(offset){
 		case 0x00:
-			retval|=0x0004; 	/* Set READY? status bit */
+			retval |= 0x0004; 	/* Set READY? status bit */
 			break;
 		default:
 			break;
@@ -370,9 +328,9 @@ READ_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 	return retval;
 }
 
-WRITE_HANDLER( namcos2_68k_serial_comms_ctrl_w )
+WRITE16_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 {
-	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ctrl[offset&0x0f],data);
+	COMBINE_DATA( &namcos2_68k_serial_comms_ctrl[offset&0x07] );
 //	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
@@ -385,32 +343,23 @@ WRITE_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 /* The sprite bank register also holds the colour bank for */
 /* the ROZ memory and some of the priority control data    */
 
-unsigned char *namcos2_sprite_ram=NULL;
-int namcos2_sprite_bank=0;
+data16_t *namcos2_sprite_ram=NULL;
+data16_t namcos2_sprite_bank=0;
 
-WRITE_HANDLER( namcos2_68k_sprite_ram_w )
-{
-	COMBINE_WORD_MEM(&namcos2_sprite_ram[offset&0x3fff],data);
+READ16_HANDLER( namcos2_68k_sprite_ram_r ){
+	return namcos2_sprite_ram[offset&0x1fff];
+}
+WRITE16_HANDLER( namcos2_68k_sprite_ram_w ){
+	COMBINE_DATA( &namcos2_sprite_ram[offset&0x1fff] );
 }
 
-WRITE_HANDLER( namcos2_68k_sprite_bank_w )
-{
-	int newword = COMBINE_WORD(namcos2_sprite_bank, data);
-	namcos2_sprite_bank=newword;
-}
-
-READ_HANDLER( namcos2_68k_sprite_ram_r )
-{
-	int data=READ_WORD(&namcos2_sprite_ram[offset&0x3fff]);
-	return data;
-}
-
-READ_HANDLER( namcos2_68k_sprite_bank_r )
-{
+READ16_HANDLER( namcos2_68k_sprite_bank_r ){
 	return namcos2_sprite_bank;
 }
+WRITE16_HANDLER( namcos2_68k_sprite_bank_w ){
+	COMBINE_DATA( &namcos2_sprite_bank );
 
-
+}
 
 /*************************************************************/
 /* 68000 Shared protection/random key generator 			 */
@@ -426,21 +375,18 @@ READ_HANDLER( namcos2_68k_sprite_bank_r )
 //$d0000e	  Write $31ad, read $00bd (burnf)
 //
 
-unsigned char namcos2_68k_key[0x10];
+data16_t namcos2_68k_key[0x10];
 
-READ_HANDLER( namcos2_68k_key_r )
-{
+READ16_HANDLER( namcos2_68k_key_r ){
 /*	return READ_WORD(&namcos2_68k_key[offset&0x0f]); */
 	return rand()&0xffff;
 }
 
-WRITE_HANDLER( namcos2_68k_key_w )
-{
+WRITE16_HANDLER( namcos2_68k_key_w ){
 	/* Seed the random number generator */
 	srand(data);
-	COMBINE_WORD_MEM(&namcos2_68k_key[offset&0x0f],data);
+	COMBINE_DATA( &namcos2_68k_key[offset&0x07] );
 }
-
 
 /**************************************************************/
 /*	ROZ - Rotate & Zoom memory function handlers			  */
@@ -460,30 +406,25 @@ WRITE_HANDLER( namcos2_68k_key_w )
 /*															  */
 /**************************************************************/
 
-unsigned char namcos2_68k_roz_ctrl[0x10];
+data16_t namcos2_68k_roz_ctrl[0x8];
 size_t namcos2_68k_roz_ram_size;
-unsigned char *namcos2_68k_roz_ram=NULL;
+data16_t *namcos2_68k_roz_ram=NULL;
 
-WRITE_HANDLER( namcos2_68k_roz_ctrl_w )
-{
-	COMBINE_WORD_MEM(&namcos2_68k_roz_ctrl[offset&0x0f],data);
+WRITE16_HANDLER( namcos2_68k_roz_ctrl_w ){
+	COMBINE_DATA( &namcos2_68k_roz_ctrl[offset&0x7] );
 }
 
-READ_HANDLER( namcos2_68k_roz_ctrl_r )
-{
-	return READ_WORD(&namcos2_68k_roz_ctrl[offset&0x0f]);
+READ16_HANDLER( namcos2_68k_roz_ctrl_r ){
+	return namcos2_68k_roz_ctrl[offset&0x7];
 }
 
-WRITE_HANDLER( namcos2_68k_roz_ram_w )
-{
-	COMBINE_WORD_MEM(&namcos2_68k_roz_ram[offset],data);
+WRITE16_HANDLER( namcos2_68k_roz_ram_w ){
+	COMBINE_DATA( &namcos2_68k_roz_ram[offset] );
 }
 
-READ_HANDLER( namcos2_68k_roz_ram_r )
-{
-	return READ_WORD(&namcos2_68k_roz_ram[offset]);
+READ16_HANDLER( namcos2_68k_roz_ram_r ){
+	return namcos2_68k_roz_ram[offset];
 }
-
 
 
 /**************************************************************/
@@ -492,37 +433,31 @@ READ_HANDLER( namcos2_68k_roz_ram_r )
 /*															  */
 /**************************************************************/
 
-unsigned char *namcos2_68k_roadtile_ram=NULL;
-unsigned char *namcos2_68k_roadgfx_ram=NULL;
+data16_t *namcos2_68k_roadtile_ram=NULL;
+data16_t *namcos2_68k_roadgfx_ram=NULL;
 size_t namcos2_68k_roadtile_ram_size;
 size_t namcos2_68k_roadgfx_ram_size;
 
-WRITE_HANDLER( namcos2_68k_roadtile_ram_w )
-{
-	COMBINE_WORD_MEM(&namcos2_68k_roadtile_ram[offset],data);
+WRITE16_HANDLER( namcos2_68k_roadtile_ram_w ){
+	COMBINE_DATA( &namcos2_68k_roadtile_ram[offset] );
 }
 
-READ_HANDLER( namcos2_68k_roadtile_ram_r )
-{
-	return READ_WORD(&namcos2_68k_roadtile_ram[offset]);
+READ16_HANDLER( namcos2_68k_roadtile_ram_r ){
+	return namcos2_68k_roadtile_ram[offset];
 }
 
-WRITE_HANDLER( namcos2_68k_roadgfx_ram_w )
-{
-	COMBINE_WORD_MEM(&namcos2_68k_roadgfx_ram[offset],data);
+WRITE16_HANDLER( namcos2_68k_roadgfx_ram_w ){
+	COMBINE_DATA( &namcos2_68k_roadgfx_ram[offset] );
 }
 
-READ_HANDLER( namcos2_68k_roadgfx_ram_r )
-{
-	return READ_WORD(&namcos2_68k_roadgfx_ram[offset]);
+READ16_HANDLER( namcos2_68k_roadgfx_ram_r ){
+	return namcos2_68k_roadgfx_ram[offset];
 }
 
-WRITE_HANDLER( namcos2_68k_road_ctrl_w )
-{
+WRITE16_HANDLER( namcos2_68k_road_ctrl_w ){
 }
 
-READ_HANDLER( namcos2_68k_road_ctrl_r )
-{
+READ16_HANDLER( namcos2_68k_road_ctrl_r ){
 	return 0;
 }
 
@@ -535,19 +470,18 @@ READ_HANDLER( namcos2_68k_road_ctrl_r )
 #define FRAME_TIME		(1.0/60.0)
 #define LINE_LENGTH 	(FRAME_TIME/NO_OF_LINES)
 
-int  namcos2_68k_master_C148[0x20];
-int  namcos2_68k_slave_C148[0x20];
+data16_t  namcos2_68k_master_C148[0x20];
+data16_t  namcos2_68k_slave_C148[0x20];
 
-WRITE_HANDLER( namcos2_68k_master_C148_w )
-{
+WRITE16_HANDLER( namcos2_68k_master_C148_w ){
+	offset*=2;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
-
+	
 	data&=0x0007;
 	namcos2_68k_master_C148[(offset>>13)&0x1f]=data;
 
-	switch(offset)
-	{
+	switch(offset){
 		case 0x1d4000:
 			/* Trigger Master to Slave interrupt */
 //			cpu_set_irq_line(CPU_SLAVE, namcos2_68k_slave_C148[NAMCOS2_C148_CPUIRQ], ASSERT_LINE);
@@ -606,14 +540,12 @@ WRITE_HANDLER( namcos2_68k_master_C148_w )
 	}
 }
 
-
-READ_HANDLER( namcos2_68k_master_C148_r )
-{
+READ16_HANDLER( namcos2_68k_master_C148_r ){
+	offset*=2;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
-	switch(offset)
-	{
+	switch(offset){
 		case 0x1d6000:
 			/* Clear Slave to Master*/
 //			cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
@@ -639,8 +571,7 @@ READ_HANDLER( namcos2_68k_master_C148_r )
 int namcos2_68k_master_vblank(void)
 {
 	/* If the POS interrupt is running then set it at half way thru the frame */
-	if(namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ])
-	{
+	if(namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ]){
 		timer_set(TIME_IN_NSEC(LINE_LENGTH*100), 0, namcos2_68k_master_posirq);
 	}
 
@@ -648,15 +579,13 @@ int namcos2_68k_master_vblank(void)
 	return namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ];
 }
 
-void namcos2_68k_master_posirq( int moog )
-{
+void namcos2_68k_master_posirq( int moog ){
 	cpu_set_irq_line(CPU_MASTER, namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ], ASSERT_LINE);
 	cpu_set_irq_line(CPU_SLAVE , namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
 }
 
-
-WRITE_HANDLER( namcos2_68k_slave_C148_w )
-{
+WRITE16_HANDLER( namcos2_68k_slave_C148_w ){
+	offset*=2;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
@@ -688,8 +617,9 @@ WRITE_HANDLER( namcos2_68k_slave_C148_w )
 }
 
 
-READ_HANDLER( namcos2_68k_slave_C148_r )
+READ16_HANDLER( namcos2_68k_slave_C148_r )
 {
+	offset*=2;
 	offset+=0x1c0000;
 	offset&=0x1fe000;
 
@@ -714,8 +644,7 @@ READ_HANDLER( namcos2_68k_slave_C148_r )
 	return namcos2_68k_slave_C148[(offset>>13)&0x1f];
 }
 
-int namcos2_68k_slave_vblank(void)
-{
+int namcos2_68k_slave_vblank(void){
 	return namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ];
 }
 

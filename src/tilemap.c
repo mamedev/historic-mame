@@ -1257,7 +1257,6 @@ static void update_visible( struct tilemap *tilemap ){
 
 void tilemap_update( struct tilemap *tilemap ){
 profiler_mark(PROFILER_TILEMAP_UPDATE);
-	tilemap->bNeedRender = 1;
 	if( tilemap==ALL_TILEMAPS ){
 		tilemap = first_tilemap;
 		while( tilemap ){
@@ -1266,6 +1265,7 @@ profiler_mark(PROFILER_TILEMAP_UPDATE);
 		}
 	}
 	else if( tilemap->enable ){
+		tilemap->bNeedRender = 1;
 		update_visible( tilemap );
 		update_tile_info( tilemap );
 	}

@@ -42,51 +42,52 @@ To Do:
 
 /**************** Machine stuff ******************/
 int  toaplan1_interrupt(void);
-WRITE_HANDLER( toaplan1_int_enable_w );
-READ_HANDLER( toaplan1_shared_r );
-WRITE_HANDLER( toaplan1_shared_w );
-READ_HANDLER( toaplan1_unk_r );
-READ_HANDLER( samesame_port_6_r );
-READ_HANDLER( vimana_mcu_r );
-WRITE_HANDLER( vimana_mcu_w );
-READ_HANDLER( vimana_input_port_5_r );
+WRITE16_HANDLER( toaplan1_int_enable_w );
+READ16_HANDLER( toaplan1_shared_r );
+WRITE16_HANDLER( toaplan1_shared_w );
+READ16_HANDLER( toaplan1_unk_r );
+READ16_HANDLER( samesame_port_6_word_r );
+READ16_HANDLER( vimana_mcu_r );
+WRITE16_HANDLER( vimana_mcu_w );
+READ16_HANDLER( vimana_input_port_5_word_r );
 
-READ_HANDLER( demonwld_dsp_r );
-WRITE_HANDLER( demonwld_dsp_w );
-WRITE_HANDLER( demonwld_dsp_ctrl_w );
+READ16_HANDLER( demonwld_dsp_r );
+WRITE16_HANDLER( demonwld_dsp_w );
+WRITE16_HANDLER( demonwld_dsp_ctrl_w );
 
 void toaplan1_init_machine(void);
 
 WRITE_HANDLER( rallybik_coin_w );
 WRITE_HANDLER( toaplan1_coin_w );
+WRITE16_HANDLER( samesame_coin_w );
 
-unsigned char *toaplan1_sharedram;
+extern unsigned char *toaplan1_sharedram;
 
 
 /**************** Video stuff ******************/
-READ_HANDLER( toaplan1_vblank_r );
-WRITE_HANDLER( toaplan1_flipscreen_w );
+READ16_HANDLER( toaplan1_vblank_r );
+WRITE16_HANDLER( toaplan1_flipscreen_w );
 
-READ_HANDLER( toaplan1_videoram1_r );
-WRITE_HANDLER( toaplan1_videoram1_w );
-READ_HANDLER( toaplan1_videoram2_r );
-WRITE_HANDLER( toaplan1_videoram2_w );
-READ_HANDLER( rallybik_videoram3_r );
-READ_HANDLER( toaplan1_videoram3_r );
-WRITE_HANDLER( toaplan1_videoram3_w );
-READ_HANDLER( toaplan1_colorram1_r );
-WRITE_HANDLER( toaplan1_colorram1_w );
-READ_HANDLER( toaplan1_colorram2_r );
-WRITE_HANDLER( toaplan1_colorram2_w );
+READ16_HANDLER ( toaplan1_spriteram16_r );
+WRITE16_HANDLER( toaplan1_spriteram16_w );
+READ16_HANDLER ( toaplan1_spritesizeram16_r );
+WRITE16_HANDLER( toaplan1_spritesizeram16_w );
+READ16_HANDLER ( rallybik_tileram16_r );
+READ16_HANDLER ( toaplan1_tileram16_r );
+WRITE16_HANDLER( toaplan1_tileram16_w );
+READ16_HANDLER ( toaplan1_colorram1_r );
+WRITE16_HANDLER( toaplan1_colorram1_w );
+READ16_HANDLER ( toaplan1_colorram2_r );
+WRITE16_HANDLER( toaplan1_colorram2_w );
 
-READ_HANDLER( video_ofs_r );
-WRITE_HANDLER( video_ofs_w );
-READ_HANDLER( video_ofs3_r );
-WRITE_HANDLER( video_ofs3_w );
-READ_HANDLER( scrollregs_r );
-WRITE_HANDLER( scrollregs_w );
-WRITE_HANDLER( offsetregs_w );
-WRITE_HANDLER( layers_offset_w );
+READ16_HANDLER ( toaplan1_spriteram_offs_r );
+WRITE16_HANDLER( toaplan1_spriteram_offs_w );
+READ16_HANDLER ( toaplan1_tileram_offs_r );
+WRITE16_HANDLER( toaplan1_tileram_offs_w );
+READ16_HANDLER ( toaplan1_scroll_regs_r );
+WRITE16_HANDLER( toaplan1_scroll_regs_w );
+WRITE16_HANDLER( toaplan1_tile_offsets_w );
+WRITE16_HANDLER( toaplan1_layers_offset_w );
 
 void toaplan1_eof_callback(void);
 void rallybik_eof_callback(void);
@@ -98,286 +99,288 @@ void rallybik_vh_stop(void);
 void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *toaplan1_colorram1;
-extern unsigned char *toaplan1_colorram2;
-extern size_t colorram1_size;
-extern size_t colorram2_size;
+extern data16_t *spriteram16;
+extern data16_t *toaplan1_colorram1;
+extern data16_t *toaplan1_colorram2;
+extern size_t spriteram_size;
+extern size_t toaplan1_colorram1_size;
+extern size_t toaplan1_colorram2_size;
 
 
 
 
-static MEMORY_READ_START( rallybik_readmem )
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x083fff, MRA_BANK1 },
-	{ 0x0c0000, 0x0c0fff, MRA_BANK2 },				/* sprite ram data */
-	{ 0x100002, 0x100003, video_ofs3_r },
-	{ 0x100004, 0x100007, rallybik_videoram3_r },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_r },
-	{ 0x140000, 0x140001, input_port_0_r },
+static MEMORY_READ16_START( rallybik_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x083fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, MRA16_RAM },				/* sprite ram data */
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_r },
+	{ 0x100004, 0x100007, rallybik_tileram16_r },	/* tile layers */
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_r },
+	{ 0x140000, 0x140001, input_port_0_word_r },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
 MEMORY_END
-static MEMORY_WRITE_START( rallybik_writemem )
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x083fff, MWA_BANK1 },
-	{ 0x0c0000, 0x0c0fff, MWA_BANK2, &spriteram, &spriteram_size },	/* sprite ram data */
-	{ 0x100002, 0x100003, video_ofs3_w },
-	{ 0x100004, 0x100007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_w },
+static MEMORY_WRITE16_START( rallybik_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x083fff, MWA16_RAM },
+	{ 0x0c0000, 0x0c0fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
+	{ 0x100004, 0x100007, toaplan1_tileram16_w },
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
 	{ 0x140000, 0x140001, toaplan1_int_enable_w },
-	{ 0x140008, 0x14000f, layers_offset_w },
-	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x180000, 0x180fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x1c0000, 0x1c0003, offsetregs_w },
+	{ 0x140008, 0x14000f, toaplan1_layers_offset_w },
+	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x180000, 0x180fff, toaplan1_shared_w },
+	{ 0x1c0000, 0x1c0003, toaplan1_tile_offsets_w },
 MEMORY_END
 
-static MEMORY_READ_START( truxton_readmem )
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x083fff, MRA_BANK1 },
-	{ 0x0c0000, 0x0c0001, input_port_0_r },
-	{ 0x0c0002, 0x0c0003, video_ofs_r },
-	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_r },	/* sprite size ? */
-	{ 0x100002, 0x100003, video_ofs3_r },
-	{ 0x100004, 0x100007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_r },
+static MEMORY_READ16_START( truxton_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x083fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_r },
+	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_r },
+	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_r },
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_r },
+	{ 0x100004, 0x100007, toaplan1_tileram16_r },
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_r },
 	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
 	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, toaplan1_shared_r },
 MEMORY_END
-static MEMORY_WRITE_START( truxton_writemem )
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x083fff, MWA_BANK1 },
-	{ 0x0c0002, 0x0c0003, video_ofs_w },
-	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_w },	/* sprite size ? */
-	{ 0x100002, 0x100003, video_ofs3_w },
-	{ 0x100004, 0x100007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_w },
+static MEMORY_WRITE16_START( truxton_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x083fff, MWA16_RAM },
+	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_w },
+	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_w },
+	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_w },
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
+	{ 0x100004, 0x100007, toaplan1_tileram16_w },
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
 	{ 0x140000, 0x140001, toaplan1_int_enable_w },
-	{ 0x140008, 0x14000f, layers_offset_w },
-	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x180000, 0x180fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x1c0000, 0x1c0003, offsetregs_w },
+	{ 0x140008, 0x14000f, toaplan1_layers_offset_w },
+	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x180000, 0x180fff, toaplan1_shared_w },
+	{ 0x1c0000, 0x1c0003, toaplan1_tile_offsets_w },
 	{ 0x1c0006, 0x1c0007, toaplan1_flipscreen_w },
 MEMORY_END
 
-static MEMORY_READ_START( hellfire_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x047fff, MRA_BANK1 },
+static MEMORY_READ16_START( hellfire_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x047fff, MRA16_RAM },
 	{ 0x084000, 0x0847ff, toaplan1_colorram1_r },
 	{ 0x086000, 0x0867ff, toaplan1_colorram2_r },
 	{ 0x0c0000, 0x0c0fff, toaplan1_shared_r },
-	{ 0x100002, 0x100003, video_ofs3_r },
-	{ 0x100004, 0x100007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_r },
-	{ 0x140000, 0x140001, input_port_0_r },
-	{ 0x140002, 0x140003, video_ofs_r },
-	{ 0x140004, 0x140005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x140006, 0x140007, toaplan1_videoram2_r },	/* sprite size ? */
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_r },
+	{ 0x100004, 0x100007, toaplan1_tileram16_r },
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_r },
+	{ 0x140000, 0x140001, input_port_0_word_r },
+	{ 0x140002, 0x140003, toaplan1_spriteram_offs_r },
+	{ 0x140004, 0x140005, toaplan1_spriteram16_r },
+	{ 0x140006, 0x140007, toaplan1_spritesizeram16_r },
 MEMORY_END
-static MEMORY_WRITE_START( hellfire_writemem )
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x040000, 0x047fff, MWA_BANK1 },
+static MEMORY_WRITE16_START( hellfire_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x040000, 0x047fff, MWA16_RAM },
 	{ 0x080002, 0x080003, toaplan1_int_enable_w },
-	{ 0x080008, 0x08000f, layers_offset_w },
-	{ 0x084000, 0x0847ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x086000, 0x0867ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x0c0000, 0x0c0fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x100002, 0x100003, video_ofs3_w },
-	{ 0x100004, 0x100007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x100010, 0x10001f, scrollregs_w },
-	{ 0x140002, 0x140003, video_ofs_w },
-	{ 0x140004, 0x140005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x140006, 0x140007, toaplan1_videoram2_w },	/* sprite size ? */
-	{ 0x180000, 0x180003, offsetregs_w },
+	{ 0x080008, 0x08000f, toaplan1_layers_offset_w },
+	{ 0x084000, 0x0847ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x086000, 0x0867ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x0c0000, 0x0c0fff, toaplan1_shared_w },
+	{ 0x100002, 0x100003, toaplan1_tileram_offs_w },
+	{ 0x100004, 0x100007, toaplan1_tileram16_w },
+	{ 0x100010, 0x10001f, toaplan1_scroll_regs_w },
+	{ 0x140002, 0x140003, toaplan1_spriteram_offs_w },
+	{ 0x140004, 0x140005, toaplan1_spriteram16_w },
+	{ 0x140006, 0x140007, toaplan1_spritesizeram16_w },
+	{ 0x180000, 0x180003, toaplan1_tile_offsets_w },
 	{ 0x180006, 0x180007, toaplan1_flipscreen_w },
 MEMORY_END
 
-static MEMORY_READ_START( zerowing_readmem )
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, MRA_BANK1 },
+static MEMORY_READ16_START( zerowing_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x080000, 0x087fff, MRA16_RAM },
 	{ 0x400000, 0x400005, toaplan1_unk_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440fff, toaplan1_shared_r },
-	{ 0x480002, 0x480003, video_ofs3_r },
-	{ 0x480004, 0x480007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x480010, 0x48001f, scrollregs_r },
-	{ 0x4c0000, 0x4c0001, input_port_0_r },
-	{ 0x4c0002, 0x4c0003, video_ofs_r },
-	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_r },	/* sprite size ? */
+	{ 0x480002, 0x480003, toaplan1_tileram_offs_r },
+	{ 0x480004, 0x480007, toaplan1_tileram16_r },
+	{ 0x480010, 0x48001f, toaplan1_scroll_regs_r },
+	{ 0x4c0000, 0x4c0001, input_port_0_word_r },
+	{ 0x4c0002, 0x4c0003, toaplan1_spriteram_offs_r },
+	{ 0x4c0004, 0x4c0005, toaplan1_spriteram16_r },
+	{ 0x4c0006, 0x4c0007, toaplan1_spritesizeram16_r },
 MEMORY_END
-static MEMORY_WRITE_START( zerowing_writemem )
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, MWA_BANK1 },
-	{ 0x0c0000, 0x0c0003, offsetregs_w },
+static MEMORY_WRITE16_START( zerowing_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x087fff, MWA16_RAM },
+	{ 0x0c0000, 0x0c0003, toaplan1_tile_offsets_w },
 	{ 0x0c0006, 0x0c0007, toaplan1_flipscreen_w },
 	{ 0x400002, 0x400003, toaplan1_int_enable_w },
-	{ 0x400008, 0x40000f, layers_offset_w },
-	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x440000, 0x440fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x480002, 0x480003, video_ofs3_w },
-	{ 0x480004, 0x480007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x480010, 0x48001f, scrollregs_w },
-	{ 0x4c0002, 0x4c0003, video_ofs_w },
-	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_w },	/* sprite size ? */
+	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x440000, 0x440fff, toaplan1_shared_w },
+	{ 0x480002, 0x480003, toaplan1_tileram_offs_w },
+	{ 0x480004, 0x480007, toaplan1_tileram16_w },
+	{ 0x480010, 0x48001f, toaplan1_scroll_regs_w },
+	{ 0x4c0002, 0x4c0003, toaplan1_spriteram_offs_w },
+	{ 0x4c0004, 0x4c0005, toaplan1_spriteram16_w },
+	{ 0x4c0006, 0x4c0007, toaplan1_spritesizeram16_w },
 MEMORY_END
 
-static MEMORY_READ_START( demonwld_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x400000, 0x400001, input_port_0_r },
+static MEMORY_READ16_START( demonwld_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x400000, 0x400001, input_port_0_word_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x600000, 0x600fff, toaplan1_shared_r },
-	{ 0x800002, 0x800003, video_ofs3_r },
-	{ 0x800004, 0x800007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x800010, 0x80001f, scrollregs_r },
-	{ 0xa00000, 0xa00001, input_port_0_r },
-	{ 0xa00002, 0xa00003, video_ofs_r },
-	{ 0xa00004, 0xa00005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0xa00006, 0xa00007, toaplan1_videoram2_r },	/* sprite size ? */
-	{ 0xc00000, 0xc03fff, MRA_BANK1},
+	{ 0x800002, 0x800003, toaplan1_tileram_offs_r },
+	{ 0x800004, 0x800007, toaplan1_tileram16_r },
+	{ 0x800010, 0x80001f, toaplan1_scroll_regs_r },
+	{ 0xa00000, 0xa00001, input_port_0_word_r },
+	{ 0xa00002, 0xa00003, toaplan1_spriteram_offs_r },
+	{ 0xa00004, 0xa00005, toaplan1_spriteram16_r },
+	{ 0xa00006, 0xa00007, toaplan1_spritesizeram16_r },
+	{ 0xc00000, 0xc03fff, MRA16_RAM},
 MEMORY_END
-static MEMORY_WRITE_START( demonwld_writemem )
-	{ 0x000000, 0x03ffff, MWA_ROM },
+static MEMORY_WRITE16_START( demonwld_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
-	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x600000, 0x600fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x800002, 0x800003, video_ofs3_w },
-	{ 0x800004, 0x800007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x800010, 0x80001f, scrollregs_w },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x600000, 0x600fff, toaplan1_shared_w },
+	{ 0x800002, 0x800003, toaplan1_tileram_offs_w },
+	{ 0x800004, 0x800007, toaplan1_tileram16_w },
+	{ 0x800010, 0x80001f, toaplan1_scroll_regs_w },
 	{ 0x400000, 0x400001, toaplan1_int_enable_w },
-	{ 0x400008, 0x40000f, layers_offset_w },
-	{ 0xa00002, 0xa00003, video_ofs_w },
-	{ 0xa00004, 0xa00005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0xa00006, 0xa00007, toaplan1_videoram2_w },	/* sprite size ? */
-	{ 0xc00000, 0xc03fff, MWA_BANK1},
-	{ 0xe00000, 0xe00003, offsetregs_w },
-	{ 0xe0000a, 0xe0000b, demonwld_dsp_ctrl_w },			/* DSP Comms control */
+	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
+	{ 0xa00002, 0xa00003, toaplan1_spriteram_offs_w },
+	{ 0xa00004, 0xa00005, toaplan1_spriteram16_w },
+	{ 0xa00006, 0xa00007, toaplan1_spritesizeram16_w },
+	{ 0xc00000, 0xc03fff, MWA16_RAM },
+	{ 0xe00000, 0xe00003, toaplan1_tile_offsets_w },
+	{ 0xe0000a, 0xe0000b, demonwld_dsp_ctrl_w },	/* DSP Comms control */
 MEMORY_END
 
-static MEMORY_READ_START( samesame_readmem )
-	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x040000, 0x07ffff, MRA_ROM },
-	{ 0x0c0000, 0x0c3fff, MRA_BANK1 },
+static MEMORY_READ16_START( samesame_readmem )
+	{ 0x000000, 0x00ffff, MRA16_ROM },
+	{ 0x040000, 0x07ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0c3fff, MRA16_RAM },
 	{ 0x100000, 0x100001, toaplan1_vblank_r },
 	{ 0x104000, 0x1047ff, toaplan1_colorram1_r },
 	{ 0x106000, 0x1067ff, toaplan1_colorram2_r },
-	{ 0x140000, 0x140001, input_port_1_r },
-	{ 0x140002, 0x140003, input_port_2_r },
-	{ 0x140004, 0x140005, input_port_3_r },
-	{ 0x140006, 0x140007, input_port_4_r },
-	{ 0x140008, 0x140009, input_port_5_r },
-	{ 0x14000a, 0x14000b, samesame_port_6_r },		/* Territory, and MCU ready */
-	{ 0x180002, 0x180003, video_ofs3_r },
-	{ 0x180004, 0x180007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x180010, 0x18001f, scrollregs_r },
-	{ 0x1c0000, 0x1c0001, input_port_0_r },
-	{ 0x1c0002, 0x1c0003, video_ofs_r },
-	{ 0x1c0004, 0x1c0005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x1c0006, 0x1c0007, toaplan1_videoram2_r },	/* sprite size ? */
+	{ 0x140000, 0x140001, input_port_1_word_r },
+	{ 0x140002, 0x140003, input_port_2_word_r },
+	{ 0x140004, 0x140005, input_port_3_word_r },
+	{ 0x140006, 0x140007, input_port_4_word_r },
+	{ 0x140008, 0x140009, input_port_5_word_r },
+	{ 0x14000a, 0x14000b, samesame_port_6_word_r },	/* Territory, and MCU ready */
+	{ 0x180002, 0x180003, toaplan1_tileram_offs_r },
+	{ 0x180004, 0x180007, toaplan1_tileram16_r },
+	{ 0x180010, 0x18001f, toaplan1_scroll_regs_r },
+	{ 0x1c0000, 0x1c0001, input_port_0_word_r },
+	{ 0x1c0002, 0x1c0003, toaplan1_spriteram_offs_r },
+	{ 0x1c0004, 0x1c0005, toaplan1_spriteram16_r },
+	{ 0x1c0006, 0x1c0007, toaplan1_spritesizeram16_r },
 MEMORY_END
-static MEMORY_WRITE_START( samesame_writemem )
-	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x040000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x080003, offsetregs_w },
+static MEMORY_WRITE16_START( samesame_writemem )
+	{ 0x000000, 0x00ffff, MWA16_ROM },
+	{ 0x040000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x080003, toaplan1_tile_offsets_w },
 	{ 0x080006, 0x080007, toaplan1_flipscreen_w },
-	{ 0x0c0000, 0x0c3fff, MWA_BANK1 },			/* Frame done at $c1ada */
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM },			/* Frame done at $c1ada */
 /*	{ 0x100000, 0x100001, ??? },				disable palette refresh ? */
 	{ 0x100002, 0x100003, toaplan1_int_enable_w },
-	{ 0x100008, 0x10000f, layers_offset_w },
-	{ 0x104000, 0x1047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x106000, 0x1067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x14000c, 0x14000d, toaplan1_coin_w },	/* Coin counter/lockout */
+	{ 0x100008, 0x10000f, toaplan1_layers_offset_w },
+	{ 0x104000, 0x1047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x106000, 0x1067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x14000c, 0x14000d, samesame_coin_w },	/* Coin counter/lockout */
 //	{ 0x14000e, 0x14000f, samesame_mcu_w },		/* Commands sent to HD647180 */
-	{ 0x180002, 0x180003, video_ofs3_w },
-	{ 0x180004, 0x180007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x180010, 0x18001f, scrollregs_w },
+	{ 0x180002, 0x180003, toaplan1_tileram_offs_w },
+	{ 0x180004, 0x180007, toaplan1_tileram16_w },
+	{ 0x180010, 0x18001f, toaplan1_scroll_regs_w },
 /*	{ 0x1c0000, 0x1c0001, ??? },				disable sprite refresh ? */
-	{ 0x1c0002, 0x1c0003, video_ofs_w },
-	{ 0x1c0004, 0x1c0005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x1c0006, 0x1c0007, toaplan1_videoram2_w },	/* sprite size ? */
+	{ 0x1c0002, 0x1c0003, toaplan1_spriteram_offs_w },
+	{ 0x1c0004, 0x1c0005, toaplan1_spriteram16_w },
+	{ 0x1c0006, 0x1c0007, toaplan1_spritesizeram16_w },
 MEMORY_END
 
-static MEMORY_READ_START( outzone_readmem )
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x100000, 0x100001, input_port_0_r },
-	{ 0x100002, 0x100003, video_ofs_r },
-	{ 0x100004, 0x100005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x100006, 0x100007, toaplan1_videoram2_r },
+static MEMORY_READ16_START( outzone_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x100001, input_port_0_word_r },
+	{ 0x100002, 0x100003, toaplan1_spriteram_offs_r },
+	{ 0x100004, 0x100005, toaplan1_spriteram16_r },
+	{ 0x100006, 0x100007, toaplan1_spritesizeram16_r },
 	{ 0x140000, 0x140fff, toaplan1_shared_r },
-	{ 0x200002, 0x200003, video_ofs3_r },
-	{ 0x200004, 0x200007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x200010, 0x20001f, scrollregs_r },
-	{ 0x240000, 0x243fff, MRA_BANK1 },
+	{ 0x200002, 0x200003, toaplan1_tileram_offs_r },
+	{ 0x200004, 0x200007, toaplan1_tileram16_r },
+	{ 0x200010, 0x20001f, toaplan1_scroll_regs_r },
+	{ 0x240000, 0x243fff, MRA16_RAM },
 	{ 0x300000, 0x300001, toaplan1_vblank_r },
 	{ 0x304000, 0x3047ff, toaplan1_colorram1_r },
 	{ 0x306000, 0x3067ff, toaplan1_colorram2_r },
 MEMORY_END
-static MEMORY_WRITE_START( outzone_writemem )
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100002, 0x100003, video_ofs_w },
-	{ 0x100004, 0x100005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x100006, 0x100007, toaplan1_videoram2_w },
-	{ 0x140000, 0x140fff, toaplan1_shared_w, &toaplan1_sharedram },
-	{ 0x200002, 0x200003, video_ofs3_w },
-	{ 0x200004, 0x200007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x200010, 0x20001f, scrollregs_w },
-	{ 0x240000, 0x243fff, MWA_BANK1 },
+static MEMORY_WRITE16_START( outzone_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100002, 0x100003, toaplan1_spriteram_offs_w },
+	{ 0x100004, 0x100005, toaplan1_spriteram16_w },
+	{ 0x100006, 0x100007, toaplan1_spritesizeram16_w },
+	{ 0x140000, 0x140fff, toaplan1_shared_w },
+	{ 0x200002, 0x200003, toaplan1_tileram_offs_w },
+	{ 0x200004, 0x200007, toaplan1_tileram16_w },
+	{ 0x200010, 0x20001f, toaplan1_scroll_regs_w },
+	{ 0x240000, 0x243fff, MWA16_RAM },
 	{ 0x300000, 0x300001, toaplan1_int_enable_w },
-	{ 0x300008, 0x30000f, layers_offset_w },
-	{ 0x304000, 0x3047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
-	{ 0x340000, 0x340003, offsetregs_w },
+	{ 0x300008, 0x30000f, toaplan1_layers_offset_w },
+	{ 0x304000, 0x3047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
+	{ 0x340000, 0x340003, toaplan1_tile_offsets_w },
 	{ 0x340006, 0x340007, toaplan1_flipscreen_w },
 MEMORY_END
 
-static MEMORY_READ_START( vimana_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x0c0000, 0x0c0001, input_port_0_r },
-	{ 0x0c0002, 0x0c0003, video_ofs_r },
-	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_r },	/* sprites info */
-	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_r },	/* sprite size ? */
+static MEMORY_READ16_START( vimana_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
+	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_r },
+	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_r },
+	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_r },
 	{ 0x400000, 0x400001, toaplan1_vblank_r },
 	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
 	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440005, vimana_mcu_r },
-	{ 0x440006, 0x440007, input_port_3_r },
-	{ 0x440008, 0x440009, vimana_input_port_5_r },
-	{ 0x44000a, 0x44000b, input_port_1_r },
-	{ 0x44000c, 0x44000d, input_port_2_r },
-	{ 0x44000e, 0x44000f, input_port_4_r },
-	{ 0x440010, 0x440011, input_port_6_r },
-	{ 0x480000, 0x487fff, MRA_BANK1 },
+	{ 0x440006, 0x440007, input_port_3_word_r },
+	{ 0x440008, 0x440009, vimana_input_port_5_word_r },
+	{ 0x44000a, 0x44000b, input_port_1_word_r },
+	{ 0x44000c, 0x44000d, input_port_2_word_r },
+	{ 0x44000e, 0x44000f, input_port_4_word_r },
+	{ 0x440010, 0x440011, input_port_6_word_r },
+	{ 0x480000, 0x487fff, MRA16_RAM },
 	{ 0x4c0000, 0x4c0001, toaplan1_unk_r },
-	{ 0x4c0002, 0x4c0003, video_ofs3_r },
-	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_r },	/* tile layers */
-	{ 0x4c0010, 0x4c001f, scrollregs_r },
+	{ 0x4c0002, 0x4c0003, toaplan1_tileram_offs_r },
+	{ 0x4c0004, 0x4c0007, toaplan1_tileram16_r },
+	{ 0x4c0010, 0x4c001f, toaplan1_scroll_regs_r },
 MEMORY_END
-static MEMORY_WRITE_START( vimana_writemem )
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x080000, 0x080003, offsetregs_w },
+static MEMORY_WRITE16_START( vimana_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080000, 0x080003, toaplan1_tile_offsets_w },
 	{ 0x080006, 0x080007, toaplan1_flipscreen_w },
-	{ 0x0c0002, 0x0c0003, video_ofs_w },
-	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_w },	/* sprites info */
-	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_w },	/* sprite size ? */
+	{ 0x0c0002, 0x0c0003, toaplan1_spriteram_offs_w },
+	{ 0x0c0004, 0x0c0005, toaplan1_spriteram16_w },
+	{ 0x0c0006, 0x0c0007, toaplan1_spritesizeram16_w },
 	{ 0x400002, 0x400003, toaplan1_int_enable_w },	/* IRQACK? */
-	{ 0x400008, 0x40000f, layers_offset_w },
-	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
-	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
+	{ 0x400008, 0x40000f, toaplan1_layers_offset_w },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &toaplan1_colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &toaplan1_colorram2_size },
 	{ 0x440000, 0x440005, vimana_mcu_w },
-	{ 0x480000, 0x487fff, MWA_BANK1 },
-	{ 0x4c0002, 0x4c0003, video_ofs3_w },
-	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_w },	/* tile layers */
-	{ 0x4c0010, 0x4c001f, scrollregs_w },
+	{ 0x480000, 0x487fff, MWA16_RAM },
+	{ 0x4c0002, 0x4c0003, toaplan1_tileram_offs_w },
+	{ 0x4c0004, 0x4c0007, toaplan1_tileram16_w },
+	{ 0x4c0010, 0x4c001f, toaplan1_scroll_regs_w },
 MEMORY_END
 
 
@@ -472,24 +475,24 @@ static PORT_WRITE_START( outzone_sound_writeport )
 	{ 0x04, 0x04, toaplan1_coin_w },	/* Coin counter/lockout */
 PORT_END
 
-static MEMORY_READ_START( DSP_readmem )
-	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
+static MEMORY_READ16_START( DSP_readmem )
+	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
+	{ 0x8000, 0x8fff, MRA16_ROM },	/* 800h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
 MEMORY_END
 
-static MEMORY_WRITE_START( DSP_writemem )
-	{ 0x0000, 0x011f, MWA_RAM },
-	{ 0x8000, 0x8fff, MWA_ROM },
+static MEMORY_WRITE16_START( DSP_writemem )
+	{ 0x0000, 0x011f, MWA16_RAM },
+	{ 0x8000, 0x8fff, MWA16_ROM },
 MEMORY_END
 
-static PORT_READ_START( DSP_readport )
-	{ 0x01, 0x01, demonwld_dsp_r },
+static PORT_READ16_START( DSP_readport )
+	{ 0x02, 0x03, demonwld_dsp_r },
 PORT_END
 
-static PORT_WRITE_START( DSP_writeport )
-	{ 0x00, 0x03, demonwld_dsp_w },
+static PORT_WRITE16_START( DSP_writeport )
+	{ 0x00, 0x07, demonwld_dsp_w },
 PORT_END
 
 
@@ -1701,28 +1704,28 @@ static const struct MachineDriver machine_driver_vimana =
 ***************************************************************************/
 
 ROM_START( rallybik )
-	ROM_REGION( 0x080000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "b45-02.rom",  0x000000, 0x08000, 0x383386d7 )
-	ROM_LOAD_ODD ( "b45-01.rom",  0x000000, 0x08000, 0x7602f6a7 )
-	ROM_LOAD_EVEN( "b45-04.rom",  0x040000, 0x20000, 0xe9b005b1 )
-	ROM_LOAD_ODD ( "b45-03.rom",  0x040000, 0x20000, 0x555344ce )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "b45-02.rom",  0x000000, 0x08000, 0x383386d7 )
+	ROM_LOAD16_BYTE( "b45-01.rom",  0x000001, 0x08000, 0x7602f6a7 )
+	ROM_LOAD16_BYTE( "b45-04.rom",  0x040000, 0x20000, 0xe9b005b1 )
+	ROM_LOAD16_BYTE( "b45-03.rom",  0x040001, 0x20000, 0x555344ce )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b45-05.rom",  0x0000, 0x4000, 0x10814601 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b45-09.bin",  0x00000, 0x20000, 0x1dc7b010 )
 	ROM_LOAD( "b45-08.bin",  0x20000, 0x20000, 0xfab661ba )
 	ROM_LOAD( "b45-07.bin",  0x40000, 0x20000, 0xcd3748b4 )
 	ROM_LOAD( "b45-06.bin",  0x60000, 0x20000, 0x144b085c )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "b45-11.rom",  0x00000, 0x10000, 0x0d56e8bb )
 	ROM_LOAD( "b45-10.rom",  0x10000, 0x10000, 0xdbb7c57e )
 	ROM_LOAD( "b45-12.rom",  0x20000, 0x10000, 0xcf5aae4e )
 	ROM_LOAD( "b45-13.rom",  0x30000, 0x10000, 0x1683b07c )
 
-	ROM_REGION( 0x240, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x240, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "b45-15.bpr",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "b45-16.bpr",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "b45-14.bpr",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -1730,20 +1733,20 @@ ROM_START( rallybik )
 ROM_END
 
 ROM_START( truxton )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "b65_11.bin",  0x000000, 0x20000, 0x1a62379a )
-	ROM_LOAD_ODD ( "b65_10.bin",  0x000000, 0x20000, 0xaff5195d )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "b65_11.bin",  0x000000, 0x20000, 0x1a62379a )
+	ROM_LOAD16_BYTE( "b65_10.bin",  0x000001, 0x20000, 0xaff5195d )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b65_09.bin",  0x0000, 0x8000, 0xf1c0f410 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b65_08.bin",  0x00000, 0x20000, 0xd2315b37 )
 	ROM_LOAD( "b65_07.bin",  0x20000, 0x20000, 0xfb83252a )
 	ROM_LOAD( "b65_06.bin",  0x40000, 0x20000, 0x36cedcbe )
 	ROM_LOAD( "b65_05.bin",  0x60000, 0x20000, 0x81cd95f1 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "b65_04.bin",  0x00000, 0x20000, 0x8c6ff461 )
 	ROM_LOAD( "b65_03.bin",  0x20000, 0x20000, 0x58b1350b )
 	ROM_LOAD( "b65_02.bin",  0x40000, 0x20000, 0x1dd55161 )
@@ -1751,20 +1754,20 @@ ROM_START( truxton )
 ROM_END
 
 ROM_START( hellfire )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "b90-14.bin",  0x000000, 0x20000, 0x101df9f5 )
-	ROM_LOAD_ODD ( "b90-15.bin",  0x000000, 0x20000, 0xe67fd452 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "b90-14.bin",  0x000000, 0x20000, 0x101df9f5 )
+	ROM_LOAD16_BYTE( "b90-15.bin",  0x000001, 0x20000, 0xe67fd452 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b90-03.bin",  0x0000, 0x8000, 0x4058fa67 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "b90-04.bin",  0x00000, 0x20000, 0xea6150fc )
 	ROM_LOAD( "b90-05.bin",  0x20000, 0x20000, 0xbb52c507 )
 	ROM_LOAD( "b90-06.bin",  0x40000, 0x20000, 0xcf5b0252 )
 	ROM_LOAD( "b90-07.bin",  0x60000, 0x20000, 0xb98af263 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "b90-11.bin",  0x00000, 0x20000, 0xc33e543c )
 	ROM_LOAD( "b90-10.bin",  0x20000, 0x20000, 0x35fd1092 )
 	ROM_LOAD( "b90-09.bin",  0x40000, 0x20000, 0xcf01009e )
@@ -1772,22 +1775,22 @@ ROM_START( hellfire )
 ROM_END
 
 ROM_START( zerowing )
-	ROM_REGION( 0x080000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "o15-11.rom",  0x000000, 0x08000, 0x6ff2b9a0 )
-	ROM_LOAD_ODD ( "o15-12.rom",  0x000000, 0x08000, 0x9773e60b )
-	ROM_LOAD_EVEN( "o15-09.rom",  0x040000, 0x20000, 0x13764e95 )
-	ROM_LOAD_ODD ( "o15-10.rom",  0x040000, 0x20000, 0x351ba71a )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "o15-11.rom",  0x000000, 0x08000, 0x6ff2b9a0 )
+	ROM_LOAD16_BYTE( "o15-12.rom",  0x000001, 0x08000, 0x9773e60b )
+	ROM_LOAD16_BYTE( "o15-09.rom",  0x040000, 0x20000, 0x13764e95 )
+	ROM_LOAD16_BYTE( "o15-10.rom",  0x040001, 0x20000, 0x351ba71a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "o15-13.rom",  0x0000, 0x8000, 0xe7b72383 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "o15-05.rom",  0x00000, 0x20000, 0x4e5dd246 )
 	ROM_LOAD( "o15-06.rom",  0x20000, 0x20000, 0xc8c6d428 )
 	ROM_LOAD( "o15-07.rom",  0x40000, 0x20000, 0xefc40e99 )
 	ROM_LOAD( "o15-08.rom",  0x60000, 0x20000, 0x1b019eab )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "o15-03.rom",  0x00000, 0x20000, 0x7f245fd3 )
 	ROM_LOAD( "o15-04.rom",  0x20000, 0x20000, 0x0b1a1289 )
 	ROM_LOAD( "o15-01.rom",  0x40000, 0x20000, 0x70570e43 )
@@ -1795,52 +1798,52 @@ ROM_START( zerowing )
 ROM_END
 
 ROM_START( demonwld )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "rom10",  0x000000, 0x20000, 0x036ee46c )
-	ROM_LOAD_ODD ( "rom09",  0x000000, 0x20000, 0xbed746e3 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "rom10",  0x000000, 0x20000, 0x036ee46c )
+	ROM_LOAD16_BYTE( "rom09",  0x000001, 0x20000, 0xbed746e3 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "rom11",  0x0000, 0x8000, 0x397eca1b )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",  0x8000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",  0x8000, 0x0800, 0x2d135376 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD16_BYTE( "dsp_21.bin",  0x8000, 0x0800, 0x2d135376 )
+	ROM_LOAD16_BYTE( "dsp_22.bin",  0x8001, 0x0800, 0x79389a71 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom05",  0x00000, 0x20000, 0x6506c982 )
 	ROM_LOAD( "rom07",  0x20000, 0x20000, 0xa3a0d993 )
 	ROM_LOAD( "rom06",  0x40000, 0x20000, 0x4fc5e5f3 )
 	ROM_LOAD( "rom08",  0x60000, 0x20000, 0xeb53ab09 )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom01",  0x00000, 0x20000, 0x1b3724e9 )
 	ROM_LOAD( "rom02",  0x20000, 0x20000, 0x7b20a44d )
 	ROM_LOAD( "rom03",  0x40000, 0x20000, 0x2cacdcd0 )
 	ROM_LOAD( "rom04",  0x60000, 0x20000, 0x76fd3201 )
 
-	ROM_REGION( 0x40, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "prom12.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "prom13.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( samesame )
-	ROM_REGION( 0x080000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "o17_09.bin",  0x000000, 0x08000, 0x3f69e437 )
-	ROM_LOAD_ODD ( "o17_10.bin",  0x000000, 0x08000, 0x4e723e0a )
-	ROM_LOAD_EVEN( "o17_11.bin",  0x040000, 0x20000, 0xbe07d101 )
-	ROM_LOAD_ODD ( "o17_12.bin",  0x040000, 0x20000, 0xef698811 )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "o17_09.bin",  0x000000, 0x08000, 0x3f69e437 )
+	ROM_LOAD16_BYTE( "o17_10.bin",  0x000001, 0x08000, 0x4e723e0a )
+	ROM_LOAD16_BYTE( "o17_11.bin",  0x040000, 0x20000, 0xbe07d101 )
+	ROM_LOAD16_BYTE( "o17_12.bin",  0x040001, 0x20000, 0xef698811 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound HD647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.017",  0x00000, 0x08000, 0x00000000 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "o17_05.bin",  0x00000, 0x20000, 0x565315f8 )
 	ROM_LOAD( "o17_06.bin",  0x20000, 0x20000, 0x95262d4c )
 	ROM_LOAD( "o17_07.bin",  0x40000, 0x20000, 0x4c4b735c )
 	ROM_LOAD( "o17_08.bin",  0x60000, 0x20000, 0x95c6586c )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "o17_01.bin",  0x00000, 0x20000, 0xea12e491 )
 	ROM_LOAD( "o17_02.bin",  0x20000, 0x20000, 0x32a13a9f )
 	ROM_LOAD( "o17_03.bin",  0x40000, 0x20000, 0x68723dc9 )
@@ -1848,23 +1851,23 @@ ROM_START( samesame )
 ROM_END
 
 ROM_START( fireshrk )
-	ROM_REGION( 0x080000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "9.bin",  0x000000, 0x08000, 0xf0c70e6f )
-	ROM_LOAD_ODD ( "10.bin", 0x000000, 0x08000, 0x9d253d77 )
-	ROM_LOAD_EVEN( "11.bin", 0x040000, 0x20000, 0x6beac378 )
-	ROM_LOAD_ODD ( "12.bin", 0x040000, 0x20000, 0x6adb6eb5 )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "9.bin",  0x000000, 0x08000, 0xf0c70e6f )
+	ROM_LOAD16_BYTE( "10.bin", 0x000001, 0x08000, 0x9d253d77 )
+	ROM_LOAD16_BYTE( "11.bin", 0x040000, 0x20000, 0x6beac378 )
+	ROM_LOAD16_BYTE( "12.bin", 0x040001, 0x20000, 0x6adb6eb5 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound HD647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.017",  0x00000, 0x08000, 0x00000000 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "o17_05.bin",  0x00000, 0x20000, 0x565315f8 )
 	ROM_LOAD( "o17_06.bin",  0x20000, 0x20000, 0x95262d4c )
 	ROM_LOAD( "o17_07.bin",  0x40000, 0x20000, 0x4c4b735c )
 	ROM_LOAD( "o17_08.bin",  0x60000, 0x20000, 0x95c6586c )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "o17_01.bin",  0x00000, 0x20000, 0xea12e491 )
 	ROM_LOAD( "o17_02.bin",  0x20000, 0x20000, 0x32a13a9f )
 	ROM_LOAD( "o17_03.bin",  0x40000, 0x20000, 0x68723dc9 )
@@ -1872,18 +1875,18 @@ ROM_START( fireshrk )
 ROM_END
 
 ROM_START( outzone )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "rom7.bin",  0x000000, 0x20000, 0x936e25d8 )
-	ROM_LOAD_ODD ( "rom8.bin",  0x000000, 0x20000, 0xd19b3ecf )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "rom7.bin",  0x000000, 0x20000, 0x936e25d8 )
+	ROM_LOAD16_BYTE( "rom8.bin",  0x000001, 0x20000, 0xd19b3ecf )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, 0x6bb72d16 )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
@@ -1891,36 +1894,36 @@ ROM_START( outzone )
 ROM_END
 
 ROM_START( outzonep )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "18.bin",  0x000000, 0x20000, 0x31a171bb )
-	ROM_LOAD_ODD ( "19.bin",  0x000000, 0x20000, 0x804ecfd1 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "18.bin",  0x000000, 0x20000, 0x31a171bb )
+	ROM_LOAD16_BYTE( "19.bin",  0x000001, 0x20000, 0x804ecfd1 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, 0xc64ec7b6 )
 	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, 0x64b6c5ac )
 /* same data, different layout
-	ROM_LOAD_GFX_EVEN( "04.bin",  0x000000, 0x10000, 0x3d11eae0 )
-	ROM_LOAD_GFX_ODD ( "08.bin",  0x000000, 0x10000, 0xc7628891 )
-	ROM_LOAD_GFX_EVEN( "13.bin",  0x080000, 0x10000, 0xb23dd87e )
-	ROM_LOAD_GFX_ODD ( "09.bin",  0x080000, 0x10000, 0x445651ba )
-	ROM_LOAD_GFX_EVEN( "03.bin",  0x020000, 0x10000, 0x6b347646 )
-	ROM_LOAD_GFX_ODD ( "07.bin",  0x020000, 0x10000, 0x461b47f9 )
-	ROM_LOAD_GFX_EVEN( "14.bin",  0x0a0000, 0x10000, 0xb28ae37a )
-	ROM_LOAD_GFX_ODD ( "10.bin",  0x0a0000, 0x10000, 0x6596a076 )
-	ROM_LOAD_GFX_EVEN( "02.bin",  0x040000, 0x10000, 0x11a781c3 )
-	ROM_LOAD_GFX_ODD ( "06.bin",  0x040000, 0x10000, 0x1055da17 )
-	ROM_LOAD_GFX_EVEN( "15.bin",  0x0c0000, 0x10000, 0x9c9e811b )
-	ROM_LOAD_GFX_ODD ( "11.bin",  0x0c0000, 0x10000, 0x4c4d44dc )
-	ROM_LOAD_GFX_EVEN( "01.bin",  0x060000, 0x10000, 0xe8c46aea )
-	ROM_LOAD_GFX_ODD ( "05.bin",  0x060000, 0x10000, 0xf8a2fe01 )
-	ROM_LOAD_GFX_EVEN( "16.bin",  0x0e0000, 0x10000, 0xcffcb99b )
-	ROM_LOAD_GFX_ODD ( "12.bin",  0x0e0000, 0x10000, 0x90d37ded )
+	ROM_LOAD16_BYTE( "04.bin",  0x000000, 0x10000, 0x3d11eae0 )
+	ROM_LOAD16_BYTE( "08.bin",  0x000001, 0x10000, 0xc7628891 )
+	ROM_LOAD16_BYTE( "13.bin",  0x080000, 0x10000, 0xb23dd87e )
+	ROM_LOAD16_BYTE( "09.bin",  0x080001, 0x10000, 0x445651ba )
+	ROM_LOAD16_BYTE( "03.bin",  0x020000, 0x10000, 0x6b347646 )
+	ROM_LOAD16_BYTE( "07.bin",  0x020001, 0x10000, 0x461b47f9 )
+	ROM_LOAD16_BYTE( "14.bin",  0x0a0000, 0x10000, 0xb28ae37a )
+	ROM_LOAD16_BYTE( "10.bin",  0x0a0001, 0x10000, 0x6596a076 )
+	ROM_LOAD16_BYTE( "02.bin",  0x040000, 0x10000, 0x11a781c3 )
+	ROM_LOAD16_BYTE( "06.bin",  0x040001, 0x10000, 0x1055da17 )
+	ROM_LOAD16_BYTE( "15.bin",  0x0c0000, 0x10000, 0x9c9e811b )
+	ROM_LOAD16_BYTE( "11.bin",  0x0c0001, 0x10000, 0x4c4d44dc )
+	ROM_LOAD16_BYTE( "01.bin",  0x060000, 0x10000, 0xe8c46aea )
+	ROM_LOAD16_BYTE( "05.bin",  0x060001, 0x10000, 0xf8a2fe01 )
+	ROM_LOAD16_BYTE( "16.bin",  0x0e0000, 0x10000, 0xcffcb99b )
+	ROM_LOAD16_BYTE( "12.bin",  0x0e0001, 0x10000, 0x90d37ded )
 */
 
-	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, 0x6bb72d16 )
 	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, 0x0934782d )
 	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, 0xec903c07 )
@@ -1928,73 +1931,73 @@ ROM_START( outzonep )
 ROM_END
 
 ROM_START( vimana )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "vim07.bin",  0x000000, 0x20000, 0x1efaea84 )
-	ROM_LOAD_ODD ( "vim08.bin",  0x000000, 0x20000, 0xe45b7def )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "vim07.bin",  0x000000, 0x20000, 0x1efaea84 )
+	ROM_LOAD16_BYTE( "vim08.bin",  0x000001, 0x20000, 0xe45b7def )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound HD647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.019",  0x00000, 0x08000, 0x00000000 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGION( 0x40, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( vimana2 )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "vimana07.bin",  0x000000, 0x20000, 0x5a4bf73e )
-	ROM_LOAD_ODD ( "vimana08.bin",  0x000000, 0x20000, 0x03ba27e8 )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "vimana07.bin",  0x000000, 0x20000, 0x5a4bf73e )
+	ROM_LOAD16_BYTE( "vimana08.bin",  0x000001, 0x20000, 0x03ba27e8 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound HD647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.019",  0x00000, 0x08000, 0x00000000 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGION( 0x40, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END
 
 ROM_START( vimanan )
-	ROM_REGION( 0x040000, REGION_CPU1 )	/* Main 68K code */
-	ROM_LOAD_EVEN( "tp019-07.rom",  0x000000, 0x20000, 0x78888ff2 )
-	ROM_LOAD_ODD ( "tp019-08.rom",  0x000000, 0x20000, 0x6cd2dc3c )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "tp019-07.rom",  0x000000, 0x20000, 0x78888ff2 )
+	ROM_LOAD16_BYTE( "tp019-08.rom",  0x000001, 0x20000, 0x6cd2dc3c )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound HD647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.019",  0x00000, 0x08000, 0x00000000 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim6.bin",  0x00000, 0x20000, 0x2886878d )
 	ROM_LOAD( "vim5.bin",  0x20000, 0x20000, 0x61a63d7a )
 	ROM_LOAD( "vim4.bin",  0x40000, 0x20000, 0xb0515768 )
 	ROM_LOAD( "vim3.bin",  0x60000, 0x20000, 0x0b539131 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "vim1.bin",  0x00000, 0x80000, 0xcdde26cd )
 	ROM_LOAD( "vim2.bin",  0x80000, 0x80000, 0x1dbfc118 )
 
-	ROM_REGION( 0x40, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "tp019-09.bpr",  0x00, 0x20, 0xbc88cced )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp019-10.bpr",  0x20, 0x20, 0xa1e17492 )	/* ??? */
 ROM_END

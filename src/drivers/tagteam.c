@@ -283,13 +283,13 @@ static const struct MachineDriver machine_driver_tagteam =
 
 
 ROM_START( bigprowr )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "bf00-1.20",    0x08000, 0x2000, 0x8aba32c9 )
 	ROM_LOAD( "bf01.33",      0x0a000, 0x2000, 0x0a41f3ae )
 	ROM_LOAD( "bf02.34",      0x0c000, 0x2000, 0xa28b0a0e )
 	ROM_LOAD( "bf03.46",      0x0e000, 0x2000, 0xd4cf7ec7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio code */
 	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
 	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
 	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
@@ -297,7 +297,7 @@ ROM_START( bigprowr )
 	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
 	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
 
-	ROM_REGION( 0x12000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x12000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bf10.89",      0x00000, 0x2000, 0xb1868746 )
 	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
 	ROM_LOAD( "bf12.103",     0x04000, 0x2000, 0xc8717a46 )
@@ -308,19 +308,19 @@ ROM_START( bigprowr )
 	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
 	ROM_LOAD( "bf18.107",     0x10000, 0x2000, 0xfd6f006d )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
 	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
 ROM_END
 
 ROM_START( tagteam )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
 	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )
 	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, 0x3d33a923 )
 	ROM_LOAD( "prowbf3.bin",  0x0e000, 0x2000, 0x518475d2 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for audio code */
 	ROM_LOAD( "bf4.8",        0x04000, 0x2000, 0x0558e1d8 )
 	ROM_LOAD( "bf5.7",        0x06000, 0x2000, 0xc1073f24 )
 	ROM_LOAD( "bf6.6",        0x08000, 0x2000, 0x208cd081 )
@@ -328,7 +328,7 @@ ROM_START( tagteam )
 	ROM_LOAD( "bf8.2",        0x0c000, 0x2000, 0xeafe8056 )
 	ROM_LOAD( "bf9.1",        0x0e000, 0x2000, 0xd589ce1b )
 
-	ROM_REGION( 0x12000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x12000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, 0x48165902 )
 	ROM_LOAD( "bf11.94",      0x02000, 0x2000, 0xc3fe99c1 )
 	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, 0x69de1ea2 )
@@ -339,7 +339,7 @@ ROM_START( tagteam )
 	ROM_LOAD( "bf17.96",      0x0e000, 0x2000, 0xccf42380 )
 	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0xe73a4bba )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "fko.8",        0x0000, 0x0020, 0xb6ee1483 )
 	ROM_LOAD( "fjo.25",       0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
 ROM_END

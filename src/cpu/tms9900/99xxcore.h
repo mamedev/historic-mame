@@ -515,13 +515,6 @@ static void reset_decrementer(void);
 	/*8-bit external data bus, with on-chip 16-bit RAM, and 16-bit address bus*/
 	/*The code is complex, so we use functions rather than macros*/
 
-	/* Why aren't these in memory.h ??? */
-#ifdef LSB_FIRST
-	#define BYTE_XOR_BE(a) ((a) ^ 1)
-#else
-	#define BYTE_XOR_BE(a) (a)
-#endif
-
 	static int readword(int addr)
 	{
 		if (addr < 0xf000)
@@ -1514,7 +1507,7 @@ static void writeCRU(int CRUAddr, int Number, UINT16 Value)
 		else
 			/* External CRU */
 #endif
-		cpu_writeport(CRUAddr, (Value & 0x01));
+		cpu_writeport16(CRUAddr, (Value & 0x01));
 		Value >>= 1;
 		CRUAddr = (CRUAddr + 1) & wCRUAddrMask;
 	}
@@ -1535,11 +1528,11 @@ static void external_instruction_notify(int ext_op_ID)
 #if 1
 	/* I guess we can support this like normal CRU operations */
 #if (TMS99XX_MODEL == TMS9900_ID)
-	cpu_writeport(ext_op_ID << 12, 0); /* or is it 1 ??? */
+	cpu_writeport16(ext_op_ID << 12, 0); /* or is it 1 ??? */
 #elif (TMS99XX_MODEL == TMS9980_ID)
-	cpu_writeport((ext_op_ID & 3) << 11, (ext_op_ID & 4) ? 1 : 0);
+	cpu_writeport16((ext_op_ID & 3) << 11, (ext_op_ID & 4) ? 1 : 0);
 #elif (TMS99XX_MODEL == TMS9995_ID)
-	cpu_writeport(ext_op_ID << 15, 0); /* or is it 1 ??? */
+	cpu_writeport16(ext_op_ID << 15, 0); /* or is it 1 ??? */
 #else
 	#warning "I don't know how your processor handle external opcodes (maybe you don't need them, though)."
 #endif
@@ -1582,7 +1575,7 @@ static void external_instruction_notify(int ext_op_ID)
 	This seems to be impossible to emulate efficiently.
 */
 #if (TMS99XX_MODEL != TMS9995_ID)
-#define READPORT(Port) cpu_readport(Port)
+#define READPORT(Port) cpu_readport16(Port)
 #else
 /* on tms9995, we have to handle internal CRU port */
 int READPORT(int Port)
@@ -1596,12 +1589,12 @@ int READPORT(int Port)
 	else if (Port == 0x1FD)
 		/* MID flag, and extrernal devices */
 		if (I.MID_flag)
-			return cpu_readport(Port) | 0x10;
+			return cpu_readport16(Port) | 0x10;
 		else
-			return cpu_readport(Port) & ~ 0x10;
+			return cpu_readport16(Port) & ~ 0x10;
 	else
 		/* extrernal devices */
-		return cpu_readport(Port);
+		return cpu_readport16(Port);
 }
 #endif
 

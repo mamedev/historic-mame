@@ -328,7 +328,7 @@ static	int 	S2650_relative[0x100] =
 		REL_EA( S.page );										\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 	} else S.iar = (S.iar + 1) & PMSK;							\
 }
 
@@ -341,7 +341,7 @@ static	int 	S2650_relative[0x100] =
 	REL_ZERO( 0 );												\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc(S.ea);											\
+	change_pc16(S.ea);											\
 }
 
 /***************************************************************
@@ -355,7 +355,7 @@ static	int 	S2650_relative[0x100] =
 		BRA_EA();												\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 	} else S.iar = (S.iar + 2) & PMSK;							\
 }
 
@@ -369,7 +369,7 @@ static	int 	S2650_relative[0x100] =
 	S.ea   = (S.ea + S.reg[3]) & AMSK;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc(S.ea);											\
+	change_pc16(S.ea);											\
 }
 
 /***************************************************************
@@ -385,7 +385,7 @@ static	int 	S2650_relative[0x100] =
 		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 	} else	S.iar = (S.iar + 1) & PMSK; 						\
 }
 
@@ -400,7 +400,7 @@ static	int 	S2650_relative[0x100] =
 	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc(S.ea);											\
+	change_pc16(S.ea);											\
 }
 
 /***************************************************************
@@ -416,7 +416,7 @@ static	int 	S2650_relative[0x100] =
 		S.ras[S.psu & SP] = S.page + S.iar;						\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 	} else S.iar = (S.iar + 2) & PMSK;							\
 }
 
@@ -432,7 +432,7 @@ static	int 	S2650_relative[0x100] =
 	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
-	change_pc(S.ea);											\
+	change_pc16(S.ea);											\
 }
 
 /***************************************************************
@@ -447,7 +447,7 @@ static	int 	S2650_relative[0x100] =
 		S.psu = (S.psu & ~SP) | ((S.psu - 1) & SP); 			\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 	}															\
 }
 
@@ -465,7 +465,7 @@ static	int 	S2650_relative[0x100] =
 		S.psu = (S.psu & ~SP) | ((S.psu - 1) & SP); 			\
 		S.page = S.ea & PAGE;									\
 		S.iar  = S.ea & PMSK;									\
-		change_pc(S.ea);										\
+		change_pc16(S.ea);										\
 		S.psu &= ~II;											\
 		CHECK_IRQ_LINE; 										\
 	}															\
@@ -527,9 +527,10 @@ static	int 	S2650_relative[0x100] =
 {																\
 	UINT8 before = dest;										\
 	/* add source; carry only if WC is set */					\
-	dest = dest + source + ((S.psl >> 3) & S.psl & C);			\
+	UINT16 res = dest + source + ((S.psl >> 3) & S.psl & C);	\
 	S.psl &= ~(C | OVF | IDC);									\
-	if( dest < before ) S.psl |= C; 							\
+	if(res & 0x100) S.psl |= C; 							    \
+    dest = res & 0xff;                                          \
 	if( (dest & 15) < (before & 15) ) S.psl |= IDC; 			\
 	SET_CC_OVF(dest,before);									\
 }
@@ -543,9 +544,10 @@ static	int 	S2650_relative[0x100] =
 {																\
 	UINT8 before = dest;										\
 	/* subtract source; borrow only if WC is set */ 			\
-	dest = dest - source - ((S.psl >> 3) & (S.psl ^ C) & C);	\
+	UINT16 res = dest - source - ((S.psl >> 3) & (S.psl ^ C) & C);	\
 	S.psl &= ~(C | OVF | IDC);									\
-	if( dest <= before ) S.psl |= C;							\
+	if((res & 0x100)==0) S.psl |= C; 							\
+    dest = res & 0xff;                                          \
 	if( (dest & 15) < (before & 15) ) S.psl |= IDC; 			\
 	SET_CC_OVF(dest,before);									\
 }
@@ -626,10 +628,11 @@ static	int 	S2650_relative[0x100] =
 /***************************************************************
  * M_SPSU
  * Store processor status upper (PSU) to register R0
+ * Checks for External Sense IO port
  ***************************************************************/
 #define M_SPSU()												\
 {																\
-	R0 = S.psu & ~PSU34;										\
+	R0 = ((S.psu & ~PSU34) | (cpu_readport16(S2650_SENSE_PORT) & SI)); \
 	SET_CC(R0); 												\
 }
 
@@ -675,7 +678,7 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_PPSU()												\
 {																\
-	UINT8 ppsu = ARG() & ~PSU34;								\
+	UINT8 ppsu = (ARG() & ~PSU34) & ~SI;						\
 	S.psu = S.psu | ppsu;										\
 }
 
@@ -699,8 +702,9 @@ static	int 	S2650_relative[0x100] =
 #define M_TPSU()												\
 {																\
 	UINT8 tpsu = ARG(); 										\
+    UINT8 rpsu = (S.psu | (cpu_readport16(S2650_SENSE_PORT) & SI)); \
 	S.psl &= ~CC;												\
-	if( (S.psu & tpsu) != tpsu )								\
+	if( (rpsu & tpsu) != tpsu )									\
 		S.psl |= 0x80;											\
 }
 
@@ -745,7 +749,7 @@ void s2650_reset(void *param)
 {
 	memset(&S, 0, sizeof(S));
 	S.psl = COM | WC;
-	S.psu = SI;
+	S.psu = 0;
 }
 
 void s2650_exit(void)
@@ -767,7 +771,7 @@ void s2650_set_context(void *src)
 		S = *(s2650_Regs*)src;
 		S.page = S.page & PAGE;
 		S.iar = S.iar & PMSK;
-        change_pc(S.page + S.iar);
+        change_pc16(S.page + S.iar);
 	}
 }
 
@@ -780,7 +784,7 @@ void s2650_set_pc(unsigned val)
 {
 	S.page = val & PAGE;
 	S.iar = val & PMSK;
-	change_pc(S.page + S.iar);
+	change_pc16(S.page + S.iar);
 }
 
 unsigned s2650_get_sp(void)
@@ -864,6 +868,7 @@ void s2650_set_irq_line(int irqline, int state)
 			s2650_set_sense(1);
 		return;
 	}
+
 	S.irq_state = state;
 	CHECK_IRQ_LINE;
 }
@@ -896,7 +901,9 @@ void s2650_set_sense(int state)
 
 int s2650_get_sense(void)
 {
-    return (S.psu & SI) ? 1 : 0;
+	/* OR'd with Input to allow for external connections */
+
+    return (((S.psu & SI) ? 1 : 0) | ((cpu_readport16(S2650_SENSE_PORT) & SI) ? 1 : 0));
 }
 
 static  int S2650_Cycles[0x100] = {
@@ -1032,7 +1039,7 @@ int s2650_execute(int cycles)
 			case 0x31:		/* REDC,1 */
 			case 0x32:		/* REDC,2 */
 			case 0x33:		/* REDC,3 */
-				S.reg[S.r] = cpu_readport(S2650_CTRL_PORT);
+				S.reg[S.r] = cpu_readport16(S2650_CTRL_PORT);
 				SET_CC( S.reg[S.r] );
 				break;
 
@@ -1109,7 +1116,7 @@ int s2650_execute(int cycles)
 			case 0x55:		/* REDE,1 v */
 			case 0x56:		/* REDE,2 v */
 			case 0x57:		/* REDE,3 v */
-				S.reg[S.r] = cpu_readport( ARG() );
+				S.reg[S.r] = cpu_readport16( ARG() );
 				SET_CC(S.reg[S.r]);
 				break;
 
@@ -1161,7 +1168,7 @@ int s2650_execute(int cycles)
 			case 0x71:		/* REDD,1 */
 			case 0x72:		/* REDD,2 */
 			case 0x73:		/* REDD,3 */
-				S.reg[S.r] = cpu_readport(S2650_DATA_PORT);
+				S.reg[S.r] = cpu_readport16(S2650_DATA_PORT);
 				SET_CC(S.reg[S.r]);
 				break;
 
@@ -1294,7 +1301,7 @@ int s2650_execute(int cycles)
 			case 0xb1:		/* WRTC,1 */
 			case 0xb2:		/* WRTC,2 */
 			case 0xb3:		/* WRTC,3 */
-				cpu_writeport(S2650_CTRL_PORT,S.reg[S.r]);
+				cpu_writeport16(S2650_CTRL_PORT,S.reg[S.r]);
 				break;
 
 			case 0xb4:		/* TPSU */
@@ -1366,7 +1373,7 @@ int s2650_execute(int cycles)
 			case 0xd5:		/* WRTE,1 v */
 			case 0xd6:		/* WRTE,2 v */
 			case 0xd7:		/* WRTE,3 v */
-				cpu_writeport( ARG(), S.reg[S.r] );
+				cpu_writeport16( ARG(), S.reg[S.r] );
 				break;
 
 			case 0xd8:		/* BIRR,0 (*)a */
@@ -1417,7 +1424,7 @@ int s2650_execute(int cycles)
 			case 0xf1:		/* WRTD,1 */
 			case 0xf2:		/* WRTD,2 */
 			case 0xf3:		/* WRTD,3 */
-				cpu_writeport(S2650_DATA_PORT, S.reg[S.r]);
+				cpu_writeport16(S2650_DATA_PORT, S.reg[S.r]);
 				break;
 
 			case 0xf4:		/* TMI,0  v */

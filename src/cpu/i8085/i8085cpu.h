@@ -180,11 +180,11 @@ int q = I.AF.b.h+R; 											\
 
 #define M_IN													\
 	I.XX.d=ARG();												\
-	I.AF.b.h=cpu_readport(I.XX.d);
+	I.AF.b.h=cpu_readport16(I.XX.d);
 
 #define M_OUT													\
 	I.XX.d=ARG();												\
-	cpu_writeport(I.XX.d,I.AF.b.h)
+	cpu_writeport16(I.XX.d,I.AF.b.h)
 
 #ifdef	X86_ASM
 #define M_DAD(R)												\

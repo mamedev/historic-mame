@@ -157,7 +157,7 @@ void cdp1802_reset(void *param)
 	cdp1802.ie=1;
 	cdp1802.df=0;
 	cdp1802.reg[0].w.l=0;
-	change_pc(PC);
+	change_pc16(PC);
 
 	cdp1802.idle=0;
 	cdp1802.dma_cycles=0;
@@ -180,7 +180,7 @@ void cdp1802_set_context (void *src)
 	if( src )
 	{
 		cdp1802 = *(CDP1802_Regs*)src;
-		change_pc(PC);
+		change_pc16(PC);
 	}
 }
 
@@ -192,7 +192,7 @@ unsigned cdp1802_get_pc (void)
 void cdp1802_set_pc (unsigned val)
 {
 	PC = val;
-	change_pc(PC);
+	change_pc16(PC);
 }
 
 unsigned cdp1802_get_sp (void)
@@ -303,7 +303,7 @@ int cdp1802_execute(int cycles)
 	int ref=cycles;
 	cdp1802_icount = cycles;
 
-	change_pc(PC);
+	change_pc16(PC);
 
 	do
 	{
@@ -335,7 +335,7 @@ void cdp1802_set_irq_line(int irqline, int state)
 		cdp1802.t=(cdp1802.x<<4)|cdp1802.p;
 		cdp1802.p=1; 
 		cdp1802.x=2;
-		change_pc(PC);
+		change_pc16(PC);
 	}
 }
 

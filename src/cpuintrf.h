@@ -16,8 +16,8 @@ struct MachineCPU
 	int cpu_clock;	/* in Hertz */
 	const void *memory_read;	/* struct Memory_ReadAddress */
 	const void *memory_write;	/* struct Memory_WriteAddress */
-	const struct IO_ReadPort *port_read;
-	const struct IO_WritePort *port_write;
+	const void *port_read;
+	const void *port_write;
 	int (*vblank_interrupt)(void);
     int vblank_interrupts_per_frame;    /* usually 1 */
 /* use this for interrupts which are not tied to vblank 	*/
@@ -344,11 +344,10 @@ struct cpu_interface
 	mem_write_handler memory_write;
 	mem_read_handler internal_read;
 	mem_write_handler internal_write;
-	unsigned pgm_memory_base;
+	offs_t pgm_memory_base;
 	void (*set_op_base)(offs_t pc);
 	int address_shift;
 	unsigned address_bits, endianess, align_unit, max_inst_len;
-	unsigned abits1, abits2, abitsmin;
 };
 
 extern struct cpu_interface cpuintf[];
@@ -375,14 +374,15 @@ int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);
 
 /* Returns the current program counter */
-unsigned cpu_get_pc(void);
+offs_t cpu_get_pc(void);
+offs_t cpu_get_pc_byte(void);
 /* Set the current program counter */
-void cpu_set_pc(unsigned val);
+void cpu_set_pc(offs_t val);
 
 /* Returns the current stack pointer */
-unsigned cpu_get_sp(void);
+offs_t cpu_get_sp(void);
 /* Set the current stack pointer */
-void cpu_set_sp(unsigned val);
+void cpu_set_sp(offs_t val);
 
 /* Get the active CPUs context and return it's size */
 unsigned cpu_get_context(void *context);
@@ -484,7 +484,7 @@ void cpu_generate_internal_interrupt(int cpunum, int type);
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
 
 /* use this function to install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int));
+void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
 
 /* use these in your write memory/port handles to set an IRQ vector */
 /* offset corresponds to the irq line number here */

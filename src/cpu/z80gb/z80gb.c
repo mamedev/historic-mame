@@ -253,7 +253,7 @@ void z80gb_set_context (void *src)
 {
 	if( src )
 		Regs = *(z80gb_regs *)src;
-	change_pc(Regs.w.PC);
+	change_pc16(Regs.w.PC);
 }
 
 /****************************************************************************/
@@ -277,7 +277,7 @@ unsigned z80gb_get_pc (void)
 void z80gb_set_pc (unsigned pc)
 {
 	Regs.w.PC = pc;
-	change_pc(Regs.w.PC);
+	change_pc16(Regs.w.PC);
 }
 
 unsigned z80gb_get_sp (void)

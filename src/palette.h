@@ -186,6 +186,7 @@ READ16_HANDLER( paletteram16_2_word_r );
 
 WRITE_HANDLER( paletteram_BBGGGRRR_w );
 WRITE_HANDLER( paletteram_RRRGGGBB_w );
+WRITE_HANDLER( paletteram_BBBGGGRR_w );
 WRITE_HANDLER( paletteram_IIBBGGRR_w );
 WRITE_HANDLER( paletteram_BBGGRRII_w );
 

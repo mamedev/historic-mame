@@ -155,26 +155,6 @@ int turbofrc_vh_start(void)
 
 ***************************************************************************/
 
-READ16_HANDLER( aerofgt_rasterram_r )
-{
-	return aerofgt_rasterram[offset];
-}
-
-WRITE16_HANDLER( aerofgt_rasterram_w )
-{
-	COMBINE_DATA(&aerofgt_rasterram[offset]);
-}
-
-READ16_HANDLER( aerofgt_spriteram3_r )
-{
-	return aerofgt_spriteram3[offset];
-}
-
-WRITE16_HANDLER( aerofgt_spriteram3_w )
-{
-	COMBINE_DATA(&aerofgt_spriteram3[offset]);
-}
-
 WRITE16_HANDLER( aerofgt_bg1videoram_w )
 {
 	int oldword = aerofgt_bg1videoram[offset];

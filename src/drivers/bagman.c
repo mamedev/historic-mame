@@ -601,7 +601,7 @@ static const struct MachineDriver machine_driver_pickin =
 ***************************************************************************/
 
 ROM_START( bagman )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
 	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
@@ -609,26 +609,26 @@ ROM_START( bagman )
 	ROM_LOAD( "m9_b09s.bin",  0x4000, 0x1000, 0x68e83e4f )
 	ROM_LOAD( "n9_b10.bin",   0x5000, 0x1000, 0x1d6579f7 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c1_b01.bin",   0x0000, 0x1000, 0x705193b2 )
 	ROM_LOAD( "f1_b03s.bin",  0x1000, 0x1000, 0xdba1eda7 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagnard )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
 	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
@@ -636,26 +636,26 @@ ROM_START( bagnard )
 	ROM_LOAD( "bagnard.009",  0x4000, 0x1000, 0x4f0088ab )
 	ROM_LOAD( "bagnard.010",  0x5000, 0x1000, 0xcd2cac01 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "bagnard.001",  0x0000, 0x1000, 0x060b044c )
 	ROM_LOAD( "bagnard.003",  0x1000, 0x1000, 0x8043bc1a )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagmans )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a5-9f",        0x1000, 0x1000, 0x2ddf6bb9 )
 	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
@@ -663,26 +663,26 @@ ROM_START( bagmans )
 	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
 	ROM_LOAD( "a5-9n",        0x5000, 0x1000, 0x68e4b64d )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( bagmans2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, 0x7871206e )
 	ROM_LOAD( "a4_9j.bin",    0x2000, 0x1000, 0xb2da8b77 )
@@ -690,26 +690,26 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "a4_9m.bin",    0x4000, 0x1000, 0xb8e75eb6 )
 	ROM_LOAD( "a4_9n.bin",    0x5000, 0x1000, 0x83fccb1c )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a2_1c.bin",    0x0000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x1000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( sbagman )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "5.9e",         0x0000, 0x1000, 0x1b1d6b0a )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
 	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
@@ -727,26 +727,26 @@ ROM_START( sbagman )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
 	ROM_CONTINUE(			  0xce00, 0x0200 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
 	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "1.1c",         0x0000, 0x1000, 0xa046ff44 )
 	ROM_LOAD( "3.1f",         0x1000, 0x1000, 0xa4422da4 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( sbagmans )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
 	ROM_LOAD( "7.9j",         0x2000, 0x1000, 0x9a1c778d )
@@ -764,26 +764,26 @@ ROM_START( sbagmans )
 	ROM_LOAD( "16.8k",        0xf000, 0x0e00, 0xb77eb1f5 )
 	ROM_CONTINUE(			  0xce00, 0x0200 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "2.1e",         0x0000, 0x1000, 0xf4d3d4e6 )
 	ROM_LOAD( "4.1j",         0x1000, 0x1000, 0x2c6a510d )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sbag_1c.bin",  0x0000, 0x1000, 0x262f870a )
 	ROM_LOAD( "sbag_1f.bin",  0x1000, 0x1000, 0x350ed0fb )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 	ROM_LOAD( "r6.bin",       0x0040, 0x0020, 0xc58a4f6a ) /*state machine driving TMS5110*/
 
-	ROM_REGION( 0x2000, REGION_SOUND1 ) /* data for the TMS5110 speech chip */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 ) /* data for the TMS5110 speech chip */
 	ROM_LOAD( "11.9r",        0x0000, 0x1000, 0x2e0057ff )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
 ROM_START( pickin )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "9e",           0x0000, 0x1000, 0xefd0bd43 )
 	ROM_LOAD( "9f",           0x1000, 0x1000, 0xb5785a23 )
 	ROM_LOAD( "9j",           0x2000, 0x1000, 0x65ee9fd4 )
@@ -791,13 +791,13 @@ ROM_START( pickin )
 	ROM_LOAD( "9m",           0x4000, 0x1000, 0x935a7248 )
 	ROM_LOAD( "9n",           0x5000, 0x1000, 0x52485d1d )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "1f",           0x0000, 0x1000, 0xc5e96ac6 )
 	ROM_LOAD( "1j",           0x1000, 0x1000, 0x41c4ac1c )
 
 	/* no gfx2 */
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, 0xfac81668 )
 	ROM_LOAD( "6331-1.3r",    0x0020, 0x0020, 0x14ee1603 )
 ROM_END

@@ -447,29 +447,29 @@ static const struct MachineDriver machine_driver_tp84 =
 ***************************************************************************/
 
 ROM_START( tp84 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "tp84_8j.bin",  0xa000, 0x2000, 0x4b4629a4 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
 	ROM_LOAD( "tp84_10j.bin", 0xe000, 0x2000, 0xa45237c4 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code of sound cpu Z80 */
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp84_2j.bin",  0x0000, 0x2000, 0x05c7508f ) /* chars */
 	ROM_LOAD( "tp84_1j.bin",  0x2000, 0x2000, 0x498d90b7 )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp84_12a.bin", 0x0000, 0x2000, 0xcd682f30 ) /* sprites */
 	ROM_LOAD( "tp84_13a.bin", 0x2000, 0x2000, 0x888d4bd6 )
 	ROM_LOAD( "tp84_14a.bin", 0x4000, 0x2000, 0x9a220b39 )
 	ROM_LOAD( "tp84_15a.bin", 0x6000, 0x2000, 0xfac98397 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
@@ -478,29 +478,29 @@ ROM_START( tp84 )
 ROM_END
 
 ROM_START( tp84a )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "f05",          0xa000, 0x2000, 0xe97d5093 )
 	ROM_LOAD( "tp84_9j.bin",  0xc000, 0x2000, 0xdbd5333b )
 	ROM_LOAD( "f07",          0xe000, 0x2000, 0x8fbdb4ef )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "tp84_10d.bin", 0xe000, 0x2000, 0x36462ff1 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for code of sound cpu Z80 */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code of sound cpu Z80 */
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp84_2j.bin",  0x0000, 0x2000, 0x05c7508f ) /* chars */
 	ROM_LOAD( "tp84_1j.bin",  0x2000, 0x2000, 0x498d90b7 )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp84_12a.bin", 0x0000, 0x2000, 0xcd682f30 ) /* sprites */
 	ROM_LOAD( "tp84_13a.bin", 0x2000, 0x2000, 0x888d4bd6 )
 	ROM_LOAD( "tp84_14a.bin", 0x4000, 0x2000, 0x9a220b39 )
 	ROM_LOAD( "tp84_15a.bin", 0x6000, 0x2000, 0xfac98397 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */

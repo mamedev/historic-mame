@@ -338,82 +338,82 @@ static const struct MachineDriver machine_driver_simpsons =
 ***************************************************************************/
 
 ROM_START( simpsons )
-	ROM_REGION( 0x8a000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "g01.17c",      0x30000, 0x20000, 0x9f843def )
 	ROM_LOAD( "j13.13c",      0x50000, 0x20000, 0xaade2abd )
     ROM_LOAD( "j12.15c",      0x70000, 0x18000, 0x479e12f2 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_REGION( 0x28000, REGION_CPU2, 0 ) /* Z80 code + banks */
 	ROM_LOAD( "e03.6g",       0x00000, 0x08000, 0x866b7a35 )
 	ROM_CONTINUE(			  0x10000, 0x18000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
 
 ROM_START( simpsn2p )
-	ROM_REGION( 0x8a000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "simp_p01.rom", 0x30000, 0x20000, 0x07ceeaea )
 	ROM_LOAD( "simp_013.rom", 0x50000, 0x20000, 0x8781105a )
     ROM_LOAD( "simp_012.rom", 0x70000, 0x18000, 0x244f9289 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_REGION( 0x28000, REGION_CPU2, 0 ) /* Z80 code + banks */
 	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
 	ROM_CONTINUE(			  0x10000, 0x18000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
 
 ROM_START( simps2pj )
-	ROM_REGION( 0x8a000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x8a000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "072-s02.16c",  0x10000, 0x20000, 0x265f7a47 )
 	ROM_LOAD( "072-t01.17c",  0x30000, 0x20000, 0x91de5c2d )
 	ROM_LOAD( "072-213.13c",  0x50000, 0x20000, 0xb326a9ae )
     ROM_LOAD( "072-212.15c",  0x70000, 0x18000, 0x584d9d37 )
 	ROM_CONTINUE(		      0x08000, 0x08000 )
 
-	ROM_REGION( 0x28000, REGION_CPU2 ) /* Z80 code + banks */
+	ROM_REGION( 0x28000, REGION_CPU2, 0 ) /* Z80 code + banks */
 	ROM_LOAD( "simp_g03.rom", 0x00000, 0x08000, 0x76c1850c )
 	ROM_CONTINUE(			  0x10000, 0x18000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_18h.rom", 0x000000, 0x080000, 0xba1ec910 )	/* tiles */
 	ROM_LOAD( "simp_16h.rom", 0x080000, 0x080000, 0xcf2bbcab )
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( dont dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( dont dispose as the program can read them, 0 ) */
 	ROM_LOAD( "simp_3n.rom",  0x000000, 0x100000, 0x7de500ad )	/* sprites */
 	ROM_LOAD( "simp_8n.rom",  0x100000, 0x100000, 0xaa085093 )
 	ROM_LOAD( "simp_12n.rom", 0x200000, 0x100000, 0x577dbd53 )
 	ROM_LOAD( "simp_16l.rom", 0x300000, 0x100000, 0x55fab05d )
 
-	ROM_REGION( 0x140000, REGION_SOUND1 ) /* samples for the 053260 */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* samples for the 053260 */
 	ROM_LOAD( "simp_1f.rom", 0x000000, 0x100000, 0x1397a73b )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END

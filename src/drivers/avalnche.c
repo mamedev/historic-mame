@@ -150,7 +150,7 @@ static const struct MachineDriver machine_driver_avalnche =
 ***************************************************************************/
 
 ROM_START( avalnche )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	/* Note: These are being loaded into a bogus location, */
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */

@@ -336,25 +336,25 @@ static const struct MachineDriver machine_driver_jrpacman =
 ***************************************************************************/
 
 ROM_START( jrpacman )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "jrp8d.bin",    0x0000, 0x2000, 0xe3fa972e )
 	ROM_LOAD( "jrp8e.bin",    0x2000, 0x2000, 0xec889e94 )
 	ROM_LOAD( "jrp8h.bin",    0x8000, 0x2000, 0x35f1fc6e )
 	ROM_LOAD( "jrp8j.bin",    0xa000, 0x2000, 0x9737099e )
 	ROM_LOAD( "jrp8k.bin",    0xc000, 0x2000, 0x5252dd97 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, 0x0527ff9b )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "jrp2e.bin",    0x0000, 0x2000, 0x73477193 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "jrprom.9e",    0x0000, 0x0100, 0x029d35c4 ) /* palette low bits */
 	ROM_LOAD( "jrprom.9f",    0x0100, 0x0100, 0xeee34a79 ) /* palette high bits */
 	ROM_LOAD( "jrprom.9p",    0x0200, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
 
-	ROM_REGION( 0x0200, REGION_SOUND1 )	/* sound prom */
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "jrprom.7p",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "jrprom.5s",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END

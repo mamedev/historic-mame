@@ -1,7 +1,7 @@
 /***************************************************************************
 
-						Cisco Heat & F1 GrandPrix Star
-							(c) 1990 & 1991 Jaleco
+				Cisco Heat & F1 GrandPrix Star, Scud Hammer
+						(c) 1990 & 1991, 1994 Jaleco
 
 
 				    driver by Luca Elia (eliavit@unina.it)
@@ -342,6 +342,36 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 }
 
 
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+WRITE16_HANDLER( scudhamm_vregs_w )
+{
+//	int old_data = megasys1_vregs[offset];
+	int new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+
+	switch (offset)
+	{
+		case 0x000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
+		case 0x000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
+		case 0x000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+
+// 		UNUSED LAYER
+//		case 0x008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
+//		case 0x008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
+//		case 0x008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+
+		case 0x100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
+		case 0x100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
+		case 0x100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+
+		case 0x208/2   : watchdog_reset_w(0,0);	break;
+
+		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
+	}
+}
+
 
 /***************************************************************************
 								Road Drawing
@@ -377,50 +407,8 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 */
 
-void cischeat_mark_road_colors(int road_num)
-{
-	int i, color, colmask[ROAD_COLOR_CODES], sy;
-
-	int gfx_num					=	(road_num & 1) ? 4 : 3;
-	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
-	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
-	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
-//	int total_color_codes		=	gfx.total_color_codes;
-	int color_codes_start		=	gfx.color_codes_start;
-
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
-
-	int min_y = Machine->visible_area. min_y;
-	int max_y = Machine->visible_area. max_y;
-
-	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
-
-	/* Let's walk from the top to the bottom of the visible screen */
-	for (sy = min_y ; sy <= max_y ; sy ++)
-	{
-		int code	= roadram[sy * 4 + 0];
-		int attr	= roadram[sy * 4 + 2];
-
-		color = ROAD_COLOR(attr);
-
-		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code = code * (X_SIZE/TILE_SIZE);
-
-		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
-			colmask[color] |= pen_usage[(code + i) % total_elements];
-	}
-
-	for (color = 0; color < ROAD_COLOR_CODES; color++)
-	 for (i = 0; i < 16; i++)
-	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
-
-
-/*
-	Draw road in the given bitmap. The priority1 and priority2 parameters
-	specify the range of lines to draw
-*/
+/*	Draw the road in the given bitmap. The priority1 and priority2 parameters
+	specify the range of lines to draw	*/
 
 void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
 {
@@ -428,7 +416,7 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	Machine->visible_area;
-	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
+	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
@@ -478,9 +466,43 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 
 }
 
+void cischeat_mark_road_colors(int road_num)
+{
+	int i, color, colmask[ROAD_COLOR_CODES], sy;
 
+	int gfx_num					=	(road_num & 1) ? 5 : 4;
+	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
+	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
+	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
+//	int total_color_codes		=	gfx.total_color_codes;
+	int color_codes_start		=	gfx.color_codes_start;
 
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
+	int min_y = Machine->visible_area. min_y;
+	int max_y = Machine->visible_area. max_y;
+
+	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
+
+	/* Let's walk from the top to the bottom of the visible screen */
+	for (sy = min_y ; sy <= max_y ; sy ++)
+	{
+		int code	= roadram[sy * 4 + 0];
+		int attr	= roadram[sy * 4 + 2];
+
+		color = ROAD_COLOR(attr);
+
+		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
+		code = code * (X_SIZE/TILE_SIZE);
+
+		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
+			colmask[color] |= pen_usage[(code + i) % total_elements];
+	}
+
+	for (color = 0; color < ROAD_COLOR_CODES; color++)
+	 for (i = 0; i < 16; i++)
+	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
+}
 
 
 
@@ -516,50 +538,9 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 
 */
 
-void f1gpstar_mark_road_colors(int road_num)
-{
-	int i, color, colmask[ROAD_COLOR_CODES], sy;
 
-	int gfx_num					=	(road_num & 1) ? 4 : 3;
-	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
-	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
-	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
-//	int total_color_codes		=	gfx.total_color_codes;
-	int color_codes_start		=	gfx.color_codes_start;
-
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
-
-	int min_y = Machine->visible_area.min_y;
-	int max_y = Machine->visible_area.max_y;
-
-	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
-
-	/* Let's walk from the top to the bottom of the visible screen */
-	for (sy = min_y ; sy <= max_y ; sy ++)
-	{
-		int attr	=	roadram[ sy * 4 + 2 ];
-		int code	=	roadram[ sy * 4 + 3 ];
-
-		color	= ROAD_COLOR(attr>>8);
-
-		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
-		code	= code * (X_SIZE/TILE_SIZE);
-
-		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
-			colmask[color] |= pen_usage[(code + i) % total_elements];
-	}
-
-	for (color = 0; color < ROAD_COLOR_CODES; color++)
-	 for (i = 0; i < 16; i++)
-	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
-}
-
-
-
-/*
-	Draw road in the given bitmap. The priority1 and priority2 parameters
-	specify the range of lines to draw
-*/
+/*	Draw the road in the given bitmap. The priority1 and priority2 parameters
+	specify the range of lines to draw	*/
 
 void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
 {
@@ -568,7 +549,7 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	Machine->visible_area;
-	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
+	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
@@ -637,94 +618,49 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 }
 
 
-
-
-/***************************************************************************
-
-							Sprites Drawing
-
-***************************************************************************/
-
-#define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
-#define SPRITE_COLOR_CODES	(0x80)
-#define SPRITE_COLOR(_x_)	((_x_) & (SPRITE_COLOR_CODES - 1))
-#define SHRINK(_org_,_fact_) ( ( (_org_) << 16 ) * (_fact_ & 0xff) / 0x80 )
-
-
-/* Mark colors used by visible sprites */
-
-static void cischeat_mark_sprite_colors(void)
+void f1gpstar_mark_road_colors(int road_num)
 {
-	int i, color, colmask[SPRITE_COLOR_CODES];
-	unsigned int *pen_usage	=	Machine->gfx[5]->pen_usage;
-	int total_elements		=	Machine->gfx[5]->total_elements;
-	int color_codes_start	=	Machine->drv->gfxdecodeinfo[5].color_codes_start;
+	int i, color, colmask[ROAD_COLOR_CODES], sy;
 
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
+	int gfx_num					=	(road_num & 1) ? 5 : 4;
+	struct GfxDecodeInfo gfx	=	Machine->drv->gfxdecodeinfo[gfx_num];
+	int total_elements			=	Machine->gfx[gfx_num]->total_elements;
+	unsigned int *pen_usage		=	Machine->gfx[gfx_num]->pen_usage;
+//	int total_color_codes		=	gfx.total_color_codes;
+	int color_codes_start		=	gfx.color_codes_start;
 
-	data16_t		*source	=	spriteram16;
-	const data16_t	*finish	=	source + 0x1000/2;
+	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
-	for (color = 0 ; color < SPRITE_COLOR_CODES ; color++) colmask[color] = 0;
+	int min_y = Machine->visible_area.min_y;
+	int max_y = Machine->visible_area.max_y;
 
-	for (; source < finish; source += 0x10/2 )
+	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
+
+	/* Let's walk from the top to the bottom of the visible screen */
+	for (sy = min_y ; sy <= max_y ; sy ++)
 	{
-		int sx, sy, xzoom, yzoom;
-		int xdim, ydim, xnum, ynum;
-		int code, attr, size;
+		int attr	=	roadram[ sy * 4 + 2 ];
+		int code	=	roadram[ sy * 4 + 3 ];
 
- 		size	=	source[ 0 ];
-		if (size & 0x1000)	continue;
+		color	= ROAD_COLOR(attr>>8);
 
-		/* number of tiles */
-		xnum	=	( (size & 0x0f) >> 0 ) + 1;
-		ynum	=	( (size & 0xf0) >> 4 ) + 1;
+		/* line number converted to tile number (each tile is TILE_SIZE x 1) */
+		code	= code * (X_SIZE/TILE_SIZE);
 
-		xzoom	=	source[ 1 ];
-		yzoom	=	source[ 2 ];
-
-		sx		=	source[ 3 ];
-		sy		=	source[ 4 ];
-		SIGN_EXTEND_POS(sx)
-		SIGN_EXTEND_POS(sy)
-
-		/* dimension of the sprite after zoom */
-		xdim	=	( SHRINK(16 * xnum, xzoom) ) >> 16;
-		ydim	=	( SHRINK(16 * ynum, yzoom) ) >> 16;
-
-		/* the y pos passed to the hardware is the that of the last line
-		   we need the y pos of the first line  */
-		sy -= ydim;
-
-		if (	((sx+xdim-1) < xmin) || (sx > xmax) ||
-				((sy+ydim-1) < ymin) || (sy > ymax)		)	continue;
-
-		code	=	source[ 6 ];
-		attr	=	source[ 7 ];
-		color	=	SPRITE_COLOR(attr);
-
-		for (i = 0; i < xnum * ynum; i++)
+		for (i = 0; i < (X_SIZE/TILE_SIZE); i++)
 			colmask[color] |= pen_usage[(code + i) % total_elements];
 	}
 
-	for (color = 0; color < SPRITE_COLOR_CODES; color++)
-	 for (i = 0; i < (16-1); i++)	// pen 15 is transparent
+	for (color = 0; color < ROAD_COLOR_CODES; color++)
+	 for (i = 0; i < 16; i++)
 	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
 }
 
 
 
 
-/*
-	Draw sprites, in the given priority range, to a bitmap.
 
-	Priorities between 0 and 15 cover sprites whose priority nibble
-	is between 0 and 15. Priorities between	0+16 and 15+16 cover
-	sprites whose priority nibble is between 0 and 15 and whose
-	colour code's high bit is set.
+/***************************************************************************
 
 	Sprite Data:
 
@@ -738,13 +674,13 @@ static void cischeat_mark_sprite_colors(void)
 
 	02/04 	fed- ---- ---- ----		unused?
 	 		---c ---- ---- ----		Flip X/Y
-			---- ba98 ---- ----		unused?
-			---- ---- 7654 3210		X/Y zoom
+			---- ba9- ---- ----		? X/Y zoom ?
+			---- ---8 7654 3210		X/Y zoom
 
-	06/08	fedc ba-- ---- ----		unused?
+	06/08	fedc ba-- ---- ----		? X/Y position ?
 			---- --98 7654 3210		X/Y position
 
-	0A		?
+	0A		0 ?
 
 	0C		Code
 
@@ -755,7 +691,20 @@ static void cischeat_mark_sprite_colors(void)
 			---- ---- 7--- ----		unused?
 			---- ---- -654 3210		Color
 
-*/
+***************************************************************************/
+
+#define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
+#define SPRITE_COLOR_CODES	(0x80)
+#define SPRITE_COLOR(_x_)	((_x_) & (SPRITE_COLOR_CODES - 1))
+#define SHRINK(_org_,_fact_) ( ( ( (_org_) << 16 ) * (_fact_ & 0x01ff) ) / 0x80 )
+
+/*	Draw sprites, in the given priority range, to a bitmap.
+
+	Priorities between 0 and 15 cover sprites whose priority nibble
+	is between 0 and 15. Priorities between	0+16 and 15+16 cover
+	sprites whose priority nibble is between 0 and 15 and whose
+	colour code's high bit is set.	*/
+
 static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int priority2)
 {
 	int x, y, sx, sy;
@@ -817,7 +766,7 @@ static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int
 
 		if ( ( (xdim / 0x10000) == 0 ) || ( (ydim / 0x10000) == 0) )	continue;
 
-		/* the y pos passed to the hardware is the that of the last line
+		/* the y pos passed to the hardware is the that of the last line,
 		   we need the y pos of the first line  */
 		sy -= (ydim * ynum);
 
@@ -856,7 +805,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 		{
 			for (x = xstart; x != xend; x += xinc)
 			{
-				drawgfxzoom(bitmap,Machine->gfx[5],
+				drawgfxzoom(bitmap,Machine->gfx[3],
 							code++,
 							color,
 							flipx,flipy,
@@ -867,6 +816,73 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 			}
 		}
 	}	/* end sprite loop */
+}
+
+
+
+
+/* Mark colors used by visible sprites */
+
+static void cischeat_mark_sprite_colors(void)
+{
+	int i, color, colmask[SPRITE_COLOR_CODES];
+	unsigned int *pen_usage	=	Machine->gfx[3]->pen_usage;
+	int total_elements		=	Machine->gfx[3]->total_elements;
+	int color_codes_start	=	Machine->drv->gfxdecodeinfo[3].color_codes_start;
+
+	int xmin = Machine->visible_area.min_x;
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y;
+	int ymax = Machine->visible_area.max_y;
+
+	data16_t		*source	=	spriteram16;
+	const data16_t	*finish	=	source + 0x1000/2;
+
+	for (color = 0 ; color < SPRITE_COLOR_CODES ; color++) colmask[color] = 0;
+
+	for (; source < finish; source += 0x10/2 )
+	{
+		int sx, sy, xzoom, yzoom;
+		int xdim, ydim, xnum, ynum;
+		int code, attr, size;
+
+ 		size	=	source[ 0 ];
+		if (size & 0x1000)	continue;
+
+		/* number of tiles */
+		xnum	=	( (size & 0x0f) >> 0 ) + 1;
+		ynum	=	( (size & 0xf0) >> 4 ) + 1;
+
+		xzoom	=	source[ 1 ];
+		yzoom	=	source[ 2 ];
+
+		sx		=	source[ 3 ];
+		sy		=	source[ 4 ];
+		SIGN_EXTEND_POS(sx)
+		SIGN_EXTEND_POS(sy)
+
+		/* dimension of the sprite after zoom */
+		xdim	=	( xnum * SHRINK(16,xzoom) ) >> 16;
+		ydim	=	( ynum * SHRINK(16,yzoom) ) >> 16;
+
+		/* the y pos passed to the hardware is the that of the last line,
+		   we need the y pos of the first line  */
+		sy -= ydim;
+
+		if (	((sx+xdim-1) < xmin) || (sx > xmax) ||
+				((sy+ydim-1) < ymin) || (sy > ymax)		)	continue;
+
+		code	=	source[ 6 ];
+		attr	=	source[ 7 ];
+		color	=	SPRITE_COLOR(attr);
+
+		for (i = 0; i < xnum * ynum; i++)
+			colmask[color] |= pen_usage[(code + i) % total_elements];
+	}
+
+	for (color = 0; color < SPRITE_COLOR_CODES; color++)
+	 for (i = 0; i < (16-1); i++)	// pen 15 is transparent
+	  if (colmask[color] & (1 << i)) palette_used_colors[16 * color + i + color_codes_start] = PALETTE_COLOR_USED;
 }
 
 
@@ -1053,6 +1069,81 @@ void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	MEGASYS1_TMAP_DRAW(2)
 	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,0);
 
+
+	megasys1_active_layers = megasys1_active_layers1;
+}
+
+
+
+
+
+
+
+/**************************************************************************
+								[ Scud Hammer ]
+**************************************************************************/
+
+
+extern data16_t scudhamm_motor_command;
+
+	READ16_HANDLER( scudhamm_motor_pos_r );
+	READ16_HANDLER( scudhamm_motor_status_r );
+	READ16_HANDLER( scudhamm_analog_r );
+
+void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int megasys1_active_layers1, flag;
+	megasys1_active_layers = 0x0d;
+	megasys1_active_layers1 = megasys1_active_layers;
+
+#ifdef MAME_DEBUG
+debugsprites = 0;
+if (keyboard_pressed(KEYCODE_Z))
+{
+	int msk = 0;
+	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x1;}
+	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x2;}
+	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x4;}
+	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x8; debugsprites = 1;}
+	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0x8; debugsprites = 2;}
+	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0x8; debugsprites = 3;}
+	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0x8; debugsprites = 4;}
+
+	if (msk != 0) megasys1_active_layers &= msk;
+#if 1
+{	char buf[80];
+	sprintf(buf, "Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
+				scudhamm_motor_command,
+				scudhamm_motor_pos_r(0),
+				scudhamm_motor_status_r(0),
+				scudhamm_analog_r(0) );
+	usrintf_showmessage(buf);	}
+#endif
+}
+#endif
+
+	MEGASYS1_TMAP_SET_SCROLL(0)
+//	MEGASYS1_TMAP_SET_SCROLL(1)
+	MEGASYS1_TMAP_SET_SCROLL(2)
+
+	MEGASYS1_TMAP_UPDATE(0)
+//	MEGASYS1_TMAP_UPDATE(1)
+	MEGASYS1_TMAP_UPDATE(2)
+
+	palette_init_used_colors();
+
+	if (megasys1_active_layers & 0x08)	cischeat_mark_sprite_colors();
+
+	palette_recalc();
+
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+
+	flag = 0;
+	MEGASYS1_TMAP_DRAW(0)
+//	else fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+//	MEGASYS1_TMAP_DRAW(1)
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,15);
+	MEGASYS1_TMAP_DRAW(2)
 
 	megasys1_active_layers = megasys1_active_layers1;
 }

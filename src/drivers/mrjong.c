@@ -192,33 +192,33 @@ static const struct MachineDriver machine_driver_mrjong =
 ***************************************************************************/
 
 ROM_START( mrjong )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* code */
 	ROM_LOAD( "mj00", 0x0000, 0x2000, 0xd211aed3 )
 	ROM_LOAD( "mj01", 0x2000, 0x2000, 0x49a9ca7e )
 	ROM_LOAD( "mj02", 0x4000, 0x2000, 0x4b50ae6a )
 	ROM_LOAD( "mj03", 0x6000, 0x2000, 0x2c375a17 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 )	/* gfx */
+	ROM_REGION( 0x2000, REGION_GFX1, 0 )	/* gfx */
 	ROM_LOAD( "mj21", 0x0000, 0x1000, 0x1ea99dab )
 	ROM_LOAD( "mj20", 0x1000, 0x1000, 0x7eb1d381 )
 
-	ROM_REGION( 0x0120, REGION_PROMS )	/* color */
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )	/* color */
 	ROM_LOAD( "mj61", 0x0000, 0x0020, 0xa85e9b27 )
 	ROM_LOAD( "mj60", 0x0020, 0x0100, 0xdd2b304f )
 ROM_END
 
 ROM_START( crazyblk )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* code */
 	ROM_LOAD( "c1.a6", 0x0000, 0x2000, 0xe2a211a2 )
 	ROM_LOAD( "c2.a7", 0x2000, 0x2000, 0x75070978 )
 	ROM_LOAD( "c3.a7", 0x4000, 0x2000, 0x696ca502 )
 	ROM_LOAD( "c4.a8", 0x6000, 0x2000, 0xc7f5a247 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 )	/* gfx */
+	ROM_REGION( 0x2000, REGION_GFX1, 0 )	/* gfx */
 	ROM_LOAD( "c6.h5", 0x0000, 0x1000, 0x2b2af794 )
 	ROM_LOAD( "c5.h4", 0x1000, 0x1000, 0x98d13915 )
 
-	ROM_REGION( 0x0120, REGION_PROMS )	/* color */
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )	/* color */
 	ROM_LOAD( "clr.j7", 0x0000, 0x0020, 0xee1cf1d5 )
 	ROM_LOAD( "clr.g5", 0x0020, 0x0100, 0xbcb1e2e3 )
 ROM_END

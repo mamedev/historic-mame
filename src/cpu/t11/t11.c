@@ -266,7 +266,7 @@ void t11_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case T11_PC: PC = val; /* change_pc not needed */ break;
+		case T11_PC: PC = val; /* change_pc16 not needed */ break;
 		case T11_SP: SP = val; break;
 		case T11_PSW: PSW = val; break;
 		case T11_R0: REGW(0) = val; break;
@@ -357,7 +357,6 @@ int t11_execute(int cycles)
 		goto getout;
 	}
 
-change_pc(0xffff);
 	do
 	{
 		t11.ppc = t11.reg[7];	/* copy PC to previous PC */

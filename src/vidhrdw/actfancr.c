@@ -9,15 +9,19 @@
 
 static int actfancr_control_1[0x20],actfancr_control_2[0x20];
 unsigned char *actfancr_pf1_data,*actfancr_pf2_data,*actfancr_pf1_rowscroll_data;
-static struct tilemap *pf1_tilemap;
+static struct tilemap *pf1_tilemap,*pf1_alt_tilemap;
 static int flipscreen;
-
-
 
 static UINT32 actfancr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
 	/* logical (col,row) -> memory offset */
 	return (col & 0x0f) + ((row & 0x0f) << 4) + ((col & 0xf0) << 4);
+}
+
+static UINT32 actfancr_scan2(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x0f) + ((row & 0x0f) << 4) + ((row & 0x10) << 4) + ((col & 0x70) << 5);
 }
 
 static void get_tile_info(int tile_index)
@@ -53,8 +57,9 @@ static void get_trio_tile_info(int tile_index)
 int actfancr_vh_start (void)
 {
 	pf1_tilemap = tilemap_create(get_tile_info,actfancr_scan,TILEMAP_OPAQUE,16,16,256,16);
+	pf1_alt_tilemap = tilemap_create(get_tile_info,actfancr_scan2,TILEMAP_OPAQUE,16,16,128,32);
 
-	if (!pf1_tilemap)
+	if (!pf1_tilemap || !pf1_alt_tilemap)
 		return 1;
 
 	return 0;
@@ -67,6 +72,7 @@ int triothep_vh_start (void)
 	if (!pf1_tilemap)
 		return 1;
 
+	pf1_alt_tilemap=NULL;
 	return 0;
 }
 
@@ -86,6 +92,7 @@ WRITE_HANDLER( actfancr_pf1_data_w )
 {
 	actfancr_pf1_data[offset]=data;
 	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	if (pf1_alt_tilemap) tilemap_mark_tile_dirty(pf1_alt_tilemap,offset/2);
 }
 
 READ_HANDLER( actfancr_pf1_data_r )
@@ -117,8 +124,11 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrollx( pf1_tilemap,0, scrollx );
 	tilemap_set_scrolly( pf1_tilemap,0, scrolly );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, scrollx );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, scrolly );
 
 	tilemap_update(pf1_tilemap);
+	tilemap_update(pf1_alt_tilemap);
 
 	palette_init_used_colors();
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
@@ -160,7 +170,10 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	palette_recalc();
 
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	if (actfancr_control_1[6]==1)
+		tilemap_draw(bitmap,pf1_alt_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,pf1_tilemap,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)

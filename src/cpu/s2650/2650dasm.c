@@ -339,7 +339,7 @@ int Dasm2650(char * buff, int PC)
 			break;
 		case 0x30: case 0x31: case 0x32: case 0x33:
 #if HJB
-			sprintf(buff, "in   r%d,(ctl)", rv);
+			sprintf(buff, "in   r%d,(ctrl)", rv);
 #else
             sprintf(buff, "redc,%d", rv);
 #endif

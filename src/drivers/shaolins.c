@@ -270,20 +270,20 @@ static const struct MachineDriver machine_driver_shaolins =
 ***************************************************************************/
 
 ROM_START( kicker )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "kikra10.bin",  0x0000, 0x2000, 0x4d156afc )
 	ROM_LOAD( "kikra11.bin",  0x2000, 0x2000, 0xff6ca5df )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "kikrh14.bin",  0x0000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x4000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */
@@ -292,20 +292,20 @@ ROM_START( kicker )
 ROM_END
 
 ROM_START( shaolins )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
 	ROM_LOAD( "kikrd11.bin",  0xC000, 0x4000, 0x654037f8 )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "shaolins.6",   0x0000, 0x2000, 0xff18a7ed )
 	ROM_LOAD( "shaolins.7",   0x2000, 0x2000, 0x5f53ae61 )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "kikrh14.bin",  0x0000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x4000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */

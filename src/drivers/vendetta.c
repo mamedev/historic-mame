@@ -119,17 +119,17 @@ static void vendetta_video_banking( int select )
 {
 	if ( select & 1 )
 	{
-		cpu_setbankhandler_r( 2, paletteram_r );
-		cpu_setbankhandler_w( 2, paletteram_xBBBBBGGGGGRRRRR_swap_w );
-		cpu_setbankhandler_r( 3, K053247_r );
-		cpu_setbankhandler_w( 3, K053247_w );
+		memory_set_bankhandler_r( 2, 0, paletteram_r );
+		memory_set_bankhandler_w( 2, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w );
+		memory_set_bankhandler_r( 3, 0, K053247_r );
+		memory_set_bankhandler_w( 3, 0, K053247_w );
 	}
 	else
 	{
-		cpu_setbankhandler_r( 2, vendetta_K052109_r );
-		cpu_setbankhandler_w( 2, vendetta_K052109_w );
-		cpu_setbankhandler_r( 3, K052109_r );
-		cpu_setbankhandler_w( 3, K052109_w );
+		memory_set_bankhandler_r( 2, 0, vendetta_K052109_r );
+		memory_set_bankhandler_w( 2, 0, vendetta_K052109_w );
+		memory_set_bankhandler_r( 3, 0, K052109_r );
+		memory_set_bankhandler_w( 3, 0, K052109_w );
 	}
 }
 
@@ -395,68 +395,68 @@ static const struct MachineDriver machine_driver_vendetta =
 ***************************************************************************/
 
 ROM_START( vendetta )
-	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
 ROM_START( vendett2 )
-	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
 ROM_START( vendettj )
-	ROM_REGION( 0x49000, REGION_CPU1 ) /* code + banked roms + banked ram */
+	ROM_REGION( 0x49000, REGION_CPU1, 0 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
 	ROM_LOAD( "081b02", 0x000000, 0x10000, 0x4c604d9b )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a09", 0x000000, 0x080000, 0xb4c777a9 ) /* characters */
 	ROM_LOAD( "081a08", 0x080000, 0x080000, 0x272ac8d9 ) /* characters */
 
-	ROM_REGION( 0x400000, REGION_GFX2 ) /* graphics ( don't dispose as the program can read them ) */
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* graphics ( don't dispose as the program can read them, 0 ) */
 	ROM_LOAD( "081a04", 0x000000, 0x100000, 0x464b9aa4 ) /* sprites */
 	ROM_LOAD( "081a05", 0x100000, 0x100000, 0x4e173759 ) /* sprites */
 	ROM_LOAD( "081a06", 0x200000, 0x100000, 0xe9fe6d80 ) /* sprites */
 	ROM_LOAD( "081a07", 0x300000, 0x100000, 0x8a22b29a ) /* sprites */
 
-	ROM_REGION( 0x100000, REGION_SOUND1 ) /* 053260 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* 053260 samples */
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 

@@ -268,56 +268,56 @@ static const struct MachineDriver machine_driver_rocnrope =
 ***************************************************************************/
 
 ROM_START( rocnrope )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "rr1.1h",       0x6000, 0x2000, 0x83093134 )
 	ROM_LOAD( "rr2.2h",       0x8000, 0x2000, 0x75af8697 )
 	ROM_LOAD( "rr3.3h",       0xa000, 0x2000, 0xb21372b1 )
 	ROM_LOAD( "rr4.4h",       0xc000, 0x2000, 0x7acb2a05 )
 	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
 	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
 	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
 	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
 	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 ROM_END
 
 ROM_START( rocnropk )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
 	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
 	ROM_LOAD( "rnr_h3.vid",   0xa000, 0x2000, 0x6d278459 )
 	ROM_LOAD( "rnr_h4.vid",   0xc000, 0x2000, 0x9b2e5f2a )
 	ROM_LOAD( "rnr_h5.vid",   0xe000, 0x2000, 0x150a6264 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
 	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rnr_a11.vid",  0x0000, 0x2000, 0xafdaba5e )
 	ROM_LOAD( "rnr_a12.vid",  0x2000, 0x2000, 0x054cafeb )
 	ROM_LOAD( "rnr_a9.vid",   0x4000, 0x2000, 0x9d2166b2 )
 	ROM_LOAD( "rnr_a10.vid",  0x6000, 0x2000, 0xaff6e22f )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
 	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
 	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )

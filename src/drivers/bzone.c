@@ -622,7 +622,7 @@ static const struct MachineDriver machine_driver_redbaron =
 ***************************************************************************/
 
 ROM_START( bzone )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
@@ -636,7 +636,7 @@ ROM_START( bzone )
 ROM_END
 
 ROM_START( bzone2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
 	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
@@ -650,7 +650,7 @@ ROM_START( bzone2 )
 ROM_END
 
 ROM_START( redbaron )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x60f23983 )
 	ROM_CONTINUE(           0x5800, 0x0800 )
 	ROM_LOAD( "037000.01e", 0x5000, 0x0800, 0x69bed808 )

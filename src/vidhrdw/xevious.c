@@ -199,32 +199,32 @@ WRITE_HANDLER( xevious_bg_colorram_w )
 WRITE_HANDLER( xevious_vh_latch_w )
 {
 	int reg;
+	int scroll = data + ((offset&0x01)<<8);   /* A0 -> D8 */
 
-	data = data + ((offset&0x01)<<8);   /* A0 -> D8 */
 	reg = (offset&0xf0)>>4;
 
 	switch (reg)
 	{
 	case 0:
 		if (flip_screen)
-			tilemap_set_scrollx(bg_tilemap,0,data-312);
+			tilemap_set_scrollx(bg_tilemap,0,scroll-312);
 		else
-			tilemap_set_scrollx(bg_tilemap,0,data+20);
+			tilemap_set_scrollx(bg_tilemap,0,scroll+20);
 		break;
 	case 1:
-		tilemap_set_scrollx(fg_tilemap,0,data+32);
+		tilemap_set_scrollx(fg_tilemap,0,scroll+32);
 		break;
 	case 2:
-		tilemap_set_scrolly(bg_tilemap,0,data+16);
+		tilemap_set_scrolly(bg_tilemap,0,scroll+16);
 		break;
 	case 3:
-		tilemap_set_scrolly(fg_tilemap,0,data+18);
+		tilemap_set_scrolly(fg_tilemap,0,scroll+18);
 		break;
 	case 7:
-		flip_screen_set(data & 1);
+		flip_screen_set(scroll & 1);
 		break;
    default:
-		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
+		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, scroll);
 		   break;
 	}
 }

@@ -402,13 +402,13 @@ WRITE_HANDLER( combascb_bankselect_w )
 		if (data == 0x1f)
 		{
 cpu_setbank(1,page + 0x20000 + 0x4000 * (data & 1));
-			cpu_setbankhandler_r (1, combasc_io_r);/* IO RAM & Video Registers */
-			cpu_setbankhandler_w (1, combasc_io_w);
+			memory_set_bankhandler_r (1, 0, combasc_io_r);/* IO RAM & Video Registers */
+			memory_set_bankhandler_w (1, 0, combasc_io_w);
 		}
 		else
 		{
-			cpu_setbankhandler_r (1, MRA_BANK1);	/* banked ROM */
-			cpu_setbankhandler_w (1, MWA_ROM);
+			memory_set_bankhandler_r (1, 0, MRA_BANK1);	/* banked ROM */
+			memory_set_bankhandler_w (1, 0, MWA_ROM);
 		}
 	}
 }

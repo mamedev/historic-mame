@@ -67,12 +67,12 @@ unsigned ccpu_dasm(char *buffer, unsigned pc);
 void ccpu_SetInputs(int inputs, int switches);
 
 /* constants for configuring the system */
-#define CCPU_PORT_IOSWITCHES   	0
-#define CCPU_PORT_IOINPUTS     	1
-#define CCPU_PORT_IOOUTPUTS    	2
-#define CCPU_PORT_IN_JOYSTICKX 	3
-#define CCPU_PORT_IN_JOYSTICKY 	4
-#define CCPU_PORT_MAX          	5
+#define CCPU_PORT_IOSWITCHES   	(0<<1)
+#define CCPU_PORT_IOINPUTS     	(1<<1)
+#define CCPU_PORT_IOOUTPUTS    	(2<<1)
+#define CCPU_PORT_IN_JOYSTICKX 	(3<<1)
+#define CCPU_PORT_IN_JOYSTICKY 	(4<<1)
+#define CCPU_PORT_MAX          	(5<<1)
 
 #define CCPU_MEMSIZE_4K        	0
 #define CCPU_MEMSIZE_8K        	1

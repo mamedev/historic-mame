@@ -286,22 +286,22 @@ static const struct MachineDriver machine_driver_bogeyman =
 /******************************************************************************/
 
 ROM_START( bogeyman )
-	ROM_REGION( 0x58000, REGION_CPU1 )
+	ROM_REGION( 0x58000, REGION_CPU1, 0 )
  	ROM_LOAD( "j20.c14",  0x04000, 0x04000, 0xea90d637 )
 	ROM_LOAD( "j10.c15",  0x08000, 0x04000, 0x0a8f218d )
 	ROM_LOAD( "j00.c17",  0x0c000, 0x04000, 0x5d486de9 )
 
-	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "j70.h15",  0x00000, 0x04000, 0xfdc787bf )	/* Characters */
 	ROM_LOAD( "j60.c17",  0x08000, 0x01000, 0xcc03ceb2 )
 	ROM_CONTINUE(         0x0a000, 0x01000 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "j30.c9",   0x00000, 0x04000, 0x41af81c0 )	/* Sprites */
 	ROM_LOAD( "j40.c7",   0x04000, 0x04000, 0x8b438421 )
 	ROM_LOAD( "j50.c5",   0x08000, 0x04000, 0xb507157f )
 
-	ROM_REGION( 0x10000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "j90.h12",  0x00000, 0x04000, 0x46b2d4d0 )	/* Tiles */
 	ROM_LOAD( "j80.h13",  0x04000, 0x04000, 0x77ebd0a4 )
 	ROM_LOAD( "ja0.h10",  0x08000, 0x01000, 0xf2aa05ed )
@@ -309,7 +309,7 @@ ROM_START( bogeyman )
 	ROM_CONTINUE(         0x0c000, 0x01000 )
 	ROM_CONTINUE(         0x0e000, 0x01000 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "82s129.5k",  0x0000, 0x0100, 0x4a7c5367 )	/* Colour prom 1 */
 	ROM_LOAD( "82s129.6k",  0x0100, 0x0100, 0xb6127713 )	/* Colour prom 2 */
 ROM_END

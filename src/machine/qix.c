@@ -183,7 +183,7 @@ WRITE_HANDLER( zoo_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
 
-	if (data & 0x04) cpu_setbank (1, &RAM[0x10000])
+	if (data & 0x04) cpu_setbank (1, &RAM[0x10000]);
 	else cpu_setbank (1, &RAM[0xa000]);
 }
 

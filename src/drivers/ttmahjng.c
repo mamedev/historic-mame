@@ -233,18 +233,18 @@ static const struct MachineDriver machine_driver_ttmahjng =
 ***************************************************************************/
 
 ROM_START( ttmahjng )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ju04", 0x0000, 0x1000, 0xfe7c693a )
 	ROM_LOAD( "ju05", 0x1000, 0x1000, 0x985723d3 )
 	ROM_LOAD( "ju06", 0x2000, 0x1000, 0x2cd69bc8 )
 	ROM_LOAD( "ju07", 0x3000, 0x1000, 0x30e8ec63 )
 
-	ROM_REGION( 0x0200, REGION_PROMS ) /* color proms */
+	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "ju03", 0x0000, 0x0100, 0x27d47624 )
 	ROM_LOAD( "ju09", 0x0100, 0x0100, 0x27d47624 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "ju01", 0x0000, 0x0800, 0x0f05ca3c )
 	ROM_LOAD( "ju02", 0x0800, 0x0800, 0xc1ffeceb )
 	ROM_LOAD( "ju08", 0x1000, 0x0800, 0x2dcc76b5 )

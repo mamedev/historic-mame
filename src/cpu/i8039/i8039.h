@@ -194,13 +194,13 @@ extern unsigned n7751_dasm(char *buffer, unsigned pc);
 /*
  *	 Input a UINT8 from given I/O port
  */
-#define I8039_In(Port) ((UINT8)cpu_readport(Port))
+#define I8039_In(Port) ((UINT8)cpu_readport16(Port))
 
 
 /*
  *	 Output a UINT8 to given I/O port
  */
-#define I8039_Out(Port,Value) (cpu_writeport(Port,Value))
+#define I8039_Out(Port,Value) (cpu_writeport16(Port,Value))
 
 
 /*

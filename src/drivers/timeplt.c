@@ -359,22 +359,22 @@ static const struct MachineDriver machine_driver_timeplt =
 ***************************************************************************/
 
 ROM_START( timeplt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tm1",          0x0000, 0x2000, 0x1551f1b9 )
 	ROM_LOAD( "tm2",          0x2000, 0x2000, 0x58636cb5 )
 	ROM_LOAD( "tm3",          0x4000, 0x2000, 0xff4e0d83 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tm4",          0x0000, 0x2000, 0x7e437c3e )
 	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
@@ -382,22 +382,22 @@ ROM_START( timeplt )
 ROM_END
 
 ROM_START( timepltc )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "cd1y",         0x0000, 0x2000, 0x83ec72c2 )
 	ROM_LOAD( "cd2y",         0x2000, 0x2000, 0x0dcf5287 )
 	ROM_LOAD( "cd3y",         0x4000, 0x2000, 0xc789b912 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tm6",          0x0000, 0x2000, 0xc2507f40 )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tm4",          0x0000, 0x2000, 0x7e437c3e )
 	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
@@ -405,22 +405,22 @@ ROM_START( timepltc )
 ROM_END
 
 ROM_START( spaceplt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "sp1",          0x0000, 0x2000, 0xac8ca3ae )
 	ROM_LOAD( "sp2",          0x2000, 0x2000, 0x1f0308ef )
 	ROM_LOAD( "sp3",          0x4000, 0x2000, 0x90aeca50 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sp6",          0x0000, 0x2000, 0x76caa8af )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sp4",          0x0000, 0x2000, 0x3781ce7a )
 	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x34c91839 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x463b2b07 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x4bbb2150 ) /* sprite lookup table */
@@ -428,23 +428,23 @@ ROM_START( spaceplt )
 ROM_END
 
 ROM_START( psurge )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "p1",           0x0000, 0x2000, 0x05f9ba12 )
 	ROM_LOAD( "p2",           0x2000, 0x2000, 0x3ff41576 )
 	ROM_LOAD( "p3",           0x4000, 0x2000, 0xe8fe120a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "p6",           0x0000, 0x1000, 0xb52d01fa )
 	ROM_LOAD( "p7",           0x1000, 0x1000, 0x9db5c0ce )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "p4",           0x0000, 0x2000, 0x26fd7f81 )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "p5",           0x0000, 0x2000, 0x6066ec8e )
 	ROM_LOAD( "tm5",          0x2000, 0x2000, 0xe8ca87b9 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x00000000 ) /* palette */
 	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x00000000 ) /* sprite lookup table */

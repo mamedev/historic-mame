@@ -12,7 +12,6 @@
 
 
 static struct osd_bitmap *tmpbitmap2;
-static unsigned char inverse_palette[256]; /* JB 970727 */
 
 
 void arabian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -113,7 +112,6 @@ void arabian_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 int arabian_vh_start(void)
 {
 	int p1,p2,p3,p4,v1,v2,offs;
-	int i;	/* JB 970727 */
 
 	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
@@ -124,9 +122,6 @@ int arabian_vh_start(void)
 		return 1;
 	}
 
-	/* JB 970727 */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		inverse_palette[ Machine->pens[i] ] = i;
 
 /*transform graphics data into more usable format*/
 /*which is coded like this:
@@ -182,6 +177,16 @@ void arabian_vh_stop(void)
 
 
 
+static void update_pixel(int y,int x)
+{
+	int col;
+
+	col = tmpbitmap->line[y][x];
+	if (!col) col = 16+tmpbitmap2->line[y][x];
+
+	Machine->scrbitmap->line[y][x] = Machine->pens[col];
+}
+
 
 INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 {
@@ -217,19 +222,24 @@ INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 
 	if (plane & 0x01)
 	{
-		if (p4 != 8)  tmpbitmap ->line[y     ][x     ] = Machine->pens[p4];
-		if (p3 != 8)  tmpbitmap ->line[y+  dy][x+  dx] = Machine->pens[p3];
-		if (p2 != 8)  tmpbitmap ->line[y+2*dy][x+2*dx] = Machine->pens[p2];
-		if (p1 != 8)  tmpbitmap ->line[y+3*dy][x+3*dx] = Machine->pens[p1];
+		if (p4 != 8)  tmpbitmap ->line[y     ][x     ] = p4;
+		if (p3 != 8)  tmpbitmap ->line[y+  dy][x+  dx] = p3;
+		if (p2 != 8)  tmpbitmap ->line[y+2*dy][x+2*dx] = p2;
+		if (p1 != 8)  tmpbitmap ->line[y+3*dy][x+3*dx] = p1;
 	}
 
 	if (plane & 0x04)
 	{
-		if (p4 != 8)  tmpbitmap2->line[y     ][x     ] = Machine->pens[16+p4];
-		if (p3 != 8)  tmpbitmap2->line[y+  dy][x+  dx] = Machine->pens[16+p3];
-		if (p2 != 8)  tmpbitmap2->line[y+2*dy][x+2*dx] = Machine->pens[16+p2];
-		if (p1 != 8)  tmpbitmap2->line[y+3*dy][x+3*dx] = Machine->pens[16+p1];
+		if (p4 != 8)  tmpbitmap2->line[y     ][x     ] = p4;
+		if (p3 != 8)  tmpbitmap2->line[y+  dy][x+  dx] = p3;
+		if (p2 != 8)  tmpbitmap2->line[y+2*dy][x+2*dx] = p2;
+		if (p1 != 8)  tmpbitmap2->line[y+3*dy][x+3*dx] = p1;
 	}
+
+	update_pixel(y     ,x     );
+	update_pixel(y+  dy,x+  dx);
+	update_pixel(y+2*dy,x+2*dx);
+	update_pixel(y+3*dy,x+3*dx);
 
 	if (dx >= 0 && dy >= 0)
 		osd_mark_dirty(x,y,x+3*dx,y+3*dy);
@@ -316,16 +326,6 @@ WRITE_HANDLER( arabian_videoram_w )
 	}
 
 
-	/* JB 970727 */
-	tmpbitmap ->line[y     ][x     ] = inverse_palette[ tmpbitmap ->line[y     ][x     ] ];
-	tmpbitmap ->line[y+  dy][x+  dx] = inverse_palette[ tmpbitmap ->line[y+  dy][x+  dx] ];
-	tmpbitmap ->line[y+2*dy][x+2*dx] = inverse_palette[ tmpbitmap ->line[y+2*dy][x+2*dx] ];
-	tmpbitmap ->line[y+3*dy][x+3*dx] = inverse_palette[ tmpbitmap ->line[y+3*dy][x+3*dx] ];
-	tmpbitmap2->line[y     ][x     ] = inverse_palette[ tmpbitmap2->line[y     ][x     ] ];
-	tmpbitmap2->line[y+  dy][x+  dx] = inverse_palette[ tmpbitmap2->line[y+  dy][x+  dx] ];
-	tmpbitmap2->line[y+2*dy][x+2*dx] = inverse_palette[ tmpbitmap2->line[y+2*dy][x+2*dx] ];
-	tmpbitmap2->line[y+3*dy][x+3*dx] = inverse_palette[ tmpbitmap2->line[y+3*dy][x+3*dx] ];
-
 	if (plane1)
 	{
 		bm = &tmpbitmap->line[y     ][x     ];
@@ -376,57 +376,52 @@ WRITE_HANDLER( arabian_videoram_w )
 	{
 		bm = &tmpbitmap2->line[y     ][x     ];
 		*bm &= 0xf3;
-		if (data & 0x10) *bm |= (16+8);
-		if (data & 0x01) *bm |= (16+4);
+		if (data & 0x10) *bm |= 8;
+		if (data & 0x01) *bm |= 4;
 
 		bm = &tmpbitmap2->line[y+  dy][x+  dx];
 		*bm &= 0xf3;
-		if (data & 0x20) *bm |= (16+8);
-		if (data & 0x02) *bm |= (16+4);
+		if (data & 0x20) *bm |= 8;
+		if (data & 0x02) *bm |= 4;
 
 		bm = &tmpbitmap2->line[y+2*dy][x+2*dx];
 		*bm &= 0xf3;
-		if (data & 0x40) *bm |= (16+8);
-		if (data & 0x04) *bm |= (16+4);
+		if (data & 0x40) *bm |= 8;
+		if (data & 0x04) *bm |= 4;
 
 		bm = &tmpbitmap2->line[y+3*dy][x+3*dx];
 		*bm &= 0xf3;
-		if (data & 0x80) *bm |= (16+8);
-		if (data & 0x08) *bm |= (16+4);
+		if (data & 0x80) *bm |= 8;
+		if (data & 0x08) *bm |= 4;
 	}
 
 	if (plane4)
 	{
 		bm = &tmpbitmap2->line[y     ][x     ];
 		*bm &= 0xfc;
-		if (data & 0x10) *bm |= (16+2);
-		if (data & 0x01) *bm |= (16+1);
+		if (data & 0x10) *bm |= 2;
+		if (data & 0x01) *bm |= 1;
 
 		bm = &tmpbitmap2->line[y+  dy][x+  dx];
 		*bm &= 0xfc;
-		if (data & 0x20) *bm |= (16+2);
-		if (data & 0x02) *bm |= (16+1);
+		if (data & 0x20) *bm |= 2;
+		if (data & 0x02) *bm |= 1;
 
 		bm = &tmpbitmap2->line[y+2*dy][x+2*dx];
 		*bm &= 0xfc;
-		if (data & 0x40) *bm |= (16+2);
-		if (data & 0x04) *bm |= (16+1);
+		if (data & 0x40) *bm |= 2;
+		if (data & 0x04) *bm |= 1;
 
 		bm = &tmpbitmap2->line[y+3*dy][x+3*dx];
 		*bm &= 0xfc;
-		if (data & 0x80) *bm |= (16+2);
-		if (data & 0x08) *bm |= (16+1);
+		if (data & 0x80) *bm |= 2;
+		if (data & 0x08) *bm |= 1;
 	}
 
-	/* JB 970727 */
-	tmpbitmap ->line[y     ][x     ] = Machine->pens[ tmpbitmap ->line[y     ][x     ] ];
-	tmpbitmap ->line[y+  dy][x+  dx] = Machine->pens[ tmpbitmap ->line[y+  dy][x+  dx] ];
-	tmpbitmap ->line[y+2*dy][x+2*dx] = Machine->pens[ tmpbitmap ->line[y+2*dy][x+2*dx] ];
-	tmpbitmap ->line[y+3*dy][x+3*dx] = Machine->pens[ tmpbitmap ->line[y+3*dy][x+3*dx] ];
-	tmpbitmap2->line[y     ][x     ] = Machine->pens[ tmpbitmap2->line[y     ][x     ] ];
-	tmpbitmap2->line[y+  dy][x+  dx] = Machine->pens[ tmpbitmap2->line[y+  dy][x+  dx] ];
-	tmpbitmap2->line[y+2*dy][x+2*dx] = Machine->pens[ tmpbitmap2->line[y+2*dy][x+2*dx] ];
-	tmpbitmap2->line[y+3*dy][x+3*dx] = Machine->pens[ tmpbitmap2->line[y+3*dy][x+3*dx] ];
+	update_pixel(y     ,x     );
+	update_pixel(y+  dy,x+  dx);
+	update_pixel(y+2*dy,x+2*dx);
+	update_pixel(y+3*dy,x+3*dx);
 
 	if (dx >= 0 && dy >= 0)
 		osd_mark_dirty(x,y,x+3*dx,y+3*dy);
@@ -441,6 +436,14 @@ WRITE_HANDLER( arabian_videoram_w )
 
 void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE, 0);
- 	copybitmap(bitmap,tmpbitmap ,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
+	if (full_refresh)
+	{
+		int x,y;
+
+		for (y = 0;y < bitmap->height;y++)
+			for (x = 0;x < bitmap->width;x++)
+				update_pixel(y,x);
+
+		osd_mark_dirty(0,0,bitmap->width,bitmap->height);
+	}
 }

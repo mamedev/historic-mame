@@ -95,24 +95,24 @@ void simpsons_video_banking(int bank)
 {
 	if (bank & 1)
 	{
-		cpu_setbankhandler_r(3,paletteram_r);
-		cpu_setbankhandler_w(3,paletteram_xBBBBBGGGGGRRRRR_swap_w);
+		memory_set_bankhandler_r(3,0,paletteram_r);
+		memory_set_bankhandler_w(3,0,paletteram_xBBBBBGGGGGRRRRR_swap_w);
 	}
 	else
 	{
-		cpu_setbankhandler_r(3,K052109_r);
-		cpu_setbankhandler_w(3,K052109_w);
+		memory_set_bankhandler_r(3,0,K052109_r);
+		memory_set_bankhandler_w(3,0,K052109_w);
 	}
 
 	if (bank & 2)
 	{
-		cpu_setbankhandler_r(4,simpsons_K053247_r);
-		cpu_setbankhandler_w(4,simpsons_K053247_w);
+		memory_set_bankhandler_r(4,0,simpsons_K053247_r);
+		memory_set_bankhandler_w(4,0,simpsons_K053247_w);
 	}
 	else
 	{
-		cpu_setbankhandler_r(4,simpsons_K052109_r);
-		cpu_setbankhandler_w(4,simpsons_K052109_w);
+		memory_set_bankhandler_r(4,0,simpsons_K052109_r);
+		memory_set_bankhandler_w(4,0,simpsons_K052109_w);
 	}
 }
 

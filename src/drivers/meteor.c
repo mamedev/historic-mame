@@ -274,7 +274,7 @@ static const struct MachineDriver machine_driver_meteor =
 
 ***************************************************************************/
 ROM_START( meteor )
-	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "vm1", 	      0x0000, 0x0800, 0x894fe9b1 )
 	ROM_LOAD( "vm2", 	      0x0800, 0x0800, 0x28685a68 )
 	ROM_LOAD( "vm3", 	      0x1000, 0x0800, 0xc88fb12a )
@@ -284,10 +284,10 @@ ROM_START( meteor )
 	ROM_LOAD( "vm7", 	      0x3000, 0x0800, 0x39f43ac2 )
 	ROM_LOAD( "vm8", 	      0x3800, 0x0800, 0xa0508de3 )
 
-	ROM_REGION( 0x1000, REGION_CPU2 )		/* sound MCU */
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )		/* sound MCU */
 	ROM_LOAD( "vm5", 	      0x0000, 0x0800, 0xb14ccd57 )
 
-	ROM_REGION( 0x3000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rm1v",         0x0000, 0x0800, 0xd621fe96 )
 	ROM_LOAD( "rm2v",         0x0800, 0x0800, 0xb3981251 )
 	ROM_LOAD( "gm1v",         0x1000, 0x0800, 0xd44617e8 )

@@ -2090,6 +2090,7 @@ int showcopyright(struct osd_bitmap *bitmap)
 	strcat (buf, "\n\n");
 	strcat (buf, ui_getstring(UI_copyright3));
 
+	erase_screen(bitmap);
 	ui_displaymessagewindow(bitmap,buf);
 
 	setup_selected = -1;////
@@ -2384,6 +2385,7 @@ int showgamewarnings(struct osd_bitmap *bitmap)
 		strcat(buf,"\n\n");
 		strcat(buf,ui_getstring (UI_typeok));
 
+		erase_screen(bitmap);
 		ui_displaymessagewindow(bitmap,buf);
 
 		done = 0;

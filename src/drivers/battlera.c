@@ -333,7 +333,7 @@ static const struct MachineDriver machine_driver_battlera =
 /******************************************************************************/
 
 ROM_START( bldwolf )
-	ROM_REGION(0x100000, REGION_CPU1) /* Main cpu code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Main cpu code */
 	ROM_LOAD( "es00-1.rom", 0x00000, 0x10000, 0xff4aa252 )
 	ROM_LOAD( "es01.rom",   0x10000, 0x10000, 0x9fea3189 )
 	ROM_LOAD( "es02-1.rom", 0x20000, 0x10000, 0x49792753 )
@@ -346,15 +346,15 @@ ROM_START( bldwolf )
 	ROM_LOAD( "es10-1.rom", 0xd0000, 0x10000, 0xd3cddc02 )
 	/* Rom sockets 0xe0000 - 0x100000 are unused */
 
-	ROM_REGION(0x10000, REGION_CPU2) /* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "es11.rom",   0x00000, 0x10000, 0xf5b29c9c )
 
-	ROM_REGION(0x80000, REGION_GFX1 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )
 	/* Nothing */
 ROM_END
 
 ROM_START( battlera )
-	ROM_REGION(0x100000, REGION_CPU1) /* Main cpu code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Main cpu code */
 	ROM_LOAD( "00_e1.bin", 0x00000, 0x10000, 0xaa1cbe69 ) /* ET00 */
 	ROM_LOAD( "es01.rom",  0x10000, 0x10000, 0x9fea3189 ) /* ET01 */
 	ROM_LOAD( "02_e4.bin", 0x20000, 0x10000, 0xcd72f580 ) /* ET02, etc */
@@ -367,10 +367,10 @@ ROM_START( battlera )
 	ROM_LOAD( "es10-1.rom",0xd0000, 0x10000, 0xd3cddc02 )
 	/* Rom sockets 0xe0000 - 0x100000 are unused */
 
-	ROM_REGION(0x10000, REGION_CPU2) /* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "es11.rom",  0x00000, 0x10000, 0xf5b29c9c )
 
-	ROM_REGION(0x80000, REGION_GFX1 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )
 	/* Nothing */
 ROM_END
 

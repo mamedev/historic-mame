@@ -362,59 +362,59 @@ static const struct MachineDriver machine_driver_wiping =
 ***************************************************************************/
 
 ROM_START( wiping )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* main cpu code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main cpu code */
 	ROM_LOAD( "1",            0x0000, 0x2000, 0xb55d0d19 )
 	ROM_LOAD( "2",            0x2000, 0x2000, 0xb1f96e47 )
 	ROM_LOAD( "3",            0x4000, 0x2000, 0xc67bab5a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "4",            0x0000, 0x1000, 0xa1547e18 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "8",            0x0000, 0x1000, 0x601160f6 ) /* chars */
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "7",            0x0000, 0x2000, 0x2c2cc054 ) /* sprites */
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "wip-g13.bin",  0x0000, 0x0020, 0xb858b897 )	/* palette */
 	ROM_LOAD( "wip-f4.bin",   0x0020, 0x0100, 0x3f56c8d5 )	/* char lookup table */
 	ROM_LOAD( "wip-e11.bin",  0x0120, 0x0100, 0xe7400715 )	/* sprite lookup table */
 
-	ROM_REGION( 0x4000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x4000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "rugr5c8",	  0x0000, 0x2000, 0x67bafbbf )
 	ROM_LOAD( "rugr6c9",	  0x2000, 0x2000, 0xcac84a87 )
 
-	ROM_REGION( 0x0200, REGION_SOUND2 )	/* 4bit->8bit sample expansion PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND2, 0 )	/* 4bit->8bit sample expansion PROMs */
 	ROM_LOAD( "wip-e8.bin",   0x0000, 0x0100, 0xbd2c080b )	/* low 4 bits */
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END
 
 ROM_START( rugrats )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* main cpu code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main cpu code */
 	ROM_LOAD( "rugr1d1",      0x0000, 0x2000, 0xe7e1bd6d )
 	ROM_LOAD( "rugr2d2",      0x2000, 0x2000, 0x5f47b9ad )
 	ROM_LOAD( "rugr3d3",      0x4000, 0x2000, 0x3d748d1a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "rugr4c4",      0x0000, 0x2000, 0xd4a92c38 )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rugr8d2",      0x0000, 0x1000, 0xa3dcaca5 ) /* chars */
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rugr7c13",     0x0000, 0x2000, 0xfe1191dd ) /* sprites */
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "prom.13g",     0x0000, 0x0020, 0xf21238f0 )	/* palette */
 	ROM_LOAD( "prom.4f",      0x0020, 0x0100, 0xcfc90f3d )	/* char lookup table */
 	ROM_LOAD( "prom.11e",     0x0120, 0x0100, 0xcfc90f3d )	/* sprite lookup table */
 
-	ROM_REGION( 0x4000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x4000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "rugr5c8",	  0x0000, 0x2000, 0x67bafbbf )
 	ROM_LOAD( "rugr6c9",	  0x2000, 0x2000, 0xcac84a87 )
 
-	ROM_REGION( 0x0200, REGION_SOUND2 )	/* 4bit->8bit sample expansion PROMs */
+	ROM_REGION( 0x0200, REGION_SOUND2, 0 )	/* 4bit->8bit sample expansion PROMs */
 	ROM_LOAD( "wip-e8.bin",   0x0000, 0x0100, 0xbd2c080b )	/* low 4 bits */
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END

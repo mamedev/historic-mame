@@ -329,46 +329,46 @@ static const struct MachineDriver machine_driver_yiear =
 ***************************************************************************/
 
 ROM_START( yiear )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "i08.10d",      0x08000, 0x4000, 0xe2d7458b )
 	ROM_LOAD( "i07.8d",       0x0c000, 0x4000, 0x7db7442e )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
 	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "g04_5.bin",    0x00000, 0x4000, 0x45109b29 )
 	ROM_LOAD( "g03_6.bin",    0x04000, 0x4000, 0x1d650790 )
 	ROM_LOAD( "g06_3.bin",    0x08000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x0c000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
 ROM_START( yiear2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "d12_8.bin",    0x08000, 0x4000, 0x49ecd9dd )
 	ROM_LOAD( "d14_7.bin",    0x0c000, 0x4000, 0xbc2e1208 )
 
-	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
 	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "g04_5.bin",    0x00000, 0x4000, 0x45109b29 )
 	ROM_LOAD( "g03_6.bin",    0x04000, 0x4000, 0x1d650790 )
 	ROM_LOAD( "g06_3.bin",    0x08000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x0c000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
-	ROM_REGION( 0x2000, REGION_SOUND1 )	/* 8k for the VLM5030 data */
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )	/* 8k for the VLM5030 data */
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 

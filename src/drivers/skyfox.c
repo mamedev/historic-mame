@@ -382,14 +382,14 @@ Sound processor - Z80  1.748MHz
 
 
 ROM_START( skyfox )
-	ROM_REGION( 0x10000, REGION_CPU1 )		/* Main Z80 Code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "skyfox1.bin", 0x00000, 0x8000, 0xb4d4bb6f )
 	ROM_LOAD( "skyfox2.bin", 0x08000, 0x8000, 0xe15e0263 )	// identical halves
 
-	ROM_REGION( 0x10000, REGION_CPU2 )		/* Sound Z80 Code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "skyfox9.bin", 0x00000, 0x8000, 0x0b283bf5 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "skyfox3.bin", 0x00000, 0x10000, 0x3a17a929 )
 	ROM_LOAD( "skyfox4.bin", 0x10000, 0x10000, 0x358053bb )
 	ROM_LOAD( "skyfox5.bin", 0x20000, 0x10000, 0xc1215a6e )
@@ -397,24 +397,24 @@ ROM_START( skyfox )
 	ROM_LOAD( "skyfox7.bin", 0x40000, 0x10000, 0xfa2ab5b4 )
 	ROM_LOAD( "skyfox8.bin", 0x50000, 0x10000, 0x0e3edc49 )
 
-	ROM_REGION( 0x08000, REGION_GFX2 )	/* Background - do not dispose */
+	ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* Background - do not dispose */
 	ROM_LOAD( "skyfox10.bin", 0x0000, 0x8000, 0x19f58f9c )
 
-	ROM_REGION( 0x300, REGION_PROMS )	/* Color Proms */
+	ROM_REGION( 0x300, REGION_PROMS, 0 )	/* Color Proms */
 	ROM_LOAD( "sfoxrprm.bin", 0x000, 0x100, 0x79913c7f )	// R
 	ROM_LOAD( "sfoxgprm.bin", 0x100, 0x100, 0xfb73d434 )	// G
 	ROM_LOAD( "sfoxbprm.bin", 0x200, 0x100, 0x60d2ab41 )	// B
 ROM_END
 
 ROM_START( exerizrb )
-	ROM_REGION( 0x10000, REGION_CPU1 )		/* Main Z80 Code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "1-a",         0x00000, 0x8000, 0x5df72a5d )
 	ROM_LOAD( "skyfox2.bin", 0x08000, 0x8000, 0xe15e0263 )	// 1-b
 
-	ROM_REGION( 0x10000, REGION_CPU2 )		/* Sound Z80 Code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "skyfox9.bin", 0x00000, 0x8000, 0x0b283bf5 )	// 1-i
 
-	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* Sprites */
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "1-c",         0x00000, 0x10000, 0x450e9381 )
 	ROM_LOAD( "skyfox4.bin", 0x10000, 0x10000, 0x358053bb )	// 1-d
 	ROM_LOAD( "1-e",         0x20000, 0x10000, 0x50a38c60 )
@@ -422,10 +422,10 @@ ROM_START( exerizrb )
 	ROM_LOAD( "1-g",         0x40000, 0x10000, 0xc9bbfe5c )
 	ROM_LOAD( "skyfox8.bin", 0x50000, 0x10000, 0x0e3edc49 )	// 1-h
 
-	ROM_REGION( 0x08000, REGION_GFX2 )	/* Background - do not dispose */
+	ROM_REGION( 0x08000, REGION_GFX2, 0 )	/* Background - do not dispose */
 	ROM_LOAD( "skyfox10.bin", 0x0000, 0x8000, 0x19f58f9c )	// 1-j
 
-	ROM_REGION( 0x300, REGION_PROMS )	/* Color Proms */
+	ROM_REGION( 0x300, REGION_PROMS, 0 )	/* Color Proms */
 	ROM_LOAD( "sfoxrprm.bin", 0x000, 0x100, 0x79913c7f )	// 2-bpr
 	ROM_LOAD( "sfoxgprm.bin", 0x100, 0x100, 0xfb73d434 )	// 3-bpr
 	ROM_LOAD( "sfoxbprm.bin", 0x200, 0x100, 0x60d2ab41 )	// 1-bpr

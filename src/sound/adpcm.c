@@ -457,8 +457,10 @@ int ADPCM_playing(int num)
  *
 ***********************************************************************************************/
 
+#define OKIM6295_VOICES		4
+
 static int okim6295_command[MAX_OKIM6295];
-static int okim6295_base[MAX_OKIM6295][MAX_OKIM6295_VOICES];
+static int okim6295_base[MAX_OKIM6295][OKIM6295_VOICES];
 
 
 /**********************************************************************************************
@@ -474,15 +476,15 @@ int OKIM6295_sh_start(const struct MachineSound *msound)
 	int i;
 
 	/* reset the ADPCM system */
-	num_voices = intf->num * MAX_OKIM6295_VOICES;
+	num_voices = intf->num * OKIM6295_VOICES;
 	compute_tables();
 
 	/* initialize the voices */
 	memset(adpcm, 0, sizeof(adpcm));
 	for (i = 0; i < num_voices; i++)
 	{
-		int chip = i / MAX_OKIM6295_VOICES;
-		int voice = i % MAX_OKIM6295_VOICES;
+		int chip = i / OKIM6295_VOICES;
+		int voice = i % OKIM6295_VOICES;
 
 		/* reset the OKI-specific parameters */
 		okim6295_command[chip] = -1;
@@ -542,9 +544,9 @@ void OKIM6295_set_bank_base(int which, int base)
 {
 	int channel;
 
-	for (channel = 0; channel < MAX_OKIM6295_VOICES; channel++)
+	for (channel = 0; channel < OKIM6295_VOICES; channel++)
 	{
-		struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
+		struct ADPCMVoice *voice = &adpcm[which * OKIM6295_VOICES + channel];
 
 		/* update the stream and set the new base */
 		stream_update(voice->stream, 0);
@@ -564,9 +566,9 @@ void OKIM6295_set_frequency(int which, int frequency)
 {
 	int channel;
 
-	for (channel = 0; channel < MAX_OKIM6295_VOICES; channel++)
+	for (channel = 0; channel < OKIM6295_VOICES; channel++)
 	{
-		struct ADPCMVoice *voice = &adpcm[which * MAX_OKIM6295_VOICES + channel];
+		struct ADPCMVoice *voice = &adpcm[which * OKIM6295_VOICES + channel];
 
 		/* update the stream and set the new base */
 		stream_update(voice->stream, 0);
@@ -587,17 +589,17 @@ static int OKIM6295_status_r(int num)
 	int i, result;
 
 	/* range check the numbers */
-	if (num >= num_voices / MAX_OKIM6295_VOICES)
+	if (num >= num_voices / OKIM6295_VOICES)
 	{
-		logerror("error: OKIM6295_status_r() called with chip = %d, but only %d chips allocated\n",num, num_voices / MAX_OKIM6295_VOICES);
-		return 0x0f;
+		logerror("error: OKIM6295_status_r() called with chip = %d, but only %d chips allocated\n",num, num_voices / OKIM6295_VOICES);
+		return 0xff;
 	}
 
+	result = 0xf0;	/* naname expects bits 4-7 to be 1 */
 	/* set the bit to 1 if something is playing on a given channel */
-	result = 0;
-	for (i = 0; i < MAX_OKIM6295_VOICES; i++)
+	for (i = 0; i < OKIM6295_VOICES; i++)
 	{
-		struct ADPCMVoice *voice = &adpcm[num * MAX_OKIM6295_VOICES + i];
+		struct ADPCMVoice *voice = &adpcm[num * OKIM6295_VOICES + i];
 
 		/* update the stream */
 		stream_update(voice->stream, 0);
@@ -621,9 +623,9 @@ static int OKIM6295_status_r(int num)
 static void OKIM6295_data_w(int num, int data)
 {
 	/* range check the numbers */
-	if (num >= num_voices / MAX_OKIM6295_VOICES)
+	if (num >= num_voices / OKIM6295_VOICES)
 	{
-		logerror("error: OKIM6295_data_w() called with chip = %d, but only %d chips allocated\n", num, num_voices / MAX_OKIM6295_VOICES);
+		logerror("error: OKIM6295_data_w() called with chip = %d, but only %d chips allocated\n", num, num_voices / OKIM6295_VOICES);
 		return;
 	}
 
@@ -634,10 +636,11 @@ static void OKIM6295_data_w(int num, int data)
 		unsigned char *base;
 
 		/* determine which voice(s) (voice is set by a 1 bit in the upper 4 bits of the second byte) */
-		for (i = 0; i < MAX_OKIM6295_VOICES; i++, temp >>= 1)
+		for (i = 0; i < OKIM6295_VOICES; i++, temp >>= 1)
+		{
 			if (temp & 1)
 			{
-				struct ADPCMVoice *voice = &adpcm[num * MAX_OKIM6295_VOICES + i];
+				struct ADPCMVoice *voice = &adpcm[num * OKIM6295_VOICES + i];
 
 				/* update the stream */
 				stream_update(voice->stream, 0);
@@ -668,6 +671,7 @@ static void OKIM6295_data_w(int num, int data)
 					voice->playing = 0;
 				}
 			}
+		}
 
 		/* reset the command */
 		okim6295_command[num] = -1;
@@ -686,14 +690,16 @@ static void OKIM6295_data_w(int num, int data)
 
 		/* determine which voice(s) (voice is set by a 1 bit in bits 3-6 of the command */
 		for (i = 0; i < 4; i++, temp >>= 1)
+		{
 			if (temp & 1)
 			{
-				struct ADPCMVoice *voice = &adpcm[num * MAX_OKIM6295_VOICES + i];
+				struct ADPCMVoice *voice = &adpcm[num * OKIM6295_VOICES + i];
 
 				/* update the stream, then turn it off */
 				stream_update(voice->stream, 0);
 				voice->playing = 0;
 			}
+		}
 	}
 }
 

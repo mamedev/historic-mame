@@ -5,7 +5,8 @@ Land Sea Air Squad / Storming Party  (c) 1986 Taito
 driver by Nicola Salmoria
 
 TODO:
-- Unknown writes to YM2203 output ports (filters?)
+- I think storming is supposed to be a bootleg without mcu, so I should verify
+  if it works with the mcu not hooked up.
 - Wrong sprite/tilemap priority. Sprites can appear above and below the middle
   layer, it's not clear how this is selected since there are no free attribute
   bits.
@@ -19,6 +20,7 @@ TODO:
   (or tilemaps), however I haven't done that because the video circuitry is not
   entirely understood and if other games are found running on this hardware, they
   might not like the optimizations.
+- Unknown writes to YM2203 output ports (filters?)
 
 ***************************************************************************/
 
@@ -384,31 +386,31 @@ static const struct MachineDriver machine_driver_lsasquad =
 ***************************************************************************/
 
 ROM_START( lsasquad )
-	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "a64-21.4",     0x00000, 0x8000, 0x5ff6b017 )
     /* ROMs banked at 8000-9fff */
 	ROM_LOAD( "a64-20.3",     0x10000, 0x8000, 0x7f8b4979 )
 	ROM_LOAD( "a64-19.2",     0x18000, 0x8000, 0xba31d34a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "a64-04.44",    0x0000, 0x8000, 0xc238406a )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a64-05.35",    0x0000, 0x0800, 0x572677b9 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a64-10.27",    0x00000, 0x8000, 0xbb4f1b37 )
 	ROM_LOAD( "a64-22.28",    0x08000, 0x8000, 0x58e03b89 )
 	ROM_LOAD( "a64-11.40",    0x10000, 0x8000, 0xa3bbc0b3 )
 	ROM_LOAD( "a64-23.41",    0x18000, 0x8000, 0x377a538b )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a64-14.2",     0x00000, 0x8000, 0xa72e2041 )
 	ROM_LOAD( "a64-16.3",     0x08000, 0x8000, 0x05206333 )
 	ROM_LOAD( "a64-15.25",    0x10000, 0x8000, 0x01ed5851 )
 	ROM_LOAD( "a64-17.26",    0x18000, 0x8000, 0x6eaf3735 )
 
-	ROM_REGION( 0x1000, REGION_PROMS )
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )
 	ROM_LOAD( "a64-07.22",    0x0000, 0x0400, 0x82802bbb )	/* red   (bottom half unused) */
 	ROM_LOAD( "a64-08.23",    0x0400, 0x0400, 0xaa9e1dbd )	/* green (bottom half unused) */
 	ROM_LOAD( "a64-09.24",    0x0800, 0x0400, 0xdca86295 )	/* blue  (bottom half unused) */
@@ -416,31 +418,31 @@ ROM_START( lsasquad )
 ROM_END
 
 ROM_START( storming )
-	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "stpartyj.001", 0x00000, 0x8000, 0x07e6bc61 )
     /* ROMs banked at 8000-9fff */
 	ROM_LOAD( "stpartyj.002", 0x10000, 0x8000, 0x1c7fe5d5 )
 	ROM_LOAD( "stpartyj.003", 0x18000, 0x8000, 0x159f23a6 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "a64-04.44",    0x0000, 0x8000, 0xc238406a )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "a64-05.35",    0x0000, 0x0800, 0x572677b9 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a64-10.27",    0x00000, 0x8000, 0xbb4f1b37 )
 	ROM_LOAD( "stpartyj.009", 0x08000, 0x8000, 0x8ee2443b )
 	ROM_LOAD( "a64-11.40",    0x10000, 0x8000, 0xa3bbc0b3 )
 	ROM_LOAD( "stpartyj.011", 0x18000, 0x8000, 0xf342d42f )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "a64-14.2",     0x00000, 0x8000, 0xa72e2041 )
 	ROM_LOAD( "a64-16.3",     0x08000, 0x8000, 0x05206333 )
 	ROM_LOAD( "a64-15.25",    0x10000, 0x8000, 0x01ed5851 )
 	ROM_LOAD( "a64-17.26",    0x18000, 0x8000, 0x6eaf3735 )
 
-	ROM_REGION( 0x1000, REGION_PROMS )
+	ROM_REGION( 0x1000, REGION_PROMS, 0 )
 	ROM_LOAD( "a64-07.22",    0x0000, 0x0400, 0x82802bbb )	/* red   (bottom half unused) */
 	ROM_LOAD( "a64-08.23",    0x0400, 0x0400, 0xaa9e1dbd )	/* green (bottom half unused) */
 	ROM_LOAD( "a64-09.24",    0x0800, 0x0400, 0xdca86295 )	/* blue  (bottom half unused) */

@@ -231,7 +231,7 @@ static const struct MachineDriver machine_driver_videopin =
 ***************************************************************************/
 
 ROM_START( videopin )
-	ROM_REGION(0x10000, REGION_CPU1) /* 64Kb code roms, the ROMs are nibble-wide */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64Kb code roms, the ROMs are nibble-wide */
     ROM_LOAD_NIB_LOW ( "34242-01.e0", 0x2000, 0x0400, 0xc6a83795 ) //ROM0
 	ROM_LOAD_NIB_HIGH( "34237-01.k0", 0x2000, 0x0400, 0x9b5ef087 ) //ROM0
 	ROM_LOAD_NIB_LOW ( "34243-01.d0", 0x2400, 0x0400, 0xdc87d023 ) //ROM4
@@ -247,11 +247,11 @@ ROM_START( videopin )
 	ROM_LOAD_NIB_LOW ( "34251-01.f1", 0x3800, 0x0400, 0x5d416efc ) //ROM3
 	ROM_LOAD_NIB_HIGH( "34248-01.j1", 0x3800, 0x0400, 0x9f120e95 ) //ROM3
 	ROM_LOAD_NIB_LOW ( "34245-01.b0", 0x3c00, 0x0400, 0xda02c194 ) //ROM7
-	ROM_RELOAD_NIB_LOW (              0xfc00, 0x0400 ) /* for 6502 vectors */
+	ROM_RELOAD(                       0xfc00, 0x0400 ) /* for 6502 vectors */
 	ROM_LOAD_NIB_HIGH( "34241-01.f0", 0x3c00, 0x0400, 0x5bfb83da ) //ROM7
-	ROM_RELOAD_NIB_HIGH(              0xfc00, 0x0400 ) /* for 6502 vectors */
+	ROM_RELOAD(                       0xfc00, 0x0400 ) /* for 6502 vectors */
 
-	ROM_REGION(0x520, REGION_GFX1 | REGIONFLAG_DISPOSE )	  /* 1k for graphics: temporary space for graphics (disposed after conversion) */
+	ROM_REGION(0x520, REGION_GFX1, ROMREGION_DISPOSE )	  /* 1k for graphics: temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "34258-01.c5", 0x0000, 0x0200, 0x91a5f117 )
 	ROM_LOAD( "34259-01.d5", 0x0200, 0x0200, 0x6cd98c06 )
 	ROM_LOAD( "34257-01.m1", 0x0400, 0x0020, 0x50245866 ) /* 32bytes 16x16 space for 8x8 ball pix */

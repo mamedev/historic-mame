@@ -429,65 +429,65 @@ static const struct MachineDriver machine_driver_deniam16c =
 ***************************************************************************/
 
 ROM_START( logicpro )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "logicpro.r4", 0x00000, 0x40000, 0xc506d484 )
-	ROM_LOAD_ODD ( "logicpro.r3", 0x00000, 0x40000, 0xd5a4cf62 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "logicpro.r4", 0x00000, 0x40000, 0xc506d484 )
+	ROM_LOAD16_BYTE( "logicpro.r3", 0x00001, 0x40000, 0xd5a4cf62 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
 	ROM_LOAD( "logicpro.r2", 0x0000, 0x10000, 0x000d624b )
 
-	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "logicpro.r5", 0x000000, 0x080000, 0xdedf18c9 )
 	ROM_LOAD( "logicpro.r6", 0x080000, 0x080000, 0x3ecbd1c2 )
 	ROM_LOAD( "logicpro.r7", 0x100000, 0x080000, 0x47135521 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* sprites, used at run time */
-	ROM_LOAD_GFX_EVEN( "logicpro.r9", 0x000000, 0x080000, 0xa98bc1d2 )
-	ROM_LOAD_GFX_ODD ( "logicpro.r8", 0x000000, 0x080000, 0x1de46298 )
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* sprites, used at run time */
+	ROM_LOAD16_BYTE( "logicpro.r9", 0x000000, 0x080000, 0xa98bc1d2 )
+	ROM_LOAD16_BYTE( "logicpro.r8", 0x000001, 0x080000, 0x1de46298 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "logicpro.r1", 0x0000, 0x080000, 0xa1fec4d4 )
 ROM_END
 
 ROM_START( karianx )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "even",        0x00000, 0x80000, 0xfd0ce238 )
-	ROM_LOAD_ODD ( "odd",         0x00000, 0x80000, 0xbe173cdc )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "even",        0x00000, 0x80000, 0xfd0ce238 )
+	ROM_LOAD16_BYTE( "odd",         0x00001, 0x80000, 0xbe173cdc )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound */
 	ROM_LOAD( "snd",         0x0000, 0x10000, 0xfedd3375 )
 
-	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "bkg1",        0x000000, 0x080000, 0x5cb8558a )
 	ROM_LOAD( "bkg2",        0x080000, 0x080000, 0x95ff297c )
 	ROM_LOAD( "bkg3",        0x100000, 0x080000, 0x6c81f1b2 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* sprites, used at run time */
-	ROM_LOAD_GFX_EVEN( "obj4",        0x000000, 0x080000, 0x5f8d75a9 )
-	ROM_LOAD_GFX_ODD ( "obj1",        0x000000, 0x080000, 0x967ee97d )
-	ROM_LOAD_GFX_EVEN( "obj5",        0x100000, 0x080000, 0xe9fc22f9 )
-	ROM_LOAD_GFX_ODD ( "obj2",        0x100000, 0x080000, 0xd39eb04e )
-	ROM_LOAD_GFX_EVEN( "obj6",        0x200000, 0x080000, 0xc1ec35a5 )
-	ROM_LOAD_GFX_ODD ( "obj3",        0x200000, 0x080000, 0x6ac1ac87 )
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* sprites, used at run time */
+	ROM_LOAD16_BYTE( "obj4",        0x000000, 0x080000, 0x5f8d75a9 )
+	ROM_LOAD16_BYTE( "obj1",        0x000001, 0x080000, 0x967ee97d )
+	ROM_LOAD16_BYTE( "obj5",        0x100000, 0x080000, 0xe9fc22f9 )
+	ROM_LOAD16_BYTE( "obj2",        0x100001, 0x080000, 0xd39eb04e )
+	ROM_LOAD16_BYTE( "obj6",        0x200000, 0x080000, 0xc1ec35a5 )
+	ROM_LOAD16_BYTE( "obj3",        0x200001, 0x080000, 0x6ac1ac87 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "voi",         0x0000, 0x080000, 0xc6506a80 )
 ROM_END
 
 ROM_START( logicpr2 )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "lp2-2",       0x00000, 0x80000, 0xcc1880bf )
-	ROM_LOAD_ODD ( "lp2-1",       0x00000, 0x80000, 0x46d5e954 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "lp2-2",       0x00000, 0x80000, 0xcc1880bf )
+	ROM_LOAD16_BYTE( "lp2-1",       0x00001, 0x80000, 0x46d5e954 )
 
-	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "log2-b01",    0x000000, 0x080000, 0xfe789e07 )
 	ROM_LOAD( "log2-b02",    0x080000, 0x080000, 0x1e0c51cd )
 	ROM_LOAD( "log2-b03",    0x100000, 0x080000, 0x916f2928 )
 
-	ROM_REGION( 0x400000, REGION_GFX2 )	/* sprites, used at run time */
-	ROM_LOAD_GFX_SWAP( "obj",         0x000000, 0x400000, 0xf221f305 )
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* sprites, used at run time */
+	ROM_LOAD16_WORD_SWAP( "obj",         0x000000, 0x400000, 0xf221f305 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "log2-s01",    0x0000, 0x100000, 0x2875c435 )
 ROM_END
 

@@ -361,20 +361,20 @@ static const struct MachineDriver machine_driver_foodf =
  *************************************/
 
 ROM_START( foodf )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for 68000 code */
-	ROM_LOAD_EVEN( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
-	ROM_LOAD_ODD ( "foodf.8c",     0x00000, 0x02000, 0xdfc3d5a8 )
-	ROM_LOAD_EVEN( "foodf.9d",     0x04000, 0x02000, 0xea596480 )
-	ROM_LOAD_ODD ( "foodf.8d",     0x04000, 0x02000, 0x64b93076 )
-	ROM_LOAD_EVEN( "foodf.9e",     0x08000, 0x02000, 0x95159a3e )
-	ROM_LOAD_ODD ( "foodf.8e",     0x08000, 0x02000, 0xe6cff1b1 )
-	ROM_LOAD_EVEN( "foodf.9f",     0x0c000, 0x02000, 0x608690c9 )
-	ROM_LOAD_ODD ( "foodf.8f",     0x0c000, 0x02000, 0x17828dbb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for 68000 code */
+	ROM_LOAD16_BYTE( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
+	ROM_LOAD16_BYTE( "foodf.8c",     0x00001, 0x02000, 0xdfc3d5a8 )
+	ROM_LOAD16_BYTE( "foodf.9d",     0x04000, 0x02000, 0xea596480 )
+	ROM_LOAD16_BYTE( "foodf.8d",     0x04001, 0x02000, 0x64b93076 )
+	ROM_LOAD16_BYTE( "foodf.9e",     0x08000, 0x02000, 0x95159a3e )
+	ROM_LOAD16_BYTE( "foodf.8e",     0x08001, 0x02000, 0xe6cff1b1 )
+	ROM_LOAD16_BYTE( "foodf.9f",     0x0c000, 0x02000, 0x608690c9 )
+	ROM_LOAD16_BYTE( "foodf.8f",     0x0c001, 0x02000, 0x17828dbb )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "foodf.6lm",    0x0000, 0x2000, 0xc13c90eb )
 
-	ROM_REGION( 0x4000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "foodf.4d",     0x0000, 0x2000, 0x8870e3d6 )
 	ROM_LOAD( "foodf.4e",     0x2000, 0x2000, 0x84372edf )
 ROM_END

@@ -364,27 +364,28 @@ static const struct MachineDriver machine_driver_thunderj =
  *************************************/
 
 ROM_START( thunderj )
-	ROM_REGION( 0xa0000, REGION_CPU1 )	/* 10*64k for 68000 code */
-	ROM_LOAD_EVEN( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
-	ROM_LOAD_ODD ( "2002.14c",   0x00000, 0x10000, 0x173ec10d )
-	ROM_LOAD_EVEN( "2003.15e",   0x20000, 0x10000, 0x6e155469 )
-	ROM_LOAD_ODD ( "2004.15c",   0x20000, 0x10000, 0xe9ff1e42 )
-	ROM_LOAD_EVEN( "2005.16e",   0x40000, 0x10000, 0xa40242e7 )
-	ROM_LOAD_ODD ( "2006.16c",   0x40000, 0x10000, 0xaa18b94c )
-	ROM_LOAD_EVEN( "1005.15h",   0x60000, 0x10000, 0x05474ebb )
-	ROM_LOAD_ODD ( "1010.16h",   0x60000, 0x10000, 0xccff21c8 )
-	ROM_LOAD_EVEN( "1007.17e",   0x80000, 0x10000, 0x9c2a8aba )
-	ROM_LOAD_ODD ( "1008.17c",   0x80000, 0x10000, 0x22109d16 )
+	ROM_REGION( 0xa0000, REGION_CPU1, 0 )	/* 10*64k for 68000 code */
+	ROM_LOAD16_BYTE( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
+	ROM_LOAD16_BYTE( "2002.14c",   0x00001, 0x10000, 0x173ec10d )
+	ROM_LOAD16_BYTE( "2003.15e",   0x20000, 0x10000, 0x6e155469 )
+	ROM_LOAD16_BYTE( "2004.15c",   0x20001, 0x10000, 0xe9ff1e42 )
+	ROM_LOAD16_BYTE( "2005.16e",   0x40000, 0x10000, 0xa40242e7 )
+	ROM_LOAD16_BYTE( "2006.16c",   0x40001, 0x10000, 0xaa18b94c )
+	ROM_LOAD16_BYTE( "1005.15h",   0x60000, 0x10000, 0x05474ebb )
+	ROM_LOAD16_BYTE( "1010.16h",   0x60001, 0x10000, 0xccff21c8 )
+	ROM_LOAD16_BYTE( "1007.17e",   0x80000, 0x10000, 0x9c2a8aba )
+	ROM_LOAD16_BYTE( "1008.17c",   0x80001, 0x10000, 0x22109d16 )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "1011.17l",   0x00000, 0x10000, 0xbbbbca45 )
-	ROM_LOAD_ODD ( "1012.17n",   0x00000, 0x10000, 0x53e5e638 )
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* 8*64k for 68000 code */
+	ROM_LOAD16_BYTE( "1011.17l",    0x00000, 0x10000, 0xbbbbca45 )
+	ROM_LOAD16_BYTE( "1012.17n",    0x00001, 0x10000, 0x53e5e638 )
+	ROM_COPY( REGION_CPU1, 0x60000, 0x60000, 0x20000 )
 
-	ROM_REGION( 0x14000, REGION_CPU3 )	/* 64k + 16k for 6502 code */
+	ROM_REGION( 0x14000, REGION_CPU3, 0 )	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
 	ROM_CONTINUE(              0x04000, 0xc000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1021.5s",   0x000000, 0x10000, 0xd8432766 )	/* graphics, plane 0 */
 	ROM_LOAD( "1025.5r",   0x010000, 0x10000, 0x839feed5 )
 	ROM_LOAD( "1029.3p",   0x020000, 0x10000, 0xfa887662 )
@@ -402,7 +403,7 @@ ROM_START( thunderj )
 	ROM_LOAD( "1032.14p",  0x0e0000, 0x10000, 0xf639161a )
 	ROM_LOAD( "1036.16p",  0x0f0000, 0x10000, 0xb342443d )
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1037.2s",   0x000000, 0x10000, 0x07addba6 )
 	ROM_LOAD( "1041.2r",   0x010000, 0x10000, 0x1e9c29e4 )
 	ROM_LOAD( "1045.34s",  0x020000, 0x10000, 0xe7235876 )
@@ -420,10 +421,10 @@ ROM_START( thunderj )
 	ROM_LOAD( "1048.16s",  0x0e0000, 0x10000, 0x200d45b3 )
 	ROM_LOAD( "1052.16r",  0x0f0000, 0x10000, 0x74711ef1 )
 
-	ROM_REGION( 0x010000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x010000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "1020.4m",   0x000000, 0x10000, 0x65470354 )	/* alphanumerics */
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* 256k for ADPCM */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* 256k for ADPCM */
 	ROM_LOAD( "tj1016.bin",  0x00000, 0x10000, 0xc10bdf73 )
 	ROM_LOAD( "tj1017.bin",  0x10000, 0x10000, 0x4e5e25e8 )
 	ROM_LOAD( "tj1018.bin",  0x20000, 0x10000, 0xec81895d )
@@ -443,15 +444,10 @@ static void init_thunderj(void)
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 3, 2, 0x0002);
 	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
-	atarigen_invert_region(REGION_GFX1);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* it looks like they jsr to $800000 as some kind of protection */
 	/* put an RTS there so we don't die */
 	*rts_address = 0x4e75;
-
-	/* copy the shared ROM from region 0 to region 1 */
-	memcpy(&memory_region(REGION_CPU2)[0x60000], &memory_region(REGION_CPU1)[0x60000], 0x20000);
 }
 
 

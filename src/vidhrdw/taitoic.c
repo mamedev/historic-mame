@@ -1,21 +1,39 @@
-/***************************************************************************
+/*******************************************************************************
 
 TC0100SCN
 ---------
-Tilemap generator, has three 64x64 tilemaps with 8x8 tiles.
-The front one fetches gfx data from RAM, the others use ROMs as usual.
+Tilemap generator. The front tilemap fetches gfx data from RAM,
+the others use ROMs as usual. The double width layout is unverified.
+
+Standard memory layout (three 64x64 tilemaps with 8x8 tiles)
 
 0000-3fff BG0
 4000-5fff FG0
 6000-6fff gfx data for FG0
-7000-7fff unknown/unused?
+7000-7fff unused (probably)
 8000-bfff BG1
-c000-c1ff BG0 rowscroll (gunfront)
-c200-c3ff unknown/unused? (FG0 rowscroll?)
-c400-c5ff BG1 rowscroll (gunfront)
-c600-ffff unknown/unused?
+c000-c1ff BG0 rowscroll
+c200-c3ff unknown/unused? [lumped with c000-1ff in game inits] (FG0 rowscroll?)
+c400-c5ff BG1 rowscroll
+c600-c7ff unknown/unused? [lumped with c400-5ff in game inits]
+c800-dfff unused (probably)
+e000-e0ff BG0 colscroll [see info below]
+e100-ffff unused (probably)
 
-control registers:
+Double width tilemaps memory layout (two 128x64 tilemaps, one 128x32 tilemap)
+
+00000-07fff BG0 (128x64)
+08000-0ffff BG1 (128x64)
+10000-101ff BG0 rowscroll
+10200-103ff unknown/unused?
+10400-105ff BG1 rowscroll
+10600-107ff unknown/unused?
+10800-10fff unknown/unused?	[*unsure where colscroll is*]
+11000-11fff gfx data for FG0
+12000-13fff FG0 (128x32)
+
+Control registers
+
 000-001 BG0 scroll X
 002-003 BG1 scroll X
 004-005 FG0 scroll X
@@ -26,9 +44,80 @@ control registers:
         --------------x- BG1 disable
         -------------x-- FG0 disable
         ------------x--- change priority order from BG0-BG1-FG0 to BG1-BG0-FG0
-        -----------x---- unknown (cameltru, NOT cameltry)
+        -----------x---- double width tilemaps + different memory map
+                                (cameltru and all the multi-screen games)
 00e-00f ---------------x flip screen
+        ----------x----- this TC0100SCN is subsidiary [= not the main one]
+                                (multi-screen games only)
         --x------------- unknown (thunderfox)
+
+
+Colscroll [standard layout]
+=========
+
+The e000-ff area is not divided into two halves, it appears to refer only
+to bg0 - the bottommost layer unless bg0/1 are flipped. This would work
+for Gunfront, which flips bg layers and has bg0 as clouds on top: the
+video shows only the clouds affected.
+
+128 words are available in 0xe0?? area. I think every word scrolls 8
+pixels - evidenced in Gunfront. [128 words could scroll 128x8 pixels,
+adequate for the double width tilemaps which are available on the
+TC0100SCN.]
+
+[The reasoning behind colscroll only affecting bg0 may be that it is
+only addressable per column of 8 pixels. This is not very fine, and will
+tend to look jagged because you can't individually control each pixel
+column. Not a problem if:
+(i) you only use steps of 1 up or down between neighbouring columns
+(ii) you use rowscroll simultaneously to drown out the jaggedness
+(iii) it's the background layer and isn't the most visible thing.]
+
+Growl
+-----
+This uses column scroll in the boat scene [that's just after you have
+disposed of the fat men in fezzes] and in the underground lava cavern
+scene.
+
+Boat scene: code from $2eb58 appears to be doing see-saw motion for
+water layer under boat. $e08c is highest word written, it oscillates
+between fffa and 0005. Going back towards $e000 a middle point is reached
+which sticks at zero. By $e000 written values oscillate again.
+
+A total of 80 words are being written to [some below 0xe000, I think those
+won't do anything, sloppy coding...]
+
+Cavern scene: code from $3178a moves a sequence of 0s, 1s and 0x1ffs
+along. These words equate to 0, +1, -1 so will gently ripple bg 0
+up and down adding to the shimmering heat effect.
+
+Ninja Kids
+----------
+This uses column scroll in the fat flame boss scene [that's the end of
+round 2] and in the last round in the final confrontation with Satan scene.
+
+Fat flame boss: code at $8eee moves a sequence of 1s and 0s along. This
+is similar to the heat shimmer in Growl cavern scene.
+
+Final boss: code at $a024 moves a sine wave of values 0-4 along. When
+you are close to getting him the range of values expands to 0-10.
+
+Gunfront
+--------
+In demo mode when the boss appears with the clouds, a sequence of 40 words
+forming sine wave between 0xffd0 and ffe0 is moved along. Bg0 has been
+given priority over bg1 so it's the foreground (clouds) affected.
+
+The 40 words will affect 40 8-pixel columns [rows, as this game is
+rotated] i.e. what is visible on screen at any point.
+
+Galmedes
+--------
+Towards end of first round in empty starfield area, about three big ship
+sprites cross the screen (scrolling down with the starfield). 16 starfield
+columns [rows, as the game is rotated] scroll across with the ship.
+$84fc0 and neighbouring routines poke col scroll area.
+
 
 
 TC0280GRD
@@ -59,14 +148,14 @@ from RAM.
 1000-1fff BG1
 2000-2fff BG2
 3000-3fff BG3
-4000-41ff BG0 rowscroll ?
-4400-45ff BG1 rowscroll ?
-4800-49ff BG2 rowscroll ?
-4c00-4dff BG3 rowscroll ?
-6000-61ff BG0 colscroll ??
-6400-65ff BG1 colscroll ??
-6800-69ff BG2 colscroll ??
-6c00-6dff BG3 colscroll ??
+4000-41ff BG0 row horiz'tl magnification (0 = none) [see notes below]
+4400-45ff BG1 row horiz'tl magnification
+4800-49ff BG2 row horiz'tl magnification
+4c00-4dff BG3 row horiz'tl magnification
+6000-61ff BG0 row vertical magnification (0 = none)
+6400-65ff BG1 row vertical magnification
+6800-69ff BG2 row vertical magnification
+6c00-6dff BG3 row vertical magnification
 [gaps above seem to be unused]
 7000-bfff unknown/unused?
 c000-dfff FG0
@@ -77,7 +166,7 @@ Each tile in bg layers is two data words:
 +0x00   %yx..bbbb cccccccc      b=control bits(?) c=colour .=unused(?)
 +0x02   tilenum                 (range 0 to $1fff)
 
-[y=yflip x=xflip I think. No idea what 4 lsbs do.]
+[y=yflip x=xflip b=unknown]
 
 control registers:
 000-001 BG0 x scroll     (layer priority order definable)
@@ -112,14 +201,25 @@ control registers:
 				In Metalb this takes various values [see Raine lookup table in
 				vidhrdw\taito_f2.c]. Other games leave it at zero.
 
-020-021 BG0 dx?	(these four change when x-scrolling layer)
-022-023 BG1 dx?
-024-025 BG2 dx?
-026-027 BG3 dx?
-028-029 BG0 dy?	(these four change when y-scrolling layer)
-02a-02b BG1 dy?
-02c-02d BG2 dy?
-02e-02f BG3 dy?
+020-021 BG0 dx	(provides extra precision to x-scroll)
+022-023 BG1 dx
+024-025 BG2 dx
+026-027 BG3 dx
+028-029 BG0 dy	(provides extra precision to y-scroll)
+02a-02b BG1 dy
+02c-02d BG2 dy
+02e-02f BG3 dy
+
+Row magnification
+=================
+Currently we treat the horizontal row magnification as simple rowscroll.
+This is wrong! e.g. MetalB stage1 has parallax scrolling effect for the
+background which we completely miss. This is achieved by setting
+increasing row horizontal magnification from centre row thru to top row.
+These values are unchanged until the round 1 boss.
+
+AFAICS from the MetalB videos there is NO equivalent magnification
+effect for individual columns.
 
 
 TC0110PCR
@@ -201,15 +301,14 @@ static struct tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3];
 static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_gfx[TC0100SCN_MAX_CHIPS],TC0100SCN_tx_gfx[TC0100SCN_MAX_CHIPS];
-
-
+static int bg_col_multiplier = 0;
 
 
 INLINE void common_get_bg_tile_info(data16_t *ram,int gfxnum,int tile_index)
 {
 	int code = (ram[2*tile_index + 1] & 0x7fff) + (taitof2_scrbank << 15);
 	int attr = ram[2*tile_index];
-	SET_TILE_INFO(gfxnum,code,attr & 0xff);
+	SET_TILE_INFO(gfxnum,code,(attr * bg_col_multiplier) & 0xff);
 	tile_info.flags = TILE_FLIPYX((attr & 0xc000) >> 14);
 }
 
@@ -355,6 +454,11 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset)
 	}
 
 	taitof2_scrbank = 0;
+
+	bg_col_multiplier = 1;
+
+	if (Machine->gfx[gfxnum]->color_granularity == 2)	/* Yuyugogo, Yesnoj */
+		bg_col_multiplier = 8;
 
 	return 0;
 }
@@ -535,7 +639,7 @@ void TC0100SCN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int fla
 {
 	int disable = TC0100SCN_ctrl[chip][6] & 0xf7;
 
-#ifdef MAME_DEBUG
+#if 0
 if (disable != 0 && disable != 3 && disable != 7)
 	usrintf_showmessage("layer disable = %x",disable);
 #endif
@@ -1225,7 +1329,11 @@ void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32
 
 
 static int TC0110PCR_addr;
+static int TC0110PCR_1_addr;
+static int TC0110PCR_2_addr;
 static data16_t *TC0110PCR_ram;
+static data16_t *TC0110PCR_1_ram;
+static data16_t *TC0110PCR_2_ram;
 #define TC0110PCR_RAM_SIZE 0x2000
 
 int TC0110PCR_vh_start(void)
@@ -1237,10 +1345,40 @@ int TC0110PCR_vh_start(void)
 	return 0;
 }
 
+int TC0110PCR_1_vh_start(void)
+{
+	TC0110PCR_1_ram = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_1_ram));
+
+	if (!TC0110PCR_1_ram) return 1;
+
+	return 0;
+}
+
+int TC0110PCR_2_vh_start(void)
+{
+	TC0110PCR_2_ram = malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_2_ram));
+
+	if (!TC0110PCR_2_ram) return 1;
+
+	return 0;
+}
+
 void TC0110PCR_vh_stop(void)
 {
 	free(TC0110PCR_ram);
 	TC0110PCR_ram = 0;
+}
+
+void TC0110PCR_1_vh_stop(void)
+{
+	free(TC0110PCR_1_ram);
+	TC0110PCR_1_ram = 0;
+}
+
+void TC0110PCR_2_vh_stop(void)
+{
+	free(TC0110PCR_2_ram);
+	TC0110PCR_2_ram = 0;
 }
 
 READ16_HANDLER( TC0110PCR_word_r )
@@ -1252,6 +1390,32 @@ READ16_HANDLER( TC0110PCR_word_r )
 
 		default:
 logerror("PC %06x: warning - read TC0110PCR address %02x\n",cpu_get_pc(),offset);
+			return 0xff;
+	}
+}
+
+READ16_HANDLER( TC0110PCR_word_1_r )
+{
+	switch (offset)
+	{
+		case 1:
+			return TC0110PCR_1_ram[TC0110PCR_1_addr];
+
+		default:
+logerror("PC %06x: warning - read second TC0110PCR address %02x\n",cpu_get_pc(),offset);
+			return 0xff;
+	}
+}
+
+READ16_HANDLER( TC0110PCR_word_2_r )
+{
+	switch (offset)
+	{
+		case 1:
+			return TC0110PCR_2_ram[TC0110PCR_2_addr];
+
+		default:
+logerror("PC %06x: warning - read third TC0110PCR address %02x\n",cpu_get_pc(),offset);
 			return 0xff;
 	}
 }
@@ -1268,7 +1432,6 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 		case 1:
 		{
 			int r,g,b;   /* data = palette BGR value */
-
 
 			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
 
@@ -1290,6 +1453,172 @@ logerror("PC %06x: warning - write %04x to TC0110PCR address %02x\n",cpu_get_pc(
 	}
 }
 
+WRITE16_HANDLER( TC0110PCR_step1_word_w )
+{
+	switch (offset)
+	{
+		case 0:
+			TC0110PCR_addr = data & 0xfff;
+			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
+			break;
+
+		case 1:
+		{
+			int r,g,b;   /* data = palette BGR value */
+
+			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+
+			r = (data >>  0) & 0x1f;
+			g = (data >>  5) & 0x1f;
+			b = (data >> 10) & 0x1f;
+
+			r = (r << 3) | (r >> 2);
+			g = (g << 3) | (g >> 2);
+			b = (b << 3) | (b >> 2);
+
+			palette_change_color(TC0110PCR_addr,r,g,b);
+			break;
+		}
+
+		default:
+logerror("PC %06x: warning - write %04x to TC0110PCR address %02x\n",cpu_get_pc(),data,offset);
+			break;
+	}
+}
+
+WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
+{
+	switch (offset)
+	{
+		case 0:
+			TC0110PCR_1_addr = data & 0xfff;
+			if (data>0xfff) logerror ("Write to second TC0110PCR palette index > 0xfff\n");
+			break;
+
+		case 1:
+		{
+			int r,g,b;   /* data = palette RGB value */
+
+			TC0110PCR_1_ram[TC0110PCR_1_addr] = data & 0xffff;
+
+			r = (data >>  0) & 0x1f;
+			g = (data >>  5) & 0x1f;
+			b = (data >> 10) & 0x1f;
+
+			r = (r << 3) | (r >> 2);
+			g = (g << 3) | (g >> 2);
+			b = (b << 3) | (b >> 2);
+
+			/* change a color in the second color area (4096-8191) */
+			palette_change_color(TC0110PCR_1_addr + 4096,r,g,b);
+			break;
+		}
+
+		default:
+logerror("PC %06x: warning - write %04x to second TC0110PCR offset %02x\n",cpu_get_pc(),data,offset);
+			break;
+	}
+}
+
+WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
+{
+	switch (offset)
+	{
+		case 0:
+			TC0110PCR_2_addr = data & 0xfff;
+			if (data>0xfff) logerror ("Write to third TC0110PCR palette index > 0xfff\n");
+			break;
+
+		case 1:
+		{
+			int r,g,b;   /* data = palette RGB value */
+
+			TC0110PCR_2_ram[TC0110PCR_2_addr] = data & 0xffff;
+
+			r = (data >>  0) & 0x1f;
+			g = (data >>  5) & 0x1f;
+			b = (data >> 10) & 0x1f;
+
+			r = (r << 3) | (r >> 2);
+			g = (g << 3) | (g >> 2);
+			b = (b << 3) | (b >> 2);
+
+			/* change a color in the second color area (8192-12288) */
+			palette_change_color(TC0110PCR_2_addr + 8192,r,g,b);
+			break;
+		}
+
+		default:
+logerror("PC %06x: warning - write %04x to third TC0110PCR offset %02x\n",cpu_get_pc(),data,offset);
+			break;
+	}
+}
+
+WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
+{
+	switch (offset)
+	{
+		case 0:
+			TC0110PCR_addr = data & 0xfff;
+			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
+			break;
+
+		case 1:
+		{
+			int r,g,b;   /* data = palette RGB value */
+
+			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+
+			b = (data >>  0) & 0x1f;
+			g = (data >>  5) & 0x1f;
+			r = (data >> 10) & 0x1f;
+
+			r = (r << 3) | (r >> 2);
+			g = (g << 3) | (g >> 2);
+			b = (b << 3) | (b >> 2);
+
+			palette_change_color(TC0110PCR_addr,r,g,b);
+			break;
+		}
+
+		default:
+logerror("PC %06x: warning - write %04x to TC0110PCR offset %02x\n",cpu_get_pc(),data,offset);
+			break;
+	}
+}
+
+WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )	/* 4 bits per color gun */
+{
+	switch (offset)
+	{
+		case 0:
+			TC0110PCR_addr = data & 0xfff;
+			if (data>0xfff) logerror ("Write to palette index > 0xfff\n");
+			break;
+
+		case 1:
+		{
+			int r,g,b;   /* data = palette BGR value */
+
+			TC0110PCR_ram[TC0110PCR_addr] = data & 0xffff;
+
+			r = (data >> 0) & 0xf;
+			g = (data >> 4) & 0xf;
+			b = (data >> 8) & 0xf;
+
+			r = (r << 4) | r;
+			g = (g << 4) | g;
+			b = (b << 4) | b;
+
+			palette_change_color(TC0110PCR_addr,r,g,b);
+			break;
+		}
+
+		default:
+logerror("PC %06x: warning - write %04x to TC0110PCR address %02x\n",cpu_get_pc(),data,offset);
+			break;
+	}
+}
 
 /***************************************************************************/
 

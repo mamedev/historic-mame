@@ -865,7 +865,7 @@ static const struct MachineDriver machine_driver_profpac =
 
 
 ROM_START( seawolf2 )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sw2x1.bin",    0x0000, 0x0800, 0xad0103f6 )
 	ROM_LOAD( "sw2x2.bin",    0x0800, 0x0800, 0xe0430f0a )
 	ROM_LOAD( "sw2x3.bin",    0x1000, 0x0800, 0x05ad1619 )
@@ -873,7 +873,7 @@ ROM_START( seawolf2 )
 ROM_END
 
 ROM_START( spacezap )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "0662.01",      0x0000, 0x1000, 0xa92de312 )
 	ROM_LOAD( "0663.xx",      0x1000, 0x1000, 0x4836ebf1 )
 	ROM_LOAD( "0664.xx",      0x2000, 0x1000, 0xd8193a80 )
@@ -881,7 +881,7 @@ ROM_START( spacezap )
 ROM_END
 
 ROM_START( ebases )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "m761a",        0x0000, 0x1000, 0x34422147 )
 	ROM_LOAD( "m761b",        0x1000, 0x1000, 0x4f28dfd6 )
 	ROM_LOAD( "m761c",        0x2000, 0x1000, 0xbff6c97e )
@@ -889,7 +889,7 @@ ROM_START( ebases )
 ROM_END
 
 ROM_START( wow )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "wow.x1",       0x0000, 0x1000, 0xc1295786 )
 	ROM_LOAD( "wow.x2",       0x1000, 0x1000, 0x9be93215 )
 	ROM_LOAD( "wow.x3",       0x2000, 0x1000, 0x75e5a22e )
@@ -901,7 +901,7 @@ ROM_START( wow )
 ROM_END
 
 ROM_START( gorf )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "gorf-a.bin",   0x0000, 0x1000, 0x5b348321 )
 	ROM_LOAD( "gorf-b.bin",   0x1000, 0x1000, 0x62d6de77 )
 	ROM_LOAD( "gorf-c.bin",   0x2000, 0x1000, 0x1d3bc9c9 )
@@ -913,7 +913,7 @@ ROM_START( gorf )
 ROM_END
 
 ROM_START( gorfpgm1 )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "873a",         0x0000, 0x1000, 0x97cb4a6a )
 	ROM_LOAD( "873b",         0x1000, 0x1000, 0x257236f8 )
 	ROM_LOAD( "873c",         0x2000, 0x1000, 0x16b0638b )
@@ -925,7 +925,7 @@ ROM_START( gorfpgm1 )
 ROM_END
 
 ROM_START( robby )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "rotox1.bin",   0x0000, 0x1000, 0xa431b85a )
 	ROM_LOAD( "rotox2.bin",   0x1000, 0x1000, 0x33cdda83 )
 	ROM_LOAD( "rotox3.bin",   0x2000, 0x1000, 0xdbf97491 )
@@ -939,14 +939,14 @@ ROM_START( robby )
 ROM_END
 
 ROM_START( profpac )
-	ROM_REGION( 0x10000, REGION_CPU1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "pps1",         0x0000, 0x2000, 0xa244a62d )
 	ROM_LOAD( "pps2",         0x2000, 0x2000, 0x8a9a6653 )
 	ROM_LOAD( "pps7",         0x8000, 0x2000, 0xf9c26aba )
 	ROM_LOAD( "pps8",         0xa000, 0x2000, 0x4d201e41 )
 	ROM_LOAD( "pps9",         0xc000, 0x2000, 0x17a0b418 )
 
-	ROM_REGION( 0x04000, REGION_USER1 )
+	ROM_REGION( 0x04000, REGION_USER1, 0 )
 	ROM_LOAD( "pps3",         0x0000, 0x2000, 0x15717fd8 )
 	ROM_LOAD( "pps4",         0x0000, 0x2000, 0x36540598 )
 	ROM_LOAD( "pps5",         0x0000, 0x2000, 0x8dc89a59 )

@@ -407,68 +407,68 @@ static const struct MachineDriver machine_driver_sidepctj =
 ***************************************************************************/
 
 ROM_START( sidepckt )
-    ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
     ROM_LOAD( "dh00",         0x00000, 0x10000, 0x251b316e )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio cpu */
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio cpu */
     ROM_LOAD( "dh04.bin",     0x08000, 0x8000, 0xd076e62e )
 
-    ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
     ROM_LOAD( "sp_07.bin",    0x00000, 0x8000, 0x9d6f7969 ) /* characters */
     ROM_LOAD( "sp_06.bin",    0x08000, 0x8000, 0x580e4e43 )
     ROM_LOAD( "sp_05.bin",    0x10000, 0x8000, 0x05ab71d2 )
 
-    ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "dh01.bin",     0x00000, 0x8000, 0xa2cdfbea ) /* sprites */
     ROM_LOAD( "dh02.bin",     0x08000, 0x8000, 0xeeb5c3e7 )
     ROM_LOAD( "dh03.bin",     0x10000, 0x8000, 0x8e18d21d )
 
-    ROM_REGION( 0x0200, REGION_PROMS )	/* color PROMs */
+    ROM_REGION( 0x0200, REGION_PROMS, 0 )	/* color PROMs */
     ROM_LOAD( "dh-09.bpr",    0x0000, 0x0100, 0xce049b4f )
     ROM_LOAD( "dh-08.bpr",    0x0100, 0x0100, 0xcdf2180f )
 ROM_END
 
 ROM_START( sidepctj )
-    ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
     ROM_LOAD( "dh00.bin",     0x00000, 0x10000, 0xa66bc28d )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio cpu */
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio cpu */
     ROM_LOAD( "dh04.bin",     0x08000, 0x8000, 0xd076e62e )
 
-    ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
     ROM_LOAD( "dh07.bin",     0x00000, 0x8000, 0x7d0ce858 ) /* characters */
     ROM_LOAD( "dh06.bin",     0x08000, 0x8000, 0xb86ddf72 )
     ROM_LOAD( "dh05.bin",     0x10000, 0x8000, 0xdf6f94f2 )
 
-    ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "dh01.bin",     0x00000, 0x8000, 0xa2cdfbea ) /* sprites */
     ROM_LOAD( "dh02.bin",     0x08000, 0x8000, 0xeeb5c3e7 )
     ROM_LOAD( "dh03.bin",     0x10000, 0x8000, 0x8e18d21d )
 
-    ROM_REGION( 0x0200, REGION_PROMS )	/* color PROMs */
+    ROM_REGION( 0x0200, REGION_PROMS, 0 )	/* color PROMs */
     ROM_LOAD( "dh-09.bpr",    0x0000, 0x0100, 0xce049b4f )
     ROM_LOAD( "dh-08.bpr",    0x0100, 0x0100, 0xcdf2180f )
 ROM_END
 
 ROM_START( sidepctb )
-    ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
     ROM_LOAD( "sp_09.bin",    0x04000, 0x4000, 0x3c6fe54b )
     ROM_LOAD( "sp_08.bin",    0x08000, 0x8000, 0x347f81cd )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio cpu */
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio cpu */
     ROM_LOAD( "dh04.bin",     0x08000, 0x8000, 0xd076e62e )
 
-    ROM_REGION( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
     ROM_LOAD( "sp_07.bin",    0x00000, 0x8000, 0x9d6f7969 ) /* characters */
     ROM_LOAD( "sp_06.bin",    0x08000, 0x8000, 0x580e4e43 )
     ROM_LOAD( "sp_05.bin",    0x10000, 0x8000, 0x05ab71d2 )
 
-    ROM_REGION( 0x18000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "dh01.bin",     0x00000, 0x8000, 0xa2cdfbea ) /* sprites */
     ROM_LOAD( "dh02.bin",     0x08000, 0x8000, 0xeeb5c3e7 )
     ROM_LOAD( "dh03.bin",     0x10000, 0x8000, 0x8e18d21d )
 
-    ROM_REGION( 0x0200, REGION_PROMS )	/* color PROMs */
+    ROM_REGION( 0x0200, REGION_PROMS, 0 )	/* color PROMs */
     ROM_LOAD( "dh-09.bpr",    0x0000, 0x0100, 0xce049b4f )
     ROM_LOAD( "dh-08.bpr",    0x0100, 0x0100, 0xcdf2180f )
 ROM_END

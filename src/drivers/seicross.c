@@ -493,7 +493,7 @@ MACHINE_DRIVER(no_nvram,0)
 ***************************************************************************/
 
 ROM_START( friskyt )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ftom.01",      0x0000, 0x1000, 0xbce5d486 )
 	ROM_LOAD( "ftom.02",      0x1000, 0x1000, 0x63157d6e )
 	ROM_LOAD( "ftom.03",      0x2000, 0x1000, 0xc8d9ef2c )
@@ -503,22 +503,22 @@ ROM_START( friskyt )
 	ROM_LOAD( "ftom.07",      0x6000, 0x1000, 0xb2ef303a )
 	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, 0x10461a24 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
 	/* filled in later */
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ftom.11",      0x0000, 0x1000, 0x1ec6ff65 )
 	ROM_LOAD( "ftom.12",      0x1000, 0x1000, 0x3b8f40b5 )
 	ROM_LOAD( "ftom.09",      0x2000, 0x1000, 0x60642f25 )
 	ROM_LOAD( "ftom.10",      0x3000, 0x1000, 0x07b9dcfc )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
 	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
 ROM_END
 
 ROM_START( radrad )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1.3a",         0x0000, 0x1000, 0xb1e958ca )
 	ROM_LOAD( "2.3b",         0x1000, 0x1000, 0x30ba76b3 )
 	ROM_LOAD( "3.3c",         0x2000, 0x1000, 0x1c9f397b )
@@ -528,22 +528,22 @@ ROM_START( radrad )
 	ROM_LOAD( "7.3g",         0x6000, 0x1000, 0x02b1f9c9 )
 	ROM_LOAD( "8.3h",         0x7000, 0x0800, 0x911c90e8 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
 	/* filled in later */
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "11.l7",        0x0000, 0x1000, 0x4ace7afb )
 	ROM_LOAD( "12.n7",        0x1000, 0x1000, 0xb19b8473 )
 	ROM_LOAD( "9.j7",         0x2000, 0x1000, 0x229939a3 )
 	ROM_LOAD( "10.j7",        0x3000, 0x1000, 0x79237913 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
 	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
 ROM_END
 
 ROM_START( seicross )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "smc1",         0x0000, 0x1000, 0xf6c3aeca )
 	ROM_LOAD( "smc2",         0x1000, 0x1000, 0x0ec6c218 )
 	ROM_LOAD( "smc3",         0x2000, 0x1000, 0xceb3c8f4 )
@@ -553,22 +553,22 @@ ROM_START( seicross )
 	ROM_LOAD( "smc7",         0x6000, 0x1000, 0x13052b03 )
 	ROM_LOAD( "smc8",         0x7000, 0x0800, 0x2093461d )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
 	/* filled in later */
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
 	ROM_LOAD( "smcd",         0x1000, 0x1000, 0xc3c953c4 )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 ROM_END
 
 ROM_START( sectrzon )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
 	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )
 	ROM_LOAD( "sz3.3d",       0x2000, 0x1000, 0xbaad4294 )
@@ -578,16 +578,16 @@ ROM_START( sectrzon )
 	ROM_LOAD( "sz7.3i",       0x6000, 0x1000, 0x7b34dc1c )
 	ROM_LOAD( "sz8.3j",       0x7000, 0x0800, 0x9933526a )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the protection mcu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
 	/* filled in later */
 
-	ROM_REGION( 0x4000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
 	ROM_LOAD( "sz12.7m",      0x1000, 0x1000, 0x2bdef9ad )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 ROM_END

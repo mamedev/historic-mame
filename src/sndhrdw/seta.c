@@ -5,11 +5,11 @@
 					driver by	Luca Elia (eliavit@unina.it)
 
 
-Sound Chip:
+Seta Custom Sound Chip:
 
-	X1-010 					[Seta Custom]
-	Unsigned 16 Bit PCM 	[Fixed Per Game Pitch?]
-	16 Voices				[There's More Data Written!]
+	X1-010
+	Unsigned 16 Bit PCM
+	16 Voices
 
 Format:
 
@@ -20,11 +20,11 @@ Format:
 	0		7654 321-
 			---- ---0	Key On / Off
 
-	1		7654 ----	Volume 1(L?)
-			---- 3210	Volume 2(R?)
+	1		7654 ----	Volume 1 (L?)
+			---- 3210	Volume 2 (R?)
 
-	2					? (high byte?)
-	3					? (low  byte?)
+	2					Frequency
+	3					""
 
 	4					Sample Start / 0x1000 			[Start/End in bytes]
 	5					0x100 - (Sample End / 0x1000)	[PCM ROM is Max 1MB?]
@@ -33,33 +33,27 @@ Format:
 	7					?
 
 
-Hardcoded Values (for now):
+Hardcoded Values:
 
 	PCM ROM region:		REGION_SOUND1
-	Sample Frequency:	4, 6, 8 KHz
 
 ***************************************************************************/
 #include "driver.h"
 
-/* Variables and functions that driver has access to */
-unsigned char *seta_sound_ram;
-
 #define SETA_NUM_CHANNELS 16
 
 /* Variables only used here */
-static int firstchannel, frequency;
+static int firstchannel;
 static int seta_reg[SETA_NUM_CHANNELS][8];
-
-
 
 
 int seta_sh_start(const struct MachineSound *msound)
 {
 	int i;
-	int vol[MIXER_MAX_CHANNELS];
+	int mix_lev[SETA_NUM_CHANNELS];
 
-	for (i = 0;i < MIXER_MAX_CHANNELS;i++)	vol[i] = 100;
-	firstchannel = mixer_allocate_channels(SETA_NUM_CHANNELS,vol);
+	for (i = 0; i < SETA_NUM_CHANNELS; i++)	mix_lev[i] = (100 * 2) / SETA_NUM_CHANNELS + 1;
+	firstchannel = mixer_allocate_channels(SETA_NUM_CHANNELS,mix_lev);
 
 	for (i = 0; i < SETA_NUM_CHANNELS; i++)
 	{
@@ -67,25 +61,13 @@ int seta_sh_start(const struct MachineSound *msound)
 		sprintf(buf,"X1-010 Channel #%d",i);
 		mixer_set_name(firstchannel + i,buf);
 	}
+
 	return 0;
 }
 
-int seta_sh_start_4KHz(const struct MachineSound *msound)
+void seta_sound_enable_w(int data)
 {
-	frequency = 4000;
-	return seta_sh_start(msound);
-}
-
-int seta_sh_start_6KHz(const struct MachineSound *msound)
-{
-	frequency = 6000;
-	return seta_sh_start(msound);
-}
-
-int seta_sh_start_8KHz(const struct MachineSound *msound)
-{
-	frequency = 8000;
-	return seta_sh_start(msound);
+	mixer_sound_enable_global_w(data);
 }
 
 
@@ -110,7 +92,7 @@ READ_HANDLER( seta_sound_r )
 		}
 	}
 
-	return seta_sound_ram[offset];
+	return 0;
 }
 
 
@@ -128,10 +110,7 @@ READ_HANDLER( seta_sound_r )
 WRITE_HANDLER( seta_sound_w )
 {
 	int channel, reg;
-
-	seta_sound_ram[offset] = data;
-
-	if (Machine->sample_rate == 0)		return;
+	int frequency;
 
 	channel	=	offset / 8;
 	reg		=	offset % 8;
@@ -139,6 +118,8 @@ WRITE_HANDLER( seta_sound_w )
 	if (channel >= SETA_NUM_CHANNELS)	return;
 
 	seta_reg[channel][reg] = data & 0xff;
+
+	if (Machine->sample_rate == 0)		return;
 
 	switch (reg)
 	{
@@ -160,15 +141,8 @@ WRITE_HANDLER( seta_sound_w )
 				if (!( (start < end) && (end <= maxlen) ))
 				{
 					logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",cpu_get_pc(),start,end,channel);
-					DUMP_REGS
 					return;
 				}
-
-#if 1
-/* Print some more debug info */
-logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
-DUMP_REGS
-#endif
 
 				/*
 				   Twineagl continuosly writes 1 to reg 0 of the channel, so
@@ -181,12 +155,33 @@ DUMP_REGS
 				/* These samples are probaly looped and use the 3rd & 4th register's value */
 				if (data & 2)	return;
 
+#if 1
+/* Print some more debug info */
+logerror("PC: %06X - Play 16 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
+#endif
+
 				/* left and right speaker's volume can be set indipendently.
 				   We use a mean volume for now */
 				mixer_set_volume(firstchannel + channel, ((volume & 0xf)+(volume >> 4))*100/(2*0xf)  );
 
 				/* I assume the pitch is fixed for a given board. It ranges
 				   from 4 to 8 KHz for the games I've seen */
+
+				/* *Preliminary* pitch selection */
+
+				if ( seta_reg[channel][3] == 0)
+				{
+					int f = seta_reg[channel][2] /*% 17*/;
+					frequency = f * 1000;
+				}
+				else
+				{
+					int f = (seta_reg[channel][2] + seta_reg[channel][3]*256) % 0x4000;
+					frequency =	0x4000 - f;
+				}
+
+				/* Meta Fox does not write the frequency register. Ever */
+				if (frequency == 0)	frequency = 4000;
 
 				mixer_play_sample_16(
 					firstchannel + channel,
@@ -206,16 +201,15 @@ DUMP_REGS
 
 
 
-
 /* Use these for 16 bit CPUs */
 
-READ_HANDLER( seta_sound_word_r )
+READ16_HANDLER( seta_sound_word_r )
 {
-	return seta_sound_r(offset/2) & 0xff;
+	return seta_sound_r(offset) & 0xff;
 }
 
-WRITE_HANDLER( seta_sound_word_w )
+WRITE16_HANDLER( seta_sound_word_w )
 {
-	if ( (data & 0x00ff0000) == 0 )
-		seta_sound_w(offset/2, data & 0xff);
+	if (ACCESSING_LSB)
+		seta_sound_w(offset, data & 0xff);
 }

@@ -376,23 +376,23 @@ static const struct MachineDriver machine_driver_bionicc =
 
 
 ROM_START( bionicc )
-	ROM_REGION( 0x40000, REGION_CPU1 )      /* 68000 code */
-	ROM_LOAD_EVEN( "tsu_02b.rom",  0x00000, 0x10000, 0xcf965a0a ) /* 68000 code */
-	ROM_LOAD_ODD ( "tsu_04b.rom",  0x00000, 0x10000, 0xc9884bfb ) /* 68000 code */
-	ROM_LOAD_EVEN( "tsu_03b.rom",  0x20000, 0x10000, 0x4e157ae2 ) /* 68000 code */
-	ROM_LOAD_ODD ( "tsu_05b.rom",  0x20000, 0x10000, 0xe66ca0f9 ) /* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "tsu_02b.rom",  0x00000, 0x10000, 0xcf965a0a ) /* 68000 code */
+	ROM_LOAD16_BYTE( "tsu_04b.rom",  0x00001, 0x10000, 0xc9884bfb ) /* 68000 code */
+	ROM_LOAD16_BYTE( "tsu_03b.rom",  0x20000, 0x10000, 0x4e157ae2 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "tsu_05b.rom",  0x20001, 0x10000, 0xe66ca0f9 ) /* 68000 code */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_08.rom",   0x00000, 0x8000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_07.rom",   0x00000, 0x8000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
 	ROM_LOAD( "tsu_06.rom",   0x08000, 0x8000, 0x40bf0eb4 )
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
 	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
 	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
@@ -402,7 +402,7 @@ ROM_START( bionicc )
 	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_10.rom",   0x00000, 0x8000, 0xf1180d02 )	/* Sprites */
 	ROM_LOAD( "tsu_09.rom",   0x08000, 0x8000, 0x6a049292 )
 	ROM_LOAD( "tsu_15.rom",   0x10000, 0x8000, 0xea912701 )
@@ -412,28 +412,28 @@ ROM_START( bionicc )
 	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
 	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 
 ROM_START( bionicc2 )
-	ROM_REGION( 0x40000, REGION_CPU1 )      /* 68000 code */
-	ROM_LOAD_EVEN( "02",      0x00000, 0x10000, 0xf2528f08 ) /* 68000 code */
-	ROM_LOAD_ODD ( "04",      0x00000, 0x10000, 0x38b1c7e4 ) /* 68000 code */
-	ROM_LOAD_EVEN( "03",      0x20000, 0x10000, 0x72c3b76f ) /* 68000 code */
-	ROM_LOAD_ODD ( "05",      0x20000, 0x10000, 0x70621f83 ) /* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "02",      0x00000, 0x10000, 0xf2528f08 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "04",      0x00001, 0x10000, 0x38b1c7e4 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "03",      0x20000, 0x10000, 0x72c3b76f ) /* 68000 code */
+	ROM_LOAD16_BYTE( "05",      0x20001, 0x10000, 0x70621f83 ) /* 68000 code */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_08.rom",   0x00000, 0x8000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_07.rom",   0x00000, 0x8000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
 	ROM_LOAD( "tsu_06.rom",   0x08000, 0x8000, 0x40bf0eb4 )
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
 	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
 	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
@@ -443,7 +443,7 @@ ROM_START( bionicc2 )
 	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "tsu_10.rom",   0x00000, 0x8000, 0xf1180d02 )	/* Sprites */
 	ROM_LOAD( "tsu_09.rom",   0x08000, 0x8000, 0x6a049292 )
 	ROM_LOAD( "tsu_15.rom",   0x10000, 0x8000, 0xea912701 )
@@ -453,28 +453,28 @@ ROM_START( bionicc2 )
 	ROM_LOAD( "tsu_22.rom",   0x30000, 0x8000, 0x5ee1ae6a )
 	ROM_LOAD( "tsu_21.rom",   0x38000, 0x8000, 0x98777006 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 
 ROM_START( topsecrt )
-	ROM_REGION( 0x40000, REGION_CPU1 )      /* 68000 code */
-	ROM_LOAD_EVEN( "ts_02.rom",  0x00000, 0x10000, 0xb2fe1ddb ) /* 68000 code */
-	ROM_LOAD_ODD ( "ts_04.rom",  0x00000, 0x10000, 0x427a003d ) /* 68000 code */
-	ROM_LOAD_EVEN( "ts_03.rom",  0x20000, 0x10000, 0x27f04bb6 ) /* 68000 code */
-	ROM_LOAD_ODD ( "ts_05.rom",  0x20000, 0x10000, 0xc01547b1 ) /* 68000 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "ts_02.rom",  0x00000, 0x10000, 0xb2fe1ddb ) /* 68000 code */
+	ROM_LOAD16_BYTE( "ts_04.rom",  0x00001, 0x10000, 0x427a003d ) /* 68000 code */
+	ROM_LOAD16_BYTE( "ts_03.rom",  0x20000, 0x10000, 0x27f04bb6 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "ts_05.rom",  0x20001, 0x10000, 0xc01547b1 ) /* 68000 code */
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "ts_01.rom",    0x00000, 0x8000, 0x8ea07917 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_08.rom",    0x00000, 0x8000, 0x96ad379e )	/* VIDEORAM (text layer) tiles */
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_07.rom",    0x00000, 0x8000, 0x25cdf8b2 )	/* SCROLL2 Layer Tiles */
 	ROM_LOAD( "ts_06.rom",    0x08000, 0x8000, 0x314fb12d )
 
-	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_12.rom",    0x00000, 0x8000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
 	ROM_LOAD( "ts_11.rom",    0x08000, 0x8000, 0xab30237a )
 	ROM_LOAD( "ts_17.rom",    0x10000, 0x8000, 0xdeb657e4 )
@@ -484,7 +484,7 @@ ROM_START( topsecrt )
 	ROM_LOAD( "ts_23.rom",    0x30000, 0x8000, 0xbbfbe58a )
 	ROM_LOAD( "ts_24.rom",    0x38000, 0x8000, 0xf156e564 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "ts_10.rom",    0x00000, 0x8000, 0xc3587d05 )	/* Sprites */
 	ROM_LOAD( "ts_09.rom",    0x08000, 0x8000, 0x6b63eef2 )
 	ROM_LOAD( "ts_15.rom",    0x10000, 0x8000, 0xdb8cebb0 )
@@ -494,7 +494,7 @@ ROM_START( topsecrt )
 	ROM_LOAD( "ts_22.rom",    0x30000, 0x8000, 0x3fe05d9a )
 	ROM_LOAD( "ts_21.rom",    0x38000, 0x8000, 0x27a9bb7c )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141.18f",   0x0000, 0x0100, 0xb58d0023 )	/* priority (not used) */
 ROM_END
 

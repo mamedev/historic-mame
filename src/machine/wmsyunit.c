@@ -257,10 +257,10 @@ static WRITE16_HANDLER( term2_hack_w )
  *************************************/
 
 #ifdef LSB_FIRST
-	#define BYTE_XOR_LE(a)  (a)
+	#define ADDR_XOR_LE(a)  (a)
 	#define BIG_DWORD_LE(x) (x)
 #else
-	#define BYTE_XOR_LE(a)  ((UINT8*)((UINT32)(a) ^ 1))
+	#define ADDR_XOR_LE(a)  ((UINT8*)((UINT32)(a) ^ 1))
 	#define BIG_DWORD_LE(x) (((UINT32)(x) >> 16) + ((x) << 16))
 #endif
 
@@ -297,11 +297,11 @@ static WRITE16_HANDLER( term2_hack_w )
 
 #define SCRATCH_RAM(offs)		&wms_scratch_ram[((offs) & 0x3fffff) >> 4]
 
-#define READ_INT8(REG)			(*(INT8 *)BYTE_XOR_LE(SCRATCH_RAM(REG)))
+#define READ_INT8(REG)			(*(INT8 *)ADDR_XOR_LE(SCRATCH_RAM(REG)))
 #define READ_INT16(REG)			READ_U16(SCRATCH_RAM(REG))
 #define READ_INT32(REG)			BIG_DWORD_LE(READ_U32(SCRATCH_RAM(REG)))
 
-#define WRITE_INT8(REG,DATA)	(*(INT8 *)BYTE_XOR_LE(SCRATCH_RAM(REG)) = (DATA))
+#define WRITE_INT8(REG,DATA)	(*(INT8 *)ADDR_XOR_LE(SCRATCH_RAM(REG)) = (DATA))
 #define WRITE_INT16(REG,DATA)	WRITE_U16(SCRATCH_RAM(REG), DATA)
 #define WRITE_INT32(REG,DATA)	WRITE_U32(SCRATCH_RAM(REG), BIG_DWORD_LE(DATA))
 

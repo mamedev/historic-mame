@@ -268,6 +268,8 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/superqix.o $(OBJ)/drivers/superqix.o \
 	$(OBJ)/vidhrdw/superman.o $(OBJ)/drivers/superman.o $(OBJ)/machine/cchip.o \
 	$(OBJ)/vidhrdw/minivadr.o $(OBJ)/drivers/minivadr.o \
+	$(OBJ)/vidhrdw/asuka.o $(OBJ)/drivers/asuka.o \
+	$(OBJ)/vidhrdw/cadash.o $(OBJ)/drivers/cadash.o \
 	$(OBJ)/machine/tnzs.o $(OBJ)/vidhrdw/tnzs.o $(OBJ)/drivers/tnzs.o \
 	$(OBJ)/machine/buggychl.o $(OBJ)/vidhrdw/buggychl.o $(OBJ)/drivers/buggychl.o \
 	$(OBJ)/machine/lkage.o $(OBJ)/vidhrdw/lkage.o $(OBJ)/drivers/lkage.o \
@@ -341,6 +343,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/dotrikun.o $(OBJ)/drivers/dotrikun.o \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/sndhrdw/system16.o $(OBJ)/drivers/system16.o \
+	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 
 $(OBJ)/deniam.a: \
 	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
@@ -654,8 +657,8 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/sndhrdw/seta.o $(OBJ)/drivers/seta.o \
 
 $(OBJ)/atlus.a: \
-	$(OBJ)/vidhrdw/ohmygod.o $(OBJ)/drivers/ohmygod.o \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
+	$(OBJ)/vidhrdw/ohmygod.o $(OBJ)/drivers/ohmygod.o \
 
 $(OBJ)/sun.a: \
 	$(OBJ)/drivers/shanghai.o \
@@ -680,6 +683,7 @@ $(OBJ)/playmark.a: \
 
 $(OBJ)/pacific.a: \
 	$(OBJ)/vidhrdw/thief.o $(OBJ)/drivers/thief.o \
+	$(OBJ)/vidhrdw/mrflea.o $(OBJ)/drivers/mrflea.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/leprechn.o $(OBJ)/drivers/leprechn.o \

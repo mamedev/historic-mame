@@ -23,8 +23,40 @@ static unsigned char *s1ram;
 static int namcos1_cpu1_banklatch;
 static int namcos1_reset = 0;
 
-
 static int berabohm_input_counter;
+
+/*******************************************************************************
+*																			   *
+*	BANK area handling															*
+*																			   *
+*******************************************************************************/
+
+/* Bank handler definitions */
+typedef struct {
+	mem_read_handler bank_handler_r;
+	mem_write_handler bank_handler_w;
+	int 		  bank_offset;
+	unsigned char *bank_pointer;
+} bankhandler;
+
+/* hardware elements of 1Mbytes physical memory space */
+static bankhandler namcos1_bank_element[NAMCOS1_MAX_BANK];
+
+static const mem_read_handler org_bank_handler_r[16] =
+{
+	MRA_BANK1 ,MRA_BANK2 ,MRA_BANK3 ,MRA_BANK4 ,
+	MRA_BANK5 ,MRA_BANK6 ,MRA_BANK7 ,MRA_BANK8 ,
+	MRA_BANK9 ,MRA_BANK10,MRA_BANK11,MRA_BANK12,
+	MRA_BANK13,MRA_BANK14,MRA_BANK15,MRA_BANK16
+};
+
+static const mem_write_handler org_bank_handler_w[16] =
+{
+	MWA_BANK1 ,MWA_BANK2 ,MWA_BANK3 ,MWA_BANK4 ,
+	MWA_BANK5 ,MWA_BANK6 ,MWA_BANK7 ,MWA_BANK8 ,
+	MWA_BANK9 ,MWA_BANK10,MWA_BANK11,MWA_BANK12,
+	MWA_BANK13,MWA_BANK14,MWA_BANK15,MWA_BANK16
+};
 
 
 
@@ -574,39 +606,43 @@ static WRITE_HANDLER( unknown_w ) {
 	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
 }
 
-/* Bank handler definitions */
-
-typedef struct {
-	mem_read_handler bank_handler_r;
-	mem_write_handler bank_handler_w;
-	int 		  bank_offset;
-	unsigned char *bank_pointer;
-} bankhandler;
-
-static bankhandler namcos1_bank_element[NAMCOS1_MAX_BANK];
-
-/* This is where we store our handlers */
-/* 2 cpus with 8 banks of 8k each	   */
-static bankhandler namcos1_banks[2][8];
-
 /* Main bankswitching routine */
 WRITE_HANDLER( namcos1_bankswitch_w ) {
 	static int chip = 0;
+	mem_read_handler handler_r;
+	mem_write_handler handler_w;
+	offs_t offs;
 
 	if ( offset & 1 ) {
-		int bank = ( offset >> 9 ) & 0x07; //0x0f;
 		int cpu = cpu_getactivecpu();
+		int bank = (cpu*8) + ( ( offset >> 9 ) & 0x07 );
 		chip &= 0x0300;
 		chip |= ( data & 0xff );
-		/* copy bank handler */
-		namcos1_banks[cpu][bank].bank_handler_r = namcos1_bank_element[chip].bank_handler_r;
-		namcos1_banks[cpu][bank].bank_handler_w = namcos1_bank_element[chip].bank_handler_w;
-		namcos1_banks[cpu][bank].bank_offset	= namcos1_bank_element[chip].bank_offset;
-		namcos1_banks[cpu][bank].bank_pointer	= namcos1_bank_element[chip].bank_pointer;
-		//memcpy( &namcos1_banks[cpu][bank] , &namcos1_bank_element[chip] , sizeof(bankhandler));
+
+		/* for BANK handlers , memory direct and OP-code base */
+		cpu_setbank(bank+1,namcos1_bank_element[chip].bank_pointer);
+
+		/* Addition OFFSET for stub handlers */
+		offs = namcos1_bank_element[chip].bank_offset;
+
+		/* read hardware */
+		handler_r = namcos1_bank_element[chip].bank_handler_r;
+		if( handler_r )
+			/* I/O handler */
+			memory_set_bankhandler_r( bank+1,offs,handler_r);
+		else	/* memory direct */
+			memory_set_bankhandler_r( bank+1,0,org_bank_handler_r[bank] );
+
+		/* write hardware */
+		handler_w = namcos1_bank_element[chip].bank_handler_w;
+		if( handler_w )
+			/* I/O handler */
+			memory_set_bankhandler_w( bank+1,offs,handler_w);
+		else	/* memory direct */
+			memory_set_bankhandler_w( bank+1,0,org_bank_handler_w[bank] );
 
 		/* unmapped bank warning */
-		if( namcos1_banks[cpu][bank].bank_handler_r == unknown_r)
+		if( handler_r == unknown_r)
 		{
 			logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , cpu_get_pc(), bank , chip );
 		}
@@ -634,56 +670,6 @@ WRITE_HANDLER( namcos1_subcpu_bank_w )
 
 	cpu_setactivecpu( oldcpu );
 }
-
-#define MR_HANDLER(cpu,bank) \
-READ_HANDLER( namcos1_##cpu##_banked_area##bank##_r ) {\
-	if( namcos1_banks[cpu][bank].bank_handler_r) \
-		return (*namcos1_banks[cpu][bank].bank_handler_r)( offset+namcos1_banks[cpu][bank].bank_offset); \
-	return namcos1_banks[cpu][bank].bank_pointer[offset]; }
-
-MR_HANDLER(0,0)
-MR_HANDLER(0,1)
-MR_HANDLER(0,2)
-MR_HANDLER(0,3)
-MR_HANDLER(0,4)
-MR_HANDLER(0,5)
-MR_HANDLER(0,6)
-MR_HANDLER(0,7)
-MR_HANDLER(1,0)
-MR_HANDLER(1,1)
-MR_HANDLER(1,2)
-MR_HANDLER(1,3)
-MR_HANDLER(1,4)
-MR_HANDLER(1,5)
-MR_HANDLER(1,6)
-MR_HANDLER(1,7)
-#undef MR_HANDLER
-
-#define MW_HANDLER(cpu,bank) \
-WRITE_HANDLER( namcos1_##cpu##_banked_area##bank##_w ) {\
-	if( namcos1_banks[cpu][bank].bank_handler_w) \
-	{ \
-		(*namcos1_banks[cpu][bank].bank_handler_w)( offset+ namcos1_banks[cpu][bank].bank_offset,data ); \
-		return; \
-	}\
-	namcos1_banks[cpu][bank].bank_pointer[offset]=data; \
-}
-
-MW_HANDLER(0,0)
-MW_HANDLER(0,1)
-MW_HANDLER(0,2)
-MW_HANDLER(0,3)
-MW_HANDLER(0,4)
-MW_HANDLER(0,5)
-MW_HANDLER(0,6)
-MW_HANDLER(1,0)
-MW_HANDLER(1,1)
-MW_HANDLER(1,2)
-MW_HANDLER(1,3)
-MW_HANDLER(1,4)
-MW_HANDLER(1,5)
-MW_HANDLER(1,6)
-#undef MW_HANDLER
 
 /*******************************************************************************
 *																			   *
@@ -726,7 +712,7 @@ WRITE_HANDLER( namcos1_sound_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = ( data >> 4 ) & 0x07;
 
-	cpu_setbank( 1, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
+	cpu_setbank( 17, &RAM[ 0x0c000 + ( 0x4000 * bank ) ] );
 }
 
 /*******************************************************************************
@@ -773,7 +759,7 @@ WRITE_HANDLER( namcos1_mcu_bankswitch_w )
 		logerror("unmapped mcu bank selected pc=%04x bank=%02x\n",cpu_get_pc(),data);
 		addr = 0x4000;
 	}
-	cpu_setbank( 4, memory_region(REGION_CPU4)+addr );
+	cpu_setbank( 20, memory_region(REGION_CPU4)+addr );
 }
 
 /* This point is very obscure, but i havent found any better way yet. */
@@ -788,15 +774,12 @@ WRITE_HANDLER( namcos1_mcu_bankswitch_w )
 /* I found set $A6 only initialize in MCU						*/
 /* This patch kill write this data by MCU case $A6 to xx(clear) */
 
-WRITE_HANDLER( mwh_bank3 );
-
 WRITE_HANDLER( namcos1_mcu_patch_w )
 {
 	//logerror("mcu C000 write pc=%04x data=%02x\n",cpu_get_pc(),data);
 	if(mcu_patch_data == 0xa6) return;
 	mcu_patch_data = data;
-
-	mwh_bank3( offset, data );
+	cpu_bankbase[19][offset] = data;
 }
 
 /*******************************************************************************
@@ -804,26 +787,6 @@ WRITE_HANDLER( namcos1_mcu_patch_w )
 *	Initialization															   *
 *																			   *
 *******************************************************************************/
-
-static OPBASE_HANDLER( namcos1_setopbase_0 )
-{
-	int bank = (address>>13)&7;
-	OP_RAM = OP_ROM = (namcos1_banks[0][bank].bank_pointer) - (bank<<13);
-	/* memory.c output warning - op-code execute on mapped i/o	*/
-	/* but it is necessary to continue cpu_setOPbase16 function */
-	/* for update current operationhardware(ophw) code			*/
-	return address;
-}
-
-static OPBASE_HANDLER( namcos1_setopbase_1 )
-{
-	int bank = (address>>13)&7;
-	OP_RAM = OP_ROM = (namcos1_banks[1][bank].bank_pointer) - (bank<<13);
-	/* memory.c output warning - op-code execute on mapped i/o	*/
-	/* but it is necessary to continue cpu_setOPbase16 function */
-	/* for update current operationhardware(ophw) code			*/
-	return address;
-}
 
 static void namcos1_install_bank(int start,int end,mem_read_handler hr,mem_write_handler hw,
 			  int offset,unsigned char *pointer)
@@ -896,16 +859,15 @@ static void namcos1_build_banks(mem_read_handler key_r,mem_write_handler key_w)
 
 void init_namcos1( void ) {
 
-	int oldcpu = cpu_getactivecpu(), i;
+	int oldcpu = cpu_getactivecpu();
+	int bank;
 
 	/* Point all of our bankhandlers to the error handlers */
-	for ( i = 0; i < 8; i++ ) {
-		namcos1_banks[0][i].bank_handler_r = unknown_r;
-		namcos1_banks[0][i].bank_handler_w = unknown_w;
-		namcos1_banks[0][i].bank_offset = 0;
-		namcos1_banks[1][i].bank_handler_r = unknown_r;
-		namcos1_banks[1][i].bank_handler_w = unknown_w;
-		namcos1_banks[1][i].bank_offset = 0;
+	for( bank =0 ; bank < 2*8 ; bank++ )
+	{
+		/* set bank pointer & handler for cpu interface */
+		memory_set_bankhandler_r( bank+1,0,unknown_r);
+		memory_set_bankhandler_w( bank+1,0,unknown_w);
 	}
 
 	/* Prepare code for Cpu 0 */
@@ -926,8 +888,8 @@ void init_namcos1( void ) {
 	/* Point mcu & sound shared RAM to destination */
 	{
 		unsigned char *RAM = namco_wavedata + 0x1000; /* Ram 1, bank 1, offset 0x1000 */
-		cpu_setbank( 2, RAM );
-		cpu_setbank( 3, RAM );
+		cpu_setbank( 18, RAM );
+		cpu_setbank( 19, RAM );
 	}
 
 	/* In case we had some cpu's suspended, resume them now */
@@ -979,10 +941,6 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 
 	/* build bank elements */
 	namcos1_build_banks(specific->key_r,specific->key_w);
-
-	/* override opcode handling for extended memory bank handler */
-	cpu_setOPbaseoverride( 0,namcos1_setopbase_0 );
-	cpu_setOPbaseoverride( 1,namcos1_setopbase_1 );
 
 	/* sound cpu speedup optimize (auto detect) */
 	{

@@ -179,7 +179,7 @@ static READ_HANDLER( tempest_IN0_r )
 	if (avgdvg_done())
 		res|=0x40;
 
-	/* Emulate the 3Khz source on bit 7 (divide 1.5MHz by 512) */
+	/* Emulate the 3kHz source on bit 7 (divide 1.5MHz by 512) */
 	if (cpu_gettotalcycles() & 0x100)
 		res |=0x80;
 
@@ -412,7 +412,7 @@ static const struct MachineDriver machine_driver_tempest =
 
 
 ROM_START( tempest ) /* rev 3 */
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -430,7 +430,7 @@ ROM_START( tempest ) /* rev 3 */
 ROM_END
 
 ROM_START( tempest1 ) /* rev 1 */
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -448,7 +448,7 @@ ROM_START( tempest1 ) /* rev 1 */
 ROM_END
 
 ROM_START( tempest2 ) /* rev 2 */
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -466,7 +466,7 @@ ROM_START( tempest2 ) /* rev 2 */
 ROM_END
 
 ROM_START( temptube )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
 	ROM_LOAD( "136002.115",   0xa000, 0x0800, 0xf3e2827a )
@@ -485,7 +485,7 @@ ROM_END
 
 #if 0 /* identical to rom_tempest, only different rom sizes */
 ROM_START( tempest3 )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tempest.x",    0x9000, 0x1000, 0x0 )
 	ROM_LOAD( "tempest.1",    0xa000, 0x1000, 0x0 )
 	ROM_LOAD( "tempest.3",    0xb000, 0x1000, 0x0 )

@@ -19,82 +19,82 @@
 **	FIELD WRITE FUNCTIONS
 **#################################################################################################*/
 
-WRITE32_HANDLER( wfield_01 )
+void wfield_01(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x01,16);
 }
 
-WRITE32_HANDLER( wfield_02 )
+void wfield_02(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x03,15);
 }
 
-WRITE32_HANDLER( wfield_03 )
+void wfield_03(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x07,14);
 }
 
-WRITE32_HANDLER( wfield_04 )
+void wfield_04(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x0f,13);
 }
 
-WRITE32_HANDLER( wfield_05 )
+void wfield_05(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x1f,12);
 }
 
-WRITE32_HANDLER( wfield_06 )
+void wfield_06(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x3f,11);
 }
 
-WRITE32_HANDLER( wfield_07 )
+void wfield_07(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x7f,10);
 }
 
-WRITE32_HANDLER( wfield_08 )
+void wfield_08(offs_t offset,data32_t data)
 {
 	WFIELDMAC_8;
 }
 
-WRITE32_HANDLER( wfield_09 )
+void wfield_09(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x1ff,8);
 }
 
-WRITE32_HANDLER( wfield_10 )
+void wfield_10(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x3ff,7);
 }
 
-WRITE32_HANDLER( wfield_11 )
+void wfield_11(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x7ff,6);
 }
 
-WRITE32_HANDLER( wfield_12 )
+void wfield_12(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0xfff,5);
 }
 
-WRITE32_HANDLER( wfield_13 )
+void wfield_13(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x1fff,4);
 }
 
-WRITE32_HANDLER( wfield_14 )
+void wfield_14(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x3fff,3);
 }
 
-WRITE32_HANDLER( wfield_15 )
+void wfield_15(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x7fff,2);
 }
 
-WRITE32_HANDLER( wfield_16 )
+void wfield_16(offs_t offset,data32_t data)
 {
 	if (offset & 0x0f)
 	{
@@ -106,82 +106,82 @@ WRITE32_HANDLER( wfield_16 )
 	}
 }
 
-WRITE32_HANDLER( wfield_17 )
+void wfield_17(offs_t offset,data32_t data)
 {
 	WFIELDMAC(0x1ffff,0);
 }
 
-WRITE32_HANDLER( wfield_18 )
+void wfield_18(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x3ffff,15);
 }
 
-WRITE32_HANDLER( wfield_19 )
+void wfield_19(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x7ffff,14);
 }
 
-WRITE32_HANDLER( wfield_20 )
+void wfield_20(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0xfffff,13);
 }
 
-WRITE32_HANDLER( wfield_21 )
+void wfield_21(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x1fffff,12);
 }
 
-WRITE32_HANDLER( wfield_22 )
+void wfield_22(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x3fffff,11);
 }
 
-WRITE32_HANDLER( wfield_23 )
+void wfield_23(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x7fffff,10);
 }
 
-WRITE32_HANDLER( wfield_24 )
+void wfield_24(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0xffffff,9);
 }
 
-WRITE32_HANDLER( wfield_25 )
+void wfield_25(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x1ffffff,8);
 }
 
-WRITE32_HANDLER( wfield_26 )
+void wfield_26(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x3ffffff,7);
 }
 
-WRITE32_HANDLER( wfield_27 )
+void wfield_27(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x7ffffff,6);
 }
 
-WRITE32_HANDLER( wfield_28 )
+void wfield_28(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0xfffffff,5);
 }
 
-WRITE32_HANDLER( wfield_29 )
+void wfield_29(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x1fffffff,4);
 }
 
-WRITE32_HANDLER( wfield_30 )
+void wfield_30(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x3fffffff,3);
 }
 
-WRITE32_HANDLER( wfield_31 )
+void wfield_31(offs_t offset,data32_t data)
 {
 	WFIELDMAC_BIG(0x7fffffff,2);
 }
 
-WRITE32_HANDLER( wfield_32 )
+void wfield_32(offs_t offset,data32_t data)
 {
 	WFIELDMAC_32;
 }
@@ -192,112 +192,112 @@ WRITE32_HANDLER( wfield_32 )
 **	FIELD READ FUNCTIONS (ZERO-EXTEND)
 **#################################################################################################*/
 
-READ32_HANDLER( rfield_z_01 )
+data32_t rfield_z_01(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x01,16);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_02 )
+data32_t rfield_z_02(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x03,15);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_03 )
+data32_t rfield_z_03(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x07,14);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_04 )
+data32_t rfield_z_04(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x0f,13);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_05 )
+data32_t rfield_z_05(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1f,12);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_06 )
+data32_t rfield_z_06(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3f,11);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_07 )
+data32_t rfield_z_07(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7f,10);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_08 )
+data32_t rfield_z_08(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_8;
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_09 )
+data32_t rfield_z_09(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1ff,8);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_10 )
+data32_t rfield_z_10(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3ff,7);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_11 )
+data32_t rfield_z_11(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7ff,6);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_12 )
+data32_t rfield_z_12(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0xfff,5);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_13 )
+data32_t rfield_z_13(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1fff,4);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_14 )
+data32_t rfield_z_14(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3fff,3);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_15 )
+data32_t rfield_z_15(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7fff,2);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_16 )
+data32_t rfield_z_16(offs_t offset)
 {
 	UINT32 ret;
 	if (offset & 0x0f)
@@ -310,112 +310,112 @@ READ32_HANDLER( rfield_z_16 )
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_17 )
+data32_t rfield_z_17(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1ffff,0);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_18 )
+data32_t rfield_z_18(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3ffff,15);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_19 )
+data32_t rfield_z_19(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7ffff,14);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_20 )
+data32_t rfield_z_20(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xfffff,13);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_21 )
+data32_t rfield_z_21(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1fffff,12);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_22 )
+data32_t rfield_z_22(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3fffff,11);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_23 )
+data32_t rfield_z_23(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7fffff,10);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_24 )
+data32_t rfield_z_24(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xffffff,9);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_25 )
+data32_t rfield_z_25(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1ffffff,8);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_26 )
+data32_t rfield_z_26(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3ffffff,7);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_27 )
+data32_t rfield_z_27(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7ffffff,6);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_28 )
+data32_t rfield_z_28(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xfffffff,5);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_29 )
+data32_t rfield_z_29(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1fffffff,4);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_30 )
+data32_t rfield_z_30(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3fffffff,3);
 	return ret;
 }
 
-READ32_HANDLER( rfield_z_31 )
+data32_t rfield_z_31(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7fffffff,2);
 	return ret;
 }
 
-READ32_HANDLER( rfield_32 )
+data32_t rfield_32(offs_t offset)
 {
 	RFIELDMAC_32;
 }
@@ -426,56 +426,56 @@ READ32_HANDLER( rfield_32 )
 **	FIELD READ FUNCTIONS (SIGN-EXTEND)
 **#################################################################################################*/
 
-READ32_HANDLER( rfield_s_01 )
+data32_t rfield_s_01(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x01,16);
 	return ((INT32)(ret << 31)) >> 31;
 }
 
-READ32_HANDLER( rfield_s_02 )
+data32_t rfield_s_02(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x03,15);
 	return ((INT32)(ret << 30)) >> 30;
 }
 
-READ32_HANDLER( rfield_s_03 )
+data32_t rfield_s_03(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x07,14);
 	return ((INT32)(ret << 29)) >> 29;
 }
 
-READ32_HANDLER( rfield_s_04 )
+data32_t rfield_s_04(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x0f,13);
 	return ((INT32)(ret << 28)) >> 28;
 }
 
-READ32_HANDLER( rfield_s_05 )
+data32_t rfield_s_05(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1f,12);
 	return ((INT32)(ret << 27)) >> 27;
 }
 
-READ32_HANDLER( rfield_s_06 )
+data32_t rfield_s_06(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3f,11);
 	return ((INT32)(ret << 26)) >> 26;
 }
 
-READ32_HANDLER( rfield_s_07 )
+data32_t rfield_s_07(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7f,10);
 	return ((INT32)(ret << 25)) >> 25;
 }
 
-READ32_HANDLER( rfield_s_08 )
+data32_t rfield_s_08(offs_t offset)
 {
 	UINT32 ret;
 	if (offset & 0x07)
@@ -488,56 +488,56 @@ READ32_HANDLER( rfield_s_08 )
 	return (INT32)(INT8)ret;
 }
 
-READ32_HANDLER( rfield_s_09 )
+data32_t rfield_s_09(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1ff,8);
 	return ((INT32)(ret << 23)) >> 23;
 }
 
-READ32_HANDLER( rfield_s_10 )
+data32_t rfield_s_10(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3ff,7);
 	return ((INT32)(ret << 22)) >> 22;
 }
 
-READ32_HANDLER( rfield_s_11 )
+data32_t rfield_s_11(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7ff,6);
 	return ((INT32)(ret << 21)) >> 21;
 }
 
-READ32_HANDLER( rfield_s_12 )
+data32_t rfield_s_12(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0xfff,5);
 	return ((INT32)(ret << 20)) >> 20;
 }
 
-READ32_HANDLER( rfield_s_13 )
+data32_t rfield_s_13(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1fff,4);
 	return ((INT32)(ret << 19)) >> 19;
 }
 
-READ32_HANDLER( rfield_s_14 )
+data32_t rfield_s_14(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x3fff,3);
 	return ((INT32)(ret << 18)) >> 18;
 }
 
-READ32_HANDLER( rfield_s_15 )
+data32_t rfield_s_15(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x7fff,2);
 	return ((INT32)(ret << 17)) >> 17;
 }
 
-READ32_HANDLER( rfield_s_16 )
+data32_t rfield_s_16(offs_t offset)
 {
 	UINT32 ret;
 	if (offset & 0x0f)
@@ -553,105 +553,105 @@ READ32_HANDLER( rfield_s_16 )
 	return (INT32)(INT16)ret;
 }
 
-READ32_HANDLER( rfield_s_17 )
+data32_t rfield_s_17(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC(0x1ffff,0);
 	return ((INT32)(ret << 15)) >> 15;
 }
 
-READ32_HANDLER( rfield_s_18 )
+data32_t rfield_s_18(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3ffff,15);
 	return ((INT32)(ret << 14)) >> 14;
 }
 
-READ32_HANDLER( rfield_s_19 )
+data32_t rfield_s_19(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7ffff,14);
 	return ((INT32)(ret << 13)) >> 13;
 }
 
-READ32_HANDLER( rfield_s_20 )
+data32_t rfield_s_20(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xfffff,13);
 	return ((INT32)(ret << 12)) >> 12;
 }
 
-READ32_HANDLER( rfield_s_21 )
+data32_t rfield_s_21(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1fffff,12);
 	return ((INT32)(ret << 11)) >> 11;
 }
 
-READ32_HANDLER( rfield_s_22 )
+data32_t rfield_s_22(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3fffff,11);
 	return ((INT32)(ret << 10)) >> 10;
 }
 
-READ32_HANDLER( rfield_s_23 )
+data32_t rfield_s_23(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7fffff,10);
 	return ((INT32)(ret << 9)) >> 9;
 }
 
-READ32_HANDLER( rfield_s_24 )
+data32_t rfield_s_24(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xffffff,9);
 	return ((INT32)(ret << 8)) >> 8;
 }
 
-READ32_HANDLER( rfield_s_25 )
+data32_t rfield_s_25(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1ffffff,8);
 	return ((INT32)(ret << 7)) >> 7;
 }
 
-READ32_HANDLER( rfield_s_26 )
+data32_t rfield_s_26(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3ffffff,7);
 	return ((INT32)(ret << 6)) >> 6;
 }
 
-READ32_HANDLER( rfield_s_27 )
+data32_t rfield_s_27(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7ffffff,6);
 	return ((INT32)(ret << 5)) >> 5;
 }
 
-READ32_HANDLER( rfield_s_28 )
+data32_t rfield_s_28(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0xfffffff,5);
 	return ((INT32)(ret << 4)) >> 4;
 }
 
-READ32_HANDLER( rfield_s_29 )
+data32_t rfield_s_29(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x1fffffff,4);
 	return ((INT32)(ret << 3)) >> 3;
 }
 
-READ32_HANDLER( rfield_s_30 )
+data32_t rfield_s_30(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x3fffffff,3);
 	return ((INT32)(ret << 2)) >> 2;
 }
 
-READ32_HANDLER( rfield_s_31 )
+data32_t rfield_s_31(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_BIG(0x7fffffff,2);

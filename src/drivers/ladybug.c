@@ -462,7 +462,7 @@ static const struct MachineDriver machine_driver_ladybug =
 ***************************************************************************/
 
 ROM_START( ladybug )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "lb1.cpu",      0x0000, 0x1000, 0xd09e0adb )
 	ROM_LOAD( "lb2.cpu",      0x1000, 0x1000, 0x88bc4a0a )
 	ROM_LOAD( "lb3.cpu",      0x2000, 0x1000, 0x53e9efce )
@@ -470,22 +470,22 @@ ROM_START( ladybug )
 	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
 	ROM_LOAD( "lb6.cpu",      0x5000, 0x1000, 0xcf1acca4 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
 	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "lb8.cpu",      0x0000, 0x1000, 0x8b99910b )
 	ROM_LOAD( "lb7.cpu",      0x1000, 0x1000, 0x86a5b448 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
 	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( ladybugb )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "lb1a.cpu",     0x0000, 0x1000, 0xec135e54 )
 	ROM_LOAD( "lb2a.cpu",     0x1000, 0x1000, 0x3049c5c6 )
 	ROM_LOAD( "lb3a.cpu",     0x2000, 0x1000, 0xb0fef837 )
@@ -493,22 +493,22 @@ ROM_START( ladybugb )
 	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
 	ROM_LOAD( "lb6a.cpu",     0x5000, 0x1000, 0x88c8002a )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
 	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "lb8.cpu",      0x0000, 0x1000, 0x8b99910b )
 	ROM_LOAD( "lb7.cpu",      0x1000, 0x1000, 0x86a5b448 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
 	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( snapjack )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "sj2a.bin",     0x0000, 0x1000, 0x6b30fcda )
 	ROM_LOAD( "sj2b.bin",     0x1000, 0x1000, 0x1f1088d1 )
 	ROM_LOAD( "sj2c.bin",     0x2000, 0x1000, 0xedd65f3a )
@@ -516,22 +516,22 @@ ROM_START( snapjack )
 	ROM_LOAD( "sj2e.bin",     0x4000, 0x1000, 0x1bff7d05 )
 	ROM_LOAD( "sj2f.bin",     0x5000, 0x1000, 0x21793edf )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sj2i.bin",     0x0000, 0x1000, 0xff2011c7 )
 	ROM_LOAD( "sj2j.bin",     0x1000, 0x1000, 0xf097babb )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "sj2h.bin",     0x0000, 0x1000, 0xb7f105b6 )
 	ROM_LOAD( "sj2g.bin",     0x1000, 0x1000, 0x1cdb03a8 )
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "sj8t.bin",     0x0000, 0x0020, 0xcbbd9dd1 ) /* palette */
 	ROM_LOAD( "sj9k.bin",     0x0020, 0x0020, 0x5b16fbd2 ) /* sprite color lookup table */
 	ROM_LOAD( "sj9h.bin",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( cavenger )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x1000, 0x9e0cc781 )
 	ROM_LOAD( "2",            0x1000, 0x1000, 0x5ce5b950 )
 	ROM_LOAD( "3",            0x2000, 0x1000, 0xbc28218d )
@@ -539,15 +539,15 @@ ROM_START( cavenger )
 	ROM_LOAD( "5",            0x4000, 0x1000, 0xd117153e )
 	ROM_LOAD( "6",            0x5000, 0x1000, 0xc7d366cb )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "9",            0x0000, 0x1000, 0x63357785 )
 	ROM_LOAD( "0",            0x1000, 0x1000, 0x52ad1133 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "8",            0x0000, 0x1000, 0xb022bf2d )
 	/* 1000-1fff empty */
 
-	ROM_REGION( 0x0060, REGION_PROMS )
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
 	ROM_LOAD( "t8.bpr",       0x0000, 0x0020, 0x42a24dd5 ) /* palette */
 	ROM_LOAD( "k9.bpr",       0x0020, 0x0020, 0xd736b8de ) /* sprite color lookup table */
 	ROM_LOAD( "h9.bpr",       0x0040, 0x0020, 0x27fa3a50 ) /* ?? */

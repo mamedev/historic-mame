@@ -1685,18 +1685,18 @@ static const struct MachineDriver machine_driver_alpha68k_V_sb =
 /******************************************************************************/
 
 ROM_START( kouyakyu )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_ODD ( "epr-6704.bin",  0x00000, 0x2000, 0xc7ac2292 )
-	ROM_LOAD_EVEN( "epr-6707.bin",  0x00000, 0x2000, 0x9cb2962e )
-	ROM_LOAD_ODD ( "epr-6705.bin",  0x04000, 0x2000, 0x985327cb )
-	ROM_LOAD_EVEN( "epr-6708.bin",  0x04000, 0x2000, 0xf8863dc5 )
-	ROM_LOAD_ODD ( "epr-6706.bin",  0x08000, 0x2000, 0x053a74f6 )
-	ROM_LOAD_EVEN( "epr-6709.bin",  0x08000, 0x2000, 0xf41cb58c )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr-6704.bin",  0x00001, 0x2000, 0xc7ac2292 )
+	ROM_LOAD16_BYTE( "epr-6707.bin",  0x00000, 0x2000, 0x9cb2962e )
+	ROM_LOAD16_BYTE( "epr-6705.bin",  0x04001, 0x2000, 0x985327cb )
+	ROM_LOAD16_BYTE( "epr-6708.bin",  0x04000, 0x2000, 0xf8863dc5 )
+	ROM_LOAD16_BYTE( "epr-6706.bin",  0x08001, 0x2000, 0x053a74f6 )
+	ROM_LOAD16_BYTE( "epr-6709.bin",  0x08000, 0x2000, 0xf41cb58c )
 
-	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr-6710.bin", 0x000000, 0x1000, 0xaccda190 ) /* Chars */
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr-6686.bin", 0x000000, 0x2000, 0x3d9e516f ) /* Tiles plane 1 & 2 */
 	ROM_LOAD( "epr-6687.bin", 0x002000, 0x2000, 0x9c1f49df )
 	ROM_LOAD( "epr-6688.bin", 0x004000, 0x2000, 0xceb76c5b )
@@ -1711,7 +1711,7 @@ ROM_START( kouyakyu )
 	ROM_LOAD( "epr-6696.bin", 0x014000, 0x2000, 0x0625f48e )
 	ROM_LOAD( "epr-6697.bin", 0x016000, 0x2000, 0xf18afabe )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )      /* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "epr-6698.bin", 0x000000, 0x2000, 0x7adfd1ff )
 	ROM_LOAD( "epr-6699.bin", 0x002000, 0x2000, 0x9bfa4a72 )
 	ROM_LOAD( "epr-6700.bin", 0x004000, 0x2000, 0xee579266 )
@@ -1719,7 +1719,7 @@ ROM_START( kouyakyu )
 	ROM_LOAD( "epr-6702.bin", 0x008000, 0x2000, 0x27ddf031 )
 	ROM_LOAD( "epr-6703.bin", 0x00a000, 0x2000, 0xfbff3a86 )
 
-	ROM_REGION( 0x0420, REGION_PROMS )
+	ROM_REGION( 0x0420, REGION_PROMS, 0 )
 	ROM_LOAD( "pr6627.bpr",  0x000000, 0x100, 0x5ec5480d )
 	ROM_LOAD( "pr6628.bpr",  0x000100, 0x100, 0x8af247a4 )
 	ROM_LOAD( "pr6629.bpr",  0x000200, 0x100, 0x29c7a393 )
@@ -1728,17 +1728,17 @@ ROM_START( kouyakyu )
 ROM_END
 
 ROM_START( sstingry )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 68000 code */
-	ROM_LOAD_EVEN( "ss_05.rom",  0x0000,  0x4000, 0xbfb28d53 )
-	ROM_LOAD_ODD ( "ss_07.rom",  0x0000,  0x4000, 0xeb1b65c5 )
-	ROM_LOAD_EVEN( "ss_04.rom",  0x8000,  0x4000, 0x2e477a79 )
-	ROM_LOAD_ODD ( "ss_06.rom",  0x8000,  0x4000, 0x597620cb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 68000 code */
+	ROM_LOAD16_BYTE( "ss_05.rom",  0x0000,  0x4000, 0xbfb28d53 )
+	ROM_LOAD16_BYTE( "ss_07.rom",  0x0001,  0x4000, 0xeb1b65c5 )
+	ROM_LOAD16_BYTE( "ss_04.rom",  0x8000,  0x4000, 0x2e477a79 )
+	ROM_LOAD16_BYTE( "ss_06.rom",  0x8001,  0x4000, 0x597620cb )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )      /* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )      /* sound cpu */
 	ROM_LOAD( "ss_01.rom",       0x0000,  0x4000, 0xfef09a92 )
 	ROM_LOAD( "ss_02.rom",       0x4000,  0x4000, 0xab4e8c01 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ss_12.rom",       0x00000, 0x4000, 0x74caa9e9 )
 	ROM_LOAD( "ss_08.rom",       0x08000, 0x4000, 0x32368925 )
 	ROM_LOAD( "ss_13.rom",       0x10000, 0x4000, 0x13da6203 )
@@ -1746,29 +1746,29 @@ ROM_START( sstingry )
 	ROM_LOAD( "ss_11.rom",       0x20000, 0x4000, 0xd134302e )
 	ROM_LOAD( "ss_09.rom",       0x28000, 0x4000, 0x6f9d938a )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "ic92",            0x0000, 0x0100, 0xe7ce1179 )
 	ROM_LOAD( "ic91",            0x0100, 0x0100, 0xc3965079 )
 	ROM_LOAD( "ic93",            0x0200, 0x0100, 0x9af8a375 )
 ROM_END
 
 ROM_START( kyros )
-	ROM_REGION( 0x20000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "2.10c", 0x00000,  0x4000, 0x4bd030b1 )
-	ROM_CONTINUE (          0x10000, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "1.13c", 0x00000,  0x4000, 0x75cfbc5e )
-	ROM_CONTINUE (          0x10001, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_EVEN( "4.10b", 0x08000,  0x4000, 0xbe2626c2 )
-	ROM_CONTINUE (          0x18000, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "3.13b", 0x08001,  0x4000, 0xfb25e71a )
-	ROM_CONTINUE (          0x18001, 0x4000 | ROMFLAG_ALTERNATE )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "2.10c", 0x00000,  0x4000, 0x4bd030b1 )
+	ROM_CONTINUE   (          0x10000, 0x4000 )
+	ROM_LOAD16_BYTE( "1.13c", 0x00001,  0x4000, 0x75cfbc5e )
+	ROM_CONTINUE   (          0x10001, 0x4000 )
+	ROM_LOAD16_BYTE( "4.10b", 0x08000,  0x4000, 0xbe2626c2 )
+	ROM_CONTINUE   (          0x18000, 0x4000 )
+	ROM_LOAD16_BYTE( "3.13b", 0x08001,  0x4000, 0xfb25e71a )
+	ROM_CONTINUE   (          0x18001, 0x4000 )
 
-	ROM_REGION( 0x20000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "2s.1f",      0x00000, 0x4000, 0x800ceb27 )
 	ROM_LOAD( "1s.1d",      0x10000, 0x8000, 0x87d3e719 ) /* todo */
 	ROM_LOAD( "0.1t",       0x18000, 0x2000, 0x5d0acb4c ) /* todo */
 
-	ROM_REGION( 0x60000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "8.9pr",      0x00000, 0x8000, 0xc5290944 )
 	ROM_LOAD( "11.11m",     0x08000, 0x8000, 0xfbd44f1e )
 	ROM_LOAD( "12.11n",		0x10000, 0x8000, 0x10fed501 )
@@ -1782,7 +1782,7 @@ ROM_START( kyros )
 	ROM_LOAD( "19.11t",		0x50000, 0x8000, 0x4f336306 )
 	ROM_LOAD( "20.13t",		0x58000, 0x8000, 0xa165d06b )
 
-	ROM_REGION( 0x0500, REGION_PROMS )
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7114l.5r", 0x000, 0x100, 0x3628bf36 )
 	ROM_LOAD( "mb7114l.4r", 0x100, 0x100, 0x850704e4 )
 	ROM_LOAD( "mb7114l.6r", 0x200, 0x100, 0xa54f60d7 )
@@ -1791,16 +1791,16 @@ ROM_START( kyros )
 ROM_END
 
 ROM_START( paddlema )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "padlem.6g",  0x00000, 0x10000, 0xc227a6e8 )
-	ROM_LOAD_ODD ( "padlem.3g",  0x00000, 0x10000, 0xf11a21aa )
-	ROM_LOAD_EVEN( "padlem.6h",  0x20000, 0x10000, 0x8897555f )
-	ROM_LOAD_ODD ( "padlem.3h",  0x20000, 0x10000, 0xf0fe9b9d )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "padlem.6g",  0x00000, 0x10000, 0xc227a6e8 )
+	ROM_LOAD16_BYTE( "padlem.3g",  0x00001, 0x10000, 0xf11a21aa )
+	ROM_LOAD16_BYTE( "padlem.6h",  0x20000, 0x10000, 0x8897555f )
+	ROM_LOAD16_BYTE( "padlem.3h",  0x20001, 0x10000, 0xf0fe9b9d )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "padlem.18c", 0x000000, 0x10000, 0x9269778d )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "padlem.16m",      0x00000, 0x10000, 0x0984fb4d )
 	ROM_LOAD( "padlem.16n",      0x10000, 0x10000, 0x4249e047 )
 	ROM_LOAD( "padlem.13m",      0x20000, 0x10000, 0xfd9dbc27 )
@@ -1810,33 +1810,33 @@ ROM_START( paddlema )
 	ROM_LOAD( "padlem.6m",       0x60000, 0x10000, 0x3f47910c )
 	ROM_LOAD( "padlem.6n",       0x70000, 0x10000, 0xfe337655 )
 
-	ROM_REGION( 0x8000, REGION_SOUND1 )	/* ADPCM samples? */
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* ADPCM samples? */
 	ROM_LOAD( "padlem.18n",      0x0000,  0x8000,  0x06506200 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "padlem.a",        0x0000,  0x0100,  0xcae6bcd6 )
 	ROM_LOAD( "padlem.b",        0x0100,  0x0100,  0xb6df8dcb )
 	ROM_LOAD( "padlem.c",        0x0200,  0x0100,  0x39ca9b86 )
 ROM_END
 
 ROM_START( timesold )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "bf.3",       0x00000,  0x10000, 0xa491e533 )
-	ROM_LOAD_ODD ( "bf.4",       0x00000,  0x10000, 0x34ebaccc )
-	ROM_LOAD_EVEN( "bf.1",       0x20000,  0x10000, 0x158f4cb3 )
-	ROM_LOAD_ODD ( "bf.2",       0x20000,  0x10000, 0xaf01a718 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "bf.3",       0x00000,  0x10000, 0xa491e533 )
+	ROM_LOAD16_BYTE( "bf.4",       0x00001,  0x10000, 0x34ebaccc )
+	ROM_LOAD16_BYTE( "bf.1",       0x20000,  0x10000, 0x158f4cb3 )
+	ROM_LOAD16_BYTE( "bf.2",       0x20001,  0x10000, 0xaf01a718 )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "bf.7",            0x00000,  0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(                0x18000,  0x08000 )
 	ROM_LOAD( "bf.8",            0x30000,  0x10000, 0x8a43497b )
 	ROM_LOAD( "bf.9",            0x50000,  0x10000, 0x1408416f )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "bf.5",            0x00000,  0x08000, 0x3cec2f55 )
 	ROM_LOAD( "bf.6",            0x08000,  0x08000, 0x086a364d )
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "bf.10",           0x000000, 0x20000, 0x613313ba )
 	ROM_LOAD( "bf.14",           0x020000, 0x20000, 0xefda5c45 )
 	ROM_LOAD( "bf.18",           0x040000, 0x20000, 0xe886146a )
@@ -1852,23 +1852,23 @@ ROM_START( timesold )
 ROM_END
 
 ROM_START( timesol1 )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "3",          0x00000,  0x10000, 0xbc069a29 )
-	ROM_LOAD_ODD ( "4",          0x00000,  0x10000, 0xac7dca56 )
-	ROM_LOAD_EVEN( "bf.1",       0x20000,  0x10000, 0x158f4cb3 )
-	ROM_LOAD_ODD ( "bf.2",       0x20000,  0x10000, 0xaf01a718 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "3",          0x00000,  0x10000, 0xbc069a29 )
+	ROM_LOAD16_BYTE( "4",          0x00001,  0x10000, 0xac7dca56 )
+	ROM_LOAD16_BYTE( "bf.1",       0x20000,  0x10000, 0x158f4cb3 )
+	ROM_LOAD16_BYTE( "bf.2",       0x20001,  0x10000, 0xaf01a718 )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "bf.7",            0x00000,  0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(                0x18000,  0x08000 )
 	ROM_LOAD( "bf.8",            0x30000,  0x10000, 0x8a43497b )
 	ROM_LOAD( "bf.9",            0x50000,  0x10000, 0x1408416f )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "bf.5",            0x00000,  0x08000, 0x3cec2f55 )
 	ROM_LOAD( "bf.6",            0x08000,  0x08000, 0x086a364d )
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "bf.10",           0x000000, 0x20000, 0x613313ba )
 	ROM_LOAD( "bf.14",           0x020000, 0x20000, 0xefda5c45 )
 	ROM_LOAD( "bf.18",           0x040000, 0x20000, 0xe886146a )
@@ -1884,23 +1884,23 @@ ROM_START( timesol1 )
 ROM_END
 
 ROM_START( btlfield )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "bfv1_03.bin", 0x00000, 0x10000, 0x8720af0d )
-	ROM_LOAD_ODD ( "bfv1_04.bin", 0x00000, 0x10000, 0x7dcccbe6 )
-	ROM_LOAD_EVEN( "bf.1",        0x20000, 0x10000, 0x158f4cb3 )
-	ROM_LOAD_ODD ( "bf.2",        0x20000, 0x10000, 0xaf01a718 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "bfv1_03.bin", 0x00000, 0x10000, 0x8720af0d )
+	ROM_LOAD16_BYTE( "bfv1_04.bin", 0x00001, 0x10000, 0x7dcccbe6 )
+	ROM_LOAD16_BYTE( "bf.1",        0x20000, 0x10000, 0x158f4cb3 )
+	ROM_LOAD16_BYTE( "bf.2",        0x20001, 0x10000, 0xaf01a718 )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "bf.7",            0x00000,  0x08000, 0xf8b293b5 )
 	ROM_CONTINUE(                0x18000,  0x08000 )
 	ROM_LOAD( "bf.8",            0x30000,  0x10000, 0x8a43497b )
 	ROM_LOAD( "bf.9",            0x50000,  0x10000, 0x1408416f )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "bfv1_05.bin",     0x00000,  0x08000, 0xbe269dbf )
 	ROM_LOAD( "bfv1_06.bin",     0x08000,  0x08000, 0x022b9de9 )
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "bf.10",           0x000000, 0x20000, 0x613313ba )
 	ROM_LOAD( "bf.14",           0x020000, 0x20000, 0xefda5c45 )
 	ROM_LOAD( "bf.18",           0x040000, 0x20000, 0xe886146a )
@@ -1916,27 +1916,27 @@ ROM_START( btlfield )
 ROM_END
 
 ROM_START( skysoldr )
-	ROM_REGION( 0x80000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "ss.3",       0x00000, 0x10000, 0x7b88aa2e )
-	ROM_CONTINUE ( 0x40000,      0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "ss.4",       0x00000, 0x10000, 0xf0283d43 )
-	ROM_CONTINUE ( 0x40001,      0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_EVEN( "ss.1",       0x20000, 0x10000, 0x20e9dbc7 )
-	ROM_CONTINUE ( 0x60000,      0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "ss.2",       0x20000, 0x10000, 0x486f3432 )
-	ROM_CONTINUE ( 0x60001,      0x10000 | ROMFLAG_ALTERNATE )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ss.3",       0x00000, 0x10000, 0x7b88aa2e )
+	ROM_CONTINUE ( 0x40000,      0x10000 )
+	ROM_LOAD16_BYTE( "ss.4",       0x00001, 0x10000, 0xf0283d43 )
+	ROM_CONTINUE ( 0x40001,      0x10000 )
+	ROM_LOAD16_BYTE( "ss.1",       0x20000, 0x10000, 0x20e9dbc7 )
+	ROM_CONTINUE ( 0x60000,      0x10000 )
+	ROM_LOAD16_BYTE( "ss.2",       0x20001, 0x10000, 0x486f3432 )
+	ROM_CONTINUE ( 0x60001,      0x10000 )
 
-	ROM_REGION( 0x80000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "ss.7",            0x00000, 0x08000, 0xb711fad4 )
 	ROM_CONTINUE(                0x18000, 0x08000 )
 	ROM_LOAD( "ss.8",            0x30000, 0x10000, 0xe5cf7b37 )
 	ROM_LOAD( "ss.9",            0x50000, 0x10000, 0x76124ca2 )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "ss.5",            0x00000, 0x08000, 0x928ba287 )
 	ROM_LOAD( "ss.6",            0x08000, 0x08000, 0x93b30b55 )
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "ss.10",          0x000000, 0x20000, 0xe48c1623 )
 	ROM_LOAD( "ss.14",			0x020000, 0x20000, 0x190c8704 )
 	ROM_LOAD( "ss.18",			0x040000, 0x20000, 0xcb6ff33a )
@@ -1954,33 +1954,33 @@ ROM_START( skysoldr )
 	ROM_LOAD( "ss.21",			0x1c0000, 0x20000, 0xcb7bf5fe )
 	ROM_LOAD( "ss.25",			0x1e0000, 0x20000, 0x65138016 )
 
-	ROM_REGION( 0x80000, REGION_USER1 ) /* Reload the code here for upper bank */
-	ROM_LOAD_EVEN( "ss.3",      0x00000, 0x10000, 0x7b88aa2e )
-	ROM_CONTINUE ( 0x40000,     0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "ss.4",      0x00000, 0x10000, 0xf0283d43 )
-	ROM_CONTINUE ( 0x40001,     0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_EVEN( "ss.1",      0x20000, 0x10000, 0x20e9dbc7 )
-	ROM_CONTINUE ( 0x60000,     0x10000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "ss.2",      0x20000, 0x10000, 0x486f3432 )
-	ROM_CONTINUE ( 0x60001,     0x10000 | ROMFLAG_ALTERNATE )
+	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 ) /* Reload the code here for upper bank */
+	ROM_LOAD16_BYTE( "ss.3",      0x00000, 0x10000, 0x7b88aa2e )
+	ROM_CONTINUE   ( 0x40000,     0x10000 )
+	ROM_LOAD16_BYTE( "ss.4",      0x00001, 0x10000, 0xf0283d43 )
+	ROM_CONTINUE   ( 0x40001,     0x10000 )
+	ROM_LOAD16_BYTE( "ss.1",      0x20000, 0x10000, 0x20e9dbc7 )
+	ROM_CONTINUE   ( 0x60000,     0x10000 )
+	ROM_LOAD16_BYTE( "ss.2",      0x20001, 0x10000, 0x486f3432 )
+	ROM_CONTINUE   ( 0x60001,     0x10000 )
 ROM_END
 
 ROM_START( goldmedl )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "gm.3",      0x00000,  0x10000, 0xddf0113c )
-	ROM_LOAD_ODD ( "gm.4",      0x00000,  0x10000, 0x16db4326 )
-	ROM_LOAD_EVEN( "gm.1",      0x20000,  0x10000, 0x54a11e28 )
-	ROM_LOAD_ODD ( "gm.2",      0x20000,  0x10000, 0x4b6a13e4 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "gm.3",      0x00000,  0x10000, 0xddf0113c )
+	ROM_LOAD16_BYTE( "gm.4",      0x00001,  0x10000, 0x16db4326 )
+	ROM_LOAD16_BYTE( "gm.1",      0x20000,  0x10000, 0x54a11e28 )
+	ROM_LOAD16_BYTE( "gm.2",      0x20001,  0x10000, 0x4b6a13e4 )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "goldsnd0.c47",   0x00000,  0x08000, 0x031d27dc )
 	ROM_CONTINUE(               0x18000,  0x78000 )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "gm.5",           0x000000, 0x08000, 0x667f33f1 )
 	ROM_LOAD( "gm.6",           0x008000, 0x08000, 0x56020b13 )
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "goldchr3.c46",   0x000000, 0x80000, 0x6faaa07a )
 	ROM_LOAD( "goldchr2.c45",   0x080000, 0x80000, 0xe6b0aa2c )
 	ROM_LOAD( "goldchr1.c44",   0x100000, 0x80000, 0x55db41cd )
@@ -1988,50 +1988,50 @@ ROM_START( goldmedl )
 ROM_END
 
 ROM_START( goldmedb )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "l_3.bin",   0x00000,  0x10000, 0x5e106bcf)
-	ROM_LOAD_ODD ( "l_4.bin",   0x00000,  0x10000, 0xe19966af)
-	ROM_LOAD_EVEN( "l_1.bin",   0x20000,  0x08000, 0x7eec7ee5)
-	ROM_LOAD_ODD ( "l_2.bin",   0x20000,  0x08000, 0xbf59e4f9)
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "l_3.bin",   0x00000,  0x10000, 0x5e106bcf)
+	ROM_LOAD16_BYTE( "l_4.bin",   0x00001,  0x10000, 0xe19966af)
+	ROM_LOAD16_BYTE( "l_1.bin",   0x20000,  0x08000, 0x7eec7ee5)
+	ROM_LOAD16_BYTE( "l_2.bin",   0x20001,  0x08000, 0xbf59e4f9)
 
-	ROM_REGION( 0x88000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x88000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "goldsnd0.c47",   0x00000,  0x08000, 0x031d27dc )
 	ROM_CONTINUE(               0x10000,  0x78000 )
 
-	ROM_REGION( 0x010000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "gm.5",           0x000000, 0x08000, 0x667f33f1 )
 	ROM_LOAD( "gm.6",           0x008000, 0x08000, 0x56020b13 )
 //	ROM_LOAD( "33.bin", 0x000000, 0x10000, 0x5600b13 )
 
 	/* I haven't yet verified if these are the same as the bootleg */
 
-	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "goldchr3.c46",   0x000000, 0x80000, 0x6faaa07a )
 	ROM_LOAD( "goldchr2.c45",   0x080000, 0x80000, 0xe6b0aa2c )
 	ROM_LOAD( "goldchr1.c44",   0x100000, 0x80000, 0x55db41cd )
 	ROM_LOAD( "goldchr0.c43",   0x180000, 0x80000, 0x76572c3f )
 
-	ROM_REGION( 0x10000, REGION_USER1 )
-	ROM_LOAD_EVEN( "l_1.bin",   0x00000,  0x08000, 0x7eec7ee5)
-	ROM_LOAD_ODD ( "l_2.bin",   0x00000,  0x08000, 0xbf59e4f9)
+	ROM_REGION16_BE( 0x10000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "l_1.bin",   0x00000,  0x08000, 0x7eec7ee5)
+	ROM_LOAD16_BYTE( "l_2.bin",   0x00001,  0x08000, 0xbf59e4f9)
 ROM_END
 
 ROM_START( skyadvnt )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
-	ROM_LOAD_ODD ( "sa2.bin",   0x00000,  0x20000, 0x06074e72 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
+	ROM_LOAD16_BYTE( "sa2.bin",   0x00001,  0x20000, 0x06074e72 )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
 	ROM_CONTINUE(               0x18000,  0x08000 )
 	ROM_LOAD( "sa.4",           0x30000,  0x10000, 0xc2e3c30c )
 	ROM_LOAD( "sa.5",           0x50000,  0x10000, 0x11cdb868 )
 	ROM_LOAD( "sa.6",           0x70000,  0x08000, 0x237d93fd )
 
-	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "sa.7",           0x000000, 0x08000, 0xea26e9c5 )
 
-	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "sachr3",         0x000000, 0x80000, 0xa986b8d5 )
 	ROM_LOAD( "sachr2",         0x0a0000, 0x80000, 0x504b07ae )
 	ROM_LOAD( "sachr1",         0x140000, 0x80000, 0xe734dccd )
@@ -2039,21 +2039,21 @@ ROM_START( skyadvnt )
 ROM_END
 
 ROM_START( skyadvnu )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
-	ROM_LOAD_ODD ( "sa_v3.2",   0x00000,  0x20000, 0xfa7a14d1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
+	ROM_LOAD16_BYTE( "sa_v3.2",   0x00001,  0x20000, 0xfa7a14d1 )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
 	ROM_CONTINUE(               0x18000,  0x08000 )
 	ROM_LOAD( "sa.4",           0x30000,  0x10000, 0xc2e3c30c )
 	ROM_LOAD( "sa.5",           0x50000,  0x10000, 0x11cdb868 )
 	ROM_LOAD( "sa.6",           0x70000,  0x08000, 0x237d93fd )
 
-	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "sa.7",           0x000000, 0x08000, 0xea26e9c5 )
 
-	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "sachr3",         0x000000, 0x80000, 0xa986b8d5 )
 	ROM_LOAD( "sachr2",         0x0a0000, 0x80000, 0x504b07ae )
 	ROM_LOAD( "sachr1",         0x140000, 0x80000, 0xe734dccd )
@@ -2061,11 +2061,11 @@ ROM_START( skyadvnu )
 ROM_END
 
 ROM_START( gangwars )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "u1",        0x00000, 0x20000, 0x11433507 )
-	ROM_LOAD_ODD ( "u2",        0x00000, 0x20000, 0x44cc375f )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "u1",        0x00000, 0x20000, 0x11433507 )
+	ROM_LOAD16_BYTE( "u2",        0x00001, 0x20000, 0x44cc375f )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "u12",            0x00000, 0x08000, 0x2620caa1 )
 	ROM_CONTINUE(               0x18000, 0x08000 )
 	ROM_LOAD( "u9",             0x70000, 0x10000, 0x9136745e )
@@ -2081,10 +2081,10 @@ the 128k ones are and match these ones.
 
 */
 
-	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "gwb_ic.m19",		0x000000, 0x10000, 0xb75bf1d0 )
 
-	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "gwb_ic.308",		0x000000, 0x10000, 0x321a2fdd )
 	ROM_LOAD( "gwb_ic.309",		0x010000, 0x10000, 0x4d908f65 )
 	ROM_LOAD( "gwb_ic.310",		0x020000, 0x10000, 0xfc888541 )
@@ -2126,27 +2126,27 @@ the 128k ones are and match these ones.
 	ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
 	ROM_LOAD( "gwb_ic.315",		0x270000, 0x10000, 0xe7c9b103 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* Extra code bank */
-	ROM_LOAD_EVEN( "u3",        0x00000,  0x20000, 0xde6fd3c0 )
-	ROM_LOAD_ODD ( "u4",        0x00000,  0x20000, 0x43f7f5d3 )
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 ) /* Extra code bank */
+	ROM_LOAD16_BYTE( "u3",        0x00000,  0x20000, 0xde6fd3c0 )
+	ROM_LOAD16_BYTE( "u4",        0x00001,  0x20000, 0x43f7f5d3 )
 ROM_END
 
 ROM_START( gangwarb )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "gwb_ic.m15", 0x00000, 0x20000, 0x7752478e )
-	ROM_LOAD_ODD ( "gwb_ic.m16", 0x00000, 0x20000, 0xc2f3b85e )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "gwb_ic.m15", 0x00000, 0x20000, 0x7752478e )
+	ROM_LOAD16_BYTE( "gwb_ic.m16", 0x00001, 0x20000, 0xc2f3b85e )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "gwb_ic.380",      0x00000, 0x08000, 0xe6d6c9cf )
 	ROM_CONTINUE(                0x18000, 0x08000 )
 	ROM_LOAD( "gwb_ic.419",      0x30000, 0x10000, 0x84e5c946 )
 	ROM_LOAD( "gwb_ic.420",      0x50000, 0x10000, 0xeb305d42 )
 	ROM_LOAD( "gwb_ic.421",      0x70000, 0x10000, 0x7b9f2608 )
 
-	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "gwb_ic.m19",		0x000000, 0x10000, 0xb75bf1d0 )
 
-	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "gwb_ic.308",		0x000000, 0x10000, 0x321a2fdd )
 	ROM_LOAD( "gwb_ic.309",		0x010000, 0x10000, 0x4d908f65 )
 	ROM_LOAD( "gwb_ic.310",		0x020000, 0x10000, 0xfc888541 )
@@ -2188,27 +2188,27 @@ ROM_START( gangwarb )
 	ROM_LOAD( "gwb_ic.280",		0x260000, 0x10000, 0x222b3dcd )
 	ROM_LOAD( "gwb_ic.315",		0x270000, 0x10000, 0xe7c9b103 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* Extra code bank */
-	ROM_LOAD_EVEN( "gwb_ic.m17", 0x00000, 0x20000, 0x2a5fe86e )
-	ROM_LOAD_ODD ( "gwb_ic.m18", 0x00000, 0x20000, 0xc8b60c53 )
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 ) /* Extra code bank */
+	ROM_LOAD16_BYTE( "gwb_ic.m17", 0x00000, 0x20000, 0x2a5fe86e )
+	ROM_LOAD16_BYTE( "gwb_ic.m18", 0x00001, 0x20000, 0xc8b60c53 )
 ROM_END
 
 ROM_START( sbasebal )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "snksb1.bin", 0x00000, 0x20000, 0x304fef2d )
-	ROM_LOAD_ODD ( "snksb2.bin", 0x00000, 0x20000, 0x35821339 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "snksb1.bin", 0x00000, 0x20000, 0x304fef2d )
+	ROM_LOAD16_BYTE( "snksb2.bin", 0x00001, 0x20000, 0x35821339 )
 
-	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "snksb3.bin",      0x00000, 0x08000, 0x89e12f25 )
 	ROM_CONTINUE(                0x18000, 0x08000 )
 	ROM_LOAD( "snksb4.bin",      0x30000, 0x10000, 0xcca2555d )
 	ROM_LOAD( "snksb5.bin",      0x50000, 0x10000, 0xf45ee36f )
 	ROM_LOAD( "snksb6.bin",      0x70000, 0x10000, 0x651c9472 )
 
-	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "snksb7.bin",      0x000000, 0x10000, 0x8f3c2e25 )
 
-	ROM_REGION( 0x280000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kcbchr3.bin",     0x000000, 0x80000, 0x719071c7 )
 	ROM_LOAD( "kcbchr2.bin",     0x0a0000, 0x80000, 0x014f0f90 )
 	ROM_LOAD( "kcbchr1.bin",     0x140000, 0x80000, 0xa5ce1e10 )

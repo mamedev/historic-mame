@@ -603,12 +603,12 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * Input a byte from given I/O port
  ***************************************************************/
-#define IN(port)   ((UINT8)cpu_readport(port))
+#define IN(port)   ((UINT8)cpu_readport16(port))
 
 /***************************************************************
  * Output a byte to given I/O port
  ***************************************************************/
-#define OUT(port,value) cpu_writeport(port,value)
+#define OUT(port,value) cpu_writeport16(port,value)
 
 /***************************************************************
  * Read a byte from given memory location
@@ -3978,7 +3978,7 @@ static void take_interrupt(void)
                     break;
             }
         }
-        change_pc(_PCD);
+        change_pc16(_PCD);
     }
 }
 
@@ -4107,7 +4107,7 @@ void z80_reset(void *param)
         }
     }
 
-    change_pc(_PCD);
+    change_pc16(_PCD);
 }
 
 void z80_exit(void)
@@ -4173,7 +4173,7 @@ void z80_set_context (void *src)
 {
 	if( src )
 		Z80 = *(Z80_Regs*)src;
-    change_pc(_PCD);
+    change_pc16(_PCD);
 }
 
 /****************************************************************************
@@ -4209,7 +4209,7 @@ unsigned z80_get_pc (void)
 void z80_set_pc (unsigned val)
 {
 	_PC = val;
-	change_pc(_PCD);
+	change_pc16(_PCD);
 }
 
 /****************************************************************************

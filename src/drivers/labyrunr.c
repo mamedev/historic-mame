@@ -281,15 +281,15 @@ static const struct MachineDriver machine_driver_labyrunr =
 ***************************************************************************/
 
 ROM_START( labyrunr )
-	ROM_REGION( 0x28000, REGION_CPU1 ) /* code + banked roms */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* code + banked roms */
 	ROM_LOAD( "771j04.10f", 0x10000, 0x08000, 0x354a41d0 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
 	ROM_LOAD( "771j03.08f", 0x18000, 0x10000, 0x12b49044 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "771d01.14a",	0x00000, 0x40000, 0x15c8f5f9 )	/* tiles + sprites */
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "771d02.08d", 0x0000, 0x0100, 0x3d34bb5a )	/* sprite lookup table */
 															/* there is no char lookup table */
 ROM_END

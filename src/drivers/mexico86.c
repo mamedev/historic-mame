@@ -408,42 +408,42 @@ MACHINEDRIVER( kikikai )
 ***************************************************************************/
 
 ROM_START( kikikai )
-	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
 	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, 0xc141d5ab ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, 0x4094d750 ) /* banked at 0x8000			 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, 0xcc3539db )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, 0x3cc2bbe4 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a85-15.rom", 0x00000, 0x10000, 0xaebc8c32 )
 	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, 0xa9df0453 )
 	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, 0x3eeaf878 )
 	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, 0x91e58067 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, 0xd15f61a8 )
 	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
 	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
 ROM_END
 
 ROM_START( kicknrun )
-	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
 	ROM_LOAD( "a87-08.bin", 0x00000, 0x08000, 0x715e1b04 ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "a87-07.bin", 0x10000, 0x10000, 0x6cb6ebfe ) /* banked at 0x8000			 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BADCRC(0x8e821fa0) )	/* manually crafted from the Mexico '86 one */
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "a87-05.bin", 0x08000, 0x08000, 0x4eee3a8a )
 	ROM_CONTINUE(           0x00000, 0x08000 )
 	ROM_LOAD( "a87-04.bin", 0x10000, 0x08000, 0x8b438d20 )
@@ -453,25 +453,25 @@ ROM_START( kicknrun )
 	ROM_LOAD( "a87-02.bin", 0x30000, 0x08000, 0x64f1a85f )
 	ROM_RELOAD(             0x38000, 0x08000 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
 ROM_END
 
 ROM_START( mexico86 )
-	ROM_REGION( 0x28000, REGION_CPU1 )	 /* 196k for code */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	 /* 196k for code */
 	ROM_LOAD( "2_g.bin",    0x00000, 0x08000, 0x2bbfe0fb ) /* 1st half, main code		 */
 	ROM_CONTINUE(           0x20000, 0x08000 )			   /* 2nd half, banked at 0x8000 */
 	ROM_LOAD( "1_f.bin",    0x10000, 0x10000, 0x0b93e68e ) /* banked at 0x8000			 */
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	 /* 64k for the audio cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	 /* 64k for the audio cpu */
 	ROM_LOAD( "a87-06.bin", 0x0000, 0x8000, 0x1625b587 )
 
-	ROM_REGION( 0x0800, REGION_CPU3 )	/* 2k for the microcontroller */
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, 0xff92f816 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "4_d.bin",    0x08000, 0x08000, 0x57cfdbca )
 	ROM_CONTINUE(           0x00000, 0x08000 )
 	ROM_LOAD( "5_c.bin",    0x10000, 0x08000, 0xe42fa143 )
@@ -481,7 +481,7 @@ ROM_START( mexico86 )
 	ROM_LOAD( "7_a.bin",    0x30000, 0x08000, 0x245036b1 )
 	ROM_RELOAD(             0x38000, 0x08000 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )

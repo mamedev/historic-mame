@@ -1259,6 +1259,30 @@ WRITE_HANDLER( paletteram_RRRGGGBB_w )
 	palette_change_color(offset,r,g,b);
 }
 
+WRITE_HANDLER( paletteram_BBBGGGRR_w )
+{
+	int r,g,b;
+	int bit0,bit1,bit2;
+
+	paletteram[offset] = data;
+
+	/* blue component */
+	bit0 = (data >> 5) & 0x01;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* green component */
+	bit0 = (data >> 2) & 0x01;
+	bit1 = (data >> 3) & 0x01;
+	bit2 = (data >> 4) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	/* blue component */
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	r = 0x55 * bit0 + 0xaa * bit1;
+
+	palette_change_color(offset,r,g,b);
+}
 
 WRITE_HANDLER( paletteram_BBGGGRRR_w )
 {

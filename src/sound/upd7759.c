@@ -151,6 +151,7 @@ struct UPD7759voice
 
 /* global pointer to the current interface */
 static const struct UPD7759_interface *upd7759_intf;
+static offs_t upd7759_bank_base[MAX_UPD7759];
 
 /* array of ADPCM voices */
 static struct UPD7759voice updadpcm[MAX_UPD7759];
@@ -223,7 +224,7 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	unsigned char *data;
 
 
-	memrom = memory_region(upd7759_intf->region[num]);
+	memrom = memory_region(upd7759_intf->region[num]) + upd7759_bank_base[num];
 
 	numsam = (unsigned int)memrom[0]; /* get number of samples from sound rom */
 	header = &(memrom[1]);
@@ -248,6 +249,7 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 
 	nextoff = 2 * sample_num;
 	sample->offset = ((((unsigned int)(header[nextoff]))<<8)+(header[nextoff+1]))*2;
+	sample->offset += upd7759_bank_base[num];
 	data = &memory_region(upd7759_intf->region[num])[sample->offset];
 	/* guesswork, probably wrong */
 	j = 0;
@@ -315,6 +317,8 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 	upd7759_intf = intf;
 	base_rate = intf->clock_rate / CLOCK_DIVIDER;
 
+	memset(upd7759_bank_base, 0, sizeof(upd7759_bank_base));
+
 #if OVERSAMPLING
 	oversampling = (Machine->sample_rate / base_rate);
 	if (!oversampling) oversampling = 1;
@@ -348,6 +352,17 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 
 void UPD7759_sh_stop (void)
 {
+}
+
+
+/*
+ *   Set an offset to the base of the ROM within the region
+ */
+
+void UPD7759_set_bank_base(int which, offs_t base)
+{
+	if (which < MAX_UPD7759)
+		upd7759_bank_base[which] = base;
 }
 
 

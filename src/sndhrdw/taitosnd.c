@@ -3,13 +3,6 @@
 
 
 /**********************************************************************************************
-	Soundboard Status bitfield definition:
-	 bit meaning
-	  0  Set if theres any data pending that the main cpu sent to the slave
-	  1  ??? ( Its not being checked both on Rastan and SSI )
-	  2  Set if theres any data pending that the slave sent to the main cpu
-
-***********************************************************************************************
 
 	It seems like 1 nibble commands are only for control purposes.
 	2 nibble commands are the real messages passed from one board to the other.
@@ -24,242 +17,245 @@
 #define REPORT_DATA_FLOW
 #endif
 
-static int irq_enabled=0; /* interrupts off */
-
-/* status of soundboard ( reports any commands pending ) */
-static unsigned char SlaveContrStat = 0;
-
-static int transmit=0; /* number of bytes to transmit/receive (SLAVE) */
-static int tr_mode;    /* transmit mode (1 or 2 bytes) */
-static int lasthalf=0; /* in 2 bytes mode this is first nibble (LSB bits 0,1,2,3) received */
-
-static int m_transmit=0; /* as above but for motherboard (MASTER) */
-static int m_tr_mode;    /* as above */
-static int m_lasthalf=0; /* as above */
-
-static int irq_req=0; /*no request*/
-
-static unsigned char soundcommand;
-static unsigned char soundboarddata;
 
 
-/***********************************************************************/
-/*  looking from sound board point of view ... (SLAVE)                 */
-/***********************************************************************/
 
-void Interrupt_Controller(void)
+#define TC0140SYT_PORT01_FULL         (0x01)
+#define TC0140SYT_PORT23_FULL         (0x02)
+#define TC0140SYT_PORT01_FULL_MASTER  (0x04)
+#define TC0140SYT_PORT23_FULL_MASTER  (0x08)
+
+typedef struct TC0140SYT
 {
-	if ( irq_req && irq_enabled )
+	unsigned char slavedata[4];	/* Data on master->slave port (4 nibbles) */
+	unsigned char masterdata[4];/* Data on slave->master port (4 nibbles) */
+	unsigned char mainmode;		/* Access mode on master cpu side */
+	unsigned char submode;		/* Access mode on slave cpu side */
+	unsigned char status;		/* Status data */
+	unsigned char nmi_enabled;	/* 1 if slave cpu has nmi's enabled */
+	unsigned char nmi_req;		/* 1 if slave cpu has a pending nmi */
+} TC0140SYT;
+
+static struct TC0140SYT tc0140syt;
+
+
+static void Interrupt_Controller(void)
+{
+	if ( tc0140syt.nmi_req && tc0140syt.nmi_enabled )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT ); //maybe we should use set_nmi_line here ?
-		irq_req = 0;
+		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		tc0140syt.nmi_req = 0;
 	}
 }
 
+WRITE_HANDLER( taitosound_port_w )
+{
+	data &= 0x0f;
+
+	tc0140syt.mainmode = data;
+	//logerror("taitosnd: Master cpu mode [%02x]\n", data);
+	if (data > 4)
+	{
+		logerror("tc0140syt : error Master entering unknown mode[%02x]\n", data);
+	}
+}
+
+WRITE_HANDLER( taitosound_comm_w )
+{
+
+	data &= 0x0f;	/*this is important, otherwise ballbros won't work*/
+
+	switch( tc0140syt.mainmode )
+	{
+		case 0x00:		// mode #0
+			tc0140syt.slavedata[tc0140syt.mainmode ++] = data;
+			//logerror("taitosnd: Master cpu written port 0, data %01x\n", data);
+			break;
+			
+		case 0x01:		// mode #1
+			tc0140syt.slavedata[tc0140syt.mainmode ++] = data;
+			tc0140syt.status |= TC0140SYT_PORT01_FULL;
+			tc0140syt.nmi_req = 1;
+			//logerror("taitosnd: Master cpu sends 0/1 : %01x%01x\n",tc0140syt.slavedata[1],tc0140syt.slavedata[0]);
+        	break;
+			
+		case 0x02:		// mode #2
+			tc0140syt.slavedata[tc0140syt.mainmode ++] = data;
+			//logerror("taitosnd: Master cpu written port 2, data %01\n", data);
+			break;
+			
+		case 0x03:		// mode #3
+			tc0140syt.slavedata[tc0140syt.mainmode ++] = data;
+			tc0140syt.status |= TC0140SYT_PORT23_FULL;
+			tc0140syt.nmi_req = 1;
+			//logerror("taitosnd: Master cpu sends 2/3 : %01x%01x\n",tc0140syt.slavedata[3],tc0140syt.slavedata[2]);
+			break;
+			
+		case 0x04:		// port status
+//#ifdef REPORT_DATA_FLOW
+			//logerror("taitosnd: Master issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
+//#endif
+			/* this does a hi-lo transition to reset the sound cpu */
+			if (data)
+				cpu_set_reset_line(1,ASSERT_LINE);
+			else
+			{
+				cpu_set_reset_line(1,CLEAR_LINE);
+                cpu_spin(); /* otherwise no sound in driftout */
+            }
+			break;
+			
+		default:
+			logerror("taitosnd: Master cpu written in mode [%02x] data[%02x]\n",tc0140syt.mainmode, data);
+	}
+
+}
+
+READ_HANDLER( taitosound_comm_r )
+{
+	switch( tc0140syt.mainmode )
+	{
+		case 0x00:		// mode #0
+			//logerror("taitosnd: Master cpu read portdata %01x\n", tc0140syt.masterdata[0]);
+			return tc0140syt.masterdata[tc0140syt.mainmode ++];
+			break;
+			
+		case 0x01:		// mode #1
+			//logerror("taitosnd: Master cpu receives 0/1 : %01x%01x\n", tc0140syt.masterdata[1],tc0140syt.masterdata[0]);
+			tc0140syt.status &= ~TC0140SYT_PORT01_FULL_MASTER;
+			return tc0140syt.masterdata[tc0140syt.mainmode ++];
+			break;
+			
+		case 0x02:		// mode #2
+			//logerror("taitosnd: Master cpu read masterdata %01x\n", tc0140syt.masterdata[2]);
+			return tc0140syt.masterdata[tc0140syt.mainmode ++];
+			break;
+			
+		case 0x03:		// mode #3
+			//logerror("taitosnd: Master cpu receives 2/3 : %01x%01x\n", tc0140syt.masterdata[3],tc0140syt.masterdata[2]);
+			tc0140syt.status &= ~TC0140SYT_PORT23_FULL_MASTER;
+			return tc0140syt.masterdata[tc0140syt.mainmode ++];
+			break;
+			
+		case 0x04:		// port status
+			//logerror("tc0140syt : Master cpu read status : %02x\n", tc0140syt.status);
+			return tc0140syt.status;
+			break;
+			
+		default:
+			logerror("tc0140syt : Master cpu read in mode [%02x]\n", tc0140syt.mainmode);
+			return 0;
+	}
+}
+
+//SLAVE SIDE
 
 WRITE_HANDLER( taitosound_slave_port_w )
 {
-	int pom;
-
-	if (transmit != 0)
-		logerror("taitosnd: Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
-
-#ifdef REPORT_SLAVE_MODE_CHANGE
-	logerror("taitosnd: Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
-#endif
-
-	pom = (data >> 2 ) & 0x01;
-	transmit = 1 + (1 - pom); /* one or two bytes long transmission */
-	lasthalf = 0;
-	tr_mode = transmit;
-
-	pom = data & 0x03;
-	if (pom == 0x01)
-		irq_enabled = 0; /* off */
-
-	if (pom == 0x02)
-		irq_enabled = 1; /* on */
-
-	if (pom == 0x03)
-		logerror("taitosnd: Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
-}
-
-READ_HANDLER( taitosound_slave_comm_r )
-{
-	static unsigned char pom=0;
-
-	if (transmit == 0)
-	{
-		logerror("taitosnd: Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
-	}
-	else
-	{
-		if (tr_mode == 1)
-		{
-			pom = SlaveContrStat;
-#ifdef REPORT_SLAVE_MODE_READ_ITSELF
-			logerror("taitosnd: Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_get_pc() );
-#endif
-		}
-		else
-		{            /*2-bytes transmision*/
-			if (transmit==2)
-			{
-				pom = soundcommand & 0x0f;
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_get_pc() );
-#endif
-			}
-			else
-			{
-				pom = (soundcommand & 0xf0) >> 4;
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_get_pc() );
-#endif
-				SlaveContrStat &= 0xfe; /* Ready to receive new commands */;
-			}
-		}
-		transmit--;
-	}
-
-	Interrupt_Controller();
-
-	return pom;
+	data &= 0x0f;
+	tc0140syt.submode = data;
+	//logerror("taitosnd: Slave cpu mode [%02x]\n", data);
+	if (data > 6)
+		logerror("tc0140syt error : Slave cpu unknown mode[%02x]\n", data);
 }
 
 WRITE_HANDLER( taitosound_slave_comm_w )
 {
 	data &= 0x0f;
 
-	if (transmit == 0)
+	switch ( tc0140syt.submode )
 	{
-		logerror("taitosnd: Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
-	}
-	else
-	{
-		if (transmit == 2)
-			lasthalf = data;
-		transmit--;
-		if (transmit==0)
-		{
-			if (tr_mode == 2)
-			{
-				soundboarddata = lasthalf + (data << 4);
-				SlaveContrStat |= 4; /* report data pending on main */
-				cpu_spin(); /* writing should take longer than emulated, so spin */
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_get_pc() );
-#endif
-			}
-			else
-			{
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Slave issued control value %02x (PC = %04x)\n",data, cpu_get_pc() );
-#endif
-			}
-		}
+		case 0x00:		// mode #0
+			tc0140syt.masterdata[tc0140syt.submode ++] = data;
+			//logerror("taitosnd: Slave cpu written port 0, data %01x\n", data);
+			break;
+			
+		case 0x01:		// mode #1
+			tc0140syt.masterdata[tc0140syt.submode ++] = data;
+			tc0140syt.status |= TC0140SYT_PORT01_FULL_MASTER;
+			//logerror("taitosnd: Slave cpu sends 0/1 : %01x%01x\n",tc0140syt.masterdata[1],tc0140syt.masterdata[0]);
+			cpu_spin(); /* writing should take longer than emulated, so spin */
+			break;
+			
+		case 0x02:		// mode #2
+			//logerror("taitosnd: Slave cpu written port 2, data %01x\n", data);
+			tc0140syt.masterdata[tc0140syt.submode ++] = data;
+			break;
+			
+		case 0x03:		// mode #3
+			tc0140syt.masterdata[tc0140syt.submode ++] = data;
+			tc0140syt.status |= TC0140SYT_PORT23_FULL_MASTER;
+			//logerror("taitosnd: Slave cpu sends 2/3 : %01x%01x\n",tc0140syt.masterdata[3],tc0140syt.masterdata[2]);
+			cpu_spin(); /* writing should take longer than emulated, so spin */
+			break;
+			
+		case 0x04:		// port status
+			//tc0140syt.status = TC0140SYT_SET_OK;
+			//logerror("tc0140syt : Slave cpu status ok.\n");
+			break;
+			
+		case 0x05:		// nmi disable
+			tc0140syt.nmi_enabled = 0;
+			break;
+			
+		case 0x06:		// nmi enable
+			tc0140syt.nmi_enabled = 1;
+			break;
+			
+		default:
+			logerror("tc0140syt: Slave cpu written in mode [%02x] data[%02x]\n",tc0140syt.submode, data & 0xff);
 	}
 
 	Interrupt_Controller();
+
 }
 
-
-
-/***********************************************************************/
-/*  now looking from main board point of view (MASTER)                 */
-/***********************************************************************/
-
-WRITE_HANDLER( taitosound_port_w )
+READ_HANDLER( taitosound_slave_comm_r )
 {
-	if ((data&0xff) != 0x01)
+	unsigned char res = 0;
+
+	switch ( tc0140syt.submode )
 	{
-		int pom = (data >> 2 ) & 0x01;
-		m_transmit = 1 + (1 - pom); /* one or two bytes long transmission */
-		m_lasthalf = 0;
-		m_tr_mode = m_transmit;
+		case 0x00:		// mode #0
+			//logerror("taitosnd: Slave cpu read slavedata %01x\n", tc0140syt.slavedata[0]);
+			res = tc0140syt.slavedata[tc0140syt.submode ++];
+			break;
+			
+		case 0x01:		// mode #1
+			//logerror("taitosnd: Slave cpu receives 0/1 : %01x%01x PC=%4x\n", tc0140syt.slavedata[1],tc0140syt.slavedata[0],cpu_get_pc());
+			tc0140syt.status &= ~TC0140SYT_PORT01_FULL;
+			res = tc0140syt.slavedata[tc0140syt.submode ++];
+			break;
+			
+		case 0x02:		// mode #2
+			//logerror("taitosnd: Slave cpu read slavedata %01x\n", tc0140syt.slavedata[2]);
+			res = tc0140syt.slavedata[tc0140syt.submode ++];
+			break;
+			
+		case 0x03:		// mode #3
+			//logerror("taitosnd: Slave cpu receives 2/3 : %01x%01x\n", tc0140syt.slavedata[3],tc0140syt.slavedata[2]);
+			tc0140syt.status &= ~TC0140SYT_PORT23_FULL;
+			res = tc0140syt.slavedata[tc0140syt.submode ++];
+			break;
+			
+		case 0x04:		// port status
+			//logerror("tc0140syt : Slave cpu read status : %02x\n", tc0140syt.status);
+			res = tc0140syt.status;
+			break;
+			
+		default:
+			logerror("tc0140syt : Slave cpu read in mode [%02x]\n", tc0140syt.submode);
+			res = 0;
 	}
-	else
-	{
-		if (m_transmit == 1)
-		{
-			/*logerror("taitosnd: single-doubled (first was=%02x)\n",m_lasthalf);*/
-		}
-		else
-		{
-			logerror("taitosnd: taitosound_port_w() - unknown innerworking\n");
-		}
-	}
+
+	Interrupt_Controller();
+
+    return res;
 }
 
-WRITE_HANDLER( taitosound_comm_w )
-{
-	data &= 0x0f;
 
-	if (m_transmit == 0)
-	{
-		logerror("taitosnd: Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
-	}
-	else
-	{
-		if (m_transmit == 2)
-			m_lasthalf = data;
 
-		m_transmit--;
 
-		if (m_transmit==0)
-		{
-			if (m_tr_mode == 2)
-			{
-				soundcommand = m_lasthalf + (data << 4);
-				SlaveContrStat |= 1; /* report data pending for slave */
-				irq_req = 1;
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
-#endif
-			}
-			else
-			{
-#ifdef REPORT_DATA_FLOW
-				logerror("taitosnd: Main issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
-#endif
-				/* this does a hi-lo transition to reset the sound cpu */
-				if (data)
-					cpu_set_reset_line(1,ASSERT_LINE);
-				else
-					cpu_set_reset_line(1,CLEAR_LINE);
-
-				m_transmit++;
-			}
-		}
-	}
-}
-
-READ_HANDLER( taitosound_comm_r )
-{
-
-	m_transmit--;
-	if (m_tr_mode==2)
-	{
-#ifdef REPORT_DATA_FLOW
-		logerror("taitosnd: Main read double %02x (PC = %08x)\n",soundboarddata, cpu_get_pc() );
-#endif
-		SlaveContrStat &= 0xfb; /* clear pending data for main bit */
-
-		if ( m_transmit == 1 )
-			return soundboarddata & 0x0f;
-
-		return ( soundboarddata >> 4 ) & 0x0f;
-
-	}
-	else
-	{
-#ifdef REPORT_MAIN_MODE_READ_SLAVE
-		logerror("taitosnd: Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_get_pc() );
-#endif
-		m_transmit++;
-		return SlaveContrStat;
-	}
-}
 
 
 

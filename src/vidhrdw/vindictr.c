@@ -145,39 +145,53 @@ void vindictr_vh_stop(void)
 
 void vindictr_scanline_update(int scanline)
 {
-	data16_t *base = &atarian_0_base[(scanline / 8) * 64 + 42];
+	data16_t *base = &atarian_0_base[((scanline - 8) / 8) * 64 + 42];
 	int x;
 
-	/* update the current parameters */
-	if (base < &atarian_0_base[0x7c0])
-		for (x = 42; x < 64; x++)
-		{
-			data16_t data = *base++;
-			data16_t command = data & 0x7e00;
+	/* keep in range */
+	if (base < atarian_0_base)
+		base += 0x7c0;
+	else if (base >= &atarian_0_base[0x7c0])
+		return;
 
-			if (command == 0x7400)
-				ataripf_set_bankbits(0, (data & 7) << 16, scanline + 8);
-			else if (command == 0x7600)
-			{
-				ataripf_set_xscroll(0, data & 0x1ff, scanline + 8);
-				atarimo_set_xscroll(0, data & 0x1ff, scanline + 8);
-			}
-			else if (command == 0x7800)
-				;
-			else if (command == 0x7a00)
-				;
-			else if (command == 0x7c00)
-				;
-			else if (command == 0x7e00)
+	/* update the current parameters */
+	for (x = 42; x < 64; x++)
+	{
+		data16_t data = *base++;
+
+		switch ((data >> 9) & 7)
+		{
+			case 2:		/* /PFB */
+				ataripf_set_bankbits(0, (data & 7) << 16, scanline);
+				break;
+			
+			case 3:		/* /PFHSLD */
+				ataripf_set_xscroll(0, data & 0x1ff, scanline);
+				break;
+			
+			case 4:		/* /MOHS */
+				atarimo_set_xscroll(0, data & 0x1ff, scanline);
+				break;
+				
+			case 5:		/* /PFSPC */
+				break;
+			
+			case 6:		/* /VIRQ */
+				atarigen_scanline_int_gen();
+				break;
+				
+			case 7:		/* /PFVS */
 			{
 				/* a new vscroll latches the offset into a counter; we must adjust for this */
-				int offset = scanline + 8;
+				int offset = scanline;
 				if (offset >= 240)
 					offset -= 240;
-				ataripf_set_yscroll(0, (data - offset) & 0x1ff, scanline + 8);
-				atarimo_set_yscroll(0, (data - offset) & 0x1ff, scanline + 8);
+				ataripf_set_yscroll(0, (data - offset) & 0x1ff, scanline);
+				atarimo_set_yscroll(0, (data - offset) & 0x1ff, scanline);
+				break;
 			}
 		}
+	}
 }
 
 

@@ -5,19 +5,17 @@
 
 #include "driver.h"
 #include "cpu/tms32010/tms32010.h"
+#include "vidhrdw/generic.h"
 
 #define LOG_DSP_CALLS 0
-#define CLEAR 0
+#define CLEAR  0
 #define ASSERT 1
 
 
 
-unsigned char *twincobr_68k_dsp_ram;
-unsigned char *twincobr_sharedram;
-unsigned char *wardner_mainram;
-
-extern unsigned char *spriteram;
-extern unsigned char *paletteram;
+data16_t *twincobr_68k_dsp_ram;
+data8_t  *twincobr_sharedram;
+data8_t   *wardner_mainram;
 
 
 extern int twincobr_fg_rom_bank;
@@ -31,7 +29,7 @@ extern int wardner_sprite_hack;
 static int coin_count;	/* coin count increments on startup ? , so stop it */
 static int dsp_execute;
 static unsigned int dsp_addr_w, main_ram_seg;
-int toaplan_main_cpu;   /* Main CPU type.  0 = 68000, 1 = Z80 */
+int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 #if LOG_DSP_CALLS
 static char *toaplan_cpu_type[2] = { "68K" , "Z80" };
 #endif
@@ -42,65 +40,38 @@ int fsharkbt_8741;
 
 void fsharkbt_reset_8741_mcu(void)
 {
-	/* clean out high score tables in these game hardware */
-	int twincobr_cnt;
-	int twinc_hisc_addr[12] =
-	{
-		0x15a4, 0x15a8, 0x170a, 0x170c, /* Twin Cobra */
-		0x1282, 0x1284, 0x13ea, 0x13ec, /* Kyukyo Tiger */
-		0x016c, 0x0170, 0x02d2, 0x02d4	/* Flying shark */
-	};
-	for (twincobr_cnt=0; twincobr_cnt < 12; twincobr_cnt++)
-	{
-		WRITE_WORD(&twincobr_68k_dsp_ram[(twinc_hisc_addr[twincobr_cnt])],0xffff);
-	}
-
 	toaplan_main_cpu = 0;		/* 68000 */
 	twincobr_display_on = 0;
 	fsharkbt_8741 = -1;
 	twincobr_intenable = 0;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
-
-	/* coin count increments on startup ? , so stop it */
-	coin_count = 0;
+	coin_count = 0;		/* coin count increments on startup ? , so stop it */
 }
 
 void wardner_reset(void)
 {
-	/* clean out high score tables in these game hardware */
-	wardner_mainram[0x0117] = 0xff;
-	wardner_mainram[0x0118] = 0xff;
-	wardner_mainram[0x0119] = 0xff;
-	wardner_mainram[0x011a] = 0xff;
-	wardner_mainram[0x011b] = 0xff;
-	wardner_mainram[0x0170] = 0xff;
-	wardner_mainram[0x0171] = 0xff;
-	wardner_mainram[0x0172] = 0xff;
-
 	toaplan_main_cpu = 1;		/* Z80 */
 	twincobr_intenable = 0;
 	twincobr_display_on = 1;
 	dsp_addr_w = dsp_execute = 0;
 	main_ram_seg = 0;
-
-	/* coin count increments on startup ? , so stop it */
-	coin_count = 0;
+	coin_count = 0;		/* coin count increments on startup ? , so stop it */
 }
 
 
-READ_HANDLER( twincobr_dsp_r )
+READ16_HANDLER( twincobr_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
 	unsigned int input_data = 0;
 	switch (main_ram_seg) {
-		case 0x30000:	input_data = READ_WORD(&twincobr_68k_dsp_ram[dsp_addr_w]); break;
-		case 0x40000:	input_data = READ_WORD(&spriteram[dsp_addr_w]); break;
-		case 0x50000:	input_data = READ_WORD(&paletteram[dsp_addr_w]); break;
-		case 0x7000:	input_data = wardner_mainram[dsp_addr_w] + (wardner_mainram[dsp_addr_w+1]<<8); break;
-		case 0x8000:	input_data = spriteram[dsp_addr_w] + (spriteram[dsp_addr_w+1]<<8); break;
-		case 0xa000:	input_data = paletteram[dsp_addr_w] + (paletteram[dsp_addr_w+1]<<8); break;
+		case 0x30000:	input_data = twincobr_68k_dsp_ram[dsp_addr_w]; break;
+		case 0x40000:	input_data = spriteram16[dsp_addr_w]; break;
+		case 0x50000:	input_data = paletteram16[dsp_addr_w]; break;
+		case 0x7000:	input_data = wardner_mainram[dsp_addr_w*2] + (wardner_mainram[dsp_addr_w*2+1]<<8); break;
+		case 0x8000:	input_data = spriteram16[dsp_addr_w]; break;
+		case 0xa000:	input_data = paletteram[dsp_addr_w*2] + (paletteram[dsp_addr_w*2+1]<<8); break;
 		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 	}
 #if LOG_DSP_CALLS
@@ -109,13 +80,12 @@ READ_HANDLER( twincobr_dsp_r )
 	return input_data;
 }
 
-READ_HANDLER( fsharkbt_dsp_r )
+READ16_HANDLER( fsharkbt_dsp_r )
 {
-	/* Flying Shark bootleg uses IO port 2 */
+	/* IO Port 2 used by Flying Shark bootleg */
 	/* DSP reads data from an extra MCU (8741) at IO port 2 */
-	/* Boot-leggers using their own copy protection ?? */
 	/* Port is read three times during startup. First and last data */
-	/*	 read must equal, but second read data must be different */
+	/*	 read must equal, but second data read must be different */
 	fsharkbt_8741 += 1;
 #if LOG_DSP_CALLS
 	logerror("DSP PC:%04x IO read %04x from 8741 MCU (port 2)\n",cpu_getpreviouspc(),(fsharkbt_8741 & 0x08));
@@ -123,7 +93,7 @@ READ_HANDLER( fsharkbt_dsp_r )
 	return (fsharkbt_8741 & 1);
 }
 
-WRITE_HANDLER( twincobr_dsp_w )
+WRITE16_HANDLER( twincobr_dsp_w )
 {
 	if (offset == 0) {
 		/* This sets the main CPU RAM address the DSP should */
@@ -134,10 +104,10 @@ WRITE_HANDLER( twincobr_dsp_w )
 		/* Lower thirteen bits of this data is shifted left one position */
 		/*		to move it to an even address word boundary */
 
-		dsp_addr_w = ((data & 0x1fff) << 1);
+		dsp_addr_w = data & 0x1fff;
 		main_ram_seg = ((data & 0xe000) << 3);
 		if (toaplan_main_cpu == 1) {		/* Z80 */
-			dsp_addr_w &= 0xfff;
+			dsp_addr_w &= 0x7ff;
 			if (main_ram_seg == 0x30000) main_ram_seg = 0x7000;
 			if (main_ram_seg == 0x40000) main_ram_seg = 0x8000;
 			if (main_ram_seg == 0x50000) main_ram_seg = 0xa000;
@@ -150,17 +120,16 @@ WRITE_HANDLER( twincobr_dsp_w )
 		/* Data written to main CPU RAM via DSP IO port 1*/
 		dsp_execute = 0;
 		switch (main_ram_seg) {
-			case 0x30000:	WRITE_WORD(&twincobr_68k_dsp_ram[dsp_addr_w],data);
-								if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
-			case 0x40000:	WRITE_WORD(&spriteram[dsp_addr_w],data); break;
-			case 0x50000:	WRITE_WORD(&paletteram[dsp_addr_w],data); break;
-			case 0x7000:	wardner_mainram[dsp_addr_w] = data & 0xff;
-							wardner_mainram[dsp_addr_w + 1] = (data >> 8) & 0xff;
-							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
-			case 0x8000:	spriteram[dsp_addr_w] = data & 0xff;
-							spriteram[dsp_addr_w + 1] = (data >> 8) & 0xff;break;
-			case 0xa000:	paletteram[dsp_addr_w] = data & 0xff;
-							paletteram[dsp_addr_w + 1] = (data >> 8) & 0xff; break;
+			case 0x30000:	twincobr_68k_dsp_ram[dsp_addr_w]=data;
+							if ((dsp_addr_w < 2) && (data == 0)) dsp_execute = 1; break;
+			case 0x40000:	spriteram16[dsp_addr_w]=data; break;
+			case 0x50000:	paletteram16[dsp_addr_w]=data; break;
+			case 0x7000:	wardner_mainram[dsp_addr_w*2] = data;
+							wardner_mainram[dsp_addr_w*2 + 1] = data >> 8;
+							if ((dsp_addr_w < 2) && (data == 0)) dsp_execute = 1; break;
+			case 0x8000:	spriteram16[dsp_addr_w]=data; break;
+			case 0xa000:	paletteram[dsp_addr_w*2] = data & 0xff;
+							paletteram[dsp_addr_w*2 + 1] = (data >> 8) & 0xff; break;
 			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
 		}
 #if LOG_DSP_CALLS
@@ -198,17 +167,17 @@ WRITE_HANDLER( twincobr_dsp_w )
 	}
 }
 
-READ_HANDLER( twincobr_68k_dsp_r )
+READ16_HANDLER( twincobr_68k_dsp_r )
 {
-	return READ_WORD(&twincobr_68k_dsp_ram[offset]);
+	return twincobr_68k_dsp_ram[offset];
 }
 
-WRITE_HANDLER( twincobr_68k_dsp_w )
+WRITE16_HANDLER( twincobr_68k_dsp_w )
 {
 #if LOG_DSP_CALLS
-	if (offset < 10) logerror("%s:%08x write %08x at %08x\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,0x30000+offset);
+	if (offset < 5) logerror("%s:%08x write %08x at %08x\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,0x30000+offset);
 #endif
-	COMBINE_WORD_MEM(&twincobr_68k_dsp_ram[offset],data);
+	COMBINE_DATA(&twincobr_68k_dsp_ram[offset]);
 }
 
 
@@ -226,7 +195,7 @@ READ_HANDLER( wardner_mainram_r )
 }
 
 
-WRITE_HANDLER( twincobr_7800c_w )
+WRITE16_HANDLER( twincobr_control_w )
 {
 #if 0
 	logerror("%s:%08x  Writing %08x to %08x.\n",toaplan_cpu_type[toaplan_main_cpu],cpu_get_pc(),data,toaplan_port_type[toaplan_main_cpu] - offset);
@@ -243,7 +212,7 @@ WRITE_HANDLER( twincobr_7800c_w )
 		case 0x0006: twincobr_flip_screen = 0; twincobr_flip_x_base=0x037; twincobr_flip_y_base=0x01e; break;
 		case 0x0007: twincobr_flip_screen = 1; twincobr_flip_x_base=0x085; twincobr_flip_y_base=0x0f2; break;
 		case 0x0008: twincobr_bg_ram_bank = 0x0000; break;
-		case 0x0009: twincobr_bg_ram_bank = 0x2000; break;
+		case 0x0009: twincobr_bg_ram_bank = 0x1000; break;
 		case 0x000a: twincobr_fg_rom_bank = 0x0000; break;
 		case 0x000b: twincobr_fg_rom_bank = 0x1000; break;
 		case 0x000e: twincobr_display_on  = 0x0000; break; /* Turn display off */
@@ -270,17 +239,18 @@ WRITE_HANDLER( twincobr_7800c_w )
 
 
 
-READ_HANDLER( twincobr_sharedram_r )
+READ16_HANDLER( twincobr_sharedram_r )
 {
-	return twincobr_sharedram[offset / 2];
+	return twincobr_sharedram[offset];
 }
 
-WRITE_HANDLER( twincobr_sharedram_w )
+WRITE16_HANDLER( twincobr_sharedram_w )
 {
-	twincobr_sharedram[offset / 2] = data;
+	if (ACCESSING_LSB)
+		twincobr_sharedram[offset] = data;
 }
 
-WRITE_HANDLER( fshark_coin_dsp_w )
+static WRITE_HANDLER( toaplan_coin_dsp_w )
 {
 #if 0
 	if (data > 1)
@@ -312,3 +282,16 @@ WRITE_HANDLER( fshark_coin_dsp_w )
 					break;
 	}
 }
+WRITE16_HANDLER( fshark_coin_dsp_w )
+{
+	toaplan_coin_dsp_w(offset, data);
+}
+WRITE_HANDLER( twincobr_coin_w )
+{
+	toaplan_coin_dsp_w(offset, data);
+}
+WRITE_HANDLER( wardner_coin_dsp_w )
+{
+	toaplan_coin_dsp_w(offset, data);
+}
+

@@ -328,9 +328,14 @@ static int ci_strcmp (const char *s1, const char *s2)
 {
 	int c1, c2;
 
-	while ((c1 = tolower(*s1++)) == (c2 = tolower(*s2++)))
+	while ((c1 = tolower(*s1)) == (c2 = tolower(*s2)))
+	{
 		if (!c1)
 			return 0;
+
+		s1++;
+		s2++;
+	}
 
 	return (c1 - c2);
 }
@@ -348,11 +353,14 @@ static int ci_strncmp (const char *s1, const char *s2, int n)
 
 	while (n)
 	{
-		if ((c1 = tolower (*s1++)) != (c2 = tolower (*s2++)))
+		if ((c1 = tolower (*s1)) != (c2 = tolower (*s2)))
 			return (c1 - c2);
 		else if (!c1)
 			break;
 		--n;
+
+		s1++;
+		s2++;
 	}
 	return 0;
 }

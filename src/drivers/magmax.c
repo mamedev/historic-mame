@@ -302,13 +302,13 @@ static const struct MachineDriver machine_driver_magmax =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz */
+			8000000,	/* 8 MHz */
 			magmax_readmem, magmax_writemem, 0, 0,
 			magmax_interrupt, 1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			10000000/4,	/* 2.5 Mhz */
+			10000000/4,	/* 2.5 MHz */
 			magmax_soundreadmem, magmax_soundwritemem, magmax_soundreadport, magmax_soundwriteport,
 			ignore_interrupt, 1
 		},
@@ -341,22 +341,22 @@ static const struct MachineDriver machine_driver_magmax =
 
 
 ROM_START( magmax )
-	ROM_REGION( 0x14000, REGION_CPU1 ) /* 68000 (main) cpu code */
-	ROM_LOAD_ODD ( "1.3b", 0x00000, 0x4000, 0x33793cbb )
-	ROM_LOAD_EVEN( "6.3d", 0x00000, 0x4000, 0x677ef450 )
-	ROM_LOAD_ODD ( "2.5b", 0x08000, 0x4000, 0x1a0c84df )
-	ROM_LOAD_EVEN( "7.5d", 0x08000, 0x4000, 0x01c35e95 )
-	ROM_LOAD_ODD ( "3.6b", 0x10000, 0x2000, 0xd06e6cae )
-	ROM_LOAD_EVEN( "8.6d", 0x10000, 0x2000, 0x790a82be )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 ) /* 68000 (main) cpu code */
+	ROM_LOAD16_BYTE( "1.3b", 0x00001, 0x4000, 0x33793cbb )
+	ROM_LOAD16_BYTE( "6.3d", 0x00000, 0x4000, 0x677ef450 )
+	ROM_LOAD16_BYTE( "2.5b", 0x08001, 0x4000, 0x1a0c84df )
+	ROM_LOAD16_BYTE( "7.5d", 0x08000, 0x4000, 0x01c35e95 )
+	ROM_LOAD16_BYTE( "3.6b", 0x10001, 0x2000, 0xd06e6cae )
+	ROM_LOAD16_BYTE( "8.6d", 0x10000, 0x2000, 0x790a82be )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* Z80 (sound) cpu code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 (sound) cpu code */
 	ROM_LOAD( "15.17b", 0x00000, 0x2000, 0x19e7b983 )
 	ROM_LOAD( "16.18b", 0x02000, 0x2000, 0x055e3126 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* chars */
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
 	ROM_LOAD( "23.15g", 0x00000, 0x2000, 0xa7471da2 )
 
-	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* sprites */
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD( "17.3e",  0x00000, 0x2000, 0x8e305b2e )
 	ROM_LOAD( "18.5e",  0x02000, 0x2000, 0x14c55a60 )
 	ROM_LOAD( "19.6e",  0x04000, 0x2000, 0xfa4141d8 )
@@ -364,9 +364,9 @@ ROM_START( magmax )
 	ROM_LOAD( "21.5g",  0x0a000, 0x2000, 0xdd52eda4 )
 	ROM_LOAD( "22.6g",  0x0c000, 0x2000, 0x4afc98ff )
 
-	ROM_REGION( 0x10000, REGION_USER1 ) /* surface scroll control */
-	ROM_LOAD_GFX_EVEN( "4.18b",  0x00000, 0x2000, 0x1550942e )
-	ROM_LOAD_GFX_ODD ( "5.20b",  0x00000, 0x2000, 0x3b93017f )
+	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* surface scroll control */
+	ROM_LOAD16_BYTE( "4.18b",  0x00000, 0x2000, 0x1550942e )
+	ROM_LOAD16_BYTE( "5.20b",  0x00001, 0x2000, 0x3b93017f )
 	/* BG control data */
 	ROM_LOAD( "9.18d",  0x04000, 0x2000, 0x9ecc9ab8 ) /* surface */
 	ROM_LOAD( "10.20d", 0x06000, 0x2000, 0xe2ff7293 ) /* underground */
@@ -376,11 +376,11 @@ ROM_START( magmax )
 	ROM_LOAD( "13.18f", 0x0c000, 0x2000, 0x75f30159 ) /* surface of mechanical level */
 	ROM_LOAD( "14.20f", 0x0e000, 0x2000, 0x96babcba ) /* underground of mechanical level */
 
-	ROM_REGION( 0x0200, REGION_USER2 ) /* BG control data */
+	ROM_REGION( 0x0200, REGION_USER2, 0 ) /* BG control data */
 	ROM_LOAD( "mag_b.14d",  0x0000, 0x0100, 0xa0fb7297 ) /* background control PROM */
 	ROM_LOAD( "mag_c.15d",  0x0100, 0x0100, 0xd84a6f78 ) /* background control PROM */
 
-	ROM_REGION( 0x0500, REGION_PROMS ) /* color PROMs */
+	ROM_REGION( 0x0500, REGION_PROMS, 0 ) /* color PROMs */
 	ROM_LOAD( "mag_e.10f",  0x0000, 0x0100, 0x75e4f06a ) /* red */
 	ROM_LOAD( "mag_d.10e",  0x0100, 0x0100, 0x34b6a6e3 ) /* green */
 	ROM_LOAD( "mag_a.10d",  0x0200, 0x0100, 0xa7ea7718 ) /* blue */

@@ -1141,7 +1141,8 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 
 	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PEN_RAW
 			&& transparency != TRANSPARENCY_PENS && transparency != TRANSPARENCY_COLOR
-			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW)
+			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW
+			&& transparency != TRANSPARENCY_BLEND_RAW)
 	{
 		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
@@ -1405,6 +1406,53 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 								{
 									int c = source[x_index>>16];
 									if( c != transparent_color ) dest[x] = color + c;
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+					}
+
+					/* case 1c: TRANSPARENCY_BLEND_RAW */
+					if (transparency == TRANSPARENCY_BLEND_RAW)
+					{
+						if (pri_buffer)
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *pri = pri_buffer->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] |= (color + c);
+										pri[x] = 31;
+									}
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+						else
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT8 *dest = dest_bmp->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color ) dest[x] |= (color + c);
 									x_index += dx;
 								}
 
@@ -1808,6 +1856,53 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 								{
 									int c = source[x_index>>16];
 									if( c != transparent_color ) dest[x] = color + c;
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+					}
+
+					/* case 1c: TRANSPARENCY_BLEND_RAW */
+					if (transparency == TRANSPARENCY_BLEND_RAW)
+					{
+						if (pri_buffer)
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT8 *pri = pri_buffer->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+											dest[x] |= color + c;
+										pri[x] = 31;
+									}
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+						else
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color ) dest[x] |= color + c;
 									x_index += dx;
 								}
 
@@ -2937,6 +3032,127 @@ DECLARE(blockmove_8toN_transpen_raw_flipx,(
 		srcheight--;
 	}
 })
+
+DECLARE(blockmove_8toN_transblend_raw,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase,int transpen),
+{
+	DATA_TYPE *end;
+	int trans4;
+	UINT32 *sd4;
+
+	srcmodulo -= srcwidth;
+	dstmodulo -= srcwidth;
+
+	trans4 = transpen * 0x01010101;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (col != transpen) *dstdata |= colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			UINT32 col4;
+
+			if ((col4 = *(sd4++)) != trans4)
+			{
+				UINT32 xod4;
+
+				xod4 = col4 ^ trans4;
+				if (xod4 & 0x000000ff) dstdata[BL0] |= colorbase + ((col4) & 0xff);
+				if (xod4 & 0x0000ff00) dstdata[BL1] |= colorbase + ((col4 >>  8) & 0xff);
+				if (xod4 & 0x00ff0000) dstdata[BL2] |= colorbase + ((col4 >> 16) & 0xff);
+				if (xod4 & 0xff000000) dstdata[BL3] |= colorbase + (col4 >> 24);
+			}
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = *(srcdata++);
+			if (col != transpen) *dstdata |= colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
+DECLARE(blockmove_8toN_transblend_raw_flipx,(
+		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
+		DATA_TYPE *dstdata,int dstmodulo,
+		unsigned int colorbase, int transpen),
+{
+	DATA_TYPE *end;
+	int trans4;
+	UINT32 *sd4;
+
+	srcmodulo += srcwidth;
+	dstmodulo -= srcwidth;
+	//srcdata += srcwidth-1;
+	srcdata -= 3;
+
+	trans4 = transpen * 0x01010101;
+
+	while (srcheight)
+	{
+		end = dstdata + srcwidth;
+		while (((long)srcdata & 3) && dstdata < end)	/* longword align */
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (col != transpen) *dstdata |= colorbase + col;
+			dstdata++;
+		}
+		sd4 = (UINT32 *)srcdata;
+		while (dstdata <= end - 4)
+		{
+			UINT32 col4;
+
+			if ((col4 = *(sd4--)) != trans4)
+			{
+				UINT32 xod4;
+
+				xod4 = col4 ^ trans4;
+				if (xod4 & 0xff000000) dstdata[BL0] |= colorbase + (col4 >> 24);
+				if (xod4 & 0x00ff0000) dstdata[BL1] |= colorbase + ((col4 >> 16) & 0xff);
+				if (xod4 & 0x0000ff00) dstdata[BL2] |= colorbase + ((col4 >>  8) & 0xff);
+				if (xod4 & 0x000000ff) dstdata[BL3] |= colorbase + (col4 & 0xff);
+			}
+			dstdata += 4;
+		}
+		srcdata = (UINT8 *)sd4;
+		while (dstdata < end)
+		{
+			int col;
+
+			col = srcdata[3];
+			srcdata--;
+			if (col != transpen) *dstdata |= colorbase + col;
+			dstdata++;
+		}
+
+		srcdata += srcmodulo;
+		dstdata += dstmodulo;
+		srcheight--;
+	}
+})
+
 
 #define PEN_IS_OPAQUE ((1<<col)&transmask) == 0
 
@@ -4208,6 +4424,14 @@ usrintf_showmessage("pdrawgfx TRANS_PEN_RAW not supported");
 //					BLOCKMOVE(8toN_transpen_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
 				else
 					BLOCKMOVE(8toN_transthrough_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
+				break;
+
+			case TRANSPARENCY_BLEND_RAW:
+				if (pribuf)
+usrintf_showmessage("pdrawgfx TRANS_BLEND_RAW not supported");
+//					BLOCKMOVE(8toN_transpen_pri_raw,flipx,(sd,sw,sh,sm,dd,dm,paldata,pribuf,pri_mask));
+				else
+					BLOCKMOVE(8toN_transblend_raw,flipx,(sd,sw,sh,sm,dd,dm,color,transparent_color));
 				break;
 
 			default:

@@ -609,17 +609,17 @@ static const struct MachineDriver machine_driver_ninjak2a =
 
 
 ROM_START( ninjakd2 )
-	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
 	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
 	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, 0xd3a18a79 )  // sound z80 code encrypted
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -629,7 +629,7 @@ ROM_START( ninjakd2 )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -639,29 +639,29 @@ ROM_START( ninjakd2 )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
 ROM_END
 
 ROM_START( ninjak2a )
-	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
 	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
 	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -671,7 +671,7 @@ ROM_START( ninjak2a )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -681,29 +681,29 @@ ROM_START( ninjak2a )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
 ROM_END
 
 ROM_START( ninjak2b )
-	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
 	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
 	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -713,7 +713,7 @@ ROM_START( ninjak2b )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -723,29 +723,29 @@ ROM_START( ninjak2b )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_12.rom",   0x00000, 0x02000, 0xdb5657a9 )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
 ROM_END
 
 ROM_START( rdaction )
-	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "1.3u",  	      0x00000, 0x8000, 0x5c475611 )
 	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
 	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
 	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "nk2_06.bin",   0x10000, 0x8000, 0x7bfe6c9e )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_11.rom",   0x00000, 0x4000, 0x41a714b3 )	/* background tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -755,7 +755,7 @@ ROM_START( rdaction )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )	/* sprites tiles */
 	ROM_CONTINUE(             0x10000, 0x4000)
 	ROM_CONTINUE(             0x04000, 0x4000)
@@ -765,13 +765,13 @@ ROM_START( rdaction )
 	ROM_CONTINUE(             0x0c000, 0x4000)
 	ROM_CONTINUE(             0x1c000, 0x4000)
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "12.5n",        0x00000, 0x02000, 0x0936b365 )	/* foreground tiles */
 	ROM_CONTINUE(             0x04000, 0x02000)
 	ROM_CONTINUE(             0x02000, 0x02000)
 	ROM_CONTINUE(             0x06000, 0x02000)
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )	/* raw pcm samples */
 ROM_END
 

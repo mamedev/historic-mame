@@ -133,7 +133,7 @@ INPUT_PORTS_START( route16 )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -320,7 +320,7 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 ***************************************************************************/
 
 ROM_START( route16 )
-	ROM_REGION( 0x10000, REGION_CPU1 )  // 64k for the first CPU
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
 	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
 	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
 	ROM_LOAD( "route16.a2",   0x1000, 0x0800, 0x1065a468 )
@@ -328,20 +328,20 @@ ROM_START( route16 )
 	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
 	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )  // 64k for the second CPU
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
 	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
 	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
 	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
 	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( route16b )
-	ROM_REGION( 0x10000, REGION_CPU1 )  // 64k for the first CPU
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
 	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
 	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
@@ -349,20 +349,20 @@ ROM_START( route16b )
 	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
 	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )  // 64k for the second CPU
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  // 64k for the second CPU
 	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
 	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
 	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
 	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( stratvox )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -370,18 +370,18 @@ ROM_START( stratvox )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( stratvxb )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
 	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
@@ -389,18 +389,18 @@ ROM_START( stratvxb )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 ROM_END
 
 ROM_START( speakres )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
 	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )
 	ROM_LOAD( "speakres.3",   0x1000, 0x0800, 0xa3874304 )
@@ -408,11 +408,11 @@ ROM_START( speakres )
 	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
 	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the second CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
 	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
 	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */

@@ -1625,7 +1625,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1667,7 +1667,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1709,7 +1709,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1751,7 +1751,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1793,7 +1793,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1835,7 +1835,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 Mhz ? */ \
+			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -1893,14 +1893,14 @@ NBMJDRV5(bananadr, 132, scandalm, scandalm, gionbana, bananadr, nb1413m3_nvram_h
 
 
 ROM_START( gionbana )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "gion_03.bin", 0x00000, 0x10000, 0x615e993b )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "gion_02.bin", 0x00000, 0x10000, 0xc392eacc )
 	ROM_LOAD( "gion_01.bin", 0x10000, 0x10000, 0xc253eff7 )
 
-	ROM_REGION( 0x0c0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x0c0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "gion_04.bin", 0x000000, 0x10000, 0x0a1398d2 )
 	ROM_LOAD( "gion_05.bin", 0x010000, 0x10000, 0x75b2c2e3 )
 	ROM_LOAD( "gion_06.bin", 0x020000, 0x10000, 0xcb743f16 )
@@ -1914,19 +1914,19 @@ ROM_START( gionbana )
 	ROM_LOAD( "gion_14.bin", 0x0a0000, 0x10000, 0xa4e8b6a0 )
 	ROM_LOAD( "gion_15.bin", 0x0b0000, 0x10000, 0xd36445e4 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "gion_m1.bin", 0x00000, 0x40000, 0xf730ea47 )
 ROM_END
 
 ROM_START( hanamomo )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "hmog_21.bin", 0x00000, 0x10000, 0x5b59d413 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "hmog_22.bin", 0x00000, 0x10000, 0xccc15b78 )
 	ROM_LOAD( "hmog_23.bin", 0x10000, 0x10000, 0x3b166358 )
 
-	ROM_REGION( 0x140000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hmog_01.bin", 0x000000, 0x10000, 0x52e7bf1f )
 	ROM_LOAD( "hmog_02.bin", 0x010000, 0x10000, 0xbfe11acc )
 	ROM_LOAD( "hmog_03.bin", 0x020000, 0x10000, 0x3b28db4c )
@@ -1950,13 +1950,13 @@ ROM_START( hanamomo )
 ROM_END
 
 ROM_START( msjiken )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "msjn_11.bin",  0x00000, 0x10000, 0x723499ef )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "msjn_12.bin",  0x00000, 0x10000, 0x810e299e )
 
-	ROM_REGION( 0x110000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "msjn_01.bin",  0x000000, 0x10000, 0x42dc6211 ) // main board
 	ROM_LOAD( "msjn_02.bin",  0x010000, 0x10000, 0x3bc29b14 ) // 	"
 	ROM_LOAD( "msjn_03.bin",  0x020000, 0x10000, 0x442c838d ) // 	"
@@ -1977,14 +1977,14 @@ ROM_START( msjiken )
 ROM_END
 
 ROM_START( telmahjn )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "telm_03.bin", 0x00000, 0x10000, 0x851bff09 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "telm_02.bin", 0x00000, 0x10000, 0x5b278b68 )
 	ROM_LOAD( "telm_01.bin", 0x10000, 0x10000, 0x06f00282 )
 
-	ROM_REGION( 0x100000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "telm_04.bin", 0x000000, 0x10000, 0x54114564 )
 	ROM_LOAD( "telm_05.bin", 0x010000, 0x10000, 0x369b2c83 )
 	ROM_LOAD( "telm_06.bin", 0x020000, 0x10000, 0x790e8016 )
@@ -2002,19 +2002,19 @@ ROM_START( telmahjn )
 	ROM_LOAD( "telm_18.bin", 0x0e0000, 0x10000, 0x8ca01f4e )
 	ROM_LOAD( "telm_19.bin", 0x0f0000, 0x10000, 0x07362f98 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "telm_m1.bin", 0x00000, 0x40000, 0x2199e3e9 )
 ROM_END
 
 ROM_START( mgmen89 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mg89_03.bin", 0x00000, 0x10000, 0x1ac5cd84 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mg89_02.bin", 0x00000, 0x10000, 0x1ca17bda )
 	ROM_LOAD( "mg89_01.bin", 0x10000, 0x10000, 0x9a8c1ac5 )
 
-	ROM_REGION( 0x0e0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x0e0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mg89_04.bin", 0x000000, 0x10000, 0x4c7d3afb )
 	ROM_LOAD( "mg89_05.bin", 0x010000, 0x10000, 0xa0b9e4b7 )
 	ROM_LOAD( "mg89_06.bin", 0x020000, 0x10000, 0x7adb3527 )
@@ -2030,18 +2030,18 @@ ROM_START( mgmen89 )
 	ROM_LOAD( "mg89_16.bin", 0x0c0000, 0x10000, 0xb66c3b87 )
 	ROM_LOAD( "mg89_17.bin", 0x0d0000, 0x10000, 0x3bd5c16b )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "mg89_m1.bin", 0x00000, 0x40000, 0x77ba1eaf )
 ROM_END
 
 ROM_START( mjfocus )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "2_3h",   0x00000, 0x10000, 0xfd88b3e6 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "1.2k",   0x00000, 0x10000, 0xe933d3c8 )
 
-	ROM_REGION( 0x130000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x130000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "3_8c",   0x000000, 0x10000, 0x4177d71f )
 	ROM_LOAD( "4_8d",   0x010000, 0x10000, 0xaba5d761 )
 	ROM_LOAD( "5_8e",   0x020000, 0x10000, 0x59c9680e )
@@ -2064,13 +2064,13 @@ ROM_START( mjfocus )
 ROM_END
 
 ROM_START( mjfocusm )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mfcs_02m.bin", 0x00000, 0x10000, 0x409d4f0b )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "1.2k",   0x00000, 0x10000, 0xe933d3c8 )
 
-	ROM_REGION( 0x110000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "3.8c",         0x000000, 0x10000, 0x4c8d6ca9 )
 	ROM_LOAD( "mfcs_04m.bin", 0x010000, 0x10000, 0xe73d7804 )
 	ROM_LOAD( "5.8e",         0x020000, 0x10000, 0xf4d7e344 )
@@ -2089,18 +2089,18 @@ ROM_START( mjfocusm )
 	ROM_LOAD( "18.10j",       0x0f0000, 0x10000, 0xb2cc3586 )
 	ROM_LOAD( "mfcs_19m.bin", 0x100000, 0x10000, 0x45c08364 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "mfcs_m1m.bin", 0x00000, 0x40000, 0xda46163e )
 ROM_END
 
 ROM_START( peepshow )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "2.3h",   0x00000, 0x10000, 0x8db1746c )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "1.2k",   0x00000, 0x10000, 0xe933d3c8 )
 
-	ROM_REGION( 0x110000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x110000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "3.8c",   0x000000, 0x10000, 0x4c8d6ca9 )
 	ROM_LOAD( "4.8d",   0x010000, 0x10000, 0x9e80455f )
 	ROM_LOAD( "5.8e",   0x020000, 0x10000, 0xf4d7e344 )
@@ -2119,18 +2119,18 @@ ROM_START( peepshow )
 	ROM_LOAD( "18.10j", 0x0f0000, 0x10000, 0xb2cc3586 )
 	ROM_LOAD( "19.10k", 0x100000, 0x10000, 0xb6b40e4d )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "mask",   0x00000, 0x40000, 0x72258083 )
 ROM_END
 
 ROM_START( scandal )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "1.3h",   0x00000, 0x10000, 0x97e73a9c )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "2.3j",   0x00000, 0x10000, 0x9a5f7907 )
 
-	ROM_REGION( 0x0d0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x0d0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "15.11p", 0x000000, 0x10000, 0x4677f0d0 )
 	ROM_LOAD( "14.11n", 0x010000, 0x10000, 0xf935a681 )
 	ROM_LOAD( "13.11m", 0x020000, 0x10000, 0x80c5109e )
@@ -2147,13 +2147,13 @@ ROM_START( scandal )
 ROM_END
 
 ROM_START( scandalm )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "scmm_01.bin", 0x00000, 0x10000, 0x9811bab6 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "2.3j",   0x00000, 0x10000, 0x9a5f7907 )
 
-	ROM_REGION( 0x0d0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x0d0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "15.11p", 0x000000, 0x10000, 0x4677f0d0 )
 	ROM_LOAD( "14.11n", 0x010000, 0x10000, 0xf935a681 )
 	ROM_LOAD( "13.11m", 0x020000, 0x10000, 0x80c5109e )
@@ -2170,14 +2170,14 @@ ROM_START( scandalm )
 ROM_END
 
 ROM_START( mjnanpas )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mnst_03.bin", 0x00000, 0x10000, 0xece14e07 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mnst_02.bin", 0x00000, 0x10000, 0x22c7ddce )
 	ROM_LOAD( "mnst_01.bin", 0x10000, 0x10000, 0x13b79c41 )
 
-	ROM_REGION( 0x240000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x240000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mnst_04.bin", 0x000000, 0x10000, 0x7b8fb5f2 )
 	ROM_LOAD( "mnst_05.bin", 0x010000, 0x10000, 0x6e48b612 )
 	ROM_LOAD( "mnst_06.bin", 0x020000, 0x10000, 0x1ea7db2e )
@@ -2199,18 +2199,18 @@ ROM_START( mjnanpas )
 	ROM_LOAD( "mnst_22.bin", 0x120000, 0x10000, 0x3468f36f )
 	ROM_LOAD( "mnst_23.bin", 0x130000, 0x10000, 0x8d1a64a6 )
 
-	ROM_REGION( 0x40000, REGION_USER1 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
 	ROM_LOAD( "mnst_m1.bin", 0x00000, 0x40000, 0x77ba1eaf )
 ROM_END
 
 ROM_START( bananadr )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "1.4h",   0x00000, 0x10000, 0xa6344e0d )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "2.4j",   0x00000, 0x20000, 0xd6f24371 )
 
-	ROM_REGION( 0x240000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x240000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "3.11p",  0x000000, 0x10000, 0xbcb94d00 )
 	ROM_LOAD( "4.11n",  0x010000, 0x10000, 0x90642607 )
 	ROM_LOAD( "5.11m",  0x020000, 0x10000, 0x1ea7db2e )
@@ -2234,14 +2234,14 @@ ROM_START( bananadr )
 ROM_END
 
 ROM_START( club90s )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "c90s_03.bin", 0x00000, 0x10000, 0xf8148ba5 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "c90s_02.bin", 0x00000, 0x10000, 0xb7938ed8 )
 	ROM_LOAD( "c90s_01.bin", 0x10000, 0x10000, 0xbaaf17bd )
 
-	ROM_REGION( 0x180000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x180000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "c90s_04.bin", 0x080000, 0x20000, 0x2c7d74ef )
 	ROM_LOAD( "c90s_05.bin", 0x0a0000, 0x20000, 0x98d1f969 )
 	ROM_LOAD( "c90s_06.bin", 0x0c0000, 0x20000, 0x509c1499 )
@@ -2253,14 +2253,14 @@ ROM_START( club90s )
 ROM_END
 
 ROM_START( mladyhtr )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mlht_03.bin", 0x00000, 0x10000, 0xbda76c24 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mlht_02.bin", 0x00000, 0x10000, 0xe841696d )
 	ROM_LOAD( "mlht_01.bin", 0x10000, 0x10000, 0x75c35c62 )
 
-	ROM_REGION( 0x1d0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x1d0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mj-1802.bin", 0x000000, 0x80000, 0xe6213f10 )
 	ROM_LOAD( "mlht_04.bin", 0x080000, 0x20000, 0x5896f484 )
 	ROM_LOAD( "mlht_05.bin", 0x0a0000, 0x20000, 0xbc26f689 )
@@ -2283,14 +2283,14 @@ ROM_START( mladyhtr )
 ROM_END
 
 ROM_START( chinmoku )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "3.3h",   0x00000, 0x10000, 0xeddff33e )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "2.2k",   0x00000, 0x10000, 0x0d6306e3 )
 	ROM_LOAD( "1.2h",   0x10000, 0x10000, 0xa85e681c )
 
-	ROM_REGION( 0x1e0000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x1e0000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "4.8d",   0x020000, 0x20000, 0x5b5234f6 )
 	ROM_LOAD( "5.8e",   0x040000, 0x20000, 0x56bf9a23 )
 	ROM_LOAD( "6.8f",   0x060000, 0x20000, 0x188bdbd6 )
@@ -2313,13 +2313,13 @@ ROM_START( chinmoku )
 ROM_END
 
 ROM_START( maiko )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mikb_02.bin", 0x00000, 0x10000, 0xfbf68ebd )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mikb_01.bin", 0x00000, 0x20000, 0x713b3f8f )
 
-	ROM_REGION( 0x200000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "mikb_03.bin", 0x000000, 0x20000, 0x0c949a6f )
 	ROM_LOAD( "mikb_04.bin", 0x020000, 0x20000, 0x8c841482 )
 	ROM_LOAD( "mikb_05.bin", 0x040000, 0x20000, 0x7c61b4f7 )
@@ -2330,13 +2330,13 @@ ROM_START( maiko )
 ROM_END
 
 ROM_START( hanaoji )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "hnoj_02.bin", 0x00000, 0x10000, 0x580cd095 )
 
-	ROM_REGION( 0x10000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "hnoj_01.bin", 0x00000, 0x10000, 0x3f7fcb94 )
 
-	ROM_REGION( 0x120000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x120000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hnoj_03.bin", 0x000000, 0x20000, 0xfbbe1dce )
 	ROM_LOAD( "hnoj_04.bin", 0x020000, 0x20000, 0x2074b04f )
 	ROM_LOAD( "hnoj_05.bin", 0x040000, 0x20000, 0x84d20ba6 )

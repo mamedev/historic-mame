@@ -416,7 +416,7 @@ static const struct MachineDriver machine_driver_junofrst =
 
 
 ROM_START( junofrst )
-	ROM_REGION( 2*0x1c000, REGION_CPU1 )	/* code + space for decrypted opcodes */
+	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
 	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, 0xf5a7ab9d ) /* program ROMs */
 	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, 0xf20626e0 )
 	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, 0x1e7744a7 )
@@ -428,20 +428,20 @@ ROM_START( junofrst )
 	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
 	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
 
-	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
 	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
 
-	ROM_REGION( 0x6000, REGION_GFX1 )	/* BLTROM, used at runtime */
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )	/* BLTROM, used at runtime */
 	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
 	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
 	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
 ROM_END
 
 ROM_START( junofstg )
-	ROM_REGION( 2*0x1c000, REGION_CPU1 )	/* code + space for decrypted opcodes */
+	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
 	ROM_LOAD( "jfg_a.9b",     0x0a000, 0x2000, 0x8f77d1c5 ) /* program ROMs */
 	ROM_LOAD( "jfg_b.10b",    0x0c000, 0x2000, 0xcd645673 )
 	ROM_LOAD( "jfg_c.10a",    0x0e000, 0x2000, 0x47852761 )
@@ -453,13 +453,13 @@ ROM_START( junofstg )
 	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
 	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
 
-	ROM_REGION(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
 
-	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* 8039 */
 	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
 
-	ROM_REGION( 0x6000, REGION_GFX1 )	/* BLTROM, used at runtime */
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )	/* BLTROM, used at runtime */
 	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
 	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
 	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )

@@ -114,7 +114,7 @@ READ_HANDLER( mhavoc_port_0_r )
 	if (player_1)
 		res = (res & 0x3f) | (readinputport (5) & 0xc0);
 
-	/* Emulate the 2.4Khz source on bit 2 (divide 2.5MHz by 1024) */
+	/* Emulate the 2.4kHz source on bit 2 (divide 2.5MHz by 1024) */
 	if (cpu_gettotalcycles() & 0x400)
 		res &=~0x02;
 	else

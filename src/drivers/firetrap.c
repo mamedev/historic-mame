@@ -417,21 +417,21 @@ static const struct MachineDriver machine_driver_firetrap =
 ***************************************************************************/
 
 ROM_START( firetrap )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* 64k for code + 64k for banked ROMs */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64k for banked ROMs */
 	ROM_LOAD( "di02.bin",     0x00000, 0x8000, 0x3d1e4bf7 )
 	ROM_LOAD( "di01.bin",     0x10000, 0x8000, 0x9bbae38b )
 	ROM_LOAD( "di00.bin",     0x18000, 0x8000, 0xd0dad7de )
 
-	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 
 	/* there's also a protected 8751 microcontroller with ROM onboard */
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
 	ROM_LOAD( "di03.bin",     0x00000, 0x2000, 0x46721930 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "di06.bin",     0x00000, 0x2000, 0x441d9154 )
 	ROM_CONTINUE(             0x08000, 0x2000 )
 	ROM_CONTINUE(             0x02000, 0x2000 )
@@ -449,7 +449,7 @@ ROM_START( firetrap )
 	ROM_CONTINUE(             0x16000, 0x2000 )
 	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "di09.bin",     0x00000, 0x2000, 0xd11e28e8 )
 	ROM_CONTINUE(             0x08000, 0x2000 )
 	ROM_CONTINUE(             0x02000, 0x2000 )
@@ -467,32 +467,32 @@ ROM_START( firetrap )
 	ROM_CONTINUE(             0x16000, 0x2000 )
 	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )
 	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
 	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "firetrap.3b",  0x0000,  0x0100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100,  0x0100, 0xd5abfc64 ) /* palette blue component */
 ROM_END
 
 ROM_START( firetpbl )
-	ROM_REGION( 0x28000, REGION_CPU1 )	/* 64k for code + 96k for banked ROMs */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "ft0d.bin",     0x00000, 0x8000, 0x793ef849 )
 	ROM_LOAD( "ft0a.bin",     0x08000, 0x8000, 0x613313ee )	/* unprotection code */
 	ROM_LOAD( "ft0c.bin",     0x10000, 0x8000, 0x5c8a0562 )
 	ROM_LOAD( "ft0b.bin",     0x18000, 0x8000, 0xf2412fe8 )
 
-	ROM_REGION( 0x18000, REGION_CPU2 )	/* 64k for the sound CPU + 32k for banked ROMs */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the sound CPU + 32k for banked ROMs */
 	ROM_LOAD( "di17.bin",     0x08000, 0x8000, 0x8605f6b9 )
 	ROM_LOAD( "di18.bin",     0x10000, 0x8000, 0x49508c93 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
 	ROM_LOAD( "ft0e.bin",     0x00000, 0x2000, 0xa584fc16 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "di06.bin",     0x00000, 0x2000, 0x441d9154 )
 	ROM_CONTINUE(             0x08000, 0x2000 )
 	ROM_CONTINUE(             0x02000, 0x2000 )
@@ -510,7 +510,7 @@ ROM_START( firetpbl )
 	ROM_CONTINUE(             0x16000, 0x2000 )
 	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "di09.bin",     0x00000, 0x2000, 0xd11e28e8 )
 	ROM_CONTINUE(             0x08000, 0x2000 )
 	ROM_CONTINUE(             0x02000, 0x2000 )
@@ -528,13 +528,13 @@ ROM_START( firetpbl )
 	ROM_CONTINUE(             0x16000, 0x2000 )
 	ROM_CONTINUE(             0x1e000, 0x2000 )
 
-	ROM_REGION( 0x20000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "di16.bin",     0x00000, 0x8000, 0x0de055d7 )
 	ROM_LOAD( "di13.bin",     0x08000, 0x8000, 0x869219da )
 	ROM_LOAD( "di14.bin",     0x10000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x18000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "firetrap.3b",  0x0000,  0x0100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100,  0x0100, 0xd5abfc64 ) /* palette blue component */
 ROM_END

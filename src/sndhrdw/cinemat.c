@@ -32,12 +32,12 @@ typedef void (*cinemat_sound_handler_proc)(UINT8, UINT8);
 
 static cinemat_sound_handler_proc cinemat_sound_handler;
 
-READ_HANDLER( cinemat_output_port_r )
+READ16_HANDLER( cinemat_output_port_r )
 {
 	return cinemat_outputs;
 }
 
-WRITE_HANDLER( cinemat_output_port_w )
+WRITE16_HANDLER( cinemat_output_port_w )
 {
 	if ((cinemat_outputs ^ data) & 0x9f)
 	{

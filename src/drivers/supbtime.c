@@ -80,11 +80,11 @@ MEMORY_END
 static MEMORY_WRITE16_START( supbtime_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x100000, 0x103fff, MWA16_RAM },
-	{ 0x104000, 0x11ffff, MWA_NOP }, /* Nothing there */
+	{ 0x104000, 0x11ffff, MWA16_NOP }, /* Nothing there */
 	{ 0x120000, 0x1207ff, MWA16_RAM, &spriteram16 },
-	{ 0x120800, 0x13ffff, MWA_NOP }, /* Nothing there */
+	{ 0x120800, 0x13ffff, MWA16_NOP }, /* Nothing there */
 	{ 0x140000, 0x1407ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x18000a, 0x18000d, MWA_NOP },
+	{ 0x18000a, 0x18000d, MWA16_NOP },
 	{ 0x1a0000, 0x1a0001, sound_w },
 
 	{ 0x300000, 0x30000f, supbtime_control_0_w },
@@ -92,9 +92,9 @@ static MEMORY_WRITE16_START( supbtime_writemem )
 	{ 0x322000, 0x323fff, supbtime_pf2_data_w, &supbtime_pf2_data },
 
 	{ 0x340000, 0x3401ff, MWA16_RAM, &supbtime_pf1_row },
-	{ 0x340400, 0x3405ff, MWA_NOP },/* Unused col scroll */
-	{ 0x342000, 0x3421ff, MWA_NOP },/* Unused row scroll */
-	{ 0x342400, 0x3425ff, MWA_NOP },/* Unused col scroll */
+	{ 0x340400, 0x3405ff, MWA16_NOP },/* Unused col scroll */
+	{ 0x342000, 0x3421ff, MWA16_NOP },/* Unused row scroll */
+	{ 0x342400, 0x3425ff, MWA16_NOP },/* Unused col scroll */
 MEMORY_END
 
 /******************************************************************************/
@@ -338,40 +338,40 @@ static const struct MachineDriver machine_driver_supbtime =
 /******************************************************************************/
 
 ROM_START( supbtime )
-	ROM_REGION( 0x40000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN( "gk03", 0x00000, 0x20000, 0xaeaeed61 )
-	ROM_LOAD_ODD ( "gk04", 0x00000, 0x20000, 0x2bc5a4eb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "gk03", 0x00000, 0x20000, 0xaeaeed61 )
+	ROM_LOAD16_BYTE( "gk04", 0x00001, 0x20000, 0x2bc5a4eb )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, 0xa715cca0 ) /* chars */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
 	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, 0x2f2246ff )
 ROM_END
 
 ROM_START( supbtimj )
-	ROM_REGION( 0x40000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
-	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
+	ROM_LOAD16_BYTE( "gc04.bin", 0x00001, 0x20000, 0x551b2a0c )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, 0xa715cca0 ) /* chars */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
 	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, 0x2f2246ff )
 ROM_END
 

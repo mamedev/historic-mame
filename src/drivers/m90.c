@@ -372,58 +372,59 @@ static struct MachineDriver machine_driver_bootleg =
 /***************************************************************************/
 
 ROM_START( hasamu )
-	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "hasc-p1.bin",    0x00000, 0x20000, 0x53df9834 )
-	ROM_LOAD_V20_ODD ( "hasc-p0.bin",    0x00000, 0x20000, 0xdff0ba6e )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "hasc-p1.bin",    0x00001, 0x20000, 0x53df9834 )
+	ROM_LOAD16_BYTE( "hasc-p0.bin",    0x00000, 0x20000, 0xdff0ba6e )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "hasc-sp.bin",    0x0000, 0x10000, 0x259b1687 )
 
-	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hasc-c0.bin",    0x000000, 0x20000, 0xdd5a2174 )
 	ROM_LOAD( "hasc-c1.bin",    0x020000, 0x20000, 0x76b8217c )
 	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, 0xd90f9a68 )
 	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, 0x6cfe0d39 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
 	/* No samples */
 ROM_END
 
 ROM_START( bombrman )
-	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "bbm-p1.bin",    0x00000, 0x20000, 0x982bd166 )
-	ROM_LOAD_V20_ODD ( "bbm-p0.bin",    0x00000, 0x20000, 0x0a20afcc )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "bbm-p1.bin",    0x00001, 0x20000, 0x982bd166 )
+	ROM_LOAD16_BYTE( "bbm-p0.bin",    0x00000, 0x20000, 0x0a20afcc )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "bbm-sp.bin",    0x0000, 0x10000, 0x251090cd )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bbm-c3.bin",    0x000000, 0x40000, 0x3c3613af )
 	ROM_LOAD( "bbm-c2.bin",    0x040000, 0x40000, 0x0700d406 )
 	ROM_LOAD( "bbm-c1.bin",    0x080000, 0x40000, 0x4c7c8bbc )
 	ROM_LOAD( "bbm-c0.bin",    0x0c0000, 0x40000, 0x695d2019 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
-	/* Does this have a sample rom? (bbm-v0 was all FF) */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, 0x0fa803fe )
 ROM_END
 
 ROM_START( dynablsb )
-	ROM_REGION( 0x100000, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "db2-26.bin",    0x00000, 0x20000, 0xa78c72f8 )
-	ROM_LOAD_V20_ODD ( "db3-25.bin",    0x00000, 0x20000, 0xbf3137c3 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "db2-26.bin",    0x00001, 0x20000, 0xa78c72f8 )
+	ROM_LOAD16_BYTE( "db3-25.bin",    0x00000, 0x20000, 0xbf3137c3 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "db1-17.bin",    0x0000, 0x10000, 0xe693c32f )
 
-	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bbm-c3.bin",    0x000000, 0x40000, 0x3c3613af )
 	ROM_LOAD( "bbm-c2.bin",    0x040000, 0x40000, 0x0700d406 )
 	ROM_LOAD( "bbm-c1.bin",    0x080000, 0x40000, 0x4c7c8bbc )
 	ROM_LOAD( "bbm-c0.bin",    0x0c0000, 0x40000, 0x695d2019 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
 	/* Does this have a sample rom? */
 ROM_END
+
 
 static void init_m90(void)
 {

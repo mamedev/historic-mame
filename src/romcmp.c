@@ -36,52 +36,65 @@ void CLIB_DECL logerror(const char *text,...)
 
 /* compare modes when one file is twice as long as the other */
 /* A = All file */
-/* BS = All file, byte swapped */
-/* 1 = 1st half */
-/* 2 = 2nd half */
+/* 12 = 1st half */
+/* 22 = 2nd half */
 /* E = Even bytes */
 /* O = Odd bytes */
 /* E1 = Even bytes 1st half */
 /* O1 = Odd bytes 1st half */
 /* E2 = Even bytes 2nd half */
 /* O2 = Odd bytes 2nd half */
-enum {	MODE_A_A, MODE_A_BS,
-		MODE_12_A, MODE_22_A, MODE_E_A, MODE_O_A,
-		MODE_14_A, MODE_24_A, MODE_34_A, MODE_44_A,
-		MODE_E1_A, MODE_O1_A, MODE_E2_A, MODE_O2_A,
-		MODE_A_12, MODE_A_22, MODE_A_E, MODE_A_O,
-		MODE_A_14, MODE_A_24, MODE_A_34, MODE_A_44,
-		MODE_A_E1, MODE_A_O1, MODE_A_E2, MODE_A_O2,
+enum {	MODE_A,
+		MODE_12, MODE_22,
+		MODE_14, MODE_24, MODE_34, MODE_44,
+		MODE_E, MODE_O,
+		MODE_E12, MODE_O12, MODE_E22, MODE_O22,
 		TOTAL_MODES };
-char *modenames[][2] =
+char *modenames[] =
 {
-	{ "          ", "          " },
-	{ "          ", "[byteswap]" },
-	{ "[1/2]     ", "          " },
-	{ "[2/2]     ", "          " },
-	{ "[even]    ", "          " },
-	{ "[odd]     ", "          " },
-	{ "[1/4]     ", "          " },
-	{ "[2/4]     ", "          " },
-	{ "[3/4]     ", "          " },
-	{ "[4/4]     ", "          " },
-	{ "[even 1/2]", "          " },
-	{ "[odd 1/2] ", "          " },
-	{ "[even 2/2]", "          " },
-	{ "[odd 2/2] ", "          " },
-	{ "          ", "[1/2]     " },
-	{ "          ", "[2/2]     " },
-	{ "          ", "[even]    " },
-	{ "          ", "[odd]     " },
-	{ "          ", "[1/4]     " },
-	{ "          ", "[2/4]     " },
-	{ "          ", "[3/4]     " },
-	{ "          ", "[4/4]     " },
-	{ "          ", "[even 1/2]" },
-	{ "          ", "[odd 1/2] " },
-	{ "          ", "[even 2/2]" },
-	{ "          ", "[odd 2/2] " }
+	"          ",
+	"[1/2]     ",
+	"[2/2]     ",
+	"[1/4]     ",
+	"[2/4]     ",
+	"[3/4]     ",
+	"[4/4]     ",
+	"[even]    ",
+	"[odd]     ",
+	"[even 1/2]",
+	"[odd 1/2] ",
+	"[even 2/2]",
+	"[odd 2/2] ",
 };
+
+static void compatiblemodes(int mode,int *start,int *end)
+{
+	if (mode == MODE_A)
+	{
+		*start = MODE_A;
+		*end = MODE_A;
+	}
+	if (mode >= MODE_12 && mode <= MODE_22)
+	{
+		*start = MODE_12;
+		*end = MODE_22;
+	}
+	if (mode >= MODE_14 && mode <= MODE_44)
+	{
+		*start = MODE_14;
+		*end = MODE_44;
+	}
+	if (mode >= MODE_E && mode <= MODE_O)
+	{
+		*start = MODE_E;
+		*end = MODE_O;
+	}
+	if (mode >= MODE_E12 && mode <= MODE_O22)
+	{
+		*start = MODE_E12;
+		*end = MODE_O22;
+	}
+}
 
 struct fileinfo
 {
@@ -92,7 +105,7 @@ struct fileinfo
 };
 
 struct fileinfo files[2][MAX_FILES];
-float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES];
+float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES][TOTAL_MODES];
 
 
 static void checkintegrity(const struct fileinfo *file,int side)
@@ -240,119 +253,83 @@ static void checkintegrity(const struct fileinfo *file,int side)
 }
 
 
-static float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode)
+static int usedbytes(const struct fileinfo *file,int mode)
+{
+	switch (mode)
+	{
+		case MODE_A:
+			return file->size;
+		case MODE_12:
+		case MODE_22:
+		case MODE_E:
+		case MODE_O:
+			return file->size / 2;
+		case MODE_14:
+		case MODE_24:
+		case MODE_34:
+		case MODE_44:
+		case MODE_E12:
+		case MODE_O12:
+		case MODE_E22:
+		case MODE_O22:
+			return file->size / 4;
+		default:
+			return 0;
+	}
+}
+
+static void basemult(const struct fileinfo *file,int mode,int *base,int *mult)
+{
+	*mult = 1;
+	if (mode >= MODE_E) *mult = 2;
+
+	switch (mode)
+	{
+		case MODE_A:
+		case MODE_12:
+		case MODE_14:
+		case MODE_E:
+		case MODE_E12:
+			*base = 0; break;
+		case MODE_O:
+		case MODE_O12:
+			*base = 1; break;
+		case MODE_22:
+		case MODE_E22:
+			*base = file->size / 2; break;
+		case MODE_O22:
+			*base = 1 + file->size / 2; break;
+		case MODE_24:
+			*base = file->size / 4; break;
+		case MODE_34:
+			*base = 2*file->size / 4; break;
+		case MODE_44:
+			*base = 3*file->size / 4; break;
+	}
+}
+
+static float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode1,int mode2)
 {
 	int i;
 	int match = 0;
-	float score = 0.0;
+	int size1,size2;
+	int base1,base2,mult1,mult2;
 
 
 	if (file1->buf == 0 || file2->buf == 0) return 0.0;
 
-	if (mode >= MODE_A_12 && mode <= MODE_A_O2)
-	{
-		const struct fileinfo *temp;
-		mode -= MODE_A_O2 - MODE_A_12 + 1;
+	size1 = usedbytes(file1,mode1);
+	size2 = usedbytes(file2,mode2);
 
-		temp = file1;
-		file1 = file2;
-		file2 = temp;
-	}
+	if (size1 != size2) return 0.0;
 
-	if (mode == MODE_A_A || mode == MODE_A_BS)
-	{
-		if (file1->size != file2->size) return 0.0;
-	}
-	else if (mode >= MODE_12_A && mode <= MODE_O_A)
-	{
-		if (file1->size != 2*file2->size) return 0.0;
-	}
-	else if (mode >= MODE_14_A && mode <= MODE_O2_A)
-	{
-		if (file1->size != 4*file2->size) return 0.0;
-	}
+	basemult(file1,mode1,&base1,&mult1);
+	basemult(file2,mode2,&base2,&mult2);
 
-	switch (mode)
-	{
-		case MODE_A_A:
-		case MODE_12_A:
-		case MODE_14_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[i] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
+	for (i = 0;i < size1;i++)
+		if (file1->buf[base1 + mult1 * i] == file2->buf[base2 + mult2 * i]) match++;
 
-		case MODE_A_BS:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[i] == file2->buf[i^1]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_22_A:
-		case MODE_24_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[i + file2->size] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_34_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[i + 2*file2->size] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_44_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[i + 3*file2->size] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_E_A:
-		case MODE_E1_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[2*i] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_O_A:
-		case MODE_O1_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[2*i+1] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_E2_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[2*i + 2*file2->size] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-
-		case MODE_O2_A:
-			for (i = 0;i < file2->size;i++)
-			{
-				if (file1->buf[2*i+1 + 2*file2->size] == file2->buf[i]) match++;
-			}
-			score = (float)match/file2->size;
-			break;
-	}
-
-	return score;
+	return (float)match / size1;
 }
 
 
@@ -403,9 +380,9 @@ static void freefile(struct fileinfo *file)
 }
 
 
-static void printname(const struct fileinfo *file1,const struct fileinfo *file2,float score,int mode)
+static void printname(const struct fileinfo *file1,const struct fileinfo *file2,float score,int mode1,int mode2)
 {
-	printf("%-12s %s %-12s %s ",file1 ? file1->name : "",modenames[mode][0],file2 ? file2->name : "",modenames[mode][1]);
+	printf("%-12s %s %-12s %s ",file1 ? file1->name : "",modenames[mode1],file2 ? file2->name : "",modenames[mode2]);
 	if (score == 0.0) printf("NO MATCH\n");
 	else if (score == 1.0) printf("IDENTICAL\n");
 	else printf("%3.3f%%\n",score*100);
@@ -523,16 +500,25 @@ static int load_files(int i, int *found, const char *path)
 int CLIB_DECL main(int argc,char **argv)
 {
 	int	err;
+	int total_modes = 1;	/* by default, use only MODE_A */
+
+	if (argc >= 2 && strcmp(argv[1],"-d") == 0)
+	{
+		argc--;
+		argv++;
+		total_modes = TOTAL_MODES;
+	}
 
 	if (argc < 2)
 	{
-		printf("usage: romcmp [dir1 | zip1] [dir2 | zip2]\n");
+		printf("usage: romcmp [-d] [dir1 | zip1] [dir2 | zip2]\n");
+		printf("-d enables a slower, more comprehensive comparison.\n");
 		return 0;
 	}
 
 	{
 		int found[2];
-		int i,j,mode;
+		int i,j,mode1,mode2;
 		int besti,bestj;
 
 
@@ -569,10 +555,13 @@ int CLIB_DECL main(int argc,char **argv)
 			{
 				for (j = i+1;j < found[0];j++)
 				{
-					for (mode = 0;mode < TOTAL_MODES;mode++)
+					for (mode1 = 0;mode1 < total_modes;mode1++)
 					{
-						if (filecompare(&files[0][i],&files[0][j],mode) == 1.0)
-							printname(&files[0][i],&files[0][j],1.0,mode);
+						for (mode2 = 0;mode2 < total_modes;mode2++)
+						{
+							if (filecompare(&files[0][i],&files[0][j],mode1,mode2) == 1.0)
+								printname(&files[0][i],&files[0][j],1.0,mode1,mode2);
+						}
 					}
 				}
 			}
@@ -584,35 +573,44 @@ int CLIB_DECL main(int argc,char **argv)
 			{
 				for (j = 0;j < found[1];j++)
 				{
-					for (mode = 0;mode < TOTAL_MODES;mode++)
+					fprintf(stderr,"%2d%%\r",100*(i*found[1]+j)/(found[0]*found[1]));
+					for (mode1 = 0;mode1 < total_modes;mode1++)
 					{
-						matchscore[i][j][mode] = filecompare(&files[0][i],&files[1][j],mode);
+						for (mode2 = 0;mode2 < total_modes;mode2++)
+						{
+							matchscore[i][j][mode1][mode2] = filecompare(&files[0][i],&files[1][j],mode1,mode2);
+						}
 					}
 				}
 			}
+			fprintf(stderr,"   \r");
 
 			do
 			{
 				float bestscore;
-				int bestmode;
+				int bestmode1,bestmode2;
 
 				besti = -1;
 				bestj = -1;
 				bestscore = 0.0;
-				bestmode = -1;
+				bestmode1 = bestmode2 = -1;
 
-				for (mode = 0;mode < TOTAL_MODES;mode++)
+				for (mode1 = 0;mode1 < total_modes;mode1++)
 				{
-					for (i = 0;i < found[0];i++)
+					for (mode2 = 0;mode2 < total_modes;mode2++)
 					{
-						for (j = 0;j < found[1];j++)
+						for (i = 0;i < found[0];i++)
 						{
-							if (matchscore[i][j][mode] > bestscore)
+							for (j = 0;j < found[1];j++)
 							{
-								bestscore = matchscore[i][j][mode];
-								besti = i;
-								bestj = j;
-								bestmode = mode;
+								if (matchscore[i][j][mode1][mode2] > bestscore)
+								{
+									bestscore = matchscore[i][j][mode1][mode2];
+									besti = i;
+									bestj = j;
+									bestmode1 = mode1;
+									bestmode2 = mode2;
+								}
 							}
 						}
 					}
@@ -620,54 +618,53 @@ int CLIB_DECL main(int argc,char **argv)
 
 				if (besti != -1)
 				{
-					printname(&files[0][besti],&files[1][bestj],bestscore,bestmode);
+					int start,end;
+
+					printname(&files[0][besti],&files[1][bestj],bestscore,bestmode1,bestmode2);
 					files[0][besti].listed = 1;
 					files[1][bestj].listed = 1;
 
-					matchscore[besti][bestj][bestmode] = 0.0;
-					for (mode = 0;mode < TOTAL_MODES;mode++)
+					matchscore[besti][bestj][bestmode1][bestmode2] = 0.0;
+
+					/* remove all matches using the same sections with a worse score */
+					for (j = 0;j < found[1];j++)
 					{
-						if (bestmode == MODE_A_A || bestmode == MODE_A_BS ||
-								mode == bestmode ||
-								(bestmode >= MODE_12_A && bestmode <= MODE_O_A &&
-								((mode-MODE_12_A)&~1) != ((bestmode-MODE_12_A)&~1)) ||
-								(bestmode >= MODE_14_A && bestmode <= MODE_44_A &&
-								((mode-MODE_14_A)&~3) != ((bestmode-MODE_14_A)&~3)) ||
-								(bestmode >= MODE_E1_A && bestmode <= MODE_O2_A &&
-								((mode-MODE_E1_A)&~3) != ((bestmode-MODE_E1_A)&~3)) ||
-								(bestmode >= MODE_A_12 && bestmode <= MODE_A_O &&
-								((mode-MODE_A_12)&~1) != ((bestmode-MODE_A_12)&~1)) ||
-								(bestmode >= MODE_A_14 && bestmode <= MODE_A_44 &&
-								((mode-MODE_A_14)&~3) != ((bestmode-MODE_A_14)&~3)) ||
-								(bestmode >= MODE_A_E1 && bestmode <= MODE_A_O2 &&
-								((mode-MODE_A_E1)&~3) != ((bestmode-MODE_A_E1)&~3)))
+						for (mode2 = 0;mode2 < total_modes;mode2++)
 						{
-							for (i = 0;i < found[0];i++)
-							{
-								if (matchscore[i][bestj][mode] < bestscore)
-									matchscore[i][bestj][mode] = 0.0;
-							}
-							for (j = 0;j < found[1];j++)
-							{
-								if (matchscore[besti][j][mode] < bestscore)
-									matchscore[besti][j][mode] = 0.0;
-							}
+							if (matchscore[besti][j][bestmode1][mode2] < bestscore)
+								matchscore[besti][j][bestmode1][mode2] = 0.0;
 						}
-						if (files[0][besti].size > files[1][bestj].size)
+					}
+					for (i = 0;i < found[0];i++)
+					{
+						for (mode1 = 0;mode1 < total_modes;mode1++)
 						{
-							for (i = 0;i < found[0];i++)
-							{
-								if (matchscore[i][bestj][mode] < bestscore)
-									matchscore[i][bestj][mode] = 0.0;
-							}
+							if (matchscore[i][bestj][mode1][bestmode2] < bestscore)
+								matchscore[i][bestj][mode1][bestmode2] = 0.0;
 						}
-						else
+					}
+
+					/* remove all matches using incompatible sections */
+					compatiblemodes(bestmode1,&start,&end);
+					for (j = 0;j < found[1];j++)
+					{
+						for (mode2 = 0;mode2 < total_modes;mode2++)
 						{
-							for (j = 0;j < found[1];j++)
-							{
-								if (matchscore[besti][j][mode] < bestscore)
-									matchscore[besti][j][mode] = 0.0;
-							}
+							for (mode1 = 0;mode1 < start;mode1++)
+								matchscore[besti][j][mode1][mode2] = 0.0;
+							for (mode1 = end+1;mode1 < total_modes;mode1++)
+								matchscore[besti][j][mode1][mode2] = 0.0;
+						}
+					}
+					compatiblemodes(bestmode2,&start,&end);
+					for (i = 0;i < found[0];i++)
+					{
+						for (mode1 = 0;mode1 < total_modes;mode1++)
+						{
+							for (mode2 = 0;mode2 < start;mode2++)
+								matchscore[i][bestj][mode1][mode2] = 0.0;
+							for (mode2 = end+1;mode2 < total_modes;mode2++)
+								matchscore[i][bestj][mode1][mode2] = 0.0;
 						}
 					}
 				}
@@ -676,12 +673,12 @@ int CLIB_DECL main(int argc,char **argv)
 
 			for (i = 0;i < found[0];i++)
 			{
-				if (files[0][i].listed == 0) printname(&files[0][i],0,0.0,0);
+				if (files[0][i].listed == 0) printname(&files[0][i],0,0.0,0,0);
 				freefile(&files[0][i]);
 			}
 			for (i = 0;i < found[1];i++)
 			{
-				if (files[1][i].listed == 0) printname(0,&files[1][i],0.0,0);
+				if (files[1][i].listed == 0) printname(0,&files[1][i],0.0,0,0);
 				freefile(&files[1][i]);
 			}
 		}

@@ -74,18 +74,18 @@ WRITE_HANDLER( magix_videoram_w )
 	{
 		int bank = magix_videobank & 2;
 		unsigned char *RAM;
-		int r,g,b;
+		int r,g,b,color;
 
 		if (bank)	RAM = magix_videoram_0;
 		else		RAM = magix_videoram_1;
 
 		RAM[offset] = data;
-		data = RAM[offset & ~1] | (RAM[offset | 1] << 8);
+		color = RAM[offset & ~1] | (RAM[offset | 1] << 8);
 
 		/* BBBBBGGGGGRRRRRx */
-		r = (data >>  0) & 0x1f;
-		g = (data >>  5) & 0x1f;
-		b = (data >> 10) & 0x1f;
+		r = (color >>  0) & 0x1f;
+		g = (color >>  5) & 0x1f;
+		b = (color >> 10) & 0x1f;
 
 		palette_change_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
 	}

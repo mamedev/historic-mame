@@ -383,21 +383,21 @@ static const struct MachineDriver machine_driver_funkyjet =
 /******************************************************************************/
 
 ROM_START( funkyjet )
-	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
-	ROM_LOAD_EVEN( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
-	ROM_LOAD_ODD ( "jk01.13f", 0x00000, 0x40000, 0xbe3920d7 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
+	ROM_LOAD16_BYTE( "jk01.13f", 0x00001, 0x40000, 0xbe3920d7 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, 0x748c0bd8 )
 
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mat02", 0x000000, 0x80000, 0xe4b94c7e ) /* chars */
 
-	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
   	ROM_LOAD( "mat00", 0x000000, 0x80000, 0xfbda0228 ) /* sprites */
 	ROM_LOAD( "mat01", 0x080000, 0x80000, 0x24093a8d )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "jk03.15h",    0x00000, 0x20000, 0x69a0eaf7 )
 ROM_END
 

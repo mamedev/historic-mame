@@ -223,7 +223,7 @@ void mark_sprite_colors( void )
 	for (offs = (spriteram_size-8)/2;offs >= 0;offs -= 4)
 	{
 		code = buffered_spriteram16[offs] & 0x7ff;
-		color = (buffered_spriteram[offs+1] & 0x3c) >> 2;
+		color = (buffered_spriteram16[offs+1] & 0x3c) >> 2;
 		colmask[color] |= Machine->gfx[3]->pen_usage[code];
 	}
 

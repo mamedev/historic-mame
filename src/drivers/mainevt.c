@@ -720,189 +720,189 @@ static const struct MachineDriver machine_driver_devstors =
 ***************************************************************************/
 
 ROM_START( mainevt )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "799c02.k11",   0x10000, 0x08000, 0xe2e7dbd5 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION( 0x20000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
-	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
-	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
-	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD16_BYTE( "799c07.h22",   0x00001, 0x08000, 0x176df538 )
+	ROM_LOAD16_BYTE( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD16_BYTE( "799c09.k22",   0x10001, 0x08000, 0x9baec75e )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2 )	/* 128+512k for the UPD7759C samples */
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( mainevt2 )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "02",           0x10000, 0x08000, 0xc143596b )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION( 0x20000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
-	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
-	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
-	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD16_BYTE( "799c07.h22",   0x00001, 0x08000, 0x176df538 )
+	ROM_LOAD16_BYTE( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD16_BYTE( "799c09.k22",   0x10001, 0x08000, 0x9baec75e )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2 )	/* 128+512k for the UPD7759C samples */
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( ringohja )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "799n02.k11",   0x10000, 0x08000, 0xf9305dd0 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "799c01.f7",    0x00000, 0x08000, 0x447c4c5c )
 
-	ROM_REGION( 0x20000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
-	ROM_LOAD_GFX_ODD ( "799c07.h22",   0x00000, 0x08000, 0x176df538 )
-	ROM_LOAD_GFX_EVEN( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
-	ROM_LOAD_GFX_ODD ( "799c09.k22",   0x10000, 0x08000, 0x9baec75e )
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "799c06.f22",   0x00000, 0x08000, 0xf839cb58 )
+	ROM_LOAD16_BYTE( "799c07.h22",   0x00001, 0x08000, 0x176df538 )
+	ROM_LOAD16_BYTE( "799c08.j22",   0x10000, 0x08000, 0xd01e0078 )
+	ROM_LOAD16_BYTE( "799c09.k22",   0x10001, 0x08000, 0x9baec75e )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "799b04.h4",    0x00000, 0x80000, 0x323e0c2b )
 	ROM_LOAD( "799b05.k4",    0x80000, 0x80000, 0x571c5831 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "63s141n.bin",  0x0000, 0x0100, 0x61f6c8d1 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2 )	/* 128+512k for the UPD7759C samples */
+	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
 	/* 00000-1ffff space where the following ROM is bank switched */
 	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( devstors )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "890-z02.k11",  0x10000, 0x08000, 0xebeb306f )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
-	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
-	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
-	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD16_BYTE( "dev-f07.rom",  0x00001, 0x10000, 0x6c74fa2e )
+	ROM_LOAD16_BYTE( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD16_BYTE( "dev-f09.rom",  0x20001, 0x10000, 0x67ca40d5 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 ROM_END
 
 ROM_START( devstor2 )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "dev-x02.rom",  0x10000, 0x08000, 0xe58ebb35 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
-	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
-	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
-	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD16_BYTE( "dev-f07.rom",  0x00001, 0x10000, 0x6c74fa2e )
+	ROM_LOAD16_BYTE( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD16_BYTE( "dev-f09.rom",  0x20001, 0x10000, 0x67ca40d5 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 ROM_END
 
 ROM_START( devstor3 )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "890k02.k11",   0x10000, 0x08000, 0x52f4ccdd )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
-	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
-	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
-	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD16_BYTE( "dev-f07.rom",  0x00001, 0x10000, 0x6c74fa2e )
+	ROM_LOAD16_BYTE( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD16_BYTE( "dev-f09.rom",  0x20001, 0x10000, 0x67ca40d5 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 ROM_END
 
 ROM_START( garuka )
-	ROM_REGION( 0x40000, REGION_CPU1 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD( "890w02.bin",   0x10000, 0x08000, 0xb2f6f538 )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "dev-k01.rom",  0x00000, 0x08000, 0xd44b3eb0 )
 
-	ROM_REGION( 0x40000, REGION_GFX1 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD_GFX_EVEN( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
-	ROM_LOAD_GFX_ODD ( "dev-f07.rom",  0x00000, 0x10000, 0x6c74fa2e )
-	ROM_LOAD_GFX_EVEN( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
-	ROM_LOAD_GFX_ODD ( "dev-f09.rom",  0x20000, 0x10000, 0x67ca40d5 )
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "dev-f06.rom",  0x00000, 0x10000, 0x26592155 )
+	ROM_LOAD16_BYTE( "dev-f07.rom",  0x00001, 0x10000, 0x6c74fa2e )
+	ROM_LOAD16_BYTE( "dev-f08.rom",  0x20000, 0x10000, 0x29e12e80 )
+	ROM_LOAD16_BYTE( "dev-f09.rom",  0x20001, 0x10000, 0x67ca40d5 )
 
-	ROM_REGION( 0x100000, REGION_GFX2 )	/* graphics (addressable by the main CPU) */
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
 	ROM_LOAD( "dev-f04.rom",  0x00000, 0x80000, 0xf16cd1fa )
 	ROM_LOAD( "dev-f05.rom",  0x80000, 0x80000, 0xda37db05 )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "devaprom.bin", 0x0000, 0x0100, 0xd3620106 )	/* priority encoder (not used) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1 )	/* 512k for 007232 samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
  	ROM_LOAD( "dev-f03.rom",  0x00000, 0x80000, 0x19065031 )
 ROM_END
 

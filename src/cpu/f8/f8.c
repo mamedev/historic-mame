@@ -410,7 +410,7 @@ static void ROMC_1A(void)
      * register was addressed; the device containing the addressed port
      * must place the contents of the data bus into the address port.
      */
-    cpu_writeport(f8.io, f8.dbus);
+    cpu_writeport16(f8.io, f8.dbus);
     f8_icount -= cL;
 }
 
@@ -423,7 +423,7 @@ static void ROMC_1B(void)
      * contents of timer and interrupt control registers cannot be read
      * back onto the data bus).
      */
-	f8.dbus = cpu_readport(f8.io);
+	f8.dbus = cpu_readport16(f8.io);
     f8_icount -= cL;
 }
 
@@ -1334,7 +1334,7 @@ static void f8_ins_0(int n)
 {
 	ROMC_1C();
 	CLR_OZCS;
-    f8.a = cpu_readport(n);
+    f8.a = cpu_readport16(n);
 	SET_SZ(f8.a);
     ROMC_00();
 }
@@ -1361,7 +1361,7 @@ static void f8_ins_1(int n)
 static void f8_outs_0(int n)
 {
 	ROMC_1C();
-	cpu_writeport(n, f8.a);
+	cpu_writeport16(n, f8.a);
     ROMC_00();
 }
 

@@ -236,35 +236,12 @@ WRITE_HANDLER( upd_data_w )
 
 /*************************************
  *
- *	Mirroring (20bit -> 24bit)
- *
- *************************************/
-
-static READ16_HANDLER( mirror_r )
-{
-	return cpu_readmem24bew_word((offset << 1) & 0xfffff);
-}
-
-
-static WRITE16_HANDLER(mirror_w)
-{
-	if (ACCESSING_LSB && ACCESSING_MSB)
-		cpu_writemem24bew_word((offset << 1) & 0xfffff, data);
-	else if (ACCESSING_MSB)
-		cpu_writemem24bew((offset << 1) & 0xfffff, (data >> 8) & 0xff);
-	else
-		cpu_writemem24bew(((offset << 1) & 0xfffff) + 1, data & 0xff);
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
  *************************************/
 
 static MEMORY_READ16_START( readmem )
+	MEMORY_ADDRESS_BITS(20)
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x040000, 0x04ffff, MRA16_RAM },
 	{ 0x060000, 0x060fff, MRA16_RAM },
@@ -274,11 +251,11 @@ static MEMORY_READ16_START( readmem )
 	{ 0x0c001e, 0x0c001f, sound_busy_r },
 	{ 0x0a0000, 0x0a07ff, MRA16_RAM },
 	{ 0x0fc000, 0x0fffff, MRA16_RAM },
-	{ 0x100000, 0xffffff, mirror_r },
 MEMORY_END
 
 
 static MEMORY_WRITE16_START( writemem )
+	MEMORY_ADDRESS_BITS(20)
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x040000, 0x04ffff, rpunch_bitmap_w, &rpunch_bitmapram, &rpunch_bitmapram_size },
 	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
@@ -291,7 +268,6 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x0c0010, 0x0c0013, rpunch_ins_w },
 	{ 0x0c0028, 0x0c0029, rpunch_crtc_register_w },
 	{ 0x0fc000, 0x0fffff, MWA16_RAM },
-	{ 0x100000, 0xffffff, mirror_w },
 MEMORY_END
 
 
@@ -563,7 +539,7 @@ INPUT_PORTS_START( svolley )
 	PORT_DIPSETTING(      0x0800, "10-11" )
 	PORT_DIPSETTING(      0x0000, "11-11" )
 	PORT_SERVICE( 0x2000, IP_ACTIVE_HIGH )
-	PORT_DIPNAME( 0x4000, 0x0000, DEF_STR( Demo_Sounds ))
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ))
 	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Flip_Screen ))
@@ -706,128 +682,128 @@ static const struct MachineDriver machine_driver_rpunch =
  *************************************/
 
 ROM_START( rpunch )
-	ROM_REGION( 0x20000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "rpunch.20", 0x00000, 0x08000, 0xa2028d59 )
-	ROM_LOAD_ODD ( "rpunch.21", 0x00000, 0x08000, 0x1cdb13d3 )
-	ROM_LOAD_EVEN( "rpunch.2",  0x10000, 0x08000, 0x9b9729bb )
-	ROM_LOAD_ODD ( "rpunch.3",  0x10000, 0x08000, 0x5704a688 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "rpunch.20", 0x00000, 0x08000, 0xa2028d59 )
+	ROM_LOAD16_BYTE( "rpunch.21", 0x00001, 0x08000, 0x1cdb13d3 )
+	ROM_LOAD16_BYTE( "rpunch.2",  0x10000, 0x08000, 0x9b9729bb )
+	ROM_LOAD16_BYTE( "rpunch.3",  0x10001, 0x08000, 0x5704a688 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "rpunch.92", 0x00000, 0x10000, 0x5e1870e3 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 )
+	ROM_REGION( 0x60000, REGION_GFX1, 0 )
 	ROM_LOAD( "rl_c13.bin", 0x00000, 0x40000, 0x7c8403b0 )
 	ROM_LOAD( "rl_c10.bin", 0x40000, 0x08000, 0x312eb260 )
 	ROM_LOAD( "rl_c12.bin", 0x48000, 0x08000, 0xbea85219 )
 
-	ROM_REGION( 0x60000, REGION_GFX2 )
+	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "rl_a10.bin", 0x00000, 0x40000, 0xc2a77619 )
 	ROM_LOAD( "rl_a13.bin", 0x40000, 0x08000, 0xa39c2c16 )
 	ROM_LOAD( "rpunch.54",  0x48000, 0x08000, 0xe2969747 )
 
-	ROM_REGION( 0x60000, REGION_GFX3 )
-	ROM_LOAD_GFX_EVEN( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
-	ROM_LOAD_GFX_ODD ( "rl_4h.bin", 0x00000, 0x20000, 0x8a4d3c99 )
-	ROM_LOAD_GFX_EVEN( "rl_1g.bin", 0x40000, 0x08000, 0x74d41b2e )
-	ROM_LOAD_GFX_ODD ( "rl_1h.bin", 0x40000, 0x08000, 0x7dcb32bb )
-	ROM_LOAD_GFX_EVEN( "rpunch.85", 0x50000, 0x08000, 0x60b88a2c )
-	ROM_LOAD_GFX_ODD ( "rpunch.86", 0x50000, 0x08000, 0x91d204f6 )
+	ROM_REGION( 0x60000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
+	ROM_LOAD16_BYTE( "rl_4h.bin", 0x00001, 0x20000, 0x8a4d3c99 )
+	ROM_LOAD16_BYTE( "rl_1g.bin", 0x40000, 0x08000, 0x74d41b2e )
+	ROM_LOAD16_BYTE( "rl_1h.bin", 0x40001, 0x08000, 0x7dcb32bb )
+	ROM_LOAD16_BYTE( "rpunch.85", 0x50000, 0x08000, 0x60b88a2c )
+	ROM_LOAD16_BYTE( "rpunch.86", 0x50001, 0x08000, 0x91d204f6 )
 
-	ROM_REGION( 0x60000, REGION_SOUND1 )
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rl_f18.bin", 0x20000, 0x20000, 0x47840673 )
 //	ROM_LOAD( "rpunch.91", 0x00000, 0x0f000, 0x7512cc59 )
 ROM_END
 
 
 ROM_START( rabiolep )
-	ROM_REGION( 0x20000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "rl_e2.bin", 0x00000, 0x08000, 0x7d936a12 )
-	ROM_LOAD_ODD ( "rl_d2.bin", 0x00000, 0x08000, 0xd8d85429 )
-	ROM_LOAD_EVEN( "rl_e4.bin", 0x10000, 0x08000, 0x5bfaee12 )
-	ROM_LOAD_ODD ( "rl_d4.bin", 0x10000, 0x08000, 0xe64216bf )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "rl_e2.bin", 0x00000, 0x08000, 0x7d936a12 )
+	ROM_LOAD16_BYTE( "rl_d2.bin", 0x00001, 0x08000, 0xd8d85429 )
+	ROM_LOAD16_BYTE( "rl_e4.bin", 0x10000, 0x08000, 0x5bfaee12 )
+	ROM_LOAD16_BYTE( "rl_d4.bin", 0x10001, 0x08000, 0xe64216bf )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "rl_f20.bin", 0x00000, 0x10000, 0xa6f50351 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 )
+	ROM_REGION( 0x60000, REGION_GFX1, 0 )
 	ROM_LOAD( "rl_c13.bin", 0x00000, 0x40000, 0x7c8403b0 )
 	ROM_LOAD( "rl_c10.bin", 0x40000, 0x08000, 0x312eb260 )
 	ROM_LOAD( "rl_c12.bin", 0x48000, 0x08000, 0xbea85219 )
 
-	ROM_REGION( 0x60000, REGION_GFX2 )
+	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "rl_a10.bin", 0x00000, 0x40000, 0xc2a77619 )
 	ROM_LOAD( "rl_a13.bin", 0x40000, 0x08000, 0xa39c2c16 )
 	ROM_LOAD( "rl_a12.bin", 0x48000, 0x08000, 0x970b0e32 )
 
-	ROM_REGION( 0x60000, REGION_GFX3 )
-	ROM_LOAD_GFX_EVEN( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
-	ROM_LOAD_GFX_ODD ( "rl_4h.bin", 0x00000, 0x20000, 0x8a4d3c99 )
-	ROM_LOAD_GFX_EVEN( "rl_1g.bin", 0x40000, 0x08000, 0x74d41b2e )
-	ROM_LOAD_GFX_ODD ( "rl_1h.bin", 0x40000, 0x08000, 0x7dcb32bb )
-	ROM_LOAD_GFX_EVEN( "rl_2g.bin", 0x50000, 0x08000, 0x744903b4 )
-	ROM_LOAD_GFX_ODD ( "rl_2h.bin", 0x50000, 0x08000, 0x09649e75 )
+	ROM_REGION( 0x60000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
+	ROM_LOAD16_BYTE( "rl_4h.bin", 0x00001, 0x20000, 0x8a4d3c99 )
+	ROM_LOAD16_BYTE( "rl_1g.bin", 0x40000, 0x08000, 0x74d41b2e )
+	ROM_LOAD16_BYTE( "rl_1h.bin", 0x40001, 0x08000, 0x7dcb32bb )
+	ROM_LOAD16_BYTE( "rl_2g.bin", 0x50000, 0x08000, 0x744903b4 )
+	ROM_LOAD16_BYTE( "rl_2h.bin", 0x50001, 0x08000, 0x09649e75 )
 
-	ROM_REGION( 0x60000, REGION_SOUND1 )
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rl_f18.bin", 0x20000, 0x20000, 0x47840673 )
 ROM_END
 
 
 ROM_START( svolley )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "sps_13.bin", 0x00000, 0x10000, 0x2fbc5dcf )
-	ROM_LOAD_ODD ( "sps_11.bin", 0x00000, 0x10000, 0x51b025c9 )
-	ROM_LOAD_EVEN( "sps_14.bin", 0x20000, 0x08000, 0xe7630122 )
-	ROM_LOAD_ODD ( "sps_12.bin", 0x20000, 0x08000, 0xb6b24910 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "sps_13.bin", 0x00000, 0x10000, 0x2fbc5dcf )
+	ROM_LOAD16_BYTE( "sps_11.bin", 0x00001, 0x10000, 0x51b025c9 )
+	ROM_LOAD16_BYTE( "sps_14.bin", 0x20000, 0x08000, 0xe7630122 )
+	ROM_LOAD16_BYTE( "sps_12.bin", 0x20001, 0x08000, 0xb6b24910 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sps_17.bin", 0x00000, 0x10000, 0x48b89688 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 )
+	ROM_REGION( 0x60000, REGION_GFX1, 0 )
 	ROM_LOAD( "sps_02.bin", 0x00000, 0x10000, 0x1a0abe75 )
 	ROM_LOAD( "sps_03.bin", 0x10000, 0x10000, 0x36279075 )
 	ROM_LOAD( "sps_04.bin", 0x20000, 0x10000, 0x7cede7d9 )
 	ROM_LOAD( "sps_01.bin", 0x30000, 0x08000, 0x6425e6d7 )
 	ROM_LOAD( "sps_10.bin", 0x40000, 0x08000, 0xa12b1589 )
 
-	ROM_REGION( 0x60000, REGION_GFX2 )
+	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "sps_05.bin", 0x00000, 0x10000, 0xb0671d12 )
 	ROM_LOAD( "sps_06.bin", 0x10000, 0x10000, 0xc231957e )
 	ROM_LOAD( "sps_07.bin", 0x20000, 0x10000, 0x904b7709 )
 	ROM_LOAD( "sps_08.bin", 0x30000, 0x10000, 0x5430ffac )
 	ROM_LOAD( "sps_09.bin", 0x40000, 0x10000, 0x414a6278 )
 
-	ROM_REGION( 0x60000, REGION_GFX3 )
-	ROM_LOAD_GFX_EVEN( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
-	ROM_LOAD_GFX_ODD ( "sps_23.bin", 0x00000, 0x10000, 0x7b15c805 )
-	ROM_LOAD_GFX_EVEN( "sps_19.bin", 0x20000, 0x08000, 0x8ac2f232 )
-	ROM_LOAD_GFX_ODD ( "sps_22.bin", 0x20000, 0x08000, 0xfcc754e3 )
-	ROM_LOAD_GFX_EVEN( "sps_18.bin", 0x30000, 0x08000, 0x4d6c8f0c )
-	ROM_LOAD_GFX_ODD ( "sps_21.bin", 0x30000, 0x08000, 0x9dd28b42 )
+	ROM_REGION( 0x60000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
+	ROM_LOAD16_BYTE( "sps_23.bin", 0x00001, 0x10000, 0x7b15c805 )
+	ROM_LOAD16_BYTE( "sps_19.bin", 0x20000, 0x08000, 0x8ac2f232 )
+	ROM_LOAD16_BYTE( "sps_22.bin", 0x20001, 0x08000, 0xfcc754e3 )
+	ROM_LOAD16_BYTE( "sps_18.bin", 0x30000, 0x08000, 0x4d6c8f0c )
+	ROM_LOAD16_BYTE( "sps_21.bin", 0x30001, 0x08000, 0x9dd28b42 )
 
-	ROM_REGION( 0x60000, REGION_SOUND1 )
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
 	ROM_LOAD( "sps_16.bin", 0x20000, 0x20000, 0x456d0f36 )
 	ROM_LOAD( "sps_15.bin", 0x40000, 0x10000, 0xf33f415f )
 ROM_END
 
 
 ROM_START( svolleyk )
-	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "a14.bin", 0x00000, 0x10000, 0xdbab3bf9 )
-	ROM_LOAD_ODD ( "a11.bin", 0x00000, 0x10000, 0x92afd56f )
-	ROM_LOAD_EVEN( "a15.bin", 0x20000, 0x08000, 0xd8f89c4a )
-	ROM_LOAD_ODD ( "a12.bin", 0x20000, 0x08000, 0xde3dd5cb )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "a14.bin", 0x00000, 0x10000, 0xdbab3bf9 )
+	ROM_LOAD16_BYTE( "a11.bin", 0x00001, 0x10000, 0x92afd56f )
+	ROM_LOAD16_BYTE( "a15.bin", 0x20000, 0x08000, 0xd8f89c4a )
+	ROM_LOAD16_BYTE( "a12.bin", 0x20001, 0x08000, 0xde3dd5cb )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sps_17.bin", 0x00000, 0x10000, 0x48b89688 )
 
-	ROM_REGION( 0x60000, REGION_GFX1 )
+	ROM_REGION( 0x60000, REGION_GFX1, 0 )
 	ROM_LOAD( "sps_02.bin", 0x00000, 0x10000, 0x1a0abe75 )
 	ROM_LOAD( "sps_03.bin", 0x10000, 0x10000, 0x36279075 )
 	ROM_LOAD( "sps_04.bin", 0x20000, 0x10000, 0x7cede7d9 )
 	ROM_LOAD( "sps_01.bin", 0x30000, 0x08000, 0x6425e6d7 )
 	ROM_LOAD( "sps_10.bin", 0x40000, 0x08000, 0xa12b1589 )
 
-	ROM_REGION( 0x60000, REGION_GFX2 )
+	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "sps_05.bin", 0x00000, 0x10000, 0xb0671d12 )
 	ROM_LOAD( "sps_06.bin", 0x10000, 0x10000, 0xc231957e )
 	ROM_LOAD( "sps_07.bin", 0x20000, 0x10000, 0x904b7709 )
@@ -835,15 +811,15 @@ ROM_START( svolleyk )
 	ROM_LOAD( "sps_09.bin", 0x40000, 0x10000, 0x414a6278 )
 	ROM_LOAD( "a09.bin",    0x50000, 0x08000, 0xdd92dfe1 )
 
-	ROM_REGION( 0x60000, REGION_GFX3 )
-	ROM_LOAD_GFX_EVEN( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
-	ROM_LOAD_GFX_ODD ( "sps_23.bin", 0x00000, 0x10000, 0x7b15c805 )
-	ROM_LOAD_GFX_EVEN( "sps_19.bin", 0x20000, 0x08000, 0x8ac2f232 )
-	ROM_LOAD_GFX_ODD ( "sps_22.bin", 0x20000, 0x08000, 0xfcc754e3 )
-	ROM_LOAD_GFX_EVEN( "sps_18.bin", 0x30000, 0x08000, 0x4d6c8f0c )
-	ROM_LOAD_GFX_ODD ( "sps_21.bin", 0x30000, 0x08000, 0x9dd28b42 )
+	ROM_REGION( 0x60000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
+	ROM_LOAD16_BYTE( "sps_23.bin", 0x00001, 0x10000, 0x7b15c805 )
+	ROM_LOAD16_BYTE( "sps_19.bin", 0x20000, 0x08000, 0x8ac2f232 )
+	ROM_LOAD16_BYTE( "sps_22.bin", 0x20001, 0x08000, 0xfcc754e3 )
+	ROM_LOAD16_BYTE( "sps_18.bin", 0x30000, 0x08000, 0x4d6c8f0c )
+	ROM_LOAD16_BYTE( "sps_21.bin", 0x30001, 0x08000, 0x9dd28b42 )
 
-	ROM_REGION( 0x60000, REGION_SOUND1 )
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 )
 	ROM_LOAD( "sps_16.bin", 0x20000, 0x20000, 0x456d0f36 )
 	ROM_LOAD( "sps_15.bin", 0x40000, 0x10000, 0xf33f415f )
 ROM_END

@@ -40,27 +40,19 @@ typedef struct ccpuRegs
     UINT8   eCState;
 } ccpuRegs;
 
-#define CCPU_FETCH(a) ((unsigned)cpu_readop(a+CCPU_PGM_OFFSET))
-#define CCPU_READPORT(a) (cpu_readport (a))
-#define CCPU_WRITEPORT(a,v) (cpu_writeport (a,v))
+#define CCPU_FETCH(a) 		(cpu_readop(BYTE_XOR_BE(a)+CCPU_PGM_OFFSET))
+#define CCPU_READPORT(a)	(cpu_readport16bew_word(a))
+#define CCPU_WRITEPORT(a,v) (cpu_writeport16bew_word(a,v))
 
 /*
  * Read a word from given RAM memory location
  */
-#ifdef LSB_FIRST
-#define CCPU_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)+CCPU_DATA_OFFSET)<<8) | cpu_readmem16(((A<<1)+CCPU_DATA_OFFSET+1)))
-#else
-#define CCPU_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)+CCPU_DATA_OFFSET)) | cpu_readmem16(((A<<1)+CCPU_DATA_OFFSET+1))<<8)
-#endif
+#define CCPU_RAM_RDMEM(A)	(cpu_readmem16bew_word((A<<1)+CCPU_DATA_OFFSET))
 
 /*
  *	 Write a word to given RAM memory location
  */
-#ifdef LSB_FIRST
-#define CCPU_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET+1),(V&0x0ff)); cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET),((V>>8)&0x0ff)); }
-#else
-#define CCPU_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET+1),((V>>8)&0x0ff)); cpu_writemem16(((A<<1)+CCPU_DATA_OFFSET),(V&0x0ff)); }
-#endif
+#define CCPU_RAM_WRMEM(A,V) (cpu_writemem16bew_word((A<<1)+CCPU_DATA_OFFSET,V))
 
 
 #define RAW_VECTORS 1

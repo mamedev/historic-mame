@@ -592,7 +592,7 @@ there are three 6522 VIAs, at 2000, 2800, and 3000
 */
 
 ROM_START( kaos )
-    ROM_REGION( 0x10000, REGION_CPU1 )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
     ROM_LOAD( "kaosab.g2",    0x9000, 0x0800, 0xb23d858f )
     ROM_CONTINUE(		   	  0xd000, 0x0800			 )
     ROM_LOAD( "kaosab.j2",    0x9800, 0x0800, 0x4861e5dc )
@@ -606,13 +606,13 @@ ROM_START( kaos )
     ROM_LOAD( "kaosab.e1",    0xb800, 0x0800, 0x3da5202a )
     ROM_CONTINUE(		   	  0xf800, 0x0800			 )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "kaossnd.e1",   0xf800, 0x800, 0xab23d52a )
 ROM_END
 
 
 ROM_START( killcom )
-    ROM_REGION( 0x10000, REGION_CPU1 )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
     ROM_LOAD( "killcom.e2",   0xc000, 0x800, 0xa01cbb9a )
     ROM_LOAD( "killcom.f2",   0xc800, 0x800, 0xbb3b4a93 )
     ROM_LOAD( "killcom.g2",   0xd000, 0x800, 0x86ec68b2 )
@@ -622,12 +622,12 @@ ROM_START( killcom )
     ROM_LOAD( "killcom.f1",   0xf000, 0x800, 0xef652762 )
     ROM_LOAD( "killcom.e1",   0xf800, 0x800, 0xbc19dcb7 )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "killsnd.e1",   0xf800, 0x800, 0x77d4890d )
 ROM_END
 
 ROM_START( megatack )
-    ROM_REGION( 0x10000, REGION_CPU1 )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
     ROM_LOAD( "megattac.e2",  0xc000, 0x800, 0x33fa5104 )
     ROM_LOAD( "megattac.f2",  0xc800, 0x800, 0xaf5e96b1 )
     ROM_LOAD( "megattac.g2",  0xd000, 0x800, 0x670103ea )
@@ -637,12 +637,12 @@ ROM_START( megatack )
     ROM_LOAD( "megattac.f1",  0xf000, 0x800, 0xc93a8ed4 )
     ROM_LOAD( "megattac.e1",  0xf800, 0x800, 0xd9996b9f )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "megatsnd.e1",  0xf800, 0x800, 0x0c186bdb )
 ROM_END
 
 ROM_START( challeng )
-    ROM_REGION( 0x10000, REGION_CPU1 )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
     ROM_LOAD( "chall.6",      0xa000, 0x1000, 0xb30fe7f5 )
     ROM_LOAD( "chall.5",      0xb000, 0x1000, 0x34c6a88e )
     ROM_LOAD( "chall.4",      0xc000, 0x1000, 0x0ddc18ef )
@@ -650,7 +650,7 @@ ROM_START( challeng )
     ROM_LOAD( "chall.2",      0xe000, 0x1000, 0x948912ad )
     ROM_LOAD( "chall.1",      0xf000, 0x1000, 0x7c71a9dc )
 
-    ROM_REGION( 0x10000, REGION_CPU2 )
+    ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "chall.snd",    0xf800, 0x800, 0x1b2bffd2 )
 ROM_END
 
@@ -659,4 +659,4 @@ ROM_END
 GAME( 1981, kaos,     0, gameplan, kaos,     0, ROT270, "GamePlan", "Kaos" )
 GAME( 1980, killcom,  0, gameplan, killcom,  0, ROT0,   "GamePlan (Centuri license)", "Killer Comet" )
 GAME( 1980, megatack, 0, gameplan, megatack, 0, ROT0,   "GamePlan (Centuri license)", "MegaTack" )
-GAME( 1980, challeng, 0, gameplan, challeng, 0, ROT0,   "GamePlan (Centuri license)", "Challenger" )
+GAME( 1981, challeng, 0, gameplan, challeng, 0, ROT0,   "GamePlan (Centuri license)", "Challenger" )

@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	{ \
 		{ \
 			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 2.50 Mhz */ \
+			5000000/1,		/* 2.50 MHz */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
 			nb1413m3_interrupt, ##_intcnt_ \
 		} \
@@ -341,13 +341,13 @@ NBMJDRV1(  hyhoo2, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_h
 
 
 ROM_START( hyhoo )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "hyhoo.1",  0x00000, 0x08000, 0xc2852861 )
 
-	ROM_REGION( 0x10000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "hyhoo.2",  0x00000, 0x10000, 0x1fffcc84 )
 
-	ROM_REGION( 0x380000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x380000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hy1506-1.1i", 0x000000, 0x80000, 0x42c9fa34 )
 	ROM_LOAD( "hy1506-1.2i", 0x080000, 0x80000, 0x4c14972f )
 	ROM_LOAD( "hy1506-1.3i", 0x100000, 0x80000, 0x4a18c783 )
@@ -356,14 +356,14 @@ ROM_START( hyhoo )
 ROM_END
 
 ROM_START( hyhoo2 )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* program */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "hyhoo2.2",  0x00000, 0x08000, 0xd8733cdc )
 	ROM_LOAD( "hyhoo2.1",  0x08000, 0x08000, 0x4a1d9493 )
 
-	ROM_REGION( 0x10000, REGION_SOUND1 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "hyhoo2.3",  0x00000, 0x10000, 0xd7e82b23 )
 
-	ROM_REGION( 0x380000, REGION_GFX1 ) /* gfx */
+	ROM_REGION( 0x380000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "hy1506-1.1i", 0x000000, 0x80000, 0x42c9fa34 )
 	ROM_LOAD( "hy1506-1.2i", 0x080000, 0x80000, 0x4c14972f )
 	ROM_LOAD( "hy1506-1.3i", 0x100000, 0x80000, 0x4a18c783 )

@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 
-static int palette_bank;
+static int char_bank,palette_bank;
 
 
 void flstory_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -53,8 +53,9 @@ WRITE_HANDLER( flstory_palette_w )
 
 WRITE_HANDLER( flstory_gfxctrl_w )
 {
+	char_bank = (data & 0x10) >> 4;
 	palette_bank = (data & 0x20) >> 5;
-//logerror("%04x: gfxctrl = %02x\n",cpu_get_pc(),data);
+//usrintf_showmessage("%04x: gfxctrl = %02x\n",cpu_get_pc(),data);
 }
 
 
@@ -88,9 +89,9 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/2)/32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((videoram[offs + 1] & 0xc0) << 2) + 0xc00,
+					videoram[offs] + ((videoram[offs + 1] & 0xc0) << 2) + 0x400 + 0x800 * char_bank,
 					videoram[offs + 1] & 0x07,
-					videoram[offs + 1] & 0x08,1,
+					videoram[offs + 1] & 0x08, videoram[offs + 1] & 0x10,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -98,14 +99,14 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	for (offs = spriteram_size-4;offs >= 0;offs -= 4)
 	{
 		int code,sx,sy,flipx,flipy;
 
 
 		code = spriteram[offs+2] + ((spriteram[offs+1] & 0x30) << 4);
 		sx = spriteram[offs+3];
-		sy = 240 - spriteram[offs+0];
+		sy = 240 - spriteram[offs+0] - 1;
 		flipx = spriteram[offs+1]&0x40;
 		flipy = spriteram[offs+1]&0x80;
 
@@ -137,9 +138,9 @@ void flstory_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/2)/32;
 
 			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + ((videoram[offs + 1] & 0xc0) << 2) + 0xc00,
+					videoram[offs] + ((videoram[offs + 1] & 0xc0) << 2) + 0x400 + 0x800 * char_bank,
 					videoram[offs + 1] & 0x07,
-					videoram[offs + 1] & 0x08,1,
+					videoram[offs + 1] & 0x08, videoram[offs + 1] & 0x10,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}

@@ -430,35 +430,35 @@ static const struct MachineDriver machine_driver_ginganin =
 ***************************************************************************/
 
 ROM_START( ginganin )
-	ROM_REGION( 0x20000, REGION_CPU1 )	/* main cpu */
-	ROM_LOAD_EVEN( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )
-	ROM_LOAD_ODD(  "gn_01.bin", 0x00000, 0x10000, 0x30256fcb )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* main cpu */
+	ROM_LOAD16_BYTE( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )
+	ROM_LOAD16_BYTE( "gn_01.bin", 0x00001, 0x10000, 0x30256fcb )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* sound cpu */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu */
 	ROM_LOAD( "gn_05.bin", 0x00000, 0x10000, 0xe76e10e7 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gn_15.bin", 0x000000, 0x10000, 0x1b8ac9fb )  /* bg */
 	ROM_LOAD( "gn_14.bin", 0x010000, 0x10000, 0xe73fe668 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "gn_12.bin", 0x000000, 0x10000, 0xc134a1e9 )  /* fg */
 	ROM_LOAD( "gn_13.bin", 0x010000, 0x10000, 0x1d3bec21 )
 
-	ROM_REGION( 0x04000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "gn_10.bin", 0x000000, 0x04000, 0xae371b2d )  /* txt */
 
-	ROM_REGION( 0x50000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x50000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "gn_06.bin", 0x000000, 0x10000, 0xbdc65835 )  /* sprites */
 	ROM_CONTINUE(		   0x040000, 0x10000 )
 	ROM_LOAD( "gn_07.bin", 0x010000, 0x10000, 0xc2b8eafe )
 	ROM_LOAD( "gn_08.bin", 0x020000, 0x10000, 0xf7c73c18 )
 	ROM_LOAD( "gn_09.bin", 0x030000, 0x10000, 0xa5e07c3b )
 
-	ROM_REGION( 0x08000, REGION_GFX5 )	/* background tilemaps */
+	ROM_REGION( 0x08000, REGION_GFX5, 0 )	/* background tilemaps */
 	ROM_LOAD( "gn_11.bin", 0x00000, 0x08000, 0xf0d0e605 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
 	ROM_LOAD( "gn_04.bin", 0x00000, 0x10000, 0x0ed9133b )
 	ROM_LOAD( "gn_03.bin", 0x10000, 0x10000, 0xf1ba222c )
 

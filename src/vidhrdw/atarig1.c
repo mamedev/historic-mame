@@ -37,7 +37,7 @@ static UINT16 current_control;
  *
  *************************************/
 
-int hydra_vh_start(void)
+int atarig1_vh_start(void)
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -150,7 +150,7 @@ cant_create_pf:
  *
  *************************************/
 
-void hydra_vh_stop(void)
+void atarig1_vh_stop(void)
 {
 	atarian_free();
 	atarirle_free();
@@ -165,7 +165,7 @@ void hydra_vh_stop(void)
  *
  *************************************/
 
-WRITE16_HANDLER( hydra_mo_control_w )
+WRITE16_HANDLER( atarig1_mo_control_w )
 {
 	logerror("MOCONT = %d (scan = %d)\n", data, cpu_getscanline());
 
@@ -174,15 +174,15 @@ WRITE16_HANDLER( hydra_mo_control_w )
 }
 
 
-void hydra_scanline_update(int scanline)
+void atarig1_scanline_update(int scanline)
 {
-	data16_t *base = &atarian_0_base[(scanline / 8) * 64 + 47];
+	data16_t *base = &atarian_0_base[(scanline / 8) * 64 + 48];
 	int i;
 
 	if (scanline == 0) logerror("-------\n");
 
 	/* keep in range */
-	if (base >= &atarian_0_base[0x7c0])
+	if (base >= &atarian_0_base[0x800])
 		return;
 
 	/* update the playfield scrolls */
@@ -190,11 +190,11 @@ void hydra_scanline_update(int scanline)
 	{
 		data16_t word;
 
-		word = base[i * 2 + 1];
+		word = *base++;
 		if (word & 0x8000)
 			ataripf_set_xscroll(0, ((word >> 6) + pfscroll_xoffset) & 0x1ff, scanline + i);
 
-		word = base[i * 2 + 2];
+		word = *base++;
 		if (word & 0x8000)
 		{
 			ataripf_set_yscroll(0, ((word >> 6) - (scanline + i)) & 0x1ff, scanline + i);
@@ -211,7 +211,7 @@ void hydra_scanline_update(int scanline)
  *
  *************************************/
 
-void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void atarig1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark the used colors */
 	palette_init_used_colors();

@@ -199,7 +199,7 @@ static const struct MachineDriver machine_driver_subs =
 ***************************************************************************/
 
 ROM_START( subs )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "34190.p1",     0x2800, 0x0800, 0xa88aef21 )
 	ROM_LOAD( "34191.p2",     0x3000, 0x0800, 0x2c652e72 )
 	ROM_LOAD( "34192.n2",     0x3800, 0x0800, 0x3ce63d33 )
@@ -211,10 +211,10 @@ ROM_START( subs )
 	ROM_LOAD( "34196.e2",     0x8000, 0x0100, 0x7c7a04c3 )	/* ROM 0 D4-D7 */
 	ROM_LOAD( "34194.e1",     0x9000, 0x0100, 0x6b1c4acc )	/* ROM 0 D0-D3 */
 
-	ROM_REGION( 0x0800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "34211.m4",     0x0000, 0x0800, 0xfa8d4409 )	/* Playfield */
 
-	ROM_REGION( 0x0800, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "34216.d7",     0x0000, 0x0200, 0x941d28b4 )	/* Motion */
 	ROM_LOAD( "34218.e7",     0x0200, 0x0200, 0xf4f4d874 )	/* Motion */
 	ROM_LOAD( "34217.d8",     0x0400, 0x0200, 0xa7a60da3 )	/* Motion */

@@ -950,6 +950,27 @@ WRITE16_HANDLER( ataripf_0_large_w )
 
 
 /*---------------------------------------------------------------
+	ataripf_0_split_w: Simple write handler for split playfields.
+---------------------------------------------------------------*/
+
+WRITE16_HANDLER( ataripf_0_split_w )
+{
+	int adjusted = (offset & 0x003f) | ((~offset & 0x1000) >> 6) | ((offset & 0x0fc0) << 1);
+	int oldword = LOWER_HALF(ataripf[0].vram[adjusted]);
+	int newword = oldword;
+
+	COMBINE_DATA(&newword);
+
+	if (oldword != newword)
+	{
+		LOWER_HALF(ataripf[0].vram[adjusted]) = newword;
+		ataripf[0].dirtymap[adjusted] = -1;
+	}
+	COMBINE_DATA(&ataripf_0_base[offset]);
+}
+
+
+/*---------------------------------------------------------------
 	ataripf_01_upper_lsb_msb_w: Simple write handler for the
 	upper word of dual split two-word playfields, where the LSB
 	contains the significant data for playfield 0 and the MSB

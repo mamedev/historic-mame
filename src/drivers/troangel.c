@@ -210,21 +210,21 @@ static const struct MachineDriver machine_driver_troangel =
 
 
 ROM_START( troangel )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* main CPU */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main CPU */
 	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, 0xf21f8196 )
 	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, 0x58801e55 )
 	ROM_LOAD( "ta-a-3n",	0x4000, 0x2000, 0xde3dea44 )
 	ROM_LOAD( "ta-a-3q",	0x6000, 0x2000, 0xfff0fc2a )
 
-	ROM_REGION(  0x10000 , REGION_CPU2 )	/* sound CPU */
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, 0x15a83210 )
 
-	ROM_REGION( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ta-a-3c",	0x00000, 0x2000, 0x7ff5482f )	/* characters */
 	ROM_LOAD( "ta-a-3d",	0x02000, 0x2000, 0x06eef241 )
 	ROM_LOAD( "ta-a-3e",	0x04000, 0x2000, 0xe49f7ad8 )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "ta-b-5j",	0x00000, 0x2000, 0x86895c0c )	/* sprites */
 	ROM_LOAD( "ta-b-5h",	0x02000, 0x2000, 0xf8cff29d )
 	ROM_LOAD( "ta-b-5e",	0x04000, 0x2000, 0x8b21ee9a )
@@ -232,7 +232,7 @@ ROM_START( troangel )
 	ROM_LOAD( "ta-b-5c",	0x08000, 0x2000, 0xc19134c9 )
 	ROM_LOAD( "ta-b-5a",	0x0a000, 0x2000, 0x0012792a )
 
-	ROM_REGION( 0x0320, REGION_PROMS )
+	ROM_REGION( 0x0320, REGION_PROMS, 0 )
 	ROM_LOAD( "ta-a-5a",	0x0000,	0x0100, 0x01de1167 ) /* chars palette low 4 bits */
 	ROM_LOAD( "ta-a-5b",	0x0100,	0x0100, 0xefd11d4b ) /* chars palette high 4 bits */
 	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, 0xf94911ea ) /* sprites palette */

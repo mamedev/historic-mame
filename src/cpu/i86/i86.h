@@ -84,8 +84,8 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 #define WriteByte(ea,val)		cpu_writemem20((ea) & AMASK, val);
 #define WriteWord(ea,val)		{ cpu_writemem20((ea) & AMASK, (val) & 0xff); cpu_writemem20(((ea) + 1) & AMASK, ((val) >> 8) & 0xff); }
 
-#define read_port(port) 		cpu_readport(port)
-#define write_port(port,val) 	cpu_writeport(port,val)
+#define read_port(port) 		cpu_readport16(port)
+#define write_port(port,val) 	cpu_writeport16(port,val)
 
 #define FETCH					(cpu_readop_arg(I.pc++))
 #define FETCHOP					(cpu_readop(I.pc++))

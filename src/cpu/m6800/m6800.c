@@ -387,7 +387,7 @@ static const UINT8 flags8d[256]= /* decrement */
 #define IDXWORD(w) {INDEXED;w.d=RM16(EAD);}
 
 /* Macros for branch instructions */
-#define CHANGE_PC() change_pc(PCD)
+#define CHANGE_PC() change_pc16(PCD)
 #define BRANCH(f) {IMMBYTE(t);if(f){PC+=SIGNED(t);CHANGE_PC();}}
 #define NXORV  ((CC&0x08)^((CC&0x02)<<2))
 
@@ -2041,7 +2041,7 @@ const char *hd63701_info(void *context, int regnum)
 }
 
 /*
-	if change_pc() direccted these areas ,Call hd63701_trap_pc().
+	if change_pc16() direccted these areas ,Call hd63701_trap_pc().
 	'mode' is selected by the sense of p2.0,p2.1,and p2.3 at reset timming.
 	mode 0,1,2,4,6 : $0000-$001f
 	mode 5         : $0000-$001f,$0200-$efff
@@ -2442,10 +2442,10 @@ READ_HANDLER( m6803_internal_registers_r )
 		case 0x01:
 			return m6800.port2_ddr;
 		case 0x02:
-			return (cpu_readport(M6803_PORT1) & (m6800.port1_ddr ^ 0xff))
+			return (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff))
 					| (m6800.port1_data & m6800.port1_ddr);
 		case 0x03:
-			return (cpu_readport(M6803_PORT2) & (m6800.port2_ddr ^ 0xff))
+			return (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff))
 					| (m6800.port2_data & m6800.port2_ddr);
 		case 0x04:
 		case 0x05:
@@ -2527,10 +2527,10 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			{
 				m6800.port1_ddr = data;
 				if(m6800.port1_ddr == 0xff)
-					cpu_writeport(M6803_PORT1,m6800.port1_data);
+					cpu_writeport16(M6803_PORT1,m6800.port1_data);
 				else
-					cpu_writeport(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
-						| (cpu_readport(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
+					cpu_writeport16(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+						| (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
 			}
 			break;
 		case 0x01:
@@ -2538,10 +2538,10 @@ WRITE_HANDLER( m6803_internal_registers_w )
 			{
 				m6800.port2_ddr = data;
 				if(m6800.port2_ddr == 0xff)
-					cpu_writeport(M6803_PORT2,m6800.port2_data);
+					cpu_writeport16(M6803_PORT2,m6800.port2_data);
 				else
-					cpu_writeport(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
-						| (cpu_readport(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
+					cpu_writeport16(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+						| (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
 
 				if (m6800.port2_ddr & 2)
 					logerror("CPU #%d PC %04x: warning - port 2 bit 1 set as output (OLVL) - not supported\n",cpu_getactivecpu(),cpu_get_pc());
@@ -2550,19 +2550,19 @@ WRITE_HANDLER( m6803_internal_registers_w )
 		case 0x02:
 			m6800.port1_data = data;
 			if(m6800.port1_ddr == 0xff)
-				cpu_writeport(M6803_PORT1,m6800.port1_data);
+				cpu_writeport16(M6803_PORT1,m6800.port1_data);
 			else
-				cpu_writeport(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
-					| (cpu_readport(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
+				cpu_writeport16(M6803_PORT1,(m6800.port1_data & m6800.port1_ddr)
+					| (cpu_readport16(M6803_PORT1) & (m6800.port1_ddr ^ 0xff)));
 			break;
 		case 0x03:
 			m6800.port2_data = data;
 			m6800.port2_ddr = data;
 			if(m6800.port2_ddr == 0xff)
-				cpu_writeport(M6803_PORT2,m6800.port2_data);
+				cpu_writeport16(M6803_PORT2,m6800.port2_data);
 			else
-				cpu_writeport(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
-					| (cpu_readport(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
+				cpu_writeport16(M6803_PORT2,(m6800.port2_data & m6800.port2_ddr)
+					| (cpu_readport16(M6803_PORT2) & (m6800.port2_ddr ^ 0xff)));
 			break;
 		case 0x04:
 		case 0x05:

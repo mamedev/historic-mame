@@ -229,7 +229,7 @@ INLINE UINT8 RDPORT_B(int mode, UINT16 addr)
 {
 	if( mode == 0 )
 	{
-		return cpu_readport(addr);
+		return cpu_readport16(addr);
 	}
 	else
 	{
@@ -242,8 +242,8 @@ INLINE UINT16 RDPORT_W(int mode, UINT16 addr)
 {
 	if( mode == 0 )
 	{
-		return cpu_readport((UINT16)(addr)) +
-			  (cpu_readport((UINT16)(addr+1)) << 8);
+		return cpu_readport16((UINT16)(addr)) +
+			  (cpu_readport16((UINT16)(addr+1)) << 8);
 	}
 	else
 	{
@@ -256,10 +256,10 @@ INLINE UINT32 RDPORT_L(int mode, UINT16 addr)
 {
 	if( mode == 0 )
 	{
-		return	cpu_readport((UINT16)(addr)) +
-			   (cpu_readport((UINT16)(addr+1)) <<  8) +
-			   (cpu_readport((UINT16)(addr+2)) << 16) +
-			   (cpu_readport((UINT16)(addr+3)) << 24);
+		return	cpu_readport16((UINT16)(addr)) +
+			   (cpu_readport16((UINT16)(addr+1)) <<  8) +
+			   (cpu_readport16((UINT16)(addr+2)) << 16) +
+			   (cpu_readport16((UINT16)(addr+3)) << 24);
 	}
 	else
 	{
@@ -272,7 +272,7 @@ INLINE void WRPORT_B(int mode, UINT16 addr, UINT8 value)
 {
 	if( mode == 0 )
 	{
-        cpu_writeport(addr,value);
+        cpu_writeport16(addr,value);
 	}
 	else
 	{
@@ -284,8 +284,8 @@ INLINE void WRPORT_W(int mode, UINT16 addr, UINT16 value)
 {
 	if( mode == 0 )
 	{
-		cpu_writeport((UINT16)(addr),value & 0xff);
-		cpu_writeport((UINT16)(addr+1),(value >> 8) & 0xff);
+		cpu_writeport16((UINT16)(addr),value & 0xff);
+		cpu_writeport16((UINT16)(addr+1),(value >> 8) & 0xff);
 	}
 	else
 	{
@@ -297,10 +297,10 @@ INLINE void WRPORT_L(int mode, UINT16 addr, UINT32 value)
 {
 	if( mode == 0 )
 	{
-		cpu_writeport((UINT16)(addr),value & 0xff);
-		cpu_writeport((UINT16)(addr+1),(value >> 8) & 0xff);
-		cpu_writeport((UINT16)(addr+2),(value >> 16) & 0xff);
-		cpu_writeport((UINT16)(addr+3),(value >> 24) & 0xff);
+		cpu_writeport16((UINT16)(addr),value & 0xff);
+		cpu_writeport16((UINT16)(addr+1),(value >> 8) & 0xff);
+		cpu_writeport16((UINT16)(addr+2),(value >> 16) & 0xff);
+		cpu_writeport16((UINT16)(addr+3),(value >> 24) & 0xff);
 	}
 	else
 	{

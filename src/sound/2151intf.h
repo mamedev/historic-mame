@@ -29,6 +29,19 @@ WRITE_HANDLER( YM2151_register_port_2_w );
 WRITE_HANDLER( YM2151_data_port_0_w );
 WRITE_HANDLER( YM2151_data_port_1_w );
 WRITE_HANDLER( YM2151_data_port_2_w );
+
+READ16_HANDLER( YM2151_status_port_0_lsb_r );
+READ16_HANDLER( YM2151_status_port_1_lsb_r );
+READ16_HANDLER( YM2151_status_port_2_lsb_r );
+
+WRITE16_HANDLER( YM2151_register_port_0_lsb_w );
+WRITE16_HANDLER( YM2151_register_port_1_lsb_w );
+WRITE16_HANDLER( YM2151_register_port_2_lsb_w );
+
+WRITE16_HANDLER( YM2151_data_port_0_lsb_w );
+WRITE16_HANDLER( YM2151_data_port_1_lsb_w );
+WRITE16_HANDLER( YM2151_data_port_2_lsb_w );
+
 int YM2151_sh_start(const struct MachineSound *msound);
 void YM2151_sh_stop(void);
 void YM2151_sh_reset(void);

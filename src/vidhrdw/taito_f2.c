@@ -81,7 +81,7 @@ struct tempsprite
 	int zoomx,zoomy;
 	int primask;
 };
-struct tempsprite *spritelist;
+static struct tempsprite *spritelist;
 
 /*******************************************************
    The TC0480SCP games may use separate palettes for
@@ -135,9 +135,9 @@ static int has_two_TC0100SCN(void)
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (!IS_MEMORY_END(mwa))
+		while (!IS_MEMPORT_END(mwa))
 		{
-			if (!IS_MEMORY_MARKER(mwa))
+			if (!IS_MEMPORT_MARKER(mwa))
 			{
 				if (mwa->handler == TC0100SCN_word_1_w)
 					return 1;
@@ -158,9 +158,9 @@ static int has_TC0480SCP(void)
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (!IS_MEMORY_END(mwa))
+		while (!IS_MEMPORT_END(mwa))
 		{
-			if (!IS_MEMORY_MARKER(mwa))
+			if (!IS_MEMPORT_MARKER(mwa))
 			{
 				if (mwa->handler == TC0480SCP_word_w)
 					return 1;
@@ -181,9 +181,9 @@ static int has_TC0110PCR(void)
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (!IS_MEMORY_END(mwa))
+		while (!IS_MEMPORT_END(mwa))
 		{
-			if (!IS_MEMORY_MARKER(mwa))
+			if (!IS_MEMPORT_MARKER(mwa))
 			{
 				if (mwa->handler == TC0110PCR_word_w)
 					return 1;
@@ -204,9 +204,9 @@ static int has_TC0280GRD(void)
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (!IS_MEMORY_END(mwa))
+		while (!IS_MEMPORT_END(mwa))
 		{
-			if (!IS_MEMORY_MARKER(mwa))
+			if (!IS_MEMPORT_MARKER(mwa))
 			{
 				if (mwa->handler == TC0280GRD_word_w)
 					return 1;
@@ -227,9 +227,9 @@ static int has_TC0430GRW(void)
 	mwa = Machine->drv->cpu[0].memory_write;
 	if (mwa)
 	{
-		while (!IS_MEMORY_END(mwa))
+		while (!IS_MEMPORT_END(mwa))
 		{
-			if (!IS_MEMORY_MARKER(mwa))
+			if (!IS_MEMPORT_MARKER(mwa))
 			{
 				if (mwa->handler == TC0430GRW_word_w)
 					return 1;

@@ -505,110 +505,110 @@ static const struct MachineDriver machine_driver_hyprolyb =
 ***************************************************************************/
 
 ROM_START( trackfld )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
 	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
 	ROM_LOAD( "a03_k03.bin",  0xA000, 0x2000, 0x6c0d1ee9 )
 	ROM_LOAD( "a04_e04.bin",  0xC000, 0x2000, 0x21d6c448 )
 	ROM_LOAD( "a05_e05.bin",  0xE000, 0x2000, 0xf08c7b7e )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
-	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
 	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
 	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c11_d06.bin",  0x0000, 0x2000, 0x82e2185a )
 	ROM_LOAD( "c12_d07.bin",  0x2000, 0x2000, 0x800ff1f1 )
 	ROM_LOAD( "c13_d08.bin",  0x4000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0x6000, 0x2000, 0x5886c802 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for speech rom */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( trackflc )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
 	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
 	ROM_LOAD( "l03.3a",       0xA000, 0x2000, 0xfef4c0ea )
 	ROM_LOAD( "f04.4a",       0xC000, 0x2000, 0x73940f2d )
 	ROM_LOAD( "f05.5a",       0xE000, 0x2000, 0x363fd761 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
-	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
 	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
 	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c11_d06.bin",  0x0000, 0x2000, 0x82e2185a )
 	ROM_LOAD( "c12_d07.bin",  0x2000, 0x2000, 0x800ff1f1 )
 	ROM_LOAD( "c13_d08.bin",  0x4000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0x6000, 0x2000, 0x5886c802 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for speech rom */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolym )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0xe54cc960 )
 	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
 	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
-	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
 	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
 	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c11_d06.bin",  0x0000, 0x2000, 0x82e2185a )
 	ROM_LOAD( "c12_d07.bin",  0x2000, 0x2000, 0x800ff1f1 )
 	ROM_LOAD( "c13_d08.bin",  0x4000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0x6000, 0x2000, 0x5886c802 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
-	ROM_REGION( 0x10000, REGION_SOUND1 )	/* 64k for speech rom */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolyb )
-	ROM_REGION( 2*0x10000, REGION_CPU1 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
 	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x2d6fc308 )
 	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
 	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/*  64k for the 6802 which plays ADPCM samples */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/*  64k for the 6802 which plays ADPCM samples */
 	/* this bootleg uses a 6802 to "emulate" the VLM5030 speech chip */
 	/* I didn't bother to emulate the 6802, I just play the samples. */
 	ROM_LOAD( "2764.1",       0x8000, 0x2000, 0xa4cddeb8 )
@@ -616,18 +616,18 @@ ROM_START( hyprolyb )
 	ROM_LOAD( "2764.3",       0xc000, 0x2000, 0xc3ec42e1 )
 	ROM_LOAD( "2764.4",       0xe000, 0x2000, 0x76998389 )
 
-	ROM_REGION( 0x6000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
 	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
 	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
 
-	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "c11_d06.bin",  0x0000, 0x2000, 0x82e2185a )
 	ROM_LOAD( "c12_d07.bin",  0x2000, 0x2000, 0x800ff1f1 )
 	ROM_LOAD( "c13_d08.bin",  0x4000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0x6000, 0x2000, 0x5886c802 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */

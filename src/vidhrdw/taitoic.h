@@ -43,9 +43,20 @@ void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT3
 
 
 int TC0110PCR_vh_start(void);
+int TC0110PCR_1_vh_start(void);	/* 2nd chip */
+int TC0110PCR_2_vh_start(void);	/* 3rd chip */
 void TC0110PCR_vh_stop(void);
+void TC0110PCR_1_vh_stop(void);	/* 2nd chip */
+void TC0110PCR_2_vh_stop(void);	/* 3rd chip */
 READ16_HANDLER( TC0110PCR_word_r );
-WRITE16_HANDLER( TC0110PCR_word_w );
+READ16_HANDLER( TC0110PCR_word_1_r );	/* 2nd chip */
+READ16_HANDLER( TC0110PCR_word_2_r );	/* 3rd chip */
+WRITE16_HANDLER( TC0110PCR_word_w );	/* color index goes up in step of 2 */
+WRITE16_HANDLER( TC0110PCR_step1_word_w );	/* color index goes up in step of 1 */
+WRITE16_HANDLER( TC0110PCR_step1_word_1_w );	/* 2nd chip */
+WRITE16_HANDLER( TC0110PCR_step1_word_2_w );	/* 3rd chip */
+WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w );	/* swaps red and blue components */
+WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w );	/* only 4 bits per color gun */
 
 WRITE_HANDLER( TC0360PRI_w );
 

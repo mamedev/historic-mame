@@ -331,7 +331,7 @@ static const struct MachineDriver machine_driver_redalert =
 ***************************************************************************/
 
 ROM_START( redalert )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "rag5",         	0x5000, 0x1000, 0xd7c9cdd6 )
 	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
 	ROM_LOAD( "rag7n",        	0x7000, 0x1000, 0x82ab2dae )
@@ -341,11 +341,11 @@ ROM_START( redalert )
 	ROM_LOAD( "ragab",        	0xa000, 0x1000, 0xab99f5ed )
 	ROM_LOAD( "ragb",         	0xb000, 0x1000, 0x8e0d1661 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for code */
 	ROM_LOAD( "w3s1",         	0x7800, 0x0800, 0x4af956a5 )
 	ROM_RELOAD(                0xf800, 0x0800 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* 64k for code */
 	ROM_LOAD( "ras1b",        	0x0000, 0x1000, 0xec690845 )
 	ROM_LOAD( "ras2",         	0x1000, 0x1000, 0xfae94cfc )
 	ROM_LOAD( "ras3",         	0x2000, 0x1000, 0x20d56f3e )

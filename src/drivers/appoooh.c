@@ -291,7 +291,7 @@ static const struct MachineDriver machine_driver_appoooh =
 ***************************************************************************/
 
 ROM_START( appoooh )
-	ROM_REGION( 0x14000, REGION_CPU1 )	/* 64k for code + 16k bank */
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code + 16k bank */
 	ROM_LOAD( "epr-5906.bin", 0x00000, 0x2000, 0xfffae7fe )
 	ROM_LOAD( "epr-5907.bin", 0x02000, 0x2000, 0x57696cd6 )
 	ROM_LOAD( "epr-5908.bin", 0x04000, 0x2000, 0x4537cddc )
@@ -302,22 +302,22 @@ ROM_START( appoooh )
 	ROM_LOAD( "epr-5912.bin", 0x10000, 0x2000, 0x3c3915ab ) /* bank1     */
 	ROM_LOAD( "epr-5914.bin", 0x12000, 0x2000, 0x58792d4a ) /* a000-dfff */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr-5895.bin", 0x00000, 0x4000, 0x4b0d4294 )	/* playfield #1 chars */
 	ROM_LOAD( "epr-5896.bin", 0x04000, 0x4000, 0x7bc84d75 )
 	ROM_LOAD( "epr-5897.bin", 0x08000, 0x4000, 0x745f3ffa )
 
-	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "epr-5898.bin", 0x00000, 0x4000, 0xcf01644d )	/* playfield #2 chars */
 	ROM_LOAD( "epr-5899.bin", 0x04000, 0x4000, 0x885ad636 )
 	ROM_LOAD( "epr-5900.bin", 0x08000, 0x4000, 0xa8ed13f3 )
 
-	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
 	ROM_LOAD( "pr5921.prm",   0x0000, 0x020, 0xf2437229 ) 	/* palette */
 	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, 0x85c542bf ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, 0x16acbd53 ) 	/* charset #2 lookup table */
 
-	ROM_REGION( 0xa000, REGION_SOUND1 )	/* adpcm voice data */
+	ROM_REGION( 0xa000, REGION_SOUND1, 0 )	/* adpcm voice data */
 	ROM_LOAD( "epr-5901.bin", 0x0000, 0x2000, 0x170a10a4 )
 	ROM_LOAD( "epr-5902.bin", 0x2000, 0x2000, 0xf6981640 )
 	ROM_LOAD( "epr-5903.bin", 0x4000, 0x2000, 0x0439df50 )

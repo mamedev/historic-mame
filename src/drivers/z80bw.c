@@ -340,7 +340,7 @@ static const struct MachineDriver machine_driver_spaceint =
 
 
 ROM_START( astinvad )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
 	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
 	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0xa0092553 )
@@ -349,23 +349,23 @@ ROM_START( astinvad )
 	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0xeb338863 )
 	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0x16dcfea4 )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, 0xb45287ff )
 ROM_END
 
 ROM_START( kamikaze )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
 	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
 	ROM_LOAD( "km03",         0x1000, 0x0800, 0x3e8dedb6 )
 	ROM_LOAD( "km04",         0x1800, 0x0800, 0x494e1f6d )
 
-	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
 	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, BADCRC(0xb45287ff) )
 ROM_END
 
 ROM_START( spaceint )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "1",	 0x0000, 0x0400, 0x184314d2 )
 	ROM_LOAD( "2",	 0x0400, 0x0400, 0x55459aa1 )
 	ROM_LOAD( "3",	 0x0800, 0x0400, 0x9d6819be )
@@ -373,7 +373,7 @@ ROM_START( spaceint )
 	ROM_LOAD( "5",	 0x1000, 0x0400, 0xc6cfa650 )
 	ROM_LOAD( "6",	 0x1400, 0x0400, 0xc7ccf40f )
 
-	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "clr", 0x0000, 0x0100, 0x13c1803f )
 ROM_END
 

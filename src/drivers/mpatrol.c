@@ -405,33 +405,33 @@ static const struct MachineDriver machine_driver_mpatrol =
 ***************************************************************************/
 
 ROM_START( mpatrol )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mp-a.3l",      0x1000, 0x1000, 0xf4b85974 )
 	ROM_LOAD( "mp-a.3k",      0x2000, 0x1000, 0x2e1a598c )
 	ROM_LOAD( "mp-a.3j",      0x3000, 0x1000, 0xdd05b587 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
 	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
 	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
 
-	ROM_REGION( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
 
-	ROM_REGION( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
 
-	ROM_REGION( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
@@ -439,33 +439,33 @@ ROM_START( mpatrol )
 ROM_END
 
 ROM_START( mpatrolw )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "mpw-a.3m",     0x0000, 0x1000, 0xbaa1a1d4 )
 	ROM_LOAD( "mpw-a.3l",     0x1000, 0x1000, 0x52459e51 )
 	ROM_LOAD( "mpw-a.3k",     0x2000, 0x1000, 0x9b249fe5 )
 	ROM_LOAD( "mpw-a.3j",     0x3000, 0x1000, 0xfee76972 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mpw-e.3e",     0x0000, 0x1000, 0xf56e01fe )       /* chars */
 	ROM_LOAD( "mpw-e.3f",     0x1000, 0x1000, 0xcaaba2d9 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
 	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
 
-	ROM_REGION( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
 
-	ROM_REGION( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
 
-	ROM_REGION( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	/* the palette PROM is wrong: the Williams logo is painted in all black */
 	ROM_LOAD( "2a",           0x0000, 0x0100, BADCRC( 0x0f193a50 ) ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
@@ -474,33 +474,33 @@ ROM_START( mpatrolw )
 ROM_END
 
 ROM_START( mranger )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mr-a.3l",      0x1000, 0x1000, 0x217dd431 )
 	ROM_LOAD( "mr-a.3k",      0x2000, 0x1000, 0x9f0af7b2 )
 	ROM_LOAD( "mr-a.3j",      0x3000, 0x1000, 0x7fe8e2cd )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for code */
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 
-	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
 	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
 
-	ROM_REGION( 0x2000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-b.3m",      0x0000, 0x1000, 0x707ace5e )       /* sprites */
 	ROM_LOAD( "mp-b.3n",      0x1000, 0x1000, 0x9b72133a )
 
-	ROM_REGION( 0x1000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3l",      0x0000, 0x1000, 0xc46a7f72 )       /* background graphics */
 
-	ROM_REGION( 0x1000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3k",      0x0000, 0x1000, 0xc7aa1fb0 )
 
-	ROM_REGION( 0x1000, REGION_GFX5 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000, REGION_GFX5, ROMREGION_DISPOSE )
 	ROM_LOAD( "mp-e.3h",      0x0000, 0x1000, 0xa0919392 )
 
-	ROM_REGION( 0x0240, REGION_PROMS )
+	ROM_REGION( 0x0240, REGION_PROMS, 0 )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */

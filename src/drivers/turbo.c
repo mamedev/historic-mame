@@ -387,12 +387,12 @@ static const struct MachineDriver machine_driver_turbo =
  *********************************************************************/
 
 ROM_START( turbo )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "epr1513.bin",  0x0000, 0x2000, 0x0326adfc )
 	ROM_LOAD( "epr1514.bin",  0x2000, 0x2000, 0x25af63b0 )
 	ROM_LOAD( "epr1515.bin",  0x4000, 0x2000, 0x059c1c36 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
@@ -410,7 +410,7 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -421,14 +421,14 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
 
 
-	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -443,12 +443,12 @@ ROM_START( turbo )
 ROM_END
 
 ROM_START( turboa )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "epr1262.rom",  0x0000, 0x2000, 0x1951b83a )
 	ROM_LOAD( "epr1263.rom",  0x2000, 0x2000, 0x45e01608 )
 	ROM_LOAD( "epr1264.rom",  0x4000, 0x2000, 0x1802f6c7 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "epr1247.rom", 0x04000, 0x2000, 0xc8c5e4d5 )
@@ -466,7 +466,7 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -477,14 +477,14 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
 
 
-	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */
@@ -499,12 +499,12 @@ ROM_START( turboa )
 ROM_END
 
 ROM_START( turbob )
-	ROM_REGION( 0x10000, REGION_CPU1 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "epr-1363.cpu",  0x0000, 0x2000, 0x5c110fb6 )
 	ROM_LOAD( "epr-1364.cpu",  0x2000, 0x2000, 0x6a341693 )
 	ROM_LOAD( "epr-1365.cpu",  0x4000, 0x2000, 0x3b6b0dc8 )
 
-	ROM_REGION( 0x20000, REGION_GFX1 ) /* sprite data */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* sprite data */
 	ROM_LOAD( "epr1246.rom", 0x00000, 0x2000, 0x555bfe9a )
 	ROM_RELOAD(				 0x02000, 0x2000 )
 	ROM_LOAD( "mpr1290.rom", 0x04000, 0x2000, 0x95182020 )	/* is this good? */
@@ -522,7 +522,7 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, 0x4ca984ce )
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, 0xaee6e05e )
 
-	ROM_REGION( 0x4800, REGION_GFX2 ) /* road data */
+	ROM_REGION( 0x4800, REGION_GFX2, 0 ) /* road data */
 	ROM_LOAD( "epr1125.rom", 0x0000, 0x0800, 0x65b5d44b )
 	ROM_LOAD( "epr1126.rom", 0x0800, 0x0800, 0x685ace1b )
 	ROM_LOAD( "epr1127.rom", 0x1000, 0x0800, 0x9233c9ca )
@@ -533,14 +533,14 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, 0x04866769 )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, 0x29854c48 )
 
-	ROM_REGION( 0x1000, REGION_GFX3 )	/* background data */
+	ROM_REGION( 0x1000, REGION_GFX3, 0 )	/* background data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION( 0x200, REGION_GFX4 )	/* number data (copied at init time) */
+	ROM_REGION( 0x200, REGION_GFX4, 0 )	/* number data (copied at init time) */
 
 
-	ROM_REGION( 0x1000, REGION_PROMS ) /* various PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, 0 ) /* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, 0x7692f497 )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, 0x1a86ce70 )	/* sprite priorities */
 	ROM_LOAD( "pr1123.bin",	 0x0600, 0x0400, 0x02d2cb52 )	/* sprite/road/background priorities */

@@ -112,14 +112,14 @@ extern unsigned adsp2100_dasm(char *buffer, unsigned pc);
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-#define ADSP2100_RDMEM(A) ((unsigned)cpu_readmem16lew(A))
-#define ADSP2100_RDMEM_WORD(A) ((unsigned)cpu_readmem16lew_word(A))
+#define ADSP2100_RDMEM(A) ((unsigned)cpu_readmem17lew(A))
+#define ADSP2100_RDMEM_WORD(A) ((unsigned)cpu_readmem17lew_word(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-#define ADSP2100_WRMEM(A,V) (cpu_writemem16lew(A,V))
-#define ADSP2100_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
+#define ADSP2100_WRMEM(A,V) (cpu_writemem17lew(A,V))
+#define ADSP2100_WRMEM_WORD(A,V) (cpu_writemem17lew_word(A,V))
 
 /****************************************************************************/
 /* Write a 24-bit value to program memory                                   */

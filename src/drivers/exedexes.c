@@ -285,33 +285,33 @@ static const struct MachineDriver machine_driver_exedexes =
 
 
 ROM_START( exedexes )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
 	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0xcadb75bd ) /* Characters */
 
-	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
 	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
 
-	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
-	ROM_REGION( 0x6000, REGION_GFX5 )	/* background tilemaps */
+	ROM_REGION( 0x6000, REGION_GFX5, 0 )	/* background tilemaps */
 	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
-	ROM_REGION( 0x0b20, REGION_PROMS )
+	ROM_REGION( 0x0b20, REGION_PROMS, 0 )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
@@ -327,33 +327,33 @@ ROM_START( exedexes )
 ROM_END
 
 ROM_START( savgbees )
-	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
 	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
 	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
 
-	ROM_REGION( 0x02000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, 0x5972f95f ) /* Characters */
 
-	ROM_REGION( 0x04000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "h01_ee08.bin", 0x00000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
 
-	ROM_REGION( 0x08000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "a03_ee06.bin", 0x00000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
 	ROM_LOAD( "a02_ee05.bin", 0x04000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
 
-	ROM_REGION( 0x08000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX4, ROMREGION_DISPOSE )
 	ROM_LOAD( "j11_ee10.bin", 0x00000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "j12_ee11.bin", 0x04000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
-	ROM_REGION( 0x6000, REGION_GFX5 )	/* background tilemaps */
+	ROM_REGION( 0x6000, REGION_GFX5, 0 )	/* background tilemaps */
 	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 
-	ROM_REGION( 0x0b20, REGION_PROMS )
+	ROM_REGION( 0x0b20, REGION_PROMS, 0 )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */

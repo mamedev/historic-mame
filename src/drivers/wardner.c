@@ -123,36 +123,35 @@ out:
 
 ***************************************************************************/
 
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "cpu/tms32010/tms32010.h"
 
 
+
 /******************** Machine stuff **********************/
 void wardner_reset(void);
 WRITE_HANDLER( wardner_mainram_w );
 READ_HANDLER( wardner_mainram_r );
-READ_HANDLER( twincobr_dsp_r );
-WRITE_HANDLER( twincobr_dsp_w );
-WRITE_HANDLER( twincobr_7800c_w );
-WRITE_HANDLER( fshark_coin_dsp_w );
+READ16_HANDLER( twincobr_dsp_r );
+WRITE16_HANDLER( twincobr_dsp_w );
+WRITE_HANDLER( twincobr_control_w );
+WRITE_HANDLER( wardner_coin_dsp_w );
 
 static int wardner_membank = 0;
 extern int twincobr_intenable;
 
-unsigned char *wardner_sharedram;
-unsigned char *wardner_spare_pal_ram;
+data8_t *wardner_sharedram;
+data8_t *wardner_spare_pal_ram;
 
-extern unsigned char *wardner_mainram;
+extern data8_t *wardner_mainram;
 
 
 /******************** Video stuff **********************/
-READ_HANDLER( twincobr_crtc_r );
-WRITE_HANDLER( twincobr_crtc_w );
-
 WRITE_HANDLER( wardner_videoram_w );
-READ_HANDLER( wardner_videoram_r );
+READ_HANDLER ( wardner_videoram_r );
 WRITE_HANDLER( wardner_bglayer_w );
 WRITE_HANDLER( wardner_fglayer_w );
 WRITE_HANDLER( wardner_txlayer_w );
@@ -161,16 +160,12 @@ WRITE_HANDLER( wardner_fgscroll_w );
 WRITE_HANDLER( wardner_txscroll_w );
 WRITE_HANDLER( twincobr_exscroll_w );
 
-int  twincobr_vh_start(void);
-void twincobr_vh_stop(void);
-void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void twincobr_eof_callback(void);
+int  toaplan0_vh_start(void);
+void toaplan0_vh_stop(void);
+void toaplan0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void toaplan0_eof_callback(void);
 
 extern int twincobr_display_on;
-
-extern unsigned char *videoram;
-extern unsigned char *twincobr_fgvideoram;
-extern unsigned char *twincobr_bgvideoram;
 
 
 
@@ -184,7 +179,7 @@ static int wardner_interrupt(void)
 }
 
 
-static WRITE_HANDLER( CRTC_add_w )
+static WRITE_HANDLER( CRTC_reg_sel_w )
 {
 	crtc6845_address_w(offset, data);
 }
@@ -197,12 +192,16 @@ static WRITE_HANDLER( CRTC_data_w )
 
 static READ_HANDLER( wardner_sprite_r )
 {
-	return spriteram[offset];
+	int shift = (offset & 1) * 8;
+	return spriteram16[offset/2] >> shift;
 }
 
 static WRITE_HANDLER( wardner_sprite_w )
 {
-	spriteram[offset] = data;
+	if (offset & 1)
+		spriteram16[offset/2] = (spriteram16[offset/2] & 0x00ff) | (data << 8);
+	else
+		spriteram16[offset/2] = (spriteram16[offset/2] & 0xff00) | data;
 }
 
 static READ_HANDLER( wardner_sharedram_r )
@@ -265,7 +264,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x6fff, MRA_ROM },			/* Main CPU ROM code */
 	{ 0x7000, 0x7fff, wardner_mainram_r },	/* Main RAM */
 	{ 0x8000, 0xffff, wardner_ram_rom_r },	/* Overlapped RAM/Banked ROM - See below */
-	/* memory layout is really as follows */
+	/* memory layout in bank 0 is really as follows */
 //	{ 0x8000, 0x8fff, wardner_sprite_r },	/* Sprite RAM data */
 //	{ 0x9000, 0x9fff, MRA_ROM },			/* Banked ROM */
 //	{ 0xa000, 0xadff, paletteram_r },		/* Palette RAM */
@@ -278,7 +277,7 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x6fff, MWA_ROM },
 	{ 0x7000, 0x7fff, wardner_mainram_w, &wardner_mainram },
-	{ 0x8000, 0x8fff, wardner_sprite_w, &spriteram, &spriteram_size },
+	{ 0x8000, 0x8fff, wardner_sprite_w, (data8_t **)&spriteram16, &spriteram_size },
 	{ 0x9000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xadff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xae00, 0xafff, wardner_spare_pal_ram_w, &wardner_spare_pal_ram },
@@ -301,16 +300,16 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xc800, 0xcfff, MWA_BANK5 },
 MEMORY_END
 
-static MEMORY_READ_START( DSP_readmem )
-	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
-	{ 0x8000, 0x8bff, MRA_ROM },	/* 600h words. The real DSPs ROM is at */
+static MEMORY_READ16_START( DSP_readmem )
+	{ 0x0000, 0x011f, MRA16_RAM },	/* 90h words internal RAM */
+	{ 0x8000, 0x8bff, MRA16_ROM },	/* 600h words. The real DSPs ROM is at */
 									/* address 0 */
 									/* View it at 8000h in the debugger */
 MEMORY_END
 
-static MEMORY_WRITE_START( DSP_writemem )
-	{ 0x0000, 0x011f, MWA_RAM },
-	{ 0x8000, 0x8bff, MWA_ROM },
+static MEMORY_WRITE16_START( DSP_writemem )
+	{ 0x0000, 0x011f, MWA16_RAM },
+	{ 0x8000, 0x8bff, MWA16_ROM },
 MEMORY_END
 
 
@@ -324,7 +323,8 @@ static PORT_READ_START( readport )
 PORT_END
 
 static PORT_WRITE_START( writeport )
-	{ 0x00, 0x02, twincobr_crtc_w },
+	{ 0x00, 0x00, CRTC_reg_sel_w },
+	{ 0x02, 0x02, CRTC_data_w },
 	{ 0x10, 0x13, wardner_txscroll_w },		/* scroll text layer */
 	{ 0x14, 0x15, wardner_txlayer_w },		/* offset in text video RAM */
 	{ 0x20, 0x23, wardner_bgscroll_w },		/* scroll bg layer */
@@ -333,8 +333,8 @@ static PORT_WRITE_START( writeport )
 	{ 0x34, 0x35, wardner_fglayer_w },		/* offset in fg video RAM */
 	{ 0x40, 0x43, twincobr_exscroll_w },	/* scroll extra layer (not used) */
 	{ 0x60, 0x65, wardner_videoram_w },		/* data for video layer RAM */
-	{ 0x5a, 0x5a, fshark_coin_dsp_w },		/* Machine system control */
-	{ 0x5c, 0x5c, twincobr_7800c_w },		/* Machine system control */
+	{ 0x5a, 0x5a, wardner_coin_dsp_w },		/* Machine system control */
+	{ 0x5c, 0x5c, twincobr_control_w },		/* Machine system control */
 	{ 0x70, 0x70, wardner_ramrom_banks_w },	/* ROM bank select */
 PORT_END
 
@@ -347,11 +347,11 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x01, 0x01, YM3812_write_port_0_w },
 PORT_END
 
-static PORT_READ_START( DSP_readport )
-	{ 0x01, 0x01, twincobr_dsp_r },
+static PORT_READ16_START( DSP_readport )
+	{ 0x02, 0x03, twincobr_dsp_r },
 PORT_END
-static PORT_WRITE_START( DSP_writeport )
-	{ 0x00,  0x03, twincobr_dsp_w },
+static PORT_WRITE16_START( DSP_writeport )
+	{ 0x00,  0x07, twincobr_dsp_w },
 PORT_END
 
 
@@ -577,24 +577,23 @@ static const struct MachineDriver machine_driver_wardner =
 			CPU_Z80,
 			24000000/4,			/* 6 MHz ??? - Real board crystal is 24MHz */
 			readmem,writemem,
-			readport,
-			writeport,
-			wardner_interrupt,1
+			readport, writeport,
+			wardner_interrupt, 1
 		},
 		{
 			CPU_Z80,
 			24000000/7,			/* 3.43 MHz ??? */
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
+			sound_readmem, sound_writemem,
+			sound_readport, sound_writeport,
+			ignore_interrupt, 0	/* IRQs are caused by the YM3812 */
 		},
 		{
 			CPU_TMS320C10,
 			24000000/7,			/* 3.43 MHz ??? */
-			DSP_readmem,DSP_writemem,
-			DSP_readport,DSP_writeport,
-			ignore_interrupt,0	/* IRQs are caused by Z80(0) */
-		},
+			DSP_readmem, DSP_writemem,
+			DSP_readport, DSP_writeport,
+			ignore_interrupt, 0	/* IRQs are caused by Z80(0) */
+		}
 	},
 	56, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
 	100,									/* 100 CPU slices per frame */
@@ -607,10 +606,10 @@ static const struct MachineDriver machine_driver_wardner =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
-	twincobr_eof_callback,
-	twincobr_vh_start,
-	twincobr_vh_stop,
-	twincobr_vh_screenrefresh,
+	toaplan0_eof_callback,
+	toaplan0_vh_start,
+	toaplan0_vh_stop,
+	toaplan0_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -618,8 +617,8 @@ static const struct MachineDriver machine_driver_wardner =
 		{
 			SOUND_YM3812,
 			&ym3812_interface
-		},
-	},
+		}
+	}
 };
 
 
@@ -633,60 +632,51 @@ static const struct MachineDriver machine_driver_wardner =
 
 
 ROM_START( wardner )
-	ROM_REGION( 0x40000, REGION_CPU1 )	/* Banked Main Z80 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* Banked Main Z80 code */
 	ROM_LOAD( "wardner.17", 0x00000, 0x08000, 0xc5dd56fd )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x10000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom", 0x20000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "wardner.20", 0x38000, 0x08000, 0x347f411b )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-#ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9000, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9000, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9400, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9400, 0x0200, 0x50452ff8 )
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9800, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9800, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9c00, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9c00, 0x0200, 0x712bad47 )
-#else
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9000, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9000, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9400, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9400, 0x0200, 0x712bad47 )
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9800, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9800, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9c00, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9c00, 0x0200, 0x50452ff8 )
-#endif
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x0000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x0400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x0400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x0800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x0800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x0c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x0c00, 0x0200, 0x50452ff8 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "wardner.07", 0x00000, 0x04000, 0x1392b60d )
 	ROM_LOAD( "wardner.06", 0x04000, 0x04000, 0x0ed848da )
 	ROM_LOAD( "wardner.05", 0x08000, 0x04000, 0x79792c86 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
 	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
 	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
 	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
 	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
 	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
 	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
 	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
 	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
 	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
 
-	ROM_REGION( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x260, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -695,60 +685,51 @@ ROM_START( wardner )
 ROM_END
 
 ROM_START( pyros )
-	ROM_REGION( 0x40000, REGION_CPU1 )	/* Banked Z80 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* Banked Z80 code */
 	ROM_LOAD( "b25-29.rom", 0x00000, 0x08000, 0xb568294d )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x10000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom", 0x20000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "b25-30.rom", 0x38000, 0x08000, 0x5056c799 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-#ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9000, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9000, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9400, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9400, 0x0200, 0x50452ff8 )
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9800, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9800, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9c00, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9c00, 0x0200, 0x712bad47 )
-#else
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9000, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9000, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9400, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9400, 0x0200, 0x712bad47 )
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9800, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9800, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9c00, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9c00, 0x0200, 0x50452ff8 )
-#endif
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x0000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x0400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x0400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x0800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x0800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x0c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x0c00, 0x0200, 0x50452ff8 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "b25-35.rom", 0x00000, 0x04000, 0xfec6f0c0 )
 	ROM_LOAD( "b25-34.rom", 0x04000, 0x04000, 0x02505dad )
 	ROM_LOAD( "b25-33.rom", 0x08000, 0x04000, 0x9a55fcb9 )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
 	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
 	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
 	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
 	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
 	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
 	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
 	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
 	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
 	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
 
-	ROM_REGION( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x260, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -757,60 +738,51 @@ ROM_START( pyros )
 ROM_END
 
 ROM_START( wardnerj )
-	ROM_REGION( 0x40000, REGION_CPU1 )	/* Banked Z80 code */
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* Banked Z80 code */
 	ROM_LOAD( "b25-17.bin",  0x00000, 0x08000, 0x4164dca9 )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom",  0x10000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
 	ROM_LOAD( "b25-19.rom",  0x20000, 0x10000, 0x95b68813 )
 	ROM_LOAD( "b25-20.bin",  0x38000, 0x08000, 0x1113ad38 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound Z80 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
 	ROM_LOAD( "b25-16.rom", 0x00000, 0x08000, 0xe5202ff8 )
 
-	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-#ifndef LSB_FIRST
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9000, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9000, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9400, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9400, 0x0200, 0x50452ff8 )
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9800, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9800, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9c00, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9c00, 0x0200, 0x712bad47 )
-#else
-	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x9000, 0x0400, 0xcc5b3f53 ) /* msb */
-	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x9000, 0x0400, 0x47351d55 )
-	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x9400, 0x0200, 0x9dfffaff )
-	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x9400, 0x0200, 0x712bad47 )
-	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x9800, 0x0400, 0x70b537b9 ) /* lsb */
-	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x9800, 0x0400, 0x6edb2de8 )
-	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x9c00, 0x0200, 0xac843ca6 )
-	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x9c00, 0x0200, 0x50452ff8 )
-#endif
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* Space for Co-Processor TMS320C10 */
 
-	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* chars */
+	ROM_REGION( 0x1000, REGION_USER1, 0 )	/* Co-Processor TMS320C10 MCU code */
+	ROM_LOAD_NIB_HIGH( "82s137.1d",  0x0000, 0x0400, 0xcc5b3f53 ) /* msb */
+	ROM_LOAD_NIB_LOW ( "82s137.1e",  0x0000, 0x0400, 0x47351d55 )
+	ROM_LOAD_NIB_HIGH( "82s131.3b",  0x0400, 0x0200, 0x9dfffaff )
+	ROM_LOAD_NIB_LOW ( "82s131.3a",  0x0400, 0x0200, 0x712bad47 )
+	ROM_LOAD_NIB_HIGH( "82s137.3d",  0x0800, 0x0400, 0x70b537b9 ) /* lsb */
+	ROM_LOAD_NIB_LOW ( "82s137.3e",  0x0800, 0x0400, 0x6edb2de8 )
+	ROM_LOAD_NIB_HIGH( "82s131.2a",  0x0c00, 0x0200, 0xac843ca6 )
+	ROM_LOAD_NIB_LOW ( "82s131.1a",  0x0c00, 0x0200, 0x50452ff8 )
+
+	ROM_REGION( 0x0c000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
 	ROM_LOAD( "b25-07.bin", 0x00000, 0x04000, 0x50e329e0 )
 	ROM_LOAD( "b25-06.bin", 0x04000, 0x04000, 0x3bfeb6ae )
 	ROM_LOAD( "b25-05.bin", 0x08000, 0x04000, 0xbe36a53e )
 
-	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* fg tiles */
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* fg tiles */
 	ROM_LOAD( "b25-12.rom",  0x00000, 0x08000, 0x15d08848 )
 	ROM_LOAD( "b25-15.rom",  0x08000, 0x08000, 0xcdd2d408 )
 	ROM_LOAD( "b25-14.rom",  0x10000, 0x08000, 0x5a2aef4f )
 	ROM_LOAD( "b25-13.rom",  0x18000, 0x08000, 0xbe21db2b )
 
-	ROM_REGION( 0x20000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* bg tiles */
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* bg tiles */
 	ROM_LOAD( "b25-08.rom",  0x00000, 0x08000, 0x883ccaa3 )
 	ROM_LOAD( "b25-11.rom",  0x08000, 0x08000, 0xd6ebd510 )
 	ROM_LOAD( "b25-10.rom",  0x10000, 0x08000, 0xb9a61e81 )
 	ROM_LOAD( "b25-09.rom",  0x18000, 0x08000, 0x585411b7 )
 
-	ROM_REGION( 0x40000, REGION_GFX4 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "b25-01.rom",  0x00000, 0x10000, 0x42ec01fb )
 	ROM_LOAD( "b25-02.rom",  0x10000, 0x10000, 0x6c0130b7 )
 	ROM_LOAD( "b25-03.rom",  0x20000, 0x10000, 0xb923db99 )
 	ROM_LOAD( "b25-04.rom",  0x30000, 0x10000, 0x8059573c )
 
-	ROM_REGION( 0x260, REGION_PROMS )		/* nibble bproms, lo/hi order to be determined */
+	ROM_REGION( 0x260, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
 	ROM_LOAD( "82s129.b19",  0x000, 0x100, 0x24e7d62f )	/* sprite priority control ?? */
 	ROM_LOAD( "82s129.b18",  0x100, 0x100, 0xa50cef09 )	/* sprite priority control ?? */
 	ROM_LOAD( "82s123.b21",  0x200, 0x020, 0xf72482db )	/* sprite control ?? */
@@ -821,24 +793,13 @@ ROM_END
 
 static void init_wardner(void)
 {
+	data8_t *source = memory_region(REGION_USER1);
+	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS320C10_PGM_OFFSET];
 	int A;
-	unsigned char datamsb;
-	unsigned char datalsb;
-
-	unsigned char *DSP_ROMS = memory_region(REGION_CPU3);
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */
-
 	for (A = 0;A < 0x0600;A++)
-	{
-		datamsb = DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1000 + A];
-		datalsb = DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1800 + A];
-		DSP_ROMS[TMS320C10_PGM_OFFSET + (A*2)]	 = datamsb;
-		DSP_ROMS[TMS320C10_PGM_OFFSET + (A*2)+1] = datalsb;
-
-		DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1000 + A] = 0;
-		DSP_ROMS[TMS320C10_PGM_OFFSET + 0x1800 + A] = 0;
-    }
+		dest[A] = (source[A] << 8) | source[A + 0x800];
 }
 
 

@@ -49,13 +49,12 @@ WRITE_HANDLER( cloak_paletteram_w )
 	int r,g,b;
 	int bit0,bit1,bit2;
 
-
 	/* a write to offset 64-127 means to set the msb of the red component */
-	data |= (offset & 0x40) << 2;
+	int color = data | ((offset & 0x40) << 2);
 
-	r = (~data & 0x1c0) >> 6;
-	g = (~data & 0x038) >> 3;
-	b = (~data & 0x007);
+	r = (~color & 0x1c0) >> 6;
+	g = (~color & 0x038) >> 3;
+	b = (~color & 0x007);
 
 	bit0 = (r >> 0) & 0x01;
 	bit1 = (r >> 1) & 0x01;

@@ -344,7 +344,7 @@ MACHINEDRIVER( polyplay, polyplay, polyplay )
 
 /* ROM loading and mapping */
 ROM_START( polyplay )
-	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "cpu_0000.37",       0x0000, 0x0400, 0x87884c5f )
 	ROM_LOAD( "cpu_0400.36",       0x0400, 0x0400, 0xd5c84829 )
 	ROM_LOAD( "cpu_0800.35",       0x0800, 0x0400, 0x5f36d08e )
