@@ -50,4 +50,7 @@ void state_save_load_finish(void);
 /* Display function */
 void state_save_dump_registry(void);
 
+/* Verification function; can be called from front ends */
+int state_save_check_file(mame_file *file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...));
+
 #endif

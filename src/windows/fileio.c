@@ -99,7 +99,7 @@ struct rc_option fileio_opts[] =
 #else
 	{ "biospath", "bp", rc_string, &pathlist[FILETYPE_ROM].rawpath, "bios", 0, 0, NULL, "path to BIOS sets" },
 	{ "softwarepath", "swp", rc_string, &pathlist[FILETYPE_IMAGE].rawpath, "software", 0, 0, NULL, "path to software" },
-	{ "CRC_directory", "crc", rc_string, &pathlist[FILETYPE_CRC].rawpath, "crc", 0, 0, NULL, "path to CRC files" },
+	{ "hash_directory", "hash", rc_string, &pathlist[FILETYPE_HASH].rawpath, "hash", 0, 0, NULL, "path to hash files" },
 #endif
 	{ "samplepath", "sp", rc_string, &pathlist[FILETYPE_SAMPLE].rawpath, "samples", 0, 0, NULL, "path to samplesets" },
 #ifdef __WIN32__

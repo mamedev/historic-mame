@@ -171,7 +171,7 @@ static void h_md5_begin(void);
 static void h_md5_buffer(const void* mem, unsigned long len);
 static void h_md5_end(UINT8* chksum);
 
-static hash_function_desc hash_descs[HASH_NUM_FUNCTIONS] =
+static const hash_function_desc hash_descs[HASH_NUM_FUNCTIONS] =
 {
 	{
 		"crc", 'c', 4,
@@ -204,7 +204,7 @@ const char* info_strings[] =
 static const char* binToStr = "0123456789abcdef";
 
 
-static hash_function_desc* hash_get_function_desc(unsigned int function)
+static const hash_function_desc* hash_get_function_desc(unsigned int function)
 {
 	unsigned int idx = 0;
 
@@ -226,14 +226,14 @@ static hash_function_desc* hash_get_function_desc(unsigned int function)
 
 const char* hash_function_name(unsigned int function)
 {
-	hash_function_desc* info = hash_get_function_desc(function);
+	const hash_function_desc* info = hash_get_function_desc(function);
 
 	return info->name;
 }
 
 int hash_data_has_checksum(const char* data, unsigned int function)
 {
-	hash_function_desc* info = hash_get_function_desc(function);
+	const hash_function_desc* info = hash_get_function_desc(function);
 	char str[3];
 	const char* res;
 
@@ -251,9 +251,9 @@ int hash_data_has_checksum(const char* data, unsigned int function)
 	return (res - data + 2);
 }
 
-static int hash_data_add_binary_checksum(char* d, unsigned int function, UINT8* checksum)
+static int hash_data_add_binary_checksum(char* d, unsigned int function, const UINT8* checksum)
 {
-	hash_function_desc* desc = hash_get_function_desc(function);
+	const hash_function_desc* desc = hash_get_function_desc(function);
 	char* start = d;
 	unsigned i;
 	
@@ -321,7 +321,7 @@ int hash_data_is_equal(const char* d1, const char* d2, unsigned int functions)
 
 			if (offs1 && offs2)
 			{
-				hash_function_desc* info = hash_get_function_desc(i);
+				const hash_function_desc* info = hash_get_function_desc(i);
 
 				if (!hash_compare_checksum(d1+offs1, d2+offs2, info->size))
 					return 0;
@@ -348,7 +348,7 @@ int hash_data_is_equal(const char* d1, const char* d2, unsigned int functions)
 int hash_data_extract_printable_checksum(const char* data, unsigned int function, char* checksum)
 {
 	unsigned int i;
-	hash_function_desc* info;
+	const hash_function_desc* info;
 	int offs;
 	
 	// Check if the hashdata contains the requested function
@@ -398,10 +398,33 @@ int hash_data_extract_printable_checksum(const char* data, unsigned int function
 	return 1;
 }
 
-int hash_data_extract_binary_checksum(const char* data, unsigned int function, unsigned char* checksum)
+static int hex_string_to_binary(unsigned char* binary, const char* data, int size)
 {
 	unsigned int i;
-	hash_function_desc* info;
+	char c;
+
+	for (i = 0; i < size * 2; i++)
+	{
+		c = tolower(*data++);
+		
+		if (c >= '0' && c <= '9')
+			c -= '0';
+		else if (c >= 'a' && c <= 'f')
+			c -= 'a' - 10;
+		else
+			return 1;
+
+		if (i % 2 == 0)
+			binary[i / 2] = c * 16;
+		else
+			binary[i / 2] += c;
+	}
+	return 0;
+}
+
+int hash_data_extract_binary_checksum(const char* data, unsigned int function, unsigned char* checksum)
+{
+	const hash_function_desc* info;
 	int offs;
 	
 	// Check if the hashdata contains the requested function
@@ -433,29 +456,13 @@ int hash_data_extract_binary_checksum(const char* data, unsigned int function, u
 	}
 	
 	// Convert hex string into binary
-	for (i=0;i<info->size*2;i++)
-	{
-		char c = tolower(*data++);
-		
-		if (c >= '0' && c <= '9')
-			c -= '0';
-		else if (c >= 'a' && c <= 'f')
-			c -= 'a' - 10;
-		else if (c >= 'A' && c <= 'F')
-			c -= 'A' - 10;
-		else
+	if (hex_string_to_binary(checksum, data, info->size))
 		{
 			// Invalid character: the checksum is treated as zero,
 			//  and a warning is returned
 			memset(checksum, '\0', info->size);
 			return 2;
 		}
-
-		if (i % 2 == 0)
-			checksum[i / 2] = c * 16;
-		else
-			checksum[i / 2] += c;
-	}
 
 	return 1;
 }
@@ -497,7 +504,22 @@ unsigned int hash_data_used_functions(const char* data)
 	return res;
 }
 
-int hash_data_insert_binary_checksum(char* d, unsigned int function, UINT8* checksum)
+int hash_data_insert_printable_checksum(char* d, unsigned int function, const char* checksum)
+{
+	const hash_function_desc* desc;
+	UINT8 binary_checksum[20];
+
+	desc = hash_get_function_desc(function);
+
+	ASSERT(desc->size <= sizeof(binary_checksum));
+
+	if (hex_string_to_binary(binary_checksum, checksum, desc->size))
+		return 2;
+
+	return hash_data_insert_binary_checksum(d, function, binary_checksum);
+}
+
+int hash_data_insert_binary_checksum(char* d, unsigned int function, const UINT8* checksum)
 {
 	int offset;
 	
@@ -540,7 +562,7 @@ void hash_compute(char* dst, const unsigned char* data, unsigned long length, un
 		
 		if (functions & func)
 		{
-			hash_function_desc* desc = hash_get_function_desc(func);
+			const hash_function_desc* desc = hash_get_function_desc(func);
 			UINT8 chksum[256];
 
 			desc->calculate_begin();

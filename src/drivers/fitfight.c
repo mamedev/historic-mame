@@ -38,9 +38,7 @@ lev 7 : 0x7c : 0000 17aa -
 
 todo:
 
-fix scrolling - is it related to the 0x700000 accesses? see
-stephh's notes on the 0x700000 reads / writes
-sprite priorities (see glass break in fitfight)
+fix scrolling
 sound
 fix sprite colour problems.
 should these be considered clones or not since the game has
@@ -103,321 +101,115 @@ VIDEO_UPDATE(fitfight);
 
 static READ16_HANDLER(fitfight_700000_r)
 {
-	/*
-	01656A: 48E7 3000                movem.l D2-D3, -(A7)
-	01656E: 4EB9 0001 698A           jsr     $1698a.l
-	016574: 0240 000F                andi.w  #$f, D0
-	016578: 3600                     move.w  D0, D3
-	01657A: 33C3 0070 0000           move.w  D3, $700000.l
-	016580: 33FC 0200 0070 0000      move.w  #$200, $700000.l
-	016588: 33FC 0200 0070 0000      move.w  #$200, $700000.l
-	016590: 3439 0070 0000           move.w  $700000.l, D2
-	016596: 0242 00FF                andi.w  #$ff, D2
-	01659A: 33F9 00E0 4C56 0070 0000 move.w  $e04c56.l, $700000.l
-	0165A4: 3003                     move.w  D3, D0
-	0165A6: 48C0                     ext.l   D0
-	0165A8: 3202                     move.w  D2, D1
-	0165AA: 48C1                     ext.l   D1
-	0165AC: E481                     asr.l   #2, D1
-	0165AE: B081                     cmp.l   D1, D0
-	0165B0: 6702                     beq     165b4
-	0165B2: 60FE                     bra     165b2			<- infinite loop
-	0165B4: 4CDF 000C                movem.l (A7)+, D2-D3
-	0165B8: 4E75                     rts
-	*/
-
-	/* D3 (write to 0x700000) - D2 (read from 0x700000)
-	   D3 = D2 >> 2, so D2 = D3 << 2 */
-
 	UINT16 data = fitfight_700000_data;
-
 	return (data << 2);
 }
 
 static READ16_HANDLER(histryma_700000_r)
 {
-	/*
-	017F82: 48E7 3800                movem.l D2-D4, -(A7)
-	017F86: 33F9 00E0 7900 0070 0000 move.w  $e07900.l, $700000.l
-	017F90: 4EB9 0000 74C8           jsr     $74c8.l
-	017F96: 4EB9 0001 8356           jsr     $18356.l
-	017F9C: 0240 00FE                andi.w  #$fe, D0
-	017FA0: 3600                     move.w  D0, D3
-	017FA2: 33C3 0070 0000           move.w  D3, $700000.l
-	017FA8: 33FC 0200 0070 0000      move.w  #$200, $700000.l
-	017FB0: 3439 0070 0000           move.w  $700000.l, D2
-	017FB6: 0242 00FF                andi.w  #$ff, D2
-	017FBA: 3802                     move.w  D2, D4
-	017FBC: 0244 00AA                andi.w  #$aa, D4
-	017FC0: 33F9 00E0 7900 0070 0000 move.w  $e07900.l, $700000.l
-	017FCA: 0242 0055                andi.w  #$55, D2
-	017FCE: E54A                     lsl.w   #2, D2
-	017FD0: 3002                     move.w  D2, D0
-	017FD2: 8044                     or.w    D4, D0
-	017FD4: 48C0                     ext.l   D0
-	017FD6: 3400                     move.w  D0, D2
-	017FD8: B642                     cmp.w   D2, D3
-	017FDA: 6702                     beq     17fde
-	017FDC: 60FE                     bra     17fdc			<- infinite loop
-	017FDE: 4EB9 0000 74C2           jsr     $74c2.l
-	017FE4: 4CDF 001C                movem.l (A7)+, D2-D4
-	017FE8: 4E75                     rts
-	*/
-
-	/* D3 (write to 0x700000) - D2 (read from 0x700000)
-	   D3 = ((D2 & 0x55) << 2) | (D2 & 0xaa), so D2 = ???
-	   (please help me in finding the formula to avoid the table) */
-
-	static const UINT16 table[128] =
-	{
-		0x00, 0x02, 0x01, 0x03, 0x08, 0x0a, 0x09, 0x0b,		// 0x00 .. 0x0e
-		0x04, 0x06, 0x05, 0x07, 0x0c, 0x0e, 0x0d, 0x0f,		// 0x10 .. 0x1e
-		0x20, 0x22, 0x21, 0x23, 0x28, 0x2a, 0x29, 0x2b,		// 0x20 .. 0x2e
-		0x24, 0x26, 0x25, 0x27, 0x2c, 0x2e, 0x2d, 0x2f,		// 0x30 .. 0x3e
-		0x10, 0x12, 0x11, 0x13, 0x18, 0x1a, 0x19, 0x1b,		// 0x40 .. 0x4e
-		0x14, 0x16, 0x15, 0x17, 0x1c, 0x1e, 0x1d, 0x1f,		// 0x50 .. 0x5e
-		0x30, 0x32, 0x31, 0x33, 0x38, 0x3a, 0x39, 0x3b,		// 0x60 .. 0x6e
-		0x34, 0x36, 0x35, 0x37, 0x3c, 0x3e, 0x3d, 0x3f,		// 0x70 .. 0x7e
-		0x80, 0x82, 0x81, 0x83, 0x88, 0x8a, 0x89, 0x8b,		// 0x80 .. 0x8e
-		0x84, 0x86, 0x85, 0x87, 0x8c, 0x8e, 0x8d, 0x8f,		// 0x90 .. 0x9e
-		0xa0, 0xa2, 0xa1, 0xa3, 0xa8, 0xaa, 0xa9, 0xab,		// 0xa0 .. 0xae
-		0xa4, 0xa6, 0xa5, 0xa7, 0xac, 0xae, 0xad, 0xaf,		// 0xb0 .. 0xbe
-		0x90, 0x92, 0x91, 0x93, 0x98, 0x9a, 0x99, 0x9b,		// 0xc0 .. 0xce
-		0x94, 0x96, 0x95, 0x97, 0x9c, 0x9e, 0x9d, 0x9f,		// 0xd0 .. 0xde
-		0xb0, 0xb2, 0xb1, 0xb3, 0xb8, 0xba, 0xb9, 0xbb,		// 0xe0 .. 0xee
-		0xb4, 0xb6, 0xb5, 0xb7, 0xbc, 0xbe, 0xbd, 0xbf,		// 0xf0 .. 0xfe
-	};
-
-	UINT16 data = fitfight_700000_data;
-
-	return (table[data/2]);
+	UINT16 data = (fitfight_700000_data & 0x00AA);
+	data |= ((fitfight_700000_data & 0x0055) >> 2);
+	return (data);
 }
 
 static READ16_HANDLER(bbprot_700000_r)
 {
-	/*
-	016FCC: 4E56 FFEC                link    A6, #-$14
-	016FD0: 48E7 2030                movem.l D2/A2-A3, -(A7)
-	016FD4: 45EE FFEC                lea     (-$14,A6), A2
-	016FD8: 47EE FFF6                lea     (-$a,A6), A3
-	016FDC: 33F9 00E0 9F68 0070 0000 move.w  $e09f68.l, $700000.l
-	016FE6: 007C 0700                ori     #$700, SR
-	016FEA: 4EB9 0001 74DC           jsr     $174dc.l
-	016FF0: 0240 00FE                andi.w  #$fe, D0
-	016FF4: 3400                     move.w  D0, D2
-	016FF6: 0280 0000 0100           andi.l  #$100, D0
-	016FFC: E080                     asr.l   #8, D0
-	016FFE: 1D40 FFF6                move.b  D0, (-$a,A6)
-	017002: 3002                     move.w  D2, D0
-	017004: 0280 0000 0080           andi.l  #$80, D0
-	01700A: EE80                     asr.l   #7, D0
-	01700C: 1740 0001                move.b  D0, ($1,A3)
-	017010: 3002                     move.w  D2, D0
-	017012: 0280 0000 0040           andi.l  #$40, D0
-	017018: EC80                     asr.l   #6, D0
-	01701A: 1740 0002                move.b  D0, ($2,A3)
-	01701E: 3002                     move.w  D2, D0
-	017020: 0280 0000 0020           andi.l  #$20, D0
-	017026: EA80                     asr.l   #5, D0
-	017028: 1740 0003                move.b  D0, ($3,A3)
-	01702C: 3002                     move.w  D2, D0
-	01702E: 0280 0000 0010           andi.l  #$10, D0
-	017034: E880                     asr.l   #4, D0
-	017036: 1740 0004                move.b  D0, ($4,A3)
-	01703A: 3002                     move.w  D2, D0
-	01703C: 0280 0000 0008           andi.l  #$8, D0
-	017042: E680                     asr.l   #3, D0
-	017044: 1740 0005                move.b  D0, ($5,A3)
-	017048: 3002                     move.w  D2, D0
-	01704A: 0280 0000 0004           andi.l  #$4, D0
-	017050: E480                     asr.l   #2, D0
-	017052: 1740 0006                move.b  D0, ($6,A3)
-	017056: 3002                     move.w  D2, D0
-	017058: 0280 0000 0002           andi.l  #$2, D0
-	01705E: E280                     asr.l   #1, D0
-	017060: 1740 0007                move.b  D0, ($7,A3)
-	017064: 1002                     move.b  D2, D0
-	017066: 0200 0001                andi.b  #$1, D0
-	01706A: 1740 0008                move.b  D0, ($8,A3)
-	01706E: 33C2 0070 0000           move.w  D2, $700000.l
-	017074: 33FC 0200 0070 0000      move.w  #$200, $700000.l
-	01707C: 3439 0070 0000           move.w  $700000.l, D2
-	017082: 3002                     move.w  D2, D0
-	017084: 0280 0000 0100           andi.l  #$100, D0
-	01708A: E080                     asr.l   #8, D0
-	01708C: 1D40 FFEC                move.b  D0, (-$14,A6)
-	017090: 3002                     move.w  D2, D0
-	017092: 0280 0000 0080           andi.l  #$80, D0
-	017098: EE80                     asr.l   #7, D0
-	01709A: 1540 0001                move.b  D0, ($1,A2)
-	01709E: 3002                     move.w  D2, D0
-	0170A0: 0280 0000 0040           andi.l  #$40, D0
-	0170A6: EC80                     asr.l   #6, D0
-	0170A8: 1540 0002                move.b  D0, ($2,A2)
-	0170AC: 3002                     move.w  D2, D0
-	0170AE: 0280 0000 0020           andi.l  #$20, D0
-	0170B4: EA80                     asr.l   #5, D0
-	0170B6: 1540 0003                move.b  D0, ($3,A2)
-	0170BA: 3002                     move.w  D2, D0
-	0170BC: 0280 0000 0010           andi.l  #$10, D0
-	0170C2: E880                     asr.l   #4, D0
-	0170C4: 1540 0004                move.b  D0, ($4,A2)
-	0170C8: 3002                     move.w  D2, D0
-	0170CA: 0280 0000 0008           andi.l  #$8, D0
-	0170D0: E680                     asr.l   #3, D0
-	0170D2: 1540 0005                move.b  D0, ($5,A2)
-	0170D6: 3002                     move.w  D2, D0
-	0170D8: 0280 0000 0004           andi.l  #$4, D0
-	0170DE: E480                     asr.l   #2, D0
-	0170E0: 1540 0006                move.b  D0, ($6,A2)
-	0170E4: 3002                     move.w  D2, D0
-	0170E6: 0280 0000 0002           andi.l  #$2, D0
-	0170EC: E280                     asr.l   #1, D0
-	0170EE: 1540 0007                move.b  D0, ($7,A2)
-	0170F2: 1002                     move.b  D2, D0
-	0170F4: 0200 0001                andi.b  #$1, D0
-	0170F8: 1540 0008                move.b  D0, ($8,A2)
-	0170FC: 33F9 00E0 9F68 0070 0000 move.w  $e09f68.l, $700000.l
-	017106: 102B 0008                move.b  ($8,A3), D0
-	01710A: B02A 0008                cmp.b   ($8,A2), D0
-	01710E: 6650                     bne     17160
-	017110: 102B 0007                move.b  ($7,A3), D0
-	017114: B02A 0007                cmp.b   ($7,A2), D0
-	017118: 6646                     bne     17160
-	01711A: 102B 0004                move.b  ($4,A3), D0
-	01711E: B02A 0006                cmp.b   ($6,A2), D0
-	017122: 663C                     bne     17160
-	017124: 102B 0005                move.b  ($5,A3), D0
-	017128: B02A 0005                cmp.b   ($5,A2), D0
-	01712C: 6632                     bne     17160
-	01712E: 102B 0002                move.b  ($2,A3), D0
-	017132: B02A 0004                cmp.b   ($4,A2), D0
-	017136: 6628                     bne     17160
-	017138: 102B 0001                move.b  ($1,A3), D0
-	01713C: B02A 0003                cmp.b   ($3,A2), D0
-	017140: 661E                     bne     17160
-	017142: 102E FFF6                move.b  (-$a,A6), D0
-	017146: B02A 0002                cmp.b   ($2,A2), D0
-	01714A: 6614                     bne     17160
-	01714C: 102B 0003                move.b  ($3,A3), D0
-	017150: B02A 0001                cmp.b   ($1,A2), D0
-	017154: 660A                     bne     17160
-	017156: 102B 0006                move.b  ($6,A3), D0
-	01715A: B02E FFEC                cmp.b   (-$14,A6), D0
-	01715E: 6702                     beq     17162
-	017160: 60FE                     bra     17160
-	017162: 027C F9FF                andi    #$f9ff, SR
-	017166: 4CEE 0C04 FFE0           movem.l (-$20,A6), D2/A2-A3
-	01716C: 4E5E                     unlk    A6
-	01716E: 4E75                     rts
-	*/
-
-	/* A3 = offset of value written to 0x700000.w
-         A2 = offset of value read from 0x700000.w
-	   (-$a,A6) = $0,A3 and (-$14,A6) = $0,A2
-
-	     write bits   8 7 6 5 4 3 2 1 0    =    read bits    6 5 4 7 2 3 8 1 0
-	     A3 offset    0 1 2 3 4 5 6 7 8         A2 offset    2 3 4 1 6 5 0 7 8
-	                                      <=>
-	     read bits    8 7 6 5 4 3 2 1 0    =    write bits   2 5 8 7 6 3 4 1 0
-	     A2 offset    0 1 2 3 4 5 6 7 8         A3 offset    6 3 0 1 2 5 4 7 8
-
-	   Comparaison between bits of what is read and bits of what is written :
-	     - bits 0, 1 & 3 are the same
-	     - bits 4, 6, 7 & 8 are >> 2
-	     - bit  2 is << 6
-	     - bit  5 is << 2
-	*/
-
 	UINT16 data = 0;
-
 	data  =  (fitfight_700000_data & 0x000b);
 	data |= ((fitfight_700000_data & 0x01d0) >> 2);
 	data |= ((fitfight_700000_data & 0x0004) << 6);
 	data |= ((fitfight_700000_data & 0x0020) << 2);
-
 	return (data);
 }
 
 static WRITE16_HANDLER(fitfight_700000_w)
 {
-	COMBINE_DATA(&fof_700000[offset]);		// really needed for scrolling ?
+	COMBINE_DATA(&fof_700000[offset]);		// needed for scrolling
 	if (data < 0x0200)				// to avoid considering writes of 0x0200
 		fitfight_700000_data = data;
 }
 
-static ADDRESS_MAP_START( fitfight_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( fitfight_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
+	//written at scanline 5, allways 1. Used by histryma/fitfight @0x0000ec2c/@0x0000f076
 
 	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_1_word_r)	// for 'histryma' only
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_3_word_r)
-//	AM_RANGE(0x700000, 0x700001) AM_READ(xxxx) /* see init */
-
-	AM_RANGE(0xb00000, 0xb0ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00000, 0xc003ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xd00000, 0xd007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xe00000, 0xe0ffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fitfight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-
-	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
-
-	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) /* unused layer? */
-	AM_RANGE(0xb04000, 0xb07fff) AM_WRITE(fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
-	AM_RANGE(0xb08000, 0xb0bfff) AM_WRITE(fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
-	AM_RANGE(0xb0c000, 0xb0ffff) AM_WRITE(fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
 
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_600000)
-	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
-	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_900000)
-	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_a00000)
+	//	Is 0x600000 controlling the slave audio CPU? data is 0x1111000zzzzzzzzz (9 sign. bits)
+	//	Used by histryma/fitfight:
+	//		@0x000031ae/0x00002b3a: 0xF000, once, during POST
+	//		 0xe001ae/0xe00096 holds the address (0x600000), 0xe001b2/0xe0009a holds the word to output
+	//		@0x00003294/0x00002c1a: word content of 0xe001b2
+	//		@0x000032cc/?: 0xF0dd byte from 0xe001b5, dd seems to be allways 0xFD
+	//		@0x000036bc/?: 0xF0FD when inserting coin
+	//		@0x000037a6/0x000030e6: 0x??dd byte from 0xe08c05, 0xF101 then 0xF001/0xF157 then 0xF057
 
-	AM_RANGE(0xc00000, 0xc00fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xd00000, 0xd007ff) AM_WRITE(MWA16_RAM) AM_BASE(&fitfight_spriteram)
-	AM_RANGE(0xe00000, 0xe0ffff) AM_WRITE(MWA16_RAM)
+//	AM_RANGE(0x700000, 0x700001) AM_READ(xxxx) /* see init */
+	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
+	//	kept at 0xe07900/0xe04c56
+
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
+	//written at scanline 1, allways 0. Used by histryma/fitfight @0x00001d76/@0x00000f6a
+
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_900000) //mid tilemap scroll
+	//  fitfigth: @0x00002b42,@0x00000f76
+	//  histryma: @0x000031b6,@0x00001d82
+
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_a00000) //bak tilemap scroll
+	//  fitfight: @0x00002b4a,@0x00000f82
+	//  histryma: @0x000031be,@0x00001d8e
+
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITENOP /* unused layer? */
+	AM_RANGE(0xb04000, 0xb07fff) AM_READWRITE(MRA16_RAM,fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
+	AM_RANGE(0xb08000, 0xb0bfff) AM_READWRITE(MRA16_RAM,fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
+	AM_RANGE(0xb0c000, 0xb0ffff) AM_READWRITE(MRA16_RAM,fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
+
+	AM_RANGE(0xb10000, 0xb13fff) AM_WRITENOP //used by histryma @0x0000b25a
+	AM_RANGE(0xb14000, 0xb17fff) AM_WRITENOP //used by histryma @0x0000b25a,b270
+	AM_RANGE(0xb18000, 0xb1bfff) AM_WRITENOP //used by histryma @0x0000b25a,b270,b286
+
+	AM_RANGE(0xc00000, 0xc00fff) AM_READWRITE(MRA16_RAM,paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0xd00000, 0xd007ff) AM_RAM AM_BASE(&fitfight_spriteram)
+
+	AM_RANGE(0xe00000, 0xe0ffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbprot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( bbprot_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+
+	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
 
 	AM_RANGE(0x300000, 0x300001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x380000, 0x380001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x400000, 0x400001) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x480000, 0x480001) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x700000, 0x700001) AM_READ(bbprot_700000_r)
-
-	AM_RANGE(0xb00000, 0xb0ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00000, 0xc003ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc00400, 0xc00fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xd00000, 0xd007ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xe00000, 0xe0ffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bbprot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-
-	AM_RANGE(0x100000, 0x100001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_100000)
-
-	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(MWA16_RAM) /* unused layer? */
-	AM_RANGE(0xb04000, 0xb07fff) AM_WRITE(fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
-	AM_RANGE(0xb08000, 0xb0bfff) AM_WRITE(fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
-	AM_RANGE(0xb0c000, 0xb0ffff) AM_WRITE(fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
 
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_600000)
-	AM_RANGE(0x700000, 0x700001) AM_WRITE(fitfight_700000_w) AM_BASE(&fof_700000)
+
+	AM_RANGE(0x700000, 0x700001) AM_READWRITE(bbprot_700000_r,fitfight_700000_w) AM_BASE(&fof_700000)
+
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_800000)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_900000)
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_RAM) AM_BASE(&fof_a00000)
 
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITENOP /* unused layer? */
+	AM_RANGE(0xb04000, 0xb07fff) AM_READWRITE(MRA16_RAM,fof_bak_tileram_w) AM_BASE(&fof_bak_tileram)
+	AM_RANGE(0xb08000, 0xb0bfff) AM_READWRITE(MRA16_RAM,fof_mid_tileram_w) AM_BASE(&fof_mid_tileram)
+	AM_RANGE(0xb0c000, 0xb0ffff) AM_READWRITE(MRA16_RAM,fof_txt_tileram_w) AM_BASE(&fof_txt_tileram)
+
+	AM_RANGE(0xc00000, 0xc00fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0xd00000, 0xd007ff) AM_WRITE(MWA16_RAM) AM_BASE(&fitfight_spriteram)
-	AM_RANGE(0xe00000, 0xe0ffff) AM_WRITE(MWA16_RAM)
+
+	AM_RANGE(0xd00000, 0xd007ff) AM_RAM AM_BASE(&fitfight_spriteram)
+
+	AM_RANGE(0xe00000, 0xe0ffff) AM_RAM
 ADDRESS_MAP_END
 
 /* I've put the inputs the same way they can be read in the "test mode" */
@@ -891,9 +683,19 @@ static struct GfxDecodeInfo prot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+/*
+static struct OKIM6295interface okim6295_interface =
+{
+	1,
+	{ 1333333/165 }, // ~8080Hz ??? TODO: find out the real frequency
+	{ REGION_SOUND1 },
+	{ 100 }
+};
+*/
+
 static MACHINE_DRIVER_START( fitfight )
-	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_PROGRAM_MAP(fitfight_readmem,fitfight_writemem)
+	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
+	MDRV_CPU_PROGRAM_MAP(fitfight_main_map,0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -913,8 +715,8 @@ static MACHINE_DRIVER_START( fitfight )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbprot )
-	MDRV_CPU_ADD(M68000, 12000000)
-	MDRV_CPU_PROGRAM_MAP(bbprot_readmem,bbprot_writemem)
+	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
+	MDRV_CPU_PROGRAM_MAP(bbprot_main_map,0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -962,10 +764,15 @@ ROM_START( fitfight )
 
 	ROM_REGION( 0x010000, REGION_CPU2, 0 ) /* Sound Program? */
 	ROM_LOAD( "u23_ff1.bin",  0x000000, 0x010000, CRC(e2d6d768) SHA1(233e5501ffda8db48341fa66f16b630544803a89) )
+	/* It sure doesn't look like Z80 code to me...
+	   Is it a H6280?
+	   It's also not encrypted as there are 2 similar readable text strings
+	   (in spanish, italian or brazilian portuguese?) starting at 0x9fb3 and 0xa071 
+	   "Completando de 0x797B a 0xFEFB (banco 0)"*/
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* OKI Samples? */
-	ROM_LOAD( "h7e_ff1.bin",  0x000000, 0x080000, CRC(3e12dfd8) SHA1(8f21abfc6a6aac9ad3fafe97d0279739c7b9fab9) )
-	ROM_LOAD( "h18e_ff1.bin", 0x080000, 0x080000, CRC(a7f36dbe) SHA1(206efb7f32d6123ed3e22790ff38dd0a8e1626d7) )
+	ROM_LOAD( "h7e_ff1.bin",  0x000000, 0x080000, CRC(3e12dfd8) SHA1(8f21abfc6a6aac9ad3fafe97d0279739c7b9fab9) ) //seems to be a merge of 2 0x040000 roms
+	ROM_LOAD( "h18e_ff1.bin", 0x080000, 0x080000, CRC(a7f36dbe) SHA1(206efb7f32d6123ed3e22790ff38dd0a8e1626d7) ) //seems to be a merge of 2 0x040000 roms
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
 	ROM_LOAD( "p1_ff1.bin",   0x0c0000, 0x040000, CRC(542593b3) SHA1(068d9b5dc98a8353462705c64d2d287f270510a9) )
@@ -1017,8 +824,8 @@ ROM_START( histryma )
 	ROM_LOAD( "y61f.bin",  0x000000, 0x010000, CRC(b588525a) SHA1(b768bd75d6351430f9656289146119e9c0308554) )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* OKI Samples? */
-	ROM_LOAD( "u7_th.bin",  0x000000, 0x080000, CRC(88b41ef5) SHA1(565e2c4554dde79cd2da8b8a181b3378818223cc) )
-	ROM_LOAD( "u18_th.bin", 0x080000, 0x080000, CRC(a734cd77) SHA1(3fe4cba6f6d691dfc4775de634e6e39bf4bb08b8) )
+	ROM_LOAD( "u7_th.bin",  0x000000, 0x080000, CRC(88b41ef5) SHA1(565e2c4554dde79cd2da8b8a181b3378818223cc) ) //seems to be a merge of 2 0x040000 roms
+	ROM_LOAD( "u18_th.bin", 0x080000, 0x080000, CRC(a734cd77) SHA1(3fe4cba6f6d691dfc4775de634e6e39bf4bb08b8) ) //seems to be a merge of 2 0x040000 roms
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* GFX */
 	ROM_LOAD( "p1_th.bin",   0x0c0000, 0x040000, CRC(501c5336) SHA1(1743221d73d59ba40ddad3f69bc4aa1a51c29962) )

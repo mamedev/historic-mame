@@ -169,8 +169,27 @@ WRITE_HANDLER( IremGA20_w )
 
 READ_HANDLER( IremGA20_r )
 {
-	/* Todo - Looks like there is a status bit to show whether each channel is playing */
-	return 0xff;
+	int channel;
+
+	if (!Machine->sample_rate)
+		return 0;
+
+	stream_update(IremGA20_chip.channel, 0);
+
+	channel = offset >> 4;
+
+	switch (offset & 0xf)
+	{
+		case 0xe:	// voice status.  bit 0 is 1 if active. (routine around 0xccc in rtypeleo)
+			return IremGA20_channel[channel].play ? 1 : 0;
+			break;
+
+		default:
+			logerror("GA20: read unk. register %d, channel %d\n", offset & 0xf, channel);
+			break;
+	}
+
+	return 0;
 }
 
 static void IremGA20_reset( void )

@@ -828,9 +828,12 @@ static void cpu_timeslice(void)
 				LOG(("         %d ran, %d total, time = %.9f\n", ran, (INT32)cpu[cpunum].totalcycles, mame_time_to_double(cpu[cpunum].localtime)));
 				
 				/* if the new local CPU time is less than our target, move the target up */
-				if (compare_mame_times(cpu[cpunum].localtime, target) < 0 && compare_mame_times(cpu[cpunum].localtime, base) > 0)
+				if (compare_mame_times(cpu[cpunum].localtime, target) < 0)
 				{
-					target = cpu[cpunum].localtime;
+					if (compare_mame_times(cpu[cpunum].localtime, base) > 0)
+						target = cpu[cpunum].localtime;
+					else
+						target = base;
 					LOG(("         (new target)\n"));
 				}
 			}

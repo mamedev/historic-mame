@@ -175,6 +175,9 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_E132XS)
 #include "cpu/e132xs/e132xs.h"
 #endif
+#if (HAS_I386)
+#include "cpu/i386/i386intf.h"
+#endif
 
 #ifdef MESS
 
@@ -605,6 +608,9 @@ const struct
 #endif
 #if (HAS_E132XS)
 	{ CPU_E132XS, e132xs_get_info },
+#endif
+#if (HAS_I386)
+	{ CPU_I386, i386_get_info },
 #endif
 
 #ifdef MESS

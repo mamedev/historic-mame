@@ -638,7 +638,7 @@ int cli_frontend_init (int argc, char **argv)
 
 	if( statename )
 	{
-		options.savegame = *( statename );
+		options.savegame = statename;
 	}
 
 	/* need a decent default for debug width/height */

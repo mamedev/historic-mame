@@ -50,9 +50,9 @@ extern struct mame_bitmap *collision_bitmap;
 extern struct mame_bitmap *collision_background;
 extern struct mame_bitmap *scrolled_background;
 
-unsigned char s2636_1_dirty[4];
-unsigned char s2636_2_dirty[4];
-unsigned char s2636_3_dirty[4];
+extern unsigned char s2636_1_dirty[4];
+extern unsigned char s2636_2_dirty[4];
+extern unsigned char s2636_3_dirty[4];
 
 extern int CollisionRegister;
 

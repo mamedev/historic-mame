@@ -14,7 +14,7 @@ static struct tilemap *fof_txt_tilemap;
 
 extern char bbprot_kludge;
 
-static void fitfight_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void fitfight_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer )
 {
 	const struct GfxElement *gfx = Machine->gfx[3];
 	data16_t *source = fitfight_spriteram;
@@ -22,25 +22,26 @@ static void fitfight_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 	while( source<finish )
 	{
-		int xpos, ypos, number,xflip,yflip, end, colr;
+		int xpos, ypos, number,xflip,yflip, end, colr, prio;
 
 		ypos = source[0];
 		xpos = source[3];
 		number = source[2];
 		xflip = (source[1] & 0x0001) ^ 0x0001;
 		yflip = (source[1] & 0x0002);
+		prio = (source[1] & 0x0400) >> 10;
 		colr = (source[1] & 0x00fc) >> 2;
 		if (bbprot_kludge==1) colr = (source[1] & 0x00f8) >> 3;
 		end = source[0] & 0x8000;
 
 		ypos = 0xff-ypos;
 
-		xpos -=48;
-		ypos -=16;
+		xpos -=38;//48;
+		ypos -=14;//16;
 
 		if (end) break;
-
-		 drawgfx(bitmap,gfx,number,colr,xflip,yflip,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
+		if (prio == layer)
+		  drawgfx(bitmap,gfx,number,colr,xflip,yflip,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
 
 		source+=4;
 	}
@@ -73,7 +74,7 @@ static void get_fof_mid_tile_info(int tile_index)
 	SET_TILE_INFO(1,code,colr,TILE_FLIPYX(xflip))
 }
 
-WRITE16_HANDLER(  fof_mid_tileram_w )
+WRITE16_HANDLER( fof_mid_tileram_w )
 {
 	COMBINE_DATA(&fof_mid_tileram[offset]);
 
@@ -90,7 +91,7 @@ static void get_fof_txt_tile_info(int tile_index)
 	SET_TILE_INFO(0,code,colr,TILE_FLIPYX(xflip))
 }
 
-WRITE16_HANDLER(  fof_txt_tileram_w )
+WRITE16_HANDLER( fof_txt_tileram_w )
 {
 	COMBINE_DATA(&fof_txt_tileram[offset]);
 	tilemap_mark_tile_dirty(fof_txt_tilemap,offset/2);
@@ -117,34 +118,49 @@ VIDEO_UPDATE(fitfight)
 {
 	/* scroll isn't right */
 
-	int scrollval;
+	int vblank;
+	int scrollbak,scrollmid;
 
-	int scroll2;
+	vblank = (fof_700000[0] & 0x8000);
 
-	scroll2 = (fof_700000[0] & 0x01f8) >> 6;
-	scroll2 = 0;
+	if (vblank > 0)
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+	else {
+//		if (keyboard_pressed(KEYCODE_Q))
+//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
+//		else if (keyboard_pressed(KEYCODE_W))
+//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
+//		else if (keyboard_pressed(KEYCODE_E))
+//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
+//		else if (keyboard_pressed(KEYCODE_R))
+//			scrollbak = ((fof_a00000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
+//		else
+			scrollbak = ((fof_a00000[0]&0xff00) >> 5);
+		tilemap_set_scrollx(fof_bak_tilemap,0, scrollbak );
+		tilemap_set_scrolly(fof_bak_tilemap,0, fof_a00000[0]&0xff);
+		tilemap_draw(bitmap,cliprect,fof_bak_tilemap,0,0);
 
-	scrollval = (fof_a00000[0]&0xff00) >> 5;
+		fitfight_drawsprites(bitmap,cliprect,0);
 
+//		if (keyboard_pressed(KEYCODE_A))
+//			scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x01c0) >> 6);
+//		else if (keyboard_pressed(KEYCODE_S))
+//			scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x0038) >> 3);
+//		else if (keyboard_pressed(KEYCODE_D))
+//			scrollmid = ((fof_900000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);
+//		else if (keyboard_pressed(KEYCODE_F))
+//			scrollmid = ((fof_900000[0]&0xff00) >> 5) + ((fof_700000[0] & 0x01c0) >> 6);
+//		else
+			scrollmid = ((fof_900000[0]&0xff00) >> 5);
+		tilemap_set_scrollx(fof_mid_tilemap,0, scrollmid );
+		tilemap_set_scrolly(fof_mid_tilemap,0, fof_900000[0]&0xff);
+//		if (!keyboard_pressed(KEYCODE_F))
+			tilemap_draw(bitmap,cliprect,fof_mid_tilemap,0,0);
 
+		fitfight_drawsprites(bitmap,cliprect,1);
 
-	tilemap_set_scrollx(fof_bak_tilemap,0, scrollval - scroll2 );
-	tilemap_set_scrolly(fof_bak_tilemap,0, fof_a00000[0]&0xff);
-
-	tilemap_draw(bitmap,cliprect,fof_bak_tilemap,0,0);
-
-
-	scrollval = (fof_900000[0]&0xff00) >> 5;
-
-	tilemap_set_scrollx(fof_mid_tilemap,0, scrollval - scroll2 );
-	tilemap_set_scrolly(fof_mid_tilemap,0, fof_900000[0]&0xff);
-
-	tilemap_draw(bitmap,cliprect,fof_mid_tilemap,0,0);
-
-	fitfight_drawsprites(bitmap,cliprect);
-
-	tilemap_draw(bitmap,cliprect,fof_txt_tilemap,0,0);
-
+		tilemap_draw(bitmap,cliprect,fof_txt_tilemap,0,0);
+	}
 /*	usrintf_showmessage	("Regs %04x %04x %04x %04x %04x %04x",
 			fof_100000[0], fof_600000[0], fof_700000[0],
 			fof_800000[0], fof_900000[0],

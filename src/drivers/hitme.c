@@ -1,8 +1,4 @@
-/* Hit Me driver by the EMUL8, led by Dan Boris
-
-   It doesn't work?  should the timer stuff have changed?
-
-*/
+/* Hit Me driver by the EMUL8, led by Dan Boris */
 
 /*
 
@@ -20,59 +16,469 @@
 
 #include "driver.h"
 
-static float timeout_time;
-static int timeout_counter;
-static const float tock = .0189;
-data8_t *hitme_vidram;
+static struct tilemap *hitme_tilemap;
+static mame_time timeout_time;
+static data8_t *hitme_vidram;
 
-WRITE_HANDLER( hitme_vidram_w );
-VIDEO_START (hitme);
-VIDEO_START (brickyrd);
-VIDEO_UPDATE (hitme);
-PALETTE_INIT( hitme );
+
+
+/*************************************
+ *
+ *	Video RAM access
+ *
+ *************************************/
+
+static void get_hitme_tile_info(int tile_index)
+{
+	/* the code is the low 6 bits */
+	data8_t code = hitme_vidram[tile_index] & 0x3f;
+	SET_TILE_INFO(0, code, 0, 0);
+}
+
+
+WRITE_HANDLER( hitme_vidram_w )
+{
+	/* mark this tile dirty */
+	hitme_vidram[offset] = data;
+	tilemap_mark_tile_dirty(hitme_tilemap, offset);
+}
+
+
+
+/*************************************
+ *
+ *	Video start/update
+ *
+ *************************************/
+
+static VIDEO_START(hitme)
+{
+	hitme_tilemap = tilemap_create(get_hitme_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8,10, 40,19);
+	return 0;
+}
+
+
+static VIDEO_START(barricad)
+{
+	hitme_tilemap = tilemap_create(get_hitme_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8,8, 32,24);
+	return 0;
+}
+
+
+static VIDEO_UPDATE(hitme)
+{
+	/* the card width resistor comes from an input port, scaled to the range 0-25 kOhms */
+	double width_resist = readinputport(7) * 25000 / 100;
+	/* this triggers a oneshot for the following length of time */
+	double width_duration = 0.45 * 1000e-12 * width_resist;
+	/* the dot clock runs at the standard horizontal frequency * 320+16 clocks per scanline */
+	double dot_freq = 15750 * 336;
+	/* the number of pixels is the duration times the frequency */
+	int width_pixels = width_duration * dot_freq; 
+	int x, y, xx, inv;
+	offs_t offs = 0;
+	
+	/* start by drawing the tilemap */
+	tilemap_draw(bitmap,cliprect,hitme_tilemap,0,0);
+
+	/* now loop over and invert anything */
+	for (y = 0; y < 19; y++)
+	{
+		int dy = bitmap->rowpixels;
+		for (inv = x = 0; x < 40; x++, offs++)
+		{
+			/* if the high bit is set, reset the oneshot */
+			if (hitme_vidram[y*40+x] & 0x80)
+				inv = width_pixels;
+			
+			/* invert pixels until we run out */
+			for (xx = 0; xx < 8 && inv; xx++, inv--)
+			{
+				UINT16 *dest = (UINT16 *)bitmap->line[y*10] + x*8 + xx;
+				dest[0*dy] ^= 1;
+				dest[1*dy] ^= 1;
+				dest[2*dy] ^= 1;
+				dest[3*dy] ^= 1;
+				dest[4*dy] ^= 1;
+				dest[5*dy] ^= 1;
+				dest[6*dy] ^= 1;
+				dest[7*dy] ^= 1;
+				dest[8*dy] ^= 1;
+				dest[9*dy] ^= 1;
+			}
+		}
+	}
+}
+
+
+static VIDEO_UPDATE(barricad)
+{
+	tilemap_draw(bitmap,cliprect,hitme_tilemap,0,0);
+}
+
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
+
+static data8_t read_port_and_t0(int port)
+{
+	data8_t val = readinputport(port);
+	if (compare_mame_times(mame_timer_get_time(), timeout_time) > 0)
+		val ^= 0x80;
+	return val;
+}
+
+
+static data8_t read_port_and_t0_and_hblank(int port)
+{
+	data8_t val = read_port_and_t0(port);
+	if (cpu_gethorzbeampos() < (Machine->drv->screen_width * 9 / 10))
+		val ^= 0x04;
+	return val;
+}
+
+
+static READ_HANDLER( hitme_port_0_r )
+{
+	return read_port_and_t0_and_hblank(0);
+}
+
+
+static READ_HANDLER( hitme_port_1_r )
+{
+	return read_port_and_t0(1);
+}
+
+
+static READ_HANDLER( hitme_port_2_r )
+{
+	return read_port_and_t0_and_hblank(2);
+}
+
+
+static READ_HANDLER( hitme_port_3_r )
+{
+	return read_port_and_t0(3);
+}
+
+
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
+
+static WRITE_HANDLER( output_port_0_w )
+{
+	/* 
+		Note: We compute the timeout time on a write here. Unfortunately, the situation is
+		kind of weird, because the discrete sound system is also affected by this timeout.
+		In fact, it is very important that our timing calculation timeout AFTER the sound
+		system's equivalent computation, or else we will hang notes.
+	*/
+	data8_t raw_game_speed = readinputport(6);
+	double resistance = raw_game_speed * 25000 / 100;
+	mame_time duration = make_mame_time(0, MAX_SUBSECONDS * 0.45 * 6.8e-6 * resistance * (data+1));
+	timeout_time = add_mame_times(mame_timer_get_time(), duration);
+	
+	discrete_sound_w(0, data);
+	discrete_sound_w(1, 1);
+}
+
+
+static WRITE_HANDLER( output_port_1_w )
+{
+	discrete_sound_w(2, data);
+	discrete_sound_w(3, 1);
+}
+
+
+
+/*************************************
+ *
+ *	Memory maps
+ *
+ *************************************/
+
+/*
+	Note: the 8080 puts I/O port addresses out on the upper 8 address bits and asserts
+	IORQ. Most systems decode IORQ, but hitme doesn't, which means that all the I/O
+	port accesses can also be made via memory mapped accesses with the port number in the
+	upper 8 bits.
+*/
+
+static ADDRESS_MAP_START( hitme_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS(AMEF_ABITS(13))
+	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x0c00, 0x0eff) AM_READWRITE(MRA8_RAM, hitme_vidram_w) AM_BASE(&hitme_vidram)
+	AM_RANGE(0x1000, 0x10ff) AM_MIRROR(0x300) AM_RAM
+	AM_RANGE(0x1400, 0x14ff) AM_READ(hitme_port_0_r)
+	AM_RANGE(0x1500, 0x15ff) AM_READ(hitme_port_1_r)
+	AM_RANGE(0x1600, 0x16ff) AM_READ(hitme_port_2_r)
+	AM_RANGE(0x1700, 0x17ff) AM_READ(hitme_port_3_r)
+	AM_RANGE(0x1800, 0x18ff) AM_READ(input_port_4_r)
+	AM_RANGE(0x1900, 0x19ff) AM_READ(input_port_5_r)
+	AM_RANGE(0x1d00, 0x1dff) AM_WRITE(output_port_0_w)
+	AM_RANGE(0x1e00, 0x1fff) AM_WRITE(output_port_1_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hitme_portmap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x14, 0x14) AM_READ(hitme_port_0_r)
+	AM_RANGE(0x15, 0x15) AM_READ(hitme_port_1_r)
+	AM_RANGE(0x16, 0x16) AM_READ(hitme_port_2_r)
+	AM_RANGE(0x17, 0x17) AM_READ(hitme_port_3_r)
+	AM_RANGE(0x18, 0x18) AM_READ(input_port_4_r)
+	AM_RANGE(0x19, 0x19) AM_READ(input_port_5_r)
+	AM_RANGE(0x1d, 0x1d) AM_WRITE(output_port_0_w)
+	AM_RANGE(0x1e, 0x1f) AM_WRITE(output_port_1_w)
+ADDRESS_MAP_END
+
+
+
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
+/*
+	Note: the hitme video generator adds two blank lines to the beginning of each
+	row. In order to simulate this, we decode an extra two lines at the top of each
+	character.
+*/
+
+static struct GfxLayout hitme_charlayout =
+{
+	8,10,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0x200*8, 0x200*8, 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static struct GfxDecodeInfo hitme_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &hitme_charlayout, 0, 2  },
+	{ -1 }
+};
+
+
+static struct GfxLayout barricad_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static struct GfxDecodeInfo barricad_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &barricad_charlayout,   0, 1  },
+	{ -1 }
+};
+
+
+
+/*************************************
+ *
+ *	Sound configurations
+ *
+ *************************************/
+
+const struct discrete_555_astbl_desc desc_hitme_555 =
+{
+	DISC_555_OUT_SQW | DISC_555_OUT_DC,
+	5,				// B+ voltage of 555
+	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
+	5.0 * 2.0 /3.0,	// normally 2/3 of v555
+	5.0 / 3.0		// normally 1/3 of v555
+};
+
+static struct discrete_comp_adder_table desc_hitme_adder =
+{
+	DISC_COMP_P_CAPACITOR, 0, 5,
+	{
+		0.100e-6,	// C19
+		0.022e-6,	// C18
+		0.033e-6,	// C17
+		0.010e-6, 	// C16
+		0.005e-6 	// C15
+	}
+};
+
+/* Nodes - Inputs */
+#define HITME_DOWNCOUNT_VAL		NODE_01
+#define HITME_OUT0				NODE_02
+#define HITME_ENABLE_VAL		NODE_03
+#define HITME_OUT1				NODE_04
+#define HITME_GAME_SPEED		NODE_05
+
+/* Nodes - Sounds */
+#define HITME_FINAL_SND			NODE_90
+
+
+static DISCRETE_SOUND_START(hitme_sound_interface)
+
+	/* These are the inputs; PULSE-type inputs are used for oneshot latching signals */
+	DISCRETE_INPUT		(HITME_DOWNCOUNT_VAL,0x00,0x000f,0.0)
+	DISCRETE_INPUT_PULSE(HITME_OUT0 		,0x01,0x000f,0.0)
+	DISCRETE_INPUT		(HITME_ENABLE_VAL   ,0x02,0x000f,0.0)
+	DISCRETE_INPUT_PULSE(HITME_OUT1			,0x03,0x000f,0.0)
+
+ 	/* This represents the resistor at R3, which controls the speed of the sound effects */
+	DISCRETE_ADJUSTMENT(HITME_GAME_SPEED,1,0.0,25000.0,DISC_LINADJ,6)
+
+	/* The clock for the main downcounter is a "404", or LS123 retriggerable multivibrator.
+	 * It is clocked by IPH2 (8.945MHz/16 = 559kHz), then triggers a pulse which is adjustable
+	 * via the resistor R3. When the pulse is finished, it immediately retriggers itself to
+	 * form a clock. The length of the clock pulse is 0.45*R*C, where R is the variable R3
+	 * resistor value, and C is 6.8uF. Thus the frequency of the resulting wave is
+	 * 1.0/(0.45*R*C). We compute that frequency and use a standard 50% duty cycle square wave.
+	 * This is because the "off time" of the clock is very small (559kHz), and we will miss
+	 * edges if we model it perfectly accurately. */
+	DISCRETE_TRANSFORM3(NODE_16,1,1,0.45*6.8e-6,HITME_GAME_SPEED,"012*/")
+	DISCRETE_SQUAREWAVE(NODE_17,1,NODE_16,1,50,0.5,0)
+
+	/* There are 2 cascaded 4-bit downcounters (2R = low, 2P = high), effectively 
+	 * making an 8-bit downcounter, clocked by the clock from the 404 chip.
+	 * The initial count is latched by writing OUT0. */
+	DISCRETE_COUNTER(NODE_20,1,HITME_OUT0,NODE_17,255,0,HITME_DOWNCOUNT_VAL,0)
+	/* When the counter rolls over from 0->255, we clock a D-type flipflop at 2N. */
+	DISCRETE_TRANSFORM2(NODE_21,1,NODE_20,255,"01=!")
+
+	/* This flipflop represents the latch at 1L. It is clocked when OUT1 is written and latches
+	 * the value from the processor. When the downcounter above rolls over, it clears the latch. */
+	DISCRETE_LOGIC_DFLIPFLOP(NODE_22,1,NODE_21,1,HITME_OUT1,HITME_ENABLE_VAL)
+
+	/* The output of the latch goes through a series of various capacitors in parallel.	*/
+	DISCRETE_COMP_ADDER(NODE_23,1,NODE_22,&desc_hitme_adder)
+
+	/* The combined capacitance is input to a 555 timer in astable mode. */
+	DISCRETE_555_ASTABLE(NODE_24,1,22e3,39e3,NODE_23,NODE_NC,&desc_hitme_555)
+
+	/* The output of the 555 timer is fed through a simple CR filter in the amp stage. */
+	DISCRETE_CRFILTER(NODE_25,1,NODE_24,1e3,50e-6)
+
+	/* We scale the final output of 3.3 to 16-bit range and output it at full volume */
+	DISCRETE_GAIN(HITME_FINAL_SND,NODE_25,32000.0/3.3)
+	DISCRETE_OUTPUT(HITME_FINAL_SND,100)
+DISCRETE_SOUND_END
+
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( hitme )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(8080, 8945000/16)
+	MDRV_CPU_PROGRAM_MAP(hitme_map,0)
+	MDRV_CPU_IO_MAP(hitme_portmap,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 19*10)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 19*10-1)
+	MDRV_GFXDECODE(hitme_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+
+	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_VIDEO_START(hitme)
+	MDRV_VIDEO_UPDATE(hitme)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, hitme_sound_interface)
+MACHINE_DRIVER_END
+
+
+
+/*
+	Note: The Barricade rom is using a resolution of 32x24 which suggests slightly
+	different hardware from HitMe (40x19) however the screenshot on the arcade
+	flyer is using a 40x19 resolution. So is this a different version of
+	Barricade or is the resolution set by a dip switch?
+*/
+
+static MACHINE_DRIVER_START( barricad )
+	MDRV_IMPORT_FROM(hitme)
+
+	/* video hardware */
+	MDRV_SCREEN_SIZE(32*8, 24*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_GFXDECODE(barricad_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(barricad)
+	MDRV_VIDEO_UPDATE(barricad)
+MACHINE_DRIVER_END
+
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 INPUT_PORTS_START( hitme )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) /* Start button */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Random bit generator Based on Hblank */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* P1 Stand button */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* P1 Hit button */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* P1 Bet button */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )					/* Start button */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Hblank */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )	/* P1 Stand button */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )	/* P1 Hit button */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )	/* P1 Bet button */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Time out counter (*TO) */
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Aux 2 dipswitch - Unused */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* P2 Stand button */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) /* P2 Hit button */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) /* P2 Bet button */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )					/* Aux 2 dipswitch - Unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )	/* P2 Stand button */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )	/* P2 Hit button */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )	/* P2 Bet button */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Time out counter (*TO) */
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "Extra Hand On Natural" ) /* Aux 1 dipswitch */
+	PORT_DIPNAME( 0x01, 0x00, "Extra Hand On Natural" )			/* Aux 1 dipswitch */
 	PORT_DIPSETTING(    0x00, DEF_STR ( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR ( On )  )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Random bit generator Based on Hblank */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 ) /* P3 Stand button */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 ) /* P3 Hit button */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 ) /* P3 Bet button */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Hblank */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )	/* P3 Stand button */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )	/* P3 Hit button */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )	/* P3 Bet button */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Time out counter (*TO) */
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (TOC1) */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Aux 2 dipswitch - Unused*/
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 ) /* P4 Stand button */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 ) /* P4 Hit button */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 ) /* P4 Bet button */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )				/* Time out counter (TOC1) */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )					/* Aux 2 dipswitch - Unused*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )					/* Always high */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )	/* P4 Stand button */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )	/* P4 Hit button */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )	/* P4 Bet button */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )				/* Time out counter (*TO) */
 
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x07, "Number of Chips" )
@@ -84,6 +490,7 @@ INPUT_PORTS_START( hitme )
 	PORT_DIPSETTING(    0x05, "30 Chips" )
 	PORT_DIPSETTING(    0x06, "35 Chips" )
 	PORT_DIPSETTING(    0x07, "40 Chips" )
+	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x00, "Number of Hands" )
@@ -95,53 +502,63 @@ INPUT_PORTS_START( hitme )
 	PORT_DIPSETTING(    0x05, "30 Hands" )
 	PORT_DIPSETTING(    0x06, "35 Hands" )
 	PORT_DIPSETTING(    0x07, "40 Hands" )
+	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	/* this is actually a variable resistor */
+	PORT_START
+	PORT_ADJUSTER(30, "Game Speed")
+
+	/* this is actually a variable resistor */
+	PORT_START
+	PORT_ADJUSTER(50, "Card Width")
 INPUT_PORTS_END
 
-INPUT_PORTS_START( brickyrd )
+
+INPUT_PORTS_START( barricad )
 	PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) /* Start button */
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Random bit generator Based on Hblank */
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )							/* Start button */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )							/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Hblank */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1  )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Time out counter (*TO) */
 
 	PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Aux 2 dipswitch - Unused */
-   PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3  )
-   PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3  )
-   PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3  )
-   PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )							/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )							/* Aux 2 dipswitch - Unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3  )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Time out counter (*TO) */
 
 	PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* ??? */
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Random bit generator Based on Hblank */
-   PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4  )
-   PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4  )
-   PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER4  )
-   PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER4  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )						/* ??? */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )							/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Hblank */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER4  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4  )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER4  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER4  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Time out counter (*TO) */
 
 	PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (TOC1) */
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Always high */
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Aux 2 dipswitch - Unused*/
-   PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2  )
-   PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
-   PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2  )
-   PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Time out counter (*TO) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )						/* Time out counter (TOC1) */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )						/* Always high */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )						/* Aux 2 dipswitch - Unused*/
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2  )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2  )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )						/* Time out counter (*TO) */
 
-   /* On the flyer it says that barricade has both user adjustable points per
+	/* On the flyer it says that barricade has both user adjustable points per
 		game, and speed. From experimenting it looks like points per game is the
 		same dipswitch as hitme's chips, and speed is hitme's hands. The flyer
-      says 1-7 points per games, but it really can go to 8. */
+	  says 1-7 points per games, but it really can go to 8. */
 
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x07, "Points Per Game" )
@@ -169,207 +586,70 @@ INPUT_PORTS_START( brickyrd )
 	PORT_DIPSETTING(    0x07, "Slow Slow" )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
-{
-	8,8, /* 8*8 characters */
-	64, /* 64 characters */
-	1, /* 1 bit per pixel */
-	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &charlayout,   0, 1  },
-	{ -1 } /* end of array */
-};
-
-static READ_HANDLER ( hitme_port_0_r )
-{
-	if ((timer_get_time() - timeout_time) > (timeout_counter * tock))
-	{
-		return input_port_0_r (offset) - ((rand()%2) << 2) - 0x80;
-	}
-	else
-		return input_port_0_r (offset) - ((rand()%2) << 2);
-}
-
-static READ_HANDLER ( hitme_port_1_r )
-{
-	if ((timer_get_time() - timeout_time) > (timeout_counter * tock))
-	{
-		return input_port_1_r (offset) - 0x80;
-	}
-	else
-		return input_port_1_r (offset);
-}
-
-static READ_HANDLER ( hitme_port_2_r )
-{
-	if ((timer_get_time() - timeout_time) > (timeout_counter * tock))
-	{
-		return input_port_2_r (offset) - ((rand()%2) << 2) - 0x80;
-	}
-	else
-		return input_port_2_r (offset) - ((rand()%2) << 2);
-}
-
-static READ_HANDLER ( hitme_port_3_r )
-{
-	if ((timer_get_time() - timeout_time) > (timeout_counter * tock))
-	{
-		return input_port_3_r (offset) - 0x80;
-	}
-	else
-		return input_port_3_r (offset);
-}
-
-static WRITE_HANDLER ( output_port_0_w )
-{
-	timeout_counter = (data);
-	timeout_time = timer_get_time();
-}
-
-#if 0
-static READ_HANDLER ( hitme_unknown_r )
-{
-	return 0x00;
-}
-#endif
-
-static ADDRESS_MAP_START( hitme_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x0c00, 0x0eff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x13ff) AM_READ(MRA8_RAM)
-	/* guesswork, probably wrong but it reads from these addresses */
-	AM_RANGE(0x1420, 0x1420) AM_READ(hitme_port_0_r)
-	AM_RANGE(0x1520, 0x1520) AM_READ(hitme_port_1_r)
-	AM_RANGE(0x1620, 0x1620) AM_READ(hitme_port_2_r)
-	AM_RANGE(0x1720, 0x1720) AM_READ(hitme_port_3_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hitme_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x0c00, 0x0eff) AM_WRITE(hitme_vidram_w) AM_BASE(&hitme_vidram)
-	AM_RANGE(0x1000, 0x13ff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hitme_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x14, 0x14) AM_READ(hitme_port_0_r)
-	AM_RANGE(0x15, 0x15) AM_READ(hitme_port_1_r)
-	AM_RANGE(0x16, 0x16) AM_READ(hitme_port_2_r)
-	AM_RANGE(0x17, 0x17) AM_READ(hitme_port_3_r)
-	AM_RANGE(0x18, 0x18) AM_READ(input_port_4_r)
-	AM_RANGE(0x19, 0x19) AM_READ(input_port_5_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hitme_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x1d, 0x1d) AM_WRITE(output_port_0_w) /* OUT0 */
-//	AM_RANGE(0x1e, 0x1e) AM_WRITE(output_port_1_r) /* OUT1 */
-ADDRESS_MAP_END
-
-static MACHINE_DRIVER_START( hitme )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 8945000/16 )	/* .559 MHz */
-	MDRV_CPU_PROGRAM_MAP(hitme_readmem,hitme_writemem)
-	MDRV_CPU_IO_MAP(hitme_readport,hitme_writeport)
-	/* interrupts not used */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE(40*8, 19*8)
-	MDRV_VISIBLE_AREA( 0*8, 40*8-1, 0*8, 19*8-1 )
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2)
-
-	MDRV_PALETTE_INIT(hitme)
-	MDRV_VIDEO_START(hitme)
-	MDRV_VIDEO_UPDATE(hitme)
-	/* sound hardware */
-MACHINE_DRIVER_END
-
-	/*	The Barricade rom is using a resolution of 32x24 which suggests slightly
-   	different hardware from HitMe (40x19) however the screenshot on the arcade
-      flyer is using a 40x19 resolution. So is this a different version of
-      Barricade or is the resolution set by a dip switch?
-
-      */
 
 
-static MACHINE_DRIVER_START( brickyrd )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(8080, 8945000/16 )	/* .559 MHz */
-	MDRV_CPU_PROGRAM_MAP(hitme_readmem,hitme_writemem)
-	MDRV_CPU_IO_MAP(hitme_readport,hitme_writeport)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE(32*8, 24*8)
-	MDRV_VISIBLE_AREA( 0*8, 32*8-1, 0*8, 24*8-1 )
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2)
-
-	MDRV_PALETTE_INIT(hitme)
-	MDRV_VIDEO_START(brickyrd)
-	MDRV_VIDEO_UPDATE(hitme)
-	/* sound hardware */
-MACHINE_DRIVER_END
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( hitme )
-	ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
+	ROM_REGION( 0x2000, REGION_CPU1, ROMREGION_INVERT )
 	ROM_LOAD( "hm0.b7", 0x0000, 0x0200, CRC(6c48c50f) SHA1(42dc7c3461687e5be4393cc21d695bc84ae4f5dc) )
 	ROM_LOAD( "hm2.c7", 0x0200, 0x0200, CRC(25d47ba4) SHA1(6f3bb4ca6918dc07f37d0c0c7fe5ec53aa7171a5) )
 	ROM_LOAD( "hm4.d7", 0x0400, 0x0200, CRC(f8bfda8d) SHA1(48bbc106f8d80d6c1ad1a2c1575ce7d6452fbe9d) )
 	ROM_LOAD( "hm6.e7", 0x0600, 0x0200, CRC(8aa87118) SHA1(aca395a4f6a1981cd89ca99e05935d72adcb69ca) )
 
-	ROM_REGION( 0x0400, REGION_GFX1, 0 )
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASE00 )
     ROM_LOAD( "hmcg.h7", 0x0000, 0x0200, CRC(818f5fbe) SHA1(e2b3349e51ba57d14f3388ba93891bc6274b7a14) )
 ROM_END
 
+
 ROM_START( mblkjack )
-	ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
+	ROM_REGION( 0x2000, REGION_CPU1, ROMREGION_INVERT )
 	ROM_LOAD( "mirco1.bin", 0x0000, 0x0200, CRC(aa796ad7) SHA1(2908bdb4ab17a2f5bc4da2f957906bf2b57afa50) )
 	ROM_LOAD( "hm2.c7", 0x0200, 0x0200, CRC(25d47ba4) SHA1(6f3bb4ca6918dc07f37d0c0c7fe5ec53aa7171a5) )
 	ROM_LOAD( "hm4.d7", 0x0400, 0x0200, CRC(f8bfda8d) SHA1(48bbc106f8d80d6c1ad1a2c1575ce7d6452fbe9d) )
 	ROM_LOAD( "hm6.e7", 0x0600, 0x0200, CRC(8aa87118) SHA1(aca395a4f6a1981cd89ca99e05935d72adcb69ca) )
 
-	ROM_REGION( 0x0400, REGION_GFX1, 0 )
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASE00 )
     ROM_LOAD( "hmcg.h7", 0x0000, 0x0200, CRC(818f5fbe) SHA1(e2b3349e51ba57d14f3388ba93891bc6274b7a14) )
 ROM_END
 
+
 ROM_START( barricad )
-   ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
+   ROM_REGION( 0x2000, REGION_CPU1, ROMREGION_INVERT )
    ROM_LOAD( "550806.7b",   0x0000, 0x0200, CRC(ea7f5da7) SHA1(c0ad37a0ffdb0500e8adc8fb9c4369e461307f84) )
    ROM_LOAD( "550807.7c",   0x0200, 0x0200, CRC(0afef174) SHA1(2a7be988262b855bc81a1b0036fa9f2481d4d53b) )
    ROM_LOAD( "550808.7d",   0x0400, 0x0200, CRC(6e02d260) SHA1(8a1640a1d56cbc34f74f07bc15e77db63635e8f5) )
    ROM_LOAD( "550809.7e",   0x0600, 0x0200, CRC(d834a63f) SHA1(ffb631cc4f51a670c7cd30df1c79bf51301d9e9a) )
 
-   ROM_REGION( 0x0400, REGION_GFX1, 0 )
+   ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
    ROM_LOAD( "550805.7h",   0x0000, 0x0200, CRC(35197599) SHA1(3c49af89b1bc1d495e1d6265ff3feaf33c56facb) )
 ROM_END
 
+
 ROM_START( brickyrd )
-   ROM_REGION( 0x10000, REGION_CPU1, ROMREGION_INVERT ) /* 64k for code */
+   ROM_REGION( 0x2000, REGION_CPU1, ROMREGION_INVERT )
    ROM_LOAD( "550806.7b",   0x0000, 0x0200, CRC(ea7f5da7) SHA1(c0ad37a0ffdb0500e8adc8fb9c4369e461307f84) )
    ROM_LOAD( "barricad.7c", 0x0200, 0x0200, CRC(94e1d1c0) SHA1(f6e6f9a783867c3602ba8cff6a18c47c5df987a4) )
    ROM_LOAD( "550808.7d",   0x0400, 0x0200, CRC(6e02d260) SHA1(8a1640a1d56cbc34f74f07bc15e77db63635e8f5) )
    ROM_LOAD( "barricad.7e", 0x0600, 0x0200, CRC(2b1d914f) SHA1(f1a6631949a7c62f5de39d58821e1be36b98629e) )
 
-   ROM_REGION( 0x0400, REGION_GFX1, 0 )
+   ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
    ROM_LOAD( "barricad.7h", 0x0000, 0x0200, CRC(c676fd22) SHA1(c37bf92f5a146a93bd977b2a05485addc00ab066) )
 ROM_END
 
-GAMEX( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1976, barricad, 0,        brickyrd, brickyrd, 0, ROT0, "RamTek", "Barricade", GAME_NO_SOUND  )
-GAMEX( 1976, brickyrd, barricad, brickyrd, brickyrd, 0, ROT0, "RamTek", "Brickyard", GAME_NO_SOUND  )
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME ( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me" )
+GAME ( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)" )
+GAMEX( 1976, barricad, 0,        barricad, barricad, 0, ROT0, "RamTek", "Barricade", GAME_IMPERFECT_SOUND  )
+GAMEX( 1976, brickyrd, barricad, barricad, barricad, 0, ROT0, "RamTek", "Brickyard", GAME_IMPERFECT_SOUND  )

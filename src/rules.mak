@@ -241,6 +241,16 @@ else
 CPUDEFS += -DHAS_I286=0
 endif
 
+CPU=$(strip $(findstring I386@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i386
+CPUDEFS += -DHAS_I386=1
+CPUOBJS += $(OBJ)/cpu/i386/i386.o
+$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op16.h i386op32.c i386op32.h i386ops.c
+else
+CPUDEFS += -DHAS_I386=0
+endif
+
 CPU=$(strip $(findstring V20@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/nec
@@ -1089,6 +1099,14 @@ else
 CPUDEFS += -DHAS_E132XS=0
 endif
 
+SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_CDDA=1
+SOUNDOBJS += $(OBJ)/sound/cdda.o
+else
+SOUNDDEFS += -DHAS_CDDA=0
+endif
+
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CUSTOM=1
@@ -1126,7 +1144,7 @@ SOUNDDEFS += -DHAS_DISCRETE=1
 SOUNDOBJS += $(OBJ)/sound/discrete.o
 $(OBJ)/sound/discrete.o: src/sound/discrete.c src/sound/discrete.h \
 		src/sound/disc_dev.c src/sound/disc_flt.c src/sound/disc_inp.c \
-		src/sound/disc_mth.c src/sound/disc_out.c src/sound/disc_wav.c
+		src/sound/disc_mth.c src/sound/disc_wav.c
 else
 SOUNDDEFS += -DHAS_DISCRETE=0
 endif

@@ -186,6 +186,8 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port used for steering */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0 )
 
+	PORT_START
+	PORT_ADJUSTER( 60, "Motor RPM" )
 INPUT_PORTS_END
 
 
@@ -294,7 +296,7 @@ static DISCRETE_SOUND_START(nitedrvr_sound_interface)
 	/* 0k = 214Hz.   250k = 4416Hz                  */
 	/************************************************/
 	DISCRETE_RCFILTER(NODE_20, 1, NITEDRVR_MOTOR_DATA, 123037, 2.2e-6)
-	DISCRETE_ADJUSTMENT(NODE_21, 1, (214.0-27.0)/12/31, (4416.0-27.0)/12/31, (382.0-27.0)/12/31, DISC_LOGADJ, "Motor RPM")
+	DISCRETE_ADJUSTMENT(NODE_21, 1, (214.0-27.0)/12/31, (4416.0-27.0)/12/31, DISC_LOGADJ, 6)
 	DISCRETE_MULTIPLY(NODE_22, 1, NODE_20, NODE_21)
 
 	DISCRETE_MULTADD(NODE_23, 1, NODE_22, 2, 27.0/6)	/* F1 = /12*2 = /6 */

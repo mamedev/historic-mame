@@ -17,6 +17,8 @@ struct AM53CF96interface
 
 extern void am53cf96_init( struct AM53CF96interface *interface );
 extern void am53cf96_read_data(int bytes, data8_t *pData);
+void am53cf96_write_data(int bytes, data8_t *pData);
+void *am53cf96_get_device(void);
 extern READ32_HANDLER( am53cf96_r );
 extern WRITE32_HANDLER( am53cf96_w );
 

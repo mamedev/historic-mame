@@ -4,6 +4,7 @@
 data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 data16_t *gunnail_scrollram;
 static data16_t gunnail_scrolly;
+data16_t tharrier_scroll;
 
 static int redraw_bitmap;
 
@@ -529,6 +530,68 @@ static void manybloc_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	}
 }
 
+static void tharrier_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority, int pri_mask)
+{
+	int offs;
+
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
+	{
+		if ((spriteram16[offs] & 0x0001) || (spriteram16[offs] && is_blkheart))
+		{
+			int sx = (spriteram16[offs+4] & 0x1ff) + videoshift;
+			int sy = (spriteram16[offs+6] & 0x1ff);
+			int code = spriteram16[offs+3];
+			int color = spriteram16[offs+7];
+			int w = (spriteram16[offs+1] & 0x0f);
+			int h = ((spriteram16[offs+1] & 0xf0) >> 4);
+			int pri = spriteram16[offs+7]>>8;
+			int flipy= ((spriteram16[offs+1] & 0x0200) >> 9);
+			int flipx = ((spriteram16[offs+1] & 0x0100) >> 8);
+
+			int xx,yy,x;
+			int delta = 16;
+
+			flipx ^= flip_screen;
+			flipy ^= flip_screen;
+
+			if ((pri&pri_mask)!=priority) continue;
+
+			if (flip_screen)
+			{
+				sx = 368 - sx;
+				sy = 240 - sy;
+				delta = -16;
+			}
+
+			yy = h;
+			sy+=flipy?(delta*h):0;
+			do
+			{
+				x = sx+(flipx?(delta*w):0);
+
+
+				xx = w;
+				do
+				{
+					drawgfx(bitmap,Machine->gfx[2],
+							code,
+							color,
+							flipx, flipy,
+							((x + 16) & 0x1ff) - 16,sy & 0x1ff,
+							cliprect,TRANSPARENCY_PEN,15);
+
+					code++;
+					x +=delta * ( flipx?-1:1 );
+
+
+				} while (--xx >= 0);
+				sy += delta * ( flipy?-1:1);
+
+			} while (--yy >= 0);
+		}
+	}
+}
+
 VIDEO_UPDATE( macross )
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
@@ -544,6 +607,15 @@ VIDEO_UPDATE( manybloc )
 
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	manybloc_draw_sprites(bitmap,cliprect,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+}
+
+VIDEO_UPDATE( tharrier )
+{
+	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
+	tilemap_set_scrollx(bg_tilemap,0,tharrier_scroll);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tharrier_draw_sprites(bitmap,cliprect,0,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 

@@ -35,6 +35,13 @@
 
  CHANGELOG:
 
+ MooglyGuy 29/03/2004
+    - Changed MOVI to use unsigned values instead of signed, correcting
+      an ugly glitch when loading 32-bit immediates.
+ Pierpaolo Prazzoli
+	- Same fix in get_const
+
+
  MooglyGuy - 02/27/04
     - Fixed delayed branching
     - const_val for CALL should always have bit 0 clear
@@ -286,10 +293,24 @@ void e132xs_trap(void);
 /* Registers */
 enum
 {
-
 	E132XS_PC = 1,
 	E132XS_SR,
 	E132XS_FER,
+	E132XS_G3,
+	E132XS_G4,
+	E132XS_G5,
+	E132XS_G6,
+	E132XS_G7,
+	E132XS_G8,
+	E132XS_G9,
+	E132XS_G10,
+	E132XS_G11,
+	E132XS_G12,
+	E132XS_G13,
+	E132XS_G14,
+	E132XS_G15,
+	E132XS_G16,
+	E132XS_G17,
 	E132XS_SP,
 	E132XS_UB,
 	E132XS_BCR,
@@ -300,10 +321,10 @@ enum
 	E132XS_ISR,
 	E132XS_FCR,
 	E132XS_MCR,
-	E132XS_G0,  E132XS_G1,  E132XS_G2,  E132XS_G3,
-	E132XS_G4,  E132XS_G5,  E132XS_G6,  E132XS_G7,
-	E132XS_G8,  E132XS_G9,  E132XS_G10, E132XS_G11,
-	E132XS_G12, E132XS_G13, E132XS_G14, E132XS_G15,
+	E132XS_G28,
+	E132XS_G29,
+	E132XS_G30,
+	E132XS_G31,
 	E132XS_CL0, E132XS_CL1, E132XS_CL2, E132XS_CL3,
 	E132XS_CL4, E132XS_CL5, E132XS_CL6, E132XS_CL7,
 	E132XS_CL8, E132XS_CL9, E132XS_CL10,E132XS_CL11,
@@ -591,13 +612,14 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 
 static UINT8 e132xs_reg_layout[] =
 {
-	E132XS_PC,  E132XS_SR,  E132XS_FER, E132XS_SP,  E132XS_UB,  -1,
-	E132XS_BCR, E132XS_ISR, E132XS_FCR, E132XS_MCR, -1,
-	E132XS_TR,  E132XS_TPR, E132XS_TCR, E132XS_WCR, -1,
-	E132XS_G0,  E132XS_G1,  E132XS_G2,  E132XS_G3,  -1,
+	E132XS_PC,  E132XS_SR,  E132XS_FER, E132XS_G3,  -1,
 	E132XS_G4,  E132XS_G5,  E132XS_G6,  E132XS_G7,  -1,
 	E132XS_G8,  E132XS_G9,  E132XS_G10, E132XS_G11, -1,
-	E132XS_G12, E132XS_G13, E132XS_G14, E132XS_G15, -1,
+	E132XS_G12, E132XS_G13, E132XS_G14,	E132XS_G15, -1,
+	E132XS_G16,	E132XS_G17,	E132XS_SP,	E132XS_UB,  -1,
+	E132XS_BCR,	E132XS_TPR,	E132XS_TCR,	E132XS_TR,  -1,
+	E132XS_WCR,	E132XS_ISR,	E132XS_FCR,	E132XS_MCR, -1,
+	E132XS_G28, E132XS_G29,	E132XS_G30,	E132XS_G31, -1,
 	E132XS_CL0, E132XS_CL1, E132XS_CL2, E132XS_CL3, -1,
 	E132XS_CL4, E132XS_CL5, E132XS_CL6, E132XS_CL7, -1,
 	E132XS_CL8, E132XS_CL9, E132XS_CL10,E132XS_CL11,-1,
@@ -661,7 +683,7 @@ void e132xs_set_entry_point(int which)
 
 INT32 immediate_value(void)
 {
-	INT16 imm1, imm2;
+	UINT16 imm1, imm2;
 	INT32 ret;
 
 	switch( N_VALUE )
@@ -681,12 +703,12 @@ INT32 immediate_value(void)
 
 		case 18:
 			PC += 2;
-			ret = (UINT32) READ_OP(PC);
+			ret = READ_OP(PC);
 			return ret;
 
 		case 19:
 			PC += 2;
-			ret = 0xffff0000 | ((INT32) READ_OP(PC));
+			ret = (INT32) (0xffff0000 | READ_OP(PC));
 			return ret;
 
 		case 20:
@@ -732,14 +754,14 @@ INT32 immediate_value(void)
 INT32 get_const(void)
 {
 	INT32 const_val;
-	INT16 imm1;
+	UINT16 imm1;
 
 	PC += 2;
 	imm1 = READ_OP(PC);
 
 	if( E_BIT(imm1) )
 	{
-		INT16 imm2;
+		UINT16 imm2;
 
 		PC += 2;
 		imm2 = READ_OP(PC);
@@ -954,13 +976,13 @@ static int e132xs_execute(int cycles)
 
 #ifdef MAME_DEBUG
 		if( PC & 1 ) //never! -> if so mask it out
-			printf("PC bit 1 set!! @ %X\n",PC);
+			logerror("PC bit 1 set!! @ %X\n",PC);
 
 		if( SP & 3 ) //never!
-			printf("SP bit 1/2 set!! @ %X\n",PC);
+			logerror("SP bit 1 / 2 set!! @ %X\n",PC);
 
 		if( UB & 3 ) //never!
-			printf("UB bits 1/2 set!! @ %X\n",PC);
+			logerror("UB bits 1 / 2 set!! @ %X\n",PC);
 #endif
 
 		CALL_MAME_DEBUG;
@@ -2302,8 +2324,8 @@ void e132xs_shrdi(void)
 
 	val >>= N_VALUE;
 
-	high_order = (val & 0xffffffff00000000ULL) >> 32;
-	low_order = val & 0x00000000ffffffff;
+	high_order = val >> 32;
+	low_order = val & 0xffffffff;
 
 	SET_RD(high_order, NOINC);
 	SET_RD(low_order, INC);
@@ -2330,8 +2352,8 @@ void e132xs_shrd(void)
 
 		val >>= n;
 
-		high_order = (val & 0xffffffff00000000ULL) >> 32;
-		low_order = val & 0x00000000ffffffff;
+		high_order = val >> 32;
+		low_order = val & 0xffffffff;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -2370,7 +2392,7 @@ void e132xs_sardi(void)
 
 	val = (INT64) COMBINE_64_32_32(high_order, low_order);
 
-	sign_bit = (val & 0x8000000000000000LL) >> 63;
+	sign_bit = val >> 63;
 	val >>= N_VALUE;
 
 	if( sign_bit )
@@ -2378,12 +2400,12 @@ void e132xs_sardi(void)
 		int i;
 		for( i = 0; i < N_VALUE; i++ )
 		{
-			val |= (0x8000000000000000LL >> i);
+			val |= (U64(0x8000000000000000) >> i);
 		}
 	}
 
-	high_order = (val & 0xffffffff00000000ULL) >> 32;
-	low_order = val & 0x00000000ffffffff;
+	high_order = val >> 32;
+	low_order = val & 0xffffffff;
 
 	SET_RD(high_order, NOINC);
 	SET_RD(low_order, INC);
@@ -2408,7 +2430,7 @@ void e132xs_sard(void)
 		low_order = GET_L_REG(D_CODE + INC);
 
 		val = (INT64) COMBINE_64_32_32(high_order, low_order);
-		sign_bit = (val & 0x8000000000000000LL) >> 63;
+		sign_bit = val >> 63;
 
 		val >>= n;
 
@@ -2417,12 +2439,12 @@ void e132xs_sard(void)
 			int i;
 			for( i = 0; i < n; i++ )
 			{
-				val |= (0x8000000000000000LL >> i);
+				val |= (U64(0x8000000000000000) >> i);
 			}
 		}
 
-		high_order = (val & 0xffffffff00000000ULL) >> 32;
-		low_order = val & 0x00000000ffffffff;
+		high_order = val >> 32;
+		low_order = val & 0xffffffff;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -2474,8 +2496,8 @@ void e132xs_shldi(void)
 
 	val <<= N_VALUE;
 
-	high_order = (val & 0xffffffff00000000ULL) >> 32;
-	low_order = val & 0x00000000ffffffff;
+	high_order = val >> 32;
+	low_order = val & 0xffffffff;
 
 	SET_RD(high_order, NOINC);
 	SET_RD(low_order, INC);
@@ -2503,8 +2525,8 @@ void e132xs_shld(void)
 
 		val <<= n;
 
-		high_order = (val & 0xffffffff00000000ULL) >> 32;
-		low_order = val & 0x00000000ffffffff;
+		high_order = val >> 32;
+		low_order = val & 0xffffffff;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -3493,8 +3515,8 @@ void e132xs_mulu(void)
 		}
 
 		double_word = (op1 * op2);
-		low_order = double_word & 0x00000000ffffffff;
-		high_order = (double_word & 0xffffffff00000000ULL) >> 32;
+		low_order = double_word & 0xffffffff;
+		high_order = double_word >> 32;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -3543,8 +3565,8 @@ void e132xs_muls(void)
 		}
 
 		double_word = (op1 * op2);
-		low_order = double_word & 0x00000000ffffffff;
-		high_order = (double_word & 0xffffffff00000000ULL) >> 32;
+		low_order = double_word & 0xffffffff;
+		high_order = double_word >> 32;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -3959,58 +3981,72 @@ void e132xs_mul(void)
 
 void e132xs_fadd(void)
 {
+	logerror("E1-32XS: Executed FADD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_faddd(void)
 {
+	logerror("E1-32XS: Executed FADDD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fsub(void)
 {
+	logerror("E1-32XS: Executed FSUB instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fsubd(void)
 {
+	logerror("E1-32XS: Executed FSUBD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fmul(void)
 {
+	logerror("E1-32XS: Executed FMUL instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fmuld(void)
 {
+	logerror("E1-32XS: Executed FMULD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fdiv(void)
 {
+	logerror("E1-32XS: Executed FDIV instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fdivd(void)
 {
+	logerror("E1-32XS: Executed FDIVD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcmp(void)
 {
+	logerror("E1-32XS: Executed FCMP instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcmpd(void)
 {
+	logerror("E1-32XS: Executed FCMPD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcmpu(void)
 {
+	logerror("E1-32XS: Executed FCMPU instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcmpud(void)
 {
+	logerror("E1-32XS: Executed FCMPUD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcvt(void)
 {
+	logerror("E1-32XS: Executed FCVT instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_fcvtd(void)
 {
+	logerror("E1-32XS: Executed FCVTD instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_extend(void)
@@ -4043,8 +4079,8 @@ void e132xs_extend(void)
 			UINT64 result;
 
 			result = vals * vald;
-			vals = (result & 0xffffffff00000000ULL) >> 32;
-			vald = result & 0x00000000ffffffff;
+			vals = result >> 32;
+			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
 
@@ -4056,8 +4092,8 @@ void e132xs_extend(void)
 			INT64 result;
 
 			result = (INT32)vals * (INT32)vald;
-			vals = (result & 0xffffffff00000000ULL) >> 32;
-			vald = result & 0x00000000ffffffff;
+			vals = result >> 32;
+			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
 
@@ -4080,8 +4116,8 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + ((INT32)vals * (INT32)vald);
 
-			vals = (result & 0xffffffff00000000ULL) >> 32;
-			vald = result & 0x00000000ffffffff;
+			vals = result >> 32;
+			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
 
@@ -4104,8 +4140,8 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) - ((INT32)vals * (INT32)vald);
 
-			vals = (result & 0xffffffff00000000ULL) >> 32;
-			vald = result & 0x00000000ffffffff;
+			vals = result >> 32;
+			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
 
@@ -4128,8 +4164,8 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + (((vald & 0xffff0000) >> 16) * ((vals & 0xffff0000) >> 16)) + ((vald & 0xffff) * (vals & 0xffff));
 
-			vals = (result & 0xffffffff00000000ULL) >> 32;
-			vald = result & 0x00000000ffffffff;
+			vals = result >> 32;
+			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
 
@@ -4219,6 +4255,7 @@ void e132xs_extend(void)
 
 void e132xs_do(void)
 {
+	logerror("E1-32XS: Executed DO instruction! @ %X\n",activecpu_get_pc());
 }
 
 void e132xs_ldwr(void)
@@ -4802,19 +4839,119 @@ static void e132xs_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + E132XS_PC:			PC  = info->i;							break;
-		case CPUINFO_INT_REGISTER + E132XS_SR:			SR  = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_PC:			PC = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_SR:			SR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FER:			FER = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_G3:			e132xs.global_regs[3] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G4:			e132xs.global_regs[4] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G5:			e132xs.global_regs[5] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G6:			e132xs.global_regs[6] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G7:			e132xs.global_regs[7] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G8:			e132xs.global_regs[8] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G9:			e132xs.global_regs[9] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G10:			e132xs.global_regs[10] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G11:			e132xs.global_regs[11] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G12:			e132xs.global_regs[12] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G13:			e132xs.global_regs[13] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G14:			e132xs.global_regs[14] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G15:			e132xs.global_regs[15] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G16:			e132xs.global_regs[16] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G17:			e132xs.global_regs[17] = info->i;		break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + E132XS_SP:			SP  = info->i;							break;
-		case CPUINFO_INT_REGISTER + E132XS_UB:			UB  = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_SP:			SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_UB:			UB = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_BCR:			BCR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_TPR:			TPR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_TCR:			TCR = info->i;							break;
-		case CPUINFO_INT_REGISTER + E132XS_TR:			TR  = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_TR:			TR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_WCR:			WCR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_ISR:			ISR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FCR:			FCR = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_MCR:			MCR = info->i;							break;
+		case CPUINFO_INT_REGISTER + E132XS_G28:			e132xs.global_regs[28] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G29:			e132xs.global_regs[29] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G30:			e132xs.global_regs[30] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G31:			e132xs.global_regs[31] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_CL0:			e132xs.local_regs[0+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL1:			e132xs.local_regs[1+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL2:			e132xs.local_regs[2+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL3:			e132xs.local_regs[3+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL4:			e132xs.local_regs[4+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL5:			e132xs.local_regs[5+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL6:			e132xs.local_regs[6+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL7:			e132xs.local_regs[7+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL8:			e132xs.local_regs[8+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL9:			e132xs.local_regs[9+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL10:		e132xs.local_regs[10+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL11:		e132xs.local_regs[11+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL12:		e132xs.local_regs[12+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL13:		e132xs.local_regs[13+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL14:		e132xs.local_regs[14+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL15:		e132xs.local_regs[15+(GET_FP)] = info->i; break;
+		case CPUINFO_INT_REGISTER + E132XS_L0:			e132xs.local_regs[0] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L1:			e132xs.local_regs[1] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L2:			e132xs.local_regs[2] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L3:			e132xs.local_regs[3] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L4:			e132xs.local_regs[4] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L5:			e132xs.local_regs[5] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L6:			e132xs.local_regs[6] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L7:			e132xs.local_regs[7] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L8:			e132xs.local_regs[8] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L9:			e132xs.local_regs[9] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L10:			e132xs.local_regs[10] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L11:			e132xs.local_regs[11] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L12:			e132xs.local_regs[12] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L13:			e132xs.local_regs[13] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L14:			e132xs.local_regs[14] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L15:			e132xs.local_regs[15] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L16:			e132xs.local_regs[16] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L17:			e132xs.local_regs[17] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L18:			e132xs.local_regs[18] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L19:			e132xs.local_regs[19] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L20:			e132xs.local_regs[20] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L21:			e132xs.local_regs[21] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L22:			e132xs.local_regs[22] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L23:			e132xs.local_regs[23] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L24:			e132xs.local_regs[24] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L25:			e132xs.local_regs[25] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L26:			e132xs.local_regs[26] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L27:			e132xs.local_regs[27] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L28:			e132xs.local_regs[28] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L29:			e132xs.local_regs[29] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L30:			e132xs.local_regs[30] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L31:			e132xs.local_regs[31] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L32:			e132xs.local_regs[32] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L33:			e132xs.local_regs[33] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L34:			e132xs.local_regs[34] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L35:			e132xs.local_regs[35] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L36:			e132xs.local_regs[36] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L37:			e132xs.local_regs[37] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L38:			e132xs.local_regs[38] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L39:			e132xs.local_regs[39] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L40:			e132xs.local_regs[40] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L41:			e132xs.local_regs[41] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L42:			e132xs.local_regs[42] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L43:			e132xs.local_regs[43] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L44:			e132xs.local_regs[44] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L45:			e132xs.local_regs[45] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L46:			e132xs.local_regs[46] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L47:			e132xs.local_regs[47] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L48:			e132xs.local_regs[48] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L49:			e132xs.local_regs[49] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L50:			e132xs.local_regs[50] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L51:			e132xs.local_regs[51] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L52:			e132xs.local_regs[52] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L53:			e132xs.local_regs[53] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L54:			e132xs.local_regs[54] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L55:			e132xs.local_regs[55] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L56:			e132xs.local_regs[56] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L57:			e132xs.local_regs[57] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L58:			e132xs.local_regs[58] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L59:			e132xs.local_regs[59] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L60:			e132xs.local_regs[60] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L61:			e132xs.local_regs[61] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L62:			e132xs.local_regs[62] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L63:			e132xs.local_regs[63] = info->i;		break;
 
 		/* --- the following bits of info are set as pointers to info->i or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					/* not implemented */					break;
@@ -4860,6 +4997,21 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_PC:			info->i =  PC;							break;
 		case CPUINFO_INT_REGISTER + E132XS_SR:			info->i =  SR;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FER:			info->i =  FER;							break;
+		case CPUINFO_INT_REGISTER + E132XS_G3:			info->i =  e132xs.global_regs[3];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G4:			info->i =  e132xs.global_regs[4];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G5:			info->i =  e132xs.global_regs[5];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G6:			info->i =  e132xs.global_regs[6];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G7:			info->i =  e132xs.global_regs[7];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G8:			info->i =  e132xs.global_regs[8];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G9:			info->i =  e132xs.global_regs[9];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G10:			info->i =  e132xs.global_regs[10];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G11:			info->i =  e132xs.global_regs[11];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G12:			info->i =  e132xs.global_regs[12];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G13:			info->i =  e132xs.global_regs[13];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G14:			info->i =  e132xs.global_regs[14];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G15:			info->i =  e132xs.global_regs[15];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G16:			info->i =  e132xs.global_regs[16];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G17:			info->i =  e132xs.global_regs[17];		break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + E132XS_SP:			info->i =  SP;							break;
 		case CPUINFO_INT_REGISTER + E132XS_UB:			info->i =  UB;							break;
@@ -4870,6 +5022,91 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_WCR:			info->i =  WCR;							break;
 		case CPUINFO_INT_REGISTER + E132XS_ISR:			info->i =  ISR;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FCR:			info->i =  FCR;							break;
+		case CPUINFO_INT_REGISTER + E132XS_MCR:			info->i =  MCR;							break;
+		case CPUINFO_INT_REGISTER + E132XS_G28:			info->i =  e132xs.global_regs[28];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G29:			info->i =  e132xs.global_regs[29];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G30:			info->i =  e132xs.global_regs[30];		break;
+		case CPUINFO_INT_REGISTER + E132XS_G31:			info->i =  e132xs.global_regs[31];		break;
+		case CPUINFO_INT_REGISTER + E132XS_CL0:			info->i =  e132xs.local_regs[0+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL1:			info->i =  e132xs.local_regs[1+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL2:			info->i =  e132xs.local_regs[2+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL3:			info->i =  e132xs.local_regs[3+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL4:			info->i =  e132xs.local_regs[4+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL5:			info->i =  e132xs.local_regs[5+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL6:			info->i =  e132xs.local_regs[6+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL7:			info->i =  e132xs.local_regs[7+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL8:			info->i =  e132xs.local_regs[8+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL9:			info->i =  e132xs.local_regs[9+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL10:		info->i =  e132xs.local_regs[10+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL11:		info->i =  e132xs.local_regs[11+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL12:		info->i =  e132xs.local_regs[12+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL13:		info->i =  e132xs.local_regs[13+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL14:		info->i =  e132xs.local_regs[14+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_CL15:		info->i =  e132xs.local_regs[15+(GET_FP)]; break;
+		case CPUINFO_INT_REGISTER + E132XS_L0:			info->i =  e132xs.local_regs[0];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L1:			info->i =  e132xs.local_regs[1];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L2:			info->i =  e132xs.local_regs[2];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L3:			info->i =  e132xs.local_regs[3];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L4:			info->i =  e132xs.local_regs[4];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L5:			info->i =  e132xs.local_regs[5];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L6:			info->i =  e132xs.local_regs[6];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L7:			info->i =  e132xs.local_regs[7];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L8:			info->i =  e132xs.local_regs[8];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L9:			info->i =  e132xs.local_regs[9];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L10:			info->i =  e132xs.local_regs[10];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L11:			info->i =  e132xs.local_regs[11];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L12:			info->i =  e132xs.local_regs[12];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L13:			info->i =  e132xs.local_regs[13];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L14:			info->i =  e132xs.local_regs[14];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L15:			info->i =  e132xs.local_regs[15];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L16:			info->i =  e132xs.local_regs[16];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L17:			info->i =  e132xs.local_regs[17];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L18:			info->i =  e132xs.local_regs[18];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L19:			info->i =  e132xs.local_regs[19];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L20:			info->i =  e132xs.local_regs[20];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L21:			info->i =  e132xs.local_regs[21];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L22:			info->i =  e132xs.local_regs[22];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L23:			info->i =  e132xs.local_regs[23];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L24:			info->i =  e132xs.local_regs[24];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L25:			info->i =  e132xs.local_regs[25];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L26:			info->i =  e132xs.local_regs[26];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L27:			info->i =  e132xs.local_regs[27];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L28:			info->i =  e132xs.local_regs[28];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L29:			info->i =  e132xs.local_regs[29];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L30:			info->i =  e132xs.local_regs[30];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L31:			info->i =  e132xs.local_regs[31];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L32:			info->i =  e132xs.local_regs[32];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L33:			info->i =  e132xs.local_regs[33];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L34:			info->i =  e132xs.local_regs[34];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L35:			info->i =  e132xs.local_regs[35];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L36:			info->i =  e132xs.local_regs[36];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L37:			info->i =  e132xs.local_regs[37];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L38:			info->i =  e132xs.local_regs[38];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L39:			info->i =  e132xs.local_regs[39];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L40:			info->i =  e132xs.local_regs[40];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L41:			info->i =  e132xs.local_regs[41];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L42:			info->i =  e132xs.local_regs[42];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L43:			info->i =  e132xs.local_regs[43];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L44:			info->i =  e132xs.local_regs[44];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L45:			info->i =  e132xs.local_regs[45];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L46:			info->i =  e132xs.local_regs[46];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L47:			info->i =  e132xs.local_regs[47];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L48:			info->i =  e132xs.local_regs[48];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L49:			info->i =  e132xs.local_regs[49];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L50:			info->i =  e132xs.local_regs[50];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L51:			info->i =  e132xs.local_regs[51];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L52:			info->i =  e132xs.local_regs[52];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L53:			info->i =  e132xs.local_regs[53];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L54:			info->i =  e132xs.local_regs[54];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L55:			info->i =  e132xs.local_regs[55];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L56:			info->i =  e132xs.local_regs[56];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L57:			info->i =  e132xs.local_regs[57];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L58:			info->i =  e132xs.local_regs[58];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L59:			info->i =  e132xs.local_regs[59];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L60:			info->i =  e132xs.local_regs[60];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L61:			info->i =  e132xs.local_regs[61];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L62:			info->i =  e132xs.local_regs[62];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L63:			info->i =  e132xs.local_regs[63];		break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = e132xs_set_info;		break;
@@ -4895,41 +5132,28 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c FTE:%X FRM:%X ILC:%d FL:%d FP:%d",
-				e132xs.global_regs[1] & 0x40000 ? 'S':'.',
-				e132xs.global_regs[1] & 0x20000 ? 'P':'.',
-				e132xs.global_regs[1] & 0x10000 ? 'T':'.',
-				e132xs.global_regs[1] & 0x80000 ? 'L':'.',
-				e132xs.global_regs[1] & 0x00080 ? 'I':'.',
+				GET_S ? 'S':'.',
+				GET_P ? 'P':'.',
+				GET_T ? 'T':'.',
+				GET_L ? 'L':'.',
+				GET_I ? 'I':'.',
 				e132xs.global_regs[1] & 0x00040 ? '?':'.',
-				e132xs.global_regs[1] & 0x00020 ? 'H':'.',
-				e132xs.global_regs[1] & 0x00010 ? 'M':'.',
-				e132xs.global_regs[1] & 0x00008 ? 'V':'.',
-				e132xs.global_regs[1] & 0x00004 ? 'N':'.',
-				e132xs.global_regs[1] & 0x00002 ? 'Z':'.',
-				e132xs.global_regs[1] & 0x00001 ? 'C':'.',
-				(e132xs.global_regs[1] & 0x00001f00)>>8,
-				(e132xs.global_regs[1] & 0x00006000)>>13,
-				(e132xs.global_regs[1] & 0x00180000)>>19,
-				(e132xs.global_regs[1] & 0x01e00000)>>21,
-				(e132xs.global_regs[1] & 0xfe000000)>>25);
+				GET_H ? 'H':'.',
+				GET_M ? 'M':'.',
+				GET_V ? 'V':'.',
+				GET_N ? 'N':'.',
+				GET_Z ? 'Z':'.',
+				GET_C ? 'C':'.',
+				GET_FTE,
+				GET_FRM,
+				GET_ILC,
+				GET_FL,
+				GET_FP);
 			break;
 
 		case CPUINFO_STR_REGISTER + E132XS_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC :%08X", e132xs.global_regs[0]); break;
 		case CPUINFO_STR_REGISTER + E132XS_SR:  		sprintf(info->s = cpuintrf_temp_str(), "SR :%08X", e132xs.global_regs[1]); break;
 		case CPUINFO_STR_REGISTER + E132XS_FER: 		sprintf(info->s = cpuintrf_temp_str(), "FER:%08X", e132xs.global_regs[2]); break;
-		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s = cpuintrf_temp_str(), "SP :%08X", e132xs.global_regs[18]); break;
-		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s = cpuintrf_temp_str(), "UB :%08X", e132xs.global_regs[19]); break;
-		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s = cpuintrf_temp_str(), "BCR:%08X", e132xs.global_regs[20]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s = cpuintrf_temp_str(), "TPR:%08X", e132xs.global_regs[21]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s = cpuintrf_temp_str(), "TCR:%08X", e132xs.global_regs[22]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s = cpuintrf_temp_str(), "TR :%08X", e132xs.global_regs[23]); break;
-		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s = cpuintrf_temp_str(), "WCR:%08X", e132xs.global_regs[24]); break;
-		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s = cpuintrf_temp_str(), "ISR:%08X", e132xs.global_regs[25]); break;
-		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s = cpuintrf_temp_str(), "FCR:%08X", e132xs.global_regs[26]); break;
-		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s = cpuintrf_temp_str(), "MCR:%08X", e132xs.global_regs[27]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G0:  		sprintf(info->s = cpuintrf_temp_str(), "G0 :%08X", e132xs.global_regs[0]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G1:  		sprintf(info->s = cpuintrf_temp_str(), "G1 :%08X", e132xs.global_regs[1]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G2:  		sprintf(info->s = cpuintrf_temp_str(), "G2 :%08X", e132xs.global_regs[2]); break;
 		case CPUINFO_STR_REGISTER + E132XS_G3:  		sprintf(info->s = cpuintrf_temp_str(), "G3 :%08X", e132xs.global_regs[3]); break;
 		case CPUINFO_STR_REGISTER + E132XS_G4:  		sprintf(info->s = cpuintrf_temp_str(), "G4 :%08X", e132xs.global_regs[4]); break;
 		case CPUINFO_STR_REGISTER + E132XS_G5:  		sprintf(info->s = cpuintrf_temp_str(), "G5 :%08X", e132xs.global_regs[5]); break;
@@ -4943,22 +5167,38 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + E132XS_G13: 		sprintf(info->s = cpuintrf_temp_str(), "G13:%08X", e132xs.global_regs[13]); break;
 		case CPUINFO_STR_REGISTER + E132XS_G14: 		sprintf(info->s = cpuintrf_temp_str(), "G14:%08X", e132xs.global_regs[14]); break;
 		case CPUINFO_STR_REGISTER + E132XS_G15: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[15]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL0:  		sprintf(info->s = cpuintrf_temp_str(), "L0 :%08X", e132xs.local_regs[0+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL1:  		sprintf(info->s = cpuintrf_temp_str(), "L1 :%08X", e132xs.local_regs[1+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL2:  		sprintf(info->s = cpuintrf_temp_str(), "L2 :%08X", e132xs.local_regs[2+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL3:  		sprintf(info->s = cpuintrf_temp_str(), "L3 :%08X", e132xs.local_regs[3+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL4:  		sprintf(info->s = cpuintrf_temp_str(), "L4 :%08X", e132xs.local_regs[4+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL5:  		sprintf(info->s = cpuintrf_temp_str(), "L5 :%08X", e132xs.local_regs[5+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL6:  		sprintf(info->s = cpuintrf_temp_str(), "L6 :%08X", e132xs.local_regs[6+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL7:  		sprintf(info->s = cpuintrf_temp_str(), "L7 :%08X", e132xs.local_regs[7+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL8:  		sprintf(info->s = cpuintrf_temp_str(), "L8 :%08X", e132xs.local_regs[8+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL9:  		sprintf(info->s = cpuintrf_temp_str(), "L9 :%08X", e132xs.local_regs[9+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL10: 		sprintf(info->s = cpuintrf_temp_str(), "L10:%08X", e132xs.local_regs[10+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL11: 		sprintf(info->s = cpuintrf_temp_str(), "L11:%08X", e132xs.local_regs[11+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL12: 		sprintf(info->s = cpuintrf_temp_str(), "L12:%08X", e132xs.local_regs[12+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL13: 		sprintf(info->s = cpuintrf_temp_str(), "L13:%08X", e132xs.local_regs[13+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL14: 		sprintf(info->s = cpuintrf_temp_str(), "L14:%08X", e132xs.local_regs[14+(e132xs.global_regs[1] >> 25)]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL15: 		sprintf(info->s = cpuintrf_temp_str(), "L15:%08X", e132xs.local_regs[15+(e132xs.global_regs[1] >> 25)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G16: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[16]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G17: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[17]); break;
+		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s = cpuintrf_temp_str(), "SP :%08X", e132xs.global_regs[18]); break;
+		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s = cpuintrf_temp_str(), "UB :%08X", e132xs.global_regs[19]); break;
+		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s = cpuintrf_temp_str(), "BCR:%08X", e132xs.global_regs[20]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s = cpuintrf_temp_str(), "TPR:%08X", e132xs.global_regs[21]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s = cpuintrf_temp_str(), "TCR:%08X", e132xs.global_regs[22]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s = cpuintrf_temp_str(), "TR :%08X", e132xs.global_regs[23]); break;
+		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s = cpuintrf_temp_str(), "WCR:%08X", e132xs.global_regs[24]); break;
+		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s = cpuintrf_temp_str(), "ISR:%08X", e132xs.global_regs[25]); break;
+		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s = cpuintrf_temp_str(), "FCR:%08X", e132xs.global_regs[26]); break;
+		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s = cpuintrf_temp_str(), "MCR:%08X", e132xs.global_regs[27]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G28: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[28]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G29: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[29]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G30: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[30]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G31: 		sprintf(info->s = cpuintrf_temp_str(), "G15:%08X", e132xs.global_regs[31]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL0:  		sprintf(info->s = cpuintrf_temp_str(), "CL0 :%08X", e132xs.local_regs[0+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL1:  		sprintf(info->s = cpuintrf_temp_str(), "CL1 :%08X", e132xs.local_regs[1+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL2:  		sprintf(info->s = cpuintrf_temp_str(), "CL2 :%08X", e132xs.local_regs[2+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL3:  		sprintf(info->s = cpuintrf_temp_str(), "CL3 :%08X", e132xs.local_regs[3+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL4:  		sprintf(info->s = cpuintrf_temp_str(), "CL4 :%08X", e132xs.local_regs[4+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL5:  		sprintf(info->s = cpuintrf_temp_str(), "CL5 :%08X", e132xs.local_regs[5+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL6:  		sprintf(info->s = cpuintrf_temp_str(), "CL6 :%08X", e132xs.local_regs[6+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL7:  		sprintf(info->s = cpuintrf_temp_str(), "CL7 :%08X", e132xs.local_regs[7+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL8:  		sprintf(info->s = cpuintrf_temp_str(), "CL8 :%08X", e132xs.local_regs[8+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL9:  		sprintf(info->s = cpuintrf_temp_str(), "CL9 :%08X", e132xs.local_regs[9+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL10: 		sprintf(info->s = cpuintrf_temp_str(), "CL10:%08X", e132xs.local_regs[10+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL11: 		sprintf(info->s = cpuintrf_temp_str(), "CL11:%08X", e132xs.local_regs[11+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL12: 		sprintf(info->s = cpuintrf_temp_str(), "CL12:%08X", e132xs.local_regs[12+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL13: 		sprintf(info->s = cpuintrf_temp_str(), "CL13:%08X", e132xs.local_regs[13+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL14: 		sprintf(info->s = cpuintrf_temp_str(), "CL14:%08X", e132xs.local_regs[14+(GET_FP)]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL15: 		sprintf(info->s = cpuintrf_temp_str(), "CL15:%08X", e132xs.local_regs[15+(GET_FP)]); break;
 		case CPUINFO_STR_REGISTER + E132XS_L0:  		sprintf(info->s = cpuintrf_temp_str(), "L0 :%08X", e132xs.local_regs[0]); break;
 		case CPUINFO_STR_REGISTER + E132XS_L1:  		sprintf(info->s = cpuintrf_temp_str(), "L1 :%08X", e132xs.local_regs[1]); break;
 		case CPUINFO_STR_REGISTER + E132XS_L2:  		sprintf(info->s = cpuintrf_temp_str(), "L2 :%08X", e132xs.local_regs[2]); break;

@@ -73,9 +73,9 @@ static UINT8 irq_line_state[MAX_CPU][MAX_IRQ_LINES];
 static INT32 irq_line_vector[MAX_CPU][MAX_IRQ_LINES];
 
 /* ick, interrupt event queues */
-#define MAX_IRQ_EVENTS		256
-static INT32 irq_event_queue[MAX_CPU][MAX_IRQ_EVENTS];
-static int irq_event_index[MAX_CPU];
+#define MAX_IRQ_EVENTS		32
+static INT32 irq_event_queue[MAX_CPU][MAX_IRQ_LINES][MAX_IRQ_EVENTS];
+static int irq_event_index[MAX_CPU][MAX_IRQ_LINES];
 
 
 
@@ -125,20 +125,15 @@ int cpuint_init(void)
 	int cpunum;
 	int irqline;
 
-	/* loop over all CPUs */
+	/* loop over all CPUs and IRQ lines */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-	{
-		/* reset the IRQ lines */
 		for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
 		{
 			irq_line_state[cpunum][irqline] = CLEAR_LINE;
 			interrupt_vector[cpunum][irqline] =
 			irq_line_vector[cpunum][irqline] = cputype_default_irq_vector(Machine->drv->cpu[cpunum].cpu_type);
+			irq_event_index[cpunum][irqline] = 0;
 		}
-		
-		/* reset the IRQ event queues */
-		irq_event_index[cpunum] = 0;
-	}
 
 	/* set up some stuff to save */
 	state_save_set_current_tag(0);
@@ -168,7 +163,7 @@ void cpuint_reset_cpu(int cpunum)
 	for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
 	{
 		interrupt_vector[cpunum][irqline] = cpunum_default_irq_vector(cpunum);
-		irq_event_index[cpunum] = 0;
+		irq_event_index[cpunum][irqline] = 0;
 	}
 
 	/* reset any driver hooks into the IRQ acknowledge callbacks */
@@ -260,20 +255,21 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
  *
  *************************************/
 
-static void cpu_empty_event_queue(int cpunum)
+static void cpu_empty_event_queue(int cpu_and_irqline)
 {
+	int cpunum = cpu_and_irqline & 0xff;
+	int irqline = cpu_and_irqline >> 8;
 	int i;
 
 	/* swap to the CPU's context */
 	cpuintrf_push_context(cpunum);
 
 	/* loop over all events */
-	for (i = 0; i < irq_event_index[cpunum]; i++)
+	for (i = 0; i < irq_event_index[cpunum][irqline]; i++)
 	{
-		INT32 irq_event = irq_event_queue[cpunum][i];
+		INT32 irq_event = irq_event_queue[cpunum][irqline][i];
 		int state = irq_event & 0xff;
-		int irqline = (irq_event >> 8) & 0xff;
-		int vector = irq_event >> 16;
+		int vector = irq_event >> 8;
 
 		LOG(("cpu_empty_event_queue %d,%d,%d\n",cpunum,irqline,state));
 
@@ -314,7 +310,7 @@ static void cpu_empty_event_queue(int cpunum)
 	cpuintrf_pop_context();
 
 	/* reset counter */
-	irq_event_index[cpunum] = 0;
+	irq_event_index[cpunum][irqline] = 0;
 }
 
 	
@@ -327,22 +323,32 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 
 void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
 {
-	INT32 irq_event = (state & 0xff) | ((irqline & 0xff) << 8) | (vector << 16);
-	int event_index = irq_event_index[cpunum]++;
-
-	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
-
-	/* enqueue the event */
-	if (event_index < MAX_IRQ_EVENTS)
+	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
 	{
-		irq_event_queue[cpunum][event_index] = irq_event;
-		
-		/* if this is the first one, set the timer */
-		if (event_index == 0)
-			mame_timer_set(time_zero, cpunum, cpu_empty_event_queue);
+		INT32 irq_event = (state & 0xff) | (vector << 8);
+		int event_index = irq_event_index[cpunum][irqline]++;
+
+		LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
+
+		/* if we're full of events, flush the queue and log a message */
+		if (event_index >= MAX_IRQ_EVENTS)
+		{
+			irq_event_index[cpunum][irqline]--;
+			cpu_empty_event_queue(cpunum | (irqline << 8));
+			event_index = irq_event_index[cpunum][irqline]++;
+			logerror("Exceeded pending IRQ event queue on CPU %d!\n", cpunum);
+		}
+
+		/* enqueue the event */
+		if (event_index < MAX_IRQ_EVENTS)
+		{
+			irq_event_queue[cpunum][irqline][event_index] = irq_event;
+			
+			/* if this is the first one, set the timer */
+			if (event_index == 0)
+				mame_timer_set(time_zero, cpunum | (irqline << 8), cpu_empty_event_queue);
+		}
 	}
-	else
-		logerror("Exceeded pending IRQ event queue on CPU %d!\n", cpunum);
 }
 
 

@@ -435,8 +435,10 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 	for(r=1;r<16;r++)
 		YM_DELTAT_ADPCM_Write(DELTAT,r,regs[r]);
 	DELTAT->reg[0] = regs[0];
+
 	/* current rom data */
-	DELTAT->now_data = *(DELTAT->memory + (DELTAT->now_addr>>1) );
+	if (DELTAT->memory)
+		DELTAT->now_data = *(DELTAT->memory + (DELTAT->now_addr>>1) );
 
 }
 void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)

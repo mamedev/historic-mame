@@ -2047,6 +2047,12 @@ void update_analog_port(int port)
 			axis = PEDAL_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
 		case IPT_PEDAL2:
 			axis = Z_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
+#ifdef MESS
+		case IPT_MOUSE_X:
+			axis = X_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
+		case IPT_MOUSE_Y:
+			axis = Y_AXIS; is_stick = 0; is_gun=0; check_bounds = 0; break;
+#endif
 		default:
 			/* Use some defaults to prevent crash */
 			axis = X_AXIS; is_stick = 0; is_gun=0; check_bounds = 0;
@@ -2912,6 +2918,11 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 			++dst;
 		}
 
+#ifdef MESS
+		while((ext->type & ~IPF_MASK) == IPT_UCHAR)
+			ext++;
+#endif
+
 		src = ext;
 	}
 
@@ -3077,6 +3088,9 @@ void init_analog_seq()
 					case IPT_TRACKBALL_X:
 					case IPT_LIGHTGUN_X:
 					case IPT_AD_STICK_X:
+#ifdef MESS
+					case IPT_MOUSE_X:
+#endif
 						axis = X_AXIS;
 						break;
 					case IPT_DIAL_V:
@@ -3084,6 +3098,9 @@ void init_analog_seq()
 					case IPT_TRACKBALL_Y:
 					case IPT_LIGHTGUN_Y:
 					case IPT_AD_STICK_Y:
+#ifdef MESS
+					case IPT_MOUSE_Y:
+#endif
 						axis = Y_AXIS;
 						break;
 					case IPT_AD_STICK_Z:

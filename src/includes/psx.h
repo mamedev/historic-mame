@@ -37,11 +37,11 @@ READ32_HANDLER( psx_counter_r );
 WRITE32_HANDLER( psx_sio_w );
 READ32_HANDLER( psx_sio_r );
 typedef void ( *psx_sio_write_handler )( int, int );
-#define PSX_SIO_RESET ( 0 )
+#define PSX_SIO_SEL ( 0 )
 #define PSX_SIO_DATA ( 1 )
-#define PSX_SIO_SEL ( 2 )
 extern void psx_sio_install_write_handler( int, psx_sio_write_handler );
 extern void psx_sio_send( int, data8_t );
+extern void psx_sio_dsr( int, int );
 WRITE32_HANDLER( psx_mdec_w );
 READ32_HANDLER( psx_mdec_r );
 extern void psx_machine_init( void );

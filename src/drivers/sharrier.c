@@ -7,11 +7,225 @@
 **	Space Harrier
 */
 
+/*
+03/11/04  Charles MacDonald
+Various Hang-On fixes:
+- Fixed sprite RAM size.
+- Fixed tile RAM size.
+- Fixed 2nd 68000 work RAM size, passes RAM test.
+- Fixed visibility of 2nd 68000 ROM to 1st 68000, passes ROM test.
+- Fixed access to road RAM and shared RAM by both CPUs.
+- Cleaned up input management, now entering test mode does not crash
+  MAME, there are no specific control hacks for the name entry screen,
+  and the ROM patches are no longer needed.
+  
+To do:
+- Missing color bars in CRT tests
+- Proper Enduro Racer and Space Harrier inputs
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
 #include "system16.h"
+
+/*
+	Hang-On I/O hardware
+*/
+
+static int latched_analog_input;	/* Selected input to read with ADC */
+static int ppi_reg[2][4];			/* PPI registers */
+
+static WRITE16_HANDLER( hangon_io_w )
+{
+	if( ACCESSING_LSB )
+	{                        
+		switch( offset & 0x003020/2 )
+		{
+			case 0x0000: /* PPI @ 4B */
+				switch( offset & 0x07)
+				{
+					case 0x00: /* Port A : Z80 sound command */
+						ppi_reg[0][0] = data;
+						soundlatch_w(0, data & 0xff);
+						cpu_set_nmi_line(1, PULSE_LINE);
+						return;
+
+					case 0x01: /* Port B : Miscellaneous outputs */
+						ppi_reg[0][1] = data;
+
+						/* D7 : FLIPC (1= flip screen, 0= normal orientation) */
+						/* D6 : SHADE0 (1= highlight, 0= shadow) */
+						/* D4 : /KILL (1= screen on, 0= screen off) */
+						sys16_refreshenable = data & 0x10;
+
+						/* D3 : LAMP2 */
+						set_led_status(1, data & 0x08);
+						
+						/* D2 : LAMP1 */
+						set_led_status(0, data & 0x04);
+						
+						/* D1 : COIN2 */
+						coin_counter_w(1, data & 0x02);
+						
+						/* D0 : COIN1 */
+						coin_counter_w(0, data & 0x01);						
+						return;
+
+					case 0x02: /* Port C : Tilemap origin and audio mute */
+						ppi_reg[0][2] = data;
+
+						/* D2 : SCONT1 - Tilemap origin bit 1 */
+						/* D1 : SCONT0 - Tilemap origin bit 0 */
+						/* D0 : MUTE (1= audio on, 0= audio off) */					
+						
+  						/* Not used */
+						return;
+
+					case 0x03: /* PPI control register */
+						ppi_reg[0][3] = data;
+						return;
+				}
+				break;
+
+		case 0x3000/2: /* PPI @ 4C */
+			switch( offset & 0x07)
+			{
+				case 0x00: /* Port A : S.CPU control and ADC channel select */
+					ppi_reg[1][0] = data;
+				
+#if 0 // Not sure this is correct
+
+					/* To S.RES of second CPU */
+					if(data & 0x20)
+					cpu_set_reset_line(2, CLEAR_LINE);
+					else
+					cpu_set_reset_line(2, ASSERT_LINE);
+					
+					/* To S.INT of second CPU */
+					if(data & 0x10)
+					cpu_set_irq_line(2, 1, HOLD_LINE);
+					else
+					cpu_set_irq_line(2, 1, CLEAR_LINE);
+#endif
+					return;
+				
+				case 0x01: /* Port B : High-current outputs */
+					ppi_reg[1][1] = data;		
+					/* Not used */
+					return;
+				
+				case 0x02: /* Port C : LED driver control (?) */
+					ppi_reg[1][2] = data;				
+					/* Not used */
+					return;
+					
+				case 0x03: /* PPI control register */
+					ppi_reg[1][3] = data;
+					return;
+			}
+		break;
+
+		case 0x3020/2: /* ADC0804 */
+			switch(ppi_reg[1][0] & 0x0C)
+			{
+				case 0x00: /* "ANGLE" */
+					latched_analog_input = readinputport(0);
+					return;
+				
+				case 0x04: /* "ACCEL" */
+					latched_analog_input = readinputport(1);
+					return;
+			
+				case 0x08: /* "BRAKE" */
+					latched_analog_input = readinputport(5);
+					return;
+				
+				case 0x0C: /* Not used */
+					latched_analog_input = 0;
+					return;
+			}
+			break;
+		}
+	}
+}
+
+static READ16_HANDLER( hangon_io_r )
+{
+	switch( offset & 0x003020/2 )
+	{
+		case 0x0000: /* PPI @ 4B */
+			switch( offset & 0x07)
+			{
+				case 0x00: /* Port A : Z80 sound command */
+				/*
+				Bidirectional port, but Z80 only ever reads data written
+				by the main 68000.
+				*/
+				return 0xFF;
+			
+				case 0x01: /* Port B */
+					return ppi_reg[0][1];
+				
+				case 0x02: /* Port C */
+					return ppi_reg[0][2];
+				
+				case 0x03: /* PPI control register */
+					return ppi_reg[0][3];
+			}
+			break;
+			
+			case 0x1000/2: /* Input ports and DIP switches */
+				switch( offset & 0x0F )
+				{
+					case 0x00: /* Input port #0 */
+						return readinputport(2);
+			
+					case 0x01: /* Input port #1 */	
+						/* Not used */
+						return 0xFF;
+			
+					case 0x04: /* DIP switch A */
+						return readinputport(3);
+			
+					case 0x06: /* DIP switch B */
+						return readinputport(4);
+				}
+				break;
+			
+			case 0x3000/2: /* PPI @ 4C */
+				switch( offset & 0x07)
+				{
+					case 0x00: /* Port A */
+						return ppi_reg[1][0];
+					
+					case 0x01: /* Port B */
+						return ppi_reg[1][1];
+					
+					case 0x02: /* Port C : ADC status */
+						/*
+						D7 = 0 (left open)
+						D6 = /INTR of ADC0804
+						D5 = 0 (left open)
+						D4 = 0 (left open)
+						
+						We leave /INTR low to indicate converted data is
+						always ready to be read.
+						*/
+						return (ppi_reg[1][2] & 0x0F);
+					
+					case 0x03: /* PPI control register */
+						return ppi_reg[1][3];
+				}
+				break;
+				
+			case 0x3020/2: /* ADC0804 data output */
+				return latched_analog_input;
+	}	
+	
+	return -1;
+}
 
 /***************************************************************************/
 
@@ -169,20 +383,29 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 }
 #endif
 
+/*
+	Hang-On shared road RAM and 68000 #2 work RAM
+*/
 
-static READ16_HANDLER( ho_io_x_r ){ return input_port_0_r( offset ); }
-static READ16_HANDLER( ho_io_y_r ){ return (input_port_1_r( offset ) << 8) + input_port_5_r( offset ); }
+data16_t *hangon_roadram;
+data16_t *hangon_sharedram;
 
-static READ16_HANDLER( ho_io_highscoreentry_r ){
-	int mode= sys16_extraram4[0x3000/2];
-	if( mode&4 ){	// brake
-		if(ho_io_y_r(0,0) & 0x00ff) return 0xffff;
-	}
-	else if( mode&8 ){ // button
-		if(ho_io_y_r(0,0) & 0xff00) return 0xffff;
-	}
-	return 0;
+static READ16_HANDLER( hangon_sharedram_r ) {
+	return hangon_sharedram[offset];
 }
+
+static WRITE16_HANDLER( hangon_sharedram_w ) {
+	COMBINE_DATA( hangon_sharedram + offset );
+}
+
+static READ16_HANDLER( hangon_roadram_r ) {
+	return hangon_roadram[offset];
+}
+
+static WRITE16_HANDLER( hangon_roadram_w ) {
+	COMBINE_DATA( hangon_roadram + offset );
+}
+
 
 static READ16_HANDLER( hangon1_skip_r ){
 	if (activecpu_get_pc()==0x17e6) {cpu_spinuntil_int(); return 0xffff;}
@@ -193,53 +416,45 @@ static ADDRESS_MAP_START( hangon_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x20c400, 0x20c401) AM_READ(hangon1_skip_r)
 	AM_RANGE(0x20c000, 0x20ffff) AM_READ(SYS16_MRA16_EXTRAM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
+	AM_RANGE(0x400000, 0x403fff) AM_READ(SYS16_MRA16_TILERAM)
 	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x600000, 0x600fff) AM_READ(SYS16_MRA16_SPRITERAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(SYS16_MRA16_SPRITERAM)
 	AM_RANGE(0xa00000, 0xa00fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc68000, 0xc68fff) AM_READ(SYS16_MRA16_EXTRAM2)
-	AM_RANGE(0xc7e000, 0xc7ffff) AM_READ(SYS16_MRA16_EXTRAM3)
-	AM_RANGE(0xe00002, 0xe00003) AM_READ(sys16_coinctrl_r)
-	AM_RANGE(0xe01000, 0xe01001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xe0100c, 0xe0100d) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xe0100a, 0xe0100b) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xe03020, 0xe03021) AM_READ(ho_io_highscoreentry_r)
-	AM_RANGE(0xe03028, 0xe03029) AM_READ(ho_io_x_r)
-	AM_RANGE(0xe0302a, 0xe0302b) AM_READ(ho_io_y_r)
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(SYS16_CPU3ROM16_r)
+	AM_RANGE(0xc68000, 0xc68fff) AM_READ(hangon_roadram_r)	
+	AM_RANGE(0xc7c000, 0xc7ffff) AM_READ(hangon_sharedram_r)
+	AM_RANGE(0xe00000, 0xffffff) AM_READ(hangon_io_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hangon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x20c000, 0x20ffff) AM_WRITE(SYS16_MWA16_EXTRAM) AM_BASE(&sys16_extraram)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
+	AM_RANGE(0x400000, 0x403fff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
 	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x600000, 0x600fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
+	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
 	AM_RANGE(0xa00000, 0xa00fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc68000, 0xc68fff) AM_WRITE(SYS16_MWA16_EXTRAM2) AM_BASE(&sys16_extraram2)
-	AM_RANGE(0xc7e000, 0xc7ffff) AM_WRITE(SYS16_MWA16_EXTRAM3) AM_BASE(&sys16_extraram3)
-	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xe00002, 0xe00003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xe00004, 0xe00005) AM_WRITE(MWA16_NOP) /* ? */
-	AM_RANGE(0xe02000, 0xe02001) AM_WRITE(MWA16_NOP) /* ? */
-	AM_RANGE(0xe03000, 0xe03001) AM_WRITE(MWA16_NOP) /* ? */
+	AM_RANGE(0xc00000, 0xc3ffff) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xc68000, 0xc68fff) AM_WRITE(hangon_roadram_w) AM_BASE(&hangon_roadram)
+	AM_RANGE(0xc7c000, 0xc7ffff) AM_WRITE(hangon_sharedram_w) AM_BASE(&hangon_sharedram)
+	AM_RANGE(0xe00000, 0xffffff) AM_WRITE(hangon_io_w)
 ADDRESS_MAP_END
 
 static READ16_HANDLER( hangon2_skip_r ){
 	if (activecpu_get_pc()==0xf66) {cpu_spinuntil_int(); return 0xffff;}
-	return sys16_extraram3[0x01000/2];
+	return hangon_sharedram[0x01000/2];
 }
 
 static ADDRESS_MAP_START( hangon_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0xc7f000, 0xc7f001) AM_READ(hangon2_skip_r)
-	AM_RANGE(0xc68000, 0xc68fff) AM_READ(SYS16_MRA16_EXTRAM2)
-	AM_RANGE(0xc7e000, 0xc7ffff) AM_READ(SYS16_MRA16_EXTRAM3)
+	AM_RANGE(0xc68000, 0xc68fff) AM_READ(hangon_roadram_r)
+	AM_RANGE(0xc7c000, 0xc7ffff) AM_READ(hangon_sharedram_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hangon_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xc68000, 0xc68fff) AM_WRITE(SYS16_MWA16_EXTRAM2) AM_BASE(&sys16_extraram2)
-	AM_RANGE(0xc7e000, 0xc7ffff) AM_WRITE(SYS16_MWA16_EXTRAM3) AM_BASE(&sys16_extraram3)
+	AM_RANGE(0xc68000, 0xc68fff) AM_WRITE(hangon_roadram_w)
+	AM_RANGE(0xc7c000, 0xc7ffff) AM_WRITE(hangon_sharedram_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hangon_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -269,11 +484,11 @@ ADDRESS_MAP_END
 /***************************************************************************/
 
 static void hangon_update_proc( void ){
-	set_page( sys16_bg_page, sys16_textram[0x74e] );
-	set_page( sys16_fg_page, sys16_textram[0x74f] );
+	set_page( sys16_bg_page, sys16_textram[0x74e] & 0x3333 );
+	set_page( sys16_fg_page, sys16_textram[0x74f] & 0x3333 );
 	sys16_fg_scrollx = sys16_textram[0x7fc] & 0x01ff;
 	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x792] & 0x00ff;
+	sys16_fg_scrolly = sys16_textram[0x792] & 0x01ff;
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
@@ -287,13 +502,20 @@ static MACHINE_INIT( hangon ){
 	sys16_textlayer_hi_min=0;
 	sys16_textlayer_hi_max=0xff;
 
-	sys16_patch_code( 0x83bd, 0x29);
-	sys16_patch_code( 0x8495, 0x2a);
-	sys16_patch_code( 0x84f9, 0x2b);
+/*  
+	The following patches modified the input code to read the first three
+	analog inputs from unique addresses rather than the single address
+	the ADC is mapped to, so the input selection behavior didn't have to be
+	emulated. Not needed anymore, but left in for reference.
+	
+	sys16_patch_code( 0x83bd, 0x29); // $E03021 -> $E03029
+	sys16_patch_code( 0x8495, 0x2a); // $E03021 -> $E0302A
+	sys16_patch_code( 0x84f9, 0x2b); // $E03021 -> $E0302B
+*/
 
 	sys16_update_proc = hangon_update_proc;
 
-	sys16_gr_ver = &sys16_extraram2[0x0];
+	sys16_gr_ver = &hangon_roadram[0x0];
 	sys16_gr_hor = sys16_gr_ver+0x200/2;
 	sys16_gr_pal = sys16_gr_ver+0x400/2;
 	sys16_gr_flip= sys16_gr_ver+0x600/2;

@@ -371,3 +371,88 @@ READ16_HANDLER (dw2_d80000_r )
 	}
 }
 
+/* Dragon World 3
+
+Dragon World 3 has 2 protection chips
+ASIC022 and ASIC025
+one of them also has an external data rom (encrypted?)
+
+code below is ElSemi's preliminary code, it doesn't work properly and isn't used, much of the protection isn't understood */
+
+#if 0
+AddWriteArea(0xda0000,0xdaffff,0,dw3_w8,dw3_w16,dw3_w32);
+AddReadArea (0xda0000,0xdaffff,0,dw3_r8,dw3_r16,dw3_r32);
+
+#define DW3BITSWAP(s,d,bs,bd)  d=((d&(~(1<<bd)))|(((s>>bs)&1)<<bd))
+
+unsigned short dw3_Rw[8];
+unsigned char *dw3_R=(unsigned char *) dw3_Rw;
+
+unsigned char dw3_r8(unsigned int addr)
+{
+	if(addr>=0xDA5610 && addr<=0xDA5613)
+		return *((unsigned char *) (dw3_R+((addr-0xDA5610)^1)));
+	return 0;
+}
+
+unsigned short dw3_r16(unsigned int addr)
+{
+	if(addr>=0xDA5610 && addr<=0xDA5613)
+		return *((unsigned short *) (dw3_R+(addr-0xDA5610)));
+	return 0;
+}
+
+unsigned int dw3_r32(unsigned int addr)
+{
+	return 0;
+}
+
+void dw3_w8(unsigned int addr,unsigned char val)
+{
+	if(addr==0xDA5610)
+		dw3_R[1]=val;
+	if(addr==0xDA5611)
+		dw3_R[0]=val;
+	if(addr==0xDA5612)
+		dw3_R[3]=val;
+	if(addr==0xDA5613)
+		dw3_R[2]=val;
+}
+
+void dw3_w16(unsigned int addr,unsigned short val)
+{
+	if(addr>=0xDA5610 && addr<=0xDA5613)
+	{
+		unsigned short *s=((unsigned short *) (dw3_R+(addr-0xDA5610)));
+		*s=val;
+		if(addr==0xDA5610)
+		{
+			if(val==1)
+			{
+				unsigned short v1=dw3_Rw[1];
+				unsigned short v2=0;
+				DW3BITSWAP(v1,v2,0,0);
+				DW3BITSWAP(v1,v2,1,1);
+				DW3BITSWAP(v1,v2,7,2);
+				DW3BITSWAP(v1,v2,6,3);
+				DW3BITSWAP(v1,v2,5,4);
+				DW3BITSWAP(v1,v2,4,5);
+				DW3BITSWAP(v1,v2,3,6);
+				DW3BITSWAP(v1,v2,2,7);
+
+				dw3_Rw[1]=v2;
+			}
+		}
+	}
+
+}
+
+
+void dw3_w32(unsigned int addr,unsigned int val)
+{
+
+}
+#endif
+
+
+

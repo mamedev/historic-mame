@@ -17,7 +17,7 @@
 #include "e132xs.h"
 
 const char *L_REG[] =
-{ 
+{
   "L0",  "L1",  "L2",  "L3",  "L4",  "L5",  "L6",  "L7",  "L8",  "L9",
   "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19",
   "L20", "L21", "L22", "L23", "L24", "L25", "L26", "L27", "L28", "L29",
@@ -28,7 +28,7 @@ const char *L_REG[] =
 };
 
 const char *G_REG[] =
-{ 
+{
   "PC",  "SR",  "FER", "G03", "G04", "G05", "G06", "G07", "G08", "G09",
   "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "SP",  "UB",
   "BCR", "TPR", "TCR", "TR",  "WCR", "ISR", "FCR", "MCR", "G28", "G29",
@@ -36,7 +36,7 @@ const char *G_REG[] =
 };
 
 const char *SETxx[] =
-{ 
+{
   "SETADR",   "Reserved", "SET1",   "SET0",     "SETLE",  "SETGT",  "SETLT",  "SETGE",
   "SETSE",    "SETHT",    "SETST",  "SETHE",    "SETE",   "SETNE",  "SETV",   "SETNV",
   "Reserved", "Reserved", "SET1M",  "Reserved", "SETLEM", "SETGTM", "SETLTM", "SETGEM",
@@ -96,7 +96,7 @@ void RR_format(char *source, char *dest, UINT16 op)
 
 UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 {
-	INT16 next_op;
+	UINT16 next_op;
 	UINT32 const_val;
 
 	if( SOURCEBIT(op) )
@@ -117,7 +117,7 @@ UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 
 	if( E_BIT(next_op) )
 	{
-		INT16 next_op2;
+		UINT16 next_op2;
 
 		size = 6;
 
@@ -201,9 +201,9 @@ UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	return const_val;
 }
 
-UINT32 RRimm_format(char *dest, UINT16 op, unsigned *pc)
+INT32 RRimm_format(char *dest, UINT16 op, unsigned *pc)
 {
-	INT16 imm1, imm2;
+	UINT16 imm1, imm2;
 	INT32 ret;
 
 	int n = N_VALUE(op);
@@ -236,14 +236,14 @@ UINT32 RRimm_format(char *dest, UINT16 op, unsigned *pc)
 
 		case 18:
 			*pc += 2;
-			ret = (UINT32) READ_OP(*pc);
+			ret = READ_OP(*pc);
 
 			size = 4;
 			return ret;
 
 		case 19:
 			*pc += 2;
-			ret = 0xffff0000 | ((INT32) READ_OP(*pc));
+			ret = (INT32) (0xffff0000 | READ_OP(*pc));
 
 			size = 4;
 			return ret;
@@ -399,7 +399,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 	UINT8 source_code, dest_code, source_bit, dest_bit;
 
-	char source[3] = "\0", dest[3] = "\0";
+	char source[4] = "\0", dest[4] = "\0";
 
 	source_code = SOURCECODE(op);
 	dest_code = DESTCODE(op);
@@ -410,7 +410,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 	op = READ_OP(pc);
 
-	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
+//	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
 
 	op_num = (op & 0xff00) >> 8;
 
@@ -1437,70 +1437,98 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// FADD
 		case 0xc0:
 
+			buffer += sprintf(buffer, "FADD");
+
 			break;
 
 		// FADDD
 		case 0xc1:
+
+			buffer += sprintf(buffer, "FADDD");
 
 			break;
 
 		// FSUB
 		case 0xc2:
 
+			buffer += sprintf(buffer, "FSUB");
+
 			break;
 
 		// FSUBD
 		case 0xc3:
+
+			buffer += sprintf(buffer, "FSUBD");
 
 			break;
 
 		// FMUL
 		case 0xc4:
 
+			buffer += sprintf(buffer, "FMUL");
+
 			break;
 
 		// FMULD
 		case 0xc5:
+
+			buffer += sprintf(buffer, "FMULD");
 
 			break;
 
 		// FDIV
 		case 0xc6:
 
+			buffer += sprintf(buffer, "FDIV");
+
 			break;
 
 		// FDIVD
 		case 0xc7:
+
+			buffer += sprintf(buffer, "FDIVD");
 
 			break;
 
 		// FCMP
 		case 0xc8:
 
+			buffer += sprintf(buffer, "FCMP");
+
 			break;
 
 		// FCMPD
 		case 0xc9:
+
+			buffer += sprintf(buffer, "FCMPD");
 
 			break;
 
 		// FCMPU
 		case 0xca:
 
+			buffer += sprintf(buffer, "FCMPU");
+
 			break;
 
 		// FCMPUD
 		case 0xcb:
+
+			buffer += sprintf(buffer, "FCMPUD");
 
 			break;
 
 		// FCVT
 		case 0xcc:
 
+			buffer += sprintf(buffer, "FCVT");
+
 			break;
 
 		// FCVTD
 		case 0xcd:
+
+			buffer += sprintf(buffer, "FCVTD");
 
 			break;
 
@@ -1585,6 +1613,8 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 		// DO
 		case 0xcf:
+
+			buffer += sprintf(buffer, "DO");
 
 			break;
 
@@ -1819,7 +1849,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BV
 		case 0xf0:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BV %x", rel);
 
@@ -1829,7 +1859,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BNV
 		case 0xf1:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BNV %x", rel);
 
@@ -1839,7 +1869,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BE
 		case 0xf2:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BE %x", rel);
 
@@ -1849,7 +1879,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BNE
 		case 0xf3:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BNE %x", rel);
 
@@ -1859,7 +1889,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BC
 		case 0xf4:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BC %x", rel);
 
@@ -1869,7 +1899,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BNC
 		case 0xf5:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BNC %x", rel);
 
@@ -1879,7 +1909,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BSE
 		case 0xf6:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BSE %x", rel);
 
@@ -1889,7 +1919,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BHT
 		case 0xf7:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BHT %x", rel);
 
@@ -1899,7 +1929,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BN
 		case 0xf8:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BN %x", rel);
 
@@ -1909,7 +1939,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BNN
 		case 0xf9:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BNN %x", rel);
 
@@ -1919,7 +1949,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BLE
 		case 0xfa:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BLE %x", rel);
 
@@ -1929,7 +1959,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BGT
 		case 0xfb:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BGT %x", rel);
 
@@ -1939,7 +1969,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 		// BR
 		case 0xfc:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "BR %x", rel);
 
@@ -1948,6 +1978,8 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 		// TRAPxx - TRAP
 		case 0xfd: case 0xfe: case 0xff:
+
+			buffer += sprintf(buffer, "TRAPxx");
 
 			break;
 

@@ -238,7 +238,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 #ifdef MESS
 		/* CRC files */
-		case FILETYPE_CRC:
+		case FILETYPE_HASH:
 			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
 #endif
 
@@ -841,8 +841,8 @@ static const char *get_extension_for_filetype(int filetype)
 			break;
 
 #ifdef MESS
-		case FILETYPE_CRC:
-			extension = "crc";
+		case FILETYPE_HASH:
+			extension = "hsi";
 			break;
 #endif
 	}

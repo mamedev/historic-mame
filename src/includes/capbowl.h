@@ -6,19 +6,13 @@
 
 /*----------- defined in vidhrdw/capbowl.c -----------*/
 
-MACHINE_INIT( capbowl );
-
 VIDEO_START( capbowl );
 VIDEO_UPDATE( capbowl );
 
-extern unsigned char *capbowl_rowaddress;
+extern UINT8 *capbowl_rowaddress;
 
-WRITE_HANDLER( capbowl_rom_select_w );
-
-READ_HANDLER( capbowl_pagedrom_r );
-
-WRITE_HANDLER( bowlrama_turbo_w );
-READ_HANDLER( bowlrama_turbo_r );
+WRITE_HANDLER( bowlrama_blitter_w );
+READ_HANDLER( bowlrama_blitter_r );
 
 WRITE_HANDLER( capbowl_tms34061_w );
 READ_HANDLER( capbowl_tms34061_r );

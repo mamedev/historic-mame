@@ -1594,7 +1594,7 @@ unsigned DasmI286(char* buffer, unsigned pc)
 }
 #endif
 
-unsigned DasmI386(char* buffer, unsigned pc)
+unsigned DasmI386(char* buffer, unsigned pc, unsigned operand_size, unsigned address_size)
 {
   	unsigned c;
 	union cpuinfo info;
@@ -1616,7 +1616,14 @@ unsigned DasmI386(char* buffer, unsigned pc)
 
 	prefix = 0;
 	modrmv = sibv = -1;     /* set modrm and sib flags */
-	opsize = addrsize = 16;
+	if( operand_size )
+		opsize = 32;
+	else
+		opsize = 16;
+	if( address_size )
+		addrsize = 32;
+	else
+		addrsize = 16;
 	c = getbyte();
 	wordop = c & 1;
 	must_do_size = 1;

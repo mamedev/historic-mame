@@ -18,7 +18,7 @@
 **then (some of the functionality of this chip IS NOT implemented). However I
 **have bought a book about PALs and I'm able to improve it. Just LMK.
 **	Jarek Burczynski
-**	bujar@mame.net
+**	bujar at mame dot net
 */
 
 

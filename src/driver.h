@@ -557,4 +557,21 @@ const struct GameDriver driver_##NAME =		\
 
 extern const struct GameDriver *drivers[];
 
+
+/***************************************************************************
+
+	Miscellaneous
+
+***************************************************************************/
+
+/* Use to prevent warnings from GCC about overly-long integer constants. */
+#ifdef __GNUC__
+#define U64(val) val##ULL
+#define S64(val) val##LL
+#else
+#define U64(val) val
+#define S64(val) val
+#endif
+
+
 #endif

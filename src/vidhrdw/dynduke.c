@@ -165,7 +165,6 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	{
 		/* Don't draw empty sprite table entries */
 		if (buffered_spriteram[offs+7]!=0xf) continue;
-		if (buffered_spriteram[offs+0]==0xf0f) continue;
 		if (((buffered_spriteram[offs+5]>>5)&3)!=pri) continue;
 
 		fx= buffered_spriteram[offs+1]&0x20;

@@ -22,7 +22,6 @@ extern int (*sys16_spritesystem)(
 
 extern int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_passshot( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
-extern int sys16_sprite_aurail( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_fantzone( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_hangon( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
@@ -254,13 +253,11 @@ extern int sys16_textlayer_lo_min;
 extern int sys16_textlayer_lo_max;
 extern int sys16_textlayer_hi_min;
 extern int sys16_textlayer_hi_max;
-extern int sys16_dactype;
 extern int sys16_bg1_trans;
 extern int sys16_bg_priority_mode;
 extern int sys16_fg_priority_mode;
 extern int sys16_bg_priority_value;
 extern int sys16_fg_priority_value;
-extern int sys16_spritelist_end;
 extern int sys16_tilebank_switch;
 extern int sys16_rowscroll_scroll;
 extern int sys16_quartet_title_kludge;
@@ -314,6 +311,7 @@ extern struct YM2151interface sys16_ym2151_interface;
 extern struct YM2203interface sys16_ym2203_interface;
 extern struct YM2203interface sys16_3xym2203_interface;
 
+extern struct DACinterface datsu_dac_interface;
 extern struct DACinterface sys16_7751_dac_interface;
 
 extern struct UPD7759_interface sys16_upd7759_interface;
@@ -323,3 +321,6 @@ extern struct YM2413interface sys16_ym2413_interface;
 
 extern struct RF5C68interface sys18_rf5c68_interface;
 extern struct YM2612interface sys18_ym3438_interface;
+
+extern int sys18_sound_info[4*2];
+

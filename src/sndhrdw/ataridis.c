@@ -156,7 +156,7 @@ DISCRETE_SOUND_START(firetrk_sound_interface)
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
 				10000,	// R26 + R27 @ min
 				260000,	// R26 + R27 @ max
-				135000, DISC_LOGADJ, "Motor Frequency")
+				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q1
 			FIRETRUCK_MOTOR_DATA,	// IC F8, pins 2,5,6,9
 			3.4,			// TTL ON level
@@ -272,31 +272,31 @@ const struct discrete_dac_r1_ladder superbug_motor_v_dac =
 {
 	4,		// size of ladder
 	{2200000, 1000000, 470000, 220000, 0,0,0,0},	// R8, R9, R6, R7
-	4.4,		// 5V - diode junction (0.6V)
-	68000,		// R10
+	4.4,	// 5V - diode junction (0.6V)
+	68000,	// R10
 	0,		// no rGnd
-	1e-5		// C20
+	1e-5	// C20
 };
 
 const struct discrete_555_cc_desc superbug_motor_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
-	5,		// B+ voltage of 555
-	5.0 - 1.7,	// High output voltage of 555 (Usually v555 - 1.7)
+	5,				// B+ voltage of 555
+	5.0 - 1.7,		// High output voltage of 555 (Usually v555 - 1.7)
 	5.0 * 2 / 3,	// threshold
-	5.0 /3,		// trigger
-	5,		// B+ voltage of the Constant Current source
-	0.7		// Q1 junction voltage
+	5.0 /3,			// trigger
+	5,				// B+ voltage of the Constant Current source
+	0.7				// Q1 junction voltage
 };
 
 const struct discrete_dac_r1_ladder superbug_motor_out_dac =
 {
 	2,		// size of ladder
 	{10000, 10000, 0,0,0,0,0,0},	// R32, R34
-	3.4,		// TTL high voltage
+	3.4,	// TTL high voltage
 	0,		// no rBias
 	0,		// no rGnd
-	1e-7		// C26
+	1e-7	// C26
 };
 
 const struct discrete_dac_r1_ladder superbug_bang_dac =
@@ -306,7 +306,7 @@ const struct discrete_dac_r1_ladder superbug_bang_dac =
 	0,		// no vBias
 	0,		// no rBias
 	0,		// no rGnd
-	1e-7		// C25
+	1e-7	// C25
 };
 
 const struct discrete_schmitt_osc_desc superbug_screech_osc =
@@ -323,31 +323,31 @@ const struct discrete_schmitt_osc_desc superbug_screech_osc =
 const struct discrete_mixer_desc superbug_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
-	4,					// 4 inputs
+	4,							// 4 inputs
 	{15000, 10545.6, 33000, 47000, 0,0,0,0}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
 	{0,0,0,0,0,0,0,0},			// No variable resistor nodes
-	{0, 0, 0, 0, 0,0,0,0},			// No caps
-	0,					// No rI
-	5000,					// R63
-	0,					// No Filter
-	1e-7,					// C35
-	0,					// not used in resistor network
+	{0, 0, 0, 0, 0,0,0,0},		// No caps
+	0,							// No rI
+	5000,						// R63
+	0,							// No Filter
+	1e-7,						// C35
+	0,							// not used in resistor network
 	33000
 };
 
 /* Nodes - Inputs */
-#define SUPERBUG_SPEED_DATA	NODE_01
-#define SUPERBUG_CRASH_DATA	NODE_02
-#define SUPERBUG_SKID_EN	NODE_03
-#define SUPERBUG_ASR_EN		NODE_04
-#define SUPERBUG_ATTRACT_EN	NODE_05
+#define SUPERBUG_SPEED_DATA		NODE_01
+#define SUPERBUG_CRASH_DATA		NODE_02
+#define SUPERBUG_SKID_EN		NODE_03
+#define SUPERBUG_ASR_EN			NODE_04
+#define SUPERBUG_ATTRACT_EN		NODE_05
 #define SUPERBUG_ATTRACT_INV	NODE_06
 /* Nodes - Sounds */
-#define SUPERBUG_NOISE		NODE_10
-#define SUPERBUG_MOTORSND	NODE_11
-#define SUPERBUG_BANGSND	NODE_12
-#define SUPERBUG_SCREECHSND	NODE_13
-#define SUPERBUG_ASRSND		NODE_14
+#define SUPERBUG_NOISE			NODE_10
+#define SUPERBUG_MOTORSND		NODE_11
+#define SUPERBUG_BANGSND		NODE_12
+#define SUPERBUG_SCREECHSND		NODE_13
+#define SUPERBUG_ASRSND			NODE_14
 
 DISCRETE_SOUND_START(superbug_sound_interface)
 	/************************************************/
@@ -371,7 +371,7 @@ DISCRETE_SOUND_START(superbug_sound_interface)
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
 				10000,	// R12 + R62 @ min
 				260000,	// R12 + R62 @ max
-				135000, DISC_LOGADJ, "Motor Frequency")
+				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q1
 			SUPERBUG_SPEED_DATA,	// IC B5, pins 3, 14, 6, 11
 			3.4,			// TTL ON level
@@ -558,7 +558,7 @@ DISCRETE_SOUND_START(montecar_sound_interface)
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
 				10000,	// R87 + R89 @ min
 				260000,	// R87 + R89 @ max
-				135000, DISC_LOGADJ, "Motor Frequency")
+				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q7
 			MONTECAR_MOTOR_DATA,	// IC H8, pins 5, 2, 9, 6
 			3.4,			// TTL ON level
@@ -594,7 +594,7 @@ DISCRETE_SOUND_START(montecar_sound_interface)
 	DISCRETE_ADJUSTMENT(NODE_40, 1,
 				10000,	// R85 + R88 @ min
 				260000,	// R85 + R88 @ max
-				155000, DISC_LOGADJ, "Drone Motor Frequency")
+				DISC_LOGADJ, 9)
 	DISCRETE_DAC_R1(NODE_41, 1,		// base of Q7
 			MONTECAR_DRONE_MOTOR_DATA,	// IC H8, pins 19, 16, 12, 15
 			3.4,			// TTL ON level

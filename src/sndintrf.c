@@ -1236,6 +1236,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_CDDA)
+	{
+		SOUND_CDDA,
+		"CD Audio",
+		0,
+		0,
+		CDDA_sh_start,
+		CDDA_sh_stop,
+		0,
+		0
+	},
+#endif
 
 
 

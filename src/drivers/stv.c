@@ -5,7 +5,7 @@ a.k.a. known as a Sega Saturn for the Arcades.
 Driver by David Haywood,Angelo Salese,Olivier Galibert & Mariusz Wojcieszek
 SCSP driver provided by R.Belmont,based on ElSemi's SCSP sound chip emulator
 CD Block driver provided by ANY,based on sthief original emulator
-Many thanks to Guru & Runik for the help given.
+Many thanks to Guru,Fabien & Runik for the help given.
 
 Hardware overview:
 ------------------
@@ -23,8 +23,23 @@ also has a DSP;
 -A B-Bus,where the Video Hardware & the SCU sections are located;
 -Two VDPs chips(named as 1 & 2),used for the video section:
  -VDP1 is used to render sprites & polygons.
- -VDP2 is for the tilemap system,there are 4 effective normal layers or 2 roz layers
- + one back layer.
+ -VDP2 is for the tilemap system,there are:
+ 4 effective normal layers;
+ 2 roz layers;
+ 1 back layer;
+ 1 line layer;
+ The VDP2 is capable of the following things (in order):
+ -dynamic resolution (up to 740x480) & various interlacing modes;
+ -mosaic process;
+ -scrolling,scaling,horizontal & vertical cell scrolling for the normal planes,
+  the roz ones can also rotate;
+ -versatile window system,used for various effects;
+ -alpha-blending,refered as Color Calculation in the docs;
+ -shadow effects;
+ -global rgb brightness control,separate for every plane;
+
+some VDP2 registers are used to drive some VDP1 functions.
+
 this hardware comes above hell on the great list of hellish things as far as emulation goes anyway ;-)
 
 
@@ -85,15 +100,15 @@ ToDo / Notes:
 -the Cart-Dev mode...why it hangs?
 -fix some strange sound cpu memory accesses,there are various issues about this.
 -finish the DSP core.
--Add window effect in VDP2 (in progress).
--Finish the tilemap scaling.
+-Complete the window system in VDP2 (Still in progress).
 
 (per-game issues)
 -groovef: hangs soon after loaded,caused by two memory addresses in the Work RAM-H range.
  Kludged for now to work.
 -various: find idle skip if possible.
 -vmahjong: locks up the emulation due to DMA/irq issues.
--shanhigw: register maps & priorities are wrong...
+-shanhigw: Wrong priorities.
+-shanhigw: Can't get a proper vertical scrolling for the bitmaps,commented out ATM.
 -hanagumi + others: why do we get 2 credits on startup with sound enabled
  (game doesn't work with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
@@ -107,7 +122,7 @@ ToDo / Notes:
 -some games (rsgun,myfairld) don't pass a sound ram address check if you
  enter then exit from the BIOS test mode,it is a recent issue as before wasn't like
  this...
--grdforce: missing backgrounds(map issue? -AS)
+-grdforce: missing scrolling/roz on RBG0 layer.
 -ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
@@ -115,8 +130,7 @@ ToDo / Notes:
 -groovef: missing sprites
 -introdon: game initializes palette RAM *without* the IC13 hack
 -pblbeach: not working due to missing timer 1 irq.
--decathlt: sets invalid DMA size for the sound cpu and crashes due of that
-.
+-decathlt: sets invalid DMA size for the sound cpu and crashes due of that.
 
 */
 
@@ -162,7 +176,7 @@ static data32_t* ioga;
 static data16_t* scsp_regs;
 static data16_t* sound_ram;
 
-int stv_vblank;
+int stv_vblank,stv_hblank;
 /*SMPC stuff*/
 static UINT8 SCSP_reset;
 static void system_reset(void);
@@ -1979,6 +1993,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
+				cpu_set_reset_line(1, PULSE_LINE);
 				cpu_set_halt_line(1,CLEAR_LINE);
 				#endif
 				break;
@@ -2170,6 +2185,7 @@ static INTERRUPT_GEN( stv_interrupt )
 {
 	scanline = 261-cpu_getiloops();
 
+	stv_hblank = 0;
 
 	if(scanline == 0)
 	{
@@ -2184,6 +2200,7 @@ static INTERRUPT_GEN( stv_interrupt )
 	else if(scanline <= 223 && scanline >= 1)/*Correct?*/
 	{
 		timer_0++;
+		stv_hblank = 1;
 		if(timer_0 == (stv_scu[36] & 0x1ff))
 		{
 			if(!(stv_scu[40] & 8))/*Timer 0*/
@@ -2448,42 +2465,21 @@ Registers are in long words.
 51    00cc	<Free>
 52    00cf
 ===================================================================================
-DMA Status Register:
-31
-30
-29
-28
-27
-26
-25
-24
-
-23
-22 - DMA DSP-Bus access
-21 - DMA B-Bus access
-20 - DMA A-Bus access
-19
-18
-17 - DMA lv 1 interrupt
-16 - DMA lv 0 interrupt
-
-15
-14
-13 - DMA lv 2 in stand-by
-12 - DMA lv 2 in operation
-11
-10
-09 - DMA lv 1 in stand-by
-08 - DMA lv 1 in operation
-
-07
-06
-05 - DMA lv 0 in stand-by
-04 - DMA lv 0 in operation
-03
-02
-01 - DSP side DMA in stand-by
-00 - DSP side DMA in operation
+DMA Status Register(32-bit):
+xxxx xxxx x--- xx-- xx-- xx-- xx-- xx-- UNUSED
+---- ---- -x-- ---- ---- ---- ---- ---- DMA DSP-Bus access
+---- ---- --x- ---- ---- ---- ---- ---- DMA B-Bus access
+---- ---- ---x ---- ---- ---- ---- ---- DMA A-Bus access
+---- ---- ---- --x- ---- ---- ---- ---- DMA lv 1 interrupt
+---- ---- ---- ---x ---- ---- ---- ---- DMA lv 0 interrupt
+---- ---- ---- ---- --x- ---- ---- ---- DMA lv 2 in stand-by
+---- ---- ---- ---- ---x ---- ---- ---- DMA lv 2 in operation
+---- ---- ---- ---- ---- --x- ---- ---- DMA lv 1 in stand-by
+---- ---- ---- ---- ---- ---x ---- ---- DMA lv 1 in operation
+---- ---- ---- ---- ---- ---- --x- ---- DMA lv 0 in stand-by
+---- ---- ---- ---- ---- ---- ---x ---- DMA lv 0 in operation
+---- ---- ---- ---- ---- ---- ---- --x- DSP side DMA in stand-by
+---- ---- ---- ---- ---- ---- ---- ---x DSP side DMA in operation
 
 **********************************************************************************/
 /*
@@ -2537,25 +2533,25 @@ WRITE32_HANDLER( stv_scu_w32 )
 		case 1:	scu_dst_0  = ((stv_scu[1] & 0x07ffffff) >> 0); break;
 		case 2: scu_size_0 = ((stv_scu[2] & 0x000fffff) >> 0); break;
 		case 3:
-		/*Read address add value for DMA lv 0*/
-		if(stv_scu[3] & 0x100)
-			scu_src_add_0 = 4;
-		else
-			scu_src_add_0 = 0;//could be 2...
+			/*Read address add value for DMA lv 0*/
+			if(stv_scu[3] & 0x100)
+				scu_src_add_0 = 4;
+			else
+				scu_src_add_0 = 0;
 
-		/*Write address add value for DMA lv 0*/
-		switch(stv_scu[3] & 7)
-		{
-			case 0: scu_dst_add_0 = 2;   break;
-			case 1: scu_dst_add_0 = 4;   break;
-			case 2: scu_dst_add_0 = 8;   break;
-			case 3: scu_dst_add_0 = 16;  break;
-			case 4: scu_dst_add_0 = 32;  break;
-			case 5: scu_dst_add_0 = 64;  break;
-			case 6: scu_dst_add_0 = 128; break;
-			case 7: scu_dst_add_0 = 256; break;
-		}
-		break;
+			/*Write address add value for DMA lv 0*/
+			switch(stv_scu[3] & 7)
+			{
+				case 0: scu_dst_add_0 = 2;   break;
+				case 1: scu_dst_add_0 = 4;   break;
+				case 2: scu_dst_add_0 = 8;   break;
+				case 3: scu_dst_add_0 = 16;  break;
+				case 4: scu_dst_add_0 = 32;  break;
+				case 5: scu_dst_add_0 = 64;  break;
+				case 6: scu_dst_add_0 = 128; break;
+				case 7: scu_dst_add_0 = 256; break;
+			}
+			break;
 		case 4:
 /*
 -stv_scu[4] bit 0 is DMA starting bit.
@@ -2721,7 +2717,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		/*This is r/w by introdon...*/
 		logerror("IRQ status reg set:%08x\n",stv_scu[41]);
 		break;
-		case 42: /*A-Bus IRQ ACK*/ break;
+		case 42: logerror("A-Bus IRQ ACK\n"); break;
 		case 49: /*This sets the SDRAM size*/ break;
 		default: logerror("Warning: unused SCU reg set %d = %08x\n",offset,data);
 	}
@@ -2745,6 +2741,13 @@ static void dma_direct_lv0()
 	{
 		if(scu_dst_add_0 == 2)
 			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+		else if(scu_dst_add_0 == 8)
+		{
+			program_write_word(scu_dst_0,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+2,program_read_word(scu_src_0));
+			program_write_word(scu_dst_0+4,program_read_word(scu_src_0+2));
+			program_write_word(scu_dst_0+6,program_read_word(scu_src_0+2));
+		}
 		else
 		{
 			program_write_word(scu_dst_0,program_read_word(scu_src_0));
@@ -3071,6 +3074,12 @@ static WRITE32_HANDLER( sinit_w )
 	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
+static WRITE32_HANDLER ( a_bus_ctrl )
+{
+	usrintf_showmessage("%04x %04x",data,offset/4);
+}
+
+
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
 extern READ32_HANDLER ( stv_vdp2_vram_r );
 
@@ -3088,6 +3097,12 @@ extern WRITE32_HANDLER( stv_vdp1_regs_w );
 extern READ32_HANDLER ( stv_vdp1_vram_r );
 extern WRITE32_HANDLER ( stv_vdp1_vram_w );
 
+extern WRITE32_HANDLER ( stv_vdp1_framebuffer0_w );
+extern READ32_HANDLER ( stv_vdp1_framebuffer0_r );
+
+extern WRITE32_HANDLER ( stv_vdp1_framebuffer1_w );
+extern READ32_HANDLER ( stv_vdp1_framebuffer1_r );
+
 static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_ROM   // bios
 	AM_RANGE(0x00100000, 0x0010007f) AM_READWRITE(stv_SMPC_r32, stv_SMPC_w32)
@@ -3099,6 +3114,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 //	AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x0007ffffc)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
 	AM_RANGE(0x02000000, 0x04ffffff) AM_ROM AM_ROMBANK(1)// cartridge
+	AM_RANGE(0x04fffff0, 0x04ffffff) AM_WRITE(a_bus_ctrl)
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(cdregister_r, cdregister_w)
 	/* Sound */
 	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
@@ -3108,7 +3124,9 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
 	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
-	AM_RANGE(0x05c00000, 0x05cbffff) AM_READWRITE(stv_vdp1_vram_r, stv_vdp1_vram_w)
+	AM_RANGE(0x05c00000, 0x05c7ffff) AM_READWRITE(stv_vdp1_vram_r, stv_vdp1_vram_w)
+	AM_RANGE(0x05800000, 0x05c9ffff) AM_READWRITE(stv_vdp1_framebuffer0_r, stv_vdp1_framebuffer0_w)
+	AM_RANGE(0x05a00000, 0x05cbffff) AM_READWRITE(stv_vdp1_framebuffer1_r, stv_vdp1_framebuffer1_w)
 	AM_RANGE(0x05d00000, 0x05d0001f) AM_READWRITE(stv_vdp1_regs_r, stv_vdp1_regs_w)
 	AM_RANGE(0x05e00000, 0x05efffff) AM_READWRITE(stv_vdp2_vram_r, stv_vdp2_vram_w)
 	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READWRITE(stv_vdp2_cram_r, stv_vdp2_cram_w)
@@ -4513,12 +4531,12 @@ GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus"
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Othello Shiyouyo", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   "Pro Mahjong Kiwame S", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )/*This is jerky but (somewhat) playable*/
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  "Guardian Force", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */
-GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0, "Atlus",      "Power Instinct 3 - Groove On Fight", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,stv,       ROT0, "Altron (Tecmo license)", "Danchi de Hanafuoda", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",    "Guardian Force", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate",   "Fighting Dragon Legend Elan Doree", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0, "Micronet",   "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure",   "Radiant Silvergun", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )

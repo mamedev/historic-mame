@@ -343,7 +343,7 @@ int g_jmp_cycle_table[13] =
 	 0, /* EA_MODE_PD   */
 	 0, /* EA_MODE_PD7  */
 	 6, /* EA_MODE_DI   */
-	 8, /* EA_MODE_IX   */
+	10, /* EA_MODE_IX   */
 	 6, /* EA_MODE_AW   */
 	 8, /* EA_MODE_AL   */
 	 6, /* EA_MODE_PCDI */
@@ -391,7 +391,7 @@ int g_lea_cycle_table[13] =
 int g_pea_cycle_table[13] =
 {
 	 0, /* EA_MODE_NONE */
-	 4, /* EA_MODE_AI   */
+	 6, /* EA_MODE_AI   */
 	 0, /* EA_MODE_PI   */
 	 0, /* EA_MODE_PI7  */
 	 0, /* EA_MODE_PD   */
@@ -402,6 +402,24 @@ int g_pea_cycle_table[13] =
 	14, /* EA_MODE_AL   */
 	10, /* EA_MODE_PCDI */
 	14, /* EA_MODE_PCIX */
+	 0, /* EA_MODE_I    */
+};
+
+/* Extra cycles for MOVEM instruction (000, 010) */
+int g_movem_cycle_table[13] =
+{
+	 0, /* EA_MODE_NONE */
+	 0, /* EA_MODE_AI   */
+	 0, /* EA_MODE_PI   */
+	 0, /* EA_MODE_PI7  */
+	 0, /* EA_MODE_PD   */
+	 0, /* EA_MODE_PD7  */
+	 4, /* EA_MODE_DI   */
+	 6, /* EA_MODE_IX   */
+	 4, /* EA_MODE_AW   */
+	 8, /* EA_MODE_AL   */
+	 0, /* EA_MODE_PCDI */
+	 0, /* EA_MODE_PCIX */
 	 0, /* EA_MODE_I    */
 };
 
@@ -618,7 +636,8 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 		}
 
 		/* ASG: added these cases -- immediate modes take 2 extra cycles here */
-		if(cpu_type == CPU_TYPE_000 && ea_mode == EA_MODE_I &&
+		/* SV: but only when operating on long, and also on register direct mode */
+		if(cpu_type == CPU_TYPE_000 && (ea_mode == EA_MODE_I || ea_mode == EA_MODE_NONE) && op->size == 32 &&
 		   ((strcmp(op->name, "add") == 0 && strcmp(op->spec_proc, "er") == 0) ||
 			strcmp(op->name, "adda")   == 0                                    ||
 			(strcmp(op->name, "and") == 0 && strcmp(op->spec_proc, "er") == 0) ||
@@ -635,6 +654,8 @@ int get_oper_cycles(opcode_struct* op, int ea_mode, int cpu_type)
 			return op->cycles[cpu_type] + g_lea_cycle_table[ea_mode];
 		if(strcmp(op->name, "pea") == 0)
 			return op->cycles[cpu_type] + g_pea_cycle_table[ea_mode];
+		if(strcmp(op->name, "movem") == 0)
+			return op->cycles[cpu_type] + g_movem_cycle_table[ea_mode];
 	}
 	return op->cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size];
 }

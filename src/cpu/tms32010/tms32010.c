@@ -44,6 +44,7 @@
  *	TLP (22-Feb-2004) Ver 1.21												*
  *	 - Overflow for ADDH only affects upper 16bits (was modifying 32 bits)	*
  *	 - Internal Data Memory map is assigned here now						*
+ *	 - Cycle counts for invalid opcodes 7F1E and 7F1F are now 0				*
  *																			*
  \**************************************************************************/
 
@@ -675,7 +676,7 @@ static unsigned cycles_main[256]=
 static unsigned cycles_7F_other[32]=
 {
 /*80*/	1*CLK, 1*CLK, 1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 1*CLK, 1*CLK, 1*CLK, 1*CLK, 2*CLK, 2*CLK, 1*CLK, 1*CLK,
-/*90*/	1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 2*CLK, 2*CLK, 1*CLK, 1*CLK
+/*90*/	1*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 0*CLK, 2*CLK, 2*CLK, 0*CLK, 0*CLK
 };
 
 

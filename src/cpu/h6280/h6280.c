@@ -176,8 +176,8 @@ static int h6280_execute(int cycles)
 	int in,lastcycle,deltacycle;
 	h6280_ICount = cycles;
 
-    /* Subtract cycles used for taking an interrupt */
-    h6280_ICount -= h6280.extra_cycles;
+	/* Subtract cycles used for taking an interrupt */
+	h6280_ICount -= h6280.extra_cycles;
 	h6280.extra_cycles = 0;
 	lastcycle = h6280_ICount;
 
@@ -229,10 +229,10 @@ static int h6280_execute(int cycles)
 	} while (h6280_ICount > 0);
 
 	/* Subtract cycles used for taking an interrupt */
-    h6280_ICount -= h6280.extra_cycles;
-    h6280.extra_cycles = 0;
+	h6280_ICount -= h6280.extra_cycles;
+	h6280.extra_cycles = 0;
 
-    return cycles - h6280_ICount;
+	return cycles - h6280_ICount;
 }
 
 static void h6280_get_context (void *dst)
@@ -494,6 +494,7 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 				h6280.p & 0x01 ? 'C':'.');
 			break;
 
+		case CPUINFO_STR_REGISTER + H6280_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", h6280.pc.d); break;
         case CPUINFO_STR_REGISTER + H6280_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", h6280.sp.b.l); break;
         case CPUINFO_STR_REGISTER + H6280_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", h6280.p); break;
         case CPUINFO_STR_REGISTER + H6280_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", h6280.a); break;

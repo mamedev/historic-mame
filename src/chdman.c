@@ -4,7 +4,11 @@
 
 ***************************************************************************/
 
+#include "osd_cpu.h"
+#include "driver.h"
 #include "harddisk.h"
+#include "cdrom.h"
+#include "chdcd.h"
 #include "md5.h"
 #include "sha1.h"
 #include <stdarg.h>
@@ -110,6 +114,18 @@ static const char *error_strings[] =
 ***************************************************************************/
 
 /*-------------------------------------------------
+	put_bigendian_uint32 - write a UINT32 in big-endian order to memory
+-------------------------------------------------*/
+
+INLINE void put_bigendian_uint32(UINT8 *base, UINT32 value)
+{
+	base[0] = value >> 24;
+	base[1] = value >> 16;
+	base[2] = value >> 8;
+	base[3] = value;
+}
+
+/*-------------------------------------------------
 	print_big_int - 64-bit int printing with commas
 -------------------------------------------------*/
 
@@ -188,8 +204,7 @@ static void error(void)
 	printf("usage: chdman -info input.chd\n");
 	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors [sectorsize [hunksize]]]]\n");
 	printf("   or: chdman -createblankhd output.chd cylinders heads sectors [sectorsize [hunksize]]\n");
-//	printf("   or: chdman -createcd input.iso output.chd\n");
-//	printf("   or: chdman -createcd input.bin input.cue output.chd\n");
+	printf("   or: chdman -createcd input.toc output.chd\n");
 	printf("   or: chdman -copydata input.chd output.chd\n");
 	printf("   or: chdman -extract input.chd output.raw\n");
 	printf("   or: chdman -verify input.chd\n");
@@ -487,6 +502,165 @@ static void do_createhd(int argc, char *argv[])
 		remove(outputfile);
 		return;
 	}
+
+	/* success */
+	chd_close(chd);
+}
+
+/*-------------------------------------------------
+	do_createcd - create a new compressed CD
+	image from a raw file
+-------------------------------------------------*/
+
+static void do_createcd(int argc, char *argv[])
+{
+	char *inputfile, *outputfile;
+	struct chd_file *chd;
+	struct chd_exfile *chdex;
+	int err;
+	UINT32 totalsectors = 0;
+	UINT32 sectorsize = CD_FRAME_SIZE;
+	UINT32 hunksize = ((CD_FRAME_SIZE * CD_FRAMES_PER_HUNK) / sectorsize) * sectorsize;
+	static struct cdrom_toc toc;
+	static struct cdrom_track_input_info track_info;
+	int i;
+	static UINT32 metadata[CD_METADATA_WORDS], *mwp;
+
+	/* require 4 args total */
+	if (argc != 4)
+		error();
+
+	/* extract the data */
+	inputfile = argv[2];
+	outputfile = argv[3];
+
+	/* setup the CDROM module and get the disc info */
+	err = cdrom_parse_toc(inputfile, &toc, &track_info);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error reading input file: %s\n", error_string(err));
+		return;
+	}
+
+	/* count up the total number of frames */
+	totalsectors = 0;
+	for (i = 0; i < toc.numtrks; i++)
+	{
+		totalsectors += toc.tracks[i].frames;
+	}
+	printf("\nCD-ROM %s has %d tracks and %d total frames\n", inputfile, toc.numtrks, totalsectors);
+
+	/* pad each track to a hunk boundry.  cdrom.c will deal with this on the read side */
+	for (i = 0; i < toc.numtrks; i++)
+	{
+		int hunks = toc.tracks[i].frames / CD_FRAMES_PER_HUNK;
+
+		if ((toc.tracks[i].frames % CD_FRAMES_PER_HUNK) != 0)
+		{
+			hunks++;
+			toc.tracks[i].extraframes = (hunks * CD_FRAMES_PER_HUNK) - toc.tracks[i].frames;
+
+			// adjust the total sector count as well
+			totalsectors += toc.tracks[i].extraframes;
+		}
+		else
+		{
+			toc.tracks[i].extraframes = 0;
+		}
+
+		/*
+		printf("Track %02d: file %s offset %d type %d subtype %d datasize %d subsize %d frames %d extra %d\n", i,
+			track_info.fname[i], 
+			track_info.offset[i], 
+			toc.tracks[i].trktype,
+			toc.tracks[i].subtype,
+			toc.tracks[i].datasize,
+			toc.tracks[i].subsize,
+			toc.tracks[i].frames,
+			toc.tracks[i].extraframes);
+		*/		
+	}
+
+	/* create the new CHD file */
+	err = chd_create(outputfile, (UINT64)totalsectors * (UINT64)sectorsize, hunksize, CHDCOMPRESSION_ZLIB_PLUS, NULL);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error creating CHD file: %s\n", error_string(err));
+		return;
+	}
+
+	/* open the new CHD file */
+	chd = chd_open(outputfile, 1, NULL);
+	if (!chd)
+	{
+		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
+		remove(outputfile);
+		return;
+	}
+
+	/* convert the metadata to a "portable" format */
+	mwp = &metadata[0];
+	put_bigendian_uint32((UINT8 *)mwp, toc.numtrks);
+	mwp++;
+	for (i = 0; i < CD_MAX_TRACKS; i++)
+	{
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].trktype);
+		mwp++;
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].subtype);
+		mwp++;
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].datasize);
+		mwp++;
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].subsize);
+		mwp++;
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].frames);
+		mwp++;
+		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].extraframes);
+		mwp++;
+	}
+
+	/* write the metadata */
+	err = chd_set_metadata(chd, CDROM_STANDARD_METADATA, 0, metadata, sizeof(metadata));
+	if (err != CHDERR_NONE)
+	{
+		printf("Error adding CD-ROM metadata: %s\n", error_string(chd_get_last_error()));
+		chd_close(chd);
+		remove(outputfile);
+		return;
+	}
+
+	/* begin state for writing */
+	chdex = chd_start_compress_ex(chd);
+
+	/* write each track */
+	for (i = 0; i < toc.numtrks; i++)
+	{
+		int trkbytespersec = toc.tracks[i].datasize + toc.tracks[i].subsize;
+		int hunks = (toc.tracks[i].frames + toc.tracks[i].extraframes) / CD_FRAMES_PER_HUNK;
+
+		printf("Compressing track %d / %d (file %s:%d, %d frames, %d hunks)\n", i+1, toc.numtrks, track_info.fname[i], track_info.offset[i], toc.tracks[i].frames, hunks);
+
+ 		err = chd_compress_ex(chdex, track_info.fname[i], track_info.offset[i], 
+				trkbytespersec, CD_FRAMES_PER_HUNK, hunks, 
+				CD_FRAME_SIZE, progress);
+		if (err != CHDERR_NONE)
+		{
+			printf("Error during compression: %s\n", error_string(err));
+			chd_close(chd);
+			remove(outputfile);
+			return;
+		}
+	}
+
+	/* cleanup */
+	err = chd_end_compress_ex(chdex, progress);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error during compression finalization: %s\n", error_string(err));
+		chd_close(chd);
+		remove(outputfile);
+		return;
+	}
+
 
 	/* success */
 	chd_close(chd);
@@ -1801,8 +1975,8 @@ int main(int argc, char **argv)
 		do_createblankhd(argc, argv);
 	if (!stricmp(argv[1], "-copydata"))
 		do_copydata(argc, argv);
-//	else if (!stricmp(argv[1], "-createcd"))
-//		do_createcd(argc, argv);
+	else if (!stricmp(argv[1], "-createcd"))
+		do_createcd(argc, argv);
 	else if (!stricmp(argv[1], "-extract"))
 		do_extract(argc, argv);
 	else if (!stricmp(argv[1], "-verify"))

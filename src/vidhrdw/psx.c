@@ -7,7 +7,7 @@
 
 	Supports:
 	  type 1 1024x1024 framebuffer (CXD8538Q)
-	  type 2 1024x512 framebuffer
+	  type 2 1024x512 framebuffer (CXD8561Q)
 	  type 2 1024x1024 framebuffer (CXD8514Q/CXD8561Q/CXD8654Q)
 
 	Debug Keys:
@@ -2923,6 +2923,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			break;
 		case 0x40:
 		case 0x41:
+		case 0x42:
 			if( m_n_gpu_buffer_offset < 2 )
 			{
 				m_n_gpu_buffer_offset++;

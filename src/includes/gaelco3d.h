@@ -12,8 +12,8 @@
 
 /*----------- defined in vidhrdw/gaelco3d.c -----------*/
 
-offs_t gaelco3d_mask_offset;
-offs_t gaelco3d_mask_size;
+extern offs_t gaelco3d_mask_offset;
+extern offs_t gaelco3d_mask_size;
 
 void gaelco3d_render(void);
 WRITE32_HANDLER( gaelco3d_render_w );

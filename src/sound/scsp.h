@@ -6,6 +6,10 @@
 #ifndef _SCSP_H_
 #define _SCSP_H_
 
+#ifndef VOL_YM3012
+#define YM3012_VOL(LVol,LPan,RVol,RPan) (MIXER(LVol,LPan)|(MIXER(RVol,RPan) << 16))
+#endif
+
 #define MAX_SCSP	(2)
 
 struct SCSPinterface 

@@ -33,10 +33,6 @@ struct InputPort
 	UINT32 type;			/* see defines below */
 	const char *name;		/* name to display */
 	InputSeq seq;                  	/* input sequence affecting the input bits */
-#ifdef MESS
-	UINT32 arg;				/* extra argument needed in some cases */
-	UINT16 min, max;		/* for analog controls */
-#endif
 };
 
 
@@ -62,6 +58,9 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_AD_STICK_X, IPT_AD_STICK_Y, IPT_AD_STICK_Z,
 	IPT_LIGHTGUN_X, IPT_LIGHTGUN_Y,
 	IPT_PEDAL, IPT_PEDAL2,
+#ifdef MESS
+	IPT_MOUSE_X, IPT_MOUSE_Y,
+#endif /* MESS */
 	IPT_ANALOG_END,
 
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
@@ -72,9 +71,8 @@ enum { IPT_END=1,IPT_PORT,
 #ifdef MESS
 	IPT_KEYBOARD, IPT_UCHAR,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
-	IPT_MOUSE_X, IPT_MOUSE_Y,
 	IPT_START, IPT_SELECT,
-#endif
+#endif /* MESS */
 /* Many games poll an input bit to check for vertical blanks instead of using */
 /* interrupts. This special value allows you to handle that. If you set one of the */
 /* input bits to this, the bit will be inverted while a vertical blank is happening. */
@@ -122,6 +120,9 @@ enum { IPT_END=1,IPT_PORT,
 	/* 8 player support */
 	IPT_START5, IPT_START6, IPT_START7, IPT_START8,
 	IPT_COIN5, IPT_COIN6, IPT_COIN7, IPT_COIN8,
+
+	/* Analog adjuster support */
+	IPT_ADJUSTER,
 	__ipt_max
 };
 
@@ -254,6 +255,10 @@ enum { IPT_END=1,IPT_PORT,
 
 #define PORT_DIPSETTING(default,name) \
 	PORT_BIT_NAME(0, default, IPT_DIPSWITCH_SETTING, name)
+
+/* analog adjuster definition */
+#define PORT_ADJUSTER(default,name) \
+	PORT_BIT_NAME(0x00ff, (default & 0xff) | (default << 8), IPT_ADJUSTER, name)
 
 
 #define PORT_SERVICE(mask,default)	\

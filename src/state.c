@@ -93,6 +93,12 @@ static unsigned char *ss_dump_array;
 static mame_file *ss_dump_file;
 static unsigned int ss_dump_size;
 
+#ifdef MESS
+static const char ss_magic_num[8] = { 'M', 'E', 'S', 'S', 'S', 'A', 'V', 'E' };
+#else
+static const char ss_magic_num[8] = { 'M', 'A', 'M', 'E', 'S', 'A', 'V', 'E' };
+#endif
+
 
 static UINT32 ss_get_signature(void)
 {
@@ -475,7 +481,7 @@ void state_save_save_finish(void)
 	flags |= SS_MSB_FIRST;
 #endif
 
-	memcpy(ss_dump_array, "MAMESAVE", 8);
+	memcpy(ss_dump_array, ss_magic_num, 8);
 	ss_dump_array[8] = 1;
 	ss_dump_array[9] = flags;
 	memset(ss_dump_array+0xa, 0, 10);
@@ -493,11 +499,75 @@ void state_save_save_finish(void)
 	ss_dump_file = 0;
 }
 
+static int ss_check_header(const unsigned char *header, const char *gamename, UINT32 signature,
+	void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix)
+{
+	UINT32 file_sig;
+
+	/* check magic number */
+	if (memcmp(header, ss_magic_num, 8))
+	{
+		if (errormsg)
+			errormsg("%sThis is not a " APPNAME " save file", error_prefix);
+		return -1;
+	}
+
+	/* check save state version */
+	if (header[8] != 1)
+	{
+		if (errormsg)
+			errormsg("%sWrong version in save file (%d, 1 expected)", error_prefix, header[8]);
+		return -1;
+	}
+
+	/* check gamename, if we were asked to */
+	if (gamename && strcmp(gamename, (const char *) &header[10]))
+	{
+		if (errormsg)
+			errormsg("%s'%s' is not a valid savestate file for game '%s'.", error_prefix, gamename);
+		return -1;
+	}
+
+	/* check signature, if we were asked to */
+	if (signature)
+	{
+		file_sig = header[0x14]
+			| (header[0x15] << 8)
+			| (header[0x16] << 16)
+			| (header[0x17] << 24);
+
+		if (file_sig != signature)
+		{
+			if (errormsg)
+				errormsg("%sIncompatible save file (signature %08x, expected %08x)",
+					error_prefix, file_sig, signature);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+int state_save_check_file(mame_file *file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...))
+{
+	unsigned char header[0x18];
+
+	mame_fseek(file, 0, SEEK_SET);
+	
+	if (mame_fread(file, header, sizeof(header)) != sizeof(header))
+	{
+		if (errormsg)
+			errormsg("Could not read " APPNAME " save file header");
+		return -1;
+	}
+	return ss_check_header(header, gamename, 0, errormsg, "");
+}
+
 int state_save_load_begin(mame_file *file)
 {
 	ss_module *m;
 	unsigned int offset = 0;
-	UINT32 signature, file_sig;
+	UINT32 signature;
 
 	TRACE(logerror("Beginning load\n"));
 
@@ -508,27 +578,8 @@ int state_save_load_begin(mame_file *file)
 	ss_dump_file = file;
 	mame_fread(ss_dump_file, ss_dump_array, ss_dump_size);
 
-	if(memcmp(ss_dump_array, "MAMESAVE", 8)) {
-		usrintf_showmessage("Error: This is not a mame save file");
+	if (ss_check_header(ss_dump_array, NULL, signature, usrintf_showmessage, "Error: "))
 		goto bad;
-	}
-
-	if(ss_dump_array[8] != 1) {
-		usrintf_showmessage("Error: Wrong version in save file (%d, 1 expected)",
-							ss_dump_array[8]);
-		goto bad;
-	}
-
-	file_sig = ss_dump_array[0x14]
-		| (ss_dump_array[0x15] << 8)
-		| (ss_dump_array[0x16] << 16)
-		| (ss_dump_array[0x17] << 24);
-
-	if(file_sig != signature) {
-		usrintf_showmessage("Error: Incompatible save file (signature %08x, expected %08x)",
-							file_sig, signature);
-		goto bad;
-	}
 
 	if(ss_dump_array[9] & SS_NO_SOUND)
 	{

@@ -159,4 +159,4 @@ bit 0 - u_clk (unknown, but probably internal clock related)
 Jarek Burczynski
 
 s0246@poczta.onet.pl
-bujar@mame.net
+bujar at mame dot net

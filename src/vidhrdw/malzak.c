@@ -16,8 +16,8 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/s2636.h"
 
-unsigned char* s2636_1_ram;
-unsigned char* s2636_2_ram;
+extern unsigned char* s2636_1_ram;
+extern unsigned char* s2636_2_ram;
 
 static INT8 frame_count;
 
@@ -46,7 +46,7 @@ struct	{
 
 unsigned char* saa5050_vidram;  /* Video RAM for SAA 5050 */
 
-struct mame_bitmap* collision_bitmap;
+static struct mame_bitmap* collision_bitmap;
 
 int temp_x,temp_y;
 
@@ -57,8 +57,8 @@ struct
 	int code;
 } field[256];
 
-unsigned char s2636_1_dirty[4];
-unsigned char s2636_2_dirty[4];
+extern unsigned char s2636_1_dirty[4];
+extern unsigned char s2636_2_dirty[4];
 
 VIDEO_START( malzak )
 {

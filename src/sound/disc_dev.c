@@ -17,34 +17,34 @@
 
 struct dsd_555_astbl_context
 {
-	int	flip_flop;	// 555 flip/flop output state
-        double	vCap;		// voltage on cap
-        double	step;		// time for sampling rate
-        double	threshold;
-        double	trigger;
+	int		flip_flop;	// 555 flip/flop output state
+	double	vCap;		// voltage on cap
+	double	step;		// time for sampling rate
+	double	threshold;
+	double	trigger;
 };
 
 struct dsd_555_cc_context
 {
 	unsigned int	type;		// type of 555cc circuit
 	unsigned int	state[2];	// keeps track of excess flip_flop changes during the current step
-	int		flip_flop;	// 555 flip/flop output state
-        double		vCap;		// voltage on cap
-        double		step;		// time for sampling rate
+	int				flip_flop;	// 555 flip/flop output state
+	double			vCap;		// voltage on cap
+	double			step;		// time for sampling rate
 };
 
 struct dsd_566_context
 {
 	unsigned int	state[2];	// keeps track of excess flip_flop changes during the current step
-	int		flip_flop;	// 566 flip/flop output state
-        double		vCap;		// voltage on cap
-        double		step;		// time for sampling rate
-        double		vDiff;		// voltage difference between vPlus and vNeg
-        double		vSqrLow;	// voltage for a squarewave at low
-        double		vSqrHigh;	// voltage for a squarewave at high
-        double		thresholdLow;	// falling threshold
-        double		thresholdHigh;	// rising threshold
-        double		triOffset;	// used to shift a triangle to AC
+	int			flip_flop;		// 566 flip/flop output state
+	double		vCap;			// voltage on cap
+	double		step;			// time for sampling rate
+	double		vDiff;			// voltage difference between vPlus and vNeg
+	double		vSqrLow;		// voltage for a squarewave at low
+	double		vSqrHigh;		// voltage for a squarewave at high
+	double		thresholdLow;	// falling threshold
+	double		thresholdHigh;	// rising threshold
+	double		triOffset;		// used to shift a triangle to AC
 };
 
 
@@ -62,25 +62,25 @@ struct dsd_566_context
 /*                                                                      */
 /* also passed discrete_555_astbl_desc structure                        */
 /*                                                                      */
-/* Jan 2004, D Renaud.                                                                    */
+/* Jan 2004, D Renaud.                                                  */
 /************************************************************************/
-#define DSD555ASTBL_RESET	!node->input[0]
-#define DSD555ASTBL_R1		node->input[1]
-#define DSD555ASTBL_R2		node->input[2]
-#define DSD555ASTBL_C		node->input[3]
-#define DSD555ASTBL_CTRLV	node->input[4]
+#define DSD_555_ASTBL_RESET	!node->input[0]
+#define DSD_555_ASTBL_R1	node->input[1]
+#define DSD_555_ASTBL_R2	node->input[2]
+#define DSD_555_ASTBL_C		node->input[3]
+#define DSD_555_ASTBL_CTRLV	node->input[4]
 
-int dsd_555_astbl_step(struct node_description *node)
+void dsd_555_astbl_step(struct node_description *node)
 {
-	struct dsd_555_astbl_context *context=(struct dsd_555_astbl_context*)node->context;
-	struct discrete_555_astbl_desc *info = (struct discrete_555_astbl_desc*)node->custom;
+	const struct discrete_555_astbl_desc *info = node->custom;
+	struct dsd_555_astbl_context *context = node->context;
 
 	double dt;	// change in time
 	double tRC;	// RC time constant
 	double vC;	// Current voltage on capacitor, before dt
 	double vCnext = 0;	// Voltage on capacitor, after dt
 
-	if(DSD555ASTBL_RESET)
+	if(DSD_555_ASTBL_RESET)
 	{
 		/* We are in RESET */
 		node->output = 0;
@@ -90,10 +90,10 @@ int dsd_555_astbl_step(struct node_description *node)
 	else
 	{
 		/* Check: if the Control Voltage node is connected, calculate thresholds based on Control Voltage */
-		if (DSD555ASTBL_CTRLV != NODE_NC)
+		if (DSD_555_ASTBL_CTRLV != NODE_NC)
 		{
-			context->threshold = DSD555ASTBL_CTRLV;
-			context->trigger = DSD555ASTBL_CTRLV / 2.0;
+			context->threshold = DSD_555_ASTBL_CTRLV;
+			context->trigger = DSD_555_ASTBL_CTRLV / 2.0;
 		}
 
 		/* Calculate future capacitor voltage.
@@ -117,50 +117,64 @@ int dsd_555_astbl_step(struct node_description *node)
 		dt = context->step;
 		vC = context->vCap;
 
-		/* Keep looping until all toggling in time sample is used up. */
-		do
+		/* Sometimes a switching network is used to setup the capacitance.
+		 * These may select no capacitor, causing oscillation to stop.
+		 */
+		if (DSD_555_ASTBL_C == 0)
 		{
-			if (context->flip_flop)
+			context->flip_flop = 1;
+			/* The voltage goes high because the cap circuit is open. */
+			vCnext = info->v555;
+			vC = info->v555;
+			context->vCap = 0;
+		}
+		else
+		{
+			/* Keep looping until all toggling in time sample is used up. */
+			do
 			{
-				/* Charging */
-				tRC = (DSD555ASTBL_R1 + DSD555ASTBL_R2) * DSD555ASTBL_C;
-				vCnext = vC + ((info->v555 - vC) * (1.0 - exp(-(dt / tRC))));
-				dt = 0;
-	
-				/* has it charged past upper limit? */
-				if (vCnext >= context->threshold)
+				if (context->flip_flop)
 				{
-					if (vCnext > context->threshold)
-					{
-						/* calculate the overshoot time */
-						dt = tRC * log(1.0 / (1.0 - ((vCnext - context->threshold) / (info->v555 - vC))));
-					}
-					vC = context->threshold;
-					context->flip_flop = 0;
-				}
-			}
-			else
-			{
-				/* Discharging */
-				tRC = DSD555ASTBL_R2 * DSD555ASTBL_C;
-				vCnext = vC - (vC * (1 - exp(-(dt / tRC))));
-				dt = 0;
-	
-				/* has it discharged past lower limit? */
-				if (vCnext <= context->trigger)
-				{
-					if (vCnext < context->trigger)
-					{
-						/* calculate the overshoot time */
-						dt = tRC * log(1.0 / (1.0 - ((context->trigger - vCnext) / vC)));
-					}
-					vC = context->trigger;
-					context->flip_flop = 1;
-				}
-			}
-		} while(dt);
+					/* Charging */
+					tRC = (DSD_555_ASTBL_R1 + DSD_555_ASTBL_R2) * DSD_555_ASTBL_C;
+					vCnext = vC + ((info->v555 - vC) * (1.0 - exp(-(dt / tRC))));
+					dt = 0;
 
-		context->vCap = vCnext;
+					/* has it charged past upper limit? */
+					if (vCnext >= context->threshold)
+					{
+						if (vCnext > context->threshold)
+						{
+							/* calculate the overshoot time */
+							dt = tRC * log(1.0 / (1.0 - ((vCnext - context->threshold) / (info->v555 - vC))));
+						}
+						vC = context->threshold;
+						context->flip_flop = 0;
+					}
+				}
+				else
+				{
+					/* Discharging */
+					tRC = DSD_555_ASTBL_R2 * DSD_555_ASTBL_C;
+					vCnext = vC - (vC * (1 - exp(-(dt / tRC))));
+					dt = 0;
+
+					/* has it discharged past lower limit? */
+					if (vCnext <= context->trigger)
+					{
+						if (vCnext < context->trigger)
+						{
+							/* calculate the overshoot time */
+							dt = tRC * log(1.0 / (1.0 - ((context->trigger - vCnext) / vC)));
+						}
+						vC = context->trigger;
+						context->flip_flop = 1;
+					}
+				}
+			} while(dt);
+
+			context->vCap = vCnext;
+		}
 
 		switch (info->options & DISC_555_OUT_MASK)
 		{
@@ -179,14 +193,12 @@ int dsd_555_astbl_step(struct node_description *node)
 		if (info->options & DISC_555_OUT_AC)
 			node->output -= (info->options & DISC_555_OUT_MASK) ? context->threshold * 3.0 /4.0 : info->v555high / 2.0;
 	}
-
-	return 0;
 }
 
-int dsd_555_astbl_reset(struct node_description *node)
+void dsd_555_astbl_reset(struct node_description *node)
 {
-	struct dsd_555_astbl_context *context=(struct dsd_555_astbl_context*)node->context;
-	struct discrete_555_astbl_desc *info = (struct discrete_555_astbl_desc*)node->custom;
+	const struct discrete_555_astbl_desc *info = node->custom;
+	struct dsd_555_astbl_context *context = node->context;
 
 	/* This will preset the thresholds if the Control Voltage is not used. */
 	context->threshold = info->threshold555;
@@ -198,29 +210,6 @@ int dsd_555_astbl_reset(struct node_description *node)
 
 	/* Step to set the output */
 	dsd_555_astbl_step(node);
-
-	return 0;
-}
-
-int dsd_555_astbl_init(struct node_description *node)
-{
-	discrete_log("dsd_555_astbl_init() - Creating node %d.",node->node-NODE_00);
-
-	/* Allocate memory for the context array and the node execution order array */
-	if((node->context=malloc(sizeof(struct dsd_555_astbl_context)))==NULL)
-	{
-		discrete_log("dsd_555_astbl_init() - Failed to allocate local context memory.");
-		return 1;
-	}
-	else
-	{
-		/* Initialize memory */
-		memset(node->context,0,sizeof(struct dsd_555_astbl_context));
-	}
-
-	/* Initialize the object */
-	dsd_555_astbl_reset(node);
-	return 0;
 }
 
 
@@ -238,20 +227,20 @@ int dsd_555_astbl_init(struct node_description *node)
 /*                                                                      */
 /* also passed discrete_555_cc_desc structure                           */
 /*                                                                      */
-/* Mar 2004, D Renaud.                                                                    */
+/* Mar 2004, D Renaud.                                                  */
 /************************************************************************/
-#define DSD555CC_RESET	!node->input[0]
-#define DSD555CC_VIN	node->input[1]
-#define DSD555CC_R	node->input[2]
-#define DSD555CC_C	node->input[3]
-#define DSD555CC_RBIAS	node->input[4]
-#define DSD555CC_RGND	node->input[5]
-#define DSD555CC_RDIS	node->input[6]
+#define DSD_555_CC_RESET	!node->input[0]
+#define DSD_555_CC_VIN		node->input[1]
+#define DSD_555_CC_R		node->input[2]
+#define DSD_555_CC_C		node->input[3]
+#define DSD_555_CC_RBIAS	node->input[4]
+#define DSD_555_CC_RGND		node->input[5]
+#define DSD_555_CC_RDIS		node->input[6]
 
-int dsd_555_cc_step(struct node_description *node)
+void dsd_555_cc_step(struct node_description *node)
 {
-	struct dsd_555_cc_context *context=(struct dsd_555_cc_context*)node->context;
-	struct discrete_555_cc_desc *info = (struct discrete_555_cc_desc*)node->custom;
+	const struct discrete_555_cc_desc *info = node->custom;
+	struct dsd_555_cc_context *context = node->context;
 
 	double i;	// Charging current created by vIn
 	double rC = 0;	// Equivalent charging resistor
@@ -267,7 +256,7 @@ int dsd_555_cc_step(struct node_description *node)
 	double rTemp;	// play thing
 
 
-	if (DSD555CC_RESET)
+	if (DSD_555_CC_RESET)
 	{
 		/* 555 held in reset */
 		node->output = 0;
@@ -280,46 +269,46 @@ int dsd_555_cc_step(struct node_description *node)
 	{
 		dt = context->step;	// Change in time
 		vC = context->vCap;	// Set to voltage before change
-		viLimit = DSD555CC_VIN + info->vCCjunction;	// the max vC can be and still be charged by i
+		viLimit = DSD_555_CC_VIN + info->vCCjunction;	// the max vC can be and still be charged by i
 		/* Calculate charging current */
-		i = (info->vCCsource - viLimit) / DSD555CC_R;
+		i = (info->vCCsource - viLimit) / DSD_555_CC_R;
 
 		switch (context->type)	// see dsd_555_cc_reset for descriptions
 		{
 			case 1:
-				rD = DSD555CC_RDIS;
+				rD = DSD_555_CC_RDIS;
 			case 0:
 				break;
 			case 3:
-				rD = (DSD555CC_RDIS * DSD555CC_RGND) / (DSD555CC_RDIS + DSD555CC_RGND);
+				rD = (DSD_555_CC_RDIS * DSD_555_CC_RGND) / (DSD_555_CC_RDIS + DSD_555_CC_RGND);
 			case 2:
-				rC = DSD555CC_RGND;
+				rC = DSD_555_CC_RGND;
 				vi = i * rC;
 				break;
 			case 4:
-				rC = DSD555CC_RBIAS;
+				rC = DSD_555_CC_RBIAS;
 				vi = i * rC;
 				vB = info->v555;
 				break;
 			case 5:
-				rC = DSD555CC_RBIAS + DSD555CC_RDIS;
-				vi = i * DSD555CC_RBIAS;
+				rC = DSD_555_CC_RBIAS + DSD_555_CC_RDIS;
+				vi = i * DSD_555_CC_RBIAS;
 				vB = info->v555;
-				rD = DSD555CC_RDIS;
+				rD = DSD_555_CC_RDIS;
 				break;
 			case 6:
-				rC = (DSD555CC_RBIAS * DSD555CC_RGND) / (DSD555CC_RBIAS + DSD555CC_RGND);
+				rC = (DSD_555_CC_RBIAS * DSD_555_CC_RGND) / (DSD_555_CC_RBIAS + DSD_555_CC_RGND);
 				vi = i * rC;
-				vB = info->v555 * (DSD555CC_RGND / (DSD555CC_RBIAS + DSD555CC_RGND));
+				vB = info->v555 * (DSD_555_CC_RGND / (DSD_555_CC_RBIAS + DSD_555_CC_RGND));
 				break;
 			case 7:
-				rTemp = DSD555CC_RBIAS + DSD555CC_RDIS;
-				rC = (rTemp * DSD555CC_RGND) / (rTemp + DSD555CC_RGND);
-				rTemp += DSD555CC_RGND;
-				rTemp = DSD555CC_RGND / rTemp;	// now has voltage divider ratio, not resistance
-				vi = i * DSD555CC_RBIAS * rTemp;
+				rTemp = DSD_555_CC_RBIAS + DSD_555_CC_RDIS;
+				rC = (rTemp * DSD_555_CC_RGND) / (rTemp + DSD_555_CC_RGND);
+				rTemp += DSD_555_CC_RGND;
+				rTemp = DSD_555_CC_RGND / rTemp;	// now has voltage divider ratio, not resistance
+				vi = i * DSD_555_CC_RBIAS * rTemp;
 				vB = info->v555 * rTemp;
-				rD = (DSD555CC_RGND * DSD555CC_RDIS) / (DSD555CC_RGND + DSD555CC_RDIS);
+				rD = (DSD_555_CC_RGND * DSD_555_CC_RDIS) / (DSD_555_CC_RGND + DSD_555_CC_RDIS);
 				break;
 		}
 
@@ -333,7 +322,7 @@ int dsd_555_cc_step(struct node_description *node)
 				{
 					/* Charging */
 					/* iC=C*dv/dt  works out to dv=iC*dt/C */
-					vCnext = vC + (i * dt / DSD555CC_C);
+					vCnext = vC + (i * dt / DSD_555_CC_C);
 					/* Yes, if the cap voltage has reached the max voltage it can,
 					 * and the 555 threshold has not been reached, then oscillation stops.
 					 * This is the way the actual electronics works.
@@ -348,7 +337,7 @@ int dsd_555_cc_step(struct node_description *node)
 						if (vCnext > info->threshold555)
 						{
 							/* calculate the overshoot time */
-							dt = DSD555CC_C * (vCnext - info->threshold555) / i;
+							dt = DSD_555_CC_C * (vCnext - info->threshold555) / i;
 						}
 						vC = info->threshold555;
 						context->flip_flop = 0;
@@ -362,10 +351,10 @@ int dsd_555_cc_step(struct node_description *node)
 						context->state[0] = (context->state[0] + 1) & 0x03;
 					}
 				}
-				else if (DSD555CC_RDIS)
+				else if (DSD_555_CC_RDIS)
 				{
 					/* Discharging */
-					tRC = DSD555CC_RDIS * DSD555CC_C;
+					tRC = DSD_555_CC_RDIS * DSD_555_CC_C;
 					vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
 
@@ -401,7 +390,7 @@ int dsd_555_cc_step(struct node_description *node)
 					if (vC < viLimit) v += vi;
 					else if (context->type <= 3) v = viLimit;
 							
-					tRC = rC * DSD555CC_C;
+					tRC = rC * DSD_555_CC_C;
 					vCnext = vC + ((v - vC) * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
 
@@ -421,7 +410,7 @@ int dsd_555_cc_step(struct node_description *node)
 				else if (rD)
 				{
 					/* Discharging */
-					tRC = rD * DSD555CC_C;
+					tRC = rD * DSD_555_CC_C;
 					vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
 					dt = 0;
 
@@ -483,13 +472,11 @@ int dsd_555_cc_step(struct node_description *node)
 		if (info->options & DISC_555_OUT_AC)
 			node->output -= (info->options & DISC_555_OUT_MASK) ? info->threshold555 * 3.0 /4.0 : info->v555high / 2.0;
 	}
-
-	return 0;
 }
 
-int dsd_555_cc_reset(struct node_description *node)
+void dsd_555_cc_reset(struct node_description *node)
 {
-	struct dsd_555_cc_context *context = (struct dsd_555_cc_context*)node->context;
+	struct dsd_555_cc_context *context = node->context;
 
 	context->flip_flop=1;
 	context->vCap = 0;
@@ -501,7 +488,7 @@ int dsd_555_cc_reset(struct node_description *node)
 	 * depending on the resistors used.  We will determine
 	 * the type of circuit at reset, because the ciruit type
 	 * is constant. */
-	context->type = (int)(DSD555CC_RDIS && DSD555CC_RDIS) | ((int)(DSD555CC_RGND && DSD555CC_RGND) << 1) | ((int)(DSD555CC_RBIAS && DSD555CC_RBIAS) << 2);
+	context->type = (int)(DSD_555_CC_RDIS && DSD_555_CC_RDIS) | ((int)(DSD_555_CC_RGND && DSD_555_CC_RGND) << 1) | ((int)(DSD_555_CC_RBIAS && DSD_555_CC_RBIAS) << 2);
 	/*
 	 * TYPES:
 	 * Note: These are equivalent circuits shown without the 555 circuitry.
@@ -603,30 +590,6 @@ int dsd_555_cc_reset(struct node_description *node)
 
 	/* Step to set the output */
 	dsd_555_cc_step(node);
-
-	return 0;
-}
-
-int dsd_555_cc_init(struct node_description *node)
-{
-	discrete_log("dsd_555_cc_init() - Creating node %d.",node->node-NODE_00);
-
-	/* Allocate memory for the context array and the node execution order array */
-	if((node->context=malloc(sizeof(struct dsd_555_cc_context)))==NULL)
-	{
-		discrete_log("dsd_555_cc_init() - Failed to allocate local context memory.");
-		return 1;
-	}
-	else
-	{
-		/* Initialize memory */
-		memset(node->context,0,sizeof(struct dsd_555_cc_context));
-	}
-
-	/* Initialize the object */
-	dsd_555_cc_reset(node);
-
-	return 0;
 }
 
 
@@ -641,29 +604,29 @@ int dsd_555_cc_init(struct node_description *node)
 /*                                                                      */
 /* also passed discrete_566_desc structure                              */
 /*                                                                      */
-/* Mar 2004, D Renaud.                                                                    */
+/* Mar 2004, D Renaud.                                                  */
 /************************************************************************/
-#define DSD566_ENABLE	node->input[0]
-#define DSD566_VMOD	node->input[1]
-#define DSD566_R	node->input[2]
-#define DSD566_C	node->input[3]
+#define DSD_566_ENABLE	node->input[0]
+#define DSD_566_VMOD	node->input[1]
+#define DSD_566_R	node->input[2]
+#define DSD_566_C	node->input[3]
 
-int dsd_566_step(struct node_description *node)
+void dsd_566_step(struct node_description *node)
 {
-	struct dsd_566_context *context=(struct dsd_566_context*)node->context;
-	struct discrete_566_desc *info = (struct discrete_566_desc*)node->custom;
+	const struct discrete_566_desc *info = node->custom;
+	struct dsd_566_context *context = node->context;
 
 	double i;	// Charging current created by vIn
 	double dt;	// change in time
 	double vC;	// Current voltage on capacitor, before dt
 	double vCnext = 0;	// Voltage on capacitor, after dt
 
-	if (DSD566_ENABLE)
+	if (DSD_566_ENABLE)
 	{
 		dt = context->step;	// Change in time
 		vC = context->vCap;	// Set to voltage before change
 		/* Calculate charging current */
-		i = (context->vDiff - DSD566_VMOD) / DSD566_R;
+		i = (context->vDiff - DSD_566_VMOD) / DSD_566_R;
 
 		/* Keep looping until all toggling in time sample is used up. */
 		do
@@ -671,7 +634,7 @@ int dsd_566_step(struct node_description *node)
 			if (context->flip_flop)
 			{
 				/* Discharging */
-				vCnext = vC - (i * dt / DSD566_C);
+				vCnext = vC - (i * dt / DSD_566_C);
 				dt = 0;
 
 				/* has it discharged past lower limit? */
@@ -680,7 +643,7 @@ int dsd_566_step(struct node_description *node)
 					if (vCnext < context->thresholdLow)
 					{
 						/* calculate the overshoot time */
-						dt = DSD566_C * (context->thresholdLow - vCnext) / i;
+						dt = DSD_566_C * (context->thresholdLow - vCnext) / i;
 					}
 					vC = context->thresholdLow;
 					context->flip_flop = 0;
@@ -697,14 +660,14 @@ int dsd_566_step(struct node_description *node)
 			{
 				/* Charging */
 				/* iC=C*dv/dt  works out to dv=iC*dt/C */
-				vCnext = vC + (i * dt / DSD566_C);
+				vCnext = vC + (i * dt / DSD_566_C);
 				dt = 0;
 				/* Yes, if the cap voltage has reached the max voltage it can,
 				 * and the 566 threshold has not been reached, then oscillation stops.
 				 * This is the way the actual electronics works.
 				 * This is why you never play with the pots after being factory adjusted
 				 * to work in the proper range. */
-				if (vCnext > DSD566_VMOD) vCnext = DSD566_VMOD;
+				if (vCnext > DSD_566_VMOD) vCnext = DSD_566_VMOD;
 
 				/* has it charged past upper limit? */
 				if (vCnext >= context->thresholdHigh)
@@ -712,7 +675,7 @@ int dsd_566_step(struct node_description *node)
 					if (vCnext > context->thresholdHigh)
 					{
 						/* calculate the overshoot time */
-						dt = DSD566_C * (vCnext - context->thresholdHigh) / i;
+						dt = DSD_566_C * (vCnext - context->thresholdHigh) / i;
 					}
 					vC = context->thresholdHigh;
 					context->flip_flop = 1;
@@ -756,13 +719,12 @@ int dsd_566_step(struct node_description *node)
 	}
 	else
 		node->output = 0;
-	return 0;
 }
 
-int dsd_566_reset(struct node_description *node)
+void dsd_566_reset(struct node_description *node)
 {
-	struct dsd_566_context *context=(struct dsd_566_context*)node->context;
-	struct discrete_566_desc *info = (struct discrete_566_desc*)node->custom;
+	const struct discrete_566_desc *info = node->custom;
+	struct dsd_566_context *context = node->context;
 
 	double	temp;
 
@@ -790,28 +752,4 @@ int dsd_566_reset(struct node_description *node)
 
 	/* Step the output */
 	dsd_566_step(node);
-
-	return 0;
-}
-
-int dsd_566_init(struct node_description *node)
-{
-	discrete_log("dsd_566_init() - Creating node %d.",node->node-NODE_00);
-
-	/* Allocate memory for the context array and the node execution order array */
-	if((node->context=malloc(sizeof(struct dsd_566_context)))==NULL)
-	{
-		discrete_log("dsd_566_init() - Failed to allocate local context memory.");
-		return 1;
-	}
-	else
-	{
-		/* Initialize memory */
-		memset(node->context,0,sizeof(struct dsd_566_context));
-	}
-
-	/* Initialize the object */
-	dsd_566_reset(node);
-
-	return 0;
 }

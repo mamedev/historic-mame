@@ -291,7 +291,10 @@ void run_mbox(void)
 		if (IP15_8 & LDC)
 		{
 			C = RAMWORD;
-			ACC=ACC+(  ( (long)((A-B)*C) )>>14  );
+			/* TODO: this next line is accurate to the schematics, but doesn't seem to work right */
+			/* ACC=ACC+(  ( (long)((A-B)*C) )>>14  ); */
+			/* round the result - this fixes bad trench vectors in Star Wars */
+			ACC += ((((long)((A - B) * C)) >> 13) + 1) >> 1;
 		}
 
 		/* 0x40 - LDB */

@@ -41,7 +41,7 @@ enum
 	FILETYPE_CTRLR,
 	FILETYPE_INI,
 #ifdef MESS
-	FILETYPE_CRC,
+	FILETYPE_HASH,
 #endif
 	FILETYPE_end /* dummy last entry */
 };

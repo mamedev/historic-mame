@@ -24,6 +24,7 @@
 		* Driving Force
 		* Eight Ball Action
 		* Porky
+		* MTV Rock-N-Roll Trivia (Part 2)
 
 	Known issues:
 		* mystery items in Ali Baba don't work correctly because of protection
@@ -647,6 +648,54 @@ static READ_HANDLER( porky_port1_r )
 }
 
 
+/************************************
+ *
+ *	Rock-N-Roll Trivia (Part 2)
+ *  questions roms and protection
+ *	handlers
+ *
+ ************************************/
+
+static data8_t *rocktrv2_prot_data, rocktrv2_question_bank = 0;
+
+static READ_HANDLER( rocktrv2_prot1_data_r )
+{
+	return rocktrv2_prot_data[0] >> 4;
+}
+
+static READ_HANDLER( rocktrv2_prot2_data_r )
+{
+	return rocktrv2_prot_data[1] >> 4;
+}
+
+static READ_HANDLER( rocktrv2_prot3_data_r )
+{
+	return rocktrv2_prot_data[2] >> 4;
+}
+
+static READ_HANDLER( rocktrv2_prot4_data_r )
+{
+	return rocktrv2_prot_data[3] >> 4;
+}
+
+static WRITE_HANDLER( rocktrv2_prot_data_w )
+{
+	rocktrv2_prot_data[offset] = data;
+}
+
+static WRITE_HANDLER( rocktrv2_question_bank_w )
+{
+	rocktrv2_question_bank = data;
+}
+
+static READ_HANDLER( rocktrv2_question_r )
+{
+	UINT8 *question = memory_region(REGION_USER1);
+
+	return question[offset | (rocktrv2_question_bank * 0x8000)];
+}
+
+
 /*************************************
  *
  *	Main CPU memory handlers
@@ -889,6 +938,32 @@ static ADDRESS_MAP_START( s2650games_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(s2650_mirror_w)
 ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START( rocktrv2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x43ff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4400, 0x47ff) AM_READWRITE(MRA8_RAM, colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x4c00, 0x4fff) AM_RAM
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x5040, 0x507f) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x5080, 0x5080) AM_READ(input_port_2_r)	/* DSW1 */
+	AM_RANGE(0x50c0, 0x50c0) AM_READ(input_port_3_r)	/* DSW2 */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x5001, 0x5001) AM_WRITE(pengo_sound_enable_w)
+	AM_RANGE(0x5003, 0x5003) AM_WRITE(pengo_flipscreen_w)
+	AM_RANGE(0x5007, 0x5007) AM_WRITE(pacman_coin_counter_w)
+	AM_RANGE(0x5040, 0x505f) AM_WRITE(pengo_sound_w) AM_BASE(&pengo_soundregs)
+	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x5fe0, 0x5fe3) AM_WRITE(rocktrv2_prot_data_w) AM_BASE(&rocktrv2_prot_data)
+	AM_RANGE(0x5fe0, 0x5fe0) AM_READ(rocktrv2_prot1_data_r)
+	AM_RANGE(0x5fe4, 0x5fe4) AM_READ(rocktrv2_prot2_data_r)
+	AM_RANGE(0x5fe8, 0x5fe8) AM_READ(rocktrv2_prot3_data_r)
+	AM_RANGE(0x5fec, 0x5fec) AM_READ(rocktrv2_prot4_data_r)
+	AM_RANGE(0x5ff0, 0x5ff0) AM_WRITE(rocktrv2_question_bank_w)
+	AM_RANGE(0x5fff, 0x5fff) AM_READ(input_port_3_r) /* DSW2 mirrored */
+	AM_RANGE(0x6000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xffff) AM_READ(rocktrv2_question_r)
+ADDRESS_MAP_END
 
 /*************************************
  *
@@ -2398,6 +2473,77 @@ INPUT_PORTS_START( porky )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( rocktrv2 )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x1c, 0x10, "Questions Per Game" )
+	PORT_DIPSETTING(    0x1c, "2" )
+	PORT_DIPSETTING(    0x18, "3" )
+	PORT_DIPSETTING(    0x14, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x0c, "6" )
+	PORT_DIPSETTING(    0x08, "7" )
+	PORT_DIPSETTING(    0x04, "8" )
+	PORT_DIPSETTING(    0x00, "9" )
+	PORT_DIPNAME( 0x60, 0x60, "Clock Speed" )
+	PORT_DIPSETTING(    0x60, "Beginner" )
+	PORT_DIPSETTING(    0x40, "Intermed" )
+	PORT_DIPSETTING(    0x20, "Pro" )
+	PORT_DIPSETTING(    0x00, "Super - Pro" )
+	PORT_DIPNAME( 0x80, 0x80,"Freeze Image" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_DIPNAME( 0x01, 0x01, "Mode" )
+	PORT_DIPSETTING(    0x01, "Amusement" )
+	PORT_DIPSETTING(    0x00, "Credit" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x04, "K.O. Switch" )
+	PORT_DIPSETTING(    0x04, "Auto" )
+	PORT_DIPSETTING(    0x00, "Manual" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x70, 0x70, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x70, "10000" )
+	PORT_DIPSETTING(    0x60, "17500" )
+	PORT_DIPSETTING(    0x50, "25000" )
+	PORT_DIPSETTING(    0x40, "32500" )
+	PORT_DIPSETTING(    0x30, "40000" )
+	PORT_DIPSETTING(    0x20, "47500" )
+	PORT_DIPSETTING(    0x10, "55000" )
+	PORT_DIPSETTING(    0x00, "62500" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown )  )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /*************************************
  *
  *	Graphics layouts
@@ -2701,7 +2847,7 @@ static MACHINE_DRIVER_START( bigbucks )
 
 	MDRV_MACHINE_INIT(NULL)
 
-	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8-1, 28*8-1)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
 MACHINE_DRIVER_END
 
 
@@ -2757,6 +2903,22 @@ static MACHINE_DRIVER_START( porky )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(porky_readport,s2650games_writeport)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( rocktrv2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(pacman)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(rocktrv2_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_MACHINE_INIT(NULL)
+
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+MACHINE_DRIVER_END
+
 
 
 /*************************************
@@ -4136,6 +4298,45 @@ ROM_START( porky )
 	ROM_LOAD( "4a",			  0x0020, 0x0100, CRC(30fe0266) SHA1(5081a19ceaeb937ee1378f3374e9d5949d17c3e8) )
 ROM_END
 
+
+ROM_START( rocktrv2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1.aux",        0x0000, 0x4000, CRC(d182947b) SHA1(b778658386b2ed7c9f518cf20d7805ea62ae727b) )
+	ROM_LOAD( "2.aux",        0x6000, 0x2000, CRC(27a7461d) SHA1(0cbd4a03dcff352fbd6b9a9009dc908e34553ee2) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5e.cpu",       0x0000, 0x1000, CRC(0a6cc43b) SHA1(a773bf3dda326797d63ceb908ad4d48f516bcea0) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, 0 )
+	/* Not Used */
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "7f.cpu",       0x0000, 0x0020, CRC(7549a947) SHA1(4f2c3e7d6c38f0b9a90317f91feb3f86c9a0d0a5) )
+	ROM_LOAD( "4a.cpu",       0x0020, 0x0100, CRC(ddd5d88e) SHA1(f28e1d90bb495001c30c63b0ef2eec45de568174) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) ) /* timing - not used */
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 )	/* Question ROMs */
+	ROM_LOAD( "3.aux",        0x00000, 0x4000, CRC(5b117ca6) SHA1(08d625312a751b99e132b90dcf8274d0ff2aecf2) )
+	ROM_LOAD( "4.aux",        0x04000, 0x4000, CRC(81bfd4c3) SHA1(300cb4a38d3a1234bfc793f0574527033697f5a2) )
+	ROM_LOAD( "5.aux",        0x08000, 0x4000, CRC(e976423c) SHA1(53a7f100943313014285ce09c03bd3eabd1388b0) )
+	ROM_LOAD( "6.aux",        0x0c000, 0x4000, CRC(425946bf) SHA1(c8b0ba85bbba2f2c33f4ba069bf2fbb9692281d8) )
+	ROM_LOAD( "7.aux",        0x10000, 0x4000, CRC(7056fc8f) SHA1(99c18ba4cd4d45531066069d2fd5018177072d5b) )
+	ROM_LOAD( "8.aux",        0x14000, 0x4000, CRC(8b86464f) SHA1(7827df4c763fe078d3844eafab728e9400275049) )
+	ROM_LOAD( "9.aux",        0x18000, 0x4000, CRC(17d8eba4) SHA1(806593824868e266c776e2e49cebb60dd6f8302e) )
+	ROM_LOAD( "10.aux",       0x1c000, 0x4000, CRC(398c8eb4) SHA1(2cbbb11e255b84a54621f5fccfa8354bf925f1df) )
+	ROM_LOAD( "11.aux",       0x20000, 0x4000, CRC(7f376424) SHA1(72ba5b01053c0c568562ba7a1257252c47736a3c) )
+	ROM_LOAD( "12.aux",       0x24000, 0x4000, BAD_DUMP CRC(8d5bbf81) SHA1(0ebc9afbe6df6d60cf8797e246dda45694dca89e) )
+	ROM_LOAD( "13.aux",       0x28000, 0x4000, CRC(99fe2c21) SHA1(9ff29cb2b74a16f5249677172b9d96e11241032e) )
+	ROM_LOAD( "14.aux",       0x2c000, 0x4000, CRC(df4cf5e7) SHA1(1228a31b9053ade416a33f699f3f5513d1e47b24) )
+	ROM_LOAD( "15.aux",       0x30000, 0x4000, CRC(2a32de26) SHA1(5892d4aea590d109339a66d15ebedaa04629fa7e) )
+	ROM_LOAD( "16.aux",       0x34000, 0x4000, CRC(fcd42187) SHA1(e99e1f281eff2f6f42440f30bcb7a5efe34590fd) )
+	ROM_LOAD( "17.aux",       0x38000, 0x4000, CRC(24d5c388) SHA1(f7039d84b3cbf00884e87ea7221f1b608a7d879e) )
+	ROM_LOAD( "18.aux",       0x3c000, 0x4000, CRC(feb195fd) SHA1(5677d31e526cc7752254e9af0d694f05bc6bc907) )
+ROM_END
+
 /*************************************
  *
  *	Driver initialization
@@ -4329,6 +4530,15 @@ static DRIVER_INIT( dremshpr )
 	install_mem_write_handler(0, 0x4800, 0x4bff, MWA8_RAM);
 }
 
+static DRIVER_INIT( rocktrv2 )
+{
+	/* hack to pass the rom check for the bad rom */
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	ROM[0x7ffe] = 0xa7;
+	ROM[0x7fee] = 0x6d;
+}
+
 
 /*************************************
  *
@@ -4392,3 +4602,4 @@ GAME( 1986, bigbucks, 0,		bigbucks, bigbucks, 0,        ROT90,  "Dynasoft Inc.",
 GAME( 1984, drivfrcp, 0,        drivfrcp, drivfrcp, 0,        ROT90,  "Shinkai Inc. (Magic Eletronics Inc. licence)", "Driving Force (Pac-Man conversion)" )
 GAMEX(1985, 8bpm,	  8ballact,	8bpm,	  8bpm,		8bpm,     ROT90,  "Seatongrove Ltd (Magic Eletronics USA licence)", "Eight Ball Action (Pac-Man conversion)", GAME_WRONG_COLORS )
 GAMEX(1985, porky,	  0,        porky,	  porky,	porky,    ROT90,  "Shinkai Inc. (Magic Eletronics Inc. licence)", "Porky", GAME_NO_SOUND )
+GAME( 1986, rocktrv2, 0,		rocktrv2, rocktrv2, rocktrv2, ROT90,  "Triumph Software Inc.", "MTV Rock-N-Roll Trivia (Part 2)" )
