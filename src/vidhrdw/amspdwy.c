@@ -112,7 +112,7 @@ Offset:		Format:		Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int i;
 	int max_x = Machine->drv->screen_width  - 1;
@@ -152,7 +152,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void amspdwy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void amspdwy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,tilemap,0,0);
 	draw_sprites(bitmap);

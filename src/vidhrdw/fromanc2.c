@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
-static struct osd_bitmap *fromanc2_tmpbitmapx[2];
-static struct osd_bitmap *fromanc2_tmpbitmap[2][4];
+static struct mame_bitmap *fromanc2_tmpbitmapx[2];
+static struct mame_bitmap *fromanc2_tmpbitmap[2][4];
 static data16_t *fromanc2_videoram[2][4];
 static data8_t *fromanc2_dirty[2][4];
 static data16_t *fromanc2_paletteram[2];
@@ -652,7 +652,7 @@ void fromancr_vh_stop(void)
 
 
 ******************************************************************************/
-void fromanc2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void fromanc2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int vram;
 //	int layer;
@@ -820,7 +820,7 @@ void fromanc2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	copybitmap(bitmap, fromanc2_tmpbitmapx[1], 0, 0, 352, 0, 0, TRANSPARENCY_NONE, 0);
 }
 
-void fromancr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void fromancr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int vram;
 	int layer;

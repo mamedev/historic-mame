@@ -149,7 +149,7 @@ WRITE_HANDLER( pandoras_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr)
+static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sr)
 {
 	int offs;
 
@@ -169,7 +169,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr)
 	}
 }
 
-void pandoras_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pandoras_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw( bitmap, layer0, 1 ,0);
 	draw_sprites( bitmap, &pandoras_sharedram[0x800] );

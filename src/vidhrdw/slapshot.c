@@ -136,7 +136,7 @@ void slapshot_vh_stop (void)
 			SPRITE DRAW ROUTINES
 ************************************************************/
 
-static void slapshot_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offset)
+static void slapshot_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offset)
 {
 	/*
 		Sprite format:
@@ -574,7 +574,7 @@ One exception is the "puck" in early attract which is
 a bg layer given priority over some sprites.
 ********************************************************************/
 
-void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void slapshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];

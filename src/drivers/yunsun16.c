@@ -45,7 +45,7 @@ WRITE16_HANDLER( yunsun16_vram_0_w );
 WRITE16_HANDLER( yunsun16_vram_1_w );
 
 int  yunsun16_vh_start(void);
-void yunsun16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void yunsun16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

@@ -22,7 +22,7 @@ unsigned char *retofinv_fg_colorram;
 static unsigned char flipscreen=0;
 static unsigned char *bg_dirtybuffer;
 static unsigned bg_bank; /* last background bank active, 0 or 1 */
-static struct osd_bitmap *bitmap_bg;
+static struct mame_bitmap *bitmap_bg;
 
 
 /* data corrections for color rom */
@@ -167,7 +167,7 @@ WRITE_HANDLER( retofinv_fg_colorram_w )
 		retofinv_fg_colorram[offset] = data;
 }
 
-void retofinv_render_sprites(struct osd_bitmap *bitmap)
+void retofinv_render_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,sx,sy,flipx,flipy,tile,palette,size;
 	int tileofs0,tileofs1,tileofs2,tileofs3;
@@ -255,7 +255,7 @@ void retofinv_render_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void retofinv_draw_background(struct osd_bitmap *bitmap)
+void retofinv_draw_background(struct mame_bitmap *bitmap)
 {
 	int x,y,offs;
 	int sx,sy,tile,palette;
@@ -305,7 +305,7 @@ void retofinv_draw_background(struct osd_bitmap *bitmap)
 }
 
 
-void retofinv_draw_foreground(struct osd_bitmap *bitmap)
+void retofinv_draw_foreground(struct mame_bitmap *bitmap)
 {
 	int x,y,offs;
 	int sx,sy,tile,palette,flipx,flipy;
@@ -402,13 +402,13 @@ void retofinv_draw_foreground(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void retofinv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void retofinv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	retofinv_draw_background(bitmap);
 	retofinv_render_sprites(bitmap);

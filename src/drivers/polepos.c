@@ -97,7 +97,7 @@ extern data16_t *polepos_sprite16_memory;
 int polepos_vh_start(void);
 void polepos_vh_stop(void);
 void polepos_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void polepos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void polepos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( polepos_view16_w );
 WRITE16_HANDLER( polepos_road16_w );

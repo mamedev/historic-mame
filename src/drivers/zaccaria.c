@@ -47,7 +47,7 @@ WRITE_HANDLER( zaccaria_videoram_w );
 WRITE_HANDLER( zaccaria_attributes_w );
 WRITE_HANDLER( zaccaria_flip_screen_x_w );
 WRITE_HANDLER( zaccaria_flip_screen_y_w );
-void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void zaccaria_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int dsw;

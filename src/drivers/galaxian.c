@@ -173,7 +173,7 @@ int gteikob2_vh_start(void);
 int  batman2_vh_start(void);
 int scramble_vh_start(void);
 int  jumpbug_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( jumpbug_gfxbank_w );
 WRITE_HANDLER( pisces_gfxbank_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );

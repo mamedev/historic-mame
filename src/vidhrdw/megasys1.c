@@ -584,7 +584,7 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 	0C		Y position
 	0E		Code											*/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
@@ -969,11 +969,11 @@ void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,co
 
 
 /***************************************************************************
-			  Draw the game screen in the given osd_bitmap.
+			  Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
 
-void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,flag,pri,primask;
 	int active_layers;

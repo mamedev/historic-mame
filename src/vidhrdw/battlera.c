@@ -14,7 +14,7 @@
 static int HuC6270_registers[20];
 static int VDC_register,vram_ptr;
 static unsigned char *HuC6270_vram,*tile_dirty,*sprite_dirty,*vram_dirty;
-static struct osd_bitmap *tile_bitmap,*front_bitmap;
+static struct mame_bitmap *tile_bitmap,*front_bitmap;
 
 static int current_scanline,next_update_first_line,inc_value;
 static int irq_enable,rcr_enable,sb_enable,bb_enable,bldwolf_vblank;
@@ -261,7 +261,7 @@ WRITE_HANDLER( HuC6270_data_w )
 
 /******************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap,const struct rectangle *clip,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip,int pri)
 {
 	int offs,my,mx,code,code2,fx,fy,cgy=0,cgx,colour,i;
 
@@ -322,7 +322,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,const struct rectangle *clip,
 
 }
 
-static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
+static void screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
 {
 	int offs,code,scrollx,scrolly,mx,my;
 
@@ -396,12 +396,12 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
 /******************************************************************************/
 
-void battlera_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void battlera_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Nothing */
 }
 
-static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
+static void partial_refresh(struct mame_bitmap *bitmap,int current_line)
 {
 	struct rectangle clip;
 
@@ -422,7 +422,7 @@ static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
 	next_update_first_line = current_line + 1;
 }
 
-void battlera_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line)
+void battlera_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
 {
 	struct rectangle clip;
 

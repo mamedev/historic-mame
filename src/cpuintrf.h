@@ -97,6 +97,9 @@ enum
 #if (HAS_V33)
 	CPU_V33,
 #endif
+#if (HAS_V60)
+	CPU_V60,
+#endif
 #if (HAS_I8035)
 	CPU_I8035,
 #endif

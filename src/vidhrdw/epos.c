@@ -97,11 +97,11 @@ WRITE_HANDLER( epos_port_1_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   To be used by bitmapped games not using sprites.
 
 ***************************************************************************/
-void epos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void epos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{

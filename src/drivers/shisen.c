@@ -12,7 +12,7 @@ driver by Nicola Salmoria
 /* in vidhrdw/sichuan2.c */
 WRITE_HANDLER( sichuan2_bankswitch_w );
 WRITE_HANDLER( sichuan2_paletteram_w );
-void sichuan2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void sichuan2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

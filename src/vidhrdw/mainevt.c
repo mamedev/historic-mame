@@ -112,7 +112,7 @@ void mainevt_vh_stop(void)
 
 /*****************************************************************************/
 
-void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void mainevt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 
@@ -125,7 +125,7 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	K051960_sprites_draw(bitmap,-1,-1);
 }
 
-void dv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 

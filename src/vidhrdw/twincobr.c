@@ -246,7 +246,7 @@ WRITE_HANDLER( wardner_videoram_w )
 	}
 }
 
-static void twincobr_draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void twincobr_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	int offs;
 
@@ -278,7 +278,7 @@ static void twincobr_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 
 
-void toaplan0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toaplan0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	static int offs,code,tile,color;
 

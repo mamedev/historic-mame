@@ -94,7 +94,7 @@ WRITE16_HANDLER( metro_K053936_w )
 		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
 }
 
-void K053936_zoom_draw(struct osd_bitmap *bitmap)
+void K053936_zoom_draw(struct mame_bitmap *bitmap)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -608,7 +608,7 @@ int  blzntrnd_vh_start(void)
 
 /* Draw sprites of a given priority */
 
-void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
+void metro_draw_sprites(struct mame_bitmap *bitmap, int pri)
 {
 	const int region		=	REGION_GFX1;
 
@@ -757,7 +757,7 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 
 ***************************************************************************/
 
-void metro_tilemap_draw	(struct osd_bitmap *bitmap, struct tilemap *tmap, UINT32 flags, UINT32 priority,
+void metro_tilemap_draw	(struct mame_bitmap *bitmap, struct tilemap *tmap, UINT32 flags, UINT32 priority,
 						 int sx, int sy, int wx, int wy)	// scroll & window values
 {
 #if 1
@@ -817,7 +817,7 @@ void metro_tilemap_draw	(struct osd_bitmap *bitmap, struct tilemap *tmap, UINT32
 
 
 /* Draw all the layers that match the given priority */
-static void draw_layers(struct osd_bitmap *bitmap, int pri, int layers_ctrl)
+static void draw_layers(struct mame_bitmap *bitmap, int pri, int layers_ctrl)
 {
 	data16_t layers_pri = metro_videoregs[0x10/2];
 	int layer;
@@ -867,7 +867,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 }
 
 
-void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void metro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,pri,sprites_pri,layers_ctrl = -1;
 	data8_t *dirtyindex;

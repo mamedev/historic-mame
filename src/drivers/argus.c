@@ -109,9 +109,9 @@ int  valtric_vh_start (void);
 int  butasan_vh_start (void);
 void argus_vh_stop    (void);
 void butasan_vh_stop  (void);
-void argus_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
-void valtric_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
-void butasan_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void argus_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
+void valtric_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+void butasan_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 static data8_t argus_bank_latch   = 0x00;
 static data8_t butasan_page_latch = 0x00;

@@ -16,7 +16,7 @@ unsigned char *kangaroo_blitter;
 unsigned char *kangaroo_scroll;
 
 static int screen_flipped;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 
 
 /***************************************************************************
@@ -218,7 +218,7 @@ WRITE_HANDLER( kangaroo_blitter_w )
 
 
 
-INLINE void kangaroo_plot_pixel(struct osd_bitmap *bitmap, int x, int y, int col, int color_base, int flip)
+INLINE void kangaroo_plot_pixel(struct mame_bitmap *bitmap, int x, int y, int col, int color_base, int flip)
 {
 	if (flip)
 	{
@@ -303,13 +303,13 @@ WRITE_HANDLER( kangaroo_videoram_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kangaroo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx, scrolly;
 

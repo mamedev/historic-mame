@@ -22,6 +22,7 @@ CPUS+=I186@
 CPUS+=V20@
 CPUS+=V30@
 CPUS+=V33@
+CPUS+=V60@
 CPUS+=I8035@
 CPUS+=I8039@
 CPUS+=I8048@
@@ -709,12 +710,14 @@ $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/airbustr.o $(OBJ)/drivers/airbustr.o \
 
 $(OBJ)/neogeo.a: \
-	$(OBJ)/machine/neogeo.o $(OBJ)/machine/pd4990a.o $(OBJ)/vidhrdw/neogeo.o $(OBJ)/drivers/neogeo.o \
+	$(OBJ)/machine/neogeo.o $(OBJ)/machine/pd4990a.o $(OBJ)/machine/neocrypt.o \
+	$(OBJ)/vidhrdw/neogeo.o $(OBJ)/drivers/neogeo.o \
 
 $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/hanaawas.o $(OBJ)/drivers/hanaawas.o \
 	$(OBJ)/vidhrdw/srmp2.o $(OBJ)/drivers/srmp2.o \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/sndhrdw/seta.o $(OBJ)/drivers/seta.o \
+	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \

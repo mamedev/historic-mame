@@ -316,7 +316,7 @@ int nemesis_vh_start(void)
 	return 0;
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	/*
 	 *	16 bytes per sprite, in memory from 56000-56fff
@@ -557,7 +557,7 @@ static void update_gfx(void)
 
 /******************************************************************************/
 
-void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void nemesis_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -584,7 +584,7 @@ void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,foreground,1,0);
 }
 
-void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void twinbee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -621,7 +621,7 @@ void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,foreground,1,0);
 }
 
-void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	struct rectangle clip;

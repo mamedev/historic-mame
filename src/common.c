@@ -14,6 +14,20 @@
 //#define LOG_LOAD
 
 
+
+/***************************************************************************
+
+	Constants
+
+***************************************************************************/
+
+// VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels wide all
+// around the bitmap. This is required because, for performance reasons, some graphic
+// routines don't clip at boundaries of the bitmap.
+#define BITMAP_SAFETY			16
+
+
+
 /***************************************************************************
 
 	Type definitions
@@ -53,6 +67,8 @@ unsigned int coinlockedout[COIN_COUNTERS];
 
 int flip_screen_x, flip_screen_y;
 
+int snapno;
+
 
 
 /***************************************************************************
@@ -84,115 +100,13 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 }                           /* MAURY_END: dichiarazione */
 
 
-/***************************************************************************
-
-  Read ROMs into memory.
-
-  Arguments:
-  const struct RomModule *romp - pointer to an array of Rommodule structures,
-                                 as defined in common.h.
-
-***************************************************************************/
-
-int readroms(void)
-{
-	return rom_load_new(Machine->gamedrv->rom);
-}
-
 
 /***************************************************************************
 
-	ROM parsing helpers
+	Sample handling code
 
-***************************************************************************/
-
-const struct RomModule *rom_first_region(const struct GameDriver *drv)
-{
-	return drv->rom;
-}
-
-const struct RomModule *rom_next_region(const struct RomModule *romp)
-{
-	romp++;
-	while (!ROMENTRY_ISREGIONEND(romp))
-		romp++;
-	return ROMENTRY_ISEND(romp) ? NULL : romp;
-}
-
-const struct RomModule *rom_first_file(const struct RomModule *romp)
-{
-	romp++;
-	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
-		romp++;
-	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
-}
-
-const struct RomModule *rom_next_file(const struct RomModule *romp)
-{
-	romp++;
-	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
-		romp++;
-	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
-}
-
-const struct RomModule *rom_first_chunk(const struct RomModule *romp)
-{
-	return (ROMENTRY_ISFILE(romp)) ? romp : NULL;
-}
-
-const struct RomModule *rom_next_chunk(const struct RomModule *romp)
-{
-	romp++;
-	return (ROMENTRY_ISCONTINUE(romp)) ? romp : NULL;
-}
-
-
-
-/***************************************************************************
-
-	printromlist
-
-***************************************************************************/
-
-void printromlist(const struct RomModule *romp,const char *basename)
-{
-	const struct RomModule *region, *rom, *chunk;
-
-	if (!romp) return;
-
-#ifdef MESS
-	if (!strcmp(basename,"nes")) return;
-#endif
-
-	printf("This is the list of the ROMs required for driver \"%s\".\n"
-			"Name              Size       Checksum\n",basename);
-
-	for (region = romp; region; region = rom_next_region(region))
-	{
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			const char *name = ROM_GETNAME(rom);
-			int expchecksum = ROM_GETCRC(rom);
-			int length = 0;
-
-			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
-				length += ROM_GETLENGTH(chunk);
-
-			if (expchecksum)
-				printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
-			else
-				printf("%-12s  %7d bytes  NO GOOD DUMP KNOWN\n",name,length);
-		}
-	}
-}
-
-
-
-/***************************************************************************
-
-  Read samples into memory.
-  This function is different from readroms() because it doesn't fail if
-  it doesn't find a file: it will load as many samples as it can find.
+	This function is different from readroms() because it doesn't fail if
+	it doesn't find a file: it will load as many samples as it can find.
 
 ***************************************************************************/
 
@@ -201,6 +115,10 @@ void printromlist(const struct RomModule *romp,const char *basename)
 #else
 #define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #endif
+
+/*-------------------------------------------------
+	read_wav_sample - read a WAV file as a sample
+-------------------------------------------------*/
 
 static struct GameSample *read_wav_sample(void *f)
 {
@@ -316,6 +234,11 @@ static struct GameSample *read_wav_sample(void *f)
 	return result;
 }
 
+
+/*-------------------------------------------------
+	readsamples - load all samples
+-------------------------------------------------*/
+
 struct GameSamples *readsamples(const char **samplenames,const char *basename)
 /* V.V - avoids samples duplication */
 /* if first samplename is *dir, looks for samples into "basename" first, then "dir" */
@@ -365,6 +288,10 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 }
 
 
+/*-------------------------------------------------
+	freesamples - free allocated samples
+-------------------------------------------------*/
+
 void freesamples(struct GameSamples *samples)
 {
 	int i;
@@ -379,6 +306,17 @@ void freesamples(struct GameSamples *samples)
 }
 
 
+
+/***************************************************************************
+
+	Memory region code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	memory_region - returns pointer to a memory
+	region
+-------------------------------------------------*/
 
 unsigned char *memory_region(int num)
 {
@@ -398,6 +336,12 @@ unsigned char *memory_region(int num)
 	return 0;
 }
 
+
+/*-------------------------------------------------
+	memory_region_length - returns length of a
+	memory region
+-------------------------------------------------*/
+
 size_t memory_region_length(int num)
 {
 	int i;
@@ -415,6 +359,12 @@ size_t memory_region_length(int num)
 
 	return 0;
 }
+
+
+/*-------------------------------------------------
+	new_memory_region - allocates memory for a
+	region
+-------------------------------------------------*/
 
 int new_memory_region(int num, size_t length, UINT32 flags)
 {
@@ -443,6 +393,12 @@ int new_memory_region(int num, size_t length, UINT32 flags)
 	return 1;
 }
 
+
+/*-------------------------------------------------
+	free_memory_region - releases memory for a
+	region
+-------------------------------------------------*/
+
 void free_memory_region(int num)
 {
 	int i;
@@ -467,7 +423,17 @@ void free_memory_region(int num)
 }
 
 
-/* LBO 042898 - added coin counters */
+
+/***************************************************************************
+
+	Coin counter code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	coin_counter_w - sets input for coin counter
+-------------------------------------------------*/
+
 void coin_counter_w(int num,int on)
 {
 	if (num >= COIN_COUNTERS) return;
@@ -479,6 +445,11 @@ void coin_counter_w(int num,int on)
 	lastcoin[num] = on;
 }
 
+
+/*-------------------------------------------------
+	coin_lockout_w - locks out one coin input
+-------------------------------------------------*/
+
 void coin_lockout_w(int num,int on)
 {
 	if (num >= COIN_COUNTERS) return;
@@ -486,7 +457,12 @@ void coin_lockout_w(int num,int on)
 	coinlockedout[num] = on;
 }
 
-/* Locks out all the coin inputs */
+
+/*-------------------------------------------------
+	coin_lockout_global_w - locks out all the coin
+	inputs
+-------------------------------------------------*/
+
 void coin_lockout_global_w(int on)
 {
 	int i;
@@ -498,7 +474,17 @@ void coin_lockout_global_w(int on)
 }
 
 
-/* flipscreen handling functions */
+
+/***************************************************************************
+
+	Global video attribute handling code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	updateflip - handle global flipping
+-------------------------------------------------*/
+
 static void updateflip(void)
 {
 	int min_x,max_x,min_y,max_y;
@@ -530,11 +516,21 @@ static void updateflip(void)
 	set_visible_area(min_x,max_x,min_y,max_y);
 }
 
+
+/*-------------------------------------------------
+	flip_screen_set - set global flip
+-------------------------------------------------*/
+
 void flip_screen_set(int on)
 {
 	flip_screen_x_set(on);
 	flip_screen_y_set(on);
 }
+
+
+/*-------------------------------------------------
+	flip_screen_x_set - set global horizontal flip
+-------------------------------------------------*/
 
 void flip_screen_x_set(int on)
 {
@@ -545,6 +541,11 @@ void flip_screen_x_set(int on)
 		updateflip();
 	}
 }
+
+
+/*-------------------------------------------------
+	flip_screen_y_set - set global vertical flip
+-------------------------------------------------*/
 
 void flip_screen_y_set(int on)
 {
@@ -557,6 +558,11 @@ void flip_screen_y_set(int on)
 }
 
 
+/*-------------------------------------------------
+	set_vh_global_attribute - set an arbitrary
+	global video attribute
+-------------------------------------------------*/
+
 void set_vh_global_attribute( int *addr, int data )
 {
 	if (*addr != data)
@@ -566,6 +572,11 @@ void set_vh_global_attribute( int *addr, int data )
 	}
 }
 
+
+/*-------------------------------------------------
+	set_visible_area - adjusts the visible portion
+	of the bitmap area dynamically
+-------------------------------------------------*/
 
 void set_visible_area(int min_x,int max_x,int min_y,int max_y)
 {
@@ -614,36 +625,148 @@ void set_visible_area(int min_x,int max_x,int min_y,int max_y)
 }
 
 
-struct osd_bitmap *bitmap_alloc(int width,int height)
+
+/***************************************************************************
+
+	Bitmap allocation/freeing code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	bitmap_alloc - allocate a bitmap at the
+	current screen depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc(int width,int height)
 {
 	return bitmap_alloc_depth(width,height,Machine->scrbitmap->depth);
 }
 
-struct osd_bitmap *bitmap_alloc_depth(int width,int height,int depth)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
 
-		temp = width; width = height; height = temp;
+/*-------------------------------------------------
+	bitmap_alloc_depth - allocate a bitmap for a
+	specific depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+{
+	struct mame_bitmap *bitmap;
+
+	/* cheesy kludge: pass in negative depth to prevent orientation swapping */
+	if (depth < 0)
+	{
+		depth = -depth;
 	}
 
-	return osd_alloc_bitmap(width,height,depth);
+	/* adjust for orientation */
+	else if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp = width; width = height; height = temp;
+	}
+
+	/* verify it's a depth we can handle */
+	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
+	{
+		logerror("osd_alloc_bitmap() unknown depth %d\n",depth);
+		return NULL;
+	}
+
+	/* allocate memory for the bitmap struct */
+	bitmap = malloc(sizeof(struct mame_bitmap));
+	if (bitmap != NULL)
+	{
+		int i, rowlen, rdwidth, bitmapsize, linearraysize, pixelsize;
+		unsigned char *bm;
+
+		/* initialize the basic parameters */
+		bitmap->depth = depth;
+		bitmap->width = width;
+		bitmap->height = height;
+
+		/* determine pixel size in bytes */
+		pixelsize = 1;
+		if (depth == 15 || depth == 16)
+			pixelsize = 2;
+		else if (depth == 32)
+			pixelsize = 4;
+
+		/* round the width to a multiple of 8 */
+		rdwidth = (width + 7) & ~7;
+		rowlen = rdwidth + 2 * BITMAP_SAFETY;
+		bitmap->rowpixels = rowlen;
+
+		/* now convert from pixels to bytes */
+		rowlen *= pixelsize;
+		bitmap->rowbytes = rowlen;
+
+		/* determine total memory for bitmap and line arrays */
+		bitmapsize = (height + 2 * BITMAP_SAFETY) * rowlen;
+		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
+
+		/* allocate the bitmap data plus an array of line pointers */
+		bitmap->line = malloc(linearraysize + bitmapsize);
+		if (bitmap->line == NULL)
+		{
+			free(bitmap);
+			return NULL;
+		}
+
+		/* clear ALL bitmap, including safety area, to avoid garbage on right */
+		bm = (unsigned char *)bitmap->line + linearraysize;
+		memset(bm, 0, (height + 2 * BITMAP_SAFETY) * rowlen);
+
+		/* initialize the line pointers */
+		for (i = 0; i < height + 2 * BITMAP_SAFETY; i++)
+			bitmap->line[i] = &bm[i * rowlen + BITMAP_SAFETY * pixelsize];
+
+		/* adjust for the safety rows */
+		bitmap->line += BITMAP_SAFETY;
+		bitmap->base = bitmap->line[0];
+	}
+
+	/* return the result */
+	return bitmap;
 }
 
-void bitmap_free(struct osd_bitmap *bitmap)
+
+/*-------------------------------------------------
+	bitmap_free - free a bitmap
+-------------------------------------------------*/
+
+void bitmap_free(struct mame_bitmap *bitmap)
 {
-	osd_free_bitmap(bitmap);
+	/* skip if NULL */
+	if (!bitmap)
+		return;
+
+	/* unadjust for the safety rows */
+	bitmap->line -= BITMAP_SAFETY;
+
+	/* free the memory */
+	free(bitmap->line);
+	free(bitmap);
 }
 
 
-void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
+
+/***************************************************************************
+
+	Screen snapshot code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	save_screen_snapshot_as - save a snapshot to
+	the given filename
+-------------------------------------------------*/
+
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
 {
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		png_write_bitmap(fp,bitmap);
 	else
 	{
-		struct osd_bitmap *copy;
+		struct mame_bitmap *copy;
 		int sizex, sizey, scalex, scaley;
 
 		sizex = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
@@ -707,13 +830,16 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 	}
 }
 
-int snapno;
 
-void save_screen_snapshot(struct osd_bitmap *bitmap)
+
+/*-------------------------------------------------
+	save_screen_snapshot - save a screen snapshot
+-------------------------------------------------*/
+
+void save_screen_snapshot(struct mame_bitmap *bitmap)
 {
-	void *fp;
 	char name[20];
-
+	void *fp;
 
 	/* avoid overwriting existing files */
 	/* first of all try with "gamename.png" */
@@ -735,6 +861,87 @@ void save_screen_snapshot(struct osd_bitmap *bitmap)
 }
 
 
+
+/***************************************************************************
+
+	ROM loading code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	rom_first_region - return pointer to first ROM
+	region
+-------------------------------------------------*/
+
+const struct RomModule *rom_first_region(const struct GameDriver *drv)
+{
+	return drv->rom;
+}
+
+
+/*-------------------------------------------------
+	rom_next_region - return pointer to next ROM
+	region
+-------------------------------------------------*/
+
+const struct RomModule *rom_next_region(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISEND(romp) ? NULL : romp;
+}
+
+
+/*-------------------------------------------------
+	rom_first_file - return pointer to first ROM
+	file
+-------------------------------------------------*/
+
+const struct RomModule *rom_first_file(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
+}
+
+
+/*-------------------------------------------------
+	rom_next_file - return pointer to next ROM
+	file
+-------------------------------------------------*/
+
+const struct RomModule *rom_next_file(const struct RomModule *romp)
+{
+	romp++;
+	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
+		romp++;
+	return ROMENTRY_ISREGIONEND(romp) ? NULL : romp;
+}
+
+
+/*-------------------------------------------------
+	rom_first_chunk - return pointer to first ROM
+	chunk
+-------------------------------------------------*/
+
+const struct RomModule *rom_first_chunk(const struct RomModule *romp)
+{
+	return (ROMENTRY_ISFILE(romp)) ? romp : NULL;
+}
+
+
+/*-------------------------------------------------
+	rom_next_chunk - return pointer to next ROM
+	chunk
+-------------------------------------------------*/
+
+const struct RomModule *rom_next_chunk(const struct RomModule *romp)
+{
+	romp++;
+	return (ROMENTRY_ISCONTINUE(romp)) ? romp : NULL;
+}
 
 
 
@@ -1335,6 +1542,16 @@ fatalerror:
 
 
 /*-------------------------------------------------
+	readroms - load all the ROMs for this machine
+-------------------------------------------------*/
+
+int readroms(void)
+{
+	return rom_load_new(Machine->gamedrv->rom);
+}
+
+
+/*-------------------------------------------------
 	rom_load_new - new, more flexible ROM
 	loading system
 -------------------------------------------------*/
@@ -1419,4 +1636,41 @@ int rom_load_new(const struct RomModule *romp)
 
 	/* display the results and exit */
 	return display_rom_load_results(&romdata);
+}
+
+
+/*-------------------------------------------------
+	printromlist - print list of ROMs
+-------------------------------------------------*/
+
+void printromlist(const struct RomModule *romp,const char *basename)
+{
+	const struct RomModule *region, *rom, *chunk;
+
+	if (!romp) return;
+
+#ifdef MESS
+	if (!strcmp(basename,"nes")) return;
+#endif
+
+	printf("This is the list of the ROMs required for driver \"%s\".\n"
+			"Name              Size       Checksum\n",basename);
+
+	for (region = romp; region; region = rom_next_region(region))
+	{
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+		{
+			const char *name = ROM_GETNAME(rom);
+			int expchecksum = ROM_GETCRC(rom);
+			int length = 0;
+
+			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+				length += ROM_GETLENGTH(chunk);
+
+			if (expchecksum)
+				printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
+			else
+				printf("%-12s  %7d bytes  NO GOOD DUMP KNOWN\n",name,length);
+		}
+	}
 }

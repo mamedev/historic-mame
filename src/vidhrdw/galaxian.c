@@ -85,35 +85,35 @@ static int stars_blink_state;
 static void *stars_blink_timer;
 static void *stars_scroll_timer;
        void galaxian_init_stars(unsigned char **palette);
-static void (*draw_stars)(struct osd_bitmap *);		/* function to call to draw the star layer */
-static void galaxian_draw_stars(struct osd_bitmap *bitmap);
-	   void scramble_draw_stars(struct osd_bitmap *bitmap);
-static void   rescue_draw_stars(struct osd_bitmap *bitmap);
-static void  mariner_draw_stars(struct osd_bitmap *bitmap);
-static void  jumpbug_draw_stars(struct osd_bitmap *bitmap);
+static void (*draw_stars)(struct mame_bitmap *);		/* function to call to draw the star layer */
+static void galaxian_draw_stars(struct mame_bitmap *bitmap);
+	   void scramble_draw_stars(struct mame_bitmap *bitmap);
+static void   rescue_draw_stars(struct mame_bitmap *bitmap);
+static void  mariner_draw_stars(struct mame_bitmap *bitmap);
+static void  jumpbug_draw_stars(struct mame_bitmap *bitmap);
 static void start_stars_blink_timer(double ra, double rb, double c);
 static void start_stars_scroll_timer(void);
 
 /* bullets circuit */
 static int darkplnt_bullet_color;
-static void (*draw_bullets)(struct osd_bitmap *,int,int,int);	/* function to call to draw a bullet */
-static void galaxian_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y);
-static void gteikob2_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y);
-static void scramble_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y);
-static void   theend_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y);
-static void darkplnt_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y);
+static void (*draw_bullets)(struct mame_bitmap *,int,int,int);	/* function to call to draw a bullet */
+static void galaxian_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
+static void gteikob2_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
+static void scramble_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
+static void   theend_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
+static void darkplnt_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y);
 
 /* background circuit */
 static int background_enable;
 static int background_red, background_green, background_blue;
-static void (*draw_background)(struct osd_bitmap *);	/* function to call to draw the background */
-static void scramble_draw_background(struct osd_bitmap *bitmap);
-static void  turtles_draw_background(struct osd_bitmap *bitmap);
-static void  mariner_draw_background(struct osd_bitmap *bitmap);
-static void  frogger_draw_background(struct osd_bitmap *bitmap);
-static void stratgyx_draw_background(struct osd_bitmap *bitmap);
-static void  minefld_draw_background(struct osd_bitmap *bitmap);
-static void   rescue_draw_background(struct osd_bitmap *bitmap);
+static void (*draw_background)(struct mame_bitmap *);	/* function to call to draw the background */
+static void scramble_draw_background(struct mame_bitmap *bitmap);
+static void  turtles_draw_background(struct mame_bitmap *bitmap);
+static void  mariner_draw_background(struct mame_bitmap *bitmap);
+static void  frogger_draw_background(struct mame_bitmap *bitmap);
+static void stratgyx_draw_background(struct mame_bitmap *bitmap);
+static void  minefld_draw_background(struct mame_bitmap *bitmap);
+static void   rescue_draw_background(struct mame_bitmap *bitmap);
 
 
 /***************************************************************************
@@ -911,7 +911,7 @@ static void frogger_modify_ypos(UINT8 *sy)
 
 /* bullet drawing functions */
 
-static void galaxian_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y)
+static void galaxian_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
 {
 	int i;
 
@@ -934,12 +934,12 @@ static void galaxian_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, in
 	}
 }
 
-static void gteikob2_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y)
+static void gteikob2_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
 {
 	galaxian_draw_bullets(bitmap, offs, 260 - x, y);
 }
 
-static void scramble_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y)
+static void scramble_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
 {
 	if (flip_screen_x)  x++;
 
@@ -953,7 +953,7 @@ static void scramble_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, in
 	}
 }
 
-static void darkplnt_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y)
+static void darkplnt_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
 {
 	if (flip_screen_x)  x++;
 
@@ -966,7 +966,7 @@ static void darkplnt_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, in
 	}
 }
 
-static void theend_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int y)
+static void theend_draw_bullets(struct mame_bitmap *bitmap, int offs, int x, int y)
 {
 	int i;
 
@@ -987,7 +987,7 @@ static void theend_draw_bullets(struct osd_bitmap *bitmap, int offs, int x, int 
 
 /* background drawing functions */
 
-static void scramble_draw_background(struct osd_bitmap *bitmap)
+static void scramble_draw_background(struct mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -999,14 +999,14 @@ static void scramble_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void turtles_draw_background(struct osd_bitmap *bitmap)
+static void turtles_draw_background(struct mame_bitmap *bitmap)
 {
 	int color = (background_blue << 2) | (background_green << 1) | background_red;
 
 	fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE + color],&Machine->visible_area);
 }
 
-static void frogger_draw_background(struct osd_bitmap *bitmap)
+static void frogger_draw_background(struct mame_bitmap *bitmap)
 {
 	/* color split point verified on real machine */
 	if (flip_screen_x)
@@ -1021,7 +1021,7 @@ static void frogger_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void stratgyx_draw_background(struct osd_bitmap *bitmap)
+static void stratgyx_draw_background(struct mame_bitmap *bitmap)
 {
 	UINT8 x;
 	UINT8 *prom;
@@ -1060,7 +1060,7 @@ static void stratgyx_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void minefld_draw_background(struct osd_bitmap *bitmap)
+static void minefld_draw_background(struct mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -1085,7 +1085,7 @@ static void minefld_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void rescue_draw_background(struct osd_bitmap *bitmap)
+static void rescue_draw_background(struct mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
@@ -1110,7 +1110,7 @@ static void rescue_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mariner_draw_background(struct osd_bitmap *bitmap)
+static void mariner_draw_background(struct mame_bitmap *bitmap)
 {
 	UINT8 x;
 	UINT8 *prom;
@@ -1230,7 +1230,7 @@ void galaxian_init_stars(unsigned char **palette)
 	}
 }
 
-static void plot_star(struct osd_bitmap *bitmap, int x, int y, int color)
+static void plot_star(struct mame_bitmap *bitmap, int x, int y, int color)
 {
 	if (y < Machine->visible_area.min_y ||
 		y > Machine->visible_area.max_y ||
@@ -1251,7 +1251,7 @@ static void plot_star(struct osd_bitmap *bitmap, int x, int y, int color)
 	plot_pixel(bitmap, x, y, Machine->pens[STARS_COLOR_BASE + color]);
 }
 
-static void galaxian_draw_stars(struct osd_bitmap *bitmap)
+static void galaxian_draw_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1277,7 +1277,7 @@ static void galaxian_draw_stars(struct osd_bitmap *bitmap)
 	}
 }
 
-void scramble_draw_stars(struct osd_bitmap *bitmap)
+void scramble_draw_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1320,7 +1320,7 @@ void scramble_draw_stars(struct osd_bitmap *bitmap)
 	}
 }
 
-static void rescue_draw_stars(struct osd_bitmap *bitmap)
+static void rescue_draw_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1365,7 +1365,7 @@ static void rescue_draw_stars(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mariner_draw_stars(struct osd_bitmap *bitmap)
+static void mariner_draw_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 	UINT8 *prom;
@@ -1399,7 +1399,7 @@ static void mariner_draw_stars(struct osd_bitmap *bitmap)
 	}
 }
 
-static void jumpbug_draw_stars(struct osd_bitmap *bitmap)
+static void jumpbug_draw_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1485,12 +1485,12 @@ static void start_stars_scroll_timer()
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int x,y;
 	int offs,color_mask;

@@ -570,7 +570,7 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
 
-void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
+void cischeat_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
 {
 	int curr_code,sx,sy;
 	int min_priority, max_priority;
@@ -660,7 +660,7 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
 
-void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
+void f1gpstar_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
 {
 	int sx,sy;
 	int xstart;
@@ -776,7 +776,7 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	sprites whose priority nibble is between 0 and 15 and whose
 	colour code's high bit is set.	*/
 
-static void cischeat_draw_sprites(struct osd_bitmap *bitmap , int priority1, int priority2)
+static void cischeat_draw_sprites(struct mame_bitmap *bitmap , int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -934,7 +934,7 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-static void bigrun_draw_sprites(struct osd_bitmap *bitmap , int priority1, int priority2)
+static void bigrun_draw_sprites(struct mame_bitmap *bitmap , int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -1098,7 +1098,7 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) ) \
 								Big Run
 **************************************************************************/
 
-void bigrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	int megasys1_active_layers1, flag;
@@ -1151,7 +1151,7 @@ void bigrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 								Cisco Heat
 **************************************************************************/
 
-void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int megasys1_active_layers1, flag;
 
@@ -1206,7 +1206,7 @@ void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							F1 GrandPrix Star
 **************************************************************************/
 
-void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void f1gpstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int megasys1_active_layers1, flag;
 
@@ -1271,7 +1271,7 @@ extern data16_t scudhamm_motor_command;
 	READ16_HANDLER( scudhamm_motor_status_r );
 	READ16_HANDLER( scudhamm_analog_r );
 
-void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void scudhamm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int megasys1_active_layers1, flag;
 	megasys1_active_layers = 0x0d;

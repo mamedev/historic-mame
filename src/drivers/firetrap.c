@@ -79,7 +79,7 @@ WRITE_HANDLER( firetrap_bg2_scrollx_w );
 WRITE_HANDLER( firetrap_bg2_scrolly_w );
 int firetrap_vh_start(void);
 void firetrap_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void firetrap_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int firetrap_irq_enable = 0;

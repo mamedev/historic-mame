@@ -2,6 +2,8 @@
 
 Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
+To enter service mode, keep 1&2 pressed on reset
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,11 +15,16 @@ void konami1_decode(void);
 
 extern unsigned char *circusc_spritebank;
 extern unsigned char *circusc_scroll;
+extern unsigned char *circusc_videoram,*circusc_colorram;
 
+WRITE_HANDLER( circusc_videoram_w );
+WRITE_HANDLER( circusc_colorram_w );
+
+int circusc_vh_start(void);
 WRITE_HANDLER( circusc_flipscreen_w );
 void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( circusc_sprite_bank_select_w );
-void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void circusc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 
@@ -68,8 +75,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0c00, 0x0c00, circusc_sh_irqtrigger_w },  /* cause interrupt on audio CPU */
 	{ 0x1c00, 0x1c00, MWA_RAM, &circusc_scroll },
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x33ff, colorram_w, &colorram },
-	{ 0x3400, 0x37ff, videoram_w, &videoram, &videoram_size },
+	{ 0x3000, 0x33ff, circusc_colorram_w, &circusc_colorram },
+	{ 0x3400, 0x37ff, circusc_videoram_w, &circusc_videoram },
 	{ 0x3800, 0x38ff, MWA_RAM, &spriteram_2 },
 	{ 0x3900, 0x39ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3a00, 0x3fff, MWA_RAM },
@@ -103,7 +110,7 @@ INPUT_PORTS_START( circusc )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -178,15 +185,14 @@ INPUT_PORTS_START( circusc )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "20000 70000" )
 	PORT_DIPSETTING(    0x00, "30000 80000" )
-	PORT_DIPNAME( 0x10, 0x10, "Dip Sw2 5" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Dip Sw2 6" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Dip Sw2 7" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -271,8 +277,8 @@ static const struct MachineDriver machine_driver_circusc =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	circusc_vh_start,
+	0,
 	circusc_vh_screenrefresh,
 
 	/* sound hardware */

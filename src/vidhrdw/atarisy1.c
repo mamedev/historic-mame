@@ -39,9 +39,9 @@
  *************************************/
 
 /* temporary bitmap */
-static struct osd_bitmap *trans_bitmap_pf;
-static struct osd_bitmap *trans_bitmap_mo;
-static struct osd_bitmap *priority_copy;
+static struct mame_bitmap *trans_bitmap_pf;
+static struct mame_bitmap *trans_bitmap_mo;
+static struct mame_bitmap *priority_copy;
 
 /* playfield parameters */
 static data16_t priority_pens;
@@ -510,7 +510,7 @@ enum
 
 static int overrender_callback(struct ataripf_overrender_data *data, int state)
 {
-	static struct osd_bitmap *real_dest;
+	static struct mame_bitmap *real_dest;
 	static UINT8 priority_type;
 
 	/* Rendering for the high-priority case here is tricky         */
@@ -640,7 +640,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void atarisys1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* draw the layers */
 	ataripf_render(0, bitmap);

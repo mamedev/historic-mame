@@ -38,7 +38,7 @@ WRITE16_HANDLER( afega_palette_w );
 void grdnstrm_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 int  afega_vh_start(void);
-void afega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void afega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

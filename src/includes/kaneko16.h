@@ -6,8 +6,10 @@
 
 /* Tile Layers: */
 
-extern data16_t *kaneko16_vram_0, *kaneko16_vram_1, *kaneko16_layers_0_regs;
-extern data16_t *kaneko16_vram_2, *kaneko16_vram_3, *kaneko16_layers_1_regs;
+extern data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
+extern data16_t *kaneko16_vscroll_0, *kaneko16_vscroll_1;
+extern data16_t *kaneko16_vram_2,    *kaneko16_vram_3,    *kaneko16_layers_1_regs;
+extern data16_t *kaneko16_vscroll_2, *kaneko16_vscroll_3;
 
 WRITE16_HANDLER( kaneko16_vram_0_w );
 WRITE16_HANDLER( kaneko16_vram_1_w );
@@ -28,7 +30,7 @@ extern data16_t *kaneko16_sprites_regs;
 READ16_HANDLER ( kaneko16_sprites_regs_r );
 WRITE16_HANDLER( kaneko16_sprites_regs_w );
 
-void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int pri);
+void kaneko16_draw_sprites(struct mame_bitmap *bitmap, int pri);
 
 /* Pixel Layer: */
 
@@ -65,7 +67,6 @@ int sandscrp_vh_start_1xVIEW2(void);
 void kaneko16_vh_stop(void);
 void berlwall_vh_stop(void);
 
-void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
+void kaneko16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void kaneko16_init_machine(void);

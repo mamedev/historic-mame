@@ -54,7 +54,7 @@ struct vertex
 	int bValid;
 };
 
-static void draw_pixel( struct osd_bitmap *bitmap, int sx, int sy, int color )
+static void draw_pixel( struct mame_bitmap *bitmap, int sx, int sy, int color )
 {
 	((UINT16 *)bitmap->line[sy])[sx] = color;
 }
@@ -66,7 +66,7 @@ static int onscreen( int x,int y )
 	return x>=0 && y>=0 && x<kScreenWidth && y<kScreenHeight;
 }
 
-static void draw_line( struct osd_bitmap *bitmap, int xpos1, int ypos1, int xpos2, int ypos2, int color )
+static void draw_line( struct mame_bitmap *bitmap, int xpos1, int ypos1, int xpos2, int ypos2, int color )
 {
 	int dx,dy,sx,sy,cx,cy;
 
@@ -115,7 +115,7 @@ static void draw_line( struct osd_bitmap *bitmap, int xpos1, int ypos1, int xpos
 	}
 }
 
-static void draw_quad( struct osd_bitmap *bitmap, struct vertex *vertex, int vi[4], int color )
+static void draw_quad( struct mame_bitmap *bitmap, struct vertex *vertex, int vi[4], int color )
 {
 	int i;
 	struct vertex *pv1, *pv2;
@@ -161,7 +161,7 @@ multiply_matrix(
 	memcpy( A, temp, sizeof(temp) );
 }
 
-static void draw_polygons( struct osd_bitmap *bitmap )
+static void draw_polygons( struct mame_bitmap *bitmap )
 {
 	int i;
 	const INT16 *pDSPRAM;
@@ -449,7 +449,7 @@ void namcos21_vh_stop( void )
 {
 }
 
-static void draw_sprite( int page, struct osd_bitmap *bitmap, const data16_t *pSource )
+static void draw_sprite( int page, struct mame_bitmap *bitmap, const data16_t *pSource )
 {
 	INT16 hpos,vpos;
 	data16_t hsize,vsize;
@@ -568,7 +568,7 @@ static void draw_sprite( int page, struct osd_bitmap *bitmap, const data16_t *pS
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	data16_t *spritelist16;
 	data16_t which;
@@ -610,7 +610,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void namcos21_vh_update_default( struct osd_bitmap *bitmap, int fullrefresh )
+void namcos21_vh_update_default( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	int i;
 	data16_t data1,data2;

@@ -21,7 +21,7 @@
 
 int rampart_bitmap_init(int _xdim, int _ydim);
 void rampart_bitmap_free(void);
-void rampart_bitmap_render(struct osd_bitmap *bitmap);
+void rampart_bitmap_render(struct mame_bitmap *bitmap);
 
 
 
@@ -122,7 +122,7 @@ void arcadecl_vh_stop(void)
  *
  *************************************/
 
-void arcadecl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void arcadecl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* draw the layers */
 	rampart_bitmap_render(bitmap);

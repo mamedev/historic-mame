@@ -20,7 +20,7 @@ TODO:
 
 static unsigned char *xain_sharedram;
 
-void xain_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void xain_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int xain_vh_start(void);
 WRITE_HANDLER( xain_scrollxP0_w );
 WRITE_HANDLER( xain_scrollyP0_w );

@@ -82,7 +82,7 @@ WRITE_HANDLER( ddragon_bgvideoram_w );
 WRITE_HANDLER( ddragon_fgvideoram_w );
 
 int  chinagat_vh_start(void);
-void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern int technos_video_hw;
 extern int ddragon_scrollx_hi, ddragon_scrolly_hi;

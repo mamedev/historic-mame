@@ -23,8 +23,8 @@
 int  pow_vh_start(void);
 int  searchar_vh_start(void);
 int  ikari3_vh_start(void);
-void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void pow_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void searchar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 WRITE16_HANDLER( pow_paletteram16_word_w );
 WRITE16_HANDLER( pow_flipscreen16_w );
 WRITE16_HANDLER( pow_video16_w );

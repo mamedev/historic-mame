@@ -271,7 +271,7 @@ extern size_t hdgsp_vram_size;
 int harddriv_vh_start(void);
 void harddriv_vh_stop(void);
 void harddriv_vh_eof(void);
-void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void harddriv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void hdgsp_write_to_shiftreg(UINT32 address, UINT16 *shiftreg);
 void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg);
@@ -1063,8 +1063,7 @@ static void init_driver(void)
 	{
 		1,
 		0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,
-		0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,
-		0x1000,0
+		0x0800,0
 	};
 
 	hdgsp_multisync = 0;

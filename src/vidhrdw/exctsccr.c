@@ -118,7 +118,7 @@ void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 }
 
-static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
+static void exctsccr_drawsprites( struct mame_bitmap *bitmap ) {
 	int offs;
 	unsigned char *OBJ1, *OBJ2;
 
@@ -212,12 +212,12 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void exctsccr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
+void exctsccr_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ) {
 	int offs;
 
 	/* background chars */

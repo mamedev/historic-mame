@@ -77,13 +77,17 @@
 #include "vidhrdw/generic.h"
 
 
+/* constants */
+#define MAIN_OSC		19968000
+
+
 /* video driver data & functions */
 extern INT8 mcr12_sprite_xoffs;
 extern INT8 mcr12_sprite_xoffs_flip;
 
 int mcr12_vh_start(void);
 void mcr12_vh_stop(void);
-void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void mcr1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 WRITE_HANDLER( mcr1_videoram_w );
 
@@ -357,9 +361,9 @@ static const struct MachineDriver machine_driver_mcr1 =
 	{
 		{
 			CPU_Z80,
-			2500000,	/* 2.5 MHz */
+			MAIN_OSC/8,		/* 2.5 MHz */
 			readmem,writemem,readport,writeport,
-			mcr_interrupt,1,
+			mcr_interrupt,2,
 			0,0,mcr_daisy_chain
 		},
 		SOUND_CPU_SSIO

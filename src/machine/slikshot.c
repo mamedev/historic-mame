@@ -536,7 +536,7 @@ WRITE_HANDLER( slikshot_z80_control_w )
  *
  *************************************/
 
-void slikshot_extra_draw(struct osd_bitmap *bitmap)
+void slikshot_extra_draw(struct mame_bitmap *bitmap)
 {
 	INT8 vx = (INT8)readinputport(3);
 	INT8 vy = (INT8)readinputport(4);

@@ -29,7 +29,7 @@ WRITE_HANDLER( jack_flipscreen_w )
 }
 
 
-void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

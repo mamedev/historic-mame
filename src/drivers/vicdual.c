@@ -85,7 +85,7 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 WRITE_HANDLER( vicdual_characterram_w );
 READ_HANDLER( vicdual_characterram_r );
 WRITE_HANDLER( vicdual_palette_bank_w );
-void vicdual_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void vicdual_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* Carnival sound handlers */
 extern const char *carnival_sample_names[];

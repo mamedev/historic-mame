@@ -118,7 +118,7 @@ WRITE_HANDLER( popflame_videoreg_w );
 int naughtyb_vh_start(void);
 void naughtyb_vh_stop(void);
 void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void naughtyb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( pleiads_sound_control_a_w );
 WRITE_HANDLER( pleiads_sound_control_b_w );

@@ -67,7 +67,7 @@ extern void phozon_init_machine(void);
 extern int phozon_vh_start( void );
 extern void phozon_vh_stop( void );
 extern void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void phozon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 	/* CPU 1 (MAIN CPU) read addresses */
 static MEMORY_READ_START( readmem_cpu1 )

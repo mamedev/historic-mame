@@ -126,7 +126,7 @@ WRITE_HANDLER( raiden_control_w )
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
+static void draw_sprites(struct mame_bitmap *bitmap,int pri_mask)
 {
 	int offs,fx,fy,x,y,color,sprite;
 
@@ -162,7 +162,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 	}
 }
 
-void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void raiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps, alternate version has different scroll positions */
 	if (!ALTERNATE) {

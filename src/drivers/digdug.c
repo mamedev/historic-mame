@@ -137,7 +137,7 @@ WRITE_HANDLER( digdug_cpu_reset_w );
 WRITE_HANDLER( digdug_vh_latch_w );
 int digdug_vh_start(void);
 void digdug_vh_stop(void);
-void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void digdug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 WRITE_HANDLER( pengo_sound_w );

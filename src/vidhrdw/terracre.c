@@ -14,7 +14,7 @@ data16_t *terrac_videoram2;
 size_t terrac_videoram2_size;
 data16_t *terrac_scrolly;
 
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 
 static const unsigned char *spritepalettebank;
@@ -156,12 +156,12 @@ int terrac_vh_start(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void terracre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,x,y;
 

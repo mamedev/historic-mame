@@ -21,7 +21,7 @@ WRITE_HANDLER( scramble_background_green_w );
 WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern struct AY8910interface scobra_ay8910_interface;
 extern const struct Memory_ReadAddress scobra_sound_readmem[];

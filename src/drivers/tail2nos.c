@@ -23,7 +23,7 @@ WRITE16_HANDLER( tail2nos_zoomdata_w );
 WRITE16_HANDLER( tail2nos_gfxbank_w );
 int tail2nos_vh_start(void);
 void tail2nos_vh_stop(void);
-void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tail2nos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static READ_HANDLER( pip )

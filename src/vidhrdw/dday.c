@@ -17,7 +17,7 @@ unsigned char *dday_textvideoram;
 unsigned char *dday_colorram;
 
 static struct tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
-struct osd_bitmap *main_bitmap;
+struct mame_bitmap *main_bitmap;
 static int control;
 static int sl_image;
 static int sl_enable;
@@ -364,7 +364,7 @@ WRITE_HANDLER( dday_control_w )
 
 ***************************************************************************/
 
-void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(main_bitmap,bg_tilemap,TILEMAP_BACK,0);
 	tilemap_draw(main_bitmap,fg_tilemap,0,0);
@@ -375,7 +375,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		/* apply shadow */
 
-		struct osd_bitmap *sl_bitmap;
+		struct mame_bitmap *sl_bitmap;
 		int x, y;
 
 

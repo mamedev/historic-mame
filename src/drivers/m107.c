@@ -29,10 +29,10 @@ extern int m107_raster_irq_position,m107_sprite_list;
 #define m107_IRQ_3 ((m107_irq_vectorbase+12)/4) /* ??? */
 
 WRITE_HANDLER( m107_spritebuffer_w );
-void m107_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line);
-void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip);
-void m107_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dsoccr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line);
+void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip);
+void m107_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void dsoccr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void m107_vh_stop(void);
 int m107_vh_start(void);
 WRITE_HANDLER( m107_control_w );
@@ -226,20 +226,19 @@ MEMORY_END
 /******************************************************************************/
 
 INPUT_PORTS_START( firebarr )
-	PORT_PLAYER1_2BUTTON_JOYSTICK
-	PORT_PLAYER2_2BUTTON_JOYSTICK
+	IREM_JOYSTICK_1_2(1)
+	IREM_JOYSTICK_1_2(2)
 	PORT_UNUSED
 	PORT_UNUSED
-	PORT_COINS_VBLANK
-	PORT_SYSTEM_DIPSWITCH
+	IREM_COINS
+	IREM_SYSTEM_DIPSWITCH
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -270,7 +269,7 @@ INPUT_PORTS_START( firebarr )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, "Continuous Play" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
@@ -285,20 +284,19 @@ INPUT_PORTS_START( firebarr )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dsoccr94 )
-	PORT_PLAYER1_2BUTTON_JOYSTICK
-	PORT_PLAYER2_2BUTTON_JOYSTICK
-	PORT_PLAYER3_2BUTTON_JOYSTICK
-	PORT_PLAYER4_2BUTTON_JOYSTICK
-	PORT_COINS_VBLANK
-	PORT_SYSTEM_DIPSWITCH
+	IREM_JOYSTICK_1_2(1)
+	IREM_JOYSTICK_1_2(2)
+	IREM_JOYSTICK_3_4(3)
+	IREM_JOYSTICK_3_4(4)
+	IREM_COINS
+	IREM_SYSTEM_DIPSWITCH_4PLAYERS
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, "Time" )
+	PORT_DIPSETTING(    0x00, "1:30" )
+	PORT_DIPSETTING(    0x03, "2:00" )
+	PORT_DIPSETTING(    0x02, "2:30" )
+	PORT_DIPSETTING(    0x01, "3:00" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -308,10 +306,10 @@ INPUT_PORTS_START( dsoccr94 )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, "Starting Button" )
+	PORT_DIPSETTING(    0x00, "Button 1" )
+	PORT_DIPSETTING(    0x20, "Start Button" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )

@@ -74,7 +74,7 @@ NMI interrupts for music timing
 
 WRITE_HANDLER( bombjack_background_w );
 WRITE_HANDLER( bombjack_flipscreen_w );
-void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bombjack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int bombjack_vh_start(void);
 
 

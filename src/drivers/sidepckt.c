@@ -21,7 +21,7 @@ i8751 protection simluation and other fixes by Bryan McPhail, 15/10/00.
 /* from vidhrdw */
 void sidepckt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int sidepckt_vh_start(void);
-void sidepckt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void sidepckt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( sidepckt_flipscreen_w );
 WRITE_HANDLER( sidepckt_videoram_w );

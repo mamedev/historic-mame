@@ -16,7 +16,7 @@ Japan). It has no sound.
 
 
 WRITE_HANDLER( minivadr_videoram_w );
-void minivadr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void minivadr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 
 

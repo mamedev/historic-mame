@@ -46,7 +46,7 @@ WRITE_HANDLER( pbaction_scroll_w );
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
-void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void pbaction_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE_HANDLER( pbaction_sh_command_w )

@@ -122,7 +122,7 @@ WRITE_HANDLER( troangel_flipscreen_w )
 
 
 
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 	int offs;
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -189,7 +189,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -229,7 +229,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 
 
-void troangel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void troangel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	draw_background(bitmap);
 	draw_sprites(bitmap);

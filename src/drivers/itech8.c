@@ -195,7 +195,7 @@ extern UINT8 *itech8_display_page;
 int itech8_vh_start(void);
 int slikshot_vh_start(void);
 void itech8_vh_stop(void);
-void itech8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 READ_HANDLER( itech8_tms34061_r );
 READ_HANDLER( itech8_blitter_r );

@@ -46,7 +46,7 @@ WRITE_HANDLER( bankp_scroll_w );
 WRITE_HANDLER( bankp_out_w );
 int bankp_vh_start(void);
 void bankp_vh_stop(void);
-void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bankp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

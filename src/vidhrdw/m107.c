@@ -271,7 +271,7 @@ void m107_vh_stop(void)
 
 /*****************************************************************************/
 
-static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *clip, int pri)
+static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *clip, int pri)
 {
 	int offs;
 
@@ -355,7 +355,7 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 
 /*****************************************************************************/
 
-void m107_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void m107_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Nothing - screen refresh is handled by raster interrupt routine */
 }
@@ -418,7 +418,7 @@ static void m107_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
+void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
 {
 	if (pf4_enable)
 		tilemap_draw(bitmap,pf4_layer,0,0);
@@ -439,7 +439,7 @@ void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 		any used yet */
 }
 
-void m107_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line)
+void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
 {
 	struct rectangle clip;
 

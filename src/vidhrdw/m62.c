@@ -401,12 +401,12 @@ WRITE_HANDLER( spelunk2_gfxport_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -464,7 +464,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void draw_priority_sprites(struct osd_bitmap *bitmap, int prioritylayer)
+static void draw_priority_sprites(struct mame_bitmap *bitmap, int prioritylayer)
 {
 	int offs;
 
@@ -525,7 +525,7 @@ static void draw_priority_sprites(struct osd_bitmap *bitmap, int prioritylayer)
 }
 
 
-void kungfum_draw_background(struct osd_bitmap *bitmap,int prioritylayer)
+void kungfum_draw_background(struct mame_bitmap *bitmap,int prioritylayer)
 {
 	int offs,i;
 	int scrollx[32];
@@ -620,7 +620,7 @@ void kungfum_draw_background(struct osd_bitmap *bitmap,int prioritylayer)
 	}
 }
 
-static void battroad_draw_background(struct osd_bitmap *bitmap, int prioritylayer)
+static void battroad_draw_background(struct mame_bitmap *bitmap, int prioritylayer)
 {
 	int offs;
 
@@ -679,7 +679,7 @@ static void battroad_draw_background(struct osd_bitmap *bitmap, int prioritylaye
 	}
 }
 
-void ldrun_draw_background(struct osd_bitmap *bitmap, int prioritylayer)
+void ldrun_draw_background(struct mame_bitmap *bitmap, int prioritylayer)
 {
 	int offs;
 
@@ -738,7 +738,7 @@ void ldrun_draw_background(struct osd_bitmap *bitmap, int prioritylayer)
 
 /* almost identical but scrolling background, more characters, */
 /* no char x flip, and more sprites */
-void ldrun4_draw_background(struct osd_bitmap *bitmap)
+void ldrun4_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -786,7 +786,7 @@ void ldrun4_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-void lotlot_draw_background(struct osd_bitmap *bitmap)
+void lotlot_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -850,7 +850,7 @@ void lotlot_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void kidniki_draw_background(struct osd_bitmap *bitmap)
+static void kidniki_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -896,7 +896,7 @@ static void kidniki_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void spelunkr_draw_background(struct osd_bitmap *bitmap)
+static void spelunkr_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -951,7 +951,7 @@ static void spelunkr_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void spelunk2_draw_background(struct osd_bitmap *bitmap)
+static void spelunk2_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1003,7 +1003,7 @@ static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-static void youjyudn_draw_background(struct osd_bitmap *bitmap,int priority)
+static void youjyudn_draw_background(struct mame_bitmap *bitmap,int priority)
 {
 	int offs;
 
@@ -1036,7 +1036,7 @@ static void youjyudn_draw_background(struct osd_bitmap *bitmap,int priority)
 
 
 
-static void battroad_draw_text(struct osd_bitmap *bitmap)
+static void battroad_draw_text(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1064,7 +1064,7 @@ static void battroad_draw_text(struct osd_bitmap *bitmap)
 	}
 }
 
-static void kidniki_draw_text(struct osd_bitmap *bitmap)
+static void kidniki_draw_text(struct mame_bitmap *bitmap)
 {
 	int offs;
 	int scrolly;
@@ -1099,7 +1099,7 @@ static void kidniki_draw_text(struct osd_bitmap *bitmap)
 	}
 }
 
-static void spelunkr_draw_text(struct osd_bitmap *bitmap)
+static void spelunkr_draw_text(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1127,7 +1127,7 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 	}
 }
 
-static void youjyudn_draw_text(struct osd_bitmap *bitmap)
+static void youjyudn_draw_text(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1156,14 +1156,14 @@ static void youjyudn_draw_text(struct osd_bitmap *bitmap)
 }
 
 
-void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kungfum_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	kungfum_draw_background(bitmap,0);
 	draw_sprites(bitmap);
 	kungfum_draw_background(bitmap,1);
 }
 
-void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void battroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	battroad_draw_background(bitmap, 0);
 	draw_priority_sprites(bitmap, 0);
@@ -1172,7 +1172,7 @@ void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	battroad_draw_text(bitmap);
 }
 
-void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ldrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	ldrun_draw_background(bitmap, 0);
 	draw_priority_sprites(bitmap, 0);
@@ -1180,40 +1180,40 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_priority_sprites(bitmap, 1);
 }
 
-void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ldrun4_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	ldrun4_draw_background(bitmap);
 	draw_sprites(bitmap);
 }
 
-void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lotlot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	lotlot_draw_background(bitmap);
 	draw_sprites(bitmap);
 }
 
-void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kidniki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	kidniki_draw_background(bitmap);
 	draw_sprites(bitmap);
 	kidniki_draw_text(bitmap);
 }
 
-void spelunkr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void spelunkr_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	spelunkr_draw_background(bitmap);
 	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }
 
-void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void spelunk2_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	spelunk2_draw_background(bitmap);
 	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }
 
-void youjyudn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void youjyudn_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	youjyudn_draw_background(bitmap,0);
 	draw_sprites(bitmap);

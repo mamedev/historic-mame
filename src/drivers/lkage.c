@@ -35,7 +35,7 @@ Take the following observations with a grain of salt (might not be true):
 extern unsigned char *lkage_scroll, *lkage_vreg;
 WRITE_HANDLER( lkage_videoram_w );
 int lkage_vh_start(void);
-void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lkage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( lkage_68705_portA_r );
 WRITE_HANDLER( lkage_68705_portA_w );

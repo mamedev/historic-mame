@@ -270,7 +270,7 @@ UINT32 *atarian_get_lookup(int map, int *size)
 	destination bitmap.
 ---------------------------------------------------------------*/
 
-void atarian_render(int map, struct osd_bitmap *bitmap)
+void atarian_render(int map, struct mame_bitmap *bitmap)
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	struct atarian_data *an = &atarian[map];

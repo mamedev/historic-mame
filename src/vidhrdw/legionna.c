@@ -165,7 +165,7 @@ void legionna_vh_stop(void)
 
 *************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;
@@ -220,7 +220,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 }
 
 
-void legionna_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 #ifdef MAME_DEBUG
 	static int dislayer[5];	/* Layer toggles to help get the layers correct */

@@ -559,7 +559,7 @@ void harddriv_vh_eof(void)
  *
  *************************************/
 
-void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void harddriv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	struct gfx_update_entry *draw_state;
 	UINT32 curr_offset = 0;

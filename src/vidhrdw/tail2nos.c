@@ -155,7 +155,7 @@ WRITE16_HANDLER( tail2nos_gfxbank_w )
 
 ***************************************************************************/
 
-static void drawsprites(struct osd_bitmap *bitmap)
+static void drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -182,7 +182,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tail2nos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	static struct GfxLayout tilelayout =
 	{

@@ -88,7 +88,7 @@ extern unsigned char *ccastles_scrolly;
 WRITE_HANDLER( ccastles_paletteram_w );
 int ccastles_vh_start(void);
 void ccastles_vh_stop(void);
-void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( ccastles_bitmode_r );
 WRITE_HANDLER( ccastles_bitmode_w );

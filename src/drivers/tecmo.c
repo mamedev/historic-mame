@@ -62,7 +62,7 @@ WRITE_HANDLER( tecmo_bgscroll_w );
 WRITE_HANDLER( tecmo_flipscreen_w );
 
 int tecmo_vh_start(void);
-void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tecmo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

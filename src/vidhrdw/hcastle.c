@@ -182,7 +182,7 @@ WRITE_HANDLER( hcastle_pf2_control_w )
 
 /*****************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int bank )
+static void draw_sprites( struct mame_bitmap *bitmap, unsigned char *sbank, int bank )
 {
 	int bank_base = (bank == 0) ? 0x4000 * (gfx_bank & 1) : 0;
 	K007121_sprites_draw(bank,bitmap,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base,-1);
@@ -190,7 +190,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int b
 
 /*****************************************************************************/
 
-void hcastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void hcastle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	static int old_pf1,old_pf2;
 

@@ -133,7 +133,7 @@ READ_HANDLER( vastar_bg2videoram_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -192,7 +192,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void vastar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vastar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 

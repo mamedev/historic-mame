@@ -54,7 +54,7 @@ extern UINT8 qix_cocktail_flip;
 
 int qix_vh_start(void);
 void qix_vh_stop(void);
-void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void qix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int qix_vblank_start(void);
 void qix_scanline_callback(int scanline);

@@ -44,7 +44,7 @@ WRITE_HANDLER( pcktgal_flipscreen_w )
 	last_flip=flipscreen;
 }
 
-void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pcktgal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

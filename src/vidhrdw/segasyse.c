@@ -76,7 +76,7 @@ void segae_vh_stop(void)
 	free (cache_bitmap);
 }
 
-void segae_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void segae_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int i;
 

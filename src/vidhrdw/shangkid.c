@@ -67,7 +67,7 @@ WRITE_HANDLER( shangkid_videoram_w )
 	}
 }
 
-static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
+static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap ){
 	struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx;
 	int transparent_pen;
@@ -161,7 +161,7 @@ static void draw_sprite( const UINT8 *source, struct osd_bitmap *bitmap ){
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	const UINT8 *source, *finish;
 
@@ -173,7 +173,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
+void shangkid_screenrefresh( struct mame_bitmap *bitmap, int fullfresh )
 {
 	int flipscreen = shangkid_videoreg[1]&0x80;
 	tilemap_set_flip( background, flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
@@ -188,7 +188,7 @@ void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
 
 
 
-static void dynamski_draw_background( struct osd_bitmap *bitmap, int pri )
+static void dynamski_draw_background( struct mame_bitmap *bitmap, int pri )
 {
 	int i;
 	int sx,sy;
@@ -243,7 +243,7 @@ static void dynamski_draw_background( struct osd_bitmap *bitmap, int pri )
 	}
 }
 
-static void dynamski_draw_sprites( struct osd_bitmap *bitmap )
+static void dynamski_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int i;
 	int sx,sy;
@@ -275,7 +275,7 @@ static void dynamski_draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void dynamski_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void dynamski_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	dynamski_draw_background( bitmap, 0 );
 	dynamski_draw_sprites( bitmap );

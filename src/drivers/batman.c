@@ -31,7 +31,7 @@
 
 int batman_vh_start(void);
 void batman_vh_stop(void);
-void batman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void batman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void batman_scanline_update(int scanline);
 

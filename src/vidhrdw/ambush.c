@@ -52,13 +52,13 @@ void ambush_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colort
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_chars(struct osd_bitmap *bitmap, int priority)
+static void draw_chars(struct mame_bitmap *bitmap, int priority)
 {
 	int offs, transparency;
 
@@ -99,7 +99,7 @@ static void draw_chars(struct osd_bitmap *bitmap, int priority)
 }
 
 
-void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ambush_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

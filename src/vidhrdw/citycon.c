@@ -118,13 +118,13 @@ WRITE_HANDLER( citycon_background_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -169,7 +169,7 @@ INLINE void changecolor_RRRRGGGGBBBBxxxx(int color,int indx)
 	palette_set_color(color,r,g,b);
 }
 
-void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void citycon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,scroll;
 

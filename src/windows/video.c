@@ -46,11 +46,6 @@ extern UINT8 win_trying_to_quit;
 // frameskipping
 #define FRAMESKIP_LEVELS		12
 
-// VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels wide all
-// around the bitmap. This is required because, for performance reasons, some graphic
-// routines don't clip at boundaries of the bitmap.
-#define BITMAP_SAFETY			16
-
 
 
 //============================================================
@@ -321,108 +316,6 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 
 	option->priority = priority;
 	return 0;
-}
-
-
-
-//============================================================
-//	osd_alloc_bitmap
-//============================================================
-
-struct osd_bitmap *osd_alloc_bitmap(int width, int height, int depth)
-{
-	struct osd_bitmap *bitmap;
-
-	// verify it's a depth we can handle
-	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
-	{
-		logerror("osd_alloc_bitmap() unknown depth %d\n",depth);
-		return NULL;
-	}
-
-	// allocate memory for the bitmap struct
-	bitmap = malloc(sizeof(struct osd_bitmap));
-	if (bitmap != NULL)
-	{
-		int i, rowlen, rdwidth;
-		unsigned char *bm;
-
-		// initialize the basic parameters
-		bitmap->depth = depth;
-		bitmap->width = width;
-		bitmap->height = height;
-
-		// round the width to a quadword
-		rdwidth = (width + 7) & ~7;
-		rowlen = (rdwidth + 2 * BITMAP_SAFETY) * sizeof(unsigned char);
-
-		// expand 32bpp and 15/16bpp depths
-		if (depth == 32)
-			rowlen *= 4;
-		else if (depth == 15 || depth == 16)
-			rowlen *= 2;
-
-		// allocate memory for the bitmap itself
-		bm = malloc((height + 2 * BITMAP_SAFETY) * rowlen);
-		if (bm == NULL)
-		{
-			free(bitmap);
-			return 0;
-		}
-
-		// clear ALL bitmap, including safety area, to avoid garbage on right
-		memset(bm, 0, (height + 2 * BITMAP_SAFETY) * rowlen);
-
-		// allocate an array of line pointers
-		bitmap->line = malloc((height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *));
-		if (bitmap->line == NULL)
-		{
-			free(bm);
-			free(bitmap);
-			return 0;
-		}
-
-		// initialize the line pointers
-		for (i = 0; i < height + 2 * BITMAP_SAFETY; i++)
-		{
-			if (depth == 32)
-				bitmap->line[i] = &bm[i * rowlen + 4*BITMAP_SAFETY];
-			else if (depth == 15 || depth == 16)
-				bitmap->line[i] = &bm[i * rowlen + 2*BITMAP_SAFETY];
-			else
-				bitmap->line[i] = &bm[i * rowlen + BITMAP_SAFETY];
-		}
-
-		// adjust for the safety rows
-		bitmap->line += BITMAP_SAFETY;
-
-		// save a pointer to the bitmap data in the private pointer
-		bitmap->_private = bm;
-	}
-
-	// return the result
-	return bitmap;
-}
-
-
-
-//============================================================
-//	osd_free_bitmap
-//============================================================
-
-void osd_free_bitmap(struct osd_bitmap *bitmap)
-{
-	// skip if NULL
-	if (!bitmap)
-		return;
-
-	// unadjust for the safety rows
-	bitmap->line -= BITMAP_SAFETY;
-
-	// free the memory
-	free(bitmap->line);
-	free(bitmap->_private);
-	free(bitmap);
 }
 
 
@@ -1000,7 +893,7 @@ void update_palette_16(void)
 //	display_fps
 //============================================================
 
-static void display_fps(struct osd_bitmap *bitmap)
+static void display_fps(struct mame_bitmap *bitmap)
 {
 	int divdr = 100 * FRAMESKIP_LEVELS;
 	int fps = (video_fps * (double)(FRAMESKIP_LEVELS - frameskip) * game_speed_percent + (divdr / 2)) / divdr;
@@ -1074,7 +967,7 @@ void update_autoframeskip(void)
 //	render_frame
 //============================================================
 
-static void render_frame(struct osd_bitmap *bitmap)
+static void render_frame(struct mame_bitmap *bitmap)
 {
 	TICKER curr;
 	int i;
@@ -1162,7 +1055,7 @@ static void render_frame(struct osd_bitmap *bitmap)
 //	osd_update_video_and_audio
 //============================================================
 
-void osd_update_video_and_audio(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap, int leds_status)
+void osd_update_video_and_audio(struct mame_bitmap *game_bitmap, struct mame_bitmap *debug_bitmap, int leds_status)
 {
 	// if the LEDs have changed, update them
 	if (leds_old != leds_status)
@@ -1261,7 +1154,7 @@ int osd_get_brightness(void)
 //	osd_save_snapshot
 //============================================================
 
-void osd_save_snapshot(struct osd_bitmap *bitmap)
+void osd_save_snapshot(struct mame_bitmap *bitmap)
 {
 	save_screen_snapshot(bitmap);
 }

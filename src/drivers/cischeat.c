@@ -176,10 +176,10 @@ int bigrun_vh_start(void);
 int cischeat_vh_start(void);
 int f1gpstar_vh_start(void);
 
-void bigrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cischeat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void f1gpstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void scudhamm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void f1gpstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void scudhamm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /**************************************************************************

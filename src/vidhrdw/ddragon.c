@@ -166,7 +166,7 @@ WRITE_HANDLER( ddragon_fgvideoram_w )
 					(which+order),color,flipx,flipy,sx,sy, \
 					clip,TRANSPARENCY_PEN,0);
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -248,7 +248,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 #undef DRAW_SPRITE
 
 
-void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx = ddragon_scrollx_hi + *ddragon_scrollx_lo;
 	int scrolly = ddragon_scrolly_hi + *ddragon_scrolly_lo;

@@ -147,7 +147,7 @@ WRITE_HANDLER( flkatck_k007121_regs_w )
 
 ***************************************************************************/
 
-void flkatck_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void flkatck_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 #if 0
 usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",

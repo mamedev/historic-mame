@@ -52,7 +52,7 @@ WRITE_HANDLER( mpatrol_flipscreen_w );
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
 void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mpatrol_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( mpatrol_input_port_3_r );
 

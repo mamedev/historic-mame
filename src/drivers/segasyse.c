@@ -191,7 +191,7 @@ static WRITE_HANDLER (segae_port_be_bf_w);
 
 int segae_vh_start(void);
 void segae_vh_stop(void);
-void segae_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void segae_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 unsigned char segae_vdp_ctrl_r ( UINT8 chip );
 unsigned char segae_vdp_data_r ( UINT8 chip );

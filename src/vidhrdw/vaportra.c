@@ -155,7 +155,7 @@ WRITE16_HANDLER( vaportra_palette_24bit_b_w )
 
 /******************************************************************************/
 
-static void vaportra_drawsprites(struct osd_bitmap *bitmap, int pri)
+static void vaportra_drawsprites(struct mame_bitmap *bitmap, int pri)
 {
 	int offs,priority_value;
 
@@ -224,7 +224,7 @@ static void vaportra_drawsprites(struct osd_bitmap *bitmap, int pri)
 }
 
 
-void vaportra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vaportra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int pri=vaportra_control_2[0];
 

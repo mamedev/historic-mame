@@ -34,7 +34,7 @@ WRITE_HANDLER( dynduke_text_w );
 WRITE_HANDLER( dynduke_gfxbank_w );
 int dynduke_vh_start(void);
 WRITE_HANDLER( dynduke_control_w );
-void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dynduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( dynduke_paletteram_w );
 
 static unsigned char *dynduke_shared_ram;

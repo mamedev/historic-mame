@@ -158,7 +158,7 @@ WRITE16_HANDLER( pow_video16_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
+static void draw_sprites(struct mame_bitmap *bitmap, int j,int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -215,7 +215,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 }
 
 
-void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pow_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
@@ -231,7 +231,7 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
+static void draw_sprites2(struct mame_bitmap *bitmap, int j, int z, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -296,7 +296,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 }
 
 
-void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void searchar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 

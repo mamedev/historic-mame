@@ -57,12 +57,12 @@ Games by Nihon Game/Culture Brain:
 /* from vidhrdw/shangkid.c */
 extern int shangkid_vh_start( void );
 extern void shangkid_vh_stop( void );
-extern void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh );
+extern void shangkid_screenrefresh( struct mame_bitmap *bitmap, int fullfresh );
 extern WRITE_HANDLER( shangkid_videoram_w );
 extern UINT8 *shangkid_videoreg;
 extern int shangkid_gfx_type;
 
-extern void dynamski_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern void dynamski_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 
 /***************************************************************************************/
 

@@ -69,7 +69,7 @@ struct ataripf_data
 	int					latchdata;			/* shifted value for latching */
 	int					latchmask;			/* mask for latching */
 
-	struct osd_bitmap *	bitmap;				/* backing bitmap */
+	struct mame_bitmap *	bitmap;				/* backing bitmap */
 	UINT32 *			vram;				/* pointer to VRAM */
 	UINT32 *			dirtymap;			/* dirty bitmap */
 	UINT8 *				visitmap;			/* visiting bitmap */
@@ -493,7 +493,7 @@ UINT32 *ataripf_get_lookup(int map, int *size)
 	blocks, and copy it to the destination bitmap.
 ---------------------------------------------------------------*/
 
-void ataripf_render(int map, struct osd_bitmap *bitmap)
+void ataripf_render(int map, struct mame_bitmap *bitmap)
 {
 	struct ataripf_data *pf = &ataripf[map];
 
@@ -1050,7 +1050,7 @@ static void pf_process(struct ataripf_data *pf, pf_callback callback, void *para
 
 static void pf_render_callback(struct ataripf_data *pf, const struct ataripf_state *state)
 {
-	struct osd_bitmap *bitmap = pf->process_param;
+	struct mame_bitmap *bitmap = pf->process_param;
 	int x, y, bankbits = state->bankbits;
 
 	/* standard loop over tiles */

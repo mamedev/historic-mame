@@ -1,6 +1,6 @@
 /***************************************************************************
 
-							  -= Cave Games =-
+							  -= Cave Hardware =-
 
 					driver by	Luca Elia (l.elia@tin.it)
 
@@ -19,6 +19,7 @@ Other        :  93C46 EEPROM
 Year + Game			License		PCB			Tilemaps		Sprites			Other
 -----------------------------------------------------------------------------------
 94	Mazinger Z		Banpresto	?			038 9335EX706	013 9341E7009
+95	Metamoqester	Banpresto	BP947A		038 9437WX711	013 9346E7002
 95	Sailor Moon		Banpresto	BP945A		038 9437WX711	013 9346E7002
 95	Donpachi		Atlus		AT-C01DP-2	038 9429WX727	013 8647-01		NMK 112
 96	Hotdog Storm	Marble		?			?
@@ -29,6 +30,11 @@ Year + Game			License		PCB			Tilemaps		Sprites			Other
 99	Guwange			Atlus		ATC05		?
 -----------------------------------------------------------------------------------
 
+To Do:
+
+- Sprite lag in some games (e.g. metmqstr). The sprites chip probably
+  generates interrupts (unknown_irq)
+
 
 ***************************************************************************/
 
@@ -36,48 +42,7 @@ Year + Game			License		PCB			Tilemaps		Sprites			Other
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
-
-
-/* Variables that vidhrdw has access to */
-
-int cave_spritetype;
-
-/* Variables defined in vidhrdw */
-
-extern data16_t *cave_videoregs;
-
-extern data16_t *cave_vram_0, *cave_vctrl_0;
-extern data16_t *cave_vram_1, *cave_vctrl_1;
-extern data16_t *cave_vram_2, *cave_vctrl_2;
-
-/* Functions defined in vidhrdw */
-
-WRITE16_HANDLER( cave_vram_0_w );
-WRITE16_HANDLER( cave_vram_1_w );
-WRITE16_HANDLER( cave_vram_2_w );
-
-WRITE16_HANDLER( cave_vram_0_8x8_w );
-WRITE16_HANDLER( cave_vram_1_8x8_w );
-WRITE16_HANDLER( cave_vram_2_8x8_w );
-
-void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-
-int cave_vh_start_16_16_16(void);
-int cave_vh_start_16_16_8(void);
-int cave_vh_start_16_16_0(void);
-int cave_vh_start_16_0_0(void);
-int cave_vh_start_8_8_0(void);
-
-int sailormn_vh_start_16_16_8(void);
-
-void cave_vh_stop(void);
-
-void cave_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void sailormn_tilebank_w( int bank );
-
+#include "cave.h"
 
 /***************************************************************************
 
@@ -112,6 +77,22 @@ static int mazinger_interrupt(void)
 {
 	unknown_irq = 1;
 	return cave_interrupt();
+}
+
+static int metmqstr_interrupt(void)
+{
+	switch( cpu_getiloops() )
+	{
+		case 0:		// VBlank
+			vblank_irq = 1;
+			update_irq_state();
+			return ignore_interrupt();
+		default:
+		case 1:		// Sprites?
+			unknown_irq = 1;
+			update_irq_state();
+			return ignore_interrupt();
+	}
 }
 
 /* Called by the YMZ280B to set the IRQ state */
@@ -369,6 +350,32 @@ WRITE16_HANDLER( cave_eeprom_lsb_w )
 
 		// clock line asserted: write latch or select next bit to read
 		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE );
+	}
+}
+
+/*	- No coin lockouts
+	- Writing 0xcf00 shouldn't send a 1 bit to the eeprom	*/
+WRITE16_HANDLER( metmqstr_eeprom_msb_w )
+{
+	if (data & ~0xff00)
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",cpu_get_pc(),data);
+
+	if ( ACCESSING_MSB )  // even address
+	{
+		coin_counter_w(1, data & 0x2000);
+		coin_counter_w(0, data & 0x1000);
+
+		if (~data & 0x0100)
+		{
+			// latch the bit
+			EEPROM_write_bit(data & 0x0800);
+
+			// reset line asserted: reset.
+			EEPROM_set_cs_line((data & 0x0200) ? CLEAR_LINE : ASSERT_LINE );
+
+			// clock line asserted: write latch or select next bit to read
+			EEPROM_set_clock_line((data & 0x0400) ? ASSERT_LINE : CLEAR_LINE );
+		}
 	}
 }
 
@@ -748,6 +755,58 @@ MEMORY_END
 
 
 /***************************************************************************
+								Metamoqester
+***************************************************************************/
+
+static MEMORY_READ16_START( metmqstr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x17ffff, MRA16_ROM				},	// ROM
+	{ 0x200000, 0x27ffff, MRA16_ROM				},	// ROM
+	{ 0x408000, 0x408fff, MRA16_RAM				},	// Palette
+	{ 0x600000, 0x600001, watchdog_reset16_r	},	// Watchdog?
+	{ 0x880000, 0x887fff, MRA16_RAM				},	// Layer 2
+	{ 0x888000, 0x88ffff, MRA16_RAM				},	//
+	{ 0x900000, 0x907fff, MRA16_RAM				},	// Layer 1
+	{ 0x908000, 0x90ffff, MRA16_RAM				},	//
+	{ 0x980000, 0x987fff, MRA16_RAM				},	// Layer 0
+	{ 0x988000, 0x98ffff, MRA16_RAM				},	//
+	{ 0xa80000, 0xa80007, cave_irq_cause_r		},	// IRQ Cause
+	{ 0xa8006c, 0xa8006d, soundflags_ack_r		},	// Communication
+	{ 0xa8006e, 0xa8006f, soundlatch_ack_r		},	// From Sound CPU
+/**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xb80000, 0xb80005, MRA16_RAM				},	// Layer 1 Control
+/**/{ 0xc00000, 0xc00005, MRA16_RAM				},	// Layer 2 Control
+	{ 0xc80000, 0xc80001, input_port_0_word_r	},	// Inputs
+	{ 0xc80002, 0xc80003, cave_input1_r			},	// Inputs + EEPROM
+	{ 0xf00000, 0xf07fff, MRA16_RAM				},	// Sprites
+	{ 0xf08000, 0xf0ffff, MRA16_RAM				},	// RAM
+MEMORY_END
+
+static MEMORY_WRITE16_START( metmqstr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0x100000, 0x17ffff, MWA16_ROM						},	// ROM
+	{ 0x200000, 0x27ffff, MWA16_ROM						},	// ROM
+	{ 0x408000, 0x408fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+	{ 0x880000, 0x887fff, cave_vram_2_w, &cave_vram_2	},	// Layer 2
+	{ 0x888000, 0x88ffff, MWA16_RAM						},	//
+	{ 0x900000, 0x907fff, cave_vram_1_w, &cave_vram_1	},	// Layer 1
+	{ 0x908000, 0x90ffff, MWA16_RAM						},	//
+	{ 0x980000, 0x987fff, cave_vram_0_w, &cave_vram_0	},	// Layer 0
+	{ 0x988000, 0x98ffff, MWA16_RAM						},	//
+	{ 0xa80068, 0xa80069, watchdog_reset16_w			},	// Watchdog?
+	{ 0xa8006c, 0xa8006d, MWA16_NOP						},	// ?
+	{ 0xa8006e, 0xa8006f, sound_cmd_w					},	// To Sound CPU
+	{ 0xa80000, 0xa8007f, MWA16_RAM, &cave_videoregs	},	// Video Regs
+	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2		},	// Layer 2 Control
+	{ 0xb80000, 0xb80005, MWA16_RAM, &cave_vctrl_1		},	// Layer 1 Control
+	{ 0xc00000, 0xc00005, MWA16_RAM, &cave_vctrl_0		},	// Layer 0 Control
+	{ 0xd00000, 0xd00001, metmqstr_eeprom_msb_w			},	// EEPROM
+	{ 0xf00000, 0xf07fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0xf08000, 0xf0ffff, MWA16_RAM						},	// RAM
+MEMORY_END
+
+
+/***************************************************************************
 								Sailorm Moon
 ***************************************************************************/
 
@@ -931,6 +990,69 @@ PORT_END
 
 
 /***************************************************************************
+								Metamoqester
+***************************************************************************/
+
+WRITE_HANDLER( metmqstr_rombank_w )
+{
+	data8_t *ROM = memory_region(REGION_CPU2);
+	int bank = data & 0xf;
+	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if (bank >= 2)	bank += 2;
+	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
+}
+
+WRITE_HANDLER( metmqstr_okibank0_w )
+{
+	data8_t *ROM = memory_region(REGION_SOUND1);
+	int bank1 = (data >> 0) & 0x7;
+	int bank2 = (data >> 4) & 0x7;
+	if (Machine->sample_rate == 0)	return;
+	memcpy(ROM + 0x20000 * 0, ROM + 0x40000 + 0x20000 * bank1, 0x20000);
+	memcpy(ROM + 0x20000 * 1, ROM + 0x40000 + 0x20000 * bank2, 0x20000);
+}
+
+WRITE_HANDLER( metmqstr_okibank1_w )
+{
+	data8_t *ROM = memory_region(REGION_SOUND2);
+	int bank1 = (data >> 0) & 0x7;
+	int bank2 = (data >> 4) & 0x7;
+	if (Machine->sample_rate == 0)	return;
+	memcpy(ROM + 0x20000 * 0, ROM + 0x40000 + 0x20000 * bank1, 0x20000);
+	memcpy(ROM + 0x20000 * 1, ROM + 0x40000 + 0x20000 * bank2, 0x20000);
+}
+
+static MEMORY_READ_START( metmqstr_sound_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM	},	// ROM
+	{ 0x4000, 0x7fff, MRA_BANK1	},	// ROM (Banked)
+	{ 0xe000, 0xffff, MRA_RAM	},	// RAM
+MEMORY_END
+
+static MEMORY_WRITE_START( metmqstr_sound_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM	},	// ROM
+	{ 0x4000, 0x7fff, MWA_ROM	},	// ROM (Banked)
+	{ 0xe000, 0xffff, MWA_RAM	},	// RAM
+MEMORY_END
+
+static PORT_READ_START( metmqstr_sound_readport )
+	{ 0x20, 0x20, soundflags_r				},	// Communication
+	{ 0x30, 0x30, soundlatch_lo_r			},	// From Main CPU
+	{ 0x40, 0x40, soundlatch_hi_r			},	//
+	{ 0x51, 0x51, YM2151_status_port_0_r	},	// YM2151
+PORT_END
+
+static PORT_WRITE_START( metmqstr_sound_writeport )
+	{ 0x00, 0x00, metmqstr_rombank_w		},	// Rom Bank
+	{ 0x50, 0x50, YM2151_register_port_0_w	},	// YM2151
+	{ 0x51, 0x51, YM2151_data_port_0_w		},	//
+	{ 0x60, 0x60, OKIM6295_data_0_w			},	// M6295 #0
+	{ 0x70, 0x70, metmqstr_okibank0_w		},	// Samples Bank #0
+	{ 0x80, 0x80, OKIM6295_data_1_w			},	// M6295 #1
+	{ 0x90, 0x90, metmqstr_okibank1_w		},	// Samples Bank #1
+PORT_END
+
+
+/***************************************************************************
 								Sailorm Moon
 ***************************************************************************/
 
@@ -1011,6 +1133,7 @@ PORT_END
 	101626.w -> c,a6	(1:coin<<4|credit) <<8 | (2:coin<<4|credit)
 */
 
+/* Most games use this */
 INPUT_PORTS_START( cave )
 	PORT_START	// IN0 - Player 1
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
@@ -1051,6 +1174,7 @@ INPUT_PORTS_START( cave )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/* Different layout */
 INPUT_PORTS_START( guwange )
 	PORT_START	// IN0 - Player 1 & 2
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1  )
@@ -1089,6 +1213,47 @@ INPUT_PORTS_START( guwange )
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+/* "normal" layout but with 4 buttons */
+INPUT_PORTS_START( metmqstr )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? enter & exit service mode
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -1298,6 +1463,25 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
 
 
 /***************************************************************************
+								Metamoqester
+***************************************************************************/
+
+static struct GfxDecodeInfo metmqstr_gfxdecodeinfo[] =
+{
+	/* There are only $800 colors here, the first half for sprites
+	   the second half for tiles. We use $8000 virtual colors instead
+	   for consistency with games having $8000 real colors.
+	   A vh_init_palette function is thus needed for sprites */
+
+	{ REGION_GFX1, 0, &layout_16x16x4,	0x4400, 0x40 }, // [0] Layer 0
+	{ REGION_GFX2, 0, &layout_16x16x4,	0x4400, 0x40 }, // [1] Layer 1
+	{ REGION_GFX3, 0, &layout_16x16x4,	0x4400, 0x40 }, // [2] Layer 2
+//	{ REGION_GFX4, 0, &layout_sprites,	0x0000, 0x40 }, // Sprites
+	{ -1 }
+};
+
+
+/***************************************************************************
 								Sailor Moon
 ***************************************************************************/
 
@@ -1337,6 +1521,13 @@ void cave_init_machine(void)
 	soundbuf.len = 0;
 }
 
+/* start with the watchdog armed */
+void cave_init_machine_watchdog(void)
+{
+	cave_init_machine();
+	watchdog_reset16_w(0,0,0);
+}
+
 static struct YMZ280Binterface ymz280b_intf =
 {
 	1,
@@ -1344,6 +1535,15 @@ static struct YMZ280Binterface ymz280b_intf =
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq_gen }
+};
+
+/*	X1 = 32 MHz, OKI: / 165 mode A ; / 132 mode B */
+static struct OKIM6295interface metmqstr_okim6295_intf =
+{
+	2,
+	{ 32000000 / 16 / 132,	32000000 / 16 / 132	},
+	{ REGION_SOUND1,		REGION_SOUND2		},
+	{ 100,					100					}
 };
 
 static struct OKIM6295interface okim6295_intf_16kHz_16kHz =
@@ -1642,13 +1842,6 @@ static const struct MachineDriver machine_driver_hotdogst =
 								Mazinger Z
 ***************************************************************************/
 
-void mazinger_init_machine(void)
-{
-	cave_init_machine();
-	/* start with the watchdog armed */
-	watchdog_reset16_w(0,0,0);
-}
-
 static const struct MachineDriver machine_driver_mazinger =
 {
 	{
@@ -1667,7 +1860,7 @@ static const struct MachineDriver machine_driver_mazinger =
 	},
 	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
 	1,
-	mazinger_init_machine,
+	cave_init_machine_watchdog,
 
 	/* video hardware */
 	384, 240, { 0, 384-1, 0, 240-1 },
@@ -1685,6 +1878,53 @@ static const struct MachineDriver machine_driver_mazinger =
 	{
 		{	SOUND_YM2203,	&ym2203_intf_4MHz		},
 		{	SOUND_OKIM6295,	&okim6295_intf_8kHz		}
+	},
+
+	cave_nvram_handler
+};
+
+
+/***************************************************************************
+								Metamoqester
+***************************************************************************/
+
+static const struct MachineDriver machine_driver_metmqstr =
+{
+	{
+		{
+			CPU_M68000,
+			32000000 / 2,
+			metmqstr_readmem, metmqstr_writemem,0,0,
+			metmqstr_interrupt, 2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			32000000 / 4,
+			metmqstr_sound_readmem,  metmqstr_sound_writemem,
+			metmqstr_sound_readport, metmqstr_sound_writeport,
+			ignore_interrupt, 0	/* NMI triggered by main CPU, IRQ triggered by YM2151 */
+		}
+	},
+	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
+	1,
+	cave_init_machine_watchdog,	/* start with the watchdog armed */
+
+	/* video hardware */
+	0x200, 240, { 0x7d, 0x7d + 0x180-1, 0, 240-1 },
+	metmqstr_gfxdecodeinfo,
+	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
+	dfeveron_vh_init_palette,
+	VIDEO_TYPE_RASTER,
+	0,
+	cave_vh_start_16_16_16,
+	cave_vh_stop,
+	cave_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{	SOUND_YM2151,	&ym2151_intf_4MHz		},	// 32/8 ?
+		{	SOUND_OKIM6295,	&metmqstr_okim6295_intf	}
 	},
 
 	cave_nvram_handler
@@ -2149,13 +2389,100 @@ ROM_START( mazinger )
 //	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
 //	empty
 
-	ROM_REGION( 0x280000 * 2, REGION_GFX4, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_REGION( 0x400000 * 2, REGION_GFX4, ROMREGION_ERASEFF )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "bp943a-2.u56", 0x000000, 0x200000, 0x97e13959 )
 	ROM_LOAD( "bp943a-3.u55", 0x200000, 0x080000, 0x9c4957dd )
 
 	ROM_REGION( 0x0c0000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp943a-4.u64", 0x040000, 0x080000, 0x3fc7f29a )	// 4 x $20000
+ROM_END
+
+
+/***************************************************************************
+
+								Metamoqester
+
+[Ninja Master (World version)?]
+(C) 1995 Banpresto
+
+PCB: BP947A
+CPU: MC68HC000P16 (68000, 64 pin DIP)
+SND: Z0840008PSC (Z80, 40 pin DIP), AD-65 x 2 (= OKI M6295), YM2151, CY5002 (= YM3012)
+OSC: 32.000 MHz
+RAM: LGS GM76C88ALFW-15 x 9 (28 pin SOP), LGS GM71C4260AJ70 x 2 (40 pin SOJ)
+     Hitachi HM62256LFP-12T x 2 (40 pin SOJ)
+
+Other Chips:
+AT93C46 (EEPROM)
+PAL (not dumped, located near 68000): ATF16V8 x 1
+
+GFX:  (Same GFX chips as "Sailor Moon")
+
+      038 9437WX711 (176 pin PQFP)
+      038 9437WX711 (176 pin PQFP)
+      038 9437WX711 (176 pin PQFP)
+      013 9346E7002 (240 pin PQFP)
+
+On PCB near JAMMA connector is a small push button labelled SW1 to access test mode.
+
+ROMS:
+BP947A.U37	16M Mask	\ Oki Samples
+BP947A.U42	16M Mask	/
+
+BP947A.U46	16M Mask	\
+BP947A.U47	16M Mask	|
+BP947A.U48	16M Mask	|
+BP947A.U49	16M Mask	| GFX
+BP947A.U50	16M Mask	|
+BP947A.U51	16M Mask	|
+BP947A.U52	16M Mask	/
+
+BP947A.U20	27C020		  Sound PRG
+
+BP947A.U25	27C240		\
+BP947A.U28	27C240		| Main PRG
+BP947A.U29	27C240		/
+
+***************************************************************************/
+
+ROM_START( metmqstr )
+	ROM_REGION( 0x280000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "bp947a.u25", 0x000000, 0x80000, 0x0a5c3442 )
+	ROM_LOAD16_WORD_SWAP( "bp947a.u28", 0x100000, 0x80000, 0x8c55decf )
+	ROM_LOAD16_WORD_SWAP( "bp947a.u29", 0x200000, 0x80000, 0xcf0f3f3b )
+
+	ROM_REGION( 0x48000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "bp947a.u20",  0x00000, 0x08000, 0xa4a36170 )
+	ROM_CONTINUE(            0x10000, 0x38000             )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "bp947a.u48", 0x000000, 0x100000, 0x04ff6a3d )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "bp947a.u47", 0x000000, 0x100000, 0x0de42827 )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, 0x0f9c906e )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x000000, 0x100000             )
+
+	ROM_REGION( 0x800000 * 2, REGION_GFX4, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "bp947a.u49", 0x000000, 0x200000, 0x09749531 )
+	ROM_LOAD( "bp947a.u50", 0x200000, 0x200000, 0x19cea8b2 )
+	ROM_LOAD( "bp947a.u51", 0x400000, 0x200000, 0xc19bed67 )
+	ROM_LOAD( "bp947a.u52", 0x600000, 0x200000, 0x70c64875 )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp947a.u42", 0x040000, 0x100000, 0x2ce8ff2a )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x040000, 0x100000             )
+
+	ROM_REGION( 0x140000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, 0xc3077c8f )	// FIRST AND SECOND HALF IDENTICAL
+	ROM_CONTINUE(           0x040000, 0x100000             )
 ROM_END
 
 
@@ -2365,6 +2692,15 @@ void init_mazinger(void)
 	cpu_setbank(1,memory_region(REGION_USER1));
 }
 
+
+void init_metmqstr(void)
+{
+	cave_default_eeprom = 0;
+	cave_default_eeprom_length = 0;
+	unpack_sprites();
+	cave_spritetype = 2;	// "normal" sprites with different position handling
+}
+
 /* Tiles are 6 bit, 4 bits stored in one rom, 2 bits in the other.
    Expand the 2 bit part into a 4 bit layout, so we can decode it */
 void sailormn_unpack_tiles( const int region )
@@ -2425,12 +2761,13 @@ void init_uopoko(void)
 
 ***************************************************************************/
 
-GAME( 1994, mazinger, 0, mazinger, cave,    mazinger, ROT90,  "Banpresto",                   "Mazinger Z" )
-GAME( 1995, sailormn, 0, sailormn, cave,    sailormn, ROT0,   "Banpresto",                   "Pretty Soldier Sailor Moon" )
-GAME( 1995, donpachi, 0, donpachi, cave,    ddonpach, ROT270, "Atlus/Cave",                  "DonPachi (Japan)"       )
-GAME( 1996, hotdogst, 0, hotdogst, cave,    hotdogst, ROT90,  "Marble",                      "Hotdog Storm" )
-GAME( 1997, ddonpach, 0, ddonpach, cave,    ddonpach, ROT270, "Atlus/Cave",                  "DoDonPachi (Japan)" )
-GAME( 1998, dfeveron, 0, dfeveron, cave,    dfeveron, ROT270, "Cave (Nihon System license)", "Dangun Feveron (Japan)" )
-GAME( 1998, esprade,  0, esprade,  cave,    esprade,  ROT270, "Atlus/Cave",                  "ESP Ra.De. (Japan)" )
-GAME( 1998, uopoko,   0, uopoko,   cave,    uopoko,   ROT0,   "Cave (Jaleco license)",       "Uo Poko (Japan)" )
-GAME( 1999, guwange,  0, guwange,  guwange, guwange,  ROT270, "Atlus/Cave",                  "Guwange (Japan)" )
+GAME( 1994, mazinger, 0, mazinger, cave,     mazinger, ROT90,  "Banpresto",                   "Mazinger Z"                 )
+GAME( 1995, donpachi, 0, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                  "DonPachi (Japan)"           )
+GAME( 1995, metmqstr, 0, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto / Pandorabox",      "Metamoqester"               )
+GAME( 1995, sailormn, 0, sailormn, cave,     sailormn, ROT0,   "Banpresto",                   "Pretty Soldier Sailor Moon" )
+GAME( 1996, hotdogst, 0, hotdogst, cave,     hotdogst, ROT90,  "Marble",                      "Hotdog Storm"               )
+GAME( 1997, ddonpach, 0, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                  "DoDonPachi (Japan)"         )
+GAME( 1998, dfeveron, 0, dfeveron, cave,     dfeveron, ROT270, "Cave (Nihon System license)", "Dangun Feveron (Japan)"     )
+GAME( 1998, esprade,  0, esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                  "ESP Ra.De. (Japan)"         )
+GAME( 1998, uopoko,   0, uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",       "Uo Poko (Japan)"            )
+GAME( 1999, guwange,  0, guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                  "Guwange (Japan)"            )

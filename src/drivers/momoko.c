@@ -22,7 +22,7 @@ Flipped screen looks wrong, but it is correct.
 extern data8_t *momoko_bg_scrollx;
 extern data8_t *momoko_bg_scrolly;
 
-void momoko_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void momoko_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( momoko_fg_scrollx_w );
 WRITE_HANDLER( momoko_fg_scrolly_w );

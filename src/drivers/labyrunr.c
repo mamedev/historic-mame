@@ -21,7 +21,7 @@ void labyrunr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 WRITE_HANDLER( labyrunr_vram1_w );
 WRITE_HANDLER( labyrunr_vram2_w );
 int labyrunr_vh_start(void);
-void labyrunr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void labyrunr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static int labyrunr_interrupt(void)
 {

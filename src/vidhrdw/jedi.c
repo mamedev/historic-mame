@@ -22,7 +22,7 @@ static UINT32 jedi_hscroll;
 static UINT32 jedi_alpha_bank;
 static int video_off, smooth_table;
 static UINT8 *fgdirty, *bgdirty;
-static struct osd_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
+static struct mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
 
 
 
@@ -310,7 +310,7 @@ static void update_smoothing(int bgtilerow, int first, int last)
  *
  *************************************/
 
-void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jedi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bgexdirty[32][2];
 	int offs;

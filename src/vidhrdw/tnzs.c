@@ -37,7 +37,7 @@ static int tnzs_screenflip;
   form 512 xRRRRRGGGGGBBBBB color values.
 
 ***************************************************************************/
-void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void arknoid2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,col;
 
@@ -54,13 +54,13 @@ void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void tnzs_vh_draw_background(struct osd_bitmap *bitmap,unsigned char *m)
+void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 {
 	int x,y,column,tot;
 	int scrollx, scrolly;
@@ -139,7 +139,7 @@ void tnzs_vh_draw_background(struct osd_bitmap *bitmap,unsigned char *m)
 	}
 }
 
-void tnzs_vh_draw_foreground(struct osd_bitmap *bitmap,
+void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 							 unsigned char *char_pointer,
 							 unsigned char *x_pointer,
 							 unsigned char *y_pointer,
@@ -178,7 +178,7 @@ void tnzs_vh_draw_foreground(struct osd_bitmap *bitmap,
 	}
 }
 
-void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tnzs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* If the byte at f300 has bit 6 set, flip the screen
 	   (I'm not 100% sure about this) */

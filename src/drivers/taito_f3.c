@@ -45,7 +45,7 @@
 
 int  f3_vh_start(void);
 void f3_vh_stop(void);
-void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void f3_eof_callback(void);
 
 extern data32_t *f3_vram,*f3_line_ram;

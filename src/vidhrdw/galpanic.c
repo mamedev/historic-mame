@@ -66,13 +66,13 @@ WRITE16_HANDLER( galpanic_paletteram_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
+static void galpanic_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 	int sx,sy;
@@ -114,7 +114,7 @@ static void galpanic_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void comad_draw_sprites(struct osd_bitmap *bitmap)
+static void comad_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -138,7 +138,7 @@ static void comad_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_fgbitmap(struct osd_bitmap *bitmap)
+static void draw_fgbitmap(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -154,7 +154,7 @@ static void draw_fgbitmap(struct osd_bitmap *bitmap)
 	}
 }
 
-void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
@@ -164,7 +164,7 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	galpanic_draw_sprites(bitmap);
 }
 
-void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void comad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

@@ -137,7 +137,7 @@ extern unsigned char *cclimber_column_scroll;
 WRITE_HANDLER( cclimber_colorram_w );
 WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( cclimber_sample_select_w );
 WRITE_HANDLER( cclimber_sample_trigger_w );
@@ -1019,7 +1019,7 @@ ROM_END
 WRITE_HANDLER( swimmer_bgcolor_w );
 WRITE_HANDLER( swimmer_palettebank_w );
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void swimmer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( swimmer_sidepanel_enable_w );
 
 

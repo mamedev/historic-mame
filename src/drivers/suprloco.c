@@ -20,7 +20,7 @@ extern unsigned char *suprloco_videoram;
 
 void suprloco_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int  suprloco_vh_start(void);
-void suprloco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void suprloco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( suprloco_videoram_w );
 WRITE_HANDLER( suprloco_scrollram_w );
 READ_HANDLER( suprloco_scrollram_r );

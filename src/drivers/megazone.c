@@ -2,6 +2,8 @@
 
 Based on drivers from Juno First emulator by Chris Hardy (chris@junofirst.freeserve.co.uk)
 
+To enter service mode, keep 1&2 pressed on reset
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -31,7 +33,7 @@ void megazone_vh_stop(void);
 WRITE_HANDLER( megazone_flipscreen_w );
 void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( megazone_sprite_bank_select_w );
-void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void megazone_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 
@@ -89,11 +91,6 @@ WRITE_HANDLER( megazone_colorram2_w )
 	}
 }
 
-READ_HANDLER( megazone_dip3_r )
-{
-	return(0xff);
-}
-
 READ_HANDLER( megazone_sharedram_r )
 {
 	return(megazone_sharedram[offset]);
@@ -116,6 +113,13 @@ WRITE_HANDLER( i8039_irqen_and_status_w )
 	i8039_status = (data & 0x70) >> 4;
 }
 
+static WRITE_HANDLER( megazone_coin_counter_w )
+{
+	coin_counter_w(1-offset,data);		/* 1-offset, because coin counters are in reversed order */
+}
+
+
+
 static MEMORY_READ_START( readmem )
 	{ 0x2000, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x33ff, MRA_RAM },
@@ -124,6 +128,8 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
+	{ 0x0000, 0x0001, megazone_coin_counter_w }, /* coin counter 2, coin counter 1 */
+	{ 0x0005, 0x0005, megazone_flipscreen_w },
 	{ 0x0007, 0x0007, interrupt_enable_w },
 	{ 0x0800, 0x0800, watchdog_reset_w },
 	{ 0x1800, 0x1800, MWA_RAM, &megazone_scrollx },
@@ -142,9 +148,8 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x6000, 0x6000, input_port_0_r }, /* IO Coin */
 	{ 0x6001, 0x6001, input_port_1_r }, /* P1 IO */
 	{ 0x6002, 0x6002, input_port_2_r }, /* P2 IO */
-	{ 0x6003, 0x6003, input_port_3_r }, /* DIP 1 */
-	{ 0x8000, 0x8000, input_port_4_r }, /* DIP 2 */
-	{ 0x8001, 0x8001, megazone_dip3_r }, /* DIP 3 - Not used */
+	{ 0x8000, 0x8000, input_port_3_r }, /* DIP 1 */
+	{ 0x8001, 0x8001, input_port_4_r }, /* DIP 2 */
 	{ 0xe000, 0xe7ff, megazone_sharedram_r },  /* Shared with $3800->3fff of main CPU */
 MEMORY_END
 
@@ -189,7 +194,7 @@ INPUT_PORTS_START( megazone )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -215,8 +220,31 @@ INPUT_PORTS_START( megazone )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_START      /* DSW1 */
 
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "20k 70k" )
+	PORT_DIPSETTING(    0x10, "20k 80k" )
+	PORT_DIPSETTING(    0x08, "30k 90k" )
+	PORT_DIPSETTING(    0x00, "30k 100k" )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
@@ -251,32 +279,6 @@ INPUT_PORTS_START( megazone )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-
-	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x18, "20k 70k" )
-	PORT_DIPSETTING(    0x10, "20k 80k" )
-	PORT_DIPSETTING(    0x08, "30k 90k" )
-	PORT_DIPSETTING(    0x00, "30k 100k" )
-
-	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
-	PORT_DIPSETTING(    0x20, "Difficult" )
-	PORT_DIPSETTING(    0x00, "Very Difficult" )
-
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 INPUT_PORTS_END
 
 
@@ -413,7 +415,7 @@ ROM_START( megazone )
 	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
 
 	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, 0xf36f19c5 )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, 0x965a7ff6 )
 	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, 0x5eaa7f3e )
 	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, 0x7bb1aeee )
 	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, 0x6add71b1 )
@@ -445,7 +447,7 @@ ROM_START( megaznik )
 	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
 
 	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic15_vid.bin",  0x0000, 0x2000, 0x965a7ff6 )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, 0x965a7ff6 )
 	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, 0x5eaa7f3e )
 	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, 0x7bb1aeee )
 	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, 0x6add71b1 )

@@ -25,7 +25,7 @@ static UINT32 *start_end;
  *
  *************************************/
 
-static void special_callback(struct osd_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos);
+static void special_callback(struct mame_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos);
 
 
 
@@ -325,7 +325,7 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-static void special_callback(struct osd_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos)
+static void special_callback(struct mame_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos)
 {
 	struct GfxElement *gfx = Machine->gfx[1];
 	UINT32 temp = start_end[ypos & 0x1ff];
@@ -368,7 +368,7 @@ static void special_callback(struct osd_bitmap *bitmap, struct rectangle *clip, 
  *
  *************************************/
 
-void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void thunderj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* draw the layers */
 	ataripf_render(0, bitmap);

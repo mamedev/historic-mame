@@ -30,7 +30,7 @@ struct artwork_info *artwork_backdrop = NULL;
 /* the overlay instance */
 struct artwork_info *artwork_overlay = NULL;
 
-struct osd_bitmap *artwork_real_scrbitmap;
+struct mame_bitmap *artwork_real_scrbitmap;
 
 void artwork_free(struct artwork_info **a);
 
@@ -103,11 +103,11 @@ static void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
 
 }
 
-static void merge_cmy(struct artwork_info *a, struct osd_bitmap *source, struct osd_bitmap *source_alpha,int sx, int sy)
+static void merge_cmy(struct artwork_info *a, struct mame_bitmap *source, struct mame_bitmap *source_alpha,int sx, int sy)
 {
 	int c1, c2, m1, m2, y1, y2, pen1, pen2, max, alpha;
 	int x, y, w, h;
-	struct osd_bitmap *dest, *dest_alpha;
+	struct mame_bitmap *dest, *dest_alpha;
 
 	dest = a->orig_artwork;
 	dest_alpha = a->alpha;
@@ -224,9 +224,9 @@ static void allocate_artwork_mem (int width, int height, struct artwork_info **a
   is allocated for the disk.
 
 *********************************************************************/
-static struct osd_bitmap *create_disk (int r, int fg, int bg)
+static struct mame_bitmap *create_disk (int r, int fg, int bg)
 {
-	struct osd_bitmap *disk;
+	struct mame_bitmap *disk;
 
 	int x = 0, twox = 0;
 	int y = r;
@@ -311,7 +311,7 @@ static void init_palette(int start_pen)
   Reads a PNG for a artwork struct and converts it into a format
   usable for mame.
  *********************************************************************/
-static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct osd_bitmap **alpha, struct png_info *p)
+static int decode_png(const char *file_name, struct mame_bitmap **bitmap, struct mame_bitmap **alpha, struct png_info *p)
 {
 	UINT8 *tmp;
 	UINT32 x, y, pen;
@@ -453,7 +453,7 @@ static int decode_png(const char *file_name, struct osd_bitmap **bitmap, struct 
 static void load_png(const char *filename, unsigned int start_pen,
 					 int width, int height, struct artwork_info **a)
 {
-	struct osd_bitmap *picture = 0, *alpha = 0;
+	struct mame_bitmap *picture = 0, *alpha = 0;
 	struct png_info p;
 	int scalex, scaley;
 
@@ -519,7 +519,7 @@ static void overlay_init(struct artwork_info *a)
 	UINT8 r,g,b;
 	float h, s, v, rf, gf, bf;
 	int offset, height, width;
-	struct osd_bitmap *overlay, *overlay1, *orig;
+	struct mame_bitmap *overlay, *overlay1, *orig;
 
 	offset = a->start_pen;
 	height = a->artwork->height;
@@ -564,7 +564,7 @@ static void overlay_init(struct artwork_info *a)
   levels of transparancy of the overlay.
  *********************************************************************/
 
-static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
+static void overlay_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 {
 	int i, j;
 	int height, width;
@@ -709,7 +709,7 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 
  *********************************************************************/
 
-static void backdrop_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
+static void backdrop_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 {
 	int i, j, brgb, bp, black = -1;
 	UINT8 r, g, b;
@@ -814,7 +814,7 @@ static void backdrop_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 	}
 }
 
-void artwork_draw(struct osd_bitmap *dest, struct osd_bitmap *source, int full_refresh)
+void artwork_draw(struct mame_bitmap *dest, struct mame_bitmap *source, int full_refresh)
 {
 	if (artwork_backdrop) backdrop_draw(dest, source);
 	if (artwork_overlay) overlay_draw(dest, source);
@@ -981,7 +981,7 @@ void artwork_elements_scale(struct artwork_element *ae, int width, int height)
  *********************************************************************/
 void overlay_create(const struct artwork_element *ae, unsigned int start_pen)
 {
-	struct osd_bitmap *disk, *disk_alpha, *box, *box_alpha;
+	struct mame_bitmap *disk, *disk_alpha, *box, *box_alpha;
 	int pen, transparent_pen = -1, disk_type, white_pen;
 	int width, height;
 

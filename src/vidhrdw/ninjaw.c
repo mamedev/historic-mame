@@ -230,7 +230,7 @@ void ninjaw_vh_stop (void)
 			SPRITE DRAW ROUTINE
 ************************************************************/
 
-static void ninjaw_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offs)
 {
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, invis, curx, cury;
@@ -335,7 +335,7 @@ static void ninjaw_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 				SCREEN REFRESH
 **************************************************************/
 
-void ninjaw_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ninjaw_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 

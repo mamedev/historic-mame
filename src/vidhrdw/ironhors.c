@@ -126,12 +126,12 @@ if (data & 0xc8) usrintf_showmessage("ironhors_palettebank_w %02x",data);
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ironhors_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
+static struct mame_bitmap *tmpbitmap2,*tmpbitmap3;
 static int scroll0,scroll1;
 static int palette_bank;
 static const unsigned char *pacland_color_prom;
@@ -196,7 +196,7 @@ WRITE_HANDLER( pacland_bankswitch_w )
 		{ drawgfx( bitmap, Machine->gfx[ 2+gfx ], code, color, flipx, flipy, sx, sy, \
 		&spritevisiblearea, TRANSPARENCY_COLOR,0xff); }
 
-static void pacland_draw_sprites( struct osd_bitmap *bitmap,int priority)
+static void pacland_draw_sprites( struct mame_bitmap *bitmap,int priority)
 {
 	int offs;
 
@@ -271,7 +271,7 @@ static void pacland_draw_sprites( struct osd_bitmap *bitmap,int priority)
 
 
 
-void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pacland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy, code, flipx, flipy, color;

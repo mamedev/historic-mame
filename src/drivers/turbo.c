@@ -153,7 +153,7 @@ int turbo_vh_start(void);
 void turbo_vh_stop(void);
 void turbo_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom);
 void turbo_vh_eof(void);
-void turbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 WRITE_HANDLER( turbo_collision_clear_w );
 
 

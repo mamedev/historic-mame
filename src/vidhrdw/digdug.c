@@ -133,7 +133,7 @@ WRITE_HANDLER( digdug_vh_latch_w )
 }
 
 
-void digdug_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+void digdug_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
@@ -153,12 +153,12 @@ WRITE_HANDLER( digdug_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void digdug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void digdug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,pfindex,pfcolor;
 	unsigned char *pf;

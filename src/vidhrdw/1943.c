@@ -17,8 +17,8 @@ unsigned char *c1943_bgscrolly;
 static int chon,objon,sc1on,sc2on;
 static int flipscreen;
 
-static struct osd_bitmap *sc2bitmap;
-static struct osd_bitmap *sc1bitmap;
+static struct mame_bitmap *sc2bitmap;
+static struct mame_bitmap *sc1bitmap;
 static unsigned char sc2map[9][8][2];
 static unsigned char sc1map[9][9][2];
 
@@ -188,12 +188,12 @@ WRITE_HANDLER( c1943_d806_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;

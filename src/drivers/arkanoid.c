@@ -48,7 +48,7 @@
 void arkanoid_init_machine(void);
 
 WRITE_HANDLER( arkanoid_d008_w );
-void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void arkanoid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( arkanoid_Z80_mcu_r );
 WRITE_HANDLER( arkanoid_Z80_mcu_w );

@@ -25,7 +25,7 @@ static int mjsikaku_flipx, mjsikaku_flipy;
 static int mjsikaku_screen_refresh;
 static int mjsikaku_gfxmode;
 
-static struct osd_bitmap *mjsikaku_tmpbitmap;
+static struct mame_bitmap *mjsikaku_tmpbitmap;
 static unsigned short *mjsikaku_videoram;
 static unsigned short *mjsikaku_videoworkram;
 static unsigned char *mjsikaku_palette;
@@ -1201,7 +1201,7 @@ void mjsikaku_vh_stop(void)
 
 
 ******************************************************************************/
-void mjsikaku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mjsikaku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned short color;

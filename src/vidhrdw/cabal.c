@@ -106,7 +106,7 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 
 ********************************************************************/
 
-static void cabal_draw_sprites( struct osd_bitmap *bitmap )
+static void cabal_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs,data0,data1,data2;
 
@@ -146,7 +146,7 @@ static void cabal_draw_sprites( struct osd_bitmap *bitmap )
 }
 
 
-void cabal_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void cabal_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
 	cabal_draw_sprites(bitmap);

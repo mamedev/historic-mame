@@ -156,7 +156,7 @@ void slapfght_log_vram(void)
   Render the Sprites
 
 ***************************************************************************/
-static void perfrman_draw_sprites( struct osd_bitmap *bitmap, int priority_to_display )
+static void perfrman_draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
 {
 	int offs;
 
@@ -192,13 +192,13 @@ static void perfrman_draw_sprites( struct osd_bitmap *bitmap, int priority_to_di
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_flip( pf1_tilemap, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrolly( pf1_tilemap ,0 , 0 );
@@ -221,7 +221,7 @@ void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

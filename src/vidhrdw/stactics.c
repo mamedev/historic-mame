@@ -98,11 +98,11 @@ static int f_offset;
 
 static int palette_select;
 
-static struct osd_bitmap *tmpbitmap2;
-static struct osd_bitmap *bitmap_B;
-static struct osd_bitmap *bitmap_D;
-static struct osd_bitmap *bitmap_E;
-static struct osd_bitmap *bitmap_F;
+static struct mame_bitmap *tmpbitmap2;
+static struct mame_bitmap *bitmap_B;
+static struct mame_bitmap *bitmap_D;
+static struct mame_bitmap *bitmap_E;
+static struct mame_bitmap *bitmap_F;
 
 static unsigned char *beamdata;
 static int states_per_frame;
@@ -530,13 +530,13 @@ static const struct rectangle visible_screen_area = {0*8, 32*8, 0*8, 30*8};
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void stactics_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     int offs, sx, sy, i;
     int char_number;

@@ -260,7 +260,7 @@ void namcona1_vh_stop( void )
 /*************************************************************************/
 
 static void pdraw_masked_tile(
-		struct osd_bitmap *bitmap,
+		struct mame_bitmap *bitmap,
 		int code,
 		int color,
 		int sx, int sy,
@@ -408,7 +408,7 @@ static void pdraw_masked_tile(
 
 static const data8_t pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int which;
 	const data16_t *source = spriteram16;
@@ -465,7 +465,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap, int which, int primask )
+static void draw_background( struct mame_bitmap *bitmap, int which, int primask )
 {
 	int adjust = 0x3a - which*2;
 	const data16_t *scroll = namcona1_scroll+0x200*which;
@@ -503,7 +503,7 @@ static void draw_background( struct osd_bitmap *bitmap, int which, int primask )
 	}
 }
 
-void namcona1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void namcona1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bg_to_show = -1;
 	int which;

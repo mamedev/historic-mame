@@ -118,7 +118,7 @@ WRITE_HANDLER( timelimt_scroll_y_w )
 	Draw the sprites
 
 ***************************************************************************/
-static void drawsprites( struct osd_bitmap *bitmap )
+static void drawsprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -149,7 +149,7 @@ static void drawsprites( struct osd_bitmap *bitmap )
 
 ***************************************************************************/
 
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -188,7 +188,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 
 ***************************************************************************/
 
-static void draw_foreground( struct osd_bitmap *bitmap )
+static void draw_foreground( struct mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -212,13 +212,13 @@ static void draw_foreground( struct osd_bitmap *bitmap )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void timelimt_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void timelimt_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	if ( full_refresh )
 	{

@@ -180,7 +180,7 @@ int blmbycar_vh_start(void)
 
 ***************************************************************************/
 
-static void blmbycar_draw_sprites(struct osd_bitmap *bitmap)
+static void blmbycar_draw_sprites(struct mame_bitmap *bitmap)
 {
 	data16_t *source, *finish;
 
@@ -233,7 +233,7 @@ static void blmbycar_draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void blmbycar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void blmbycar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,layers_ctrl = -1;
 

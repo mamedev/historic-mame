@@ -128,7 +128,7 @@ extern UINT8 *victory_charram;
 int victory_vh_start(void);
 void victory_vh_stop(void);
 void victory_vh_eof(void);
-void victory_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void victory_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int victory_vblank_interrupt(void);
 
 READ_HANDLER( victory_video_control_r );

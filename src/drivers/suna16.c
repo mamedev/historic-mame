@@ -31,7 +31,7 @@ WRITE16_HANDLER( suna16_paletteram16_w );
 
 int  suna16_vh_start(void);
 void suna16_vh_stop(void);
-void suna16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void suna16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

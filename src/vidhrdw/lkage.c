@@ -100,7 +100,7 @@ int lkage_vh_start(void)
 	return 0;
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int priority )
+static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *finish = spriteram;
@@ -178,7 +178,7 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 	}
 }
 
-void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lkage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flip_screen_x_set(~lkage_vreg[2] & 0x01);
 	flip_screen_y_set(~lkage_vreg[2] & 0x02);

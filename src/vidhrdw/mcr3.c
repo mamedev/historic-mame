@@ -48,7 +48,7 @@ size_t spyhunt_alpharam_size;
  *************************************/
 
 /* Spy Hunter-specific scrolling background */
-static struct osd_bitmap *spyhunt_backbitmap;
+static struct mame_bitmap *spyhunt_backbitmap;
 
 static UINT8 last_cocktail_flip;
 
@@ -105,21 +105,20 @@ WRITE_HANDLER( mcr3_videoram_w )
  *
  *************************************/
 
-static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
+static void mcr3_update_background(struct mame_bitmap *bitmap, UINT8 color_xor)
 {
 	int offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
-	{
 		if (dirtybuffer[offs])
 		{
 			int mx = (offs / 2) % 32;
 			int my = (offs / 2) / 32;
 			int attr = videoram[offs + 1];
 			int color = ((attr & 0x30) >> 4) ^ color_xor;
-			int code = videoram[offs] + 256 * (attr & 0x03);
+			int code = videoram[offs] | ((attr & 0x03) << 8) | ((attr & 0x40) << 4);
 
 			if (!mcr_cocktail_flip)
 				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
@@ -130,7 +129,6 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
 
 			dirtybuffer[offs] = 0;
 		}
-	}
 }
 
 
@@ -141,15 +139,14 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
  *
  *************************************/
 
-void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy)
+void mcr3_update_sprites(struct mame_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy)
 {
 	int offs;
 
-
-	fillbitmap(priority_bitmap,1,NULL);
+	fillbitmap(priority_bitmap, 1, NULL);
 
 	/* loop over sprite RAM */
-	for (offs = spriteram_size-4;offs >= 0;offs -= 4)
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
 		int code, color, flipx, flipy, sx, sy, flags;
 
@@ -204,7 +201,7 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
  *
  *************************************/
 
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mcr3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
 	if (last_cocktail_flip != mcr_cocktail_flip)
@@ -229,8 +226,13 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mcrmono_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
+	/* mark everything dirty on a cocktail flip change */
+	if (last_cocktail_flip != mcr_cocktail_flip)
+		memset(dirtybuffer, 1, videoram_size);
+	last_cocktail_flip = mcr_cocktail_flip;
+
 	/* redraw the background */
 	mcr3_update_background(tmpbitmap, 3);
 
@@ -318,7 +320,7 @@ void spyhunt_vh_stop(void)
  *
  *************************************/
 
-void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void spyhunt_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static const struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
 	int offs, scrollx, scrolly;
@@ -446,7 +448,7 @@ void dotron_change_light(int light)
  *
  *************************************/
 
-void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void dotron_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	struct rectangle sclip;
 	int offs;

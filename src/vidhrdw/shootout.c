@@ -86,7 +86,7 @@ int shootout_vh_start( void ){
 	return 1; /* error */
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int bank_bits ){
+static void draw_sprites( struct mame_bitmap *bitmap, int bank_bits ){
 	static int bFlicker;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	const struct rectangle *clip = &Machine->visible_area;
@@ -142,7 +142,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank_bits ){
 	}
 }
 
-void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void shootout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(priority_bitmap,0,NULL);
 
@@ -151,7 +151,7 @@ void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_sprites( bitmap,3/*bank bits */ );
 }
 
-void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void shootouj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(priority_bitmap,0,NULL);
 

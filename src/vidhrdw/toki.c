@@ -210,7 +210,7 @@ WRITE16_HANDLER( toki_background2_videoram16_w )
 ***************************************************************************/
 
 
-void toki_draw_sprites (struct osd_bitmap *bitmap)
+void toki_draw_sprites (struct mame_bitmap *bitmap)
 {
 	int x,y,xoffs,yoffs,tile,flipx,flipy,color,offs;
 	data16_t *sprite_word;
@@ -254,7 +254,7 @@ void toki_draw_sprites (struct osd_bitmap *bitmap)
 }
 
 
-void tokib_draw_sprites (struct osd_bitmap *bitmap)
+void tokib_draw_sprites (struct mame_bitmap *bitmap)
 {
 	int x,y,tile,flipx,color,offs;
 	data16_t *sprite_word;
@@ -298,7 +298,7 @@ void tokib_draw_sprites (struct osd_bitmap *bitmap)
  *
  *************************************/
 
-void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,background_y_scroll,foreground_y_scroll,latch1,latch2;
 
@@ -332,7 +332,7 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,text_layer,0,0);
 }
 
-void tokib_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tokib_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scroll_rows(foreground_layer,1);
 	tilemap_set_scroll_rows(background_layer,1);

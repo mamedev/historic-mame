@@ -13,7 +13,7 @@ Additional tweaking by Jarek Burczynski
 #include "cpu/m68000/m68000.h"
 
 void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void magmax_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void magmax_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int magmax_vh_start(void);
 void magmax_vh_stop(void);
 

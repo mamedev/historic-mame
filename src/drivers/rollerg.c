@@ -18,7 +18,7 @@ static void rollerg_banking( int lines );
 
 int rollerg_vh_start(void);
 void rollerg_vh_stop(void);
-void rollerg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void rollerg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

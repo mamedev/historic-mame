@@ -45,7 +45,7 @@ WRITE16_HANDLER( toypop_merged_background_w );
 WRITE_HANDLER( toypop_palettebank_w );
 WRITE16_HANDLER( toypop_flipscreen_w );
 WRITE16_HANDLER( liblrabl_flipscreen_w );
-void toypop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void toypop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 

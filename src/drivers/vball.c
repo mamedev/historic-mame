@@ -30,7 +30,7 @@ extern int vball_gfxset;
 
 int vb_vh_start(void);
 void vb_vh_stop(void);
-void vb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void vb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern void vb_bgprombank_w(int bank);
 extern void vb_spprombank_w(int bank);
 extern WRITE_HANDLER( vb_foreground_w );

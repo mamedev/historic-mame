@@ -50,12 +50,12 @@ WRITE_HANDLER( lastday_ctrl_w );
 WRITE_HANDLER( pollux_ctrl_w );
 WRITE_HANDLER( primella_ctrl_w );
 WRITE16_HANDLER( rshark_ctrl_w );
-void lastday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gulfstrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void bluehawk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void primella_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void rshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lastday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void gulfstrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void pollux_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void bluehawk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void primella_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void rshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void dooyong_eof_callback(void);
 void rshark_eof_callback(void);
 

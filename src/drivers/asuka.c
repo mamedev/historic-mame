@@ -100,7 +100,7 @@ int rastan_s_interrupt(void);
 
 int asuka_vh_start(void);
 int galmedes_vh_start(void);
-void asuka_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void asuka_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 void asuka_vh_stop(void);
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );

@@ -626,7 +626,7 @@ static const struct MachineDriver machine_driver_pipedrm =
 	/* video hardware */
   	44*8, 30*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1536, 0,
+	2048, 0,
 	0,
 
 	VIDEO_TYPE_RASTER,

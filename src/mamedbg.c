@@ -539,7 +539,7 @@ struct GfxElement *build_debugger_font(void)
 	return font;
 }
 
-static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
+static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
 	int saved_depth = Machine->color_depth;
@@ -573,7 +573,7 @@ static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
 
 void dbg_put_screen_char(int ch, int attr, int x, int y)
 {
-	struct osd_bitmap *bitmap = Machine->debug_bitmap;
+	struct mame_bitmap *bitmap = Machine->debug_bitmap;
 	struct GfxElement *font = Machine->debugger_font;
 
 	switch_ui_orientation();

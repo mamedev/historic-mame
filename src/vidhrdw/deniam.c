@@ -218,7 +218,7 @@ WRITE16_HANDLER( deniam_coinctrl_w )
  *   c  | ---------------- | zoomy like in System 16?
  *   e  | ---------------- |
  */
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -374,7 +374,7 @@ static void set_fg_page(int page,int value)
 	}
 }
 
-void deniam_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void deniam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly;
 	int page;

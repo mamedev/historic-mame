@@ -50,7 +50,7 @@ WRITE_HANDLER( raidena_text_w );
 int raiden_vh_start(void);
 int raidena_vh_start(void);
 WRITE_HANDLER( raiden_control_w );
-void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void raiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static unsigned char *raiden_shared_ram;
 extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;

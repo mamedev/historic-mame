@@ -26,8 +26,8 @@ extern unsigned char *kingobox_scroll_y;
 WRITE_HANDLER( kingofb_f800_w );
 void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
 void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void kingobox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ringking_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kingobox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void ringking_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static unsigned char *video_shared;
 static unsigned char *sprite_shared;

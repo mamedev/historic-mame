@@ -21,7 +21,7 @@ READ_HANDLER( ttmahjng_videoram1_r );
 READ_HANDLER( ttmahjng_videoram2_r );
 WRITE_HANDLER( ttmahjng_sharedram_w );
 READ_HANDLER( ttmahjng_sharedram_r );
-void ttmahjng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ttmahjng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int psel;

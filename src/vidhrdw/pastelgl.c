@@ -22,7 +22,7 @@ static int pastelgl_flipx, pastelgl_flipy;
 static int pastelgl_screen_refresh;
 static int pastelgl_palbank;
 
-static struct osd_bitmap *pastelgl_tmpbitmap;
+static struct mame_bitmap *pastelgl_tmpbitmap;
 static unsigned char *pastelgl_videoram;
 static unsigned char *pastelgl_paltbl;
 
@@ -304,7 +304,7 @@ void pastelgl_vh_stop(void)
 
 
 ******************************************************************************/
-void pastelgl_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned char color;

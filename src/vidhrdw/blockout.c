@@ -121,7 +121,7 @@ WRITE16_HANDLER( blockout_videoram_w )
 
 
 
-void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void blockout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 

@@ -332,7 +332,7 @@ typedef struct _ygv608 {
 int ygv608_timed_interrupt( void );
 int  ygv608_vh_start( void );
 void ygv608_vh_stop( void );
-void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh );
+void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh );
 
 READ16_HANDLER( ygv608_r );
 WRITE16_HANDLER( ygv608_w );

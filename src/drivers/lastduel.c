@@ -28,7 +28,7 @@ WRITE16_HANDLER( madgear_scroll2_w );
 WRITE16_HANDLER( lastduel_scroll_w );
 int lastduel_vh_start(void);
 int madgear_vh_start(void);
-void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lastduel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void lastduel_eof_callback(void);
 
 extern data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;

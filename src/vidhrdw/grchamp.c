@@ -12,8 +12,8 @@ static UINT8 grchamp_tile_number;
 static UINT8 grchamp_rain_xpos;
 static UINT8 grchamp_rain_ypos;
 static int palette_bank;
-static struct osd_bitmap *headlight_bitmap;
-static struct osd_bitmap *work_bitmap;
+static struct mame_bitmap *headlight_bitmap;
+static struct mame_bitmap *work_bitmap;
 
 UINT8 grchamp_vreg1[0x10];	/* background control registers */
 UINT8 *grchamp_videoram;	/* background tilemaps */
@@ -138,9 +138,9 @@ static UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32
 
 int grchamp_vh_start( void )
 {
-	headlight_bitmap = osd_alloc_bitmap( 64,128,Machine->scrbitmap->depth );
+	headlight_bitmap = bitmap_alloc( 64,128 );
 	if( headlight_bitmap ){
-		work_bitmap = osd_alloc_bitmap( 32,32,Machine->scrbitmap->depth );
+		work_bitmap = bitmap_alloc( 32,32 );
 		if( work_bitmap ){
 			tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
 			tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -151,20 +151,20 @@ int grchamp_vh_start( void )
 				tilemap_set_transparent_pen( tilemap[2], 0 );
 				return 0;
 			}
-			osd_free_bitmap( work_bitmap );
+			bitmap_free( work_bitmap );
 		}
-		osd_free_bitmap( headlight_bitmap );
+		bitmap_free( headlight_bitmap );
 	}
 	return 1;
 }
 
 void grchamp_vh_stop( void )
 {
-	osd_free_bitmap( headlight_bitmap );
-	osd_free_bitmap( work_bitmap );
+	bitmap_free( headlight_bitmap );
+	bitmap_free( work_bitmap );
 }
 
-static void draw_text( struct osd_bitmap *bitmap )
+static void draw_text( struct mame_bitmap *bitmap )
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -190,7 +190,7 @@ static void draw_text( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 	int dx = -48;
 	int dy = 16;
@@ -220,7 +220,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 	tilemap_draw(bitmap,tilemap[2],0,0);
 }
 
-static void draw_player_car( struct osd_bitmap *bitmap )
+static void draw_player_car( struct mame_bitmap *bitmap )
 {
 	drawgfx( bitmap,
 		Machine->gfx[2],
@@ -233,7 +233,7 @@ static void draw_player_car( struct osd_bitmap *bitmap )
 		TRANSPARENCY_PEN, 0 );
 }
 
-static int collision_check( struct osd_bitmap *bitmap, int which )
+static int collision_check( struct mame_bitmap *bitmap, int which )
 {
 	int bgcolor = Machine->pens[0];
 	int sprite_transp = Machine->pens[0x24];
@@ -280,7 +280,7 @@ static int collision_check( struct osd_bitmap *bitmap, int which )
 	return result?(1<<which):0;
 }
 
-static void draw_rain( struct osd_bitmap *bitmap ){
+static void draw_rain( struct mame_bitmap *bitmap ){
 	const struct GfxElement *gfx = Machine->gfx[4];
 	const struct rectangle *clip = &Machine->visible_area;
 	int tile_number = grchamp_tile_number>>4;
@@ -301,7 +301,7 @@ static void draw_rain( struct osd_bitmap *bitmap ){
 	}
 }
 
-static void draw_fog( struct osd_bitmap *bitmap, int bFog ){
+static void draw_fog( struct mame_bitmap *bitmap, int bFog ){
 	int x0 = 256-grchamp_player_xpos-64;
 	int y0 = 240-grchamp_player_ypos-64;
 	int color = Machine->pens[bFog?0x40:0x00];
@@ -317,7 +317,7 @@ static void draw_fog( struct osd_bitmap *bitmap, int bFog ){
 	fillbitmap( bitmap,color,0 );
 }
 
-static void draw_headlights( struct osd_bitmap *bitmap, int bFog )
+static void draw_headlights( struct mame_bitmap *bitmap, int bFog )
 {
 	int sx, sy, color;
 	int x0 = 256-grchamp_player_xpos-64;
@@ -350,7 +350,7 @@ static void draw_headlights( struct osd_bitmap *bitmap, int bFog )
 	}
 }
 
-static void draw_radar( struct osd_bitmap *bitmap ){
+static void draw_radar( struct mame_bitmap *bitmap ){
 	const UINT8 *source = grchamp_radar;
 	int color = Machine->pens[3];
 	int offs;
@@ -368,7 +368,7 @@ static void draw_radar( struct osd_bitmap *bitmap ){
 	}
 }
 
-static void draw_tachometer( struct osd_bitmap *bitmap ){
+static void draw_tachometer( struct mame_bitmap *bitmap ){
 /*
 	int value = grchamp_vreg1[0x03]&0xf;
 	int i;
@@ -384,7 +384,7 @@ static void draw_tachometer( struct osd_bitmap *bitmap ){
 */
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int bFog ){
+static void draw_sprites( struct mame_bitmap *bitmap, int bFog ){
 	const struct GfxElement *gfx = Machine->gfx[3];
 	const struct rectangle *clip = &Machine->visible_area;
 	int bank = (grchamp_videoreg0&0x20)?0x40:0x00;
@@ -406,7 +406,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bFog ){
 	}
 }
 
-void grchamp_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh ){
+void grchamp_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh ){
 	int bFog = grchamp_videoreg0&0x40;
 
 	draw_background( bitmap ); /* 3 layers */

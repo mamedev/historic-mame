@@ -4,10 +4,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct osd_bitmap *ship1_vid;
-static struct osd_bitmap *ship2_vid;
-static struct osd_bitmap *proj1_vid;
-static struct osd_bitmap *proj2_vid;
+static struct mame_bitmap *ship1_vid;
+static struct mame_bitmap *ship2_vid;
+static struct mame_bitmap *proj1_vid;
+static struct mame_bitmap *proj2_vid;
 
 static int s1_x = 0;
 static int s1_y = 0;
@@ -517,7 +517,7 @@ int starcrus_collision_check_s2p1p2(void)
     return 0;
 }
 
-void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void starcrus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 

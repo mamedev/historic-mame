@@ -48,9 +48,9 @@ GFX             - SEI0210   custom    (128 pin PQFP)
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-extern void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-extern void skysmash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern void bloodbro_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern void weststry_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern void skysmash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 extern int bloodbro_vh_start(void);
 
 WRITE16_HANDLER( bloodbro_bgvideoram_w );

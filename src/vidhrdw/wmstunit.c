@@ -897,7 +897,7 @@ void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
  *
  *************************************/
 
-void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int v, width, xoffs;
 	UINT32 offset;

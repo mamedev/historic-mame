@@ -152,7 +152,7 @@ void warriorb_vh_stop (void)
 			SPRITE DRAW ROUTINE
 ************************************************************/
 
-static void warriorb_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void warriorb_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offs)
 {
 	int offs, data, data2, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
@@ -253,7 +253,7 @@ static void warriorb_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_
 				SCREEN REFRESH
 **************************************************************/
 
-void warriorb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void warriorb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 

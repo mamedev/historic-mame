@@ -7,7 +7,7 @@ data16_t *bigtwin_bgvideoram;
 size_t bigtwin_bgvideoram_size;
 data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
 
-static struct osd_bitmap *bgbitmap;
+static struct mame_bitmap *bgbitmap;
 static int bgscrollx,bgscrolly;
 static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
@@ -240,7 +240,7 @@ WRITE16_HANDLER( wbeachvl_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
+static void draw_sprites(struct mame_bitmap *bitmap,int codeshift)
 {
 	int offs;
 	int height = Machine->gfx[0]->height;
@@ -269,7 +269,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
 }
 
 
-void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bigtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	palette_set_color(256,0,0,0);	/* keep the background black */
 
@@ -279,7 +279,7 @@ void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void wbeachvl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wbeachvl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

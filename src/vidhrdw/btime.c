@@ -25,7 +25,7 @@ static int btime_palette = 0;
 static unsigned char bnj_scroll1 = 0;
 static unsigned char bnj_scroll2 = 0;
 static unsigned char *dirtybuffer2 = 0;
-static struct osd_bitmap *background_bitmap;
+static struct mame_bitmap *background_bitmap;
 static int lnc_sound_interrupt_enabled = 0;
 
 /***************************************************************************
@@ -368,12 +368,12 @@ int lnc_sound_interrupt(void)
 
 /***************************************************************************
 
-Draw the game screen in the given osd_bitmap.
+Draw the game screen in the given mame_bitmap.
 Do NOT call osd_update_display() from this function, it will be called by
 the main emulation engine.
 
 ***************************************************************************/
-static void drawchars(struct osd_bitmap *bitmap, int transparency, int color, int priority)
+static void drawchars(struct mame_bitmap *bitmap, int transparency, int color, int priority)
 {
     int offs;
 
@@ -412,7 +412,7 @@ static void drawchars(struct osd_bitmap *bitmap, int transparency, int color, in
     }
 }
 
-static void drawsprites(struct osd_bitmap *bitmap, int color,
+static void drawsprites(struct mame_bitmap *bitmap, int color,
                         int sprite_y_adjust, int sprite_y_adjust_flip_screen,
                         unsigned char *sprite_ram, int interleave)
 {
@@ -462,7 +462,7 @@ static void drawsprites(struct osd_bitmap *bitmap, int color,
 }
 
 
-static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
+static void drawbackground(struct mame_bitmap *bitmap, unsigned char* tilemap)
 {
     int i, offs;
 
@@ -548,7 +548,7 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
 }
 
 
-void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void btime_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
@@ -587,7 +587,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void eggs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
@@ -601,7 +601,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lnc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
@@ -615,7 +615,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void zoar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
         memset(dirtybuffer,1,videoram_size);
@@ -640,7 +640,7 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bnj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
     {
@@ -706,7 +706,7 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cookrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     int offs;
 
@@ -745,7 +745,7 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void disco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (full_refresh)
         memset(dirtybuffer,1,videoram_size);

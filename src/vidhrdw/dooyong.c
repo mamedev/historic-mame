@@ -71,7 +71,7 @@ WRITE16_HANDLER( rshark_ctrl_w )
 }
 
 
-static void draw_layer(struct osd_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -119,7 +119,7 @@ static void draw_layer(struct osd_bitmap *bitmap,int gfx,const unsigned char *sc
 	}
 }
 
-static void bluehawk_draw_layer(struct osd_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void bluehawk_draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -167,7 +167,7 @@ static void bluehawk_draw_layer(struct osd_bitmap *bitmap,int gfx,const unsigned
 	}
 }
 
-static void bluehawk_draw_layer2(struct osd_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void bluehawk_draw_layer2(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -215,7 +215,7 @@ static void bluehawk_draw_layer2(struct osd_bitmap *bitmap,int gfx,const unsigne
 	}
 }
 
-static void rshark_draw_layer(struct osd_bitmap *bitmap,int gfx,data16_t *scroll,
+static void rshark_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scroll,
 		const unsigned char *tilemap,const unsigned char *tilemap2,int transparency)
 {
 	int offs;
@@ -255,7 +255,7 @@ static void rshark_draw_layer(struct osd_bitmap *bitmap,int gfx,data16_t *scroll
 	}
 }
 
-static void draw_tx(struct osd_bitmap *bitmap,int yoffset)
+static void draw_tx(struct mame_bitmap *bitmap,int yoffset)
 {
 	int offs;
 
@@ -281,7 +281,7 @@ static void draw_tx(struct osd_bitmap *bitmap,int yoffset)
 	}
 }
 
-static void bluehawk_draw_tx(struct osd_bitmap *bitmap)
+static void bluehawk_draw_tx(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -307,7 +307,7 @@ static void bluehawk_draw_tx(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap,int pollux_extensions)
+static void draw_sprites(struct mame_bitmap *bitmap,int pollux_extensions)
 {
 	int offs;
 
@@ -361,7 +361,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pollux_extensions)
 	}
 }
 
-static void rshark_draw_sprites(struct osd_bitmap *bitmap)
+static void rshark_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -407,7 +407,7 @@ static void rshark_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void lastday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lastday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -415,7 +415,7 @@ void lastday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,-1);
 }
 
-void gulfstrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gulfstrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -423,7 +423,7 @@ void gulfstrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,-1);
 }
 
-void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pollux_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -431,7 +431,7 @@ void pollux_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,0);
 }
 
-void bluehawk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bluehawk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	bluehawk_draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX3)+0x78000,TRANSPARENCY_NONE);
 	bluehawk_draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX4)+0x78000,TRANSPARENCY_PEN);
@@ -440,7 +440,7 @@ void bluehawk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	bluehawk_draw_tx(bitmap);
 }
 
-void primella_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void primella_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	bluehawk_draw_layer(bitmap,1,lastday_bgscroll,memory_region(REGION_GFX2)+memory_region_length(REGION_GFX2)-0x8000,TRANSPARENCY_NONE);
 	if (tx_pri) bluehawk_draw_tx(bitmap);
@@ -448,7 +448,7 @@ void primella_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (!tx_pri) bluehawk_draw_tx(bitmap);
 }
 
-void rshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	rshark_draw_layer(bitmap,4,rshark_scroll4,memory_region(REGION_GFX5),memory_region(REGION_GFX6)+0x60000,TRANSPARENCY_NONE);
 	rshark_draw_layer(bitmap,3,rshark_scroll3,memory_region(REGION_GFX4),memory_region(REGION_GFX6)+0x40000,TRANSPARENCY_PEN);

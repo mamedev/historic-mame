@@ -146,7 +146,7 @@ WRITE_HANDLER( labyrunr_vram2_w )
 
 ***************************************************************************/
 
-void labyrunr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void labyrunr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(layer0,0,K007121_ctrlram[0][0x00] - 40);
 	tilemap_set_scrolly(layer0,0,K007121_ctrlram[0][0x02]);

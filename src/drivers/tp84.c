@@ -96,7 +96,7 @@ READ_HANDLER( tp84_scanline_r );
 void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int tp84_vh_start(void);
 void tp84_vh_stop(void);
-void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tp84_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int tp84_6809_interrupt(void);
 
 

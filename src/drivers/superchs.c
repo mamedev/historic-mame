@@ -42,7 +42,7 @@
 
 int superchs_vh_start (void);
 void superchs_vh_stop (void);
-void superchs_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void superchs_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
 
 static UINT16 coin_word;
 static data32_t *superchs_ram;

@@ -182,7 +182,7 @@ WRITE_HANDLER( kncljoe_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	struct rectangle clip = Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1 + sprite_bank];
@@ -223,7 +223,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void kncljoe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kncljoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

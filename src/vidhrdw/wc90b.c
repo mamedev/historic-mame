@@ -119,7 +119,7 @@ WRITE_HANDLER( wc90b_txvideoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
+static void draw_sprites( struct mame_bitmap *bitmap, int priority ){
   int offs;
 
   /* draw all visible sprites of specified priority */
@@ -148,7 +148,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 	}
 }
 
-void wc90b_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wc90b_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,8 * wc90b_scroll2x[0] + 256);
 	tilemap_set_scrolly(bg_tilemap,0,wc90b_scroll2y[0] + ((wc90b_scroll2y[0] < 0x10 || wc90b_scroll2y[0] == 0xff) ? 256 : 0));

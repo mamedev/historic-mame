@@ -311,7 +311,7 @@ Offset:		Format:		Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int i;
 
@@ -351,7 +351,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void clshroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void clshroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx  = clshroad_vregs[ 0 ] + (clshroad_vregs[ 1 ] << 8);
 //	int priority = clshroad_vregs[ 2 ];

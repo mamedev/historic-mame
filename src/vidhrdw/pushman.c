@@ -91,7 +91,7 @@ WRITE16_HANDLER( pushman_videoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,x,y,color,sprite;
 
@@ -112,7 +112,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void pushman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pushman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( bg_tilemap,0, control[0] );

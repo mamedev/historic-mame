@@ -156,7 +156,7 @@ WRITE_HANDLER( wiz_flipy_w )
     }
 }
 
-static void draw_background(struct osd_bitmap *bitmap, int bank, int colortype)
+static void draw_background(struct mame_bitmap *bitmap, int bank, int colortype)
 {
 	int offs;
 
@@ -196,7 +196,7 @@ static void draw_background(struct osd_bitmap *bitmap, int bank, int colortype)
 	}
 }
 
-static void draw_foreground(struct osd_bitmap *bitmap, int colortype)
+static void draw_foreground(struct mame_bitmap *bitmap, int colortype)
 {
 	int offs;
 
@@ -235,7 +235,7 @@ static void draw_foreground(struct osd_bitmap *bitmap, int colortype)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sprite_ram,
+static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sprite_ram,
                          int bank, const struct rectangle* visible_area)
 {
 	int offs;
@@ -264,12 +264,12 @@ static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sprite_ram,
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wiz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bank;
 	const struct rectangle* visible_area;
@@ -287,7 +287,7 @@ void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void stinger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
 	draw_background(bitmap, 2 + char_bank[0], 1);

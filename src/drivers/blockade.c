@@ -37,7 +37,7 @@ Notes:  Support is complete with the exception of the square wave generator
 /* #define BLOCKADE_LOG 1 */
 
 /* in vidhrdw */
-void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blockade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( blockade_coin_latch_w );
 WRITE_HANDLER( blockade_sound_freq_w );

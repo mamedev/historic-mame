@@ -61,7 +61,7 @@ WRITE16_HANDLER( ginganin_fgram16_w );
 WRITE16_HANDLER( ginganin_txtram16_w );
 WRITE16_HANDLER( ginganin_vregs16_w );
 int  ginganin_vh_start(void);
-void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ginganin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /*

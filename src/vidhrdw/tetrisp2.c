@@ -214,7 +214,7 @@ int tetrisp2_vh_start(void)
 
 ***************************************************************************/
 
-static void tetrisp2_draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void tetrisp2_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	int x, y, tx, ty, sx, sy, flipx, flipy;
 	int xsize, ysize, xnum, ynum;
@@ -332,7 +332,7 @@ static void tetrisp2_draw_sprites(struct osd_bitmap *bitmap, int priority)
 
 ***************************************************************************/
 
-void tetrisp2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tetrisp2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,layers_ctrl = -1;
 

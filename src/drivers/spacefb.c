@@ -127,7 +127,7 @@ red flash effect when you die.
 #include "cpu/i8039/i8039.h"
 
 
-void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void spacefb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 WRITE_HANDLER( spacefb_video_control_w );

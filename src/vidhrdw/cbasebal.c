@@ -166,7 +166,7 @@ WRITE_HANDLER( cbasebal_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,sx,sy;
 
@@ -199,7 +199,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void cbasebal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cbasebal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (bg_on)
 		tilemap_draw(bitmap,bg_tilemap,0,0);

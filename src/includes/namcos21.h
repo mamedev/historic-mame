@@ -16,4 +16,4 @@ extern data16_t *namcos21_dspram16;
 
 int namcos21_vh_start( void );
 void namcos21_vh_stop( void );
-void namcos21_vh_update_default( struct osd_bitmap *bitmap, int fullrefresh );
+void namcos21_vh_update_default( struct mame_bitmap *bitmap, int fullrefresh );

@@ -82,7 +82,7 @@ int mappy_vh_start(void);
 int motos_vh_start(void);
 int todruaga_vh_start(void);
 void mappy_vh_stop(void);
-void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mappy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( mappy_videoram_w );
 WRITE_HANDLER( mappy_colorram_w );
 WRITE_HANDLER( mappy_scroll_w );

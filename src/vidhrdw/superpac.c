@@ -90,7 +90,7 @@ READ_HANDLER(superpac_flipscreen_r)
 
 
 
-static void draw_sprites(struct osd_bitmap *bitmap, struct rectangle *clip, int drawmode)
+static void draw_sprites(struct mame_bitmap *bitmap, struct rectangle *clip, int drawmode)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	int offs;
@@ -189,13 +189,13 @@ static void draw_sprites(struct osd_bitmap *bitmap, struct rectangle *clip, int 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void superpac_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

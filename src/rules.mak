@@ -252,6 +252,16 @@ else
 CPUDEFS += -DHAS_V33=0
 endif
 
+CPU=$(strip $(findstring V60@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/v60
+CPUDEFS += -DHAS_V60=1
+CPUOBJS += $(OBJ)/cpu/v60/v60.o
+DBGOBJS += $(OBJ)/cpu/v60/v60d.o
+else
+CPUDEFS += -DHAS_V60=0
+endif
+
 CPU=$(strip $(findstring I8035@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8039

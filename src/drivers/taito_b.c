@@ -115,7 +115,7 @@ int  hitice_vh_start(void);
 void taitob_vh_stop(void);
 void taitob_eof_callback(void);
 
-void taitob_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void taitob_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( TC0180VCU_word_w );
 READ16_HANDLER ( TC0180VCU_word_r );

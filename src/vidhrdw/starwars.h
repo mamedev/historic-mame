@@ -26,7 +26,7 @@ void starwars_set_palette(unsigned char *, unsigned char *,const unsigned char *
 int starwars_interrupt(void);
 int starwars_vh_start(void);
 void starwars_vh_stop(void);
-void starwars_vh_screenrefresh(struct osd_bitmap *);
+void starwars_vh_screenrefresh(struct mame_bitmap *);
 
 void init_display(void);
 void draw_vector(short, short, short, short, short, short, char);

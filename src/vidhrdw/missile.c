@@ -160,7 +160,7 @@ WRITE_HANDLER( missile_video_3rd_bit_w )
 
 
 /********************************************************************************************/
-void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void missile_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{

@@ -123,7 +123,7 @@ WRITE_HANDLER( srumbler_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -170,7 +170,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void srumbler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap);

@@ -518,7 +518,7 @@ Newer version of the I/O chip ?
 	}
 
 INLINE void bryan_drawscanline(
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
 	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
@@ -996,15 +996,15 @@ UINT16 topspeed_get_road_pixel_color(UINT16 pixel,UINT16 color)
 }
 
 
-static void topspeed_custom_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,
+static void topspeed_custom_draw(struct mame_bitmap *bitmap,int chip,int layer,int flags,
 							UINT32 priority,data16_t *color_ctrl_ram)
 {
 	UINT16 *dst16,*src16;
 	UINT8 *tsrc;
 	UINT16 scanline[1024];	/* won't be called by a wide-screen game, but just in case... */
 
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(PC080SN_tilemap[chip][layer]);
-	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(PC080SN_tilemap[chip][layer]);
+	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(PC080SN_tilemap[chip][layer]);
+	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(PC080SN_tilemap[chip][layer]);
 
 	UINT16 a,color;
 	int sx,x_index;
@@ -1095,12 +1095,12 @@ static void topspeed_custom_draw(struct osd_bitmap *bitmap,int chip,int layer,in
 }
 
 
-void PC080SN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
+void PC080SN_tilemap_draw(struct mame_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
 {
 	tilemap_draw(bitmap,PC080SN_tilemap[chip][layer],flags,priority);
 }
 
-void PC080SN_tilemap_draw_special(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority,data16_t *ram)
+void PC080SN_tilemap_draw_special(struct mame_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority,data16_t *ram)
 {
 	topspeed_custom_draw(bitmap,chip,layer,flags,priority,ram);
 }
@@ -1564,7 +1564,7 @@ void TC0080VCO_tilemap_update(void)
 
 /* NB: orientation_flipx code in following routine has not been tested */
 
-static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT32 priority)
+static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	UINT16 zoom = TC0080VCO_scroll_ram[6];
 	int zx, zy;
@@ -1581,8 +1581,8 @@ static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 		UINT16 *dst16,*src16;
 		UINT8 *tsrc;
 		UINT16 scanline[512];
-		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[0]);
-		struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(TC0080VCO_tilemap[0]);
+		struct mame_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[0]);
+		struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(TC0080VCO_tilemap[0]);
 
 		int sx,zoomx,zoomy;
 		int dx,ex,dy,ey;
@@ -1730,7 +1730,7 @@ static void TC0080VCO_bg0_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 }
 
 
-static void TC0080VCO_bg1_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT32 priority)
+static void TC0080VCO_bg1_tilemap_draw(struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	UINT8 layer=1;
 	UINT16 zoom = TC0080VCO_scroll_ram[6+layer];
@@ -1753,7 +1753,7 @@ static void TC0080VCO_bg1_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 		int sx,sy;
 
 		/* shouldn't we set no_clip before doing this (see TC0480SCP) ? */
-		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[layer]);
+		struct mame_bitmap *srcbitmap = tilemap_get_pixmap(TC0080VCO_tilemap[layer]);
 
 		if (zoomx < 63)
 		{
@@ -1806,7 +1806,7 @@ static void TC0080VCO_bg1_tilemap_draw(struct osd_bitmap *bitmap,int flags,UINT3
 }
 
 
-void TC0080VCO_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+void TC0080VCO_tilemap_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
 	int disable = 0x00;	/* possibly layer disable bits do exist ?? */
 
@@ -2638,7 +2638,7 @@ void TC0100SCN_tilemap_update(void)
 	}
 }
 
-void TC0100SCN_tilemap_draw(struct osd_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
+void TC0100SCN_tilemap_draw(struct mame_bitmap *bitmap,int chip,int layer,int flags,UINT32 priority)
 {
 	int disable = TC0100SCN_ctrl[chip][6] & 0xf7;
 
@@ -2777,7 +2777,7 @@ void TC0430GRW_tilemap_update(int base_color)
 	TC0280GRD_tilemap_update(base_color);
 }
 
-static void zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority,int xmultiply)
+static void zoom_draw(struct mame_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority,int xmultiply)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -2804,12 +2804,12 @@ static void zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 p
 			0,priority);
 }
 
-void TC0280GRD_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority)
+void TC0280GRD_zoom_draw(struct mame_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority)
 {
 	zoom_draw(bitmap,xoffset,yoffset,priority,2);
 }
 
-void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority)
+void TC0430GRW_zoom_draw(struct mame_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority)
 {
 	zoom_draw(bitmap,xoffset,yoffset,priority,1);
 }
@@ -3553,7 +3553,7 @@ Historical Issues
 
 **********************************************************************/
 
-static void TC0480SCP_bg01_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+static void TC0480SCP_bg01_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
 	/* X-axis zoom offers expansion only: 0 = no zoom, 0xff = max
 	   Y-axis zoom offers expansion/compression: 0x7f = no zoom, 0xff = max
@@ -3575,8 +3575,8 @@ static void TC0480SCP_bg01_draw(struct osd_bitmap *bitmap,int layer,int flags,UI
 		UINT8 *tsrc;
 		UINT16 scanline[512];
 		UINT32 sx;
-		struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
-		struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap
+		struct mame_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
+		struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap
 							(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
 		int flip = TC0480SCP_pri_reg & 0x40;
 		int i,y,y_index,src_y_index,row_index;
@@ -3741,10 +3741,10 @@ flipscreen.
 
 ****************************************************************/
 
-static void TC0480SCP_bg23_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+static void TC0480SCP_bg23_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
-	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap
+	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
+	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap
 						(TC0480SCP_tilemap[layer][TC0480SCP_dblwidth]);
 
 	UINT16 *dst16,*src16;
@@ -3908,7 +3908,7 @@ static void TC0480SCP_bg23_draw(struct osd_bitmap *bitmap,int layer,int flags,UI
 
 
 
-void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+void TC0480SCP_tilemap_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
 	/* no layer disable bits */
 

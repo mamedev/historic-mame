@@ -28,7 +28,7 @@ static struct tilemap *fg_tilemap,*bg1_tilemap,*bg2_tilemap,*bg3_tilemap;
 static int senjyo, scrollhack;
 static int senjyo_bgstripes;
 
-static struct osd_bitmap *bgbitmap;
+static struct mame_bitmap *bgbitmap;
 
 
 void init_starforc(void)
@@ -226,7 +226,7 @@ WRITE_HANDLER( senjyo_bgstripes_w )
 
 ***************************************************************************/
 
-static void draw_bgbitmap(struct osd_bitmap *bitmap, int full_refresh)
+static void draw_bgbitmap(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x,y,pen,strwid,count;
 
@@ -274,7 +274,7 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap, int full_refresh)
 	copybitmap(bitmap,bgbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-static void draw_radar(struct osd_bitmap *bitmap)
+static void draw_radar(struct mame_bitmap *bitmap)
 {
 	int offs,x;
 
@@ -306,7 +306,7 @@ static void draw_radar(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap,int priority)
+static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
@@ -358,7 +358,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void senjyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 

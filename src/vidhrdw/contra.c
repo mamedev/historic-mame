@@ -277,7 +277,7 @@ WRITE_HANDLER( contra_K007121_ctrl_1_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, int bank )
+static void draw_sprites( struct mame_bitmap *bitmap, int bank )
 {
 	const unsigned char *source;
 	int base_color = (K007121_ctrlram[bank][6]&0x30)*2;
@@ -288,7 +288,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 	K007121_sprites_draw(bank,bitmap,source,base_color,40,0,-1);
 }
 
-void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void contra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx( fg_tilemap,0, K007121_ctrlram[0][0x00] - 40 );
 	tilemap_set_scrolly( fg_tilemap,0, K007121_ctrlram[0][0x02] );

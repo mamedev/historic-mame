@@ -128,7 +128,7 @@ C - uses sub board with support for player 3 and 4 controls
 #include "cpu/m6800/m6800.h"
 
 /* from vidhrdw */
-extern void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void namcos1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int namcos1_vh_start(void);
 extern void namcos1_vh_stop(void);
 

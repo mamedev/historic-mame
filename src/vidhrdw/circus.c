@@ -99,7 +99,7 @@ WRITE_HANDLER( circus_clown_z_w )
 //	logerror("clown Z = %02x\n",data);
 }
 
-static void draw_line(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
+static void draw_line(struct mame_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
 {
 	/* Draws horizontal and Vertical lines only! */
     int col = Machine->pens[1];
@@ -129,7 +129,7 @@ static void draw_line(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2,
 	}
 }
 
-static void draw_robot_box (struct osd_bitmap *bitmap, int x, int y)
+static void draw_robot_box (struct mame_bitmap *bitmap, int x, int y)
 {
 	/* Box */
 
@@ -150,7 +150,7 @@ static void draw_robot_box (struct osd_bitmap *bitmap, int x, int y)
 }
 
 
-void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy;
@@ -226,7 +226,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy;
@@ -320,7 +320,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 }
 
-void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy;

@@ -16,7 +16,7 @@ data16_t *splash_spriteram;
 data16_t *splash_pixelram;
 
 static struct tilemap *screen[2];
-static struct osd_bitmap *screen2;
+static struct mame_bitmap *screen2;
 
 
 /***************************************************************************
@@ -166,7 +166,7 @@ int splash_vh_start(void)
 	  400| xxxxxxxx -------- | unused
 */
 
-static void splash_draw_sprites(struct osd_bitmap *bitmap)
+static void splash_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int i;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -193,7 +193,7 @@ static void splash_draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void splash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void splash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* set scroll registers */
 	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);

@@ -290,7 +290,7 @@ READ_HANDLER( exerion_video_timing_r )
  *
  *************************************/
 
-void draw_background(struct osd_bitmap *bitmap)
+void draw_background(struct mame_bitmap *bitmap)
 {
 	UINT8 *latches = &background_latches[VISIBLE_Y_MIN * 16];
 	int x, y;
@@ -407,7 +407,7 @@ void draw_background(struct osd_bitmap *bitmap)
  *
  *************************************/
 
-void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int sx, sy, offs, i;
 

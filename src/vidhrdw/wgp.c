@@ -408,7 +408,7 @@ static UINT8 ylookup[16] =
 	  2, 2, 3, 3,
 	  2, 2, 3, 3 };
 
-static void wgp_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void wgp_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offs)
 {
 	int offs,i,j,k;
 	int x,y,curx,cury;
@@ -572,7 +572,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 	}
 
 INLINE void bryan2_drawscanline(
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
 	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
@@ -599,10 +599,10 @@ INLINE void bryan2_drawscanline(
 
 
 
-static void wgp_piv_layer_draw(struct osd_bitmap *bitmap,int layer,int flags,UINT32 priority)
+static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
 {
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(wgp_piv_tilemap[layer]);
-	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(wgp_piv_tilemap[layer]);
+	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(wgp_piv_tilemap[layer]);
+	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(wgp_piv_tilemap[layer]);
 
 	UINT16 *dst16,*src16;
 	UINT8 *tsrc;
@@ -719,7 +719,7 @@ static void wgp_piv_layer_draw(struct osd_bitmap *bitmap,int layer,int flags,UIN
                         SCREEN REFRESH
 **************************************************************/
 
-void wgp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	UINT8 layer[3];

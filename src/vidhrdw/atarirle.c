@@ -144,18 +144,18 @@ static UINT16 *rle_table[8];
 static int build_rle_tables(void);
 static int count_objects(const data16_t *base, int length);
 static void prescan_rle(const struct atarirle_data *mo, int which);
-static void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int color, int hflip, int vflip,
+static void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
 		int x, int y, int xscale, int yscale, const struct rectangle *clip);
-static void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+static void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
-static void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+static void draw_rle_zoom_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
-static void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+static void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
-static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+static void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 
@@ -382,7 +382,7 @@ void atarirle_free(void)
 	atarirle_render: Render all motion objects in order.
 ---------------------------------------------------------------*/
 
-void atarirle_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb callback)
+void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback)
 {
 	struct atarirle_data *mo = &atarirle[map];
 	struct atarirle_entry *obj = mo->spriteram;
@@ -707,7 +707,7 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 	object.
 ---------------------------------------------------------------*/
 
-void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int color, int hflip, int vflip,
+void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
 	int x, int y, int xscale, int yscale, const struct rectangle *clip)
 {
 	const pen_t *palettebase = &Machine->pens[mo->palettebase + color];
@@ -752,7 +752,7 @@ void draw_rle(struct atarirle_data *mo, struct osd_bitmap *bitmap, int code, int
 	bitmap.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
@@ -941,7 +941,7 @@ void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
 	bitmap.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
@@ -1130,7 +1130,7 @@ void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx
 	8-bit bitmap with horizontal flip.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
@@ -1318,7 +1318,7 @@ void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarirle_info *
 	16-bit bitmap with horizontal flip.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {

@@ -20,7 +20,7 @@ Notes:
 
 
 int hexion_vh_start(void);
-void hexion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hexion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( hexion_bankswitch_w );
 READ_HANDLER( hexion_bankedram_r );

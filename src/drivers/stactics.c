@@ -58,7 +58,7 @@ extern unsigned char *stactics_motor_on;
 /* Defined in vidhrdw/stactics.c */
 int stactics_vh_start(void);
 void stactics_vh_stop(void);
-void stactics_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void stactics_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern unsigned char *stactics_scroll_ram;
 extern unsigned char *stactics_videoram_b;
 extern unsigned char *stactics_chardata_b;

@@ -66,13 +66,13 @@ int  bnj_vh_start (void);
 
 void bnj_vh_stop (void);
 
-void btime_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
-void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void bnj_vh_screenrefresh     (struct osd_bitmap *bitmap,int full_refresh);
-void lnc_vh_screenrefresh     (struct osd_bitmap *bitmap,int full_refresh);
-void zoar_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
-void disco_vh_screenrefresh   (struct osd_bitmap *bitmap,int full_refresh);
-void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
+void btime_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
+void cookrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void bnj_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
+void lnc_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
+void zoar_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
+void disco_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
+void eggs_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( btime_paletteram_w );
 WRITE_HANDLER( bnj_background_w );

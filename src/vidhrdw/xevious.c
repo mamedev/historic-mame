@@ -151,6 +151,8 @@ int xevious_vh_start(void)
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
+	tilemap_set_scrolldx(fg_tilemap,0,-160);
+	tilemap_set_scrolldy(fg_tilemap,0,8);
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
@@ -291,7 +293,7 @@ ROM 3M,3L color reprace table for sprite
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,sx,sy;
 
@@ -371,7 +373,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void xevious_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

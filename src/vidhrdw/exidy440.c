@@ -405,7 +405,7 @@ double compute_pixel_time(int x, int y)
  *
  *************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int scroll_offset)
+static void draw_sprites(struct mame_bitmap *bitmap, int scroll_offset)
 {
 	int scanline, i;
 
@@ -511,7 +511,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int scroll_offset)
  *
  *************************************/
 
-static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
+static void update_screen(struct mame_bitmap *bitmap, int scroll_offset)
 {
 	int y, sy;
 	int beamx, beamy;
@@ -565,7 +565,7 @@ void exidy440_update_callback(int param)
 		to happen at 60Hz, whether or not we're frameskipping; in order to do those, we pretty
 		much need to do all the update handling */
 
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 
 	int i;
 	double time, increment;
@@ -598,7 +598,7 @@ void exidy440_update_callback(int param)
  *
  *************************************/
 
-void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void exidy440_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* if we need a full refresh, mark all scanlines dirty */
 	if (full_refresh)

@@ -1,3 +1,5 @@
+#if 1
+
 /*********************************************************************
 
 	cheat.c
@@ -142,6 +144,14 @@
 	07132001	Ian Patterson	removed CW-specific macro
 								fixed conflict disabling
 	07182001	Ian Patterson	added cheat types 15-17
+	08062001	Ian Patterson	S and W keys now deactivated when typing names/descriptions
+								added direct input to user select, edit (max/data field),
+								start/continue search value
+								added save/add all support to watch menu
+	08182001	Ian Patterson	updated conflict checking algorithm to support rom and memory handler cheats
+	09162001	Ian Patterson	added eeprom patching cheat types
+	09272001	Ian Patterson	added cheat types 80-95
+	09292001	Ian Patterson	fixes for rc.c
 
 (Description from Pugsy's cheat.dat)
 
@@ -230,6 +240,42 @@
 ;   -075 : the user selects a decimal value from 1 to byte
 ;          (display : 1 to byte) - the value is poked once and the cheat is
 ;          removed from the active list.
+;   -080 : the user selects a decimal value from 0 to byte
+;          (display : 0 to byte) - the value is poked once when it changes and
+;          the cheat stays in the active list.
+;   -081 : the user selects a decimal value from 0 to byte
+;          (display : 1 to byte+1) - the value is poked once when it changes
+;          and cheat stays in the active list.
+;   -082 : the user selects a decimal value from 1 to byte
+;          (display : 1 to byte) - the value is poked once when it changes and
+;          the cheat stays in the active list.
+;   -083 : the user selects a BCD value from 0 to byte
+;          (display : 0 to byte) - the value is poked once when it changes and
+;          the cheat stays in the active list.
+;   -084 : the user selects a BCD value from 0 to byte
+;          (display : 1 to byte+1) - the value is poked once when it changes
+;          and the cheat stays in the active list.
+;   -085 : the user selects a decimal value from 1 to byte
+;          (display : 1 to byte) - the value is poked once when it changes and
+;          the cheat stays in the active list.
+;   -090 : the user selects a decimal value from 0 to byte
+;          (display : 0 to byte) - the value is poked once and the cheat
+;          stays in the active list.
+;   -091 : the user selects a decimal value from 0 to byte
+;          (display : 1 to byte+1) - the value is poked once and the cheat
+;          stays in the active list.
+;   -092 : the user selects a decimal value from 1 to byte
+;          (display : 1 to byte) - the value is poked once and the cheat
+;          stays in the active list.
+;   -093 : the user selects a BCD value from 0 to byte
+;          (display : 0 to byte) - the value is poked once and the cheat
+;          stays in the active list.
+;   -094 : the user selects a BCD value from 0 to byte
+;          (display : 1 to byte+1) - the value is poked once and the cheat
+;          stays in the active list.
+;   -095 : the user selects a decimal value from 1 to byte
+;          (display : 1 to byte) - the value is poked once and the cheat
+;          stays in the active list.
 ;	-100 : constantly pokes the value to the selected CPU's ROM region, adjusting for endian issues
 ;	-101 : pokes the value to the selected CPU's ROM region and the cheat is
 ;	       removed from the active list, adjusting for endian issues
@@ -241,6 +287,9 @@
 ;	       the cheat is removed
 ;	-112 : pokes the value to the memory mapped to the memory handler
 ;	-113 : pokes the value to the memory mapped to the memory handler, and the cheat is removed
+;	-120 : pokes the value to the eeprom buffer, and the cheat is removed
+;	-121 : sets the bits in the eeprom buffer, and the cheat is removed
+;	-122 : clears the bits in the eeprom buffer, and the cheat is removed
 ;   -500 to 575: These cheat types are identical to types 000 to 075 except
 ;                they are used in linked cheats (i.e. of 1/8 type). The first
 ;                cheat in the link list will be the normal type (eg type 000)
@@ -257,6 +306,7 @@
 
 #include "driver.h"
 #include "ui_text.h"
+#include "machine/eeprom.h"
 
 #include <ctype.h>
 
@@ -312,24 +362,30 @@ enum
 
 enum
 {
-	kSubcheatFlagDone =			1 << 0,
-	kSubcheatFlagTimed =		1 << 1,
-	kSubcheatFlagBitModify =	1 << 2,
-	kSubcheatFlagByteModify =	1 << 3,
-	kSubcheatFlagCustomRegion =	1 << 4,
-	kSubcheatFlagPrompt =		1 << 5,
-	kSubcheatFlagWatch =		1 << 6,
+	kSubcheatFlagDone =				1 << 0,
+	kSubcheatFlagTimed =			1 << 1,
+	kSubcheatFlagBitModify =		1 << 2,
+	kSubcheatFlagByteModify =		1 << 3,
+	kSubcheatFlagROMRegion =		1 << 4,
+	kSubcheatFlagCustomRegion =		1 << 4,
+	kSubcheatFlagPrompt =			1 << 6,
+	kSubcheatFlagWatch =			1 << 7,
+	kSubcheatFlagNoConflictCheck =	1 << 8,
 
 	kSubcheatFlagModifyMask =	kSubcheatFlagBitModify |
 								kSubcheatFlagByteModify,
 	kSubcheatFlagStatusMask =	kSubcheatFlagDone |
 								kSubcheatFlagTimed,
+	kSubcheatFlagRegionMask =	kSubcheatFlagROMRegion |
+								kSubcheatFlagCustomRegion,
 	kSubcheatFlagModeMask =		kSubcheatFlagBitModify |
 								kSubcheatFlagByteModify |
+								kSubcheatFlagROMRegion |
 								kSubcheatFlagCustomRegion |
 								kSubcheatFlagPrompt |
 								kSubcheatFlagWatch |
-								kSubcheatFlagPrompt
+								kSubcheatFlagPrompt |
+								kSubcheatFlagNoConflictCheck
 };
 
 struct subcheat_struct
@@ -395,19 +451,31 @@ enum
 	kCheatSpecial_ResetBit2 =					43,
 	kCheatSpecial_ResetBit5 =					44,
 	kCheatSpecial_UserFirst =					60,
-	kCheatSpecial_m0d0c =						60,		/* minimum value 0, display range 0 to byte, poke when changed */
-	kCheatSpecial_m0d1c =						61,		/* minimum value 0, display range 1 to byte+1, poke when changed */
-	kCheatSpecial_m1d1c =						62,		/* minimum value 1, display range 1 to byte, poke when changed */
-	kCheatSpecial_m0d0bcdc =					63,		/* BCD, minimum value 0, display range 0 to byte, poke when changed */
-	kCheatSpecial_m0d1bcdc =					64,		/* BCD, minimum value 0, display range 1 to byte+1, poke when changed */
-	kCheatSpecial_m1d1bcdc =					65,		/* BCD, minimum value 1, display range 1 to byte, poke when changed */
-	kCheatSpecial_m0d0 =						70,		/* minimum value 0, display range 0 to byte */
-	kCheatSpecial_m0d1 =						71,		/* minimum value 0, display range 1 to byte+1 */
-	kCheatSpecial_m1d1 =						72,		/* minimum value 1, display range 1 to byte */
-	kCheatSpecial_m0d0bcd =						73,		/* BCD, minimum value 0, display range 0 to byte */
-	kCheatSpecial_m0d1bcd =						74,		/* BCD, minimum value 0, display range 1 to byte+1 */
-	kCheatSpecial_m1d1bcd =						75,		/* BCD, minimum value 1, display range 1 to byte */
-	kCheatSpecial_UserLast =					75,
+	kCheatSpecial_m0d0cRemove =					60,		/* minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1cRemove =					61,		/* minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1cRemove =					62,		/* minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0bcdcRemove =				63,		/* BCD, minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1bcdcRemove =				64,		/* BCD, minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1bcdcRemove =				65,		/* BCD, minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0Remove =					70,		/* minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1Remove =					71,		/* minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1Remove =					72,		/* minimum value 1, display range 1 to byte */
+	kCheatSpecial_m0d0bcdRemove =				73,		/* BCD, minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1bcdRemove =				74,		/* BCD, minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1bcdRemove =				75,		/* BCD, minimum value 1, display range 1 to byte */
+	kCheatSpecial_m0d0c =						80,		/* minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1c =						81,		/* minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1c =						82,		/* minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0bcdc =					83,		/* BCD, minimum value 0, display range 0 to byte, poke when changed */
+	kCheatSpecial_m0d1bcdc =					84,		/* BCD, minimum value 0, display range 1 to byte+1, poke when changed */
+	kCheatSpecial_m1d1bcdc =					85,		/* BCD, minimum value 1, display range 1 to byte, poke when changed */
+	kCheatSpecial_m0d0 =						90,		/* minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1 =						91,		/* minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1 =						92,		/* minimum value 1, display range 1 to byte */
+	kCheatSpecial_m0d0bcd =						93,		/* BCD, minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1bcd =						94,		/* BCD, minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1bcd =						95,		/* BCD, minimum value 1, display range 1 to byte */
+	kCheatSpecial_UserLast =					95,
 	kCheatSpecial_PokeROM =						100,
 	kCheatSpecial_PokeROMRemove =				101,
 	kCheatSpecial_PokeROMRaw =					102,
@@ -416,6 +484,9 @@ enum
 	kCheatSpecial_ForcePokeRegionRemove =		111,
 	kCheatSpecial_ForcePokeRegionRaw =			112,
 	kCheatSpecial_ForcePokeRegionRemoveRaw =	113,
+	kCheatSpecial_PokeEEPROMRemove =			120,
+	kCheatSpecial_SetBitEEPROMRemove =			121,
+	kCheatSpecial_ClearBitEEPROMRemove =		122,
 	kCheatSpecial_Last =						199,
 	kCheatSpecial_LinkStart =					500,	/* only used when loading the database */
 	kCheatSpecial_LinkEnd =						699,	/* only used when loading the database */
@@ -452,9 +523,21 @@ const int kSupportedCheatTypes[] =
 	kCheatSpecial_ResetBit1,
 	kCheatSpecial_ResetBit2,
 	kCheatSpecial_ResetBit5,
-	kCheatSpecial_m0d0c,
-	kCheatSpecial_m0d1c,
-	kCheatSpecial_m1d1c,
+	kCheatSpecial_m0d0cRemove,
+	kCheatSpecial_m0d1cRemove,
+	kCheatSpecial_m1d1cRemove,
+	kCheatSpecial_m0d0bcdcRemove,
+	kCheatSpecial_m0d1bcdcRemove,
+	kCheatSpecial_m1d1bcdcRemove,
+	kCheatSpecial_m0d0Remove,
+	kCheatSpecial_m0d1Remove,
+	kCheatSpecial_m1d1Remove,
+	kCheatSpecial_m0d0bcdRemove,
+	kCheatSpecial_m0d1bcdRemove,
+	kCheatSpecial_m1d1bcdRemove,
+	kCheatSpecial_m0d0cRemove,
+	kCheatSpecial_m0d1cRemove,
+	kCheatSpecial_m1d1cRemove,
 	kCheatSpecial_m0d0bcdc,
 	kCheatSpecial_m0d1bcdc,
 	kCheatSpecial_m1d1bcdc,
@@ -472,18 +555,21 @@ const int kSupportedCheatTypes[] =
 	kCheatSpecial_ForcePokeRegionRemove,
 	kCheatSpecial_ForcePokeRegionRaw,
 	kCheatSpecial_ForcePokeRegionRemoveRaw,
+	kCheatSpecial_PokeEEPROMRemove,
+	kCheatSpecial_SetBitEEPROMRemove,
+	kCheatSpecial_ClearBitEEPROMRemove,
 	kCheatSpecial_Watch,
 	kCheatSpecial_Comment,
 	-1
 };
 
-char * cheatfile = "cheat.dat";
+char * cheatfile = NULL;
 
 char database[CHEAT_FILENAME_MAXLEN + 1];
 
 int he_did_cheat;
 
-char * kCheatNameTemplates[] =
+static char * kCheatNameTemplates[] =
 {
 	"Infinite Lives",
 	"Infinite Lives PL1",
@@ -628,10 +714,10 @@ static int					is_watch_visible;		/* we can toggle the visibility for all on or 
 #define CPU_AUDIO_OFF(index)	((Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU) && (Machine->sample_rate == 0))
 
 /* Local prototypes */
-static INT32	DisplayHelpFile(struct osd_bitmap * bitmap, INT32 selected);
-static INT32	EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 cheatnum);
-static INT32	CommentMenu(struct osd_bitmap * bitmap, INT32 selected, int cheat_index);
-static INT32	UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int cheat_num);
+static INT32	DisplayHelpFile(struct mame_bitmap * bitmap, INT32 selected);
+static INT32	EditCheatMenu(struct mame_bitmap * bitmap, INT32 selected, UINT8 cheatnum);
+static INT32	CommentMenu(struct mame_bitmap * bitmap, INT32 selected, int cheat_index);
+static INT32	UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, int cheat_num);
 static int		FindFreeWatch(void);
 static void		reset_table(struct ExtMemory * table);
 static void		AddResultToListByIdx(int idx);
@@ -1438,7 +1524,7 @@ UINT8 force_read_region_raw(struct subcheat_struct * subcheat)
   simplified from its current form.
 
 ***************************************************************************/
-void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
+void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num, int initMode)
 {
 	/* clear all flags (except mode flags) */
 	CheatTable[cheat_num].flags &= ~kCheatFlagModeMask;
@@ -1472,14 +1558,24 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 
 		case kCheatSpecial_Comment:
 			subcheat->frames_til_trigger =	0;
-			subcheat->address =				0;
-			subcheat->data =				0;
+
+			if(initMode)
+			{
+				subcheat->address =				0;
+				subcheat->data =				0;
+			}
+
 			CheatTable[cheat_num].flags |=	kCheatFlagComment;
 			break;
 
 		case kCheatSpecial_Watch:
 			subcheat->frames_til_trigger =	0;
-			subcheat->data =				0;
+
+			if(initMode)
+			{
+				subcheat->data =				0;
+			}
+
 			CheatTable[cheat_num].flags |=	kCheatFlagWatch;
 			subcheat->flags |=				kSubcheatFlagWatch;
 			break;
@@ -1497,14 +1593,21 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 		(code == kCheatSpecial_PokeROMRemove) ||		/* Steph 2001.05.04 */
 		(code == kCheatSpecial_ForcePokeRegionRemove) ||
 		(code == kCheatSpecial_ForcePokeRegionRemoveRaw) ||
-		(	(code >= kCheatSpecial_UserFirst) &&
-			(code <= kCheatSpecial_UserLast)))
+		(code == kCheatSpecial_PokeEEPROMRemove) ||
+		(code == kCheatSpecial_SetBitEEPROMRemove) ||
+		(code == kCheatSpecial_ClearBitEEPROMRemove) ||
+		(	(code >= kCheatSpecial_m0d0cRemove) &&
+			(code <= kCheatSpecial_m1d1bcdRemove)))
 	{
 		CheatTable[cheat_num].flags |=	kCheatFlagOneShot;
 	}
 
 	/* Set the minimum value */
-	if(	(code == kCheatSpecial_m1d1c) ||
+	if(	(code == kCheatSpecial_m1d1cRemove) ||
+		(code == kCheatSpecial_m1d1bcdcRemove) ||
+		(code == kCheatSpecial_m1d1Remove) ||
+		(code == kCheatSpecial_m1d1bcdRemove) ||
+		(code == kCheatSpecial_m1d1c) ||
 		(code == kCheatSpecial_m1d1bcdc) ||
 		(code == kCheatSpecial_m1d1) ||
 		(code == kCheatSpecial_m1d1bcd))
@@ -1520,8 +1623,10 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	if(	(code >= kCheatSpecial_UserFirst) &&
 		(code <= kCheatSpecial_UserLast))
 	{
-		subcheat->max = subcheat->data;
-		subcheat->data = 0;
+		if(initMode)
+		{
+			subcheat->max = subcheat->data;
+		}
 	}
 	else
 	{
@@ -1529,7 +1634,11 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	}
 
 	/* Set prompting flags */
-	if(	(	(code >= kCheatSpecial_m0d0c) &&
+	if(	(	(code >= kCheatSpecial_m0d0cRemove) &&
+			(code <= kCheatSpecial_m1d1cRemove)) ||
+		(	(code >= kCheatSpecial_m0d0Remove) &&
+			(code <= kCheatSpecial_m1d1Remove)) ||
+		(	(code >= kCheatSpecial_m0d0c) &&
 			(code <= kCheatSpecial_m1d1c)) ||
 		(	(code >= kCheatSpecial_m0d0) &&
 			(code <= kCheatSpecial_m1d1)))
@@ -1537,7 +1646,11 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 		CheatTable[cheat_num].flags |=	kCheatFlagDecPrompt;
 		subcheat->flags |=				kSubcheatFlagPrompt;
 	}
-	else if(	(	(code >= kCheatSpecial_m0d0bcdc) &&
+	else if(	(	(code >= kCheatSpecial_m0d0bcdcRemove) &&
+					(code <= kCheatSpecial_m1d1bcdcRemove)) ||
+				(	(code >= kCheatSpecial_m0d0bcdRemove) &&
+					(code <= kCheatSpecial_m1d1bcdRemove)) ||
+				(	(code >= kCheatSpecial_m0d0bcdc) &&
 					(code <= kCheatSpecial_m1d1bcdc)) ||
 				(	(code >= kCheatSpecial_m0d0bcd) &&
 					(code <= kCheatSpecial_m1d1bcd)))
@@ -1557,22 +1670,25 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	if(	(	(code >= kCheatSpecial_SetBit) &&
 			(code <= kCheatSpecial_SetBit5)) ||
 		(	(code >= kCheatSpecial_ResetBit) &&
-			(code <= kCheatSpecial_ResetBit5)))
+			(code <= kCheatSpecial_ResetBit5)) ||
+		(code == kCheatSpecial_SetBitEEPROMRemove) ||
+		(code == kCheatSpecial_ClearBitEEPROMRemove))
 	{
 		subcheat->flags |= kSubcheatFlagBitModify;
 	}
 
 	if(	(	(code >= kCheatSpecial_Poke) &&
 			(code <= kCheatSpecial_Backup4)) ||
-			(code == kCheatSpecial_PokeROM) ||		/* Steph 2001.05.04 */
-			(code == kCheatSpecial_PokeROMRemove) ||
-			(code == kCheatSpecial_PokeROMRaw) ||
-			(code == kCheatSpecial_PokeROMRemoveRaw) ||
-			(code == kCheatSpecial_ForcePokeRegion) ||
-			(code == kCheatSpecial_ForcePokeRegionRemove) ||
-			(code == kCheatSpecial_ForcePokeRegionRaw) ||
-			(code == kCheatSpecial_ForcePokeRegionRemoveRaw) ||
-		(	(code >= kCheatSpecial_m0d0c) &&
+		(code == kCheatSpecial_PokeROM) ||		/* Steph 2001.05.04 */
+		(code == kCheatSpecial_PokeROMRemove) ||
+		(code == kCheatSpecial_PokeROMRaw) ||
+		(code == kCheatSpecial_PokeROMRemoveRaw) ||
+		(code == kCheatSpecial_ForcePokeRegion) ||
+		(code == kCheatSpecial_ForcePokeRegionRemove) ||
+		(code == kCheatSpecial_ForcePokeRegionRaw) ||
+		(code == kCheatSpecial_ForcePokeRegionRemoveRaw) ||
+		(code == kCheatSpecial_PokeEEPROMRemove) ||
+		(	(code >= kCheatSpecial_m0d0cRemove) &&
 			(code <= kCheatSpecial_m1d1bcd)))
 	{
 		subcheat->flags |= kSubcheatFlagByteModify;
@@ -1581,13 +1697,24 @@ void cheat_set_code(struct subcheat_struct * subcheat, int code, int cheat_num)
 	if(	(code == kCheatSpecial_PokeROM) ||
 		(code == kCheatSpecial_PokeROMRemove) ||
 		(code == kCheatSpecial_PokeROMRaw) ||
-		(code == kCheatSpecial_PokeROMRemoveRaw) ||
-		(code == kCheatSpecial_ForcePokeRegion) ||
+		(code == kCheatSpecial_PokeROMRemoveRaw))
+	{
+		subcheat->flags |= kSubcheatFlagROMRegion;
+	}
+
+	if(	(code == kCheatSpecial_ForcePokeRegion) ||
 		(code == kCheatSpecial_ForcePokeRegionRemove) ||
 		(code == kCheatSpecial_ForcePokeRegionRaw) ||
 		(code == kCheatSpecial_ForcePokeRegionRemoveRaw))
 	{
 		subcheat->flags |= kSubcheatFlagCustomRegion;
+	}
+
+	if(	(code == kCheatSpecial_PokeEEPROMRemove) ||
+		(code == kCheatSpecial_SetBitEEPROMRemove) ||
+		(code == kCheatSpecial_ClearBitEEPROMRemove))
+	{
+		subcheat->flags |= kSubcheatFlagNoConflictCheck;
 	}
 
 	subcheat->code = code;
@@ -1619,63 +1746,69 @@ void cheat_set_status(int cheat_num, int active)
 			UINT32	address =	CheatTable[cheat_num].subcheat[i].address;
 			UINT8	data =		CheatTable[cheat_num].subcheat[i].data;
 			UINT32	flags =		CheatTable[cheat_num].subcheat[i].flags;
+			UINT8	cpu =		CheatTable[cheat_num].subcheat[i].cpu;
 			UINT8	conflict =	0;
 
-			for(j = 0; j < LoadedCheatTotal; j++)
+			if(!flags & kSubcheatFlagNoConflictCheck)
 			{
-				if(	(j != cheat_num) &&
-					(CheatTable[j].flags & kCheatFlagActive))
+				for(j = 0; j < LoadedCheatTotal; j++)
 				{
-					for(k = 0; k <= CheatTable[j].num_sub; k++)
+					if(	(j != cheat_num) &&
+						(CheatTable[j].flags & kCheatFlagActive))
 					{
-						if(	(CheatTable[j].subcheat[k].address == address) &&
-							(!(CheatTable[j].subcheat[k].flags & kSubcheatFlagCustomRegion)))
+						for(k = 0; k <= CheatTable[j].num_sub; k++)
 						{
-							if(flags & kSubcheatFlagBitModify)
+							if(	(CheatTable[j].subcheat[k].address == address) &&
+								(CheatTable[j].subcheat[k].cpu == cpu) &&
+								((CheatTable[j].subcheat[k].flags & kSubcheatFlagRegionMask) == (flags & kSubcheatFlagRegionMask)) &&
+								!(CheatTable[j].subcheat[k].flags & kSubcheatFlagNoConflictCheck))
 							{
-								if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagByteModify) &&
-									data)
+								if(flags & kSubcheatFlagBitModify)
 								{
-									conflict = 1;
+									if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagByteModify) &&
+										data)
+									{
+										conflict = 1;
+									}
+
+									if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagBitModify) &&
+										(CheatTable[j].subcheat[k].data & data))
+									{
+										conflict = 1;
+									}
 								}
 
-								if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagBitModify) &&
-									(CheatTable[j].subcheat[k].data & data))
+								if(flags & kSubcheatFlagByteModify)
 								{
-									conflict = 1;
+									if(CheatTable[j].subcheat[k].flags & kSubcheatFlagByteModify)
+									{
+										conflict = 1;
+									}
+
+									if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagBitModify) &&
+										CheatTable[j].subcheat[k].data)
+									{
+										conflict = 1;
+									}
 								}
+
+								if(conflict)
+								{
+									/* no possible recursion for disabling */
+									cheat_set_status(j, 0);
+
+									if(CheatTable[j].name && CheatTable[j].name[0])
+									{
+										usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), CheatTable[j].name);
+									}
+									else
+									{
+										usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), ui_getstring(UI_none));
+									}
+								}
+
+								conflict = 0;
 							}
-
-							if(flags & kSubcheatFlagByteModify)
-							{
-								if(CheatTable[j].subcheat[k].flags & kSubcheatFlagByteModify)
-								{
-									conflict = 1;
-								}
-
-								if(	(CheatTable[j].subcheat[k].flags & kSubcheatFlagBitModify) &&
-									CheatTable[j].subcheat[k].data)
-								{
-									conflict = 1;
-								}
-							}
-
-							if(conflict)
-							{
-								/* no possible recursion for disabling */
-								cheat_set_status(j, 0);
-
-								if(CheatTable[j].name && CheatTable[j].name[0])
-								{
-									usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), CheatTable[j].name);
-								}
-								else
-								{
-									usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_conflict_found), ui_getstring(UI_none));
-								}
-							}
-
-							conflict = 0;
 						}
 					}
 				}
@@ -1831,7 +1964,7 @@ void cheat_insert_new(int cheat_num)
 	/*add one to the total */
 	LoadedCheatTotal++;
 
-	cheat_set_code(CheatTable[cheat_num].subcheat, 0, cheat_num);
+	cheat_set_code(CheatTable[cheat_num].subcheat, 0, cheat_num, 1);
 }
 
 /*	removes the cheat at the specified index */
@@ -2216,7 +2349,7 @@ void LoadCheatFile(int merge, char * filename)
 		subcheat->address =				temp_address;
 		subcheat->data =				temp_data;
 
-		cheat_set_code(subcheat, temp_code, LoadedCheatTotal);
+		cheat_set_code(subcheat, temp_code, LoadedCheatTotal, 1);
 
 		/* don't bother with the names & comments for subcheats */
 		if(sub)
@@ -2282,6 +2415,10 @@ void LoadCheatFiles(void)
 
 	ActiveCheatTotal = 0;
 	LoadedCheatTotal = 0;
+
+	// fix for machines with nothing like rc.c
+	if(!cheatfile)
+		cheatfile = "cheat.dat";
 
 	/* start off with the default cheat file, cheat.dat */
 	strcpy(str, cheatfile);
@@ -2387,7 +2524,7 @@ void InitCheat(void)
 #endif
 
 /*	shows the "Enable/Disable a Cheat" menu */
-INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
+INT32 EnableDisableCheatMenu(struct mame_bitmap *bitmap, INT32 selected)
 {
 	INT32			sel;
 	static INT32	submenu_choice;
@@ -2647,7 +2784,7 @@ INT32 EnableDisableCheatMenu(struct osd_bitmap *bitmap, INT32 selected)
 }
 
 /*	lets the user select a value for selection cheats */
-static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int cheat_num)
+static INT32 UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, int cheat_num)
 {
 	char					buf[2048];
 	int						sel;
@@ -2656,6 +2793,7 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 	static int				value = -1;
 	int						delta = 0;
 	int						displayValue;
+	int						keyValue;
 
 	if(cheat_num >= LoadedCheatTotal)
 	{
@@ -2740,6 +2878,26 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 		sel = -2;
 	}
 
+	keyValue = code_read_hex_async();
+
+	if(keyValue != -1)
+	{
+		if(cheat->flags & kCheatFlagBCDPrompt)
+		{
+			value *= 10;
+			value &= 0xFF;
+			value += keyValue;
+		}
+		else
+		{
+			value <<= 4;
+			value &= 0xF0;
+			value |= keyValue & 0x0F;
+		}
+
+		delta = 0;
+	}
+
 	if (sel == -1 || sel == -2)
 	{
 		schedule_full_refresh();
@@ -2779,7 +2937,7 @@ static INT32 UserSelectValueMenu(struct osd_bitmap * bitmap, int selection, int 
 }
 
 /*	shows a cheat's comment */
-static INT32 CommentMenu(struct osd_bitmap * bitmap, INT32 selected, int cheat_index)
+static INT32 CommentMenu(struct mame_bitmap * bitmap, INT32 selected, int cheat_index)
 {
 	char	buf[2048];
 	int		sel;
@@ -2835,7 +2993,7 @@ static INT32 CommentMenu(struct osd_bitmap * bitmap, INT32 selected, int cheat_i
 }
 
 /*	shows the "Add/Edit a Cheat" menu */
-INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
+INT32 AddEditCheatMenu(struct mame_bitmap * bitmap, INT32 selected)
 {
 	int				sel;
 	static INT32	submenu_choice;
@@ -2986,7 +3144,7 @@ INT32 AddEditCheatMenu(struct osd_bitmap * bitmap, INT32 selected)
 }
 
 /*	shows the cheat editing menu */
-static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 cheat_num)
+static INT32 EditCheatMenu(struct mame_bitmap * bitmap, INT32 selected, UINT8 cheat_num)
 {
 	enum
 	{
@@ -3218,12 +3376,12 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_WATCH_VALUE))
+	if(!textedit_active && input_ui_pressed(IPT_UI_WATCH_VALUE))
 	{
 		WatchCheat(cheat_num);
 	}
 
-	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	if(!textedit_active && input_ui_pressed(IPT_UI_SAVE_CHEAT))
 	{
 		cheat_save(cheat_num);
 	}
@@ -3333,7 +3491,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 					}
 					while(!IsCheatTypeSupported(tempCode));
 
-					cheat_set_code(subcheat, tempCode, cheat_num);
+					cheat_set_code(subcheat, tempCode, cheat_num, 0);
 					break;
 			}
 		}
@@ -3421,7 +3579,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 					}
 					while(!IsCheatTypeSupported(tempCode));
 
-					cheat_set_code(subcheat, tempCode, cheat_num);
+					cheat_set_code(subcheat, tempCode, cheat_num, 0);
 					break;
 			}
 		}
@@ -3435,6 +3593,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 			sel = -1;
 		}
 		else if(	(selectedSubcheatItem == kMenu_Offset_Address) ||
+					(selectedSubcheatItem == kMenu_Offset_Value) ||
 					(sel == kMenu_Name) ||
 					(sel == kMenu_Description) ||
 					(sel == kMenu_ActivationKey))
@@ -3488,6 +3647,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 			{
 				if(length > 0)
 				{
+					CheatTable[cheat_num].name = realloc(CheatTable[cheat_num].name, length);
 					CheatTable[cheat_num].name[length - 1] = 0;
 				}
 			}
@@ -3512,6 +3672,7 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 			{
 				if(length > 0)
 				{
+					CheatTable[cheat_num].name = realloc(CheatTable[cheat_num].name, length);
 					CheatTable[cheat_num].comment[length - 1] = 0;
 				}
 			}
@@ -3540,6 +3701,29 @@ static INT32 EditCheatMenu(struct osd_bitmap * bitmap, INT32 selected, UINT8 che
 				subcheat->address <<= 4;
 				subcheat->address |= hex_val;
 				subcheat->address &= cpunum_address_mask(subcheat->cpu);
+			}
+		}
+		else if(selectedSubcheatItem == kMenu_Offset_Value)
+		{
+			int	keyValue;
+
+			subcheat = &CheatTable[cheat_num].subcheat[selectedSubcheat];
+
+			keyValue = code_read_hex_async();
+			if(keyValue != -1)
+			{
+				if(CheatTable[cheat_num].flags & kCheatFlagPromptMask)
+				{
+					subcheat->max <<= 4;
+					subcheat->max &= 0xF0;
+					subcheat->max |= keyValue & 0x0F;
+				}
+				else
+				{
+					subcheat->data <<= 4;
+					subcheat->data &= 0xF0;
+					subcheat->data |= keyValue & 0x0F;
+				}
 			}
 		}
 	}
@@ -3645,7 +3829,7 @@ static int build_tables(int cpu)
 	if(searchSpeed == kSpeed_AllMemory)
 	{
 		int	addressSpace = cpunum_address_bits(cpu);
-		int	size = 1 << (addressSpace - 1);
+		int	size = 1 << addressSpace;
 
 		ext_sr->data =	malloc(size);
 		ext_br->data =	malloc(size);
@@ -3835,7 +4019,7 @@ static int build_tables(int cpu)
  * If you think of other way to search for codes, let me know.
  */
 
-INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
+INT32 StartSearch(struct mame_bitmap *bitmap, INT32 selected)
 {
 	enum
 	{
@@ -3855,6 +4039,7 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 	INT32			sel;
 	UINT8			total = 0;
 	int				i;
+	int				keyValue;
 
 	sel = selected - 1;
 
@@ -3979,19 +4164,18 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 					int					j;
 					int					count = 0;
 
+					searchValue &= 0xFF;
+
 					if(ShiftKeyPressed())
 					{
 						for(ext = FlagTable; ext->data; ext++)
 						{
 							for(j = 0; j <= ext->end - ext->start; j++)
 							{
-								if(ext->data[j] != 0)
-								{
-									if(cpunum_read_byte(searchCPU, j+ext->start) != searchValue)
-										ext->data[j] = 0;
-									else
-										count++;
-								}
+								if((cpunum_read_byte(searchCPU, j+ext->start) & 0xFF) != searchValue)
+									ext->data[j] = 0;
+								else
+									count++;
 							}
 						}
 					}
@@ -4001,13 +4185,18 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 						{
 							for(j = 0; j <= ext->end - ext->start; j++)
 							{
-								if(ext->data[j] != 0)
+								int	readValue;
+
+								readValue = cpunum_read_byte(searchCPU, j + ext->start) & 0xFF;
+
+								if(	(readValue != (searchValue & 0xFF)) &&
+									(readValue != ((searchValue - 1) & 0xFF)))
 								{
-									if(	(cpunum_read_byte(searchCPU, j+ext->start) != searchValue) &&
-										(cpunum_read_byte(searchCPU, j+ext->start) != (searchValue - 1)))
-										ext->data[j] = 0;
-									else
-										count++;
+									ext->data[j] = 0;
+								}
+								else
+								{
+									count++;
 								}
 							}
 						}
@@ -4042,6 +4231,17 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 	if(input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
+	keyValue = code_read_hex_async();
+	if(keyValue != -1)
+	{
+		if(sel == Menu_Value)
+		{
+			searchValue <<= 4;
+			searchValue &= 0xF0;
+			searchValue |= keyValue & 0x0F;
+		}
+	}
+
 	if(sel == -1 || sel == -2)
 	{
 		schedule_full_refresh();
@@ -4051,7 +4251,7 @@ INT32 StartSearch(struct osd_bitmap *bitmap, INT32 selected)
 }
 
 /*	shows the "Continue Search" menu */
-INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
+INT32 ContinueSearch(struct mame_bitmap *bitmap, INT32 selected)
 {
 	char * energyStrings[] =
 	{
@@ -4088,6 +4288,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 	INT32			sel;
 	UINT8			total = 0;
 	int				i;
+	int				keyValue;
 
 	sel = selected - 1;
 
@@ -4215,6 +4416,8 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 					struct ExtMemory	* ext;
 					int					j;
 
+					searchValue &= 0xFF;
+
 					if(ShiftKeyPressed())
 					{
 						for(ext = FlagTable; ext->data; ext++)
@@ -4243,8 +4446,12 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 							{
 								if(ext->data[j] != 0)
 								{
-									if(	(cpunum_read_byte(searchCPU, j+ext->start) != searchValue) &&
-										(cpunum_read_byte(searchCPU, j+ext->start) != (searchValue - 1)))
+									int	readValue;
+
+									readValue = cpunum_read_byte(searchCPU, j + ext->start) & 0xFF;
+
+									if(	(readValue != (searchValue & 0xFF)) &&
+										(readValue != ((searchValue - 1) & 0xFF)))
 									{
 										ext->data[j] = 0;
 									}
@@ -4496,6 +4703,17 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 	if(input_ui_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
+	keyValue = code_read_hex_async();
+	if(keyValue != -1)
+	{
+		if(sel == Menu_Value)
+		{
+			searchValue <<= 4;
+			searchValue &= 0xF0;
+			searchValue |= keyValue & 0x0F;
+		}
+	}
+
 	if(sel == -1 || sel == -2)
 	{
 		schedule_full_refresh();
@@ -4505,7 +4723,7 @@ INT32 ContinueSearch(struct osd_bitmap *bitmap, INT32 selected)
 }
 
 /*	shows the "View Last Results" menu */
-INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
+INT32 ViewSearchResults(struct mame_bitmap * bitmap, INT32 selected)
 {
 	int					sel;
 	const char			* menu_item[MAX_SEARCHES + 2];
@@ -4581,34 +4799,73 @@ INT32 ViewSearchResults(struct osd_bitmap * bitmap, INT32 selected)
 
 	if(input_ui_pressed(IPT_UI_WATCH_VALUE))
 	{
-		/* watch the currently selected result */
-		if(sel < total - 1)
+		if(ShiftKeyPressed())
 		{
-			int	freeWatch;
+			int	j;
 
-			freeWatch = FindFreeWatch();
-
-			if(freeWatch != -1)
+			for(j = 0; j < total - 1; j++)
 			{
-				watches[freeWatch].cheat_num =		-1;
-				watches[freeWatch].address =		menu_addresses[sel];
-				watches[freeWatch].cpu =			searchCPU;
-				watches[freeWatch].num_bytes =		1;
-				watches[freeWatch].display_type =	kWatchDisplayType_Hex;
-				watches[freeWatch].label_type =		kWatchLabel_None;
-				watches[freeWatch].label[0] =		0;
+				int	freeWatch;
 
-				is_watch_active = 1;
+				freeWatch = FindFreeWatch();
+
+				if(freeWatch != -1)
+				{
+					watches[freeWatch].cheat_num =		-1;
+					watches[freeWatch].address =		menu_addresses[j];
+					watches[freeWatch].cpu =			searchCPU;
+					watches[freeWatch].num_bytes =		1;
+					watches[freeWatch].display_type =	kWatchDisplayType_Hex;
+					watches[freeWatch].label_type =		kWatchLabel_None;
+					watches[freeWatch].label[0] =		0;
+
+					is_watch_active = 1;
+				}
+			}
+		}
+		else
+		{
+			/* watch the currently selected result */
+			if(sel < total - 1)
+			{
+				int	freeWatch;
+
+				freeWatch = FindFreeWatch();
+
+				if(freeWatch != -1)
+				{
+					watches[freeWatch].cheat_num =		-1;
+					watches[freeWatch].address =		menu_addresses[sel];
+					watches[freeWatch].cpu =			searchCPU;
+					watches[freeWatch].num_bytes =		1;
+					watches[freeWatch].display_type =	kWatchDisplayType_Hex;
+					watches[freeWatch].label_type =		kWatchLabel_None;
+					watches[freeWatch].label[0] =		0;
+
+					is_watch_active = 1;
+				}
 			}
 		}
 	}
 
 	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
 	{
-		/* copy the currently selected result to the cheat list */
-		if(sel < total - 1)
+		if(ShiftKeyPressed())
 		{
-			AddResultToListByIdx(sel);
+			int	j;
+
+			for(j = 0; j < total - 1; j++)
+			{
+				AddResultToListByIdx(j);
+			}
+		}
+		else
+		{
+			/* copy the currently selected result to the cheat list */
+			if(sel < total - 1)
+			{
+				AddResultToListByIdx(sel);
+			}
 		}
 	}
 
@@ -4733,7 +4990,7 @@ static void AddCheatToList(offs_t address, UINT8 data, int cpu)
 		theSubCheat->address =	address;
 		theSubCheat->data =		data;
 
-		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1);
+		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1, 1);
 	}
 }
 
@@ -4775,7 +5032,7 @@ static void ConvertWatchToCheat(int idx)
 		theSubCheat->address =	address;
 		theSubCheat->data =		data;
 
-		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1);
+		cheat_set_code(theSubCheat, kCheatSpecial_Poke, LoadedCheatTotal - 1, 1);
 	}
 }
 
@@ -4788,6 +5045,9 @@ static void SaveWatch(int idx)
 
 	if(idx >= MAX_WATCHES)
 		return;
+
+	if(!cheatfile)
+		cheatfile = "cheat.dat";
 
 	theFile = osd_fopen(NULL, cheatfile, OSD_FILETYPE_CHEAT, 1);
 
@@ -4857,7 +5117,7 @@ static void PrintBinary(char * buf, int value)
 }
 
 /*	displays all watches */
-void DisplayWatches(struct osd_bitmap * bitmap)
+void DisplayWatches(struct mame_bitmap * bitmap)
 {
 	int		i, j;
 	char	buf[256];
@@ -4938,7 +5198,7 @@ void DisplayWatches(struct osd_bitmap * bitmap)
 }
 
 /*	shows watch configuration menu */
-static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 watchnum)
+static INT32 ConfigureWatch(struct mame_bitmap * bitmap, INT32 selected, UINT8 watchnum)
 {
 	enum
 	{
@@ -5240,17 +5500,17 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	if(!textedit_active && input_ui_pressed(IPT_UI_SAVE_CHEAT))
 	{
 		SaveWatch(watchnum);
 	}
 
-	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+	if(!textedit_active && input_ui_pressed(IPT_UI_ADD_CHEAT))
 	{
 		ConvertWatchToCheat(watchnum);
 	}
 
-	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
+	if(!textedit_active && input_ui_pressed(IPT_UI_DELETE_CHEAT))
 	{
 		watches[watchnum].num_bytes = 0;
 
@@ -5332,7 +5592,7 @@ static INT32 ConfigureWatch(struct osd_bitmap * bitmap, INT32 selected, UINT8 wa
 }
 
 /*	shows the "Configure Watchpoint" menu */
-static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
+static INT32 ChooseWatch(struct mame_bitmap * bitmap, INT32 selected)
 {
 	int				sel;
 	static INT32	submenu_choice;
@@ -5485,7 +5745,7 @@ static INT32 ChooseWatch(struct osd_bitmap * bitmap, INT32 selected)
 #endif
 
 /*	shows the "General Help" menu */
-static INT32 DisplayHelpFile(struct osd_bitmap * bitmap, INT32 selected)
+static INT32 DisplayHelpFile(struct mame_bitmap * bitmap, INT32 selected)
 {
 	char	buf[2048];
 	int		sel;
@@ -5621,7 +5881,7 @@ static void SetupDefaultMemoryAreas(int cpu)
 }
 
 /*	shows the "Options:SelectMemoryAreas" menu */
-static INT32 SelectMemoryAreas(struct osd_bitmap * bitmap, INT32 selected)
+static INT32 SelectMemoryAreas(struct mame_bitmap * bitmap, INT32 selected)
 {
 	int									sel;
 	char								buf[MAX_MEMORY_AREAS][80];
@@ -5717,7 +5977,7 @@ static INT32 SelectMemoryAreas(struct osd_bitmap * bitmap, INT32 selected)
 }
 
 /*	shows the "Options" menu */
-static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
+static INT32 SelectOptions(struct mame_bitmap * bitmap, INT32 selected)
 {
 	enum
 	{
@@ -5861,7 +6121,7 @@ static INT32 SelectOptions(struct osd_bitmap * bitmap, INT32 selected)
 #endif
 
 /*	shows the main cheat menu */
-INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
+INT32 cheat_menu(struct mame_bitmap *bitmap, INT32 selected)
 {
 	enum
 	{
@@ -6078,7 +6338,7 @@ void StopCheat(void)
 }
 
 /*	performs all cheat actions, called once per frame */
-void DoCheat(struct osd_bitmap *bitmap)
+void DoCheat(struct mame_bitmap *bitmap)
 {
 	DisplayWatches(bitmap);
 
@@ -6247,12 +6507,12 @@ void DoCheat(struct osd_bitmap *bitmap)
 							break;
 
 						/* 60-65: user select, poke when changes */
-						case kCheatSpecial_m0d0c:
-						case kCheatSpecial_m0d1c:
-						case kCheatSpecial_m1d1c:
-						case kCheatSpecial_m0d0bcdc:
-						case kCheatSpecial_m0d1bcdc:
-						case kCheatSpecial_m1d1bcdc:
+						case kCheatSpecial_m0d0cRemove:
+						case kCheatSpecial_m0d1cRemove:
+						case kCheatSpecial_m1d1cRemove:
+						case kCheatSpecial_m0d0bcdcRemove:
+						case kCheatSpecial_m0d1bcdcRemove:
+						case kCheatSpecial_m1d1bcdcRemove:
 							if(subcheat->flags & kSubcheatFlagTimed)
 							{
 								if(READ_CHEAT != subcheat->backup)
@@ -6270,6 +6530,39 @@ void DoCheat(struct osd_bitmap *bitmap)
 							break;
 
 						/* 70-75: user select, poke once */
+						case kCheatSpecial_m0d0Remove:
+						case kCheatSpecial_m0d1Remove:
+						case kCheatSpecial_m1d1Remove:
+						case kCheatSpecial_m0d0bcdRemove:
+						case kCheatSpecial_m0d1bcdRemove:
+						case kCheatSpecial_m1d1bcdRemove:
+							WRITE_CHEAT;
+							subcheat->flags |= kSubcheatFlagDone;
+							break;
+
+						/* 80-85: user select, poke when changes, don't remove */
+						case kCheatSpecial_m0d0c:
+						case kCheatSpecial_m0d1c:
+						case kCheatSpecial_m1d1c:
+						case kCheatSpecial_m0d0bcdc:
+						case kCheatSpecial_m0d1bcdc:
+						case kCheatSpecial_m1d1bcdc:
+							if(subcheat->flags & kSubcheatFlagTimed)
+							{
+								if(READ_CHEAT != subcheat->backup)
+								{
+									WRITE_CHEAT;
+								}
+							}
+							else
+							{
+								subcheat->backup = READ_CHEAT;
+								subcheat->frame_count = 1;
+								subcheat->flags |= kSubcheatFlagTimed;
+							}
+							break;
+
+						/* 70-75: user select, poke once, don't remove */
 						case kCheatSpecial_m0d0:
 						case kCheatSpecial_m0d1:
 						case kCheatSpecial_m1d1:
@@ -6277,7 +6570,6 @@ void DoCheat(struct osd_bitmap *bitmap)
 						case kCheatSpecial_m0d1bcd:
 						case kCheatSpecial_m1d1bcd:
 							WRITE_CHEAT;
-							subcheat->flags |= kSubcheatFlagDone;
 							break;
 
 						case kCheatSpecial_PokeROM:
@@ -6315,6 +6607,33 @@ void DoCheat(struct osd_bitmap *bitmap)
 							force_poke_region_raw(subcheat, subcheat->data);
 							subcheat->flags |= kSubcheatFlagDone;
 							break;
+
+						case kCheatSpecial_PokeEEPROMRemove:
+						{
+							UINT8	* buf = EEPROM_get_data_pointer(NULL);
+
+							buf[subcheat->address] = subcheat->data;
+							subcheat->flags |= kSubcheatFlagDone;
+						}
+						break;
+
+						case kCheatSpecial_SetBitEEPROMRemove:
+						{
+							UINT8	* buf = EEPROM_get_data_pointer(NULL);
+
+							buf[subcheat->address] |= subcheat->data;
+							subcheat->flags |= kSubcheatFlagDone;
+						}
+						break;
+
+						case kCheatSpecial_ClearBitEEPROMRemove:
+						{
+							UINT8	* buf = EEPROM_get_data_pointer(NULL);
+
+							buf[subcheat->address] &= ~subcheat->data;
+							subcheat->flags |= kSubcheatFlagDone;
+						}
+						break;
 					}
 				}
 				else
@@ -6362,3 +6681,4 @@ void DoCheat(struct osd_bitmap *bitmap)
 	cheatEngineWasActive = 0;
 }
 
+#endif

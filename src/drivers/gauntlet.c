@@ -133,7 +133,7 @@ WRITE16_HANDLER( gauntlet_yscroll_w );
 
 int gauntlet_vh_start(void);
 void gauntlet_vh_stop(void);
-void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void gauntlet_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern UINT8 vindctr2_screen_refresh;
 extern data16_t *gauntlet_yscroll;

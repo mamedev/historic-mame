@@ -100,7 +100,7 @@ WRITE_HANDLER( mnchmobl_videoram_w )
 	}
 }
 
-static void draw_status( struct osd_bitmap *bitmap )
+static void draw_status( struct mame_bitmap *bitmap )
 {
 	struct rectangle clip = Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -128,7 +128,7 @@ static void draw_status( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 /*
 	ROM B1.2C contains 256 tilemaps defining 4x4 configurations of
@@ -172,7 +172,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	int scroll = mnchmobl_vreg[6];
@@ -203,7 +203,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void mnchmobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	draw_background( bitmap );
 	draw_sprites( bitmap );

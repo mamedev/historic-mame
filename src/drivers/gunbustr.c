@@ -53,7 +53,7 @@
 
 int gunbustr_vh_start (void);
 void gunbustr_vh_stop (void);
-void gunbustr_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void gunbustr_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 static UINT16 coin_word;
 static data32_t *gunbustr_ram;

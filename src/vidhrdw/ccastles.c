@@ -9,8 +9,8 @@
 #include "vidhrdw/generic.h"
 
 
-static struct osd_bitmap *sprite_bm;
-static struct osd_bitmap *maskbitmap;
+static struct mame_bitmap *sprite_bm;
+static struct mame_bitmap *maskbitmap;
 
 unsigned char *ccastles_screen_addr;
 unsigned char *ccastles_screen_inc;
@@ -239,7 +239,7 @@ WRITE_HANDLER( ccastles_bitmode_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
@@ -283,7 +283,7 @@ static void redraw_bitmap(void)
 }
 
 
-void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	unsigned char *spriteaddr;

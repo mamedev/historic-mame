@@ -10,12 +10,12 @@
 #include "vidhrdw/generic.h"
 
 /* prototypes */
-void kchamp_vs_drawsprites( struct osd_bitmap *bitmap );
-void kchamp_1p_drawsprites( struct osd_bitmap *bitmap );
+void kchamp_vs_drawsprites( struct mame_bitmap *bitmap );
+void kchamp_1p_drawsprites( struct mame_bitmap *bitmap );
 
 
 
-typedef void (*kchamp_drawspritesproc)( struct osd_bitmap * );
+typedef void (*kchamp_drawspritesproc)( struct mame_bitmap * );
 
 static kchamp_drawspritesproc kchamp_drawsprites;
 
@@ -65,7 +65,7 @@ void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 }
 
-void kchamp_vs_drawsprites( struct osd_bitmap *bitmap ) {
+void kchamp_vs_drawsprites( struct mame_bitmap *bitmap ) {
 
 	int offs;
 	        /*
@@ -98,7 +98,7 @@ void kchamp_vs_drawsprites( struct osd_bitmap *bitmap ) {
 	}
 }
 
-void kchamp_1p_drawsprites( struct osd_bitmap *bitmap ) {
+void kchamp_1p_drawsprites( struct mame_bitmap *bitmap ) {
 
 	int offs;
 	        /*
@@ -133,13 +133,13 @@ void kchamp_1p_drawsprites( struct osd_bitmap *bitmap ) {
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void kchamp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kchamp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
         int offs;
 

@@ -13,7 +13,7 @@
 
 unsigned char *tp84_videoram2;
 unsigned char *tp84_colorram2;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 
 unsigned char *tp84_scrollx;
@@ -245,7 +245,7 @@ READ_HANDLER( tp84_scanline_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	struct rectangle clip = Machine->visible_area;
@@ -289,7 +289,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tp84_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int coloffset;

@@ -26,7 +26,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void raiders5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void raiders5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern UINT8 *raiders5_fgram;
 extern size_t raiders5_fgram_size;

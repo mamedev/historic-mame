@@ -211,7 +211,7 @@ int ninjakid_vh_start( void ){
 	return 0;
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap ){
+static void draw_sprites( struct mame_bitmap *bitmap ){
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 
@@ -260,7 +260,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 	}
 }
 
-void ninjakid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ninjakid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,chr,col,px,py,x,y;
 

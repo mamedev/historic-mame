@@ -85,7 +85,7 @@ int alpha68k_vh_start(void)
 
 /******************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
+static void draw_sprites(struct mame_bitmap *bitmap, int j, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -138,7 +138,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
 
 /******************************************************************************/
 
-void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void alpha68k_II_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
 
@@ -227,7 +227,7 @@ WRITE16_HANDLER( alpha68k_V_video_control_w )
 	}
 }
 
-static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
+static void draw_sprites_V(struct mame_bitmap *bitmap, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -279,7 +279,7 @@ static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int f
 	}
 }
 
-void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void alpha68k_V_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
 
@@ -309,7 +309,7 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
 
-void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void alpha68k_V_sb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int last_bank=0;
 
@@ -331,7 +331,7 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /******************************************************************************/
 
-static void draw_sprites2(struct osd_bitmap *bitmap, int c,int d)
+static void draw_sprites2(struct mame_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i;
 
@@ -367,7 +367,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int c,int d)
 	}
 }
 
-void alpha68k_I_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void alpha68k_I_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
@@ -417,7 +417,7 @@ void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-static void kyros_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
+static void kyros_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fy;
 
@@ -446,7 +446,7 @@ static void kyros_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 	}
 }
 
-void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void kyros_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
@@ -457,7 +457,7 @@ void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /******************************************************************************/
 
-static void sstingry_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
+static void sstingry_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fx,fy;
 
@@ -487,7 +487,7 @@ static void sstingry_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 	}
 }
 
-void sstingry_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void sstingry_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
@@ -529,7 +529,7 @@ int kouyakyu_vh_start(void)
 	return 0;
 }
 
-void kouyakyu_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void kouyakyu_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,1,&Machine->visible_area);
 

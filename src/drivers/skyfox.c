@@ -28,7 +28,7 @@ WRITE_HANDLER( skyfox_vregs_w );
 
 void skyfox_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 
-void skyfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void skyfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

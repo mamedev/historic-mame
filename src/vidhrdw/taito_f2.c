@@ -558,7 +558,7 @@ WRITE16_HANDLER( koshien_spritebank_w )
 
 
 
-static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
+static void draw_sprites(struct mame_bitmap *bitmap,int *primasks)
 {
 	/*
 		Sprite format:
@@ -1078,7 +1078,7 @@ void taitof2_partial_buffer_delayed_qzchikyu_eof_callback(void)
 
 
 /* SSI */
-void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ssi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	taitof2_handle_sprite_buffering();
 
@@ -1090,7 +1090,7 @@ void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void yesnoj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	taitof2_handle_sprite_buffering();
 
@@ -1105,7 +1105,7 @@ void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void taitof2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	taitof2_handle_sprite_buffering();
 
@@ -1120,7 +1120,7 @@ void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int tilepri[3];
 	int spritepri[4];
@@ -1176,7 +1176,7 @@ void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-static void draw_roz_layer(struct osd_bitmap *bitmap)
+static void draw_roz_layer(struct mame_bitmap *bitmap)
 {
 	if (has_TC0280GRD())
 		TC0280GRD_zoom_draw(bitmap,f2_pivot_xdisp,f2_pivot_ydisp,8);
@@ -1186,7 +1186,7 @@ static void draw_roz_layer(struct osd_bitmap *bitmap)
 }
 
 
-void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int tilepri[3];
 	int spritepri[4];
@@ -1260,7 +1260,7 @@ void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 
 
 /* Thunderfox */
-void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int tilepri[2][3];
 	int spritepri[4];
@@ -1389,7 +1389,7 @@ and it changes these (and the sprite pri settings) a lot.
 
 ********************************************************************/
 
-void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];
@@ -1455,7 +1455,7 @@ void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 /* Deadconx, Footchmp */
-void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];

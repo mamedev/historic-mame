@@ -364,7 +364,7 @@ WRITE_HANDLER( ninjemak_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -401,7 +401,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void galivan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x07));
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0x07));
@@ -418,7 +418,7 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,1,0);
 }
 
-void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void ninjemak_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* (scrollx[1] & 0x40) does something */
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x1f));

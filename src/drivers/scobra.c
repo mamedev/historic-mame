@@ -144,7 +144,7 @@ int  minefld_vh_start (void);
 int  calipso_vh_start (void);
 int  stratgyx_vh_start(void);
 
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER ( galaxian_videoram_r );
 WRITE_HANDLER( galaxian_stars_enable_w );

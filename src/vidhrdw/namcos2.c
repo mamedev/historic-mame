@@ -384,7 +384,7 @@ WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 
 ***************************************************************************/
 
-static void draw_layerROZ(struct osd_bitmap *bitmap)
+static void draw_layerROZ(struct mame_bitmap *bitmap)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -411,7 +411,7 @@ static void draw_layerROZ(struct osd_bitmap *bitmap)
 }
 
 
-static void draw_sprites_default( struct osd_bitmap *bitmap, int priority )
+static void draw_sprites_default( struct mame_bitmap *bitmap, int priority )
 {
 	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
 	int offset,offset0,offset2,offset4,offset6;
@@ -513,7 +513,7 @@ static void draw_sprites_default( struct osd_bitmap *bitmap, int priority )
 }
 
 
-static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
+static void draw_sprites_finallap( struct mame_bitmap *bitmap, int priority )
 {
 	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
 	int offset,offset0,offset2,offset4,offset6;
@@ -646,7 +646,7 @@ static void fill_palette_bank(int virtual,int physical)
 }
 
 
-void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
+void namcos2_vh_update_default(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int priority;
 	static int show[10] = {1,1,1,1,1,1,1,1,1,1};
@@ -710,7 +710,7 @@ profiler_mark(PROFILER_END);
 }
 
 
-void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
+void namcos2_vh_update_finallap(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int priority;
 	static int show[10] = {1,1,1,1,1,1,1,1,1,1};

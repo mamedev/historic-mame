@@ -93,10 +93,10 @@ int  toaplan1_vh_start(void);
 void toaplan1_vh_stop(void);
 int  rallybik_vh_start(void);
 void rallybik_vh_stop(void);
-void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void demonwld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void zerowing_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern data16_t *toaplan1_colorram1;
 extern data16_t *toaplan1_colorram2;

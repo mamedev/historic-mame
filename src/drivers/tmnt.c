@@ -53,13 +53,13 @@ int thndrx2_vh_start(void);
 void thndrx2_vh_stop(void);
 int prmrsocr_vh_start(void);
 void prmrsocr_vh_stop(void);
-void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void tmnt2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mia_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void tmnt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void punkshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void lgtnfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void glfgreat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void tmnt2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void thndrx2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 static int tmnt_soundlatch;
 
 static READ16_HANDLER( K052109_word_noA12_r )

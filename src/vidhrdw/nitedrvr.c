@@ -26,7 +26,7 @@ WRITE_HANDLER( nitedrvr_hvc_w )
 	return;
 }
 
-static void nitedrvr_draw_block(struct osd_bitmap *bitmap, int bx, int by, int ex, int ey)
+static void nitedrvr_draw_block(struct mame_bitmap *bitmap, int bx, int by, int ex, int ey)
 {
 	int x,y;
 
@@ -44,12 +44,12 @@ static void nitedrvr_draw_block(struct osd_bitmap *bitmap, int bx, int by, int e
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void nitedrvr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,roadway;
 	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */

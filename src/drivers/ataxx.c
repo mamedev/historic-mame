@@ -122,7 +122,7 @@ WRITE_HANDLER( leland_gfx_port_w );
 void leland_vh_eof(void);
 int ataxx_vh_start(void);
 void ataxx_vh_stop(void);
-void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void ataxx_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 /* Internal routines */

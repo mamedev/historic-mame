@@ -77,7 +77,7 @@ WRITE_HANDLER( astrocde_magic_expand_color_w );
 WRITE_HANDLER( astrocde_magic_control_w );
 WRITE_HANDLER( wow_magicram_w );
 WRITE_HANDLER( astrocde_pattern_board_w );
-void astrocde_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void astrocde_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER( wow_video_retrace_r );
 
 WRITE_HANDLER( astrocde_interrupt_enable_w );
@@ -86,7 +86,7 @@ int  wow_interrupt(void);
 
 READ_HANDLER( seawolf2_controller1_r );
 READ_HANDLER( seawolf2_controller2_r );
-void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void seawolf2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int  gorf_interrupt(void);
 READ_HANDLER( gorf_timer_r );

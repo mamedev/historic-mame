@@ -123,7 +123,7 @@ int ckongs_vh_start(void);
 int pisces_vh_start(void);
 int froggers_vh_start(void);
 
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( pisces_gfxbank_w );
 

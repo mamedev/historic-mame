@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int palette_offset,sprite_palette_offset;
+static int palette_offset;
 static struct tilemap *bg_tilemap;
 
 
@@ -24,10 +24,10 @@ static void holeland_get_tile_info(int tile_index)
 	int attr = colorram[tile_index];
 	int tile_number = videoram[tile_index] | ((attr & 0x03) << 8);
 
-//if (keyboard_pressed(KEYCODE_Q) && (attr & 0x10)) tile_number = rand();
-//if (keyboard_pressed(KEYCODE_W) && (attr & 0x20)) tile_number = rand();
-//if (keyboard_pressed(KEYCODE_E) && (attr & 0x40)) tile_number = rand();
-//if (keyboard_pressed(KEYCODE_R) && (attr & 0x80)) tile_number = rand();
+/*if (keyboard_pressed(KEYCODE_Q) && (attr & 0x10)) tile_number = rand(); */
+/*if (keyboard_pressed(KEYCODE_W) && (attr & 0x20)) tile_number = rand(); */
+/*if (keyboard_pressed(KEYCODE_E) && (attr & 0x40)) tile_number = rand(); */
+/*if (keyboard_pressed(KEYCODE_R) && (attr & 0x80)) tile_number = rand(); */
 	SET_TILE_INFO(
 			0,
 			tile_number,
@@ -104,11 +104,6 @@ WRITE_HANDLER( holeland_pal_offs_w )
 	}
 }
 
-WRITE_HANDLER( crzrally_spritepal_w )
-{
-	sprite_palette_offset = data << 4;
-}
-
 WRITE_HANDLER( holeland_scroll_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, data);
@@ -121,7 +116,7 @@ WRITE_HANDLER( holeland_flipscreen_w )
 }
 
 
-static void holeland_draw_sprites(struct osd_bitmap *bitmap)
+static void holeland_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
@@ -160,7 +155,7 @@ static void holeland_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void crzrally_draw_sprites(struct osd_bitmap *bitmap)
+static void crzrally_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
@@ -171,7 +166,7 @@ static void crzrally_draw_sprites(struct osd_bitmap *bitmap)
 		sx = spriteram[offs+2];
 
 		code = spriteram[offs+1] + ((spriteram[offs+3] & 0x01) << 8);
-		color = sprite_palette_offset + (spriteram[offs+3] >> 4);
+		color = (spriteram[offs+3] >> 4) + ((spriteram[offs+3] & 0x01) << 4);
 
 		/* Bit 1 unknown */
 		flipx = spriteram[offs+3] & 0x04;
@@ -198,15 +193,15 @@ static void crzrally_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void holeland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void holeland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
-//tilemap_mark_all_tiles_dirty(bg_tilemap);
+/*tilemap_mark_all_tiles_dirty(bg_tilemap); */
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	holeland_draw_sprites(bitmap);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
 }
 
-void crzrally_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void crzrally_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	crzrally_draw_sprites(bitmap);

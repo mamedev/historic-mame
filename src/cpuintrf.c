@@ -62,6 +62,9 @@
 #if (HAS_V20 || HAS_V30 || HAS_V33)
 #include "cpu/nec/necintrf.h"
 #endif
+#if (HAS_V60)
+#include "cpu/v60/v60.h"
+#endif
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
 #include "cpu/i8039/i8039.h"
 #endif
@@ -420,6 +423,9 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_V33)
 	CPU0(V33,	   v33, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+#endif
+#if (HAS_V60)
+	CPU0(V60,	   v60, 	 1,  0,1.00,-1000,		   16, 24lew, 0,24,LE,1, 11	),
 #endif
 #if (HAS_I8035)
 	CPU0(I8035,    i8035,	 1,  0,1.00,0,              8, 16,	  0,16,LE,1, 2	),
@@ -1420,7 +1426,7 @@ static const char *dummy_info(void *context, int regnum)
 {
 	switch (regnum)
 	{
-		case CPU_INFO_NAME: return "Dummy";
+		case CPU_INFO_NAME: return "";
 		case CPU_INFO_FAMILY: return "no CPU";
 		case CPU_INFO_VERSION: return "0.0";
 		case CPU_INFO_FILE: return __FILE__;

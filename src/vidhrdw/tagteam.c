@@ -103,12 +103,12 @@ logerror("%04x: control = %02x\n",cpu_get_pc(),data);
 
 /***************************************************************************
 
-Draw the game screen in the given osd_bitmap.
+Draw the game screen in the given mame_bitmap.
 Do NOT call osd_update_display() from this function, it will be called by
 the main emulation engine.
 
 ***************************************************************************/
-static void drawchars(struct osd_bitmap *bitmap,int color)
+static void drawchars(struct mame_bitmap *bitmap,int color)
 {
 	int offs;
 
@@ -150,7 +150,7 @@ static void drawchars(struct osd_bitmap *bitmap,int color)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-static void drawsprites(struct osd_bitmap *bitmap,int color)
+static void drawsprites(struct mame_bitmap *bitmap,int color)
 {
 	int offs;
 
@@ -197,7 +197,7 @@ static void drawsprites(struct osd_bitmap *bitmap,int color)
 	}
 }
 
-void tagteam_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tagteam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	drawchars(bitmap,palettebank);
 

@@ -53,7 +53,7 @@ The 6809 NMI is used for sound timing.
 
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void yiear_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( yiear_videoram_w );
 WRITE_HANDLER( yiear_control_w );
 int  yiear_nmi_interrupt(void);

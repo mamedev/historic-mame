@@ -168,7 +168,7 @@ WRITE_HANDLER( baraduke_scroll1_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	const struct rectangle *clip = &Machine->visible_area;
 
@@ -251,7 +251,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void baraduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -297,7 +297,7 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void metrocrs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

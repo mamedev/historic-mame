@@ -31,19 +31,9 @@ void osd_exit(void);
 
 ******************************************************************************/
 
-struct osd_bitmap
-{
-	int width,height;	/* width and height of the bitmap */
-	int depth;			/* bits per pixel */
-	void *_private;		/* don't touch! - reserved for osdepend use */
-	void **line;		/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
-};
-
-/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
-/* around the bitmap. This is required because, for performance reasons, some graphic */
-/* routines don't clip at boundaries of the bitmap. */
-struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth);
-void osd_free_bitmap(struct osd_bitmap *bitmap);
+/* mame_bitmap used to be declared here, but has moved to common.c */
+/* sadly, the include order requires that at least this forward declaration is here */
+struct mame_bitmap;
 
 /*
   Create a display screen, or window, of the given dimensions (or larger). It is
@@ -144,7 +134,7 @@ int osd_skip_this_frame(void);
   on the window title bar.
 */
 void osd_update_video_and_audio(
-		struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap,int leds_status);
+		struct mame_bitmap *game_bitmap,struct mame_bitmap *debug_bitmap,int leds_status);
 
 void osd_debugger_focus(int debugger_has_focus);
 
@@ -161,7 +151,7 @@ int osd_get_brightness(void);
   file name. This isn't scrictly necessary, so you can just call
   save_screen_snapshot() to let the core automatically pick a default name.
 */
-void osd_save_snapshot(struct osd_bitmap *bitmap);
+void osd_save_snapshot(struct mame_bitmap *bitmap);
 
 
 /******************************************************************************

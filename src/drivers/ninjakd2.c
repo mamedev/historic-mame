@@ -230,7 +230,7 @@ WRITE_HANDLER( ninjakd2_sprite_overdraw_w );
 WRITE_HANDLER( ninjakd2_background_enable_w );
 int  ninjakd2_vh_start(void);
 void ninjakd2_vh_stop(void);
-void ninjakd2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ninjakd2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern unsigned char 	*ninjakd2_scrolly_ram;
 extern unsigned char 	*ninjakd2_scrollx_ram;

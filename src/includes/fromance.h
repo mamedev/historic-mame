@@ -14,8 +14,8 @@
 
 int fromance_vh_start(void);
 void fromance_vh_stop(void);
-void fromance_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void fromance_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void pipedrm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 WRITE_HANDLER( fromance_crtc_data_w );
 WRITE_HANDLER( fromance_crtc_register_w );

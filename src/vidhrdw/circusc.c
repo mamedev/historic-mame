@@ -11,9 +11,11 @@
 
 
 
+unsigned char *circusc_videoram,*circusc_colorram;
+static struct tilemap *bg_tilemap;
+
 unsigned char *circusc_spritebank;
 unsigned char *circusc_scroll;
-static int flipscreen;
 
 
 
@@ -78,117 +80,130 @@ void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-WRITE_HANDLER( circusc_flipscreen_w )
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_tile_info(int tile_index)
 {
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	unsigned char attr = circusc_colorram[tile_index];
+	tile_info.priority = (attr & 0x10) >> 4;
+	SET_TILE_INFO(
+			0,
+			circusc_videoram[tile_index] + ((attr & 0x20) << 3),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0xc0) >> 6))
 }
 
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Start the video hardware emulation.
 
 ***************************************************************************/
-void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+int circusc_vh_start(void)
+{
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+
+	if (!bg_tilemap)
+		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap,32);
+
+	return 0;
+}
+
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( circusc_videoram_w )
+{
+	if (circusc_videoram[offset] != data)
+	{
+		circusc_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
+	}
+}
+
+WRITE_HANDLER( circusc_colorram_w )
+{
+	if (circusc_colorram[offset] != data)
+	{
+		circusc_colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
+	}
+}
+
+WRITE_HANDLER( circusc_flipscreen_w )
+{
+	flip_screen_set(data & 1);
+}
+
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
+	unsigned char *sr;
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	if ((*circusc_spritebank & 0x01) != 0)
+		sr = spriteram;
+	else sr = spriteram_2;
+
+	for (offs = 0; offs < spriteram_size;offs += 4)
 	{
-		if (dirtybuffer[offs])
+		int sx,sy,flipx,flipy;
+
+
+		sx = sr[offs + 2];
+		sy = sr[offs + 3];
+		flipx = sr[offs + 1] & 0x40;
+		flipy = sr[offs + 1] & 0x80;
+		if (flip_screen)
 		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 8 * (colorram[offs] & 0x20),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+
+		drawgfx(bitmap,Machine->gfx[1],
+				sr[offs + 0] + 8 * (sr[offs + 1] & 0x20),
+				sr[offs + 1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+
 	}
+}
 
+void circusc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+{
+	int i;
 
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
+	for (i = 0;i < 10;i++)
+		tilemap_set_scrolly(bg_tilemap,i,0);
+	for (i = 10;i < 32;i++)
+		tilemap_set_scrolly(bg_tilemap,i,*circusc_scroll);
 
-
-		if (flipscreen)
-		{
-			for (offs = 0;offs < 10;offs++)
-				scroll[31-offs] = 0;
-			for (offs = 10;offs < 32;offs++)
-				scroll[31-offs] = *circusc_scroll;
-		}
-		else
-		{
-			for (offs = 0;offs < 10;offs++)
-				scroll[offs] = 0;
-			for (offs = 10;offs < 32;offs++)
-				scroll[offs] = -*circusc_scroll;
-		}
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* Draw the sprites. */
-	{
-		unsigned char *sr;
-
-
-		if ((*circusc_spritebank & 0x01) != 0)
-			sr = spriteram;
-		else sr = spriteram_2;
-
-		for (offs = 0; offs < spriteram_size;offs += 4)
-		{
-			int sx,sy,flipx,flipy;
-
-
-			sx = sr[offs + 2];
-			sy = sr[offs + 3];
-			flipx = sr[offs + 1] & 0x40;
-			flipy = sr[offs + 1] & 0x80;
-			if (flipscreen)
-			{
-				sx = 240 - sx;
-				sy = 240 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[1],
-					sr[offs + 0] + 8 * (sr[offs + 1] & 0x20),
-					sr[offs + 1] & 0x0f,
-					flipx,flipy,
-					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
-		}
-	}
+	tilemap_draw(bitmap,bg_tilemap,1,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,0,0);
 }

@@ -420,13 +420,13 @@ void sprtmtch_vh_stop(void)
 
 ***************************************************************************/
 
-void dynax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dynax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 //	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }
 
 
-void sprtmtch_copylayer(struct osd_bitmap *bitmap,int i)
+void sprtmtch_copylayer(struct mame_bitmap *bitmap,int i)
 {
 	struct GfxElement gfx;
 	int color;
@@ -480,7 +480,7 @@ void sprtmtch_copylayer(struct osd_bitmap *bitmap,int i)
 	}
 }
 
-void sprtmtch_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sprtmtch_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 #ifdef MAME_DEBUG
 #if 0

@@ -52,11 +52,11 @@ WRITE_HANDLER( marineb_palbank1_w );
 WRITE_HANDLER( marineb_flipscreen_x_w );
 WRITE_HANDLER( marineb_flipscreen_y_w );
 
-void marineb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
-void changes_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
-void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void hoccer_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
-void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void marineb_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+void changes_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+void springer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void hoccer_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
+void hopprobo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static void marineb_init_machine(void)

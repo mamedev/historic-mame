@@ -20,7 +20,7 @@
 static int 		 ps5_vram_page = 0x0;
 static int		 bg_clip_mode;
 
-static struct osd_bitmap *bitmap_bg;
+static struct mame_bitmap *bitmap_bg;
 static unsigned char 	 *bg_dirtybuffer;
 
 /* Paged RAM 0 */
@@ -332,7 +332,7 @@ void psychic5_vh_stop(void)
 	bitmap_free(bitmap_bg);
 }
 
-void psychic5_draw_background(struct osd_bitmap *bitmap)
+void psychic5_draw_background(struct mame_bitmap *bitmap)
 {
 	int x,y,offs;
 	int sx,sy,tile,palette,flipx,flipy,lo,hi;
@@ -369,7 +369,7 @@ void psychic5_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-void psychic5_draw_foreground(struct osd_bitmap *bitmap)
+void psychic5_draw_foreground(struct mame_bitmap *bitmap)
 {
 	int x,y,offs;
 	int sx,sy,tile,palette,flipx,flipy,lo,hi;
@@ -404,7 +404,7 @@ void psychic5_draw_foreground(struct osd_bitmap *bitmap)
 	}
 }
 
-void psychic5_draw_sprites(struct osd_bitmap *bitmap)
+void psychic5_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,sx,sy,tile,palette,flipx,flipy;
 	int size32,tileofs0,tileofs1,tileofs2,tileofs3,temp1,temp2;
@@ -494,7 +494,7 @@ void psychic5_draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-void psychic5_draw_sprites2(struct osd_bitmap *bitmap)
+void psychic5_draw_sprites2(struct mame_bitmap *bitmap)
 {
 	int offs,sx,sy,tile,palette,flipx,flipy;
 	int size32,tileofs0,tileofs1,tileofs2,tileofs3;
@@ -555,7 +555,7 @@ void psychic5_draw_sprites2(struct osd_bitmap *bitmap)
 
 
 
-void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void psychic5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bg_scrollx,bg_scrolly;
 

@@ -32,7 +32,7 @@ WRITE16_HANDLER( blmbycar_vram_0_w );
 WRITE16_HANDLER( blmbycar_vram_1_w );
 
 int  blmbycar_vh_start(void);
-void blmbycar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blmbycar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

@@ -1116,7 +1116,7 @@ WRITE_HANDLER( K007121_ctrl_1_w )
  *
  */
 
-void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
+void K007121_sprites_draw(int chip,struct mame_bitmap *bitmap,
 		const unsigned char *source,int base_color,int global_x_offset,int bank_base,
 		UINT32 pri_mask)
 {
@@ -1499,7 +1499,7 @@ void K007342_tilemap_set_enable(int tilemap, int enable)
 	tilemap_set_enable(K007342_tilemap[tilemap], enable);
 }
 
-void K007342_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags,UINT32 priority)
+void K007342_tilemap_draw(struct mame_bitmap *bitmap,int num,int flags,UINT32 priority)
 {
 	tilemap_draw(bitmap,K007342_tilemap[num],flags,priority);
 }
@@ -1563,7 +1563,7 @@ WRITE_HANDLER( K007420_w )
  *   7  | xxxxxxxx | unused
  */
 
-void K007420_sprites_draw(struct osd_bitmap *bitmap)
+void K007420_sprites_draw(struct mame_bitmap *bitmap)
 {
 #define K007420_SPRITERAM_SIZE 0x200
 	int offs;
@@ -2237,7 +2237,7 @@ if (keyboard_pressed(KEYCODE_F))
 #endif
 }
 
-void K052109_tilemap_draw(struct osd_bitmap *bitmap,int num,int flags,UINT32 priority)
+void K052109_tilemap_draw(struct mame_bitmap *bitmap,int num,int flags,UINT32 priority)
 {
 	tilemap_draw(bitmap,K052109_tilemap[num],flags,priority);
 }
@@ -2505,7 +2505,7 @@ WRITE16_HANDLER( K051937_word_w )
  * Note that Aliens also uses the shadow bit to select the second sprite bank.
  */
 
-void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_priority)
+void K051960_sprites_draw(struct mame_bitmap *bitmap,int min_priority,int max_priority)
 {
 #define NUM_SPRITES 128
 	int offs,pri_code;
@@ -2952,7 +2952,7 @@ void K053244_bankselect(int bank)
  * The rest of the sprite remains normal.
  */
 
-void K053245_sprites_draw(struct osd_bitmap *bitmap)
+void K053245_sprites_draw(struct mame_bitmap *bitmap)
 {
 #define NUM_SPRITES 128
 	int offs,pri_code;
@@ -3372,7 +3372,7 @@ int K053246_is_IRQ_enabled(void)
  * The rest of the sprite remains normal.
  */
 
-void K053247_sprites_draw(struct osd_bitmap *bitmap)
+void K053247_sprites_draw(struct mame_bitmap *bitmap)
 {
 #define NUM_SPRITES 256
 	int offs,pri_code;
@@ -3946,7 +3946,7 @@ void K051316_set_offset(int chip, int xoffs, int yoffs)
 }
 
 
-void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,int flags,UINT32 priority)
+void K051316_zoom_draw(int chip, struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -3990,17 +3990,17 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,int flags,UINT32 prio
 #endif
 }
 
-void K051316_zoom_draw_0(struct osd_bitmap *bitmap,int flags,UINT32 priority)
+void K051316_zoom_draw_0(struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	K051316_zoom_draw(0,bitmap,flags,priority);
 }
 
-void K051316_zoom_draw_1(struct osd_bitmap *bitmap,int flags,UINT32 priority)
+void K051316_zoom_draw_1(struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	K051316_zoom_draw(1,bitmap,flags,priority);
 }
 
-void K051316_zoom_draw_2(struct osd_bitmap *bitmap,int flags,UINT32 priority)
+void K051316_zoom_draw_2(struct mame_bitmap *bitmap,int flags,UINT32 priority)
 {
 	K051316_zoom_draw(2,bitmap,flags,priority);
 }
@@ -4698,7 +4698,7 @@ void K054157_tilemap_update(void)
 	}
 }
 
-void K054157_tilemap_draw(struct osd_bitmap *bitmap, int num, int flags, UINT32 priority)
+void K054157_tilemap_draw(struct mame_bitmap *bitmap, int num, int flags, UINT32 priority)
 {
 	tilemap_draw(bitmap, K054157_tilemap[num], flags, priority);
 }

@@ -35,7 +35,7 @@ WRITE_HANDLER( mrflea_spriteram_w ){
 	spriteram[offset] = data;
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap ){
+static void draw_sprites( struct mame_bitmap *bitmap ){
 	const struct GfxElement *gfx = Machine->gfx[0];
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x100;
@@ -63,7 +63,7 @@ static void draw_sprites( struct osd_bitmap *bitmap ){
 	}
 }
 
-static void draw_background( struct osd_bitmap *bitmap ){
+static void draw_background( struct mame_bitmap *bitmap ){
 	const UINT8 *source = videoram;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	int sx,sy;
@@ -89,7 +89,7 @@ int mrflea_vh_start( void ){
 	return 0;
 }
 
-void mrflea_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void mrflea_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	draw_background( bitmap );
 	draw_sprites( bitmap );

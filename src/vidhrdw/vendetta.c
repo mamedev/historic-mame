@@ -88,7 +88,7 @@ static void sortlayers(int *layer,int *pri)
 	SWAP(1,2)
 }
 
-void vendetta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vendetta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layer[3];
 

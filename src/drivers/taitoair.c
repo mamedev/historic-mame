@@ -173,7 +173,7 @@ static data16_t *taitoh_68000_mainram;
 
 int		recordbr_vh_start(void);
 void 		syvalion_vh_stop (void);
-void		recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void		recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */

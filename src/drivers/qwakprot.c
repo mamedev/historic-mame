@@ -44,7 +44,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void qwakprot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void qwakprot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( qwakprot_paletteram_w );
 
 

@@ -175,12 +175,12 @@ static char* p64x64[4] = {
 	pos64x64xy
 };
 
-static void drawsprite_16x16( struct osd_bitmap *bitmap, int code,
+static void drawsprite_16x16( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 	WC90_DRAW_SPRITE( code, sx, sy );
 }
 
-static void drawsprite_16x32( struct osd_bitmap *bitmap, int code,
+static void drawsprite_16x32( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+1, sx, sy+16 );
@@ -191,7 +191,7 @@ static void drawsprite_16x32( struct osd_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_16x64( struct osd_bitmap *bitmap, int code,
+static void drawsprite_16x64( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+3, sx, sy+48 );
@@ -206,7 +206,7 @@ static void drawsprite_16x64( struct osd_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_32x16( struct osd_bitmap *bitmap, int code,
+static void drawsprite_32x16( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+1, sx+16, sy );
@@ -217,7 +217,7 @@ static void drawsprite_32x16( struct osd_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_32x32( struct osd_bitmap *bitmap, int code,
+static void drawsprite_32x32( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x32[ bank&3 ];
@@ -228,7 +228,7 @@ static void drawsprite_32x32( struct osd_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[3], sx+16, sy+16 );
 }
 
-static void drawsprite_32x64( struct osd_bitmap *bitmap, int code,
+static void drawsprite_32x64( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x64[ bank&3 ];
@@ -243,7 +243,7 @@ static void drawsprite_32x64( struct osd_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[7], sx+16, sy+48 );
 }
 
-static void drawsprite_64x16( struct osd_bitmap *bitmap, int code,
+static void drawsprite_64x16( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+3, sx+48, sy );
@@ -258,7 +258,7 @@ static void drawsprite_64x16( struct osd_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_64x32( struct osd_bitmap *bitmap, int code,
+static void drawsprite_64x32( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x32[ bank&3 ];
@@ -273,7 +273,7 @@ static void drawsprite_64x32( struct osd_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[7], sx+48, sy+16 );
 }
 
-static void drawsprite_64x64( struct osd_bitmap *bitmap, int code,
+static void drawsprite_64x64( struct mame_bitmap *bitmap, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x64[ bank&3 ];
@@ -297,12 +297,12 @@ static void drawsprite_64x64( struct osd_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[15], sx+48, sy+48 );
 }
 
-static void drawsprite_invalid( struct osd_bitmap *bitmap, int code,
+static void drawsprite_invalid( struct mame_bitmap *bitmap, int code,
 											int sx, int sy, int bank, int flags ) {
 	logerror("8 pixel sprite size not supported\n" );
 }
 
-typedef void (*drawsprites_procdef)( struct osd_bitmap *, int, int, int, int, int );
+typedef void (*drawsprites_procdef)( struct mame_bitmap *, int, int, int, int, int );
 
 static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_invalid,		/* 0000 = 08x08 */
@@ -323,7 +323,7 @@ static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_64x64		/* 1111 = 64x64 */
 };
 
-static void draw_sprites( struct osd_bitmap *bitmap, int priority )
+static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 {
 	int offs, sx,sy, flags, which;
 
@@ -349,7 +349,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 #undef WC90_DRAW_SPRITE
 
 
-void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wc90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,wc90_scroll2xlo[0] + 256 * wc90_scroll2xhi[0]);
 	tilemap_set_scrolly(bg_tilemap,0,wc90_scroll2ylo[0] + 256 * wc90_scroll2yhi[0]);

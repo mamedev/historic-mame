@@ -40,7 +40,7 @@ WRITE_HANDLER( nitedrvr_ram_w );
 /* vidhrdw/nitedrvr.c */
 extern unsigned char *nitedrvr_hvc;
 WRITE_HANDLER( nitedrvr_hvc_w );
-extern void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void nitedrvr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static MEMORY_READ_START( readmem )

@@ -122,7 +122,7 @@ void syvalion_vh_stop(void)
   Screen refresh
 ***************************************************************************/
 
-static void syvalion_draw_sprites(struct osd_bitmap *bitmap)
+static void syvalion_draw_sprites(struct mame_bitmap *bitmap)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -215,7 +215,7 @@ static void syvalion_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void recordbr_draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void recordbr_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -327,7 +327,7 @@ static void recordbr_draw_sprites(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-static void dleague_draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void dleague_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -444,7 +444,7 @@ static void taitoh_log_vram(void)
 
 /**************************************************************************/
 
-void syvalion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void syvalion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	TC0080VCO_tilemap_update();
 
@@ -461,7 +461,7 @@ void syvalion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	TC0080VCO_tilemap_update();
 
@@ -491,7 +491,7 @@ void recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void dleague_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dleague_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	TC0080VCO_tilemap_update();
 

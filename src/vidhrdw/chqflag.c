@@ -98,7 +98,7 @@ void chqflag_vh_stop( void )
 
 ***************************************************************************/
 
-void chqflag_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void chqflag_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 

@@ -14,8 +14,8 @@ unsigned char *route16_videoram1;
 unsigned char *route16_videoram2;
 size_t route16_videoram_size;
 
-static struct osd_bitmap *tmpbitmap1;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap1;
+static struct mame_bitmap *tmpbitmap2;
 
 static int video_flip;
 static int video_color_select_1;
@@ -30,7 +30,7 @@ static int route16_hardware;
 /* Local functions */
 static void modify_pen(int pen, int colorindex);
 static void common_videoram_w(int offset,int data,
-                              int coloroffset, struct osd_bitmap *bitmap);
+                              int coloroffset, struct mame_bitmap *bitmap);
 
 
 
@@ -244,7 +244,7 @@ WRITE_HANDLER( route16_videoram2_w )
   common_videoram_w
 ***************************************************************************/
 static void common_videoram_w(int offset,int data,
-                              int coloroffset, struct osd_bitmap *bitmap)
+                              int coloroffset, struct mame_bitmap *bitmap)
 {
 	int x, y, color1, color2, color3, color4;
 
@@ -280,12 +280,12 @@ static void common_videoram_w(int offset,int data,
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void route16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     if (video_remap_1)
 	{

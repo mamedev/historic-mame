@@ -18,7 +18,7 @@ Sprite Priorities in Dommy
 /* from vidhrdw/btime.c */
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  btime_vh_start (void);
-void eggs_vh_screenrefresh    (struct osd_bitmap *bitmap,int full_refresh);
+void eggs_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( btime_mirrorvideoram_r );
 WRITE_HANDLER( btime_mirrorvideoram_w );

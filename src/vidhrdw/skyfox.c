@@ -163,7 +163,7 @@ Offset:			Value:
 
 ***************************************************************************/
 
-void skyfox_draw_sprites(struct osd_bitmap *bitmap)
+void skyfox_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -242,7 +242,7 @@ void skyfox_draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void skyfox_draw_background(struct osd_bitmap *bitmap)
+void skyfox_draw_background(struct mame_bitmap *bitmap)
 {
 	unsigned char *RAM	=	memory_region(REGION_GFX2);
 	int x,y,i;
@@ -285,7 +285,7 @@ void skyfox_draw_background(struct osd_bitmap *bitmap)
 ***************************************************************************/
 
 
-void skyfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void skyfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);	// the bg is black
 	skyfox_draw_background(bitmap);

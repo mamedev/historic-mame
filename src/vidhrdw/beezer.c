@@ -16,7 +16,7 @@ int beezer_interrupt (void)
 	return ignore_interrupt();
 }
 
-void beezer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void beezer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int x, y;
 	const UINT8 *ram = memory_region(REGION_CPU1);

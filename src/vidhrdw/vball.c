@@ -136,7 +136,7 @@ WRITE_HANDLER( vb_attrib_w )
 	}
 }
 
-static void vb_draw_foreground( struct osd_bitmap *bitmap )
+static void vb_draw_foreground( struct mame_bitmap *bitmap )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	unsigned char *source = vb_videoram;
@@ -167,7 +167,7 @@ static void vb_draw_foreground( struct osd_bitmap *bitmap )
 					(which+order),color,flipx,flipy,sx,sy, \
 					clip,TRANSPARENCY_PEN,0);
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -209,7 +209,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 #undef DRAW_SPRITE
 
-static void vb_draw_background( struct osd_bitmap *bitmap )
+static void vb_draw_background( struct mame_bitmap *bitmap )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	unsigned char *source = videoram;
@@ -268,7 +268,7 @@ static void vb_draw_background( struct osd_bitmap *bitmap )
 }
 
 
-void vb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 //	Tripping the sprite funk-tastic. :-) PaulH
 /*	static int i=0;

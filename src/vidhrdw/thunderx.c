@@ -79,7 +79,7 @@ void scontra_vh_stop(void)
 
 ***************************************************************************/
 
-void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void scontra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 

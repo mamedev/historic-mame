@@ -84,6 +84,53 @@ void init_neogeo(void)
 	extern struct YM2610interface neogeo_ym2610_interface;
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 	data8_t *mem08;
+	int tileno,numtiles;
+
+	numtiles = memory_region_length(REGION_GFX2)/128;
+	for (tileno = 0;tileno < numtiles;tileno++)
+	{
+		unsigned char swap[128];
+		UINT8 *gfxdata;
+		int x,y;
+		unsigned int pen;
+
+		gfxdata = &memory_region(REGION_GFX2)[128 * tileno];
+
+		memcpy(swap,gfxdata,128);
+
+		for (y = 0;y < 16;y++)
+		{
+			UINT32 dw;
+
+			dw = 0;
+			for (x = 0;x < 8;x++)
+			{
+				pen  = ((swap[64 + 4*y + 3] >> x) & 1) << 3;
+				pen |= ((swap[64 + 4*y + 1] >> x) & 1) << 2;
+				pen |= ((swap[64 + 4*y + 2] >> x) & 1) << 1;
+				pen |=	(swap[64 + 4*y	  ] >> x) & 1;
+				dw |= pen << 4*x;
+			}
+			*(gfxdata++) = dw>>0;
+			*(gfxdata++) = dw>>8;
+			*(gfxdata++) = dw>>16;
+			*(gfxdata++) = dw>>24;
+
+			dw = 0;
+			for (x = 0;x < 8;x++)
+			{
+				pen  = ((swap[4*y + 3] >> x) & 1) << 3;
+				pen |= ((swap[4*y + 1] >> x) & 1) << 2;
+				pen |= ((swap[4*y + 2] >> x) & 1) << 1;
+				pen |=	(swap[4*y	 ] >> x) & 1;
+				dw |= pen << 4*x;
+			}
+			*(gfxdata++) = dw>>0;
+			*(gfxdata++) = dw>>8;
+			*(gfxdata++) = dw>>16;
+			*(gfxdata++) = dw>>24;
+		}
+	}
 
 	if (memory_region(REGION_SOUND2))
 	{
@@ -256,31 +303,23 @@ static WRITE16_HANDLER( kof99_bankswitch_w )
 	static int bankoffset[64] =
 	{
 		0x000000, 0x100000, 0x200000, 0x300000,
-		0x407800, 0x507800, 0x40d000, 0x50d000,
-		0x424800, 0x524800, 0x429000, 0x529000,
-		0x54d000, 0x551000, 0x567000, 0x592800,
 		0x3cc000, 0x4cc000, 0x3f2000, 0x4f2000,
+		0x407800, 0x507800, 0x40d000, 0x50d000,
 		0x417800, 0x517800, 0x420800, 0x520800,
+		0x424800, 0x524800, 0x429000, 0x529000,
 		0x42e800, 0x52e800, 0x431800, 0x531800,
+		0x54d000, 0x551000, 0x567000, 0x592800,
 		0x588800, 0x581800, 0x599800, 0x594800,
 		0x200000,	/* rest not used? */
-//		0x302E00, 0x2D5000, 0x2FB000, 0x2F2500,
-//		0x330200, 0x2E0400, 0x324800, 0x2BF100,
-//		0x302200, 0x304600, 0x318B00, 0x33B100,
-//		0x305100, 0x321800, 0x313A00, 0x2E4E00,
-//		0x30C600, 0x2EB200, 0x315600, 0x2E2B00,
-//		0x335700, 0x2DFD00, 0x31BB00, 0x2E5500,
-//		0x336D00, 0x318200, 0x345500, 0x344E00,
-//		0x300000,	/* rest not used? */
 	};
 
 	/* unscramble bank number */
 	data =
 		(((data>>14)&1)<<0)+
 		(((data>> 6)&1)<<1)+
-		(((data>>10)&1)<<2)+
-		(((data>>12)&1)<<3)+
-		(((data>> 8)&1)<<4)+
+		(((data>> 8)&1)<<2)+
+		(((data>>10)&1)<<3)+
+		(((data>>12)&1)<<4)+
 		(((data>> 5)&1)<<5);
 
 	bankaddress = 0x100000 + bankoffset[data];
@@ -294,18 +333,6 @@ static void neogeo_custom_memory(void)
 	/* Individual games can go here... */
 
 	/* kludges */
-
-	if (!strcmp(Machine->gamedrv->name,"gururin"))
-	{
-		/* Fix a really weird problem. The game clears the video RAM but goes */
-		/* beyond the tile RAM, corrupting the zoom control RAM. After that it */
-		/* initializes the control RAM, but then corrupts it again! */
-		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-		mem16[0x1328/2] = 0x4e71;
-		mem16[0x132a/2] = 0x4e71;
-		mem16[0x132c/2] = 0x4e71;
-		mem16[0x132e/2] = 0x4e71;
-	}
 
 	if (!Machine->sample_rate &&
 			!strcmp(Machine->gamedrv->name,"popbounc"))
@@ -325,24 +352,26 @@ static void neogeo_custom_memory(void)
 	/* hacks to make the games which do protection checks run in arcade mode */
 	/* we write protect a SRAM location so it cannot be set to 1 */
 	sram_protection_hack = ~0;
-	if (!strcmp(Machine->gamedrv->name,"fatfury3") ||
-			 !strcmp(Machine->gamedrv->name,"samsho3") ||
-			 !strcmp(Machine->gamedrv->name,"samsho4") ||
-			 !strcmp(Machine->gamedrv->name,"aof3") ||
-			 !strcmp(Machine->gamedrv->name,"rbff1") ||
-			 !strcmp(Machine->gamedrv->name,"rbffspec") ||
-			 !strcmp(Machine->gamedrv->name,"kof95") ||
-			 !strcmp(Machine->gamedrv->name,"kof96") ||
-			 !strcmp(Machine->gamedrv->name,"kof97") ||
-			 !strcmp(Machine->gamedrv->name,"kof98") ||
-			 !strcmp(Machine->gamedrv->name,"kof99") ||
-			 !strcmp(Machine->gamedrv->name,"kof99p") ||
-			 !strcmp(Machine->gamedrv->name,"kizuna") ||
-			 !strcmp(Machine->gamedrv->name,"lastblad") ||
-			 !strcmp(Machine->gamedrv->name,"lastbld2") ||
-			 !strcmp(Machine->gamedrv->name,"rbff2") ||
-			 !strcmp(Machine->gamedrv->name,"mslug2") ||
-			 !strcmp(Machine->gamedrv->name,"garoup"))
+	if (	!strcmp(Machine->gamedrv->name,"fatfury3") ||
+			!strcmp(Machine->gamedrv->name,"samsho3") ||
+			!strcmp(Machine->gamedrv->name,"samsho4") ||
+			!strcmp(Machine->gamedrv->name,"aof3") ||
+			!strcmp(Machine->gamedrv->name,"rbff1") ||
+			!strcmp(Machine->gamedrv->name,"rbffspec") ||
+			!strcmp(Machine->gamedrv->name,"kof95") ||
+			!strcmp(Machine->gamedrv->name,"kof96") ||
+			!strcmp(Machine->gamedrv->name,"kof97") ||
+			!strcmp(Machine->gamedrv->name,"kof98") ||
+			!strcmp(Machine->gamedrv->name,"kof99") ||
+			!strcmp(Machine->gamedrv->name,"kof99n") ||
+			!strcmp(Machine->gamedrv->name,"kof99p") ||
+			!strcmp(Machine->gamedrv->name,"kof2000") ||
+			!strcmp(Machine->gamedrv->name,"kizuna") ||
+			!strcmp(Machine->gamedrv->name,"lastblad") ||
+			!strcmp(Machine->gamedrv->name,"lastbld2") ||
+			!strcmp(Machine->gamedrv->name,"rbff2") ||
+			!strcmp(Machine->gamedrv->name,"mslug2") ||
+			!strcmp(Machine->gamedrv->name,"garoup"))
 		sram_protection_hack = 0x100/2;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))

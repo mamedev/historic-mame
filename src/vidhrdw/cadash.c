@@ -149,7 +149,7 @@ WRITE16_HANDLER( cadash_spriteflip_w )
 ********************************************************/
 
 
-static void cadash_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void cadash_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offs)
 {
 	int offs, flipx, flipy;
 	int x, y, curx, cury;
@@ -241,7 +241,7 @@ static void cadash_draw_sprites(struct osd_bitmap *bitmap,int *primasks,int y_of
 				SCREEN REFRESH
 **************************************************************/
 
-void cadash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cadash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 

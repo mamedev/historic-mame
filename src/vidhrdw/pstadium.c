@@ -24,7 +24,7 @@ static int pstadium_flipx, pstadium_flipy;
 static int pstadium_paltblnum;
 static int pstadium_screen_refresh;
 
-static struct osd_bitmap *pstadium_tmpbitmap;
+static struct mame_bitmap *pstadium_tmpbitmap;
 static unsigned char *pstadium_videoram;
 static unsigned char *pstadium_palette;
 static unsigned char *pstadium_paltbl;
@@ -389,7 +389,7 @@ void pstadium_vh_stop(void)
 	pstadium_tmpbitmap = 0;
 }
 
-void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	int color;
@@ -420,7 +420,7 @@ void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void galkoku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	int color;

@@ -17,7 +17,7 @@ Preliminary driver by:
 WRITE_HANDLER( battlnts_spritebank_w );
 int battlnts_vh_start(void);
 void battlnts_vh_stop(void);
-void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void battlnts_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static int battlnts_interrupt( void )
 {

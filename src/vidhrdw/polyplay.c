@@ -55,7 +55,7 @@ READ_HANDLER( polyplay_characterram_r )
 }
 
 
-void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -38,7 +38,7 @@ size_t bosco_radarram_size;
 											/* to speed up video refresh */
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap1;
+static struct mame_bitmap *tmpbitmap1;
 
 
 
@@ -256,12 +256,12 @@ WRITE_HANDLER( bosco_starcontrol_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 

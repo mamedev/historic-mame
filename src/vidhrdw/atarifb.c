@@ -23,7 +23,7 @@ extern int atarifb_game;
 WRITE_HANDLER( atarifb_alphap1_vram_w );
 WRITE_HANDLER( atarifb_alphap2_vram_w );
 WRITE_HANDLER( atarifb_scroll_w );
-void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 struct rectangle bigfield_area = {  4*8, 34*8-1, 0*8, 32*8-1 };
 struct rectangle left_area =     {  0*8,  3*8-1, 0*8, 32*8-1 };
@@ -98,12 +98,12 @@ void atarifb_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,obj;
 	int sprite_bank;

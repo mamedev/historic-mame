@@ -74,8 +74,8 @@ WRITE_HANDLER( gberet_scroll_w );
 WRITE_HANDLER( gberetb_scroll_w );
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
-void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gberetb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gberet_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void gberetb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int gberet_interrupt(void);
 

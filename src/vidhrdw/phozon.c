@@ -79,14 +79,14 @@ void phozon_vh_stop( void ) {
 	generic_vh_stop();
 }
 
-void phozon_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+void phozon_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	drawgfx(dest,Machine->gfx[2],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
 		TRANSPARENCY_PEN,0);
 }
 
-void phozon_draw_sprite8(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+void phozon_draw_sprite8(struct mame_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	drawgfx(dest,Machine->gfx[3],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
@@ -95,12 +95,12 @@ void phozon_draw_sprite8(struct osd_bitmap *dest,unsigned int code,unsigned int 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void phozon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

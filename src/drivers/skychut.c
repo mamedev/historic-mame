@@ -17,8 +17,8 @@
 
 extern UINT8* iremm15_chargen;
 
-void skychut_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void iremm15_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( skychut_colorram_w );
 WRITE_HANDLER( skychut_vh_flipscreen_w );
 

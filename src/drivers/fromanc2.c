@@ -80,10 +80,10 @@ ETC	93C46A		SERIAL EEPROM	1Kb(64x16 / 128x8)
 #include "machine/eeprom.h"
 
 
-void fromanc2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void fromanc2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int fromanc2_vh_start(void);
 void fromanc2_vh_stop(void);
-void fromancr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void fromancr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int fromancr_vh_start(void);
 void fromancr_vh_stop(void);
 

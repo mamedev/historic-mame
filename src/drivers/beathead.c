@@ -117,7 +117,7 @@ extern data32_t *	beathead_palette_select;
 int beathead_vh_start(void);
 void beathead_vh_stop(void);
 void beathead_scanline_update(int scanline);
-void beathead_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void beathead_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 WRITE32_HANDLER( beathead_vram_transparent_w );
 WRITE32_HANDLER( beathead_vram_bulk_w );

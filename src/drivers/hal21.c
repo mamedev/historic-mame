@@ -15,8 +15,8 @@
 #include "cpu/z80/z80.h"
 
 
-extern void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source );
-extern void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *source );
+extern void tnk3_draw_text( struct mame_bitmap *bitmap, int bank, unsigned char *source );
+extern void tnk3_draw_status( struct mame_bitmap *bitmap, int bank, unsigned char *source );
 
 static int scrollx_base; /* this is the only difference in video hardware found so far */
 
@@ -82,7 +82,7 @@ void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortabl
 }
 
 static void aso_draw_background(
-		struct osd_bitmap *bitmap,
+		struct mame_bitmap *bitmap,
 		int scrollx, int scrolly,
 		int bank, int color,
 		const struct GfxElement *gfx )
@@ -122,7 +122,7 @@ static void aso_draw_background(
 }
 
 void aso_draw_sprites(
-		struct osd_bitmap *bitmap,
+		struct mame_bitmap *bitmap,
 		int xscroll, int yscroll,
 		const struct GfxElement *gfx
 ){
@@ -161,7 +161,7 @@ WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
 WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
 WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
 
-void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
+void aso_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ){
 	unsigned char *ram = memory_region(REGION_CPU1);
 	int attributes = hal21_vreg[1];
 	{

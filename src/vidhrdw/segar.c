@@ -41,8 +41,8 @@ typedef struct
 	unsigned char backfill;
 	unsigned char fill_background;
 	unsigned int backshift;
-	struct osd_bitmap *horizbackbitmap;
-	struct osd_bitmap *vertbackbitmap;
+	struct mame_bitmap *horizbackbitmap;
+	struct mame_bitmap *vertbackbitmap;
 } SEGAR_VID_STRUCT;
 
 static SEGAR_VID_STRUCT sv;
@@ -202,7 +202,7 @@ WRITE_HANDLER( segar_bcolortable_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
@@ -224,7 +224,7 @@ int segar_vh_start(void)
 This is the refresh code that is common across all the G80 games.  This
 corresponds to the VIDEO I board.
 ***************************************************************************/
-static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_transparency, int copy_transparency)
+static void segar_common_screenrefresh(struct mame_bitmap *bitmap, int sprite_transparency, int copy_transparency)
 {
 	int offs;
 	int charcode;
@@ -285,7 +285,7 @@ static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_tra
 /***************************************************************************
 "Standard" refresh for games without special background boards.
 ***************************************************************************/
-void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void segar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 		sv.refresh = 1;
@@ -425,7 +425,7 @@ WRITE_HANDLER( spaceod_nobackfill_w )
 /***************************************************************************
 Special refresh for Space Odyssey, this code refreshes the static background.
 ***************************************************************************/
-void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void spaceod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int charcode;
@@ -587,7 +587,7 @@ WRITE_HANDLER( monsterb_back_port_w )
 /***************************************************************************
 Special refresh for Monster Bash, this code refreshes the static background.
 ***************************************************************************/
-void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void monsterb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int charcode;
@@ -761,7 +761,7 @@ WRITE_HANDLER( sindbadm_back_port_w )
 /***************************************************************************
 Special refresh for Sinbad Mystery, this code refreshes the static background.
 ***************************************************************************/
-void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sindbadm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int charcode;

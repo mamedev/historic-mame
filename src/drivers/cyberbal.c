@@ -53,7 +53,7 @@ WRITE16_HANDLER( cyberbal_paletteram_1_w );
 int cyberbal_vh_start(void);
 int cyberb2p_vh_start(void);
 void cyberbal_vh_stop(void);
-void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void cyberbal_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void cyberbal_scanline_update(int param);
 

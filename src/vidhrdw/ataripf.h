@@ -70,7 +70,7 @@ struct ataripf_desc
 struct ataripf_overrender_data
 {
 	/* these are passed in to ataripf_overrender */
-	struct osd_bitmap *	bitmap;				/* bitmap we're drawing to */
+	struct mame_bitmap *	bitmap;				/* bitmap we're drawing to */
 	struct rectangle 	clip;				/* clip region to overrender with */
 	UINT32				mousage;			/* motion object pen usage */
 	UINT32				mocolor;			/* motion object color */
@@ -138,7 +138,7 @@ void ataripf_free(void);
 UINT32 *ataripf_get_lookup(int map, int *size);
 
 /* core processing */
-void ataripf_render(int map, struct osd_bitmap *bitmap);
+void ataripf_render(int map, struct mame_bitmap *bitmap);
 void ataripf_overrender(int map, ataripf_overrender_cb callback, struct ataripf_overrender_data *data);
 
 /* atrribute setters */

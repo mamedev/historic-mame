@@ -43,7 +43,7 @@ WRITE_HANDLER( dlair_led1_w )
 	led1 = data;
 }
 
-void dlair_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dlair_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

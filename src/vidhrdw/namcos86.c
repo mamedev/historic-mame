@@ -269,7 +269,7 @@ WRITE_HANDLER( rthunder_backcolor_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority )
+static void draw_sprites( struct mame_bitmap *bitmap, int sprite_priority )
 {
 	/* note: sprites don't yet clip at the top of the screen properly */
 	const struct rectangle *clip = &Machine->visible_area;
@@ -354,7 +354,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority )
 
 
 
-void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layer;
 

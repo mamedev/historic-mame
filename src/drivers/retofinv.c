@@ -28,7 +28,7 @@ READ_HANDLER( retofinv_mcu_status_r );
 int  retofinv_vh_start(void);
 void retofinv_vh_stop(void);
 void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void retofinv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void retofinv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 READ_HANDLER( retofinv_bg_videoram_r );
 READ_HANDLER( retofinv_fg_videoram_r );
 READ_HANDLER( retofinv_bg_colorram_r );

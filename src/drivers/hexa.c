@@ -36,7 +36,7 @@ NOTES:
 
 
 
-void hexa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hexa_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( hexa_d008_w );
 
 

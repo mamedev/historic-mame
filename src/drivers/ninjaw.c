@@ -153,7 +153,7 @@ rumbling on a subwoofer in the cabinet.)
 
 int ninjaw_vh_start (void);
 void ninjaw_vh_stop (void);
-void ninjaw_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void ninjaw_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 static UINT16 cpua_ctrl = 0xff;
 

@@ -45,7 +45,7 @@ int ladybug_interrupt(void);
 
 void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( ladybug_flipscreen_w );
-void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ladybug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

@@ -10,7 +10,7 @@
 int  goindol_vh_start(void);
 WRITE_HANDLER( goindol_fg_videoram_w );
 WRITE_HANDLER( goindol_bg_videoram_w );
-void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void goindol_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern data8_t *goindol_fg_scrollx;
 extern data8_t *goindol_fg_scrolly;

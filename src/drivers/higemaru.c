@@ -12,7 +12,7 @@ driver by Mirko Buffoni
 
 WRITE_HANDLER( higemaru_c800_w );
 void higemaru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void higemaru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void higemaru_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

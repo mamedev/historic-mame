@@ -36,7 +36,7 @@ WRITE_HANDLER( pandoras_cram_w );
 WRITE_HANDLER( pandoras_flipscreen_w );
 WRITE_HANDLER( pandoras_scrolly_w );
 int pandoras_vh_start(void);
-void pandoras_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void pandoras_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static int pandoras_interrupt_a( void ){
 	if (irq_enable_a)

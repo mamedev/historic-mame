@@ -24,7 +24,7 @@ WRITE_HANDLER( cclimber_bigsprite_videoram_w );
 void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 void yamato_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)

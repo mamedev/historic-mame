@@ -123,7 +123,7 @@ static void (*williams2_blitters[])(int, int, int, int, int) =
  *
  *************************************/
 
-static void copy_pixels(struct osd_bitmap *bitmap, const struct rectangle *clip, int transparent_pen)
+static void copy_pixels(struct mame_bitmap *bitmap, const struct rectangle *clip, int transparent_pen)
 {
 	int blaster_back_color = 0;
 	int pairs = (clip->max_x - clip->min_x + 1) / 2;
@@ -276,7 +276,7 @@ void williams_vh_update(int scanline)
 }
 
 
-void williams_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void williams_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* full refresh forces us to redraw everything */
 	if (full_refresh)
@@ -366,7 +366,7 @@ void williams2_vh_stop(void)
  *
  *************************************/
 
-void williams2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void williams2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	UINT8 *tileram = &memory_region(REGION_CPU1)[0xc000];
 	int xpixeloffset, xtileoffset;

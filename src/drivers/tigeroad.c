@@ -26,7 +26,7 @@ Memory Overview:
 
 WRITE16_HANDLER( tigeroad_videoctrl_w );
 WRITE16_HANDLER( tigeroad_scroll_w );
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tigeroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void tigeroad_eof_callback(void);
 
 

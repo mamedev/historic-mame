@@ -138,7 +138,7 @@ static data16_t ip_select, ip_select_values[5];
 
 void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *prom);
 int  megasys1_vh_start(void);
-void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ16_HANDLER( megasys1_vregs_C_r );
 

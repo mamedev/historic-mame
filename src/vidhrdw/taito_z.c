@@ -77,7 +77,7 @@ void TC0150ROD_vh_stop(void)
 	}
 
 INLINE void bryan3_drawscanline(
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
 	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
@@ -249,7 +249,7 @@ parameter has been added to select which games use the transparency.
 ******************************************************************************/
 
 
-void TC0150ROD_draw(struct osd_bitmap *bitmap,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority)
+void TC0150ROD_draw(struct mame_bitmap *bitmap,int y_offs,int palette_offs,int type,int road_trans,UINT32 priority)
 {
 #ifdef MAME_DEBUG
 	static int dislayer[6];	/* Road Layer toggles to help get road correct */
@@ -1098,7 +1098,7 @@ confirmed
 ********************************************************/
 
 
-static void contcirc_draw_sprites_16x8(struct osd_bitmap *bitmap,int y_offs)
+static void contcirc_draw_sprites_16x8(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -1190,7 +1190,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void chasehq_draw_sprites_16x16(struct osd_bitmap *bitmap,int y_offs)
+static void chasehq_draw_sprites_16x16(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -1375,7 +1375,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void bshark_draw_sprites_16x8(struct osd_bitmap *bitmap,int y_offs)
+static void bshark_draw_sprites_16x8(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -1468,7 +1468,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void sci_draw_sprites_16x8(struct osd_bitmap *bitmap,int y_offs)
+static void sci_draw_sprites_16x8(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, start_offs, data, tilenum, color, flipx, flipy;
@@ -1570,7 +1570,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void aquajack_draw_sprites_16x8(struct osd_bitmap *bitmap,int y_offs)
+static void aquajack_draw_sprites_16x8(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -1662,7 +1662,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void spacegun_draw_sprites_16x8(struct osd_bitmap *bitmap,int y_offs)
+static void spacegun_draw_sprites_16x8(struct mame_bitmap *bitmap,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -1757,7 +1757,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
                         SCREEN REFRESH
 **************************************************************/
 
-void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void contcirc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -1783,7 +1783,7 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /* Nightstr and ChaseHQ */
 
-void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void chasehq_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -1807,7 +1807,7 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -1831,7 +1831,7 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sci_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -1855,7 +1855,7 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void aquajack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -1879,7 +1879,7 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void spacegun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 
@@ -2009,7 +2009,7 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dblaxle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[5];
 	UINT16 priority;

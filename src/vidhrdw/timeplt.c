@@ -184,7 +184,7 @@ READ_HANDLER( timeplt_scanline_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	struct rectangle clip = Machine->visible_area;
@@ -228,7 +228,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void timeplt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

@@ -46,7 +46,7 @@ AY8910 Port A = DSW
 extern unsigned char *funkyb_row_scroll;
 
 void funkybee_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void funkybee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void funkybee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( funkybee_gfx_bank_w );
 

@@ -150,7 +150,7 @@ int fuuki16_vh_start(void)
 
 ***************************************************************************/
 
-static void fuuki16_draw_sprites(struct osd_bitmap *bitmap)
+static void fuuki16_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -281,7 +281,7 @@ if (keyboard_pressed(KEYCODE_X))
 ***************************************************************************/
 
 
-static void fuuki16_draw_layer(struct osd_bitmap *bitmap, int i, int flag, int pri)
+static void fuuki16_draw_layer(struct mame_bitmap *bitmap, int i, int flag, int pri)
 {
 	switch( i )
 	{
@@ -295,7 +295,7 @@ static void fuuki16_draw_layer(struct osd_bitmap *bitmap, int i, int flag, int p
 	}
 }
 
-void fuuki16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void fuuki16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	data16_t layer0_scrollx, layer0_scrolly;
 	data16_t layer1_scrollx, layer1_scrolly;

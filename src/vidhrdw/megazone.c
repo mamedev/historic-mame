@@ -18,6 +18,13 @@ unsigned char *megazone_colorram2;
 size_t megazone_videoram2_size;
 
 /***************************************************************************
+Based on driver from MAME 0.55
+Changes by Martin M. (pfloyd@gmx.net) 14.10.2001:
+
+ - Added support for screen flip in cocktail mode (tricky!) */
+
+
+/***************************************************************************
 
   Convert the color PROMs into a more useable format.
 
@@ -115,12 +122,12 @@ void megazone_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void megazone_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int x,y;
@@ -139,13 +146,13 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 			flipx = colorram[offs] & (1<<6);
 			flipy = colorram[offs] & (1<<5);
-//			if (flipscreen)
-//			{
-//				sx = 31 - sx;
-//				sy = 31 - sy;
-//				flipx = !flipx;
-//				flipy = !flipy;
-//			}
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					((int)videoram[offs]) + ((colorram[offs] & (1<<7) ? 256 : 0) ),
@@ -158,11 +165,24 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrollx = -*megazone_scrolly + 4*8;
-		int scrolly = -*megazone_scrollx;
+		int scrollx;
+		int scrolly;
+
+		if (flipscreen)
+		{
+			scrollx = *megazone_scrolly;
+			scrolly = *megazone_scrollx;
+		}
+		else
+		{
+			scrollx = -*megazone_scrolly+4*8; // leave space for credit&score overlay
+			scrolly = -*megazone_scrollx;
+		}
+
 
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
+
 
 	/* Draw the sprites. */
 	{
@@ -171,19 +191,14 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int sx,sy,flipx,flipy;
 
 
-			sx = spriteram[offs + 3] + 4*8;
+			sx = spriteram[offs + 3];
+			if (flipscreen) sx-=11; else sx+=4*8;   	  // Sprite y-position correction depending on screen flip
 			sy = 255-((spriteram[offs + 1]+16)&0xff);
+			if (flipscreen) sy+=2; 			  	  // Sprite x-position correction depending on screen flip
 
 			flipx = ~spriteram[offs+0] & 0x40;
 			flipy = spriteram[offs+0] & 0x80;
 
-//			if (flipscreen)
-//			{
-//				sx = 240 - sx;
-//				sy = 240 - sy;
-//				flipx = !flipx;
-//				flipy = !flipy;
-//			}
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 2],
 					spriteram[offs + 0] & 0x0f,
@@ -205,6 +220,18 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			flipx = megazone_colorram2[offs] & (1<<6);
 			flipy = megazone_colorram2[offs] & (1<<5);
+
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+
+
+
 			drawgfx(bitmap,Machine->gfx[0],
 					((int)megazone_videoram2[offs]) + ((megazone_colorram2[offs] & (1<<7) ? 256 : 0) ),
 					(megazone_colorram2[offs] & 0x0f) + 0x10,

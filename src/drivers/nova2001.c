@@ -38,7 +38,7 @@ void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 WRITE_HANDLER( nova2001_scroll_x_w );
 WRITE_HANDLER( nova2001_scroll_y_w );
 WRITE_HANDLER( nova2001_flipscreen_w );
-void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void nova2001_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

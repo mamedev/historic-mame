@@ -24,8 +24,8 @@ UINT8 exidy_collision_invert;
 UINT8 *exidy_palette;
 UINT16 *exidy_colortable;
 
-static struct osd_bitmap *motion_object_1_vid;
-static struct osd_bitmap *motion_object_2_vid;
+static struct mame_bitmap *motion_object_1_vid;
+static struct mame_bitmap *motion_object_2_vid;
 
 static UINT8 chardirty[256];
 static UINT8 update_complete;
@@ -165,7 +165,7 @@ int exidy_vh_start(void)
 	motion_object_2_vid = bitmap_alloc(16, 16);
     if (!motion_object_2_vid)
     {
-        osd_free_bitmap(motion_object_1_vid);
+        bitmap_free(motion_object_1_vid);
         generic_vh_stop();
         return 1;
     }
@@ -421,7 +421,7 @@ void exidy_vh_eof(void)
  *
  *************************************/
 
-void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void exidy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int sx, sy;
 

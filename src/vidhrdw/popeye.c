@@ -15,7 +15,7 @@ data8_t *popeye_background_pos;
 data8_t *popeye_palettebank;
 data8_t *popeye_textram;
 
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static int invertmask;
 
 #define BGRAM_SIZE 0x2000
@@ -196,7 +196,7 @@ WRITE_HANDLER( popeyebl_bitmap_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
@@ -235,7 +235,7 @@ static void set_background_palette(int bank)
 }
 
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -269,7 +269,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void popeye_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -42,7 +42,7 @@ The 2 ay-8910 read ports are responsible for reading the sound commands.
 
 
 WRITE_HANDLER( jack_paletteram_w );
-void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER( jack_flipscreen_r );
 WRITE_HANDLER( jack_flipscreen_w );
 

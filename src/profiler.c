@@ -92,7 +92,7 @@ logerror("Profiler error: FILO buffer underflow\n");
 	}
 }
 
-void profiler_show(struct osd_bitmap *bitmap)
+void profiler_show(struct mame_bitmap *bitmap)
 {
 	int i,j;
 	UINT64 total,normalize;

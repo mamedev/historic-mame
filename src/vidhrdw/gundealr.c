@@ -150,7 +150,7 @@ WRITE_HANDLER( gundealr_flipscreen_w )
 
 ***************************************************************************/
 
-void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gundealr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

@@ -133,7 +133,7 @@ READ_HANDLER( actfancr_pf2_data_r )
 
 /******************************************************************************/
 
-void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int my,mx,offs,color,tile,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
@@ -225,7 +225,7 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int my,mx,offs,color,tile,i,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));

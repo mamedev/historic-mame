@@ -22,7 +22,7 @@ WRITE16_HANDLER( ohmygod_spritebank_w );
 WRITE16_HANDLER( ohmygod_scrollx_w );
 WRITE16_HANDLER( ohmygod_scrolly_w );
 int ohmygod_vh_start(void);
-void ohmygod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ohmygod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int adpcm_bank_shift;

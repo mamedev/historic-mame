@@ -79,9 +79,9 @@ int png_filter(struct png_info *p);
 int png_deflate_image(struct png_info *p);
 int png_write_sig(void *fp);
 int png_write_datastream(void *fp, struct png_info *p);
-int png_write_bitmap(void *fp, struct osd_bitmap *bitmap);
-int mng_capture_start(void *fp, struct osd_bitmap *bitmap);
-int mng_capture_frame(void *fp, struct osd_bitmap *bitmap);
+int png_write_bitmap(void *fp, struct mame_bitmap *bitmap);
+int mng_capture_start(void *fp, struct mame_bitmap *bitmap);
+int mng_capture_frame(void *fp, struct mame_bitmap *bitmap);
 int mng_capture_stop(void *fp);
 int mng_capture_status(void);
 #endif

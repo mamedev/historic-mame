@@ -32,14 +32,14 @@ extern size_t spriteram_3_size;
 extern data8_t *dirtybuffer;
 extern data16_t *dirtybuffer16;
 extern data32_t *dirtybuffer32;
-extern struct osd_bitmap *tmpbitmap;
+extern struct mame_bitmap *tmpbitmap;
 
 
 int generic_vh_start(void);
 int generic_bitmapped_vh_start(void);
 void generic_vh_stop(void);
 void generic_bitmapped_vh_stop(void);
-void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void generic_bitmapped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER( videoram_r );
 READ_HANDLER( colorram_r );
 WRITE_HANDLER( videoram_w );

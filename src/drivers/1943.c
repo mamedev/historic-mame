@@ -16,7 +16,7 @@ extern unsigned char *c1943_bgscrolly;
 WRITE_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
 WRITE_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
 void c1943_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int c1943_vh_start(void);
 void c1943_vh_stop(void);
 

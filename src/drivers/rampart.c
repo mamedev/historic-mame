@@ -32,7 +32,7 @@ WRITE16_HANDLER( rampart_bitmap_w );
 
 int rampart_vh_start(void);
 void rampart_vh_stop(void);
-void rampart_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void rampart_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern data16_t *rampart_bitmap;
 

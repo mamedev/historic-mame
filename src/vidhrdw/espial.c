@@ -80,12 +80,12 @@ WRITE_HANDLER( espial_attributeram_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void espial_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

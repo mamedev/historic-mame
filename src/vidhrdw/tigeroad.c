@@ -31,7 +31,7 @@ WRITE16_HANDLER( tigeroad_scroll_w )
 }
 
 
-static void render_background( struct osd_bitmap *bitmap, int priority )
+static void render_background( struct mame_bitmap *bitmap, int priority )
 {
 	int scrollx = 	tigeroad_scrollram[0] & 0xfff; /* 0..4096 */
 	int scrolly =	tigeroad_scrollram[1] & 0xfff; /* 0..4096 */
@@ -96,7 +96,7 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 	}
 }
 
-static void render_sprites( struct osd_bitmap *bitmap )
+static void render_sprites( struct mame_bitmap *bitmap )
 {
 	data16_t *source = &buffered_spriteram16[spriteram_size/2] - 4;
 	data16_t *finish = buffered_spriteram16;
@@ -136,7 +136,7 @@ static void render_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-static void render_text( struct osd_bitmap *bitmap )
+static void render_text( struct mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -171,7 +171,7 @@ static void render_text( struct osd_bitmap *bitmap )
 
 
 
-void tigeroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tigeroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	render_background( bitmap,0 );
 	render_sprites( bitmap );

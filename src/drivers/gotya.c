@@ -36,7 +36,7 @@ extern unsigned char *gotya_foregroundram;
 
 void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gotya_vh_start(void);
-void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gotya_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( gotya_video_control_w );
 
 WRITE_HANDLER( gotya_soundlatch_w );
@@ -145,7 +145,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static const char *sample_names[] =
 {												// Address triggered at
-	"*gotya",
+	"*thehand",
 	"01.wav",	/* game start tune */			// 075f
 	"02.wav",	/* coin in */					// 0074
 	"03.wav",	/* eat dot */					// 0e45

@@ -77,13 +77,13 @@ void jackal_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void jackal_draw_sprites(struct osd_bitmap *bitmap,const unsigned char *sram,int length,int bank)
+static void jackal_draw_sprites(struct mame_bitmap *bitmap,const unsigned char *sram,int length,int bank)
 {
 	int offs, spritenum, sx, sy, color;
 	unsigned char sn1, sn2, sp, flipx, flipy;
@@ -200,7 +200,7 @@ static void jackal_draw_sprites(struct osd_bitmap *bitmap,const unsigned char *s
 }
 
 
-void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jackal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	unsigned char *sr, *ss;
 	int offs,i;

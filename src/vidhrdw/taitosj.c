@@ -22,10 +22,10 @@ unsigned char *taitosj_gfxpointer;
 unsigned char *taitosj_colorbank,*taitosj_video_priority;
 static unsigned char taitosj_collision_reg[4];
 static unsigned char *dirtybuffer2,*dirtybuffer3;
-static struct osd_bitmap *taitosj_tmpbitmap[3];
-static struct osd_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;
-static struct osd_bitmap *sprite_plane_collbitmap1;
-static struct osd_bitmap *sprite_plane_collbitmap2[3];
+static struct mame_bitmap *taitosj_tmpbitmap[3];
+static struct mame_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;
+static struct mame_bitmap *sprite_plane_collbitmap1;
+static struct mame_bitmap *sprite_plane_collbitmap2[3];
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
 static int taitosj_video_enable;
@@ -653,7 +653,7 @@ static void check_sprite_plane_collision(void)
 }
 
 
-static void drawsprites(struct osd_bitmap *bitmap)
+static void drawsprites(struct mame_bitmap *bitmap)
 {
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities (but they are still wrong sometimes.) */
@@ -705,7 +705,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 }
 
 
-static void drawplayfield(int n, struct osd_bitmap *bitmap)
+static void drawplayfield(int n, struct mame_bitmap *bitmap)
 {
 	static int fudge1[3] = { 3,  1, -1 };
 	static int fudge2[3] = { 8, 10, 12 };
@@ -745,7 +745,7 @@ static void drawplayfield(int n, struct osd_bitmap *bitmap)
 }
 
 
-static void drawplane(int n,struct osd_bitmap *bitmap)
+static void drawplane(int n,struct mame_bitmap *bitmap)
 {
 	switch (n)
 	{
@@ -761,7 +761,7 @@ static void drawplane(int n,struct osd_bitmap *bitmap)
 }
 
 
-void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void taitosj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

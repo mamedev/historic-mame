@@ -16,7 +16,7 @@ extern unsigned char *s2636ram;
 
 int  tinvader_vh_start(void);
 void tinvader_vh_stop(void);
-void tinvader_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tinvader_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( zac_s2636_w );
 WRITE_HANDLER( tinvader_sound_w );
@@ -284,7 +284,7 @@ ROM_END
 
 int  invaders_vh_start(void);
 void invaders_vh_stop(void);
-void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void invaders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void init_8080bw(void);
 

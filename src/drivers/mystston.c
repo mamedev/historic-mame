@@ -26,7 +26,7 @@ WRITE_HANDLER( mystston_scroll_w );
 WRITE_HANDLER( mystston_2000_w );
 int mystston_vh_start(void);
 void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mystston_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

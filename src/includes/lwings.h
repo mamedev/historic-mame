@@ -10,6 +10,6 @@ WRITE_HANDLER( lwings_bg2_image_w );
 int  lwings_vh_start(void);
 int  trojan_vh_start(void);
 int  avengers_vh_start(void);
-void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void lwings_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void trojan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void lwings_eof_callback(void);

@@ -39,7 +39,7 @@ size_t spriteram_3_size;
 data8_t *dirtybuffer;
 data16_t *dirtybuffer16;
 data32_t *dirtybuffer32;
-struct osd_bitmap *tmpbitmap;
+struct mame_bitmap *tmpbitmap;
 
 
 void generic_vh_postload(void)
@@ -114,11 +114,11 @@ void generic_bitmapped_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   To be used by bitmapped games not using sprites.
 
 ***************************************************************************/
-void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void generic_bitmapped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

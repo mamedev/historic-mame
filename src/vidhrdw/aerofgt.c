@@ -297,7 +297,7 @@ WRITE16_HANDLER( pspikes_palette_bank_w )
 
 ***************************************************************************/
 
-static void aerofgt_drawsprites(struct osd_bitmap *bitmap,int priority)
+static void aerofgt_drawsprites(struct mame_bitmap *bitmap,int priority)
 {
 	int offs;
 
@@ -369,7 +369,7 @@ static void aerofgt_drawsprites(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int chip)
+static void turbofrc_drawsprites(struct mame_bitmap *bitmap,int chip)
 {
 	int attr_start,base,first;
 
@@ -441,7 +441,7 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int chip)
 }
 
 
-void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pspikes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,scrolly;
 
@@ -457,7 +457,7 @@ void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	turbofrc_drawsprites(bitmap,0);
 }
 
-void karatblz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void karatblz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg1_tilemap,0,bg1scrollx-8);
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
@@ -474,7 +474,7 @@ void karatblz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	turbofrc_drawsprites(bitmap,0);
 }
 
-void spinlbrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void spinlbrk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,scrolly;
 
@@ -496,7 +496,7 @@ void spinlbrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	turbofrc_drawsprites(bitmap,1);
 }
 
-void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void turbofrc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,scrolly;
 
@@ -519,7 +519,7 @@ void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	turbofrc_drawsprites(bitmap,0);
 }
 
-void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void aerofgt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg1_tilemap,0,aerofgt_rasterram[0x0000]-18);
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);

@@ -95,7 +95,7 @@ void init_senjyo(void);
 
 int senjyo_vh_start(void);
 void senjyo_vh_stop(void);
-void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void senjyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int senjyo_sh_start(const struct MachineSound *msound);
 void senjyo_sh_stop(void);

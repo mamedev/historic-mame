@@ -19,7 +19,7 @@ NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
 #include "cpu/z80/z80.h"
 
 void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bking2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( bking2_xld1_w );
 WRITE_HANDLER( bking2_yld1_w );
 WRITE_HANDLER( bking2_xld2_w );

@@ -121,7 +121,7 @@ Colscroll effects?
 int darius2d_vh_start (void);
 int warriorb_vh_start (void);
 void warriorb_vh_stop (void);
-void warriorb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void warriorb_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***********************************************************

@@ -26,8 +26,8 @@ Notes:
 #include "cpu/m6809/m6809.h"
 
 
-void mainevt_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
-void dv_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void mainevt_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+void dv_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 int mainevt_vh_start (void);
 int dv_vh_start (void);
 void mainevt_vh_stop (void);

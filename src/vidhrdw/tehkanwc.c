@@ -16,7 +16,7 @@ robbiex@rocketmail.com
 
 unsigned char *tehkanwc_videoram1;
 size_t tehkanwc_videoram1_size;
-static struct osd_bitmap *tmpbitmap1 = 0;
+static struct mame_bitmap *tmpbitmap1 = 0;
 static unsigned char *dirtybuffer1;
 static unsigned char scroll_x[2],scroll_y;
 static unsigned char led0,led1;
@@ -114,7 +114,7 @@ WRITE_HANDLER( gridiron_led1_w )
    bit 7 = enable (0 = display off)
  */
 
-static void gridiron_drawled(struct osd_bitmap *bitmap,unsigned char led,int player)
+static void gridiron_drawled(struct mame_bitmap *bitmap,unsigned char led,int player)
 {
 	int i;
 
@@ -152,7 +152,7 @@ else logerror("unknown LED %02x for player %d\n",led,player);
 
 
 
-void tehkanwc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tehkanwc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

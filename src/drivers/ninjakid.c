@@ -32,7 +32,7 @@ extern READ_HANDLER( ninjakun_io_8000_r );
 extern WRITE_HANDLER( ninjakun_io_8000_w );
 
 extern int ninjakid_vh_start( void );
-extern void ninjakid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void ninjakid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern WRITE_HANDLER( ninjakun_flipscreen_w );
 
 extern WRITE_HANDLER( ninjakun_paletteram_w );

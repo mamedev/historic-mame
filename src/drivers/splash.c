@@ -23,7 +23,7 @@ READ16_HANDLER( splash_pixelram_r );
 WRITE16_HANDLER( splash_vram_w );
 WRITE16_HANDLER( splash_pixelram_w );
 int splash_vh_start( void );
-void splash_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void splash_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 
 
 static WRITE16_HANDLER( splash_sh_irqtrigger_w )

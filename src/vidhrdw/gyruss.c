@@ -125,13 +125,13 @@ READ_HANDLER( gyruss_scanline_r )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	struct rectangle clip = Machine->visible_area;
 	int offs;
@@ -168,7 +168,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gyruss_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

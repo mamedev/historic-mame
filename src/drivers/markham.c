@@ -13,7 +13,7 @@ Markham (c) 1983 Sun Electronics
 
 void markham_vh_convert_color_prom(unsigned char *palette,
 	unsigned short *colortable,const unsigned char *color_prom);
-void markham_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void markham_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static UINT8 *markham_sharedram;
 

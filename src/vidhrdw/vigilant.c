@@ -36,7 +36,7 @@ static int rear_disable=1;
 
 static int rear_refresh=1;
 
-static struct osd_bitmap *bg_bitmap;
+static struct mame_bitmap *bg_bitmap;
 
 
 int vigilant_vh_start(void)
@@ -183,7 +183,7 @@ WRITE_HANDLER( vigilant_rear_color_w )
 
  ???
  **************************************************************************/
-static void draw_foreground( struct osd_bitmap *bitmap, int priority, int opaque )
+static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaque )
 {
 	int offs;
 	int scroll = -(horiz_scroll_low + horiz_scroll_high);
@@ -236,7 +236,7 @@ static void draw_foreground( struct osd_bitmap *bitmap, int priority, int opaque
 
  ???
  **************************************************************************/
-static void draw_background( struct osd_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap )
 {
 	int scrollx = 0x17a + 16*8 - (rear_horiz_scroll_low + rear_horiz_scroll_high);
 
@@ -252,13 +252,13 @@ static void draw_background( struct osd_bitmap *bitmap )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip)
 {
 	int offs;
 
@@ -292,7 +292,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,const struct rectangle *clip)
 	}
 }
 
-void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vigilant_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 
@@ -331,7 +331,7 @@ void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kikcubic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

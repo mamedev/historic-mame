@@ -155,7 +155,7 @@
 /* video driver data & functions */
 int balsente_vh_start(void);
 void balsente_vh_stop(void);
-void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 WRITE_HANDLER( balsente_videoram_w );
 WRITE_HANDLER( balsente_paletteram_w );

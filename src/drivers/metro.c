@@ -100,7 +100,7 @@ int  metro_vh_start_14300(void);
 int  blzntrnd_vh_start(void);
 void metro_vh_stop(void);
 
-void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void metro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

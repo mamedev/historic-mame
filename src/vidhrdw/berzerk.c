@@ -169,11 +169,11 @@ READ_HANDLER( berzerk_collision_r )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   To be used by bitmapped games not using sprites.
 
 ***************************************************************************/
-void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void berzerk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{

@@ -16,7 +16,7 @@ unsigned char *gunsmoke_bg_scrollx;
 static int chon,objon,bgon;
 static int sprite3bank;
 
-static struct osd_bitmap * bgbitmap;
+static struct mame_bitmap * bgbitmap;
 static unsigned char bgmap[9][9][2];
 
 
@@ -157,12 +157,12 @@ WRITE_HANDLER( gunsmoke_d806_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gunsmoke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;

@@ -99,11 +99,11 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 void cosmica_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void cosmicg_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void panic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void magspot2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void cosmica_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void cosmicg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void nomnlnd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( cosmica_videoram_w );
 WRITE_HANDLER( panic_color_register_w );
 WRITE_HANDLER( cosmicg_color_register_w );

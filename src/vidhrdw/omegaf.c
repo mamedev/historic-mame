@@ -102,7 +102,7 @@ static int bg0_enabled = 1;
 static int bg1_enabled = 1;
 static int bg2_enabled = 1;
 
-static struct osd_bitmap *bitmap_sp;	/* for sprite overdraw */
+static struct mame_bitmap *bitmap_sp;	/* for sprite overdraw */
 static int sprite_overdraw_enabled = 0;
 
 static int scrollx_mask = 0x07ff;
@@ -577,7 +577,7 @@ WRITE_HANDLER( omegaf_sprite_overdraw_w )
   Screen refresh
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -613,7 +613,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void omegaf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void omegaf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area);	// ??
 

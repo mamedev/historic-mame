@@ -40,13 +40,13 @@ WRITE_HANDLER( system1_sprites_collisionram_w );
 WRITE_HANDLER( system1_videoram_w );
 WRITE_HANDLER( system1_paletteram_w );
 WRITE_HANDLER( system1_backgroundram_w );
-void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void system1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void system1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( system1_videomode_w );
 READ_HANDLER( system1_videomode_r );
 
 WRITE_HANDLER( choplifter_scroll_x_w );
-void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void choplifter_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void wbml_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 #endif

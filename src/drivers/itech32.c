@@ -63,7 +63,7 @@ extern UINT16 itech32_vram_height;
 
 int itech32_vh_start(void);
 void itech32_vh_stop(void);
-void itech32_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void itech32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 WRITE16_HANDLER( timekill_paletteram_w );
 WRITE16_HANDLER( bloodstm_paletteram_w );

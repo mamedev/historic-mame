@@ -111,7 +111,7 @@ WRITE_HANDLER( gladiatr_paletteram_rg_w );
 WRITE_HANDLER( gladiatr_paletteram_b_w );
 extern int gladiatr_vh_start(void);
 extern void gladiatr_vh_stop(void);
-extern void gladiatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void gladiatr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( gladiatr_spritebank_w );
 
 /*Rom bankswitching*/

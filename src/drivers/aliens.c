@@ -19,7 +19,7 @@ static void aliens_banking( int lines );
 
 void aliens_vh_stop( void );
 int aliens_vh_start( void );
-void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void aliens_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int palette_selected;

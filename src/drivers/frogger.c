@@ -99,7 +99,7 @@ int froggrmc_vh_start(void);
 
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( frogger_filter_w );
 
 READ_HANDLER( frogger_portB_r );

@@ -20,7 +20,7 @@ static int flipscreen;
 
 /******************************************************************************/
 
-static void funkyjet_drawsprites(struct osd_bitmap *bitmap)
+static void funkyjet_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -151,7 +151,7 @@ int funkyjet_vh_start(void)
 
 /******************************************************************************/
 
-void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void funkyjet_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flipscreen=funkyjet_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

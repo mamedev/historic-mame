@@ -267,7 +267,7 @@ $fcc00-$fffff empty (0xff fill)
 int wgp_vh_start (void);
 int wgp2_vh_start (void);
 void wgp_vh_stop (void);
-void wgp_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void wgp_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 //static data16_t *wgp_ram;
 extern data16_t *wgp_spritemap;

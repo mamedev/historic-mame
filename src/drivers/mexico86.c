@@ -34,8 +34,8 @@ WRITE_HANDLER( mexico86_68705_ddrB_w );
 extern unsigned char *mexico86_videoram,*mexico86_objectram;
 extern size_t mexico86_objectram_size;
 WRITE_HANDLER( mexico86_bankswitch_w );
-void mexico86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void kikikai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mexico86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void kikikai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

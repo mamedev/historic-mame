@@ -72,11 +72,11 @@ int pspikes_vh_start(void);
 int karatblz_vh_start(void);
 int spinlbrk_vh_start(void);
 int turbofrc_vh_start(void);
-void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void karatblz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void spinlbrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void pspikes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void karatblz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void spinlbrk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void turbofrc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void aerofgt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

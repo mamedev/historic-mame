@@ -9,7 +9,7 @@
 #include "artwork.h"
 
 unsigned char *s2636ram;
-struct osd_bitmap *spritebitmap;
+struct mame_bitmap *spritebitmap;
 
 int dirtychar[16];
 int CollisionBackground;
@@ -168,7 +168,7 @@ void tinvader_vh_stop(void)
     spritebitmap = 0;
 }
 
-void tinvader_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tinvader_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

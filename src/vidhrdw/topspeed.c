@@ -46,7 +46,7 @@ void topspeed_vh_stop(void)
 
 ********************************************************************************/
 
-void topspeed_draw_sprites(struct osd_bitmap *bitmap)
+void topspeed_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs,map_offset,x,y,curx,cury,sprite_chunk;
 	data16_t *spritemap = topspeed_spritemap;
@@ -128,7 +128,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 /***************************************************************************/
 
-void topspeed_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void topspeed_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[4];
 

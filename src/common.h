@@ -21,6 +21,19 @@ extern "C" {
 
 ***************************************************************************/
 
+struct mame_bitmap
+{
+	int width,height;	/* width and height of the bitmap */
+	int depth;			/* bits per pixel */
+	void **line;		/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
+
+	/* alternate way of accessing the pixels */
+	void *base;			/* pointer to pixel (0,0) (adjusted for padding) */
+	int rowpixels;		/* pixels per row (including padding) */
+	int rowbytes;		/* bytes per row (including padding) */
+};
+
+
 struct RomModule
 {
 	const char *_name;	/* name of the file to load */
@@ -346,12 +359,12 @@ void set_vh_global_attribute( int *addr, int data );
 
 void set_visible_area(int min_x,int max_x,int min_y,int max_y);
 
-struct osd_bitmap *bitmap_alloc(int width,int height);
-struct osd_bitmap *bitmap_alloc_depth(int width,int height,int depth);
-void bitmap_free(struct osd_bitmap *bitmap);
+struct mame_bitmap *bitmap_alloc(int width,int height);
+struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
+void bitmap_free(struct mame_bitmap *bitmap);
 
-void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap);
-void save_screen_snapshot(struct osd_bitmap *bitmap);
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap);
+void save_screen_snapshot(struct mame_bitmap *bitmap);
 
 
 

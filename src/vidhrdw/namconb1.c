@@ -86,7 +86,7 @@ WRITE32_HANDLER( namconb1_videoram_w )
 }
 
 static void draw_sprite(
-		struct osd_bitmap *bitmap,
+		struct mame_bitmap *bitmap,
 		const data32_t *pSource,
 		int pri_table[8] )
 {
@@ -188,7 +188,7 @@ static void draw_sprite(
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int pri_table[8] )
+static void draw_sprites( struct mame_bitmap *bitmap, int pri_table[8] )
 {
 	int i;
 	data16_t which;
@@ -265,7 +265,7 @@ static void handle_mcu( void )
 	namconb1_workram32[0x601e/4] |= credits;
 }
 
-void namconb1_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
+void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 {
 	int beamx,beamy;
 

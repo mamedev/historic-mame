@@ -26,7 +26,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/canyon.c */
-extern void canyon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void canyon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static READ_HANDLER( canyon_options_r )
 {

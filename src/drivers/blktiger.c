@@ -33,7 +33,7 @@ WRITE_HANDLER( blktiger_scrolly_w );
 
 int blktiger_vh_start(void);
 void blktiger_vh_stop(void);
-void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blktiger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void blktiger_eof_callback(void);
 
 

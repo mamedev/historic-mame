@@ -115,7 +115,7 @@ WRITE_HANDLER( gng_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->visible_area;
@@ -147,7 +147,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap);

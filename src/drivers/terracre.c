@@ -41,8 +41,8 @@ VRAM(Sprites)
 
 
 void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-//void terracre_vh_screenrefresh(struct osd_bitmap *bitmap);
+void terracre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+//void terracre_vh_screenrefresh(struct mame_bitmap *bitmap);
 int terrac_vh_start(void);
 void terrac_vh_stop(void);
 WRITE16_HANDLER( terrac_videoram2_w );

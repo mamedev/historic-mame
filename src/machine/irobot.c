@@ -45,7 +45,7 @@ extern void run_video(void);
 
 extern void irobot_poly_clear(void);
 
-extern struct osd_bitmap *polybitmapt;
+extern struct mame_bitmap *polybitmapt;
 
 static UINT8 *comRAM[2], *mbRAM, *mbROM;
 static UINT8 irobot_control_num = 0;

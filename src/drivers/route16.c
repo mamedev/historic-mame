@@ -68,7 +68,7 @@ READ_HANDLER( route16_videoram1_r );
 READ_HANDLER( route16_videoram2_r );
 WRITE_HANDLER( route16_sharedram_w );
 READ_HANDLER( route16_sharedram_r );
-void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void route16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( stratvox_sn76477_w );
 
 static MEMORY_READ_START( cpu1_readmem )

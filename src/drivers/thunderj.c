@@ -31,7 +31,7 @@
 
 int thunderj_vh_start(void);
 void thunderj_vh_stop(void);
-void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void thunderj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void thunderj_scanline_update(int scanline);
 

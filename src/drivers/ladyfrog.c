@@ -14,7 +14,7 @@ VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
 #include "driver.h"
 
 
-void ladyfrog_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ladyfrog_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 }
 

@@ -173,11 +173,11 @@ int  truxton2_0_vh_start(void);
 int  batrider_0_vh_start(void);
 void toaplan2_0_vh_stop(void);
 void toaplan2_1_vh_stop(void);
-void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void truxton2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dogyuun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void batrider_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void toaplan2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void truxton2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void dogyuun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void batsugun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void batrider_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /********* Video wrappers for PIPIBIBI *********/

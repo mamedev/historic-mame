@@ -24,7 +24,7 @@ WRITE_HANDLER( bsktball_led2_w );
 
 /* vidhrdw/bsktball.c */
 extern unsigned char *bsktball_motion;
-extern void bsktball_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void bsktball_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /* sound hardware - temporary */

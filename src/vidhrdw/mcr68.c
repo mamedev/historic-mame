@@ -75,7 +75,7 @@ WRITE16_HANDLER( mcr68_videoram_w )
  *
  *************************************/
 
-static void mcr68_update_background(struct osd_bitmap *bitmap, int overrender)
+static void mcr68_update_background(struct mame_bitmap *bitmap, int overrender)
 {
 	int offs;
 
@@ -116,7 +116,7 @@ static void mcr68_update_background(struct osd_bitmap *bitmap, int overrender)
  *
  *************************************/
 
-static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
+static void mcr68_update_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	struct rectangle sprite_clip = Machine->visible_area;
 	int offs;
@@ -189,7 +189,7 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
  *
  *************************************/
 
-void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mcr68_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* draw the background */
 	mcr68_update_background(tmpbitmap, 0);
@@ -334,7 +334,7 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
  *
  *************************************/
 
-static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender)
+static void zwackery_update_background(struct mame_bitmap *bitmap, int overrender)
 {
 	int offs;
 
@@ -378,7 +378,7 @@ static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender
  *
  *************************************/
 
-static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
+static void zwackery_update_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	int offs;
 
@@ -455,7 +455,7 @@ static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
  *
  *************************************/
 
-void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void zwackery_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* draw the background */
 	zwackery_update_background(tmpbitmap, 0);

@@ -10,7 +10,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static int bg_rambank[2],fg_rambank[2],tx_rambank;
 
 /* framebuffer is a raw bitmap, remapped as a last step */
-static struct osd_bitmap *framebuffer[2],*pixel_bitmap;
+static struct mame_bitmap *framebuffer[2],*pixel_bitmap;
 
 static data16_t pixel_scroll[2];
 static int pixel_init;
@@ -341,7 +341,7 @@ WRITE16_HANDLER( hitice_pixel_scroll_w )
 }
 
 
-static void taitob_draw_sprites (struct osd_bitmap *bitmap)
+static void taitob_draw_sprites (struct mame_bitmap *bitmap)
 {
 /*	Sprite format: (16 bytes per sprite)
 	offs:             bits:
@@ -464,7 +464,7 @@ static void taitob_draw_sprites (struct osd_bitmap *bitmap)
 }
 
 
-static void TC0180VCU_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tmap,int plane)
+static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tmap,int plane)
 {
 /*plane = 0 fg tilemap*/
 /*plane = 1 bg tilemap*/
@@ -504,7 +504,7 @@ static void TC0180VCU_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tma
 }
 
 
-static void draw_framebuffer(struct osd_bitmap *bitmap,int priority)
+static void draw_framebuffer(struct mame_bitmap *bitmap,int priority)
 {
 	struct rectangle myclip = Machine->visible_area;
 	int x,y;
@@ -575,7 +575,7 @@ profiler_mark(PROFILER_USER1);
 profiler_mark(PROFILER_END);
 }
 
-void taitob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void taitob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if ((video_control & 0x20) == 0)
 	{

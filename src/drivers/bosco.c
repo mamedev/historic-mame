@@ -92,7 +92,7 @@ void bosco_init_machine(void);
 
 WRITE_HANDLER( bosco_cpu_reset_w );
 int  bosco_vh_start(void);
-void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
@@ -108,7 +108,7 @@ WRITE_HANDLER( bosco_scrolly_w );
 WRITE_HANDLER( bosco_starcontrol_w );
 int  bosco_vh_start(void);
 void bosco_vh_stop(void);
-void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( pengo_sound_w );
 int  bosco_sh_start(const struct MachineSound *msound);

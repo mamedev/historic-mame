@@ -33,14 +33,14 @@ void taitof2_partial_buffer_delayed_eof_callback(void);
 void taitof2_partial_buffer_delayed_thundfox_eof_callback(void);
 void taitof2_partial_buffer_delayed_qzchikyu_eof_callback(void);
 
-void taitof2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void taitof2_pri_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void taitof2_pri_roz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ssi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void thundfox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void deadconx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void metalb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void yesnoj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void taitof2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void ssi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void yesnoj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( taitof2_spritebank_w );
 READ16_HANDLER ( koshien_spritebank_r );

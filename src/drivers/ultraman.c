@@ -17,7 +17,7 @@ Driver by Manuel Abadia <manu@teleline.es>
 WRITE16_HANDLER( ultraman_gfxctrl_w );
 int ultraman_vh_start( void );
 void ultraman_vh_stop( void );
-void ultraman_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void ultraman_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 
 
 

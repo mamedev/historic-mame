@@ -507,7 +507,7 @@ WRITE_HANDLER( majtitle_gfx_ctrl_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -560,7 +560,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void majtitle_draw_sprites(struct osd_bitmap *bitmap)
+static void majtitle_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -610,7 +610,7 @@ static void majtitle_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_layer(struct osd_bitmap *bitmap,
+static void draw_layer(struct mame_bitmap *bitmap,
 		struct tilemap *tilemap,int *scrollx,int *scrolly,int priority)
 {
 	int start,i;
@@ -638,18 +638,18 @@ static void draw_layer(struct osd_bitmap *bitmap,
 	} while (start < Machine->visible_area.max_y - 128);
 }
 
-static void draw_bg(struct osd_bitmap *bitmap,int priority)
+static void draw_bg(struct mame_bitmap *bitmap,int priority)
 {
 	draw_layer(bitmap,bg_tilemap,scrollx2,scrolly2,priority);
 }
 
-static void draw_fg(struct osd_bitmap *bitmap,int priority)
+static void draw_fg(struct mame_bitmap *bitmap,int priority)
 {
 	draw_layer(bitmap,fg_tilemap,scrollx1,scrolly1,priority);
 }
 
 
-void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void m72_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (video_off)
 	{
@@ -664,7 +664,7 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_fg(bitmap,TILEMAP_FRONT);
 }
 
-void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void majtitle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 

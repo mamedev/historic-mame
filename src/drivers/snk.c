@@ -69,12 +69,12 @@ extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsign
 extern int snk_vh_start( void );
 extern void snk_vh_stop( void );
 
-extern void tnk3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ikari_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void tdfever_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void ftsoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void gwar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-// extern void psychos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh); /* not needed? */
+extern void tnk3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void ikari_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void tdfever_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void ftsoccer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void gwar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+// extern void psychos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh); /* not needed? */
 
 /*********************************************************************/
 

@@ -30,7 +30,7 @@ WRITE_HANDLER( tagteam_control_w );
 
 int  tagteam_vh_start (void);
 void tagteam_vh_stop (void);
-void tagteam_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void tagteam_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 static WRITE_HANDLER( sound_command_w )
 {

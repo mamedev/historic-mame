@@ -45,7 +45,7 @@ WRITE_HANDLER( avalnche_videoram_w )
 	}
 }
 
-void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void avalnche_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{

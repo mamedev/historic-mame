@@ -72,7 +72,7 @@ WRITE_HANDLER( rallyx_flipscreen_w );
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void rallyx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE_HANDLER( rallyx_coin_lockout_w )

@@ -64,7 +64,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc);
 void atarirle_free(void);
 
 /* core processing */
-void atarirle_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb callback);
+void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback);
 
 /* attribute setters */
 void atarirle_set_xscroll(int map, int xscroll, int scanline);

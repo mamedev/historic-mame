@@ -12,7 +12,7 @@ extern unsigned char* berzerk_magicram;
 
 void berzerk_init_machine(void);
 
-void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void berzerk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int  berzerk_interrupt(void);
 WRITE_HANDLER( berzerk_irq_enable_w );

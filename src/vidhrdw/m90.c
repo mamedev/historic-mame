@@ -70,7 +70,7 @@ int m90_vh_start(void)
 	return 0;
 }
 
-static void m90_drawsprites(struct osd_bitmap *bitmap)
+static void m90_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -105,7 +105,7 @@ static void m90_drawsprites(struct osd_bitmap *bitmap)
 }
 
 #if 0
-static void bootleg_drawsprites(struct osd_bitmap *bitmap)
+static void bootleg_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -161,7 +161,7 @@ WRITE_HANDLER( m90_video_w )
 	markdirty(pf2_wide_layer,m90_video_control_data[0xc] & 0x2,offset);
 }
 
-void m90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void m90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	static int last_pf1,last_pf2;
 	int pf1_base = m90_video_control_data[0xa] & 0x3;

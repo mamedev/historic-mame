@@ -65,7 +65,7 @@ WRITE16_HANDLER( twin16_video_register_w ){
 
 /******************************************************************************************/
 
-static void draw_text( struct osd_bitmap *bitmap ){
+static void draw_text( struct mame_bitmap *bitmap ){
 	const struct rectangle *clip = &Machine->visible_area;
 	const data16_t *source = twin16_fixram;
 	int i;
@@ -96,7 +96,7 @@ static void draw_text( struct osd_bitmap *bitmap ){
 /******************************************************************************************/
 
 static void draw_sprite( /* slow slow slow, but it's ok for now */
-	struct osd_bitmap *bitmap,
+	struct mame_bitmap *bitmap,
 	const UINT16 *pen_data,
 	const pen_t *pal_data,
 	int xpos, int ypos,
@@ -219,7 +219,7 @@ void twin16_spriteram_process( void ){
  *   3  | ------------xxxx | color
  */
 
-static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
+static void draw_sprites( struct mame_bitmap *bitmap, int pri ){
 	int count = 0;
 	const data16_t *source = 0x1800+spriteram16;
 	const data16_t *finish = source + 0x800;
@@ -283,7 +283,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
 	}
 }
 
-static void show_video_register( struct osd_bitmap *bitmap ){
+static void show_video_register( struct mame_bitmap *bitmap ){
 #if 0
 	int n;
 	for( n=0; n<4; n++ ){
@@ -297,7 +297,7 @@ static void show_video_register( struct osd_bitmap *bitmap ){
 #endif
 }
 
-static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
+static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 	const data16_t *gfx_base;
 	const data16_t *source = videoram16;
 	int i, y1, y2, yd;
@@ -563,7 +563,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 	}
 }
 
-void twin16_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
+void twin16_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh ){
 	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
 	need_process_spriteram = 1;
 

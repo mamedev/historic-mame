@@ -13,7 +13,7 @@
 
 static int gfxbank;
 static unsigned char *superqix_bitmapram,*superqix_bitmapram2,*superqix_bitmapram_dirty,*superqix_bitmapram2_dirty;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 int sqix_minx,sqix_maxx,sqix_miny,sqix_maxy;
 int sqix_last_bitmap;
 int sqix_current_bitmap;
@@ -191,12 +191,12 @@ WRITE_HANDLER( superqix_0410_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void superqix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 	unsigned char pens[16];

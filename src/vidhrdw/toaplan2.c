@@ -1362,7 +1362,7 @@ void toaplan2_log_vram(void)
 	Sprite Handlers
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priority_to_display, int bank_sel )
+static void draw_sprites( struct mame_bitmap *bitmap, int controller, int priority_to_display, int bank_sel )
 {
 	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
 	const struct rectangle *clip = &Machine->visible_area;
@@ -1487,10 +1487,10 @@ static void mark_sprite_priority(int controller)
 }
 
 /***************************************************************************
-	Draw the game screen in the given osd_bitmap.
+	Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
-void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toaplan2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
@@ -1513,7 +1513,7 @@ void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void dogyuun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dogyuun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
@@ -1545,7 +1545,7 @@ void dogyuun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void batsugun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
@@ -1577,13 +1577,13 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void truxton2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void truxton2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	toaplan2_0_vh_screenrefresh(bitmap, full_refresh);
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void batrider_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void batrider_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 

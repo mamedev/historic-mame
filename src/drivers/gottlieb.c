@@ -158,7 +158,7 @@ WRITE_HANDLER( gottlieb_video_outputs_w );
 WRITE_HANDLER( usvsthem_video_outputs_w );
 extern unsigned char *gottlieb_characterram;
 WRITE_HANDLER( gottlieb_paletteram_w );
-void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gottlieb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( gottlieb_sh_w );
 

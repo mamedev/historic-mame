@@ -74,7 +74,7 @@ WRITE_HANDLER( suna8_spriteram_w );			// for debug
 WRITE_HANDLER( suna8_banked_spriteram_w );	// for debug
 
 int  suna8_vh_start(void);
-void suna8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************
@@ -198,7 +198,7 @@ int suna8_vh_start_textdim12(void)	{ return suna8_vh_start_common(12); }
 
 ***************************************************************************/
 
-void suna8_draw_normal_sprites(struct osd_bitmap *bitmap)
+void suna8_draw_normal_sprites(struct mame_bitmap *bitmap)
 {
 	int i;
 	int mx = 0;	// multisprite x counter
@@ -327,7 +327,7 @@ void suna8_draw_normal_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void suna8_draw_text_sprites(struct osd_bitmap *bitmap)
+void suna8_draw_text_sprites(struct mame_bitmap *bitmap)
 {
 	int i;
 
@@ -411,7 +411,7 @@ void suna8_draw_text_sprites(struct osd_bitmap *bitmap)
 */
 #define TILEMAPS 0
 
-void suna8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 #ifdef MAME_DEBUG
 #if TILEMAPS

@@ -114,7 +114,7 @@ WRITE_HANDLER( atarifb_alphap1_vram_w );
 WRITE_HANDLER( atarifb_alphap2_vram_w );
 extern int atarifb_vh_start(void);
 extern void atarifb_vh_stop(void);
-extern void atarifb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* machine/atarifb.c */
 WRITE_HANDLER( atarifb_out1_w );

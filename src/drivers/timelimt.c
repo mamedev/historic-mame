@@ -16,7 +16,7 @@ Notes:
 extern int timelimt_vh_start( void );
 extern void timelimt_vh_stop( void );
 extern void timelimt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void timelimt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void timelimt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern WRITE_HANDLER( timelimt_videoram_w );
 extern WRITE_HANDLER( timelimt_bg_videoram_w );

@@ -110,8 +110,8 @@ WRITE_HANDLER( m72_dmaon_w );
 WRITE_HANDLER( m72_port02_w );
 WRITE_HANDLER( rtype2_port02_w );
 WRITE_HANDLER( majtitle_gfx_ctrl_w );
-void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void m72_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void majtitle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void m72_eof_callback(void);
 
 

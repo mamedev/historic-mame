@@ -83,7 +83,7 @@ Heavy use is made of sprite zooming.
 
 ********************************************************/
 
-static void gunbustr_draw_sprites_16x16(struct osd_bitmap *bitmap,int *primasks,int x_offs,int y_offs)
+static void gunbustr_draw_sprites_16x16(struct mame_bitmap *bitmap,int *primasks,int x_offs,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -229,7 +229,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				SCREEN REFRESH
 **************************************************************/
 
-void gunbustr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gunbustr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[5];
 	UINT16 priority;

@@ -68,7 +68,7 @@ WRITE_HANDLER( bagman_pal16r6_w );
 
 extern unsigned char *bagman_video_enable;
 WRITE_HANDLER( bagman_flipscreen_w );
-void bagman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bagman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void bagman_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable, const unsigned char *color_prom);
 
 

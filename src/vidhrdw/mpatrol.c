@@ -15,7 +15,7 @@
 
 static unsigned char scrollreg[16];
 static unsigned char bg1xpos,bg1ypos,bg2xpos,bg2ypos,bgcontrol;
-static struct osd_bitmap *bgbitmap[3];
+static struct mame_bitmap *bgbitmap[3];
 
 
 
@@ -341,7 +341,7 @@ static void get_clip(struct rectangle *clip, int min_y, int max_y)
 	}
 }
 
-static void draw_background(struct osd_bitmap *bitmap,
+static void draw_background(struct mame_bitmap *bitmap,
                             int xpos, int ypos, int ypos_end, int image,
 							int transparency)
 {
@@ -362,12 +362,12 @@ static void draw_background(struct osd_bitmap *bitmap,
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void mpatrol_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,i;
 

@@ -141,7 +141,7 @@ int dcon_vh_start(void)
 	return 0;
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;
@@ -177,7 +177,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 	}
 }
 
-void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0] );

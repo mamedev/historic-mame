@@ -10,7 +10,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct osd_bitmap *screen_bitmap;
+static struct mame_bitmap *screen_bitmap;
 
 size_t battlane_bitmap_size;
 unsigned char *battlane_bitmap;
@@ -29,7 +29,7 @@ static int battlane_scrollx;
 
 extern int battlane_cpu_control;
 
-static struct osd_bitmap *bkgnd_bitmap;  /* scroll bitmap */
+static struct mame_bitmap *bkgnd_bitmap;  /* scroll bitmap */
 
 
 WRITE_HANDLER( battlane_video_ctrl_w )
@@ -213,12 +213,12 @@ void battlane_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void battlane_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     int scrollx,scrolly;
 	int x,y, offs;

@@ -298,7 +298,7 @@ WRITE16_HANDLER( cninja_palette_24bit_w )
 
 /******************************************************************************/
 
-static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
+static void cninja_drawsprites(struct mame_bitmap *bitmap, int pri)
 {
 	int offs;
 
@@ -364,7 +364,7 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 	}
 }
 
-static void robocop2_drawsprites(struct osd_bitmap *bitmap, int pri)
+static void robocop2_drawsprites(struct mame_bitmap *bitmap, int pri)
 {
 	int offs;
 
@@ -591,7 +591,7 @@ static void setup_scrolling(void)
 	}
 }
 
-void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void cninja_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int last_pf2_bank, last_pf3_bank;
 	int pf23_control;
@@ -629,7 +629,7 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }
 
-void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void edrandy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int pf23_control;
 
@@ -661,7 +661,7 @@ void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }
 
-void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void robocop2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	static int last_pf2_bank,last_pf3_bank,last_pf4_bank;
 	int pf23_control,pf14_control;

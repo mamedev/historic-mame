@@ -36,7 +36,7 @@ WRITE16_HANDLER( toobin_vscroll_w );
 
 int toobin_vh_start(void);
 void toobin_vh_stop(void);
-void toobin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void toobin_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 

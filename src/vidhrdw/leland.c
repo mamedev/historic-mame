@@ -41,7 +41,7 @@ struct scroll_position
 
 
 /* video RAM */
-static struct osd_bitmap *fgbitmap;
+static struct mame_bitmap *fgbitmap;
 static UINT8 *leland_video_ram;
 UINT8 *ataxx_qram;
 UINT8 leland_last_scanline_int;
@@ -560,7 +560,7 @@ void leland_vh_eof(void)
  *
  *************************************/
 
-void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void leland_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	const UINT8 *background_prom = memory_region(REGION_USER1);
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -628,7 +628,7 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ataxx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int x, y, chunk;

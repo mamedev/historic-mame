@@ -483,7 +483,7 @@ UINT8 *atarimo_get_gfx_lookup(int map, int *size)
 	destination bitmap.
 ---------------------------------------------------------------*/
 
-void atarimo_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2)
+void atarimo_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2)
 {
 	struct atarimo_data *mo = &atarimo[map];
 
@@ -918,7 +918,7 @@ static void mo_render_callback(struct atarimo_data *mo, const struct atarimo_ent
 	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
 	const struct GfxElement *gfx = &mo->gfxelement[gfxindex];
 	const unsigned int *usage = gfx->pen_usage;
-	struct osd_bitmap *bitmap = mo->process_param;
+	struct mame_bitmap *bitmap = mo->process_param;
 	struct ataripf_overrender_data overrender_data;
 	UINT32 total_usage = 0;
 	int x, y, sx, sy;

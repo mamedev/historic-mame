@@ -176,13 +176,13 @@ READ_HANDLER( suprloco_control_r )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
+INLINE void draw_pixel(struct mame_bitmap *bitmap,int x,int y,int color)
 {
 	if (flip_screen)
 	{
@@ -200,7 +200,7 @@ INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 }
 
 
-static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
+static void render_sprite(struct mame_bitmap *bitmap,int spr_number)
 {
 	int sx,sy,col,row,height,src,adjy,dy;
 	unsigned char *spr_reg;
@@ -271,7 +271,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int spr_number;
 	unsigned char *spr_reg;
@@ -285,7 +285,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void suprloco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void suprloco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

@@ -577,8 +577,8 @@ READ_HANDLER( williams_video_counter_r );
 
 int williams_vh_start(void);
 void williams_vh_stop(void);
-void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void williams2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void williams_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void williams2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int blaster_vh_start(void);
 

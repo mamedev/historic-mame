@@ -91,7 +91,7 @@ extern unsigned char *kangaroo_scroll;
 void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  kangaroo_vh_start(void);
 void kangaroo_vh_stop(void);
-void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kangaroo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( kangaroo_blitter_w );
 WRITE_HANDLER( kangaroo_videoram_w );
 WRITE_HANDLER( kangaroo_video_control_w );

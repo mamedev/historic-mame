@@ -32,7 +32,7 @@ READ16_HANDLER( volfied_video_ram_r );
 READ16_HANDLER( volfied_video_ctrl_r );
 READ16_HANDLER( volfied_cchip_r );
 
-void volfied_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void volfied_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 int volfied_vh_start(void);
 void volfied_vh_stop(void);

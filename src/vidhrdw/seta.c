@@ -519,7 +519,7 @@ void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable
 ***************************************************************************/
 
 
-static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
+static void seta_draw_sprites_map(struct mame_bitmap *bitmap)
 {
 	int offs, col;
 	int xoffs, yoffs;
@@ -625,7 +625,7 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 
 
 
-static void seta_draw_sprites(struct osd_bitmap *bitmap)
+static void seta_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 	int xoffs, yoffs;
@@ -701,7 +701,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 ***************************************************************************/
 
 /* For games without tilemaps */
-void seta_vh_screenrefresh_no_layers(struct osd_bitmap *bitmap,int full_refresh)
+void seta_vh_screenrefresh_no_layers(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	seta_draw_sprites(bitmap);
@@ -710,7 +710,7 @@ void seta_vh_screenrefresh_no_layers(struct osd_bitmap *bitmap,int full_refresh)
 
 
 /* For games with 1 or 2 tilemaps */
-void seta_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void seta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl = -1;
 	int enab_0, enab_1, x_0, x_1, y_0, y_1;

@@ -203,7 +203,7 @@ WRITE16_HANDLER( madmotor_pf1_rowscroll_w )
 
 /******************************************************************************/
 
-static void madmotor_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
+static void madmotor_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -273,7 +273,7 @@ static void madmotor_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_
 
 /******************************************************************************/
 
-void madmotor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void madmotor_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

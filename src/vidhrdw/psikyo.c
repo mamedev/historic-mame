@@ -185,7 +185,7 @@ Note:	Not all sprites are displayed: in the top part of spriteram
 
 ***************************************************************************/
 
-static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
+static void psikyo_draw_sprites(struct mame_bitmap *bitmap/*,int priority*/)
 {
 	int offs;
 
@@ -306,7 +306,7 @@ static void psikyo_draw_sprites(struct osd_bitmap *bitmap/*,int priority*/)
 
 ***************************************************************************/
 
-void psikyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i, layers_ctrl = -1;
 

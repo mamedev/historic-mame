@@ -1011,7 +1011,7 @@ static void argus_bg0_scroll_handle( void )
 
 }
 
-static void argus_draw_sprites(struct osd_bitmap *bitmap, int priority)
+static void argus_draw_sprites(struct mame_bitmap *bitmap, int priority)
 {
 	int offs;
 
@@ -1067,7 +1067,7 @@ static void argus_draw_sprites(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-static void valtric_draw_sprites(struct osd_bitmap *bitmap)
+static void valtric_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1120,7 +1120,7 @@ static void valtric_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void butasan_draw_sprites(struct osd_bitmap *bitmap)
+void butasan_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -1363,7 +1363,7 @@ static void butasan_log_vram(void)
 }
 #endif
 
-void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void argus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* scroll BG0 and render tile at proper position */
 	argus_bg0_scroll_handle();
@@ -1377,7 +1377,7 @@ void argus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap, tx_tilemap,  0, 0);
 }
 
-void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void valtric_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 
@@ -1386,7 +1386,7 @@ void valtric_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap, tx_tilemap,  0, 0);
 }
 
-void butasan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void butasan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 

@@ -118,7 +118,7 @@ WRITE16_HANDLER( suna16_paletteram16_w )
 
 ***************************************************************************/
 
-static void suna16_draw_sprites(struct osd_bitmap *bitmap)
+static void suna16_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -218,7 +218,7 @@ static void suna16_draw_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void suna16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void suna16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* I believe background is black */
 	fillbitmap(bitmap,Machine->pens[512],&Machine->visible_area);

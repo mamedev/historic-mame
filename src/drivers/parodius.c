@@ -16,7 +16,7 @@ static void parodius_init_machine( void );
 static void parodius_banking( int lines );
 int parodius_vh_start( void );
 void parodius_vh_stop( void );
-void parodius_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void parodius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static int videobank;
 static unsigned char *ram;

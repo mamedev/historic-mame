@@ -89,7 +89,7 @@ void polyplay_reset(void);
 /* video hardware access */
 extern unsigned char *polyplay_characterram;
 void polyplay_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER( polyplay_characterram_r );
 WRITE_HANDLER( polyplay_characterram_w );
 

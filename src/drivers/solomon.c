@@ -18,7 +18,7 @@ WRITE_HANDLER( solomon_bgvideoram_w );
 WRITE_HANDLER( solomon_bgcolorram_w );
 int  solomon_vh_start(void);
 void solomon_vh_stop(void);
-void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void solomon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static WRITE_HANDLER( solomon_sh_command_w )
 {

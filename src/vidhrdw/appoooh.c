@@ -207,7 +207,7 @@ WRITE_HANDLER( appoooh_out_w )
 	/* bit 7 unknown (used) */
 }
 
-static void appoooh_draw_sprites(struct osd_bitmap *dest_bmp,
+static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
         const struct GfxElement *gfx,
         unsigned char *sprite)
 {
@@ -241,12 +241,12 @@ static void appoooh_draw_sprites(struct osd_bitmap *dest_bmp,
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void appoooh_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void appoooh_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 

@@ -85,8 +85,8 @@ Rainbowe needs dump of its c-chip.
 
 int  rainbow_vh_start(void);
 int  jumping_vh_start(void);
-void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void rastan_vh_stop(void);
 int rainbow_interrupt(void);
 

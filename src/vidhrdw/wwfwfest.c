@@ -149,7 +149,7 @@ static void get_bg1_tile_info(int tile_index)
  sprite drawing could probably be improved a bit
 *******************************************************************************/
 
-static void wwfwfest_drawsprites( struct osd_bitmap *bitmap )
+static void wwfwfest_drawsprites( struct mame_bitmap *bitmap )
 {
 	/*- SPR RAM Format -**
 
@@ -244,7 +244,7 @@ int wwfwfest_vh_start(void)
 	return 0;
 }
 
-void wwfwfest_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void wwfwfest_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	if (wwfwfest_pri == 0x0078) {
 		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg0_scrolly  );

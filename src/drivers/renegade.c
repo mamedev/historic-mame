@@ -105,7 +105,7 @@ $8000 - $ffff	ROM
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 
-extern void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh);
+extern void renegade_vh_screenrefresh(struct mame_bitmap *bitmap, int fullrefresh);
 extern int renegade_vh_start( void );
 WRITE_HANDLER( renegade_scroll0_w );
 WRITE_HANDLER( renegade_scroll1_w );

@@ -144,7 +144,7 @@ WRITE_HANDLER( mappy_scroll_w )
 
 
 
-void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+void mappy_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	if (special_display == 1) sy++;	/* Motos */
@@ -164,12 +164,12 @@ WRITE_HANDLER( mappy_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void mappy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

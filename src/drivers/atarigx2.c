@@ -33,7 +33,7 @@
 
 int atarig42_vh_start(void);
 void atarig42_vh_stop(void);
-void atarig42_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void atarig42_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void atarigx2_scanline_update(int param);
 

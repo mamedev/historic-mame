@@ -74,7 +74,7 @@ int gypsyjug_vh_start(void)
 /*************************************************************/
 /* draw dirty sprites                                        */
 /*************************************************************/
-static void meadows_draw_sprites(struct osd_bitmap *bitmap)
+static void meadows_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int 	i;
 	for( i = 0; i < SPR_COUNT; i++ ) {
@@ -115,7 +115,7 @@ int     i;
 /*************************************************************/
 /* Screen refresh											 */
 /*************************************************************/
-void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void meadows_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int 	i;
 

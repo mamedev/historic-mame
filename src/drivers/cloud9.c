@@ -54,7 +54,7 @@ WRITE_HANDLER( cloud9_paletteram_w );
 READ_HANDLER( cloud9_bitmap_regs_r );
 WRITE_HANDLER( cloud9_bitmap_regs_w );
 WRITE_HANDLER( cloud9_bitmap_w );
-extern void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void cloud9_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *cloud9_vram2;
 extern unsigned char *cloud9_bitmap_regs;

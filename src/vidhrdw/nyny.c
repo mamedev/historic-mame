@@ -12,8 +12,8 @@
 extern unsigned char *nyny_videoram ;
 extern unsigned char *nyny_colourram ;
 
-static struct osd_bitmap *tmpbitmap1;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap1;
+static struct mame_bitmap *tmpbitmap2;
 
 
 /* used by nyny and spiders */
@@ -161,7 +161,7 @@ WRITE_HANDLER( nyny_videoram1_w )
 	}
 }
 
-void nyny_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void nyny_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	copybitmap(bitmap,tmpbitmap2,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap1,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);

@@ -55,7 +55,7 @@ READ16_HANDLER( xexexbg_rom_r )
 	return *(xexexbg_base + 2048*xexexbg_regs[7] + (offset>>1));
 }
 
-void xexexbg_draw(struct osd_bitmap *bitmap, int colorbase, int pri)
+void xexexbg_draw(struct mame_bitmap *bitmap, int colorbase, int pri)
 {
 	const struct rectangle area = Machine->visible_area;
 	data16_t *line;
@@ -266,7 +266,7 @@ static void sortlayers(int *layer, int *pri)
 	SWAP(2, 3)
 }
 int xdump = 0;
-void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void xexex_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int layer[4];
 	int plane;

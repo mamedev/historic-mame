@@ -13,7 +13,7 @@
 
 unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static int flipscreen;
 static int bgon,objon;
 
@@ -82,12 +82,12 @@ WRITE_HANDLER( sidearms_gfxctrl_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sidearms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs, sx, sy;
 	int scrollx,scrolly;

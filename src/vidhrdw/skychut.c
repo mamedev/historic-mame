@@ -41,12 +41,12 @@ WRITE_HANDLER( skychut_colorram_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void skychut_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	if (full_refresh)
@@ -77,7 +77,7 @@ void skychut_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 UINT8* iremm15_chargen;
 
-static void iremm15_drawgfx(struct osd_bitmap *bitmap, int ch,
+static void iremm15_drawgfx(struct mame_bitmap *bitmap, int ch,
 							INT16 color, INT16 back, int x, int y)
 {
 	UINT8 mask;
@@ -98,12 +98,12 @@ static void iremm15_drawgfx(struct osd_bitmap *bitmap, int ch,
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void iremm15_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	if (full_refresh)

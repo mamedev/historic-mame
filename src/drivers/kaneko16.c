@@ -25,7 +25,7 @@ CUSTOM :  VU-001 046A                  (48pin PQFP)
 ---------------------------------------------------------------------------
 Year + Game					PCB			Notes
 ---------------------------------------------------------------------------
-91	The Berlin Wall						Encrypted ROMs -> wrong background colors
+91	The Berlin Wall
 	Magical Crystals		Z00FC-02
 92	Bakuretsu Breaker					Incomplete dump (gfx+sfx missing)
 	Blaze On							2 Sprites Chips !?
@@ -38,10 +38,6 @@ Year + Game					PCB			Notes
 Note: gtmr manual shows "Compatible with AX Kaneko System Board"
 
 To Do:
-
-[berlwall]
-
-- Fix colors of the high color background (encrypted)
 
 [gtmr]
 
@@ -793,7 +789,8 @@ static MEMORY_WRITE16_START( berlwall_writemem )
 	{ 0x800400, 0x800401, OKIM6295_data_0_lsb_w								},
 	{ 0xc00000, 0xc00fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers
 	{ 0xc01000, 0xc01fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0xc02000, 0xc03fff, MWA16_RAM											},	//
+	{ 0xc02000, 0xc02fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
+	{ 0xc03000, 0xc03fff, MWA16_RAM, &kaneko16_vscroll_0,					},	//
 	{ 0xd00000, 0xd0001f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers Regs
 MEMORY_END
 
@@ -829,10 +826,12 @@ static MEMORY_WRITE16_START( bakubrkr_writemem )
 	{ 0x400200, 0x40021f, kaneko16_YM2149_1_w								},	//
 	{ 0x500000, 0x500fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x501000, 0x501fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0x502000, 0x503fff, MWA16_RAM											},	//
+	{ 0x502000, 0x502fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
+	{ 0x503000, 0x503fff, MWA16_RAM, &kaneko16_vscroll_0,					},	//
 	{ 0x580000, 0x580fff, kaneko16_vram_3_w, &kaneko16_vram_3				},	// Layers 1
 	{ 0x581000, 0x581fff, kaneko16_vram_2_w, &kaneko16_vram_2				},	//
-	{ 0x582000, 0x583fff, MWA16_RAM											},	//
+	{ 0x582000, 0x582fff, MWA16_RAM, &kaneko16_vscroll_3,					},	//
+	{ 0x583000, 0x583fff, MWA16_RAM, &kaneko16_vscroll_2,					},	//
 	{ 0x600000, 0x601fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
 	{ 0x700000, 0x700fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x900000, 0x90001f, kaneko16_sprites_regs_w,  &kaneko16_sprites_regs	},	// Sprites Regs
@@ -871,7 +870,8 @@ static MEMORY_WRITE16_START( blazeon_writemem )
 	{ 0x500000, 0x500fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x600000, 0x600fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x601000, 0x601fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0x602000, 0x603fff, MWA16_RAM											},	//
+	{ 0x602000, 0x602fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
+	{ 0x603000, 0x603fff, MWA16_RAM, &kaneko16_vscroll_0,					},	//
 	{ 0x700000, 0x700fff, MWA16_RAM, &spriteram16,	&spriteram_size			},	// Sprites
 	{ 0x800000, 0x80001f, kaneko16_layers_0_regs_w,	&kaneko16_layers_0_regs	},	// Layers 1 Regs
 	{ 0x900000, 0x90001f, kaneko16_sprites_regs_w,	&kaneko16_sprites_regs	},	// Sprites Regs #1
@@ -1004,10 +1004,12 @@ static MEMORY_WRITE16_START( gtmr_writemem )
 	{ 0x400000, 0x401fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
 	{ 0x500000, 0x500fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x501000, 0x501fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0x502000, 0x503fff, MWA16_RAM											},	//
+	{ 0x502000, 0x502fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
+	{ 0x503000, 0x503fff, MWA16_RAM, &kaneko16_vscroll_0,					},	//
 	{ 0x580000, 0x580fff, kaneko16_vram_3_w, &kaneko16_vram_3				},	// Layers 1
 	{ 0x581000, 0x581fff, kaneko16_vram_2_w, &kaneko16_vram_2				},	//
-	{ 0x582000, 0x583fff, MWA16_RAM											},	//
+	{ 0x582000, 0x582fff, MWA16_RAM, &kaneko16_vscroll_3,					},	//
+	{ 0x583000, 0x583fff, MWA16_RAM, &kaneko16_vscroll_2,					},	//
 	{ 0x600000, 0x60000f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers 0 Regs
 	{ 0x680000, 0x68000f, kaneko16_layers_1_regs_w, &kaneko16_layers_1_regs	},	// Layers 1 Regs
 	{ 0x700000, 0x70001f, kaneko16_sprites_regs_w, &kaneko16_sprites_regs	},	// Sprites Regs
@@ -1053,10 +1055,12 @@ static MEMORY_WRITE16_START( mgcrystl_writemem )
 	{ 0x500000, 0x500fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x600000, 0x600fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
 	{ 0x601000, 0x601fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0x602000, 0x603fff, MWA16_RAM											},	//
+	{ 0x602000, 0x602fff, MWA16_RAM, &kaneko16_vscroll_1,					},	//
+	{ 0x603000, 0x603fff, MWA16_RAM, &kaneko16_vscroll_0,					},	//
 	{ 0x680000, 0x680fff, kaneko16_vram_3_w, &kaneko16_vram_3				},	// Layers 1
 	{ 0x681000, 0x681fff, kaneko16_vram_2_w, &kaneko16_vram_2				},	//
-	{ 0x682000, 0x683fff, MWA16_RAM											},	//
+	{ 0x682000, 0x682fff, MWA16_RAM, &kaneko16_vscroll_3,					},	//
+	{ 0x683000, 0x683fff, MWA16_RAM, &kaneko16_vscroll_2,					},	//
 	{ 0x700000, 0x701fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
 	{ 0x800000, 0x80001f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers 0 Regs
 	{ 0x900000, 0x90001f, kaneko16_sprites_regs_w,  &kaneko16_sprites_regs	},	// Sprites Regs
@@ -1140,7 +1144,8 @@ static MEMORY_WRITE16_START( sandscrp_writemem )
 	{ 0x100000, 0x100001, sandscrp_irq_cause_w					},	// IRQ Ack
 	{ 0x400000, 0x400fff, kaneko16_vram_1_w, &kaneko16_vram_1	},	// Layers 0
 	{ 0x401000, 0x401fff, kaneko16_vram_0_w, &kaneko16_vram_0	},	//
-	{ 0x402000, 0x403fff, MWA16_RAM								},	//
+	{ 0x402000, 0x402fff, MWA16_RAM, &kaneko16_vscroll_1,		},	//
+	{ 0x403000, 0x403fff, MWA16_RAM, &kaneko16_vscroll_0,		},	//
 	{ 0x500000, 0x501fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x600000, 0x600fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xa00000, 0xa00001, sandscrp_coin_counter_w				},	// Coin Counters (Lockout unused)
@@ -1194,10 +1199,11 @@ static MEMORY_WRITE16_START( shogwarr_writemem )
 	{ 0x380000, 0x380fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x400000, 0x400001, OKIM6295_data_0_lsb_w					},	// Samples
 	{ 0x480000, 0x480001, OKIM6295_data_1_lsb_w					},
-	{ 0x580000, 0x581fff, MWA16_RAM, &spriteram16, &spriteram_size			},	// Sprites
-	{ 0x600000, 0x600fff, kaneko16_vram_1_w, &kaneko16_vram_1				},	// Layers 0
-	{ 0x601000, 0x601fff, kaneko16_vram_0_w, &kaneko16_vram_0				},	//
-	{ 0x602000, 0x603fff, MWA16_RAM											},	//
+	{ 0x580000, 0x581fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x600000, 0x600fff, kaneko16_vram_1_w, &kaneko16_vram_1		},	// Layers 0
+	{ 0x601000, 0x601fff, kaneko16_vram_0_w, &kaneko16_vram_0		},	//
+	{ 0x602000, 0x602fff, MWA16_RAM, &kaneko16_vscroll_1,			},	//
+	{ 0x603000, 0x603fff, MWA16_RAM, &kaneko16_vscroll_0,			},	//
 	{ 0x800000, 0x80000f, kaneko16_layers_0_regs_w, &kaneko16_layers_0_regs	},	// Layers 1 Regs
 	{ 0x900000, 0x90001f, kaneko16_sprites_regs_w, &kaneko16_sprites_regs		},	// Sprites Regs
 	{ 0xa80000, 0xa80001, watchdog_reset16_w					},	// Watchdog
@@ -3095,14 +3101,6 @@ ROM_START( sandscrp )
 	ROM_LOAD( "sandsc07.bin", 0x000000, 0x040000, 0x9870ab12 )
 ROM_END
 
-void init_sandscrp(void)
-{
-	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
-
-	// $100->0 (fix the bg x scroll being 100 pixels off during game only!)
-	RAM[0x13ee/2] = 0x0000;
-}
-
 
 /***************************************************************************
 
@@ -3218,7 +3216,7 @@ GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall, ROT0,  "Kaneko", "
 GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 2)" )
 GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (Japan)" )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16, ROT0,  "Atlus",  "Blaze On (Japan)" )
-GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, sandscrp, ROT90, "Face",   "Sand Scorpion" )
+GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "Sand Scorpion" )
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
 GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
 GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )

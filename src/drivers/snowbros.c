@@ -11,8 +11,8 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

@@ -109,7 +109,7 @@
 /*************************************************************/
 int deadeye_vh_start(void);
 int gypsyjug_vh_start(void);
-void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void meadows_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( meadows_videoram_w );
 WRITE_HANDLER( meadows_sprite_w );
 

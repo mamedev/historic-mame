@@ -157,7 +157,7 @@ WRITE16_HANDLER( ultraman_gfxctrl_w )
 
 ***************************************************************************/
 
-void ultraman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ultraman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K051316_zoom_draw_2(bitmap,0,0);
 	K051316_zoom_draw_1(bitmap,0,0);

@@ -19,8 +19,8 @@ WRITE_HANDLER( vigilant_sprite_paletteram_w );
 WRITE_HANDLER( vigilant_horiz_scroll_w );
 WRITE_HANDLER( vigilant_rear_horiz_scroll_w );
 WRITE_HANDLER( vigilant_rear_color_w );
-void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void vigilant_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void kikcubic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 WRITE_HANDLER( vigilant_bank_select_w )

@@ -280,7 +280,7 @@ WRITE_HANDLER( fromance_crtc_register_w )
  *
  *************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int draw_priority)
+static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
 {
 	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;
@@ -385,7 +385,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int draw_priority)
  *
  *************************************/
 
-void fromance_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void fromance_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap, 0, scrollx[0]);
 	tilemap_set_scrolly(bg_tilemap, 0, scrolly[0]);
@@ -397,7 +397,7 @@ void fromance_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void pipedrm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* there seems to be no logical mapping for the X scroll register -- maybe it's gone */
 	tilemap_set_scrolly(bg_tilemap, 0, scrolly[1]);

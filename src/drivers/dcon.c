@@ -23,7 +23,7 @@ WRITE16_HANDLER( dcon_text_w );
 WRITE16_HANDLER( dcon_control_w );
 
 int dcon_vh_start(void);
-void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
 

@@ -53,7 +53,7 @@ WRITE_HANDLER( tsamurai_textbank2_w );
 
 WRITE_HANDLER( tsamurai_scrolly_w );
 WRITE_HANDLER( tsamurai_scrollx_w );
-extern void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern void tsamurai_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 WRITE_HANDLER( tsamurai_bg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_colorram_w );
@@ -61,7 +61,7 @@ extern int tsamurai_vh_start( void );
 extern unsigned char *tsamurai_videoram;
 
 extern int vsgongf_vh_start( void );
-extern void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+extern void vsgongf_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 
 static struct AY8910interface ay8910_interface =
 {

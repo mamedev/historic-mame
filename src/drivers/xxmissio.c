@@ -11,7 +11,7 @@ XX Mission (c) 1986 UPL
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void xxmissio_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void xxmissio_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern UINT8 *xxmissio_fgram;
 extern size_t xxmissio_fgram_size;

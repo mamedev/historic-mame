@@ -60,7 +60,7 @@ WRITE_HANDLER( exzisus_videoram_1_w );
 WRITE_HANDLER( exzisus_objectram_0_w );
 WRITE_HANDLER( exzisus_objectram_1_w );
 
-void exzisus_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void exzisus_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 /***************************************************************************

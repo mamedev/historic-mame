@@ -108,7 +108,7 @@ void ajax_vh_stop( void )
 
 ***************************************************************************/
 
-void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void ajax_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	K052109_tilemap_update();
 

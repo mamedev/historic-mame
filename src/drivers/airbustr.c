@@ -203,7 +203,7 @@ WRITE_HANDLER( airbustr_bgram_w );
 WRITE_HANDLER( airbustr_fgram_w );
 WRITE_HANDLER( airbustr_scrollregs_w );
 extern int  airbustr_vh_start(void);
-extern void airbustr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void airbustr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* Debug stuff (bound to go away sometime) */
 int u1, u2, u3, u4;

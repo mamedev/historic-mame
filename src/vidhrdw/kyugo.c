@@ -48,7 +48,7 @@ WRITE_HANDLER( kyugo_flipscreen_w )
 
 
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	/* sprite information is scattered through memory */
 	/* and uses a portion of the text layer memory (outside the visible area) */
@@ -100,7 +100,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 
 
-void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kyugo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	const UINT8 *color_codes = memory_region(REGION_PROMS) + 0x300;

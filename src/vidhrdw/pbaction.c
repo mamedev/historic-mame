@@ -14,7 +14,7 @@ unsigned char *pbaction_videoram2,*pbaction_colorram2;
 WRITE_HANDLER( pbaction_videoram2_w );
 WRITE_HANDLER( pbaction_colorram2_w );
 static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static int scroll;
 static int flipscreen;
 
@@ -107,12 +107,12 @@ WRITE_HANDLER( pbaction_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void pbaction_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

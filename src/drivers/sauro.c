@@ -75,7 +75,7 @@ TODO
 unsigned char *sauro_videoram2;
 unsigned char *sauro_colorram2;
 
-void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void sauro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( sauro_scroll1_w );
 WRITE_HANDLER( sauro_scroll2_w );

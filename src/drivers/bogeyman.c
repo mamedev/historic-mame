@@ -15,7 +15,7 @@
 #include "cpu/m6502/m6502.h"
 
 void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void bogeyman_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int bogeyman_vh_start(void);
 void bogeyman_vh_stop(void);
 WRITE_HANDLER( bogeyman_paletteram_w );

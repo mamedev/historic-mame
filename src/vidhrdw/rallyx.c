@@ -17,7 +17,7 @@ size_t rallyx_radarram_size;
 unsigned char *rallyx_scrollx,*rallyx_scrolly;
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap1;
+static struct mame_bitmap *tmpbitmap1;
 static int flipscreen;
 
 
@@ -235,13 +235,13 @@ WRITE_HANDLER( rallyx_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rallyx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
@@ -410,7 +410,7 @@ const int displacement = 1;
 
 
 
-void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jungler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
@@ -536,7 +536,7 @@ const int displacement = 0;
 
 
 
-void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 
@@ -678,7 +678,7 @@ if (flipscreen) sx += 32;
 
 
 
-void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
 

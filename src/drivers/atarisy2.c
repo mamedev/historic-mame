@@ -149,7 +149,7 @@ void atarisys2_scanline_update(int scanline);
 
 int atarisys2_vh_start(void);
 void atarisys2_vh_stop(void);
-void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void atarisys2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern data16_t *atarisys2_slapstic;
 

@@ -27,6 +27,11 @@ Note:	if MAME_DEBUG is defined, pressing:
 		Layer Size:				512 x 512
 		Tiles:					16 x 16 x 4
 
+		Line scroll is supported by the chip: each layer has RAM
+		for 512 horizontal scroll offsets (one per tilemap line)
+		that are added to the global scroll values.
+		See e.g. blazeon (2nd demo level), mgcrystl, sandscrp.
+
 	[ 1024 Sprites ]
 
 		Sprites are 16 x 16 x 4 in the older games, 16 x 16 x 8 in
@@ -40,8 +45,10 @@ Note:	if MAME_DEBUG is defined, pressing:
 
 struct tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;
 struct tilemap *kaneko16_tmap_2, *kaneko16_tmap_3;
-data16_t *kaneko16_vram_0, *kaneko16_vram_1, *kaneko16_layers_0_regs;
-data16_t *kaneko16_vram_2, *kaneko16_vram_3, *kaneko16_layers_1_regs;
+data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
+data16_t *kaneko16_vscroll_0, *kaneko16_vscroll_1;
+data16_t *kaneko16_vram_2,    *kaneko16_vram_3,    *kaneko16_layers_1_regs;
+data16_t *kaneko16_vscroll_2, *kaneko16_vscroll_3;
 
 
 int kaneko16_sprite_type;
@@ -51,7 +58,7 @@ data16_t *kaneko16_sprites_regs;
 
 
 data16_t *kaneko16_bg15_select, *kaneko16_bg15_reg;
-static struct osd_bitmap *kaneko16_bg15_bitmap;
+static struct mame_bitmap *kaneko16_bg15_bitmap;
 
 struct tempsprite
 {
@@ -166,6 +173,10 @@ int kaneko16_vh_start_1xVIEW2(void)
 
 		tilemap_set_transparent_pen(kaneko16_tmap_0, 0);
 		tilemap_set_transparent_pen(kaneko16_tmap_1, 0);
+
+		tilemap_set_scroll_rows(kaneko16_tmap_0, 0x200);	// Line Scroll
+		tilemap_set_scroll_rows(kaneko16_tmap_1, 0x200);
+
 		return 0;
 	}
 }
@@ -207,6 +218,10 @@ int kaneko16_vh_start_2xVIEW2(void)
 
 		tilemap_set_transparent_pen(kaneko16_tmap_2, 0);
 		tilemap_set_transparent_pen(kaneko16_tmap_3, 0);
+
+		tilemap_set_scroll_rows(kaneko16_tmap_2, 0x200);	// Line Scroll
+		tilemap_set_scroll_rows(kaneko16_tmap_3, 0x200);
+
 		return 0;
 	}
 }
@@ -468,7 +483,7 @@ int kaneko16_parse_sprite_type3(int i, struct tempsprite *s)
 
 /* Build a list of sprites to display & draw them */
 
-void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int pri)
+void kaneko16_draw_sprites(struct mame_bitmap *bitmap, int pri)
 {
 	/* Sprites *must* be parsed from the first in RAM to the last,
 	   because of the multisprite feature. But they *must* be drawn
@@ -711,14 +726,14 @@ WRITE16_HANDLER( kaneko16_sprites_regs_w )
 
 					fed- ---- ---- ----
 					---c ---- ---- ----		BG Disable
-					---- b--- ---- ----		? Always 1 in berlwall & bakubrkr ?
+					---- b--- ---- ----		Line Scroll (Always 1 in berlwall & bakubrkr)
 					---- -a-- ---- ----		? Always 1 in gtmr     & bakubrkr ?
 					---- --9- ---- ----		BG Flip X
 					---- ---8 ---- ----		BG Flip Y
 
 					---- ---- 765- ----
 					---- ---- ---4 ----		FG Disable
-					---- ---- ---- 3---		? Always 1 in berlwall & bakubrkr ?
+					---- ---- ---- 3---		Line Scroll (Always 1 in berlwall & bakubrkr)
 					---- ---- ---- -2--		? Always 1 in gtmr     & bakubrkr ?
 					---- ---- ---- --1-		FG Flip X
 					---- ---- ---- ---0		FG Flip Y
@@ -790,11 +805,14 @@ WRITE16_HANDLER( kaneko16_bg15_reg_w )
 
 ***************************************************************************/
 
-void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kaneko16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layers_flip_0, layers_flip_1 = 0;
 	int layers_ctrl = -1;
 	int i,flag;
+
+	data16_t layer0_scrollx, layer0_scrolly;
+	data16_t layer1_scrollx, layer1_scrolly;
 
 	layers_flip_0 = kaneko16_layers_0_regs[ 4 ];
 	if (kaneko16_tmap_2)
@@ -825,16 +843,41 @@ void kaneko16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Scroll layers */
-	tilemap_set_scrollx(kaneko16_tmap_0, 0, kaneko16_layers_0_regs[ 2 ] >> 6 );
-	tilemap_set_scrolly(kaneko16_tmap_0, 0, kaneko16_layers_0_regs[ 3 ] >> 6 );
-	tilemap_set_scrollx(kaneko16_tmap_1, 0, kaneko16_layers_0_regs[ 0 ] >> 6 );
-	tilemap_set_scrolly(kaneko16_tmap_1, 0, kaneko16_layers_0_regs[ 1 ] >> 6 );
+	layer0_scrollx		=	kaneko16_layers_0_regs[ 2 ];
+	layer0_scrolly		=	kaneko16_layers_0_regs[ 3 ] >> 6;
+	layer1_scrollx		=	kaneko16_layers_0_regs[ 0 ];
+	layer1_scrolly		=	kaneko16_layers_0_regs[ 1 ] >> 6;
+
+	tilemap_set_scrolly(kaneko16_tmap_0,0,layer0_scrolly);
+	tilemap_set_scrolly(kaneko16_tmap_1,0,layer1_scrolly);
+
+	for (i=0; i<0x200; i++)
+	{
+		data16_t scroll;
+		scroll = (layers_flip_0 & 0x0800) ? kaneko16_vscroll_0[i] : 0;
+		tilemap_set_scrollx(kaneko16_tmap_0,i,(layer0_scrollx + scroll) >> 6 );
+		scroll = (layers_flip_0 & 0x0008) ? kaneko16_vscroll_1[i] : 0;
+		tilemap_set_scrollx(kaneko16_tmap_1,i,(layer1_scrollx + scroll) >> 6 );
+	}
+
 	if (kaneko16_tmap_2)
 	{
-	tilemap_set_scrollx(kaneko16_tmap_2, 0, kaneko16_layers_1_regs[ 2 ] >> 6 );
-	tilemap_set_scrolly(kaneko16_tmap_2, 0, kaneko16_layers_1_regs[ 3 ] >> 6 );
-	tilemap_set_scrollx(kaneko16_tmap_3, 0, kaneko16_layers_1_regs[ 0 ] >> 6 );
-	tilemap_set_scrolly(kaneko16_tmap_3, 0, kaneko16_layers_1_regs[ 1 ] >> 6 );
+	layer0_scrollx		=	kaneko16_layers_1_regs[ 2 ];
+	layer0_scrolly		=	kaneko16_layers_1_regs[ 3 ] >> 6;
+	layer1_scrollx		=	kaneko16_layers_1_regs[ 0 ];
+	layer1_scrolly		=	kaneko16_layers_1_regs[ 1 ] >> 6;
+
+	tilemap_set_scrolly(kaneko16_tmap_2,0,layer0_scrolly);
+	tilemap_set_scrolly(kaneko16_tmap_3,0,layer1_scrolly);
+
+	for (i=0; i<0x200; i++)
+	{
+		data16_t scroll;
+		scroll = (layers_flip_1 & 0x0800) ? kaneko16_vscroll_2[i] : 0;
+		tilemap_set_scrollx(kaneko16_tmap_2,i,(layer0_scrollx + scroll) >> 6 );
+		scroll = (layers_flip_1 & 0x0008) ? kaneko16_vscroll_3[i] : 0;
+		tilemap_set_scrollx(kaneko16_tmap_3,i,(layer1_scrollx + scroll) >> 6 );
+	}
 	}
 
 #ifdef MAME_DEBUG

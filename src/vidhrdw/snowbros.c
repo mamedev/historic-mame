@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int x=0,y=0,offs;
 
@@ -80,7 +80,7 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void wintbob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

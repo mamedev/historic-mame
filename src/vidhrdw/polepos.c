@@ -20,7 +20,7 @@ static const UINT8 *road_control;
 static const UINT8 *road_bits1;
 static const UINT8 *road_bits2;
 
-static struct osd_bitmap *view_bitmap;
+static struct mame_bitmap *view_bitmap;
 static UINT8 *view_dirty;
 
 
@@ -307,7 +307,7 @@ WRITE_HANDLER( polepos_alpha_w )
 
 ***************************************************************************/
 
-static void draw_view(struct osd_bitmap *bitmap)
+static void draw_view(struct mame_bitmap *bitmap)
 {
 	struct rectangle clip = Machine->visible_area;
 	int x, y, offs;
@@ -332,7 +332,7 @@ static void draw_view(struct osd_bitmap *bitmap)
 	copyscrollbitmap(bitmap, view_bitmap, 1, &x, 0, 0, &clip, TRANSPARENCY_NONE, 0);
 }
 
-static void draw_road(struct osd_bitmap *bitmap)
+static void draw_road(struct mame_bitmap *bitmap)
 {
 	int x, y, i;
 
@@ -404,7 +404,7 @@ static void draw_road(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	data16_t *posmem = &polepos_sprite16_memory[0x380];
 	data16_t *sizmem = &polepos_sprite16_memory[0x780];
@@ -428,7 +428,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_alpha(struct osd_bitmap *bitmap)
+static void draw_alpha(struct mame_bitmap *bitmap)
 {
 	int x, y, offs, in;
 
@@ -478,7 +478,7 @@ static void draw_alpha(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void polepos_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void polepos_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	draw_view(bitmap);
 	draw_road(bitmap);

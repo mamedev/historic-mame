@@ -41,7 +41,7 @@ static int sailorws_screen_refresh;
 static int sailorws_gfxflag2;
 static int gfxdraw_mode;
 
-static struct osd_bitmap *sailorws_tmpbitmap0, *sailorws_tmpbitmap1;
+static struct mame_bitmap *sailorws_tmpbitmap0, *sailorws_tmpbitmap1;
 static unsigned short *sailorws_videoram0, *sailorws_videoram1;
 static unsigned short *sailorws_videoworkram0, *sailorws_videoworkram1;
 static unsigned char *sailorws_palette, *mscoutm_palette;
@@ -788,7 +788,7 @@ void mscoutm_vh_stop(void)
 
 
 ******************************************************************************/
-void sailorws_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned short color;
@@ -869,7 +869,7 @@ void sailorws_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void mscoutm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned short color;

@@ -14,7 +14,7 @@ unsigned char *zaxxon_char_color_bank;
 unsigned char *zaxxon_background_position;
 unsigned char *zaxxon_background_color_bank;
 unsigned char *zaxxon_background_enable;
-static struct osd_bitmap *backgroundbitmap1,*backgroundbitmap2;
+static struct mame_bitmap *backgroundbitmap1,*backgroundbitmap2;
 static const unsigned char *color_codes;
 
 int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
@@ -96,14 +96,14 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 ***************************************************************************/
 
-static void copy_pixel(struct osd_bitmap *dst_bm, int dx, int dy,
-					   struct osd_bitmap *src_bm, int sx, int sy)
+static void copy_pixel(struct mame_bitmap *dst_bm, int dx, int dy,
+					   struct mame_bitmap *src_bm, int sx, int sy)
 {
 	plot_pixel(dst_bm, dx, dy, read_pixel(src_bm, sx, sy));
 }
 
 
-static void create_background(struct osd_bitmap *dst_bm, struct osd_bitmap *src_bm, int col)
+static void create_background(struct mame_bitmap *dst_bm, struct mame_bitmap *src_bm, int col)
 {
 	int offs;
 	int sx,sy;
@@ -152,7 +152,7 @@ static void create_background(struct osd_bitmap *dst_bm, struct osd_bitmap *src_
 
 int zaxxon_vh_start(void)
 {
-	struct osd_bitmap *prebitmap;
+	struct mame_bitmap *prebitmap;
 	int width, height;
 
 
@@ -278,13 +278,13 @@ void zaxxon_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -297,8 +297,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		                             * -V-
 		                             */
 
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
 		/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
 		/* The number of active sprites is stored at 0xc032 */
 
@@ -322,8 +320,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 	else if (zaxxon_vid_type == FUTSPY_VID)
 	{
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
 		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		{
 			if (spriteram[offs] != 0xff)
@@ -339,24 +335,38 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 	else
 	{
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
 		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 		{
 			if (spriteram[offs] != 0xff)
 			{
-					drawgfx(bitmap,Machine->gfx[2],
+				int sx,sy,flipx,flipy;
+
+
+				sx = ((spriteram[offs+3] + 16) & 0xff) - 32;
+				sy = 255 - spriteram[offs] - 16;
+				flipx = spriteram[offs+1] & 0x40;
+				flipy = spriteram[offs+1] & 0x80;
+
+				if (flip_screen)
+				{
+					flipx = !flipx;
+					flipy = !flipy;
+					sx = 223 - sx;
+					sy = 224 - sy;
+				}
+
+				drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+1] & 0x3f,
 						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
-						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						flipx,flipy,
+						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
 }
 
-void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -375,10 +385,15 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (Machine->orientation & ORIENTATION_SWAP_XY)
 		{
 			/* standard rotation - skew background horizontally */
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = 1023+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
+			if (!flip_screen)
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = 1023+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
+				else
+					scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+			}
 			else
-				scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+				scroll = (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7)) - 32;
 
 			skew = 128 - 512 + 2 * Machine->visible_area.min_x;
 
@@ -392,9 +407,9 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 					 && (*zaxxon_background_color_bank & 1))
-					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+					copybitmap(bitmap,backgroundbitmap2,flip_screen,flip_screen,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
 				else
-					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+					copybitmap(bitmap,backgroundbitmap1,flip_screen,flip_screen,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
 
 				skew += 2;
 			}
@@ -402,12 +417,17 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		else
 		{
 			/* skew background up one pixel every 2 horizontal pixels */
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
-					- backgroundbitmap1->height + 256;
+			if (!flip_screen_y)
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
+							- backgroundbitmap1->height + 256;
+				else
+					scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
+							- backgroundbitmap1->height + 256;
+			}
 			else
-				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
-					- backgroundbitmap1->height + 256;
+				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
 
 			skew = 72 - (255 - Machine->visible_area.max_y);
 
@@ -421,9 +441,9 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 					 && (*zaxxon_background_color_bank & 1))
-					copybitmap(bitmap,backgroundbitmap2,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
+					copybitmap(bitmap,backgroundbitmap2,flip_screen,flip_screen,skew,scroll,&clip,TRANSPARENCY_NONE,0);
 				else
-					copybitmap(bitmap,backgroundbitmap1,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
+					copybitmap(bitmap,backgroundbitmap1,flip_screen,flip_screen,skew,scroll,&clip,TRANSPARENCY_NONE,0);
 
 				skew--;
 			}
@@ -451,16 +471,22 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* not sure about the color code calculation - char_color_bank is used only in test mode */
 			color =	(color_codes[sx + 32 * (sy/4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
-void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -505,7 +531,7 @@ void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void ixion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

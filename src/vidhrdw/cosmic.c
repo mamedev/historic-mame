@@ -269,7 +269,7 @@ WRITE_HANDLER( cosmica_videoram_w )
 }
 
 
-void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cosmicg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{
@@ -285,7 +285,7 @@ void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void panic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -330,7 +330,7 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cosmica_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -376,7 +376,7 @@ void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void magspot2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -422,7 +422,7 @@ void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void nomnlnd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

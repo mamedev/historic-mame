@@ -103,8 +103,8 @@ WRITE_HANDLER( wiz_flipx_w );
 WRITE_HANDLER( wiz_flipy_w );
 int  wiz_vh_start(void);
 void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wiz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void stinger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static READ_HANDLER( wiz_protection_r )

@@ -28,11 +28,11 @@ void konami1_decode(void);
 extern unsigned char *trackfld_scroll;
 extern unsigned char *trackfld_scroll2;
 void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void trackfld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int trackfld_vh_start(void);
 void trackfld_vh_stop(void);
 
-void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hyperspt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( konami_sh_irqtrigger_w );
 READ_HANDLER( trackfld_sh_timer_r );

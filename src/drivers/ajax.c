@@ -30,7 +30,7 @@ int ajax_interrupt( void );
 /* from vidhrdw/ajax.c */
 int ajax_vh_start( void );
 void ajax_vh_stop( void );
-void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void ajax_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 
 /****************************************************************************/
 

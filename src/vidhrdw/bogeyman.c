@@ -68,7 +68,7 @@ WRITE_HANDLER( bogeyman_videoram_w )
 	dirtybuffer[offset]=1;
 }
 
-void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void bogeyman_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int mx,my,offs,color,tile,bank,sx,sy,flipx,flipy,multi;
 

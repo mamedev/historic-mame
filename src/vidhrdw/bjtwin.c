@@ -14,7 +14,7 @@ static int bioship_background_bank;
 static UINT8 bioship_scroll[4];
 
 static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
-static struct osd_bitmap *background_bitmap;
+static struct mame_bitmap *background_bitmap;
 
 /***************************************************************************
 
@@ -384,7 +384,7 @@ WRITE16_HANDLER( gunnail_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int priority, int pri_mask)
+static void draw_sprites(struct mame_bitmap *bitmap, int priority, int pri_mask)
 {
 	int offs;
 
@@ -435,7 +435,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int priority, int pri_mask)
 	}
 }
 
-void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void macross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
 
@@ -444,7 +444,7 @@ void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gunnail_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 
@@ -455,7 +455,7 @@ void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	macross_vh_screenrefresh(bitmap,full_refresh);
 }
 
-void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bioship_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	data16_t *tilerom = (data16_t *)memory_region(REGION_GFX5);
 	int scrollx=-(bioship_scroll[1] + bioship_scroll[0]*256);
@@ -504,7 +504,7 @@ void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void strahl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
 
@@ -514,7 +514,7 @@ void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bjtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,-videoshift);
 

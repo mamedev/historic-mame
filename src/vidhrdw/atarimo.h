@@ -29,7 +29,7 @@
 ##########################################################################*/
 
 /* callback for special processing */
-typedef void (*atarimo_special_cb)(struct osd_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos);
+typedef void (*atarimo_special_cb)(struct mame_bitmap *bitmap, struct rectangle *clip, int code, int color, int xpos, int ypos);
 
 /* description for a four-word mask */
 struct atarimo_entry
@@ -88,7 +88,7 @@ UINT8 *atarimo_get_color_lookup(int map, int *size);
 UINT8 *atarimo_get_gfx_lookup(int map, int *size);
 
 /* core processing */
-void atarimo_render(int map, struct osd_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2);
+void atarimo_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2);
 void atarimo_force_update(int map, int scanline);
 
 /* atrribute setters */

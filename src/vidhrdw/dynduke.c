@@ -155,7 +155,7 @@ WRITE_HANDLER( dynduke_control_w )
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 
@@ -193,7 +193,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 	}
 }
 
-void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dynduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrolly( bg_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );

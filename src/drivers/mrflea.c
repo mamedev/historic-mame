@@ -57,7 +57,7 @@ extern WRITE_HANDLER( mrflea_gfx_bank_w );
 extern WRITE_HANDLER( mrflea_videoram_w );
 extern WRITE_HANDLER( mrflea_spriteram_w );
 extern int mrflea_vh_start( void );
-extern void mrflea_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
+extern void mrflea_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
 
 static struct AY8910interface ay8910_interface = {
 	3,	/* 3 chips */

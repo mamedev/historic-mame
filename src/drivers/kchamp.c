@@ -68,7 +68,7 @@ IO ports and memory map changes. Dip switches differ too.
 
 /* from vidhrdw */
 extern void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void kchamp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void kchamp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int kchampvs_vh_start(void);
 extern int kchamp1p_vh_start(void);
 

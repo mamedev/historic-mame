@@ -57,12 +57,12 @@ WRITE_HANDLER( funkybee_gfx_bank_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap)
+static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitmap)
 {
 	int sx,sy;
 
@@ -109,7 +109,7 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap)
 }
 
 
-void funkybee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void funkybee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

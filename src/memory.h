@@ -710,10 +710,12 @@ DECLARE_MEM_HANDLERS_16BIT_BE(32)
 /* ----- declare 16-bit littleendian handlers ----- */
 DECLARE_MEM_HANDLERS_16BIT_LE(16)
 DECLARE_MEM_HANDLERS_16BIT_LE(17)
+DECLARE_MEM_HANDLERS_16BIT_LE(24)
 DECLARE_MEM_HANDLERS_16BIT_LE(29)
 DECLARE_MEM_HANDLERS_16BIT_LE(32)
 #define change_pc16lew(pc)		change_pc_generic(pc, 16, 1, cpu_setopbase16lew)
 #define change_pc17lew(pc)		change_pc_generic(pc, 17, 1, cpu_setopbase17lew)
+#define change_pc24lew(pc)		change_pc_generic(pc, 24, 1, cpu_setopbase24lew)
 #define change_pc29lew(pc)		change_pc_generic(pc, 29, 1, cpu_setopbase29lew)
 #define change_pc32lew(pc)		change_pc_generic(pc, 32, 1, cpu_setopbase32lew)
 
@@ -752,6 +754,7 @@ DECLARE_PORT_HANDLERS_16BIT_BE(16)
 
 /* ----- declare 16-bit littleendian handlers ----- */
 DECLARE_PORT_HANDLERS_16BIT_LE(16)
+DECLARE_PORT_HANDLERS_16BIT_LE(24)
 
 /* ----- declare 32-bit bigendian handlers ----- */
 DECLARE_PORT_HANDLERS_32BIT_BE(16)

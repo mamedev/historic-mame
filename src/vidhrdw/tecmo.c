@@ -177,7 +177,7 @@ WRITE_HANDLER( tecmo_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 	const UINT8 layout[8][8] =
@@ -254,7 +254,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void tecmo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x100],&Machine->visible_area);

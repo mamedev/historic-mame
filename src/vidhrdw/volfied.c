@@ -2,7 +2,7 @@
 #include "state.h"
 #include "vidhrdw/generic.h"
 
-static struct osd_bitmap* pixel_layer = 0;
+static struct mame_bitmap* pixel_layer = 0;
 
 static UINT16* video_ram = NULL;
 
@@ -120,7 +120,7 @@ WRITE16_HANDLER( volfied_sprite_flip_w )
 				SCREEN REFRESH
 *******************************************************/
 
-static void draw_sprites(struct osd_bitmap* bitmap)
+static void draw_sprites(struct mame_bitmap* bitmap)
 {
 	int offs;
 
@@ -216,7 +216,7 @@ static void refresh_pixel_layer(void)
 	}
 }
 
-void volfied_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void volfied_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	refresh_pixel_layer();
 

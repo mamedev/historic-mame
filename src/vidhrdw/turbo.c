@@ -366,7 +366,7 @@ static void draw_offroad_sprites(UINT32 *dest, int road_column, int scanline)
 }
 
 
-static void draw_scores(struct osd_bitmap *bitmap)
+static void draw_scores(struct mame_bitmap *bitmap)
 {
 	struct rectangle clip;
 	int offs, x, y;
@@ -434,7 +434,7 @@ static void draw_scores(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-static void draw_everything(struct osd_bitmap *bitmap, int yoffs)
+static void draw_everything(struct mame_bitmap *bitmap, int yoffs)
 {
 	UINT8 *overall_priority_base = &overall_priority[(turbo_fbpla & 8) << 6];
 	UINT8 *sprite_priority_base = &sprite_priority[(turbo_fbpla & 7) << 7];
@@ -580,7 +580,7 @@ void turbo_vh_eof(void)
 	drew_frame = 0;
 }
 
-void turbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* update the sprite data */
 	update_sprite_info();

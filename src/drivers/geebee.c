@@ -85,7 +85,7 @@ extern int geebee_vh_start(void);
 extern int navalone_vh_start(void);
 extern int kaitei_vh_start(void);
 extern int sos_vh_start(void);
-extern void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 /* from sndhrdw/geebee.c */
 WRITE_HANDLER( geebee_sound_w );

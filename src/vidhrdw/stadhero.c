@@ -21,7 +21,7 @@ static data16_t stadhero_pf2_control_1[8];
 
 /******************************************************************************/
 
-static void stadhero_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
+static void stadhero_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -86,7 +86,7 @@ static void stadhero_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_
 
 /******************************************************************************/
 
-void stadhero_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void stadhero_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flipscreen=stadhero_pf2_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

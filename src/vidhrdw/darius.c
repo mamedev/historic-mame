@@ -105,7 +105,7 @@ WRITE16_HANDLER( darius_fg_layer_w )
 
 /***************************************************************************/
 
-void darius_draw_sprites(struct osd_bitmap *bitmap,int *primasks, int y_offs)
+void darius_draw_sprites(struct mame_bitmap *bitmap,int *primasks, int y_offs)
 {
 	int offs,curx,cury;
 	UINT16 code,data,sx,sy;
@@ -182,7 +182,7 @@ void darius_draw_sprites(struct osd_bitmap *bitmap,int *primasks, int y_offs)
 
 
 
-void darius_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void darius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[2];
 

@@ -54,12 +54,12 @@ unsigned char *s2636_1_ram;
 unsigned char *s2636_2_ram;
 unsigned char *s2636_3_ram;
 
-struct osd_bitmap *s2636_1_bitmap;
-struct osd_bitmap *s2636_2_bitmap;
-struct osd_bitmap *s2636_3_bitmap;
-struct osd_bitmap *collision_bitmap;
-struct osd_bitmap *collision_background;
-struct osd_bitmap *scrolled_background;
+struct mame_bitmap *s2636_1_bitmap;
+struct mame_bitmap *s2636_2_bitmap;
+struct mame_bitmap *s2636_3_bitmap;
+struct mame_bitmap *collision_bitmap;
+struct mame_bitmap *collision_background;
+struct mame_bitmap *scrolled_background;
 
 static unsigned char s2636_1_dirty[4];
 static unsigned char s2636_2_dirty[4];
@@ -489,7 +489,7 @@ int cvs_interrupt(void)
 	return ignore_interrupt();
 }
 
-INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y)
+INLINE void plot_star(struct mame_bitmap *bitmap, int x, int y)
 {
 	if (flip_screen_x)
 	{
@@ -506,7 +506,7 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y)
 	}
 }
 
-void cvs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cvs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,character;
 	int sx,sy;

@@ -16,7 +16,7 @@ extern unsigned char *shaolins_scroll;
 
 void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( shaolins_palettebank_w );
-void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void shaolins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 int shaolins_interrupt(void)

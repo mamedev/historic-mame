@@ -4930,64 +4930,64 @@ static const struct MachineDriver machine_driver_driveout =									\
 
 ROM_START( finalb )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "b82-09",     0x00000, 0x20000, 0x632f1ecd )
-	ROM_LOAD16_BYTE( "b82-17",     0x00001, 0x20000, 0xe91b2ec9 )
+	ROM_LOAD16_BYTE( "b82_09.10",  0x00000, 0x20000, 0x632f1ecd )
+	ROM_LOAD16_BYTE( "b82_17.11",  0x00001, 0x20000, 0xe91b2ec9 )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD16_BYTE( "b82-06",     0x00000, 0x20000, 0xfc450a25 )
-	ROM_LOAD16_BYTE( "b82-07",     0x00001, 0x20000, 0xec3df577 )
+	ROM_LOAD16_BYTE( "b82-06.19",  0x00000, 0x20000, 0xfc450a25 )
+	ROM_LOAD16_BYTE( "b82-07.18",  0x00001, 0x20000, 0xec3df577 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
-	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-04.4",   0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
 
 	/* Note: this is intentional to load at 0x180000, not at 0x100000
 	   because finalb_driver_init will move some bits around before data
 	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
 	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
 
-	ROM_LOAD       ( "b82-05",     0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format*/
+	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "b82-10",      0x00000, 0x04000, 0xa38aaaed )
+	ROM_LOAD( "b82_10.16",   0x00000, 0x04000, 0xa38aaaed )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b82-02",      0x00000, 0x80000, 0x5dd06bdd )
+	ROM_LOAD( "b82-02.1",    0x00000, 0x80000, 0x5dd06bdd )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b82-01",      0x00000, 0x80000, 0xf0eb6846 )
+	ROM_LOAD( "b82-01.2",    0x00000, 0x80000, 0xf0eb6846 )
 ROM_END
 
 ROM_START( finalbj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "b82-09",     0x00000, 0x20000, 0x632f1ecd )
-	ROM_LOAD16_BYTE( "b82-08",     0x00001, 0x20000, 0x07154fe5 )
+	ROM_LOAD16_BYTE( "b82_09.10",  0x00000, 0x20000, 0x632f1ecd )
+	ROM_LOAD16_BYTE( "b82_08.11",  0x00001, 0x20000, 0x07154fe5 )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD16_BYTE( "b82-06",     0x00000, 0x20000, 0xfc450a25 )
-	ROM_LOAD16_BYTE( "b82-07",     0x00001, 0x20000, 0xec3df577 )
+	ROM_LOAD16_BYTE( "b82-06.19",  0x00000, 0x20000, 0xfc450a25 )
+	ROM_LOAD16_BYTE( "b82-07.18",  0x00001, 0x20000, 0xec3df577 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD16_BYTE( "b82-04",     0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
-	ROM_LOAD16_BYTE( "b82-03",     0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-04.4",   0x000000, 0x80000, 0x6346f98e ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, 0xdaa11561 ) /* sprites 4-bit format*/
 
 	/* Note: this is intentional to load at 0x180000, not at 0x100000
 	   because finalb_driver_init will move some bits around before data
 	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
 	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
 
-	ROM_LOAD       ( "b82-05",     0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format */
+	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, 0xaa90b93a ) /* sprites 2-bit format */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "b82-10",      0x00000, 0x04000, 0xa38aaaed )
+	ROM_LOAD( "b82_10.16",   0x00000, 0x04000, 0xa38aaaed )
 	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "b82-02",      0x00000, 0x80000, 0x5dd06bdd )
+	ROM_LOAD( "b82-02.1",    0x00000, 0x80000, 0x5dd06bdd )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "b82-01",      0x00000, 0x80000, 0xf0eb6846 )
+	ROM_LOAD( "b82-01.2",    0x00000, 0x80000, 0xf0eb6846 )
 ROM_END
 
 ROM_START( dondokod )
@@ -5153,7 +5153,7 @@ ROM_END
 ROM_START( thndfoxu )		/* Thunder Fox */
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
 	ROM_LOAD16_BYTE( "c28-13-1.51",  0x00000, 0x20000, 0xacb07013 )
-	ROM_LOAD16_BYTE( "c28-us-1.40",  0x00001, 0x20000, 0x874a84e1 )
+	ROM_LOAD16_BYTE( "c28-15-1.40",  0x00001, 0x20000, 0x874a84e1 )
 	ROM_LOAD16_BYTE( "c28-08.50",    0x40000, 0x20000, 0x38e038f1 )
 	ROM_LOAD16_BYTE( "c28-07.39",    0x40001, 0x20000, 0x24419abb )
 
@@ -5305,10 +5305,10 @@ ROM_END
 
 ROM_START( liquidk )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
-	ROM_LOAD16_BYTE( "lq11.bin",  0x00001, 0x20000, 0x42d2be6e )
-	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
-	ROM_LOAD16_BYTE( "lq12.bin",  0x40001, 0x20000, 0xcb16bad5 )
+	ROM_LOAD16_BYTE( "c49_09.12",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD16_BYTE( "c49_11.14",  0x00001, 0x20000, 0x42d2be6e )
+	ROM_LOAD16_BYTE( "c49_10.13",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD16_BYTE( "c49_12.15",  0x40001, 0x20000, 0xcb16bad5 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
 	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
@@ -5318,7 +5318,7 @@ ROM_START( liquidk )
 	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
-	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
+	ROM_LOAD( "c49_08.9",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5329,10 +5329,10 @@ ROM_END
 
 ROM_START( liquidku )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
-	ROM_LOAD16_BYTE( "lq11.bin",  0x00001, 0x20000, 0x42d2be6e )
-	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
-	ROM_LOAD16_BYTE( "lq14.bin",  0x40001, 0x20000, 0xbc118a43 )
+	ROM_LOAD16_BYTE( "c49_09.12",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD16_BYTE( "c49_11.14",  0x00001, 0x20000, 0x42d2be6e )
+	ROM_LOAD16_BYTE( "c49_10.13",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD16_BYTE( "c49_14.15",  0x40001, 0x20000, 0xbc118a43 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
 	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
@@ -5342,7 +5342,7 @@ ROM_START( liquidku )
 	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
-	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
+	ROM_LOAD( "c49_08.9",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5353,10 +5353,10 @@ ROM_END
 
 ROM_START( mizubaku )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
-	ROM_LOAD16_BYTE( "lq11.bin",  0x00001, 0x20000, 0x42d2be6e )
-	ROM_LOAD16_BYTE( "lq10.bin",  0x40000, 0x20000, 0x50bef2e0 )
-	ROM_LOAD16_BYTE( "c49-13",    0x40001, 0x20000, 0x2518dbf9 )
+	ROM_LOAD16_BYTE( "c49_09.12",  0x00000, 0x20000, 0x6ae09eb9 )
+	ROM_LOAD16_BYTE( "c49_11.14",  0x00001, 0x20000, 0x42d2be6e )
+	ROM_LOAD16_BYTE( "c49_10.13",  0x40000, 0x20000, 0x50bef2e0 )
+	ROM_LOAD16_BYTE( "c49_13.15",  0x40001, 0x20000, 0x2518dbf9 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
 	ROM_LOAD( "lk_scr.bin",  0x00000, 0x80000, 0xc3364f9b )
@@ -5366,7 +5366,7 @@ ROM_START( mizubaku )
 	ROM_LOAD( "lk_obj1.bin", 0x80000, 0x80000, 0xd2400710 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
-	ROM_LOAD( "lq08.bin",    0x00000, 0x04000, 0x413c310c )
+	ROM_LOAD( "c49_08.9",    0x00000, 0x04000, 0x413c310c )
 	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
@@ -5403,44 +5403,44 @@ ROM_END
 
 ROM_START( ssi )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
-	ROM_LOAD16_BYTE( "ssi_16-1.rom", 0x00001, 0x40000, 0x470a483a )
+	ROM_LOAD16_BYTE( "c64_15-1.bin", 0x00000, 0x40000, 0xce9308a6 )
+	ROM_LOAD16_BYTE( "c64_16-1.bin", 0x00001, 0x40000, 0x470a483a )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* empty! */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "ssi_m01.rom",  0x000000, 0x100000, 0xa1b4f486 )
+	ROM_LOAD( "c64-01.1",     0x000000, 0x100000, 0xa1b4f486 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
-	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
+	ROM_LOAD( "c64_09.13",    0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
+	ROM_LOAD( "c64-02.2",     0x00000, 0x20000, 0x3cb0b907 )
 
 	/* no Delta-T samples */
 ROM_END
 
 ROM_START( majest12 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
-	ROM_LOAD16_BYTE( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )
-	ROM_LOAD16_BYTE( "c64-08.bin", 0x00001, 0x20000, 0xddfd33d5 )
-	ROM_LOAD16_BYTE( "c64-05.bin", 0x40001, 0x20000, 0xb61866c0 )
+	ROM_LOAD16_BYTE( "c64_07.10", 0x00000, 0x20000, 0xf29ed5c9 )
+	ROM_LOAD16_BYTE( "c64_06.4",  0x40000, 0x20000, 0x18dc71ac )
+	ROM_LOAD16_BYTE( "c64_08.11", 0x00001, 0x20000, 0xddfd33d5 )
+	ROM_LOAD16_BYTE( "c64_05.5",  0x40001, 0x20000, 0xb61866c0 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* empty! */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "ssi_m01.rom",  0x000000, 0x100000, 0xa1b4f486 )
+	ROM_LOAD( "c64-01.1",     0x000000, 0x100000, 0xa1b4f486 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		/* sound cpu */
-	ROM_LOAD( "ssi_09.rom",   0x00000, 0x04000, 0x88d7f65c )
+	ROM_LOAD( "c64_09.13",    0x00000, 0x04000, 0x88d7f65c )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
+	ROM_LOAD( "c64-02.2",     0x00000, 0x20000, 0x3cb0b907 )
 
 	/* no Delta-T samples */
 ROM_END
@@ -5723,78 +5723,78 @@ ROM_END
 
 ROM_START( yuyugogo )	/* Yuuyu no QUIZ de GO!GO! */
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c83-10.bin",  0x00000,  0x20000, 0x4d185d03 )
-	ROM_LOAD16_BYTE( "c83-09.bin",  0x00001,  0x20000, 0xf9892792 )
+	ROM_LOAD16_BYTE( "c83_10.3",  0x00000,  0x20000, 0x4d185d03 )
+	ROM_LOAD16_BYTE( "c83_09.2",  0x00001,  0x20000, 0xf9892792 )
 
 	ROM_REGION16_BE( 0x100000, REGION_USER1, 0 )
 	/* extra ROM mapped at d00000 */
-	ROM_LOAD16_WORD_SWAP( "c83-03.bin", 0x000000, 0x100000, 0xeed9acc2 )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "c83-03.10", 0x000000, 0x100000, 0xeed9acc2 )	/* data rom */
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "c83-05.bin", 0x00000, 0x20000, 0xeca57fb1 )
+	ROM_LOAD( "c83-05.21", 0x00000, 0x20000, 0xeca57fb1 )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD16_BYTE( "c83-01.bin", 0x000000, 0x100000, 0x8bf0d416 )
-	ROM_LOAD16_BYTE( "c83-02.bin", 0x000001, 0x100000, 0x20bb1c15 )
+	ROM_LOAD16_BYTE( "c83-01.12",  0x000000, 0x100000, 0x8bf0d416 )
+	ROM_LOAD16_BYTE( "c83-02.11",  0x000001, 0x100000, 0x20bb1c15 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	 /* sound cpu */
-	ROM_LOAD( "c83-11.bin", 0x00000, 0x04000, 0x461e702a )
+	ROM_LOAD( "c83_11.1"  , 0x00000, 0x04000, 0x461e702a )
 	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c83-04.bin",  0x000000, 0x100000, 0x2600093a )
+	ROM_LOAD( "c83-04.5",  0x000000, 0x100000, 0x2600093a )
 
 	/* no Delta-T samples */
 ROM_END
 
 ROM_START( ninjak )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "nk_0h.rom",   0x00000, 0x20000, 0xba7e6e74 )
-	ROM_LOAD16_BYTE( "nk_0l.rom",   0x00001, 0x20000, 0x0ac2cba2 )
-	ROM_LOAD16_BYTE( "nk_1lh.rom",  0x40000, 0x20000, 0x3eccfd0a )
-	ROM_LOAD16_BYTE( "nk_1ll.rom",  0x40001, 0x20000, 0xd126ded1 )
+	ROM_LOAD16_BYTE( "c85_10x.19",  0x00000, 0x20000, 0xba7e6e74 )
+	ROM_LOAD16_BYTE( "c85_xx.5",    0x00001, 0x20000, 0x0ac2cba2 )
+	ROM_LOAD16_BYTE( "c85_07.18",   0x40000, 0x20000, 0x3eccfd0a )
+	ROM_LOAD16_BYTE( "c85_06.4",    0x40001, 0x20000, 0xd126ded1 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "nk_scrn.rom", 0x000000, 0x80000, 0x4cc7b9df )
+	ROM_LOAD( "c85-03.10",    0x00000, 0x80000, 0x4cc7b9df )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )
-	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )
+	ROM_LOAD( "c85-01.16",    0x000000, 0x100000, 0xa711977c )
+	ROM_LOAD( "c85-02.15",    0x100000, 0x100000, 0xa6ad0f3d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "nk_snd.rom", 0x00000, 0x04000, 0xf2a52a51 )
-	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
+	ROM_LOAD( "c85-14.6",     0x00000, 0x04000, 0xf2a52a51 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "nk_sch-a.rom", 0x00000, 0x80000, 0x5afb747e )
+	ROM_LOAD( "c85-04.1",     0x00000, 0x80000, 0x5afb747e )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "nk_sch-b.rom", 0x00000, 0x80000, 0x3c1b0ed0 )
+	ROM_LOAD( "c85-05.11",    0x00000, 0x80000, 0x3c1b0ed0 )
 ROM_END
 
 ROM_START( ninjakj )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
-	ROM_LOAD16_BYTE( "nk_0h.rom",   0x00000, 0x20000, 0xba7e6e74 )
-	ROM_LOAD16_BYTE( "c85-11l",     0x00001, 0x20000, 0xe4ccaa8e )
-	ROM_LOAD16_BYTE( "nk_1lh.rom",  0x40000, 0x20000, 0x3eccfd0a )
-	ROM_LOAD16_BYTE( "nk_1ll.rom",  0x40001, 0x20000, 0xd126ded1 )
+	ROM_LOAD16_BYTE( "c85_10x.19",  0x00000, 0x20000, 0xba7e6e74 )
+	ROM_LOAD16_BYTE( "c85-11x.5",   0x00001, 0x20000, 0xe4ccaa8e )
+	ROM_LOAD16_BYTE( "c85_07.18",   0x40000, 0x20000, 0x3eccfd0a )
+	ROM_LOAD16_BYTE( "c85_06.4",    0x40001, 0x20000, 0xd126ded1 )
 
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "nk_scrn.rom", 0x00000, 0x80000, 0x4cc7b9df )
+	ROM_LOAD( "c85-03.10",    0x00000, 0x80000, 0x4cc7b9df )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "nk_obj-0.rom", 0x000000, 0x100000, 0xa711977c )
-	ROM_LOAD( "nk_obj-1.rom", 0x100000, 0x100000, 0xa6ad0f3d )
+	ROM_LOAD( "c85-01.16",    0x000000, 0x100000, 0xa711977c )
+	ROM_LOAD( "c85-02.15",    0x100000, 0x100000, 0xa6ad0f3d )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "nk_snd.rom", 0x00000, 0x04000, 0xf2a52a51 )
-	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
+	ROM_LOAD( "c85-14.6",     0x00000, 0x04000, 0xf2a52a51 )
+	ROM_CONTINUE(             0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "nk_sch-a.rom", 0x00000, 0x80000, 0x5afb747e )
+	ROM_LOAD( "c85-04.1",     0x00000, 0x80000, 0x5afb747e )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "nk_sch-b.rom", 0x00000, 0x80000, 0x3c1b0ed0 )
+	ROM_LOAD( "c85-05.11",    0x00000, 0x80000, 0x3c1b0ed0 )
 ROM_END
 
 ROM_START( solfigtr )	/* Solitary Fighter */
@@ -5823,22 +5823,22 @@ ROM_END
 
 ROM_START( qzquest )	/* Quiz Quest */
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "c92-06", 0x000000, 0x020000, 0x424be722 )
-	ROM_LOAD16_BYTE( "c92-05", 0x000001, 0x020000, 0xda470f93 )
-	ROM_LOAD16_WORD_SWAP( "c92-03", 0x100000, 0x080000, 0x1d697606 )	/* data rom */
+	ROM_LOAD16_BYTE( "c92_06.8", 0x000000, 0x020000, 0x424be722 )
+	ROM_LOAD16_BYTE( "c92_05.7", 0x000001, 0x020000, 0xda470f93 )
+	ROM_LOAD16_WORD_SWAP( "c92-03.6", 0x100000, 0x080000, 0x1d697606 )	/* data rom */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "c92-02", 0x000000, 0x100000, 0x2daccecf )
+	ROM_LOAD( "c92-02.10", 0x000000, 0x100000, 0x2daccecf )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "c92-01", 0x000000, 0x100000, 0x9976a285 )
+	ROM_LOAD( "c92-01.21", 0x000000, 0x100000, 0x9976a285 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "c92-07",    0x00000, 0x04000, 0x3e313db9 )
+	ROM_LOAD( "c92_07.5",  0x00000, 0x04000, 0x3e313db9 )
 	ROM_CONTINUE(          0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "c92-04",  0x000000, 0x080000, 0xe421bb43 )
+	ROM_LOAD( "c92-04.9",  0x000000, 0x080000, 0xe421bb43 )
 
 	/* no Delta-T samples */
 ROM_END
@@ -5949,22 +5949,22 @@ ROM_END
 
 ROM_START( qzchikyu )
 	ROM_REGION( 0x180000, REGION_CPU1, 0 )     /* 256k for 68000 code */
-	ROM_LOAD16_BYTE( "d19-06.bin", 0x000000, 0x020000, 0xde8c8e55 )
-	ROM_LOAD16_BYTE( "d19-05.bin", 0x000001, 0x020000, 0xc6d099d0 )
-	ROM_LOAD16_WORD_SWAP( "d19-03.bin", 0x100000, 0x080000, 0x5c1b92c0 )	/* data rom */
+	ROM_LOAD16_BYTE( "d19_06.8",	0x000000, 0x020000, 0xde8c8e55 )
+	ROM_LOAD16_BYTE( "d19_05.7",	0x000001, 0x020000, 0xc6d099d0 )
+	ROM_LOAD16_WORD_SWAP( "d19-03.6",	0x100000, 0x080000, 0x5c1b92c0 )	/* data rom */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "d19-02.bin", 0x000000, 0x100000, 0xf2dce2f2 )
+	ROM_LOAD( "d19-02.10",	0x000000, 0x100000, 0xf2dce2f2 )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "d19-01.bin", 0x000000, 0x100000, 0x6c4342d0 )
+	ROM_LOAD( "d19-01.21",	0x000000, 0x100000, 0x6c4342d0 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
-	ROM_LOAD( "d19-07.bin", 0x00000, 0x04000, 0xa8935f84 )
-	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
+	ROM_LOAD( "d19_07.5",	0x00000, 0x04000, 0xa8935f84 )
+	ROM_CONTINUE(			0x10000, 0x0c000 ) /* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "d19-04.bin", 0x000000, 0x080000, 0xd3c44905 )
+	ROM_LOAD( "d19-04.9",	0x000000, 0x080000, 0xd3c44905 )
 
 	/* no Delta-T samples */
 ROM_END
@@ -6042,80 +6042,80 @@ ROM_END
 
 ROM_START( dinorex )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )     /* 1Mb for 68000 code */
-	ROM_LOAD16_BYTE( "drex_14.rom",  0x000000, 0x080000, 0xe6aafdac )
-	ROM_LOAD16_BYTE( "drex_16.rom",  0x000001, 0x080000, 0xcedc8537 )
-	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )  /* data rom */
-	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )  /* data rom */
+	ROM_LOAD16_BYTE( "d39_14.9",	0x000000, 0x080000, 0xe6aafdac )
+	ROM_LOAD16_BYTE( "d39_16.8",	0x000001, 0x080000, 0xcedc8537 )
+	ROM_LOAD16_WORD_SWAP( "d39-04.6",	0x100000, 0x100000, 0x3800506d )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "d39-05.7",	0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
+	ROM_LOAD( "d39-06.2",	0x000000, 0x100000, 0x52f62835 )
 
 	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
+	ROM_LOAD( "d39-01.29",	0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "d39-02.28",	0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "d39-03.27",	0x400000, 0x200000, 0xfc9cdab4 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
-	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_LOAD( "d39_12.5",	0x00000, 0x04000, 0x8292c7c1 )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
+	ROM_LOAD( "d39-07.10",	0x000000, 0x100000, 0x28262816 )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
+	ROM_LOAD( "d39-08.4",	0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
 ROM_START( dinorexj )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )     /* 1Mb for 68000 code */
-	ROM_LOAD16_BYTE( "drex_14.rom",  0x000000, 0x080000, 0xe6aafdac )
-	ROM_LOAD16_BYTE( "d39-13.rom",   0x000001, 0x080000, 0xae496b2f )
-	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )	/* data rom */
-	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
+	ROM_LOAD16_BYTE( "d39_14.9",	0x000000, 0x080000, 0xe6aafdac )
+	ROM_LOAD16_BYTE( "d39_13.8",	0x000001, 0x080000, 0xae496b2f )
+	ROM_LOAD16_WORD_SWAP( "d39-04.6",	0x100000, 0x100000, 0x3800506d )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "d39-05.7",	0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
+	ROM_LOAD( "d39-06.2",	0x000000, 0x100000, 0x52f62835 )
 
 	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
+	ROM_LOAD( "d39-01.29",	0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "d39-02.28",	0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "d39-03.27",	0x400000, 0x200000, 0xfc9cdab4 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
-	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_LOAD( "d39_12.5",	0x00000, 0x04000, 0x8292c7c1 )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
+	ROM_LOAD( "d39-07.10",	0x000000, 0x100000, 0x28262816 )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
+	ROM_LOAD( "d39-08.4",	0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
 ROM_START( dinorexu )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )	/* 1Mb for 68000 code */
-	ROM_LOAD16_BYTE( "drex_14.rom",  0x000000, 0x080000, 0xe6aafdac )
-	ROM_LOAD16_BYTE( "drex_16u.rom", 0x000001, 0x080000, 0xfe96723b )
-	ROM_LOAD16_WORD_SWAP( "drex_04m.rom", 0x100000, 0x100000, 0x3800506d )	/* data rom */
-	ROM_LOAD16_WORD_SWAP( "drex_05m.rom", 0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
+	ROM_LOAD16_BYTE( "d39_14.9",	0x000000, 0x080000, 0xe6aafdac )
+	ROM_LOAD16_BYTE( "d39_15.8",	0x000001, 0x080000, 0xfe96723b )
+	ROM_LOAD16_WORD_SWAP( "d39-04.6",	0x100000, 0x100000, 0x3800506d )	/* data rom */
+	ROM_LOAD16_WORD_SWAP( "d39-05.7",	0x200000, 0x100000, 0xe2ec3b5d )	/* data rom */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
-	ROM_LOAD( "drex_06m.rom", 0x000000, 0x100000, 0x52f62835 )
+	ROM_LOAD( "d39-06.2",	0x000000, 0x100000, 0x52f62835 )
 
 	ROM_REGION( 0x600000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
-	ROM_LOAD( "drex_01m.rom", 0x000000, 0x200000, 0xd10e9c7d )
-	ROM_LOAD( "drex_02m.rom", 0x200000, 0x200000, 0x6c304403 )
-	ROM_LOAD( "drex_03m.rom", 0x400000, 0x200000, 0xfc9cdab4 )
+	ROM_LOAD( "d39-01.29",	0x000000, 0x200000, 0xd10e9c7d )
+	ROM_LOAD( "d39-02.28",	0x200000, 0x200000, 0x6c304403 )
+	ROM_LOAD( "d39-03.27",	0x400000, 0x200000, 0xfc9cdab4 )
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )		 /* sound cpu */
-	ROM_LOAD( "drex_12.rom",  0x00000, 0x04000, 0x8292c7c1 )
+	ROM_LOAD( "d39_12.5",	0x00000, 0x04000, 0x8292c7c1 )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "drex_07m.rom", 0x000000, 0x100000, 0x28262816 )
+	ROM_LOAD( "d39-07.10",	0x000000, 0x100000, 0x28262816 )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
-	ROM_LOAD( "drex_08m.rom", 0x000000, 0x080000, 0x377b8b7b )
+	ROM_LOAD( "d39-08.4",	0x000000, 0x080000, 0x377b8b7b )
 ROM_END
 
 ROM_START( qjinsei )	/* Quiz Jinsei Gekijoh */

@@ -15,8 +15,8 @@ size_t ninjakd2_backgroundram_size;
 unsigned char 	*ninjakd2_foreground_videoram;
 size_t ninjakd2_foregroundram_size;
 
-static struct osd_bitmap *bitmap_bg;
-static struct osd_bitmap *bitmap_sp;
+static struct mame_bitmap *bitmap_bg;
+static struct mame_bitmap *bitmap_sp;
 
 static unsigned char 	 *bg_dirtybuffer;
 static int 		 bg_enable = 1;
@@ -90,7 +90,7 @@ WRITE_HANDLER( ninjakd2_sprite_overdraw_w )
 	}
 }
 
-void ninjakd2_draw_foreground(struct osd_bitmap *bitmap)
+void ninjakd2_draw_foreground(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -124,7 +124,7 @@ void ninjakd2_draw_foreground(struct osd_bitmap *bitmap)
 }
 
 
-void ninjakd2_draw_background(struct osd_bitmap *bitmap)
+void ninjakd2_draw_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -159,7 +159,7 @@ void ninjakd2_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
-void ninjakd2_draw_sprites(struct osd_bitmap *bitmap)
+void ninjakd2_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -192,12 +192,12 @@ void ninjakd2_draw_sprites(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void ninjakd2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ninjakd2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx,scrolly;
 

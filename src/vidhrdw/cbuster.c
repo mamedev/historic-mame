@@ -155,7 +155,7 @@ WRITE16_HANDLER( twocrude_control_1_w )
 
 /******************************************************************************/
 
-static void twocrude_drawsprites(struct osd_bitmap *bitmap, int pri)
+static void twocrude_drawsprites(struct mame_bitmap *bitmap, int pri)
 {
 	int offs;
 
@@ -225,7 +225,7 @@ static void twocrude_drawsprites(struct osd_bitmap *bitmap, int pri)
 
 /******************************************************************************/
 
-void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void twocrude_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int pf23_control,pf14_control;

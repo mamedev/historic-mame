@@ -145,7 +145,7 @@ WRITE_HANDLER( looping_videoram_w )
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int tile_number;
 	const UINT8 *source = spriteram;
@@ -169,7 +169,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void looping_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void looping_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_draw( bitmap,tilemap,0,0 );
 	draw_sprites( bitmap );

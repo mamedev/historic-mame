@@ -34,13 +34,13 @@ extern unsigned char *matmania_pageselect;
 
 WRITE_HANDLER( matmania_paletteram_w );
 void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void maniach_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void maniach_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( matmania_videoram3_w );
 WRITE_HANDLER( matmania_colorram3_w );
 int matmania_vh_start(void);
 void matmania_vh_stop(void);
-void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 READ_HANDLER( maniach_68705_portA_r );
 WRITE_HANDLER( maniach_68705_portA_w );

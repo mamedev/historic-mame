@@ -25,7 +25,7 @@ TODO:
 /* from vidhrdw */
 int kncljoe_vh_start(void);
 void kncljoe_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void kncljoe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kncljoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER(kncljoe_videoram_w);
 WRITE_HANDLER(kncljoe_control_w);
 WRITE_HANDLER(kncljoe_scroll_w);

@@ -109,7 +109,7 @@ WRITE_HANDLER( buggychl_sprite_lookup_bank_w );
 WRITE_HANDLER( buggychl_sprite_lookup_w );
 WRITE_HANDLER( buggychl_ctrl_w );
 WRITE_HANDLER( buggychl_bg_scrollx_w );
-void buggychl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void buggychl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

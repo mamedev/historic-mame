@@ -241,7 +241,7 @@ WRITE_HANDLER( gondo_scroll_w )
 /******************************************************************************/
 
 /* 'Karnov' sprites, used by Gondomania, Last Mission, Shackled, Ghostbusters */
-static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites1(struct mame_bitmap *bitmap, int priority)
 {
 	int offs,x,y,sprite,sprite2,colour,extra,fx,fy;
 
@@ -304,7 +304,7 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 }
 
 /* 'Dec0' sprites, used by Cobra Command, Oscar */
-static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
+static void draw_sprites2(struct mame_bitmap *bitmap, int priority)
 {
 	int offs,x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
@@ -367,7 +367,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
-static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
+static void srdarwin_drawsprites(struct mame_bitmap *bitmap, int pri)
 {
 	int offs;
 
@@ -414,7 +414,7 @@ static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
 }
 
 /* Draw character tiles, each game has different colour masks */
-static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
+static void draw_characters(struct mame_bitmap *bitmap, int mask, int shift)
 {
 	int mx,my,tile,color,offs;
 
@@ -435,7 +435,7 @@ static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 
 /******************************************************************************/
 
-void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void cobracom_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
@@ -521,7 +521,7 @@ int cobracom_vh_start(void)
 
 /******************************************************************************/
 
-void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void ghostb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
    if (dec8_pf0_control[0]&0x4) { /* Rowscroll */
  		int offs;
@@ -570,7 +570,7 @@ int ghostb_vh_start(void)
 
 /******************************************************************************/
 
-void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void oscar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
@@ -616,7 +616,7 @@ int oscar_vh_start(void)
 
 /******************************************************************************/
 
-void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void lastmiss_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
@@ -626,7 +626,7 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
-void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void shackled_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
@@ -704,7 +704,7 @@ int shackled_vh_start(void)
 
 /******************************************************************************/
 
-void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void srdarwin_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (scroll2[0]<<8)+scroll2[1] );
 
@@ -763,7 +763,7 @@ int srdarwin_vh_start(void)
 
 /******************************************************************************/
 
-void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void gondo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
@@ -775,7 +775,7 @@ void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,dec8_fix_tilemap,0,0);
 }
 
-void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void garyoret_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );

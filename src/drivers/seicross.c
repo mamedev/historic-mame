@@ -42,7 +42,7 @@ on a very small daughterboard).
 extern unsigned char *seicross_row_scroll;
 WRITE_HANDLER( seicross_colorram_w );
 void seicross_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void seicross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static unsigned char *nvram;

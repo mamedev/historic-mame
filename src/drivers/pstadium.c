@@ -81,8 +81,8 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+void galkoku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int pstadium_vh_start(void);
 void pstadium_vh_stop(void);
 

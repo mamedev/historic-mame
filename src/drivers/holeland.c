@@ -16,14 +16,13 @@ TODO:
 
 int holeland_vh_start( void );
 int crzrally_vh_start( void );
-void holeland_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
-void crzrally_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void holeland_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+void crzrally_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 
 WRITE_HANDLER( holeland_videoram_w );
 WRITE_HANDLER( holeland_colorram_w );
 WRITE_HANDLER( holeland_flipscreen_w );
 WRITE_HANDLER( holeland_pal_offs_w );
-WRITE_HANDLER( crzrally_spritepal_w );
 WRITE_HANDLER( holeland_scroll_w );
 
 
@@ -59,7 +58,6 @@ static MEMORY_WRITE_START( crzrally_writemem )
 	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf000, holeland_scroll_w },
 	{ 0xf800, 0xf801, holeland_pal_offs_w },
-	{ 0xf806, 0xf806, crzrally_spritepal_w },
 MEMORY_END
 
 static PORT_READ_START( readport )

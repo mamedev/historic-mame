@@ -94,11 +94,11 @@ void llander_stop(void)
 
 }
 
-void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i, pwidth, pheight;
 	float scale;
-	struct osd_bitmap vector_bitmap;
+	struct mame_bitmap vector_bitmap;
 	struct rectangle rect;
 
 	if (llander_panel == NULL)
@@ -110,10 +110,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	pwidth = llander_panel->artwork->width;
 	pheight = llander_panel->artwork->height;
 
-	vector_bitmap.width = bitmap->width;
-	vector_bitmap.height = bitmap->height - pheight;
-	vector_bitmap._private = bitmap->_private;
-	vector_bitmap.line = bitmap->line;
+	vector_bitmap = *bitmap;
 
 	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
 

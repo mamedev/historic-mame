@@ -34,7 +34,7 @@ void superman_vh_stop (void)
 
 /**************************************************************************/
 
-static void superman_draw_tilemap (struct osd_bitmap *bitmap,int bankbase,int attribfix,int cocktail)
+static void superman_draw_tilemap (struct mame_bitmap *bitmap,int bankbase,int attribfix,int cocktail)
 {
 	int i,j;
 	UINT32 x1, y1;
@@ -90,7 +90,7 @@ static void superman_draw_tilemap (struct osd_bitmap *bitmap,int bankbase,int at
 }
 
 
-static void superman_draw_sprites (struct osd_bitmap *bitmap,int bankbase,int cocktail)
+static void superman_draw_sprites (struct mame_bitmap *bitmap,int bankbase,int cocktail)
 {
 	int sprite,i,x,y,color,flipx,flipy;
 
@@ -133,7 +133,7 @@ static void superman_draw_sprites (struct osd_bitmap *bitmap,int bankbase,int co
 }
 
 
-void superman_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh)
+void superman_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh)
 {
 	int bankbase;
 	int attribfix;

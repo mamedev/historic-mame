@@ -199,7 +199,7 @@ static void ctc_interrupt(int state)
 Z80_DaisyChain mcr_daisy_chain[] =
 {
 	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0, 0, 0, -1} 		/* end mark */
+	{ 0, 0, 0, -1 }		/* end mark */
 };
 
 
@@ -209,7 +209,7 @@ static z80ctc_interface ctc_intf =
 	{ 0 },              /* clock (filled in from the CPU 0 clock) */
 	{ 0 },              /* timer disables */
 	{ ctc_interrupt },  /* interrupt handler */
-	{ 0 },              /* ZC/TO0 callback */
+	{ z80ctc_0_trg1_w },/* ZC/TO0 callback */
 	{ 0 },              /* ZC/TO1 callback */
 	{ 0 }               /* ZC/TO2 callback */
 };
@@ -311,9 +311,18 @@ void zwackery_init_machine(void)
 
 int mcr_interrupt(void)
 {
-	/* once per frame, pulse the CTC line 3 */
-	z80ctc_0_trg3_w(0, 1);
-	z80ctc_0_trg3_w(0, 0);
+	/* CTC line 2 is connected to VBLANK, which is once every 1/2 frame */
+	/* for the 30Hz interlaced display */
+	z80ctc_0_trg2_w(0, 1);
+	z80ctc_0_trg2_w(0, 0);
+
+	/* CTC line 3 is connected to 493, which is signalled once every */
+	/* frame at 30Hz */
+	if (cpu_getiloops() == 0)
+	{
+		z80ctc_0_trg3_w(0, 1);
+		z80ctc_0_trg3_w(0, 0);
+	}
 
 	return ignore_interrupt();
 }
@@ -398,6 +407,28 @@ WRITE_HANDLER( mcr_control_port_w )
 			D0 = coin meter 1
 	*/
 
+	coin_counter_w(0, (data >> 0) & 1);
+	coin_counter_w(1, (data >> 1) & 1);
+	coin_counter_w(2, (data >> 2) & 1);
+	mcr_cocktail_flip = (data >> 6) & 1;
+}
+
+
+WRITE_HANDLER( mcrmono_control_port_w )
+{
+	/*
+		Bit layout is as follows:
+			D7 = n/c
+			D6 = cocktail flip
+			D5 = n/c
+			D4 = n/c
+			D3 = n/c
+			D2 = n/c
+			D1 = n/c
+			D0 = coin meter 1
+	*/
+
+	coin_counter_w(0, (data >> 0) & 1);
 	mcr_cocktail_flip = (data >> 6) & 1;
 }
 

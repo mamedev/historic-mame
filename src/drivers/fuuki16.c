@@ -52,7 +52,7 @@ WRITE16_HANDLER( fuuki16_vram_2_w );
 WRITE16_HANDLER( fuuki16_vram_3_w );
 
 int  fuuki16_vh_start(void);
-void fuuki16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void fuuki16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void fuuki16_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /***************************************************************************

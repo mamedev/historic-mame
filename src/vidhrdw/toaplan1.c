@@ -94,9 +94,9 @@ tile_struct *temp_list;
 static int max_list_size[32];
 static int tile_count[32];
 
-struct osd_bitmap *tmpbitmap1;
-static struct osd_bitmap *tmpbitmap2;
-static struct osd_bitmap *tmpbitmap3;
+struct mame_bitmap *tmpbitmap1;
+static struct mame_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap3;
 
 #undef BGDBG
 
@@ -410,7 +410,7 @@ WRITE16_HANDLER( toaplan1_layers_offset_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
 
 ***************************************************************************/
 
@@ -724,8 +724,8 @@ static void rallybik_find_sprites (void)
 
 void toaplan1_sprite_mask
 	(
-	struct osd_bitmap *dest_bmp,
-	struct osd_bitmap *src_bmp,
+	struct mame_bitmap *dest_bmp,
+	struct mame_bitmap *src_bmp,
 	const struct rectangle *clip
 	)
 {
@@ -824,9 +824,9 @@ void toaplan1_sprite_mask
 
 void toaplan1_sprite_copy
 	(
-	struct osd_bitmap *dest_bmp,
-	struct osd_bitmap *src_bmp,
-	struct osd_bitmap *look_bmp,
+	struct mame_bitmap *dest_bmp,
+	struct mame_bitmap *src_bmp,
+	struct mame_bitmap *look_bmp,
 	const struct rectangle *clip
 	)
 {
@@ -923,7 +923,7 @@ void toaplan1_sprite_copy
 
 
 
-static void toaplan1_render (struct osd_bitmap *bitmap)
+static void toaplan1_render (struct mame_bitmap *bitmap)
 {
 	int i;
 	int priority,pen;
@@ -1053,7 +1053,7 @@ if ( toaplan_dbg_sprite_only == 0 ){
 
 
 
-static void zerowing_render (struct osd_bitmap *bitmap)
+static void zerowing_render (struct mame_bitmap *bitmap)
 {
 	int i;
 	int priority,pen;
@@ -1096,7 +1096,7 @@ static void zerowing_render (struct osd_bitmap *bitmap)
 }
 
 
-static void demonwld_render (struct osd_bitmap *bitmap)
+static void demonwld_render (struct mame_bitmap *bitmap)
 {
 	int i;
 	int priority,pen;
@@ -1141,7 +1141,7 @@ static void demonwld_render (struct osd_bitmap *bitmap)
 }
 
 
-static void rallybik_render (struct osd_bitmap *bitmap)
+static void rallybik_render (struct mame_bitmap *bitmap)
 {
 	int i;
 	int priority,pen;
@@ -1176,7 +1176,7 @@ static void rallybik_render (struct osd_bitmap *bitmap)
 
 
 
-static void toaplan1_sprite_render (struct osd_bitmap *bitmap)
+static void toaplan1_sprite_render (struct mame_bitmap *bitmap)
 {
 	int i,j;
 	int priority;
@@ -1325,7 +1325,7 @@ static void toaplan1_sprite_render (struct osd_bitmap *bitmap)
 
 
 
-void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* discover what data will be drawn */
 	toaplan1_find_sprites();
@@ -1335,7 +1335,7 @@ void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	toaplan1_sprite_render(bitmap);
 }
 
-void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void zerowing_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* discover what data will be drawn */
 	toaplan1_find_sprites();
@@ -1345,7 +1345,7 @@ void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	toaplan1_sprite_render(bitmap);
 }
 
-void demonwld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* discover what data will be drawn */
 	toaplan1_find_sprites();
@@ -1355,7 +1355,7 @@ void demonwld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	toaplan1_sprite_render(bitmap);
 }
 
-void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* discover what data will be drawn */
 	rallybik_find_tiles();

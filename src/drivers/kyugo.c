@@ -31,7 +31,7 @@ extern unsigned char *kyugo_back_scrollY_lo;
 extern unsigned char *kyugo_back_scrollX;
 WRITE_HANDLER( kyugo_gfxctrl_w );
 WRITE_HANDLER( kyugo_flipscreen_w );
-void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void kyugo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static unsigned char *shared_ram;

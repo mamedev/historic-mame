@@ -23,7 +23,7 @@ int yard_vh_start(void);
 void yard_vh_stop(void);
 WRITE_HANDLER( yard_flipscreen_w );
 WRITE_HANDLER( yard_scroll_panel_w );
-void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void yard_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

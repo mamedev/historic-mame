@@ -50,7 +50,7 @@ WRITE_HANDLER( strnskil_scrl_ctrl_w )
 	strnskil_flipscreen = (data >> 3) & 1;
 }
 
-void strnskil_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void strnskil_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 
 	int offs,chr,col,x,y,px,py,fx,fy,bank,d ;

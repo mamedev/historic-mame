@@ -43,7 +43,8 @@ void invaders_screen_red_w(int data);
 #define OUT_PORT_4_SHOT			0x02
 #define OUT_PORT_4_BASEHIT		0x04
 #define OUT_PORT_4_INVADERHIT	0x08
-#define OUT_PORT_4_UNUSED		0xf0
+#define OUT_PORT_4_ENABLE_SNDS	0x20
+#define OUT_PORT_4_UNUSED		(~(0x2f))
 
 /* output port 0x05 definitions - sound effect drive outputs */
 #define OUT_PORT_5_FLEET1		0x01
@@ -55,7 +56,8 @@ void invaders_screen_red_w(int data);
 #define OUT_PORT_5_UNUSED		0xc0
 
 
-#define PLAY(id,loop)           sample_start( id, id, loop )
+static int astinvad_snds = 0;
+#define PLAY(id,loop)           if (astinvad_snds) sample_start( id, id, loop )
 #define STOP(id)                sample_stop( id )
 
 
@@ -113,6 +115,8 @@ WRITE_HANDLER( astinvad_sh_port_4_w )
 
 	port4State = data;
 
+	if ( bitsGoneHigh & OUT_PORT_4_ENABLE_SNDS ) astinvad_snds = 1;
+	if ( bitsGoneLow & OUT_PORT_4_ENABLE_SNDS ) astinvad_snds = 0;
 
 	if ( bitsGoneHigh & OUT_PORT_4_UFO )  PLAY( SND_UFO, 1 );
 	if ( bitsGoneLow  & OUT_PORT_4_UFO )  STOP( SND_UFO );

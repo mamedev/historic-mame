@@ -90,9 +90,9 @@ int		syvalion_vh_start(void);
 int		recordbr_vh_start(void);
 int		dleague_vh_start(void);
 void 		syvalion_vh_stop (void);
-void 		syvalion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void		recordbr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void		dleague_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void 		syvalion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void		recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void		dleague_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

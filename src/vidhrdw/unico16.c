@@ -173,7 +173,7 @@ int unico16_vh_start(void)
 
 ***************************************************************************/
 
-static void unico16_draw_sprites(struct osd_bitmap *bitmap)
+static void unico16_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -249,7 +249,7 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-void unico16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void unico16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int gunx[256] = {
 		0x160,0x162,0x164,0x165,

@@ -91,7 +91,7 @@ static UINT32 *pTcosin;            /* adjust line width */
 static UINT8 Tgamma[256];         /* quick gamma anti-alias table  */
 static UINT8 Tgammar[256];        /* same as above, reversed order */
 
-static struct osd_bitmap *vecbitmap;
+static struct mame_bitmap *vecbitmap;
 static int vecwidth, vecheight;
 static int vecshift;
 static int xmin, ymin, xmax, ymax; /* clipping area */
@@ -829,7 +829,7 @@ static void clever_mark_dirty (void)
 	}
 }
 
-void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 	int temp_x, temp_y;

@@ -14,7 +14,7 @@ void konami1_decode(void);
 
 WRITE_HANDLER( rocnrope_flipscreen_w );
 void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void rocnrope_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */

@@ -14,7 +14,7 @@
 /* from vidhrdw/beezer.c */
 extern UINT8 *beezer_ram;
 int beezer_interrupt (void);
-void beezer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void beezer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( beezer_ram_w );
 
 /* from machine/beezer.c */

@@ -19,10 +19,10 @@ static UINT32 pens_line_tab[256];
 static UINT32 *prom_tab = NULL;
 
 
-typedef void (*blit_horiz_pixel_line_proc)(struct osd_bitmap *bitmap,int x,int y, int width, UINT32* pens);
+typedef void (*blit_horiz_pixel_line_proc)(struct mame_bitmap *bitmap,int x,int y, int width, UINT32* pens);
 static blit_horiz_pixel_line_proc blit_horiz_pixel_line;
 
-static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &(((UINT8*)b->line[y])[x]);
 	while(w-->0)
@@ -31,7 +31,7 @@ static void bhpl_8_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fx(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &(((UINT8*)b->line[y])[b->width-1-x]);
 	while(w-->0)
@@ -40,7 +40,7 @@ static void bhpl_8_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[x]);
 	while(w-->0)
@@ -49,7 +49,7 @@ static void bhpl_8_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fxy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT8* lineadr = &(((UINT8*)b->line[b->height-1-y])[b->width-1-x]);
 	while(w-->0)
@@ -58,7 +58,7 @@ static void bhpl_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	while(w-->0)
 	{
@@ -66,7 +66,7 @@ static void bhpl_8_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fx_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	y = b->width-1-y;
 	while(w-->0)
@@ -75,7 +75,7 @@ static void bhpl_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	while(w-->0)
@@ -84,7 +84,7 @@ static void bhpl_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_8_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	y = b->width-1-y;
@@ -95,7 +95,7 @@ static void bhpl_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens
 	}
 }
 
-static void bhpl_16_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[x]);
 	while(w-->0)
@@ -104,7 +104,7 @@ static void bhpl_16_nd(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fx(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[b->width-1-x]);
 	while(w-->0)
@@ -113,7 +113,7 @@ static void bhpl_16_nd_fx(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[x]);
 	while(w-->0)
@@ -122,7 +122,7 @@ static void bhpl_16_nd_fy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fxy(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[b->height-1-y])[b->width-1-x]);
 	while(w-->0)
@@ -131,7 +131,7 @@ static void bhpl_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	while(w-->0)
 	{
@@ -139,7 +139,7 @@ static void bhpl_16_nd_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
 		pens++;
 	}
 }
-static void bhpl_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fx_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	y = b->width-1-y;
 	while(w-->0)
@@ -148,7 +148,7 @@ static void bhpl_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens
 		pens++;
 	}
 }
-static void bhpl_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	while(w-->0)
@@ -157,7 +157,7 @@ static void bhpl_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens
 		pens++;
 	}
 }
-static void bhpl_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w, UINT32* pens)
+static void bhpl_16_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	x = b->height-1-x;
 	y = b->width-1-y;
@@ -282,7 +282,7 @@ int magmax_vh_start(void)
 
 
 
-void magmax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void magmax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

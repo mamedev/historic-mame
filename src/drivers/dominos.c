@@ -31,7 +31,7 @@ WRITE_HANDLER( dominos_lamp2_w );
 WRITE_HANDLER( dominos_lamp1_w );
 
 /* vidhrdw/dominos.c */
-extern void dominos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void dominos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM }, /* RAM */

@@ -8,9 +8,9 @@ int  cninja_vh_start(void);
 int  edrandy_vh_start(void);
 int  robocop2_vh_start(void);
 int  stoneage_vh_start(void);
-void cninja_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void edrandy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void robocop2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void cninja_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void edrandy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void robocop2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( cninja_pf1_data_w );
 WRITE16_HANDLER( cninja_pf2_data_w );

@@ -181,12 +181,12 @@ WRITE_HANDLER( jrpacman_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jrpacman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,offs;
 	int scrolly[36];

@@ -67,7 +67,7 @@ READ_HANDLER( gyruss_scanline_r );
 int  gyruss_vh_start(void);
 void gyruss_vh_stop(void);
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void gyruss_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int gyruss_6809_interrupt(void);
 
 
@@ -190,7 +190,7 @@ INPUT_PORTS_START( gyruss )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -288,7 +288,7 @@ INPUT_PORTS_START( gyrussce )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )

@@ -69,7 +69,7 @@ void lazercmd_marker_dirty(int marker)
 /* plot a bitmap marker */
 /* hardware has 2 marker sizes 2x2 and 4x2 selected by jumper */
 /* meadows lanes normaly use 2x2 pixels and lazer command uses either */
-static void plot_pattern(struct osd_bitmap *bitmap, int x, int y)
+static void plot_pattern(struct mame_bitmap *bitmap, int x, int y)
 {
 	int xbit, ybit, size;
 
@@ -111,7 +111,7 @@ int lazercmd_vh_start(void)
 }
 
 
-void lazercmd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,x,y;
 

@@ -93,8 +93,8 @@ static int create_clipper(void);
 static void erase_surfaces(void);
 static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC *desc);
-static int render_to_blit(struct osd_bitmap *bitmap, int update);
-static int render_to_primary(struct osd_bitmap *bitmap, int update);
+static int render_to_blit(struct mame_bitmap *bitmap, int update);
+static int render_to_primary(struct mame_bitmap *bitmap, int update);
 static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update);
 
 
@@ -906,7 +906,7 @@ static void compute_color_masks(const DDSURFACEDESC *desc)
 //	win_ddraw_draw
 //============================================================
 
-int win_ddraw_draw(struct osd_bitmap *bitmap, int update)
+int win_ddraw_draw(struct mame_bitmap *bitmap, int update)
 {
 	int result;
 
@@ -935,7 +935,7 @@ int win_ddraw_draw(struct osd_bitmap *bitmap, int update)
 //	render_to_blit
 //============================================================
 
-static int render_to_blit(struct osd_bitmap *bitmap, int update)
+static int render_to_blit(struct mame_bitmap *bitmap, int update)
 {
 	int dstdepth = blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	LPDIRECTDRAWSURFACE target_surface;
@@ -1143,7 +1143,7 @@ surface_lost:
 //	render_to_primary
 //============================================================
 
-static int render_to_primary(struct osd_bitmap *bitmap, int update)
+static int render_to_primary(struct mame_bitmap *bitmap, int update)
 {
 	DDSURFACEDESC temp_desc = { sizeof(temp_desc) };
 	LPDIRECTDRAWSURFACE target_surface;

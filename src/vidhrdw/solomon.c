@@ -6,7 +6,7 @@
 unsigned char *solomon_bgvideoram;
 unsigned char *solomon_bgcolorram;
 
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 static int flipscreen;
 
@@ -99,12 +99,12 @@ WRITE_HANDLER( solomon_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void solomon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

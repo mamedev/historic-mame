@@ -49,7 +49,7 @@ driver by Ivan Mackintosh
 
 WRITE_HANDLER( milliped_paletteram_w );
 void milliped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /*
  * This wrapper routine is necessary because Millipede requires a direction bit

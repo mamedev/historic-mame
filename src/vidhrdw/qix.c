@@ -292,7 +292,7 @@ WRITE_HANDLER( qix_palettebank_w )
  *
  *************************************/
 
-void qix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void qix_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int y;
 

@@ -29,7 +29,7 @@ KNOWN ISSUES/TODO:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern void exctsccr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void exctsccr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 extern void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( exctsccr_gfx_bank_w );
 extern int exctsccr_vh_start( void );

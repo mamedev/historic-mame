@@ -181,8 +181,8 @@ WRITE_HANDLER( dkong_palettebank_w );
 void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int dkong_vh_start(void);
-void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void dkong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( dkong_sh_w );
 WRITE_HANDLER( dkongjr_sh_death_w );

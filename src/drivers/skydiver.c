@@ -80,7 +80,7 @@ WRITE_HANDLER( skydiver_sk_lamps_w );
 WRITE_HANDLER( skydiver_yd_lamps_w );
 WRITE_HANDLER( skydiver_iver_lamps_w );
 WRITE_HANDLER( skydiver_width_w );
-extern void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void skydiver_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static int skydiver_nmion;
 

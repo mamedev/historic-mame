@@ -36,7 +36,7 @@ WRITE_HANDLER( clshroad_flipscreen_w );
 void firebatl_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 int  firebatl_vh_start(void);
 int  clshroad_vh_start(void);
-void clshroad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void clshroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);

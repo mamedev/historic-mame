@@ -20,7 +20,7 @@ static UINT32 spritebitmap_width;
 static UINT32 spritebitmap_height;
 
 static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip);
-static void render_sprite_tile(struct osd_bitmap *bitmap, pen_t *pens, int sx, int sy);
+static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int sx, int sy);
 
 INT8 mcr12_sprite_xoffs;
 INT8 mcr12_sprite_xoffs_flip;
@@ -178,7 +178,7 @@ WRITE_HANDLER( twotigra_videoram_w )
  *
  *************************************/
 
-static void mcr1_update_background(struct osd_bitmap *bitmap)
+static void mcr1_update_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -218,7 +218,7 @@ static void mcr1_update_background(struct osd_bitmap *bitmap)
 }
 
 
-static void mcr2_update_background(struct osd_bitmap *bitmap, int check_sprites)
+static void mcr2_update_background(struct mame_bitmap *bitmap, int check_sprites)
 {
 	int offs;
 
@@ -317,7 +317,7 @@ static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
  *
  *************************************/
 
-static void render_sprite_tile(struct osd_bitmap *bitmap, pen_t *pens, int sx, int sy)
+static void render_sprite_tile(struct mame_bitmap *bitmap, pen_t *pens, int sx, int sy)
 {
 	int x, y;
 
@@ -416,7 +416,7 @@ static void mcr12_update_sprites(int scale)
  *
  *************************************/
 
-void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mcr1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
 	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
@@ -431,7 +431,7 @@ void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mcr2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
 	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
@@ -455,9 +455,9 @@ void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-extern void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy);
+extern void mcr3_update_sprites(struct mame_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy);
 
-void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void journey_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
 	if (last_cocktail_flip != mcr_cocktail_flip)

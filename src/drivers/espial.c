@@ -68,7 +68,7 @@ extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 WRITE_HANDLER( espial_attributeram_w );
 void espial_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void espial_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 void espial_init_machine(void)

@@ -30,7 +30,7 @@ extern unsigned char *rthunder_videoram1, *rthunder_videoram2, *spriteram, *dirt
 
 void namcos86_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
 int namcos86_vh_start(void);
-void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
+void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
 READ_HANDLER( rthunder_videoram1_r );
 WRITE_HANDLER( rthunder_videoram1_w );
 READ_HANDLER( rthunder_videoram2_r );

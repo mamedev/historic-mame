@@ -44,7 +44,7 @@ extern unsigned char *tomahawk_protection;
 void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  astrof_vh_start(void);
 void astrof_vh_stop(void);
-void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void astrof_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( astrof_videoram_w );
 WRITE_HANDLER( tomahawk_videoram_w );
 WRITE_HANDLER( astrof_video_control1_w );

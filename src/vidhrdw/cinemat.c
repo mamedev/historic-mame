@@ -188,18 +188,18 @@ void spacewar_vh_stop (void)
 	vector_vh_stop();
 }
 
-void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void cinemat_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
     vector_vh_screenrefresh(bitmap, full_refresh);
     vector_clear_list ();
 }
 
-void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
     int tk[] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
 	int i, pwidth, pheight, key, row, col, sw_option;
 	float scale;
-	struct osd_bitmap vector_bitmap;
+	struct mame_bitmap vector_bitmap;
 	struct rectangle rect;
 
     static int sw_option_change;
@@ -214,10 +214,7 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	pwidth = spacewar_panel->artwork->width;
 	pheight = spacewar_panel->artwork->height;
 
-	vector_bitmap.width = bitmap->width;
-	vector_bitmap.height = bitmap->height - pheight;
-	vector_bitmap._private = bitmap->_private;
-	vector_bitmap.line = bitmap->line;
+	vector_bitmap = *bitmap;
 
 	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
     vector_clear_list ();

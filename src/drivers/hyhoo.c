@@ -31,7 +31,7 @@ Memo:
 
 
 void hyhoo_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void hyhoo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void hyhoo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int hyhoo_vh_start(void);
 void hyhoo_vh_stop(void);
 

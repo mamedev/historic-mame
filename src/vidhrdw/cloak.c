@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct osd_bitmap *tmpbitmap2,*charbitmap;
+static struct mame_bitmap *tmpbitmap2,*charbitmap;
 static unsigned char x,y,bmap;
 static unsigned char *tmpvideoram,*tmpvideoram2;
 
@@ -215,7 +215,7 @@ void cloak_vh_stop(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
@@ -235,7 +235,7 @@ static void refresh_bitmaps(void)
 }
 
 
-void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cloak_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

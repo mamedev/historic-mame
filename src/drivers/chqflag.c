@@ -20,7 +20,7 @@ static WRITE_HANDLER( k007232_extvolume_w );
 /* from vidhrdw/chqflag.c */
 int chqflag_vh_start( void );
 void chqflag_vh_stop( void );
-void chqflag_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void chqflag_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 
 static int chqflag_interrupt( void )
 {

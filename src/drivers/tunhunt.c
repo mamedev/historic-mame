@@ -280,7 +280,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static void draw_text( struct osd_bitmap *bitmap )
+static void draw_text( struct mame_bitmap *bitmap )
 {
 	/* 8 columns, 32 rows */
 	int offs;
@@ -305,7 +305,7 @@ static void draw_text( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_motion_object( struct osd_bitmap *bitmap )
+static void draw_motion_object( struct mame_bitmap *bitmap )
 {
 /*
  *		VSTRLO	0x1202
@@ -386,7 +386,7 @@ static void draw_motion_object( struct osd_bitmap *bitmap )
 	);
 }
 
-static void draw_box( struct osd_bitmap *bitmap )
+static void draw_box( struct mame_bitmap *bitmap )
 {
 /*
 	This is unnecessarily slow, but the box priorities aren't completely understood,
@@ -442,7 +442,7 @@ static void draw_box( struct osd_bitmap *bitmap )
 
 /* "shell" graphics are 16x16 pixel tiles used for player shots and targeting cursor */
 static void draw_shell(
-		struct osd_bitmap *bitmap,
+		struct mame_bitmap *bitmap,
 		int picture_code,
 		int hposition,
 		int vstart,
@@ -492,7 +492,7 @@ static void draw_shell(
 			TRANSPARENCY_PEN,0 );
 }
 
-void tunhunt_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+void tunhunt_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 {
 	const UINT8 *pMem = memory_region( REGION_CPU1 );
 

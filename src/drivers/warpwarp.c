@@ -51,7 +51,7 @@ C037	  flip screen (currently ignored)
 
 extern unsigned char *warpwarp_bulletsram;
 void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void warpwarp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* from sndhrdw/warpwarp.c */
 WRITE_HANDLER( warpwarp_sound_w );

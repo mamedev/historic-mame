@@ -65,7 +65,7 @@ void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-static void srmp2_draw_sprites(struct osd_bitmap *bitmap)
+static void srmp2_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
 	Sprite RAM A:	spriteram16_2
@@ -138,7 +138,7 @@ static void srmp2_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void srmp3_draw_sprites_map(struct osd_bitmap *bitmap)
+static void srmp3_draw_sprites_map(struct mame_bitmap *bitmap)
 {
 	int offs, col;
 	int xoffs, yoffs;
@@ -211,7 +211,7 @@ static void srmp3_draw_sprites_map(struct osd_bitmap *bitmap)
 }
 
 
-static void srmp3_draw_sprites(struct osd_bitmap *bitmap)
+static void srmp3_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
 	Sprite RAM A:	spriteram_2
@@ -295,7 +295,7 @@ static void srmp3_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void mjyuugi_draw_sprites_map(struct osd_bitmap *bitmap)
+static void mjyuugi_draw_sprites_map(struct mame_bitmap *bitmap)
 {
 	int offs, col;
 	int xoffs, yoffs;
@@ -375,7 +375,7 @@ static void mjyuugi_draw_sprites_map(struct osd_bitmap *bitmap)
 }
 
 
-static void mjyuugi_draw_sprites(struct osd_bitmap *bitmap)
+static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 {
 /*
 	Sprite RAM A:	spriteram16_2
@@ -452,21 +452,21 @@ static void mjyuugi_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void srmp2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void srmp2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp2_draw_sprites(bitmap);
 }
 
 
-void srmp3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void srmp3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp3_draw_sprites(bitmap);
 }
 
 
-void mjyuugi_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	mjyuugi_draw_sprites(bitmap);

@@ -39,8 +39,8 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/sprint2.c */
-extern void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void sprint1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void sprint2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int sprint2_vh_start(void);
 extern void sprint2_vh_stop(void);
 extern unsigned char *sprint2_vert_car_ram;

@@ -47,7 +47,7 @@ WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w );
 extern int gaplus_vh_start( void );
 extern void gaplus_vh_stop( void );
 extern void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void gaplus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern void gaplus_init_machine(void);
 WRITE_HANDLER( gaplus_starfield_control_w );
 

@@ -26,13 +26,13 @@ void cinemat_select_artwork (int monitor, int overlay_req, int backdrop_req, str
 void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cinemat_vh_start (void);
 void cinemat_vh_stop (void);
-void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void cinemat_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 int cinemat_clear_list(void);
 
 void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int spacewar_vh_start (void);
 void spacewar_vh_stop (void);
-void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
 extern struct artwork_element starcas_overlay[];
 extern struct artwork_element tailg_overlay[];
@@ -616,10 +616,10 @@ READ16_HANDLER( speedfrk_input_port_1_r )
 	if ((input_port_5_r(0) & 0xf0) != 0xf0)
         gear = input_port_5_r(0) & 0xf0;
 
-    val = (input_port_1_r(0) & 0xff00) | gear;
+    val = (input_port_1_word_r(0, 0) & 0xff00) | gear;
 
 	/* add the start key into the mix */
-	if (input_port_1_r(0) & 0x80)
+	if (input_port_1_word_r(0, 0) & 0x80)
         val |= 0x80;
 	else
         val &= ~0x80;
@@ -1078,7 +1078,7 @@ void demon_init_machine (void)
 
 void init_demon(void)
 {
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, 0);
 }
 
 static Z80_DaisyChain daisy_chain[] =
@@ -1269,9 +1269,9 @@ INPUT_PORTS_END
 static READ16_HANDLER( boxingb_input_port_1_r )
 {
 	if (cinemat_output_port_r(0,0) & 0x80)
-		return ((input_port_4_r(0) & 0x0f) << 12) + input_port_1_r(0);
+		return ((input_port_4_r(0) & 0x0f) << 12) + input_port_1_word_r(0,0);
 	else
-		return ((input_port_4_r(0) & 0xf0) << 8)  + input_port_1_r(0);
+		return ((input_port_4_r(0) & 0xf0) << 8)  + input_port_1_word_r(0,0);
 }
 
 void boxingb_init_machine (void)

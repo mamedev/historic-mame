@@ -90,7 +90,7 @@ extern unsigned char *tutankhm_scrollx;
 
 WRITE_HANDLER( tutankhm_videoram_w );
 WRITE_HANDLER( junofrst_blitter_w );
-void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tutankhm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 WRITE_HANDLER( tutankhm_sh_irqtrigger_w );

@@ -66,8 +66,11 @@ struct tilemap
 
 	void (*draw)( struct tilemap *tilemap, int xpos, int ypos, int mask, int value );
 
-	int scroll_rows, scroll_cols;
-	int *rowscroll, *colscroll;
+	int cached_scroll_rows, cached_scroll_cols;
+	int *cached_rowscroll, *cached_colscroll;
+
+	int logical_scroll_rows, logical_scroll_cols;
+	int *logical_rowscroll, *logical_colscroll;
 
 	int orientation;
 	int clip_left,clip_right,clip_top,clip_bottom;
@@ -77,11 +80,11 @@ struct tilemap
 	UINT8 *tile_dirty_map;
 
 	/* cached color data */
-	struct osd_bitmap *pixmap;
+	struct mame_bitmap *pixmap;
 	UINT32 pixmap_pitch_line;
 	UINT32 pixmap_pitch_row;
 
-	struct osd_bitmap *transparency_bitmap;
+	struct mame_bitmap *transparency_bitmap;
 	UINT32 transparency_bitmap_pitch_line;
 	UINT32 transparency_bitmap_pitch_row;
 	UINT8 *transparency_data, **transparency_data_row;
@@ -89,7 +92,7 @@ struct tilemap
 	struct tilemap *next; /* resource tracking */
 };
 
-struct osd_bitmap *		priority_bitmap;
+struct mame_bitmap *		priority_bitmap;
 UINT32					priority_bitmap_pitch_line;
 UINT32					priority_bitmap_pitch_row;
 
@@ -107,7 +110,7 @@ static struct
 	blitopaque_t draw_opaque;
 	int clip_left, clip_top, clip_right, clip_bottom;
 	UINT32 tilemap_priority_code;
-	struct osd_bitmap *	screen_bitmap;
+	struct mame_bitmap *	screen_bitmap;
 	UINT32				screen_bitmap_pitch_line;
 	UINT32				screen_bitmap_pitch_row;
 } blit;
@@ -119,6 +122,7 @@ static void PenToPixel_Term( struct tilemap *tilemap );
 static int mappings_create( struct tilemap *tilemap );
 static void mappings_dispose( struct tilemap *tilemap );
 static void mappings_update( struct tilemap *tilemap );
+static void recalculate_scroll( struct tilemap *tilemap );
 
 /* {p/n}{blend/draw/invis}{opaque/trans}{16/32} */
 static void pio( void *dest, const void *source, int count, UINT8 *pri, UINT32 pcode );
@@ -569,11 +573,12 @@ static void tilemap_reset(void)
 
 int tilemap_init( void )
 {
-	screen_width = Machine->scrbitmap->width;
-	screen_height = Machine->scrbitmap->height;
-	first_tilemap = 0;
+	screen_width	= Machine->scrbitmap->width;
+	screen_height	= Machine->scrbitmap->height;
+	first_tilemap	= NULL;
+
 	state_save_register_func_postload(tilemap_reset);
-	priority_bitmap = osd_alloc_bitmap( screen_width, screen_height, 8 );
+	priority_bitmap = bitmap_alloc_depth( screen_width, screen_height, -8 );
 	if( priority_bitmap )
 	{
 		priority_bitmap_pitch_line = ((UINT8 *)priority_bitmap->line[1]) - ((UINT8 *)priority_bitmap->line[0]);
@@ -592,7 +597,7 @@ void tilemap_close( void )
 		tilemap_dispose( first_tilemap );
 		first_tilemap = next;
 	}
-	osd_free_bitmap( priority_bitmap );
+	bitmap_free( priority_bitmap );
 }
 
 /***********************************************************************************/
@@ -606,11 +611,12 @@ struct tilemap *tilemap_create(
 {
 	struct tilemap *tilemap;
 	UINT32 row;
+	int num_tiles;
 
 	tilemap = calloc( 1,sizeof( struct tilemap ) );
 	if( tilemap )
 	{
-		int num_tiles = num_cols*num_rows;
+		num_tiles = num_cols*num_rows;
 		tilemap->num_logical_cols = num_cols;
 		tilemap->num_logical_rows = num_rows;
 		if( Machine->orientation & ORIENTATION_SWAP_XY )
@@ -635,23 +641,26 @@ struct tilemap *tilemap_create(
 		/* various defaults */
 		tilemap->enable = 1;
 		tilemap->type = type;
-		tilemap->scroll_rows = 1;
-		tilemap->scroll_cols = 1;
+		tilemap->logical_scroll_rows = tilemap->cached_scroll_rows = 1;
+		tilemap->logical_scroll_cols = tilemap->cached_scroll_cols = 1;
 		tilemap->transparent_pen = -1;
 		tilemap->tile_depth = 0;
 		tilemap->tile_granularity = 0;
 		tilemap->tile_dirty_map = 0;
 
-		tilemap->rowscroll = calloc(tilemap->cached_height,sizeof(int));
-		tilemap->colscroll = calloc(tilemap->cached_width,sizeof(int));
+		tilemap->logical_rowscroll	= calloc(tilemap->cached_height,sizeof(int));
+		tilemap->cached_rowscroll	= calloc(tilemap->cached_height,sizeof(int));
+		tilemap->logical_colscroll	= calloc(tilemap->cached_width, sizeof(int));
+		tilemap->cached_colscroll	= calloc(tilemap->cached_width, sizeof(int));
 
 		tilemap->transparency_data = malloc( num_tiles );
 		tilemap->transparency_data_row = malloc( sizeof(UINT8 *)*num_rows );
 
-		tilemap->pixmap = osd_alloc_bitmap( tilemap->cached_width, tilemap->cached_height, 16 );
-		tilemap->transparency_bitmap = osd_alloc_bitmap( tilemap->cached_width, tilemap->cached_height, 8 );
+		tilemap->pixmap = bitmap_alloc_depth( tilemap->cached_width, tilemap->cached_height, -16 );
+		tilemap->transparency_bitmap = bitmap_alloc_depth( tilemap->cached_width, tilemap->cached_height, -8 );
 
-		if( tilemap->rowscroll && tilemap->colscroll &&
+		if( tilemap->logical_rowscroll && tilemap->cached_rowscroll &&
+			tilemap->logical_colscroll && tilemap->cached_colscroll &&
 			tilemap->pixmap &&
 			tilemap->transparency_data &&
 			tilemap->transparency_data_row &&
@@ -699,12 +708,14 @@ void tilemap_dispose( struct tilemap *tilemap )
 		prev->next =tilemap->next;
 	}
 	PenToPixel_Term( tilemap );
-	free( tilemap->rowscroll );
-	free( tilemap->colscroll );
+	free( tilemap->logical_rowscroll );
+	free( tilemap->cached_rowscroll );
+	free( tilemap->logical_colscroll );
+	free( tilemap->cached_colscroll );
 	free( tilemap->transparency_data );
 	free( tilemap->transparency_data_row );
-	osd_free_bitmap( tilemap->transparency_bitmap );
-	osd_free_bitmap( tilemap->pixmap );
+	bitmap_free( tilemap->transparency_bitmap );
+	bitmap_free( tilemap->pixmap );
 	mappings_dispose( tilemap );
 	free( tilemap );
 }
@@ -716,40 +727,6 @@ void tilemap_set_enable( struct tilemap *tilemap, int enable )
 	tilemap->enable = enable?1:0;
 }
 
-static void tilemap_update_scroll_delta( struct tilemap *tilemap)
-{
-	int oldx_delta;
-	int oldy_delta;
-	int xdiff , ydiff;
-	int which;
-
-	oldx_delta = tilemap->scrollx_delta;
-	oldy_delta = tilemap->scrolly_delta;
-
-	/* set new value fron FLIP attribute  */
-	tilemap->scrollx_delta = (tilemap->attributes & TILEMAP_FLIPX )?tilemap->dx_if_flipped:tilemap->dx;
-	tilemap->scrolly_delta = (tilemap->attributes & TILEMAP_FLIPY )?tilemap->dy_if_flipped:tilemap->dy;
-
-	/* calculate difference */
-	xdiff = tilemap->scrollx_delta - oldx_delta;
-	ydiff = tilemap->scrolly_delta - oldy_delta;
-
-	if( tilemap->orientation & ORIENTATION_SWAP_XY )
-		SWAP(xdiff,ydiff);
-	/* choice difference direction by orientation flip */
-	if( tilemap->orientation & ORIENTATION_FLIP_X )
-		xdiff = -xdiff;
-	if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		ydiff = -ydiff;
-	/* adjust row position */
-	if( xdiff != 0 )
-		for(which=0 ; which < tilemap->scroll_rows ; which++)
-			tilemap->rowscroll[which] += xdiff;
-	/* adjust col position */
-	if( ydiff != 0 )
-		for(which=0 ; which < tilemap->scroll_cols ; which++)
-			tilemap->colscroll[which] += ydiff;
-}
 
 void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 {
@@ -764,10 +741,6 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 	}
 	else if( tilemap->attributes!=attributes )
 	{
-		int old_orientation = tilemap->orientation;
-		int doflipx,doflipy;
-		int n1,n2,range;
-
 		tilemap->attributes = attributes;
 		tilemap->orientation = Machine->orientation;
 		if( attributes&TILEMAP_FLIPY )
@@ -779,118 +752,86 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 		{
 			tilemap->orientation ^= ORIENTATION_FLIP_X;
 		}
-		mappings_update( tilemap );
 
-		/* swap & adjust scroll positions & value */
-		doflipx = (old_orientation^tilemap->orientation)&ORIENTATION_FLIP_X;
-		doflipy = (old_orientation^tilemap->orientation)&ORIENTATION_FLIP_Y;
-		if( tilemap->orientation & ORIENTATION_SWAP_XY )
-			SWAP(doflipx,doflipy);
-		if(doflipy)
-		{
-			/* swap row number 0<>last , 1<>last-1 .. */
-			for(n1=0 , n2=tilemap->scroll_rows-1 ; n1 < n2 ; n1++,n2-- )
-				SWAP(tilemap->rowscroll[n1],tilemap->rowscroll[n2]);
-			/* flip col positions */
-			range = screen_width-tilemap->cached_width;
-			for(n1=0 ; n1 < tilemap->scroll_cols ; n1++)
-				tilemap->colscroll[n1] = range - tilemap->colscroll[n1];
-		}
-		if(doflipx)
-		{
-			/* swap col number 0<>last , 1<>last-1 .. */
-			for(n1=0 , n2=tilemap->scroll_cols-1 ; n1 < n2 ; n1++,n2-- )
-				SWAP(tilemap->colscroll[n1],tilemap->colscroll[n2]);
-			/* flip row positions */
-			range = screen_height-tilemap->cached_height;
-			for(n1=0 ; n1 < tilemap->scroll_rows ; n1++)
-				tilemap->rowscroll[n1] = range - tilemap->rowscroll[n1];
-		}
-		if( doflipx || doflipy)
-		{
-			tilemap_update_scroll_delta( tilemap );
-		}
+		mappings_update( tilemap );
+		recalculate_scroll( tilemap );
 		tilemap_mark_all_tiles_dirty( tilemap );
 	}
 }
 
-void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip )
+void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *pClip )
 {
 	int left,top,right,bottom;
-	if( clip )
+
+	if( pClip )
 	{
-		tilemap->logical_clip = *clip;
-		left = clip->min_x;
-		top = clip->min_y;
-		right = clip->max_x+1;
-		bottom = clip->max_y+1;
+		tilemap->logical_clip = *pClip;
+		left	= pClip->min_x;
+		top		= pClip->min_y;
+		right	= pClip->max_x+1;
+		bottom	= pClip->max_y+1;
+
 		if( tilemap->orientation & ORIENTATION_SWAP_XY )
 		{
 			SWAP(left,top)
 			SWAP(right,bottom)
 		}
+
 		if( tilemap->orientation & ORIENTATION_FLIP_X )
 		{
 			SWAP(left,right)
-			left = screen_width-left;
-			right = screen_width-right;
+			left	= screen_width-left;
+			right	= screen_width-right;
 		}
+
 		if( tilemap->orientation & ORIENTATION_FLIP_Y )
 		{
 			SWAP(top,bottom)
-			top = screen_height-top;
-			bottom = screen_height-bottom;
+			top		= screen_height-top;
+			bottom	= screen_height-bottom;
 		}
 	}
 	else
 	{
+		/* does anyone rely on this behavior? */
 		tilemap->logical_clip = Machine->visible_area;
-		left = 0;
-		top = 0;
-		right = tilemap->cached_width;
-		bottom = tilemap->cached_height;
+		left	= 0;
+		top		= 0;
+		right	= tilemap->cached_width;
+		bottom	= tilemap->cached_height;
 	}
-	tilemap->clip_left = left;
-	tilemap->clip_right = right;
-	tilemap->clip_top = top;
-	tilemap->clip_bottom = bottom;
+
+	tilemap->clip_left		= left;
+	tilemap->clip_right		= right;
+	tilemap->clip_top		= top;
+	tilemap->clip_bottom	= bottom;
 }
 
 /***********************************************************************************/
 
 void tilemap_set_scroll_cols( struct tilemap *tilemap, int n )
 {
+	tilemap->logical_scroll_cols = n;
 	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
-		if (tilemap->scroll_rows != n)
-		{
-			tilemap->scroll_rows = n;
-		}
+		tilemap->cached_scroll_rows = n;
 	}
 	else
 	{
-		if (tilemap->scroll_cols != n)
-		{
-			tilemap->scroll_cols = n;
-		}
+		tilemap->cached_scroll_cols = n;
 	}
 }
 
 void tilemap_set_scroll_rows( struct tilemap *tilemap, int n )
 {
+	tilemap->logical_scroll_rows = n;
 	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
-		if (tilemap->scroll_cols != n)
-		{
-			tilemap->scroll_cols = n;
-		}
+		tilemap->cached_scroll_cols = n;
 	}
 	else
 	{
-		if (tilemap->scroll_rows != n)
-		{
-			tilemap->scroll_rows = n;
-		}
+		tilemap->cached_scroll_rows = n;
 	}
 }
 
@@ -948,7 +889,7 @@ profiler_mark(PROFILER_TILEMAP_UPDATE);
 profiler_mark(PROFILER_END);
 }
 
-struct osd_bitmap *tilemap_get_pixmap( struct tilemap * tilemap )
+struct mame_bitmap *tilemap_get_pixmap( struct tilemap * tilemap )
 {
 	UINT32 cached_indx = 0;
 	UINT32 row,col;
@@ -973,78 +914,122 @@ profiler_mark(PROFILER_END);
 	return tilemap->pixmap;
 }
 
-struct osd_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap )
+struct mame_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap )
 {
 	return tilemap->transparency_bitmap;
 }
 
 /***********************************************************************************/
 
-void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped )
+static void
+recalculate_scroll( struct tilemap *tilemap )
+{
+	int i;
+
+	tilemap->scrollx_delta = (tilemap->attributes & TILEMAP_FLIPX )?tilemap->dx_if_flipped:tilemap->dx;
+	tilemap->scrolly_delta = (tilemap->attributes & TILEMAP_FLIPY )?tilemap->dy_if_flipped:tilemap->dy;
+
+	for( i=0; i<tilemap->logical_scroll_rows; i++ )
+	{
+		tilemap_set_scrollx( tilemap, i, tilemap->logical_rowscroll[i] );
+	}
+	for( i=0; i<tilemap->logical_scroll_cols; i++ )
+	{
+		tilemap_set_scrolly( tilemap, i, tilemap->logical_colscroll[i] );
+	}
+}
+
+void
+tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped )
 {
 	tilemap->dx = dx;
 	tilemap->dx_if_flipped = dx_if_flipped;
-	tilemap_update_scroll_delta( tilemap );
+	recalculate_scroll( tilemap );
 }
 
-void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped )
+void
+tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped )
 {
 	tilemap->dy = dy;
 	tilemap->dy_if_flipped = dy_if_flipped;
-	tilemap_update_scroll_delta( tilemap );
+	recalculate_scroll( tilemap );
 }
 
 void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value )
 {
-	value = tilemap->scrollx_delta-value;
+	tilemap->logical_rowscroll[which] = value;
+	value = tilemap->scrollx_delta-value; /* adjust */
 
 	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->cached_height-value;
-		if( tilemap->colscroll[which]!=value )
+		/* if xy are swapped, we are actually panning the screen bitmap vertically */
+		if( tilemap->orientation & ORIENTATION_FLIP_X )
 		{
-			tilemap->colscroll[which] = value;
+			/* adjust affected col */
+			which = tilemap->cached_scroll_cols-1 - which;
 		}
+		if( tilemap->orientation & ORIENTATION_FLIP_Y )
+		{
+			/* adjust scroll amount */
+			value = screen_height-tilemap->cached_height-value;
+		}
+		tilemap->cached_colscroll[which] = value;
 	}
 	else
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->cached_width-value;
-		if( tilemap->rowscroll[which]!=value )
+		if( tilemap->orientation & ORIENTATION_FLIP_Y )
 		{
-			tilemap->rowscroll[which] = value;
+			/* adjust affected row */
+			which = tilemap->cached_scroll_rows-1 - which;
 		}
+		if( tilemap->orientation & ORIENTATION_FLIP_X )
+		{
+			/* adjust scroll amount */
+			value = screen_width-tilemap->cached_width-value;
+		}
+		tilemap->cached_rowscroll[which] = value;
 	}
 }
 
 void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value )
 {
-	value = tilemap->scrolly_delta - value;
+	tilemap->logical_colscroll[which] = value;
+	value = tilemap->scrolly_delta - value; /* adjust */
 
 	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->cached_width-value;
-		if( tilemap->rowscroll[which]!=value )
+		/* if xy are swapped, we are actually panning the screen bitmap horizontally */
+		if( tilemap->orientation & ORIENTATION_FLIP_Y )
 		{
-			tilemap->rowscroll[which] = value;
+			/* adjust affected row */
+			which = tilemap->cached_scroll_rows-1 - which;
 		}
+		if( tilemap->orientation & ORIENTATION_FLIP_X )
+		{
+			/* adjust scroll amount */
+			value = screen_width-tilemap->cached_width-value;
+		}
+		tilemap->cached_rowscroll[which] = value;
 	}
 	else
 	{
-		if( tilemap->orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->cached_height-value;
-		if( tilemap->colscroll[which]!=value )
+		if( tilemap->orientation & ORIENTATION_FLIP_X )
 		{
-			tilemap->colscroll[which] = value;
+			/* adjust affected col */
+			which = tilemap->cached_scroll_cols-1 - which;
 		}
+		if( tilemap->orientation & ORIENTATION_FLIP_Y )
+		{
+			/* adjust scroll amount */
+			value = screen_height-tilemap->cached_height-value;
+		}
+		tilemap->cached_colscroll[which] = value;
 	}
 }
 
 /***********************************************************************************/
 
-void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority )
+void tilemap_draw( struct mame_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority )
 {
 	int xpos,ypos,mask,value;
 	int rows, cols;
@@ -1055,10 +1040,10 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 	if( tilemap->enable )
 	{
 		/* scroll registers */
-		rows		= tilemap->scroll_rows;
-		cols		= tilemap->scroll_cols;
-		rowscroll	= tilemap->rowscroll;
-		colscroll	= tilemap->colscroll;
+		rows		= tilemap->cached_scroll_rows;
+		cols		= tilemap->cached_scroll_cols;
+		rowscroll	= tilemap->cached_rowscroll;
+		colscroll	= tilemap->cached_colscroll;
 
 		/* clipping */
 		left		= tilemap->clip_left;
@@ -1317,7 +1302,7 @@ profiler_mark(PROFILER_END);
    - startx and starty MUST be UINT32 for calculations to work correctly
    - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
    */
-void tilemap_draw_roz(struct osd_bitmap *dest,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
@@ -1374,7 +1359,7 @@ profiler_mark(PROFILER_END);
 
 #ifdef DECLARE
 
-DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
+DECLARE(copyrozbitmap_core,(struct mame_bitmap *bitmap,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
 		const struct rectangle *clip,
 		int mask,int value,
@@ -1387,8 +1372,8 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct tilemap *tilemap,
 	int sy;
 	int ex;
 	int ey;
-	struct osd_bitmap *srcbitmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *srcbitmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	const int xmask = srcbitmap->width-1;
 	const int ymask = srcbitmap->height-1;
 	const int widthshifted = srcbitmap->width << 16;
@@ -1618,7 +1603,7 @@ DECLARE( draw, (struct tilemap *tilemap, int xpos, int ypos, int mask, int value
 	trans_t transCur;
 	const UINT8 *pTrans;
 	UINT32 cached_indx;
-	struct osd_bitmap *screen = blit.screen_bitmap;
+	struct mame_bitmap *screen = blit.screen_bitmap;
 	int tilemap_priority_code = blit.tilemap_priority_code;
 	int x1 = xpos;
 	int y1 = ypos;
@@ -1809,8 +1794,8 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(struct tilemap *tilemap, UINT32 x
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
@@ -1913,8 +1898,8 @@ static UINT8 TRANSP(HandleTransparencyColor)(struct tilemap *tilemap, UINT32 x0,
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
@@ -2013,8 +1998,8 @@ static UINT8 TRANSP(HandleTransparencyPen)(struct tilemap *tilemap, UINT32 x0, U
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
@@ -2111,8 +2096,8 @@ static UINT8 TRANSP(HandleTransparencyPenBit)(struct tilemap *tilemap, UINT32 x0
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
@@ -2191,8 +2176,8 @@ static UINT8 TRANSP(HandleTransparencyPens)(struct tilemap *tilemap, UINT32 x0, 
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];
@@ -2277,8 +2262,8 @@ static UINT8 TRANSP(HandleTransparencyNone)(struct tilemap *tilemap, UINT32 x0, 
 {
 	UINT32 tile_width = tilemap->cached_tile_width;
 	UINT32 tile_height = tilemap->cached_tile_height;
-	struct osd_bitmap *pixmap = tilemap->pixmap;
-	struct osd_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
+	struct mame_bitmap *pixmap = tilemap->pixmap;
+	struct mame_bitmap *transparency_bitmap = tilemap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tilemap->pPenToPixel[flags&(TILE_SWAPXY|TILE_FLIPY|TILE_FLIPX)];

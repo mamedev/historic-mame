@@ -25,10 +25,10 @@ extern "C" {
 
 struct artwork_info
 {
-	struct osd_bitmap *artwork;
-	struct osd_bitmap *artwork1;
-	struct osd_bitmap *alpha;
-	struct osd_bitmap *orig_artwork;   /* needed for palette recalcs */
+	struct mame_bitmap *artwork;
+	struct mame_bitmap *artwork1;
+	struct mame_bitmap *alpha;
+	struct mame_bitmap *orig_artwork;   /* needed for palette recalcs */
 	int start_pen;
 	UINT32 *rgb;
 };
@@ -58,7 +58,7 @@ struct artwork_size_info
 
 extern struct artwork_info *artwork_backdrop;
 extern struct artwork_info *artwork_overlay;
-extern struct osd_bitmap *artwork_real_scrbitmap;
+extern struct mame_bitmap *artwork_real_scrbitmap;
 
 /*********************************************************************
   functions that apply to backdrops AND overlays
@@ -75,7 +75,7 @@ int artwork_get_size_info(const char *file_name, struct artwork_size_info *a);
 
 /* called by mame.c */
 void artwork_kill(void);
-void artwork_draw(struct osd_bitmap *dest,struct osd_bitmap *source, int full_refresh);
+void artwork_draw(struct mame_bitmap *dest,struct mame_bitmap *source, int full_refresh);
 
 #ifdef __cplusplus
 }

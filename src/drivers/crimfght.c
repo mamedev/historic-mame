@@ -19,7 +19,7 @@ static void crimfght_banking( int lines );
 
 void crimfght_vh_stop( void );
 int crimfght_vh_start( void );
-void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void crimfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE_HANDLER( crimfght_coin_w )

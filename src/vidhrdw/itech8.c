@@ -12,7 +12,7 @@
 
 
 void itech8_update_interrupts(int periodic, int tms34061, int blitter);
-void slikshot_extra_draw(struct osd_bitmap *bitmap);
+void slikshot_extra_draw(struct mame_bitmap *bitmap);
 
 
 /*************************************
@@ -774,7 +774,7 @@ READ_HANDLER( itech8_tms34061_r )
  *
  *************************************/
 
-void itech8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int y, ty;
 

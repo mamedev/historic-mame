@@ -97,7 +97,7 @@ void bottom9_vh_stop(void)
 
 ***************************************************************************/
 
-void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bottom9_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 

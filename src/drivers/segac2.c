@@ -154,7 +154,7 @@ extern int			segac2_palbank;
 int		segac2_vh_start(void);
 void	segac2_vh_stop(void);
 void	segac2_vh_eof(void);
-void	segac2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void	segac2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void	segac2_update_display(int scanline);
 void	segac2_enable_display(int enable);
 

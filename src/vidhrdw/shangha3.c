@@ -67,7 +67,7 @@ size_t shangha3_ram_size;
 int shangha3_do_shadows;
 
 static data16_t gfxlist_addr;
-static struct osd_bitmap *rawbitmap;
+static struct mame_bitmap *rawbitmap;
 
 
 
@@ -269,7 +269,7 @@ else
 }
 
 
-void shangha3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void shangha3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

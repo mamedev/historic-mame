@@ -164,7 +164,7 @@ WRITE16_HANDLER( darkseal_palette_24bit_b_w )
 
 /******************************************************************************/
 
-static void darkseal_drawsprites(struct osd_bitmap *bitmap)
+static void darkseal_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -289,7 +289,7 @@ int darkseal_vh_start(void)
 
 /******************************************************************************/
 
-void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void darkseal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flipscreen=!(darkseal_control_0[0]&0x80);
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

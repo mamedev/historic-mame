@@ -14,7 +14,7 @@ WRITE_HANDLER( citycon_videoram_w );
 WRITE_HANDLER( citycon_linecolor_w );
 WRITE_HANDLER( citycon_background_w );
 
-void citycon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void citycon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int  citycon_vh_start(void);
 void citycon_vh_stop(void);
 

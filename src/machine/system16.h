@@ -225,23 +225,23 @@ extern void sys16_vh_stop( void );
 
 /* "normal" video hardware */
 extern int sys16_vh_start( void );
-extern void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void sys16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* hang-on video hardware */
 extern int sys16_hangon_vh_start( void );
-extern void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void sys16_hangon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* outrun video hardware */
 extern int sys16_outrun_vh_start( void );
-extern void sys16_outrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void sys16_outrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* aburner video hardware */
 extern int sys16_aburner_vh_start( void );
-extern void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
+extern void sys16_aburner_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
 
 /* system18 video hardware */
 extern int sys18_vh_start( void );
-extern void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void sys18_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* video driver constants (vary with game) */
 extern int sys16_gr_bitmap_width;

@@ -197,7 +197,7 @@ int gberet_interrupt(void)
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 	unsigned char *sr;
@@ -236,7 +236,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites_bootleg(struct osd_bitmap *bitmap)
+static void draw_sprites_bootleg(struct mame_bitmap *bitmap)
 {
 	int offs;
 	unsigned char *sr;
@@ -275,7 +275,7 @@ static void draw_sprites_bootleg(struct osd_bitmap *bitmap)
 }
 
 
-void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gberet_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
@@ -283,7 +283,7 @@ void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 }
 
-void gberetb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gberetb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);

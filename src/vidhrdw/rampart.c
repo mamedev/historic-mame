@@ -27,12 +27,12 @@ data16_t *rampart_bitmap;
  *************************************/
 
 static UINT8 *pfdirty;
-static struct osd_bitmap *pfbitmap;
+static struct mame_bitmap *pfbitmap;
 static int xdim, ydim;
 
 int rampart_bitmap_init(int _xdim, int _ydim);
 void rampart_bitmap_free(void);
-void rampart_bitmap_render(struct osd_bitmap *bitmap);
+void rampart_bitmap_render(struct mame_bitmap *bitmap);
 
 
 
@@ -121,7 +121,7 @@ void rampart_vh_stop(void)
  *
  *************************************/
 
-void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rampart_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* draw the layers */
 	rampart_bitmap_render(bitmap);
@@ -210,7 +210,7 @@ WRITE16_HANDLER( rampart_bitmap_w )
  *
  *************************************/
 
-void rampart_bitmap_render(struct osd_bitmap *bitmap)
+void rampart_bitmap_render(struct mame_bitmap *bitmap)
 {
 	int x, y;
 

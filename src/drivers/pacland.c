@@ -40,7 +40,7 @@ WRITE_HANDLER( pacland_bankswitch_w );
 void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int pacland_vh_start(void);
 void pacland_vh_stop(void);
-void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void pacland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static READ_HANDLER( sharedram1_r )

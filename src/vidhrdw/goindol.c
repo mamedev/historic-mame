@@ -103,7 +103,7 @@ WRITE_HANDLER( goindol_bg_videoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int gfxbank, unsigned char *sprite_ram)
+static void draw_sprites(struct mame_bitmap *bitmap, int gfxbank, unsigned char *sprite_ram)
 {
 	int offs,sx,sy,tile,palette;
 
@@ -136,7 +136,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int gfxbank, unsigned char *
 	}
 }
 
-void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void goindol_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(fg_tilemap,0,*goindol_fg_scrollx);
 	tilemap_set_scrolly(fg_tilemap,0,*goindol_fg_scrolly);

@@ -81,7 +81,7 @@ WRITE16_HANDLER( rampart_bitmap_w );
 
 int arcadecl_vh_start(void);
 void arcadecl_vh_stop(void);
-void arcadecl_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void arcadecl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 extern data16_t *rampart_bitmap;
 

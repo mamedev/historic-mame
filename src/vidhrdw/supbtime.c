@@ -22,7 +22,7 @@ static int flipscreen;
 
 /******************************************************************************/
 
-static void supbtime_drawsprites(struct osd_bitmap *bitmap)
+static void supbtime_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -161,7 +161,7 @@ int supbtime_vh_start(void)
 
 /******************************************************************************/
 
-void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void supbtime_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flipscreen=supbtime_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -184,7 +184,7 @@ void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }
 
-void chinatwn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void chinatwn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	flipscreen=supbtime_control_0[0]&0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

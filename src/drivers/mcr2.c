@@ -95,9 +95,9 @@ READ_HANDLER( mcr2_videoram_r );
 READ_HANDLER( twotigra_videoram_r );
 WRITE_HANDLER( mcr2_videoram_w );
 WRITE_HANDLER( twotigra_videoram_w );
-void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void mcr2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
-void journey_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void journey_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 
@@ -612,7 +612,7 @@ static const struct MachineDriver machine_driver_mcr2 =
 			CPU_Z80,
 			2500000,	/* 2.5 MHz */
 			readmem,writemem,readport,writeport,
-			mcr_interrupt,1,
+			mcr_interrupt,2,
 			0,0,mcr_daisy_chain
 		},
 		SOUND_CPU_SSIO
@@ -650,7 +650,7 @@ static const struct MachineDriver machine_driver_journey =
 			CPU_Z80,
 			7500000,	/* Looks like it runs at 7.5 MHz rather than 5 or 2.5 */
 			readmem,writemem,readport,writeport,
-			mcr_interrupt,1,
+			mcr_interrupt,2,
 			0,0,mcr_daisy_chain
 		},
 		SOUND_CPU_SSIO

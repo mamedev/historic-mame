@@ -79,7 +79,7 @@ $854 marks start of service mode
 void taito_no_buffer_eof_callback(void);
 int slapshot_vh_start (void);
 void slapshot_vh_stop (void);
-void slapshot_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void slapshot_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 static data16_t *color_ram;
 

@@ -113,7 +113,7 @@ int wms_yunit_4bit_vh_start(void);
 int wms_yunit_6bit_vh_start(void);
 int wms_zunit_vh_start(void);
 void wms_yunit_vh_stop(void);
-void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void wms_yunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 void wms_yunit_vh_eof(void);
 void wms_zunit_vh_eof(void);
 void wms_yunit_display_interrupt(int scanline);

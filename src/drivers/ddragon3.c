@@ -20,8 +20,8 @@
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 
-void ddragon3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ctribe_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void ddragon3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void ctribe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE16_HANDLER( ddragon3_scroll16_w );
 
 extern int ddragon3_vh_start(void);

@@ -85,7 +85,7 @@
 
 void capbowl_init_machine(void);
 
-void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void capbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 int  capbowl_vh_start(void);
 void capbowl_vh_stop(void);

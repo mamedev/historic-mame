@@ -91,7 +91,7 @@ void galaga_init_machine(void);
 
 extern unsigned char *galaga_starcontrol;
 int galaga_vh_start(void);
-void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void galaga_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 WRITE_HANDLER( pengo_sound_w );

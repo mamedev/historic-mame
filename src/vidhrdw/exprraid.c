@@ -5,7 +5,7 @@
 unsigned char *exprraid_bgcontrol;
 
 
-static void drawbg(struct osd_bitmap *bitmap,int priority)
+static void drawbg(struct mame_bitmap *bitmap,int priority)
 {
 	unsigned char *map1 = &memory_region(REGION_GFX4)[0x0000];
 	unsigned char *map2 = &memory_region(REGION_GFX4)[0x4000];
@@ -59,7 +59,7 @@ static void drawbg(struct osd_bitmap *bitmap,int priority)
 
 
 
-void exprraid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void exprraid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

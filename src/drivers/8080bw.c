@@ -146,7 +146,7 @@ WRITE_HANDLER( schaser_colorram_w );
 READ_HANDLER( schaser_colorram_r );
 WRITE_HANDLER( helifire_colorram_w );
 
-void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void invaders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void invadpt2_vh_convert_color_prom(unsigned char *pallete, unsigned short *colortable,const unsigned char *color_prom);
 void helifire_vh_convert_color_prom(unsigned char *pallete, unsigned short *colortable,const unsigned char *color_prom);

@@ -83,7 +83,7 @@ void playch10_vh_stop( void )
 
 ***************************************************************************/
 
-void playch10_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
+void playch10_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 {
 	int offs;
 

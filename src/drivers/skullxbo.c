@@ -36,7 +36,7 @@ WRITE16_HANDLER( skullxbo_mobmsb_w );
 
 int skullxbo_vh_start(void);
 void skullxbo_vh_stop(void);
-void skullxbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void skullxbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void skullxbo_scanline_update(int param);
 

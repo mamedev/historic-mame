@@ -22,7 +22,7 @@ void finalizr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int finalizr_vh_start(void);
 void finalizr_vh_stop(void);
 WRITE_HANDLER( finalizr_videoctrl_w );
-void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void finalizr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

@@ -42,7 +42,7 @@ extern size_t vectorram_size;
 
 int  vector_vh_start (void);
 void vector_vh_stop (void);
-void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void vector_clear_list (void);
 void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
 void vector_add_point (int x, int y, int color, int intensity);

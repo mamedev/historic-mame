@@ -158,7 +158,7 @@ WRITE_HANDLER( startrek_sh_w );
 /* Video hardware prototypes */
 int sega_vh_start (void);
 void sega_vh_stop (void);
-void sega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void sega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -344,6 +344,11 @@ INPUT_PORTS_START( spacfury )
 
 		COINAGE
 
+	PORT_START	/* IN8 - port 0xfc */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
 
 INPUT_PORTS_END
 
@@ -668,6 +673,8 @@ void init_spacfury(void)
 {
 	/* This game uses the 315-0064 security chip */
 	sega_security(64);
+
+	install_port_read_handler(0, 0xfc, 0xfc, input_port_8_r);
 }
 
 void init_zektor(void)

@@ -190,7 +190,7 @@ WRITE16_HANDLER( bionicc_gfxctrl_w )
 
 ***************************************************************************/
 
-static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
+static void bionicc_draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs;
 	const struct GfxElement *gfx = Machine->gfx[3];
@@ -225,7 +225,7 @@ static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bionicc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,fg_tilemap,1|TILEMAP_BACK,0);	/* nothing in FRONT */

@@ -111,7 +111,7 @@ static void get_bg0_tile_info(int tile_index)
  sprite colour marking could probably be improved..
 *******************************************************************************/
 
-static void wwfsstar_drawsprites( struct osd_bitmap *bitmap )
+static void wwfsstar_drawsprites( struct mame_bitmap *bitmap )
 {
 	/*- SPR RAM Format -**
 
@@ -191,7 +191,7 @@ int wwfsstar_vh_start(void)
 	return 0;
 }
 
-void wwfsstar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void wwfsstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrolly( bg0_tilemap, 0, wwfsstar_scrolly  );
 	tilemap_set_scrollx( bg0_tilemap, 0, wwfsstar_scrollx  );

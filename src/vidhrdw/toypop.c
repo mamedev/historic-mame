@@ -93,13 +93,13 @@ WRITE16_HANDLER( toypop_merged_background_w )
 		toypop_bg_image[2*offset+1] = (data & 0xf) | ((data & 0xf0) << 4);
 }
 
-INLINE void toypop_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+INLINE void toypop_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->visible_area,TRANSPARENCY_COLOR,0xff);
 }
 
-void draw_background_and_characters(struct osd_bitmap *bitmap)
+void draw_background_and_characters(struct mame_bitmap *bitmap)
 {
 	register int offs, x, y;
 	UINT8 scanline[288];
@@ -159,7 +159,7 @@ void draw_background_and_characters(struct osd_bitmap *bitmap)
 	}
 }
 
-void toypop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void toypop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	register int offs, x, y;
 

@@ -1246,7 +1246,7 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 }
 
 
-void cps1_render_sprites(struct osd_bitmap *bitmap)
+void cps1_render_sprites(struct mame_bitmap *bitmap)
 {
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)					\
 {																	\
@@ -1479,7 +1479,7 @@ void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 #undef DRAWSPRITE
 }
 
-void cps2_render_sprites(struct osd_bitmap *bitmap,int *primasks)
+void cps2_render_sprites(struct mame_bitmap *bitmap,int *primasks)
 {
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)									\
 {																					\
@@ -1619,7 +1619,7 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 
 
-void cps1_render_stars(struct osd_bitmap *bitmap)
+void cps1_render_stars(struct mame_bitmap *bitmap)
 {
 	int offs;
 	UINT8 *stars_rom = memory_region(REGION_GFX2);
@@ -1686,7 +1686,7 @@ void cps1_render_stars(struct osd_bitmap *bitmap)
 }
 
 
-void cps1_render_layer(struct osd_bitmap *bitmap,int layer,int primask)
+void cps1_render_layer(struct mame_bitmap *bitmap,int layer,int primask)
 {
 	switch (layer)
 	{
@@ -1701,7 +1701,7 @@ void cps1_render_layer(struct osd_bitmap *bitmap,int layer,int primask)
 	}
 }
 
-void cps1_render_high_layer(struct osd_bitmap *bitmap, int layer)
+void cps1_render_high_layer(struct mame_bitmap *bitmap, int layer)
 {
 	switch (layer)
 	{
@@ -1723,7 +1723,7 @@ void cps1_render_high_layer(struct osd_bitmap *bitmap, int layer)
 
 ***************************************************************************/
 
-void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cps1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
     int layercontrol,l0,l1,l2,l3;
 	int videocontrol=cps1_port(0x22);

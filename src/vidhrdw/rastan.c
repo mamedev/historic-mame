@@ -120,7 +120,7 @@ WRITE16_HANDLER( rastan_spriteflip_w )
 
 /***************************************************************************/
 
-static void rastan_draw_sprites(struct osd_bitmap *bitmap,int y_offs)
+static void rastan_draw_sprites(struct mame_bitmap *bitmap,int y_offs)
 {
 	int offs,tile;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
@@ -164,7 +164,7 @@ static void rastan_draw_sprites(struct osd_bitmap *bitmap,int y_offs)
 }
 
 
-void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layer[2];
 
@@ -199,7 +199,7 @@ void opwolf_eof_callback(void)
 	beamy = ((input_port_6_r(0) * 256) >> 8);	//+19
 }
 
-void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void opwolf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layer[2];
 
@@ -232,7 +232,7 @@ void opwolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /***************************************************************************/
 
-void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
@@ -312,7 +312,7 @@ the Y settings are active low.
 
 */
 
-void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,layer[2];
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;

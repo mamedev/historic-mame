@@ -163,7 +163,7 @@ extern UINT8 exidy_collision_invert;
 int exidy_vh_start(void);
 void exidy_vh_stop(void);
 void exidy_vh_eof(void);
-void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void exidy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void exidy_vh_init_palette(UINT8 *game_palette, UINT16 *game_colortable,const UINT8 *color_prom);
 int exidy_vblank_interrupt(void);
 

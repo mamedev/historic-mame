@@ -24,7 +24,7 @@ static int gionbana_paltblnum;
 static int gionbana_screen_refresh;
 static int gfxdraw_mode;
 
-static struct osd_bitmap *gionbana_tmpbitmap0, *gionbana_tmpbitmap1;
+static struct mame_bitmap *gionbana_tmpbitmap0, *gionbana_tmpbitmap1;
 static unsigned char *gionbana_videoram0, *gionbana_videoram1;
 static unsigned char *gionbana_palette;
 static unsigned char *gionbana_paltbl;
@@ -449,7 +449,7 @@ void hanamomo_vh_stop(void)
 
 
 ******************************************************************************/
-void gionbana_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void gionbana_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned char color;

@@ -74,7 +74,7 @@ int  sprtmtch_vh_start(void);
 void dynax_vh_stop(void);
 void sprtmtch_vh_stop(void);
 
-void dynax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void sprtmtch_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dynax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void sprtmtch_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void sprtmtch_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

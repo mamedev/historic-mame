@@ -217,7 +217,7 @@ void gaplus_starfield_update( void ) {
 	}
 }
 
-static void starfield_render( struct osd_bitmap *bitmap ) {
+static void starfield_render( struct mame_bitmap *bitmap ) {
 
 	int i;
 	int width, height;
@@ -274,7 +274,7 @@ void gaplus_vh_stop( void ) {
 
 ***************************************************************************/
 
-static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
+static void gaplus_draw_sprites(struct mame_bitmap *bitmap){
 	int offs;
 
 	for (offs = 0; offs < spriteram_size; offs += 2){
@@ -339,7 +339,7 @@ static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
 	}
 }
 
-void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gaplus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

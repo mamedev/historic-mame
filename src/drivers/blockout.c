@@ -21,7 +21,7 @@ WRITE16_HANDLER( blockout_paletteram_w );
 WRITE16_HANDLER( blockout_frontcolor_w );
 int blockout_vh_start(void);
 void blockout_vh_stop(void);
-void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void blockout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int blockout_interrupt(void)

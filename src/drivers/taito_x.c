@@ -188,7 +188,7 @@ its place. The East Technology games on this hardware follow Daisenpu.
 #include "sndhrdw/taitosnd.h"
 
 
-void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void superman_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 int superman_vh_start (void);
 int ballbros_vh_start (void);
 void superman_vh_stop (void);

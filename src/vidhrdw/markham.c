@@ -49,7 +49,7 @@ WRITE_HANDLER( markham_flipscreen_w )
 	flipscreen = data & 1;
 }
 
-void markham_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void markham_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 
 	int offs,chr,col,x,y,px,py,fx,fy,bank ;

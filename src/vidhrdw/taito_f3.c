@@ -256,7 +256,7 @@ static struct tempsprite *spritelist;
 
 static void print_debug_info(int t0, int t1, int t2, int t3, int c0, int c1, int c2, int c3)
 {
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int j,trueorientation,l[16];
 	char buf[64];
 
@@ -725,7 +725,7 @@ WRITE32_HANDLER( f3_palette_24bit_w )
 	}
 
 INLINE void f3_drawscanline(
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
 	ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
@@ -750,10 +750,10 @@ INLINE void f3_drawscanline(
 }
 #undef ADJUST_FOR_ORIENTATION
 
-static void f3_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tilemap,UINT32 trans,int pos,int sx,int sy, int dpri)
+static void f3_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tilemap,UINT32 trans,int pos,int sx,int sy, int dpri)
 {
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(tilemap);
-	struct osd_bitmap *transbitmap = tilemap_get_transparency_bitmap(tilemap);
+	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(tilemap);
+	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(tilemap);
 	UINT16 *dst,*src;
 	UINT8 *tsrc;
 	int x,y,inc;
@@ -892,7 +892,7 @@ static void f3_tilemap_draw(struct osd_bitmap *bitmap,struct tilemap *tilemap,UI
 
 /******************************************************************************/
 
-static void f3_clip_top_border(struct osd_bitmap *bitmap)
+static void f3_clip_top_border(struct mame_bitmap *bitmap)
 {
 	int pri_base,i;
 
@@ -920,7 +920,7 @@ static void f3_clip_top_border(struct osd_bitmap *bitmap)
 	}
 }
 
-static void f3_clip_bottom_border(struct osd_bitmap *bitmap)
+static void f3_clip_bottom_border(struct mame_bitmap *bitmap)
 {
 	int pri_base,i;
 
@@ -1020,7 +1020,7 @@ static void f3_update_pivot_layer(void)
 
 /******************************************************************************/
 
-static void f3_draw_vram_layer(struct osd_bitmap *bitmap)
+static void f3_draw_vram_layer(struct mame_bitmap *bitmap)
 {
 	int offs,mx,my,tile,color,fx,fy,sx,sy;
 
@@ -1070,7 +1070,7 @@ static void f3_draw_vram_layer(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-static void f3_drawsprites(struct osd_bitmap *bitmap)
+static void f3_drawsprites(struct mame_bitmap *bitmap)
 {
 	int offs,spritecont,flipx,flipy,old_x,old_y,color,x,y;
 	int sprite,global_x=0,global_y=0,subglobal_x=0,subglobal_y=0;
@@ -1316,7 +1316,7 @@ static void f3_drawsprites(struct osd_bitmap *bitmap)
 
 /******************************************************************************/
 
-void f3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int use_custom[4],tpri[4],zoom[4];
 	int sprite_pri[4],layer_pri[4],enable[4],alpha[4];

@@ -84,7 +84,7 @@ WRITE_HANDLER( m92_spritecontrol_w )
 
 	/* Sprite control - display all sprites, or partial list */
 	if (offset==4) {
-		if (data&8)
+		if (data==8)
 			m92_sprite_list=(((0x100 - sprite_extent)&0xff)*8);
 		else
 			m92_sprite_list=0x800;
@@ -500,7 +500,7 @@ void m92_vh_stop(void)
 
 /*****************************************************************************/
 
-static void m92_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *clip)
+static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *clip)
 {
 	int offs=0;
 
@@ -562,7 +562,7 @@ static void m92_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *c
 
 /*****************************************************************************/
 
-void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void m92_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* Screen refresh is handled by raster interrupt routine, here
 		we just check the keyboard */
@@ -658,7 +658,7 @@ static void m92_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
+static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
 {
 	fillbitmap(priority_bitmap,0,NULL);
 
@@ -688,7 +688,7 @@ static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *
 	m92_drawsprites(bitmap,clip);
 }
 
-void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line)
+void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
 {
 	struct rectangle clip;
 

@@ -64,7 +64,7 @@ void jailbrek_vh_stop( void )
 	bitmap_free( tmpbitmap );
 }
 
-static void drawsprites( struct osd_bitmap *bitmap )
+static void drawsprites( struct mame_bitmap *bitmap )
 {
 	int i;
 
@@ -96,7 +96,7 @@ static void drawsprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void jailbrek_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i;
 

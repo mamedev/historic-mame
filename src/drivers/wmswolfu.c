@@ -100,7 +100,7 @@ WRITE16_HANDLER( wms_tunit_paletteram_w );
 /* external video routines */
 int wms_wolfu_vh_start(void);
 void wms_tunit_vh_stop(void);
-void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void wms_tunit_to_shiftreg(offs_t address, unsigned short *shiftreg);
 void wms_tunit_from_shiftreg(offs_t address, unsigned short *shiftreg);
 void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline);

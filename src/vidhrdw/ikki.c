@@ -60,7 +60,7 @@ WRITE_HANDLER( ikki_scrn_ctrl_w )
 	ikki_flipscreen = (data >> 2) & 1;
 }
 
-void ikki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ikki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 
 	int offs,chr,col,px,py,f,bank,d;

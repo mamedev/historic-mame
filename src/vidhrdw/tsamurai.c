@@ -148,7 +148,7 @@ WRITE_HANDLER( tsamurai_fg_colorram_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->visible_area;
@@ -191,7 +191,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void tsamurai_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	int i;
 
@@ -253,7 +253,7 @@ int vsgongf_vh_start(void)
 	return 0;
 }
 
-void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void vsgongf_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	static int k;
 	if( keyboard_pressed( KEYCODE_Q ) ){

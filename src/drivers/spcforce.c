@@ -40,7 +40,7 @@ a000-a3ff	R/W X/Y scroll position of each character (can be scrolled up
 extern unsigned char *spcforce_scrollram;
 
 WRITE_HANDLER( spcforce_flip_screen_w );
-void spcforce_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void spcforce_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int spcforce_interrupt(void)

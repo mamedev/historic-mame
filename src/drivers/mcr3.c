@@ -6,19 +6,20 @@
 		* Tapper
 		* Timber
 		* Discs of Tron (Squawk n' Talk)
-		* Destruction Derby (Turbo Chip Squeak)
+		* Demolition Derby (Turbo Chip Squeak)
 
 	Spy Hunter games (MCR3 with scrolling):
 		* Spy Hunter (Chip Squeak Deluxe)
-		* Turbo Tag (prototype) (Chip Squeak Deluxe)
 		* Crater Raider
+		* Turbo Tag (prototype) (Chip Squeak Deluxe)
 
 	MCR Monoboard games (MCR3 with a slightly different memory map):
-		* Destruction Derby (Monoboard version) (Turbo Chip Squeak)
+		* Demolition Derby (Monoboard version) (Turbo Chip Squeak)
 		* Sarge (Turbo Chip Squeak)
+		* Max RPM (Turbo Chip Squeak)
 		* Rampage (Sounds Good)
 		* Power Drive (Sounds Good)
-		* Max RPM (Turbo Chip Squeak)
+		* Star Guards (Sounds Good)
 
 ****************************************************************************
 
@@ -102,19 +103,19 @@ extern size_t spyhunt_alpharam_size;
 WRITE_HANDLER( mcr3_videoram_w );
 WRITE_HANDLER( mcr3_paletteram_w );
 
-void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mcr3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
-void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mcrmono_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void dotron_change_light(int light);
 int dotron_vh_start(void);
 void dotron_vh_stop(void);
-void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dotron_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int spyhunt_vh_start(void);
 void spyhunt_vh_stop(void);
-void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void spyhunt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 
@@ -140,18 +141,9 @@ static const UINT8 one_joy_trans[16] =
 
 /*************************************
  *
- *	Discs of Tron input ports
+ *	Discs of Tron I/O ports
  *
  *************************************/
-
-static int dotron_interrupt(void)
-{
-	/* pulse the CTC line 2 to enable Platform Poles */
-	z80ctc_0_trg2_w(0, 1);
-	z80ctc_0_trg2_w(0, 0);
-	return mcr_interrupt();
-}
-
 
 static READ_HANDLER( dotron_port_2_r )
 {
@@ -210,7 +202,28 @@ static WRITE_HANDLER( dotron_port_4_w )
 
 /*************************************
  *
- *	Sarge input ports
+ *	Demolition Derby I/O ports
+ *
+ *************************************/
+
+static WRITE_HANDLER( demoderb_port_4_w )
+{
+	if (data & 0x40) input_mux = 1;
+	if (data & 0x80) input_mux = 0;
+	turbocs_data_w(offset, data);
+}
+
+
+static READ_HANDLER( demoderb_port12_r )
+{
+	return readinputport(input_mux ? (6 + offset) : (1 + offset));
+}
+
+
+
+/*************************************
+ *
+ *	Sarge I/O ports
  *
  *************************************/
 
@@ -229,47 +242,14 @@ static READ_HANDLER( sarge_port_2_r )
 
 /*************************************
  *
- *	Power Drive input ports
+ *	Max RPM I/O ports
  *
  *************************************/
 
-static int powerdrv_interrupt(void)
-{
-	/* pulse the CTC line 2 periodically */
-	z80ctc_0_trg2_w(0, 1);
-	z80ctc_0_trg2_w(0, 0);
-
-	if (cpu_getiloops() == 0)
-		return mcr_interrupt();
-	else
-		return ignore_interrupt();
-}
-
-
-static READ_HANDLER( powerdrv_port_2_r )
-{
-	int result = input_port_2_r(offset) & 0x7f;
-	return result | (input_mux & 0x80);
-}
-
-
-static WRITE_HANDLER( powerdrv_port_7_w )
-{
-	/* use input_mux for scratch */
-	input_mux = ~input_mux & 0x80;
-}
-
-
-
-/*************************************
- *
- *	Max RPM input ports
- *
- *************************************/
-
-static WRITE_HANDLER( maxrpm_mux_w )
+static WRITE_HANDLER( maxrpm_port_5_w )
 {
 	input_mux = (data >> 1) & 3;
+	mcrmono_control_port_w(offset, data);
 }
 
 
@@ -327,7 +307,79 @@ static READ_HANDLER( maxrpm_port_2_r )
 
 /*************************************
  *
- *	Spy Hunter input ports
+ *	Power Drive I/O ports
+ *
+ *************************************/
+
+static READ_HANDLER( powerdrv_port_2_r )
+{
+	int result = readinputport(2) & 0x7f;
+	return result | (input_mux & 0x80);
+}
+
+
+static WRITE_HANDLER( powerdrv_port_5_w )
+{
+	/* bit 1 controls led 0 */
+	/* bit 2 controls led 1 */
+	/* bit 3 controls led 2 */
+	set_led_status(0, (data >> 1) & 1);
+	set_led_status(1, (data >> 2) & 1);
+	set_led_status(2, (data >> 3) & 1);
+	mcrmono_control_port_w(offset, data);
+}
+
+
+static WRITE_HANDLER( powerdrv_port_7_w )
+{
+	/* use input_mux for scratch */
+	input_mux = ~input_mux & 0x80;
+}
+
+
+
+/*************************************
+ *
+ *	Star Guards I/O ports
+ *
+ *************************************/
+
+static READ_HANDLER( stargrds_port_0_r )
+{
+	int result = readinputport(input_mux ? 6 : 0);
+
+	/* kludge for now: Star Guards will fail the self-test if bit 0x10 doesn't */
+	/* toggle properly */
+	static int temp = 0;
+	result ^= temp ^= 0x10;
+	return result;
+}
+
+
+static WRITE_HANDLER( stargrds_port_5_w )
+{
+	/* bit 1 controls input muxing on port 0 */
+	/* bit 2 controls led 0 */
+	/* bit 3 controls led 1 */
+	/* bit 4 controls led 2 */
+	input_mux = (data >> 1) & 1;
+	set_led_status(0, (data >> 2) & 1);
+	set_led_status(1, (data >> 3) & 1);
+	set_led_status(2, (data >> 4) & 1);
+	mcrmono_control_port_w(offset, data);
+}
+
+
+static WRITE_HANDLER( stargrds_soundsgood_data_w )
+{
+	soundsgood_data_w(offset, (data << 1) | (data >> 7));
+}
+
+
+
+/*************************************
+ *
+ *	Spy Hunter I/O ports
  *
  *************************************/
 
@@ -465,10 +517,17 @@ PORT_END
 static MEMORY_WRITE_START( mcrmono_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xebff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xe800, 0xe9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xec00, 0xecff, mcr3_paletteram_w, &paletteram },
 	{ 0xf000, 0xf7ff, mcr3_videoram_w, &videoram, &videoram_size },
 MEMORY_END
+
+
+static PORT_WRITE_START( mcrmono_writeport )
+	{ 0x05, 0x05, mcrmono_control_port_w },
+	{ 0x07, 0x07, watchdog_reset_w },
+	{ 0xf0, 0xf3, z80ctc_0_w },
+PORT_END
 
 
 
@@ -510,7 +569,7 @@ INPUT_PORTS_START( tapper )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
@@ -530,13 +589,17 @@ INPUT_PORTS_START( tapper )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 -- dipswitches */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x38, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_BIT( 0xbb, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, "Coin Meters" )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -554,7 +617,7 @@ INPUT_PORTS_START( timber )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
@@ -576,10 +639,17 @@ INPUT_PORTS_START( timber )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 -- dipswitches */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0xfb, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x38, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Coin Meters" )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -597,7 +667,7 @@ INPUT_PORTS_START( dotron )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
@@ -620,7 +690,7 @@ INPUT_PORTS_START( dotron )
 	PORT_DIPNAME( 0x01, 0x01, "Coin Meters" )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
-	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -633,7 +703,7 @@ INPUT_PORTS_START( dotron )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( destderb )
+INPUT_PORTS_START( demoderb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -647,7 +717,7 @@ INPUT_PORTS_START( destderb )
 	PORT_START	/* IN1 -- the high 6 bits contain the steering wheel value */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_ANALOG( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE, 50, 10, 0, 0 )
+	PORT_ANALOG( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER1, 50, 10, 0, 0 )
 
 	PORT_START	/* IN2 -- the high 6 bits contain the steering wheel value */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -686,6 +756,16 @@ INPUT_PORTS_START( destderb )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 (muxed) -- the high 6 bits contain the steering wheel value */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_ANALOG( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER3, 50, 10, 0, 0 )
+
+	PORT_START	/* IN2 (muxed) -- the high 6 bits contain the steering wheel value */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_ANALOG( 0xfc, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER4, 50, 10, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -742,6 +822,61 @@ INPUT_PORTS_START( sarge )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( maxrpm )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 -- dipswitches */
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+/* 0x00 says 2 Coins/2 Credits in service mode, but gives 1 Coin/1 Credit */
+	PORT_BIT( 0xc7, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* AIN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* new fake for acceleration */
+	PORT_ANALOG( 0xff, 0x30, IPT_PEDAL | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0x30, 0xff )
+
+	PORT_START	/* new fake for acceleration */
+	PORT_ANALOG( 0xff, 0x30, IPT_PEDAL | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0x30, 0xff )
+
+	PORT_START	/* new fake for steering */
+	PORT_ANALOG( 0xff, 0x74, IPT_PADDLE | IPF_PLAYER2 | IPF_REVERSE, 40, 10, 0x34, 0xb4 )
+
+	PORT_START	/* new fake for steering */
+	PORT_ANALOG( 0xff, 0x74, IPT_PADDLE | IPF_PLAYER1 | IPF_REVERSE, 40, 10, 0x34, 0xb4 )
+
+	PORT_START	/* fake for shifting */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -866,58 +1001,76 @@ INPUT_PORTS_START( powerdrv )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( maxrpm )
+INPUT_PORTS_START( stargrds )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	/* status from sounds good */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2 )
 
 	PORT_START	/* IN3 -- dipswitches */
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
-/* 0x00 says 2 Coins/2 Credits in service mode, but gives 1 Coin/1 Credit */
-	PORT_BIT( 0xc7, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0c, 0x0c, "Energy Units" )
+	PORT_DIPSETTING(    0x08, "8" )
+	PORT_DIPSETTING(    0x0c, "10" )
+	PORT_DIPSETTING(    0x04, "12" )
+	PORT_DIPSETTING(    0x00, "14" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0xc0, "Medium" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 
 	PORT_START	/* IN4 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER3 )
 
 	PORT_START	/* AIN0 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* new fake for acceleration */
-	PORT_ANALOG( 0xff, 0x30, IPT_PEDAL | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0x30, 0xff )
-
-	PORT_START	/* new fake for acceleration */
-	PORT_ANALOG( 0xff, 0x30, IPT_PEDAL | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0x30, 0xff )
-
-	PORT_START	/* new fake for steering */
-	PORT_ANALOG( 0xff, 0x74, IPT_PADDLE | IPF_PLAYER2 | IPF_REVERSE, 40, 10, 0x34, 0xb4 )
-
-	PORT_START	/* new fake for steering */
-	PORT_ANALOG( 0xff, 0x74, IPT_PADDLE | IPF_PLAYER1 | IPF_REVERSE, 40, 10, 0x34, 0xb4 )
-
-	PORT_START	/* fake for shifting */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START	/* IN0 (muxed) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	/* status from sounds good */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -968,6 +1121,40 @@ INPUT_PORTS_START( spyhunt )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( crater )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN1 */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 -- dipswitches */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* AIN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( turbotag )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1010,40 +1197,6 @@ INPUT_PORTS_START( turbotag )
 
 	PORT_START	/* new fake for steering */
 	PORT_ANALOG( 0xff, 0x74, IPT_PADDLE, 40, 10, 0x34, 0xb4 )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( crater )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START	/* IN1 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP   | IPF_2WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_2WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* IN3 -- dipswitches */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN4 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* AIN0 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -1109,30 +1262,30 @@ static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
  *************************************/
 
 /* common pieces */
-#define MAIN_CPU(interrupt) 							\
+#define MAIN_CPU			 							\
 	{													\
 		CPU_Z80,										\
 		5000000,	/* 5 MHz */							\
 		readmem,writemem,readport,writeport,			\
-		interrupt,1,									\
+		mcr_interrupt,2,								\
 		0,0,mcr_daisy_chain								\
 	}
 
-#define MONO_CPU(interrupt) 							\
+#define MONO_CPU			 							\
 	{													\
 		CPU_Z80,										\
 		5000000,	/* 5 MHz */							\
-		readmem,mcrmono_writemem,readport,writeport,	\
-		interrupt,1,									\
+		readmem,mcrmono_writemem,readport,mcrmono_writeport,\
+		mcr_interrupt,2,								\
 		0,0,mcr_daisy_chain								\
 	}
 
-#define SPYHUNT_CPU(interrupt) 							\
+#define SPYHUNT_CPU			 							\
 	{													\
 		CPU_Z80,										\
 		5000000,	/* 5 MHz */							\
 		spyhunt_readmem,spyhunt_writemem,readport,writeport,\
-		interrupt,1,									\
+		mcr_interrupt,2,								\
 		0,0,mcr_daisy_chain								\
 	}
 
@@ -1142,7 +1295,7 @@ static const struct MachineDriver machine_driver_mcr3 =
 {
 	/* basic machine hardware */
 	{
-		MAIN_CPU(mcr_interrupt),
+		MAIN_CPU,
 		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
@@ -1175,7 +1328,7 @@ static const struct MachineDriver machine_driver_dotron =
 {
 	/* basic machine hardware */
 	{
-		MAIN_CPU(dotron_interrupt),
+		MAIN_CPU,
 		SOUND_CPU_SSIO,
 		SOUND_CPU_SQUAWK_N_TALK
 	},
@@ -1206,11 +1359,11 @@ static const struct MachineDriver machine_driver_dotron =
 
 
 /* Destruction Derby = General MCR3 with Turbo Chip Squeak instead of SSIO */
-static const struct MachineDriver machine_driver_destderb =
+static const struct MachineDriver machine_driver_demoderb =
 {
 	/* basic machine hardware */
 	{
-		MAIN_CPU(mcr_interrupt),
+		MAIN_CPU,
 		SOUND_CPU_TURBO_CHIP_SQUEAK
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
@@ -1240,11 +1393,11 @@ static const struct MachineDriver machine_driver_destderb =
 
 /* Sarge/Demolition Derby Mono/Max RPM = MCR monoboardmonoboard = MCR3 with no SSIO */
 /* in this case, Turbo Chip Squeak is used for sound */
-static const struct MachineDriver machine_driver_sarge =
+static const struct MachineDriver machine_driver_mono_tcs =
 {
 	/* basic machine hardware */
 	{
-		MONO_CPU(mcr_interrupt),
+		MONO_CPU,
 		SOUND_CPU_TURBO_CHIP_SQUEAK
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
@@ -1272,51 +1425,12 @@ static const struct MachineDriver machine_driver_sarge =
 };
 
 
-/* Rampage = MCR monoboard with Sounds Good */
-static const struct MachineDriver machine_driver_rampage =
+/* Rampage/Power Drive/Star Guards = MCR monoboard with Sounds Good */
+static const struct MachineDriver machine_driver_mono_sg =
 {
 	/* basic machine hardware */
 	{
-		MONO_CPU(mcr_interrupt),
-		SOUND_CPU_SOUNDS_GOOD
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
-
-	/* video hardware */
-	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
-	gfxdecodeinfo,
-	64, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	mcrmono_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_SOUNDS_GOOD
-	},
-	0
-};
-
-
-/* Power Drive = MCR monoboard with Sounds Good and external interrupts */
-static const struct MachineDriver machine_driver_powerdrv =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,	/* 5 MHz */
-			readmem,mcrmono_writemem,readport,writeport,
-			powerdrv_interrupt,2,
-			0,0,mcr_daisy_chain
-		},
+		MONO_CPU,
 		SOUND_CPU_SOUNDS_GOOD
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
@@ -1349,7 +1463,7 @@ static const struct MachineDriver machine_driver_spyhunt =
 {
 	/* basic machine hardware */
 	{
-		SPYHUNT_CPU(mcr_interrupt),
+		SPYHUNT_CPU,
 		SOUND_CPU_SSIO,
 		SOUND_CPU_CHIP_SQUEAK_DELUXE
 	},
@@ -1379,45 +1493,12 @@ static const struct MachineDriver machine_driver_spyhunt =
 };
 
 
-/* Turbo Tag = Spy Hunter with no SSIO */
-static const struct MachineDriver machine_driver_turbotag =
-{
-	/* basic machine hardware */
-	{
-		SPYHUNT_CPU(mcr_interrupt),
-		SOUND_CPU_CHIP_SQUEAK_DELUXE
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
-
-	/* video hardware */
-	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
-	spyhunt_gfxdecodeinfo,
-	64+4, 0,
-	spyhunt_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	spyhunt_vh_start,
-	spyhunt_vh_stop,
-	spyhunt_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_CHIP_SQUEAK_DELUXE
-	},
-	spyhunt_nvram_handler
-};
-
-
 /* Crater Raider = Spy Hunter with no Chip Squeak Deluxe */
 static const struct MachineDriver machine_driver_crater =
 {
 	/* basic machine hardware */
 	{
-		SPYHUNT_CPU(mcr_interrupt),
+		SPYHUNT_CPU,
 		SOUND_CPU_SSIO
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
@@ -1440,6 +1521,39 @@ static const struct MachineDriver machine_driver_crater =
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		SOUND_SSIO
+	},
+	spyhunt_nvram_handler
+};
+
+
+/* Turbo Tag = Spy Hunter with no SSIO */
+static const struct MachineDriver machine_driver_turbotag =
+{
+	/* basic machine hardware */
+	{
+		SPYHUNT_CPU,
+		SOUND_CPU_CHIP_SQUEAK_DELUXE
+	},
+	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
+	1,
+	mcr_init_machine,
+
+	/* video hardware */
+	30*16, 30*16, { 0, 30*16-1, 0, 30*16-1 },
+	spyhunt_gfxdecodeinfo,
+	64+4, 0,
+	spyhunt_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	spyhunt_vh_start,
+	spyhunt_vh_stop,
+	spyhunt_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		SOUND_CHIP_SQUEAK_DELUXE
 	},
 	spyhunt_nvram_handler
 };
@@ -1664,7 +1778,7 @@ ROM_START( dotrone )
 ROM_END
 
 
-ROM_START( destderb )
+ROM_START( demoderb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "dd_pro",       0x00000, 0x4000, 0x8781b367 )
 	ROM_LOAD( "dd_pro1",      0x04000, 0x4000, 0x4c713bfe )
@@ -1690,7 +1804,7 @@ ROM_START( destderb )
 ROM_END
 
 
-ROM_START( destderm )
+ROM_START( demoderm )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pro0.3b",      0x00000, 0x8000, 0x2e24527b )
 	ROM_LOAD( "pro1.5b",      0x08000, 0x8000, 0x034c00fc )
@@ -1699,7 +1813,7 @@ ROM_START( destderm )
 	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
 	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "bg0.15a",      0x00000, 0x2000, 0xa35d13b8 )
 	ROM_LOAD( "bg1.14b",      0x02000, 0x2000, 0x22ca93f3 )
 
@@ -1724,7 +1838,7 @@ ROM_START( sarge )
 	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xa894ef8a )
 	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x6ca6faf3 )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "til_15a.bin",  0x00000, 0x2000, 0x685001b8 )
 	ROM_LOAD( "til_14b.bin",  0x02000, 0x2000, 0x8449eb45 )
 
@@ -1733,6 +1847,29 @@ ROM_START( sarge )
 	ROM_LOAD( "spr_6e.bin",   0x08000, 0x8000, 0x7cc6fb28 )
 	ROM_LOAD( "spr_5e.bin",   0x10000, 0x8000, 0xc832375c )
 	ROM_LOAD( "spr_4e.bin",   0x18000, 0x8000, 0xc382267d )
+ROM_END
+
+
+ROM_START( maxrpm )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
+	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
+	ROM_CONTINUE(             0x10000, 0x2000 )	/* unused? but there seems to be stuff in here */
+								/* loading it at e000 causes rogue sprites to appear on screen */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the Turbo Cheap Squeak */
+	ROM_LOAD( "turbskwk.u5",   0x8000, 0x4000, 0x55c3b759 )
+	ROM_LOAD( "turbskwk.u4",   0xc000, 0x4000, 0x31a2da2e )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
+	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "fg-0",         0x00000, 0x8000, 0x1d1435c1 )
+	ROM_LOAD( "fg-1",         0x08000, 0x8000, 0xe54b7f2a )
+	ROM_LOAD( "fg-2",         0x10000, 0x8000, 0x38be8505 )
+	ROM_LOAD( "fg-3",         0x18000, 0x8000, 0x9ae3eb52 )
 ROM_END
 
 
@@ -1747,7 +1884,7 @@ ROM_START( rampage )
 	ROM_LOAD16_BYTE( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
 	ROM_LOAD16_BYTE( "ramp_u18.snd", 0x10001, 0x8000, 0x6b8bf5e1 )
 
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
 	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
 
@@ -1770,7 +1907,7 @@ ROM_START( rampage2 )
 	ROM_LOAD16_BYTE( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
 	ROM_LOAD16_BYTE( "ramp_u18.snd", 0x10001, 0x8000, 0x6b8bf5e1 )
 
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "bg-0",         0x00000, 0x04000, 0xc0d8b7a5 )
 	ROM_LOAD( "bg-1",         0x04000, 0x04000, 0x2f6e3aa1 )
 
@@ -1793,7 +1930,7 @@ ROM_START( powerdrv )
 	ROM_LOAD16_BYTE( "pdsndu8.bin",  0x10000, 0x8000, 0x15714036 )
 	ROM_LOAD16_BYTE( "pdsndu18.bin", 0x10001, 0x8000, 0xcae14c70 )
 
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "pdrv15a.bin",  0x00000, 0x04000, 0xb858b5a8 )
 	ROM_LOAD( "pdrv14b.bin",  0x04000, 0x04000, 0x12ee7fc2 )
 
@@ -1805,26 +1942,24 @@ ROM_START( powerdrv )
 ROM_END
 
 
-ROM_START( maxrpm )
-	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
-	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
-	ROM_CONTINUE(             0x10000, 0x2000 )	/* unused? but there seems to be stuff in here */
-								/* loading it at e000 causes rogue sprites to appear on screen */
+ROM_START( stargrds )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pro-0.3b",  0x00000, 0x08000, 0x3ad94aa2 )
+	ROM_LOAD( "pro-1.5b",  0x08000, 0x08000, 0xdba428b0 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "turbskwk.u5",   0x8000, 0x4000, 0x55c3b759 )
-	ROM_LOAD( "turbskwk.u4",   0xc000, 0x4000, 0x31a2da2e )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )  /* 128k for the Sounds Good board */
+	ROM_LOAD16_BYTE( "snd0.u7",      0x00000, 0x8000, 0x7755a493 )
+	ROM_LOAD16_BYTE( "snd1.u17",     0x00001, 0x8000, 0xd98d14ae )
 
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
-	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "bg-0.15a",     0x00000, 0x08000, 0xecfaef3e )
+	ROM_LOAD( "bg-1.14b",     0x08000, 0x08000, 0x2c75569d )
 
-	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "fg-0",         0x00000, 0x8000, 0x1d1435c1 )
-	ROM_LOAD( "fg-1",         0x08000, 0x8000, 0xe54b7f2a )
-	ROM_LOAD( "fg-2",         0x10000, 0x8000, 0x38be8505 )
-	ROM_LOAD( "fg-3",         0x18000, 0x8000, 0x9ae3eb52 )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "fg-0.8e",         0x00000, 0x10000, 0x22797aaa )
+	ROM_LOAD( "fg-1.6e",         0x10000, 0x10000, 0x413fa119 )
+	ROM_LOAD( "fg-2.5e",         0x20000, 0x10000, 0x7036cfe6 )
+	ROM_LOAD( "fg-3.4e",         0x30000, 0x10000, 0xcc5cc003 )
 ROM_END
 
 
@@ -1835,7 +1970,7 @@ ROM_START( spyhunt )
 	ROM_LOAD( "cpu_pg2.8d",   0x4000, 0x2000, 0xafeeb8bd )
 	ROM_LOAD( "cpu_pg3.9d",   0x6000, 0x2000, 0x5e744381 )
 	ROM_LOAD( "cpu_pg4.10d",  0x8000, 0x2000, 0xa3033c15 )
-	ROM_LOAD( "cpu_pg5.11d",  0xa000, 0x4000, 0x88aa1e99 )
+	ROM_LOAD( "cpu_pg5.11d",  0xa000, 0x4000, 0x53a4f7cd )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "snd_0sd.a8",   0x0000, 0x1000, 0xc95cf31e )
@@ -1865,6 +2000,41 @@ ROM_START( spyhunt )
 
 	ROM_REGION( 0x01000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "cpu_alph.10g", 0x00000, 0x1000, 0x936dc87f )
+ROM_END
+
+
+ROM_START( crater )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
+	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )
+	ROM_LOAD( "crcpu.8d",     0x4000, 0x2000, 0xc95f9088 )
+	ROM_LOAD( "crcpu.9d",     0x6000, 0x2000, 0xa03c4b11 )
+	ROM_LOAD( "crcpu.10d",    0x8000, 0x2000, 0x44ae4cbd )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "crsnd4.a7",    0x0000, 0x1000, 0xfd666cb5 )
+	ROM_LOAD( "crsnd1.a8",    0x1000, 0x1000, 0x90bf2c4c )
+	ROM_LOAD( "crsnd2.a9",    0x2000, 0x1000, 0x3b8deef1 )
+	ROM_LOAD( "crsnd3.a10",   0x3000, 0x1000, 0x05803453 )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "crcpu.3a",     0x00000, 0x2000, 0x9d73504a )
+	ROM_LOAD( "crcpu.4a",     0x02000, 0x2000, 0x42a47dff )
+	ROM_LOAD( "crcpu.5a",     0x04000, 0x2000, 0x2fe4a6e1 )
+	ROM_LOAD( "crcpu.6a",     0x06000, 0x2000, 0xd0659042 )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "crvid.a3",     0x00000, 0x4000, 0x2c2f5b29 )
+	ROM_LOAD( "crvid.a4",     0x04000, 0x4000, 0x579a8e36 )
+	ROM_LOAD( "crvid.a5",     0x08000, 0x4000, 0x9bdec312 )
+	ROM_LOAD( "crvid.a6",     0x0c000, 0x4000, 0x5bf954e0 )
+	ROM_LOAD( "crvid.a7",     0x10000, 0x4000, 0x9fa307d5 )
+	ROM_LOAD( "crvid.a8",     0x14000, 0x4000, 0x4b913498 )
+	ROM_LOAD( "crvid.a9",     0x18000, 0x4000, 0x811f152d )
+	ROM_LOAD( "crvid.a10",    0x1c000, 0x4000, 0x7a22d6bc )
+
+	ROM_REGION( 0x01000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "crcpu.10g",    0x00000, 0x1000, 0x6fe53c8d )
 ROM_END
 
 
@@ -1905,77 +2075,12 @@ ROM_START( turbotag )
 ROM_END
 
 
-ROM_START( crater )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
-	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )
-	ROM_LOAD( "crcpu.8d",     0x4000, 0x2000, 0xc95f9088 )
-	ROM_LOAD( "crcpu.9d",     0x6000, 0x2000, 0xa03c4b11 )
-	ROM_LOAD( "crcpu.10d",    0x8000, 0x2000, 0x44ae4cbd )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "crsnd4.a7",    0x0000, 0x1000, 0xfd666cb5 )
-	ROM_LOAD( "crsnd1.a8",    0x1000, 0x1000, 0x90bf2c4c )
-	ROM_LOAD( "crsnd2.a9",    0x2000, 0x1000, 0x3b8deef1 )
-	ROM_LOAD( "crsnd3.a10",   0x3000, 0x1000, 0x05803453 )
-
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "crcpu.3a",     0x00000, 0x2000, 0x9d73504a )
-	ROM_LOAD( "crcpu.4a",     0x02000, 0x2000, 0x42a47dff )
-	ROM_LOAD( "crcpu.5a",     0x04000, 0x2000, 0x2fe4a6e1 )
-	ROM_LOAD( "crcpu.6a",     0x06000, 0x2000, 0xd0659042 )
-
-	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "crvid.a3",     0x00000, 0x4000, 0x2c2f5b29 )
-	ROM_LOAD( "crvid.a4",     0x04000, 0x4000, 0x579a8e36 )
-	ROM_LOAD( "crvid.a5",     0x08000, 0x4000, 0x9bdec312 )
-	ROM_LOAD( "crvid.a6",     0x0c000, 0x4000, 0x5bf954e0 )
-	ROM_LOAD( "crvid.a7",     0x10000, 0x4000, 0x9fa307d5 )
-	ROM_LOAD( "crvid.a8",     0x14000, 0x4000, 0x4b913498 )
-	ROM_LOAD( "crvid.a9",     0x18000, 0x4000, 0x811f152d )
-	ROM_LOAD( "crvid.a10",    0x1c000, 0x4000, 0x7a22d6bc )
-
-	ROM_REGION( 0x01000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "crcpu.10g",    0x00000, 0x1000, 0x6fe53c8d )
-ROM_END
-
-
 
 /*************************************
  *
  *	Driver initialization
  *
  *************************************/
-
-static void mcrmono_decode(void)
-{
-	int i;
-
-	/* Rampage tile graphics are inverted */
-	for (i = 0; i < memory_region_length(REGION_GFX1); i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
-}
-
-
-static void spyhunt_decode(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	/* some versions of rom 11d have the top and bottom 8k swapped; to enable us to work with either
-	   a correct set or a swapped set (both of which pass the checksum!), we swap them here */
-	if (RAM[0xa000] != 0x0c)
-	{
-		int i;
-
-		for (i = 0; i < 0x2000; i++)
-		{
-			UINT8 temp = RAM[0xa000 + i];
-			RAM[0xa000 + i] = RAM[0xc000 + i];
-			RAM[0xc000 + i] = temp;
-		}
-	}
-}
-
 
 static void init_tapper(void)
 {
@@ -2001,18 +2106,19 @@ static void init_dotron(void)
 }
 
 
-static void init_destderb(void)
+static void init_demoderb(void)
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_write_handler(0, 0x04, 0x04, turbocs_data_w);
+	install_port_read_handler(0, 0x01, 0x02, demoderb_port12_r);
+	install_port_write_handler(0, 0x04, 0x04, demoderb_port_4_w);
 }
 
 
-static void init_destderm(void)
+static void init_demoderm(void)
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
-	mcrmono_decode();
+	install_port_read_handler(0, 0x01, 0x02, demoderb_port12_r);
+	install_port_write_handler(0, 0x06, 0x06, demoderb_port_4_w);
 }
 
 
@@ -2022,25 +2128,6 @@ static void init_sarge(void)
 	install_port_read_handler(0, 0x01, 0x01, sarge_port_1_r);
 	install_port_read_handler(0, 0x02, 0x02, sarge_port_2_r);
 	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
-	mcrmono_decode();
-}
-
-
-static void init_rampage(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
-	mcrmono_decode();
-}
-
-
-static void init_powerdrv(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	install_port_read_handler(0, 0x02, 0x02, powerdrv_port_2_r);
-	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
-	install_port_write_handler(0, 0x07, 0x07, powerdrv_port_7_w);
-	mcrmono_decode();
 }
 
 
@@ -2049,9 +2136,34 @@ static void init_maxrpm(void)
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
 	install_port_read_handler(0, 0x01, 0x01, maxrpm_port_1_r);
 	install_port_read_handler(0, 0x02, 0x02, maxrpm_port_2_r);
-	install_port_write_handler(0, 0x05, 0x05, maxrpm_mux_w);
+	install_port_write_handler(0, 0x05, 0x05, maxrpm_port_5_w);
 	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
-	mcrmono_decode();
+}
+
+
+static void init_rampage(void)
+{
+	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
+	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
+}
+
+
+static void init_powerdrv(void)
+{
+	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
+	install_port_read_handler(0, 0x02, 0x02, powerdrv_port_2_r);
+	install_port_write_handler(0, 0x05, 0x05, powerdrv_port_5_w);
+	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
+	install_port_write_handler(0, 0x07, 0x07, powerdrv_port_7_w);
+}
+
+
+static void init_stargrds(void)
+{
+	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
+	install_port_read_handler(0, 0x00, 0x00, stargrds_port_0_r);
+	install_port_write_handler(0, 0x05, 0x05, stargrds_port_5_w);
+	install_port_write_handler(0, 0x06, 0x06, stargrds_soundsgood_data_w);
 }
 
 
@@ -2064,8 +2176,16 @@ static void init_spyhunt(void)
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = -16;
 	spyhunt_draw_lamps = 1;
+}
 
-	spyhunt_decode();
+
+static void init_crater(void)
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+
+	spyhunt_sprite_color_mask = 0x03;
+	spyhunt_scroll_offset = -96;
+	spyhunt_draw_lamps = 0;
 }
 
 
@@ -2084,16 +2204,6 @@ static void init_turbotag(void)
 }
 
 
-static void init_crater(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-
-	spyhunt_sprite_color_mask = 0x03;
-	spyhunt_scroll_offset = -96;
-	spyhunt_draw_lamps = 0;
-}
-
-
 
 /*************************************
  *
@@ -2101,6 +2211,7 @@ static void init_crater(void)
  *
  *************************************/
 
+/* MCR3 games */
 GAME( 1983, tapper,   0,        mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Budweiser)" )
 GAME( 1983, tappera,  tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (alternate)" )
 GAME( 1983, sutapper, tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Suntory)" )
@@ -2108,13 +2219,18 @@ GAME( 1984, rbtapper, tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midw
 GAME( 1984, timber,   0,        mcr3,     timber,   timber,   ROT0,  "Bally Midway", "Timber" )
 GAME( 1983, dotron,   0,        dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)" )
 GAME( 1983, dotrone,  dotron,   dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
-GAME( 1984, destderb, 0,        destderb, destderb, destderb, ROT0,  "Bally Midway", "Demolition Derby" )
-GAME( 1984, destderm, destderb, sarge,    destderb, destderm, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)" )
-GAME( 1985, sarge,    0,        sarge,    sarge,    sarge,    ROT0,  "Bally Midway", "Sarge" )
-GAME( 1986, rampage,  0,        rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)" )
-GAME( 1986, rampage2, rampage,  rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)" )
-GAME( 1986, powerdrv, 0,        powerdrv, powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive" )
-GAME( 1986, maxrpm,   0,        sarge,    maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM" )
+GAME( 1984, demoderb, 0,        demoderb, demoderb, demoderb, ROT0,  "Bally Midway", "Demolition Derby" )
+
+/* MCR monoboard games */
+GAME( 1984, demoderm, demoderb, mono_tcs, demoderb, demoderm, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)" )
+GAME( 1985, sarge,    0,        mono_tcs, sarge,    sarge,    ROT0,  "Bally Midway", "Sarge" )
+GAME( 1986, maxrpm,   0,        mono_tcs, maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM" )
+GAME( 1986, rampage,  0,        mono_sg,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)" )
+GAME( 1986, rampage2, rampage,  mono_sg,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)" )
+GAME( 1986, powerdrv, 0,        mono_sg,  powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive" )
+GAME( 1987, stargrds, 0,        mono_sg,  stargrds, stargrds, ROT0,  "Bally Midway", "Star Guards" )
+
+/* Spy Hunter games */
 GAME( 1983, spyhunt,  0,        spyhunt,  spyhunt,  spyhunt,  ROT90, "Bally Midway", "Spy Hunter" )
-GAME( 1985, turbotag, 0,        turbotag, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (prototype)" )
 GAME( 1984, crater,   0,        crater,   crater,   crater,   ORIENTATION_FLIP_X, "Bally Midway", "Crater Raider" )
+GAME( 1985, turbotag, 0,        turbotag, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (prototype)" )

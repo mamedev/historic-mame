@@ -67,7 +67,7 @@
 
 int  leprechn_vh_start(void);
 void leprechn_vh_stop(void);
-void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void leprechn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( leprechn_graphics_command_w );
 READ_HANDLER( leprechn_graphics_data_r );

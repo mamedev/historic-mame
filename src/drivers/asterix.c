@@ -12,7 +12,7 @@ Asterix
 
 int asterix_vh_start(void);
 void asterix_vh_stop(void);
-void asterix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void asterix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE16_HANDLER( asterix_spritebank_w );
 
 static unsigned char cur_control2;

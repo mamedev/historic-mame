@@ -15,7 +15,7 @@
 #include "cpu/h6280/h6280.h"
 
 int  darkseal_vh_start(void);
-void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void darkseal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE16_HANDLER( darkseal_pf1_data_w );
 WRITE16_HANDLER( darkseal_pf2_data_w );

@@ -23,7 +23,7 @@ static int hyhoo_flipscreen;
 static int hyhoo_flipx, hyhoo_flipy;
 static int hyhoo_screen_refresh;
 
-static struct osd_bitmap *hyhoo_tmpbitmap;
+static struct mame_bitmap *hyhoo_tmpbitmap;
 static unsigned short *hyhoo_videoram;
 static unsigned short *hyhoo_videoworkram;
 static unsigned char *hyhoo_palette;
@@ -376,7 +376,7 @@ void hyhoo_vh_stop(void)
 
 
 ******************************************************************************/
-void hyhoo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void hyhoo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 	unsigned short color;

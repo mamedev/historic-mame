@@ -168,7 +168,7 @@ READ_HANDLER( llander_IN0_r );
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int llander_start(void);
 void llander_stop(void);
-void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static WRITE_HANDLER( astdelux_coin_counter_w )

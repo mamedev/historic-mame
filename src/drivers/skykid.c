@@ -22,8 +22,8 @@ WRITE_HANDLER( skykid_videoram_w );
 WRITE_HANDLER( skykid_scroll_x_w );
 WRITE_HANDLER( skykid_scroll_y_w );
 WRITE_HANDLER( skykid_flipscreen_w );
-void skykid_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
-void drgnbstr_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void skykid_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+void drgnbstr_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 

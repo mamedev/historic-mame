@@ -35,7 +35,7 @@ color_prom+=32+32+16+8;
 	}
 }
 
-void kopunch_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void kopunch_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 static int bank=0;

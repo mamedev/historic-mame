@@ -218,7 +218,7 @@ Offset: 		Values: 		Format:
 
 ------------------------------------------------------------------------ */
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 int offs;
 
@@ -251,7 +251,7 @@ int offs;
 }
 
 
-void ginganin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void ginganin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl1;
 

@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct osd_bitmap *pf1_bitmap;
+static struct mame_bitmap *pf1_bitmap;
 data16_t *prehisle_video16;
 static data16_t vid_control16[7];
 static int dirty_back;
@@ -17,7 +17,7 @@ static int dirty_front;
 
 /******************************************************************************/
 
-void prehisle_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void prehisle_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int offs, mx, my, color, tile;
 	int tile_base;

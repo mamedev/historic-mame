@@ -41,7 +41,7 @@ fedcba98
 #include "cpu/m6809/m6809.h"
 
 void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom);
-void nyny_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void nyny_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int nyny_vh_start(void);
 void nyny_vh_stop(void);
 
@@ -264,11 +264,14 @@ INPUT_PORTS_START( nyny )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* PIA0 PA1 */
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	/* PIA0 PA2 */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* PIA0 PA3 */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL ) /* PIA0 PA4 */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )	/* PIA0 PA5 */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )	/* PIA0 PA6 */
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )	/* PIA0 PB2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL ) /* PIA0 PB0 */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL ) /* PIA0 PB1 */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )	/* PIA0 PB2 */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )	/* PIA0 PB3 */
 
 	PORT_START	/* SW1 - port 2*/

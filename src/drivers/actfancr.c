@@ -20,8 +20,8 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
 
-void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( actfancr_pf1_data_w );
 READ_HANDLER( actfancr_pf1_data_r );
 WRITE_HANDLER( actfancr_pf1_control_w );

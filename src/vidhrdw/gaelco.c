@@ -35,8 +35,7 @@ static struct tilemap *pant[2];
 	-----+-FEDCBA98-76543210-+--------------------------
 	  0  | -------- -------x | flip x
 	  0  | -------- ------x- | flip y
-	  0  | -------- xxxxxx-- | code (low 6 bits)
-	  0  | xxxxxxxx -------- | code (high 8 bits)
+	  0  | xxxxxxxx xxxxxx-- | code
 	  1  | -------- --xxxxxx | color
 	  1	 | -------- xx------ | priority
 	  1  | xxxxxxxx -------- | not used
@@ -50,11 +49,7 @@ static void get_tile_info_gaelco_screen0(int tile_index)
 
 	tile_info.priority = (data2 >> 6) & 0x03;
 
-	SET_TILE_INFO(
-			1,
-			0x4000 + code,
-			data2 & 0x3f,
-			TILE_FLIPYX(data & 0x03))
+	SET_TILE_INFO(1, 0x4000 + code, data2 & 0x3f, TILE_FLIPYX(data & 0x03))
 }
 
 
@@ -66,11 +61,7 @@ static void get_tile_info_gaelco_screen1(int tile_index)
 
 	tile_info.priority = (data2 >> 6) & 0x03;
 
-	SET_TILE_INFO(
-			1,
-			0x4000 + code,
-			data2 & 0x3f,
-			TILE_FLIPYX(data & 0x03))
+	SET_TILE_INFO(1, 0x4000 + code, data2 & 0x3f, TILE_FLIPYX(data & 0x03))
 }
 
 /***************************************************************************
@@ -115,11 +106,8 @@ int bigkarnk_vh_start(void)
 	if (!pant[0] || !pant[1])
 		return 1;
 
-	tilemap_set_transparent_pen(pant[0],0);
-	tilemap_set_transparent_pen(pant[1],0);
-
-	tilemap_set_transmask(pant[0],0,0xff01,0x00fe); /* pens 1-7 opaque, pens 0, 8-15 transparent */
-	tilemap_set_transmask(pant[1],0,0xff01,0x00fe); /* pens 1-7 opaque, pens 0, 8-15 transparent */
+	tilemap_set_transmask(pant[0],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
+	tilemap_set_transmask(pant[1],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
 
 	for (i = 0; i < 5; i++){
 		sprite_table[i] = malloc(512*sizeof(int));
@@ -208,7 +196,7 @@ static void gaelco_sort_sprites(void)
 	  3  | xxxxxxxx xxxxxx-- | sprite code
 */
 
-static void gaelco_draw_sprites(struct osd_bitmap *bitmap, int pri)
+static void gaelco_draw_sprites(struct mame_bitmap *bitmap, int pri)
 {
 	int j, x, y, ex, ey;
 	const struct GfxElement *gfx = Machine->gfx[0];
@@ -257,7 +245,7 @@ static void gaelco_draw_sprites(struct osd_bitmap *bitmap, int pri)
 
 ***************************************************************************/
 
-void maniacsq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void maniacsq_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* set scroll registers */
 	tilemap_set_scrolly(pant[0], 0, gaelco_vregs[0]);
@@ -287,7 +275,7 @@ void maniacsq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	gaelco_draw_sprites(bitmap,0);
 }
 
-void bigkarnk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bigkarnk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* set scroll registers */
 	tilemap_set_scrolly(pant[0], 0, gaelco_vregs[0]);

@@ -35,7 +35,7 @@ Notes:
 int bladestl_spritebank;
 int bladestl_vh_start(void);
 void bladestl_vh_stop(void);
-void bladestl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bladestl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void bladestl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( bladestl_vreg_w );
 

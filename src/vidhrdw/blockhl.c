@@ -61,7 +61,7 @@ void blockhl_vh_stop(void)
 }
 
 
-void blockhl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void blockhl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 

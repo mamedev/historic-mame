@@ -276,7 +276,7 @@ Offset:		Format:					Value:
 #define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
 
 
-static void powerins_draw_sprites(struct osd_bitmap *bitmap)
+static void powerins_draw_sprites(struct mame_bitmap *bitmap)
 {
 	data16_t *source = spriteram16 + 0x8000/2;
 	data16_t *finish = spriteram16 + 0x9000/2;
@@ -349,7 +349,7 @@ static void powerins_draw_sprites(struct osd_bitmap *bitmap)
 ***************************************************************************/
 
 
-void powerins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void powerins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layers_ctrl = -1;
 

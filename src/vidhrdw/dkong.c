@@ -201,13 +201,13 @@ WRITE_HANDLER( dkong_flipscreen_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
 
-static void draw_tiles(struct osd_bitmap *bitmap)
+static void draw_tiles(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -249,7 +249,7 @@ static void draw_tiles(struct osd_bitmap *bitmap)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -310,7 +310,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void draw_grid(struct osd_bitmap *bitmap)
+static void draw_grid(struct mame_bitmap *bitmap)
 {
 	const unsigned char *table = memory_region(REGION_GFX3);
 	int x,y,counter;
@@ -341,7 +341,7 @@ static void draw_grid(struct osd_bitmap *bitmap)
 	}
 }
 
-void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	palette_set_color(256,0xff,0x00,0x00);	/* stars */
 
@@ -353,7 +353,7 @@ void radarscp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_sprites(bitmap);
 }
 
-void dkong_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void dkong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 		memset(dirtybuffer,1,videoram_size);

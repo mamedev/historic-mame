@@ -20,7 +20,7 @@ WRITE_HANDLER( srumbler_scroll_w );
 WRITE_HANDLER( srumbler_4009_w );
 
 int  srumbler_vh_start(void);
-void srumbler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void srumbler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void srumbler_eof_callback(void);
 
 

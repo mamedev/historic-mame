@@ -228,7 +228,7 @@ int marvins_vh_start( void )
 **
 ***************************************************************************/
 
-static void draw_status( struct osd_bitmap *bitmap )
+static void draw_status( struct mame_bitmap *bitmap )
 {
 	const unsigned char *base = videoram+0x2400;
 	struct rectangle clip = Machine->visible_area;
@@ -260,7 +260,7 @@ static void draw_status( struct osd_bitmap *bitmap )
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap, int scrollx, int scrolly,
+static void draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
 		int priority, unsigned char sprite_partition )
 {
 	const struct GfxElement *gfx = Machine->gfx[3];
@@ -317,7 +317,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int scrollx, int scrolly,
 	}
 }
 
-void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	unsigned char *mem = memory_region(REGION_CPU1);
 
@@ -361,7 +361,7 @@ void marvins_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	draw_status( bitmap );
 }
 
-void madcrash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	extern int madcrash_vreg;
 	unsigned char *mem = memory_region(REGION_CPU1)+madcrash_vreg;

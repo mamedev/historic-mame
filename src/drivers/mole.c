@@ -46,7 +46,7 @@
 
 extern void moleattack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern int moleattack_vh_start( void );
-extern void moleattack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void moleattack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern void moleattack_vh_stop( void );
 
 WRITE_HANDLER( moleattack_videoram_w );

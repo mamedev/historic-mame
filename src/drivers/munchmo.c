@@ -38,7 +38,7 @@ READ_HANDLER( mnchmobl_sprite_tile_r );
 WRITE_HANDLER( mnchmobl_sprite_tile_w );
 READ_HANDLER( mnchmobl_videoram_r );
 WRITE_HANDLER( mnchmobl_videoram_w );
-void mnchmobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mnchmobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************/

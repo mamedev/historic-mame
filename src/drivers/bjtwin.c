@@ -130,11 +130,11 @@ int bjtwin_vh_start(void);
 int bioship_vh_start(void);
 int strahl_vh_start(void);
 void nmk_vh_stop(void);
-void bioship_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void strahl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gunnail_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void bioship_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void strahl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void macross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void gunnail_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void bjtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void nmk_eof_callback(void);
 
 

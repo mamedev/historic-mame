@@ -14,7 +14,7 @@
 unsigned char *bankp_videoram2;
 unsigned char *bankp_colorram2;
 static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
+static struct mame_bitmap *tmpbitmap2;
 static int scroll_x;
 static int flipscreen;
 static int priority;
@@ -194,12 +194,12 @@ WRITE_HANDLER( bankp_out_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void bankp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void bankp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

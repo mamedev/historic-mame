@@ -40,7 +40,7 @@ dip: 6.7 7.7
 
 WRITE_HANDLER( wiping_flipscreen_w );
 void wiping_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wiping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);

@@ -18,10 +18,10 @@ extern int sprint2_gear2;
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
 
-static struct osd_bitmap *back_vid;
-static struct osd_bitmap *grey_cars_vid;
-static struct osd_bitmap *black_car_vid;
-static struct osd_bitmap *white_car_vid;
+static struct mame_bitmap *back_vid;
+static struct mame_bitmap *grey_cars_vid;
+static struct mame_bitmap *black_car_vid;
+static struct mame_bitmap *white_car_vid;
 
 #define WHITE_CAR   0
 #define BLACK_CAR   1
@@ -104,7 +104,7 @@ bitmaps, but clip to where the black car is located.
 for a collision (Collision2).
 ***************************************************************************/
 
-void sprint2_check_collision1(struct osd_bitmap *bitmap)
+void sprint2_check_collision1(struct mame_bitmap *bitmap)
 {
     int sx,sy,org_x,org_y;
     struct rectangle clip;
@@ -246,7 +246,7 @@ void sprint2_check_collision1(struct osd_bitmap *bitmap)
 
 }
 
-void sprint2_check_collision2(struct osd_bitmap *bitmap)
+void sprint2_check_collision2(struct mame_bitmap *bitmap)
 {
 
     int sx,sy,org_x,org_y;
@@ -392,12 +392,12 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-static void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void sprint_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs,car;
 
@@ -446,7 +446,7 @@ static void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-static void draw_gear_indicator(int gear, struct osd_bitmap *bitmap, int x, int color)
+static void draw_gear_indicator(int gear, struct mame_bitmap *bitmap, int x, int color)
 {
 	/* gear shift indicators - not a part of the original game!!! */
 
@@ -462,7 +462,7 @@ static void draw_gear_indicator(int gear, struct osd_bitmap *bitmap, int x, int 
 }
 
 
-void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sprint2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	sprint_vh_screenrefresh(bitmap,full_refresh);
 
@@ -470,7 +470,7 @@ void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	draw_gear_indicator(sprint2_gear2, bitmap, 1 , 0);
 }
 
-void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void sprint1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	sprint_vh_screenrefresh(bitmap,full_refresh);
 

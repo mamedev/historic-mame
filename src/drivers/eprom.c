@@ -32,7 +32,7 @@
 
 int eprom_vh_start(void);
 void eprom_vh_stop(void);
-void eprom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void eprom_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void eprom_scanline_update(int scanline);
 

@@ -19,7 +19,7 @@ unsigned char *yard_scroll_x_low;
 unsigned char *yard_scroll_x_high;
 unsigned char *yard_scroll_y_low;
 unsigned char *yard_score_panel_disabled;
-static struct osd_bitmap *scroll_panel_bitmap;
+static struct mame_bitmap *scroll_panel_bitmap;
 
 #define SCROLL_PANEL_WIDTH  (14*4)
 
@@ -240,12 +240,12 @@ WRITE_HANDLER( yard_scroll_panel_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void yard_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

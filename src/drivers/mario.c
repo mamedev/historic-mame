@@ -82,7 +82,7 @@ WRITE_HANDLER( mario_gfxbank_w );
 WRITE_HANDLER( mario_palettebank_w );
 int  mario_vh_start(void);
 void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void mario_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /*
  *  from sndhrdw/mario.c

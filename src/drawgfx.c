@@ -1036,10 +1036,10 @@ int pdrawgfx_shadow_lowpri = 0;
 
 ***************************************************************************/
 
-INLINE void common_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+INLINE void common_drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
-		struct osd_bitmap *pri_buffer,UINT32 pri_mask)
+		struct mame_bitmap *pri_buffer,UINT32 pri_mask)
 {
 	struct rectangle myclip;
 
@@ -1166,7 +1166,7 @@ INLINE void common_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		drawgfx_core32(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_buffer,pri_mask);
 }
 
-void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+void drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
@@ -1175,7 +1175,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void pdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+void pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority_mask)
 {
@@ -1184,7 +1184,7 @@ void pdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void mdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
+void mdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority_mask)
 {
@@ -1200,7 +1200,7 @@ void mdrawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
   This function will very likely change in the future.
 
 ***************************************************************************/
-void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+void copybitmap(struct mame_bitmap *dest,struct mame_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
 	/* translate to proper transparency here */
@@ -1218,7 +1218,7 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 }
 
 
-void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+void copybitmap_remap(struct mame_bitmap *dest,struct mame_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
 	struct rectangle myclip;
@@ -1310,7 +1310,7 @@ void copybitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,i
   scrolls as a whole in at least one direction.
 
 ***************************************************************************/
-void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+void copyscrollbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
@@ -1328,7 +1328,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 	copyscrollbitmap_remap(dest,src,rows,rowscroll,cols,colscroll,clip,transparency,transparent_color);
 }
 
-void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
+void copyscrollbitmap_remap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color)
 {
@@ -1576,7 +1576,7 @@ void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
    - startx and starty MUST be UINT32 for calculations to work correctly
    - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
    */
-void copyrozbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
+void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority)
 {
@@ -1615,7 +1615,7 @@ void copyrozbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 
 
 /* fill a bitmap using the specified pen */
-void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
+void fillbitmap(struct mame_bitmap *dest,int pen,const struct rectangle *clip)
 {
 	int sx,sy,ex,ey,y;
 	struct rectangle myclip;
@@ -1725,10 +1725,10 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 }
 
 
-INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
-		int scalex, int scaley,struct osd_bitmap *pri_buffer,UINT32 pri_mask)
+		int scalex, int scaley,struct mame_bitmap *pri_buffer,UINT32 pri_mask)
 {
 	struct rectangle myclip;
 	int alphapen = 0;
@@ -3548,7 +3548,7 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 	}
 }
 
-void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
+void drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)
 {
@@ -3558,7 +3558,7 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void pdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
+void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
 		UINT32 priority_mask)
@@ -3569,7 +3569,7 @@ void pdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void mdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
+void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
 		UINT32 priority_mask)
@@ -3580,149 +3580,149 @@ void mdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen)
+void plot_pixel2(struct mame_bitmap *bitmap1,struct mame_bitmap *bitmap2,int x,int y,int pen)
 {
 	plot_pixel(bitmap1, x, y, pen);
 	plot_pixel(bitmap2, x, y, pen);
 }
 
-static void pp_8_nd(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[x] = p; }
-static void pp_8_nd_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[b->width-1-x] = p; }
-static void pp_8_nd_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-y])[x] = p; }
-static void pp_8_nd_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-y])[b->width-1-x] = p; }
-static void pp_8_nd_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[y] = p; }
-static void pp_8_nd_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[b->width-1-y] = p; }
-static void pp_8_nd_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-x])[y] = p; }
-static void pp_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-x])[b->width-1-y] = p; }
+static void pp_8_nd(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[x] = p; }
+static void pp_8_nd_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[b->width-1-x] = p; }
+static void pp_8_nd_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-y])[x] = p; }
+static void pp_8_nd_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-y])[b->width-1-x] = p; }
+static void pp_8_nd_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[y] = p; }
+static void pp_8_nd_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[b->width-1-y] = p; }
+static void pp_8_nd_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-x])[y] = p; }
+static void pp_8_nd_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[b->height-1-x])[b->width-1-y] = p; }
 
-static void pp_8_d(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_8_d_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_8_d_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_8_d_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_8_d_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_8_d_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_8_d_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_8_d_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_8_d(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_8_d_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_8_d_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_8_d_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT8 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_8_d_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_8_d_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_8_d_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_8_d_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT8 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
 
-static void pp_16_nd(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[x] = p; }
-static void pp_16_nd_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[b->width-1-x] = p; }
-static void pp_16_nd_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-y])[x] = p; }
-static void pp_16_nd_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-y])[b->width-1-x] = p; }
-static void pp_16_nd_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[y] = p; }
-static void pp_16_nd_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[b->width-1-y] = p; }
-static void pp_16_nd_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-x])[y] = p; }
-static void pp_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-x])[b->width-1-y] = p; }
+static void pp_16_nd(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[x] = p; }
+static void pp_16_nd_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[b->width-1-x] = p; }
+static void pp_16_nd_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-y])[x] = p; }
+static void pp_16_nd_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-y])[b->width-1-x] = p; }
+static void pp_16_nd_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[y] = p; }
+static void pp_16_nd_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[b->width-1-y] = p; }
+static void pp_16_nd_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-x])[y] = p; }
+static void pp_16_nd_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[b->height-1-x])[b->width-1-y] = p; }
 
-static void pp_16_d(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_16_d_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x;  ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_16_d_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_16_d_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_16_d_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_16_d_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_16_d_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_16_d_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_16_d(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_16_d_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x;  ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_16_d_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_16_d_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT16 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_16_d_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_16_d_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_16_d_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_16_d_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT16 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
 
-static void pp_32_nd(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[x] = p; }
-static void pp_32_nd_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[b->width-1-x] = p; }
-static void pp_32_nd_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-y])[x] = p; }
-static void pp_32_nd_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-y])[b->width-1-x] = p; }
-static void pp_32_nd_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[y] = p; }
-static void pp_32_nd_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[b->width-1-y] = p; }
-static void pp_32_nd_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-x])[y] = p; }
-static void pp_32_nd_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-x])[b->width-1-y] = p; }
+static void pp_32_nd(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[x] = p; }
+static void pp_32_nd_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[b->width-1-x] = p; }
+static void pp_32_nd_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-y])[x] = p; }
+static void pp_32_nd_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-y])[b->width-1-x] = p; }
+static void pp_32_nd_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[y] = p; }
+static void pp_32_nd_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[b->width-1-y] = p; }
+static void pp_32_nd_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-x])[y] = p; }
+static void pp_32_nd_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[b->height-1-x])[b->width-1-y] = p; }
 
-static void pp_32_d(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_32_d_fx(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x;  ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_32_d_fy(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_32_d_fxy(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
-static void pp_32_d_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_32_d_fx_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_32_d_fy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-static void pp_32_d_fxy_s(struct osd_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
-
-
-static int rp_8(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[x]; }
-static int rp_8_fx(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[b->width-1-x]; }
-static int rp_8_fy(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-y])[x]; }
-static int rp_8_fxy(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-y])[b->width-1-x]; }
-static int rp_8_s(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[x])[y]; }
-static int rp_8_fx_s(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[x])[b->width-1-y]; }
-static int rp_8_fy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-x])[y]; }
-static int rp_8_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-x])[b->width-1-y]; }
-
-static int rp_16(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
-static int rp_16_fx(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[b->width-1-x]; }
-static int rp_16_fy(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[x]; }
-static int rp_16_fxy(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[b->width-1-x]; }
-static int rp_16_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[y]; }
-static int rp_16_fx_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[b->width-1-y]; }
-static int rp_16_fy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[y]; }
-static int rp_16_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[b->width-1-y]; }
-
-static int rp_32(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[y])[x]; }
-static int rp_32_fx(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[y])[b->width-1-x]; }
-static int rp_32_fy(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-y])[x]; }
-static int rp_32_fxy(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-y])[b->width-1-x]; }
-static int rp_32_s(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[x])[y]; }
-static int rp_32_fx_s(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[x])[b->width-1-y]; }
-static int rp_32_fy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-x])[y]; }
-static int rp_32_fxy_s(struct osd_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-x])[b->width-1-y]; }
+static void pp_32_d(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_32_d_fx(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x;  ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_32_d_fy(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->height-1-y; ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_32_d_fxy(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->width-1-x; y = b->height-1-y; ((UINT32 *)b->line[y])[x] = p; osd_mark_dirty(x,y,x,y); }
+static void pp_32_d_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_32_d_fx_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { y = b->width-1-y; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_32_d_fy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
+static void pp_32_d_fxy_s(struct mame_bitmap *b,int x,int y,UINT32 p)  { x = b->height-1-x; y = b->width-1-y; ((UINT32 *)b->line[x])[y] = p; osd_mark_dirty(y,x,y,x); }
 
 
-static void pb_8_nd(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_8_nd_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_8_nd_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_8_nd_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_8_nd_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_8_nd_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_8_nd_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_8_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y--; } }
+static int rp_8(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[x]; }
+static int rp_8_fx(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[b->width-1-x]; }
+static int rp_8_fy(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-y])[x]; }
+static int rp_8_fxy(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-y])[b->width-1-x]; }
+static int rp_8_s(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[x])[y]; }
+static int rp_8_fx_s(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[x])[b->width-1-y]; }
+static int rp_8_fy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-x])[y]; }
+static int rp_8_fxy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[b->height-1-x])[b->width-1-y]; }
 
-static void pb_8_d(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_8_d_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_8_d_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_8_d_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_8_d_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_8_d_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y;  osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_8_d_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_8_d_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y--; } }
+static int rp_16(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
+static int rp_16_fx(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[b->width-1-x]; }
+static int rp_16_fy(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[x]; }
+static int rp_16_fxy(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-y])[b->width-1-x]; }
+static int rp_16_s(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[y]; }
+static int rp_16_fx_s(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[x])[b->width-1-y]; }
+static int rp_16_fy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[y]; }
+static int rp_16_fxy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[b->height-1-x])[b->width-1-y]; }
 
-static void pb_16_nd(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_16_nd_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_16_nd_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_16_nd_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_16_nd_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_16_nd_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_16_nd_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_16_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y--; } }
-
-static void pb_16_d(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_16_d_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_16_d_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_16_d_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_16_d_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_16_d_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_16_d_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_16_d_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y--; } }
+static int rp_32(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[y])[x]; }
+static int rp_32_fx(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[y])[b->width-1-x]; }
+static int rp_32_fy(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-y])[x]; }
+static int rp_32_fxy(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-y])[b->width-1-x]; }
+static int rp_32_s(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[x])[y]; }
+static int rp_32_fx_s(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[x])[b->width-1-y]; }
+static int rp_32_fy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-x])[y]; }
+static int rp_32_fxy_s(struct mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[b->height-1-x])[b->width-1-y]; }
 
 
-static void pb_32_nd(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_32_nd_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_32_nd_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_32_nd_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_32_nd_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_32_nd_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_32_nd_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_32_nd_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y--; } }
+static void pb_8_nd(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_8_nd_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_8_nd_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_8_nd_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_8_nd_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_8_nd_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_8_nd_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_8_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y--; } }
 
-static void pb_32_d(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_32_d_fx(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y++; } }
-static void pb_32_d_fy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y--; } }
-static void pb_32_d_fxy(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y--; } }
-static void pb_32_d_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y++; } }
-static void pb_32_d_fx_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y--; } }
-static void pb_32_d_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y++; } }
-static void pb_32_d_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y--; } }
+static void pb_8_d(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_8_d_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_8_d_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_8_d_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_8_d_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_8_d_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y;  osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_8_d_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_8_d_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[x])[y] = p; x--; } y--; } }
+
+static void pb_16_nd(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_16_nd_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_16_nd_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_16_nd_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_16_nd_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_16_nd_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_16_nd_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_16_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y--; } }
+
+static void pb_16_d(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_16_d_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_16_d_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_16_d_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_16_d_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_16_d_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_16_d_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_16_d_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y--; } }
+
+
+static void pb_32_nd(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_32_nd_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_32_nd_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_32_nd_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_32_nd_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_32_nd_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_32_nd_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_32_nd_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y--; } }
+
+static void pb_32_d(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(t,y,t+w-1,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y++; } }
+static void pb_32_d_fx(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x;  osd_mark_dirty(t-w+1,y,t,y+h-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y++; } }
+static void pb_32_d_fy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->height-1-y; osd_mark_dirty(t,y-h+1,t+w-1,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y--; } }
+static void pb_32_d_fxy(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->width-1-x; y = b->height-1-y; osd_mark_dirty(t-w+1,y-h+1,t,y); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x--; } y--; } }
+static void pb_32_d_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; osd_mark_dirty(y,t,y+h-1,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y++; } }
+static void pb_32_d_fx_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=x; y = b->width-1-y; osd_mark_dirty(y-h+1,t,y,t+w-1); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x++; } y--; } }
+static void pb_32_d_fy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; osd_mark_dirty(y,t-w+1,y+h-1,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y++; } }
+static void pb_32_d_fxy_s(struct mame_bitmap *b,int x,int y,int w,int h,UINT32 p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[x])[y] = p; x--; } y--; } }
 
 
 static void md(int sx,int sy,int ex,int ey)  { osd_mark_dirty(sx,sy,ex,ey); }
@@ -3862,13 +3862,13 @@ void set_pixel_functions(void)
 }
 
 
-INLINE void plotclip(struct osd_bitmap *bitmap,int x,int y,int pen,const struct rectangle *clip)
+INLINE void plotclip(struct mame_bitmap *bitmap,int x,int y,int pen,const struct rectangle *clip)
 {
 	if (x >= clip->min_x && x <= clip->max_x && y >= clip->min_y && y <= clip->max_y)
 		plot_pixel(bitmap,x,y,pen);
 }
 
-void draw_crosshair(struct osd_bitmap *bitmap,int x,int y,const struct rectangle *clip)
+void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip)
 {
 	unsigned short black,white;
 	int i;
@@ -5274,10 +5274,10 @@ DECLARE(blockmove_NtoN_blend_remap_flipx,(
 
 
 DECLARE(drawgfx_core,(
-		struct osd_bitmap *dest,const struct GfxElement *gfx,
+		struct mame_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
-		struct osd_bitmap *pri_buffer,UINT32 pri_mask),
+		struct mame_bitmap *pri_buffer,UINT32 pri_mask),
 {
 	int ox;
 	int oy;
@@ -5495,7 +5495,7 @@ DECLARE(drawgfx_core,(
 })
 
 DECLARE(copybitmap_core,(
-		struct osd_bitmap *dest,struct osd_bitmap *src,
+		struct mame_bitmap *dest,struct mame_bitmap *src,
 		int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color),
 {
@@ -5579,7 +5579,7 @@ DECLARE(copybitmap_core,(
 	}
 })
 
-DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitmap,
+DECLARE(copyrozbitmap_core,(struct mame_bitmap *bitmap,struct mame_bitmap *srcbitmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority),
 {
@@ -5621,8 +5621,11 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 		int t;
 
 		t = startx; startx = starty; starty = t;
-		t = sx; sx = sy; sy = t;
-		t = ex; ex = ey; ey = t;
+		if (clip)
+		{
+			t = sx; sx = sy; sy = t;
+			t = ex; ex = ey; ey = t;
+		}
 		t = incxx; incxx = incyy; incyy = t;
 		t = incxy; incxy = incyx; incyx = t;
 	}
@@ -5900,11 +5903,11 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 })
 
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmap, x, y)				\
-	type *dst = &((type *)bitmap->line[y])[x];								\
+	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
+	type *dst = (type *)bitmap->line[0] + y * dy + x;						\
 	int xadv = 1;															\
 	if (orientation)														\
 	{																		\
-		int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);		\
 		int tx = x, ty = y, temp;											\
 		if ((orientation) & ORIENTATION_SWAP_XY)							\
 		{																	\
@@ -5926,7 +5929,7 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 	}
 
 DECLAREG(draw_scanline, (
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const DATA_TYPE *src,pen_t *pens,int transparent_pen),
 {
 	/* 8bpp destination */
@@ -6068,13 +6071,13 @@ DECLAREG(draw_scanline, (
 #undef ADJUST_FOR_ORIENTATION
 
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
-	type *dsti = &((type *)bitmapi->line[y])[x];							\
-	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
+	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
+	int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);	\
+	type *dsti = (type *)bitmapi->line[0] + y * dy + x;						\
+	UINT8 *dstp = (UINT8 *)bitmapp->line[0] + y * dyp + x;					\
 	int xadv = 1;															\
 	if (orientation)														\
 	{																		\
-		int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);		\
-		int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);\
 		int tx = x, ty = y, temp;											\
 		if ((orientation) & ORIENTATION_SWAP_XY)							\
 		{																	\
@@ -6097,7 +6100,7 @@ DECLAREG(draw_scanline, (
 	}
 
 DECLAREG(pdraw_scanline, (
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		const DATA_TYPE *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri),
 {
 	/* 8bpp destination */
@@ -6274,11 +6277,11 @@ DECLAREG(pdraw_scanline, (
 #undef ADJUST_FOR_ORIENTATION
 
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmap, x, y)				\
-	type *src = &((type *)bitmap->line[y])[x];								\
+	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
+	type *src = (type *)bitmap->line[0] + y * dy + x;						\
 	int xadv = 1;															\
 	if (orientation)														\
 	{																		\
-		int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);		\
 		int tx = x, ty = y, temp;											\
 		if ((orientation) & ORIENTATION_SWAP_XY)							\
 		{																	\
@@ -6300,7 +6303,7 @@ DECLAREG(pdraw_scanline, (
 	}
 
 DECLAREG(extract_scanline, (
-		struct osd_bitmap *bitmap,int x,int y,int length,
+		struct mame_bitmap *bitmap,int x,int y,int length,
 		DATA_TYPE *dst),
 {
 	/* 8bpp destination */

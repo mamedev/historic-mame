@@ -163,7 +163,7 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void relief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void relief_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* draw the layers */
 	ataripf_render(0, bitmap);

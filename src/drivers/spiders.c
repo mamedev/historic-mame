@@ -172,7 +172,7 @@ $F987 - Addresses table at $f98d containing four structs:
 void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom);
 int  spiders_vh_start(void);
 void spiders_vh_stop(void);
-void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void spiders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* MACHINE */
 

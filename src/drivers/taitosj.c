@@ -157,7 +157,7 @@ READ_HANDLER( taitosj_collision_reg_r );
 WRITE_HANDLER( taitosj_collision_reg_clear_w );
 int taitosj_vh_start(void);
 void taitosj_vh_stop(void);
-void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void taitosj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static int sndnmi_disable = 1;

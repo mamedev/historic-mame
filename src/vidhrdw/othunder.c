@@ -144,7 +144,7 @@ spriteram is being tested, take no notice of that.]
 ********************************************************/
 
 
-static void othunder_draw_sprites_16x8(struct osd_bitmap *bitmap,int *primasks,int y_offs)
+static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,int *primasks,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
@@ -280,7 +280,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				SCREEN REFRESH
 **************************************************************/
 
-void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void othunder_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int layer[3];
 

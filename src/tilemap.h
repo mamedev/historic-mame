@@ -92,7 +92,7 @@ extern struct tile_info
 
 #define TILE_LINE_DISABLED 0x80000000
 
-extern struct osd_bitmap *priority_bitmap;
+extern struct mame_bitmap *priority_bitmap;
 
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );
@@ -128,9 +128,9 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes );
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 void tilemap_set_enable( struct tilemap *tilemap, int enable );
 
-void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
+void tilemap_draw( struct mame_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
 
-void tilemap_draw_roz(struct osd_bitmap *dest,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority );
@@ -145,8 +145,8 @@ void tilemap_draw_roz(struct osd_bitmap *dest,struct tilemap *tilemap,
 #define TILE_FLAG_FG_OPAQUE		(0x10)
 #define TILE_FLAG_BG_OPAQUE		(0x20)
 
-struct osd_bitmap *tilemap_get_pixmap( struct tilemap * tilemap );
-struct osd_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap );
+struct mame_bitmap *tilemap_get_pixmap( struct tilemap * tilemap );
+struct mame_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap );
 
 /*********************************************************************/
 

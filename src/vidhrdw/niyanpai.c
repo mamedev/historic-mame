@@ -29,7 +29,7 @@ static int niyanpai_flipx[VRAM_MAX], niyanpai_flipy[VRAM_MAX];
 static int niyanpai_paltblnum[VRAM_MAX];
 static int niyanpai_screen_refresh;
 
-static struct osd_bitmap *niyanpai_tmpbitmap0, *niyanpai_tmpbitmap1, *niyanpai_tmpbitmap2;
+static struct mame_bitmap *niyanpai_tmpbitmap0, *niyanpai_tmpbitmap1, *niyanpai_tmpbitmap2;
 static unsigned short *niyanpai_videoram0, *niyanpai_videoram1, *niyanpai_videoram2;
 static unsigned short *niyanpai_palette;
 static unsigned char *niyanpai_paltbl0, *niyanpai_paltbl1, *niyanpai_paltbl2;
@@ -501,7 +501,7 @@ void niyanpai_vh_stop(void)
 
 
 ******************************************************************************/
-void niyanpai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void niyanpai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int x, y;
 	unsigned short color;

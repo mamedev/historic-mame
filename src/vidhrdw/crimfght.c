@@ -92,7 +92,7 @@ int crimfght_vh_start( void )
 
 ***************************************************************************/
 
-void crimfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void crimfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	K052109_tilemap_update();
 

@@ -96,12 +96,12 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void sailorws_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int sailorws_vh_start(void);
 void sailorws_vh_stop(void);
 int mjkoiura_vh_start(void);
 void mjkoiura_vh_stop(void);
-void mscoutm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int mscoutm_vh_start(void);
 void mscoutm_vh_stop(void);
 

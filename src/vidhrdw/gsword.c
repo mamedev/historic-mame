@@ -16,7 +16,7 @@ unsigned char *gs_spritexy_ram;
 unsigned char *gs_spritetile_ram;
 unsigned char *gs_spriteattrib_ram;
 
-static struct osd_bitmap 	*bitmap_bg;
+static struct mame_bitmap 	*bitmap_bg;
 static unsigned char 	 	*dirtybuffer;
 static int charbank,charpalbank;
 static int flipscreen;
@@ -182,7 +182,7 @@ WRITE_HANDLER( gs_videoram_w )
 	}
 }
 
-void render_background(struct osd_bitmap *bitmap)
+void render_background(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -221,7 +221,7 @@ void render_background(struct osd_bitmap *bitmap)
 }
 
 
-void render_sprites(struct osd_bitmap *bitmap)
+void render_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -263,7 +263,7 @@ void render_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gsword_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx=0, scrolly=-(*gs_scrolly_ram);
 

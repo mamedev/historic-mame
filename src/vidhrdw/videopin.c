@@ -25,7 +25,7 @@ struct rectangle vpclip = { (360-296)/2, (360-296)/2 + 296,
 
 
 
-void videopin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int balloffs[4], offsc=0;

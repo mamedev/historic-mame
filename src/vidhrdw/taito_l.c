@@ -266,7 +266,7 @@ void taitol_obj1b_m(int offset)
 	             plgirs2 bullets and raimais big bosses.
 */
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -308,7 +308,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void taitol_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int dx,dy;
 

@@ -5,7 +5,7 @@ unsigned char *lsasquad_scrollram;
 
 
 
-static void draw_layer(struct osd_bitmap *bitmap,unsigned char *scrollram)
+static void draw_layer(struct mame_bitmap *bitmap,unsigned char *scrollram)
 {
 	int offs,scrollx,scrolly;
 
@@ -51,7 +51,7 @@ static void draw_layer(struct osd_bitmap *bitmap,unsigned char *scrollram)
 	}
 }
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -91,7 +91,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void lsasquad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void lsasquad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[511],&Machine->visible_area);
 

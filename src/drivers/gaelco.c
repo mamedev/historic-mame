@@ -54,7 +54,7 @@ void gaelco_vh_stop(void);
   ============================================================================*/
 
 int bigkarnk_vh_start( void );
-void bigkarnk_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void bigkarnk_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 
 
 static MEMORY_READ16_START( bigkarnk_readmem )
@@ -303,7 +303,7 @@ ROM_END
   ============================================================================*/
 
 int maniacsq_vh_start( void );
-void maniacsq_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh );
+void maniacsq_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
 
 
 static MEMORY_READ16_START( maniacsq_readmem )

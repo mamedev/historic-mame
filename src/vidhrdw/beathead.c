@@ -220,7 +220,7 @@ void beathead_scanline_update(int scanline)
  *
  *************************************/
 
-void beathead_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void beathead_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y;
 

@@ -128,7 +128,7 @@ static void get_fg_tile_info(int tile_index)
 	big object
  ********************************************/
 
-static void draw_object(struct osd_bitmap *bitmap)
+static void draw_object(struct mame_bitmap *bitmap)
 {
 	int sx, sy, color;
 
@@ -150,7 +150,7 @@ static void draw_object(struct osd_bitmap *bitmap)
 	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 1, sx, sy - 64, &Machine->visible_area, TRANSPARENCY_PEN, 0);
 }
 
-static void draw_center(struct osd_bitmap *bitmap)
+static void draw_center(struct mame_bitmap *bitmap)
 {
 	int sx, sy, x, y, color;
 
@@ -430,7 +430,7 @@ WRITE_HANDLER( decocass_center_v_shift_w )
 	memory handlers
  ********************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, int color,
+static void draw_sprites(struct mame_bitmap *bitmap, int color,
 						int sprite_y_adjust, int sprite_y_adjust_flip_screen,
 						unsigned char *sprite_ram, int interleave)
 {
@@ -481,7 +481,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int color,
 }
 
 
-static void draw_missiles(struct osd_bitmap *bitmap,
+static void draw_missiles(struct mame_bitmap *bitmap,
 						int missile_y_adjust, int missile_y_adjust_flip_screen,
 						unsigned char *missile_ram, int interleave)
 {
@@ -653,7 +653,7 @@ void decocass_vh_stop (void)
 	sprite_dirty = NULL;
 }
 
-void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void decocass_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int scrollx, scrolly_l, scrolly_r;
 

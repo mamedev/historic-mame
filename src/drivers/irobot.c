@@ -70,7 +70,7 @@ Notes:
 extern int  irobot_vh_start(void);
 extern void irobot_vh_stop(void);
 extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void irobot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( irobot_paletteram_w );
 
 void init_irobot(void);	/* convert mathbox ROMs */

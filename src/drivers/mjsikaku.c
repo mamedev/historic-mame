@@ -88,7 +88,7 @@ Memo:
 void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void mjsikaku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void mjsikaku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int mjsikaku_vh_start(void);
 int secolove_vh_start(void);
 int bijokkoy_vh_start(void);

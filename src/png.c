@@ -745,13 +745,13 @@ static int png_pack_buffer (struct png_info *p)
 
 /*********************************************************************
 
-  Writes an osd_bitmap in a PNG file. If the depth of the bitmap
+  Writes an mame_bitmap in a PNG file. If the depth of the bitmap
   is 8, a color type 3 PNG with palette is written. Otherwise a
   color type 2 true color RGB PNG is written.
 
  *********************************************************************/
 
-static int png_create_datastream(void *fp, struct osd_bitmap *bitmap)
+static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 {
 	int i, j;
 	int r, g, b;
@@ -764,10 +764,10 @@ static int png_create_datastream(void *fp, struct osd_bitmap *bitmap)
 	p.palette = p.trans = p.image = p.zimage = p.fimage = NULL;
 	p.width = bitmap->width;
 	p.height = bitmap->height;
-	p.color_type = (Machine->drv->total_colors <= 256 ? 3: 2);
 
-	if (p.color_type == 3)
+	if ((Machine->color_depth == 16) && (Machine->drv->total_colors <= 256))
 	{
+		p.color_type = 3;
 		if((p.palette = (UINT8 *)malloc (3*256))==NULL)
 		{
 			logerror("Out of memory\n");
@@ -798,6 +798,7 @@ static int png_create_datastream(void *fp, struct osd_bitmap *bitmap)
 	}
 	else
 	{
+		p.color_type = 2;
 		p.rowbytes = p.width * 3;
 		p.bit_depth = 8;
 		if((p.image = (UINT8 *)malloc (p.height * p.rowbytes))==NULL)
@@ -869,7 +870,7 @@ static int png_create_datastream(void *fp, struct osd_bitmap *bitmap)
 	return 1;
 }
 
-int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
+int png_write_bitmap(void *fp, struct mame_bitmap *bitmap)
 {
 	char text[1024];
 
@@ -899,10 +900,10 @@ int png_write_bitmap(void *fp, struct osd_bitmap *bitmap)
 
 static int mng_status;
 
-int mng_capture_start(void *fp, struct osd_bitmap *bitmap)
+int mng_capture_start(void *fp, struct mame_bitmap *bitmap)
 {
 	UINT8 mhdr[28];
-//	UINT8 term;
+/*	UINT8 term; */
 
 	if (osd_fwrite(fp, MNG_Signature, 8) != 8)
 	{
@@ -920,15 +921,15 @@ int mng_capture_start(void *fp, struct osd_bitmap *bitmap)
 	if (write_chunk(fp, MNG_CN_MHDR, mhdr, 28)==0)
 		return 0;
 
-//	term = 0x03; /* loop sequence */
-//	if (write_chunk(fp, MNG_CN_TERM, &term, 1)==0)
-//		return 0;
+/*	term = 0x03;    loop sequence    */
+/*	if (write_chunk(fp, MNG_CN_TERM, &term, 1)==0) */
+/*		return 0; */
 
 	mng_status = 1;
 	return 1;
 }
 
-int mng_capture_frame(void *fp, struct osd_bitmap *bitmap)
+int mng_capture_frame(void *fp, struct mame_bitmap *bitmap)
 {
 	if (mng_status)
 	{

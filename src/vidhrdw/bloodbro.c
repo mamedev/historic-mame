@@ -154,7 +154,7 @@ WRITE16_HANDLER( bloodbro_txvideoram_w )
    -------X XXXXXXXX
    -------- YYYYYYYY */
 
-static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
+static void bloodbro_draw_sprites( struct mame_bitmap *bitmap)
 {
 	int offs;
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -201,7 +201,7 @@ static void bloodbro_draw_sprites( struct osd_bitmap *bitmap)
    -------X XXXXXXXX
 */
 
-static void weststry_draw_sprites( struct osd_bitmap *bitmap)
+static void weststry_draw_sprites( struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -237,7 +237,7 @@ static void weststry_draw_sprites( struct osd_bitmap *bitmap)
 
 
 
-void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void bloodbro_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
 	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
@@ -252,7 +252,7 @@ void bloodbro_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	tilemap_draw(bitmap,tx_tilemap,0,0);
 }
 
-void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void weststry_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 //	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
 //	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
@@ -268,7 +268,7 @@ void weststry_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 }
 
 
-void skysmash_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void skysmash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x08]);
 	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x09]);	/* ? */

@@ -29,7 +29,7 @@ WRITE_HANDLER( starcrus_proj_parm_2_w );
 READ_HANDLER( starcrus_coll_det_r );
 extern int starcrus_vh_start(void);
 extern void starcrus_vh_stop(void);
-extern void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void starcrus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int p1_sprite;
 extern int p2_sprite;
 extern int s1_sprite;

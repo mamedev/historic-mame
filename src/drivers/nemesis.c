@@ -46,12 +46,12 @@ WRITE16_HANDLER( nemesis_videoram2b_word_w );
 WRITE16_HANDLER( nemesis_videoram2f_word_w );
 READ16_HANDLER( nemesis_characterram_word_r );
 WRITE16_HANDLER( nemesis_characterram_word_w );
-void nemesis_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void nemesis_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 int  nemesis_vh_start(void);
 void nemesis_vh_stop(void);
 
-void twinbee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void twinbee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 void nemesis_init_machine(void);
 
 WRITE16_HANDLER( salamander_palette_word_w );

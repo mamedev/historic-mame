@@ -31,7 +31,7 @@
 
 int blstroid_vh_start(void);
 void blstroid_vh_stop(void);
-void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void blstroid_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void blstroid_scanline_update(int scanline);
 

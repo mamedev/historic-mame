@@ -76,8 +76,8 @@ extern int namcos2_gametype;
 /*********************************************/
 
 int  namcos2_vh_start(void);
-void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh);
-void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh);
+void namcos2_vh_update_default(struct mame_bitmap *bitmap, int full_refresh);
+void namcos2_vh_update_finallap(struct mame_bitmap *bitmap, int full_refresh);
 
 /* MACHINE */
 

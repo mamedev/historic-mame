@@ -385,12 +385,12 @@ void run_video(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void irobot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 *bitmap_base = irobot_bufsel ? polybitmap1 : polybitmap2;
 	int x, y, offs;

@@ -106,9 +106,9 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int  zaxxon_vh_start(void);
 int  razmataz_vh_start(void);
 void zaxxon_vh_stop(void);
-void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ixion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern int zaxxon_vid_type;
 
 WRITE_HANDLER( zaxxon_sound_w );
@@ -128,6 +128,11 @@ void futspy_init_machine(void)
 static WRITE_HANDLER( zaxxon_coin_counter_w )
 {
 	coin_counter_w(offset,data);
+}
+
+static WRITE_HANDLER( zaxxon_screen_flip_w )
+{
+	flip_screen_set(~data & 1);
 }
 
 static READ_HANDLER( razmataz_unknown1_r )
@@ -194,6 +199,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
 	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
+	{ 0xc006, 0xc006, zaxxon_screen_flip_w },
 	{ 0xff3c, 0xff3e, zaxxon_sound_w },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
 	{ 0xfff1, 0xfff1, MWA_RAM, &zaxxon_char_color_bank },
@@ -253,6 +259,7 @@ static MEMORY_WRITE_START( razmataz_writemem )
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
 	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
+	{ 0xc006, 0xc006, zaxxon_screen_flip_w },
 	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
 	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
 	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
@@ -1228,11 +1235,11 @@ static void init_ixion(void)
 }
 
 
-GAMEX( 1982, zaxxon,   0,	   zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1982, zaxxon2,  zaxxon, zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1982, zaxxonb,  zaxxon, zaxxon,	 zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson", GAME_NO_COCKTAIL )
-GAMEX( 1982, szaxxon,  0,	   zaxxon,	 zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon", GAME_NO_COCKTAIL )
-GAMEX( 1984, futspy,   0,	   futspy,	 futspy,   futspy,	 ROT270, "Sega",    "Future Spy", GAME_NO_COCKTAIL )
-GAMEX( 1983, razmataz, 0,	   razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1983, ixion,    0,	   ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
+GAME( 1982, zaxxon,   0,	   zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 1)" )
+GAME( 1982, zaxxon2,  zaxxon, zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 2)" )
+GAME( 1982, zaxxonb,  zaxxon, zaxxon,	 zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
+GAME( 1982, szaxxon,  0,	   zaxxon,	 zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
+GAMEX(1984, futspy,   0,	   futspy,	 futspy,   futspy,	 ROT270, "Sega",    "Future Spy", GAME_NO_COCKTAIL )
+GAMEX(1983, razmataz, 0,	   razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX(1983, ixion,    0,	   ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
 

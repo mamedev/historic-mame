@@ -33,7 +33,7 @@ WRITE16_HANDLER( esd16_vram_0_w );
 WRITE16_HANDLER( esd16_vram_1_w );
 
 int  esd16_vh_start(void);
-void esd16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void esd16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 /***************************************************************************

@@ -23,7 +23,7 @@ TODO: In a logical order
 WRITE_HANDLER( videopin_videoram_w );
 extern int videopin_vh_start(void);
 extern void videopin_vh_stop(void);
-extern void videopin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 extern struct artwork_info *videopin_backdrop;
 
 

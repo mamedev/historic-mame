@@ -32,9 +32,9 @@ WRITE_HANDLER( circus_clown_z_w );
 
 extern int circus_vh_start(void);
 
-extern void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern int crash_interrupt(void);
 

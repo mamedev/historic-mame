@@ -87,7 +87,7 @@ int gotya_vh_start(void)
 }
 
 
-static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
+static void draw_status_row(struct mame_bitmap *bitmap, int sx, int col)
 {
 	int row;
 
@@ -119,7 +119,7 @@ static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
 }
 
 
-void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void gotya_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

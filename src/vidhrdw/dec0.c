@@ -151,7 +151,7 @@ WRITE16_HANDLER( dec0_paletteram_b_w )
 
 /******************************************************************************/
 
-static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
+static void dec0_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -419,7 +419,7 @@ static void dec0_pf3_update(void)
 
 /******************************************************************************/
 
-static void dec0_pf1_draw(struct osd_bitmap *bitmap,int flags,int pri)
+static void dec0_pf1_draw(struct mame_bitmap *bitmap,int flags,int pri)
 {
 	tilemap_set_enable(pf1_tilemap_0,0);
 	tilemap_set_enable(pf1_tilemap_1,0);
@@ -442,7 +442,7 @@ static void dec0_pf1_draw(struct osd_bitmap *bitmap,int flags,int pri)
 	}
 }
 
-static void dec0_pf2_draw(struct osd_bitmap *bitmap,int flags,int pri)
+static void dec0_pf2_draw(struct mame_bitmap *bitmap,int flags,int pri)
 {
 	tilemap_set_enable(pf2_tilemap_0,0);
 	tilemap_set_enable(pf2_tilemap_1,0);
@@ -465,7 +465,7 @@ static void dec0_pf2_draw(struct osd_bitmap *bitmap,int flags,int pri)
 	}
 }
 
-static void dec0_pf3_draw(struct osd_bitmap *bitmap,int flags,int pri)
+static void dec0_pf3_draw(struct mame_bitmap *bitmap,int flags,int pri)
 {
 	tilemap_set_enable(pf3_tilemap_0,0);
 	tilemap_set_enable(pf3_tilemap_1,0);
@@ -490,7 +490,7 @@ static void dec0_pf3_draw(struct osd_bitmap *bitmap,int flags,int pri)
 
 /******************************************************************************/
 
-void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void hbarrel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
@@ -510,7 +510,7 @@ void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void baddudes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void baddudes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* WARNING: priority inverted wrt all the other games */
 	dec0_pf1_update();
@@ -560,7 +560,7 @@ void baddudes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void robocop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int trans;
 
@@ -610,7 +610,7 @@ void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void birdtry_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	/* This game doesn't have the extra playfield chip on the game board */
 	dec0_pf1_update();
@@ -623,7 +623,7 @@ void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void hippodrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
@@ -650,7 +650,7 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void slyspy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
@@ -672,7 +672,7 @@ void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void midres_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int trans;
 

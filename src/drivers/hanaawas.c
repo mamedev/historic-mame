@@ -34,7 +34,7 @@ TODO:
 
 
 void hanaawas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void hanaawas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hanaawas_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( hanaawas_portB_w );
 WRITE_HANDLER( hanaawas_colorram_w );
 

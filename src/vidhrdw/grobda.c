@@ -65,7 +65,7 @@ void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 ***************************************************************************/
 
-static void grobda_draw_sprites(struct osd_bitmap *bitmap)
+static void grobda_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -124,7 +124,7 @@ static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void grobda_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

@@ -315,7 +315,7 @@ The first sprite data is located at f20b,then f21b and so on.
 void psychic5_init_machine(void);
 int  psychic5_vh_start(void);
 void psychic5_vh_stop(void);
-void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void psychic5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( psychic5_paged_ram_w );
 READ_HANDLER( psychic5_paged_ram_r );
 WRITE_HANDLER( psychic5_vram_page_select_w );

@@ -120,8 +120,8 @@ WRITE_HANDLER( combasc_pf_control_w );
 READ_HANDLER( combasc_scrollram_r );
 WRITE_HANDLER( combasc_scrollram_w );
 
-void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
-void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
+void combascb_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+void combasc_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
 WRITE_HANDLER( combasc_io_w );
 WRITE_HANDLER( combasc_vreg_w );
 

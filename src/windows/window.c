@@ -169,12 +169,12 @@ static struct win_effect_data effect_table[] =
 
 static void update_system_menu(void);
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update);
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update);
 
-static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update);
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update);
 
 static int create_debug_window(void);
-static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap);
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 
@@ -412,7 +412,12 @@ int win_init_window(void)
 	}
 
 	// make the window title
+	// make the window title
+#ifndef MESS
 	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+#else
+	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+#endif
 
 	// create the window, but don't show it yet
 	win_video_window = CreateWindowEx(win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX,
@@ -595,7 +600,7 @@ static void update_system_menu(void)
 //	win_update_video_window
 //============================================================
 
-void win_update_video_window(struct osd_bitmap *bitmap)
+void win_update_video_window(struct mame_bitmap *bitmap)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
@@ -612,9 +617,9 @@ void win_update_video_window(struct osd_bitmap *bitmap)
 //	draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update)
 {
-	static struct osd_bitmap *last;
+	static struct mame_bitmap *last;
 
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
@@ -1312,7 +1317,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 
-static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;
@@ -1496,7 +1501,7 @@ static int create_debug_window(void)
 //	win_update_debug_window
 //============================================================
 
-void win_update_debug_window(struct osd_bitmap *bitmap)
+void win_update_debug_window(struct mame_bitmap *bitmap)
 {
 #ifdef MAME_DEBUG
 	// if the window isn't 8bpp, force it there and clear it
@@ -1524,9 +1529,9 @@ void win_update_debug_window(struct osd_bitmap *bitmap)
 //	draw_debug_contents
 //============================================================
 
-static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap)
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap)
 {
-	static struct osd_bitmap *last;
+	static struct mame_bitmap *last;
 	UINT8 *bitmap_base;
 	int i;
 

@@ -87,7 +87,7 @@ int renegade_vh_start( void )
 	return 0;
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	const struct rectangle *clip = &Machine->visible_area;
 
@@ -131,7 +131,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 	}
 }
 
-void renegade_vh_screenrefresh(struct osd_bitmap *bitmap, int fullrefresh )
+void renegade_vh_screenrefresh(struct mame_bitmap *bitmap, int fullrefresh )
 {
 	tilemap_set_scrollx( bg_tilemap, 0, renegade_scrollx );
 	tilemap_set_scrolly( bg_tilemap, 0, 0 );

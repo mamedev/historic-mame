@@ -44,7 +44,7 @@ static int BackgroundData,VerticalBlank;
 static int sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
 
 
-void wow_update_line(struct osd_bitmap *bitmap,int line);
+void wow_update_line(struct mame_bitmap *bitmap,int line);
 
 
 
@@ -726,7 +726,7 @@ int astrocde_stars_vh_start(void)
 
 /****************************************************************************/
 
-void wow_update_line(struct osd_bitmap *bitmap,int line)
+void wow_update_line(struct mame_bitmap *bitmap,int line)
 {
 	/* Copy one line to bitmap, using current color register settings */
 
@@ -791,7 +791,7 @@ void wow_update_line(struct osd_bitmap *bitmap,int line)
 
 
 
-void astrocde_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void astrocde_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
 	{
@@ -802,7 +802,7 @@ void astrocde_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void seawolf2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int centre;
 	unsigned char *RAM = memory_region(REGION_CPU1);

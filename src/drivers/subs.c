@@ -10,7 +10,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/subs.c */
-extern void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+extern void subs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( subs_invert1_w );
 WRITE_HANDLER( subs_invert2_w );
 

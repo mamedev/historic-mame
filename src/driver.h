@@ -69,7 +69,7 @@ struct MachineDriver
 									/* e.g. sprite buffering or collision detection. */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
-	void (*vh_update)(struct osd_bitmap *bitmap,int full_refresh);
+	void (*vh_update)(struct mame_bitmap *bitmap,int full_refresh);
 
 	/* sound hardware */
 	int sound_attributes;

@@ -47,7 +47,7 @@ WRITE32_HANDLER( psikyo_vram_0_w );
 WRITE32_HANDLER( psikyo_vram_1_w );
 
 int  psikyo_vh_start(void);
-void psikyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 /* Variables only used here */
 

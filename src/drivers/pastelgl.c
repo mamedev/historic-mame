@@ -30,7 +30,7 @@ Memo:
 
 
 void pastelgl_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void pastelgl_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 int pastelgl_vh_start(void);
 void pastelgl_vh_stop(void);
 

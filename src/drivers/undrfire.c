@@ -134,7 +134,7 @@ need to reproduce the $18141a calculations.
 
 int undrfire_vh_start (void);
 void undrfire_vh_stop (void);
-void undrfire_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
+void undrfire_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
 
 /* F3 sound */
 READ16_HANDLER(f3_68000_share_r);

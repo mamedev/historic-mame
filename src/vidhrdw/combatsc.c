@@ -483,7 +483,7 @@ WRITE_HANDLER( combasc_scrollram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct osd_bitmap *bitmap, const unsigned char *source,int circuit,UINT32 pri_mask)
+static void draw_sprites(struct mame_bitmap *bitmap, const unsigned char *source,int circuit,UINT32 pri_mask)
 {
 	int base_color = (circuit*4)*16+(K007121_ctrlram[circuit][6]&0x10)*2;
 
@@ -491,7 +491,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, const unsigned char *source,
 }
 
 
-void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void combasc_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	int i;
 
@@ -604,7 +604,7 @@ byte #4:
 
 ***************************************************************************/
 
-static void bootleg_draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source, int circuit )
+static void bootleg_draw_sprites( struct mame_bitmap *bitmap, const unsigned char *source, int circuit )
 {
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
 	const struct rectangle *clip = &Machine->visible_area;
@@ -651,7 +651,7 @@ static void bootleg_draw_sprites( struct osd_bitmap *bitmap, const unsigned char
 	}
 }
 
-void combascb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
+void combascb_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 {
 	int i;
 

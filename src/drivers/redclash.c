@@ -29,7 +29,7 @@ TODO:
 extern data8_t *redclash_textram;
 
 void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void redclash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void redclash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( redclash_gfxbank_w );
 WRITE_HANDLER( redclash_flipscreen_w );

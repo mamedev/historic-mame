@@ -29,7 +29,7 @@ struct RunningMachine
 {
 	struct RegionInfo memory_region[MAX_MEMORY_REGIONS];
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
-	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
+	struct mame_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct rectangle visible_area;
 	pen_t *pens;	/* remapped palette pen numbers. When you write */
 					/* directly to a bitmap, never use absolute values, */
@@ -61,7 +61,7 @@ struct RunningMachine
 	struct rectangle absolute_visible_area;	/* as passed to osd_set_visible_area() */
 
 	/* stuff for the debugger */
-	struct osd_bitmap *debug_bitmap;
+	struct mame_bitmap *debug_bitmap;
 	pen_t *debug_pens;
 	pen_t *debug_remapped_colortable;
 	struct GfxElement *debugger_font;

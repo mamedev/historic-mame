@@ -26,7 +26,7 @@ WRITE_HANDLER( superqix_bitmapram_w );
 READ_HANDLER( superqix_bitmapram2_r );
 WRITE_HANDLER( superqix_bitmapram2_w );
 WRITE_HANDLER( superqix_0410_w );
-void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void superqix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 

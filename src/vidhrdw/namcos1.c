@@ -430,7 +430,7 @@ void namcos1_vh_stop( void )
 
 
 
-static void draw_sprites(struct osd_bitmap *bitmap,int priority)
+static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 {
 	int offs;
 	data8_t *namcos1_spriteram = &namcos1_controlram[0x0800];
@@ -494,7 +494,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void namcos1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int i,priority;
 

@@ -183,7 +183,7 @@ WRITE_HANDLER( cop01_vreg_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 	int offs,code,attr,sx,sy,flipx,flipy,color;
 
@@ -223,7 +223,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 }
 
 
-void cop01_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cop01_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap,0,mightguy_vreg[1] + 256 * (mightguy_vreg[2] & 1));
 	tilemap_set_scrolly(bg_tilemap,0,mightguy_vreg[3]);

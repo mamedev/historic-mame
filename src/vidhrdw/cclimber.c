@@ -328,12 +328,12 @@ WRITE_HANDLER( swimmer_sidepanel_enable_w )
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
+  Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-static void drawbigsprite(struct osd_bitmap *bitmap)
+static void drawbigsprite(struct mame_bitmap *bitmap)
 {
 	int offs;
 	int ox,oy,sx,sy,flipx,flipy;
@@ -379,7 +379,7 @@ static void drawbigsprite(struct osd_bitmap *bitmap)
 }
 
 
-void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
@@ -497,7 +497,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void swimmer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 

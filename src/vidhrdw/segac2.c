@@ -293,7 +293,7 @@ void segac2_enable_display(int enable)
 
 
 /* core refresh: computes the final screen */
-void segac2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void segac2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int y;
 

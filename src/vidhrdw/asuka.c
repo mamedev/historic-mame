@@ -126,7 +126,7 @@ WRITE16_HANDLER( asuka_spriteflip_w )
 ********************************************************/
 
 
-static void asuka_draw_sprites(struct osd_bitmap *bitmap)
+static void asuka_draw_sprites(struct mame_bitmap *bitmap)
 {
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
@@ -178,7 +178,7 @@ static void asuka_draw_sprites(struct osd_bitmap *bitmap)
 				SCREEN REFRESH
 **************************************************************/
 
-void asuka_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void asuka_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	UINT8 layer[3];
 

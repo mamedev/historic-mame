@@ -27,7 +27,7 @@ extern unsigned char *sbasketb_scroll;
 extern unsigned char *sbasketb_palettebank;
 extern unsigned char *sbasketb_spriteram_select;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void sbasketb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;

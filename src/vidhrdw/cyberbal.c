@@ -390,7 +390,7 @@ void cyberbal_scanline_update(int scanline)
  *
  *************************************/
 
-void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void cyberbal_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	/* draw the layers */
 	ataripf_render(current_screen, bitmap);

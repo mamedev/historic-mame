@@ -309,7 +309,7 @@ second level. Probably related to the mapper's irq timming.
 extern int playch10_vh_start( void );
 extern void playch10_vh_stop( void );
 extern void playch10_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void playch10_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh );
+extern void playch10_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
 
 /* from machine */
 extern void pc10_init_machine( void );

@@ -3279,7 +3279,7 @@ int YM2610Write(int n, int a,UINT8 v)
 					F2610->adpcm[ch].flagMask = statusmask&(1<<ch);
 				F2610->deltaT.flagMask      = statusmask&0x80;
 				/* clear arrived flag */
-				F2610->adpcm_arrivedEndAddress &= statusmask&0x3f;
+				F2610->adpcm_arrivedEndAddress &= statusmask;
 			}
 				break;
 			default:

@@ -5,8 +5,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-struct osd_bitmap *thief_page0;
-struct osd_bitmap *thief_page1;
+struct mame_bitmap *thief_page0;
+struct mame_bitmap *thief_page1;
 
 static UINT8 thief_read_mask, thief_write_mask;
 static UINT8 thief_video_control;
@@ -116,8 +116,8 @@ WRITE_HANDLER( thief_videoram_w ){
 void thief_vh_stop( void ){
 	free( videoram );
 	free( dirtybuffer );
-	osd_free_bitmap( thief_page1 );
-	osd_free_bitmap( thief_page0 );
+	bitmap_free( thief_page1 );
+	bitmap_free( thief_page0 );
 	free( thief_coprocessor.context_ram );
 	free( thief_coprocessor.image_ram );
 }
@@ -145,13 +145,13 @@ int thief_vh_start( void ){
 	return 1;
 }
 
-void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void thief_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
 	unsigned int offs;
 	int flipscreen = thief_video_control&1;
 	const pen_t *pal_data = Machine->pens;
 	UINT8 *dirty = dirtybuffer;
 	const UINT8 *source = videoram;
-	struct osd_bitmap *page;
+	struct mame_bitmap *page;
 
 	if( thief_video_control&4 ){ /* visible page */
 		dirty += 0x2000;

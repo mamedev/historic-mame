@@ -67,7 +67,7 @@ int wc90_vh_start( void );
 WRITE_HANDLER( wc90_fgvideoram_w );
 WRITE_HANDLER( wc90_bgvideoram_w );
 WRITE_HANDLER( wc90_txvideoram_w );
-void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wc90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 
 static data8_t *wc90_shared;

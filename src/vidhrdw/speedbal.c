@@ -25,8 +25,8 @@ extern size_t speedbal_sprites_dataram_size;
 static unsigned char *bg_dirtybuffer;	  /* background tiles */
 static unsigned char *ch_dirtybuffer;	  /* foreground char  */
 
-static struct osd_bitmap *bitmap_bg;   /* background tiles */
-static struct osd_bitmap *bitmap_ch;   /* foreground char  */
+static struct mame_bitmap *bitmap_bg;   /* background tiles */
+static struct mame_bitmap *bitmap_ch;   /* foreground char  */
 
 void speedbal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -171,7 +171,7 @@ READ_HANDLER( speedbal_background_videoram_r )
  *				   *
  *************************************/
 
-void speedbal_draw_sprites (struct osd_bitmap *bitmap)
+void speedbal_draw_sprites (struct mame_bitmap *bitmap)
 {
 	int SPTX,SPTY,SPTTile,SPTColor,offset,f;
 	unsigned char carac;
@@ -211,7 +211,7 @@ void speedbal_draw_sprites (struct osd_bitmap *bitmap)
  *				   *
  *************************************/
 
-void speedbal_draw_background (struct osd_bitmap *bitmap)
+void speedbal_draw_background (struct mame_bitmap *bitmap)
 {
 	int sx,sy,code,tile,offset,color;
 
@@ -248,7 +248,7 @@ void speedbal_draw_background (struct osd_bitmap *bitmap)
  *				   *
  *************************************/
 
-void speedbal_draw_foreground1 (struct osd_bitmap *bitmap)
+void speedbal_draw_foreground1 (struct mame_bitmap *bitmap)
 {
 	int sx,sy,code,caracter,color,offset;
 
@@ -285,7 +285,7 @@ void speedbal_draw_foreground1 (struct osd_bitmap *bitmap)
  *				   *
  *************************************/
 
-void speedbal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void speedbal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	// first background
 	speedbal_draw_background (bitmap);

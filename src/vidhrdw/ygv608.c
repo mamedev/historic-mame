@@ -46,7 +46,7 @@ static YGV608 ygv608;
 
 static struct tilemap *tilemap_A = NULL;
 static struct tilemap *tilemap_B = NULL;
-static struct osd_bitmap *work_bitmap = NULL;
+static struct mame_bitmap *work_bitmap = NULL;
 
 #ifdef MAME_DEBUG
 static void ShowYGV608Registers( void );
@@ -414,7 +414,7 @@ void ygv608_vh_stop(void)
 #endif
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap )
 {
 #ifdef _ENABLE_SPRITES
 
@@ -607,7 +607,7 @@ static char *mode[] = { "2PLANE_8BIT",
 static char *psize[] = { "8x8", "16x16", "32x32", "64x64" };
 #endif
 
-void ygv608_vh_update( struct osd_bitmap *bitmap, int full_refresh )
+void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
 {
 #ifdef _SHOW_VIDEO_DEBUG
     char buffer[64];
