@@ -27,11 +27,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *moonqsr_videoram;
+
 extern unsigned char *moonqsr_attributesram;
-extern unsigned char *moonqsr_spriteram;
 extern unsigned char *moonqsr_bulletsram;
 extern void moonqsr_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void moonqsr_videoram_w(int offset,int data);
@@ -39,7 +39,6 @@ extern void moonqsr_attributes_w(int offset,int data);
 extern void moonqsr_stars_w(int offset,int data);
 extern void moonqsr_gfxextend_w(int offset,int data);
 extern int moonqsr_vh_start(void);
-extern void moonqsr_vh_stop(void);
 extern void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
@@ -63,9 +62,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9000, 0x93ff, moonqsr_videoram_w, &moonqsr_videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
 	{ 0x9800, 0x983f, moonqsr_attributes_w, &moonqsr_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &moonqsr_spriteram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
 	{ 0x9860, 0x9880, MWA_RAM, &moonqsr_bulletsram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb800, 0xb800, mooncrst_sound_freq_w },
@@ -199,7 +198,7 @@ const struct MachineDriver moonqsr_driver =
 	8*13,8*16,0x01,
 	0,
 	moonqsr_vh_start,
-	moonqsr_vh_stop,
+	generic_vh_stop,
 	moonqsr_vh_screenrefresh,
 
 	/* sound hardware */

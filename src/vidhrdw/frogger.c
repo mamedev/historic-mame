@@ -7,18 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *frogger_videoram;
 unsigned char *frogger_attributesram;
-unsigned char *frogger_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static struct osd_bitmap *tmpbitmap;
 
 
 
@@ -89,40 +84,6 @@ void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 
 
-int frogger_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void frogger_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void frogger_videoram_w(int offset,int data)
-{
-	if (frogger_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		frogger_videoram[offset] = data;
-	}
-}
-
-
-
 void frogger_attributes_w(int offset,int data)
 {
 	if ((offset & 1) && frogger_attributesram[offset] != data)
@@ -166,7 +127,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					frogger_videoram[offs],
+					videoram[offs],
 					frogger_attributesram[2 * sy + 1] + (sy < 17 ? 8 : 0),
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -201,19 +162,19 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 4*8;offs += 4)
 	{
-		if (frogger_spriteram[offs + 3] != 0)
+		if (spriteram[offs + 3] != 0)
 		{
 			int x;
 
 
-			x = frogger_spriteram[offs];
+			x = spriteram[offs];
 			x = ((x << 4) & 0xf0) | ((x >> 4) & 0x0f);
 
 			drawgfx(bitmap,Machine->gfx[1],
-					frogger_spriteram[offs + 1] & 0x3f,
-					frogger_spriteram[offs + 2],
-					frogger_spriteram[offs + 1] & 0x80,frogger_spriteram[offs + 1] & 0x40,
-					x,frogger_spriteram[offs + 3],
+					spriteram[offs + 1] & 0x3f,
+					spriteram[offs + 2],
+					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+					x,spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

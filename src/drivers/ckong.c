@@ -53,16 +53,15 @@ Notable differences are: (thanks to Ville Laitinen)
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *ckong_videoram;
-extern unsigned char *ckong_colorram;
+
 extern unsigned char *ckong_bsvideoram;
-extern unsigned char *ckong_spriteram;
 extern unsigned char *ckong_bigspriteram;
-extern void ckong_videoram_w(int offset,int data);
 extern void ckong_colorram_w(int offset,int data);
 extern void ckong_bigsprite_videoram_w(int offset,int data);
+extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int ckong_vh_start(void);
 extern void ckong_vh_stop(void);
 extern void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -97,10 +96,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x6bff, MWA_RAM },
-	{ 0x9880, 0x989f, MWA_RAM, &ckong_spriteram },
+	{ 0x9880, 0x989f, MWA_RAM, &spriteram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0x9000, 0x93ff, ckong_videoram_w, &ckong_videoram },
-	{ 0x9c00, 0x9fff, ckong_colorram_w, &ckong_colorram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9c00, 0x9fff, ckong_colorram_w, &colorram },
 	{ 0x8800, 0x88ff, ckong_bigsprite_videoram_w, &ckong_bsvideoram },
 	{ 0x98dc, 0x98df, MWA_RAM, &ckong_bigspriteram },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
@@ -211,86 +210,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0x49,0x00,0x00,	/* DKRED1 */
-	0x92,0x00,0x00,	/* DKRED2 */
-	0xff,0x00,0x00,	/* RED */
-	0x00,0x24,0x00,	/* DKGRN1 */
-	0x92,0x24,0x00,	/* DKBRN1 */
-	0xb6,0x24,0x00,	/* DKBRN2 */
-	0xff,0x24,0x00,	/* LTRED1 */
-	0xdb,0x49,0x00,	/* BROWN */
-	0x00,0x6c,0x00,	/* DKGRN2 */
-	0xff,0x6c,0x00,	/* LTORG1 */
-	0x00,0x92,0x00,	/* DKGRN3 */
-	0x92,0x92,0x00,	/* DKYEL */
-	0xdb,0x92,0x00,	/* DKORG */
-	0xff,0x92,0x00,	/* ORANGE */
-	0x00,0xdb,0x00,	/* GREEN1 */
-	0x6d,0xdb,0x00,	/* LTGRN1 */
-	0x00,0xff,0x00,	/* GREEN2 */
-	0x49,0xff,0x00,	/* LTGRN2 */
-	0xff,0xff,0x00,	/* YELLOW */
-	0x00,0x00,0x55,	/* DKBLU1 */
-	0xff,0x00,0x55,	/* DKPNK1 */
-	0xff,0x24,0x55,	/* DKPNK2 */
-	0xff,0x6d,0x55,	/* LTRED2 */
-	0xdb,0x92,0x55,	/* LTBRN */
-	0xff,0x92,0x55,	/* LTORG2 */
-	0x24,0xff,0x55,	/* LTGRN3 */
-	0x49,0xff,0x55,	/* LTGRN4 */
-	0xff,0xff,0x55,	/* LTYEL */
-	0x00,0x00,0xaa,	/* DKBLU2 */
-	0xff,0x00,0xaa,	/* PINK1 */
-	0x00,0x24,0xaa,	/* DKBLU3 */
-	0xff,0x24,0xaa,	/* PINK2 */
-	0xdb,0xdb,0xaa,	/* CREAM */
-	0xff,0xdb,0xaa,	/* LTORG3 */
-	0x00,0x00,0xff,	/* BLUE */
-	0xdb,0x00,0xff,	/* PURPLE */
-	0x00,0xb6,0xff,	/* LTBLU1 */
-	0x92,0xdb,0xff,	/* LTBLU2 */
-	0xdb,0xdb,0xff,	/* WHITE1 */
-	0xff,0xff,0xff	/* WHITE2 */
-};
-
-enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
-	LTORG1,DKGRN3,DKYEL,DKORG,ORANGE,GREEN1,LTGRN1,GREEN2,LTGRN2,YELLOW,
-	DKBLU1,DKPNK1,DKPNK2,LTRED2,LTBRN,LTORG2,LTGRN3,LTGRN4,LTYEL,DKBLU2,
-	PINK1,DKBLU3,PINK2,CREAM,LTORG3,BLUE,PURPLE,LTBLU1,LTBLU2,WHITE1,
-	WHITE2};
-
-static unsigned char colortable[] =
-{
-	/* characters and sprites */
-        BLACK,LTYEL,BROWN,WHITE1,      /* hammers, white text */
-        BLACK,LTORG1,WHITE1,LTRED1,     /* pauline with kong */
-        BLACK,BLUE,LTBLU1,LTYEL,       /* 4th lvl */
-        BLACK,LTBRN,BROWN,CREAM,     /* kong */
-        BLACK,BLUE,LTYEL,LTBLU1,     /* 2nd level */
-        BLACK,RED,CREAM,BLUE,         /* blue text */
-        BLACK,PINK1,RED,DKGRN3,      /* 3rd level */
-        BLACK,LTBRN,CREAM,LTRED1,     /* pauline */
-        BLACK,LTYEL,BLUE,BROWN,      /* barrel */
-        BLACK,RED,CREAM,BLUE,      /* mario */
-        BLACK,PINK1,RED,DKGRN3,      /* 1st level */
-        BLACK,RED,LTRED1,YELLOW,       /* oil flame */
-        BLACK,YELLOW,BLUE,RED,       /* small mario, spring */
-        BLACK,DKGRN3,LTBLU1,BROWN,      /* scared flame */
-        BLACK,LTRED1,YELLOW,BLUE,       /* flame */
-        BLACK,CREAM,LTBLU2,BLUE,        /* "oil" barrel */
-
-	/* big sprite */
-	BLACK,WHITE2,DKGRN2,BLUE,	/* helicopter */
-	BLACK,WHITE2,PURPLE,PINK2,	/* air balloon */
-	BLACK,LTRED2,WHITE2,LTORG1,	/* bird */
-	BLACK,WHITE2,BLUE,LTORG2,	/* title screen Crazy Climber logo */
-	BLACK,DKPNK1,LTYEL,DKBLU2,	/* 2nd level electric sign */
-	BLACK,DKBLU3,DKPNK1,LTYEL,	/* 3rd level sign */
-	BLACK,LTYEL,DKBLU3,DKPNK1,	/* 2nd level sign */
-	BLACK,DKBLU1,DKGRN1,WHITE2	/* 1st level sign */
+	/* char palette */
+	0x00,0x3F,0x16,0xFF,0x00,0xC0,0xFF,0xA7,0x00,0xC8,0xE8,0x3F,0x00,0x27,0x16,0x2F,
+	0x00,0x1F,0x37,0xFF,0x00,0xD0,0xC0,0xE8,0x00,0x07,0x27,0xF6,0x00,0x2F,0xF7,0xA7,
+	0x00,0x2F,0xC0,0x16,0x00,0x07,0x27,0xD0,0x00,0x17,0x27,0xE8,0x00,0x07,0x1F,0xFF,
+	0x00,0xE8,0xD8,0x07,0x00,0x3D,0xFF,0xE8,0x00,0x07,0x3F,0xD2,0x00,0xFF,0xD0,0xE0,
+	/* bigsprite palette */
+	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x16,0x27,0x2F,0xff,0xff,0xff,0xff,
+	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x40,0x08,0xFF
+/*	0x00,0xFF,0xC6,0x8F,0x00,0xFF,0xC6,0x8F,0x00,0xFF,0xC0,0x67,0x00,0xFF,0xC0,0x67, */
+/*	0x00,0x88,0x47,0x7F,0x00,0x88,0x47,0x7F,0x00,0x40,0x08,0xFF,0x00,0x40,0x08,0xFF, */
 };
 
 
@@ -314,11 +245,11 @@ const struct MachineDriver ckong_driver =
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
+	96,4*24,
+	color_prom,cclimber_vh_convert_color_prom,0,0,
 	0,17,
-	0x0a,0x0b,
-	8*13,8*16,0x0a,
+	0x00,0x02,
+	8*13,8*16,0x0c,
 	0,
 	ckong_vh_start,
 	ckong_vh_stop,

@@ -7,22 +7,23 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *congo_videoram;
-unsigned char *congo_colorram;
-unsigned char *congo_spriteram;
 unsigned char *congo_background_position;
 unsigned char *congo_background_enable;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];       /* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap,*backgroundbitmap;
+static struct osd_bitmap *backgroundbitmap;
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int congo_vh_start(void)
 {
 	int offs;
@@ -30,13 +31,13 @@ int congo_vh_start(void)
 	struct osd_bitmap *prebitmap;
 
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 	/* large bitmap for the precalculated background */
 	if ((backgroundbitmap = osd_create_bitmap(512,2303+32)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -44,8 +45,8 @@ int congo_vh_start(void)
 	/* create a temporary bitmap to prepare the background before converting it */
 	if ((prebitmap = osd_create_bitmap(4096,256)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
 		osd_free_bitmap(backgroundbitmap);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -107,33 +108,10 @@ int congo_vh_start(void)
 ***************************************************************************/
 void congo_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(backgroundbitmap);
+	generic_vh_stop();
 }
 
-
-
-void congo_videoram_w(int offset,int data)
-{
-        if (congo_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-                congo_videoram[offset] = data;
-	}
-}
-
-
-
-void congo_colorram_w(int offset,int data)
-{
-        if (congo_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-                congo_colorram[offset] = data;
-	}
-}
 
 
 /***************************************************************************
@@ -145,8 +123,12 @@ void congo_colorram_w(int offset,int data)
 ***************************************************************************/
 void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs;
-
+        int offs, i;
+        static unsigned int sprpri[0x100]; /* this really should not be more
+                                     * than 0x1e, but I did not want to check
+                                     * for 0xff which is set when sprite is off
+                                     * -V-
+                                     */
 
 
 	/* copy the background */
@@ -176,17 +158,22 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-        /* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
-        /* The number of active sprites is stored at 0xc032 */
+	/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
+	/* The number of active sprites is stored at 0xc032 */
 
-        for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
+	for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
+		sprpri[ spriteram[offs+1] ] = offs;
+
+	for (i=0x1e ; i>=0; i--)
 	{
-                if (congo_spriteram[offs+2] != 0xff)
+		offs = sprpri[i];
+
+		if (spriteram[offs+2] != 0xff)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-                                        congo_spriteram[offs+1+2]& 0x7f,congo_spriteram[offs+2+2],
-                                        congo_spriteram[offs+1+2] & 0x80,congo_spriteram[offs+2+2] & 0x80,
-                                        congo_spriteram[offs+2] - 15,((congo_spriteram[offs+3+2] + 16) & 0xff) - 32,
+					spriteram[offs+2+1]& 0x7f,spriteram[offs+2+2],
+					spriteram[offs+2+1] & 0x80,spriteram[offs+2+2] & 0x80,
+					spriteram[offs+2] - 15,((spriteram[offs+2+3] + 16) & 0xff) - 32,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
@@ -201,10 +188,10 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = 8 * (31 - offs / 32);
 		sy = 8 * (offs % 32);
 
-                if (congo_videoram[offs] != 0x60)      /* don't draw spaces */
+                if (videoram[offs] != 0x60)      /* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[0],
-                                        congo_videoram[offs],
-                                    congo_colorram[offs],
+                                        videoram[offs],
+                                    colorram[offs],
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

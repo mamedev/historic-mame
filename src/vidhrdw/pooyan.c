@@ -7,64 +7,34 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
 
-unsigned char *pooyan_videoram;
-unsigned char *pooyan_colorram;
-unsigned char *pooyan_spriteram1;
-unsigned char *pooyan_spriteram2;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 
-static struct osd_bitmap *tmpbitmap;
-
-
-
-int pooyan_vh_start(void)
+void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
+	int i;
 
 
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void pooyan_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void pooyan_videoram_w(int offset,int data)
-{
-	if (pooyan_videoram[offset] != data)
+	for (i = 0;i < 256;i++)
 	{
-		dirtybuffer[offset] = 1;
+		int bits;
 
-		pooyan_videoram[offset] = data;
+
+		bits = (i >> 5) & 0x07;
+		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
+		bits = (i >> 2) & 0x07;
+		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
+		bits = (i >> 0) & 0x03;
+		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
 	}
-}
 
-
-
-void pooyan_colorram_w(int offset,int data)
-{
-	if (pooyan_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		pooyan_colorram[offset] = data;
-	}
+	for (i = 0;i < 512;i++)
+		colortable[i] = color_prom[i];
 }
 
 
@@ -96,9 +66,9 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					pooyan_videoram[offs],
-					pooyan_colorram[offs] & 0x3f,
-					pooyan_colorram[offs] & 0x80,pooyan_colorram[offs] & 0x40,
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x3f,
+					colorram[offs] & 0x80,colorram[offs] & 0x40,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -114,10 +84,10 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = 0;offs < 24*2;offs += 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				pooyan_spriteram1[offs + 1] & 0x3f,
-				pooyan_spriteram2[offs] & 0x3f,
-				pooyan_spriteram2[offs] & 0x80,!(pooyan_spriteram2[offs] & 0x40),
-				pooyan_spriteram2[offs + 1],pooyan_spriteram1[offs],
+				spriteram[offs + 1],
+				spriteram_2[offs] & 0x3f,
+				spriteram_2[offs] & 0x80,!(spriteram_2[offs] & 0x40),
+				spriteram_2[offs + 1],spriteram[offs],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

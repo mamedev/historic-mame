@@ -74,6 +74,8 @@ blitter registers:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern unsigned char *wow_videoram;
@@ -83,8 +85,6 @@ extern void wow_mask_w(int offset,int data);
 extern void wow_unknown_w(int offset,int data);
 extern void wow_masked_videoram_w(int offset,int data);
 extern void wow_blitter_w(int offset,int data);
-extern int wow_vh_start(void);
-extern void wow_vh_stop(void);
 extern void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -238,8 +238,8 @@ const struct MachineDriver wow_driver =
 	2,0,
 	(320-8*6)/2,(204-10)/2,3,
 	0,
-	wow_vh_start,
-	wow_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	wow_vh_screenrefresh,
 
 	/* sound hardware */

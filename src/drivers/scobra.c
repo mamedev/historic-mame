@@ -2,7 +2,7 @@
 
 Super Cobra memory map (preliminary)
 
-0000-5fff ROM
+0000-5fff ROM (Lost Tomb: 0000-6fff)
 8000-87ff RAM
 8800-8bff Video RAM
 9000-90ff Object RAM
@@ -64,21 +64,19 @@ a002      protection check control?
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int scramble_IN2_r(int offset);
 extern int scramble_protection_r(int offset);
 
-extern unsigned char *scramble_videoram;
 extern unsigned char *scramble_attributesram;
-extern unsigned char *scramble_spriteram;
 extern unsigned char *scramble_bulletsram;
 extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void scramble_videoram_w(int offset,int data);
 extern void scramble_attributes_w(int offset,int data);
 extern void scramble_stars_w(int offset,int data);
 extern int scramble_vh_start(void);
-extern void scramble_vh_stop(void);
 extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -86,7 +84,7 @@ extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x0000, 0x6fff, MRA_ROM },
 	{ 0xb000, 0xb000, MRA_NOP },
 	{ 0x9800, 0x9800, input_port_0_r },	/* IN0 */
 	{ 0x9801, 0x9801, input_port_1_r },	/* IN1 */
@@ -99,13 +97,13 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x8800, 0x8bff, scramble_videoram_w, &scramble_videoram },
+	{ 0x8800, 0x8bff, videoram_w, &videoram },
 	{ 0x9000, 0x903f, scramble_attributes_w, &scramble_attributesram },
-	{ 0x9040, 0x905f, MWA_RAM, &scramble_spriteram },
+	{ 0x9040, 0x905f, MWA_RAM, &spriteram },
 	{ 0x9060, 0x907f, MWA_RAM, &scramble_bulletsram },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa804, 0xa804, scramble_stars_w },
-	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x0000, 0x6fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -224,7 +222,7 @@ const struct MachineDriver scobra_driver =
 	8*13,8*16,0x04,
 	0,
 	scramble_vh_start,
-	scramble_vh_stop,
+	generic_vh_stop,
 	scramble_vh_screenrefresh,
 
 	/* sound hardware */

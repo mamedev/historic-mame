@@ -7,16 +7,15 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE	0x400
 
-unsigned char *phoenix_videoram1;
 unsigned char *phoenix_videoram2;
-
-static unsigned char dirtybuffer1[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];	/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap1,*tmpbitmap2;
+static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];
+static struct osd_bitmap *tmpbitmap2;
 
 static int scrollreg;
 static int palette_bank;
@@ -37,19 +36,24 @@ static struct rectangle backtmparea =
 
 
 
+/***************************************************************************
+
+  Stop the video hardware emulation.
+
+***************************************************************************/
 int phoenix_vh_start(void)
 {
 	scrollreg = 0;
 	palette_bank = 0;
 
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 	/* small temp bitmap for the score display */
-	if ((tmpbitmap1 = osd_create_bitmap(Machine->drv->screen_width,3*8)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,3*8)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap2);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -65,20 +69,8 @@ int phoenix_vh_start(void)
 ***************************************************************************/
 void phoenix_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap1);
 	osd_free_bitmap(tmpbitmap2);
-}
-
-
-
-void phoenix_videoram1_w(int offset,int data)
-{
-	if (phoenix_videoram1[offset] != data)
-	{
-		dirtybuffer1[offset] = 1;
-
-		phoenix_videoram1[offset] = data;
-	}
+	generic_vh_stop();
 }
 
 
@@ -113,7 +105,7 @@ void phoenix_videoreg_w (int offset,int data)
 
 		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 		{
-			dirtybuffer1[offs] = 1;
+			dirtybuffer[offs] = 1;
 			dirtybuffer2[offs] = 1;
 		}
 	}
@@ -138,6 +130,27 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
 		/* background */
+		if (dirtybuffer[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = 8 * (31 - offs / 32) - 3 * 8;
+			sy = 8 * (offs % 32);
+
+			drawgfx(tmpbitmap,Machine->gfx[1],
+					videoram[offs],
+					(videoram[offs] >> 5) + 8 * palette_bank,
+					0,0,sx,sy,
+					&backtmparea,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	/* score */
+	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	{
 		if (dirtybuffer2[offs])
 		{
 			int sx,sy;
@@ -148,30 +161,9 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (31 - offs / 32) - 3 * 8;
 			sy = 8 * (offs % 32);
 
-			drawgfx(tmpbitmap2,Machine->gfx[1],
+			drawgfx(tmpbitmap2,Machine->gfx[0],
 					phoenix_videoram2[offs],
-					(phoenix_videoram2[offs] >> 5) + 8 * palette_bank,
-					0,0,sx,sy,
-					&backtmparea,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* score */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
-	{
-		if (dirtybuffer1[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer1[offs] = 0;
-
-			sx = 8 * (31 - offs / 32) - 3 * 8;
-			sy = 8 * (offs % 32);
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					phoenix_videoram1[offs],
-					phoenix_videoram1[offs] >> 5,
+					phoenix_videoram2[offs] >> 5,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -179,9 +171,9 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,256-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap2,0,0,0,-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,256-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,-scrollreg,&backvisiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -193,10 +185,10 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = 8 * (31 - offs / 32) - 3 * 8;
 		sy = 8 * (offs % 32);
 
-		if (sy >= 3 * 8 && phoenix_videoram1[offs])	/* don't draw score and spaces */
+		if (sy >= 3 * 8 && phoenix_videoram2[offs])	/* don't draw score and spaces */
 			drawgfx(bitmap,Machine->gfx[0],
-					phoenix_videoram1[offs],
-					(phoenix_videoram1[offs] >> 5) + 8 * palette_bank,
+					phoenix_videoram2[offs],
+					(phoenix_videoram2[offs] >> 5) + 8 * palette_bank,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

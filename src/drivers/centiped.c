@@ -13,26 +13,28 @@ read:
 0c01      IN0
 0c02      trackball y
 0c03      IN1
-100a      random number generator
+100a      POKEY random number generator
 
 write
+1000-1008 POKEY
 1800      ?
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
 extern int centiped_init_machine(const char *gamename);
 extern int centiped_rand_r(int offset);
 
-extern unsigned char *centiped_videoram;
-extern unsigned char *centiped_spriteram;
-extern void centiped_videoram_w(int offset,int data);
-extern int centiped_vh_start(void);
-extern void centiped_vh_stop(void);
-extern void centiped_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void milliped_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void milliped_pokey1_w(int offset,int data);
+extern int milliped_sh_start(void);
+extern void milliped_sh_stop(void);
+extern void milliped_sh_update(void);
 
 
 
@@ -55,8 +57,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0200, MWA_RAM },
-	{ 0x0400, 0x07bf, centiped_videoram_w, &centiped_videoram },
-	{ 0x07c0, 0x07ff, MWA_RAM, &centiped_spriteram },
+	{ 0x0400, 0x07bf, videoram_w, &videoram },
+	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
+	{ 0x1000, 0x1008, milliped_pokey1_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -211,14 +214,14 @@ const struct MachineDriver centiped_driver =
 	0x06,0x04,
 	8*13,8*16,0x00,
 	0,
-	centiped_vh_start,
-	centiped_vh_stop,
-	centiped_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	milliped_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	milliped_sh_start,
+	milliped_sh_stop,
+	milliped_sh_update
 };

@@ -2,6 +2,7 @@
 
 Scramble memory map (preliminary)
 
+MAIN BOARD:
 0000-3fff ROM
 4000-47ff RAM
 4800-4bff Video RAM
@@ -24,7 +25,7 @@ read:
  * bit 5 : LEFT player 1
  * bit 4 : RIGHT player 1
  * bit 3 : SHOOT 1 player 1
- * bit 2 : CREDIT
+ * bit 2 : CREDIT (SERVICE)
  * bit 1 : SHOOT 2 player 1
  * bit 0 : UP player 2 (TABLE only)
  *
@@ -58,29 +59,58 @@ write:
 6805      ? (POUT2)
 6806      screen vertical flip
 6807      screen horizontal flip
-8200      To AY-3-8910 port A (commands for the audio CPU?)
+8200      To AY-3-8910 port A (commands for the audio CPU)
 8201      bit 3 = interrupt trigger on audio CPU  bit 4 = AMPM (?)
 8202      protection check control?
+
+
+SOUND BOARD:
+0000-17ff ROM
+8000-83ff RAM
+
+I/0 ports:
+read:
+20      8910 #2  read
+80      8910 #1  read
+
+write
+10      8910 #2  control
+20      8910 #2  write
+40      8910 #1  control
+80      8910 #1  write
+
+interrupts:
+interrupt mode 1 triggered by the main CPU
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int scramble_IN2_r(int offset);
 extern int scramble_protection_r(int offset);
 
-extern unsigned char *scramble_videoram;
 extern unsigned char *scramble_attributesram;
-extern unsigned char *scramble_spriteram;
 extern unsigned char *scramble_bulletsram;
 extern void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void scramble_videoram_w(int offset,int data);
 extern void scramble_attributes_w(int offset,int data);
 extern void scramble_stars_w(int offset,int data);
 extern int scramble_vh_start(void);
-extern void scramble_vh_stop(void);
 extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void scramble_soundcommand_w(int offset,int data);
+extern int scramble_sh_read_port1_r(int offset);
+extern void scramble_sh_control_port1_w(int offset,int data);
+extern void scramble_sh_write_port1_w(int offset,int data);
+extern int scramble_sh_read_port2_r(int offset);
+extern void scramble_sh_control_port2_w(int offset,int data);
+extern void scramble_sh_write_port2_w(int offset,int data);
+extern int scramble_sh_interrupt(void);
+extern int scramble_sh_start(void);
+extern void scramble_sh_stop(void);
+extern void scramble_sh_update(void);
 
 
 
@@ -100,15 +130,50 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, scramble_videoram_w, &scramble_videoram },
+	{ 0x4800, 0x4bff, videoram_w, &videoram },
 	{ 0x5000, 0x503f, scramble_attributes_w, &scramble_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &scramble_spriteram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram },
 	{ 0x5060, 0x507f, MWA_RAM, &scramble_bulletsram },
 	{ 0x6801, 0x6801, interrupt_enable_w },
 	{ 0x6804, 0x6804, scramble_stars_w },
 	{ 0x6802, 0x6802, MWA_NOP },
 	{ 0x6806, 0x6807, MWA_NOP },
+	{ 0x8200, 0x8200, scramble_soundcommand_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x0000, 0x17ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x0000, 0x17ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct IOReadPort sound_readport[] =
+{
+	{ 0x80, 0x80, scramble_sh_read_port1_r },
+	{ 0x20, 0x20, scramble_sh_read_port2_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x40, 0x40, scramble_sh_control_port1_w },
+	{ 0x80, 0x80, scramble_sh_write_port1_w },
+	{ 0x10, 0x10, scramble_sh_control_port2_w },
+	{ 0x20, 0x20, scramble_sh_write_port2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -118,18 +183,22 @@ static struct InputPort input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
-		{ 0, OSD_KEY_ALT, 0, OSD_KEY_CONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_3, 0 },
-		{ 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
+		{ OSD_KEY_UP, OSD_KEY_ALT, 0, OSD_KEY_CONTROL,
+				OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, OSD_KEY_3 },
+		{ OSD_JOY_UP, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1,
+				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN1 */
 		0xfc,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ 0, 0, OSD_KEY_ALT, OSD_KEY_CONTROL,
+				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_2, OSD_KEY_1 },
+		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1,
+				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
 	},
 	{	/* IN2 */
 		0xf1,
-		{ 0, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
-		{ 0, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
+		{ OSD_KEY_DOWN, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
+		{ OSD_JOY_DOWN, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
 	},
 	{ -1 }	/* end of table */
 };
@@ -137,6 +206,11 @@ static struct InputPort input_ports[] =
 
 
 static struct DSW scramble_dsw[] =
+{
+	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
+	{ -1 }
+};
+static struct DSW theend_dsw[] =
 {
 	{ 1, 0x03, "LIVES", { "3", "4", "5", "256" } },
 	{ -1 }
@@ -220,6 +294,13 @@ const struct MachineDriver scramble_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			1789750,	/* 1.78975 Mhz?????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			scramble_sh_interrupt,2
 		}
 	},
 	60,
@@ -236,16 +317,18 @@ const struct MachineDriver scramble_driver =
 	8*13,8*16,0x04,
 	0,
 	scramble_vh_start,
-	scramble_vh_stop,
+	generic_vh_stop,
 	scramble_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	scramble_sh_start,
+	scramble_sh_stop,
+	scramble_sh_update
 };
+
+
 
 const struct MachineDriver atlantis_driver =
 {
@@ -273,7 +356,46 @@ const struct MachineDriver atlantis_driver =
 	8*13,8*16,0x04,
 	0,
 	scramble_vh_start,
-	scramble_vh_stop,
+	generic_vh_stop,
+	scramble_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	0
+};
+
+
+
+const struct MachineDriver theend_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	60,
+	input_ports,theend_dsw,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	32+64,32+64,	/* 32 for the characters, 64 for the stars */
+	color_prom,scramble_vh_convert_color_prom,0,0,
+	0,17,
+	0x00,0x01,
+	8*13,8*16,0x04,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
 	scramble_vh_screenrefresh,
 
 	/* sound hardware */

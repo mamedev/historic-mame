@@ -7,17 +7,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
-
-unsigned char *btime_videoram;
-unsigned char *btime_attributesram;
-unsigned char *btime_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static struct osd_bitmap *tmpbitmap;
 
 static int background_image;
 
@@ -68,51 +62,6 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 	for (i = 0;i < 2 * 8;i++)
 		colortable[i] = i;
-}
-
-
-
-int btime_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void btime_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void btime_videoram_w(int offset,int data)
-{
-	if (btime_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		btime_videoram[offset] = data;
-	}
-}
-
-
-void btime_attributesram_w(int offset,int data)
-{
-	if (btime_attributesram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		btime_attributesram[offset] = data;
-	}
 }
 
 
@@ -186,16 +135,16 @@ static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
 						bx,by,
 						&clip,TRANSPARENCY_NONE,0);
 
-				drawgfx(tmpbitmap,Machine->gfx[(btime_attributesram[offs] & 2) ? 1 : 0],
-						btime_videoram[offs] + 256 * (btime_attributesram[offs] & 1),
+				drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 2) ? 1 : 0],
+						videoram[offs] + 256 * (colorram[offs] & 1),
 						0,
 						0,0,
 						sx,sy,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
-				drawgfx(tmpbitmap,Machine->gfx[(btime_attributesram[offs] & 2) ? 1 : 0],
-						btime_videoram[offs] + 256 * (btime_attributesram[offs] & 1),
+				drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 2) ? 1 : 0],
+						videoram[offs] + 256 * (colorram[offs] & 1),
 						0,
 						0,0,
 						sx,sy,
@@ -211,13 +160,13 @@ static int mapconvert[8] = { 1,2,3,0,5,6,7,4 };
 	/* Draw the sprites */
 	for (offs = 0;offs < 8*4; offs+=4)
 	{
-		if (btime_spriteram[offs+2])
+		if (spriteram[offs+2])
 		{
 			drawgfx(bitmap,Machine->gfx[3],
-					btime_spriteram[offs+1],
+					spriteram[offs+1],
 					0,
-					btime_spriteram[offs] & 0x02,0,
-					239 - btime_spriteram[offs+2],btime_spriteram[offs+3],
+					spriteram[offs] & 0x02,0,
+					239 - spriteram[offs+2],spriteram[offs+3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

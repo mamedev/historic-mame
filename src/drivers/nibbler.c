@@ -71,21 +71,16 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
 extern int nibbler_interrupt(void);
 
-extern unsigned char *nibbler_videoram1;
 extern unsigned char *nibbler_videoram2;
-extern unsigned char *nibbler_colorram;
 extern unsigned char *nibbler_characterram;
-extern void nibbler_videoram1_w(int offset,int data);
 extern void nibbler_videoram2_w(int offset,int data);
-extern void nibbler_colorram_w(int offset,int data);
 extern void nibbler_characterram_w(int offset,int data);
-extern int nibbler_vh_start(void);
-extern void nibbler_vh_stop(void);
 extern void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -104,9 +99,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07ff, nibbler_videoram1_w, &nibbler_videoram1 },
+	{ 0x0400, 0x07ff, videoram_w, &videoram },
 	{ 0x0800, 0x0bff, nibbler_videoram2_w, &nibbler_videoram2 },
-	{ 0x0c00, 0x0fff, nibbler_colorram_w, &nibbler_colorram },
+	{ 0x0c00, 0x0fff, colorram_w, &colorram },
 	{ 0x1000, 0x1fff, nibbler_characterram_w, &nibbler_characterram },
 	{ 0x3000, 0xbfff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -255,8 +250,8 @@ const struct MachineDriver nibbler_driver =
 	0x06,0x04,
 	8*13,8*16,0x00,
 	0,
-	nibbler_vh_start,
-	nibbler_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	nibbler_vh_screenrefresh,
 
 	/* sound hardware */

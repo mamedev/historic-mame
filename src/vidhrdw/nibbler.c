@@ -7,53 +7,15 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-unsigned char *nibbler_videoram1;
 unsigned char *nibbler_videoram2;
-unsigned char *nibbler_colorram;
 unsigned char *nibbler_characterram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 static unsigned char dirtycharacter[256];
-
-static struct osd_bitmap *tmpbitmap;
-
-
-
-int nibbler_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void nibbler_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void nibbler_videoram1_w(int offset,int data)
-{
-	if (nibbler_videoram1[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		nibbler_videoram1[offset] = data;
-	}
-}
 
 
 
@@ -64,18 +26,6 @@ void nibbler_videoram2_w(int offset,int data)
 		dirtybuffer[offset] = 1;
 
 		nibbler_videoram2[offset] = data;
-	}
-}
-
-
-
-void nibbler_colorram_w(int offset,int data)
-{
-	if (nibbler_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		nibbler_colorram[offset] = data;
 	}
 }
 
@@ -113,7 +63,7 @@ void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int charcode;
 
 
-		charcode = nibbler_videoram1[offs];
+		charcode = videoram[offs];
 
 		if (dirtybuffer[offs] || dirtycharacter[charcode])
 		{
@@ -134,12 +84,12 @@ void nibbler_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					nibbler_videoram2[offs],nibbler_colorram[offs] >> 4,
+					nibbler_videoram2[offs],colorram[offs] >> 4,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,nibbler_colorram[offs] & 0x0f,
+					charcode,colorram[offs] & 0x0f,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

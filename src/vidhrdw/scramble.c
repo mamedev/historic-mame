@@ -7,29 +7,24 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
 
-unsigned char *scramble_videoram;
 unsigned char *scramble_attributesram;
-unsigned char *scramble_spriteram;
 unsigned char *scramble_bulletsram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
 static int stars_on;
 
 struct star
 {
-	int x,y,col;
+	int x,y,code,col;
 };
 static struct star stars[MAX_STARS];
 static int total_stars;
-
-static struct osd_bitmap *tmpbitmap;
 
 
 
@@ -112,6 +107,11 @@ void scramble_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int scramble_vh_start(void)
 {
 	int generator;
@@ -120,7 +120,7 @@ int scramble_vh_start(void)
 
 	stars_on = 0;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 
@@ -153,6 +153,7 @@ int scramble_vh_start(void)
 				{
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
+					stars[total_stars].code = color;
 					stars[total_stars].col = Machine->gfx[2]->colortable[color];
 
 					total_stars++;
@@ -162,30 +163,6 @@ int scramble_vh_start(void)
 	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void scramble_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void scramble_videoram_w(int offset,int data)
-{
-	if (scramble_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		scramble_videoram[offset] = data;
-	}
 }
 
 
@@ -240,7 +217,7 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					scramble_videoram[offs],
+					videoram[offs],
 					scramble_attributesram[2 * sy + 1],
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -292,13 +269,13 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 4*8;offs += 4)
 	{
-		if (scramble_spriteram[offs + 3] > 8)	/* ???? */
+		if (spriteram[offs + 3] > 8)	/* ???? */
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					scramble_spriteram[offs + 1] & 0x3f,
-					scramble_spriteram[offs + 2],
-					scramble_spriteram[offs + 1] & 0x80,scramble_spriteram[offs + 1] & 0x40,
-					scramble_spriteram[offs],scramble_spriteram[offs + 3],
+					spriteram[offs + 1] & 0x3f,
+					spriteram[offs + 2],
+					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+					spriteram[offs],spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
@@ -308,7 +285,15 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 	if (stars_on)
 	{
 		int bpen;
+		static int stars_blink,blink_count;
 
+
+		blink_count++;
+		if (blink_count >= 72)
+		{
+			blink_count = 0;
+			stars_blink = (stars_blink + 1) % 4;
+		}
 
 		bpen = Machine->background_pen;
 		for (offs = 0;offs < total_stars;offs++)
@@ -321,7 +306,23 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			if (((x & 1) ^ ((y >> 4) & 1)) &&
 					(bitmap->line[y][x] == bpen))
-				bitmap->line[y][x] = stars[offs].col;
+			{
+				switch (stars_blink)
+				{
+					case 0:
+						if (stars[offs].code & 1) bitmap->line[y][x] = stars[offs].col;
+						break;
+					case 1:
+						if (stars[offs].code & 4) bitmap->line[y][x] = stars[offs].col;
+						break;
+					case 2:
+						if (x & 2) bitmap->line[y][x] = stars[offs].col;
+						break;
+					case 3:
+						bitmap->line[y][x] = stars[offs].col;
+						break;
+				}
+			}
 		}
 	}
 }

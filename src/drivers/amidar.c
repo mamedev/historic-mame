@@ -68,15 +68,12 @@ a008      interrupt enable
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *amidar_videoram;
+
 extern unsigned char *amidar_attributesram;
-extern unsigned char *amidar_spriteram;
-extern void amidar_videoram_w(int offset,int data);
 extern void amidar_attributes_w(int offset,int data);
-extern int amidar_vh_start(void);
-extern void amidar_vh_stop(void);
 extern void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -98,9 +95,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, amidar_videoram_w, &amidar_videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
 	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
-	{ 0x9840, 0x985f, MWA_RAM, &amidar_spriteram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
 	{ 0x0000, 0x4fff, MWA_ROM },
@@ -255,8 +252,8 @@ const struct MachineDriver amidar_driver =
 	0x06,0x04,
 	8*13,8*16,0x00,
 	0,
-	amidar_vh_start,
-	amidar_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	amidar_vh_screenrefresh,
 
 	/* sound hardware */
@@ -294,8 +291,8 @@ const struct MachineDriver turtles_driver =
 	0x07,0x01,
 	8*13,8*16,0x06,
 	0,
-	amidar_vh_start,
-	amidar_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	amidar_vh_screenrefresh,
 
 	/* sound hardware */

@@ -18,7 +18,7 @@ int scramble_IN2_r(int offset)
 
 	res = readinputport(2);
 
-if (errorlog) fprintf(errorlog,"%04x: read IN2\n",Z80_GetPC());
+/*if (errorlog) fprintf(errorlog,"%04x: read IN2\n",Z80_GetPC());*/
 
 	/* avoid protection */
 	if (Z80_GetPC() == 0x00e4) res &= 0x7f;

@@ -19,7 +19,7 @@ read:
 *
  * IN0 (bits NOT inverted)
  * bit 7 : ?
- * bit 6 : ?
+ * bit 6 : reset (when player 1 active)
  * bit 5 : ?
  * bit 4 : JUMP player 1
  * bit 3 : DOWN player 1
@@ -30,7 +30,7 @@ read:
 *
  * IN1 (bits NOT inverted)
  * bit 7 : ?
- * bit 6 : ?
+ * bit 6 : reset (when player 2 active)
  * bit 5 : ?
  * bit 4 : JUMP player 2
  * bit 3 : DOWN player 2
@@ -79,14 +79,12 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *dkong_videoram;
-extern unsigned char *dkong_spriteram;
-extern void dkong_videoram_w(int offset,int data);
+
 extern void dkongjr_gfxbank_w(int offset,int data);
 extern int dkong_vh_start(void);
-extern void dkong_vh_stop(void);
 extern void dkong_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -118,9 +116,9 @@ static struct MemoryWriteAddress dkong_writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &dkong_spriteram },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7400, 0x77ff, dkong_videoram_w, &dkong_videoram },
+	{ 0x7400, 0x77ff, videoram_w, &videoram },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
@@ -135,9 +133,9 @@ static struct MemoryWriteAddress dkongjr_writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &dkong_spriteram },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
 	{ 0x7d84, 0x7d84, interrupt_enable_w },
-	{ 0x7400, 0x77ff, dkong_videoram_w, &dkong_videoram },
+	{ 0x7400, 0x77ff, videoram_w, &videoram },
 	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
@@ -533,7 +531,7 @@ const struct MachineDriver dkong_driver =
 	8*13,8*16,4,
 	0,
 	dkong_vh_start,
-	dkong_vh_stop,
+	generic_vh_stop,
 	dkong_vh_screenrefresh,
 
 	/* sound hardware */
@@ -572,7 +570,7 @@ const struct MachineDriver dkongjr_driver =
 	8*13,8*16,4,
 	0,
 	dkong_vh_start,
-	dkong_vh_stop,
+	generic_vh_stop,
 	dkong_vh_screenrefresh,
 
 	/* sound hardware */

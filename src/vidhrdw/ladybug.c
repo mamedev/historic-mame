@@ -7,19 +7,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
-
-
-unsigned char *ladybug_videoram;
-unsigned char *ladybug_colorram;
-unsigned char *ladybug_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static struct osd_bitmap *tmpbitmap;
-
 
 
 
@@ -95,52 +87,6 @@ void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 
 
-int ladybug_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void ladybug_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void ladybug_videoram_w(int offset,int data)
-{
-	if (ladybug_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		ladybug_videoram[offset] = data;
-	}
-}
-
-
-
-void ladybug_colorram_w(int offset,int data)
-{
-	if (ladybug_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		ladybug_colorram[offset] = data;
-	}
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -168,8 +114,8 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (31 - offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					ladybug_videoram[offs] + 32 * (ladybug_colorram[offs] & 8),
-					ladybug_colorram[offs],
+					videoram[offs] + 32 * (colorram[offs] & 8),
+					colorram[offs],
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -186,7 +132,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = 14 * 0x40;offs >= 2;offs -= 0x40)
 	{
 		i = 0;
-		while (i < 0x40 && ladybug_spriteram[offs + i] != 0)
+		while (i < 0x40 && spriteram[offs + i] != 0)
 			i += 4;
 
 		while (i > 0)
@@ -207,11 +153,11 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap)
 			i -= 4;
 
 			drawgfx(bitmap,Machine->gfx[1],
-					(ladybug_spriteram[offs + i + 1] >> 2) + 4 * (ladybug_spriteram[offs + i + 2] & 0x10),
-					ladybug_spriteram[offs + i + 2] & 0x0f,
-					ladybug_spriteram[offs + i] & 0x10,ladybug_spriteram[offs + i] & 0x20,
-					offs / 4 - 8 + (ladybug_spriteram[offs + i] & 0x0f),
-					240 - ladybug_spriteram[offs + i + 3],
+					(spriteram[offs + i + 1] >> 2) + 4 * (spriteram[offs + i + 2] & 0x10),
+					spriteram[offs + i + 2] & 0x0f,
+					spriteram[offs + i] & 0x10,spriteram[offs + i] & 0x20,
+					offs / 4 - 8 + (spriteram[offs + i] & 0x0f),
+					240 - spriteram[offs + i + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

@@ -7,23 +7,16 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *mrdo_videoram1;
-unsigned char *mrdo_colorram1;
 unsigned char *mrdo_videoram2;
 unsigned char *mrdo_colorram2;
-unsigned char *mrdo_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static int scroll_x;
-
-
-static struct osd_bitmap *tmpbitmap,*tmpbitmap1,*tmpbitmap2;
+unsigned char *mrdo_scroll_x;
+static struct osd_bitmap *tmpbitmap1,*tmpbitmap2;
 
 
 
@@ -117,21 +110,26 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortabl
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int mrdo_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 	if ((tmpbitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		generic_vh_stop();
 		return 1;
 	}
 
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
 		osd_free_bitmap(tmpbitmap1);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -147,33 +145,9 @@ int mrdo_vh_start(void)
 ***************************************************************************/
 void mrdo_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(tmpbitmap1);
 	osd_free_bitmap(tmpbitmap2);
-}
-
-
-
-void mrdo_videoram1_w(int offset,int data)
-{
-	if (mrdo_videoram1[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mrdo_videoram1[offset] = data;
-	}
-}
-
-
-
-void mrdo_colorram1_w(int offset,int data)
-{
-	if (mrdo_colorram1[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mrdo_colorram1[offset] = data;
-	}
+	osd_free_bitmap(tmpbitmap1);
+	generic_vh_stop();
 }
 
 
@@ -198,13 +172,6 @@ void mrdo_colorram2_w(int offset,int data)
 
 		mrdo_colorram2[offset] = data;
 	}
-}
-
-
-
-void mrdo_scrollx_w(int offset,int data)
-{
-	scroll_x = data;
 }
 
 
@@ -239,8 +206,8 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			/* during gameplay this feature is not used, so I keep the composition */
 			/* of the two playfields in a third temporary bitmap, to speed up rendering. */
 			drawgfx(tmpbitmap1,Machine->gfx[1],
-					mrdo_videoram1[offs] + 2 * (mrdo_colorram1[offs] & 0x80),
-					mrdo_colorram1[offs] & 0x7f,
+					videoram[offs] + 2 * (colorram[offs] & 0x80),
+					colorram[offs] & 0x7f,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap2,Machine->gfx[0],
@@ -250,8 +217,8 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 					0,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					mrdo_videoram1[offs] + 2 * (mrdo_colorram1[offs] & 0x80),
-					mrdo_colorram1[offs] & 0x7f,
+					videoram[offs] + 2 * (colorram[offs] & 0x80),
+					colorram[offs] & 0x7f,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			drawgfx(tmpbitmap,Machine->gfx[0],
@@ -264,10 +231,10 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the character mapped graphics */
-	if (scroll_x)
+	if (*mrdo_scroll_x)
 	{
-		copybitmap(bitmap,tmpbitmap1,0,0,256-scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap1,0,0,-scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap1,0,0,256 - *mrdo_scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap1,0,0,- *mrdo_scroll_x,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
@@ -279,12 +246,12 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* order, to have the correct priorities. */
 	for (i = 4 * 63;i >= 0;i -= 4)
 	{
-		if (mrdo_spriteram[i + 1] != 0)
+		if (spriteram[i + 1] != 0)
 		{
 			drawgfx(bitmap,Machine->gfx[2],
-					mrdo_spriteram[i],mrdo_spriteram[i + 2] & 0x0f,
-					mrdo_spriteram[i + 2] & 0x20,mrdo_spriteram[i + 2] & 0x10,
-					256 - mrdo_spriteram[i + 1],240 - mrdo_spriteram[i + 3],
+					spriteram[i],spriteram[i + 2] & 0x0f,
+					spriteram[i + 2] & 0x20,spriteram[i + 2] & 0x10,
+					256 - spriteram[i + 1],240 - spriteram[i + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
 		}
 	}

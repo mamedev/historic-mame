@@ -86,20 +86,17 @@ f800      playfield 0 X scroll position
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int mrdo_SECRE_r(int offset);
 
-extern unsigned char *mrdo_videoram1;
-extern unsigned char *mrdo_colorram1;
 extern unsigned char *mrdo_videoram2;
 extern unsigned char *mrdo_colorram2;
-extern unsigned char *mrdo_spriteram;
-extern void mrdo_videoram1_w(int offset,int data);
-extern void mrdo_colorram1_w(int offset,int data);
+extern unsigned char *mrdo_scroll_x;
 extern void mrdo_videoram2_w(int offset,int data);
 extern void mrdo_colorram2_w(int offset,int data);
-extern void mrdo_scrollx_w(int offset,int data);
 extern void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int mrdo_vh_start(void);
 extern void mrdo_vh_stop(void);
@@ -128,14 +125,14 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0x8000, 0x83ff, mrdo_colorram1_w, &mrdo_colorram1 },
-	{ 0x8400, 0x87ff, mrdo_videoram1_w, &mrdo_videoram1 },
+	{ 0x8000, 0x83ff, colorram_w, &colorram },
+	{ 0x8400, 0x87ff, videoram_w, &videoram },
 	{ 0x8800, 0x8bff, mrdo_colorram2_w, &mrdo_colorram2 },
 	{ 0x8c00, 0x8fff, mrdo_videoram2_w, &mrdo_videoram2 },
-	{ 0x9000, 0x90ff, MWA_RAM, &mrdo_spriteram },
+	{ 0x9000, 0x90ff, MWA_RAM, &spriteram },
 	{ 0x9801, 0x9801, ladybug_sound1_w },
 	{ 0x9802, 0x9802, ladybug_sound2_w },
-	{ 0xf800, 0xffff, mrdo_scrollx_w },
+	{ 0xf800, 0xffff, MWA_RAM, &mrdo_scroll_x },
 	{ 0x9800, 0x9800, MWA_NOP },
 	{ 0xf000, 0xf7ff, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },

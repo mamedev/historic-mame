@@ -106,15 +106,13 @@ I/O C  ;AY-3-8910 Data Read Reg.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *cclimber_videoram;
-extern unsigned char *cclimber_colorram;
+
 extern unsigned char *cclimber_bsvideoram;
-extern unsigned char *cclimber_spriteram;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-extern void cclimber_videoram_w(int offset,int data);
 extern void cclimber_colorram_w(int offset,int data);
 extern void cclimber_bigsprite_videoram_w(int offset,int data);
 extern void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -153,13 +151,13 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83ff, MWA_RAM },
-	{ 0x9880, 0x989f, MWA_RAM, &cclimber_spriteram },
+	{ 0x9880, 0x989f, MWA_RAM, &spriteram },
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0x9000, 0x93ff, cclimber_videoram_w, &cclimber_videoram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
 	{ 0x9800, 0x981f, MWA_RAM, &cclimber_column_scroll },
-	{ 0x9c00, 0x9fff, cclimber_colorram_w, &cclimber_colorram },
+	{ 0x9c00, 0x9fff, cclimber_colorram_w, &colorram },
 	{ 0x8800, 0x88ff, cclimber_bigsprite_videoram_w, &cclimber_bsvideoram },
-	{ 0x9400, 0x97ff, cclimber_videoram_w },	/* mirror address, used to draw windows */
+	{ 0x9400, 0x97ff, videoram_w },	/* mirror address, used to draw windows */
 	{ 0x98dc, 0x98df, MWA_RAM, &cclimber_bigspriteram },
 	{ 0xa004, 0xa004, cclimber_sample_trigger_w },
 	{ 0xb000, 0xb000, cclimber_sample_volume_w },

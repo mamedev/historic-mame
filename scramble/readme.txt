@@ -10,5 +10,8 @@ Put the files :
 2p
 5f
 5h
+5c
+5d
+5e
 
 in this directory.

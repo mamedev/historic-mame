@@ -7,19 +7,16 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
 
-unsigned char *mooncrst_videoram;
 unsigned char *mooncrst_attributesram;
-unsigned char *mooncrst_spriteram;
 unsigned char *mooncrst_bulletsram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
 static int gfx_extend;	/* used by Moon Cresta only */
 static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int stars_on,stars_scroll;
@@ -30,8 +27,6 @@ struct star
 };
 static struct star stars[MAX_STARS];
 static int total_stars;
-
-static struct osd_bitmap *tmpbitmap;
 
 
 
@@ -114,6 +109,11 @@ void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int mooncrst_vh_start(void)
 {
 	int generator;
@@ -124,7 +124,7 @@ int mooncrst_vh_start(void)
 	gfx_bank = 0;
 	stars_on = 0;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 
@@ -166,30 +166,6 @@ int mooncrst_vh_start(void)
 	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void mooncrst_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void mooncrst_videoram_w(int offset,int data)
-{
-	if (mooncrst_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mooncrst_videoram[offset] = data;
-	}
 }
 
 
@@ -260,7 +236,7 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = (31 - offs / 32);
 			sy = (offs % 32);
 
-			charnum = mooncrst_videoram[offs];
+			charnum = videoram[offs];
 			if ((gfx_extend & 4) && (charnum & 0xc0) == 0x80)
 				charnum = (charnum & 0x3f) | (gfx_extend << 6);
 
@@ -330,20 +306,20 @@ void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 4*8;offs += 4)
 	{
-		if (mooncrst_spriteram[offs + 3] > 8)	/* ???? */
+		if (spriteram[offs + 3] > 8)	/* ???? */
 		{
 			int spritenum;
 
 
-			spritenum = mooncrst_spriteram[offs + 1] & 0x3f;
+			spritenum = spriteram[offs + 1] & 0x3f;
 			if ((gfx_extend & 4) && (spritenum & 0x30) == 0x20)
 				spritenum = (spritenum & 0x0f) | (gfx_extend << 4);
 
 			drawgfx(bitmap,Machine->gfx[1],
 					spritenum + 64 * gfx_bank,
-					mooncrst_spriteram[offs + 2],
-					mooncrst_spriteram[offs + 1] & 0x80,mooncrst_spriteram[offs + 1] & 0x40,
-					mooncrst_spriteram[offs],mooncrst_spriteram[offs + 3],
+					spriteram[offs + 2],
+					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+					spriteram[offs],spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

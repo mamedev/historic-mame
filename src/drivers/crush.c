@@ -84,18 +84,13 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *pengo_videoram;
-extern unsigned char *pengo_colorram;
-extern unsigned char *pengo_spritecode;
-extern unsigned char *pengo_spritepos;
+
 extern unsigned char *pengo_soundregs;
-extern void pengo_videoram_w(int offset,int data);
-extern void pengo_colorram_w(int offset,int data);
 extern void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern int pengo_vh_start(void);
-extern void pengo_vh_stop(void);
 extern void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void pengo_sound_enable_w(int offset,int data);
@@ -118,11 +113,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4c00, 0x4fef, MWA_RAM },
-	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
-	{ 0x4400, 0x47ff, pengo_colorram_w, &pengo_colorram },
+	{ 0x4000, 0x43ff, videoram_w, &videoram },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
-	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram},
+	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
@@ -274,7 +269,7 @@ const struct MachineDriver crush_driver =
 	8*11,8*19,0x01,
 	0,
 	pengo_vh_start,
-	pengo_vh_stop,
+	generic_vh_stop,
 	pengo_vh_screenrefresh,
 
 	/* sound hardware */

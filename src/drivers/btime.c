@@ -2,6 +2,8 @@
 
 Burgertime memory map (preliminary)
 
+MAIN BOARD:
+
 0000-0fff RAM
 0c00-0c1f palette
 1000-13ff Video RAM
@@ -20,7 +22,7 @@ write
 4000      Coinbox enable
 4001      not used
 4002      ?
-4003      sound
+4003      command to sound board / trigger interrupt on sound board
 4004      Map number
 5005      ? PSG ?
 
@@ -78,9 +80,29 @@ DSW2
 interrupts:
 A NMI causes reset.
 
+
+SOUND BOARD:
+0000-03ff RAM
+f000-ffff ROM
+
+read:
+a000      command from CPU board / interrupt acknowledge
+
+write:
+2000      8910 #1  write
+4000      8910 #1  control
+6000      8910 #2  write
+8000      8910 #2  control
+c000      NMI enable
+
+interrupts:
+NMI used for timing (music etc), clocked at (I think) 8V
+IRQ triggered by commands sent by the main CPU.
+
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -88,16 +110,21 @@ int btime_DSW1_r(int offset);
 extern int btime_init_machine(const char *gamename);
 extern int btime_interrupt(void);
 
-extern unsigned char *btime_videoram;
-extern unsigned char *btime_attributesram;
-extern unsigned char *btime_spriteram;
-extern void btime_videoram_w(int offset,int data);
-extern void btime_attributesram_w(int offset,int data);
 extern void btime_background_w(int offset,int data);
 extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int btime_vh_start(void);
-extern void btime_vh_stop(void);
 extern void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern int btime_soundcommand_r(int offset);
+extern void btime_soundcommand_w(int offset,int data);
+extern void btime_sh_control_port1_w(int offset,int data);
+extern void btime_sh_control_port2_w(int offset,int data);
+extern void btime_sh_write_port1_w(int offset,int data);
+extern void btime_sh_write_port2_w(int offset,int data);
+extern void btime_sh_interrupt_enable_w(int offset,int data);
+extern int btime_sh_interrupt(void);
+extern int btime_sh_start(void);
+extern void btime_sh_stop(void);
+extern void btime_sh_update(void);
 
 
 
@@ -105,7 +132,7 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x1000, 0x181f, MRA_RAM },
-	{ 0xb000, 0xfff0, MRA_ROM },
+	{ 0xb000, 0xffff, MRA_ROM },
 	{ 0x4000, 0x4000, input_port_0_r },	/* IN0 */
 	{ 0x4001, 0x4001, input_port_1_r },	/* IN1 */
 	{ 0x4002, 0x4002, input_port_2_r },	/* coin */
@@ -117,11 +144,35 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x1000, 0x13ff, btime_videoram_w, &btime_videoram },
-	{ 0x1400, 0x17ff, btime_attributesram_w, &btime_attributesram },
-	{ 0x1800, 0x181f, MWA_RAM, &btime_spriteram },
+	{ 0x1000, 0x13ff, videoram_w, &videoram },
+	{ 0x1400, 0x17ff, colorram_w, &colorram },
+	{ 0x1800, 0x181f, MWA_RAM, &spriteram },
+	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x4003, 0x4003, btime_soundcommand_w },
 	{ 0x4004, 0x4004, btime_background_w },
 	{ 0xb000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x03ff, MRA_RAM },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ 0xa000, 0xa000, btime_soundcommand_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x03ff, MWA_RAM },
+	{ 0x2000, 0x2000, btime_sh_write_port1_w },
+	{ 0x4000, 0x4000, btime_sh_control_port1_w },
+	{ 0x6000, 0x6000, btime_sh_write_port2_w },
+	{ 0x8000, 0x8000, btime_sh_control_port2_w },
+	{ 0xc000, 0xc000, btime_sh_interrupt_enable_w },
+	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -164,10 +215,9 @@ static struct InputPort input_ports[] =
 static struct DSW dsw[] =
 {
 	{ 4, 0x01, "LIVES", { "5", "3" }, 1 },
-	{ 4, 0x06, "BONUS", { "30000", "20000", "15000", "10000" }, 1 },
+	{ 4, 0x06, "BONUS", { "50000", "40000", "30000", "20000" }, 1 },
 	{ 4, 0x08, "PURSUERS", { "6", "4" }, 1 },
 	{ 4, 0x10, "END OF LEVEL PEPPER", { "YES", "NO" } },
-	{ 4, 0xe0, "UNKNOWN", { "0", "1", "2", "3", "4", "5", "6", "7" } },
 	{ -1 }
 };
 
@@ -242,7 +292,14 @@ const struct MachineDriver btime_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			btime_interrupt,1
+			btime_interrupt,12	/* 12 interrupts per frame */
+		},
+		{
+			CPU_M6502,
+			500000,	/*500 khz */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			btime_sh_interrupt,10	/* 10 (??) interrupts per frame */
 		}
 	},
 	60,
@@ -258,14 +315,14 @@ const struct MachineDriver btime_driver =
 	0x00,0x01,
 	8*13,8*16,0x00,
 	0,
-	btime_vh_start,
-	btime_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	btime_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	btime_sh_start,
+	btime_sh_stop,
+	btime_sh_update
 };

@@ -186,6 +186,7 @@ void Reset6502(M6502 *R,int IPeriod)
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
 R->IPeriod = IPeriod;
+R->missedinterrupt = 0;
   R->ICount=R->IPeriod;
 }
 
@@ -205,8 +206,6 @@ word Run6502(M6502 *R)
 
   for(;;)
   {
-static int missedinterrupt;
-
 #ifdef DEBUG
     /* Turn tracing on when reached trap address */
     if(PC.W==R->Trap) R->Trace=1;
@@ -234,10 +233,10 @@ static int missedinterrupt;
     }
 
     /* If cycle counter expired... */
-    if(ICount<=0 || (I == 0x58 && missedinterrupt == 1))
+    if(ICount<=0 || (I == 0x58 && R->missedinterrupt == 1))
     {
 I=INT_IRQ;
-missedinterrupt = 0;
+R->missedinterrupt = 0;
     if(ICount<=0)
 	{
       M_STORE(R);                      /* Store local registers      */
@@ -249,7 +248,7 @@ missedinterrupt = 0;
 
         if(I==INT_IRQ && (P&I_FLAG))
 		{
-			missedinterrupt = 1;
+			R->missedinterrupt = 1;
 		}
 		else if((I==INT_NMI)||(I==INT_IRQ))
       {

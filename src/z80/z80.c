@@ -2438,9 +2438,11 @@ static void InitTables (void)
 /****************************************************************************/
 static void Interrupt (int j)
 {
+Z80_IRQ = j;	/* added by Nicola Salmoria for MAME */
  if (j==Z80_IGNORE_INT) return;
  if (j==Z80_NMI_INT || R.IFF1)
  {
+Z80_IRQ = Z80_IGNORE_INT;	/* added by Nicola Salmoria for MAME */
   /* Clear interrupt flip-flop 1 */
   R.IFF1=0;
   /* Check if processor was halted */

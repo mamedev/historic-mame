@@ -101,17 +101,14 @@ NMI causes a ROM/RAM test.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int zaxxon_IN2_r(int offset);
 
-extern unsigned char *zaxxon_videoram;
-extern unsigned char *zaxxon_colorram;
-extern unsigned char *zaxxon_spriteram;
 extern unsigned char *zaxxon_background_position;
 extern void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void zaxxon_videoram_w(int offset,int data);
-extern void zaxxon_colorram_w(int offset,int data);
 extern int  zaxxon_vh_start(void);
 extern void zaxxon_vh_stop(void);
 extern void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -135,8 +132,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0x8000, 0x83ff, zaxxon_videoram_w, &zaxxon_videoram },
-	{ 0xa000, 0xa0ff, MWA_RAM, &zaxxon_spriteram },
+	{ 0x8000, 0x83ff, videoram_w, &videoram },
+	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
 	{ 0xfff8, 0xfff9, MWA_RAM, &zaxxon_background_position },
 	{ 0x0000, 0x4fff, MWA_ROM },

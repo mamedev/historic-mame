@@ -7,16 +7,11 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
-
-
-unsigned char *mario_videoram;
-unsigned char *mario_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-static struct osd_bitmap *tmpbitmap;
 
 static int gfx_bank;
 
@@ -26,34 +21,7 @@ int mario_vh_start(void)
 {
 	gfx_bank = 0;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void mario_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void mario_videoram_w(int offset,int data)
-{
-	if (mario_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		mario_videoram[offset] = data;
-	}
+	return generic_vh_start();
 }
 
 
@@ -92,7 +60,7 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (31 - offs % 32);
 			sy = 8 * (31 - offs / 32);
 
-			charcode = mario_videoram[offs] + 256 * gfx_bank;
+			charcode = videoram[offs] + 256 * gfx_bank;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,charcode >> 2,
@@ -110,12 +78,12 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (i = 0;i < 4*96;i += 4)
 	{
-		if (mario_spriteram[i])
+		if (spriteram[i])
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					mario_spriteram[i+2],mario_spriteram[i+1] & 0x3f,
-					mario_spriteram[i+1] & 0x80,mario_spriteram[i+1] & 0x40,
-					248 - mario_spriteram[i+3],mario_spriteram[i] - 8,
+					spriteram[i+2],spriteram[i+1] & 0x3f,
+					spriteram[i+1] & 0x80,spriteram[i+1] & 0x40,
+					248 - spriteram[i+3],spriteram[i] - 8,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

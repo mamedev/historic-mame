@@ -92,18 +92,15 @@ NMI causes a ROM/RAM test.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int zaxxon_IN2_r(int offset);
 
-extern unsigned char *congo_videoram;
-extern unsigned char *congo_colorram;
-extern unsigned char *congo_spriteram;
 extern unsigned char *congo_background_position;
 extern unsigned char *congo_background_enable;
 extern void congo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void congo_videoram_w(int offset,int data);
-extern void congo_colorram_w(int offset,int data);
 extern int  congo_vh_start(void);
 extern void congo_vh_stop(void);
 extern void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -127,9 +124,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
         { 0x8000, 0x83ff, MWA_RAM },
-        { 0xa000, 0xa3ff, congo_videoram_w, &congo_videoram },
-        { 0xa400, 0xa7ff, congo_colorram_w, &congo_colorram },
-        { 0x8400, 0x8fff, MWA_RAM, &congo_spriteram },
+        { 0xa000, 0xa3ff, videoram_w, &videoram },
+        { 0xa400, 0xa7ff, colorram_w, &colorram },
+        { 0x8400, 0x8fff, MWA_RAM, &spriteram },
         { 0xc01f, 0xc01f, interrupt_enable_w },
         { 0xc028, 0xc029, MWA_RAM, &congo_background_position },
         { 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },

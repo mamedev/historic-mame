@@ -7,72 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *bagman_videoram;
-unsigned char *bagman_colorram;
-unsigned char *bagman_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static struct osd_bitmap *tmpbitmap;
-int video_enable;
-
-
-
-int bagman_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void bagman_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void bagman_videoram_w(int offset,int data)
-{
-	if (bagman_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		bagman_videoram[offset] = data;
-	}
-}
-
-
-
-void bagman_colorram_w(int offset,int data)
-{
-	if (bagman_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		bagman_colorram[offset] = data;
-	}
-}
-
-
-
-void bagman_video_enable_w(int offset,int data)
-{
-	video_enable = data;
-}
+unsigned char *bagman_video_enable;
 
 
 
@@ -88,7 +29,7 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int i,offs;
 
 
-	if (video_enable == 0)
+	if (*bagman_video_enable == 0)
 	{
 		clearbitmap(bitmap);
 
@@ -110,9 +51,9 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (31 - offs / 32);
 			sy = 8 * (offs % 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[bagman_colorram[offs] & 0x10 ? 1 : 0],
-					bagman_videoram[offs] + 8 * (bagman_colorram[offs] & 0x20),
-					bagman_colorram[offs] & 0x0f,
+			drawgfx(tmpbitmap,Machine->gfx[colorram[offs] & 0x10 ? 1 : 0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
 					0,0,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -127,12 +68,12 @@ void bagman_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites. */
 	for (i = 4*7;i >= 0;i -= 4)
 	{
-		if (bagman_spriteram[i+2] && bagman_spriteram[i+3])
+		if (spriteram[i+2] && spriteram[i+3])
 			drawgfx(bitmap,Machine->gfx[2],
-					(bagman_spriteram[i] & 0x3f) + 2 * (bagman_spriteram[i+1] & 0x20),
-					bagman_spriteram[i+1] & 0x1f,
-					bagman_spriteram[i] & 0x80,bagman_spriteram[i] & 0x40,
-					bagman_spriteram[i+2] + 1,bagman_spriteram[i+3] - 1,
+					(spriteram[i] & 0x3f) + 2 * (spriteram[i+1] & 0x20),
+					spriteram[i+1] & 0x1f,
+					spriteram[i] & 0x80,spriteram[i] & 0x40,
+					spriteram[i+2] + 1,spriteram[i+3] - 1,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

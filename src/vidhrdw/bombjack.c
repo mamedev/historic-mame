@@ -7,20 +7,14 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *bombjack_videoram;
-unsigned char *bombjack_colorram;
-unsigned char *bombjack_spriteram;
 unsigned char *bombjack_paletteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-static unsigned char dirtycolor[16];	/* keep track of modified colors as well */
-static struct osd_bitmap *tmpbitmap;
-
+static unsigned char dirtycolor[16];	/* keep track of modified colors */
 static int background_image;
 
 
@@ -50,6 +44,7 @@ void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	{
 		int bits;
 
+
 		bits = (i >> 0) & 0x07;
 		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
 		bits = (i >> 3) & 0x07;
@@ -64,54 +59,6 @@ void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	/* provide a default palette so the ROM copyright notice at startup can be read */
 	for (i = 256;i < 256+128;i++)
 		colortable[i] = (i-256) % 8;
-}
-
-
-
-int bombjack_vh_start(void)
-{
-	background_image = 0;
-
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void bombjack_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void bombjack_videoram_w(int offset,int data)
-{
-	if (bombjack_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		bombjack_videoram[offset] = data;
-	}
-}
-
-
-
-void bombjack_colorram_w(int offset,int data)
-{
-	if (bombjack_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		bombjack_colorram[offset] = data;
-	}
 }
 
 
@@ -172,7 +119,7 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy;
 
 
-		if (dirtybuffer[offs] || dirtycolor[bombjack_colorram[offs] & 0x0f])
+		if (dirtybuffer[offs] || dirtycolor[colorram[offs] & 0x0f])
 		{
 			sx = 8 * (31 - offs / 32);
 			sy = 8 * (offs % 32);
@@ -208,16 +155,16 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 				}
 
 				drawgfx(tmpbitmap,Machine->gfx[0],
-							bombjack_videoram[offs] + 16 * (bombjack_colorram[offs] & 0x10),
-							bombjack_colorram[offs] & 0x0f,
+							videoram[offs] + 16 * (colorram[offs] & 0x10),
+							colorram[offs] & 0x0f,
 							0,0,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 				drawgfx(tmpbitmap,Machine->gfx[0],
-							bombjack_videoram[offs] + 16 * (bombjack_colorram[offs] & 0x10),
-							bombjack_colorram[offs] & 0x0f,
+							videoram[offs] + 16 * (colorram[offs] & 0x10),
+							colorram[offs] & 0x0f,
 							0,0,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -237,7 +184,7 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* Draw the sprites. */
-	for (offs = 0;offs < 4*24;offs += 4)
+	for (offs = 4*23;offs >= 0;offs -= 4)
 	{
 /*
  abbbbbbb cdefgggg hhhhhhhh iiiiiiii
@@ -252,10 +199,10 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
  hhhhhhhh x position
  iiiiiiii y position
 */
-		drawgfx(bitmap,Machine->gfx[bombjack_spriteram[offs+1] & 0x20 ? 3 : 2],
-				bombjack_spriteram[offs] & 0x7f,bombjack_spriteram[offs+1] & 0x0f,
-				bombjack_spriteram[offs+1] & 0x80,bombjack_spriteram[offs+1] & 0x40,
-				bombjack_spriteram[offs+2]-1,bombjack_spriteram[offs+3],
+		drawgfx(bitmap,Machine->gfx[spriteram[offs+1] & 0x20 ? 3 : 2],
+				spriteram[offs] & 0x7f,spriteram[offs+1] & 0x0f,
+				spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x40,
+				spriteram[offs+2]-1,spriteram[offs+3],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -7,21 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-
-unsigned char *pengo_videoram;
-unsigned char *pengo_colorram;
-unsigned char *pengo_spritecode;
-unsigned char *pengo_spritepos;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 static int gfx_bank;
-
-
-static struct osd_bitmap *tmpbitmap;
 
 
 
@@ -90,46 +82,7 @@ int pengo_vh_start(void)
 {
 	gfx_bank = 0;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void pengo_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void pengo_videoram_w(int offset,int data)
-{
-	if (pengo_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		pengo_videoram[offset] = data;
-	}
-}
-
-
-
-void pengo_colorram_w(int offset,int data)
-{
-	if (pengo_colorram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		pengo_colorram[offset] = data;
-	}
+	return generic_vh_start();
 }
 
 
@@ -194,8 +147,8 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[gfx_bank ? 2 : 0],
-					pengo_videoram[offs],
-					pengo_colorram[offs],
+					videoram[offs],
+					colorram[offs],
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -210,9 +163,9 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (i = 6;i > 0;i--)
 	{
 		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
-				pengo_spritecode[2*i] >> 2,pengo_spritecode[2*i + 1],
-				pengo_spritecode[2*i] & 2,pengo_spritecode[2*i] & 1,
-				239 - pengo_spritepos[2*i],272 - pengo_spritepos[2*i + 1],
+				spriteram[2*i] >> 2,spriteram[2*i + 1],
+				spriteram[2*i] & 2,spriteram[2*i] & 1,
+				239 - spriteram_2[2*i],272 - spriteram_2[2*i + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 }

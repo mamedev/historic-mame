@@ -7,6 +7,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -15,27 +17,26 @@
 #define BIGSPRITE_HEIGHT 128
 
 
-unsigned char *ckong_videoram;
-unsigned char *ckong_colorram;
 unsigned char *ckong_bsvideoram;
-unsigned char *ckong_spriteram;
 unsigned char *ckong_bigspriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 static unsigned char bsdirtybuffer[BIGSPRITE_SIZE];
-
-static struct osd_bitmap *tmpbitmap,*bsbitmap;
-
+static struct osd_bitmap *bsbitmap;
 
 
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int ckong_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 	if ((bsbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -51,27 +52,15 @@ int ckong_vh_start(void)
 ***************************************************************************/
 void ckong_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(bsbitmap);
-}
-
-
-
-void ckong_videoram_w(int offset,int data)
-{
-	if (ckong_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		ckong_videoram[offset] = data;
-	}
+	generic_vh_stop();
 }
 
 
 
 void ckong_colorram_w(int offset,int data)
 {
-	if (ckong_colorram[offset] != data)
+	if (colorram[offset] != data)
 	{
 		/* bit 5 of the address is not used for color memory. There is just */
 		/* 512k of memory; every two consecutive rows share the same memory */
@@ -81,8 +70,8 @@ void ckong_colorram_w(int offset,int data)
 		dirtybuffer[offset] = 1;
 		dirtybuffer[offset + 0x20] = 1;
 
-		ckong_colorram[offset] = data;
-		ckong_colorram[offset + 0x20] = data;
+		colorram[offset] = data;
+		colorram[offset + 0x20] = data;
 	}
 }
 
@@ -126,10 +115,10 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (31 - offs / 32);
 			sy = 8 * (offs % 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[(ckong_colorram[offs] & 0x10) ? 1 : 0],
-					ckong_videoram[offs] + 8 * (ckong_colorram[offs] & 0x20),
-					ckong_colorram[offs] & 0x0f,
-					ckong_colorram[offs] & 0x40,ckong_colorram[offs] & 0x80,
+			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
+					colorram[offs] & 0x40,colorram[offs] & 0x80,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -143,11 +132,11 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw sprites (must be done before the "big sprite" to obtain the correct priority) */
 	for (i = 0;i < 8*4;i+=4)
 	{
-		drawgfx(bitmap,Machine->gfx[ckong_spriteram[i + 1] & 0x10 ? 4 : 3],
-				(ckong_spriteram[i] & 0x3f) + 2 * (ckong_spriteram[i + 1] & 0x20),
-				ckong_spriteram[i + 1] & 0x0f,
-				ckong_spriteram[i] & 0x80,ckong_spriteram[i] & 0x40,
-				ckong_spriteram[i + 2] + 1,ckong_spriteram[i + 3],
+		drawgfx(bitmap,Machine->gfx[spriteram[i + 1] & 0x10 ? 4 : 3],
+				(spriteram[i] & 0x3f) + 2 * (spriteram[i + 1] & 0x20),
+				spriteram[i + 1] & 0x0f,
+				spriteram[i] & 0x80,spriteram[i] & 0x40,
+				spriteram[i + 2] + 1,spriteram[i + 3],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 

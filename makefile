@@ -5,11 +5,13 @@ DEFS   = -DX86_ASM -DLSB_FIRST
 CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
+         obj/vidhrdw/generic.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
 		 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
+         obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/vidhrdw/ckong.o obj/drivers/ckong.o \
          obj/vidhrdw/dkong.o obj/drivers/dkong.o \
@@ -19,13 +21,13 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/drivers/galaxian.o \
          obj/vidhrdw/mooncrst.o obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
          obj/vidhrdw/moonqsr.o obj/drivers/moonqsr.o \
-         obj/drivers/theend.o \
          obj/vidhrdw/frogger.o obj/drivers/frogger.o \
-         obj/machine/scramble.o obj/vidhrdw/scramble.o obj/drivers/scramble.o \
+         obj/machine/scramble.o obj/vidhrdw/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
+         obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/drivers/carnival.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/drivers/invaders.o \
@@ -33,10 +35,13 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/zaxxon.o obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/vidhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
-         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
+         obj/machine/centiped.o obj/drivers/centiped.o \
+         obj/vidhrdw/milliped.o obj/sndhrdw/milliped.o obj/drivers/milliped.o \
          obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
          obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
-         obj/machine/btime.o obj/vidhrdw/btime.o obj/drivers/btime.o \
+         obj/machine/btime.o obj/vidhrdw/btime.o obj/sndhrdw/btime.o obj/drivers/btime.o \
+         obj/drivers/jumpbug.o \
+		 obj/sndhrdw/psg.o obj/sndhrdw/pokey.o \
          obj/Z80/Z80.o obj/M6502/M6502.o
 
 VPATH = src src/Z80 src/M6502

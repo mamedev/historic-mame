@@ -351,11 +351,7 @@ int btime_DSW1_r(int offset)
 
 	res = readinputport(3);
 
-	if (vblank)
-	{
-		res |= IN1_VBLANK;
-		vblank = 0;
-	}
+	if (vblank == 0) res |= IN1_VBLANK;
 
 	return res;
 }
@@ -371,8 +367,12 @@ int btime_DSW1_r(int offset)
 ***************************************************************************/
 int btime_interrupt(void)
 {
-	/* let btime_DSW1_r() know that it is time to report a vblank */
-	vblank = 1;
+	/* let btime_DSW1_r() know when it is time to report a vblank */
+	/* I'm not yet sure about how the vertical blanking should be handled. */
+	/* I think that IN1_VBLANK should be 1 during the whole vblank, which */
+	/* should last roughly 1/12th of the frame. */
+	vblank = (vblank + 1) % 12;
 
+	/* IRQs are used to check coin insertion and diagnostic commands */
 	return INT_IRQ;
 }

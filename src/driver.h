@@ -129,8 +129,7 @@ struct MachineCPU
 #define CPU_M6502 2
 
 
-
-#define MAX_CPU 1
+#define MAX_CPU 4
 
 
 struct MachineDriver

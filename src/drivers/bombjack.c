@@ -34,19 +34,14 @@ b800      ?
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *bombjack_videoram;
-extern unsigned char *bombjack_colorram;
-extern unsigned char *bombjack_spriteram;
+
 extern unsigned char *bombjack_paletteram;
-extern void bombjack_videoram_w(int offset,int data);
-extern void bombjack_colorram_w(int offset,int data);
 extern void bombjack_paletteram_w(int offset,int data);
 extern void bombjack_background_w(int offset,int data);
 extern void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int bombjack_vh_start(void);
-extern void bombjack_vh_stop(void);
 extern void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -68,9 +63,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, bombjack_videoram_w, &bombjack_videoram },
-	{ 0x9400, 0x97ff, bombjack_colorram_w, &bombjack_colorram },
-	{ 0x9820, 0x987f, MWA_RAM, &bombjack_spriteram },
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9400, 0x97ff, colorram_w, &colorram },
+	{ 0x9820, 0x987f, MWA_RAM, &spriteram },
 	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
@@ -120,7 +115,8 @@ static struct DSW dsw[] =
 {
 	{ 3, 0x30, "LIVES", { "3", "4", "5", "2" } },
 	{ 4, 0x18, "DIFFICULTY 1", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
-	{ 4, 0x60, "DIFFICULTY 2", { "EASY", "MEDIUM", "HARD", "HARDEST" } },
+	{ 4, 0x60, "DIFFICULTY 2", { "MEDIUM", "EASY", "HARD", "HARDEST" } },
+		/* not a mistake, MEDIUM and EASY are swapped */
 	{ 4, 0x80, "SPECIAL", { "EASY", "HARD" } },
 	{ 3, 0x80, "DEMO SOUNDS", { "OFF", "ON" } },
 	{ 4, 0x07, "INITIAL HIGH SCORE", { "10000", "100000", "30000", "50000", "100000", "50000", "100000", "50000" } },
@@ -234,8 +230,8 @@ const struct MachineDriver bombjack_driver =
 	5,0,
 	8*13,8*16,2,
 	0,
-	bombjack_vh_start,
-	bombjack_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	bombjack_vh_screenrefresh,
 
 	/* sound hardware */

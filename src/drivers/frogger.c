@@ -61,16 +61,13 @@ d002      sound control?
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *frogger_videoram;
+
 extern unsigned char *frogger_attributesram;
-extern unsigned char *frogger_spriteram;
 extern void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void frogger_videoram_w(int offset,int data);
 extern void frogger_attributes_w(int offset,int data);
-extern int frogger_vh_start(void);
-extern void frogger_vh_stop(void);
 extern void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -91,9 +88,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0xa800, 0xabff, frogger_videoram_w, &frogger_videoram },
+	{ 0xa800, 0xabff, videoram_w, &videoram },
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
-	{ 0xb040, 0xb05f, MWA_RAM, &frogger_spriteram },
+	{ 0xb040, 0xb05f, MWA_RAM, &spriteram },
 	{ 0xb808, 0xb808, interrupt_enable_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -220,8 +217,8 @@ const struct MachineDriver frogger_driver =
 	0x00,0x03,
 	8*13,8*16,0x06,
 	0,
-	frogger_vh_start,
-	frogger_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	frogger_vh_screenrefresh,
 
 	/* sound hardware */

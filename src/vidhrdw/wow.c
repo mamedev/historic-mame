@@ -7,35 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "Z80.h"
+
 
 
 unsigned char *wow_videoram;
 int mask,unknown,collision;
-
-static struct osd_bitmap *tmpbitmap;
-
-
-
-int wow_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void wow_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
 
 
 

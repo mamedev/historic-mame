@@ -69,14 +69,12 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *dkong3_videoram;
-extern unsigned char *dkong3_spriteram;
-extern void dkong3_videoram_w(int offset,int data);
+
 extern void dkong3_gfxbank_w(int offset,int data);
 extern int  dkong3_vh_start(void);
-extern void dkong3_vh_stop(void);
 extern void dkong3_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -98,8 +96,8 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x68ff, MWA_RAM },
 	{ 0x6a80, 0x6fff, MWA_RAM },
-	{ 0x6900, 0x6a7f, MWA_RAM, &dkong3_spriteram },
-	{ 0x7400, 0x77ff, dkong3_videoram_w, &dkong3_videoram },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram },
+	{ 0x7400, 0x77ff, videoram_w, &videoram },
 	{ 0x7e81, 0x7e81, dkong3_gfxbank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
@@ -320,7 +318,7 @@ const struct MachineDriver dkong3_driver =
 	8*13,8*16,0,
 	0,
 	dkong3_vh_start,
-	dkong3_vh_stop,
+	generic_vh_stop,
 	dkong3_vh_screenrefresh,
 
 	/* sound hardware */

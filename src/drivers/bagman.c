@@ -73,19 +73,13 @@ I/O C  ;AY-3-8910 Data Read Reg.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
 extern int bagman_rand_r(int offset);
 
-extern unsigned char *bagman_videoram;
-extern unsigned char *bagman_colorram;
-extern unsigned char *bagman_spriteram;
-extern void bagman_videoram_w(int offset,int data);
-extern void bagman_colorram_w(int offset,int data);
-extern void bagman_video_enable_w(int offset,int data);
-extern int bagman_vh_start(void);
-extern void bagman_vh_stop(void);
+extern unsigned char *bagman_video_enable;
 extern void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern int cclimber_sh_read_port_r(int offset);
@@ -113,11 +107,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x67ff, MWA_RAM },
-	{ 0x9000, 0x93ff, bagman_videoram_w, &bagman_videoram },
-	{ 0x9800, 0x9bff, bagman_colorram_w, &bagman_colorram },
-	{ 0x9800, 0x981f, MWA_RAM, &bagman_spriteram },	/* hidden portion of color RAM */
+	{ 0x9000, 0x93ff, videoram_w, &videoram },
+	{ 0x9800, 0x9bff, colorram_w, &colorram },
+	{ 0x9800, 0x981f, MWA_RAM, &spriteram },	/* hidden portion of color RAM */
 	{ 0xa000, 0xa000, interrupt_enable_w },
-	{ 0xa003, 0xa003, bagman_video_enable_w },
+	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
 	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* ???? */
 	{ 0xa001, 0xa002, MWA_NOP },	/* ???? */
@@ -312,8 +306,8 @@ const struct MachineDriver bagman_driver =
 	7,4,
 	8*13,8*16,1,
 	0,
-	bagman_vh_start,
-	bagman_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	bagman_vh_screenrefresh,
 
 	/* sound hardware */

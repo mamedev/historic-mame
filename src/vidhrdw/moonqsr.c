@@ -7,19 +7,16 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
 #define MAX_STARS 250
 
-unsigned char *moonqsr_videoram;
 unsigned char *moonqsr_attributesram;
-unsigned char *moonqsr_spriteram;
 unsigned char *moonqsr_bulletsram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
 static int stars_on,stars_scroll;
 
 struct star
@@ -28,8 +25,6 @@ struct star
 };
 static struct star stars[MAX_STARS];
 static int total_stars;
-
-static struct osd_bitmap *tmpbitmap;
 
 
 
@@ -112,6 +107,11 @@ void moonqsr_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int moonqsr_vh_start(void)
 {
 	int generator;
@@ -120,7 +120,7 @@ int moonqsr_vh_start(void)
 
 	stars_on = 0;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 
@@ -162,30 +162,6 @@ int moonqsr_vh_start(void)
 	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void moonqsr_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void moonqsr_videoram_w(int offset,int data)
-{
-	if (moonqsr_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		moonqsr_videoram[offset] = data;
-	}
 }
 
 
@@ -241,7 +217,7 @@ void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					moonqsr_videoram[offs] + 8 * (moonqsr_attributesram[2 * sy + 1] & 0x20),
+					videoram[offs] + 8 * (moonqsr_attributesram[2 * sy + 1] & 0x20),
 					moonqsr_attributesram[2 * sy + 1] & 0x07,
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -306,13 +282,13 @@ void moonqsr_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* Draw the sprites */
 	for (offs = 0;offs < 4*8;offs += 4)
 	{
-		if (moonqsr_spriteram[offs + 3] > 8)	/* ???? */
+		if (spriteram[offs + 3] > 8)	/* ???? */
 		{
 			drawgfx(bitmap,Machine->gfx[1],
-					(moonqsr_spriteram[offs + 1] & 0x3f) + 2 * (moonqsr_spriteram[offs + 2] & 0x20),
-					moonqsr_spriteram[offs + 2] & 0x07,
-					moonqsr_spriteram[offs + 1] & 0x80,moonqsr_spriteram[offs + 1] & 0x40,
-					moonqsr_spriteram[offs],moonqsr_spriteram[offs + 3],
+					(spriteram[offs + 1] & 0x3f) + 2 * (spriteram[offs + 2] & 0x20),
+					spriteram[offs + 2] & 0x07,
+					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+					spriteram[offs],spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

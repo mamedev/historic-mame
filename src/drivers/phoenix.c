@@ -49,15 +49,15 @@ read-only:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *phoenix_videoram1;
+
 extern unsigned char *phoenix_videoram2;
 
 int phoenix_DSW_r (int offset);
 int phoenix_interrupt (void);
 
-void phoenix_videoram1_w(int offset,int data);
 void phoenix_videoram2_w(int offset,int data);
 void phoenix_scrollreg_w (int offset,int data);
 void phoenix_videoreg_w (int offset,int data);
@@ -82,9 +82,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, phoenix_videoram1_w, &phoenix_videoram1 },
+	{ 0x4000, 0x43ff, phoenix_videoram2_w, &phoenix_videoram2 },
 	{ 0x4400, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, phoenix_videoram2_w, &phoenix_videoram2 },
+	{ 0x4800, 0x4bff, videoram_w, &videoram },
 	{ 0x4C00, 0x4fff, MWA_RAM },
 	{ 0x5000, 0x53ff, phoenix_videoreg_w },
 	{ 0x5400, 0x57ff, MWA_RAM },

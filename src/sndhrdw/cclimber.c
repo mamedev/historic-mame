@@ -1,8 +1,9 @@
 #include "driver.h"
 
 
-#define AY8910_CLOCK (1536000000)       /* 1.536000000 MHZ */
-#include "psg.c"
+/*#define AY8910_CLOCK (1536000000)*/       /* 1.536000000 MHZ */
+/*#include "psg.c"*/
+#include "psg.h"
 
 #define SND_CLOCK 3072000	/* 3.072 Mhz */
 
@@ -12,13 +13,13 @@
 #define buffer_len (emulation_rate/UPDATES_PER_SECOND)
 
 
-unsigned char samples[0x4000];	/* 16k for samples */
-int sample_freq,sample_volume;
-int porta;
+static unsigned char samples[0x4000];	/* 16k for samples */
+static int sample_freq,sample_volume;
+static int porta;
 
 
 
-int lastreg;	/* AY-3-8910 register currently selected */
+static int lastreg;	/* AY-3-8910 register currently selected */
 
 int cclimber_sh_read_port_r(int offset)
 {
@@ -41,7 +42,7 @@ void cclimber_sh_write_port_w(int offset,int data)
 
 
 
-byte porthandler(AY8910 *chip, int port, int iswrite, byte val)
+static unsigned char porthandler(AY8910 *chip, int port, int iswrite, unsigned char val)
 {
 	if (iswrite)	/* Crazy Climber and Crazy Kong */
 	{
@@ -128,24 +129,21 @@ void cclimber_sample_trigger_w(int offset,int data)
 
 
 
-#define BUFFERS 2
 void cclimber_sh_update(void)
 {
-	static int c;
-	static unsigned char buffer[BUFFERS * buffer_len];
+	unsigned char buffer[buffer_len];
 	static int playing;
 
 
 	if (play_sound == 0) return;
 
-	AYSetBuffer(0,&buffer[c * buffer_len]);
+	AYSetBuffer(0,buffer);
 	AYUpdate();
-	osd_play_streamed_sample(0,&buffer[c * buffer_len],buffer_len,emulation_rate,255);
+	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
 if (!playing)
 {
-	osd_play_streamed_sample(0,&buffer[c * buffer_len],buffer_len,emulation_rate,255);
-	osd_play_streamed_sample(0,&buffer[c * buffer_len],buffer_len,emulation_rate,255);
+	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
+	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
 	playing = 1;
 }
-	c ^= 1;
 }

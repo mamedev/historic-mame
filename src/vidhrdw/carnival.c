@@ -7,47 +7,24 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
+
+
+unsigned char *carnival_characterram;
+static unsigned char dirtycharacter[256];
 
 #define VIDEO_RAM_SIZE 0x400
 
 
-unsigned char *carnival_videoram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 
-static struct osd_bitmap *tmpbitmap;
-
-
-int carnival_vh_start(void)
+void carnival_characterram_w(int offset,int data)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void carnival_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void carnival_videoram_w(int offset,int data)
-{
-	if (carnival_videoram[offset] != data)
+	if (carnival_characterram[offset] != data)
 	{
-		dirtybuffer[offset] = 1;
+		dirtycharacter[(offset / 8) & 0xff] = 1;
 
-		carnival_videoram[offset] = data;
+		carnival_characterram[offset] = data;
 	}
 }
 
@@ -62,16 +39,30 @@ void carnival_videoram_w(int offset,int data)
 ***************************************************************************/
 void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs;
+	int offs,i;
+	extern struct GfxLayout carnival_charlayout;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
-		if (dirtybuffer[offs])
+		int charcode;
+
+
+		charcode = videoram[offs];
+
+		if (dirtybuffer[offs] || dirtycharacter[charcode])
 		{
 			int sx,sy;
+
+
+		/* decode modified characters */
+			if (dirtycharacter[charcode] == 1)
+			{
+				decodechar(Machine->gfx[1],charcode,carnival_characterram,&carnival_charlayout);
+				dirtycharacter[charcode] = 2;
+			}
 
 
 			dirtybuffer[offs] = 0;
@@ -80,11 +71,17 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (31 - offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
-					carnival_videoram[offs]+44,
-0,/*					carnival_colorram[offs],*/
-					0,0,sx,sy,
+					charcode,0,
+					0,0,sx + 16,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 		}
+	}
+
+
+	for (i = 0;i < 256;i++)
+	{
+		if (dirtycharacter[i] == 2) dirtycharacter[i] = 0;
 	}
 
 

@@ -6,6 +6,7 @@ extern struct MachineDriver crush_driver;
 extern struct MachineDriver pengo_driver;
 extern struct MachineDriver ladybug_driver;
 extern struct MachineDriver mrdo_driver;
+extern struct MachineDriver docastle_driver;
 extern struct MachineDriver cclimber_driver;
 extern struct MachineDriver ckong_driver;
 extern struct MachineDriver dkong_driver;
@@ -37,9 +38,12 @@ extern struct MachineDriver zaxxon_driver;
 extern struct MachineDriver congo_driver;
 extern struct MachineDriver bombjack_driver;
 extern struct MachineDriver centiped_driver;
+extern struct MachineDriver milliped_driver;
 extern struct MachineDriver nibbler_driver;
 extern struct MachineDriver mpatrol_driver;
 extern struct MachineDriver btime_driver;
+extern struct MachineDriver jumpbug_driver;
+extern struct MachineDriver timeplt_driver;
 
 
 
@@ -209,6 +213,26 @@ ROM_START( mrlo_rom )
 	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
 	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
 	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+ROM_END
+
+
+
+ROM_START( docastle_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "A1",  0x0000, 0x2000 )
+	ROM_LOAD( "A2",  0x2000, 0x2000 )
+	ROM_LOAD( "A3",  0x4000, 0x2000 )
+	ROM_LOAD( "A4",  0x6000, 0x2000 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "A5",  0x0000, 0x4000 )
+	ROM_LOAD( "A9",  0x4000, 0x2000 )
+	ROM_LOAD( "A8",  0x6000, 0x2000 )
+	ROM_LOAD( "A7",  0x8000, 0x2000 )
+	ROM_LOAD( "A6",  0xa000, 0x2000 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "A10", 0x0000, 0x4000 )
 ROM_END
 
 
@@ -770,24 +794,6 @@ unsigned moonqsr_decode(int A)
 
 
 
-ROM_START( theend_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC13", 0x0000, 0x0800 )
-	ROM_LOAD( "IC14", 0x0800, 0x0800 )
-	ROM_LOAD( "IC15", 0x1000, 0x0800 )
-	ROM_LOAD( "IC16", 0x1800, 0x0800 )
-	ROM_LOAD( "IC17", 0x2000, 0x0800 )
-	ROM_LOAD( "IC18", 0x2800, 0x0800 )
-	ROM_LOAD( "IC56", 0x3000, 0x0800 )
-	ROM_LOAD( "IC55", 0x3800, 0x0800 )
-
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC30", 0x0000, 0x0800 )
-	ROM_LOAD( "IC31", 0x0800, 0x0800 )
-ROM_END
-
-
-
 ROM_START( scramble_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c", 0x0000, 0x0800 )
@@ -802,6 +808,11 @@ ROM_START( scramble_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5f", 0x0000, 0x0800 )
 	ROM_LOAD( "5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c", 0x0000, 0x0800 )
+	ROM_LOAD( "5d", 0x0800, 0x0800 )
+	ROM_LOAD( "5e", 0x1000, 0x0800 )
 ROM_END
 
 
@@ -823,6 +834,22 @@ ROM_END
 
 
 ROM_START( scobra_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800 )
+ROM_END
+
+
+
+ROM_START( scobrak_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c", 0x0000, 0x1000 )
 	ROM_LOAD( "2e", 0x1000, 0x1000 )
@@ -856,6 +883,41 @@ ROM_START( scobrab_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800 )
 	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800 )
+ROM_END
+
+
+
+ROM_START( theend_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC13", 0x0000, 0x0800 )
+	ROM_LOAD( "IC14", 0x0800, 0x0800 )
+	ROM_LOAD( "IC15", 0x1000, 0x0800 )
+	ROM_LOAD( "IC16", 0x1800, 0x0800 )
+	ROM_LOAD( "IC17", 0x2000, 0x0800 )
+	ROM_LOAD( "IC18", 0x2800, 0x0800 )
+	ROM_LOAD( "IC56", 0x3000, 0x0800 )
+	ROM_LOAD( "IC55", 0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC30", 0x0000, 0x0800 )
+	ROM_LOAD( "IC31", 0x0800, 0x0800 )
+ROM_END
+
+
+
+ROM_START( losttomb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c",      0x0000, 0x1000 )
+	ROM_LOAD( "2e",      0x1000, 0x1000 )
+	ROM_LOAD( "2f",      0x2000, 0x1000 )
+	ROM_LOAD( "2h-easy", 0x3000, 0x1000 )
+	ROM_LOAD( "2j",      0x4000, 0x1000 )
+	ROM_LOAD( "2l",      0x5000, 0x1000 )
+	ROM_LOAD( "2m",      0x6000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f",      0x0000, 0x0800 )
+	ROM_LOAD( "5h",      0x0800, 0x0800 )
 ROM_END
 
 
@@ -947,6 +1009,25 @@ ROM_END
 
 
 
+ROM_START( timeplt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tm1", 0x0000, 0x2000 )
+	ROM_LOAD( "tm2", 0x2000, 0x2000 )
+	ROM_LOAD( "tm3", 0x4000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm6", 0x0000, 0x2000 )
+	ROM_LOAD( "tm4", 0x2000, 0x2000 )
+	ROM_LOAD( "tm5", 0x4000, 0x2000 )
+
+/*  this is for audio
+	ROM_REGION(0x10000)
+	ROM_LOAD( "tm7", 0x0000, 0x1000 )
+*/
+ROM_END
+
+
+
 ROM_START( pooyan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000 )
@@ -955,10 +1036,10 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic14_g9.cpu",  0x0000, 0x1000 )
-	ROM_LOAD( "ic13_g10.cpu", 0x1000, 0x1000 )
-	ROM_LOAD( "ic15_a9.cpu",  0x2000, 0x1000 )
-	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000 )
+	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000 )
+	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000 )
+	ROM_LOAD( "ic16_a8.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "ic15_a9.cpu",  0x3000, 0x1000 )
 ROM_END
 
 
@@ -1237,6 +1318,21 @@ ROM_END
 
 
 
+ROM_START( milliped_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.104", 0x4000, 0x1000 )
+	ROM_LOAD( "%s.103", 0x5000, 0x1000 )
+	ROM_LOAD( "%s.102", 0x6000, 0x1000 )
+	ROM_LOAD( "%s.101", 0x7000, 0x1000 )
+	ROM_LOAD( "%s.101", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.106", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.107", 0x0800, 0x0800 )
+ROM_END
+
+
+
 ROM_START( nibbler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "IC12", 0x3000, 0x1000 )
@@ -1278,6 +1374,25 @@ ROM_END
 
 
 
+ROM_START( mranger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000 )
+	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000 )
+	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000 )
+	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000 )
+	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000 )	/* sprites */
+	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000 )
+	ROM_LOAD( "mr-e.3h", 0x4000, 0x1000 )	/* background graphics */
+	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000 )
+	ROM_LOAD( "mr-e.3l", 0x6000, 0x1000 )
+ROM_END
+
+
+
 ROM_START( btime_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ab05a1.12b", 0xb000, 0x1000 )
@@ -1287,24 +1402,42 @@ ROM_START( btime_rom )
 	ROM_LOAD( "ab07.15b",   0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ab8.13k",    0x0000, 0x1000 )  /* charset */
+	ROM_LOAD( "ab8.13k",    0x0000, 0x1000 )	/* charset #1 */
 	ROM_LOAD( "ab10.10k",   0x1000, 0x1000 )
 	ROM_LOAD( "ab12.7k",    0x2000, 0x1000 )
-	ROM_LOAD( "ab9.15k",    0x3000, 0x1000 )
-	ROM_LOAD( "ab9.15k",    0x4000, 0x1000 )  /* this is incorrect... rom ab11.12k missing */
+	ROM_LOAD( "ab9.15k",    0x3000, 0x1000 )	/* charset #2 */
+	ROM_LOAD( "ab11.12k",   0x4000, 0x1000 )
 	ROM_LOAD( "ab13.9k" ,   0x5000, 0x1000 )
-	ROM_LOAD( "ab02.4b",    0x6000, 0x0800 )
+	ROM_LOAD( "ab02.4b",    0x6000, 0x0800 )	/* charset #3 */
 	ROM_LOAD( "ab01.3b",    0x6800, 0x0800 )
 	ROM_LOAD( "ab00.1b",    0x7000, 0x0800 )
 
 	ROM_REGION(0x0800)	/* background graphics */
 	ROM_LOAD( "ab03.6b",    0x0000, 0x0800 )
 
-/*  this is for audio
-        ROM_REGION(0x10000)
-        ROM_LOAD( "ab14.12h",   0xf000, 0x1000 )
-*/
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ab14.12h",   0xf000, 0x1000 )
+ROM_END
 
+
+
+ROM_START( jumpbug_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "jb1", 0x0000, 0x1000 )
+	ROM_LOAD( "jb2", 0x1000, 0x1000 )
+	ROM_LOAD( "jb3", 0x2000, 0x1000 )
+	ROM_LOAD( "jb4", 0x3000, 0x1000 )
+	ROM_LOAD( "jb5", 0x8000, 0x1000 )
+	ROM_LOAD( "jb6", 0x9000, 0x1000 )
+	ROM_LOAD( "jb7", 0xa000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "jbi", 0x0000, 0x0800 )
+	ROM_LOAD( "jbj", 0x0800, 0x0800 )
+	ROM_LOAD( "jbk", 0x1000, 0x0800 )
+	ROM_LOAD( "jbl", 0x1800, 0x0800 )
+	ROM_LOAD( "jbm", 0x2000, 0x0800 )
+	ROM_LOAD( "jbn", 0x2800, 0x0800 )
 ROM_END
 
 
@@ -1324,6 +1457,7 @@ struct GameDriver drivers[] =
 	{ "ladybug",  ladybug_rom,  0, 0,               &ladybug_driver },
 	{ "mrdo",     mrdo_rom,     0, 0,               &mrdo_driver },
 	{ "mrlo",     mrlo_rom,     0, 0,               &mrdo_driver },
+	{ "docastle", docastle_rom, 0, 0,               &docastle_driver },
 	{ "cclimber", cclimber_rom, 0, cclimber_decode, &cclimber_driver },
 	{ "ccjap",    ccjap_rom,    0, ccjap_decode,    &cclimber_driver },
 	{ "ccboot",   ccboot_rom,   0, ccjap_decode,    &cclimber_driver },
@@ -1353,13 +1487,17 @@ struct GameDriver drivers[] =
 	{ "scramble", scramble_rom, 0, 0,               &scramble_driver },
 	{ "atlantis", atlantis_rom, 0, 0,               &atlantis_driver },
 	{ "scobra",   scobra_rom,   0, 0,               &scobra_driver },
+	{ "scobrak",  scobrak_rom,  0, 0,               &scobra_driver },
 	{ "scobrab",  scobrab_rom,  0, 0,               &scobra_driver },
+	{ "losttomb", losttomb_rom, 0, 0,               &scobra_driver },
 	{ "frogger",  frogger_rom,  0, 0,               &frogger_driver },
 	{ "froggers", froggers_rom, 0, 0,               &scramble_driver },
 	{ "amidar",   amidar_rom,   0, 0,               &amidar_driver },
 	{ "amidarus", amidarus_rom, 0, 0,               &amidar_driver },
 	{ "turtles",  turtles_rom,  0, 0,               &turtles_driver },
 	{ "rallyx",   rallyx_rom,   0, 0,               &rallyx_driver },
+	{ "timeplt",  timeplt_rom,  0, 0,               &timeplt_driver },
+	{ "spaceplt", timeplt_rom,  0, 0,               &timeplt_driver },
 	{ "pooyan",   pooyan_rom,   0, 0,               &pooyan_driver },
 	{ "phoenix",  phoenix_rom,  0, 0,               &phoenix_driver },
 	{ "pleiades", pleiades_rom, 0, 0,               &phoenix_driver },
@@ -1376,8 +1514,11 @@ struct GameDriver drivers[] =
 	{ "congo",    congo_rom,    0, 0,               &congo_driver },
 	{ "bombjack", bombjack_rom, 0, 0,               &bombjack_driver },
 	{ "centiped", centiped_rom, 0, 0,               &centiped_driver },
+	{ "milliped", milliped_rom, 0, 0,               &milliped_driver },
 	{ "nibbler",  nibbler_rom,  0, 0,               &nibbler_driver },
 	{ "mpatrol",  mpatrol_rom,  0, 0,               &mpatrol_driver },
+	{ "mranger",  mranger_rom,  0, 0,               &mpatrol_driver },
 	{ "btime",    btime_rom,    0, 0,               &btime_driver },
+	{ "jumpbug",  jumpbug_rom,  0, 0,               &jumpbug_driver },
 	{ 0	}	/* end of array */
 };

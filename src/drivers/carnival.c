@@ -5,7 +5,8 @@ Carnival memory map (preliminary)
 0000-3fff ROM
 4000-7fff ROM mirror image (this is the one actually used)
 e000-e3ff Video RAM + other
-e400-efff RAM
+e400-e7ff RAM
+e800-efff Character RAM
 
 I/O ports:
 read:
@@ -22,16 +23,15 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
 extern int carnival_IN1_r(int offset);
 extern int carnival_interrupt(void);
 
-extern unsigned char *carnival_videoram;
-extern void carnival_videoram_w(int offset,int data);
-extern int carnival_vh_start(void);
-extern void carnival_vh_stop(void);
+extern unsigned char *carnival_characterram;
+extern void carnival_characterram_w(int offset,int data);
 extern void carnival_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -45,8 +45,9 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0xe000, 0xe3ff, carnival_videoram_w, &carnival_videoram },
-	{ 0xe400, 0xefff, MWA_RAM },
+	{ 0xe000, 0xe3ff, videoram_w, &videoram },
+	{ 0xe400, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xefff, carnival_characterram_w, &carnival_characterram },
 	{ 0x4000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -90,10 +91,11 @@ static struct GfxLayout charlayout1 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
 	8*8	/* every char takes 10 consecutive bytes */
 };
-static struct GfxLayout charlayout2 =
+
+struct GfxLayout carnival_charlayout =
 {
 	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
+	256,	/* 256 characters */
 	1,	/* 1 bit per pixel */
 	{ 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
@@ -106,7 +108,7 @@ static struct GfxLayout charlayout2 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 0, 0x01e8, &charlayout1, 0, 1 },	/* letters */
-	{ 0, 0x0400, &charlayout2, 0, 1 },	/* graphics */
+	{ 0, 0xe800, &carnival_charlayout, 0, 1 },	/* the game dynamically modifies this */
 	{ -1 } /* end of array */
 };
 
@@ -144,7 +146,7 @@ const struct MachineDriver carnival_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,
@@ -152,8 +154,8 @@ const struct MachineDriver carnival_driver =
 	0,0,
 	8*13,8*16,0,
 	0,
-	carnival_vh_start,
-	carnival_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	carnival_vh_screenrefresh,
 
 	/* sound hardware */

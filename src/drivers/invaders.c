@@ -24,6 +24,7 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -34,8 +35,6 @@ extern int invaders_interrupt(void);
 
 extern unsigned char *invaders_videoram;
 extern void invaders_videoram_w(int offset,int data);
-extern int invaders_vh_start(void);
-extern void invaders_vh_stop(void);
 extern void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -175,8 +174,8 @@ const struct MachineDriver invaders_driver =
 	0,3,
 	8*13,8*16,2,
 	0,
-	invaders_vh_start,
-	invaders_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	invaders_vh_screenrefresh,
 
 	/* sound hardware */

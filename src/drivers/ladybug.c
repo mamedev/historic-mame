@@ -85,20 +85,15 @@ Coin insertion in left slot generates an interrupt, in right slot a NMI.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int ladybug_IN0_r(int offset);
 extern int ladybug_IN1_r(int offset);
 extern int ladybug_interrupt(void);
 
-extern unsigned char *ladybug_videoram;
-extern unsigned char *ladybug_colorram;
-extern unsigned char *ladybug_spriteram;
-extern void ladybug_videoram_w(int offset,int data);
-extern void ladybug_colorram_w(int offset,int data);
 extern void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern int ladybug_vh_start(void);
-extern void ladybug_vh_stop(void);
 extern void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void ladybug_sound1_w(int offset,int data);
@@ -124,9 +119,9 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x6000, 0x6fff, MWA_RAM },
-	{ 0xd000, 0xd3ff, ladybug_videoram_w, &ladybug_videoram },
-	{ 0xd400, 0xd7ff, ladybug_colorram_w, &ladybug_colorram },
-	{ 0x7000, 0x73ff, MWA_RAM, &ladybug_spriteram },
+	{ 0xd000, 0xd3ff, videoram_w, &videoram },
+	{ 0xd400, 0xd7ff, colorram_w, &colorram },
+	{ 0x7000, 0x73ff, MWA_RAM, &spriteram },
 	{ 0xb000, 0xbfff, ladybug_sound1_w },
 	{ 0xc000, 0xcfff, ladybug_sound2_w },
 	{ 0xa000, 0xafff, MWA_NOP },
@@ -255,8 +250,8 @@ const struct MachineDriver ladybug_driver =
 	0x02,0x06,
 	8*13,8*30,0x07,
 	0,
-	ladybug_vh_start,
-	ladybug_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	ladybug_vh_screenrefresh,
 
 	/* sound hardware */

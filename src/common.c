@@ -176,15 +176,12 @@ getout:
 ***************************************************************************/
 int readbit(const unsigned char *src,int bitnum)
 {
-	int bits;
+	int bit;
 
 
-	bits = src[bitnum / 8];
+	bit = src[bitnum / 8] << (bitnum % 8);
 
-	bitnum %= 8;
-	while (bitnum-- > 0) bits <<= 1;
-
-	if (bits & 0x80) return 1;
+	if (bit & 0x80) return 1;
 	else return 0;
 }
 
@@ -563,7 +560,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 								for (x = sx;x <= ex;x+=4)
 								{
 		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+		/* might access memory outside it. The copy will be executed correctly, though. */
 									if (*sd4 == trans4)
 									{
 										bm += 4;
@@ -571,11 +568,14 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 									else
 									{
 										sd = ((unsigned char *)sd4) + 3;
-										for (x1 = 4;x1 > 0;x1--)
+										x1 = ex - x;
+										if (x1 > 3) x1 = 3;
+										while (x1 >= 0)
 										{
 											col = *(sd--);
 											if (col != transparent_color) *bm = col;
 											bm++;
+											x1--;
 										}
 									}
 									sd4--;
@@ -591,7 +591,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 								for (x = sx;x <= ex;x+=4)
 								{
 		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+		/* might access memory outside it. The copy will be executed correctly, though. */
 									if (*sd4 == trans4)
 									{
 										bm += 4;
@@ -599,11 +599,14 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 									else
 									{
 										sd = ((unsigned char *)sd4) + 3;
-										for (x1 = 4;x1 > 0;x1--)
+										x1 = ex - x;
+										if (x1 > 3) x1 = 3;
+										while (x1 >= 0)
 										{
 											col = *(sd--);
 											if (col != transparent_color) *bm = col;
 											bm++;
+											x1--;
 										}
 									}
 									sd4--;
@@ -622,7 +625,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 								for (x = sx;x <= ex;x+=4)
 								{
 		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+		/* might access memory outside it. The copy will be executed correctly, though. */
 									if (*sd4 == trans4)
 									{
 										bm += 4;
@@ -630,11 +633,14 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 									else
 									{
 										sd = (unsigned char *)sd4;
-										for (x1 = 4;x1 > 0;x1--)
+										x1 = ex - x;
+										if (x1 > 3) x1 = 3;
+										while (x1 >= 0)
 										{
 											col = *(sd++);
 											if (col != transparent_color) *bm = col;
 											bm++;
+											x1--;
 										}
 									}
 									sd4++;
@@ -650,7 +656,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 								for (x = sx;x <= ex;x+=4)
 								{
 		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
-		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+		/* might access memory outside it. The copy will be executed correctly, though. */
 									if (*sd4 == trans4)
 									{
 										bm += 4;
@@ -658,11 +664,14 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 									else
 									{
 										sd = (unsigned char *)sd4;
-										for (x1 = 4;x1 > 0;x1--)
+										x1 = ex - x;
+										if (x1 > 3) x1 = 3;
+										while (x1 >= 0)
 										{
 											col = *(sd++);
 											if (col != transparent_color) *bm = col;
 											bm++;
+											x1--;
 										}
 									}
 									sd4++;

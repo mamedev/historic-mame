@@ -7,6 +7,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
@@ -14,18 +16,11 @@
 #define BIGSPRITE_WIDTH 128
 #define BIGSPRITE_HEIGHT 128
 
-
-unsigned char *cclimber_videoram;
-unsigned char *cclimber_colorram;
 unsigned char *cclimber_bsvideoram;
-unsigned char *cclimber_spriteram;
 unsigned char *cclimber_bigspriteram;
 unsigned char *cclimber_column_scroll;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
 static unsigned char bsdirtybuffer[BIGSPRITE_SIZE];
-
-static struct osd_bitmap *tmpbitmap,*bsbitmap;
+static struct osd_bitmap *bsbitmap;
 
 
 
@@ -79,14 +74,19 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 int cclimber_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if (generic_vh_start() != 0)
 		return 1;
 
 	if ((bsbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		generic_vh_stop();
 		return 1;
 	}
 
@@ -102,27 +102,15 @@ int cclimber_vh_start(void)
 ***************************************************************************/
 void cclimber_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
 	osd_free_bitmap(bsbitmap);
-}
-
-
-
-void cclimber_videoram_w(int offset,int data)
-{
-	if (cclimber_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		cclimber_videoram[offset] = data;
-	}
+	generic_vh_stop();
 }
 
 
 
 void cclimber_colorram_w(int offset,int data)
 {
-	if (cclimber_colorram[offset] != data)
+	if (colorram[offset] != data)
 	{
 		/* bit 5 of the address is not used for color memory. There is just */
 		/* 512 bytes of memory; every two consecutive rows share the same memory */
@@ -132,8 +120,8 @@ void cclimber_colorram_w(int offset,int data)
 		dirtybuffer[offset] = 1;
 		dirtybuffer[offset + 0x20] = 1;
 
-		cclimber_colorram[offset] = data;
-		cclimber_colorram[offset + 0x20] = data;
+		colorram[offset] = data;
+		colorram[offset + 0x20] = data;
 	}
 }
 
@@ -177,10 +165,10 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
 
-			drawgfx(tmpbitmap,Machine->gfx[(cclimber_colorram[offs] & 0x10) ? 1 : 0],
-					cclimber_videoram[offs],
-					cclimber_colorram[offs] & 0x0f,
-					cclimber_colorram[offs] & 0x40,cclimber_colorram[offs] & 0x80,
+			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
+					videoram[offs],
+					colorram[offs] & 0x0f,
+					colorram[offs] & 0x40,colorram[offs] & 0x80,
 					sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -257,10 +245,10 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */
 	for (i = 0;i < 8*4;i += 4)
 	{
-		drawgfx(bitmap,Machine->gfx[cclimber_spriteram[i + 1] & 0x10 ? 4 : 3],
-				cclimber_spriteram[i] & 0x3f,cclimber_spriteram[i + 1] & 0x0f,
-				cclimber_spriteram[i] & 0x40,cclimber_spriteram[i] & 0x80,
-				cclimber_spriteram[i + 3],240 - cclimber_spriteram[i + 2],
+		drawgfx(bitmap,Machine->gfx[spriteram[i + 1] & 0x10 ? 4 : 3],
+				spriteram[i] & 0x3f,spriteram[i + 1] & 0x0f,
+				spriteram[i] & 0x40,spriteram[i] & 0x80,
+				spriteram[i + 3],240 - spriteram[i + 2],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

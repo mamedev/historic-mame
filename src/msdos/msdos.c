@@ -17,14 +17,17 @@
 #include <audio.h>
 
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+#define VESA_SCREEN_WIDTH 640
+#define VESA_SCREEN_HEIGHT 480
+#define VESASCAN_SCREEN_WIDTH 800
+#define VESASCAN_SCREEN_HEIGHT 600
 #define SCREEN_MODE GFX_VESA1
 
 
 struct osd_bitmap *bitmap;
 int first_free_pen;
 int use_vesa;
+int use_vesascan;
 int play_sound;
 int noscanlines;
 int use_joystick;
@@ -47,6 +50,7 @@ int osd_init(int argc,char **argv)
 
 
 	use_vesa = 0;
+	use_vesascan = 0;
 	play_sound = 1;
 	noscanlines = 0;
 	use_joystick = 1;
@@ -55,6 +59,8 @@ int osd_init(int argc,char **argv)
 	{
 		if (strcmp(argv[i],"-vesa") == 0)
 			use_vesa = 1;
+		if (strcmp(argv[i],"-vesascan") == 0)
+			use_vesascan = 1;
 		if (strcmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
@@ -276,6 +282,32 @@ Register scr256x256scanlines[] =
 	{ 0x3c0, 0x13, 0x00}
 };
 
+Register scr288x224[] =
+{
+	{ 0x3c2, 0x0, 0xe3},{ 0x3d4, 0x0, 0x5f},{ 0x3d4, 0x1, 0x47},
+	{ 0x3d4, 0x2, 0x50},{ 0x3d4, 0x3, 0x82},{ 0x3d4, 0x4, 0x50},
+	{ 0x3d4, 0x5, 0x80},{ 0x3d4, 0x6, 0xb},{ 0x3d4, 0x7, 0x3e},
+	{ 0x3d4, 0x8, 0x0},{ 0x3d4, 0x9, 0x41},{ 0x3d4, 0x10, 0xda},
+	{ 0x3d4, 0x11, 0x9c},{ 0x3d4, 0x12, 0xbf},{ 0x3d4, 0x13, 0x24},
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x4},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},{ 0x3c4, 0x4, 0xe},
+	{ 0x3ce, 0x5, 0x40},{ 0x3ce, 0x6, 0x5},{ 0x3c0, 0x10, 0x41},
+	{ 0x3c0, 0x13, 0x0}
+};
+
+Register scr288x224scanlines[] =
+{
+	{ 0x3c2, 0x0, 0xe3},{ 0x3d4, 0x0, 0x5f},{ 0x3d4, 0x1, 0x47},
+	{ 0x3d4, 0x2, 0x47},{ 0x3d4, 0x3, 0x82},{ 0x3d4, 0x4, 0x50},
+	{ 0x3d4, 0x5, 0x9a},{ 0x3d4, 0x6, 0xb},{ 0x3d4, 0x7, 0x19},
+	{ 0x3d4, 0x8, 0x0},{ 0x3d4, 0x9, 0x40},{ 0x3d4, 0x10, 0xf5},
+	{ 0x3d4, 0x11, 0xac},{ 0x3d4, 0x12, 0xdf},{ 0x3d4, 0x13, 0x24},
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0xc7},{ 0x3d4, 0x16, 0x4},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x1, 0x1},{ 0x3c4, 0x4, 0xe},
+	{ 0x3ce, 0x5, 0x40},{ 0x3ce, 0x6, 0x5},{ 0x3c0, 0x10, 0x41},
+	{ 0x3c0, 0x13, 0x0}
+};
+
 Register scr320x204[] =
 {
 	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x4f},
@@ -290,6 +322,7 @@ Register scr320x204[] =
 };
 
 
+
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. I don't do any test here (224x288 will just do */
 /* for now) but one could e.g. open a window of the exact dimensions */
@@ -298,12 +331,18 @@ struct osd_bitmap *osd_create_display(int width,int height)
 {
 	if (!(width == 224 && height == 288) &&
 			!(width == 256 && height == 256) &&
+			!(width == 288 && height == 224) &&
 			!(width == 320 && height == 204))
 		use_vesa = 1;
 
 	if (use_vesa)
 	{
-		if (set_gfx_mode(SCREEN_MODE,SCREEN_WIDTH,SCREEN_HEIGHT,0,0) != 0)
+		if (set_gfx_mode(SCREEN_MODE,VESA_SCREEN_WIDTH,VESA_SCREEN_HEIGHT,0,0) != 0)
+			return 0;
+	}
+	else if (use_vesascan)
+	{
+		if (set_gfx_mode(SCREEN_MODE,VESASCAN_SCREEN_WIDTH,VESASCAN_SCREEN_HEIGHT,0,0) != 0)
 			return 0;
 	}
 	else
@@ -318,14 +357,21 @@ struct osd_bitmap *osd_create_display(int width,int height)
 			if (noscanlines)
 				outRegArray(scr224x288,sizeof(scr224x288)/sizeof(Register));
 			else
-				outRegArray(scr224x288scanlines,sizeof(scr224x288)/sizeof(Register));
+				outRegArray(scr224x288scanlines,sizeof(scr224x288scanlines)/sizeof(Register));
 		}
 		else if (width == 256 && height == 256)
 		{
 			if (noscanlines)
 				outRegArray(scr256x256,sizeof(scr256x256)/sizeof(Register));
 			else
-				outRegArray(scr256x256scanlines,sizeof(scr256x256)/sizeof(Register));
+				outRegArray(scr256x256scanlines,sizeof(scr256x256scanlines)/sizeof(Register));
+		}
+		else if (width == 288 && height == 224)
+		{
+			if (noscanlines)
+				outRegArray(scr288x224,sizeof(scr288x224)/sizeof(Register));
+			else
+				outRegArray(scr288x224scanlines,sizeof(scr288x224scanlines)/sizeof(Register));
 		}
 		else if (width == 320 && height == 204)
 			outRegArray(scr320x204,sizeof(scr320x204)/sizeof(Register));
@@ -379,12 +425,40 @@ void osd_update_display(void)
 			unsigned long address;
 
 
-			address = bmp_write_line(screen,y + (SCREEN_HEIGHT - bitmap->height) / 2)
-					+ (SCREEN_WIDTH - bitmap->width) / 2;
+			address = bmp_write_line(screen,y + (VESA_SCREEN_HEIGHT - bitmap->height) / 2)
+					+ (VESA_SCREEN_WIDTH - bitmap->width) / 2;
 			_dosmemputl(lb,width4,address);
 			lb += width4;
 		}
 	}
+    else if (use_vesascan)
+ 	{
+ 		int x,y;
+ 		int width4 = bitmap->width / 4;
+		unsigned char vesa_line[VESASCAN_SCREEN_WIDTH];
+
+ 		unsigned long *lb = (unsigned long *) vesa_line;
+ 		unsigned char *line = (unsigned char *) bitmap->private;
+
+
+ 		for (y = 0;y < bitmap->height;y++)
+ 		{
+ 			unsigned long address;
+
+
+          for (x = 0; x < bitmap->width;x++)
+          {
+             vesa_line[2*x] = vesa_line[2*x+1] = line[x];
+          }
+
+          address = bmp_write_line(screen, 2*y + (VESASCAN_SCREEN_HEIGHT - bitmap->height*2) / 2)
+ 					+ (VESASCAN_SCREEN_WIDTH - bitmap->width*2) / 2;
+
+			_dosmemputl(lb,width4*2,address);
+
+ 			line += bitmap->width;
+ 		}
+ 	}
 	else
 	{
 		/* copy the bitmap to screen memory */
@@ -456,8 +530,8 @@ void osd_play_sample(int channel,unsigned char *data,int len,int freq,int volume
 
 void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,int volume)
 {
-	static int playing = 0;
-	static int c;
+	static int playing[NUMVOICES];
+	static int c[NUMVOICES];
 
 
 	if (play_sound == 0 || channel >= NUMVOICES) return;
@@ -465,7 +539,7 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 	/* check if the waveform is large enough for double buffering */
 //	if (2*sizeof(aBuffer) > lpWave->dwLength) {
 
-	if (!playing)
+	if (!playing[channel])
 	{
 		memcpy(lpWave[channel]->lpData,data,len);
 		lpWave[channel]->wFormat = AUDIO_FORMAT_8BITS | AUDIO_FORMAT_MONO | AUDIO_FORMAT_LOOP;
@@ -477,8 +551,8 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 		APlayVoice(hVoice[channel],lpWave[channel]);
 		ASetVoiceFrequency(hVoice[channel],freq);
 		ASetVoiceVolume(hVoice[channel],volume/4);
-		playing = 1;
-		c = 1;
+		playing[channel] = 1;
+		c[channel] = 1;
 	}
 	else
 	{
@@ -488,15 +562,15 @@ void osd_play_streamed_sample(int channel,unsigned char *data,int len,int freq,i
 		for(;;)
 		{
 			AGetVoicePosition(hVoice[channel],&pos);
-			if (c == 0 && pos > len) break;
-			if (c == 1 && (pos < len || pos > 2*len)) break;
-			if (c == 2 && pos < 2*len) break;
+			if (c[channel] == 0 && pos > len) break;
+			if (c[channel] == 1 && (pos < len || pos > 2*len)) break;
+			if (c[channel] == 2 && pos < 2*len) break;
 			osd_update_audio();
 		}
-		memcpy(&lpWave[channel]->lpData[len * c],data,len);
-		AWriteAudioData(lpWave[channel],len*c,len);
-		c++;
-		if (c == 3) c = 0;
+		memcpy(&lpWave[channel]->lpData[len * c[channel]],data,len);
+		AWriteAudioData(lpWave[channel],len*c[channel],len);
+		c[channel]++;
+		if (c[channel] == 3) c[channel] = 0;
 	}
 }
 

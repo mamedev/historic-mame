@@ -23,13 +23,14 @@ Crush Roller                   Yes            Yes             Yes
 Pengo                          Yes            Yes             Yes
 Lady Bug                       Yes            Yes           No noise
 Mr. Do!                        Yes            Yes             Yes
+Mr. Do's Castle                 No             No              No
 Crazy Climber                  Yes            Yes             Yes
-Crazy Kong                     Yes             No             Yes
+Crazy Kong                     Yes            Yes             Yes
 Donkey Kong                    Yes             No              No
 Donkey Kong Jr.                Yes             No              No
 Donkey Kong 3                  Yes             No              No
 Mario Bros.                    Yes             No              No
-Bagman                    Yes (slowdowns)      No          Music only
+Bagman                         Yes             No          Music only
 Wizard of Wor               Partially        Maybe             No
 The Adventures of Robby Roto    No             No              No
 Gorf                            No             No              No
@@ -37,15 +38,16 @@ Galaxian                       Yes            Yes           Limited
 Pisces                         Yes            Yes           Limited
 "Japanese Irem game"           Yes            Yes           Limited
 War of the Bugs                Yes             No           Limited
-Moon Cresta                    Yes            Yes?          Limited
-Moon Quasar                    Yes            Yes?          Limited
-The End                        Yes             No              No
+Moon Cresta                    Yes            Yes           Limited
+Moon Quasar                    Yes            Yes           Limited
 Scramble                       Yes            Yes              No
 Super Cobra                    Yes             No              No
+The End                        Yes             No              No
 Frogger                        Yes           Close             No
 Amidar                         Yes           Close             No
 Turtles                        Yes             No              No
-Rally X                   Yes (slowdowns)      No              No
+Rally X                        Yes             No              No
+Time Pilot                     Yes             No              No
 Pooyan                         Yes             No              No
 Phoenix                        Yes           Close             No
 Pleiades                       Yes             No              No
@@ -54,10 +56,13 @@ Carnival                        No             No              No
 Zaxxon                         Yes             No              No
 Congo Bongo                    Yes             No              No
 Bomb Jack                      Yes            Yes              No
-Centipede                      Yes             No              No
+Centipede                      Yes             No             Yes
+Millipede                      Yes             No              No
 Nibbler                        Yes             No              No
 Moon Patrol                    Yes             No              No
-Burger Time                    Yes            Yes?             No
+Burger Time                    Yes            Yes             Yes
+Lost Tomb                       No             No              No
+Jump Bug                        No             No              No
 
 
 
@@ -84,10 +89,11 @@ SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
 Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c. Thanks to Chuck Cochems for the help in making them more
    compatible.
-224x288 noscanlines video mode provided by Valerio Verrando
+224x288 noscanlines and both 288x224 video modes provided by Valerio Verrando
   (v.verrando@mclink.it)
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
   (mcuddy@FensEnde.com).
+POKEY emulator by Ron Fries (rfries@tcmail.frco.com).
 UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
   (dick@ph.tn.tudelft.nl).
 
@@ -96,6 +102,7 @@ Phoenix driver provided by Brad Oliver (bradman@primenet.com) and Mirko
 Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
    by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
+Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
@@ -126,18 +133,23 @@ Space Invaders information gathered from the Space Invaders Emulator by
    Michael Strutt (mstrutt@pixie.co.za)
 Many thanks to Jim Hernandez for the information on Wizard of Wor hardware.
 Thanks to Mike Coates (mike@dissfulfils.co.uk) for Carnival ROM placement
-   indications.
+   indications and gfx info.
 Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
    emulator by Gary Shepherdson.
 Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
 Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
 Thanks to Marc Vergoossen for Zaxxon colors.
-Centipeded information taken from Centipede emulator by Ivan Mackintosh, MageX
+Centipede information taken from Centipede emulator by Ivan Mackintosh, MageX
    0.3 by Edward Massey and memory map by Pete Rittwage.
 Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
-Thanks to Chris Hardy (Chris_Hardy@vie.co.uk) for info on Moon Patrol.
+Thanks to Chris Hardy (chrish@kcbbs.gen.nz) for info on Moon Patrol.
 Thanks to Dave W. for all his help.
+Thanks to Doug Jefferys (djeffery@multipath.com) for Crazy Kong color
+   information.
+Thanks to Philip Chapman (Philip_Chapman@qsp.co.uk) for useful feedback on
+   Bomb Jack.
+Thanks to Mike Cuddy for Pooyan and Time pilot colors.
 
 
 
@@ -156,6 +168,9 @@ options:
 -vesa         use standard 640x480x256 VESA mode instead of custom video mode.
               Use this as a last resort if -noscanlines doesn't solve your
 			  video problems.
+-vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
+              slower than the other video modes. Use this if you want
+			  scanlines and the default video mode doesn't work.
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
@@ -288,6 +303,13 @@ Known issues:
 
 
 
+Mr. Do's Castle ("docastle")
+----------------------------
+
+Not working yet!
+
+
+
 Crazy Climber ("cclimber")
 --------------------------
 
@@ -364,10 +386,6 @@ Bagman ("bagman")
 Arrows  Move around
 CTRL    Action
 
-Known issues:
-- Frequent slowdowns, I don't know what's causing them (the fps counter stays
-  at 60, so this is not caused by slow emulation).
-
 
 
 Wizard of Wor ("wow")
@@ -426,7 +444,8 @@ one. The dip switch menu might display wrong settings.
   Galaxian Turbo ("galturbo")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 
 
 
@@ -439,7 +458,8 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 - What do the dip switches do?
 
 
@@ -456,7 +476,8 @@ Clones supported:
   Uniwars ("uniwars")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 - What does dip switch 6 do?
 
 
@@ -470,7 +491,8 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 - What do the dip switches do?
 
 
@@ -488,7 +510,8 @@ Clones supported:
   Unencrypted version ("mooncrsb")
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 - What do the dip switches do?
 
 
@@ -502,22 +525,8 @@ Arrows  Move around
 CTRL    Fire
 
 Known issues:
-- Only one sound channel is emulated, and I'm not sure it's correct
-
-
-
-The End ("theend")
-------------------
-
-This runs on a hardware very similar to Galaxian.
-
-Arrows  Move around
-CTRL    Fire
-
-Known issues:
-- I haven't yet had time to check what the various input bits and dip switches
-  do. Two players are not supported.
-- Is this game supposed to have background stars?
+- Only one sound channel is emulated, and I'm not sure it's correct.
+- The star background is probably not entirely accurate.
 
 
 
@@ -533,12 +542,13 @@ ALT     Bomb
 
 Clones supported:
   Battle of Atlantis ("atlantis") [I don't know what most of the dip switches
-                                   do, and you get 9 credits per coin.]
+                                   do, and you get a massive 14 credits per
+								   coin - now that's what I call good value
+								   for money! ;-)]
 
 Known issues:
-- The background stars don't blink. Maybe they should also be clipped to the top
-  and bottom of the screen?
-- Two players mode doesn't work
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
 
 
 
@@ -546,18 +556,33 @@ Super Cobra ("scobra")
 ----------------------
 
 Runs on the same hardware as Scramble.
+This is the version with Stern copyright.
 
 Arrows  Move around
 CTRL    Fire
 ALT     Bomb
 
 Clones supported:
+  Konami copyright ("scobrak")
   bootleg version ("scobrab")
 
 Known issues:
-- The background stars don't blink. Maybe they should also be clipped to the
-  top and bottom of the screen?
-- Two players mode doesn't work
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
+
+
+
+The End ("theend")
+------------------
+
+This runs on a Scramble hardware.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- The star background is probably not entirely accurate. Also, maybe it should
+  be clipped at the top and bottom of the screen?
 
 
 
@@ -608,15 +633,42 @@ CTRL    Smoke
 F2      Test
 
 Known issues:
-- Graphic glitches, slowdowns, small screen
+- Sprites are not turned off appropriately.
+- Cars are not displayed on the radar screen.
+- I don't know if I reproduced the layout of the screen coreectly.
 
+
+
+Time Pilot ("timeplt")
+----------------------
+
+Arrows  Move around
+CTRL    Fire
+
+Clones supported:
+  bootleg version ("spaceplt")
+
+Known issues:
+- The ROM copyright message and the dipswitch menu are unreadable. Time Pilot
+  doesn't have consecutive letters in the graphics ROms, I'll have to modify
+  my text routines to handle that.
+- This game uses double-width sprites for the clouds, but I haven't yet figured
+  out they are selected. The code is currently a hack - just double the sprites
+  which I know are used for clouds...
+- The memory mapped read port at c000 puzzles me...
 
 
 Pooyan ("pooyan")
 -----------------
 
+Runs on hardware similar to Time Pilot.
+
 Arrows  Move around
 CTRL    Fire
+
+Known issues:
+- The characters seem to use 16 color codes, however the color code for many
+  characters has bit 4 set. I don't know what it's for.
 
 
 
@@ -663,7 +715,7 @@ Known issues:
 Carnival ("carnival")
 ---------------------
 
-Doesn't work yet!
+Not playable yet!
 
 
 
@@ -695,17 +747,14 @@ Press fire to skip the ROM/RAM test at the beginning.
 
 In the dip switch menu, DIFFICULTY 1 refers to the speed of the mechanical
 bird, while DIFFICULTY 2 to the number and speed of enemies.
+SPECIAL refers to how often the (E) and (S) coins appear.
 
 Known issues:
 - Colors are accurate, but not entirely: the original machine uses 12 bits
   (4 bits per pen), while I currently use only 8 bits (3 bits for red and
   green, 2 bits for blue).
-- Is the sprite priority correct? For example, during the demo, should GAME
-  OVER be in front or behind other sprites?
-  There is another bit in the sprite attributes which I don't know what means:
+- There is a bit in the sprite attributes which I don't know what means:
   it seems to be set only when the (B) materializes.
-- For the DIFFICULTY 2 setting, EASY and MEDIUM might be swapped. Anyone can
-  confirm?
 - The INITIAL HIGH SCORE setting doesn't only set that, it does something
   else as well - but I don't know what.
 
@@ -721,6 +770,20 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
   I don't know if the game runs correctly.
 - The game awards you 18 credits on startup
+
+
+
+Millipede ("milliped")
+----------------------
+
+As you can imagine, this runs on the same hardware as Centipede.
+
+Arrows  Move around
+CTRL    Fire
+
+Known issues:
+- What is the clock speed of the original machine? I'm currently using 1Mhz,
+  I don't know if the game runs correctly.
 
 
 
@@ -747,6 +810,9 @@ F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
                    tests, press 2 for an additional menu of options, then
 				   left/right to choose the option, and 1 to select it)
 
+Clones supported:
+  bootleg version, called Moon Ranger ("mranger")
+
 Known issues:
 - No background graphics. I don't know where to place them... can anyone
   provide a screen snapshot?
@@ -763,7 +829,27 @@ F2      |  Use F1 to cycle through tests while in test mode.
 F1+F2   /
 
 Known issues:
-- There are the same problems with ROM encrypton that Replay 0.01a by Kevin
-  Brisley has. I'm not yet sure whether the ROMs are actually encrypted or
-  just corrupted... also, one of the graphics ROMs is missing.
+- There are the same problems with ROM encryption that Replay 0.01a by Kevin
+  Brisley has.
 - Sprites are not turned off appropriately
+
+
+
+Lost Tomb ("losttomb")
+----------------------
+
+This runs on a Super Cobra hardware.
+
+Known issues:
+- Not playable. Crashes during demo. Graphics are garbled. I think the ROMs
+  are corrupted.
+
+
+
+Jump Bug ("jumpbug")
+--------------------
+
+This seems to run on hardware similar to Scramble
+
+Known issues:
+- Not playable. Crashes during demo.

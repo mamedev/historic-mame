@@ -33,19 +33,17 @@ c0        background control?
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern int mpatrol_protection_r(int offset);
 
-extern unsigned char *mpatrol_videoram;
-extern unsigned char *mpatrol_colorram;
-extern unsigned char *mpatrol_spriteram1;
-extern unsigned char *mpatrol_spriteram2;
-extern void mpatrol_videoram_w(int offset,int data);
-extern void mpatrol_colorram_w(int offset,int data);
 extern void mpatrol_scroll_w(int offset,int data);
-extern int mpatrol_vh_start(void);
-extern void mpatrol_vh_stop(void);
+extern void mpatrol_bgscroll1_w(int offset,int data);
+extern void mpatrol_bgscroll2_w(int offset,int data);
+int mpatrol_vh_start(void);
+void mpatrol_vh_stop(void);
 extern void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -67,10 +65,10 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0x8000, 0x83ff, mpatrol_videoram_w, &mpatrol_videoram },
-	{ 0x8400, 0x87ff, mpatrol_colorram_w, &mpatrol_colorram },
-	{ 0xc820, 0xc87f, MWA_RAM, &mpatrol_spriteram1 },
-	{ 0xc8a0, 0xc8ff, MWA_RAM, &mpatrol_spriteram2 },
+	{ 0x8000, 0x83ff, videoram_w, &videoram },
+	{ 0x8400, 0x87ff, colorram_w, &colorram },
+	{ 0xc820, 0xc87f, MWA_RAM, &spriteram },
+	{ 0xc8a0, 0xc8ff, MWA_RAM, &spriteram_2 },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -80,6 +78,8 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x1c, 0x1f, mpatrol_scroll_w },
+	{ 0x40, 0x40, mpatrol_bgscroll1_w },
+	{ 0x80, 0x80, mpatrol_bgscroll2_w },
 	{ -1 }	/* end of table */
 };
 

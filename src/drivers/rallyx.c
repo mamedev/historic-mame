@@ -72,14 +72,14 @@ IM 2 and IM 0)
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 extern unsigned char *rallyx_videoram1;
 extern unsigned char *rallyx_colorram1;
 extern unsigned char *rallyx_videoram2;
 extern unsigned char *rallyx_colorram2;
-extern unsigned char *rallyx_spriteram1;
-extern unsigned char *rallyx_spriteram2;
 extern unsigned char *rallyx_scrollx;
 extern unsigned char *rallyx_scrolly;
 extern void rallyx_videoram1_w(int offset,int data);
@@ -122,8 +122,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa180, 0xa180, MWA_NOP },	/* ????? */
 	{ 0xa182, 0xa186, MWA_NOP },	/* ????? */
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8014, 0x801f, MWA_RAM, &rallyx_spriteram1 },
-	{ 0x8814, 0x881f, MWA_RAM, &rallyx_spriteram2 },
+	{ 0x8014, 0x801f, MWA_RAM, &spriteram },
+	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },
 	{ -1 }	/* end of table */
 };
 
@@ -274,7 +274,7 @@ const struct MachineDriver rallyx_driver =
 	0,
 
 	/* video hardware */
-	320,256, {},	/* visible_area is not used by the video driver */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,

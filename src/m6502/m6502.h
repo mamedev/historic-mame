@@ -63,6 +63,7 @@ typedef struct
 
   int IPeriod,ICount; /* Set IPeriod to number of CPU cycles */
                       /* between calls to Interrupt6502()    */
+  int missedinterrupt;
   void *User;         /* Arbitrary user data (ID,RAM*,etc.)  */
   byte TrapBadOps;    /* Set to 1 to warn of illegal opcodes */
   word Trap;          /* Set Trap to address to trace from   */

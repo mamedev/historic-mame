@@ -69,19 +69,17 @@ Note: 9n reg,other bits  used on moon cresta for extra graphics rom control.
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-extern unsigned char *mooncrst_videoram;
+
 extern unsigned char *mooncrst_attributesram;
-extern unsigned char *mooncrst_spriteram;
 extern unsigned char *mooncrst_bulletsram;
 extern void mooncrst_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-extern void mooncrst_videoram_w(int offset,int data);
 extern void mooncrst_attributes_w(int offset,int data);
 extern void mooncrst_stars_w(int offset,int data);
 extern void pisces_gfxbank_w(int offset,int data);
 extern int mooncrst_vh_start(void);
-extern void mooncrst_vh_stop(void);
 extern void mooncrst_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void mooncrst_sound_freq_w(int offset,int data);
@@ -123,9 +121,9 @@ static struct MemoryReadAddress japirem_readmem[] =
 
 static struct MemoryWriteAddress galaxian_writemem[] =
 {
-	{ 0x5000, 0x53ff, mooncrst_videoram_w, &mooncrst_videoram },
+	{ 0x5000, 0x53ff, videoram_w, &videoram },
 	{ 0x5800, 0x583f, mooncrst_attributes_w, &mooncrst_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &mooncrst_spriteram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram },
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
@@ -135,9 +133,9 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 };
 static struct MemoryWriteAddress pisces_writemem[] =
 {
-	{ 0x5000, 0x53ff, mooncrst_videoram_w, &mooncrst_videoram },
+	{ 0x5000, 0x53ff, videoram_w, &videoram },
 	{ 0x5800, 0x583f, mooncrst_attributes_w, &mooncrst_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &mooncrst_spriteram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram },
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x6002, 0x6002, pisces_gfxbank_w },
@@ -148,9 +146,9 @@ static struct MemoryWriteAddress pisces_writemem[] =
 };
 static struct MemoryWriteAddress japirem_writemem[] =
 {
-	{ 0x5000, 0x53ff, mooncrst_videoram_w, &mooncrst_videoram },
+	{ 0x5000, 0x53ff, videoram_w, &videoram },
 	{ 0x5800, 0x583f, mooncrst_attributes_w, &mooncrst_attributesram },
-	{ 0x5840, 0x585f, MWA_RAM, &mooncrst_spriteram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram },
 	{ 0x5860, 0x5880, MWA_RAM, &mooncrst_bulletsram },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
@@ -403,7 +401,7 @@ const struct MachineDriver galaxian_driver =
 	8*13,8*16,0x05,
 	0,
 	mooncrst_vh_start,
-	mooncrst_vh_stop,
+	generic_vh_stop,
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
@@ -442,7 +440,7 @@ const struct MachineDriver pisces_driver =
 	8*13,8*16,0x05,
 	0,
 	mooncrst_vh_start,
-	mooncrst_vh_stop,
+	generic_vh_stop,
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
@@ -481,7 +479,7 @@ const struct MachineDriver japirem_driver =
 	8*13,8*16,0x00,
 	0,
 	mooncrst_vh_start,
-	mooncrst_vh_stop,
+	generic_vh_stop,
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
@@ -520,7 +518,7 @@ const struct MachineDriver uniwars_driver =
 	8*13,8*16,0x03,
 	0,
 	mooncrst_vh_start,
-	mooncrst_vh_stop,
+	generic_vh_stop,
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */
@@ -559,7 +557,7 @@ const struct MachineDriver warofbug_driver =
 	8*13,8*16,0x05,
 	0,
 	mooncrst_vh_start,
-	mooncrst_vh_stop,
+	generic_vh_stop,
 	mooncrst_vh_screenrefresh,
 
 	/* sound hardware */

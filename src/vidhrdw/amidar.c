@@ -7,51 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
+
 
 
 #define VIDEO_RAM_SIZE 0x400
 
-unsigned char *amidar_videoram;
 unsigned char *amidar_attributesram;
-unsigned char *amidar_spriteram;
-static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
-											/* to speed up video refresh */
-
-static struct osd_bitmap *tmpbitmap;
-
-
-
-int amidar_vh_start(void)
-{
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void amidar_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-}
-
-
-
-void amidar_videoram_w(int offset,int data)
-{
-	if (amidar_videoram[offset] != data)
-	{
-		dirtybuffer[offset] = 1;
-
-		amidar_videoram[offset] = data;
-	}
-}
 
 
 
@@ -98,7 +60,7 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = (offs % 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					amidar_videoram[offs],
+					videoram[offs],
 					amidar_attributesram[2 * sy + 1],
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -115,10 +77,10 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = 4*7;offs >= 0;offs -= 4)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				amidar_spriteram[offs + 1] & 0x3f,
-				amidar_spriteram[offs + 2],
-				amidar_spriteram[offs + 1] & 0x80,amidar_spriteram[offs + 1] & 0x40,
-				amidar_spriteram[offs],amidar_spriteram[offs + 3],
+				spriteram[offs + 1] & 0x3f,
+				spriteram[offs + 2],
+				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+				spriteram[offs],spriteram[offs + 3],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

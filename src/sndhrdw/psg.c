@@ -15,6 +15,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include "psg.h"
 
@@ -207,7 +209,7 @@ void AYWriteReg(int n, int r, int v)
     }
 }
 
-byte AYReadReg(int n, int r)
+unsigned char AYReadReg(int n, int r)
 {
     AY8910 *PSG = &(AYPSG[n]);
 

@@ -23,13 +23,27 @@ static const struct MemoryReadAddress *memoryread;
 static const struct MemoryWriteAddress *memorywrite;
 
 
+
+struct z80context
+{
+	Z80_Regs regs;
+	int icount;
+	int iperiod;
+	int irq;
+};
+
+
+
 void cpu_run(void)
 {
 	int totalcpu;
-	unsigned char cpucontext[MAX_CPU][64];	/* enough to accomodate the cpu status */
+	unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
+	unsigned char *ROM0;	/* opcode decryption is currently supported only for the first memory region */
 extern void Reset6502(void *R,int IPeriod);
 extern word Run6502(void *R);
 
+
+	ROM0 = ROM;
 
 	/* count how many CPUs we have to emulate */
 	totalcpu = 0;
@@ -47,11 +61,21 @@ reset:
 		switch(Machine->drv->cpu[activecpu].cpu_type)
 		{
 			case CPU_Z80:
-				Z80_IPeriod = cycles;
-				Z80_Reset();
+				{
+					struct z80context *ctxt;
+
+
+					ctxt = (struct z80context *)cpucontext[activecpu];
+					Z80_Reset();
+					Z80_GetRegs(&ctxt->regs);
+					ctxt->icount = cycles;
+					ctxt->iperiod = cycles;
+					ctxt->irq = Z80_IGNORE_INT;
+				}
 				break;
 			case CPU_M6502:
 				/* Reset6502() needs to read memory to get the PC start address */
+				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
 				memoryread = Machine->drv->cpu[activecpu].memory_read;
 				Reset6502(cpucontext[activecpu],cycles);
 				break;
@@ -69,11 +93,33 @@ reset:
 			memoryread = Machine->drv->cpu[activecpu].memory_read;
 			memorywrite = Machine->drv->cpu[activecpu].memory_write;
 
+			RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+			/* opcode decryption is currently supported only for the first memory region */
+			if (activecpu == 0) ROM = ROM0;
+			else ROM = RAM;
+
 			switch(Machine->drv->cpu[activecpu].cpu_type)
 			{
 				case CPU_Z80:
-					for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
-						Z80_Execute();
+					{
+						struct z80context *ctxt;
+
+
+						ctxt = (struct z80context *)cpucontext[activecpu];
+
+						Z80_SetRegs(&ctxt->regs);
+						Z80_ICount = ctxt->icount;
+						Z80_IPeriod = ctxt->iperiod;
+						Z80_IRQ = ctxt->irq;
+
+						for (loops = 0;loops < Machine->drv->cpu[activecpu].interrupts_per_frame;loops++)
+							Z80_Execute();
+
+						Z80_GetRegs(&ctxt->regs);
+						ctxt->icount = Z80_ICount;
+						ctxt->iperiod = Z80_IPeriod;
+						ctxt->irq = Z80_IRQ;
+					}
 					break;
 
 				case CPU_M6502:
@@ -166,6 +212,16 @@ int input_port_5_r(int offset)
 
 
 
+
+/***************************************************************************
+
+  Interrupt handling
+
+***************************************************************************/
+
+int Z80_IRQ;	/* needed by the CPU emulation */
+
+
 /* start with interrupts enabled, so the generic routine will work even if */
 /* the machine doesn't have an interrupt enable port */
 static int interrupt_enable = 1;
@@ -174,6 +230,8 @@ static int interrupt_vector = 0xff;
 void interrupt_enable_w(int offset,int data)
 {
 	interrupt_enable = data;
+
+	if (data == 0) Z80_IRQ = Z80_IGNORE_INT;	/* make sure there are no queued interrupts */
 }
 
 
@@ -181,6 +239,8 @@ void interrupt_enable_w(int offset,int data)
 void interrupt_vector_w(int offset,int data)
 {
 	interrupt_vector = data;
+
+	Z80_IRQ = Z80_IGNORE_INT;	/* make sure there are no queued interrupts */
 }
 
 
@@ -259,7 +319,7 @@ int cpu_readmem(register int A)
 		mra++;
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped memory address %04x\n",Z80_GetPC(),A);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,Z80_GetPC(),A);
 	return RAM[A];
 }
 
@@ -287,7 +347,7 @@ void cpu_writemem(register int A,register unsigned char V)
 			else if (handler == MWA_RAM) RAM[A] = V;
 			else if (handler == MWA_ROM)
 			{
-				if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to ROM address %04x\n",Z80_GetPC(),V,A);
+				if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",activecpu,Z80_GetPC(),V,A);
 			}
 			else (*handler)(A - mwa->start,V);
 
@@ -297,7 +357,7 @@ void cpu_writemem(register int A,register unsigned char V)
 		mwa++;
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to unmapped memory address %04x\n",Z80_GetPC(),V,A);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,Z80_GetPC(),V,A);
 	RAM[A] = V;
 }
 
@@ -326,7 +386,7 @@ byte Z80_In(byte Port)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped I/O port %02x\n",Z80_GetPC(),Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",activecpu,Z80_GetPC(),Port);
 	return 0;
 }
 
@@ -357,7 +417,7 @@ void Z80_Out(byte Port,byte Value)
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to unmapped I/O port %02x\n",Z80_GetPC(),Value,Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",activecpu,Z80_GetPC(),Value,Port);
 }
 
 
@@ -368,8 +428,6 @@ void Z80_Out(byte Port,byte Value)
   (determined by IPeriod) by the CPU emulation.
 
 ***************************************************************************/
-
-int Z80_IRQ = Z80_IGNORE_INT;	/* needed by the CPU emulation */
 
 int cpu_interrupt(void)
 {
