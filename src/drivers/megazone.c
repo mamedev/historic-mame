@@ -15,8 +15,15 @@ extern unsigned char *megazone_scrolly;
 
 static unsigned char *megazone_sharedram;
 
+extern unsigned char *megazone_videoram2;
+extern unsigned char *megazone_colorram2;
+extern int megazone_videoram2_size;
+
 static int i8039_irqenable;
 static int i8039_status;
+
+int megazone_vh_start(void);
+void megazone_vh_stop(void);
 
 void megazone_flipscreen_w(int offset,int data);
 void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -31,17 +38,24 @@ void megazone_init_machine(void)
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
-int megazone_sh_timer_r(int offset)
+int megazone_portA_r(int offset)
 {
-	int timer;
+	int clock,timer;
 
-//#define MEGAZONE_TIMER_RATE (14318180/6144)
 
-//	clock = (cpu_gettotalcycles()*4) / MEGAZONE_TIMER_RATE;
-	timer = (cpu_gettotalcycles() / 1024) & 0x0f;
+	/* main xtal 14.318MHz, divided by 8 to get the AY-3-8910 clock, further */
+	/* divided by 1024 to get this timer */
+	/* The base clock for the CPU and 8910 is NOT the same, so we have to */
+	/* compensate. */
+	/* (divide by (1024/2), and not 1024, because the CPU cycle counter is */
+	/* incremented every other state change of the clock) */
+
+	clock = cpu_gettotalcycles() * 7159/12288;	/* = (14318/8)/(18432/6) */
+	timer = (clock / (1024/2)) & 0x0f;
 
 	/* low three bits come from the 8039 */
-	return (timer & 0xF)<<4 | i8039_status;
+
+	return (timer << 4) | i8039_status;
 }
 
 static void megazone_portB_w(int offset,int data)
@@ -55,13 +69,33 @@ static void megazone_portB_w(int offset,int data)
 
 
 		C = 0;
-		if (data & 1) C += 47000;	/* 47000pF = 0.047uF */
+		if (data & 1) C +=  10000;	/*  10000pF = 0.01uF */
 		if (data & 2) C += 220000;	/* 220000pF = 0.22uF */
 		data >>= 2;
 		set_RC_filter(i,1000,2200,200,C);
 	}
 }
 
+void megazone_videoram2_w(int offset,int data)
+{
+	if (megazone_videoram2[offset] != data)
+	{
+		megazone_videoram2[offset] = data;
+	}
+}
+
+void megazone_colorram2_w(int offset,int data)
+{
+	if (megazone_colorram2[offset] != data)
+	{
+		megazone_colorram2[offset] = data;
+	}
+}
+
+int megazone_dip3_r(int offset)
+{
+	return(0xff);
+}
 
 int megazone_sharedram_r(int offset)
 {
@@ -87,9 +121,10 @@ void i8039_irqen_and_status_w(int offset,int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x2000, 0x33ff, MRA_RAM },
-	{ 0x6000, 0xffff, MRA_ROM },
+	{ 0x2000, 0x2fff, MRA_RAM },
+	{ 0x3000, 0x33ff, MRA_RAM },
 	{ 0x3800, 0x3fff, megazone_sharedram_r },
+	{ 0x4000, 0xffff, MRA_ROM },		/* 4000->5FFF is a debug rom */
 	{ -1 }  /* end of table */
 };
 
@@ -97,44 +132,40 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0007, 0x0007, interrupt_enable_w },
 	{ 0x0800, 0x0800, watchdog_reset_w },
-
-	{ 0x3800, 0x3fff, megazone_sharedram_w },
-
 	{ 0x1800, 0x1800, MWA_RAM, &megazone_scrollx },
 	{ 0x1000, 0x1000, MWA_RAM, &megazone_scrolly },
-	{ 0x2000, 0x27ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, colorram_w, &colorram },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x6000, 0xffff, MWA_ROM },
+	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
+	{ 0x2400, 0x27ff, megazone_videoram2_w, &megazone_videoram2, &megazone_videoram2_size },
+	{ 0x2800, 0x2bff, colorram_w, &colorram },
+	{ 0x2c00, 0x2fff, megazone_colorram2_w, &megazone_colorram2 },
+	{ 0x3000, 0x33ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x3800, 0x3fff, megazone_sharedram_w, &megazone_sharedram },
+	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0xe000, 0xe7ff, megazone_sharedram_r, &megazone_sharedram },  /* Shared with $3800->3fff of main CPU */
-
 	{ 0x6000, 0x6000, input_port_0_r }, /* IO Coin */
 	{ 0x6001, 0x6001, input_port_1_r }, /* P1 IO */
 	{ 0x6002, 0x6002, input_port_2_r }, /* P2 IO */
-	{ 0x8001, 0x8001, input_port_3_r }, /* DIP 1 */
+	{ 0x6003, 0x6003, input_port_3_r }, /* DIP 1 */
 	{ 0x8000, 0x8000, input_port_4_r }, /* DIP 2 */
-
+	{ 0x8001, 0x8001, megazone_dip3_r }, /* DIP 3 - Not used */
+	{ 0xe000, 0xe7ff, megazone_sharedram_r },  /* Shared with $3800->3fff of main CPU */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0xe000, 0xe7ff, megazone_sharedram_w },	/* Shared with $3800->3fff of main CPU */
-
 	{ 0x2000, 0x2000, megazone_i8039_irq_w },	/* START line. Interrupts 8039 */
 	{ 0x4000, 0x4000, soundlatch_w },			/* CODE  line. Command Interrupts 8039 */
-	{ 0xA000, 0xA000, MWA_RAM },				/* INTMAIN - Interrupts main CPU (unused) */
-	{ 0xC000, 0xC000, MWA_RAM },				/* INT (Actually is NMI) enable/disable (unused)*/
-	{ 0xC001, 0xC001, watchdog_reset_w },
-
+	{ 0xa000, 0xa000, MWA_RAM },				/* INTMAIN - Interrupts main CPU (unused) */
+	{ 0xc000, 0xc000, MWA_RAM },				/* INT (Actually is NMI) enable/disable (unused)*/
+	{ 0xc001, 0xc001, watchdog_reset_w },
+	{ 0xe000, 0xe7ff, megazone_sharedram_w },	/* Shared with $3800->3fff of main CPU */
 	{ -1 }  /* end of table */
 };
 
@@ -207,7 +238,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_START      /* DSW0 */
+	PORT_START      /* DSW1 */
 
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -244,7 +275,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
-	PORT_START      /* DSW1 */
+	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
@@ -268,6 +299,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
 INPUT_PORTS_END
 
 
@@ -303,13 +335,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
 	{ 30 },
 	AY8910_DEFAULT_GAIN,
-	{ megazone_sh_timer_r },
+	{ megazone_portA_r },
 	{ 0 },
 	{ 0 },
 	{ megazone_portB_w }
@@ -320,6 +354,8 @@ static struct DACinterface dac_interface =
 	1,
 	{ 50 }
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -334,7 +370,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80,
-			18420000/6,     /* Z80 Clock is derived from the H1 signal */
+			18432000/6,     /* Z80 Clock is derived from the H1 signal */
 			3,      /* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1
@@ -352,15 +388,15 @@ static struct MachineDriver machine_driver =
 	megazone_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	36*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,16*16+16*16,
 	megazone_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	megazone_vh_start,
+	megazone_vh_stop,
 	megazone_vh_screenrefresh,
 
 	/* sound hardware */
@@ -401,10 +437,12 @@ ROM_START( megazone_rom )
 	ROM_LOAD( "ic14_vid.bin",  0x8000, 0x2000, 0x7bb1aeee )
 	ROM_LOAD( "ic04_vid.bin",  0xa000, 0x2000, 0x6add71b1 )
 
-	ROM_REGION(0x220)      /* color proms */
+	ROM_REGION(0x260)      /* PROMs */
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
 	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
+	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "ic25_cpu.bin", 0x0000, 0x2000, 0xd5d45edb )
@@ -435,7 +473,7 @@ struct GameDriver megazone_driver =
 	"1983",
 	"Konami / Interlogic + Kosuka",
 	"Chris Hardy",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 

@@ -696,137 +696,137 @@ static s_command commands[] = {
 	"Set screen size to default [or to <columns> x <lines>]",
 	cmd_set_screen_size },
 {   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_UP,
+	0,				0,			KEYCODE_UP,
 	"",
 	"Move cursor up in disassembly window",
 	cmd_dasm_up },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_DOWN,
+	0,				0,			KEYCODE_DOWN,
 	"",
 	"Move cursor down in disassembly window",
 	cmd_dasm_down },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_PGUP,
+	0,				0,			KEYCODE_PGUP,
 	"",
 	"Move cursor up one page in disassembly window",
 	cmd_dasm_page_up },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_PGDN,
+	0,				0,			KEYCODE_PGDN,
 	"",
 	"Move cursor down one page in disassembly window",
 	cmd_dasm_page_down },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_HOME,
+	0,				0,			KEYCODE_HOME,
 	"",
 	"Move cursor to first page in disassembly window",
 	cmd_dasm_home },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_END,
+	0,				0,			KEYCODE_END,
 	"",
 	"Move cursor to last page in disassembly window",
 	cmd_dasm_end },
 {   (1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_LEFT,
+	0,				0,			KEYCODE_LEFT,
 	"",
 	"Back to the previous point in 'follow history'",
 	cmd_dasm_hist_back },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_RIGHT,
+	0,				0,			KEYCODE_RIGHT,
 	"",
 	"Follow the current instruction's code or data reference",
 	cmd_dasm_hist_follow },
 {   ALL,
-	0,				0,			OSD_KEY_TAB,
+	0,				0,			KEYCODE_TAB,
 	"",
 	"Switch between windows (backwards SHIFT+TAB)",
 	cmd_switch_window },
 {	(1<<EDIT_DASM),
-    0,              0,          OSD_KEY_D,
+    0,              0,          KEYCODE_D,
     "",
     "Change disassembly case style to default",
     NULL },
 {	(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_L,
+	0,				0,			KEYCODE_L,
     "",
 	"Change disassembly case style to lower case",
     NULL },
 {	(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_U,
+	0,				0,			KEYCODE_U,
     "",
 	"Change disassembly case style to upper case",
     NULL },
 {	(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_M,
+	0,				0,			KEYCODE_M,
     "",
 	"Toggle disassembly opcode display mode",
     NULL },
 {	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
-	0,				0,			OSD_KEY_H,
+	0,				0,			KEYCODE_H,
     "",
 	"Toggle between hex, ASCII and full character set mode",
     NULL },
 {   (1<<EDIT_MEM1)|(1<<EDIT_MEM2),
-	0,				0,			OSD_KEY_M,
+	0,				0,			KEYCODE_M,
     "",
 	"Switch memory display mode between bytes, words and dwords",
     NULL },
 {	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
-	0,				0,			OSD_KEY_S,
+	0,				0,			KEYCODE_S,
     "",
 	"Search memory for a sequence of bytes",
 	cmd_search_memory },
 {   ALL,
-	0,				0,			OSD_KEY_F1,
+	0,				0,			KEYCODE_F1,
 	"",
     "Help - maybe you realized this ;)",
 	cmd_help },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_F2,
+	0,				0,			KEYCODE_F2,
 	"",
 	"Toggle breakpoint at current cursor position",
 	cmd_brk_exec_toggle },
 {	(1<<EDIT_CMDS)|(1<<EDIT_DASM),
-	0,				0,			OSD_KEY_F4,
+	0,				0,			KEYCODE_F4,
 	"",
 	"Run to cursor",
 	cmd_run_to_cursor },
 {	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
-	0,				0,			OSD_KEY_F4,
+	0,				0,			KEYCODE_F4,
 	"",
 	"Set data watchpoint to current memory location",
 	cmd_brk_data_toggle },
 {   ALL,
-	0,				0,			OSD_KEY_F5,
+	0,				0,			KEYCODE_F5,
 	"",
 	"View emulation screen",
 	cmd_view_screen },
 {	ALL,
-	0,				0,			OSD_KEY_F6,
+	0,				0,			KEYCODE_F6,
 	"",
 	"Set the focus to the next (not ignored) CPU",
 	cmd_focus_next_cpu },
 {	ALL,
-	0,				0,			OSD_KEY_F8,
+	0,				0,			KEYCODE_F8,
 	"",
 	"Step one instruction",
 	cmd_step },
 {	ALL,
-	0,				0,			OSD_KEY_F9,
+	0,				0,			KEYCODE_F9,
 	"",
 	"Animate (trace) at speed set by last \"A\" command",
 	cmd_animate },
 {	ALL,
-	0,				0,			OSD_KEY_F10,
+	0,				0,			KEYCODE_F10,
 	"",
 	"Step over instruction at cursor (ie. execute call, jsr or bsr)",
 	cmd_step_over },
 {	ALL,
-	0,				0,			OSD_KEY_F12,
+	0,				0,			KEYCODE_F12,
 	"",
 	"Go!",
 	cmd_go },
 {	ALL,
-	0,				0,			OSD_KEY_ESC,
+	0,				0,			KEYCODE_ESC,
 	"",
 	"Go!",
 	cmd_go },
@@ -1963,7 +1963,7 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
 	va_end( arg );
 
     win_show( win );
-    i = osd_debug_readkey();
+    i = keyboard_debug_readkey();
     win_close( win );
 
     return i;
@@ -2656,8 +2656,8 @@ static void edit_regs( void )
     win_set_curpos( win, pedit[regs->idx].x + pedit[regs->idx].n + regs->nibble, pedit[regs->idx].y );
 	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = osd_debug_readkey();
-	k = osd_key_name(i);
+    i = keyboard_debug_readkey();
+	k = keyboard_key_name(i);
 
 	shift = (pedit->w - 1 - regs->nibble) * 4;
 	mask = ~(0x0000000f << shift);
@@ -2677,13 +2677,13 @@ static void edit_regs( void )
 				cpu_set_reg( regs->id[regs->idx],
 					( cpu_get_reg( regs->id[regs->idx] ) & mask ) | val );
 				dump_regs();
-				i = OSD_KEY_RIGHT;	/* advance to next nibble */
+				i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
 	}
 
     switch( i )
     {
-		case OSD_KEY_LEFT:
+		case KEYCODE_LEFT:
 			if( --regs->nibble < 0 )
 			{
 				if( --regs->idx < 0 )
@@ -2694,7 +2694,7 @@ static void edit_regs( void )
 			}
 			break;
 
-		case OSD_KEY_RIGHT:
+		case KEYCODE_RIGHT:
 			if( ++regs->nibble >= pedit[regs->idx].w )
 			{
 				regs->nibble = 0;
@@ -2705,7 +2705,7 @@ static void edit_regs( void )
             }
             break;
 
-		case OSD_KEY_UP:
+		case KEYCODE_UP:
 			i = regs->idx;
             x = pedit[regs->idx].x;
 			y = pedit[regs->idx].y;
@@ -2729,7 +2729,7 @@ static void edit_regs( void )
 			}
             break;
 
-		case OSD_KEY_DOWN:
+		case KEYCODE_DOWN:
 			i = regs->idx;
 			x = pedit[regs->idx].x;
 			y = pedit[regs->idx].y;
@@ -2753,7 +2753,7 @@ static void edit_regs( void )
             }
             break;
 
-		case OSD_KEY_ENTER:
+		case KEYCODE_ENTER:
 			DBG.window = EDIT_CMDS;
 			break;
 
@@ -2779,37 +2779,37 @@ static void edit_dasm(void)
 
 	osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-    i = osd_debug_readkey();
-	k = osd_key_name(i);
+    i = keyboard_debug_readkey();
+	k = keyboard_key_name(i);
 
     switch( i )
     {
-		case OSD_KEY_M: /* Toggle mode (opcode display) */
+		case KEYCODE_M: /* Toggle mode (opcode display) */
 			sprintf( CMD, "%d", dbg_dasm_opcodes ^ 1 );
 			cmd_set_dasm_opcodes();
 			break;
 
-		case OSD_KEY_D: /* Default case disassembly */
+		case KEYCODE_D: /* Default case disassembly */
 			dbg_dasm_case = 0;
             update_window = 1;
             break;
 
-		case OSD_KEY_L: /* Lower case disassembly */
+		case KEYCODE_L: /* Lower case disassembly */
 			dbg_dasm_case = 1;
 			update_window = 1;
             break;
 
-		case OSD_KEY_U: /* Upper case disassembly */
+		case KEYCODE_U: /* Upper case disassembly */
 			dbg_dasm_case = 2;
             update_window = 1;
             break;
 
-		case OSD_KEY_R: /* Toggle relative jumps display */
+		case KEYCODE_R: /* Toggle relative jumps display */
 			dbg_dasm_relative_jumps ^= 1;
             update_window = 1;
             break;
 
-        case OSD_KEY_ENTER:
+        case KEYCODE_ENTER:
 			DBG.window = EDIT_CMDS;
 			break;
 
@@ -2855,8 +2855,8 @@ static void edit_mem( int which )
 	}
 	win_set_title( win, name_memory( DBGMEM[which].address ) );
 
-    i = osd_debug_readkey();
-	k = osd_key_name(i);
+    i = keyboard_debug_readkey();
+	k = keyboard_key_name(i);
 
 	shift = (pedit[DBGMEM[which].offset].w - 1 - DBGMEM[which].nibble) * 4;
 	mask = ~(0x0f << shift);
@@ -2875,13 +2875,13 @@ static void edit_mem( int which )
 				/* now modify the register */
 				WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
 				update_window = 1;
-				i = OSD_KEY_RIGHT;	/* advance to next nibble */
+				i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
 	}
 
     switch( i )
     {
-        case OSD_KEY_LEFT:
+        case KEYCODE_LEFT:
 			if( --DBGMEM[which].nibble < 0 )
 			{
 				if( --DBGMEM[which].offset < 0 )
@@ -2894,7 +2894,7 @@ static void edit_mem( int which )
 			}
 			break;
 
-		case OSD_KEY_RIGHT:
+		case KEYCODE_RIGHT:
 			if( ++DBGMEM[which].nibble >= pedit[DBGMEM[which].offset].w )
 			{
 				DBGMEM[which].nibble = 0;
@@ -2907,7 +2907,7 @@ static void edit_mem( int which )
             }
             break;
 
-		case OSD_KEY_UP:
+		case KEYCODE_UP:
 			DBGMEM[which].offset -= DBGMEM[which].bytes;
 			if( DBGMEM[which].offset < 0 )
 			{
@@ -2917,7 +2917,7 @@ static void edit_mem( int which )
             }
 			break;
 
-		case OSD_KEY_DOWN:
+		case KEYCODE_DOWN:
 			DBGMEM[which].offset += DBGMEM[which].bytes;
 			if( DBGMEM[which].offset >= DBGMEM[which].size )
             {
@@ -2927,42 +2927,42 @@ static void edit_mem( int which )
             }
             break;
 
-		case OSD_KEY_PGUP:
+		case KEYCODE_PGUP:
 			DBGMEM[which].base = (DBGMEM[which].base - DBGMEM[which].size) & AMASK;
 			update_window = 1;
             break;
 
-		case OSD_KEY_PGDN:
+		case KEYCODE_PGDN:
 			DBGMEM[which].base = (DBGMEM[which].base + DBGMEM[which].size) & AMASK;
             update_window = 1;
             break;
 
-		case OSD_KEY_HOME:
+		case KEYCODE_HOME:
 			DBGMEM[which].offset = 0;
 			DBGMEM[which].base = 0x00000000;
             update_window = 1;
             break;
 
-		case OSD_KEY_END:
+		case KEYCODE_END:
 			DBGMEM[which].offset = DBGMEM[which].size - 1;
 			DBGMEM[which].base = (0xffffffff - DBGMEM[which].offset) & AMASK;
             update_window = 1;
             break;
 
-		case OSD_KEY_H:
+		case KEYCODE_H:
 			DBGMEM[which].ascii = (DBGMEM[which].ascii + 1) % 3;
 			update_window = 1;
 			break;
 
 
-        case OSD_KEY_M:
+        case KEYCODE_M:
 			DBGMEM[which].mode = ++(DBGMEM[which].mode) % 3;
 			/* Reset cursor coordinates and sizes of the edit info */
 			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 			update_window = 1;
 			break;
 
-		case OSD_KEY_ENTER:
+		case KEYCODE_ENTER:
 			DBG.window = EDIT_CMDS;
 			break;
 
@@ -3108,8 +3108,8 @@ static void edit_cmds(void)
 
 	cmd = edit_cmds_info();
 
-	i = osd_debug_readkey();
-	k = osd_key_name(i);
+	i = keyboard_debug_readkey();
+	k = keyboard_key_name(i);
 	l = strlen(k);
 
 	if( l == 1 )
@@ -3117,7 +3117,7 @@ static void edit_cmds(void)
 
     switch( i )
     {
-		case OSD_KEY_SPACE:
+		case KEYCODE_SPACE:
 			/*
 			 * Command completion for convenience:
 			 * found a valid command and no space in the command line yet?
@@ -3131,19 +3131,7 @@ static void edit_cmds(void)
 			edit_cmds_append(" ");
 			break;
 
-        case OSD_KEY_EQUALS:
-			if( l > 1 ) edit_cmds_append("=");
-			break;
-
-		case OSD_KEY_SLASH:
-			if( l > 1 ) edit_cmds_append("/");
-			break;
-
-        case OSD_KEY_STOP:
-			if( l > 1 ) edit_cmds_append(".");
-			break;
-
-        case OSD_KEY_BACKSPACE:
+        case KEYCODE_BACKSPACE:
             if( strlen(cmdline) > 0 )
             {
                 cmdline[strlen(cmdline)-1] = '\0';
@@ -3151,7 +3139,7 @@ static void edit_cmds(void)
             }
             break;
 
-		case OSD_KEY_ENTER:
+		case KEYCODE_ENTER:
 			if( strlen(cmdline) )
             {
 				cmd = edit_cmds_parse( cmdline );
@@ -3162,7 +3150,7 @@ static void edit_cmds(void)
 			else
 			{
 				/* ENTER in an empty line: do single step... */
-                i = OSD_KEY_F8;
+                i = KEYCODE_F8;
 			}
 			/* fall through */
         default:
@@ -3290,7 +3278,7 @@ static void cmd_help( void )
             }
             else
 			{
-				dst += sprintf( dst, "[%s]\t%s", osd_key_name(commands[i].key), commands[i].info ) + 1;
+				dst += sprintf( dst, "[%s]\t%s", keyboard_key_name(commands[i].key), commands[i].info ) + 1;
 			}
         }
     }
@@ -3329,36 +3317,36 @@ static void cmd_help( void )
             l++;
         } while( l < win_get_h(win) );
 
-        k = osd_debug_readkey();
+        k = keyboard_debug_readkey();
         switch( k )
         {
-            case OSD_KEY_UP:
+            case KEYCODE_UP:
                 if( top > 0 )
                     top--;
-				k = OSD_KEY_NONE;
+				k = KEYCODE_NONE;
                 break;
-            case OSD_KEY_ENTER:
-            case OSD_KEY_DOWN:
+            case KEYCODE_ENTER:
+            case KEYCODE_DOWN:
                 if( top < lines - h )
                     top++;
-				k = OSD_KEY_NONE;
+				k = KEYCODE_NONE;
                 break;
-            case OSD_KEY_PGUP:
+            case KEYCODE_PGUP:
                 if( top - h > 0 )
                     top -= h;
                 else
                     top = 0;
-				k = OSD_KEY_NONE;
+				k = KEYCODE_NONE;
                 break;
-            case OSD_KEY_PGDN:
+            case KEYCODE_PGDN:
                 if( top + h < lines - h )
                     top += h;
                 else
                     top = lines - h;
-				k = OSD_KEY_NONE;
+				k = KEYCODE_NONE;
                 break;
         }
-	} while( k == OSD_KEY_NONE );
+	} while( k == KEYCODE_NONE );
 
     free( help );
 
@@ -4014,8 +4002,8 @@ static void cmd_search_memory(void)
 		win_set_curpos( win, offset * 3 + nibble, 0 );
 		osd_set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
-        i = osd_debug_readkey();
-		k = osd_key_name(i);
+        i = keyboard_debug_readkey();
+		k = keyboard_key_name(i);
 
 		shift = (1 - nibble) * 4;
 		mask = ~(0xf << shift);
@@ -4037,14 +4025,14 @@ static void cmd_search_memory(void)
 					val <<= shift;
 					/* now modify the register */
 					search_data[offset] = (search_data[offset] & mask ) | val;
-					i = OSD_KEY_RIGHT;	/* advance to next nibble */
+					i = KEYCODE_RIGHT;	/* advance to next nibble */
                     break;
             }
 		}
 
 		switch( i )
 		{
-			case OSD_KEY_DEL:
+			case KEYCODE_DEL:
 				if( offset < search_count )
 				{
 					for( i = offset; i < 15; i++ )
@@ -4053,7 +4041,7 @@ static void cmd_search_memory(void)
 				}
                 break;
 
-			case OSD_KEY_INSERT:
+			case KEYCODE_INSERT:
 				if( search_count < 16 )
 				{
 					for( i = 15; i > offset; i-- )
@@ -4063,7 +4051,7 @@ static void cmd_search_memory(void)
 				}
                 break;
 
-            case OSD_KEY_BACKSPACE:
+            case KEYCODE_BACKSPACE:
 				if( nibble > 0 || offset > 0 )
 				{
 					if( nibble > 0 )
@@ -4083,7 +4071,7 @@ static void cmd_search_memory(void)
 				}
 				break;
 
-			case OSD_KEY_LEFT:
+			case KEYCODE_LEFT:
 				if( nibble > 0 )
 				{
 					nibble--;
@@ -4096,7 +4084,7 @@ static void cmd_search_memory(void)
 				}
 				break;
 
-			case OSD_KEY_RIGHT:
+			case KEYCODE_RIGHT:
 				if( offset < search_count )
 				{
 					if( nibble < 1 )
@@ -4111,19 +4099,19 @@ static void cmd_search_memory(void)
 				}
 				break;
 
-			case OSD_KEY_HOME:
+			case KEYCODE_HOME:
 				offset = 0;
 				nibble = 0;
 				break;
 
-			case OSD_KEY_END:
+			case KEYCODE_END:
 				offset = search_count;
 				nibble = 0;
 				break;
 		}
-	} while( i != OSD_KEY_ENTER && i != OSD_KEY_ESC );
+	} while( i != KEYCODE_ENTER && i != KEYCODE_ESC );
 
-	if( i == OSD_KEY_ENTER && search_count > 0 )
+	if( i == KEYCODE_ENTER && search_count > 0 )
 	{
 		static char dbg_info[32+1];
 		unsigned addr, start;
@@ -4746,7 +4734,7 @@ static void cmd_view_screen( void )
 	{
 		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
 		osd_update_video_and_audio();
-	} while( !osd_key_pressed_memory(OSD_KEY_ANY) );
+	} while( !keyboard_key_pressed_memory(KEYCODE_ANY) );
 
 	osd_set_screen_size( w, h );
 	win_invalidate_video();
@@ -4824,7 +4812,7 @@ static void cmd_step_over( void )
  **************************************************************************/
 static void cmd_switch_window( void )
 {
-	if( osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT) )
+	if( keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT) )
 		DBG.window = --DBG.window % DBG_WINDOWS;
 	else
 		DBG.window = ++DBG.window % DBG_WINDOWS;
@@ -5070,7 +5058,7 @@ void MAME_Debug(void)
     if( ++debug_key_delay == 0x7fff )
     {
         debug_key_delay = 0;
-        debug_key_pressed = osd_key_pressed (OSD_KEY_DEBUGGER);
+        debug_key_pressed = keyboard_key_pressed(input_port_type_key(IPT_UI_ON_SCREEN_DISPLAY));
     }
 
     if( dbg_fast )
@@ -5166,7 +5154,7 @@ void MAME_Debug(void)
 			{
 				trace_delay = 0;
 
-				if( osd_key_pressed(OSD_KEY_SPACE) )
+				if( keyboard_key_pressed(KEYCODE_SPACE) )
 				{
 					dbg_trace = 0;
 					dbg_step = 0;

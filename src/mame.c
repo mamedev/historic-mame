@@ -33,7 +33,7 @@ int run_machine(void);
 
 static int validitychecks(void)
 {
-	int i;
+	int i,j;
 
 	for (i = 0;drivers[i];i++)
 	{
@@ -43,6 +43,43 @@ static int validitychecks(void)
 		{
 			printf("%s is set as a clone of itself\n",drivers[i]->name);
 			return 1;
+		}
+
+		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
+		{
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+extern struct GameDriver neogeo_bios;
+if (drivers[i]->clone_of->clone_of != &neogeo_bios)
+{
+#endif
+#endif
+			printf("%s is a clone of a clone\n",drivers[i]->name);
+			return 1;
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+}
+#endif
+#endif
+		}
+
+		for (j = i+1;drivers[j];j++)
+		{
+			if (!strcmp(drivers[i]->name,drivers[j]->name))
+			{
+				printf("%s is a duplicate name (%s, %s)\n",drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
+				return 1;
+			}
+			if (!strcmp(drivers[i]->description,drivers[j]->description))
+			{
+				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
+				return 1;
+			}
+			if (drivers[i]->rom == drivers[j]->rom)
+			{
+				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
+				return 1;
+			}
 		}
 
 		romp = drivers[i]->rom;
@@ -448,6 +485,7 @@ int run_machine(void)
 	if (vh_open() == 0)
 	{
 		tilemap_init();
+		sprite_init();
 		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)      /* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
@@ -517,6 +555,7 @@ userquit:
 			printf("Unable to start video emulation\n");
 		}
 
+		sprite_close();
 		tilemap_close();
 		vh_close();
 	}

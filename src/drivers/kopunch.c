@@ -40,8 +40,8 @@ void kopunch_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 static int bank=0;
 
-if (osd_key_pressed_memory(OSD_KEY_Z)) bank--;
-if (osd_key_pressed_memory(OSD_KEY_X)) bank++;
+if (keyboard_key_pressed_memory(KEYCODE_Z)) bank--;
+if (keyboard_key_pressed_memory(KEYCODE_X)) bank++;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -91,9 +91,9 @@ if (osd_key_pressed_memory(OSD_KEY_X)) bank++;
 
 int kopunch_interrupt(void)
 {
-	if (osd_key_pressed(OSD_KEY_Q)) return 0xef;	/* RST 28h */
-	if (osd_key_pressed(OSD_KEY_W)) return 0xf7;	/* RST 30h */
-	if (osd_key_pressed(OSD_KEY_E)) return 0xff;	/* RST 38h */
+	if (keyboard_key_pressed(KEYCODE_Q)) return 0xef;	/* RST 28h */
+	if (keyboard_key_pressed(KEYCODE_W)) return 0xf7;	/* RST 30h */
+	if (keyboard_key_pressed(KEYCODE_E)) return 0xff;	/* RST 38h */
 
 	return ignore_interrupt();
 }

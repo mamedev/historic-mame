@@ -90,3 +90,13 @@ int combatsc_workram_r( int offset ){
 void combatsc_workram_w( int offset, int data ){
 	combatsc_workram[offset] = data;
 }
+
+void combatsc_coin_counter_w(int offset,int data){
+	/* b7-b3: unused? */
+	/* b1: coin counter 2 */
+	/* b0: coin counter 1 */
+
+	coin_counter_w(0,(data) & 0x01);
+	coin_counter_w(1,(data >> 1) & 0x01);
+}
+

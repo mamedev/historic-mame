@@ -2350,7 +2350,7 @@ INPUT_PORTS_START( boothill_input_ports )                                       
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
     PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
 INPUT_PORTS_END
 
 static struct MachineDriver boothill_machine_driver =                   /* MJC 310198 */
@@ -3233,7 +3233,7 @@ INPUT_PORTS_START( gunfight_input_ports )
 	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
     PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, KEYCODE_Z, KEYCODE_A, 0, 0 )
 INPUT_PORTS_END
 
 static struct MachineDriver gunfight_machine_driver =
@@ -3904,9 +3904,9 @@ INPUT_PORTS_START( spacefev_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BITX(0x08, 0x00, 0, "Start Game A", OSD_KEY_Q, IP_JOY_NONE )
-	PORT_BITX(0x10, 0x00, 0, "Start Game B", OSD_KEY_W, IP_JOY_NONE )
-	PORT_BITX(0x20, 0x00, 0, "Start Game C", OSD_KEY_E, IP_JOY_NONE )
+	PORT_BITX(0x08, 0x00, 0, "Start Game A", KEYCODE_Q, IP_JOY_NONE )
+	PORT_BITX(0x10, 0x00, 0, "Start Game B", KEYCODE_W, IP_JOY_NONE )
+	PORT_BITX(0x20, 0x00, 0, "Start Game C", KEYCODE_E, IP_JOY_NONE )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* If on low the game doesn't start */
 
@@ -6231,7 +6231,7 @@ INPUT_PORTS_START( sitv_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_START		/* TEST MODE */
-	PORT_BITX(0x01,  0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01,  0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( 0x00, "On" )
 	PORT_DIPSETTING( 0x01, "Off" )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )

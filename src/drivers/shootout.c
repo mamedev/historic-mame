@@ -7,11 +7,10 @@ Phil Stroffolino
 
 TODO:
 - Verify Controls and Dipswitches mapped correctly ( eg: No sound on attract mode, even when its on ).
-- Fix the sprites priorities. The current implementation seems incorrect.
 - Add cocktail support.
 */
 
-void shootout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
                               0x80, 0x90, 0xc0, 0xd0, 0xa0, 0xb0, 0xe0, 0xf0};
@@ -21,6 +20,7 @@ static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
 #include "cpu/m6502/m6502.h"
 
 /* externals: from vidhrdw */
+extern int shootout_vh_start( void );
 extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 unsigned char *shootout_textram;
 
@@ -181,23 +181,22 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static struct GfxLayout char_layout =
 {
 	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
+	0x400,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 0,4 },	/* the bitplanes are packed in the same byte */
 	{ (0x2000*8)+0, (0x2000*8)+1, (0x2000*8)+2, (0x2000*8)+3, 0, 1, 2, 3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-
-static struct GfxLayout spritelayout =
+static struct GfxLayout sprite_layout =
 {
 	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
+	0x800,	/* 2048 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 0x8000*8, 0x10000*8 },	/* the bitplanes are separated */
+	{ 0*0x10000*8, 1*0x10000*8, 2*0x10000*8 },	/* the bitplanes are separated */
 	{ 128+0, 128+1, 128+2, 128+3, 128+4, 128+5, 128+6, 128+7, 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8	/* every char takes 32 consecutive bytes */
@@ -205,11 +204,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   16*4+8*8,	16	}, /* characters */
-	{ 1, 0x28000, &spritelayout, 16*4,		8	}, /* sprites */
-	{ 1, 0x10000, &spritelayout, 16*4,		8	}, /* sprites */
-	{ 1, 0x40000, &charlayout,   0,			16	}, /* tiles */
-	{ 1, 0x44000, &charlayout,   0,			16	}, /* tiles */
+	{ 1, 0x30000, &char_layout,   16*4+8*8,	16	}, /* characters */
+	{ 1, 0x00000, &sprite_layout, 16*4,		8	}, /* sprites */
+	{ 1, 0x34000, &char_layout,   0,		16	}, /* tiles */
+	{ 1, 0x38000, &char_layout,   0,		16	}, /* tiles */
 	{ -1 } /* end of array */
 };
 
@@ -267,11 +265,11 @@ static struct MachineDriver machine_driver =
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	256,256,
-	shootout_vh_convert_color_prom,
+	btime_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
+	shootout_vh_start,
 	generic_vh_stop,
 	shootout_vh_screenrefresh,
 
@@ -294,23 +292,28 @@ ROM_START( shootout_rom )
 	ROM_LOAD( "cu02.c3",        0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
 	ROM_LOAD( "cu01.c1",        0x18000, 0x4000, 0x8843c3ae ) /* opcodes encrypted */
 
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cu11.h19",       0x00000, 0x4000, 0xeff00460 ) /* characters (foreground) */
-	ROM_LOAD( "cu03.c5",        0x10000, 0x8000, 0xb786bb3e ) /* sprites */
-	ROM_LOAD( "cu05.c9",        0x18000, 0x8000, 0xdd038b85 ) /* sprites */
-	ROM_LOAD( "cu07.c12",       0x20000, 0x8000, 0x19b6b94f ) /* sprites */
-	ROM_LOAD( "cu04.c7",        0x28000, 0x8000, 0xceea6b20 ) /* sprites */
-	ROM_LOAD( "cu06.c10",       0x30000, 0x8000, 0x2ec1d17f ) /* sprites */
-	ROM_LOAD( "cu08.c13",       0x38000, 0x8000, 0x91290933 ) /* sprites */
-	ROM_LOAD( "cu10.h17",       0x40000, 0x8000, 0x3854c877 ) /* characters (background) */
+	ROM_REGION_DISPOSE(0x3c000)	/* temporary space for graphics (disposed after conversion) */
+	/* sprites */
+	ROM_LOAD( "cu04.c7",        0x00000, 0x8000, 0xceea6b20 ) /* plane 0 */
+	ROM_LOAD( "cu03.c5",        0x08000, 0x8000, 0xb786bb3e )
+	ROM_LOAD( "cu06.c10",       0x10000, 0x8000, 0x2ec1d17f ) /* plane 1 */
+	ROM_LOAD( "cu05.c9",        0x18000, 0x8000, 0xdd038b85 )
+	ROM_LOAD( "cu08.c13",       0x20000, 0x8000, 0x91290933 ) /* plane 2 */
+	ROM_LOAD( "cu07.c12",       0x28000, 0x8000, 0x19b6b94f )
+
+	ROM_LOAD( "cu11.h19",       0x30000, 0x4000, 0xeff00460 ) /* foreground characters */
+
+	ROM_LOAD( "cu10.h17",       0x34000, 0x8000, 0x3854c877 ) /* background tiles */
 
 	ROM_REGION(0x0100) /* color prom */
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "cu09.j1",        0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
-ROM_END
 
+	ROM_REGION(0x0100) /* unknown prom */
+	ROM_LOAD( "gb09.k6",        0x0000, 0x0100, 0xaa090565 )
+ROM_END
 
 
 static int hiload(void)

@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	vidhrdw/cyberbal.c
-	
+
 	Functions to emulate the video hardware of the machine.
 
 ****************************************************************************
@@ -79,12 +79,24 @@ struct mo_params
 
 /*************************************
  *
+ *		Globals we own
+ *
+ *************************************/
+
+unsigned char *cyberbal_playfieldram_1;
+unsigned char *cyberbal_playfieldram_2;
+
+
+
+/*************************************
+ *
  *		Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
 static int current_slip;
+static unsigned char *active_palette;
 
 
 
@@ -131,7 +143,7 @@ int cyberbal_vh_start(void)
 		16, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	/* reset statics */
 	memset(&pf_state, 0, sizeof(pf_state));
 	current_slip = 0;
@@ -139,14 +151,14 @@ int cyberbal_vh_start(void)
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -168,20 +180,134 @@ void cyberbal_vh_stop(void)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *		Palette tweaker
  *
  *************************************/
 
-void cyberbal_playfieldram_w(int offset, int data)
+INLINE void set_palette_entry(int entry, unsigned short value)
 {
-	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
+	int r, g, b;
+
+	r = ((value >> 9) & 0x3e) | ((value >> 15) & 1);
+	g = ((value >> 4) & 0x3e) | ((value >> 15) & 1);
+	b = ((value << 1) & 0x3e) | ((value >> 15) & 1);
+
+	r = (r << 2) | (r >> 4);
+	g = (g << 2) | (g >> 4);
+	b = (b << 2) | (b >> 4);
+
+	palette_change_color(entry, r, g, b);
+}
+
+
+
+/*************************************
+ *
+ *		Screen switcher
+ *
+ *************************************/
+
+void cyberbal_set_screen(int which)
+{
+	int i;
+
+	/* update the video memory areas */
+	atarigen_playfieldram = which ? cyberbal_playfieldram_2 : cyberbal_playfieldram_1;
+	atarigen_playfieldram_size = 0x2000;
+	atarigen_alpharam = atarigen_playfieldram + atarigen_playfieldram_size;
+	atarigen_alpharam_size = 0x1000;
+	atarigen_spriteram = atarigen_alpharam + atarigen_alpharam_size;
+	atarigen_spriteram_size = 0x1000;
+
+	/* pick the active palette */
+	active_palette = which ? paletteram_2 : paletteram;
+
+	/* re-init the palette */
+	for (i = 0; i < 2048; i++)
+		set_palette_entry(i, READ_WORD(&active_palette[i * 2]));
+
+	/* invalidate the screen */
+	memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
+}
+
+
+
+/*************************************
+ *
+ *		Playfield RAM write handlers
+ *
+ *************************************/
+
+void cyberbal_playfieldram_1_w(int offset, int data)
+{
+	int oldword = READ_WORD(&cyberbal_playfieldram_1[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	
+
 	if (oldword != newword)
 	{
-		WRITE_WORD(&atarigen_playfieldram[offset], newword);
-		atarigen_pf_dirty[offset / 2] = 0xff;
+		WRITE_WORD(&cyberbal_playfieldram_1[offset], newword);
+		if (cyberbal_playfieldram_1 == atarigen_playfieldram)
+			atarigen_pf_dirty[offset / 2] = 0xff;
 	}
+}
+
+
+void cyberbal_playfieldram_2_w(int offset, int data)
+{
+	int oldword = READ_WORD(&cyberbal_playfieldram_2[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&cyberbal_playfieldram_2[offset], newword);
+		if (cyberbal_playfieldram_2 == atarigen_playfieldram)
+			atarigen_pf_dirty[offset / 2] = 0xff;
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Palette RAM write handlers
+ *
+ *************************************/
+
+void cyberbal_paletteram_1_w(int offset, int data)
+{
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&paletteram[offset], newword);
+		if (paletteram == active_palette)
+			set_palette_entry(offset / 2, newword);
+	}
+}
+
+int cyberbal_paletteram_1_r(int offset)
+{
+	return READ_WORD(&paletteram[offset]);
+}
+
+
+void cyberbal_paletteram_2_w(int offset, int data)
+{
+	int oldword = READ_WORD(&paletteram_2[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+
+	if (oldword != newword)
+	{
+		WRITE_WORD(&paletteram_2[offset], newword);
+		if (paletteram_2 == active_palette)
+			set_palette_entry(offset / 2, newword);
+	}
+}
+
+int cyberbal_paletteram_2_r(int offset)
+{
+	return READ_WORD(&paletteram_2[offset]);
 }
 
 
@@ -199,7 +325,7 @@ void cyberbal_scanline_update(int scanline)
 	/* keep in range */
 	if ((unsigned char *)base >= &atarigen_alpharam[atarigen_alpharam_size])
 		return;
-		
+
 	/* update the playfield with the previous parameters */
 	atarigen_pf_update(&pf_state, scanline);
 
@@ -362,7 +488,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	unsigned short *colormap = (unsigned short *)param + 16 * state->param[0];
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	int x, y;
-	
+
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
@@ -371,7 +497,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int code = data & 0x1fff;
 			int color = (data >> 11) & 15;
 			colormap[color] |= usage[code];
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
 		}
@@ -399,16 +525,16 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 			int offs = y * 64 + x;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = colorbase + ((data >> 11) & 15);
-			
+
 			if (atarigen_pf_dirty[offs] != color)
 			{
 				int code = data & 0x1fff;
 				int hflip = data & 0x8000;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = color;
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -437,7 +563,7 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 	int code = data[0] & 0x7fff;
 	int vsize = (data[1] & 15) + 1;
 	int color = data[3] & 0x0f;
-	
+
 	for (y = 0; y < vsize; y++)
 		temp |= usage[code++];
 	colormap[color] |= temp;
@@ -462,17 +588,17 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int code = data[0] & 0x7fff;
 	int ypos = -(data[1] >> 7);
 	int vsize = (data[1] & 0x000f) + 1;
-	int xpos = (data[3] >> 6) - 5;
+	int xpos = (data[3] >> 6) - 4;
 	int hold_next = data[3] & 0x0010;
 	int color = data[3] & 0x000f;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
-	
+
 	/* if we've got a hold position from the last MO, use that */
 	if (modata->xhold != 1000)
 		xpos = modata->xhold;
-		
+
 	/* if we've got a hold position for the next MO, set it now */
 	if (hold_next)
 		modata->xhold = xpos + 16;
@@ -517,38 +643,38 @@ static int debug(void)
 {
 	int hidebank = -1;
 
-	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
-	
-	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
+	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
+
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
-		
-		while (osd_key_pressed(OSD_KEY_9)) { }
-		
+
+		while (keyboard_key_pressed(KEYCODE_9)) { }
+
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");
-		
+
 		fprintf(f, "\n\nPalette RAM:\n");
-		
+
 		for (i = 0x000; i < 0x800; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
@@ -558,7 +684,7 @@ static int debug(void)
 
 		fprintf(f, "\n\nMotion Objects (drawn)\n");
 		atarigen_mo_process(mo_print_callback, f);
-		
+
 		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
@@ -570,25 +696,25 @@ static int debug(void)
 					READ_WORD(&atarigen_spriteram[i*8+6])
 			);
 		}
-		
+
 		fprintf(f, "\n\nPlayfield dump\n");
 		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
 			if ((i & 63) == 63) fprintf(f, "\n");
 		}
-		
+
 		fprintf(f, "\n\nAlpha dump\n");
 		for (i = 0; i < atarigen_alpharam_size / 2; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
 			if ((i & 63) == 63) fprintf(f, "\n");
 		}
-		
+
 		fclose(f);
 	}
-	
+
 	return hidebank;
-}	
+}
 
 #endif

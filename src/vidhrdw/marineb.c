@@ -372,3 +372,65 @@ void hoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
+
+
+void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	draw_chars(tmpbitmap, bitmap, 0);
+
+
+	/* draw the sprites */
+	for (offs = 0x0f; offs >= 0; offs--)
+	{
+		int gfx,sx,sy,code,col,flipx,flipy,offs2;
+
+
+		if ((offs == 0) || (offs == 2))  continue;  /* no sprites here */
+
+
+		offs2 = 0x0010 + offs;
+
+
+		code  = videoram[offs2];
+		sx    = videoram[offs2 + 0x20];
+		sy    = colorram[offs2];
+		col   = colorram[offs2 + 0x20];
+		flipx =   code & 0x02;
+		flipy = !(code & 0x01);
+
+		if (offs < 4)
+		{
+			/* big sprite */
+			gfx = 2;
+			code = (code >> 4) | ((code & 0x0c) << 2);
+		}
+		else
+		{
+			/* small sprite */
+			gfx = 1;
+			code >>= 2;
+		}
+
+		if (!flipscreen_y)
+		{
+			sy = 256 - Machine->gfx[gfx]->width - sy;
+			flipy = !flipy;
+		}
+
+		if (!flipscreen_x)
+		{
+			sx--;
+		}
+
+		drawgfx(bitmap,Machine->gfx[gfx],
+				code,
+				col,
+				flipx,flipy,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+

@@ -106,6 +106,7 @@ struct pf_overrender_data
  *************************************/
 
 int atarisys2_mo_mask;
+unsigned char *atarisys2_slapstic;
 
 
 
@@ -130,8 +131,6 @@ static int latched_vscroll;
  *		Prototypes
  *
  *************************************/
-
-extern int slapstic_tweak(int offset);
 
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
@@ -323,7 +322,7 @@ int atarisys2_slapstic_r(int offset)
 	videobank = slapstic_tweak(0x1234);
 	videoram = alpharam + videobank * 0x2000;
 
-	return READ_WORD(&atarigen_slapstic[offset]);
+	return READ_WORD(&atarisys2_slapstic[offset]);
 }
 
 
@@ -415,7 +414,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int i;
 
 #if VIDEO_DEBUG
-	if (osd_key_pressed(OSD_KEY_9)) debug();
+	if (keyboard_key_pressed(KEYCODE_9)) debug();
 #endif
 
 	/* recalc the palette if necessary */
@@ -674,7 +673,7 @@ static void debug(void)
 	FILE *f;
 	int i;
 
-	while (osd_key_pressed(OSD_KEY_9)) { }
+	while (keyboard_key_pressed(KEYCODE_9)) { }
 
 	sprintf(name, "Dump %d", ++count);
 	f = fopen(name, "wt");

@@ -177,7 +177,7 @@ INPUT_PORTS_START( phozon_input_ports )
 	PORT_DIPSETTING(    0x05, "5" )
 	PORT_DIPSETTING(    0x06, "6" )
 	PORT_DIPSETTING(    0x07, "7" )
-	PORT_BITX( 0x08,    0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX( 0x08,    0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 /* Todo: those are different for 4 and 5 lives */

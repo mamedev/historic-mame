@@ -314,8 +314,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			bank = 2 + ((spriteram[offs] & 0x80) >> 7) + ((spriteram_3[offs] & 0x80) >> 6);
 			code = spriteram[offs] & 0x7f;
 			color = spriteram[offs + 1] & 0x7f;
-			flipx = spriteram_3[offs + 1] & 4;
-			flipy = spriteram_3[offs] & 4;
+			flipx = spriteram_3[offs] & 4;
+			flipy = spriteram_3[offs] & 8;
 			if (flipscreen)
 			{
 				flipx = !flipx;

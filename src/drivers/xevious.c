@@ -386,7 +386,7 @@ INPUT_PORTS_START( xevious_input_ports )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -466,7 +466,7 @@ INPUT_PORTS_START( xeviousa_input_ports )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -546,7 +546,7 @@ INPUT_PORTS_START( sxevious_input_ports )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -732,7 +732,7 @@ ROM_START( xevious_rom )
 	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
 	/* These are probably not the original PROMs. The transparency information */
 	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, 0x48d96000 ) /* sprite lookup table */
+	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "xe-4c-a.bin",  0x0000, 0x2000, 0x0ede5706 )
@@ -771,7 +771,7 @@ ROM_START( xeviousa_rom )
 	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
 	/* These are probably not the original PROMs. The transparency information */
 	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, 0x48d96000 ) /* sprite lookup table */
+	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
@@ -812,7 +812,7 @@ ROM_START( xevios_rom )
 	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
 	/* These are probably not the original PROMs. The transparency information */
 	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, 0x48d96000 ) /* sprite lookup table */
+	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "xe-4c-a.bin",  0x0000, 0x2000, 0x0ede5706 )
@@ -858,7 +858,7 @@ ROM_START( sxevious_rom )
 	ROM_LOAD( "4h-4f",        0x0300, 0x0200, 0xc21a65ff ) /* background tiles lookup table */
 	/* These are probably not the original PROMs. The transparency information */
 	/* (bit 7) is missing. The 0x80 bytes are mine, needed to fix the targeting cursor */
-	ROM_LOAD( "3l-3m",        0x0500, 0x0200, 0x48d96000 ) /* sprite lookup table */
+	ROM_LOAD( "3l-3m",        0x0500, 0x0200, BADCRC( 0x48d96000 ) ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "cpu_3f.rom",   0x0000, 0x1000, 0xd4bd3d81 )

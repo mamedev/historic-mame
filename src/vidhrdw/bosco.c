@@ -72,6 +72,8 @@ static struct rectangle radarvisibleareaflip =
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < 32;i++)
@@ -101,6 +103,10 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		if (colortable[i+64*4] == 0x10) colortable[i+64*4] = 0;	/* preserve transparency */
 	}
 
+	/* radar dots lookup table */
+	/* they use colors 0-3, I think */
+	for (i = 0;i < 4;i++)
+		COLOR(2,i) = i;
 
 	/* now the stars */
 	for (i = 32;i < 32 + 64;i++)
@@ -371,98 +377,22 @@ if (flipscreen) sx += 32;
 	for (offs = 0; offs < bosco_radarram_size;offs++)
 	{
 		int x,y;
-		int color;
-		int	attr;
 
 
-		attr = bosco_radarattr[offs];
-
-		x = bosco_radarx[offs] + 256 * (1 - (bosco_radarattr[offs] & 1));
-		y = 238 - bosco_radary[offs];
-
-		if (attr & 8)	/* Long bullets */
+		x = bosco_radarx[offs] + ((~bosco_radarattr[offs] & 0x01) << 8) - 2;
+		y = 235 - bosco_radary[offs];
+		if (flipscreen)
 		{
-			color = Machine->pens[1];
-			switch ((attr & 6) >> 1)
-			{
-				case 0:		/* Diagonal Left to Right */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 3) &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x+3] = color;
-						bitmap->line[y-1][x+3] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-2][x+2] = color;
-						bitmap->line[y-2][x+1] = color;
-						bitmap->line[y-3][x+1] = color;
-					}
-					break;
-				case 1:		/* Diagonal Right to Left */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 3) &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-2][x+2] = color;
-						bitmap->line[y-2][x+3] = color;
-						bitmap->line[y-3][x+3] = color;
-					}
-					break;
-				case 2:		/* Up and Down */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < Machine->drv->visible_area.max_x &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x] = color;
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y-2][x] = color;
-						bitmap->line[y-2][x+1] = color;
-						bitmap->line[y-3][x] = color;
-						bitmap->line[y-3][x+1] = color;
-					}
-					break;
-				case 3:		/* Left and Right */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 2) &&
-						y > Machine->drv->visible_area.min_y &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y-1][x] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y][x] = color;
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-1][x+3] = color;
-						bitmap->line[y][x+2] = color;
-						bitmap->line[y][x+3] = color;
-					}
-					break;
-			}
+			x -= 1;
+			y += 2;
 		}
-		else
-		{
-			color = Machine->pens[(bosco_radarattr[offs] >> 1) & 3];
 
-			/* normal size dots */
-			if (x >= Machine->drv->visible_area.min_x &&
-				x < Machine->drv->visible_area.max_x &&
-				y > Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y)
-			{
-				bitmap->line[y-1][x] = color;
-				bitmap->line[y-1][x+1] = color;
-				bitmap->line[y][x] = color;
-				bitmap->line[y][x+1] = color;
-			}
-		}
+		drawgfx(bitmap,Machine->gfx[2],
+				((bosco_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
+				0,
+				flipscreen,flipscreen,
+				x,y,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 
 

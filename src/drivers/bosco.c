@@ -292,7 +292,7 @@ INPUT_PORTS_START( bosco_input_ports )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -379,7 +379,7 @@ INPUT_PORTS_START( bosconm_input_ports )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -410,14 +410,25 @@ static struct GfxLayout spritelayout =
 	64*8	/* every sprite takes 64 bytes */
 };
 
-
+static struct GfxLayout dotlayout =
+{
+	4,4,	/* 4*4 characters */
+	8,	/* 8 characters */
+	2,	/* 2 bits per pixel */
+	{ 6, 7 },
+	{ 3*8, 2*8, 1*8, 0*8 },
+	{ 3*32, 2*32, 1*32, 0*32 },
+	16*8	/* every char takes 16 consecutive bytes */
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,      0, 64 },
-	{ 1, 0x1000, &spritelayout, 64*4, 64 },
+	{ 1, 0x0000, &charlayout,           0, 64 },
+	{ 1, 0x1000, &spritelayout,      64*4, 64 },
+	{ 1, 0x2000, &dotlayout,    64*4+64*4,  1 },
 	{ -1 } /* end of array */
 };
+
 
 
 static struct namco_interface namco_interface =
@@ -478,7 +489,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	32+64,64*4+64*4,	/* 32 for the characters, 64 for the stars */
+	32+64,64*4+64*4+4,	/* 32 for the characters, 64 for the stars */
 	bosco_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -522,13 +533,17 @@ ROM_START( bosco_rom )
 	ROM_LOAD( "bos1_3.bin",   0x2000, 0x1000, 0xc80ccfa5 )
 	ROM_LOAD( "bos1_4b.bin",  0x3000, 0x1000, 0xa3f7f4ab )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
+	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x120)	/* color proms */
-	ROM_LOAD( "bosco.6b",     0x0000, 0x020, 0xd2b96fb0 ) /* palette */
-	ROM_LOAD( "bosco.4m",     0x0020, 0x100, 0x4e15d59c ) /* lookup table */
+	ROM_REGION(0x0260)	/* PROMs */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "bos1_5c.bin",  0x0000, 0x1000, 0xa7c8e432 )
@@ -554,13 +569,17 @@ ROM_START( boscomd_rom )
 	ROM_LOAD( "2500.3l",      0x2000, 0x1000, 0xa21fae11 )
 	ROM_LOAD( "2600.3k",      0x3000, 0x1000, 0x11d6ae23 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
+	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x120)	/* color proms */
-	ROM_LOAD( "bosco.6b",     0x0000, 0x020, 0xd2b96fb0 ) /* palette */
-	ROM_LOAD( "bosco.4m",     0x0020, 0x100, 0x4e15d59c ) /* lookup table */
+	ROM_REGION(0x0260)	/* PROMs */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "2700.3j",      0x0000, 0x1000, 0x7254e65e )
@@ -586,13 +605,17 @@ ROM_START( boscomd2_rom )
 	ROM_LOAD( "3l",           0x2000, 0x1000, 0x6ca9a0cf )
 	ROM_LOAD( "3k",           0x3000, 0x1000, 0xd83bacc5 )
 
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x2100)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5300.5d",      0x0000, 0x1000, 0xa956d3c5 )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
+	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x120)	/* color proms */
-	ROM_LOAD( "bosco.6b",     0x0000, 0x020, 0xd2b96fb0 ) /* palette */
-	ROM_LOAD( "bosco.4m",     0x0020, 0x100, 0x4e15d59c ) /* lookup table */
+	ROM_REGION(0x0260)	/* PROMs */
+	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
+	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
+	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
+	ROM_LOAD( "prom.2r",      0x0220, 0x0020, 0xb88d5ba9 )	/* ?? */
+	ROM_LOAD( "prom.7h",      0x0240, 0x0020, 0x87d61353 )	/* ?? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "3j",           0x0000, 0x1000, 0x4374e39a )
@@ -610,6 +633,8 @@ ROM_START( boscomd2_rom )
 	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
 	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
+
 
 static const char *bosco_sample_names[] =
 {

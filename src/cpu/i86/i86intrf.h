@@ -18,6 +18,7 @@ extern int i86_ICount;
 
 /* Public functions */
 extern void i86_reset(void *param);
+extern void v30_reset(void *param);
 extern void i86_exit(void);
 extern int i86_execute(int cycles);
 extern unsigned i86_get_context(void *dst);
@@ -32,6 +33,7 @@ extern void i86_set_nmi_line(int state);
 extern void i86_set_irq_line(int irqline, int state);
 extern void i86_set_irq_callback(int (*callback)(int irqline));
 extern const char *i86_info(void *context, int regnum);
+extern const char *v30_info(void *context, int regnum);
 extern unsigned i86_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG

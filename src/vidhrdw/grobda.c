@@ -10,6 +10,8 @@
 #include "vidhrdw/generic.h"
 
 extern unsigned char *grobda_spriteram;
+static int flipscreen;
+
 
 /***************************************************************************
 
@@ -58,7 +60,10 @@ void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		colortable[i] = (color_prom[i + 32] & 0x0f);
 }
 
-int grobda_vh_start( void ) {
+
+
+int grobda_vh_start( void )
+{
 	/* set up spriteram area */
 	spriteram_size = 0x80;
 	spriteram = &grobda_spriteram[0x780];
@@ -68,17 +73,11 @@ int grobda_vh_start( void ) {
 	return generic_vh_start();
 }
 
-void grobda_vh_stop( void ) {
-
+void grobda_vh_stop( void )
+{
 	generic_vh_stop();
 }
 
-void grobda_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
-	int flipx,int flipy,int sx,int sy)
-{
-	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
-		TRANSPARENCY_PEN,0);
-}
 
 /***************************************************************************
 
@@ -87,53 +86,64 @@ void grobda_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
   the main emulation engine.
 
 ***************************************************************************/
+
+void grobda_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+	int flipx,int flipy,int sx,int sy)
+{
+	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+		TRANSPARENCY_PEN,0);
+}
+
 void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
 
-	/* for every character in the video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	for (offs = videoram_size - 1; offs > 0; offs--)
 	{
-		int color = colorram[offs];
-		int video = videoram[offs];
-		int sx,sy,mx,my;
-
-
-		/* Even if Grobda screen is 28x36, the memory layout is 32x32. We therefore
-        have to convert the memory coordinates into screen coordinates.
-        Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM
-        don't map to a screen position. We don't check that here, however: range
-        checking is performed by drawgfx(). */
-
-        mx = offs / 32;
-		my = offs % 32;
-
-        if (mx <= 1)        /* bottom screen characters */
+		if (dirtybuffer[offs])
 		{
-			sx = 29 - my;
-			sy = mx + 34;
-		}
-        else if (mx >= 30)  /* top screen characters */
-		{
-			sx = 29 - my;
-			sy = mx - 30;
-		}
-        else                /* middle screen characters */
-		{
-			sx = 29 - mx;
-			sy = my + 2;
-		}
+			int mx,my,sx,sy;
 
-	sx = ( ( Machine->drv->screen_height - 1 ) / 8 ) - sx;
-	drawgfx(bitmap,Machine->gfx[0],
-                videoram[offs],
-                colorram[offs] & 0x3f,
-                0,0,8*sy,8*sx,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			dirtybuffer[offs] = 0;
+            mx = offs % 32;
+			my = offs / 32;
+
+			if (my < 2)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{
+				sx = mx + 2;
+				sy = my - 2;
+			}
+
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 27 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs],
+					colorram[offs] & 0x3f,
+					flipscreen,flipscreen,
+					sx*8,sy*8,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+        }
 	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 2)

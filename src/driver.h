@@ -4,15 +4,18 @@
 
 #include "osdepend.h"
 #include "common.h"
+#include "drawgfx.h"
 #include "palette.h"
 #include "mame.h"
 #include "cpuintrf.h"
 #include "sndintrf.h"
 #include "memory.h"
+#include "input.h"
 #include "inptport.h"
 #include "usrintrf.h"
 #include "cheat.h"
 #include "tilemap.h"
+#include "sprite.h"
 
 #ifdef MAME_NET
 #include "network.h"
@@ -70,6 +73,9 @@ enum
 #endif
 #if (HAS_I86)
 	CPU_I86,
+#endif
+#if (HAS_V30)
+	CPU_V30,		/* a hacked I86 core until new V30 core is complete */
 #endif
 #if (HAS_I8035)
 	CPU_I8035,		/* same as CPU_I8039 */

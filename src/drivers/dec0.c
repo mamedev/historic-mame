@@ -15,6 +15,7 @@
     * Sly Spy                                 (USA set)
     * Midnight Resistance                     (World set)
 	* Midnight Resistance                     (USA set)
+    * Midnight Resistance                     (Japanese set)
 	* Boulderdash                             (Japanese set?)
 
 	Heavy Barrel, Bad Dudes, Robocop, Birdy Try & Hippodrome use the 'MEC-M1'
@@ -489,7 +490,7 @@ INPUT_PORTS_START( hbarrel_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -524,10 +525,10 @@ INPUT_PORTS_START( hbarrel_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( baddudes_input_ports )
@@ -537,7 +538,7 @@ INPUT_PORTS_START( baddudes_input_ports )
 
 	PORT_START	/* DSW0 */
 	DEC0_COIN_SETTING
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -702,7 +703,7 @@ INPUT_PORTS_START( slyspy_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -788,10 +789,10 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bouldash_input_ports )
@@ -810,7 +811,7 @@ INPUT_PORTS_START( bouldash_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
@@ -1277,50 +1278,6 @@ static struct MachineDriver midres_machine_driver =
 
 ROM_START( hbarrel_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
-	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
-	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
-	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
-	ROM_LOAD_EVEN( "hb06.bin",     0x40000, 0x10000, 0xda4e3fbc )
-	ROM_LOAD_ODD ( "hb03.bin",     0x40000, 0x10000, 0x7fed7c46 )
-
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hb25.bin",     0x000000, 0x10000, 0x8649762c )	/* chars */
-	ROM_LOAD( "hb26.bin",     0x010000, 0x10000, 0xf8189bbd )
-	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
-	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
-	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
-	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
-	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
-	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
-	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
-	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
-	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
-	/* b0000-bfff empty */
-	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
-	/* d0000-dfff empty */
-	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
-	/* f0000-ffff empty */
-	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
-	/* 110000-11fff empty */
-	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
-	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
-	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
-	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
-	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
-	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
-	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
-	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
-
-	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
-
-	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
-ROM_END
-
-ROM_START( hbarrelj_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
 	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
 	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
@@ -1361,6 +1318,50 @@ ROM_START( hbarrelj_rom )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
+ROM_END
+
+ROM_START( hbarrelu_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
+	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
+	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
+	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
+	ROM_LOAD_EVEN( "hb06.bin",     0x40000, 0x10000, 0xda4e3fbc )
+	ROM_LOAD_ODD ( "hb03.bin",     0x40000, 0x10000, 0x7fed7c46 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hb25.bin",     0x000000, 0x10000, 0x8649762c )	/* chars */
+	ROM_LOAD( "hb26.bin",     0x010000, 0x10000, 0xf8189bbd )
+	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
+	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
+	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
+	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
+	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
+	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
+	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
+	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
+	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
+	/* b0000-bfff empty */
+	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
+	/* d0000-dfff empty */
+	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
+	/* f0000-ffff empty */
+	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
+	/* 110000-11fff empty */
+	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
+	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
+	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
+	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
+	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
+	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
+	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
+	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
 ROM_END
 
 ROM_START( baddudes_rom )
@@ -1732,74 +1733,110 @@ ROM_END
 
 ROM_START( midres_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN ( "fk_14.rom", 0x00000, 0x20000, 0xde7522df )
-	ROM_LOAD_ODD  ( "fk_12.rom", 0x00000, 0x20000, 0x3494b8c9 )
-	ROM_LOAD_EVEN ( "fl15", 0x40000, 0x20000, 0x1328354e )
-	ROM_LOAD_ODD  ( "fl13", 0x40000, 0x20000, 0xe3b3955e )
+	ROM_LOAD_EVEN( "fk_14.rom",    0x00000, 0x20000, 0xde7522df )
+	ROM_LOAD_ODD ( "fk_12.rom",    0x00000, 0x20000, 0x3494b8c9 )
+	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
 
 	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fk_05.rom", 0x008000, 0x08000, 0x3cdb7453 )	/* chars */
-	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "fk_04.rom", 0x018000, 0x08000, 0x325ba20c )
-	ROM_CONTINUE(     0x010000, 0x08000 )
-	ROM_LOAD( "fl09", 0x020000, 0x20000, 0x907d5910 )	/* tiles */
-	ROM_LOAD( "fl08", 0x040000, 0x20000, 0xa936c03c )
-	ROM_LOAD( "fl07", 0x060000, 0x20000, 0x2068c45c )
-	ROM_LOAD( "fl06", 0x080000, 0x20000, 0xb7241ab9 )
-	ROM_LOAD( "fl11", 0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
+	ROM_LOAD( "fk_05.rom",         0x008000, 0x08000, 0x3cdb7453 )	/* chars */
+	ROM_CONTINUE(                  0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fk_04.rom",         0x018000, 0x08000, 0x325ba20c )
+	ROM_CONTINUE(                  0x010000, 0x08000 )
+	ROM_LOAD( "fl09",              0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08",              0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07",              0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06",              0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11",              0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
 	/* 0d0000-0dffff empty */
-	ROM_CONTINUE(     0x0c0000, 0x10000 )
+	ROM_CONTINUE(                  0x0c0000, 0x10000 )
 	/* 110000-11ffff empty */
-	ROM_LOAD( "fl10", 0x0e0000, 0x10000, 0x92245b29 )
+	ROM_LOAD( "fl10",              0x0e0000, 0x10000, 0x92245b29 )
 	/* 0b0000-0bffff empty */
-	ROM_CONTINUE(     0x100000, 0x10000 )
+	ROM_CONTINUE(                  0x100000, 0x10000 )
 	/* 0f0000-0fffff empty */
-	ROM_LOAD( "fl01", 0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
-	ROM_LOAD( "fl03", 0x140000, 0x20000, 0x1eefed3c )
-	ROM_LOAD( "fl00", 0x160000, 0x20000, 0x756fb801 )
-	ROM_LOAD( "fl02", 0x180000, 0x20000, 0x54d2c120 )
+	ROM_LOAD( "fl01",              0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03",              0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
+	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fl17", 0x00000, 0x20000, 0x9029965d )
+	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
 ROM_START( midresu_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN ( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
+	ROM_LOAD_EVEN( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
 	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
-	ROM_LOAD_EVEN ( "fl15",         0x40000, 0x20000, 0x1328354e )
-	ROM_LOAD_ODD  ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
+	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
 
 	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fl05",         0x008000, 0x08000, 0xd75aba06 )	/* chars */
-	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "fl04",         0x018000, 0x08000, 0x8f5bbb79 )
-	ROM_CONTINUE(     0x010000, 0x08000 )
-	ROM_LOAD( "fl09",         0x020000, 0x20000, 0x907d5910 )	/* tiles */
-	ROM_LOAD( "fl08",         0x040000, 0x20000, 0xa936c03c )
-	ROM_LOAD( "fl07",         0x060000, 0x20000, 0x2068c45c )
-	ROM_LOAD( "fl06",         0x080000, 0x20000, 0xb7241ab9 )
-	ROM_LOAD( "fl11",         0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
+	ROM_LOAD( "fl05",              0x008000, 0x08000, 0xd75aba06 )	/* chars */
+	ROM_CONTINUE(                  0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fl04",              0x018000, 0x08000, 0x8f5bbb79 )
+	ROM_CONTINUE(                  0x010000, 0x08000 )
+	ROM_LOAD( "fl09",              0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08",              0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07",              0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06",              0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11",              0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
 	/* 0d0000-0dffff empty */
-	ROM_CONTINUE(     0x0c0000, 0x10000 )
+	ROM_CONTINUE(                  0x0c0000, 0x10000 )
 	/* 110000-11ffff empty */
-	ROM_LOAD( "fl10",         0x0e0000, 0x10000, 0x92245b29 )
+	ROM_LOAD( "fl10",              0x0e0000, 0x10000, 0x92245b29 )
 	/* 0b0000-0bffff empty */
-	ROM_CONTINUE(     0x100000, 0x10000 )
+	ROM_CONTINUE(                  0x100000, 0x10000 )
 	/* 0f0000-0fffff empty */
-	ROM_LOAD( "fl01",         0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
-	ROM_LOAD( "fl03",         0x140000, 0x20000, 0x1eefed3c )
-	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
-	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
+	ROM_LOAD( "fl01",              0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03",              0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
+	ROM_LOAD( "fl16",              0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
+	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
+ROM_END
+
+ROM_START( midresj_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+	ROM_LOAD_EVEN( "fh14",         0x00000, 0x20000, 0x6d632a51 )
+	ROM_LOAD_ODD ( "fh12",         0x00000, 0x20000, 0x45143384 )
+	ROM_LOAD_EVEN( "fl15",         0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
+
+	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fk_05.rom",         0x008000, 0x08000, 0x3cdb7453 )	/* chars */
+	ROM_CONTINUE(                  0x000000, 0x08000 )	/* the two halves are swapped */
+	ROM_LOAD( "fk_04.rom",         0x018000, 0x08000, 0x325ba20c )
+	ROM_CONTINUE(                  0x010000, 0x08000 )
+	ROM_LOAD( "fl09",              0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08",              0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07",              0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06",              0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11",              0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
+	/* 0d0000-0dffff empty */
+	ROM_CONTINUE(                  0x0c0000, 0x10000 )
+	/* 110000-11ffff empty */
+	ROM_LOAD( "fl10",              0x0e0000, 0x10000, 0x92245b29 )
+	/* 0b0000-0bffff empty */
+	ROM_CONTINUE(                  0x100000, 0x10000 )
+	/* 0f0000-0fffff empty */
+	ROM_LOAD( "fl01",              0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03",              0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00",              0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02",              0x180000, 0x20000, 0x54d2c120 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fh16",              0x00000, 0x10000, 0x00736f32 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fh17",              0x00000, 0x20000, 0xc7b0a24e )
 ROM_END
 
 ROM_START( bouldash_rom )
@@ -2206,9 +2243,9 @@ struct GameDriver hbarrel_driver =
 	__FILE__,
 	0,
 	"hbarrel",
-	"Heavy Barrel (US)",
+	"Heavy Barrel (World)",
 	"1987",
-	"Data East USA",
+	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
@@ -2223,23 +2260,23 @@ struct GameDriver hbarrel_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
-	hbarrel_hiload, hbarrel_hisave
+	hbarrelj_hiload, hbarrelj_hisave
 };
 
-struct GameDriver hbarrelj_driver =
+struct GameDriver hbarrelu_driver =
 {
 	__FILE__,
 	&hbarrel_driver,
-	"hbarrelj",
-	"Heavy Barrel (Japan)",
+	"hbarrelu",
+	"Heavy Barrel (US)",
 	"1987",
-	"Data East Corporation",
+	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
 	dec0_custom_memory,
 
-	hbarrelj_rom,
+	hbarrelu_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -2248,7 +2285,7 @@ struct GameDriver hbarrelj_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
-	hbarrelj_hiload, hbarrelj_hisave
+	hbarrel_hiload, hbarrel_hisave
 };
 
 struct GameDriver baddudes_driver =
@@ -2540,6 +2577,31 @@ struct GameDriver midresu_driver =
 	dec0_custom_memory,
 
 	midresu_rom,
+	0, 0,
+	0,
+	0,
+
+	midres_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	midres_hiload, midres_hisave
+};
+
+struct GameDriver midresj_driver =
+{
+	__FILE__,
+	&midres_driver,
+	"midresj",
+	"Midnight Resistance (Japan)",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&midres_machine_driver,
+	dec0_custom_memory,
+
+	midresj_rom,
 	0, 0,
 	0,
 	0,

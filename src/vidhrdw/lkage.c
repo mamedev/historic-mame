@@ -177,6 +177,20 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 	}
 }
 
+void lkage_set_palette_row( int virtual_row, int logical_row, int len ){
+	unsigned char *source = &paletteram[logical_row*32];
+	int indx = virtual_row*16;
+	while( len-- ){
+		unsigned char greenblue = *source++;
+		unsigned char red = *source++;
+		palette_change_color( indx++,
+			(red&0xf)*0x11,
+			(greenblue>>4)*0x11,
+			(greenblue&0xf)*0x11
+		);
+	}
+}
+
 void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if( bg_tile_bank != (lkage_vreg[0x01]&0x08) ){
 		bg_tile_bank = lkage_vreg[0x01]&0x08;
@@ -188,42 +202,11 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		tilemap_mark_all_tiles_dirty( fg_tilemap );
 	}
 
-	/*
-		Each tile in a layer uses the same 16 color palette.  Rather than redraw
-		an entire tilemap when its associated palette register changes, we make
-		use of a virtual palette to achieve the same effect.  This is important
-		especially when you grab the scroll in the forest, since the palette
-		register is toggled rapidly for about 6 seconds as a special effect.
-	*/
 	{
-		unsigned char *source = paletteram;
-		int i = 0, k;
-		for( k=0; k<128; k++ ){
-			int greenblue = *source++;
-			int red = *source++;
-			palette_change_color( i++, (red&0xf)<<4, greenblue&0xf0, (greenblue&0xf)<<4 );
-		}
-
-		source = &paletteram[(0x30 + (lkage_vreg[1]>>4))*32]; /* background color */
-		for( k=0; k<16; k++ ){
-			int greenblue = *source++;
-			int red = *source++;
-			palette_change_color( i++, (red&0xf)<<4, greenblue&0xf0, (greenblue&0xf)<<4 );
-		}
-
-		source = &paletteram[(0x20 + (lkage_vreg[1]>>4))*32]; /* foreground color */
-		for( k=0; k<16; k++ ){
-			int greenblue = *source++;
-			int red = *source++;
-			palette_change_color( i++, (red&0xf)<<4, greenblue&0xf0, (greenblue&0xf)<<4 );
-		}
-
-		source = &paletteram[(0x10 + (lkage_vreg[1]&7))*32]; /* text color - wrong! */
-		for( k=0; k<16; k++ ){
-			int greenblue = *source++;
-			int red = *source++;
-			palette_change_color( i++, (red&0xf)<<4, greenblue&0xf0, (greenblue&0xf)<<4 );
-		}
+		lkage_set_palette_row( 0x0, 0x00, 16*8 ); /* sprite colors */
+		lkage_set_palette_row( 0x8, 0x30 + (lkage_vreg[1]>>4),16 ); /* bg colors */
+		lkage_set_palette_row( 0x9, 0x20 + (lkage_vreg[1]>>4),16 ); /* fg colors */
+		lkage_set_palette_row( 0xa, 0x11, 16 ); /* text colors */
 	}
 
 	tilemap_set_scrollx( fg_tilemap,0, lkage_scroll[2]+8 );
@@ -236,9 +219,10 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_render( ALL_TILEMAPS );
 
 	/*
-		a register exists which is normally 0xf3,
-		but goes to 0x13 inbetween stages.  this is
-		probably used to selectively enable backgrounds.
+		A register exists which is normally 0xf3,
+		but goes to 0x13 inbetween stages (while the backgrounds are
+		are being redrawn).  Its bits are probably used to enable
+		individual layers, but we have no way of knowing the mapping.
 	*/
 	if( lkage_vreg[2]==0xf3 ){
 		tilemap_draw( bitmap,bg_tilemap,0 );
@@ -250,4 +234,20 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	else {
 		tilemap_draw( bitmap,text_tilemap,TILEMAP_IGNORE_TRANSPARENCY );
 	}
+
+
+#if 0
+	drawgfx( bitmap,Machine->uifont,
+		"0123456789abcdef"[lkage_vreg[1]>>4],
+		0,0,0,
+		16,32,
+		0,
+		TRANSPARENCY_NONE,0 );
+	drawgfx( bitmap,Machine->uifont,
+		"0123456789abcdef"[lkage_vreg[1]&0xf],
+		0,0,0,
+		16+6,32,
+		0,
+		TRANSPARENCY_NONE,0 );
+#endif
 }

@@ -572,6 +572,51 @@ ROM_END
 
 ROM_START( kuniokun_rom )
 	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
+	ROM_LOAD( "nb-01.bin",    0x8000, 0x8000, 0x93fcfdf5 )
+	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
+	ROM_CONTINUE( 0x10000, 0x4000 )
+
+	ROM_REGION_DISPOSE(0x98000) /* temporary space for graphics (disposed after conversion) */
+
+	/* characters */
+	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* 4 bitplanes */
+
+	ROM_LOAD( "ta18-01.bin",  0x08000, 0x8000, 0xdaf15024 )
+	ROM_LOAD( "ta18-06.bin",  0x10000, 0x8000, 0x1f59a248 )
+	ROM_LOAD( "n7-5.bin",     0x18000, 0x8000, 0x7ca5a532 )
+
+	ROM_LOAD( "ta18-02.bin",  0x20000, 0x8000, 0x994c0021 )
+	ROM_LOAD( "ta18-04.bin",  0x28000, 0x8000, 0x55b9e8aa )
+	ROM_LOAD( "ta18-03.bin",  0x30000, 0x8000, 0x0475c99a )
+
+	/* sprites */
+	ROM_LOAD( "ta18-20.bin",  0x38000, 0x8000, 0xc7d54139 )
+	ROM_LOAD( "ta18-24.bin",  0x40000, 0x8000, 0x84677d45 )
+	ROM_LOAD( "ta18-18.bin",  0x48000, 0x8000, 0x1c770853 )
+
+	ROM_LOAD( "ta18-19.bin",  0x50000, 0x8000, 0xc8795fd7 )
+	ROM_LOAD( "ta18-22.bin",  0x58000, 0x8000, 0xdf3a2ff5 )
+	ROM_LOAD( "ta18-16.bin",  0x60000, 0x8000, 0x7244bad0 )
+
+	ROM_LOAD( "ta18-14.bin",  0x68000, 0x8000, 0xaf656017 )
+	ROM_LOAD( "ta18-23.bin",  0x70000, 0x8000, 0x3fd19cf7 )
+	ROM_LOAD( "ta18-17.bin",  0x78000, 0x8000, 0x74c64c6e )
+
+	ROM_LOAD( "ta18-13.bin",  0x80000, 0x8000, 0xb6b14d46 )
+	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
+	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
+
+	ROM_REGION(0x10000) /* audio CPU (M6809) */
+	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
+
+	ROM_REGION(0x20000) /* adpcm */
+	ROM_LOAD( "ta18-07.bin",  0x00000, 0x8000, 0x02e3f3ed )
+	ROM_LOAD( "ta18-08.bin",  0x10000, 0x8000, 0xc9312613 )
+	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
+ROM_END
+
+ROM_START( kuniokub_rom )
+	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
 	ROM_LOAD( "ta18-10.bin",  0x8000, 0x8000, 0xa90cf44a )
 	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
@@ -586,7 +631,7 @@ ROM_START( kuniokun_rom )
 	ROM_LOAD( "n7-5.bin",     0x18000, 0x8000, 0x7ca5a532 )
 
 	ROM_LOAD( "ta18-02.bin",  0x20000, 0x8000, 0x994c0021 )
-	ROM_LOAD( "ta18-04.bin",  0x28000, 0x8000, 0x00000000 )
+	ROM_LOAD( "ta18-04.bin",  0x28000, 0x8000, 0x55b9e8aa )
 	ROM_LOAD( "ta18-03.bin",  0x30000, 0x8000, 0x0475c99a )
 
 	/* sprites */
@@ -617,7 +662,7 @@ ROM_END
 
 /*
 static int hiload(void){
-	if( osd_key_pressed( OSD_KEY_L ) ){
+	if( keyboard_key_pressed( KEYCODE_L ) ){
 		void *f;
 		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -670,6 +715,32 @@ struct GameDriver renegade_driver =
 	0,0 /*hiload, hisave*/
 };
 
+struct GameDriver kuniokun_driver =
+{
+	__FILE__,
+	&renegade_driver,
+	"kuniokun",
+	"Nekketsu Kouha Kunio-kun (Japan)",
+	"1986",
+	"Technos",
+	"Phil Stroffolino\nCarlos A. Lozano\nRob Rosenbrock",
+	GAME_NOT_WORKING,
+	&renegade_machine_driver,
+	0,
+
+	kuniokun_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0 /*hiload, hisave*/
+};
+
 struct GameDriver kuniokub_driver =
 {
 	__FILE__,
@@ -683,7 +754,7 @@ struct GameDriver kuniokub_driver =
 	&renegade_machine_driver,
 	0,
 
-	kuniokun_rom,
+	kuniokub_rom,
 	0, 0,
 	0,
 	0,

@@ -180,64 +180,72 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			if (sr[offs+2])
 			{
-				int sx,sy,flipx,flipy,color;
+				int sx,sy,flipx,flipy,code,color;
 
 
-				sy = sr[offs+2];
 				sx = sr[offs+3];
+				sy = sr[offs+2];
 				flipx = sr[offs+4] & 0x20;
 				flipy = sr[offs+4] & 0x40;  /* not sure yet */
+				code = (sr[offs] << 2) + ((sr[offs+1] & 0x01) << 10) + ((sr[offs+1] & 0x0c) >> 2);
 				color = ((sr[offs+1] & 0xf0)>>4) + 16 * palettebank;
 
-				if ((sr[offs+4] & 0x0c) == 0x04)    /* horizontal half sized sprite */
+				switch (sr[offs+4] & 0x0c)
 				{
-					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
-					drawgfx(bitmap,Machine->gfx[2],
-							spritenum,
-							color,
-							flipx,flipy,
-							flipx?sx+8:sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[2],
-							spritenum+1,
-							color,
-							flipx,flipy,
-							flipx?sx:sx+8,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					case 0x00:	/* 16x16 */
+						drawgfx(bitmap,Machine->gfx[1],
+								code/4,
+								color,
+								flipx,flipy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						break;
+
+					case 0x04:	/* 16x8 */
+						{
+							drawgfx(bitmap,Machine->gfx[2],
+									code & ~1,
+									color,
+									flipx,flipy,
+									flipx?sx+8:sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							drawgfx(bitmap,Machine->gfx[2],
+									code | 1,
+									color,
+									flipx,flipy,
+									flipx?sx:sx+8,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						}
+						break;
+
+					case 0x08:	/* 8x16 */
+						{
+							drawgfx(bitmap,Machine->gfx[2],
+									code & ~2,
+									color,
+									flipx,flipy,
+									sx,flipy?sy+8:sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							drawgfx(bitmap,Machine->gfx[2],
+									code | 2,
+									color,
+									flipx,flipy,
+									sx,flipy?sy:sy+8,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						}
+						break;
+
+					case 0x0c:	/* 8x8 */
+						{
+							drawgfx(bitmap,Machine->gfx[2],
+									code,
+									color,
+									flipx,flipy,
+									sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						}
+						break;
 				}
-				else if ((sr[offs+4] & 0x0c) == 0x08)    /* vertical half sized sprite */
-				{
-					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
-					drawgfx(bitmap,Machine->gfx[2],
-							spritenum,
-							color,
-							flipx,flipy,
-							sx,flipy?sy+8:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[2],
-							spritenum+2,
-							color,
-							flipx,flipy,
-							sx,flipy?sy:sy+8,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
-				else if ((sr[offs+4] & 0x0c) == 0x0c)    /* quarter sized sprite */
-				{
-					int spritenum = sr[offs]*4+((sr[offs+1] & 0x0c) >> 2);
-					drawgfx(bitmap,Machine->gfx[2],
-							spritenum,
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				}
-				else
-					drawgfx(bitmap,Machine->gfx[1],
-							sr[offs] + 256 * (sr[offs+1] & 1),
-							color,
-							flipx,flipy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

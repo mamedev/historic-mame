@@ -131,29 +131,30 @@
 
   List of encrypted games currently known:
 
- CPU Part #    Game                   Comments
-  315-5010 Pengo                  unencrypted version available
-  315-5013 Super Zaxxon           used Zaxxon for known plaintext attack
-  ???-???? Super Locomotive
-  315-5018 Yamato
-  315-5028 Sindbad Mystery
-  315-5033 Regulus
-  315-5041 Mister Viking
-  315-5048 SWAT                   used Bull Fight for k.p.a.
-  315-5051 Flicky &
-           Ninja Princess (bootleg)
-  ???-???? Water Match            not available yet
-  315-5061 Future Spy
-  315-5065 Bull Fight
-  315-5069 Star Force             game by Tehkan; same key as Super Locomotive
-  315-5093 Pitfall II
-  315-5098 Ninja Princess         unencrypted version available
-  315-5102 Sega Ninja             unencrypted version available
-  315-5110 I'm Sorry              used My Hero for k.p.a.
-  315-5115 TeddyBoy Blues
-  315-5135 Heavy Metal &
-           Wonder Boy (set 1 & 2; bootlegs?)
-  ???-???? My Hero
+ CPU Part #         Game                   Comments
+  315-5010      Pengo                  unencrypted version available
+  315-5013      Super Zaxxon           used Zaxxon for known plaintext attack
+  ???-????      Super Locomotive
+  ???-???? M120 Razzmatazz             same key as Ninja Princess
+  315-5018      Yamato
+  315-5028      Sindbad Mystery
+  315-5033      Regulus
+  315-5041 M140 Mister Viking
+  315-5048      SWAT                   used Bull Fight for k.p.a.
+  315-5051      Flicky &
+                Ninja Princess (bootleg)
+  ???-????      Water Match            not available yet
+  315-5061      Future Spy
+  315-5065      Bull Fight
+  315-5069      Star Force             game by Tehkan; same key as Super Locomotive
+  315-5093      Pitfall II
+  315-5098      Ninja Princess         unencrypted version available
+  315-5102      Sega Ninja             unencrypted version available
+  315-5110      I'm Sorry              used My Hero for k.p.a.
+  315-5115      TeddyBoy Blues
+  315-5135      Heavy Metal &
+                Wonder Boy (set 1 & 2; bootlegs?)
+  ???-????      My Hero
 
 
   The following games use a different encryption algorithm:
@@ -171,6 +172,7 @@
   317-5014?DakkoChan Jansoh
   317-0029 Block Gal              NEC MC8123B 651 packaged like System16's 68000
   317-0030 Perfect Billiards
+  317-0043 Wonder Boy Monster Land
   317-0054 Shinobi (sound CPU)    NEC MC8123B 651
   317-0064 Ufo Senshi Yohko Chan
 
@@ -178,8 +180,8 @@
 
   Some text found in the ROMs:
 
-  Yamato           SECULITY BY M,MIZUNAGA
   Super Locomotive SEGA FUKUMURA MIZUNAGA
+  Yamato           SECULITY BY M,MIZUNAGA
   Regulus          SECULITY BY SYUICHI,KATAGI
   Mister Viking    SECURITY BY S.KATAGI  CONTROL CHIP M140
   SWAT             SECURITY BY S.KATAGI

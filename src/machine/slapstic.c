@@ -45,6 +45,7 @@ Championship Sprint
 Rampart
 Vindicators Part II
 Xybots
+Race Drivin'
 
 3) What is the pinout?
 
@@ -100,11 +101,11 @@ Chip #     Game                Bank Select Addresses      Disable Mask Ignore Ma
            Super Sprint
 137412-109 Championship Sprint $0008, $000a, $000c, $000e    $3da0        $002b        $0052   $0064, $0065, $0066, $0067
 137412-110 Road Blasters &     $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
-           APB?
-137412-111 Pit Fighter
-137412-116 Hydra &             $0044, $004c, $0054, $005c
+           APB
+137412-111 Pit Fighter         $0042, $0052, $0062, $0072    $???0        $000a
+137412-116 Hydra &             $0044, $004c, $0054, $005c    $???0        $0069
            Cyberball 2072 Tournament
-137412-117 STUN Runner?
+137412-117 Race Drivin'
 137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002       *$1950  *$1958,*$1960,*$1968,*$1970
            & Rampart
 
@@ -211,7 +212,7 @@ static struct slapstic_params slapstic_table[18] =
 	/* 137412-110 Road Blasters/APB */
 	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
 	/* 137412-111 Pit Fighter */
-	{ 0x0000, 0x0042, 0x0052, 0x0062, 0x0072,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0042, 0x0052, 0x0062, 0x0072,UNKNOWN, 0x000a,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-112 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-113 ???? */
@@ -221,8 +222,8 @@ static struct slapstic_params slapstic_table[18] =
 	/* 137412-115 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-116 Hydra/Cyberball 2072 Tournament */
-	{ 0x0000, 0x0044, 0x004c, 0x0054, 0x005c,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-117 ???? */
+	{ 0x0000, 0x0044, 0x004c, 0x0054, 0x005c,UNKNOWN, 0x0069,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	/* 137412-117 Race Drivin' */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-118 Vindicators II/Rampart */
 //	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002, 0x1950, 0x1958, 0x1960, 0x1968, 0x1970 },
@@ -255,10 +256,6 @@ static int version;
 #endif
 
 
-extern unsigned char *atarigen_slapstic;
-extern unsigned char *slapstic_area;
-
-
 /*************************************
  *
  *		Initialization
@@ -271,23 +268,25 @@ void slapstic_init(int chip)
 	if (chip < 101 || chip > 118)
 		return;
 
-	version = chip;
 	/* set up a pointer to the parameters */
+	version = chip;
 	slapstic = slapstic_table + (chip - 101);
 
 	/* reset the chip */
 	state = ENABLED;
 	next_bank = extra_bank = -1;
-	if (chip == 101)
+	
+	/* the 111 and later chips seem to reset to bank 0 */
+	if (chip < 111)
 		current_bank = 3;
 	else
-		current_bank = 3;
+		current_bank = 0;
+}
 
-	if (version == 101)
-	{
-		/* Super ugly hack for ESB */
-		memcpy(slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
-	}
+
+void slapstic_reset(void)
+{
+	slapstic_init(version);
 }
 
 
@@ -318,11 +317,6 @@ int slapstic_tweak(int offset)
 		current_bank = next_bank;
 		next_bank = -1;
 		extra_bank = -1;
-		if (version == 101)
-		{
-			/* Super ugly hack for ESB */
-			memcpy(slapstic_area, &atarigen_slapstic[current_bank * 0x2000], 0x2000);
-		}
 	}
 
 	/* state machine */

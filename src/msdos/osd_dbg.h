@@ -62,7 +62,6 @@
 static void osd_screen_update(void);
 static void osd_put_screen_char (int ch, int attr, int x, int y);
 static void osd_set_screen_curpos (int x, int y);
-extern int /* key */ osd_debug_readkey (void);  /* JB 980103 */
 
 /***************************************************************************
  * Note: I renamed the set_gfx_mode function to avoid a name clash with

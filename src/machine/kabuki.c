@@ -66,7 +66,7 @@ Known games:
                                          swap_key1 swap_key2 addr_key xor_key
 Mahjong Gakuen 2 Gakuen-chou no Fukushuu &
   Poker Ladies                           76543210  01234567    aa55     a5
-Pang / Buster Bros                       01234567  76543210    6548     24
+Pang / Buster Bros / Pomping World       01234567  76543210    6548     24
 Dokaben                                               unknown
 Dokaben 2                                             unknown
 Capcom Baseball                                       unknown

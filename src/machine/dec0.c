@@ -476,12 +476,12 @@ void dec0_i8751_reset(void)
 
 static int hbarrel_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
+	if (cpu_get_pc()==0x130ca) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
 }
 
-static int hbarrelj_cycle_r(int offset)
+static int hbarrelu_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x130ca) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
+	if (cpu_get_pc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
 }
 
 static int dude_skip(int offset)
@@ -526,20 +526,20 @@ static void hbarrel_custom_memory(void)
 {
 	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrel_cycle_r);
 	GAME=1;
+{ /* Remove this patch once processing time of i8751 is simulated */
+unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+WRITE_WORD (&RAM[0xb3e],0x8008);
+}
+}
+
+static void hbarrelu_custom_memory(void)
+{
+	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrelu_cycle_r);
+	GAME=1;
 
 { /* Remove this patch once processing time of i8751 is simulated */
 unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 WRITE_WORD (&RAM[0xb68],0x8008);
-}
-}
-
-static void hbarrelj_custom_memory(void)
-{
-	install_mem_read_handler(0, 0xff8010, 0xff8011, hbarrelj_cycle_r);
-	GAME=1;
-{ /* Remove this patch once processing time of i8751 is simulated */
-unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-WRITE_WORD (&RAM[0xb3e],0x8008);
 }
 }
 
@@ -585,7 +585,7 @@ void dec0_custom_memory(void)
 	i8751_timer=NULL;
 
 	if (!strcmp(Machine->gamedrv->name,"hbarrel")) hbarrel_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"hbarrelj")) hbarrelj_custom_memory();
+	if (!strcmp(Machine->gamedrv->name,"hbarrelu")) hbarrelu_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"baddudes")) baddudes_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"drgninja")) baddudes_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"birdtry")) birdtry_custom_memory();

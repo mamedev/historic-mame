@@ -26,8 +26,8 @@ static int analog_player_port[MAX_INPUT_PORTS];
 #define MRU_JOYSTICK
 
 /* header identifying the version of the game.cfg file */
-#define MAMECFGSTRING "MAMECFG\4"
-#define MAMEDEFSTRING "MAMEDEF\3"
+#define MAMECFGSTRING "MAMECFG\5"
+#define MAMEDEFSTRING "MAMEDEF\4"
 
 extern void *record;
 extern void *playback;
@@ -103,139 +103,151 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 
 struct ipd inputport_defaults[] =
 {
-#ifdef macintosh
-	{ IPT_UI_PAUSE, "Pause", OSD_KEY_ESC, 0 },
-#else
-	{ IPT_UI_PAUSE, "Pause", OSD_KEY_P, 0 },
-#endif
+	{ IPT_UI_CONFIGURE,         "Config Menu",       KEYCODE_TAB,   0 },
+	{ IPT_UI_ON_SCREEN_DISPLAY, "On Screen Display", KEYCODE_TILDE, 0 },
+	{ IPT_UI_PAUSE,             "Pause",             KEYCODE_P,     0 },
+	{ IPT_UI_RESET_MACHINE,     "Reset Game",        KEYCODE_F3,    0 },
+	{ IPT_UI_SHOW_GFX,          "Show Gfx",          KEYCODE_F4,    0 },
+	{ IPT_UI_FRAMESKIP_DEC,     "Frameskip Dec",     KEYCODE_F8,    0 },
+	{ IPT_UI_FRAMESKIP_INC,     "Frameskip Inc",     KEYCODE_F9,    0 },
+	{ IPT_UI_THROTTLE,          "Throttle",          KEYCODE_F10,   0 },
+	{ IPT_UI_SHOW_FPS,          "Show FPS",          KEYCODE_F11,   0 },
+	{ IPT_UI_SNAPSHOT,          "Save Snapshot",     KEYCODE_F12,   0 },
+	{ IPT_UI_UP,                "UI Up",             KEYCODE_UP,    OSD_JOY_UP },
+	{ IPT_UI_DOWN,              "UI Down",           KEYCODE_DOWN,  OSD_JOY_DOWN },
+	{ IPT_UI_LEFT,              "UI Left",           KEYCODE_LEFT,  OSD_JOY_LEFT },
+	{ IPT_UI_RIGHT,             "UI Right",          KEYCODE_RIGHT, OSD_JOY_RIGHT },
+	{ IPT_UI_SELECT,            "UI Select",         KEYCODE_ENTER, OSD_JOY_FIRE1 },
+	{ IPT_UI_CANCEL,            "UI Cancel",         KEYCODE_ESC,   0 },
 
-	{ IPT_COIN1,  "Coin A",          OSD_KEY_3, 0 },
-	{ IPT_COIN2,  "Coin B",          OSD_KEY_4, 0 },
-	{ IPT_COIN3,  "Coin C",          OSD_KEY_5, 0 },
-	{ IPT_COIN4,  "Coin D",          OSD_KEY_6, 0 },
-	{ IPT_TILT,   "Tilt",            OSD_KEY_T, IP_JOY_NONE },
-	{ IPT_START1, "1 Player Start",  OSD_KEY_1, 0 },
-	{ IPT_START2, "2 Players Start", OSD_KEY_2, 0 },
-	{ IPT_START3, "3 Players Start", OSD_KEY_7, 0 },
-	{ IPT_START4, "4 Players Start", OSD_KEY_8, 0 },
+	{ IPT_COIN1,  "Coin A",          KEYCODE_3, 0 },
+	{ IPT_COIN2,  "Coin B",          KEYCODE_4, 0 },
+	{ IPT_COIN3,  "Coin C",          KEYCODE_5, 0 },
+	{ IPT_COIN4,  "Coin D",          KEYCODE_6, 0 },
+	{ IPT_TILT,   "Tilt",            KEYCODE_T, IP_JOY_NONE },
+	{ IPT_START1, "1 Player Start",  KEYCODE_1, 0 },
+	{ IPT_START2, "2 Players Start", KEYCODE_2, 0 },
+	{ IPT_START3, "3 Players Start", KEYCODE_7, 0 },
+	{ IPT_START4, "4 Players Start", KEYCODE_8, 0 },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          OSD_KEY_UP,      OSD_JOY_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        OSD_KEY_DOWN,    OSD_JOY_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        OSD_KEY_LEFT,    OSD_JOY_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER1, "P1 Right",       OSD_KEY_RIGHT,   OSD_JOY_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER1, "P1 Button 1",    OSD_KEY_LCONTROL,OSD_JOY_FIRE1 },
-	{ IPT_BUTTON2             | IPF_PLAYER1, "P1 Button 2",    OSD_KEY_ALT,     OSD_JOY_FIRE2 },
-	{ IPT_BUTTON3             | IPF_PLAYER1, "P1 Button 3",    OSD_KEY_SPACE,   OSD_JOY_FIRE3 },
-	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    OSD_KEY_LSHIFT,  OSD_JOY_FIRE4 },
-	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    OSD_KEY_Z,       OSD_JOY_FIRE5 },
-	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    OSD_KEY_X,       OSD_JOY_FIRE6 },
-	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    OSD_KEY_C,       OSD_JOY_FIRE7 },
-	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    OSD_KEY_V,       OSD_JOY_FIRE8 },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    OSD_KEY_I,       OSD_JOY_FIRE2 },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  OSD_KEY_K,       OSD_JOY_FIRE3 },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  OSD_KEY_J,       OSD_JOY_FIRE1 },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", OSD_KEY_L,       OSD_JOY_FIRE4 },
-	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     OSD_KEY_E,       OSD_JOY_UP },
-	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   OSD_KEY_D,       OSD_JOY_DOWN },
-	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   OSD_KEY_S,       OSD_JOY_LEFT },
-	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1, "P1 Left/Right",  OSD_KEY_F,       OSD_JOY_RIGHT },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          KEYCODE_UP,      OSD_JOY_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        KEYCODE_DOWN,    OSD_JOY_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        KEYCODE_LEFT,    OSD_JOY_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER1, "P1 Right",       KEYCODE_RIGHT,   OSD_JOY_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER1, "P1 Button 1",    KEYCODE_LCONTROL,OSD_JOY_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER1, "P1 Button 2",    KEYCODE_LALT,    OSD_JOY_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER1, "P1 Button 3",    KEYCODE_SPACE,   OSD_JOY_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    KEYCODE_LSHIFT,  OSD_JOY_FIRE4 },
+	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    KEYCODE_Z,       OSD_JOY_FIRE5 },
+	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    KEYCODE_X,       OSD_JOY_FIRE6 },
+	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    KEYCODE_C,       OSD_JOY_FIRE7 },
+	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    KEYCODE_V,       OSD_JOY_FIRE8 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    KEYCODE_I,       OSD_JOY_FIRE2 },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  KEYCODE_K,       OSD_JOY_FIRE3 },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  KEYCODE_J,       OSD_JOY_FIRE1 },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1, "P1 Right/Right", KEYCODE_L,       OSD_JOY_FIRE4 },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1, "P1 Left/Up",     KEYCODE_E,       OSD_JOY_UP },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1, "P1 Left/Down",   KEYCODE_D,       OSD_JOY_DOWN },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1, "P1 Left/Left",   KEYCODE_S,       OSD_JOY_LEFT },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1, "P1 Left/Right",  KEYCODE_F,       OSD_JOY_RIGHT },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER2, "P2 Up",          OSD_KEY_R,       OSD_JOY2_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER2, "P2 Down",        OSD_KEY_F,       OSD_JOY2_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER2, "P2 Left",        OSD_KEY_D,       OSD_JOY2_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER2, "P2 Right",       OSD_KEY_G,       OSD_JOY2_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER2, "P2 Button 1",    OSD_KEY_A,       OSD_JOY2_FIRE1 },
-	{ IPT_BUTTON2             | IPF_PLAYER2, "P2 Button 2",    OSD_KEY_S,       OSD_JOY2_FIRE2 },
-	{ IPT_BUTTON3             | IPF_PLAYER2, "P2 Button 3",    OSD_KEY_Q,       OSD_JOY2_FIRE3 },
-	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    OSD_KEY_W,       OSD_JOY2_FIRE4 },
-	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    0,               OSD_JOY2_FIRE5 },
-	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    0,               OSD_JOY2_FIRE6 },
-	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    0,               OSD_JOY2_FIRE7 },
-	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    0,               OSD_JOY2_FIRE8 },
-	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    0,               0 },
-	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  0,               0 },
-	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  0,               0 },
-	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "P2 Right/Right", 0,               0 },
-	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "P2 Left/Up",     0,               0 },
-	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "P2 Left/Down",   0,               0 },
-	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "P2 Left/Left",   0,               0 },
-	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "P2 Left/Right",  0,               0 },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER2, "P2 Up",          KEYCODE_R,       OSD_JOY2_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER2, "P2 Down",        KEYCODE_F,       OSD_JOY2_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER2, "P2 Left",        KEYCODE_D,       OSD_JOY2_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER2, "P2 Right",       KEYCODE_G,       OSD_JOY2_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER2, "P2 Button 1",    KEYCODE_A,       OSD_JOY2_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER2, "P2 Button 2",    KEYCODE_S,       OSD_JOY2_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER2, "P2 Button 3",    KEYCODE_Q,       OSD_JOY2_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    KEYCODE_W,       OSD_JOY2_FIRE4 },
+	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    KEYCODE_NONE,    OSD_JOY2_FIRE5 },
+	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    KEYCODE_NONE,    OSD_JOY2_FIRE6 },
+	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    KEYCODE_NONE,    OSD_JOY2_FIRE7 },
+	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    KEYCODE_NONE,    OSD_JOY2_FIRE8 },
+	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER2, "P2 Right/Right", KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKLEFT_UP     | IPF_PLAYER2, "P2 Left/Up",     KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER2, "P2 Left/Down",   KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER2, "P2 Left/Left",   KEYCODE_NONE,    0 },
+	{ IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER2, "P2 Left/Right",  KEYCODE_NONE,    0 },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER3, "P3 Up",          OSD_KEY_I,       OSD_JOY3_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER3, "P3 Down",        OSD_KEY_K,       OSD_JOY3_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER3, "P3 Left",        OSD_KEY_J,       OSD_JOY3_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER3, "P3 Right",       OSD_KEY_L,       OSD_JOY3_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER3, "P3 Button 1",    OSD_KEY_RCONTROL,OSD_JOY3_FIRE1 },
-	{ IPT_BUTTON2             | IPF_PLAYER3, "P3 Button 2",    OSD_KEY_RSHIFT,  OSD_JOY3_FIRE2 },
-	{ IPT_BUTTON3             | IPF_PLAYER3, "P3 Button 3",    OSD_KEY_ENTER,   OSD_JOY3_FIRE3 },
-	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    0,               OSD_JOY3_FIRE4 },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER3, "P3 Up",          KEYCODE_I,       OSD_JOY3_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER3, "P3 Down",        KEYCODE_K,       OSD_JOY3_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER3, "P3 Left",        KEYCODE_J,       OSD_JOY3_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER3, "P3 Right",       KEYCODE_L,       OSD_JOY3_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER3, "P3 Button 1",    KEYCODE_RCONTROL,OSD_JOY3_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER3, "P3 Button 2",    KEYCODE_RSHIFT,  OSD_JOY3_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER3, "P3 Button 3",    KEYCODE_ENTER,   OSD_JOY3_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    KEYCODE_NONE,    OSD_JOY3_FIRE4 },
 
-	{ IPT_JOYSTICK_UP         | IPF_PLAYER4, "P4 Up",          0,               OSD_JOY4_UP    },
-	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER4, "P4 Down",        0,               OSD_JOY4_DOWN  },
-	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER4, "P4 Left",        0,               OSD_JOY4_LEFT  },
-	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER4, "P4 Right",       0,               OSD_JOY4_RIGHT },
-	{ IPT_BUTTON1             | IPF_PLAYER4, "P4 Button 1",    0,               OSD_JOY4_FIRE1 },
-	{ IPT_BUTTON2             | IPF_PLAYER4, "P4 Button 2",    0,               OSD_JOY4_FIRE2 },
-	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    0,               OSD_JOY4_FIRE3 },
-	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    0,               OSD_JOY4_FIRE4 },
+	{ IPT_JOYSTICK_UP         | IPF_PLAYER4, "P4 Up",          KEYCODE_NONE,    OSD_JOY4_UP    },
+	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER4, "P4 Down",        KEYCODE_NONE,    OSD_JOY4_DOWN  },
+	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER4, "P4 Left",        KEYCODE_NONE,    OSD_JOY4_LEFT  },
+	{ IPT_JOYSTICK_RIGHT      | IPF_PLAYER4, "P4 Right",       KEYCODE_NONE,    OSD_JOY4_RIGHT },
+	{ IPT_BUTTON1             | IPF_PLAYER4, "P4 Button 1",    KEYCODE_NONE,    OSD_JOY4_FIRE1 },
+	{ IPT_BUTTON2             | IPF_PLAYER4, "P4 Button 2",    KEYCODE_NONE,    OSD_JOY4_FIRE2 },
+	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    KEYCODE_NONE,    OSD_JOY4_FIRE3 },
+	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    KEYCODE_NONE,    OSD_JOY4_FIRE4 },
 
-	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        OSD_KEY_RIGHT, OSD_JOY_RIGHT  },
-	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      OSD_KEY_D,     OSD_JOY2_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      OSD_KEY_G,     OSD_JOY2_RIGHT },
-	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      OSD_KEY_J,     OSD_JOY3_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      OSD_KEY_L,     OSD_JOY3_RIGHT },
-	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",      0, 0 },
-	{ (IPT_PADDLE | IPF_PLAYER4)+IPT_EXTENSION,             "Paddle 4",      0, 0 },
-	{ IPT_DIAL | IPF_PLAYER1,    "Dial",          OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,               "Dial",          OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        OSD_KEY_D,     OSD_JOY2_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,               "Dial 2",      OSD_KEY_G,     OSD_JOY2_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        OSD_KEY_J,     OSD_JOY3_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,               "Dial 3",      OSD_KEY_L,     OSD_JOY3_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER4,    "Dial 4",        0, 0 },
-	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,               "Dial 4",        0, 0 },
+	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        KEYCODE_LEFT,  OSD_JOY_LEFT },
+	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        KEYCODE_RIGHT, OSD_JOY_RIGHT  },
+	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      KEYCODE_D,     OSD_JOY2_LEFT },
+	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      KEYCODE_G,     OSD_JOY2_RIGHT },
+	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      KEYCODE_J,     OSD_JOY3_LEFT },
+	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      KEYCODE_L,     OSD_JOY3_RIGHT },
+	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",      KEYCODE_NONE,  0 },
+	{ (IPT_PADDLE | IPF_PLAYER4)+IPT_EXTENSION,             "Paddle 4",      KEYCODE_NONE,  0 },
+	{ IPT_DIAL | IPF_PLAYER1,    "Dial",          KEYCODE_LEFT,  OSD_JOY_LEFT },
+	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,               "Dial",          KEYCODE_RIGHT, OSD_JOY_RIGHT },
+	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        KEYCODE_D,     OSD_JOY2_LEFT },
+	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,               "Dial 2",      KEYCODE_G,     OSD_JOY2_RIGHT },
+	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        KEYCODE_J,     OSD_JOY3_LEFT },
+	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,               "Dial 3",      KEYCODE_L,     OSD_JOY3_RIGHT },
+	{ IPT_DIAL | IPF_PLAYER4,    "Dial 4",        KEYCODE_NONE,  0 },
+	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,               "Dial 4",      KEYCODE_NONE,  0 },
 
-	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER1)+IPT_EXTENSION,                 "Track X",   OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", OSD_KEY_D,     OSD_JOY2_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", OSD_KEY_G,     OSD_JOY2_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", OSD_KEY_J,     OSD_JOY3_LEFT },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", OSD_KEY_L,     OSD_JOY3_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", 0, 0 },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER4)+IPT_EXTENSION,                 "Track X 4", 0, 0 },
+	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   KEYCODE_LEFT,  OSD_JOY_LEFT },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER1)+IPT_EXTENSION,                 "Track X",   KEYCODE_RIGHT, OSD_JOY_RIGHT },
+	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", KEYCODE_D,     OSD_JOY2_LEFT },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", KEYCODE_G,     OSD_JOY2_RIGHT },
+	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", KEYCODE_J,     OSD_JOY3_LEFT },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", KEYCODE_L,     OSD_JOY3_RIGHT },
+	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", KEYCODE_NONE,  0 },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER4)+IPT_EXTENSION,                 "Track X 4", KEYCODE_NONE,  0 },
 
-	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   OSD_KEY_UP,    OSD_JOY_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER1)+IPT_EXTENSION,                 "Track Y",   OSD_KEY_DOWN,  OSD_JOY_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", OSD_KEY_R,     OSD_JOY2_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", OSD_KEY_F,     OSD_JOY2_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", OSD_KEY_I,     OSD_JOY3_UP },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", OSD_KEY_K,     OSD_JOY3_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", 0, 0 },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER4)+IPT_EXTENSION,                 "Track Y 4", 0, 0 },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   KEYCODE_UP,    OSD_JOY_UP },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER1)+IPT_EXTENSION,                 "Track Y",   KEYCODE_DOWN,  OSD_JOY_DOWN },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", KEYCODE_R,     OSD_JOY2_UP },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", KEYCODE_F,     OSD_JOY2_DOWN },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", KEYCODE_I,     OSD_JOY3_UP },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", KEYCODE_K,     OSD_JOY3_DOWN },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", KEYCODE_NONE,  0 },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER4)+IPT_EXTENSION,                 "Track Y 4", KEYCODE_NONE,  0 },
 
-	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",   OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick X",   OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", OSD_KEY_D,     OSD_JOY2_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", OSD_KEY_G,     OSD_JOY2_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", OSD_KEY_J,     OSD_JOY3_LEFT },
-	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", OSD_KEY_L,     OSD_JOY3_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", 0, 0 },
-	{ (IPT_AD_STICK_X | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick X 4", 0, 0 },
+	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",   KEYCODE_LEFT,  OSD_JOY_LEFT },
+	{ (IPT_AD_STICK_X | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick X",   KEYCODE_RIGHT, OSD_JOY_RIGHT },
+	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", KEYCODE_D,     OSD_JOY2_LEFT },
+	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", KEYCODE_G,     OSD_JOY2_RIGHT },
+	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", KEYCODE_J,     OSD_JOY3_LEFT },
+	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", KEYCODE_L,     OSD_JOY3_RIGHT },
+	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", KEYCODE_NONE,  0 },
+	{ (IPT_AD_STICK_X | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick X 4", KEYCODE_NONE,  0 },
 
-	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",   OSD_KEY_UP,    OSD_JOY_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Y",   OSD_KEY_DOWN,  OSD_JOY_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", OSD_KEY_R,     OSD_JOY2_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", OSD_KEY_F,     OSD_JOY2_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", OSD_KEY_I,     OSD_JOY3_UP },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", OSD_KEY_K,     OSD_JOY3_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", 0, 0 },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", 0, 0 },
+	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",   KEYCODE_UP,    OSD_JOY_UP },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Y",   KEYCODE_DOWN,  OSD_JOY_DOWN },
+	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", KEYCODE_R,     OSD_JOY2_UP },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", KEYCODE_F,     OSD_JOY2_DOWN },
+	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", KEYCODE_I,     OSD_JOY3_UP },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", KEYCODE_K,     OSD_JOY3_DOWN },
+	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", KEYCODE_NONE,  0 },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", KEYCODE_NONE,  0 },
 
 	{ IPT_UNKNOWN,             "UNKNOWN",         IP_KEY_NONE,     IP_JOY_NONE },
 	{ IPT_END,                 0,                 0,     0 }	/* returned when there is no match */
 };
 
+struct ipd inputport_defaults_backup[sizeof(inputport_defaults)/sizeof(struct ipd)];
 
 
 static int readint(void *f,UINT32 *num)
@@ -318,6 +330,9 @@ static void load_default_keys(void)
 	void *f;
 
 
+	osd_customize_inputport_defaults(inputport_defaults);
+	memcpy(inputport_defaults_backup,inputport_defaults,sizeof(inputport_defaults));
+
 	if ((f = osd_fopen("default",0,OSD_FILETYPE_CONFIG,0)) != 0)
 	{
 		char buf[8];
@@ -332,11 +347,16 @@ static void load_default_keys(void)
 		for (;;)
 		{
 			UINT32 type;
+			UINT16 def_keyboard,def_joystick;
 			UINT16 keyboard,joystick;
 			int i;
 
 
 			if (readint(f,&type) != 0)
+				goto getout;
+			if (readword(f,&def_keyboard) != 0)
+				goto getout;
+			if (readword(f,&def_joystick) != 0)
 				goto getout;
 			if (readword(f,&keyboard) != 0)
 				goto getout;
@@ -348,8 +368,11 @@ static void load_default_keys(void)
 			{
 				if (inputport_defaults[i].type == type)
 				{
-					inputport_defaults[i].keyboard = keyboard;
-					inputport_defaults[i].joystick = joystick;
+					/* load stored settings only if the default hasn't changed */
+					if (inputport_defaults[i].keyboard == def_keyboard)
+						inputport_defaults[i].keyboard = keyboard;
+					if (inputport_defaults[i].joystick == def_joystick)
+						inputport_defaults[i].joystick = joystick;
 				}
 				i++;
 			}
@@ -377,6 +400,8 @@ static void save_default_keys(void)
 		while (inputport_defaults[i].type != IPT_END)
 		{
 			writeint(f,inputport_defaults[i].type);
+			writeword(f,inputport_defaults_backup[i].keyboard);
+			writeword(f,inputport_defaults_backup[i].joystick);
 			writeword(f,inputport_defaults[i].keyboard);
 			writeword(f,inputport_defaults[i].joystick);
 			i++;
@@ -1027,8 +1052,8 @@ void update_analog_port(int port)
 	else
 		delta = mouse_delta_y[player];
 
-	if (osd_key_pressed(deckey)) delta -= keydelta;
-	if (osd_key_pressed(inckey)) delta += keydelta;
+	if (keyboard_key_pressed(deckey)) delta -= keydelta;
+	if (keyboard_key_pressed(inckey)) delta += keydelta;
 	if (osd_joy_pressed(decjoy)) delta -= keydelta;
 	if (osd_joy_pressed(incjoy)) delta += keydelta;
 
@@ -1226,7 +1251,7 @@ int player;
 							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
 					joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
 
-					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
+					if (keyboard_key_pressed(key) ||
 						(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
 					{
 						if (joyserial[joynum][joydir] == 0)
@@ -1323,7 +1348,7 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 					key = input_port_key(in);
 					joy = input_port_joy(in);
 
-					if ((key != 0 && key != IP_KEY_NONE && osd_key_pressed(key)) ||
+					if ((key != 0 && key != IP_KEY_NONE && keyboard_key_pressed(key)) ||
 							(joy != 0 && joy != IP_JOY_NONE && osd_joy_pressed(joy)))
 					{
 						/* skip if coin input and it's locked out */

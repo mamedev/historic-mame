@@ -211,15 +211,15 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char *RAM =
 		Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	if (osd_key_pressed(OSD_KEY_PGDN))
+	if (keyboard_key_pressed(KEYCODE_PGDN))
 	{
-		while (osd_key_pressed(OSD_KEY_PGDN)) ;
+		while (keyboard_key_pressed(KEYCODE_PGDN)) ;
 		s++;
 	}
 
-	if (osd_key_pressed(OSD_KEY_PGUP))
+	if (keyboard_key_pressed(KEYCODE_PGUP))
 	{
-		while (osd_key_pressed(OSD_KEY_PGUP)) ;
+		while (keyboard_key_pressed(KEYCODE_PGUP)) ;
 		s--;
 	}
 
@@ -285,7 +285,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 #ifdef MAME_DEBUG
-    if (osd_key_pressed(OSD_KEY_SPACE))
+    if (keyboard_key_pressed(KEYCODE_SPACE))
     {
         /* Display current palette */
         const int numblocks=0x08;
@@ -310,7 +310,7 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             }
         }
     }
-    if (osd_key_pressed(OSD_KEY_F))
+    if (keyboard_key_pressed(KEYCODE_F))
     {
          battlane_dump_bitmap();
     }

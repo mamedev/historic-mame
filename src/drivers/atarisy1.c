@@ -104,41 +104,445 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *marble_speedcheck;
-
 extern unsigned char *atarisys1_bankselect;
 extern unsigned char *atarisys1_prioritycolor;
 
-extern int atarisys1_joystick_type;
-extern int atarisys1_trackball_type;
-
-int atarisys1_io_r(int offset);
-int atarisys1_6502_switch_r(int offset);
-int atarisys1_6522_r(int offset);
 int atarisys1_int3state_r(int offset);
-int atarisys1_trakball_r(int offset);
-int atarisys1_joystick_r(int offset);
 
-void atarisys1_led_w(int offset, int data);
-void atarisys1_6522_w(int offset, int data);
-void atarisys1_joystick_w(int offset, int data);
 void atarisys1_playfieldram_w(int offset, int data);
 void atarisys1_spriteram_w(int offset, int data);
 void atarisys1_bankselect_w(int offset, int data);
 void atarisys1_hscroll_w(int offset, int data);
 void atarisys1_vscroll_w(int offset, int data);
 
-int marble_speedcheck_r(int offset);
-void marble_speedcheck_w(int offset, int data);
-
-int atarisys1_interrupt(void);
-void atarisys1_sound_interrupt(int irq);
-
-void atarisys1_init_machine(void);
+void atarisys1_scanline_update(int scanline);
 
 int atarisys1_vh_start(void);
 void atarisys1_vh_stop(void);
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+
+static int joystick_type;
+static int trackball_type;
+
+static void *joystick_timer;
+static int joystick_int;
+static int joystick_int_enable;
+static int joystick_value;
+
+static int pedal_value;
+
+static int m6522_ddra, m6522_ddrb;
+static int m6522_dra, m6522_drb;
+static unsigned char m6522_regs[16];
+
+static unsigned char *marble_speedcheck;
+static unsigned long speedcheck_time1, speedcheck_time2;
+
+
+
+/*************************************
+ *
+ *		Initialization of globals.
+ *
+ *************************************/
+
+static void update_interrupts(void)
+{
+	int newstate = 0;
+
+	/* all interrupts go through an LS148, which gives priority to the highest */
+	if (joystick_int && joystick_int_enable)
+		newstate = 2;
+	if (atarigen_scanline_int_state)
+		newstate = 3;
+	if (atarigen_video_int_state)
+		newstate = 4;
+	if (atarigen_sound_int_state)
+		newstate = 6;
+
+	/* set the new state of the IRQ lines */
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void init_machine(void)
+{
+	/* initialize the system */
+	atarigen_eeprom_reset();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(atarisys1_scanline_update, 8);
+	atarigen_sound_io_reset(1);
+
+	/* reset the joystick parameters */
+	joystick_value = 0;
+	joystick_timer = NULL;
+	joystick_int = 0;
+	joystick_int_enable = 0;
+
+	/* reset the 6522 controller */
+	m6522_ddra = m6522_ddrb = 0xff;
+	m6522_dra = m6522_drb = 0xff;
+	memset(m6522_regs, 0xff, sizeof(m6522_regs));
+
+	/* reset the Marble Madness speedup checks */
+	speedcheck_time1 = speedcheck_time2 = 0;
+}
+
+
+
+/*************************************
+ *
+ *		LED handlers.
+ *
+ *************************************/
+
+static void led_w(int offset, int data)
+{
+	osd_led_w(offset, ~data & 1);
+}
+
+
+
+/*************************************
+ *
+ *		Interrupt handlers.
+ *
+ *************************************/
+
+static int vblank_interrupt(void)
+{
+	/* update the gas pedal for RoadBlasters */
+	if (joystick_type == 3)
+	{
+		if (input_port_1_r(0) & 0x80)
+		{
+			pedal_value += 64;
+			if (pedal_value > 0xff) pedal_value = 0xff;
+		}
+		else
+		{
+			pedal_value -= 64;
+			if (pedal_value < 0) pedal_value = 0;
+		}
+	}
+
+	return atarigen_video_int_gen();
+}
+
+
+
+/*************************************
+ *
+ *		Joystick read.
+ *
+ *************************************/
+
+static void delayed_joystick_int(int param)
+{
+	joystick_timer = NULL;
+	joystick_value = param;
+	joystick_int = 1;
+	atarigen_update_interrupts();
+}
+
+
+static int joystick_r(int offset)
+{
+	int newval = 0xff;
+
+	/* digital joystick type */
+	if (joystick_type == 1)
+		newval = (input_port_0_r(offset) & (0x80 >> (offset / 2))) ? 0xf0 : 0x00;
+
+	/* Hall-effect analog joystick */
+	else if (joystick_type == 2)
+		newval = (offset & 2) ? input_port_0_r(offset) : input_port_1_r(offset);
+
+	/* Road Blasters gas pedal */
+	else if (joystick_type == 3)
+		newval = pedal_value;
+
+	/* set a timer on the joystick interrupt */
+	if (joystick_timer)
+		timer_remove(joystick_timer);
+	joystick_timer = NULL;
+
+	/* the A4 bit enables/disables joystick IRQs */
+	joystick_int_enable = ((offset >> 4) & 1) ^ 1;
+
+	/* clear any existing interrupt and set a timer for a new one */
+	joystick_int = 0;
+	joystick_timer = timer_set(TIME_IN_USEC(50), newval, delayed_joystick_int);
+	atarigen_update_interrupts();
+
+	return joystick_value;
+}
+
+
+static void joystick_w(int offset, int data)
+{
+	/* the A4 bit enables/disables joystick IRQs */
+	joystick_int_enable = ((offset >> 4) & 1) ^ 1;
+}
+
+
+
+/*************************************
+ *
+ *		Trackball read.
+ *
+ *************************************/
+
+static int trakball_r(int offset)
+{
+	int result = 0xff;
+
+	/* Marble Madness trackball type -- rotated 45 degrees! */
+	if (trackball_type == 1)
+	{
+		static int old[2][2], cur[2][2];
+		int player = (offset >> 2) & 1;
+		int which = (offset >> 1) & 1;
+		int diff;
+
+		/* when reading the even ports, do a real analog port update */
+		if (which == 0)
+		{
+			int dx,dy;
+
+			if (player == 0)
+			{
+				dx = (signed char)input_port_0_r(offset);
+				dy = (signed char)input_port_1_r(offset);
+			}
+			else
+			{
+				dx = (signed char)input_port_2_r(offset);
+				dy = (signed char)input_port_3_r(offset);
+			}
+
+			cur[player][0] += dx + dy;
+			cur[player][1] += dx - dy;
+		}
+
+		/* clip the result to -0x3f to +0x3f to remove directional ambiguities */
+		diff = cur[player][which] - old[player][which];
+		if (diff < -0x3f) diff = -0x3f;
+		if (diff >  0x3f) diff =  0x3f;
+		result = old[player][which] += diff;
+	}
+
+	/* Road Blasters steering wheel */
+	else if (trackball_type == 2)
+		result = input_port_0_r(offset);
+
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *		I/O read dispatch.
+ *
+ *************************************/
+
+static int input_r(int offset)
+{
+	int temp = input_port_5_r(offset);
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
+	return temp;
+}
+
+
+static int switch_6502_r(int offset)
+{
+	int temp = input_port_4_r(offset);
+
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x08;
+	if (atarigen_sound_to_cpu_ready) temp ^= 0x10;
+	if (!(input_port_5_r(offset) & 0x0040)) temp ^= 0x80;
+
+	return temp;
+}
+
+
+
+/*************************************
+ *
+ *		TMS5220 communications
+ *
+ *************************************/
+
+/*
+ *	All communication to the 5220 goes through an SY6522A, which is an overpowered chip
+ *	for the job.  Here is a listing of the I/O addresses:
+ *
+ *		$00	DRB		Data register B
+ *		$01	DRA		Data register A
+ *		$02	DDRB	Data direction register B (0=input, 1=output)
+ *		$03	DDRA	Data direction register A (0=input, 1=output)
+ *		$04	T1CL	T1 low counter
+ *		$05	T1CH	T1 high counter
+ *		$06	T1LL	T1 low latches
+ *		$07	T1LH	T1 high latches
+ *		$08	T2CL	T2 low counter
+ *		$09	T2CH	T2 high counter
+ *		$0A	SR		Shift register
+ *		$0B	ACR		Auxiliary control register
+ *		$0C	PCR		Peripheral control register
+ *		$0D	IFR		Interrupt flag register
+ *		$0E	IER		Interrupt enable register
+ *		$0F	NHDRA	No handshake DRA
+ *
+ *	Fortunately, only addresses $00,$01,$0B,$0C, and $0F are accessed in the code, and
+ *	$0B and $0C are merely set up once.
+ *
+ *	The ports are hooked in like follows:
+ *
+ *	Port A, D0-D7 = TMS5220 data lines (i/o)
+ *
+ *	Port B, D0 = 	Write strobe (out)
+ *	        D1 = 	Read strobe (out)
+ *	        D2 = 	Ready signal (in)
+ *	        D3 = 	Interrupt signal (in)
+ *	        D4 = 	LED (out)
+ *	        D5 = 	??? (out)
+ */
+
+static int m6522_r(int offset)
+{
+	switch (offset)
+	{
+		case 0x00:	/* DRB */
+			return (m6522_drb & m6522_ddrb) | (!tms5220_ready_r() << 2) | (!tms5220_int_r() << 3);
+
+		case 0x01:	/* DRA */
+		case 0x0f:	/* NHDRA */
+			return (m6522_dra & m6522_ddra);
+
+		case 0x02:	/* DDRB */
+			return m6522_ddrb;
+
+		case 0x03:	/* DDRA */
+			return m6522_ddra;
+
+		default:
+			return m6522_regs[offset & 15];
+	}
+}
+
+
+void m6522_w(int offset, int data)
+{
+	int old;
+
+	switch (offset)
+	{
+		case 0x00:	/* DRB */
+			old = m6522_drb;
+			m6522_drb = (m6522_drb & ~m6522_ddrb) | (data & m6522_ddrb);
+			if (!(old & 1) && (m6522_drb & 1))
+				tms5220_data_w(0, m6522_dra);
+			if (!(old & 2) && (m6522_drb & 2))
+				m6522_dra = (m6522_dra & m6522_ddra) | (tms5220_status_r(0) & ~m6522_ddra);
+			break;
+
+		case 0x01:	/* DRA */
+		case 0x0f:	/* NHDRA */
+			m6522_dra = (m6522_dra & ~m6522_ddra) | (data & m6522_ddra);
+			break;
+
+		case 0x02:	/* DDRB */
+			m6522_ddrb = data;
+			break;
+
+		case 0x03:	/* DDRA */
+			m6522_ddra = data;
+			break;
+
+		default:
+			m6522_regs[offset & 15] = data;
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Speed cheats
+ *
+ *************************************/
+
+int marble_speedcheck_r(int offset)
+{
+	int result = READ_WORD(&marble_speedcheck[offset]);
+
+	if (offset == 2 && result == 0)
+	{
+		int time = cpu_gettotalcycles();
+		if (time - speedcheck_time1 < 100 && speedcheck_time1 - speedcheck_time2 < 100)
+			cpu_spinuntil_int();
+
+		speedcheck_time2 = speedcheck_time1;
+		speedcheck_time1 = time;
+	}
+
+	return result;
+}
+
+
+void marble_speedcheck_w(int offset, int data)
+{
+	COMBINE_WORD_MEM(&marble_speedcheck[offset], data);
+	speedcheck_time1 = cpu_gettotalcycles() - 1000;
+	speedcheck_time2 = speedcheck_time1 - 1000;
+}
+
+
+
+/*************************************
+ *
+ *		Opcode memory catcher.
+ *
+ *************************************/
+
+static int indytemp_setopbase(int pc)
+{
+	int prevpc = cpu_getpreviouspc();
+
+	/*
+	 *	This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
+	 *	directly to code in the slapstic.  The general order of things is this:
+	 *
+	 *		jump to $3A, which turns off interrupts and jumps to $00 (the reset address)
+	 *		look up the request in a table and jump there
+	 *		(under some circumstances, tweak the special addresses)
+	 *		return via an RTS at the real bankswitch address
+	 *
+	 *	To simulate this, we tweak the slapstic reset address on entry into slapstic code; then
+	 *	we let the system tweak whatever other addresses it wishes.  On exit, we tweak the
+	 *	address of the previous PC, which is the RTS instruction, thereby completing the
+	 *	bankswitch sequence.
+	 *
+	 *	Fortunately for us, all 4 banks have exactly the same code at this point in their
+	 *	ROM, so it doesn't matter which version we're actually executing.
+	 */
+
+	if (pc & 0x80000)
+		atarigen_slapstic_r(0);
+	else if (prevpc & 0x80000)
+		atarigen_slapstic_r(prevpc & 0x7fff);
+
+	return pc;
+}
 
 
 
@@ -150,8 +554,7 @@ void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress main_readmem[] =
 {
-	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_r },
+	{ 0x000000, 0x087fff, MRA_ROM },
 	{ 0x2e0000, 0x2e0003, atarisys1_int3state_r },
 	{ 0x400000, 0x401fff, MRA_BANK1 },
 	{ 0x840000, 0x840003, MRA_BANK2, &atarisys1_prioritycolor },
@@ -161,9 +564,9 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xa03000, 0xa03fff, MRA_BANK6 },
 	{ 0xb00000, 0xb007ff, paletteram_word_r },
 	{ 0xf00000, 0xf00fff, atarigen_eeprom_r },
-	{ 0xf20000, 0xf20007, atarisys1_trakball_r },
-	{ 0xf40000, 0xf4001f, atarisys1_joystick_r },
-	{ 0xf60000, 0xf60003, atarisys1_io_r },
+	{ 0xf20000, 0xf20007, trakball_r },
+	{ 0xf40000, 0xf4001f, joystick_r },
+	{ 0xf60000, 0xf60003, input_r },
 	{ 0xfc0000, 0xfc0003, atarigen_sound_r },
 	{ -1 }  /* end of table */
 };
@@ -171,15 +574,14 @@ static struct MemoryReadAddress main_readmem[] =
 
 static struct MemoryWriteAddress main_writemem[] =
 {
-	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, atarigen_slapstic_w, &atarigen_slapstic },
+	{ 0x000000, 0x087fff, MWA_ROM },
 	{ 0x400000, 0x401fff, MWA_BANK1 },
 	{ 0x800000, 0x800003, atarisys1_hscroll_w, &atarigen_hscroll },
 	{ 0x820000, 0x820003, atarisys1_vscroll_w, &atarigen_vscroll },
 	{ 0x840000, 0x840003, MWA_BANK2 },
 	{ 0x860000, 0x860003, atarisys1_bankselect_w, &atarisys1_bankselect },
 	{ 0x880000, 0x880003, watchdog_reset_w },
-	{ 0x8a0000, 0x8a0003, atarigen_vblank_ack_w },
+	{ 0x8a0000, 0x8a0003, atarigen_video_int_ack_w },
 	{ 0x8c0000, 0x8c0003, atarigen_eeprom_enable_w },
 	{ 0x900000, 0x9fffff, MWA_BANK3 },
 	{ 0xa00000, 0xa01fff, atarisys1_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
@@ -187,7 +589,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xa03000, 0xa03fff, MWA_BANK6, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xb00000, 0xb007ff, paletteram_IIIIRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0xf00000, 0xf00fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xf40000, 0xf4001f, atarisys1_joystick_w },
+	{ 0xf40000, 0xf4001f, joystick_w },
 	{ 0xfe0000, 0xfe0003, atarigen_sound_w },
 	{ -1 }  /* end of table */
 };
@@ -203,10 +605,10 @@ static struct MemoryWriteAddress main_writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x100f, atarisys1_6522_r },
+	{ 0x1000, 0x100f, m6522_r },
 	{ 0x1800, 0x1801, YM2151_status_port_0_r },
 	{ 0x1810, 0x1810, atarigen_6502_sound_r },
-	{ 0x1820, 0x1820, atarisys1_6502_switch_r },
+	{ 0x1820, 0x1820, switch_6502_r },
 	{ 0x1870, 0x187f, pokey1_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -216,11 +618,11 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x100f, atarisys1_6522_w },
+	{ 0x1000, 0x100f, m6522_w },
 	{ 0x1800, 0x1800, YM2151_register_port_0_w },
 	{ 0x1801, 0x1801, YM2151_data_port_0_w },
 	{ 0x1810, 0x1810, atarigen_6502_sound_w },
-	{ 0x1824, 0x1825, atarisys1_led_w },
+	{ 0x1824, 0x1825, led_w },
 	{ 0x1820, 0x1827, MWA_NOP },
 	{ 0x1870, 0x187f, pokey1_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -262,7 +664,7 @@ INPUT_PORTS_START( marble_ports )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -302,7 +704,7 @@ INPUT_PORTS_START( peterpak_ports )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -342,7 +744,7 @@ INPUT_PORTS_START( indytemp_ports )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -378,7 +780,7 @@ INPUT_PORTS_START( roadrunn_ports )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -414,7 +816,7 @@ INPUT_PORTS_START( roadblst_ports )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -460,7 +862,7 @@ static struct YM2151interface ym2151_interface =
 	1,			/* 1 chip */
 	7159160/2,	/* 3.58 MHZ ? */
 	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
-	{ atarisys1_sound_interrupt }
+	{ atarigen_ym2151_irq_gen }
 };
 
 
@@ -494,11 +896,11 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68010,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			atarisys1_interrupt,1
+			vblank_interrupt,1
 		},
 		{
 			CPU_M6502,
@@ -510,7 +912,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	atarisys1_init_machine,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
@@ -600,11 +1002,11 @@ static void roadblst_rom_decode(void)
 
 static void marble_init(void)
 {
-	atarigen_slapstic_num = 103;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 103);
 
-	atarisys1_joystick_type = 0;	/* none */
-	atarisys1_trackball_type = 1;	/* rotated */
+	joystick_type = 0;	/* none */
+	trackball_type = 1;	/* rotated */
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x8108, 0x8120);
@@ -621,11 +1023,11 @@ static void marble_init(void)
 
 static void peterpak_init(void)
 {
-	atarigen_slapstic_num = 107;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 107);
 
-	atarisys1_joystick_type = 1;	/* digital */
-	atarisys1_trackball_type = 0;	/* none */
+	joystick_type = 1;	/* digital */
+	trackball_type = 0;	/* none */
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x8101, 0x8119);
@@ -638,11 +1040,14 @@ static void peterpak_init(void)
 
 static void indytemp_init(void)
 {
-	atarigen_slapstic_num = 105;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 105);
 
-	atarisys1_joystick_type = 1;	/* digital */
-	atarisys1_trackball_type = 0;	/* none */
+	/* special case for the Indiana Jones slapstic */
+	cpu_setOPbaseoverride(indytemp_setopbase);
+
+	joystick_type = 1;	/* digital */
+	trackball_type = 0;	/* none */
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
@@ -655,11 +1060,11 @@ static void indytemp_init(void)
 
 static void roadrunn_init(void)
 {
-	atarigen_slapstic_num = 108;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 108);
 
-	atarisys1_joystick_type = 2;	/* analog */
-	atarisys1_trackball_type = 0;	/* none */
+	joystick_type = 2;	/* analog */
+	trackball_type = 0;	/* none */
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x8106, 0x811e);
@@ -672,11 +1077,11 @@ static void roadrunn_init(void)
 
 static void roadblst_init(void)
 {
-	atarigen_slapstic_num = 110;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x080000, 110);
 
-	atarisys1_joystick_type = 3;	/* pedal */
-	atarisys1_trackball_type = 2;	/* steering wheel */
+	joystick_type = 3;	/* pedal */
+	trackball_type = 2;	/* steering wheel */
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);

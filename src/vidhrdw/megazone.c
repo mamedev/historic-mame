@@ -9,13 +9,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 unsigned char *megazone_scrollx;
 unsigned char *megazone_scrolly;
 static int flipscreen;
 
-
+unsigned char *megazone_videoram2;
+unsigned char *megazone_colorram2;
+int megazone_videoram2_size;
 
 /***************************************************************************
 
@@ -76,8 +76,6 @@ void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-
-
 void megazone_flipscreen_w(int offset,int data)
 {
 	if (flipscreen != (data & 1))
@@ -87,6 +85,35 @@ void megazone_flipscreen_w(int offset,int data)
 	}
 }
 
+int megazone_vh_start(void)
+{
+	int i;
+
+
+	dirtybuffer = 0;
+	tmpbitmap = 0;
+
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
+		return 1;
+	memset(dirtybuffer,1,videoram_size);
+
+	if ((tmpbitmap = osd_new_bitmap(256,256,Machine->scrbitmap->depth)) == 0)
+	{
+		free(dirtybuffer);
+		return 1;
+	}
+
+	return 0;
+}
+
+void megazone_vh_stop(void)
+{
+	free(dirtybuffer);
+	osd_free_bitmap(tmpbitmap);
+
+	dirtybuffer = 0;
+	tmpbitmap = 0;
+}
 
 
 /***************************************************************************
@@ -99,7 +126,7 @@ void megazone_flipscreen_w(int offset,int data)
 void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
+	int x,y;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -108,7 +135,6 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,flipx,flipy;
-
 
 			dirtybuffer[offs] = 0;
 
@@ -133,11 +159,10 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrollx = 255-*megazone_scrolly;
-		int scrolly = 255-*megazone_scrollx;
+		int scrollx = -*megazone_scrolly + 4*8;
+		int scrolly = -*megazone_scrollx;
 
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -149,7 +174,7 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int sx,sy,flipx,flipy;
 
 
-			sx = spriteram[offs + 3];
+			sx = spriteram[offs + 3] + 4*8;
 			sy = 255-((spriteram[offs + 1]+16)&0xff);
 
 			flipx = ~spriteram[offs+0] & 0x40;
@@ -168,6 +193,28 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					flipx,flipy,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		}
+	}
+
+	for (y = 0; y < 32;y++)
+	{
+		offs = y*32;
+		for (x = 0; x < 6; x++)
+		{
+			int sx,sy,flipx,flipy;
+
+			sx = x;
+			sy = y;
+
+			flipx = megazone_colorram2[offs] & (1<<6);
+			flipy = megazone_colorram2[offs] & (1<<5);
+			drawgfx(bitmap,Machine->gfx[0],
+					((int)megazone_videoram2[offs]) + ((megazone_colorram2[offs] & (1<<7) ? 256 : 0) ),
+					(megazone_colorram2[offs] & 0x0f) + 0x10,
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+			offs++;
 		}
 	}
 }

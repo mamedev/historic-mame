@@ -118,28 +118,283 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *gauntlet_speed_check;
 extern int vindctr2_screen_refresh;
 
-int gauntlet_control_r(int offset);
-int gauntlet_io_r(int offset);
-int gauntlet_68010_speedup_r(int offset);
-int gauntlet_6502_switch_r(int offset);
-
-void gauntlet_io_w(int offset, int data);
-void gauntlet_68010_speedup_w(int offset, int data);
-void gauntlet_sound_ctl_w(int offset, int data);
-void gauntlet_mixer_w(int offset, int data);
-void gauntlet_tms_w(int offset, int data);
 void gauntlet_playfieldram_w(int offset, int data);
 void gauntlet_hscroll_w(int offset, int data);
 void gauntlet_vscroll_w(int offset, int data);
 
-void gauntlet_init_machine(void);
+void gauntlet_scanline_update(int scanline);
 
 int gauntlet_vh_start(void);
 void gauntlet_vh_stop(void);
 void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+
+static unsigned char *speed_check;
+static int last_speed_check;
+
+static int speech_val;
+static int last_speech_write;
+
+
+/*************************************
+ *
+ *		Initialization of globals.
+ *
+ *************************************/
+
+static void update_interrupts(void)
+{
+	int newstate = 0;
+
+	if (atarigen_video_int_state)
+		newstate |= 4;
+	if (atarigen_sound_int_state)
+		newstate |= 6;
+
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void init_machine(void)
+{
+	last_speed_check = 0;
+	last_speech_write = 0x80;
+
+	atarigen_eeprom_reset();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(gauntlet_scanline_update, 8);
+	atarigen_sound_io_reset(1);
+}
+
+
+
+/*************************************
+ *
+ *		Controller read dispatch.
+ *
+ *************************************/
+
+static int fake_inputs(int real_port, int fake_port)
+{
+	int result = readinputport(real_port);
+	int fake = readinputport(fake_port);
+
+	if (fake & 0x01)			/* up */
+	{
+		if (fake & 0x04)		/* up and left */
+			result &= ~0x20;
+		else if (fake & 0x08)	/* up and right */
+			result &= ~0x10;
+		else					/* up only */
+			result &= ~0x30;
+	}
+	else if (fake & 0x02)		/* down */
+	{
+		if (fake & 0x04)		/* down and left */
+			result &= ~0x80;
+		else if (fake & 0x08)	/* down and right */
+			result &= ~0x40;
+		else					/* down only */
+			result &= ~0xc0;
+	}
+	else if (fake & 0x04)		/* left only */
+		result &= ~0x60;
+	else if (fake & 0x08)		/* right only */
+		result &= ~0x90;
+
+	return result;
+}
+
+
+static int control_r(int offset)
+{
+	/* differentiate Gauntlet input from Vindicators 2 inputs via the refresh flag */
+	if (!vindctr2_screen_refresh)
+	{
+		/* Gauntlet case */
+		int p1 = input_port_6_r(offset);
+		switch (offset)
+		{
+			case 0:
+				return readinputport(p1);
+			case 2:
+				return readinputport((p1 != 1) ? 1 : 0);
+			case 4:
+				return readinputport((p1 != 2) ? 2 : 0);
+			case 6:
+				return readinputport((p1 != 3) ? 3 : 0);
+		}
+	}
+	else
+	{
+		/* Vindicators 2 case */
+		switch (offset)
+		{
+			case 0:
+				return fake_inputs(0, 6);
+			case 2:
+				return fake_inputs(1, 7);
+			case 4:
+			case 6:
+				return readinputport(offset / 2);
+		}
+	}
+	return 0xffff;
+}
+
+
+
+/*************************************
+ *
+ *		I/O read dispatch.
+ *
+ *************************************/
+
+static int input_r(int offset)
+{
+	int temp;
+
+	switch (offset)
+	{
+		case 0:
+			temp = input_port_5_r(offset);
+			if (atarigen_cpu_to_sound_ready) temp ^= 0x0020;
+			if (atarigen_sound_to_cpu_ready) temp ^= 0x0010;
+			return temp;
+
+		case 6:
+			return atarigen_sound_r(0);
+	}
+	return 0xffff;
+}
+
+
+static int switch_6502_r(int offset)
+{
+	int temp = 0x30;
+
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x80;
+	if (atarigen_sound_to_cpu_ready) temp ^= 0x40;
+	if (tms5220_ready_r()) temp ^= 0x20;
+	if (!(input_port_5_r(offset) & 0x0008)) temp ^= 0x10;
+
+	return temp;
+}
+
+
+
+/*************************************
+ *
+ *		Controller write dispatch.
+ *
+ *************************************/
+
+static void input_w(int offset, int data)
+{
+	switch (offset)
+	{
+		case 0x0e:		/* sound CPU reset */
+			if (data & 1)
+				atarigen_sound_reset_w(0, 0);
+			else
+				cpu_halt(1, 0);
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Sound TMS5220 write.
+ *
+ *************************************/
+
+static void tms5220_w(int offset, int data)
+{
+	(void)offset;
+	speech_val = data;
+}
+
+
+
+/*************************************
+ *
+ *		Sound control write.
+ *
+ *************************************/
+
+static void sound_ctl_w(int offset, int data)
+{
+	switch (offset & 7)
+	{
+		case 0:	/* music reset, bit D7, low reset */
+			break;
+
+		case 1:	/* speech write, bit D7, active low */
+			if (((data ^ last_speech_write) & 0x80) && (data & 0x80))
+				tms5220_data_w(0, speech_val);
+			last_speech_write = data;
+			break;
+
+		case 2:	/* speech reset, bit D7, active low */
+			break;
+
+		case 3:	/* speech squeak, bit D7, low = 650kHz clock */
+			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *		Sound mixer write.
+ *
+ *************************************/
+
+static void mixer_w(int offset, int data)
+{
+	(void)offset;
+	atarigen_set_ym2151_vol((data & 7) * 100 / 7);
+	atarigen_set_pokey_vol(((data >> 3) & 3) * 100 / 3);
+	atarigen_set_tms5220_vol(((data >> 5) & 7) * 100 / 7);
+}
+
+
+
+/*************************************
+ *
+ *		Speed cheats
+ *
+ *************************************/
+
+static int speedup_68010_r(int offset)
+{
+	int result = READ_WORD(&speed_check[offset]);
+	int time = cpu_gettotalcycles();
+	int delta = time - last_speed_check;
+
+	last_speed_check = time;
+	if (delta <= 100 && result == 0 && delta >= 0)
+		cpu_spin();
+
+	return result;
+}
+
+
+static void speedup_68010_w(int offset, int data)
+{
+	last_speed_check -= 1000;
+	COMBINE_WORD_MEM(&speed_check[offset], data);
+}
+
 
 
 /*************************************
@@ -150,13 +405,11 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress main_readmem[] =
 {
-	{ 0x000000, 0x037fff, MRA_ROM },
-	{ 0x038000, 0x03ffff, atarigen_slapstic_r },
-	{ 0x040000, 0x07ffff, MRA_ROM },
+	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x800000, 0x801fff, MRA_BANK1 },
 	{ 0x802000, 0x802fff, atarigen_eeprom_r },
-	{ 0x803000, 0x803007, gauntlet_control_r },
-	{ 0x803008, 0x80300f, gauntlet_io_r },
+	{ 0x803000, 0x803007, control_r },
+	{ 0x803008, 0x80300f, input_r },
 	{ 0x900000, 0x901fff, MRA_BANK2 },
 	{ 0x902000, 0x903fff, MRA_BANK3 },
 	{ 0x904000, 0x904fff, MRA_BANK4 },
@@ -170,14 +423,12 @@ static struct MemoryReadAddress main_readmem[] =
 
 static struct MemoryWriteAddress main_writemem[] =
 {
-	{ 0x000000, 0x037fff, MWA_ROM },
-	{ 0x038000, 0x03ffff, atarigen_slapstic_w, &atarigen_slapstic },
-	{ 0x040000, 0x07ffff, MWA_ROM },
+	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x800000, 0x801fff, MWA_BANK1 },
 	{ 0x802000, 0x802fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x803100, 0x803103, watchdog_reset_w },
-	{ 0x803120, 0x80312f, gauntlet_io_w },
-	{ 0x803140, 0x803143, atarigen_vblank_ack_w },
+	{ 0x803120, 0x80312f, input_w },
+	{ 0x803140, 0x803143, atarigen_video_int_ack_w },
 	{ 0x803150, 0x803153, atarigen_eeprom_enable_w },
 	{ 0x803170, 0x803173, atarigen_sound_w },
 	{ 0x900000, 0x901fff, gauntlet_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
@@ -204,7 +455,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1010, 0x101f, atarigen_6502_sound_r },
 	{ 0x1020, 0x102f, input_port_4_r },
-	{ 0x1030, 0x103f, gauntlet_6502_switch_r },
+	{ 0x1030, 0x103f, switch_6502_r },
 	{ 0x1800, 0x180f, pokey1_r },
 	{ 0x1811, 0x1811, YM2151_status_port_0_r },
 	{ 0x1830, 0x183f, atarigen_6502_irq_ack_r },
@@ -217,12 +468,12 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x100f, atarigen_6502_sound_w },
-	{ 0x1020, 0x102f, gauntlet_mixer_w },
-	{ 0x1030, 0x103f, gauntlet_sound_ctl_w },
+	{ 0x1020, 0x102f, mixer_w },
+	{ 0x1030, 0x103f, sound_ctl_w },
 	{ 0x1800, 0x180f, pokey1_w },
 	{ 0x1810, 0x1810, YM2151_register_port_0_w },
 	{ 0x1811, 0x1811, YM2151_data_port_0_w },
-	{ 0x1820, 0x182f, gauntlet_tms_w },
+	{ 0x1820, 0x182f, tms5220_w },
 	{ 0x1830, 0x183f, atarigen_6502_irq_ack_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -290,7 +541,7 @@ INPUT_PORTS_START( gauntlet_ports )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x0007, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0008, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0030, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -346,7 +597,7 @@ INPUT_PORTS_START( vindctr2_ports )
 
 	PORT_START	/* DSW */
 	PORT_BIT( 0x0007, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0008, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0030, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -452,11 +703,11 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68010,		/* verified */
 			7159160,
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M6502,
@@ -469,7 +720,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	gauntlet_init_machine,
+	init_machine,
 
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
@@ -789,18 +1040,19 @@ static void rom_decode(void)
  *
  *************************************/
 
-void gauntlet_init(void)
+static void gauntlet_init(void)
 {
-	atarigen_slapstic_num = 104;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x038000, 104);
+
 	vindctr2_screen_refresh = 0;
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
 
 	/* speed up the 68010 */
-	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
 
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
@@ -808,18 +1060,19 @@ void gauntlet_init(void)
 }
 
 
-void gaunt2p_init(void)
+static void gaunt2p_init(void)
 {
-	atarigen_slapstic_num = 107;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x038000, 107);
+
 	vindctr2_screen_refresh = 0;
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
 
 	/* speed up the 68010 */
-	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
 
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
@@ -827,18 +1080,19 @@ void gaunt2p_init(void)
 }
 
 
-void gauntlet2_init(void)
+static void gauntlet2_init(void)
 {
-	atarigen_slapstic_num = 106;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x038000, 106);
+
 	vindctr2_screen_refresh = 0;
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
 
 	/* speed up the 68010 */
-	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
-	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+	speed_check = install_mem_write_handler(0, 0x904002, 0x904003, speedup_68010_w);
+	install_mem_read_handler(0, 0x904002, 0x904003, speedup_68010_r);
 
 	/* display messages */
 /*	atarigen_show_slapstic_message(); -- no known slapstic problems */
@@ -846,10 +1100,11 @@ void gauntlet2_init(void)
 }
 
 
-void vindctr2_init(void)
+static void vindctr2_init(void)
 {
-	atarigen_slapstic_num = 118;
 	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x038000, 118);
+
 	vindctr2_screen_refresh = 1;
 
 	/* speed up the 6502 */

@@ -138,11 +138,11 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned short *rv;
 	int skip,col;
 
-	//if (osd_key_pressed(OSD_KEY_Q)) wms_statesave();
-	//if (osd_key_pressed(OSD_KEY_W)) wms_stateload();
+	//if (keyboard_key_pressed(KEYCODE_Q)) wms_statesave();
+	//if (keyboard_key_pressed(KEYCODE_W)) wms_stateload();
 
-	if (osd_key_pressed(OSD_KEY_E)&&errorlog) fprintf(errorlog, "log spot\n");
-	//if (osd_key_pressed(OSD_KEY_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
+	if (keyboard_key_pressed(KEYCODE_E)&&errorlog) fprintf(errorlog, "log spot\n");
+	//if (keyboard_key_pressed(KEYCODE_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
 
 	rv = &wms_videoram[(~TMS34010_get_DPYSTRT(0) & 0x1ff0)<<5];
 	col = Machine->drv->visible_area.max_x;

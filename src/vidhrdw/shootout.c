@@ -1,110 +1,101 @@
+/*
+	Video Hardware for Shoot Out
+	prom GB09.K6 may be related to background tile-sprite priority
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#define NUM_SPRITES 128
+
 extern unsigned char *shootout_textram;
-
-#if 0
-static unsigned char unknown_prom[] = { /* priority? */
-	0x00,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x00,0x02,0x02,0x02,0x02,0x02,0x02,0x02,
-	0x01,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
-	0x01,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
-	0x01,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
-};
-#endif
-
-void shootout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+static struct sprite_list *sprite_list;
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int bit0,bit1,bit2;
+int shootout_vh_start( void ){
+	if( generic_vh_start()==0 ){
+		sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT );
+		if( sprite_list ){
+			int i;
+			sprite_list->sprite_type = SPRITE_TYPE_STACK;
 
+			for( i=0; i<NUM_SPRITES; i++ ){
+				struct sprite *sprite = &sprite_list->sprite[i];
+				sprite->pal_data = Machine->gfx[1]->colortable;
+				sprite->tile_width = 16;
+				sprite->tile_height = 16;
+				sprite->total_width = 16;
+				sprite->line_offset = 16;
+			}
+			sprite_list->max_priority = 1;
 
-		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			return 0;
+		}
+		generic_vh_stop();
+	}
+	return 1; /* error */
+}
 
-		color_prom++;
+static void get_sprite_info( void ){
+	const struct GfxElement *gfx = Machine->gfx[1];
+	const UINT8 *source = spriteram;
+	struct sprite *sprite = sprite_list->sprite;
+	int count = NUM_SPRITES;
+
+	int attributes, flags, number;
+
+	while( count-- ){
+		flags = 0;
+		attributes = source[1];
+		/*
+		    76543210
+			xxx			bank
+			   x		vertical size
+			    x		priority
+			     x		horizontal flip
+			      x		flicker
+			       x	enable
+		*/
+		if ( attributes & 0x01 ){ /* enabled */
+			flags |= SPRITE_VISIBLE;
+			sprite->priority = (attributes&0x08)?1:0;
+			sprite->x = (240 - source[2])&0xff;
+			sprite->y = (240 - source[0])&0xff;
+
+			number = source[3] + ((attributes&0xe0)<<3);
+			if( attributes & 0x04 ) flags |= SPRITE_FLIPX;
+			if( attributes & 0x02 ) flags |= SPRITE_FLICKER; /* ? */
+
+			if( attributes & 0x10 ){ /* double height */
+				number = number&(~1);
+				sprite->y -= 16;
+				sprite->total_height = 32;
+			}
+			else {
+				sprite->total_height = 16;
+			}
+			sprite->pen_data = gfx->gfxdata->line[number*16];
+		}
+		sprite->flags = flags;
+		sprite++;
+		source += 4;
 	}
 }
 
-static void draw_sprites( int priority, struct osd_bitmap *bitmap ) {
-	const struct rectangle *clip = &Machine->drv->visible_area;
-
-	unsigned char *source = spriteram;
-	unsigned char *finish = source+spriteram_size;
-
-	while( source < finish ){
-		int attributes = source[1]; // TTTS PFXE
-
-		if ( attributes & 0x01 ){ /* enabled */
-			if( ( ( attributes >> 3 ) & 1 ) == priority ){ /* not perfect, but better */
-				int sx = 240 - source[2];
-				int sy = 240 - source[0];
-				int code = source[3] + 256*( (attributes>>5) & 3 );
-				int flipx = attributes & 0x04;
-				int bank = ( attributes & 0x80 ) ? 2 : 1;
-				// attributes & 0x2 ?
-
-				if (attributes & 0x10 ){ /* double height */
-					drawgfx(bitmap,Machine->gfx[bank],
-						code & ~1,
-						0,
-						flipx,0,
-						sx,sy - 16,
-						clip,TRANSPARENCY_PEN,0);
-
-					drawgfx(bitmap,Machine->gfx[bank],
-						code | 1,
-						0,
-						flipx,0,
-						sx,sy,
-						clip,TRANSPARENCY_PEN,0);
-				}
-				else
-				{
-					drawgfx(bitmap,Machine->gfx[bank],
-						code,
-						0,
-						flipx,0,
-						sx,sy,
-						clip,TRANSPARENCY_PEN,0);
-				}
-			} /* sprite priority */
-		} /* sprite enabled */
-		source+=4; /* process next sprite */
-	} /* next sprite */
-}
-
 static void draw_background( struct osd_bitmap *bitmap ){
+	const struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
 	int offs;
 	for( offs=0; offs<videoram_size; offs++ ){
 		if( dirtybuffer[offs] ){
 			int sx = (offs%32)*8;
 			int sy = (offs/32)*8;
-			int attributes = colorram[offs]; /* CCCC XTTT */
-			int tile_number = videoram[offs] + 256*(attributes & 3);
+			int attributes = colorram[offs]; /* CCCC -TTT */
+			int tile_number = videoram[offs] + 256*(attributes&7);
 			int color = attributes>>4;
 
-			drawgfx(tmpbitmap,Machine->gfx[(attributes&0x04)?4:3],
-					tile_number,
+			drawgfx(tmpbitmap,Machine->gfx[(tile_number&0x400)?3:2],
+					tile_number&0x3ff,
 					color,
 					0,0,
 					sx,sy,
@@ -125,10 +116,9 @@ static void draw_foreground( struct osd_bitmap *bitmap ){
 
 	for( sy=0; sy<256; sy+=8 ){
 		for( sx=0; sx<256; sx+=8 ){
-			int attributes = *(source+videoram_size); /* CCCC XXTT */
+			int attributes = *(source+videoram_size); /* CCCC --TT */
 			int tile_number = 256*(attributes&0x3) + *source++;
 			int color = attributes>>4;
-
 			drawgfx(bitmap,gfx,
 				tile_number, /* 0..1024 */
 				color,
@@ -140,8 +130,10 @@ static void draw_foreground( struct osd_bitmap *bitmap ){
 }
 
 void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	get_sprite_info();
+	sprite_update();
 	draw_background( bitmap );
-	draw_sprites( 1, bitmap );
+	sprite_draw( sprite_list, 1);
 	draw_foreground( bitmap );
-	draw_sprites( 0, bitmap );
+	sprite_draw( sprite_list, 0);
 }

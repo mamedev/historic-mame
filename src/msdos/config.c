@@ -6,9 +6,7 @@
  * 19980917 added a "-cheatfile" option (misc) in MAME.CFG      JCK
  */
 
-#define __INLINE__ static __inline__    /* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 #include <ctype.h>
 /* types of monitors supported */
@@ -34,6 +32,7 @@ extern unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw
 extern unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
 extern unsigned char tw320x240ns_h, tw320x240ns_v, tw320x240sc_h, tw320x240sc_v;
 extern unsigned char tw336x240ns_h, tw336x240ns_v, tw336x240sc_h, tw336x240sc_v;
+extern unsigned char tw384x224ns_h, tw384x224ns_v, tw384x224sc_h, tw384x224sc_v;
 extern unsigned char tw384x240ns_h, tw384x240ns_v, tw384x240sc_h, tw384x240sc_v;
 extern unsigned char tw384x256ns_h, tw384x256ns_v, tw384x256sc_h, tw384x256sc_v;
 extern int tw256x224_hor;
@@ -44,6 +43,7 @@ extern unsigned char tw224x288arc_h, tw224x288arc_v, tw288x224arc_h, tw288x224ar
 extern unsigned char tw256x256arc_h, tw256x256arc_v, tw256x240arc_h, tw256x240arc_v;
 extern unsigned char tw320x240arc_h, tw320x240arc_v, tw320x256arc_h, tw320x256arc_v;
 extern unsigned char tw352x240arc_h, tw352x240arc_v, tw352x256arc_h, tw352x256arc_v;
+extern unsigned char tw368x224arc_h, tw368x224arc_v;
 extern unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
 extern unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
 extern unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
@@ -54,7 +54,7 @@ extern int soundcard, usestereo,attenuation;
 extern int use_emulated_ym3812;
 
 /* from input.c */
-extern int use_mouse, joystick;
+extern int use_mouse, joystick, use_hotrod;
 
 /* from cheat.c */
 extern char *cheatfile;
@@ -87,20 +87,28 @@ char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
-	{ "none",               JOY_TYPE_NONE },
-	{ "standard",   JOY_TYPE_STANDARD },
-	{ "dual",               JOY_TYPE_2PADS },
-	{ "4button",    JOY_TYPE_4BUTTON },
-	{ "6button",    JOY_TYPE_6BUTTON },
-	{ "8button",    JOY_TYPE_8BUTTON },
-	{ "fspro",              JOY_TYPE_FSPRO },
-	{ "wingex",             JOY_TYPE_WINGEX },
-	{ "sidewinder", JOY_TYPE_SIDEWINDER },
-	{ "gamepadpro", JOY_TYPE_GAMEPAD_PRO },
-	{ "sneslpt1",   JOY_TYPE_SNESPAD_LPT1 },
-	{ "sneslpt2",   JOY_TYPE_SNESPAD_LPT2 },
-	{ "sneslpt3",   JOY_TYPE_SNESPAD_LPT3 },
-	{ NULL, NULL }
+	{ "none",			JOY_TYPE_NONE },
+	{ "auto",			JOY_TYPE_AUTODETECT },
+	{ "standard",		JOY_TYPE_STANDARD },
+	{ "dual",			JOY_TYPE_2PADS },
+	{ "4button",		JOY_TYPE_4BUTTON },
+	{ "6button",		JOY_TYPE_6BUTTON },
+	{ "8button",		JOY_TYPE_8BUTTON },
+	{ "fspro",			JOY_TYPE_FSPRO },
+	{ "wingex",			JOY_TYPE_WINGEX },
+	{ "sidewinder",		JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro",		JOY_TYPE_GAMEPAD_PRO },
+	{ "sneslpt1",		JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",		JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",		JOY_TYPE_SNESPAD_LPT3 },
+	{ "psxlpt1",		JOY_TYPE_PSXPAD_LPT1 },
+	{ "psxlpt2",		JOY_TYPE_PSXPAD_LPT2 },
+	{ "psxlpt3",		JOY_TYPE_PSXPAD_LPT3 },
+	{ "n64lpt1",		JOY_TYPE_N64PAD_LPT1 },
+	{ "n64lpt2",		JOY_TYPE_N64PAD_LPT2 },
+	{ "n64lpt3",		JOY_TYPE_N64PAD_LPT3 },
+	{ "wingwarrior",	JOY_TYPE_WINGWARRIOR },
+	{ 0, 0 }
 } ;
 
 
@@ -398,6 +406,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
 	joyname   = get_string ("config", "joystick", "joy", "none");
+	use_hotrod = get_bool  ("config", "hotrod",   NULL,  0);
 
 	/* misc configuration */
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
@@ -454,6 +463,11 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw336x240ns_v		= get_int ("tweaked", "336x240ns_v",    NULL, 0x08);
 	tw336x240sc_h		= get_int ("tweaked", "336x240sc_h",    NULL, 0x5f);
 	tw336x240sc_v		= get_int ("tweaked", "336x240sc_v",    NULL, 0x03);
+    /* 384x224 modes */
+	tw384x224ns_h		= get_int ("tweaked", "384x224ns_h",	NULL, 0x6c);
+	tw384x224ns_v		= get_int ("tweaked", "384x224ns_v",	NULL, 0x0c);
+	tw384x224sc_h		= get_int ("tweaked", "384x224sc_h",	NULL, 0x6c);
+	tw384x224sc_v		= get_int ("tweaked", "384x224sc_v",	NULL, 0x05);
 	/* 384x240 modes */
 	tw384x240ns_h		= get_int ("tweaked", "384x240ns_h",	NULL, 0x6c);
 	tw384x240ns_v		= get_int ("tweaked", "384x240ns_v",    NULL, 0x0c);
@@ -481,6 +495,8 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw352x240arc_v		= get_int ("tweaked", "352x240arc_v",	NULL, 0x09);
 	tw352x256arc_h		= get_int ("tweaked", "352x256arc_h",	NULL, 0x6a);
 	tw352x256arc_v		= get_int ("tweaked", "352x256arc_v",	NULL, 0x17);
+	tw368x224arc_h		= get_int ("tweaked", "368x224arc_h",	NULL, 0x6a);
+	tw368x224arc_v		= get_int ("tweaked", "368x224arc_v",	NULL, 0x09);
 	tw368x240arc_h		= get_int ("tweaked", "368x240arc_h",	NULL, 0x6a);
 	tw368x240arc_v		= get_int ("tweaked", "368x240arc_v",	NULL, 0x09);
 	tw368x256arc_h		= get_int ("tweaked", "368x256arc_h",	NULL, 0x6a);

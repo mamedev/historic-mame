@@ -336,7 +336,7 @@ INPUT_PORTS_START( spacfury_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
@@ -393,7 +393,7 @@ INPUT_PORTS_START( zektor_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -454,7 +454,7 @@ INPUT_PORTS_START( startrek_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -513,7 +513,7 @@ INPUT_PORTS_START( tacscan_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
@@ -578,7 +578,7 @@ INPUT_PORTS_START( elim2_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
@@ -643,7 +643,7 @@ INPUT_PORTS_START( elim4_input_ports )
 	PORT_START	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */

@@ -54,7 +54,7 @@ void fsharkbt_reset_8741_mcu(void)
 	osd_clearbitmap(Machine->scrbitmap);
 
 	/* clean out high score tables in these game hardware */
-	for (twincobr_cnt=1; twincobr_cnt < 13; twincobr_cnt++)
+	for (twincobr_cnt=0; twincobr_cnt < 12; twincobr_cnt++)
 	{
 		int twinc_hisc_addr[12] =
 		{

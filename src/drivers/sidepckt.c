@@ -297,7 +297,7 @@ static struct MachineDriver machine_driver =
 		{
 		    CPU_M6502 | CPU_AUDIO_CPU,
 		    3000000,        /* 3 Mhz ??? */
-		    2,
+			3,
 		    sound_readmem,sound_writemem,0,0,
 		    interrupt,16 /* guessed value, altho sounds ok (check on power bar) */
 		    /* nmi's are triggered from the main cpu */
@@ -351,6 +351,9 @@ ROM_START( sidepckt_rom )
     ROM_LOAD( "sp_01.bin",    0x18000, 0x8000, 0xa2cdfbea ) /* sprites */
     ROM_LOAD( "sp_02.bin",    0x20000, 0x8000, 0xeeb5c3e7 ) /* sprites */
     ROM_LOAD( "sp_03.bin",    0x28000, 0x8000, 0x8e18d21d ) /* sprites */
+
+    ROM_REGION(0x0100)	/* color PROMs (missing) */
+    ROM_LOAD( "proms",        0x0000, 0x0100, 0x00000000 )
 
     ROM_REGION(0x10000)     /* 64k for the audio cpu */
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )

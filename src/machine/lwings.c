@@ -30,9 +30,9 @@ int lwings_interrupt(void)
 int avengers_interrupt(void)
 {
 	static int n;
-	if (osd_key_pressed(OSD_KEY_S))
+	if (keyboard_key_pressed(KEYCODE_S))
 	{
-		while (osd_key_pressed(OSD_KEY_S))
+		while (keyboard_key_pressed(KEYCODE_S))
 		{}
 		n++;
 		n&=0x0f;

@@ -3,7 +3,7 @@
 Cyberball Memory Map
 --------------------
 
-CYBERBALL 68010 MEMORY MAP
+CYBERBALL 68000 MEMORY MAP
 
 Function                           Address        R/W  DATA
 -------------------------------------------------------------
@@ -50,19 +50,52 @@ RAM                                FF4000-FFFFFF  R/W
 
 
 #include "driver.h"
+#include "cpu/m6502/m6502.h"
 #include "sound/adpcm.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
+#include <math.h>
 
-void cyberbal_playfieldram_w(int offset, int data);
+
+/* better to leave this on; otherwise, you end up playing entire games out of the left speaker */
+#define USE_MONO_SOUND	1
+
+/* don't use this; it's incredibly slow (10k interrupts/second!) and doesn't really work */
+/* it's left in primarily for documentation purposes */
+/*#define EMULATE_SOUND_68000 1*/
+
+
+void cyberbal_set_screen(int which);
+
+void cyberbal_playfieldram_1_w(int offset, int data);
+void cyberbal_playfieldram_2_w(int offset, int data);
+
+void cyberbal_paletteram_1_w(int offset, int data);
+int cyberbal_paletteram_1_r(int offset);
+void cyberbal_paletteram_2_w(int offset, int data);
+int cyberbal_paletteram_2_r(int offset);
 
 int cyberbal_vh_start(void);
 void cyberbal_vh_stop(void);
 void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void cyberbal_scanline_update(int param);
+
+extern unsigned char *cyberbal_playfieldram_1;
+extern unsigned char *cyberbal_playfieldram_2;
+
+
+
+/* internal prototypes and variables */
+static void update_sound_68k_interrupts(void);
+static void handle_68k_sound_command(int data);
+
+static unsigned char *bank_base;
+static int fast_68k_int, io_68k_int;
+static int sound_data_from_68k, sound_data_from_6502;
+static int sound_data_from_68k_ready, sound_data_from_6502_ready;
 
 
 
@@ -72,13 +105,64 @@ void cyberbal_scanline_update(int param);
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
+{
+	int newstate1 = 0;
+	int newstate2 = 0;
+	int temp;
+
+	if (atarigen_sound_int_state)
+		newstate1 |= 1;
+	if (atarigen_video_int_state)
+		newstate2 |= 1;
+
+	if (newstate1)
+		cpu_set_irq_line(0, newstate1, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+
+	if (newstate2)
+		cpu_set_irq_line(2, newstate2, ASSERT_LINE);
+	else
+		cpu_set_irq_line(2, 7, CLEAR_LINE);
+
+	/* check for screen swapping */
+	temp = input_port_2_r(0);
+	if (temp & 1) cyberbal_set_screen(0);
+	else if (temp & 2) cyberbal_set_screen(1);
+}
+
+
+static void init_machine(void)
+{
+	atarigen_eeprom_reset();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(cyberbal_scanline_update, 8);
+	atarigen_sound_io_reset(1);
+
+	/* reset the sound system */
+	bank_base = &Machine->memory_region[Machine->drv->cpu[1].memory_region][0x10000];
+	cpu_setbank(8, &bank_base[0x0000]);
+	fast_68k_int = io_68k_int = 0;
+	sound_data_from_68k = sound_data_from_6502 = 0;
+	sound_data_from_68k_ready = sound_data_from_6502_ready = 0;
+
+	/* CPU 2 doesn't run until reset */
+	cpu_halt(2, 0);
+
+	/* make sure we're pointing to the right screen by default */
+	cyberbal_set_screen(0);
+}
+
+
+static void cyberb2p_update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (vblank)
+	if (atarigen_video_int_state)
 		newstate |= 1;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate |= 3;
 
 	if (newstate)
@@ -88,19 +172,15 @@ static void update_interrupts(int vblank, int sound)
 }
 
 
-static void init_machine(void)
+static void cyberb2p_init_machine(void)
 {
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
+	atarigen_interrupt_reset(cyberb2p_update_interrupts);
+	atarigen_scanline_timer_reset(cyberbal_scanline_update, 8);
+	atarijsa_reset();
 
-	atarigen_interrupt_init(update_interrupts, cyberbal_scanline_update);
-	ataraud2_init(1, 3, 2, 0x8000);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-	
-	/* display messages */
-	atarigen_show_sound_message();
+	/* make sure we're pointing to the only screen */
+	cyberbal_set_screen(0);
 }
 
 
@@ -110,6 +190,14 @@ static void init_machine(void)
  *		I/O read dispatch.
  *
  *************************************/
+
+static int special_port0_r(int offset)
+{
+	int temp = input_port_0_r(offset);
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x0080;
+	return temp;
+}
+
 
 static int special_port2_r(int offset)
 {
@@ -122,8 +210,464 @@ static int special_port2_r(int offset)
 static int sound_state_r(int offset)
 {
 	int temp = 0xffff;
+
+	(void)offset;
 	if (atarigen_cpu_to_sound_ready) temp ^= 0xffff;
 	return temp;
+}
+
+
+
+/*************************************
+ *
+ *		Extra I/O handlers.
+ *
+ *************************************/
+
+static void p2_reset_w(int offset, int data)
+{
+	(void)offset;
+	(void)data;
+	cpu_reset(2);
+	cpu_halt(2, 1);
+}
+
+
+
+/*************************************
+ *
+ *		6502 Sound Interface
+ *
+ *************************************/
+
+static int special_port3_r(int offset)
+{
+	int temp = input_port_3_r(offset);
+	if (!(readinputport(0) & 0x8000)) temp ^= 0x80;
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x40;
+	if (atarigen_sound_to_cpu_ready) temp ^= 0x20;
+	return temp;
+}
+
+
+static int sound_6502_stat_r(int offset)
+{
+	int temp = 0xff;
+
+	(void)offset;
+	if (sound_data_from_6502_ready) temp ^= 0x80;
+	if (sound_data_from_68k_ready) temp ^= 0x40;
+	return temp;
+}
+
+
+static void sound_bank_select_w(int offset, int data)
+{
+	(void)offset;
+	cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
+}
+
+
+static int sound_68k_6502_r(int offset)
+{
+	(void)offset;
+	sound_data_from_68k_ready = 0;
+	return sound_data_from_68k;
+}
+
+
+static void sound_68k_6502_w(int offset, int data)
+{
+	(void)offset;
+	sound_data_from_6502 = data;
+	sound_data_from_6502_ready = 1;
+
+#ifdef EMULATE_SOUND_68000
+	if (!io_68k_int)
+	{
+		io_68k_int = 1;
+		update_sound_68k_interrupts();
+	}
+#else
+	handle_68k_sound_command(data);
+#endif
+}
+
+
+
+/*************************************
+ *
+ *		68000 Sound Interface
+ *
+ *************************************/
+
+static void update_sound_68k_interrupts(void)
+{
+#ifdef EMULATE_SOUND_68000
+	int newstate = 0;
+
+	if (fast_68k_int)
+		newstate |= 6;
+	if (io_68k_int)
+		newstate |= 2;
+
+	if (newstate)
+		cpu_set_irq_line(3, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(3, 7, CLEAR_LINE);
+#endif
+}
+
+
+static int sound_68k_irq_gen(void)
+{
+	if (!fast_68k_int)
+	{
+		fast_68k_int = 1;
+		update_sound_68k_interrupts();
+	}
+	return 0;
+}
+
+
+static void io_68k_irq_ack_w(int offset, int data)
+{
+	(void)offset;
+	(void)data;
+	if (io_68k_int)
+	{
+		io_68k_int = 0;
+		update_sound_68k_interrupts();
+	}
+}
+
+
+static int sound_68k_r(int offset)
+{
+	int temp = (sound_data_from_6502 << 8) | 0xff;
+
+	(void)offset;
+	sound_data_from_6502_ready = 0;
+
+	if (sound_data_from_6502_ready) temp ^= 0x08;
+	if (sound_data_from_68k_ready) temp ^= 0x04;
+	return temp;
+}
+
+
+static void sound_68k_w(int offset, int data)
+{
+	(void)offset;
+	if (!(data & 0xff000000))
+	{
+		sound_data_from_68k = (data >> 8) & 0xff;
+		sound_data_from_68k_ready = 1;
+	}
+}
+
+
+static void sound_68k_dac_w(int offset, int data)
+{
+	DAC_signed_data_w((offset >> 4) & 1, (signed short)data >> 8);
+
+	if (fast_68k_int)
+	{
+		fast_68k_int = 0;
+		update_sound_68k_interrupts();
+	}
+}
+
+
+/*************************************
+ *
+ *		68000 Sound Simulator
+ *
+ *************************************/
+
+#define SAMPLE_RATE 10000
+
+struct sound_descriptor
+{
+	/*00*/unsigned short start_address_h;
+	/*02*/unsigned short start_address_l;
+	/*04*/unsigned short end_address_h;
+	/*06*/unsigned short end_address_l;
+	/*08*/unsigned short reps;
+	/*0a*/signed short volume;
+	/*0c*/signed short delta_volume;
+	/*0e*/signed short target_volume;
+	/*10*/unsigned short voice_priority;	/* voice high, priority low */
+	/*12*/unsigned short buffer_number;		/* buffer high, number low */
+	/*14*/unsigned short continue_unused;	/* continue high, unused low */
+};
+
+struct voice_descriptor
+{
+	unsigned char playing;
+	unsigned char *start;
+	unsigned char *current;
+	unsigned char *end;
+	unsigned short reps;
+	signed short volume;
+	signed short delta_volume;
+	signed short target_volume;
+	unsigned char priority;
+	unsigned char number;
+	unsigned char buffer;
+	unsigned char cont;
+	signed short chunk[48];
+	unsigned char chunk_remaining;
+};
+
+
+static signed short *volume_table;
+static struct voice_descriptor voices[6];
+static unsigned char sound_enabled;
+static int stream_channel;
+
+
+static void decode_chunk(unsigned char *memory, signed short *output, int overall)
+{
+	unsigned short volume_bits = READ_WORD(memory);
+	int volume, i, j;
+
+	memory += 2;
+	for (i = 0; i < 3; i++)
+	{
+		/* get the volume */
+		volume = ((overall & 0x03e0) + (volume_bits & 0x3e0)) >> 1;
+		volume_bits = ((volume_bits >> 5) & 0x07ff) | ((volume_bits << 11) & 0xf800);
+
+		for (j = 0; j < 4; j++)
+		{
+			unsigned short data = READ_WORD(memory);
+			memory += 2;
+			*output++ = volume_table[volume | ((data >>  0) & 0x000f)];
+			*output++ = volume_table[volume | ((data >>  4) & 0x000f)];
+			*output++ = volume_table[volume | ((data >>  8) & 0x000f)];
+			*output++ = volume_table[volume | ((data >> 12) & 0x000f)];
+		}
+	}
+}
+
+
+static void sample_stream_update(int param, void **buffer, int length)
+{
+	void *buf_left = buffer[0];
+	void *buf_right = buffer[1];
+	int i;
+
+	(void)param;
+
+	/* reset the buffers so we can add into them */
+	memset(buf_left, 0, length * Machine->sample_bits / 8);
+	memset(buf_right, 0, length * Machine->sample_bits / 8);
+
+	/* loop over voices */
+	for (i = 0; i < 6; i++)
+	{
+		struct voice_descriptor *voice = &voices[i];
+		int left = length;
+		void *output;
+
+		/* bail if not playing */
+		if (!voice->playing || !voice->buffer)
+			continue;
+
+		/* pick a buffer */
+		output = (voice->buffer == 0x10) ? buf_left : buf_right;
+
+		/* loop until we're done */
+		while (left)
+		{
+			signed short *source;
+			int this_batch;
+
+			if (!voice->chunk_remaining)
+			{
+				/* loop if necessary */
+				if (voice->current >= voice->end)
+				{
+					if (--voice->reps == 0)
+					{
+						voice->playing = 0;
+						break;
+					}
+					voice->current = voice->start;
+				}
+
+				/* decode this chunk */
+				decode_chunk(voice->current, voice->chunk, voice->volume);
+				voice->current += 26;
+				voice->chunk_remaining = 48;
+
+				/* update volumes */
+				voice->volume += voice->delta_volume;
+				if ((voice->volume & 0xffe0) == (voice->target_volume & 0xffe0))
+					voice->delta_volume = 0;
+			}
+
+			/* determine how much to copy */
+			this_batch = (left > voice->chunk_remaining) ? voice->chunk_remaining : left;
+			source = voice->chunk + 48 - voice->chunk_remaining;
+			voice->chunk_remaining -= this_batch;
+			left -= this_batch;
+
+			/* copy either 8-bit or 16-bit */
+			if (Machine->sample_bits == 16)
+			{
+				signed short *dest = output;
+				while (this_batch--)
+					*dest++ += *source++;
+				output = dest;
+			}
+			else
+			{
+				signed char *dest = output;
+				while (this_batch--)
+					*dest++ += *source++ >> 8;
+				output = dest;
+			}
+		}
+	}
+}
+
+
+static int samples_start(const struct MachineSound *msound)
+{
+	const char *names[] =
+	{
+		"68000 Simulator left",
+		"68000 Simulator right"
+	};
+	int vol[2], i, j;
+
+	(void)msound;
+
+	/* allocate volume table */
+	volume_table = malloc(sizeof(short) * 64 * 16);
+	if (!volume_table)
+		return 1;
+
+	/* build the volume table */
+	for (j = 0; j < 64; j++)
+	{
+		double factor = pow(0.5, (double)j * 0.25);
+		for (i = 0; i < 16; i++)
+			volume_table[j * 16 + i] = (signed short)(factor * 0.5 * (double)((signed short)(i << 12)));
+	}
+
+	/* get stream channels */
+#if USE_MONO_SOUND
+	vol[0] = MIXER(50, MIXER_PAN_CENTER);
+	vol[1] = MIXER(50, MIXER_PAN_CENTER);
+#else
+	vol[0] = MIXER(100, MIXER_PAN_LEFT);
+	vol[1] = MIXER(100, MIXER_PAN_RIGHT);
+#endif
+	stream_channel = stream_init_multi(2, names, vol, SAMPLE_RATE, Machine->sample_bits, 0, sample_stream_update);
+
+	/* reset voices */
+	memset(voices, 0, sizeof(voices));
+	sound_enabled = 1;
+
+	return 0;
+}
+
+
+static void samples_stop(void)
+{
+	if (volume_table)
+		free(volume_table);
+	volume_table = NULL;
+}
+
+
+static void handle_68k_sound_command(int command)
+{
+	struct sound_descriptor *sound;
+	struct voice_descriptor *voice;
+	unsigned short offset;
+	int actual_delta, actual_volume;
+	int temp;
+
+	/* read the data to reset the latch */
+	sound_68k_r(0);
+
+	switch (command)
+	{
+		case 0:		/* reset */
+			break;
+
+		case 1:		/* self-test */
+			sound_68k_w(0, 0x40 << 8);
+			break;
+
+		case 2:		/* status */
+			sound_68k_w(0, 0x00 << 8);
+			break;
+
+		case 3:
+			sound_enabled = 0;
+			break;
+
+		case 4:
+			sound_enabled = 1;
+			break;
+
+		default:
+			/* bail if we're not enabled or if we get a bogus voice */
+			offset = READ_WORD(&Machine->memory_region[2][0x1e2a + 2 * command]);
+			sound = (struct sound_descriptor *)&Machine->memory_region[2][offset];
+
+			/* check the voice */
+			temp = sound->voice_priority >> 8;
+			if (!sound_enabled || temp > 5)
+				break;
+			voice = &voices[temp];
+
+			/* see if we're allowed to take over */
+			actual_volume = sound->volume;
+			actual_delta = sound->delta_volume;
+			if (voice->playing && voice->cont)
+			{
+				temp = sound->buffer_number & 0xff;
+				if (voice->number != temp)
+					break;
+
+				/* if we're ramping, adjust for the current volume */
+				if (actual_delta != 0)
+				{
+					actual_volume = voice->volume;
+					if ((actual_delta < 0 && voice->volume <= sound->target_volume) ||
+						(actual_delta > 0 && voice->volume >= sound->target_volume))
+						actual_delta = 0;
+				}
+			}
+			else
+			{
+				temp = sound->voice_priority & 0xff;
+				if (voice->priority > temp ||
+					(voice->priority == temp && (temp & 1) == 0))
+					break;
+			}
+
+			/* fill in the voice; we're taking over */
+			voice->playing = 1;
+			voice->start = &Machine->memory_region[2][(sound->start_address_h << 16) | sound->start_address_l];
+			voice->current = voice->start;
+			voice->end = &Machine->memory_region[2][(sound->end_address_h << 16) | sound->end_address_l];
+			voice->reps = sound->reps;
+			voice->volume = actual_volume;
+			voice->delta_volume = actual_delta;
+			voice->target_volume = sound->target_volume;
+			voice->priority = sound->voice_priority & 0xff;
+			voice->number = sound->buffer_number & 0xff;
+			voice->buffer = sound->buffer_number >> 8;
+			voice->cont = sound->continue_unused >> 8;
+			voice->chunk_remaining = 0;
+			break;
+	}
 }
 
 
@@ -135,6 +679,137 @@ static int sound_state_r(int offset)
  *************************************/
 
 static struct MemoryReadAddress main_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfc8000, 0xfcffff, atarigen_sound_upper_r },
+	{ 0xfe0000, 0xfe0fff, special_port0_r },
+	{ 0xfe1000, 0xfe1fff, input_port_1_r },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r, &paletteram_2 },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r, &paletteram },
+	{ 0xff0000, 0xff1fff, MRA_BANK1 },
+	{ 0xff2000, 0xff3fff, MRA_BANK2 },
+	{ 0xff4000, 0xff5fff, MRA_BANK3 },
+	{ 0xff6000, 0xff7fff, MRA_BANK4 },
+	{ 0xff8000, 0xff9fff, MRA_BANK5 },
+	{ 0xffa000, 0xffbfff, MRA_BANK6 },
+	{ 0xffc000, 0xffffff, MRA_BANK7 },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress main_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_w },
+	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_enable_w },
+	{ 0xfd2000, 0xfd3fff, atarigen_sound_reset_w },
+	{ 0xfd4000, 0xfd5fff, watchdog_reset_w },
+	{ 0xfd6000, 0xfd7fff, p2_reset_w },
+	{ 0xfd8000, 0xfd9fff, atarigen_sound_upper_w },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },
+	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w },
+	{ 0xff2000, 0xff3fff, MWA_BANK2 },
+	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w },
+	{ 0xff6000, 0xff7fff, MWA_BANK4 },
+	{ 0xff8000, 0xff9fff, MWA_BANK5 },
+	{ 0xffa000, 0xffbfff, MWA_NOP },
+	{ 0xffc000, 0xffffff, MWA_BANK7 },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress extra_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xfe0000, 0xfe0fff, special_port0_r },
+	{ 0xfe1000, 0xfe1fff, input_port_1_r },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r },
+	{ 0xff0000, 0xff1fff, MRA_BANK1 },
+	{ 0xff2000, 0xff3fff, MRA_BANK2 },
+	{ 0xff4000, 0xff5fff, MRA_BANK3 },
+	{ 0xff6000, 0xff7fff, MRA_BANK4 },
+	{ 0xff8000, 0xff9fff, MRA_BANK5 },
+	{ 0xffa000, 0xffbfff, MRA_BANK6 },
+	{ 0xffc000, 0xffffff, MRA_BANK7 },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress extra_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0xfc0000, 0xfdffff, atarigen_video_int_ack_w },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },			/* player 2 palette RAM */
+	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w, &cyberbal_playfieldram_2 },
+	{ 0xff2000, 0xff3fff, MWA_BANK2 },
+	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
+	{ 0xff6000, 0xff7fff, MWA_BANK4 },
+	{ 0xff8000, 0xff9fff, MWA_BANK5 },
+	{ 0xffa000, 0xffbfff, MWA_BANK6 },
+	{ 0xffc000, 0xffffff, MWA_NOP },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2001, YM2151_status_port_0_r },
+	{ 0x2802, 0x2803, atarigen_6502_irq_ack_r },
+	{ 0x2c00, 0x2c01, atarigen_6502_sound_r },
+	{ 0x2c02, 0x2c03, special_port3_r },
+	{ 0x2c04, 0x2c05, sound_68k_6502_r },
+	{ 0x2c06, 0x2c07, sound_6502_stat_r },
+	{ 0x3000, 0x3fff, MRA_BANK8 },
+	{ 0x4000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x2800, 0x2801, sound_68k_6502_w },
+	{ 0x2802, 0x2803, atarigen_6502_irq_ack_w },
+	{ 0x2804, 0x2805, atarigen_6502_sound_w },
+	{ 0x2806, 0x2807, sound_bank_select_w },
+	{ 0x3000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+#ifdef EMULATE_SOUND_68000
+
+static unsigned char *ram;
+static int ram_r(int offset) { return READ_WORD(&ram[offset]); }
+static void ram_w(int offset, int data) { COMBINE_WORD_MEM(&ram[offset], data); }
+
+static struct MemoryReadAddress sound_68k_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0xff8000, 0xff87ff, sound_68k_r },
+	{ 0xfff000, 0xffffff, ram_r, &ram },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress sound_68k_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0xff8800, 0xff8fff, sound_68k_w },
+	{ 0xff9000, 0xff97ff, io_68k_irq_ack_w },
+	{ 0xff9800, 0xff9fff, sound_68k_dac_w },
+	{ 0xfff000, 0xffffff, ram_w, &ram },
+	{ -1 }  /* end of table */
+};
+
+#endif
+
+
+static struct MemoryReadAddress cyberb2p_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0xfc0000, 0xfc0003, input_port_0_r },
@@ -151,18 +826,17 @@ static struct MemoryReadAddress main_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-
-static struct MemoryWriteAddress main_writemem[] =
+static struct MemoryWriteAddress cyberb2p_writemem[] =
 {
-	{ 0x000000, 0x08ffff, MWA_ROM },
+	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_w },
 	{ 0xfca000, 0xfcafff, atarigen_666_paletteram_w },
 	{ 0xfd0000, 0xfd0003, atarigen_eeprom_enable_w },
 	{ 0xfd2000, 0xfd2003, atarigen_sound_reset_w },
 	{ 0xfd4000, 0xfd4003, watchdog_reset_w },
-	{ 0xfd6000, 0xfd6003, atarigen_vblank_ack_w },
+	{ 0xfd6000, 0xfd6003, atarigen_video_int_ack_w },
 	{ 0xfd8000, 0xfd8003, atarigen_sound_upper_w },
-	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_w },
+	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
 	{ 0xff2000, 0xff2fff, MWA_BANK3 },
 	{ 0xff3000, 0xff3fff, MWA_BANK4 },
 	{ 0xff4000, 0xffffff, MWA_BANK5 },
@@ -177,8 +851,62 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
+INPUT_PORTS_START( cyberbal_ports )
+	PORT_START      /* fe0000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER4 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(  0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x8000, "Off")
+	PORT_DIPSETTING(    0x0000, "On")
+
+	PORT_START      /* fe1000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_VBLANK )
+
+	PORT_START		/* fake port for screen switching */
+	PORT_BITX(  0x0001, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select Left Screen", KEYCODE_9, IP_JOY_NONE )
+	PORT_BITX(  0x0002, IP_ACTIVE_HIGH, IPT_BUTTON2, "Select Right Screen", KEYCODE_0, IP_JOY_NONE )
+	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* audio board port */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )	/* output buffer full */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )		/* input buffer full */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( cyberb2p_ports )
-	PORT_START      /* IN0 */
+	PORT_START      /* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
@@ -187,7 +915,7 @@ INPUT_PORTS_START( cyberb2p_ports )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* fc2000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
@@ -196,15 +924,15 @@ INPUT_PORTS_START( cyberb2p_ports )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0xffc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* DSW */
+	PORT_START		/* fc4000 */
 	PORT_BIT( 0x1fff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BITX(  0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x8000, "Off")
 	PORT_DIPSETTING(    0x0000, "On")
 
-	ATARI_AUDIO_2_PORT	/* audio board port */
+	JSA_II_PORT		/* audio board port */
 INPUT_PORTS_END
 
 
@@ -226,7 +954,6 @@ static struct GfxLayout pflayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-
 static struct GfxLayout anlayout =
 {
 	16,8,	/* 8*8 chars */
@@ -238,6 +965,27 @@ static struct GfxLayout anlayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
+static struct GfxLayout pflayout_interleaved =
+{
+	16,8,	/* 8*8 chars */
+	8192,	/* 8192 chars */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0x20000*8+0,0x20000*8+0, 0x20000*8+4,0x20000*8+4, 0,0, 4,4, 0x20000*8+8,0x20000*8+8, 0x20000*8+12,0x20000*8+12, 8,8, 12,12 },
+	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
+	16*8	/* every char takes 16 consecutive bytes */
+};
+
+static struct GfxLayout anlayout_interleaved =
+{
+	16,8,	/* 8*8 chars */
+	4096,	/* 4096 chars */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0x10000*8+0,0x10000*8+0, 0x10000*8+4,0x10000*8+4, 0,0, 4,4, 0x10000*8+8,0x10000*8+8, 0x10000*8+12,0x10000*8+12, 8,8, 12,12 },
+	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8 },
+	16*8	/* every char takes 16 consecutive bytes */
+};
 
 static struct GfxLayout molayout =
 {
@@ -251,7 +999,6 @@ static struct GfxLayout molayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 3, 0x140000, &pflayout,     0, 128 },
@@ -260,6 +1007,46 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
+{
+	{ 3, 0x140000, &pflayout_interleaved,     0, 128 },
+	{ 3, 0x000000, &molayout,             0x600, 16 },
+	{ 3, 0x180000, &anlayout_interleaved, 0x780, 8 },
+	{ -1 } /* end of array */
+};
+
+
+
+/*************************************
+ *
+ *		Sound definitions
+ *
+ *************************************/
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	3579580,
+#if USE_MONO_SOUND
+	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
+#else
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
+#endif
+	{ atarigen_ym2151_irq_gen }
+};
+
+static struct DACinterface dac_interface =
+{
+	2,
+	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
+};
+
+static struct CustomSound_interface samples_interface =
+{
+	samples_start,
+	samples_stop,
+	NULL
+};
 
 
 /*************************************
@@ -273,19 +1060,94 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			ignore_interrupt,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			CPU_M6502,
+			7159160/4,
+			1,
+			sound_readmem,sound_writemem,0,0,
+			0,0,
+			atarigen_6502_irq_gen,250
 		},
+		{
+			CPU_M68000,		/* verified */
+			7159160,		/* 7.159 Mhz */
+			4,
+			extra_readmem,extra_writemem,0,0,
+			atarigen_video_int_gen,1
+		}
+#ifdef EMULATE_SOUND_68000
+		,{
+			CPU_M68000,		/* verified */
+			7159160,		/* 7.159 Mhz */
+			2,
+			sound_68k_readmem,sound_68k_writemem,0,0,
+			sound_68k_irq_gen,1000
+		}
+#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	init_machine,
+
+	/* video hardware */
+	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
+	gfxdecodeinfo_interleaved,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+			VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_SUPPORTS_16BIT,
+	0,
+	cyberbal_vh_start,
+	cyberbal_vh_stop,
+	cyberbal_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+#ifdef EMULATE_SOUND_68000
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+#else
+		{
+			SOUND_CUSTOM,
+			&samples_interface
+		}
+#endif
+	}
+};
+
+
+static struct MachineDriver cyberb2p_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,		/* verified */
+			7159160,		/* 7.159 Mhz */
+			0,
+			cyberb2p_readmem,cyberb2p_writemem,0,0,
+			atarigen_video_int_gen,1
+		},
+		{
+			JSA_CPU(1)
+		},
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,
+	cyberb2p_init_machine,
 
 	/* video hardware */
 	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
@@ -301,11 +1163,7 @@ static struct MachineDriver machine_driver =
 	cyberbal_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151_MONO,
-		ATARI_AUDIO_2_OKIM6295(2)
-	}
+	JSA_II_MONO(2)
 };
 
 
@@ -315,6 +1173,108 @@ static struct MachineDriver machine_driver =
  *		ROM definition(s)
  *
  *************************************/
+
+ROM_START( cyberbal_rom )
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "4123.1m", 0x00000, 0x10000, 0xfb872740 )
+	ROM_LOAD_ODD ( "4124.1k", 0x00000, 0x10000, 0x87babad9 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "2131-snd.2f",  0x10000, 0x4000, 0xbd7e3d84 )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
+	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
+	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
+	ROM_LOAD_ODD ( "1135-snd.7a",  0x20000, 0x10000, 0xd520f560 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1150.15a",  0x000000, 0x10000, 0xe770eb3e ) /* MO */
+	ROM_LOAD( "1154.16a",  0x010000, 0x10000, 0x40db00da ) /* MO */
+	ROM_LOAD( "2158.17a",  0x020000, 0x10000, 0x52bb08fb ) /* MO */
+	ROM_LOAD( "1162.19a",  0x030000, 0x10000, 0x0a11d877 ) /* MO */
+
+	ROM_LOAD( "1151.11a",  0x050000, 0x10000, 0x6f53c7c1 ) /* MO */
+	ROM_LOAD( "1155.12a",  0x060000, 0x10000, 0x5de609e5 ) /* MO */
+	ROM_LOAD( "2159.13a",  0x070000, 0x10000, 0xe6f95010 ) /* MO */
+	ROM_LOAD( "1163.14a",  0x080000, 0x10000, 0x47f56ced ) /* MO */
+
+	ROM_LOAD( "1152.15c",  0x0a0000, 0x10000, 0xc8f1f7ff ) /* MO */
+	ROM_LOAD( "1156.16c",  0x0b0000, 0x10000, 0x6bf0bf98 ) /* MO */
+	ROM_LOAD( "2160.17c",  0x0c0000, 0x10000, 0xc3168603 ) /* MO */
+	ROM_LOAD( "1164.19c",  0x0d0000, 0x10000, 0x7ff29d09 ) /* MO */
+
+	ROM_LOAD( "1153.11c",  0x0f0000, 0x10000, 0x99629412 ) /* MO */
+	ROM_LOAD( "1157.12c",  0x100000, 0x10000, 0xaa198cb7 ) /* MO */
+	ROM_LOAD( "2161.13c",  0x110000, 0x10000, 0x6cf79a67 ) /* MO */
+	ROM_LOAD( "1165.14c",  0x120000, 0x10000, 0x40bdf767 ) /* MO */
+
+	ROM_LOAD( "1146.9l",   0x140000, 0x10000, 0xa64b4da8 ) /* playfield */
+	ROM_LOAD( "1147.8l",   0x150000, 0x10000, 0xca91ec1b ) /* playfield */
+	ROM_LOAD( "1148.11l",  0x160000, 0x10000, 0xee29d1d1 ) /* playfield */
+	ROM_LOAD( "1149.10l",  0x170000, 0x10000, 0x882649f8 ) /* playfield */
+
+	ROM_LOAD( "1166.14n",  0x180000, 0x10000, 0x0ca1e3b3 ) /* alphanumerics */
+	ROM_LOAD( "1167.16n",  0x190000, 0x10000, 0x882f4e1c ) /* alphanumerics */
+
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "2127.3c", 0x00000, 0x10000, 0x3e5feb1f )
+	ROM_LOAD_ODD ( "2128.1b", 0x00000, 0x10000, 0x4e642cc3 )
+	ROM_LOAD_EVEN( "2129.1c", 0x20000, 0x10000, 0xdb11d2f0 )
+	ROM_LOAD_ODD ( "2130.3b", 0x20000, 0x10000, 0xfd86b8aa )
+ROM_END
+
+
+ROM_START( cyberbt_rom )
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "cyb1007.bin", 0x00000, 0x10000, 0xd434b2d7 )
+	ROM_LOAD_ODD ( "cyb1008.bin", 0x00000, 0x10000, 0x7d6c4163 )
+	ROM_LOAD_EVEN( "cyb1009.bin", 0x20000, 0x10000, 0x3933e089 )
+	ROM_LOAD_ODD ( "cyb1010.bin", 0x20000, 0x10000, 0xe7a7cae8 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "cyb1029.bin",  0x10000, 0x4000, 0xafee87e1 )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION(0x40000)	/* 256k for 68000 sound code */
+	ROM_LOAD_EVEN( "1132-snd.5c",  0x00000, 0x10000, 0xca5ce8d8 )
+	ROM_LOAD_ODD ( "1133-snd.7c",  0x00000, 0x10000, 0xffeb8746 )
+	ROM_LOAD_EVEN( "1134-snd.5a",  0x20000, 0x10000, 0xbcbd4c00 )
+	ROM_LOAD_ODD ( "1135-snd.7a",  0x20000, 0x10000, 0xd520f560 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1001.bin",  0x000000, 0x20000, 0x586ba107 ) /* MO */
+	ROM_LOAD( "1005.bin",  0x020000, 0x20000, 0xa53e6248 ) /* MO */
+	ROM_LOAD( "1032.bin",  0x040000, 0x10000, 0x131f52a0 ) /* MO */
+
+	ROM_LOAD( "1002.bin",  0x050000, 0x20000, 0x0f71f86c ) /* MO */
+	ROM_LOAD( "1006.bin",  0x070000, 0x20000, 0xdf0ab373 ) /* MO */
+	ROM_LOAD( "1033.bin",  0x090000, 0x10000, 0xb6270943 ) /* MO */
+
+	ROM_LOAD( "1003.bin",  0x0a0000, 0x20000, 0x1cf373a2 ) /* MO */
+	ROM_LOAD( "1007.bin",  0x0c0000, 0x20000, 0xf2ffab24 ) /* MO */
+	ROM_LOAD( "1034.bin",  0x0e0000, 0x10000, 0x6514f0bd ) /* MO */
+
+	ROM_LOAD( "1004.bin",  0x0f0000, 0x20000, 0x537f6de3 ) /* MO */
+	ROM_LOAD( "1008.bin",  0x110000, 0x20000, 0x78525bbb ) /* MO */
+	ROM_LOAD( "1035.bin",  0x130000, 0x10000, 0x1be3e5c8 ) /* MO */
+
+	ROM_LOAD( "cyb1015.bin",  0x140000, 0x10000, 0xdbbad153 ) /* playfield */
+	ROM_LOAD( "cyb1016.bin",  0x150000, 0x10000, 0x76e0d008 ) /* playfield */
+	ROM_LOAD( "cyb1017.bin",  0x160000, 0x10000, 0xddca9ca2 ) /* playfield */
+	ROM_LOAD( "cyb1018.bin",  0x170000, 0x10000, 0xaa495b6f ) /* playfield */
+
+	ROM_LOAD( "cyb1019.bin",  0x180000, 0x10000, 0x833b4768 ) /* alphanumerics */
+	ROM_LOAD( "cyb1020.bin",  0x190000, 0x10000, 0x4976cffd ) /* alphanumerics */
+
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "cyb1011.bin", 0x00000, 0x10000, 0x22d3e09c )
+	ROM_LOAD_ODD ( "cyb1012.bin", 0x00000, 0x10000, 0xa8eeed8c )
+	ROM_LOAD_EVEN( "cyb1013.bin", 0x20000, 0x10000, 0x11d287c9 )
+	ROM_LOAD_ODD ( "cyb1014.bin", 0x20000, 0x10000, 0xbe15db42 )
+ROM_END
+
 
 ROM_START( cyberb2p_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
@@ -367,22 +1327,133 @@ ROM_END
 
 /*************************************
  *
+ *		Machine initialization
+ *
+ *************************************/
+
+static void cyberbal_init(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x018000, 0);
+
+	/* make sure the banks are pointing to the correct location */
+	cpu_setbank(1, cyberbal_playfieldram_2);
+	cpu_setbank(3, cyberbal_playfieldram_1);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no slapstic */
+	atarigen_show_sound_message();
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+}
+
+
+static void cyberbt_init(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x018000, 116);
+
+	/* make sure the banks are pointing to the correct location */
+	cpu_setbank(1, cyberbal_playfieldram_2);
+	cpu_setbank(3, cyberbal_playfieldram_1);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+}
+
+
+static void cyberb2p_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	/* initialize the JSA audio board */
+	atarijsa_init(1, 3, 2, 0x8000);
+
+	/* display messages */
+	atarigen_show_sound_message();
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+}
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
 
-struct GameDriver cyberb2p_driver =
+struct GameDriver cyberbal_driver =
 {
 	__FILE__,
 	0,
+	"cyberbal",
+	"Cyberball",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
+	0,
+	&machine_driver,
+	cyberbal_init,
+
+	cyberbal_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	cyberbal_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver cyberbt_driver =
+{
+	__FILE__,
+	&cyberbal_driver,
+	"cyberbt",
+	"Tournament Cyberball 2072",
+	"1989",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
+	0,
+	&machine_driver,
+	cyberbt_init,
+
+	cyberbt_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	cyberbal_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver cyberb2p_driver =
+{
+	__FILE__,
+	&cyberbal_driver,
 	"cyberb2p",
 	"Cyberball 2072 (2 player)",
 	"1989",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
 	0,
-	&machine_driver,
-	0,
+	&cyberb2p_machine_driver,
+	cyberb2p_init,
 
 	cyberb2p_rom,
 	0,

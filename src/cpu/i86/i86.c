@@ -76,7 +76,6 @@ static char seg_prefix;         /* prefix segment indicator */
 static UINT8 parity_table[256];
 /***************************************************************************/
 
-
 void i86_reset (void *param)
 {
     unsigned int i,j,c;
@@ -115,6 +114,13 @@ void i86_reset (void *param)
 		Mod_RM.RM.w[i] = (WREGS)( i & 7 );
 		Mod_RM.RM.b[i] = (BREGS)reg_name[i & 7];
     }
+}
+
+void v30_reset (void *param)
+{
+	i86_reset(param);
+	I.amask = 0x1fffff;
+	change_pc20( (I.base[CS] + I.ip) & I.amask);
 }
 
 void i86_exit (void)
@@ -498,6 +504,286 @@ static void i_daa(void)    /* Opcode 0x27 */
 
 	SetSZPF_Byte(I.regs.b[AL]);
 	i86_ICount-=4;
+}
+
+static void i_v20_instructions(void)
+{
+    /* Opcode 0x0f */
+
+    unsigned Opcode = FETCH;
+    unsigned ModRM;
+    unsigned tmp;
+    unsigned tmp2;
+
+    i86_ICount-=4;
+
+	switch (Opcode) {
+		case 0x10 : // 0F 10 47 30 - TEST1 [bx+30h],cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			I.ZeroVal = tmp & (1<<tmp2) ? 1 : 0;
+//			SetZF(tmp & (1<<tmp2));
+			break;
+		case 0x11 : // 0F 11 47 30 - TEST1 [bx+30h],cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			I.ZeroVal = tmp & (1<<tmp2) ? 1 : 0;
+//			SetZF(tmp & (1<<tmp2));
+			break;
+		case 0x12 : // 0F 12 06 - CLR1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			tmp2 &= 0xF;
+			tmp &= ~(1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x13 : // 0F 13 06 - CLR1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			tmp2 &= 0xF;
+			tmp &= ~(1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+
+		case 0x14 : // 0F 14 47 30 - SET1 [bx+30h],cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			tmp |= (1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x15 : // 0F 15 C6 - SET1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			tmp |= (1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		case 0x16 : // 0F 16 C6 - NOT1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			if (tmp & 1<<tmp2)
+				tmp &= ~(1<<tmp2);
+			else
+				tmp |= (1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x17 : // 0F 17 C6 - NOT1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = I.regs.b[CL] & 0xF;
+			if (tmp & 1<<tmp2)
+				tmp &= ~(1<<tmp2);
+			else
+				tmp |= (1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		case 0x18 : // 0F 18 XX - TEST1 [bx+30h],07
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			I.ZeroVal = tmp & (1<<tmp2) ? 1 : 0;
+//			SetZF(tmp & (1<<tmp2));
+			break;
+		case 0x19 : // 0F 19 XX - TEST1 [bx+30h],07
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xf;
+			I.ZeroVal = tmp & (1<<tmp2) ? 1 : 0;
+//			SetZF(tmp & (1<<tmp2));
+			break;
+
+		case 0x1a : // 0F 1A 06 - CLR1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			tmp &= ~(1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x1B : // 0F 1B 06 - CLR1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			tmp &= ~(1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		case 0x1C : // 0F 1C 47 30 - SET1 [bx+30h],cl
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			tmp |= (1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x1D : // 0F 1D C6 - SET1 si,cl
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			tmp |= (1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		case 0x1e : // 0F 1e C6 - NOT1 si,07
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			if (tmp & 1<<tmp2)
+				tmp &= ~(1<<tmp2);
+			else
+				tmp |= (1<<tmp2);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x1f : // 0F 1f C6 - NOT1 si,07
+			ModRM = FETCH;
+		   tmp = GetRMWord(ModRM);
+			tmp2 = FETCH;
+			tmp2 &= 0xF;
+			if (tmp & 1<<tmp2)
+				tmp &= ~(1<<tmp2);
+			else
+				tmp |= (1<<tmp2);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		case 0x20 : { // 0F 20 59 - add4s
+			int count = (I.regs.b[CL]+1)/2;
+			int i;
+	      unsigned di = I.regs.w[DI];
+			unsigned si = I.regs.w[SI];
+			I.ZeroVal = 1;
+			I.CarryVal = 0; // NOT ADC
+			for (i=0;i<count;i++) {
+				int v1,v2;
+				int result;
+				tmp = GetMemB(DS, si);
+				tmp2 = GetMemB(ES, di);
+
+				v1 = (tmp>>4)*10 + (tmp&0xf);
+				v2 = (tmp2>>4)*10 + (tmp2&0xf);
+				result = v1+v2+I.CarryVal;
+				I.CarryVal = result > 99 ? 1 : 0;
+				result = result % 100;
+				v1 = ((result/10)<<4) | (result % 10);
+				PutMemB(ES, di,v1)
+				if (v1) I.ZeroVal = 0;
+				si++;
+				di++;
+			}
+			I.OverVal = I.CarryVal;
+			} break;
+		case 0x22 : { // 0F 22 59 - sub4s
+			int count = (I.regs.b[CL]+1)/2;
+			int i;
+	      unsigned di = I.regs.w[DI];
+			unsigned si = I.regs.w[SI];
+			I.ZeroVal = 1;
+			I.CarryVal = 0; // NOT ADC
+			for (i=0;i<count;i++) {
+				int v1,v2;
+				int result;
+				tmp = GetMemB(ES, di);
+				tmp2 = GetMemB(DS, si);
+
+				v1 = (tmp>>4)*10 + (tmp&0xf);
+				v2 = (tmp2>>4)*10 + (tmp2&0xf);
+				if (v1 < (v2+I.CarryVal)) {
+					v1+=100;
+					result = v1-(v2+I.CarryVal);
+					I.CarryVal = 1;
+				} else {
+					result = v1-(v2+I.CarryVal);
+					I.CarryVal = 0;
+				}
+				v1 = ((result/10)<<4) | (result % 10);
+				PutMemB(ES, di,v1)
+				if (v1) I.ZeroVal = 0;
+				si++;
+				di++;
+			}
+			I.OverVal = I.CarryVal;
+			} break;
+		case 0x26 : { // 0F 22 59 - cmp4s
+			int count = (I.regs.b[CL]+1)/2;
+			int i;
+	      unsigned di = I.regs.w[DI];
+			unsigned si = I.regs.w[SI];
+			I.ZeroVal = 1;
+			I.CarryVal = 0; // NOT ADC
+			for (i=0;i<count;i++) {
+				int v1,v2;
+				int result;
+				tmp = GetMemB(ES, di);
+				tmp2 = GetMemB(DS, si);
+
+				v1 = (tmp>>4)*10 + (tmp&0xf);
+				v2 = (tmp2>>4)*10 + (tmp2&0xf);
+				if (v1 < (v2+I.CarryVal)) {
+					v1+=100;
+					result = v1-(v2+I.CarryVal);
+					I.CarryVal = 1;
+				} else {
+					result = v1-(v2+I.CarryVal);
+					I.CarryVal = 0;
+				}
+				v1 = ((result/10)<<4) | (result % 10);
+//				PutMemB(ES, di,v1)
+				if (v1) I.ZeroVal = 0;
+				si++;
+				di++;
+			}
+			I.OverVal = I.CarryVal;
+			} break;
+		case 0x28 : // 0F 28 C7 - ROL4 bh
+			ModRM = FETCH;
+		   tmp = GetRMByte(ModRM);
+			tmp <<= 4;
+			tmp |= I.regs.b[AL] & 0xF;
+			I.regs.b[AL] = (I.regs.b[AL] & 0xF0) | ((tmp>>8)&0xF);
+			tmp &= 0xff;
+			PutbackRMByte(ModRM,tmp);
+			break;
+		// Is this a REAL instruction??
+//		case 0x29 : // 0F 29 C7 - ROL4 bx
+//			ModRM = FETCH;
+//		   tmp = GetRMWord(ModRM);
+//			tmp <<= 4;
+//			tmp |= regs.b[AL] & 0xF;
+//			regs.b[AL] = (regs.b[AL] & 0xF0) | ((tmp>>8)&0xF);
+//			tmp &= 0xffff;
+//			PutbackRMWord(ModRM,tmp);
+//			break;
+		case 0x2A : // 0F 2a c2 - ROR4 bh
+			ModRM = FETCH;
+			tmp = GetRMByte(ModRM);
+
+			tmp2 = (I.regs.b[AL] & 0xF)<<4;
+			I.regs.b[AL] = (I.regs.b[AL] & 0xF0) | (tmp&0xF);
+
+			tmp = tmp2 | (tmp>>4);
+			PutbackRMByte(ModRM,tmp);
+			break;
+		case 0x2B : // 0F 2b c2 - ROR4 bx
+			ModRM = FETCH;
+			tmp = GetRMWord(ModRM);
+
+			tmp2 = (I.regs.b[AL] & 0xF)<<4;
+			I.regs.b[AL] = (I.regs.b[AL] & 0xF0) | (tmp&0xF);
+
+			tmp = tmp2 | (tmp>>4);
+			PutbackRMWord(ModRM,tmp);
+			break;
+		default :
+			break;
+	}
 }
 
 static void i_sub_br8(void)    /* Opcode 0x28 */
@@ -3295,7 +3581,8 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],I.ip,G
 	case 0x0c:    i_or_ald8(); break;
 	case 0x0d:    i_or_axd16(); break;
 	case 0x0e:    i_push_cs(); break;
-	case 0x0f:    i_invalid(); break;
+//	case 0x0f:    i_invalid(); break;
+	case 0x0f:    i_v20_instructions(); break;
 	case 0x10:    i_adc_br8(); break;
 	case 0x11:    i_adc_wr16(); break;
 	case 0x12:    i_adc_r8b(); break;
@@ -3601,6 +3888,68 @@ const char *i86_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "I86";
 		case CPU_INFO_FAMILY: return "Intel 80x86";
+		case CPU_INFO_VERSION: return "1.4";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i86_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i86_win_layout;
+	}
+	return buffer[which];
+}
+
+const char *v30_info(void *context, int regnum)
+{
+	static char buffer[32][63+1];
+	static int which = 0;
+	i86_Regs *r = context;
+
+	which = ++which % 32;
+	buffer[which][0] = '\0';
+	if( !context )
+		r = &I;
+
+	switch( regnum )
+	{
+		case CPU_INFO_REG+I86_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
+		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+		case CPU_INFO_REG+I86_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[AX]); break;
+		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[CX]); break;
+		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[DX]); break;
+		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[BX]); break;
+		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
+		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
+        case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+        case CPU_INFO_REG+I86_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+        case CPU_INFO_REG+I86_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+        case CPU_INFO_REG+I86_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
+		case CPU_INFO_REG+I86_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+I86_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_FLAGS:
+			r->flags = CompressFlags();
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->flags & 0x8000 ? '?':'.',
+				r->flags & 0x4000 ? '?':'.',
+				r->flags & 0x2000 ? '?':'.',
+				r->flags & 0x1000 ? '?':'.',
+				r->flags & 0x0800 ? 'O':'.',
+				r->flags & 0x0400 ? 'D':'.',
+				r->flags & 0x0200 ? 'I':'.',
+				r->flags & 0x0100 ? 'T':'.',
+				r->flags & 0x0080 ? 'S':'.',
+				r->flags & 0x0040 ? 'Z':'.',
+				r->flags & 0x0020 ? '?':'.',
+				r->flags & 0x0010 ? 'A':'.',
+				r->flags & 0x0008 ? '?':'.',
+				r->flags & 0x0004 ? 'P':'.',
+				r->flags & 0x0002 ? 'N':'.',
+				r->flags & 0x0001 ? 'C':'.');
+			break;
+		case CPU_INFO_NAME: return "V30";
+		case CPU_INFO_FAMILY: return "NEC V30";
 		case CPU_INFO_VERSION: return "1.4";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";

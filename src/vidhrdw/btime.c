@@ -443,7 +443,8 @@ static void drawchars(struct osd_bitmap *bitmap, int color, int background_on)
 	}
 }
 
-static void drawsprites(struct osd_bitmap *bitmap, int color, int sprite_x_adjust,
+static void drawsprites(struct osd_bitmap *bitmap, int color,
+						int sprite_y_adjust, int sprite_y_adjust_flipscreen,
 						unsigned char *sprite_ram, int interleave)
 {
 	int i,offs;
@@ -456,7 +457,7 @@ static void drawsprites(struct osd_bitmap *bitmap, int color, int sprite_x_adjus
 		if (!(sprite_ram[offs + 0] & 0x01)) continue;
 
 		sx = 240 - sprite_ram[offs + 3*interleave];
-		sy = 240 - sprite_ram[offs + 2*interleave] - sprite_x_adjust;
+		sy = 240 - sprite_ram[offs + 2*interleave];
 
 		flipx = sprite_ram[offs + 0] & 0x04;
 		flipy = sprite_ram[offs + 0] & 0x02;
@@ -464,11 +465,13 @@ static void drawsprites(struct osd_bitmap *bitmap, int color, int sprite_x_adjus
 		if (flipscreen)
 		{
 			sx = 240 - sx;
-			sy = 240 - sy;
+			sy = 240 - sy + sprite_y_adjust_flipscreen;
 
 			flipx = !flipx;
 			flipy = !flipy;
 		}
+
+		sy -= sprite_y_adjust;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				sprite_ram[offs + interleave],
@@ -608,7 +611,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	drawsprites(bitmap, 0, 1, videoram, 0x20);
+	drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
 }
 
 
@@ -619,7 +622,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, 0, videoram, 0x20);
+	drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 }
 
 
@@ -630,7 +633,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, 1, videoram, 0x20);
+	drawsprites(bitmap, 0, 1, 2, videoram, 0x20);
 }
 
 
@@ -651,8 +654,8 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* The order is important for correct priorities */
-	drawsprites(bitmap, btime_palette + 1, 1, videoram + 0x1f, 0x20);
-	drawsprites(bitmap, btime_palette + 1, 1, videoram,        0x20);
+	drawsprites(bitmap, btime_palette + 1, 1, 2, videoram + 0x1f, 0x20);
+	drawsprites(bitmap, btime_palette + 1, 1, 2, videoram,        0x20);
 }
 
 
@@ -699,7 +702,7 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap (bitmap, background_bitmap, 1, &scroll, 0, 0, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
 
 		// The sprites appear below the foremost layer
-		drawsprites(bitmap, 0, 0, videoram, 0x20);
+		drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 
 		drawchars(bitmap, 0, 1);
 	}
@@ -710,7 +713,7 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* copy the temporary bitmap to the screen */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		drawsprites(bitmap, 0, 0, videoram, 0x20);
+		drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 	}
 }
 
@@ -747,7 +750,7 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	drawchars(bitmap, 0, 1);
 
-	drawsprites(bitmap, 0, 0, videoram, 0x20);
+	drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
 }
 
 
@@ -760,7 +763,7 @@ void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, btime_palette, 0, spriteram, 1);
+	drawsprites(bitmap, btime_palette, 0, 0, spriteram, 1);
 }
 
 
@@ -778,5 +781,5 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, 0, videoram, 0x20);
+	drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 }

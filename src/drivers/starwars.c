@@ -88,8 +88,21 @@ void slapstic_init (int chip);
 int slapstic_bank (void);
 int slapstic_tweak (int offset);
 
-extern unsigned char *atarigen_slapstic;
-unsigned char *slapstic_area;
+static unsigned char *slapstic_base;	/* ASG - made static */
+static unsigned char *slapstic_area;
+
+/* ASG - added this (including the function) */
+static int last_bank;
+static int esb_slapstic_tweak(int offset)
+{
+	int bank = slapstic_tweak(offset);
+	if (bank != last_bank)
+	{
+		memcpy(slapstic_area, &slapstic_base[bank * 0x2000], 0x2000);
+		last_bank = bank;
+	}
+	return bank;
+}
 
 static int esb_setopbase (int pc)
 {
@@ -117,13 +130,13 @@ static int esb_setopbase (int pc)
 	if ((pc & 0xe000) == 0x8000)
 	{
 //		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
-		bank = slapstic_tweak ((pc) & 0x1fff);
+		bank = esb_slapstic_tweak ((pc) & 0x1fff);	/* ASG - switched to ESB version */
 	}
 	else if ((prevpc & 0xe000) == 0x8000)
  {
 //  if (errorlog) fprintf (errorlog, "      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
 if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
-  bank = slapstic_tweak ((prevpc) & 0x1fff);
+  bank = esb_slapstic_tweak ((prevpc) & 0x1fff);	/* ASG - switched to ESB version */
  }
 
 	return pc;
@@ -136,6 +149,8 @@ void esb_init_machine (void)
 	slapstic_init (101);
 	m6809_slapstic = 1;
 	cpu_setOPbaseoverride (esb_setopbase);
+	/* ASG - added the following: */
+	memcpy(slapstic_area, &slapstic_base[slapstic_bank() * 0x2000], 0x2000);
 
 	/* Reset all the banks */
 	starwars_out_w (4, 0);
@@ -153,8 +168,8 @@ int esb_slapstic_r (int offset)
 {
 	int val;
 
-	int bank = (slapstic_tweak (offset) * 0x2000);
-	val = atarigen_slapstic[bank + (offset & 0x1fff)];
+	int bank = (esb_slapstic_tweak (offset) * 0x2000);	/* ASG - switched to ESB version */
+	val = slapstic_base[bank + (offset & 0x1fff)];
 //	if (errorlog) fprintf (errorlog, "slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
 	return val;
 }
@@ -163,7 +178,7 @@ int esb_slapstic_r (int offset)
 void esb_slapstic_w (int offset, int data)
 {
 //	if (errorlog) fprintf (errorlog, "esb slapstic tweak via write\n");
-	slapstic_tweak (offset);
+	esb_slapstic_tweak (offset);	/* ASG - switched to ESB version */
 }
 
 /* Star Wars READ memory map */
@@ -267,7 +282,7 @@ static struct MemoryReadAddress esb_readmem[] =
 	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
 
 	/* Dummy entry to set up the slapstic */
-	{ 0x14000, 0x1bfff, MRA_NOP, &atarigen_slapstic },
+	{ 0x14000, 0x1bfff, MRA_NOP, &slapstic_base },
 	{ -1 }	/* end of table */
 };
 
@@ -300,7 +315,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -310,7 +325,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -379,7 +394,7 @@ INPUT_PORTS_START( esb_input_ports )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -389,7 +404,7 @@ INPUT_PORTS_START( esb_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )

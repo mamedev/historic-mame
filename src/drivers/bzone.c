@@ -294,10 +294,10 @@ INPUT_PORTS_START( bzone_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
  	/* handled by bzone_IN0_r() */
@@ -413,10 +413,10 @@ INPUT_PORTS_START( redbaron_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
  	/* handled by bzone_IN0_r() */

@@ -8,29 +8,56 @@
 
 #include "driver.h"
 
+#ifndef __MACHINE_ATARIGEN__
+#define __MACHINE_ATARIGEN__
 
-#ifndef __ATARIGEN__
-#define __ATARIGEN__
+/*--------------------------------------------------------------------------
 
+	Atari generic interrupt model (required)
+	
+		atarigen_scanline_int_state - state of the scanline interrupt line
+		atarigen_sound_int_state - state of the sound interrupt line
+		atarigen_video_int_state - state of the video interrupt line
+	
+		atarigen_int_callback - called when the interrupt state changes
+	
+		atarigen_interrupt_reset - resets & initializes the interrupt state
+		atarigen_update_interrupts - forces the interrupts to be reevaluted
+		
+		atarigen_scanline_int_set - scanline interrupt initialization
+		atarigen_sound_int_gen - scanline interrupt generator
+		atarigen_scanline_int_ack_w - scanline interrupt acknowledgement
+		
+		atarigen_sound_int_gen - sound interrupt generator
+		atarigen_sound_int_ack_w - sound interrupt acknowledgement
+		
+		atarigen_video_int_gen - video interrupt generator
+		atarigen_video_int_ack_w - video interrupt acknowledgement
 
-extern unsigned char *atarigen_playfieldram;
-extern unsigned char *atarigen_playfield2ram;
-extern unsigned char *atarigen_playfieldram_color;
-extern unsigned char *atarigen_playfield2ram_color;
-extern unsigned char *atarigen_spriteram;
-extern unsigned char *atarigen_alpharam;
-extern unsigned char *atarigen_vscroll;
-extern unsigned char *atarigen_hscroll;
+--------------------------------------------------------------------------*/
+extern int atarigen_scanline_int_state;
+extern int atarigen_sound_int_state;
+extern int atarigen_video_int_state;
 
-extern int atarigen_playfieldram_size;
-extern int atarigen_playfield2ram_size;
-extern int atarigen_spriteram_size;
-extern int atarigen_alpharam_size;
+typedef void (*atarigen_int_callback)(void);
+
+void atarigen_interrupt_reset(atarigen_int_callback update_int);
+void atarigen_update_interrupts(void);
+
+void atarigen_scanline_int_set(int scanline);
+int atarigen_scanline_int_gen(void);
+void atarigen_scanline_int_ack_w(int offset, int data);
+
+int atarigen_sound_int_gen(void);
+void atarigen_sound_int_ack_w(int offset, int data);
+
+int atarigen_video_int_gen(void);
+void atarigen_video_int_ack_w(int offset, int data);
 
 
 /*--------------------------------------------------------------------------
 
-	EEPROM I/O
+	EEPROM I/O (optional)
 	
 		atarigen_eeprom_default - pointer to compressed default data
 		atarigen_eeprom - pointer to base of EEPROM memory
@@ -62,47 +89,55 @@ int atarigen_hiload(void);
 void atarigen_hisave(void);
 
 
-
 /*--------------------------------------------------------------------------
 
-	Slapstic I/O
+	Slapstic I/O (optional)
 	
-		atarigen_slapstic_num - which slapstic chip to use
-		atarigen_slapstic - pointer to base of slapstic memory
-		
-		atarigen_slapstic_init - selects which slapstic to emulate
+		atarigen_slapstic_init - select and initialize the slapstic handlers
+		atarigen_slapstic_reset - resets the slapstic state
 
 		atarigen_slapstic_w - write handler for slapstic data
 		atarigen_slapstic_r - read handler for slapstic data
 
---------------------------------------------------------------------------*/
-extern int atarigen_slapstic_num;
-extern unsigned char *atarigen_slapstic;
+		slapstic_init - low-level init routine
+		slapstic_reset - low-level reset routine
+		slapstic_bank - low-level routine to return the current bank
+		slapstic_tweak - low-level tweak routine
 
+--------------------------------------------------------------------------*/
+void atarigen_slapstic_init(int cpunum, int base, int chipnum);
 void atarigen_slapstic_reset(void);
 
 void atarigen_slapstic_w(int offset, int data);
 int atarigen_slapstic_r(int offset);
 
+void slapstic_init(int chip);
+void slapstic_reset(void);
+int slapstic_bank(void);
+int slapstic_tweak(int offset);
+
+
+
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+
 
 
 /*--------------------------------------------------------------------------
 
-	Atari generic interrupt model
-	
-		atarigen_int_callback - called when the interrupt state changes
-		atarigen_scanline_callback - called every 8 scanlines (optional)
-	
-		atarigen_interrupt_init - initializes the interrupt state
-		atarigen_update_interrupts - forces the interrupts to be reevaluted
-		
-		atarigen_vblank_gen - standard VBLANK interrupt generator
-		atarigen_vblank_ack_w - standard VBLANK interrupt acknowledgement
-		
+	Sound I/O
+
+		atarigen_sound_io_reset - reset the sound I/O system
+
 		atarigen_6502_irq_gen - standard 6502 IRQ interrupt generator
 		atarigen_6502_irq_ack_r - standard 6502 IRQ interrupt acknowledgement
 		atarigen_6502_irq_ack_w - standard 6502 IRQ interrupt acknowledgement
-		
+
+		atarigen_ym2151_irq_gen - YM2151 sound IRQ generator
+
 		atarigen_sound_w - Main CPU -> sound CPU data write (low byte)
 		atarigen_sound_r - Sound CPU -> main CPU data read (low byte)
 		atarigen_sound_upper_w - Main CPU -> sound CPU data write (high byte)
@@ -113,21 +148,16 @@ int atarigen_slapstic_r(int offset);
 		atarigen_6502_sound_r - Main CPU -> sound CPU data read
 
 --------------------------------------------------------------------------*/
-typedef void (*atarigen_int_callback)(int vblank_state, int sound_state);
-typedef void (*atarigen_scanline_callback)(int scanline);
-
 extern int atarigen_cpu_to_sound_ready;
 extern int atarigen_sound_to_cpu_ready;
 
-void atarigen_interrupt_init(atarigen_int_callback update_int, atarigen_scanline_callback update_graphics);
-void atarigen_update_interrupts(void);
-
-int atarigen_vblank_gen(void);
-void atarigen_vblank_ack_w(int offset, int data);
+void atarigen_sound_io_reset(int cpu_num);
 
 int atarigen_6502_irq_gen(void);
 int atarigen_6502_irq_ack_r(int offset);
 void atarigen_6502_irq_ack_w(int offset, int data);
+
+void atarigen_ym2151_irq_gen(int irq);
 
 void atarigen_sound_w(int offset, int data);
 int atarigen_sound_r(int offset);
@@ -137,6 +167,90 @@ int atarigen_sound_upper_r(int offset);
 void atarigen_sound_reset_w(int offset, int data);
 void atarigen_6502_sound_w(int offset, int data);
 int atarigen_6502_sound_r(int offset);
+
+
+
+/*--------------------------------------------------------------------------
+
+	Misc sound helpers
+	
+		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
+		atarigen_set_ym2151_vol - set the volume of the 2151 chip
+		atarigen_set_ym2413_vol - set the volume of the 2413 chip
+		atarigen_set_pokey_vol - set the volume of the POKEY chip(s)
+		atarigen_set_tms5220_vol - set the volume of the 5220 chip
+		atarigen_set_oki6295_vol - set the volume of the OKI6295
+
+--------------------------------------------------------------------------*/
+void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2);
+void atarigen_set_ym2151_vol(int volume);
+void atarigen_set_ym2413_vol(int volume);
+void atarigen_set_pokey_vol(int volume);
+void atarigen_set_tms5220_vol(int volume);
+void atarigen_set_oki6295_vol(int volume);
+
+
+
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+
+
+/* general video globals */
+extern unsigned char *atarigen_playfieldram;
+extern unsigned char *atarigen_playfield2ram;
+extern unsigned char *atarigen_playfieldram_color;
+extern unsigned char *atarigen_playfield2ram_color;
+extern unsigned char *atarigen_spriteram;
+extern unsigned char *atarigen_alpharam;
+extern unsigned char *atarigen_vscroll;
+extern unsigned char *atarigen_hscroll;
+
+extern int atarigen_playfieldram_size;
+extern int atarigen_playfield2ram_size;
+extern int atarigen_spriteram_size;
+extern int atarigen_alpharam_size;
+
+
+/*--------------------------------------------------------------------------
+
+	Video scanline timing
+	
+		atarigen_scanline_callback - called every n scanlines
+
+		atarigen_scanline_timer_reset - call to reset the system
+
+--------------------------------------------------------------------------*/
+typedef void (*atarigen_scanline_callback)(int scanline);
+
+void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, int frequency);
+
+
+
+/*--------------------------------------------------------------------------
+
+	Video Controller I/O: used in Shuuz, Thunderjaws, Relief Pitcher, Off the Wall
+	
+		atarigen_video_control_data - pointer to base of control memory
+		atarigen_video_control_latch1 - latch #1 value (-1 means disabled)
+		atarigen_video_control_latch2 - latch #2 value (-1 means disabled)
+		
+		atarigen_video_control_reset - initializes the video controller
+
+		atarigen_video_control_w - write handler for the video controller
+		atarigen_video_control_r - read handler for the video controller
+
+--------------------------------------------------------------------------*/
+extern unsigned char *atarigen_video_control_data;
+extern int atarigen_video_control_latch1;
+extern int atarigen_video_control_latch2;
+
+void atarigen_video_control_reset(void);
+
+void atarigen_video_control_w(int offset, int data);
+int atarigen_video_control_r(int offset);
 
 
 
@@ -175,6 +289,43 @@ void atarigen_mo_free(void);
 void atarigen_mo_reset(void);
 void atarigen_mo_update(const unsigned char *base, int start, int scanline);
 void atarigen_mo_process(atarigen_mo_callback callback, void *param);
+
+
+
+/*--------------------------------------------------------------------------
+
+	RLE Motion object rendering/decoding
+	
+		atarigen_rle_descriptor - describes a single object
+		
+		atarigen_rle_count - total number of objects found
+		atarigen_rle_info - array of descriptors for objects we found
+		
+		atarigen_rle_init - prescans the RLE objects
+		atarigen_rle_free - frees all memory allocated by atarigen_rle_init
+		atarigen_rle_render - render an RLE-compressed motion object
+
+--------------------------------------------------------------------------*/
+struct atarigen_rle_descriptor
+{
+	int width;
+	int height;
+	signed short xoffs;
+	signed short yoffs;
+	int bpp;
+	unsigned int pen_usage;
+	unsigned int pen_usage_hi;
+	const unsigned short *table;
+	const unsigned short *data;
+};
+
+extern int atarigen_rle_count;
+extern struct atarigen_rle_descriptor *atarigen_rle_info;
+
+int atarigen_rle_init(int memory_region, int colorbase);
+void atarigen_rle_free(void);
+void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descriptor *info, int color, int hflip, int vflip, 
+	int x, int y, int xscale, int yscale, const struct rectangle *clip);
 
 
 
@@ -236,27 +387,6 @@ void atarigen_pf2_free(void);
 void atarigen_pf2_reset(void);
 void atarigen_pf2_update(const struct atarigen_pf_state *state, int scanline);
 void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const struct rectangle *clip);
-
-
-
-/*--------------------------------------------------------------------------
-
-	Sound stuff
-	
-		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
-		atarigen_set_ym2151_vol - set the volume of the 2151 chip
-		atarigen_set_ym2413_vol - set the volume of the 2413 chip
-		atarigen_set_pokey_vol - set the volume of the POKEY chip(s)
-		atarigen_set_tms5220_vol - set the volume of the 5220 chip
-		atarigen_set_oki6295_vol - set the volume of the OKI6295
-
---------------------------------------------------------------------------*/
-void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2);
-void atarigen_set_ym2151_vol(int volume);
-void atarigen_set_ym2413_vol(int volume);
-void atarigen_set_pokey_vol(int volume);
-void atarigen_set_tms5220_vol(int volume);
-void atarigen_set_oki6295_vol(int volume);
 
 
 

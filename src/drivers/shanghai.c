@@ -532,10 +532,10 @@ void shanghai_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x,y,b;
 	static int base,bose=256;
-if (osd_key_pressed_memory(OSD_KEY_Z)) base -= 384/2*280;
-if (osd_key_pressed_memory(OSD_KEY_X)) base += 384/2*280;
-if (osd_key_pressed_memory(OSD_KEY_C)) bose--;
-if (osd_key_pressed_memory(OSD_KEY_V)) bose++;
+if (keyboard_key_pressed_memory(KEYCODE_Z)) base -= 384/2*280;
+if (keyboard_key_pressed_memory(KEYCODE_X)) base += 384/2*280;
+if (keyboard_key_pressed_memory(KEYCODE_C)) bose--;
+if (keyboard_key_pressed_memory(KEYCODE_V)) bose++;
 
 	b = 2 * (base + ((HD63484_reg[0xcc/2] & 0x001f) << 16) + HD63484_reg[0xce/2]);
 	for (y = 0;y < 280;y++)
@@ -647,7 +647,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
@@ -720,7 +720,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_I86,	/* V30 actually */
+			CPU_V30,
 			8000000,	/* ??? */
 			0,
 			readmem,writemem,readport,writeport,

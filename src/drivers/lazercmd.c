@@ -312,7 +312,7 @@ INPUT_PORTS_START(lazercmd_input_ports)
 			PORT_DIPSETTING(0x00, "1 Coin Game")
 			PORT_DIPSETTING(0x08, "2 Coin Game")
 		PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED)
-		PORT_BITX(0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color overlay", OSD_KEY_F2, IP_JOY_NONE )
+		PORT_BITX(0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Color overlay", KEYCODE_F2, IP_JOY_NONE )
 			PORT_DIPSETTING(0x80, DEF_STR( On ))
 			PORT_DIPSETTING(0x00, DEF_STR( Off ))
 	PORT_START					   /* IN3 coinage & start */
@@ -393,7 +393,7 @@ static struct MachineDriver lazercmd_machine_driver =
 		}
 	},
 	/* frames per second, vblank duration (arbitrary values!) */
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  
+    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,			/* single CPU, no need for interleaving */
 	0,
 

@@ -3,18 +3,59 @@
 
 #define SPRITE_FLIPX					0x01
 #define SPRITE_FLIPY					0x02
+#define SPRITE_FLICKER					0x04
+#define SPRITE_VISIBLE					0x08
+#define SPRITE_TRANSPARENCY_THROUGH		0x10
+#define SPRITE_SPECIAL					0x20
 
-extern struct sprite_info {
+typedef enum {
+	SPRITE_TYPE_STACK = 0,
+	SPRITE_TYPE_UNPACK,
+	SPRITE_TYPE_ZOOM
+} SpriteType;
+
+struct sprite {
+	int priority, flags;
+
+	const UINT8 *pen_data;	/* points to top left corner of tile data */
+	int line_offset;
+
+	const UINT16 *pal_data;
+	UINT32 pen_usage;
+
+	int x_offset, y_offset;
+	int tile_width, tile_height;
+	int total_width, total_height;	/* in screen coordinates */
+	int x, y;
+
+	/* private */ const struct sprite *next;
+	/* private */ long mask_offset;
+};
+
+/* sprite list flags */
+#define SPRITE_LIST_BACK_TO_FRONT	0x0
+#define SPRITE_LIST_FRONT_TO_BACK	0x1
+#define SPRITE_LIST_RAW_DATA		0x2
+#define SPRITE_LIST_FLIPX			0x4
+#define SPRITE_LIST_FLIPY			0x8
+
+struct sprite_list {
+	SpriteType sprite_type;
+	int num_sprites;
 	int flags;
-	const unsigned short *pal_data;
+	int max_priority;
+	int transparent_pen;
+	int special_pen;
 
-	int source_w,source_h;
-	const unsigned char *source_baseaddr;
-	int source_row_offset;
+	struct sprite *sprite;
+	struct sprite_list *next; /* resource tracking */
+};
 
-	int dest_x,dest_y,dest_w,dest_h;
-} sprite_info;
+void sprite_init( void );	/* called by core - don't call this in drivers */
+void sprite_close( void );	/* called by core - don't call this in drivers */
 
-void draw_sprite( struct osd_bitmap *bitmap );
+struct sprite_list *sprite_list_create( int num_sprites, int flags );
+void sprite_update( void );
+void sprite_draw( struct sprite_list *sprite_list, int priority );
 
 #endif

@@ -18,9 +18,9 @@ void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void rampart_scanline_update(int scanline);
 
-int slapstic_tweak(int offset);
+static unsigned char *slapstic_base;
+static int current_bank;
 
-static int v32_state;
 
 
 /*************************************
@@ -29,24 +29,17 @@ static int v32_state;
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (v32_state)
+	if (atarigen_scanline_int_state)
 		newstate = 4;
 
 	if (newstate)
 		cpu_set_irq_line(0, newstate, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, 7, CLEAR_LINE);
-}
-
-
-static void vint_ack_w(int offset, int data)
-{
-	v32_state = 0;
-	atarigen_vblank_ack_w(offset, data);
 }
 
 
@@ -57,10 +50,7 @@ static void scanline_update(int scanline)
 
 	/* generate 32V signals */
 	if (scanline % 64 == 0)
-	{
-		v32_state = 1;
-		atarigen_update_interrupts();
-	}
+		atarigen_scanline_int_gen();
 }
 
 
@@ -76,26 +66,26 @@ static int bank_list[] = { 0x4000, 0x6000, 0x0000, 0x2000 };
 static int slapstic_bank_r(int offset)
 {
 	int opcode_pc = cpu_getpreviouspc();
-	int slapstic_bank, result;
+	int result;
 
 	/* if the previous PC was 1400E6, then we will be passing through 1400E8 as
 	   we decode this instruction. 1400E8 -> 0074 which represents a significant
 	   location on the Rampart slapstic; best to tweak it here */
 	if (opcode_pc == 0x1400e6)
 	{
-		slapstic_bank = bank_list[slapstic_tweak(0x00e6 / 2)];
-		slapstic_bank = bank_list[slapstic_tweak(0x00e8 / 2)];
-		slapstic_bank = bank_list[slapstic_tweak(0x00ea / 2)];
+		current_bank = bank_list[slapstic_tweak(0x00e6 / 2)];
+		current_bank = bank_list[slapstic_tweak(0x00e8 / 2)];
+		current_bank = bank_list[slapstic_tweak(0x00ea / 2)];
 	}
 
 	/* tweak the slapstic and adjust the bank */
-	slapstic_bank = bank_list[slapstic_tweak(offset / 2)];
-	result = READ_WORD(&atarigen_slapstic[slapstic_bank + (offset & 0x1fff)]);
+	current_bank = bank_list[slapstic_tweak(offset / 2)];
+	result = READ_WORD(&slapstic_base[current_bank + (offset & 0x1fff)]);
 
 	/* if we did the special hack above, then also tweak for the following
 	   instruction fetch, which will force the bank switch to occur */
 	if (opcode_pc == 0x1400e6)
-		slapstic_bank = bank_list[slapstic_tweak(0x00ec / 2)];
+		current_bank = bank_list[slapstic_tweak(0x00ec / 2)];
 
 	/* adjust the bank and return the result */
 	return result;
@@ -113,13 +103,13 @@ static int opbase_override(int pc)
 	/* tweak the slapstic at the destination PC */
 	if (pc >= 0x140000 && pc < 0x148000)
 	{
-		int slapstic_bank = bank_list[slapstic_tweak((pc - 0x140000) / 2)];
+		current_bank = bank_list[slapstic_tweak((pc - 0x140000) / 2)];
 
 		/* use a bogus ophw so that we will be called again on the next jump/ret */
 		ophw = 0x80;
 
 		/* compute the new ROM base */
-		OP_RAM = OP_ROM = &atarigen_slapstic[slapstic_bank] - 0x140000;
+		OP_RAM = OP_ROM = &slapstic_base[current_bank] - 0x140000;
 
 		/* return -1 so that the standard routine doesn't do anything more */
 		pc = -1;
@@ -140,44 +130,10 @@ static int opbase_override(int pc)
 
 static void init_machine(void)
 {
-	static const unsigned short compressed_default_eeprom[] =
-	{
-		0x0001,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0150,0x0101,
-		0x0100,0x0151,0x0300,0x0151,0x0400,0x0150,0x0101,0x01FB,
-		0x021E,0x0104,0x011A,0x0200,0x011A,0x0700,0x01FF,0x0E00,
-		0x01FF,0x0E00,0x01FF,0x0150,0x0101,0x0100,0x0151,0x0300,
-		0x0151,0x0400,0x0150,0x0101,0x01FB,0x021E,0x0104,0x011A,
-		0x0200,0x011A,0x0700,0x01AD,0x0150,0x0129,0x0187,0x01CD,
-		0x0113,0x0100,0x0172,0x0179,0x0140,0x0186,0x0113,0x0100,
-		0x01E5,0x0149,0x01F8,0x012A,0x019F,0x0185,0x01E7,0x0113,
-		0x0100,0x01C3,0x01B5,0x0115,0x0184,0x0113,0x0100,0x0179,
-		0x014E,0x01B7,0x012F,0x016D,0x01B7,0x01D5,0x010B,0x0100,
-		0x0163,0x0242,0x01B6,0x010B,0x0100,0x01B9,0x0104,0x01B7,
-		0x01F0,0x01DD,0x01B5,0x0119,0x010B,0x0100,0x01C2,0x012D,
-		0x0142,0x01B4,0x010B,0x0100,0x01C5,0x0115,0x01BB,0x016F,
-		0x01A2,0x01CF,0x01D3,0x0107,0x0100,0x0192,0x01CD,0x0142,
-		0x01CE,0x0107,0x0100,0x0170,0x0136,0x01B1,0x0140,0x017B,
-		0x01CD,0x01FB,0x0107,0x0100,0x0144,0x013B,0x0148,0x01CC,
-		0x0107,0x0100,0x0181,0x0139,0x01FF,0x0E00,0x01FF,0x0E00,
-		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
-		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
-		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
-		0x0000
-	};
-
-	atarigen_slapstic_num = 118;
-	atarigen_slapstic_reset();
-
-	atarigen_eeprom_default = compressed_default_eeprom;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, scanline_update);
-
-	/* set up some hacks to handle the slapstic accesses */
-	cpu_setOPbaseoverride(opbase_override);
-
-	/* display messages */
-	atarigen_show_slapstic_message();
+	slapstic_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(scanline_update, 8);
 }
 
 
@@ -210,6 +166,7 @@ static void adpcm_w(int offset, int data)
 
 static int ym2413_r(int offset)
 {
+	(void)offset;
 	return (YM2413_status_port_0_r(0) << 8) | 0x00ff;
 }
 
@@ -235,11 +192,12 @@ static void ym2413_w(int offset, int data)
 
 static void latch_w(int offset, int data)
 {
+	(void)offset;
 	/* bit layout in this register:
 
 		0x8000 == VCR ???
 		0x2000 == LETAMODE1 (controls right trackball)
-		0x1000 == CBANK (color bank -- is it ever set to non-zero?
+		0x1000 == CBANK (color bank -- is it ever set to non-zero?)
 		0x0800 == LETAMODE0 (controls center and left trackballs)
 		0x0400 == LETARES (reset LETA analog control reader)
 
@@ -275,7 +233,7 @@ static void latch_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x140000, 0x147fff, slapstic_bank_r, &atarigen_slapstic },
+	{ 0x140000, 0x147fff, slapstic_bank_r, &slapstic_base },
 	{ 0x200000, 0x21fffe, MRA_BANK1, &atarigen_playfieldram },
 	{ 0x3c0000, 0x3c07ff, MRA_BANK2, &paletteram },
 	{ 0x3e0000, 0x3e3fff, MRA_BANK3, &atarigen_spriteram },
@@ -308,7 +266,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5a0000, 0x5affff, atarigen_eeprom_enable_w },
 	{ 0x640000, 0x640001, latch_w },
 	{ 0x720000, 0x72ffff, watchdog_reset_w },
-	{ 0x7e0000, 0x7effff, vint_ack_w },
+	{ 0x7e0000, 0x7effff, atarigen_scanline_int_ack_w },
 	{ -1 }  /* end of table */
 };
 
@@ -343,7 +301,7 @@ INPUT_PORTS_START( rampart_ports )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0800, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -397,7 +355,7 @@ INPUT_PORTS_START( ramprt2p_ports )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0800, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -479,7 +437,7 @@ static struct OKIM6295interface okim6295_interface =
 static struct YM2413interface ym2413_interface =
 {
     1,					/* 1 chip */
-    7159160,			/* ~7MHz */
+    7159160 / 2,		/* ~7MHz */
     { 100 },			/* Volume */
     NULL				/* IRQ handler */
 };
@@ -497,11 +455,11 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			readmem,writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -595,6 +553,51 @@ ROM_END
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void rampart_init(void)
+{
+	static const unsigned short compressed_default_eeprom[] =
+	{
+		0x0001,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0150,0x0101,
+		0x0100,0x0151,0x0300,0x0151,0x0400,0x0150,0x0101,0x01FB,
+		0x021E,0x0104,0x011A,0x0200,0x011A,0x0700,0x01FF,0x0E00,
+		0x01FF,0x0E00,0x01FF,0x0150,0x0101,0x0100,0x0151,0x0300,
+		0x0151,0x0400,0x0150,0x0101,0x01FB,0x021E,0x0104,0x011A,
+		0x0200,0x011A,0x0700,0x01AD,0x0150,0x0129,0x0187,0x01CD,
+		0x0113,0x0100,0x0172,0x0179,0x0140,0x0186,0x0113,0x0100,
+		0x01E5,0x0149,0x01F8,0x012A,0x019F,0x0185,0x01E7,0x0113,
+		0x0100,0x01C3,0x01B5,0x0115,0x0184,0x0113,0x0100,0x0179,
+		0x014E,0x01B7,0x012F,0x016D,0x01B7,0x01D5,0x010B,0x0100,
+		0x0163,0x0242,0x01B6,0x010B,0x0100,0x01B9,0x0104,0x01B7,
+		0x01F0,0x01DD,0x01B5,0x0119,0x010B,0x0100,0x01C2,0x012D,
+		0x0142,0x01B4,0x010B,0x0100,0x01C5,0x0115,0x01BB,0x016F,
+		0x01A2,0x01CF,0x01D3,0x0107,0x0100,0x0192,0x01CD,0x0142,
+		0x01CE,0x0107,0x0100,0x0170,0x0136,0x01B1,0x0140,0x017B,
+		0x01CD,0x01FB,0x0107,0x0100,0x0144,0x013B,0x0148,0x01CC,
+		0x0107,0x0100,0x0181,0x0139,0x01FF,0x0E00,0x01FF,0x0E00,
+		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
+		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
+		0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0E00,
+		0x0000
+	};
+
+	atarigen_eeprom_default = compressed_default_eeprom;
+	slapstic_init(118);
+
+	/* set up some hacks to handle the slapstic accesses */
+	cpu_setOPbaseoverride(opbase_override);
+
+	/* display messages */
+	atarigen_show_slapstic_message();
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -608,9 +611,9 @@ struct GameDriver rampart_driver =
 	"1990",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	GAME_NOT_WORKING,
-	&machine_driver,
 	0,
+	&machine_driver,
+	rampart_init,
 
 	rampart_rom,
 	rom_decode,
@@ -635,9 +638,9 @@ struct GameDriver ramprt2p_driver =
 	"1990",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	GAME_NOT_WORKING,
-	&machine_driver,
 	0,
+	&machine_driver,
+	rampart_init,
 
 	ramprt2p_rom,
 	rom_decode,

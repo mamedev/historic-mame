@@ -1,6 +1,4 @@
-#define __INLINE__ static __inline__    /* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 #include <pc.h>
 #include <conio.h>
@@ -17,6 +15,11 @@
 
 /*15.75KHz SVGA driver (req. for 15.75KHz Arcade Monitor Modes)*/
 SVGA15KHZDRIVER *SVGA15KHzdriver;
+
+/* from blit.c, for VGA triple buffering */
+extern int xpage_size;
+extern int no_xpages;
+void unchain_vga(Register *pReg);
 
 BEGIN_GFX_DRIVER_LIST
 	GFX_DRIVER_VGA
@@ -261,6 +264,7 @@ unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256
 unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
 unsigned char tw320x240ns_h, tw320x240ns_v, tw320x240sc_h, tw320x240sc_v;
 unsigned char tw336x240ns_h, tw336x240ns_v, tw336x240sc_h, tw336x240sc_v;
+unsigned char tw384x224ns_h, tw384x224ns_v, tw384x224sc_h, tw384x224sc_v;
 unsigned char tw384x240ns_h, tw384x240ns_v, tw384x240sc_h, tw384x240sc_v;
 unsigned char tw384x256ns_h, tw384x256ns_v, tw384x256sc_h, tw384x256sc_v;
 
@@ -281,6 +285,10 @@ struct vga_tweak vga_tweaked[] = {
 	{ 320, 240, scr320x240, sizeof(scr320x240)/sizeof(Register),  0, 0, 1 },
 	{ 336, 240, scr336x240scanlines, sizeof(scr336x240scanlines)/sizeof(Register),  0, 1, 1 },
 	{ 336, 240, scr336x240, sizeof(scr336x240)/sizeof(Register),  0, 0, 1 },
+/* 384x224 modes put back in - as 384x240 and above are too large to triple buffer */
+/* but 384x224 just squeezes in */
+	{ 384, 224, scr384x224scanlines, sizeof(scr384x224scanlines)/sizeof(Register),  1, 1, 1 },
+	{ 384, 224, scr384x224, sizeof(scr384x224)/sizeof(Register),  1, 0, 1 },
 	{ 384, 240, scr384x240scanlines, sizeof(scr384x240scanlines)/sizeof(Register),  1, 1, 1 },
 	{ 384, 240, scr384x240, sizeof(scr384x240)/sizeof(Register),  1, 0, 1 },
 	{ 384, 256, scr384x256scanlines, sizeof(scr384x256scanlines)/sizeof(Register),  1, 1, 1 },
@@ -293,6 +301,7 @@ unsigned char tw224x288arc_h, tw224x288arc_v, tw288x224arc_h, tw288x224arc_v;
 unsigned char tw256x240arc_h, tw256x240arc_v, tw256x256arc_h, tw256x256arc_v;
 unsigned char tw320x240arc_h, tw320x240arc_v, tw320x256arc_h, tw320x256arc_v;
 unsigned char tw352x240arc_h, tw352x240arc_v, tw352x256arc_h, tw352x256arc_v;
+unsigned char tw368x224arc_h, tw368x224arc_v;
 unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
 unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
 unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
@@ -311,6 +320,8 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 	{ 352, 240, scr352x240_15KHz, sizeof(scr352x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 352 },
 	{ 352, 256, scr352x256_15KHz, sizeof(scr352x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 352 },
 /* force 384 games to match to 368 modes - the standard VGA clock speeds mean we can't go as wide as 384 */
+	{ 368, 224, scr368x224_15KHz, sizeof(scr368x224_15KHz)/sizeof(Register), 1, 0, 1, 0, 384 },
+/* all VGA modes from now on are too big for triple buffering */
 	{ 368, 240, scr368x240_15KHz, sizeof(scr368x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 384 },
 	{ 368, 256, scr368x256_15KHz, sizeof(scr368x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 384 },
 /* double monitor modes */
@@ -1447,6 +1458,31 @@ int osd_set_display(int width,int height, int attributes)
 		if (video_sync || always_synced || wait_vsync)
 			reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
 
+		/* VGA triple buffering */
+		if(use_triplebuf)
+		{
+
+			int vga_page_size = (gfx_width * gfx_height);
+			/* see if it'll fit */
+			if ((vga_page_size * 3) > 0x40000)
+			{
+				/* too big */
+				if (errorlog)
+					fprintf(errorlog,"tweaked mode %dx%d is too large to triple buffer\ntriple buffering disabled\n",gfx_width,gfx_height);
+				use_triplebuf = 0;
+			}
+			else
+			{
+				/* it fits, so set up the 3 pages */
+				no_xpages = 3;
+				xpage_size = vga_page_size / 4;
+				if (errorlog)
+					fprintf(errorlog,"unchained VGA triple buffering page size :%d\n",xpage_size);
+				/* and make sure the mode's unchained */
+				unchain_vga (reg);
+
+			}
+		}
 
 		/* set the horizontal and vertical total */
 		if(scanrate15KHz)
@@ -1491,6 +1527,11 @@ int osd_set_display(int width,int height, int attributes)
 			{
 				reg[1].value = tw352x256arc_h;
 				reg[7].value = tw352x256arc_v;
+			}
+			else if ((gfx_width == 368) && (gfx_height == 224))
+			{
+				reg[1].value = tw368x224arc_h;
+				reg[7].value = tw368x224arc_v;
 			}
 			else if ((gfx_width == 368) && (gfx_height == 240))
 			{
@@ -1580,6 +1621,20 @@ int osd_set_display(int width,int height, int attributes)
 					reg[7].value = tw336x240ns_v;
 				}
 			}
+			/* 384x224 mode */
+			else if ((gfx_width == 384) && (gfx_height == 224))
+			{
+				if (scanlines)
+				{
+					reg[1].value = tw384x224sc_h;
+					reg[7].value = tw384x224sc_v;
+				}
+				else
+				{
+					reg[1].value = tw384x224ns_h;
+					reg[7].value = tw384x224ns_v;
+				}
+			}
 			/* 384x240 mode */
 			else if ((gfx_width == 384) && (gfx_height == 240))
 			{
@@ -1658,19 +1713,20 @@ int osd_set_display(int width,int height, int attributes)
 				}
 			}
 		}
-
 		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
 		/* definition over it. */
 		if (set_gfx_mode(GFX_VGA,320,200,0,0) != 0)
 			return 0;
+
 		/* tweak the mode */
 		outRegArray(reg,reglen);
+
 		/* check for unchained mode,  if unchained clear all pages */
 		if (unchained)
 		{
 			unsigned long address;
 			/* turn off any other 'vsync's */
-			video_sync = 0;
+  			video_sync = 0;
 			wait_vsync = 0;
 			/* clear all 4 bit planes */
 			outportw (0x3c4, (0x02 | (0x0f << 0x08)));
@@ -1922,9 +1978,9 @@ void update_screen_dummy(void)
 INLINE void pan_display(void)
 {
 	/* horizontal panning */
-	if (osd_key_pressed(OSD_KEY_LSHIFT))
+	if (keyboard_key_pressed(KEYCODE_LSHIFT))
 	{
-		if (osd_key_pressed(OSD_KEY_PGUP))
+		if (keyboard_key_pressed(KEYCODE_PGUP))
 		{
 			if (skipcolumns < skipcolumnsmax)
 			{
@@ -1932,7 +1988,7 @@ INLINE void pan_display(void)
 				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 			}
 		}
-		if (osd_key_pressed(OSD_KEY_PGDN))
+		if (keyboard_key_pressed(KEYCODE_PGDN))
 		{
 			if (skipcolumns > skipcolumnsmin)
 			{
@@ -1943,7 +1999,7 @@ INLINE void pan_display(void)
 	}
 	else /*  vertical panning */
 	{
-		if (osd_key_pressed(OSD_KEY_PGDN))
+		if (keyboard_key_pressed(KEYCODE_PGDN))
 		{
 			if (skiplines < skiplinesmax)
 			{
@@ -1951,7 +2007,7 @@ INLINE void pan_display(void)
 				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
 			}
 		}
-		if (osd_key_pressed(OSD_KEY_PGUP))
+		if (keyboard_key_pressed(KEYCODE_PGUP))
 		{
 			if (skiplines > skiplinesmin)
 			{
@@ -2047,29 +2103,33 @@ void osd_update_video_and_audio(void)
 			}
 		}
 
-		if (osd_key_pressed_memory(OSD_KEY_SHOW_FPS))
+		if (keyboard_ui_key_pressed(IPT_UI_SHOW_FPS))
 		{
-			if (showfpstemp)
+			if (use_profiler &&
+					(keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT)))
 			{
-				showfpstemp = 0;
-				need_to_clear_bitmap = 1;
+				showprofile ^= 1;
+				if (showprofile == 0)
+					need_to_clear_bitmap = 1;
 			}
 			else
 			{
-				showfps ^= 1;
-				if (showfps == 0)
+				if (showfpstemp)
 				{
+					showfpstemp = 0;
 					need_to_clear_bitmap = 1;
+				}
+				else
+				{
+					showfps ^= 1;
+					if (showfps == 0)
+					{
+						need_to_clear_bitmap = 1;
+					}
 				}
 			}
 		}
 
-		if (use_profiler && osd_key_pressed_memory(OSD_KEY_SHOW_PROFILE))
-		{
-			showprofile ^= 1;
-			if (showprofile == 0)
-				need_to_clear_bitmap = 1;
-		}
 
 		/* now wait until it's time to update the screen */
 		if (throttle)
@@ -2276,10 +2336,10 @@ void osd_update_video_and_audio(void)
 	}
 
 	/* Check for PGUP, PGDN and pan screen */
-	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
+	if (keyboard_key_pressed(KEYCODE_PGDN) || keyboard_key_pressed(KEYCODE_PGUP))
 		pan_display();
 
-	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP_INC))
+	if (keyboard_ui_key_pressed(IPT_UI_FRAMESKIP_INC))
 	{
 		if (autoframeskip)
 		{
@@ -2305,7 +2365,7 @@ void osd_update_video_and_audio(void)
 		frames_displayed = 0;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP_DEC))
+	if (keyboard_ui_key_pressed(IPT_UI_FRAMESKIP_DEC))
 	{
 		if (autoframeskip)
 		{
@@ -2328,7 +2388,7 @@ void osd_update_video_and_audio(void)
 		frames_displayed = 0;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_THROTTLE))
+	if (keyboard_ui_key_pressed(IPT_UI_THROTTLE))
 	{
 		throttle ^= 1;
 

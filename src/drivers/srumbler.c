@@ -160,7 +160,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?" )
@@ -566,7 +566,7 @@ struct GameDriver srumbler_driver =
 	__FILE__,
 	0,
 	"srumbler",
-	"Speed Rumbler (set 1)",
+	"The Speed Rumbler (set 1)",
 	"1986",
 	"Capcom",
 	"Paul Leaman",
@@ -592,7 +592,7 @@ struct GameDriver srumblr2_driver =
 	__FILE__,
 	&srumbler_driver,
 	"srumblr2",
-	"Speed Rumbler (set 2)",
+	"The Speed Rumbler (set 2)",
 	"1986",
 	"Capcom",
 	"Paul Leaman",

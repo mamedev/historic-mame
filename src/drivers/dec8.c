@@ -1235,10 +1235,10 @@ INPUT_PORTS_START( gondo_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* player 1 12-way rotary control */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not currently supported */
@@ -1386,7 +1386,7 @@ INPUT_PORTS_START( lastmiss_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x20, "On" )
-	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", OSD_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Cabinet?" )

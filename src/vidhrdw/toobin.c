@@ -89,6 +89,9 @@ unsigned char *toobin_moslip;
 static struct atarigen_pf_state pf_state;
 static int last_intensity;
 
+#if DEBUG_VIDEO
+static int show_colors;
+#endif
 
 
 /*************************************
@@ -136,20 +139,20 @@ int toobin_vh_start(void)
 		128, 64				/* number of tiles in each direction */
 	};
 
-	/* reset statics */	
+	/* reset statics */
 	last_intensity = 0;
 
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -271,7 +274,7 @@ void toobin_moslip_w(int offset, int data)
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 #if DEBUG_VIDEO
-	if (osd_key_pressed(OSD_KEY_9)) debug();
+	debug();
 #endif
 
 	/* update the palette */
@@ -289,19 +292,19 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		const struct GfxElement *gfx = Machine->gfx[2];
 		int sx, sy, offs;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 			{
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int code = data & 0x3ff;
-	
+
 				/* if there's a non-zero code, draw the tile */
 				if (code)
 				{
 					int color = (data >> 12) & 15;
 					int hflip = data & 0x400;
-	
+
 					/* draw the character */
 					drawgfx(bitmap, gfx, code, color, hflip, 0, 8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
 				}
@@ -368,7 +371,7 @@ static const unsigned char *update_palette(void)
 	{
 		const unsigned int *usage = Machine->gfx[2]->pen_usage;
 		int offs, sx, sy;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 			{
@@ -428,7 +431,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 127)
@@ -438,10 +441,10 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 			int color = data1 & 0x000f;
 			int code = data2 & 0x3fff;
-			
+
 			/* mark the colors used by this tile */
 			colormap[color] |= usage[code];
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
 		}
@@ -466,21 +469,31 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 127)
 		{
 			int offs = y * 128 + x;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 				int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 				int color = data1 & 0x000f;
+				int priority = (data1 >> 4) & 3;
 				int vflip = data2 & 0x8000;
 				int hflip = data2 & 0x4000;
 				int code = data2 & 0x3fff;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, vflip, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
+
+#if DEBUG_VIDEO
+				if (show_colors)
+				{
+					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 1, 0, 0, 8 * x + 0, 8 * y, 0, TRANSPARENCY_PEN, 0);
+					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 1, 0, 0, 8 * x + 2, 8 * y, 0, TRANSPARENCY_PEN, 0);
+					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 0, 0, 0, 8 * x + 1, 8 * y, 0, TRANSPARENCY_PEN, 0);
+				}
+#endif
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -516,7 +529,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int offs = y * 128 + x;
 			int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 			int priority = (data1 >> 4) & 3;
-			
+
 			/* overrender if there is a non-zero priority for this tile */
 			/* not perfect, but works for the most obvious cases */
 			if (priority)
@@ -542,7 +555,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
@@ -584,7 +597,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int code = data[1] & 0x3fff;
 	int xpos = data[3] >> 6;
 	int color = data[3] & 0x000f;
-	int priority = 3;
+	int priority = (data[3] >> 4) & 3;
 
 	/* adjust for height */
 	ypos -= vsize * 16;
@@ -595,7 +608,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		xpos -= pf_state.hscroll;
 		ypos -= pf_state.vscroll;
 	}
-	
+
 	/* adjust the final coordinates */
 	xpos &= 0x3ff;
 	ypos &= 0x1ff;
@@ -604,26 +617,26 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 	/* determine the bounding box */
 	atarigen_mo_compute_clip_16x16(pf_clip, xpos, ypos, hsize, vsize, clip);
-		
+
 	/* draw the motion object */
 	{
 		int tilex, tiley, screeny, screendx, screendy;
 		int screenx = xpos;
 		int starty = ypos;
 		int tile = code;
-	
+
 		/* adjust for h flip */
 		if (hflip)
 			screenx += (hsize - 1) * 16, screendx = -16;
 		else
 			screendx = 16;
-	
+
 		/* adjust for v flip */
 		if (vflip)
 			starty += (vsize - 1) * 16, screendy = -16;
 		else
 			screendy = 16;
-	
+
 		/* loop over the height */
 		for (tilex = 0; tilex < hsize; tilex++, screenx += screendx)
 		{
@@ -635,19 +648,32 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 			}
 			else if (screenx > clip->max_x)
 				break;
-	
+
 			/* loop over the width */
 			for (tiley = 0, screeny = starty; tiley < vsize; tiley++, screeny += screendy, tile++)
 			{
 				/* clip the y coordinate */
 				if (screeny <= clip->min_y - 16 || screeny > clip->max_y)
 					continue;
-	
+
 				/* draw the sprite */
 				drawgfx(bitmap, gfx, tile, color, hflip, vflip, screenx, screeny, clip, TRANSPARENCY_PEN, 0);
 			}
 		}
 	}
+
+#if DEBUG_VIDEO
+	if (show_colors)
+	{
+		int tx = (pf_clip.min_x + pf_clip.max_x) / 2 - 3;
+		int ty = (pf_clip.min_y + pf_clip.max_y) / 2 - 4;
+		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx - 2, ty - 2, 0, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx + 2, ty - 2, 0, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx - 2, ty + 2, 0, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx + 2, ty + 2, 0, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 0, 0, 0, tx, ty, 0, TRANSPARENCY_NONE, 0);
+	}
+#endif
 
 	/* overrender the playfield */
 	atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
@@ -670,7 +696,17 @@ static void debug(void)
 	FILE *f;
 	int i;
 
-	while (osd_key_pressed(OSD_KEY_9)) { }
+	int new_show_colors;
+
+	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
+	if (new_show_colors != show_colors)
+	{
+		show_colors = new_show_colors;
+		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 4);
+	}
+
+	if (!keyboard_key_pressed(KEYCODE_9)) return;
+	while (keyboard_key_pressed(KEYCODE_9)) { }
 
 	sprintf(name, "Dump %d", ++count);
 	f = fopen(name, "wt");

@@ -375,14 +375,14 @@ static void mo_print_callback(const unsigned short *data, const struct rectangle
 
 static void debug(void)
 {
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

@@ -622,7 +622,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )	// if active, bit 4 of cpu2 bank is on ..
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )			// is this a flip screen?
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )			// it changes the scroll offsets
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown 1-3" )		//	routine 56d:	11 21 12 16 (bit 3 active)

@@ -404,6 +404,14 @@ void mappy_sound_w(int offset,int data)
 	/* set the register */
 	namco_soundregs[offset] = data;
 
+if (errorlog && (offset & 7) <= 2)
+{
+	char baf[80];
+	sprintf(baf,"PC %02x: Namco reg %02x = %02x\n",cpu_get_pc(),offset,data);
+	fprintf(errorlog,baf);
+	usrintf_showmessage(baf);
+}
+
 	/* recompute all the voice parameters */
 	for (base = 0, voice = channel_list; voice < last_channel; voice++, base += 8)
 	{

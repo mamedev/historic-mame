@@ -123,33 +123,33 @@ int vindictr_vh_start(void)
 		3, 0, 0x3ff,         /* link = (data[linkword] >> linkshift) & linkmask */
 		0                    /* reverse order */
 	};
-	
+
 	static struct atarigen_pf_desc pf_desc =
 	{
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	int i;
-	
+
 	/* reset statics */
 	memset(&pf_state, 0, sizeof(pf_state));
-	
+
 	/* initialize the shading colors */
 	for (i = 0; i < 32; i++)
 		palette_change_color(i + 2048, i * 128 / 31, i * 128 / 31, i * 128 / 31);
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -179,7 +179,7 @@ void vindictr_playfieldram_w(int offset, int data)
 {
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	
+
 	if (oldword != newword)
 	{
 		WRITE_WORD(&atarigen_playfieldram[offset], newword);
@@ -203,9 +203,9 @@ void vindictr_paletteram_w(int offset,int data)
 	int oldword = READ_WORD(&paletteram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
 	int i, r, g, b;
-	
+
 	WRITE_WORD(&paletteram[offset], newword);
-	
+
 	i = ztable[(newword >> 12) & 15];
 	r = ((newword >> 8) & 15) * i;
 	g = ((newword >> 4) & 15) * i;
@@ -246,14 +246,14 @@ void vindictr_scanline_update(int scanline)
 		int link = READ_WORD(&atarigen_alpharam[0xf80 + 2 * (pfscanline / 8)]) & 0x3ff;
 		atarigen_mo_update(atarigen_spriteram, link, (pfscanline - pf_state.vscroll) & 0x1ff);
 	}
-	
+
 	/* update the current parameters */
 	if ((unsigned char *)base < &atarigen_alpharam[0xf80])
 		for (x = XCHARS; x < 64; x++)
 		{
 			unsigned short data = *base++;
 			unsigned short command = data & 0x7e00;
-	
+
 			if (command == 0x7400)
 				pf_state.param[0] = data & 7;
 			else if (command == 0x7600)
@@ -294,7 +294,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* update the palette, and mark things dirty */
 	if (update_palette(modata.shade_table))
 		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
-	
+
 	/* draw the playfield */
 	memset(atarigen_pf_visit, 0, 64*64);
 	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
@@ -314,7 +314,7 @@ void vindictr_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int code = data & 0x3ff;
 				int opaque = data & 0x8000;
-				
+
 				if (code || opaque)
 				{
 					int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
@@ -346,7 +346,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 	memset(pf_map, 0, sizeof(pf_map));
 	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
-	
+
 	/* always count the shading colors */
 	memset(&palette_used_colors[2048], PALETTE_COLOR_USED, 32);
 
@@ -406,7 +406,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 
 	/* recalc */
 	result = palette_recalc();
-	
+
 	/* build the shading lookup table */
 	for (i = 0; i < 256; i++)
 	{
@@ -416,7 +416,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 		y = (r * 10 + g * 18 + b * 4) >> 8;
 		shade_table[i] = Machine->pens[2048 + y];
 	}
-	
+
 	return result;
 }
 
@@ -433,7 +433,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = &Machine->gfx[0]->pen_usage[state->param[0] * 0x1000];
 	unsigned short *colormap = (unsigned short *)param;
 	int x, y;
-	
+
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
@@ -442,7 +442,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int code = data & 0xfff;
 			int color = (data >> 11) & 14;
 			colormap[color + 0] |= usage[code];
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
 		}
@@ -469,18 +469,18 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		{
 			int offs = x * 64 + y;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs] != bank)
 			{
 				int color = 16 + ((data >> 11) & 14);
 				int code = bank * 0x1000 + (data & 0xfff);
 				int hflip = data & 0x8000;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = bank;
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -541,7 +541,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int vsize = (data[2] & 7) + 1;
 	int xpos = -pf_state.hscroll + (data[1] >> 7);
 	int xadv;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 
@@ -613,38 +613,38 @@ static int debug(void)
 {
 	int hidebank = -1;
 
-	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
-	
-	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
+	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
+
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
-		
-		while (osd_key_pressed(OSD_KEY_9)) { }
-		
+
+		while (keyboard_key_pressed(KEYCODE_9)) { }
+
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");
-		
+
 		fprintf(f, "\n\nPalette RAM:\n");
-		
+
 		for (i = 0x000; i < 0x800; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
@@ -654,7 +654,7 @@ static int debug(void)
 
 		fprintf(f, "\n\nMotion Objects (drawn)\n");
 		atarigen_mo_process(mo_print, f);
-		
+
 		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
@@ -666,25 +666,25 @@ static int debug(void)
 					READ_WORD(&atarigen_spriteram[i*8+6])
 			);
 		}
-		
+
 		fprintf(f, "\n\nPlayfield dump\n");
 		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
 			if ((i & 63) == 63) fprintf(f, "\n");
 		}
-		
+
 		fprintf(f, "\n\nAlpha dump\n");
 		for (i = 0; i < atarigen_alpharam_size / 2; i++)
 		{
 			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
 			if ((i & 63) == 63) fprintf(f, "\n");
 		}
-		
+
 		fclose(f);
 	}
-	
+
 	return hidebank;
-}	
+}
 
 #endif

@@ -898,31 +898,31 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 	struct DisplayText dt[2];
 
 	/* debug setting, tile view mode connected to '8' */
-	if (osd_key_pressed(OSD_KEY_8))
+	if (keyboard_key_pressed(KEYCODE_8))
 	{
-		while (osd_key_pressed(OSD_KEY_8)) ;
+		while (keyboard_key_pressed(KEYCODE_8)) ;
 		dotiles ^= 1;
 	}
 
 	/* tile view - 0x80, connected to '9' */
-	if (osd_key_pressed(OSD_KEY_9) && !osd_key_pressed(OSD_KEY_LSHIFT))
+	if (keyboard_key_pressed(KEYCODE_9) && !keyboard_key_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_offs > 0)
 			screen_offs -= 0x80;
 	}
-	if (osd_key_pressed(OSD_KEY_9) && osd_key_pressed(OSD_KEY_LSHIFT))
+	if (keyboard_key_pressed(KEYCODE_9) && keyboard_key_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_yoffs > 0)
 			screen_yoffs--;
 	}
 
 	/* tile view + 0x80, connected to '0' */
-	if (osd_key_pressed(OSD_KEY_0) && !osd_key_pressed(OSD_KEY_LSHIFT))
+	if (keyboard_key_pressed(KEYCODE_0) && !keyboard_key_pressed(KEYCODE_LSHIFT))
 	{
 		if (screen_offs < 0x10000)
 			screen_offs += 0x80;
 	}
-	if (osd_key_pressed(OSD_KEY_0) && osd_key_pressed(OSD_KEY_LSHIFT))
+	if (keyboard_key_pressed(KEYCODE_0) && keyboard_key_pressed(KEYCODE_LSHIFT))
 	{
 		screen_yoffs++;
 	}
@@ -1148,7 +1148,7 @@ if (!dotiles) { 					/* debug */
 	for (j = 0;j < 4;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8+8*j,8*2,0,TRANSPARENCY_NONE,0);
 }
-if (osd_key_pressed(OSD_KEY_D))
+if (keyboard_key_pressed(KEYCODE_D))
 {
 	FILE *fp;
 

@@ -4,12 +4,8 @@ Credits:
 - Steve Ellenoff: Original emulation and Mame driver
 - Jarek Parchanski: Dip Switch Fixes, Color improvements, ADPCM Interface code
 - Tatsuyuki Satoh: sound improvements, NEC 8741 emulation,adpcm improvements
-
-Special thanks to:
-- Camilty for precious hardware information and screenshots
-
-Issues:
-- Sprite colors are a mess
+- Charlie Miltenberger: sprite colors improvements & precious hardware
+			information and screenshots
 
 Trick:
 If you want fight with ODILION swordsman patch program for 1st CPU
@@ -568,10 +564,10 @@ static struct AY8910interface ay8910_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	455000,				/* 455KHz ??          */
+	1,				/* 1 chip             */
+	384000,				/* 384KHz verified!   */
 	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B},	/* vclk input mode    */
+	{ MSM5205_SEX_4B},		/* vclk input mode    */
 	{ 60 }
 };
 
@@ -599,7 +595,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2800000,	/* 2.8 MHz ? */
+			3000000,
 			4,
 			readmem_cpu3,writemem_cpu3,
 			0,0,
@@ -725,7 +721,7 @@ struct GameDriver gsword_driver =
 	"1984",
 	"Taito Corporation",
 	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
-	GAME_WRONG_COLORS,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
 	gsword_reset,
 

@@ -176,8 +176,6 @@ static struct GfxLayout objlayout =
  *
  *************************************/
 
-extern int atarisys1_int3_state;
-
 static const unsigned char *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
@@ -231,7 +229,6 @@ int atarisys1_vh_start(void)
 	/* reset the statics */
 	memset(&pf_state, 0, sizeof(pf_state));
 	memset(int3_timer, 0, sizeof(int3_timer));
-	atarisys1_int3_state = 0;
 
 	/* initialize the pen usage array */
 	for (e = 0; e < MAX_GFX_ELEMENTS; e++)
@@ -447,8 +444,7 @@ void atarisys1_spriteram_w(int offset, int data)
 static void int3off_callback(int param)
 {
 	/* clear the state */
-	atarisys1_int3_state = 0;
-	atarigen_update_interrupts();
+	atarigen_scanline_int_ack_w(0, 0);
 
 	/* make this timer go away */
 	int3off_timer = 0;
@@ -458,8 +454,7 @@ static void int3off_callback(int param)
 void atarisys1_int3_callback(int param)
 {
 	/* update the state */
-	atarisys1_int3_state = 1;
-	atarigen_update_interrupts();
+	atarigen_scanline_int_gen();
 
 	/* set a timer to turn it off */
 	if (int3off_timer)
@@ -480,7 +475,7 @@ void atarisys1_int3_callback(int param)
 
 int atarisys1_int3state_r(int offset)
 {
-	return atarisys1_int3_state ? 0x0080 : 0x0000;
+	return atarigen_scanline_int_state ? 0x0080 : 0x0000;
 }
 
 
@@ -1095,32 +1090,32 @@ static int debug(void)
 		memcpy(lasttrans, &paletteram[0x600], 0x200);
 	}
 
-	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
+	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
+	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
 
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i, bank;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

@@ -11,6 +11,8 @@
 #include "vidhrdw/vector.h"
 #include "datafile.h"
 
+extern int mame_debug;
+
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
 
@@ -43,34 +45,49 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 {
 	int temp,w,h;
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	/* special case for vectors */
+	if(Machine->drv->video_attributes == VIDEO_TYPE_VECTOR)
 	{
-		w = Machine->drv->screen_height;
-		h = Machine->drv->screen_width;
+		if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+		{
+			temp=xmin; xmin=ymin; ymin=temp;
+			temp=xmax; xmax=ymax; ymax=temp;
+		}
 	}
 	else
 	{
-		w = Machine->drv->screen_width;
-		h = Machine->drv->screen_height;
-	}
-	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
-	{
-		temp = w - xmin - 1;
-		xmin = w - xmax - 1;
-		xmax = temp;
-	}
-	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = h - ymin - 1;
-		ymin = h - ymax - 1;
-		ymax = temp;
-	}
-	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = xmin; xmin = ymin; ymin = temp;
-		temp = xmax; xmax = ymax; ymax = temp;
-	}
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			w = Machine->drv->screen_height;
+			h = Machine->drv->screen_width;
+		}
+		else
+		{
+			w = Machine->drv->screen_width;
+			h = Machine->drv->screen_height;
+		}
 
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+		{
+			temp = w - xmin - 1;
+			xmin = w - xmax - 1;
+			xmax = temp ;
+		}
+
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = h - ymin - 1;
+			ymin = h - ymax - 1;
+			ymax = temp;
+		}
+
+		if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+		{
+			temp = xmin; xmin = ymin; ymin = temp;
+			temp = xmax; xmax = ymax; ymax = temp;
+		}
+
+	}
 	Machine->uiwidth = xmax-xmin+1;
 	Machine->uiheight = ymax-ymin+1;
 	Machine->uixmin = xmin;
@@ -1039,17 +1056,17 @@ static void showcharset(void)
 //		osd_skip_this_frame();
 		osd_update_video_and_audio();
 
-		if (osd_key_pressed(OSD_KEY_LCONTROL) || osd_key_pressed(OSD_KEY_RCONTROL))
+		if (keyboard_key_pressed(KEYCODE_LCONTROL) || keyboard_key_pressed(KEYCODE_RCONTROL))
 		{
 			skip_chars = cpx;
 		}
-		if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
+		if (keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT))
 		{
 			skip_chars = 1;
 		}
 
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
 		{
 			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 			{
@@ -1059,7 +1076,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
 		{
 			if (bank > -1)
 			{
@@ -1069,7 +1086,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
+		if (keyboard_key_pressed_memory_repeat(KEYCODE_PGDN,4))
 		{
 			if (bank >= 0)
 			{
@@ -1089,7 +1106,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
+		if (keyboard_key_pressed_memory_repeat(KEYCODE_PGUP,4))
 		{
 			if (bank >= 0)
 			{
@@ -1107,7 +1124,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,6))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,6))
 		{
 			if (bank >= 0)
 			{
@@ -1119,7 +1136,7 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,6))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,6))
 		{
 			if (color > 0)
 			{
@@ -1128,13 +1145,10 @@ static void showcharset(void)
 			}
 		}
 
-		if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
-		{
+		if (keyboard_ui_key_pressed(IPT_UI_SNAPSHOT))
 			osd_save_snapshot();
-		}
-	} while (!osd_key_pressed_memory(OSD_KEY_SHOW_GFX) &&
-			!osd_key_pressed_memory(OSD_KEY_CANCEL) &&
-			!osd_key_pressed_memory(OSD_KEY_FAST_EXIT));
+	} while (!keyboard_ui_key_pressed(IPT_UI_SHOW_GFX) &&
+			!keyboard_ui_key_pressed(IPT_UI_CANCEL));
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
@@ -1305,19 +1319,19 @@ static int setdipswitches(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,arrowize);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -1341,7 +1355,7 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
 	{
 		if (sel < total - 1)
 		{
@@ -1365,15 +1379,15 @@ static int setdipswitches(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1431,7 +1445,7 @@ static int setdefkeysettings(int selected)
 	for (i = 0;i < total;i++)
 	{
 		if (i < total - 1)
-			menu_subitem[i] = osd_key_name(entry[i]->keyboard);
+			menu_subitem[i] = keyboard_key_name(entry[i]->keyboard);
 		else menu_subitem[i] = 0;	/* no subitem */
 		flag[i] = 0;
 	}
@@ -1443,12 +1457,12 @@ static int setdefkeysettings(int selected)
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = osd_read_key_immediate();
-		if (newkey != OSD_KEY_NONE)
+		newkey = keyboard_read_key_immediate();
+		if (newkey != KEYCODE_NONE)
 		{
 			sel &= 0xff;
 
-			if (!osd_key_invalid(newkey))	/* don't use pseudo key code */
+			if (!keyboard_key_pressed(input_port_type_key(IPT_UI_CANCEL)))
 				entry[sel]->keyboard = newkey;
 
 			/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -1461,19 +1475,19 @@ static int setdefkeysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1485,10 +1499,10 @@ static int setdefkeysettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1561,7 +1575,7 @@ static int setdefjoysettings(int selected)
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		{
 			sel &= 0xff;
 			/* don't change the setting */
@@ -1571,7 +1585,7 @@ static int setdefjoysettings(int selected)
 		}
 
 		/* Allows for "All buttons" */
-		if (osd_key_pressed_memory(OSD_KEY_A))
+		if (keyboard_key_pressed_memory(KEYCODE_A))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY_FIRE;
@@ -1579,7 +1593,7 @@ static int setdefjoysettings(int selected)
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
 		}
-		if (osd_key_pressed_memory(OSD_KEY_B))
+		if (keyboard_key_pressed_memory(KEYCODE_B))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY2_FIRE;
@@ -1588,7 +1602,7 @@ static int setdefjoysettings(int selected)
 			need_to_clear_bitmap = 1;
 		}
 		/* Clears entry "None" */
-		if (osd_key_pressed_memory(OSD_KEY_N))
+		if (keyboard_key_pressed_memory(KEYCODE_N))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = 0;
@@ -1616,19 +1630,19 @@ static int setdefjoysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1640,10 +1654,10 @@ static int setdefjoysettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1700,7 +1714,7 @@ static int setkeysettings(int selected)
 	{
 		if (i < total - 1)
 		{
-			menu_subitem[i] = osd_key_name(input_port_key(entry[i]));
+			menu_subitem[i] = keyboard_key_name(input_port_key(entry[i]));
 			/* If the key isn't the default, flag it */
 			if (entry[i]->keyboard != IP_KEY_DEFAULT)
 				flag[i] = 1;
@@ -1718,12 +1732,12 @@ static int setkeysettings(int selected)
 
 		menu_subitem[sel & 0xff] = "    ";
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
-		newkey = osd_read_key_immediate();
-		if (newkey != OSD_KEY_NONE)
+		newkey = keyboard_read_key_immediate();
+		if (newkey != KEYCODE_NONE)
 		{
 			sel &= 0xff;
 
-			if (osd_key_invalid(newkey))	/* pseudo key code? */
+			if (keyboard_key_pressed(input_port_type_key(IPT_UI_CANCEL)))
 				newkey = IP_KEY_DEFAULT;
 
 			entry[sel]->keyboard = newkey;
@@ -1738,19 +1752,19 @@ static int setkeysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1762,10 +1776,10 @@ static int setkeysettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1841,7 +1855,7 @@ static int setjoysettings(int selected)
 		displaymenu(menu_item,menu_subitem,flag,sel & 0xff,3);
 
 		/* Check all possible joystick values for switch or button press */
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = IP_JOY_DEFAULT;
@@ -1851,7 +1865,7 @@ static int setjoysettings(int selected)
 		}
 
 		/* Allows for "All buttons" */
-		if (osd_key_pressed_memory(OSD_KEY_A))
+		if (keyboard_key_pressed_memory(KEYCODE_A))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY_FIRE;
@@ -1859,7 +1873,7 @@ static int setjoysettings(int selected)
 			/* tell updatescreen() to clean after us (in case the window changes size) */
 			need_to_clear_bitmap = 1;
 		}
-		if (osd_key_pressed_memory(OSD_KEY_B))
+		if (keyboard_key_pressed_memory(KEYCODE_B))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = OSD_JOY2_FIRE;
@@ -1868,7 +1882,7 @@ static int setjoysettings(int selected)
 			need_to_clear_bitmap = 1;
 		}
 		/* Clears entry "None" */
-		if (osd_key_pressed_memory(OSD_KEY_N))
+		if (keyboard_key_pressed_memory(KEYCODE_N))
 		{
 			sel &= 0xff;
 			entry[sel]->joystick = 0;
@@ -1896,19 +1910,19 @@ static int setjoysettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,flag,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total - 1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total - 1) sel = -1;
 		else
@@ -1920,10 +1934,10 @@ static int setjoysettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -1954,13 +1968,12 @@ static int calibratejoysticks(int selected)
 
 	if (sel > 255) /* Waiting for the user to acknowledge joystick movement */
 	{
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
-				|| osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		{
 			calibration_started = 0;
 			sel = -1;
 		}
-		else if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		else if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 		{
 			osd_joystick_calibrate();
 			sel &= 0xff;
@@ -1986,7 +1999,7 @@ static int calibratejoysticks(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -2090,19 +2103,19 @@ static int settraksettings(int selected)
 
 	displaymenu(menu_item,menu_subitem,0,sel,arrowize);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 	{
 		if (sel < total2 - 1) sel++;
 		else sel = 0;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 	{
 		if (sel > 0) sel--;
 		else sel = total2 - 1;
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
 	{
 		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
@@ -2135,7 +2148,7 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
 	{
 		if ((sel % ENTRIES) == 0)
 		/* keyboard/joystick delta */
@@ -2168,15 +2181,15 @@ static int settraksettings(int selected)
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		if (sel == total2 - 1) sel = -1;
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
-	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 		sel = -2;
 
 	if (sel == -1 || sel == -2)
@@ -2239,13 +2252,13 @@ static int mame_stats(int selected)
 
 		displaymessagewindow(buf);
 
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2277,18 +2290,13 @@ int showcopyright(void)
 	do
 	{
 		osd_update_video_and_audio();
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
-				osd_key_pressed_memory(OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 			return 1;
-		if (osd_key_pressed_memory(OSD_KEY_O) ||
-				osd_key_pressed_memory(OSD_KEY_UI_LEFT) ||
-				osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_LEFT)) ||
-				osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_LEFT)))
+		if (keyboard_key_pressed_memory(KEYCODE_O) ||
+				keyboard_ui_key_pressed(IPT_UI_LEFT))
 			done = 1;
-		if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
-				osd_key_pressed_memory(OSD_KEY_UI_RIGHT) ||
-				osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_RIGHT)) ||
-				osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_RIGHT))))
+		if (done == 1 && (keyboard_key_pressed_memory(KEYCODE_K) ||
+				keyboard_ui_key_pressed(IPT_UI_RIGHT)))
 			done = 2;
 	} while (done < 2);
 
@@ -2400,12 +2408,12 @@ static int displaygameinfo(int selected)
 		strcat(buf,"\n\tMAME ");	/* \t means that the line will be centered */
 		strcat(buf,build_version);
 		strcat(buf,"\n\tPress any key");
-
 		drawbox(0,0,Machine->uiwidth,Machine->uiheight);
 		displaymessagewindow(buf);
 
 		sel = 0;
-		if (osd_key_pressed_memory (OSD_KEY_ANY))
+		if (keyboard_key_pressed_memory(KEYCODE_ANY) ||
+				keyboard_ui_key_pressed(IPT_UI_SELECT))	/* this catches joypress */
 			sel = -1;
 	}
 	else
@@ -2415,13 +2423,13 @@ static int displaygameinfo(int selected)
 
 		displaymessagewindow(buf);
 
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2502,18 +2510,13 @@ int showgamewarnings(void)
 		do
 		{
 			osd_update_video_and_audio();
-			if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
-					osd_key_pressed_memory(OSD_KEY_CANCEL))
+			if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 				return 1;
-			if (osd_key_pressed_memory(OSD_KEY_O) ||
-					osd_key_pressed_memory(OSD_KEY_UI_LEFT) ||
-					osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_LEFT)) ||
-					osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_LEFT)))
+			if (keyboard_key_pressed_memory(KEYCODE_O) ||
+					keyboard_ui_key_pressed(IPT_UI_LEFT))
 				done = 1;
-			if (done == 1 && (osd_key_pressed_memory(OSD_KEY_K) ||
-					osd_key_pressed_memory(OSD_KEY_UI_RIGHT) ||
-					osd_key_pressed_memory(input_port_type_key(IPT_JOYSTICK_RIGHT)) ||
-					osd_joy_pressed(input_port_type_joy(IPT_JOYSTICK_RIGHT))))
+			if (done == 1 && (keyboard_key_pressed_memory(KEYCODE_K) ||
+					keyboard_ui_key_pressed(IPT_UI_RIGHT)))
 				done = 2;
 		} while (done < 2);
 	}
@@ -2739,25 +2742,25 @@ static int displayhistory (int selected)
 		else
 			displaymessagewindow (msg);
 
-		if ((scroll > 0) && osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,4))
+		if ((scroll > 0) && keyboard_ui_key_pressed_repeat(IPT_UI_UP,4))
 		{
 			if (scroll == 2) scroll = 0;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll--;
 		}
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,4))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,4))
 		{
 			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll++;
 		}
 
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 	}
 
@@ -2823,26 +2826,26 @@ int	memcard_menu(int selection)
 			msg = "\nDAMN!! Internal Error!\n\n";
 		}
 		displaymessagewindow(msg);
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 			mcd_action = 0;
 	}
 	else
 	{
 		displaymenu(menuitem,0,0,sel,0);
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
 			mcd_number = (mcd_number + 1) % 1000;
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
 			mcd_number = (mcd_number + 999) % 1000;
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 			sel = (sel + 1) % menutotal;
 
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 			sel = (sel + menutotal - 1) % menutotal;
 
-		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 		{
 			switch(sel)
 			{
@@ -2878,10 +2881,10 @@ int	memcard_menu(int selection)
 			}
 		}
 
-		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+		if (keyboard_ui_key_pressed(IPT_UI_CANCEL))
 			sel = -1;
 
-		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		if (keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 			sel = -2;
 
 		if (sel == -1 || sel == -2)
@@ -2911,11 +2914,11 @@ static void setup_menu_init(void)
 {
 	menu_total = 0;
 
-	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
+	menu_item[menu_total] = "Keys (general)"; menu_action[menu_total++] = UI_DEFKEY;
+	menu_item[menu_total] = "Joystick (general)"; menu_action[menu_total++] = UI_DEFJOY;
 	menu_item[menu_total] = "Keys (this game)"; menu_action[menu_total++] = UI_KEY;
 	menu_item[menu_total] = "Joystick (this game)"; menu_action[menu_total++] = UI_JOY;
-	menu_item[menu_total] = "Keys (defaults)"; menu_action[menu_total++] = UI_DEFKEY;
-	menu_item[menu_total] = "Joystick (defaults)"; menu_action[menu_total++] = UI_DEFJOY;
+	menu_item[menu_total] = "Dip Switches"; menu_action[menu_total++] = UI_SWITCH;
 
 	/* Determine if there are any analog controls */
 	{
@@ -3097,7 +3100,7 @@ static int setup_menu(int selected)
 
 			case UI_CHEAT:
 osd_sound_enable(0);
-while (osd_key_pressed(OSD_KEY_UI_SELECT))
+while (keyboard_key_pressed(input_port_type_key(IPT_UI_SELECT)))
 	osd_update_video_and_audio();     /* give time to the sound hardware to apply the volume change */
 				cheat_menu();
 osd_sound_enable(1);
@@ -3126,13 +3129,13 @@ sel = sel & 0xff;
 
 	displaymenu(menu_item,0,0,sel,0);
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % menu_total;
 
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 		sel = (sel + menu_total - 1) % menu_total;
 
-	if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+	if (keyboard_ui_key_pressed(IPT_UI_SELECT))
 	{
 		switch (menu_action[sel])
 		{
@@ -3164,9 +3167,8 @@ sel = sel & 0xff;
 		}
 	}
 
-	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
-			osd_key_pressed_memory(OSD_KEY_CANCEL) ||
-			osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (keyboard_ui_key_pressed(IPT_UI_CANCEL) ||
+			keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 	{
 		menu_lastselected = sel;
 		sel = -1;
@@ -3248,11 +3250,11 @@ static void onscrd_mixervol(int increment,int arg)
 	int proportional = 0;
 
 
-	if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
+	if (keyboard_key_pressed(KEYCODE_LSHIFT) || keyboard_key_pressed(KEYCODE_RSHIFT))
 		doallchannels = 1;
-	if (!osd_key_pressed(OSD_KEY_LCONTROL) && !osd_key_pressed(OSD_KEY_RCONTROL))
+	if (!keyboard_key_pressed(KEYCODE_LCONTROL) && !keyboard_key_pressed(KEYCODE_RCONTROL))
 		increment *= 5;
-	if (osd_key_pressed(OSD_KEY_ALT) || osd_key_pressed(OSD_KEY_ALTGR))
+	if (keyboard_key_pressed(KEYCODE_LALT) || keyboard_key_pressed(KEYCODE_RALT))
 		proportional = 1;
 
 	if (increment)
@@ -3430,20 +3432,20 @@ static int on_screen_display(int selected)
 	else sel = selected - 1;
 
 	increment = 0;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
         increment = -1;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
         increment = 1;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 		sel = (sel + 1) % onscrd_total_items;
-	if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+	if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
 
 	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);
 
 	lastselected = sel;
 
-	if (osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+	if (keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 	{
 		sel = -1;
 
@@ -3505,20 +3507,18 @@ int handle_user_interface(void)
 
 
 	/* if the user pressed F12, save the screen to a file */
-	if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
+	if (keyboard_ui_key_pressed(IPT_UI_SNAPSHOT))
 		osd_save_snapshot();
 
 	/* This call is for the cheat, it must be called at least each frames */
 	if (options.cheat) DoCheat();
 
-	if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
-
 	/* if the user pressed ESC, stop the emulation */
 	/* but don't quit if the setup menu is on screen */
-	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CANCEL))
+	if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CANCEL))
 		return 1;
 
-	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 	{
 		setup_selected = -1;
 		if (osd_selected != 0)
@@ -3530,7 +3530,7 @@ int handle_user_interface(void)
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
 
-	if (osd_selected == 0 && osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+	if (!mame_debug && osd_selected == 0 && keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 	{
 		osd_selected = -1;
 		if (setup_selected != 0)
@@ -3544,7 +3544,7 @@ int handle_user_interface(void)
 
 
 #if 0
-	if (osd_key_pressed_memory(OSD_KEY_BACKSPACE))
+	if (keyboard_key_pressed_memory(KEYCODE_BACKSPACE))
 	{
 		if (jukebox_selected != -1)
 		{
@@ -3562,25 +3562,25 @@ int handle_user_interface(void)
 	{
 		char buf[40];
 		watchdog_reset_w(0,0);
-		if (osd_key_pressed_memory(OSD_KEY_LCONTROL))
+		if (keyboard_key_pressed_memory(KEYCODE_LCONTROL))
 		{
 #include "cpu/z80/z80.h"
 			soundlatch_w(0,jukebox_selected);
 			cpu_cause_interrupt(1,Z80_NMI_INT);
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_RIGHT,8))
 		{
 			jukebox_selected = (jukebox_selected + 1) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_LEFT,8))
 		{
 			jukebox_selected = (jukebox_selected - 1) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_UP,8))
 		{
 			jukebox_selected = (jukebox_selected + 16) & 0xff;
 		}
-		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+		if (keyboard_ui_key_pressed_repeat(IPT_UI_DOWN,8))
 		{
 			jukebox_selected = (jukebox_selected - 16) & 0xff;
 		}
@@ -3591,12 +3591,11 @@ int handle_user_interface(void)
 
 
 	/* if the user pressed F3, reset the emulation */
-	if (osd_key_pressed_memory(OSD_KEY_RESET_MACHINE))
+	if (keyboard_ui_key_pressed(IPT_UI_RESET_MACHINE))
 		machine_reset();
 
 
-	if (osd_key_pressed_memory(input_port_type_key(IPT_UI_PAUSE)) /* pause the game */
-			|| osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
+	if (keyboard_ui_key_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
@@ -3604,11 +3603,7 @@ int handle_user_interface(void)
 		osd_sound_enable(0);
 		osd_pause(1);
 
-		/* we don't have joy_pressed_memory() so wait for the button to be released */
-		if (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
-			while  (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE))) ;
-
-		while (osd_key_pressed_memory(input_port_type_key(IPT_UI_PAUSE)) == 0)
+		while (!keyboard_ui_key_pressed(IPT_UI_PAUSE))
 		{
 #ifdef MAME_NET
 			osd_net_sync();
@@ -3629,12 +3624,10 @@ bitmap_dirty = 0;
 #endif
 			osd_profiler(OSD_PROFILE_END);
 
-			if (osd_key_pressed_memory (OSD_KEY_FAST_EXIT)) return 1;
-
-			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CANCEL))
+			if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CANCEL))
 				return 1;
 
-			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			if (setup_selected == 0 && keyboard_ui_key_pressed(IPT_UI_CONFIGURE))
 			{
 				setup_selected = -1;
 				if (osd_selected != 0)
@@ -3646,7 +3639,7 @@ bitmap_dirty = 0;
 			}
 			if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
 
-			if (osd_selected == 0 && osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+			if (!mame_debug && osd_selected == 0 && keyboard_ui_key_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 			{
 				osd_selected = -1;
 				if (setup_selected != 0)
@@ -3663,10 +3656,6 @@ bitmap_dirty = 0;
 
 			osd_update_video_and_audio();
 		}
-
-		/* we don't have joy_pressed_memory() so wait for the button to be released */
-		if (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
-			while  (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE))) ;
 
 		osd_pause(0);
 		osd_sound_enable(1);
@@ -3685,12 +3674,15 @@ bitmap_dirty = 0;
 
 
 #ifdef MAME_DEBUG
-	if (osd_key_pressed_memory(OSD_KEY_SHOW_TOTAL_COLORS))
+	if (keyboard_key_pressed(KEYCODE_LCONTROL) || keyboard_key_pressed(KEYCODE_RCONTROL))
 	{
-		show_total_colors ^= 1;
-		if (show_total_colors == 0)
-			/* tell updatescreen() to clean after us */
-			need_to_clear_bitmap = 1;
+		if (keyboard_ui_key_pressed(IPT_UI_SHOW_FPS))
+		{
+			show_total_colors ^= 1;
+			if (show_total_colors == 0)
+				/* tell updatescreen() to clean after us */
+				need_to_clear_bitmap = 1;
+		}
 	}
 
 	if (show_total_colors)
@@ -3701,7 +3693,7 @@ bitmap_dirty = 0;
 
 
 	/* if the user pressed F4, show the character set */
-	if (osd_key_pressed_memory(OSD_KEY_SHOW_GFX))
+	if (keyboard_ui_key_pressed(IPT_UI_SHOW_GFX))
 	{
 		osd_sound_enable(0);
 

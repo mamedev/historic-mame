@@ -1,13 +1,11 @@
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 
 
-void my_textout (char *buf, int x, int y);
-
 int use_mouse;
 int joystick;
+int use_hotrod;
+
 
 void msdos_init_input (void)
 {
@@ -70,149 +68,165 @@ void msdos_shutdown_input(void)
 }
 
 
-
-/* translate a pseudo key code to to a key code */
-static int pseudo_to_key_code(int keycode)
+struct KeyboardKey keylist[] =
 {
-    switch (keycode)
-    {
-		case OSD_KEY_CANCEL:
-			return OSD_KEY_ESC;
+	{ "A",			KEY_A,				KEYCODE_A },
+	{ "B",			KEY_B,				KEYCODE_B },
+	{ "C",			KEY_C,				KEYCODE_C },
+	{ "D",			KEY_D,				KEYCODE_D },
+	{ "E",			KEY_E,				KEYCODE_E },
+	{ "F",			KEY_F,				KEYCODE_F },
+	{ "G",			KEY_G,				KEYCODE_G },
+	{ "H",			KEY_H,				KEYCODE_H },
+	{ "I",			KEY_I,				KEYCODE_I },
+	{ "J",			KEY_J,				KEYCODE_J },
+	{ "K",			KEY_K,				KEYCODE_K },
+	{ "L",			KEY_L,				KEYCODE_L },
+	{ "M",			KEY_M,				KEYCODE_M },
+	{ "N",			KEY_N,				KEYCODE_N },
+	{ "O",			KEY_O,				KEYCODE_O },
+	{ "P",			KEY_P,				KEYCODE_P },
+	{ "Q",			KEY_Q,				KEYCODE_Q },
+	{ "R",			KEY_R,				KEYCODE_R },
+	{ "S",			KEY_S,				KEYCODE_S },
+	{ "T",			KEY_T,				KEYCODE_T },
+	{ "U",			KEY_U,				KEYCODE_U },
+	{ "V",			KEY_V,				KEYCODE_V },
+	{ "W",			KEY_W,				KEYCODE_W },
+	{ "X",			KEY_X,				KEYCODE_X },
+	{ "Y",			KEY_Y,				KEYCODE_Y },
+	{ "Z",			KEY_Z,				KEYCODE_Z },
+	{ "0",			KEY_0,				KEYCODE_0 },
+	{ "1",			KEY_1,				KEYCODE_1 },
+	{ "2",			KEY_2,				KEYCODE_2 },
+	{ "3",			KEY_3,				KEYCODE_3 },
+	{ "4",			KEY_4,				KEYCODE_4 },
+	{ "5",			KEY_5,				KEYCODE_5 },
+	{ "6",			KEY_6,				KEYCODE_6 },
+	{ "7",			KEY_7,				KEYCODE_7 },
+	{ "8",			KEY_8,				KEYCODE_8 },
+	{ "9",			KEY_9,				KEYCODE_9 },
+	{ "0 PAD",		KEY_0_PAD,			KEYCODE_0_PAD },
+	{ "1 PAD",		KEY_1_PAD,			KEYCODE_1_PAD },
+	{ "2 PAD",		KEY_2_PAD,			KEYCODE_2_PAD },
+	{ "3 PAD",		KEY_3_PAD,			KEYCODE_3_PAD },
+	{ "4 PAD",		KEY_4_PAD,			KEYCODE_4_PAD },
+	{ "5 PAD",		KEY_5_PAD,			KEYCODE_5_PAD },
+	{ "6 PAD",		KEY_6_PAD,			KEYCODE_6_PAD },
+	{ "7 PAD",		KEY_7_PAD,			KEYCODE_7_PAD },
+	{ "8 PAD",		KEY_8_PAD,			KEYCODE_8_PAD },
+	{ "9 PAD",		KEY_9_PAD,			KEYCODE_9_PAD },
+	{ "F1",			KEY_F1,				KEYCODE_F1 },
+	{ "F2",			KEY_F2,				KEYCODE_F2 },
+	{ "F3",			KEY_F3,				KEYCODE_F3 },
+	{ "F4",			KEY_F4,				KEYCODE_F4 },
+	{ "F5",			KEY_F5,				KEYCODE_F5 },
+	{ "F6",			KEY_F6,				KEYCODE_F6 },
+	{ "F7",			KEY_F7,				KEYCODE_F7 },
+	{ "F8",			KEY_F8,				KEYCODE_F8 },
+	{ "F9",			KEY_F9,				KEYCODE_F9 },
+	{ "F10",		KEY_F10,			KEYCODE_F10 },
+	{ "F11",		KEY_F11,			KEYCODE_F11 },
+	{ "F12",		KEY_F12,			KEYCODE_F12 },
+	{ "ESC",		KEY_ESC,			KEYCODE_ESC },
+	{ "~",			KEY_TILDE,			KEYCODE_TILDE },
+	{ "-",			KEY_MINUS,			KEYCODE_OTHER },
+	{ "=",			KEY_EQUALS,			KEYCODE_OTHER },
+	{ "BKSPACE",	KEY_BACKSPACE,		KEYCODE_BACKSPACE },
+	{ "TAB",		KEY_TAB,			KEYCODE_TAB },
+	{ "[",			KEY_OPENBRACE,		KEYCODE_OTHER },
+	{ "]",			KEY_CLOSEBRACE,		KEYCODE_OTHER },
+	{ "ENTER",		KEY_ENTER,			KEYCODE_ENTER },
+	{ ";",			KEY_COLON,			KEYCODE_OTHER },
+	{ ":",			KEY_QUOTE,			KEYCODE_OTHER },
+	{ "\\",			KEY_BACKSLASH,		KEYCODE_OTHER },
+	{ "<",			KEY_BACKSLASH2,		KEYCODE_OTHER },
+	{ ",",			KEY_COMMA,			KEYCODE_OTHER },
+	{ ".",			KEY_STOP,			KEYCODE_OTHER },
+	{ "/",			KEY_SLASH,			KEYCODE_OTHER },
+	{ "SPACE",		KEY_SPACE,			KEYCODE_SPACE },
+	{ "INS",		KEY_INSERT,			KEYCODE_INSERT },
+	{ "DEL",		KEY_DEL,			KEYCODE_DEL },
+	{ "HOME",		KEY_HOME,			KEYCODE_HOME },
+	{ "END",		KEY_END,			KEYCODE_END },
+	{ "PGUP",		KEY_PGUP,			KEYCODE_PGUP },
+	{ "PGDN",		KEY_PGDN,			KEYCODE_PGDN },
+	{ "LEFT",		KEY_LEFT,			KEYCODE_LEFT },
+	{ "RIGHT",		KEY_RIGHT,			KEYCODE_RIGHT },
+	{ "UP",			KEY_UP,				KEYCODE_UP },
+	{ "DOWN",		KEY_DOWN,			KEYCODE_DOWN },
+	{ "/ PAD",		KEY_SLASH_PAD,		KEYCODE_OTHER },
+	{ "* PAD",		KEY_ASTERISK,		KEYCODE_OTHER },
+	{ "- PAD",		KEY_MINUS_PAD,		KEYCODE_OTHER },
+	{ "+ PAD",		KEY_PLUS_PAD,		KEYCODE_OTHER },
+	{ ". PAD",		KEY_DEL_PAD,		KEYCODE_OTHER },
+	{ "ENTER PAD",	KEY_ENTER_PAD,		KEYCODE_OTHER },
+	{ "PRTSCR",		KEY_PRTSCR,			KEYCODE_OTHER },
+	{ "PAUSE",		KEY_PAUSE,			KEYCODE_OTHER },
+	{ "LSHIFT",		KEY_LSHIFT,			KEYCODE_LSHIFT },
+	{ "RSHIFT",		KEY_RSHIFT,			KEYCODE_RSHIFT },
+	{ "LCTRL",		KEY_LCONTROL,		KEYCODE_LCONTROL },
+	{ "RCTRL",		KEY_RCONTROL,		KEYCODE_RCONTROL },
+	{ "ALT",		KEY_ALT,			KEYCODE_LALT },
+	{ "ALTGR",		KEY_ALTGR,			KEYCODE_RALT },
+	{ "LWIN",		KEY_LWIN,			KEYCODE_OTHER },
+	{ "RWIN",		KEY_RWIN,			KEYCODE_OTHER },
+	{ "MENU",		KEY_MENU,			KEYCODE_OTHER },
+	{ "SCRLOCK",	KEY_SCRLOCK,		KEYCODE_OTHER },
+	{ "NUMLOCK",	KEY_NUMLOCK,		KEYCODE_OTHER },
+	{ "CAPSLOCK",	KEY_CAPSLOCK,		KEYCODE_OTHER },
+	{ 0, 0, 0 }	/* end of table */
+};
 
-		case OSD_KEY_RESET_MACHINE:
-			return OSD_KEY_F3;
-
-		case OSD_KEY_SHOW_GFX:
-			return OSD_KEY_F4;
-
-		case OSD_KEY_CHEAT_TOGGLE:
-			return OSD_KEY_F5;
-
-		case OSD_KEY_FRAMESKIP_INC:
-			return OSD_KEY_F9;
-
-		case OSD_KEY_FRAMESKIP_DEC:
-			return OSD_KEY_F8;
-
-		case OSD_KEY_THROTTLE:
-			return OSD_KEY_F10;
-
-		case OSD_KEY_SHOW_FPS:
-			if (!key[KEY_LSHIFT] && !key[KEY_RSHIFT]
-					&& !key[KEY_LCONTROL] && !key[KEY_RCONTROL])
-				return OSD_KEY_F11;
-			else return OSD_KEY_NONE;
-
-		case OSD_KEY_SHOW_PROFILE:
-			if (key[KEY_LSHIFT] || key[KEY_RSHIFT])
-				return OSD_KEY_F11;
-			else return OSD_KEY_NONE;
-
-		case OSD_KEY_SHOW_TOTAL_COLORS:
-			if (key[KEY_LCONTROL] || key[KEY_RCONTROL])
-				return OSD_KEY_F11;
-			else return OSD_KEY_NONE;
-
-		case OSD_KEY_CONFIGURE:
-			return OSD_KEY_TAB;
-
-		case OSD_KEY_ON_SCREEN_DISPLAY:
-		{
-			extern int mame_debug;
-			if (!mame_debug)
-				return OSD_KEY_TILDE;
-			else return OSD_KEY_NONE;
-		}
-
-		case OSD_KEY_DEBUGGER:
-		{
-			extern int mame_debug;
-			if (mame_debug)
-				return OSD_KEY_TILDE;
-			else return OSD_KEY_NONE;
-		}
-
-		case OSD_KEY_SNAPSHOT:
-			return OSD_KEY_F12;
-
-		case OSD_KEY_UI_SELECT:
-			return OSD_KEY_ENTER;
-			break;
-
-		case OSD_KEY_UI_LEFT:
-			return OSD_KEY_LEFT;
-			break;
-
-		case OSD_KEY_UI_RIGHT:
-			return OSD_KEY_RIGHT;
-			break;
-
-		case OSD_KEY_UI_UP:
-			return OSD_KEY_UP;
-			break;
-
-		case OSD_KEY_UI_DOWN:
-			return OSD_KEY_DOWN;
-			break;
-	}
-
-    return keycode;
+/* return a list of all available keys */
+const struct KeyboardKey *osd_get_key_list(void)
+{
+	return keylist;
 }
 
-
-int osd_key_invalid(int keycode)
+void osd_customize_inputport_defaults(struct ipd *defaults)
 {
-    switch (keycode)
-    {
-        case OSD_KEY_ESC:
-        case OSD_KEY_F3:
-        case OSD_KEY_F4:
-		case OSD_KEY_F5:
-        case OSD_KEY_F9:
-        case OSD_KEY_F10:
-        case OSD_KEY_F11:
-        case OSD_KEY_TAB:
-        case OSD_KEY_TILDE:
-			return 1;
+	if (use_hotrod)
+	{
+		while (defaults->type != IPT_END)
+		{
+			if (defaults->keyboard == KEYCODE_UP) defaults->keyboard = KEY_8_PAD;
+			if (defaults->keyboard == KEYCODE_DOWN) defaults->keyboard = KEY_2_PAD;
+			if (defaults->keyboard == KEYCODE_LEFT) defaults->keyboard = KEY_4_PAD;
+			if (defaults->keyboard == KEYCODE_RIGHT) defaults->keyboard = KEY_6_PAD;
+			if (defaults->type == IPT_UI_SELECT) defaults->keyboard = KEY_LCONTROL;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) defaults->keyboard = KEY_R;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) defaults->keyboard = KEY_F;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) defaults->keyboard = KEY_D;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) defaults->keyboard = KEY_G;
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) defaults->keyboard = KEY_8_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) defaults->keyboard = KEY_2_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) defaults->keyboard = KEY_4_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) defaults->keyboard = KEY_6_PAD;
 
-		default:
-			return 0;
+			defaults++;
+		}
 	}
 }
 
-
-
-/*
- * Check if a key is pressed. The keycode is the standard PC keyboard
- * code, as defined in osdepend.h. Return 0 if the key is not pressed,
- * nonzero otherwise. Handle pseudo keycodes.
- */
-int osd_key_pressed(int keycode)
+int osd_is_key_pressed(int keycode)
 {
-	if (keycode == OSD_KEY_ANY)
-		return osd_read_key_immediate();
+	if (keycode >= KEY_MAX) return 0;
 
-	keycode = pseudo_to_key_code(keycode);
-
-	if (keycode > OSD_MAX_KEY) return 0;
-
-	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
-	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
-	if (keycode == OSD_KEY_PAUSE)
+	if (keycode == KEY_PAUSE)
 	{
 		static int pressed,counter;
 		int res;
 
-		keycode = KEY_PAUSE;
-		res = key[keycode] ^ pressed;
+		res = key[KEY_PAUSE] ^ pressed;
 		if (res)
 		{
 			if (counter > 0)
 			{
 				if (--counter == 0)
-					pressed = key[keycode];
+					pressed = key[KEY_PAUSE];
 			}
-			else counter = 4;
+			else counter = 10;
 		}
 
 		return res;
@@ -222,157 +236,12 @@ int osd_key_pressed(int keycode)
 }
 
 
-
-static char memory[256];
-
-/* Report a key as pressed only when the user hits it, not while it is */
-/* being kept pressed. */
-int osd_key_pressed_memory(int keycode)
+void osd_wait_keypress(void)
 {
-	int res = 0;
-
-	keycode = pseudo_to_key_code(keycode);
-
-	if (osd_key_pressed(keycode))
-	{
-		if (keycode == OSD_KEY_ANY) return 1;
-
-		if (memory[keycode] == 0) res = 1;
-		memory[keycode] = 1;
-	}
-	else
-		memory[keycode] = 0;
-
-	return res;
-}
-
-/* report key as pulsing while it is pressed */
-int osd_key_pressed_memory_repeat(int keycode,int speed)
-{
-	static int counter,keydelay;
-	int res = 0;
-
-	keycode = pseudo_to_key_code(keycode);
-
-	if (osd_key_pressed(keycode))
-	{
-		if (memory[keycode] == 0)
-		{
-			keydelay = 3;
-			counter = 0;
-			res = 1;
-		}
-		else if (++counter > keydelay * speed * Machine->drv->frames_per_second / 60)
-		{
-			keydelay = 1;
-			counter = 0;
-			res = 1;
-		}
-		memory[keycode] = 1;
-	}
-	else
-		memory[keycode] = 0;
-
-	return res;
+	readkey();
 }
 
 
-/* If the user presses a key return it, otherwise return OSD_KEY_NONE. */
-/* DO NOT wait for the user to press a key */
-int osd_read_key_immediate(void)
-{
-	int res;
-
-
-	/* first of all, record keys which are NOT pressed */
-	for (res = OSD_MAX_KEY;res > OSD_KEY_NONE;res--)
-	{
-		if (!osd_key_pressed(res))
-		{
-			memory[res] = 0;
-		}
-	}
-
-	for (res = OSD_MAX_KEY;res > OSD_KEY_NONE;res--)
-	{
-		if (osd_key_pressed(res))
-		{
-			if (memory[res] == 0)
-			{
-				memory[res] = 1;
-			}
-			else res = OSD_KEY_NONE;
-			break;
-		}
-	}
-
-	return res;
-}
-
-
-
-/* Wait for a key press and return keycode.  Support repeat */
-int osd_read_keyrepeat(void)
-{
-	int res;
-
-	clear_keybuf();
-	res = readkey() >> 8;
-
-	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
-	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
-
-	return res;
-}
-
-int osd_debug_readkey(void)
-{
-	int i,res;
-
-	clear_keybuf();
-	res = readkey() >> 8;
-
-	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
-	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
-
-	/* avoid problems when exiting the debugger (e.g. F4) */
-	for (i = OSD_MAX_KEY;i > OSD_KEY_NONE;i--)
-	{
-		if (osd_key_pressed(i))
-			memory[i] = 1;
-		else
-			memory[i] = 0;
-	}
-
-	return res;
-}
-
-
-/* return the name of a key */
-const char *osd_key_name(int keycode)
-{
-	static char *keynames[] =
-	{
-		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BKSPACE",
-		"TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "OPBRACE", "CLBRACE", "ENTER",
-		"LCTRL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE", "TILDE",
-		"LSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M", "COMMA", ".", "SLASH", "RSHIFT",
-		"*", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
-		"NUMLOCK", "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD",
-		"LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
-		"PGDN", "INS", "DEL", "PRTSCR", "Error", "Error",
-		"F11", "F12", "Error", "Error",
-		"LWIN", "RWIN", "MENU", "RCTRL", "ALTGR", "PAUSE",
-		"Error", "Error", "Error", "Error",
-		"1 PAD", "2 PAD", "3 PAD", "4 PAD", "Error",
-		"6 PAD", "7 PAD", "8 PAD", "9 PAD", "0 PAD",
-		". PAD", "= PAD", "/ PAD", "* PAD", "ENTER PAD",
-    };
-	static char *nonedefined = "None";
-
-	if (keycode && keycode <= OSD_MAX_KEY) return keynames[keycode-1];
-	else return (char *)nonedefined;
-}
 
 
 /* return the name of a joystick button */

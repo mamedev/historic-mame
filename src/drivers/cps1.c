@@ -14,7 +14,6 @@ TODO:
 - 3rd player controls in wof, dino
 - 3rd & 4th player controls, 3rd & 4th coin input, lockout & counter in
   slammast, mbomber
-- input ports for sfzch, I just copied the sf2 ones which are wrong
 
 ***************************************************************************/
 
@@ -395,7 +394,7 @@ INPUT_PORTS_START( forgottn_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
@@ -532,7 +531,7 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -640,7 +639,7 @@ INPUT_PORTS_START( strider_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -769,7 +768,7 @@ INPUT_PORTS_START( dwj_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -878,7 +877,7 @@ INPUT_PORTS_START( willow_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -988,7 +987,7 @@ INPUT_PORTS_START( unsquad_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1095,7 +1094,7 @@ INPUT_PORTS_START( ffight_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1203,7 +1202,7 @@ INPUT_PORTS_START( c1941_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1313,7 +1312,7 @@ INPUT_PORTS_START( mercs_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1432,7 +1431,7 @@ INPUT_PORTS_START( mtwins_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1541,7 +1540,7 @@ INPUT_PORTS_START( msword_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1650,7 +1649,7 @@ INPUT_PORTS_START( cawing_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1758,7 +1757,7 @@ INPUT_PORTS_START( nemo_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1867,7 +1866,7 @@ INPUT_PORTS_START( sf2_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1981,7 +1980,7 @@ INPUT_PORTS_START( c3wonders_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2090,7 +2089,7 @@ INPUT_PORTS_START( kod_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2207,7 +2206,7 @@ INPUT_PORTS_START( captcomm_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2314,7 +2313,7 @@ INPUT_PORTS_START( knights_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2432,7 +2431,7 @@ INPUT_PORTS_START( varth_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2528,7 +2527,7 @@ INPUT_PORTS_START( cworld2j_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2561,7 +2560,7 @@ INPUT_PORTS_START( wof_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -2605,7 +2604,7 @@ INPUT_PORTS_START( dino_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -2649,7 +2648,7 @@ INPUT_PORTS_START( punisher_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -2693,7 +2692,7 @@ INPUT_PORTS_START( slammast_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -2737,7 +2736,7 @@ INPUT_PORTS_START( mbombrd_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -2855,7 +2854,7 @@ INPUT_PORTS_START( pnickj_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2958,7 +2957,7 @@ INPUT_PORTS_START( qad_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -3068,7 +3067,7 @@ INPUT_PORTS_START( qadj_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -3178,7 +3177,7 @@ INPUT_PORTS_START( qtono2_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -3211,7 +3210,7 @@ INPUT_PORTS_START( pang3_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA (not used, EEPROM) */
@@ -3334,7 +3333,7 @@ INPUT_PORTS_START( megaman_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -3363,7 +3362,7 @@ INPUT_PORTS_START( sfzch_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE )	/* pause */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Pause", KEYCODE_F1, IP_JOY_NONE )	/* pause */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE  )	/* pause */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -4037,7 +4036,7 @@ ROM_START( ffightu_rom )
 	/* Note: the gfx ROMs were missing from this set. I used the ones from */
 	/* the World version, assuming the if the scantily clad woman shouldn't */
 	/* be seen in Europe, it shouldn't be seen in the USA as well. */
-	ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ff01-01m.bin", 0x000000, 0x80000, 0x0b605e44 )
 	ROM_LOAD( "ff05-05m.bin", 0x080000, 0x80000, 0x9c284108 )
 	ROM_LOAD( "ff03-03m.bin", 0x100000, 0x80000, 0x52291cd2 )
@@ -4118,7 +4117,7 @@ ROM_START( c1941j_rom )
 	ROM_LOAD_ODD ( "4143.bin",     0x40000, 0x20000, 0x440fc0b5 )
 	ROM_LOAD_WIDE_SWAP( "41_32.rom",    0x80000, 0x80000, 0x4e9648ca )
 
-	ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "41_gfx1.rom",  0x000000, 0x80000, 0xff77985a )
 	ROM_LOAD( "41_gfx5.rom",  0x080000, 0x80000, 0x01d1cb11 )
 	ROM_LOAD( "41_gfx3.rom",  0x100000, 0x80000, 0x983be58f )
@@ -4172,7 +4171,7 @@ ROM_START( mercsu_rom )
 	ROM_LOAD_ODD ( "so2_36e.rom",  0x40000, 0x20000, 0x9cfba8b4 )
 	ROM_LOAD_WIDE_SWAP( "so2_32.rom",   0x80000, 0x80000, 0x2eb5cf0c )
 
-	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD         ( "so2_gfx2.rom", 0x000000, 0x80000, 0x597c2875 )
 	ROM_LOAD_GFX_EVEN( "so2_20.rom",   0x080000, 0x20000, 0x8ca751a3 )
 	ROM_LOAD_GFX_ODD ( "so2_10.rom",   0x080000, 0x20000, 0xe9f569fd )
@@ -4257,7 +4256,7 @@ ROM_START( chikij_rom )
 	ROM_LOAD_ODD ( "chj43a.bin",   0x40000, 0x20000, 0x8d387fe8 )
 	ROM_LOAD_WIDE_SWAP( "ch_32.rom",    0x80000, 0x80000, 0x9b70bd41 )
 
-	ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ch_gfx1.rom",  0x000000, 0x80000, 0xf33ca9d4 )
 	ROM_LOAD( "ch_gfx5.rom",  0x080000, 0x80000, 0x4ec75f15 )
 	ROM_LOAD( "ch_gfx3.rom",  0x100000, 0x80000, 0x0ba2047f )
@@ -4375,7 +4374,7 @@ ROM_START( cawingj_rom )
 	ROM_LOAD_EVEN( "caj35.bin",    0xc0000, 0x20000, 0x01d71973 )
 	ROM_LOAD_ODD ( "caj41.bin",    0xc0000, 0x20000, 0x3a43b538 )
 
-	ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x200000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD_GFX_EVEN( "caj24.bin",    0x000000, 0x20000, 0xe356aad7 )
 	ROM_LOAD_GFX_ODD ( "caj17.bin",    0x000000, 0x20000, 0x540f2fd8 )
 	ROM_LOAD_GFX_EVEN( "caj25.bin",    0x040000, 0x20000, 0xcdd0204d )
@@ -4904,7 +4903,7 @@ ROM_START( knightsj_rom )
 	ROM_LOAD_ODD ( "krj38.bin",   0x40000, 0x20000, 0x9198bf8f )
 	ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
 
-	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "kr_gfx2.rom",  0x000000, 0x80000, 0xf095be2d )
 	ROM_LOAD( "kr_gfx6.rom",  0x080000, 0x80000, 0x0200bc3d )
 	ROM_LOAD( "kr_gfx1.rom",  0x100000, 0x80000, 0x9e36c1a4 )
@@ -5039,6 +5038,35 @@ ROM_START( sf2cej_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
+ROM_START( sf2rb_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE( "sf2d__23.rom", 0x000000, 0x80000, 0x450532b0 )
+	ROM_LOAD_WIDE( "sf2d__22.rom", 0x080000, 0x80000, 0xfe9d9cf5 )
+	ROM_LOAD_WIDE( "sf2cej.21",    0x100000, 0x80000, 0xfcb8fe8f )
+
+	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
+	ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d )
+	ROM_LOAD( "sf2.11",       0x100000, 0x80000, 0xd6ec9a0a )
+	ROM_LOAD( "sf2.01",       0x180000, 0x80000, 0x03b0d852 )
+	ROM_LOAD( "sf2.05",       0x200000, 0x80000, 0xba8a2761 )
+	ROM_LOAD( "sf2.10",       0x280000, 0x80000, 0x960687d5 )
+	ROM_LOAD( "sf2.04",       0x300000, 0x80000, 0xe2799472 )
+	ROM_LOAD( "sf2.08",       0x380000, 0x80000, 0xbefc47df )
+	ROM_LOAD( "sf2.13",       0x400000, 0x80000, 0xed2c67f6 )
+	ROM_LOAD( "sf2.03",       0x480000, 0x80000, 0x840289ec )
+	ROM_LOAD( "sf2.07",       0x500000, 0x80000, 0xe584bfb5 )
+	ROM_LOAD( "sf2.12",       0x580000, 0x80000, 0x978ecd18 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2.09",       0x00000, 0x08000, 0x08f6b60e )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "sf2.18",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
 ROM_START( sf2red_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2red.23",    0x000000, 0x80000, 0x40276abb )
@@ -5073,35 +5101,6 @@ ROM_START( sf2accp2_rom )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-23.bin", 0x000000, 0x80000, 0x36c3ba2f )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-22.bin", 0x080000, 0x80000, 0x0550453d )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-21.bin", 0x100000, 0x40000, 0x4c1c43ba )
-
-	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
-	ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d )
-	ROM_LOAD( "sf2.11",       0x100000, 0x80000, 0xd6ec9a0a )
-	ROM_LOAD( "sf2.01",       0x180000, 0x80000, 0x03b0d852 )
-	ROM_LOAD( "sf2.05",       0x200000, 0x80000, 0xba8a2761 )
-	ROM_LOAD( "sf2.10",       0x280000, 0x80000, 0x960687d5 )
-	ROM_LOAD( "sf2.04",       0x300000, 0x80000, 0xe2799472 )
-	ROM_LOAD( "sf2.08",       0x380000, 0x80000, 0xbefc47df )
-	ROM_LOAD( "sf2.13",       0x400000, 0x80000, 0xed2c67f6 )
-	ROM_LOAD( "sf2.03",       0x480000, 0x80000, 0x840289ec )
-	ROM_LOAD( "sf2.07",       0x500000, 0x80000, 0xe584bfb5 )
-	ROM_LOAD( "sf2.12",       0x580000, 0x80000, 0x978ecd18 )
-
-	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "sf2.09",       0x00000, 0x08000, 0x08f6b60e )
-	ROM_CONTINUE(             0x10000, 0x08000 )
-
-	ROM_REGION(0x40000) /* Samples */
-	ROM_LOAD( "sf2.18",       0x00000, 0x20000, 0x7f162009 )
-	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
-ROM_END
-
-ROM_START( sf2rb_rom )
-	ROM_REGION(CODE_SIZE)      /* 68000 code */
-	ROM_LOAD_WIDE( "sf2d__23.rom", 0x000000, 0x80000, 0x450532b0 )
-	ROM_LOAD_WIDE( "sf2d__22.rom", 0x080000, 0x80000, 0xfe9d9cf5 )
-	ROM_LOAD_WIDE( "sf2cej.21",    0x100000, 0x80000, 0xfcb8fe8f )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
@@ -5232,14 +5231,14 @@ ROM_START( wof_rom )
 	ROM_LOAD( "tk2_gfx7.rom",   0x380000, 0x80000, 0x3edeb949 )
 
 	ROM_REGION(0x28000) /* QSound Z80 code */
-	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x08000, 0xc9183a0d )
-	ROM_CONTINUE(                0x10000, 0x18000 )
+	ROM_LOAD( "tk2_qa.rom",     0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
-	ROM_LOAD( "tk2_q2.rom",      0x00000, 0x80000, 0x20f55ca9 )
-	ROM_LOAD( "tk2_q3.rom",      0x00000, 0x80000, 0xbfcf6f52 )
-	ROM_LOAD( "tk2_q4.rom",      0x00000, 0x80000, 0x36642e88 )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",     0x000000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",     0x080000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",     0x100000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
 ROM_END
 
 ROM_START( wofj_rom )
@@ -5257,15 +5256,15 @@ ROM_START( wofj_rom )
 	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
 	ROM_LOAD( "tk206.bin",      0x380000, 0x80000, 0x58066ba8 )
 
-	ROM_REGION(0x20000) /* QSound Z80 code */
-	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x08000, 0xc9183a0d )
-	ROM_CONTINUE(                0x10000, 0x18000 )
+	ROM_REGION(0x28000) /* QSound Z80 code */
+	ROM_LOAD( "tk2_qa.rom",     0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(               0x10000, 0x18000 )
 
-	ROM_REGION(0x80000) /* QSound samples */
-	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
-	ROM_LOAD( "tk2_q2.rom",      0x00000, 0x80000, 0x20f55ca9 )
-	ROM_LOAD( "tk2_q3.rom",      0x00000, 0x80000, 0xbfcf6f52 )
-	ROM_LOAD( "tk2_q4.rom",      0x00000, 0x80000, 0x36642e88 )
+	ROM_REGION(0x200000) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",     0x000000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",     0x080000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",     0x100000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
 ROM_END
 
 ROM_START( sf2t_rom )
@@ -6045,6 +6044,7 @@ GAME_DRIVER      (sf2ce,             "Street Fighter II' - Champion Edition (Wor
 GAME_DRIVER_CLONE(sf2cea,  sf2ce,    "Street Fighter II' - Champion Edition (US rev A)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2ceb,  sf2ce,    "Street Fighter II' - Champion Edition (US rev B)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2cej,  sf2ce,    "Street Fighter II' - Champion Edition (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2rb,   sf2ce,    "Street Fighter II' - Champion Edition (Rainbow)", "1992","hack",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2red,  sf2ce,    "Street Fighter II' - Champion Edition (Red Wave)", "1992","hack",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2accp2,sf2ce,    "Street Fighter II' - Champion Edition (Accelerator Pt.II)", "1992","hack",ORIENTATION_DEFAULT)
 GAME_DRIVER      (varth,             "Varth - Operation Thunderstorm (World)", "1992","Capcom",ORIENTATION_ROTATE_270)
@@ -6087,31 +6087,6 @@ struct GameDriver kodb_driver =
 	0,      /* sound_prom */
 
 	kod_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2rb_driver =
-{
-	__FILE__,
-	&sf2ce_driver,
-	"sf2rb",
-	"Street Fighter II (Rainbow Edition)",
-	"1991",
-	"hack",
-	CPS1_CREDITS,
-	GAME_NOT_WORKING,
-	&sf2_machine_driver,
-	0,
-
-	sf2rb_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
 	0, 0, 0,
 
 	ORIENTATION_DEFAULT,

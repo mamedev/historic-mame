@@ -239,8 +239,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 INPUT_PORTS_START( spiders_input_ports )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", OSD_KEY_4, IP_JOY_NONE )
-    PORT_BITX(0x04, 0x00, IP_ACTIVE_HIGH , "PS3 (Coin Counter)", OSD_KEY_F1, IP_JOY_NONE )
+    PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", KEYCODE_4, IP_JOY_NONE )
+    PORT_BITX(0x04, 0x00, IP_ACTIVE_HIGH , "PS3 (Coin Counter)", KEYCODE_F1, IP_JOY_NONE )
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -314,7 +314,7 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_VBLANK )
 
     PORT_START      /* Connected to PIA1 CB1 input */
-    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", OSD_KEY_F2, IP_JOY_NONE )
+    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", KEYCODE_F2, IP_JOY_NONE )
 
 INPUT_PORTS_END
 

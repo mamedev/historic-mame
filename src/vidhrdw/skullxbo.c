@@ -761,39 +761,39 @@ static int debug(void)
 	int hidebank = 0;
 	int new_show_colors;
 
-	new_show_colors = osd_key_pressed(OSD_KEY_CAPSLOCK);
+	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
 	if (new_show_colors != show_colors)
 	{
 		show_colors = new_show_colors;
 		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 4);
 	}
 
-	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
+	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
+	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
 
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

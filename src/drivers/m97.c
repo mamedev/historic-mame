@@ -17,6 +17,7 @@ games running on this:
 Risky Challenge/Gussun Oyoyo D8000019A1
 Shisensho II                 D8000020A1 023 9320NK700
 Quiz F-1 1,2 Finish          NANAO 08J27291A4 014 9147KK700
+Bomber Man World
 
 */
 
@@ -96,7 +97,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_I86,
+			CPU_V30,
 			32000000/4,	/* ??? */
 			0,
 			readmem,writemem,0,0,
@@ -202,6 +203,24 @@ ROM_START( quizf1_rom )
 	ROM_LOAD( "qf1-v0-.30",        0x0000, 0x40000, 0xb8d16e7c )
 ROM_END
 
+ROM_START( bbmanw_rom )
+	ROM_REGION(0x100000)
+	ROM_LOAD_EVEN( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
+	ROM_LOAD_ODD ( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
+
+	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bbm2_c0.bin",       0x000000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",       0x080000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",       0x100000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",       0x180000, 0x40000, 0x47af1750 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "bbm2sp-b.bin",      0x0000, 0x10000, 0xb8d8108c )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "bbm2_vo.bin",       0x0000, 0x20000, 0x0ae655ff )
+ROM_END
+
 
 
 struct GameDriver riskchal_driver =
@@ -270,6 +289,32 @@ struct GameDriver quizf1_driver =
 	0,
 
 	quizf1_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver bbmanw_driver =
+{
+	__FILE__,
+	0,
+	"bbmanw",
+	"Bomber Man World",
+	"1992",
+	"Irem (licensed from Hudson Soft)",
+	"Nicola Salmoria",
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	bbmanw_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

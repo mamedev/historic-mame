@@ -3,7 +3,7 @@
 Klax Memory Map
 ---------------
 
-KLAX 68010 MEMORY MAP
+KLAX 68000 MEMORY MAP
 
 Program ROM             000000-05FFFF   R    D[15:0]
 Program ROM slapstic    058000-05FFFF   R    D[15:0]   (not used!)
@@ -68,20 +68,17 @@ void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void klax_scanline_update(int scanline);
 
 
-static int v32_state;
-
-
 /*************************************
  *
  *		Interrupt handling
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (vblank || v32_state)
+	if (atarigen_video_int_state || atarigen_scanline_int_state)
 		newstate = 4;
 
 	if (newstate)
@@ -98,17 +95,14 @@ static void scanline_update(int scanline)
 
 	/* generate 32V signals */
 	if (scanline % 64 == 0)
-	{
-		v32_state = 1;
-		atarigen_update_interrupts();
-	}
+		atarigen_scanline_int_gen();
 }
 
 
 static void interrupt_ack_w(int offset, int data)
 {
-	v32_state = 0;
-	atarigen_vblank_ack_w(offset, data);
+	atarigen_scanline_int_ack_w(offset, data);
+	atarigen_video_int_ack_w(offset, data);
 }
 
 
@@ -121,12 +115,9 @@ static void interrupt_ack_w(int offset, int data)
 
 static void init_machine(void)
 {
-	v32_state = 0;
-
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, scanline_update);
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(scanline_update, 8);
 }
 
 
@@ -213,7 +204,7 @@ INPUT_PORTS_START( klax_ports )
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0600, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0800, 0x0800, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0800, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
@@ -290,11 +281,11 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			readmem,writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -415,6 +406,19 @@ ROM_END
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void klax_init(void)
+{
+	atarigen_eeprom_default = NULL;
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -430,7 +434,7 @@ struct GameDriver klax_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&machine_driver,
-	0,
+	klax_init,
 
 	klax_rom,
 	0,
@@ -456,7 +460,7 @@ struct GameDriver klax2_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&machine_driver,
-	0,
+	klax_init,
 
 	klax2_rom,
 	0,
@@ -482,7 +486,7 @@ struct GameDriver klax3_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&machine_driver,
-	0,
+	klax_init,
 
 	klax3_rom,
 	0,
@@ -508,7 +512,7 @@ struct GameDriver klaxj_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&machine_driver,
-	0,
+	klax_init,
 
 	klaxj_rom,
 	0,

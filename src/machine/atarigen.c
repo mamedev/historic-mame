@@ -12,33 +12,199 @@
 #include "cpu/m6502/m6502.h"
 
 
+/*--------------------------------------------------------------------------
+
+	Atari generic interrupt model (required)
+
+		atarigen_scanline_int_state - state of the scanline interrupt line
+		atarigen_sound_int_state - state of the sound interrupt line
+		atarigen_video_int_state - state of the video interrupt line
+
+		atarigen_int_callback - called when the interrupt state changes
+
+		atarigen_interrupt_reset - resets & initializes the interrupt state
+		atarigen_update_interrupts - forces the interrupts to be reevaluted
+
+		atarigen_scanline_int_set - scanline interrupt initialization
+		atarigen_scanline_int_gen - scanline interrupt generator
+		atarigen_scanline_int_ack_w - scanline interrupt acknowledgement
+
+		atarigen_sound_int_gen - sound interrupt generator
+		atarigen_sound_int_ack_w - sound interrupt acknowledgement
+
+		atarigen_video_int_gen - video interrupt generator
+		atarigen_video_int_ack_w - video interrupt acknowledgement
+
+--------------------------------------------------------------------------*/
+
+/* globals */
+int atarigen_scanline_int_state;
+int atarigen_sound_int_state;
+int atarigen_video_int_state;
+
+/* statics */
+static atarigen_int_callback update_int_callback;
+static void *scanline_interrupt_timer;
+
+/* prototypes */
+static void scanline_interrupt_callback(int param);
 
 
-/*************************************
+/*
+ *	Interrupt initialization
  *
- *		Globals we own
+ *	Resets the various interrupt states.
  *
- *************************************/
+ */
 
-unsigned char *atarigen_playfieldram;
-unsigned char *atarigen_playfield2ram;
-unsigned char *atarigen_playfieldram_color;
-unsigned char *atarigen_playfield2ram_color;
-unsigned char *atarigen_spriteram;
-unsigned char *atarigen_alpharam;
-unsigned char *atarigen_vscroll;
-unsigned char *atarigen_hscroll;
+void atarigen_interrupt_reset(atarigen_int_callback update_int)
+{
+	/* set the callback */
+	update_int_callback = update_int;
 
-int atarigen_playfieldram_size;
-int atarigen_playfield2ram_size;
-int atarigen_spriteram_size;
-int atarigen_alpharam_size;
+	/* reset the interrupt states */
+	atarigen_video_int_state = atarigen_sound_int_state = atarigen_scanline_int_state = 0;
+	scanline_interrupt_timer = NULL;
+}
+
+
+/*
+ *	Update interrupts
+ *
+ *	Forces the interrupt callback to be called with the current VBLANK and sound interrupt states.
+ *
+ */
+
+void atarigen_update_interrupts(void)
+{
+	(*update_int_callback)();
+}
+
+
+
+/*
+ *	Scanline interrupt initialization
+ *
+ *	Sets the scanline when the next scanline interrupt should be generated.
+ *
+ */
+
+void atarigen_scanline_int_set(int scanline)
+{
+	if (scanline_interrupt_timer)
+		timer_remove(scanline_interrupt_timer);
+	scanline_interrupt_timer = timer_set(cpu_getscanlinetime(scanline), 0, scanline_interrupt_callback);
+}
+
+
+/*
+ *	Scanline interrupt generator
+ *
+ *	Standard interrupt routine which sets the scanline interrupt state.
+ *
+ */
+
+int atarigen_scanline_int_gen(void)
+{
+	atarigen_scanline_int_state = 1;
+	(*update_int_callback)();
+	return 0;
+}
+
+
+/*
+ *	Scanline interrupt acknowledge write handler
+ *
+ *	Resets the state of the scanline interrupt.
+ *
+ */
+
+void atarigen_scanline_int_ack_w(int offset, int data)
+{
+	atarigen_scanline_int_state = 0;
+	(*update_int_callback)();
+}
+
+
+/*
+ *	Sound interrupt generator
+ *
+ *	Standard interrupt routine which sets the sound interrupt state.
+ *
+ */
+
+int atarigen_sound_int_gen(void)
+{
+	atarigen_sound_int_state = 1;
+	(*update_int_callback)();
+	return 0;
+}
+
+
+/*
+ *	Sound interrupt acknowledge write handler
+ *
+ *	Resets the state of the sound interrupt.
+ *
+ */
+
+void atarigen_sound_int_ack_w(int offset, int data)
+{
+	atarigen_sound_int_state = 0;
+	(*update_int_callback)();
+}
+
+
+/*
+ *	Video interrupt generator
+ *
+ *	Standard interrupt routine which sets the video interrupt state.
+ *
+ */
+
+int atarigen_video_int_gen(void)
+{
+	atarigen_video_int_state = 1;
+	(*update_int_callback)();
+	return 0;
+}
+
+
+/*
+ *	Video interrupt acknowledge write handler
+ *
+ *	Resets the state of the video interrupt.
+ *
+ */
+
+void atarigen_video_int_ack_w(int offset, int data)
+{
+	atarigen_video_int_state = 0;
+	(*update_int_callback)();
+}
+
+
+/*
+ *	Scanline interrupt generator
+ *
+ *	Signals an interrupt.
+ *
+ */
+
+static void scanline_interrupt_callback(int param)
+{
+	/* generate the interrupt */
+	atarigen_scanline_int_gen();
+
+	/* set a new timer to go off at the same scan line next frame */
+	scanline_interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, scanline_interrupt_callback);
+}
 
 
 
 /*--------------------------------------------------------------------------
 
-	EEPROM I/O
+	EEPROM I/O (optional)
 
 		atarigen_eeprom_default - pointer to compressed default data
 		atarigen_eeprom - pointer to base of EEPROM memory
@@ -244,25 +410,46 @@ void decompress_eeprom_byte(const unsigned short *data)
 
 /*--------------------------------------------------------------------------
 
-	Slapstic I/O
+	Slapstic I/O (optional)
 
 		atarigen_slapstic - pointer to base of slapstic memory
 
-		atarigen_slapstic_init - selects which slapstic to emulate
+		atarigen_slapstic_init - select and initialize the slapstic handlers
+		atarigen_slapstic_reset - resets the slapstic state
 
 		atarigen_slapstic_w - write handler for slapstic data
 		atarigen_slapstic_r - read handler for slapstic data
 
+		slapstic_init - low-level init routine
+		slapstic_reset - low-level reset routine
+		slapstic_bank - low-level routine to return the current bank
+		slapstic_tweak - low-level tweak routine
+
 --------------------------------------------------------------------------*/
 
-/* externals */
-void slapstic_init(int chip);
-int slapstic_bank(void);
-int slapstic_tweak(int offset);
-
 /* globals */
-int atarigen_slapstic_num;
-unsigned char *atarigen_slapstic;
+static int atarigen_slapstic_num;
+static unsigned char *atarigen_slapstic;
+
+
+/*
+ *	Slapstic initialization
+ *
+ *	Installs memory handlers for the slapstic and sets the chip number.
+ *
+ */
+
+void atarigen_slapstic_init(int cpunum, int base, int chipnum)
+{
+	atarigen_slapstic_num = chipnum;
+	atarigen_slapstic = NULL;
+	if (chipnum)
+	{
+		slapstic_init(chipnum);
+		atarigen_slapstic = install_mem_read_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_r);
+		atarigen_slapstic = install_mem_write_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_w);
+	}
+}
 
 
 /*
@@ -274,7 +461,8 @@ unsigned char *atarigen_slapstic;
 
 void atarigen_slapstic_reset(void)
 {
-	slapstic_init(atarigen_slapstic_num);
+	if (atarigen_slapstic_num)
+		slapstic_reset();
 }
 
 
@@ -309,22 +497,25 @@ int atarigen_slapstic_r(int offset)
 
 
 
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+
+
+
 /*--------------------------------------------------------------------------
 
-	Atari generic interrupt model
+	Sound I/O
 
-		atarigen_int_callback - called when the interrupt state changes
-		atarigen_scanline_callback - called every 8 scanlines (optional)
-
-		atarigen_interrupt_init - initializes the interrupt state
-		atarigen_update_interrupts - forces the interrupts to be reevaluted
-
-		atarigen_vblank_gen - standard VBLANK interrupt generator
-		atarigen_vblank_ack_w - standard VBLANK interrupt acknowledgement
+		atarigen_sound_io_reset - reset the sound I/O system
 
 		atarigen_6502_irq_gen - standard 6502 IRQ interrupt generator
 		atarigen_6502_irq_ack_r - standard 6502 IRQ interrupt acknowledgement
 		atarigen_6502_irq_ack_w - standard 6502 IRQ interrupt acknowledgement
+
+		atarigen_ym2151_irq_gen - YM2151 sound IRQ generator
 
 		atarigen_sound_w - Main CPU -> sound CPU data write (low byte)
 		atarigen_sound_r - Sound CPU -> main CPU data read (low byte)
@@ -346,94 +537,38 @@ int atarigen_cpu_to_sound_ready;
 int atarigen_sound_to_cpu_ready;
 
 /* statics */
-static atarigen_int_callback int_callback;
-static atarigen_scanline_callback scanline_callback;
-
-static int main_vblank_state;
+static int sound_cpu_num;
 static int atarigen_cpu_to_sound;
 static int atarigen_sound_to_cpu;
-
-static int last_scanline;
+static int timed_int;
+static int ym2151_int;
 
 /* prototypes */
-static void scanline_timer(int scanline);
+static void update_6502_irq(void);
 static void sound_comm_timer(int reps_left);
 static void delayed_sound_reset(int param);
 static void delayed_sound_w(int param);
 static void delayed_6502_sound_w(int param);
 
-/* macros */
-#define update_main_irq_states() (*int_callback)(main_vblank_state, atarigen_sound_to_cpu_ready)
-
 
 /*
- *	Interrupt initialization
+ *	Sound I/O reset
  *
- *	Resets the sound I/O system and the various interrupt states.
+ *	Resets the state of the sound I/O.
  *
  */
 
-void atarigen_interrupt_init(atarigen_int_callback update_int, atarigen_scanline_callback update_graphics)
+void atarigen_sound_io_reset(int cpu_num)
 {
+	/* remember which CPU is the sound CPU */
+	sound_cpu_num = cpu_num;
+
+	/* reset the internal interrupts states */
+	timed_int = ym2151_int = 0;
+
 	/* reset the sound I/O states */
 	atarigen_cpu_to_sound = atarigen_sound_to_cpu = 0;
 	atarigen_cpu_to_sound_ready = atarigen_sound_to_cpu_ready = 0;
-
-	/* reset the interrupts */
-	main_vblank_state = 0;
-	int_callback = update_int;
-	scanline_callback = update_graphics;
-
-	/* compute the last scanline */
-	last_scanline = (int)(TIME_IN_HZ(Machine->drv->frames_per_second) / cpu_getscanlineperiod());
-}
-
-
-/*
- *	Update interrupts
- *
- *	Forces the interrupt callback to be called with the current VBLANK and sound interrupt states.
- *
- */
-
-void atarigen_update_interrupts(void)
-{
-	update_main_irq_states();
-}
-
-
-/*
- *	VBLANK generator
- *
- *	Standard interrupt routine which sets the VBLANK state. Also sets the timer for
- *	the scanline interrupt, if requested.
- *
- */
-
-int atarigen_vblank_gen(void)
-{
-	/* first update the VBLANK state */
-	main_vblank_state = 1;
-	update_main_irq_states();
-
-	/* then prepare for the scanline interrupts */
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, scanline_timer);
-
-	return 0;
-}
-
-
-/*
- *	VBLANK acknowledge write handler
- *
- *	Resets the state of the VBLANK interrupt.
- *
- */
-
-void atarigen_vblank_ack_w(int offset, int data)
-{
-	main_vblank_state = 0;
-	update_main_irq_states();
 }
 
 
@@ -446,7 +581,8 @@ void atarigen_vblank_ack_w(int offset, int data)
 
 int atarigen_6502_irq_gen(void)
 {
-	cpu_set_irq_line(1, M6502_INT_IRQ, ASSERT_LINE);
+	timed_int = 1;
+	update_6502_irq();
 	return 0;
 }
 
@@ -460,13 +596,29 @@ int atarigen_6502_irq_gen(void)
 
 int atarigen_6502_irq_ack_r(int offset)
 {
-	cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+	timed_int = 0;
+	update_6502_irq();
 	return 0;
 }
 
 void atarigen_6502_irq_ack_w(int offset, int data)
 {
-	cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+	timed_int = 0;
+	update_6502_irq();
+}
+
+
+/*
+ *	YM2151 IRQ generation
+ *
+ *	Sets the state of the YM2151's IRQ line.
+ *
+ */
+
+void atarigen_ym2151_irq_gen(int irq)
+{
+	ym2151_int = irq;
+	update_6502_irq();
 }
 
 
@@ -517,14 +669,14 @@ void atarigen_sound_upper_w(int offset, int data)
 int atarigen_sound_r(int offset)
 {
 	atarigen_sound_to_cpu_ready = 0;
-	update_main_irq_states();
+	atarigen_sound_int_ack_w(0, 0);
 	return atarigen_sound_to_cpu | 0xff00;
 }
 
 int atarigen_sound_upper_r(int offset)
 {
 	atarigen_sound_to_cpu_ready = 0;
-	update_main_irq_states();
+	atarigen_sound_int_ack_w(0, 0);
 	return (atarigen_sound_to_cpu << 8) | 0x00ff;
 }
 
@@ -552,37 +704,26 @@ void atarigen_6502_sound_w(int offset, int data)
 int atarigen_6502_sound_r(int offset)
 {
 	atarigen_cpu_to_sound_ready = 0;
-	cpu_set_nmi_line(1, CLEAR_LINE);
+	cpu_set_nmi_line(sound_cpu_num, CLEAR_LINE);
 	return atarigen_cpu_to_sound;
 }
 
 
 /*
- *	Scanline timer callback
+ *	6502 IRQ state updater
  *
- *	Called once every 8 scanlines to generate the periodic callback to the main system.
+ *	Called whenever the IRQ state changes. An interrupt is generated if
+ *	either atarigen_6502_irq_gen() was called, or if the YM2151 generated
+ *	an interrupt via the atarigen_ym2151_irq_gen() callback.
  *
  */
 
-static void scanline_timer(int scanline)
+void update_6502_irq(void)
 {
-	/* if this is scanline 0, we reset the MO and playfield system */
-	if (scanline == 0)
-	{
-		atarigen_mo_reset();
-		atarigen_pf_reset();
-	}
-
-	/* callback */
-	if (scanline_callback)
-	{
-		(*scanline_callback)(scanline);
-
-		/* generate another? */
-		scanline += 8;
-		if (scanline < last_scanline)
-			timer_set(cpu_getscanlineperiod() * 8.0, scanline, scanline_timer);
-	}
+	if (timed_int || ym2151_int)
+		cpu_set_irq_line(sound_cpu_num, M6502_INT_IRQ, ASSERT_LINE);
+	else
+		cpu_set_irq_line(sound_cpu_num, M6502_INT_IRQ, CLEAR_LINE);
 }
 
 
@@ -612,12 +753,12 @@ static void sound_comm_timer(int reps_left)
 static void delayed_sound_reset(int param)
 {
 	/* unhalt and reset the sound CPU */
-	cpu_halt(1, 1);
-	cpu_reset(1);
+	cpu_halt(sound_cpu_num, 1);
+	cpu_reset(sound_cpu_num);
 
 	/* reset the sound write state */
 	atarigen_sound_to_cpu_ready = 0;
-	update_main_irq_states();
+	atarigen_sound_int_ack_w(0, 0);
 }
 
 
@@ -637,7 +778,7 @@ static void delayed_sound_w(int param)
 	/* set up the states and signal an NMI to the sound CPU */
 	atarigen_cpu_to_sound = param;
 	atarigen_cpu_to_sound_ready = 1;
-	cpu_set_nmi_line(1, ASSERT_LINE);
+	cpu_set_nmi_line(sound_cpu_num, ASSERT_LINE);
 
 	/* allocate a high frequency timer until a response is generated */
 	/* the main CPU is *very* sensistive to the timing of the response */
@@ -661,634 +802,14 @@ static void delayed_6502_sound_w(int param)
 	/* set up the states and signal the sound interrupt to the main CPU */
 	atarigen_sound_to_cpu = param;
 	atarigen_sound_to_cpu_ready = 1;
-	update_main_irq_states();
-}
-
-
-
-
-
-/*--------------------------------------------------------------------------
-
-	Motion object rendering
-
-		atarigen_mo_desc - description of the M.O. layout
-
-		atarigen_mo_callback - called back for each M.O. during processing
-
-		atarigen_mo_init - initializes and configures the M.O. list walker
-		atarigen_mo_free - frees all memory allocated by atarigen_mo_init
-		atarigen_mo_reset - reset for a new frame (use only if not using interrupt system)
-		atarigen_mo_update - updates the M.O. list for the given scanline
-		atarigen_mo_process - processes the current list
-
---------------------------------------------------------------------------*/
-
-/* statics */
-static struct atarigen_mo_desc modesc;
-
-static unsigned short *molist;
-static unsigned short *molist_end;
-static unsigned short *molist_last;
-static unsigned short *molist_upper_bound;
-
-
-/*
- *	Motion object render initialization
- *
- *	Allocates memory for the motion object display cache.
- *
- */
-
-int atarigen_mo_init(const struct atarigen_mo_desc *source_desc)
-{
-	modesc = *source_desc;
-	if (modesc.entrywords == 0) modesc.entrywords = 4;
-	modesc.entrywords++;
-
-	/* make sure everything is free */
-	atarigen_mo_free();
-
-	/* allocate memory for the cached list */
-	molist = malloc(modesc.maxcount * 2 * modesc.entrywords * (Machine->drv->screen_height / 8));
-	if (!molist)
-		return 1;
-	molist_upper_bound = molist + (modesc.maxcount * modesc.entrywords * (Machine->drv->screen_height / 8));
-
-	/* initialize the end/last pointers */
-	atarigen_mo_reset();
-
-	return 0;
-}
-
-
-/*
- *	Motion object render free
- *
- *	Frees all data allocated for the motion objects.
- *
- */
-
-void atarigen_mo_free(void)
-{
-	if (molist)
-		free(molist);
-	molist = NULL;
-}
-
-
-/*
- *	Motion object render reset
- *
- *	Resets the motion object system for a new frame. Note that this is automatically called
- *	if you're using the interrupt system.
- *
- */
-
-void atarigen_mo_reset(void)
-{
-	molist_end = molist;
-	molist_last = NULL;
-}
-
-
-/*
- *	Motion object updater
- *
- *	Parses the current motion object list, caching all entries.
- *
- */
-
-void atarigen_mo_update(const unsigned char *base, int link, int scanline)
-{
-	int entryskip = modesc.entryskip, wordskip = modesc.wordskip, wordcount = modesc.entrywords - 1;
-	unsigned char spritevisit[ATARIGEN_MAX_MAXCOUNT];
-	unsigned short *data, *data_start, *prev_data;
-	int match = 0;
-
-	/* set up local pointers */
-	data_start = data = molist_end;
-	prev_data = molist_last;
-
-	/* if the last list entries were on the same scanline, overwrite them */
-	if (prev_data)
-	{
-		if (*prev_data == scanline)
-			data_start = data = prev_data;
-		else
-			match = 1;
-	}
-
-	/* visit all the sprites and copy their data into the display list */
-	memset(spritevisit, 0, modesc.linkmask + 1);
-	while (!spritevisit[link])
-	{
-		const unsigned char *modata = &base[link * entryskip];
-		unsigned short tempdata[16];
-		int temp, i;
-
-		/* bounds checking */
-		if (data >= molist_upper_bound)
-		{
-			if (errorlog) fprintf(errorlog, "Motion object list exceeded maximum\n");
-			break;
-		}
-
-		/* start with the scanline */
-		*data++ = scanline;
-
-		/* add the data words */
-		for (i = temp = 0; i < wordcount; i++, temp += wordskip)
-			tempdata[i] = *data++ = READ_WORD(&modata[temp]);
-
-		/* is this one to ignore? (note that ignore is predecremented by 4) */
-		if (tempdata[modesc.ignoreword] == 0xffff)
-			data -= wordcount + 1;
-
-		/* update our match status */
-		else if (match)
-		{
-			prev_data++;
-			for (i = 0; i < wordcount; i++)
-				if (*prev_data++ != tempdata[i])
-				{
-					match = 0;
-					break;
-				}
-		}
-
-		/* link to the next object */
-		spritevisit[link] = 1;
-		if (modesc.linkword >= 0)
-			link = (tempdata[modesc.linkword] >> modesc.linkshift) & modesc.linkmask;
-		else
-			link = (link + 1) & modesc.linkmask;
-	}
-
-	/* if we didn't match the last set of entries, update the counters */
-	if (!match)
-	{
-		molist_end = data;
-		molist_last = data_start;
-	}
-}
-
-
-/*
- *	Motion object processor
- *
- *	Processes the cached motion object entries.
- *
- */
-
-void atarigen_mo_process(atarigen_mo_callback callback, void *param)
-{
-	unsigned short *base = molist;
-	int last_start_scan = -1;
-	struct rectangle clip;
-
-	/* create a clipping rectangle so that only partial sections are updated at a time */
-	clip.min_x = 0;
-	clip.max_x = Machine->drv->screen_width - 1;
-
-	/* loop over the list until the end */
-	while (base < molist_end)
-	{
-		unsigned short *data, *first, *last;
-		int start_scan = base[0], step;
-
-		last_start_scan = start_scan;
-		clip.min_y = start_scan;
-
-		/* look for an entry whose scanline start is different from ours; that's our bottom */
-		for (data = base; data < molist_end; data += modesc.entrywords)
-			if (*data != start_scan)
-			{
-				clip.max_y = *data;
-				break;
-			}
-
-		/* if we didn't find any additional regions, go until the bottom of the screen */
-		if (data == molist_end)
-			clip.max_y = Machine->drv->screen_height - 1;
-
-		/* set the start and end points */
-		if (modesc.reverse)
-		{
-			first = data - modesc.entrywords;
-			last = base - modesc.entrywords;
-			step = -modesc.entrywords;
-		}
-		else
-		{
-			first = base;
-			last = data;
-			step = modesc.entrywords;
-		}
-
-		/* update the base */
-		base = data;
-
-		/* render the mos */
-		for (data = first; data != last; data += step)
-			(*callback)(&data[1], &clip, param);
-	}
+	atarigen_sound_int_gen();
 }
 
 
 
 /*--------------------------------------------------------------------------
 
-	Playfield rendering
-
-		atarigen_pf_state - data block describing the playfield
-
-		atarigen_pf_callback - called back for each chunk during processing
-
-		atarigen_pf_init - initializes and configures the playfield state
-		atarigen_pf_free - frees all memory allocated by atarigen_pf_init
-		atarigen_pf_reset - reset for a new frame (use only if not using interrupt system)
-		atarigen_pf_update - updates the playfield state for the given scanline
-		atarigen_pf_process - processes the current list of parameters
-
-		atarigen_pf2_init - same as above but for a second playfield
-		atarigen_pf2_free - same as above but for a second playfield
-		atarigen_pf2_reset - same as above but for a second playfield
-		atarigen_pf2_update - same as above but for a second playfield
-		atarigen_pf2_process - same as above but for a second playfield
-
---------------------------------------------------------------------------*/
-
-/* types */
-struct playfield_data
-{
-	struct osd_bitmap *bitmap;
-	unsigned char *dirty;
-	unsigned char *visit;
-
-	int tilewidth;
-	int tileheight;
-	int tilewidth_shift;
-	int tileheight_shift;
-	int xtiles_mask;
-	int ytiles_mask;
-
-	int entries;
-	int *scanline;
-	struct atarigen_pf_state *state;
-	struct atarigen_pf_state *last_state;
-};
-
-/* globals */
-struct osd_bitmap *atarigen_pf_bitmap;
-unsigned char *atarigen_pf_dirty;
-unsigned char *atarigen_pf_visit;
-
-struct osd_bitmap *atarigen_pf2_bitmap;
-unsigned char *atarigen_pf2_dirty;
-unsigned char *atarigen_pf2_visit;
-
-struct osd_bitmap *atarigen_pf_overrender_bitmap;
-unsigned short atarigen_overrender_colortable[32];
-
-/* statics */
-static struct playfield_data playfield;
-static struct playfield_data playfield2;
-
-/* prototypes */
-static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc);
-static void internal_pf_free(struct playfield_data *pf);
-INLINE void internal_pf_reset(struct playfield_data *pf);
-INLINE void internal_pf_update(struct playfield_data *pf, const struct atarigen_pf_state *state, int scanline);
-static void internal_pf_process(struct playfield_data *pf, atarigen_pf_callback callback, void *param, const struct rectangle *clip);
-static int compute_shift(int size);
-static int compute_mask(int count);
-
-
-/*
- *	Playfield render initialization
- *
- *	Allocates memory for the playfield and initializes all structures.
- *
- */
-
-static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc)
-{
-	/* allocate the bitmap */
-	pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
-								source_desc->tileheight * source_desc->ytiles,
-								Machine->scrbitmap->depth);
-	if (!pf->bitmap)
-		return 1;
-
-	/* allocate the dirty tile map */
-	pf->dirty = malloc(source_desc->xtiles * source_desc->ytiles);
-	if (!pf->dirty)
-	{
-		internal_pf_free(pf);
-		return 1;
-	}
-	memset(pf->dirty, 0xff, source_desc->xtiles * source_desc->ytiles);
-
-	/* allocate the visitation map */
-	pf->visit = malloc(source_desc->xtiles * source_desc->ytiles);
-	if (!pf->visit)
-	{
-		internal_pf_free(pf);
-		return 1;
-	}
-
-	/* allocate the list of scanlines */
-	pf->scanline = malloc(source_desc->ytiles * source_desc->tileheight * sizeof(int));
-	if (!pf->scanline)
-	{
-		internal_pf_free(pf);
-		return 1;
-	}
-
-	/* allocate the list of parameters */
-	pf->state = malloc(source_desc->ytiles * source_desc->tileheight * sizeof(struct atarigen_pf_state));
-	if (!pf->state)
-	{
-		internal_pf_free(pf);
-		return 1;
-	}
-
-	/* copy the basic data */
-	pf->tilewidth = source_desc->tilewidth;
-	pf->tileheight = source_desc->tileheight;
-	pf->tilewidth_shift = compute_shift(source_desc->tilewidth);
-	pf->tileheight_shift = compute_shift(source_desc->tileheight);
-	pf->xtiles_mask = compute_mask(source_desc->xtiles);
-	pf->ytiles_mask = compute_mask(source_desc->ytiles);
-
-	/* initialize the last state to all zero */
-	pf->last_state = pf->state;
-	memset(pf->last_state, 0, sizeof(*pf->last_state));
-
-	/* reset */
-	internal_pf_reset(pf);
-
-	return 0;
-}
-
-int atarigen_pf_init(const struct atarigen_pf_desc *source_desc)
-{
-	int result = internal_pf_init(&playfield, source_desc);
-	if (!result)
-	{
-		/* allocate the overrender bitmap */
-		atarigen_pf_overrender_bitmap = osd_new_bitmap(Machine->drv->screen_width, Machine->drv->screen_height, Machine->scrbitmap->depth);
-		if (!atarigen_pf_overrender_bitmap)
-		{
-			internal_pf_free(&playfield);
-			return 1;
-		}
-
-		atarigen_pf_bitmap = playfield.bitmap;
-		atarigen_pf_dirty = playfield.dirty;
-		atarigen_pf_visit = playfield.visit;
-	}
-	return result;
-}
-
-int atarigen_pf2_init(const struct atarigen_pf_desc *source_desc)
-{
-	int result = internal_pf_init(&playfield2, source_desc);
-	if (!result)
-	{
-		atarigen_pf2_bitmap = playfield2.bitmap;
-		atarigen_pf2_dirty = playfield2.dirty;
-		atarigen_pf2_visit = playfield2.visit;
-	}
-	return result;
-}
-
-
-/*
- *	Playfield render free
- *
- *	Frees all memory allocated by the playfield system.
- *
- */
-
-static void internal_pf_free(struct playfield_data *pf)
-{
-	if (pf->bitmap)
-		osd_free_bitmap(pf->bitmap);
-	pf->bitmap = NULL;
-
-	if (pf->dirty)
-		free(pf->dirty);
-	pf->dirty = NULL;
-
-	if (pf->visit)
-		free(pf->visit);
-	pf->visit = NULL;
-
-	if (pf->scanline)
-		free(pf->scanline);
-	pf->scanline = NULL;
-
-	if (pf->state)
-		free(pf->state);
-	pf->state = NULL;
-}
-
-void atarigen_pf_free(void)
-{
-	internal_pf_free(&playfield);
-
-	/* free the overrender bitmap */
-	if (atarigen_pf_overrender_bitmap)
-		osd_free_bitmap(atarigen_pf_overrender_bitmap);
-	atarigen_pf_overrender_bitmap = NULL;
-}
-
-void atarigen_pf2_free(void)
-{
-	internal_pf_free(&playfield2);
-}
-
-
-/*
- *	Playfield render reset
- *
- *	Resets the playfield system for a new frame. Note that this is automatically called
- *	if you're using the interrupt system.
- *
- */
-
-INLINE void internal_pf_reset(struct playfield_data *pf)
-{
-	/* verify memory has been allocated -- we're called even if we're not used */
-	if (pf->scanline && pf->state)
-	{
-		pf->entries = 0;
-		internal_pf_update(pf, pf->last_state, 0);
-	}
-}
-
-void atarigen_pf_reset(void)
-{
-	internal_pf_reset(&playfield);
-}
-
-void atarigen_pf2_reset(void)
-{
-	internal_pf_reset(&playfield2);
-}
-
-
-/*
- *	Playfield render update
- *
- *	Sets the parameters for a given scanline.
- *
- */
-
-INLINE void internal_pf_update(struct playfield_data *pf, const struct atarigen_pf_state *state, int scanline)
-{
-	if (pf->entries > 0)
-	{
-		/* if the current scanline matches the previous one, just overwrite */
-		if (pf->scanline[pf->entries - 1] == scanline)
-			pf->entries--;
-
-		/* if the current data matches the previous data, ignore it */
-		else if (pf->last_state->hscroll == state->hscroll &&
-				 pf->last_state->vscroll == state->vscroll &&
-				 pf->last_state->param[0] == state->param[0] &&
-				 pf->last_state->param[1] == state->param[1])
-			return;
-	}
-
-	/* remember this entry as the last set of parameters */
-	pf->last_state = &pf->state[pf->entries];
-
-	/* copy in the data */
-	pf->scanline[pf->entries] = scanline;
-	pf->state[pf->entries++] = *state;
-
-	/* set the final scanline to be huge -- it will be clipped during processing */
-	pf->scanline[pf->entries] = 100000;
-}
-
-void atarigen_pf_update(const struct atarigen_pf_state *state, int scanline)
-{
-	internal_pf_update(&playfield, state, scanline);
-}
-
-void atarigen_pf2_update(const struct atarigen_pf_state *state, int scanline)
-{
-	internal_pf_update(&playfield2, state, scanline);
-}
-
-
-/*
- *	Playfield render process
- *
- *	Processes the playfield in chunks.
- *
- */
-
-INLINE void internal_pf_process(struct playfield_data *pf, atarigen_pf_callback callback, void *param, const struct rectangle *clip)
-{
-	struct rectangle curclip;
-	struct rectangle tiles;
-	int y;
-
-	/* preinitialization */
-	curclip.min_x = clip->min_x;
-	curclip.max_x = clip->max_x;
-
-	/* loop over all entries */
-	for (y = 0; y < pf->entries; y++)
-	{
-		struct atarigen_pf_state *current = &pf->state[y];
-
-		/* determine the clip rect */
-		curclip.min_y = pf->scanline[y];
-		curclip.max_y = pf->scanline[y + 1] - 1;
-
-		/* skip if we're clipped out */
-		if (curclip.min_y > clip->max_y || curclip.max_y < clip->min_y)
-			continue;
-
-		/* clip the clipper */
-		if (curclip.min_y < clip->min_y)
-			curclip.min_y = clip->min_y;
-		if (curclip.max_y > clip->max_y)
-			curclip.max_y = clip->max_y;
-
-		/* determine the tile rect */
-		tiles.min_x = ((current->hscroll + curclip.min_x) >> pf->tilewidth_shift) & pf->xtiles_mask;
-		tiles.max_x = ((current->hscroll + curclip.max_x + pf->tilewidth) >> pf->tilewidth_shift) & pf->xtiles_mask;
-		tiles.min_y = ((current->vscroll + curclip.min_y) >> pf->tileheight_shift) & pf->ytiles_mask;
-		tiles.max_y = ((current->vscroll + curclip.max_y + pf->tileheight) >> pf->tileheight_shift) & pf->ytiles_mask;
-
-		/* call the callback */
-		(*callback)(&curclip, &tiles, current, param);
-	}
-}
-
-void atarigen_pf_process(atarigen_pf_callback callback, void *param, const struct rectangle *clip)
-{
-	internal_pf_process(&playfield, callback, param, clip);
-}
-
-void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const struct rectangle *clip)
-{
-	internal_pf_process(&playfield2, callback, param, clip);
-}
-
-
-/*
- *	Shift value computer
- *
- *	Determines the log2(value).
- *
- */
-
-static int compute_shift(int size)
-{
-	int i;
-
-	/* loop until we shift to zero */
-	for (i = 0; i < 32; i++)
-		if (!(size >>= 1))
-			break;
-	return i;
-}
-
-
-/*
- *	Mask computer
- *
- *	Determines the best mask to use for the given value.
- *
- */
-
-static int compute_mask(int count)
-{
-	int shift = compute_shift(count);
-
-	/* simple case - count is an even power of 2 */
-	if (count == (1 << shift))
-		return count - 1;
-
-	/* slightly less simple case - round up to the next power of 2 */
-	else
-		return (1 << (shift + 1)) - 1;
-}
-
-
-
-
-
-/*--------------------------------------------------------------------------
-
-	Sound stuff
+	Misc sound helpers
 
 		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
 		atarigen_set_ym2151_vol - set the volume of the 2151 chip
@@ -1460,10 +981,1928 @@ static int m6502_speedup_r(int offset)
 
 
 
+
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+/***********************************************************************************************/
+
+
+
+/* general video globals */
+unsigned char *atarigen_playfieldram;
+unsigned char *atarigen_playfield2ram;
+unsigned char *atarigen_playfieldram_color;
+unsigned char *atarigen_playfield2ram_color;
+unsigned char *atarigen_spriteram;
+unsigned char *atarigen_alpharam;
+unsigned char *atarigen_vscroll;
+unsigned char *atarigen_hscroll;
+
+int atarigen_playfieldram_size;
+int atarigen_playfield2ram_size;
+int atarigen_spriteram_size;
+int atarigen_alpharam_size;
+
+
+
+/*--------------------------------------------------------------------------
+
+	Video scanline timing
+
+		atarigen_scanline_timer_reset - call to reset the system
+
+--------------------------------------------------------------------------*/
+
+/* statics */
+static atarigen_scanline_callback scanline_callback;
+static int scanlines_per_callback;
+static double scanline_callback_period;
+static int last_scanline;
+
+/* prototypes */
+static void vblank_timer(int param);
+static void scanline_timer(int scanline);
+
+/*
+ *	Scanline timer callback
+ *
+ *	Called once every n scanlines to generate the periodic callback to the main system.
+ *
+ */
+
+void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, int frequency)
+{
+	/* set the scanline callback */
+	scanline_callback = update_graphics;
+	scanline_callback_period = (double)frequency * cpu_getscanlineperiod();
+	scanlines_per_callback = frequency;
+
+	/* compute the last scanline */
+	last_scanline = (int)(TIME_IN_HZ(Machine->drv->frames_per_second) / cpu_getscanlineperiod());
+
+	/* set a timer to go off on the next VBLANK */
+	timer_set(cpu_getscanlinetime(Machine->drv->screen_height), 0, vblank_timer);
+}
+
+
+/*
+ *	VBLANK timer callback
+ *
+ *	Called once every VBLANK to prime the scanline timers.
+ *
+ */
+
+static void vblank_timer(int param)
+{
+	/* set a timer to go off at scanline 0 */
+	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, scanline_timer);
+
+	/* set a timer to go off on the next VBLANK */
+	timer_set(cpu_getscanlinetime(Machine->drv->screen_height), 1, vblank_timer);
+}
+
+
+/*
+ *	Scanline timer callback
+ *
+ *	Called once every n scanlines to generate the periodic callback to the main system.
+ *
+ */
+
+static void scanline_timer(int scanline)
+{
+	/* if this is scanline 0, we reset the MO and playfield system */
+	if (scanline == 0)
+	{
+		atarigen_mo_reset();
+		atarigen_pf_reset();
+		atarigen_pf2_reset();
+	}
+
+	/* callback */
+	if (scanline_callback)
+	{
+		(*scanline_callback)(scanline);
+
+		/* generate another? */
+		scanline += scanlines_per_callback;
+		if (scanline < last_scanline && scanlines_per_callback)
+			timer_set(scanline_callback_period, scanline, scanline_timer);
+	}
+}
+
+
+
+/*--------------------------------------------------------------------------
+
+	Video Controller I/O: used in Shuuz, Thunderjaws, Relief Pitcher, Off the Wall
+
+		atarigen_video_control_data - pointer to base of control memory
+		atarigen_video_control_latch1 - latch #1 value (-1 means disabled)
+		atarigen_video_control_latch2 - latch #2 value (-1 means disabled)
+
+		atarigen_video_control_reset - initializes the video controller
+
+		atarigen_video_control_w - write handler for the video controller
+		atarigen_video_control_r - read handler for the video controller
+
+--------------------------------------------------------------------------*/
+
+/* globals */
+unsigned char *atarigen_video_control_data;
+int atarigen_video_control_latch1;
+int atarigen_video_control_latch2;
+
+/* statics */
+static int actual_video_control_latch1;
+static int actual_video_control_latch2;
+
+
+/*
+ *	Video controller initialization
+ *
+ *	Resets the state of the video controller.
+ *
+ */
+
+void atarigen_video_control_reset(void)
+{
+	/* clear the RAM we use */
+	memset(atarigen_video_control_data, 0, 0x40);
+
+	/* reset the latches */
+	atarigen_video_control_latch1 = atarigen_video_control_latch2 = -1;
+	actual_video_control_latch1 = actual_video_control_latch2 = -1;
+}
+
+
+/*
+ *	Video controller write
+ *
+ *	Handles an I/O write to the video controller.
+ *
+ */
+
+void atarigen_video_control_w(int offset, int data)
+{
+	int oldword = READ_WORD(&atarigen_video_control_data[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&atarigen_video_control_data[offset], newword);
+
+	/* switch off the offset */
+	switch (offset)
+	{
+		/* set the scanline interrupt here */
+		case 0x06:
+			/* this is the scanline where we should interrupt */
+			/* remove any previous timer and set a new one */
+			if (oldword != newword)
+				atarigen_scanline_int_set(newword & 0x1ff);
+			break;
+
+		/* latch enable */
+		case 0x14:
+
+			/* reset the latches when disabled */
+			if (!(newword & 0x80))
+				atarigen_video_control_latch1 = atarigen_video_control_latch2 = -1;
+			else
+				atarigen_video_control_latch1 = actual_video_control_latch1,
+				atarigen_video_control_latch2 = actual_video_control_latch2;
+			break;
+
+		/* latch 1 value */
+		case 0x38:
+			actual_video_control_latch1 = newword;
+			actual_video_control_latch2 = -1;
+			if (READ_WORD(&atarigen_video_control_data[0x14]) & 0x80)
+				atarigen_video_control_latch1 = actual_video_control_latch1;
+			break;
+
+		/* latch 2 value */
+		case 0x3a:
+			actual_video_control_latch1 = -1;
+			actual_video_control_latch2 = newword;
+			if (READ_WORD(&atarigen_video_control_data[0x14]) & 0x80)
+				atarigen_video_control_latch2 = actual_video_control_latch2;
+			break;
+
+		/* IRQ ack here */
+		case 0x3c:
+			atarigen_scanline_int_ack_w(0, 0);
+			break;
+
+		/* log anything else */
+		case 0x00:
+		default:
+			if (errorlog)
+			{
+				if (oldword == newword) ;//fprintf(errorlog, "video_control_w(%02X, %04X)\n", offset, data);
+				else fprintf(errorlog, "video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, data, oldword);
+			}
+			break;
+	}
+}
+
+
+/*
+ *	Video controller read
+ *
+ *	Handles an I/O read from the video controller.
+ *
+ */
+
+int atarigen_video_control_r(int offset)
+{
+	if (errorlog) fprintf(errorlog, "video_control_r(%02X)\n", offset);
+
+	if (offset == 0)
+	{
+		int result = cpu_getscanline();
+		return (result < 255) ? result : 255;
+	}
+	else
+		return READ_WORD(&atarigen_video_control_data[offset]);
+}
+
+
+
+/*--------------------------------------------------------------------------
+
+	Motion object rendering
+
+		atarigen_mo_desc - description of the M.O. layout
+
+		atarigen_mo_callback - called back for each M.O. during processing
+
+		atarigen_mo_init - initializes and configures the M.O. list walker
+		atarigen_mo_free - frees all memory allocated by atarigen_mo_init
+		atarigen_mo_reset - reset for a new frame (use only if not using interrupt system)
+		atarigen_mo_update - updates the M.O. list for the given scanline
+		atarigen_mo_process - processes the current list
+
+--------------------------------------------------------------------------*/
+
+/* statics */
+static struct atarigen_mo_desc modesc;
+
+static unsigned short *molist;
+static unsigned short *molist_end;
+static unsigned short *molist_last;
+static unsigned short *molist_upper_bound;
+
+
+/*
+ *	Motion object render initialization
+ *
+ *	Allocates memory for the motion object display cache.
+ *
+ */
+
+int atarigen_mo_init(const struct atarigen_mo_desc *source_desc)
+{
+	modesc = *source_desc;
+	if (modesc.entrywords == 0) modesc.entrywords = 4;
+	modesc.entrywords++;
+
+	/* make sure everything is free */
+	atarigen_mo_free();
+
+	/* allocate memory for the cached list */
+	molist = malloc(modesc.maxcount * 2 * modesc.entrywords * (Machine->drv->screen_height / 8));
+	if (!molist)
+		return 1;
+	molist_upper_bound = molist + (modesc.maxcount * modesc.entrywords * (Machine->drv->screen_height / 8));
+
+	/* initialize the end/last pointers */
+	atarigen_mo_reset();
+
+	return 0;
+}
+
+
+/*
+ *	Motion object render free
+ *
+ *	Frees all data allocated for the motion objects.
+ *
+ */
+
+void atarigen_mo_free(void)
+{
+	if (molist)
+		free(molist);
+	molist = NULL;
+}
+
+
+/*
+ *	Motion object render reset
+ *
+ *	Resets the motion object system for a new frame. Note that this is automatically called
+ *	if you're using the scanline timing system.
+ *
+ */
+
+void atarigen_mo_reset(void)
+{
+	molist_end = molist;
+	molist_last = NULL;
+}
+
+
+/*
+ *	Motion object updater
+ *
+ *	Parses the current motion object list, caching all entries.
+ *
+ */
+
+void atarigen_mo_update(const unsigned char *base, int link, int scanline)
+{
+	int entryskip = modesc.entryskip, wordskip = modesc.wordskip, wordcount = modesc.entrywords - 1;
+	unsigned char spritevisit[ATARIGEN_MAX_MAXCOUNT];
+	unsigned short *data, *data_start, *prev_data;
+	int match = 0;
+
+	/* set up local pointers */
+	data_start = data = molist_end;
+	prev_data = molist_last;
+
+	/* if the last list entries were on the same scanline, overwrite them */
+	if (prev_data)
+	{
+		if (*prev_data == scanline)
+			data_start = data = prev_data;
+		else
+			match = 1;
+	}
+
+	/* visit all the sprites and copy their data into the display list */
+	memset(spritevisit, 0, modesc.linkmask + 1);
+	while (!spritevisit[link])
+	{
+		const unsigned char *modata = &base[link * entryskip];
+		unsigned short tempdata[16];
+		int temp, i;
+
+		/* bounds checking */
+		if (data >= molist_upper_bound)
+		{
+			if (errorlog) fprintf(errorlog, "Motion object list exceeded maximum\n");
+			break;
+		}
+
+		/* start with the scanline */
+		*data++ = scanline;
+
+		/* add the data words */
+		for (i = temp = 0; i < wordcount; i++, temp += wordskip)
+			tempdata[i] = *data++ = READ_WORD(&modata[temp]);
+
+		/* is this one to ignore? (note that ignore is predecremented by 4) */
+		if (tempdata[modesc.ignoreword] == 0xffff)
+			data -= wordcount + 1;
+
+		/* update our match status */
+		else if (match)
+		{
+			prev_data++;
+			for (i = 0; i < wordcount; i++)
+				if (*prev_data++ != tempdata[i])
+				{
+					match = 0;
+					break;
+				}
+		}
+
+		/* link to the next object */
+		spritevisit[link] = 1;
+		if (modesc.linkword >= 0)
+			link = (tempdata[modesc.linkword] >> modesc.linkshift) & modesc.linkmask;
+		else
+			link = (link + 1) & modesc.linkmask;
+	}
+
+	/* if we didn't match the last set of entries, update the counters */
+	if (!match)
+	{
+		molist_end = data;
+		molist_last = data_start;
+	}
+}
+
+
+/*
+ *	Motion object processor
+ *
+ *	Processes the cached motion object entries.
+ *
+ */
+
+void atarigen_mo_process(atarigen_mo_callback callback, void *param)
+{
+	unsigned short *base = molist;
+	int last_start_scan = -1;
+	struct rectangle clip;
+
+	/* create a clipping rectangle so that only partial sections are updated at a time */
+	clip.min_x = 0;
+	clip.max_x = Machine->drv->screen_width - 1;
+
+	/* loop over the list until the end */
+	while (base < molist_end)
+	{
+		unsigned short *data, *first, *last;
+		int start_scan = base[0], step;
+
+		last_start_scan = start_scan;
+		clip.min_y = start_scan;
+
+		/* look for an entry whose scanline start is different from ours; that's our bottom */
+		for (data = base; data < molist_end; data += modesc.entrywords)
+			if (*data != start_scan)
+			{
+				clip.max_y = *data;
+				break;
+			}
+
+		/* if we didn't find any additional regions, go until the bottom of the screen */
+		if (data == molist_end)
+			clip.max_y = Machine->drv->screen_height - 1;
+
+		/* set the start and end points */
+		if (modesc.reverse)
+		{
+			first = data - modesc.entrywords;
+			last = base - modesc.entrywords;
+			step = -modesc.entrywords;
+		}
+		else
+		{
+			first = base;
+			last = data;
+			step = modesc.entrywords;
+		}
+
+		/* update the base */
+		base = data;
+
+		/* render the mos */
+		for (data = first; data != last; data += step)
+			(*callback)(&data[1], &clip, param);
+	}
+}
+
+
+
+/*--------------------------------------------------------------------------
+
+	RLE Motion object rendering/decoding
+
+		atarigen_rle_init - prescans the RLE objects
+		atarigen_rle_free - frees all memory allocated by atarigen_rle_init
+		atarigen_rle_render - render an RLE-compressed motion object
+
+--------------------------------------------------------------------------*/
+
+/* globals */
+int atarigen_rle_count;
+struct atarigen_rle_descriptor *atarigen_rle_info;
+
+/* statics */
+static int rle_region;
+static unsigned short *rle_table[8];
+static unsigned short *rle_colortable;
+
+/* prototypes */
+static int build_rle_tables(void);
+static void prescan_rle(int which);
+static void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip);
+static void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip);
+static void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip);
+static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip);
+
+/*
+ *	RLE motion object initialization
+ *
+ *	Pre-parses the motion object list and potentially pre-decompresses the data.
+ *
+ */
+
+int atarigen_rle_init(int region, int colorbase)
+{
+	const unsigned short *base = (const unsigned short *)Machine->memory_region[region];
+	int lowest_address = Machine->memory_region_length[region];
+	int i;
+
+	rle_region = region;
+	rle_colortable = &Machine->colortable[colorbase];
+
+	/* build and allocate the tables */
+	if (build_rle_tables())
+		return 1;
+
+	/* first determine the lowest address of all objects */
+	for (i = 0; i < lowest_address; i += 4)
+	{
+		int offset = ((base[i + 2] & 0xff) << 16) | base[i + 3];
+		if (offset > i && offset < lowest_address)
+			lowest_address = offset;
+	}
+
+	/* that determines how many objects */
+	atarigen_rle_count = lowest_address / 4;
+	atarigen_rle_info = malloc(sizeof(struct atarigen_rle_descriptor) * atarigen_rle_count);
+	if (!atarigen_rle_info)
+	{
+		atarigen_rle_free();
+		return 1;
+	}
+	memset(atarigen_rle_info, 0, sizeof(struct atarigen_rle_descriptor) * atarigen_rle_count);
+
+	/* now loop through and prescan the objects */
+	for (i = 0; i < atarigen_rle_count; i++)
+		prescan_rle(i);
+
+	return 0;
+}
+
+
+/*
+ *	RLE motion object free
+ *
+ *	Frees all memory allocated to track the motion objects.
+ *
+ */
+
+void atarigen_rle_free(void)
+{
+	/* free the info data */
+	if (atarigen_rle_info)
+		free(atarigen_rle_info);
+	atarigen_rle_info = NULL;
+
+	/* free the tables */
+	if (rle_table[0])
+		free(rle_table[0]);
+	memset(rle_table, 0, sizeof(rle_table));
+}
+
+
+/*
+ *	RLE motion object render
+ *
+ *	Renders a compressed motion object.
+ *
+ */
+
+void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descriptor *info, int color, int hflip, int vflip,
+	int x, int y, int xscale, int yscale, const struct rectangle *clip)
+{
+	int scaled_xoffs = (xscale * info->xoffs) >> 12;
+	int scaled_yoffs = (yscale * info->yoffs) >> 12;
+
+	/* we're hflipped, account for it */
+	if (hflip) scaled_xoffs = ((xscale * info->width) >> 12) - scaled_xoffs;
+
+	/* adjust for the x and y offsets */
+	x -= scaled_xoffs;
+	y -= scaled_yoffs;
+
+	/* bail on a NULL object */
+	if (!info->data)
+		return;
+
+	/* 16-bit case */
+	if (bitmap->depth == 16)
+	{
+		if (!hflip)
+			draw_rle_zoom_16(bitmap, info, color, vflip, x, y, xscale << 4, yscale << 4, clip);
+		else
+			draw_rle_zoom_hflip_16(bitmap, info, color, vflip, x, y, xscale << 4, yscale << 4, clip);
+	}
+
+	/* 8-bit case */
+	else
+	{
+		if (!hflip)
+			draw_rle_zoom(bitmap, info, color, vflip, x, y, xscale << 4, yscale << 4, clip);
+		else
+			draw_rle_zoom_hflip(bitmap, info, color, vflip, x, y, xscale << 4, yscale << 4, clip);
+	}
+}
+
+
+/*
+ *	Builds internally-used tables
+ *
+ *	Special two-byte tables with the upper byte giving the count and the lower
+ *	byte giving the pixel value.
+ *
+ */
+
+static int build_rle_tables(void)
+{
+	unsigned short *base;
+	int i;
+
+	/* allocate all 4 tables */
+	base = malloc(0x400 * sizeof(unsigned short));
+	if (!base)
+		return 1;
+
+	/* assign the tables */
+	rle_table[0] = rle_table[1] = &base[0x000];
+	rle_table[2] = rle_table[3] = &base[0x100];
+	rle_table[5] = rle_table[7] = &base[0x200];
+	rle_table[4] = rle_table[6] = &base[0x300];
+
+	/* build the 4bpp table */
+	for (i = 0; i < 256; i++)
+		rle_table[0][i] = (((i & 0xf0) + 0x10) << 4) | (i & 0x0f);
+
+	/* build the 5bpp table */
+	for (i = 0; i < 256; i++)
+		rle_table[2][i] = (((i & 0xe0) + 0x20) << 3) | (i & 0x1f);
+
+	/* build the 6bpp table */
+	for (i = 0; i < 256; i++)
+		rle_table[5][i] = (((i & 0xc0) + 0x40) << 2) | (i & 0x3f);
+
+	/* build the special 6bpp table (only used in Primal Rage, I think) */
+	for (i = 0; i < 256; i++)
+	{
+		if ((i & 0x0f) == 0)
+			rle_table[4][i] = (((i & 0xf0) + 0x10) << 4) | (i & 0x0f);
+		else
+			rle_table[4][i] = (((i & 0xc0) + 0x40) << 2) | (i & 0x3f);
+	}
+
+	return 0;
+}
+
+
+/*
+ *	Prescans an RLE-compressed object
+ *
+ *	Determines the pen usage, width, height, and other data for an RLE object.
+ *
+ */
+
+static void prescan_rle(int which)
+{
+	unsigned short *base = (unsigned short *)&Machine->memory_region[rle_region][which * 8];
+	struct atarigen_rle_descriptor *rle_data = &atarigen_rle_info[which];
+	unsigned int usage = 0, usage_hi = 0;
+	int width = 0, height, flags, offset;
+	const unsigned short *table;
+
+	/* look up the offset */
+	rle_data->xoffs = (signed short)base[0];
+	rle_data->yoffs = (signed short)base[1];
+
+	/* determine the depth and table */
+	flags = base[2];
+	rle_data->bpp = (flags & 0x0200) ? 5 : (flags & 0x0400) ? 6 : 4;
+	table = rle_data->table = rle_table[(flags >> 8) & 7];
+
+	/* determine the starting offset */
+	offset = ((base[2] & 0xff) << 16) | base[3];
+	rle_data->data = base = (unsigned short *)&Machine->memory_region[rle_region][offset * 2];
+
+	/* make sure it's valid */
+	if (offset < which * 4 || offset > Machine->memory_region_length[rle_region])
+	{
+		memset(rle_data, 0, sizeof(*rle_data));
+		return;
+	}
+
+	/* first pre-scan to determine the width and height */
+	for (height = 0; height < 1024; height++)
+	{
+		int tempwidth = 0;
+		int entry_count = *base++;
+
+		/* if the high bit is set, assume we're inverted */
+		if (entry_count & 0x8000)
+		{
+			entry_count ^= 0xffff;
+
+			/* also change the ROM data so we don't have to do this again at runtime */
+			base[-1] ^= 0xffff;
+		}
+
+		/* we're done when we hit 0 */
+		if (entry_count == 0)
+			break;
+
+		/* track the width */
+		while (entry_count--)
+		{
+			int word = *base++;
+			int count, value;
+
+			/* decode the low byte first */
+			count = table[word & 0xff];
+			value = count & 0xff;
+			tempwidth += count >> 8;
+			if (value < 32)
+				usage |= 1 << value;
+			else
+				usage_hi |= 1 << (value - 32);
+
+			/* decode the upper byte second */
+			count = table[word >> 8];
+			value = count & 0xff;
+			tempwidth += count >> 8;
+			if (value < 32)
+				usage |= 1 << value;
+			else
+				usage_hi |= 1 << (value - 32);
+		}
+
+		/* only remember the max */
+		if (tempwidth > width) width = tempwidth;
+	}
+
+	/* fill in the data */
+	rle_data->width = width;
+	rle_data->height = height;
+	rle_data->pen_usage = usage;
+	rle_data->pen_usage_hi = usage_hi;
+}
+
+
+/*
+ *	Draw a compressed RLE object
+ *
+ *	What it says. RLE decoding is performed on the fly to an 8-bit bitmap.
+ *
+ */
+
+void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip)
+{
+	const unsigned short *palette = &rle_colortable[color];
+	const unsigned short *row_start = gfx->data;
+	const unsigned short *table = gfx->table;
+	volatile int current_row = 0;
+
+	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
+	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
+
+	int pixels_to_skip = 0, xclipped = 0;
+	int dx, dy, ex, ey;
+	int y, sourcey;
+
+	/* make sure we didn't end up with 0 */
+	if (scaled_width == 0) scaled_width = 1;
+	if (scaled_height == 0) scaled_height = 1;
+
+	/* compute the remaining parameters */
+	dx = (gfx->width << 16) / scaled_width;
+	dy = (gfx->height << 16) / scaled_height;
+	ex = sx + scaled_width - 1;
+	ey = sy + scaled_height - 1;
+	sourcey = dy / 2;
+
+	/* left edge clip */
+	if (sx < clip->min_x)
+		pixels_to_skip = clip->min_x - sx, xclipped = 1;
+	if (sx > clip->max_x)
+		return;
+
+	/* right edge clip */
+	if (ex > clip->max_x)
+		ex = clip->max_x, xclipped = 1;
+	else if (ex < clip->min_x)
+		return;
+
+	/* top edge clip */
+	if (sy < clip->min_y)
+	{
+		sourcey += (clip->min_y - sy) * dy;
+		sy = clip->min_y;
+	}
+	else if (sy > clip->max_y)
+		return;
+
+	/* bottom edge clip */
+	if (ey > clip->max_y)
+		ey = clip->max_y;
+	else if (ey < clip->min_y)
+		return;
+
+	/* loop top to bottom */
+	for (y = sy; y <= ey; y++, sourcey += dy)
+	{
+		unsigned char *dest = &bitmap->line[y][sx];
+		int j, sourcex = dx / 2, rle_end = 0;
+		const unsigned short *base;
+		int entry_count;
+
+		/* loop until we hit the row we're on */
+		for ( ; current_row != (sourcey >> 16); current_row++)
+			row_start += 1 + *row_start;
+
+		/* grab our starting parameters from this row */
+		base = row_start;
+		entry_count = *base++;
+
+		/* non-clipped case */
+		if (!xclipped)
+		{
+			/* decode the pixels */
+			for (j = 0; j < entry_count; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+			}
+		}
+
+		/* clipped case */
+		else
+		{
+			const unsigned char *end = &bitmap->line[y][ex];
+			int to_be_skipped = pixels_to_skip;
+
+			/* decode the pixels */
+			for (j = 0; j < entry_count && dest <= end; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest++, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next1;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest <= end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+
+			next1:
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest++, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next2;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest <= end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+			next2:
+				;
+			}
+		}
+	}
+}
+
+
+/*
+ *	Draw a compressed RLE object
+ *
+ *	What it says. RLE decoding is performed on the fly to a 16-bit bitmap.
+ *
+ */
+
+void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip)
+{
+	const unsigned short *palette = &rle_colortable[color];
+	const unsigned short *row_start = gfx->data;
+	const unsigned short *table = gfx->table;
+	volatile int current_row = 0;
+
+	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
+	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
+
+	int pixels_to_skip = 0, xclipped = 0;
+	int dx, dy, ex, ey;
+	int y, sourcey;
+
+	/* make sure we didn't end up with 0 */
+	if (scaled_width == 0) scaled_width = 1;
+	if (scaled_height == 0) scaled_height = 1;
+
+	/* compute the remaining parameters */
+	dx = (gfx->width << 16) / scaled_width;
+	dy = (gfx->height << 16) / scaled_height;
+	ex = sx + scaled_width - 1;
+	ey = sy + scaled_height - 1;
+	sourcey = dy / 2;
+
+	/* left edge clip */
+	if (sx < clip->min_x)
+		pixels_to_skip = clip->min_x - sx, xclipped = 1;
+	if (sx > clip->max_x)
+		return;
+
+	/* right edge clip */
+	if (ex > clip->max_x)
+		ex = clip->max_x, xclipped = 1;
+	else if (ex < clip->min_x)
+		return;
+
+	/* top edge clip */
+	if (sy < clip->min_y)
+	{
+		sourcey += (clip->min_y - sy) * dy;
+		sy = clip->min_y;
+	}
+	else if (sy > clip->max_y)
+		return;
+
+	/* bottom edge clip */
+	if (ey > clip->max_y)
+		ey = clip->max_y;
+	else if (ey < clip->min_y)
+		return;
+
+	/* loop top to bottom */
+	for (y = sy; y <= ey; y++, sourcey += dy)
+	{
+		unsigned short *dest = (unsigned short *)&bitmap->line[y][sx * 2];
+		int j, sourcex = dx / 2, rle_end = 0;
+		const unsigned short *base;
+		int entry_count;
+
+		/* loop until we hit the row we're on */
+		for ( ; current_row != (sourcey >> 16); current_row++)
+			row_start += 1 + *row_start;
+
+		/* grab our starting parameters from this row */
+		base = row_start;
+		entry_count = *base++;
+
+		/* non-clipped case */
+		if (!xclipped)
+		{
+			/* decode the pixels */
+			for (j = 0; j < entry_count; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+			}
+		}
+
+		/* clipped case */
+		else
+		{
+			const unsigned short *end = (const unsigned short *)&bitmap->line[y][ex * 2];
+			int to_be_skipped = pixels_to_skip;
+
+			/* decode the pixels */
+			for (j = 0; j < entry_count && dest <= end; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest++, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next3;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest <= end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+
+			next3:
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest++, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next4;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest <= end)
+						*dest++ = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest++, sourcex += dx;
+				}
+			next4:
+				;
+			}
+		}
+	}
+}
+
+
+/*
+ *	Draw a horizontally-flipped RLE-compressed object
+ *
+ *	What it says. RLE decoding is performed on the fly to an 8-bit bitmap.
+ *
+ */
+
+void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip)
+{
+	const unsigned short *palette = &rle_colortable[color];
+	const unsigned short *row_start = gfx->data;
+	const unsigned short *table = gfx->table;
+	volatile int current_row = 0;
+
+	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
+	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
+	int pixels_to_skip = 0, xclipped = 0;
+	int dx, dy, ex, ey;
+	int y, sourcey;
+
+	/* make sure we didn't end up with 0 */
+	if (scaled_width == 0) scaled_width = 1;
+	if (scaled_height == 0) scaled_height = 1;
+
+	/* compute the remaining parameters */
+	dx = (gfx->width << 16) / scaled_width;
+	dy = (gfx->height << 16) / scaled_height;
+	ex = sx + scaled_width - 1;
+	ey = sy + scaled_height - 1;
+	sourcey = dy / 2;
+
+	/* left edge clip */
+	if (sx < clip->min_x)
+		sx = clip->min_x, xclipped = 1;
+	if (sx > clip->max_x)
+		return;
+
+	/* right edge clip */
+	if (ex > clip->max_x)
+		pixels_to_skip = ex - clip->max_x, xclipped = 1;
+	else if (ex < clip->min_x)
+		return;
+
+	/* top edge clip */
+	if (sy < clip->min_y)
+	{
+		sourcey += (clip->min_y - sy) * dy;
+		sy = clip->min_y;
+	}
+	else if (sy > clip->max_y)
+		return;
+
+	/* bottom edge clip */
+	if (ey > clip->max_y)
+		ey = clip->max_y;
+	else if (ey < clip->min_y)
+		return;
+
+	/* loop top to bottom */
+	for (y = sy; y <= ey; y++, sourcey += dy)
+	{
+		unsigned char *dest = &bitmap->line[y][ex];
+		int j, sourcex = dx / 2, rle_end = 0;
+		const unsigned short *base;
+		int entry_count;
+
+		/* loop until we hit the row we're on */
+		for ( ; current_row != (sourcey >> 16); current_row++)
+			row_start += 1 + *row_start;
+
+		/* grab our starting parameters from this row */
+		base = row_start;
+		entry_count = *base++;
+
+		/* non-clipped case */
+		if (!xclipped)
+		{
+			/* decode the pixels */
+			for (j = 0; j < entry_count; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+			}
+		}
+
+		/* clipped case */
+		else
+		{
+			const unsigned char *start = &bitmap->line[y][sx];
+			int to_be_skipped = pixels_to_skip;
+
+			/* decode the pixels */
+			for (j = 0; j < entry_count && dest >= start; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest--, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next1;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest >= start)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+
+			next1:
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest--, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next2;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest >= start)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+			next2:
+				;
+			}
+		}
+	}
+}
+
+
+/*
+ *	Draw a horizontally-flipped RLE-compressed object
+ *
+ *	What it says. RLE decoding is performed on the fly to a 16-bit bitmap.
+ *
+ */
+
+void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
+		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		const struct rectangle *clip)
+{
+	const unsigned short *palette = &rle_colortable[color];
+	const unsigned short *row_start = gfx->data;
+	const unsigned short *table = gfx->table;
+	volatile int current_row = 0;
+
+	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
+	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
+	int pixels_to_skip = 0, xclipped = 0;
+	int dx, dy, ex, ey;
+	int y, sourcey;
+
+	/* make sure we didn't end up with 0 */
+	if (scaled_width == 0) scaled_width = 1;
+	if (scaled_height == 0) scaled_height = 1;
+
+	/* compute the remaining parameters */
+	dx = (gfx->width << 16) / scaled_width;
+	dy = (gfx->height << 16) / scaled_height;
+	ex = sx + scaled_width - 1;
+	ey = sy + scaled_height - 1;
+	sourcey = dy / 2;
+
+	/* left edge clip */
+	if (sx < clip->min_x)
+		sx = clip->min_x, xclipped = 1;
+	if (sx > clip->max_x)
+		return;
+
+	/* right edge clip */
+	if (ex > clip->max_x)
+		pixels_to_skip = ex - clip->max_x, xclipped = 1;
+	else if (ex < clip->min_x)
+		return;
+
+	/* top edge clip */
+	if (sy < clip->min_y)
+	{
+		sourcey += (clip->min_y - sy) * dy;
+		sy = clip->min_y;
+	}
+	else if (sy > clip->max_y)
+		return;
+
+	/* bottom edge clip */
+	if (ey > clip->max_y)
+		ey = clip->max_y;
+	else if (ey < clip->min_y)
+		return;
+
+	/* loop top to bottom */
+	for (y = sy; y <= ey; y++, sourcey += dy)
+	{
+		unsigned short *dest = (unsigned short *)&bitmap->line[y][ex * 2];
+		int j, sourcex = dx / 2, rle_end = 0;
+		const unsigned short *base;
+		int entry_count;
+
+		/* loop until we hit the row we're on */
+		for ( ; current_row != (sourcey >> 16); current_row++)
+			row_start += 1 + *row_start;
+
+		/* grab our starting parameters from this row */
+		base = row_start;
+		entry_count = *base++;
+
+		/* non-clipped case */
+		if (!xclipped)
+		{
+			/* decode the pixels */
+			for (j = 0; j < entry_count; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+			}
+		}
+
+		/* clipped case */
+		else
+		{
+			const unsigned short *start = (const unsigned short *)&bitmap->line[y][sx * 2];
+			int to_be_skipped = pixels_to_skip;
+
+			/* decode the pixels */
+			for (j = 0; j < entry_count && dest >= start; j++)
+			{
+				int word = *base++;
+				int count, value;
+
+				/* decode the low byte first */
+				count = table[word & 0xff];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest--, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next3;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest >= start)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+
+			next3:
+				/* decode the upper byte second */
+				count = table[word >> 8];
+				value = count & 0xff;
+				rle_end += (count & 0xff00) << 8;
+
+				/* store copies of the value until we pass the end of this chunk */
+				if (to_be_skipped)
+				{
+					while (to_be_skipped && sourcex < rle_end)
+						dest--, sourcex += dx, to_be_skipped--;
+					if (to_be_skipped) goto next4;
+				}
+				if (value)
+				{
+					value = palette[value];
+					while (sourcex < rle_end && dest >= start)
+						*dest-- = value, sourcex += dx;
+				}
+				else
+				{
+					while (sourcex < rle_end)
+						dest--, sourcex += dx;
+				}
+			next4:
+				;
+			}
+		}
+	}
+}
+
+
+/*--------------------------------------------------------------------------
+
+	Playfield rendering
+
+		atarigen_pf_state - data block describing the playfield
+
+		atarigen_pf_callback - called back for each chunk during processing
+
+		atarigen_pf_init - initializes and configures the playfield state
+		atarigen_pf_free - frees all memory allocated by atarigen_pf_init
+		atarigen_pf_reset - reset for a new frame (use only if not using interrupt system)
+		atarigen_pf_update - updates the playfield state for the given scanline
+		atarigen_pf_process - processes the current list of parameters
+
+		atarigen_pf2_init - same as above but for a second playfield
+		atarigen_pf2_free - same as above but for a second playfield
+		atarigen_pf2_reset - same as above but for a second playfield
+		atarigen_pf2_update - same as above but for a second playfield
+		atarigen_pf2_process - same as above but for a second playfield
+
+--------------------------------------------------------------------------*/
+
+/* types */
+struct playfield_data
+{
+	struct osd_bitmap *bitmap;
+	unsigned char *dirty;
+	unsigned char *visit;
+
+	int tilewidth;
+	int tileheight;
+	int tilewidth_shift;
+	int tileheight_shift;
+	int xtiles_mask;
+	int ytiles_mask;
+
+	int entries;
+	int *scanline;
+	struct atarigen_pf_state *state;
+	struct atarigen_pf_state *last_state;
+};
+
+/* globals */
+struct osd_bitmap *atarigen_pf_bitmap;
+unsigned char *atarigen_pf_dirty;
+unsigned char *atarigen_pf_visit;
+
+struct osd_bitmap *atarigen_pf2_bitmap;
+unsigned char *atarigen_pf2_dirty;
+unsigned char *atarigen_pf2_visit;
+
+struct osd_bitmap *atarigen_pf_overrender_bitmap;
+unsigned short atarigen_overrender_colortable[32];
+
+/* statics */
+static struct playfield_data playfield;
+static struct playfield_data playfield2;
+
+/* prototypes */
+static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc);
+static void internal_pf_free(struct playfield_data *pf);
+static void internal_pf_reset(struct playfield_data *pf);
+static void internal_pf_update(struct playfield_data *pf, const struct atarigen_pf_state *state, int scanline);
+static void internal_pf_process(struct playfield_data *pf, atarigen_pf_callback callback, void *param, const struct rectangle *clip);
+static int compute_shift(int size);
+static int compute_mask(int count);
+
+
+/*
+ *	Playfield render initialization
+ *
+ *	Allocates memory for the playfield and initializes all structures.
+ *
+ */
+
+static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_desc *source_desc)
+{
+	/* allocate the bitmap */
+	pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
+								source_desc->tileheight * source_desc->ytiles,
+								Machine->scrbitmap->depth);
+	if (!pf->bitmap)
+		return 1;
+
+	/* allocate the dirty tile map */
+	pf->dirty = malloc(source_desc->xtiles * source_desc->ytiles);
+	if (!pf->dirty)
+	{
+		internal_pf_free(pf);
+		return 1;
+	}
+	memset(pf->dirty, 0xff, source_desc->xtiles * source_desc->ytiles);
+
+	/* allocate the visitation map */
+	pf->visit = malloc(source_desc->xtiles * source_desc->ytiles);
+	if (!pf->visit)
+	{
+		internal_pf_free(pf);
+		return 1;
+	}
+
+	/* allocate the list of scanlines */
+	pf->scanline = malloc(source_desc->ytiles * source_desc->tileheight * sizeof(int));
+	if (!pf->scanline)
+	{
+		internal_pf_free(pf);
+		return 1;
+	}
+
+	/* allocate the list of parameters */
+	pf->state = malloc(source_desc->ytiles * source_desc->tileheight * sizeof(struct atarigen_pf_state));
+	if (!pf->state)
+	{
+		internal_pf_free(pf);
+		return 1;
+	}
+
+	/* copy the basic data */
+	pf->tilewidth = source_desc->tilewidth;
+	pf->tileheight = source_desc->tileheight;
+	pf->tilewidth_shift = compute_shift(source_desc->tilewidth);
+	pf->tileheight_shift = compute_shift(source_desc->tileheight);
+	pf->xtiles_mask = compute_mask(source_desc->xtiles);
+	pf->ytiles_mask = compute_mask(source_desc->ytiles);
+
+	/* initialize the last state to all zero */
+	pf->last_state = pf->state;
+	memset(pf->last_state, 0, sizeof(*pf->last_state));
+
+	/* reset */
+	internal_pf_reset(pf);
+
+	return 0;
+}
+
+int atarigen_pf_init(const struct atarigen_pf_desc *source_desc)
+{
+	int result = internal_pf_init(&playfield, source_desc);
+	if (!result)
+	{
+		/* allocate the overrender bitmap */
+		atarigen_pf_overrender_bitmap = osd_new_bitmap(Machine->drv->screen_width, Machine->drv->screen_height, Machine->scrbitmap->depth);
+		if (!atarigen_pf_overrender_bitmap)
+		{
+			internal_pf_free(&playfield);
+			return 1;
+		}
+
+		atarigen_pf_bitmap = playfield.bitmap;
+		atarigen_pf_dirty = playfield.dirty;
+		atarigen_pf_visit = playfield.visit;
+	}
+	return result;
+}
+
+int atarigen_pf2_init(const struct atarigen_pf_desc *source_desc)
+{
+	int result = internal_pf_init(&playfield2, source_desc);
+	if (!result)
+	{
+		atarigen_pf2_bitmap = playfield2.bitmap;
+		atarigen_pf2_dirty = playfield2.dirty;
+		atarigen_pf2_visit = playfield2.visit;
+	}
+	return result;
+}
+
+
+/*
+ *	Playfield render free
+ *
+ *	Frees all memory allocated by the playfield system.
+ *
+ */
+
+static void internal_pf_free(struct playfield_data *pf)
+{
+	if (pf->bitmap)
+		osd_free_bitmap(pf->bitmap);
+	pf->bitmap = NULL;
+
+	if (pf->dirty)
+		free(pf->dirty);
+	pf->dirty = NULL;
+
+	if (pf->visit)
+		free(pf->visit);
+	pf->visit = NULL;
+
+	if (pf->scanline)
+		free(pf->scanline);
+	pf->scanline = NULL;
+
+	if (pf->state)
+		free(pf->state);
+	pf->state = NULL;
+}
+
+void atarigen_pf_free(void)
+{
+	internal_pf_free(&playfield);
+
+	/* free the overrender bitmap */
+	if (atarigen_pf_overrender_bitmap)
+		osd_free_bitmap(atarigen_pf_overrender_bitmap);
+	atarigen_pf_overrender_bitmap = NULL;
+}
+
+void atarigen_pf2_free(void)
+{
+	internal_pf_free(&playfield2);
+}
+
+
+/*
+ *	Playfield render reset
+ *
+ *	Resets the playfield system for a new frame. Note that this is automatically called
+ *	if you're using the interrupt system.
+ *
+ */
+
+void internal_pf_reset(struct playfield_data *pf)
+{
+	/* verify memory has been allocated -- we're called even if we're not used */
+	if (pf->scanline && pf->state)
+	{
+		pf->entries = 0;
+		internal_pf_update(pf, pf->last_state, 0);
+	}
+}
+
+void atarigen_pf_reset(void)
+{
+	internal_pf_reset(&playfield);
+}
+
+void atarigen_pf2_reset(void)
+{
+	internal_pf_reset(&playfield2);
+}
+
+
+/*
+ *	Playfield render update
+ *
+ *	Sets the parameters for a given scanline.
+ *
+ */
+
+void internal_pf_update(struct playfield_data *pf, const struct atarigen_pf_state *state, int scanline)
+{
+	if (pf->entries > 0)
+	{
+		/* if the current scanline matches the previous one, just overwrite */
+		if (pf->scanline[pf->entries - 1] == scanline)
+			pf->entries--;
+
+		/* if the current data matches the previous data, ignore it */
+		else if (pf->last_state->hscroll == state->hscroll &&
+				 pf->last_state->vscroll == state->vscroll &&
+				 pf->last_state->param[0] == state->param[0] &&
+				 pf->last_state->param[1] == state->param[1])
+			return;
+	}
+
+	/* remember this entry as the last set of parameters */
+	pf->last_state = &pf->state[pf->entries];
+
+	/* copy in the data */
+	pf->scanline[pf->entries] = scanline;
+	pf->state[pf->entries++] = *state;
+
+	/* set the final scanline to be huge -- it will be clipped during processing */
+	pf->scanline[pf->entries] = 100000;
+}
+
+void atarigen_pf_update(const struct atarigen_pf_state *state, int scanline)
+{
+	internal_pf_update(&playfield, state, scanline);
+}
+
+void atarigen_pf2_update(const struct atarigen_pf_state *state, int scanline)
+{
+	internal_pf_update(&playfield2, state, scanline);
+}
+
+
+/*
+ *	Playfield render process
+ *
+ *	Processes the playfield in chunks.
+ *
+ */
+
+void internal_pf_process(struct playfield_data *pf, atarigen_pf_callback callback, void *param, const struct rectangle *clip)
+{
+	struct rectangle curclip;
+	struct rectangle tiles;
+	int y;
+
+	/* preinitialization */
+	curclip.min_x = clip->min_x;
+	curclip.max_x = clip->max_x;
+
+	/* loop over all entries */
+	for (y = 0; y < pf->entries; y++)
+	{
+		struct atarigen_pf_state *current = &pf->state[y];
+
+		/* determine the clip rect */
+		curclip.min_y = pf->scanline[y];
+		curclip.max_y = pf->scanline[y + 1] - 1;
+
+		/* skip if we're clipped out */
+		if (curclip.min_y > clip->max_y || curclip.max_y < clip->min_y)
+			continue;
+
+		/* clip the clipper */
+		if (curclip.min_y < clip->min_y)
+			curclip.min_y = clip->min_y;
+		if (curclip.max_y > clip->max_y)
+			curclip.max_y = clip->max_y;
+
+		/* determine the tile rect */
+		tiles.min_x = ((current->hscroll + curclip.min_x) >> pf->tilewidth_shift) & pf->xtiles_mask;
+		tiles.max_x = ((current->hscroll + curclip.max_x + pf->tilewidth) >> pf->tilewidth_shift) & pf->xtiles_mask;
+		tiles.min_y = ((current->vscroll + curclip.min_y) >> pf->tileheight_shift) & pf->ytiles_mask;
+		tiles.max_y = ((current->vscroll + curclip.max_y + pf->tileheight) >> pf->tileheight_shift) & pf->ytiles_mask;
+
+		/* call the callback */
+		(*callback)(&curclip, &tiles, current, param);
+	}
+}
+
+void atarigen_pf_process(atarigen_pf_callback callback, void *param, const struct rectangle *clip)
+{
+	internal_pf_process(&playfield, callback, param, clip);
+}
+
+void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const struct rectangle *clip)
+{
+	internal_pf_process(&playfield2, callback, param, clip);
+}
+
+
+/*
+ *	Shift value computer
+ *
+ *	Determines the log2(value).
+ *
+ */
+
+static int compute_shift(int size)
+{
+	int i;
+
+	/* loop until we shift to zero */
+	for (i = 0; i < 32; i++)
+		if (!(size >>= 1))
+			break;
+	return i;
+}
+
+
+/*
+ *	Mask computer
+ *
+ *	Determines the best mask to use for the given value.
+ *
+ */
+
+static int compute_mask(int count)
+{
+	int shift = compute_shift(count);
+
+	/* simple case - count is an even power of 2 */
+	if (count == (1 << shift))
+		return count - 1;
+
+	/* slightly less simple case - round up to the next power of 2 */
+	else
+		return (1 << (shift + 1)) - 1;
+}
+
+
+
+
+
 /*--------------------------------------------------------------------------
 
 	Misc Video stuff
-	
+
 		atarigen_get_hblank - returns the current HBLANK state
 		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
 		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
@@ -1545,7 +2984,7 @@ void atarigen_666_paletteram_w(int offset, int data)
 
 
 /*
- *	6-6-6 RGB exanded palette RAM handler
+ *	6-6-6 RGB expanded palette RAM handler
  *
  *	What it says.
  *
@@ -1644,7 +3083,7 @@ static void unhalt_cpu(int param)
 /*--------------------------------------------------------------------------
 
 	General stuff
-	
+
 		atarigen_show_slapstic_message - display warning about slapstic
 		atarigen_show_sound_message - display warning about coins
 		atarigen_update_messages - update messages
@@ -1661,7 +3100,7 @@ static int message_countdown;
  *	What it says.
  *
  */
- 
+
 void atarigen_show_slapstic_message(void)
 {
 	message_text[0] = "There are known problems with";
@@ -1706,7 +3145,7 @@ void atarigen_update_messages(void)
 	{
 		int maxwidth = 0;
 		int lines, x, y, i, j;
-		
+
 		/* first count lines and determine the maximum width */
 		for (lines = 0; lines < 10; lines++)
 		{
@@ -1729,26 +3168,26 @@ void atarigen_update_messages(void)
 		y += Machine->uifontheight;
 
 		/* draw the message */
-		for (i = 0; i < lines; i++)		
+		for (i = 0; i < lines; i++)
 		{
 			int width = strlen(message_text[i]) * Machine->uifontwidth;
 			int dx = (Machine->uifontwidth * maxwidth - width) / 2;
-			
+
 			for (j = 0; j < dx; j += Machine->uifontwidth)
 			{
 				ui_text(" ", x + j, y);
 				ui_text(" ", x + (maxwidth - 1) * Machine->uifontwidth - j, y);
 			}
-			
+
 			ui_text(message_text[i], x + dx, y);
 			y += Machine->uifontheight;
 		}
 
 		/* decrement the counter */
 		message_countdown--;
-		
+
 		/* if a coin is inserted, make the message go away */
-		if (osd_key_pressed(OSD_KEY_3) || osd_key_pressed(OSD_KEY_4))
+		if (keyboard_key_pressed(KEYCODE_3) || keyboard_key_pressed(KEYCODE_4))
 			message_countdown = 0;
 	}
 	else

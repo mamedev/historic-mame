@@ -577,7 +577,7 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
     copybitmap(bitmap,screen_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 #ifdef MAME_DEBUG
-	if (osd_key_pressed(OSD_KEY_F))
+	if (keyboard_key_pressed(KEYCODE_F))
 	{
 		FILE *fp=fopen("VIDEOR.DMP", "w+b");
 		if (fp)
@@ -904,7 +904,7 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     leland_draw_bitmap(bitmap, background_bitmap);
 
 #if 0
-    if (osd_key_pressed(OSD_KEY_B))
+    if (keyboard_key_pressed(KEYCODE_B))
     {
         FILE *fp;
         fp=fopen("TRAM.DMP", "w+b");

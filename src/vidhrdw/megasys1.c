@@ -643,17 +643,17 @@ int active_layers1;
 
 #ifdef MAME_DEBUG
 debugsprites = 0;
-if (osd_key_pressed(OSD_KEY_Z))
+if (keyboard_key_pressed(KEYCODE_Z))
 {
 int msk = 0;
 
-	if (osd_key_pressed(OSD_KEY_Q)) { msk |= 0xfff1;}
-	if (osd_key_pressed(OSD_KEY_W)) { msk |= 0xfff2;}
-	if (osd_key_pressed(OSD_KEY_E)) { msk |= 0xfff4;}
-	if (osd_key_pressed(OSD_KEY_A))	{ msk |= 0xfff8; debugsprites = 1;}
-	if (osd_key_pressed(OSD_KEY_S))	{ msk |= 0xfff8; debugsprites = 2;}
-	if (osd_key_pressed(OSD_KEY_D))	{ msk |= 0xfff8; debugsprites = 3;}
-	if (osd_key_pressed(OSD_KEY_F))	{ msk |= 0xfff8; debugsprites = 4;}
+	if (keyboard_key_pressed(KEYCODE_Q)) { msk |= 0xfff1;}
+	if (keyboard_key_pressed(KEYCODE_W)) { msk |= 0xfff2;}
+	if (keyboard_key_pressed(KEYCODE_E)) { msk |= 0xfff4;}
+	if (keyboard_key_pressed(KEYCODE_A))	{ msk |= 0xfff8; debugsprites = 1;}
+	if (keyboard_key_pressed(KEYCODE_S))	{ msk |= 0xfff8; debugsprites = 2;}
+	if (keyboard_key_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 3;}
+	if (keyboard_key_pressed(KEYCODE_F))	{ msk |= 0xfff8; debugsprites = 4;}
 
 	if (msk != 0) active_layers &= msk;
 }

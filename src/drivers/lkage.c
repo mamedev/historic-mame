@@ -65,7 +65,7 @@ static void irqhandler(int irq){
 static struct YM2203interface ym2203_interface = {
 	2,          /* 2 chips */
 	4000000,    /* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(60,60), YM2203_VOL(60,60) },
+	{ YM2203_VOL(19,19), YM2203_VOL(19,19) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },

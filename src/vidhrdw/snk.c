@@ -294,8 +294,8 @@ static void aso_draw_background( struct osd_bitmap *bitmap, int scrollx, int scr
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 
-//	if( osd_key_pressed( OSD_KEY_B ) ){
-//		while( osd_key_pressed( OSD_KEY_B ) ){};
+//	if( keyboard_key_pressed( KEYCODE_B ) ){
+//		while( keyboard_key_pressed( KEYCODE_B ) ){};
 //		bank = (bank+1)&3;
 //	}
 
@@ -322,13 +322,13 @@ static void aso_draw_background( struct osd_bitmap *bitmap, int scrollx, int scr
 			TRANSPARENCY_NONE,0);
 	}
 
-//	if( osd_key_pressed( OSD_KEY_S ) ){
+//	if( keyboard_key_pressed( KEYCODE_S ) ){
 //		FILE *f = fopen("dump","wb");
 //		if( f ){
 //			fwrite( Machine->memory_region[1], 0x10000, 1, f );
 //			fclose( f );
 //		}
-//		while( osd_key_pressed( OSD_KEY_S ) ){};
+//		while( keyboard_key_pressed( KEYCODE_S ) ){};
 //	}
 }
 
@@ -378,13 +378,13 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 
 	/* to be moved to memmap */
 	spriteram = &ram[0xe000];
-	videoram = osd_key_pressed( OSD_KEY_F )?&ram2[0xe800]:&ram[0xe800];
+	videoram = keyboard_key_pressed( KEYCODE_F )?&ram2[0xe800]:&ram[0xe800];
 
 	{
 		unsigned char bg_attrs = ram[0xcf00];
 		int scrolly = -8+ram[0xcb00]+((attributes&0x10)?256:0);
 		int scrollx = 0x1e*8 + ram[0xcc00]+((attributes&0x02)?256:0);
-		if( osd_key_pressed( OSD_KEY_M ) ) scrolly+=256;
+		if( keyboard_key_pressed( KEYCODE_M ) ) scrolly+=256;
 		aso_draw_background( bitmap, -scrollx, -scrolly,
 			bg_attrs>>4, /* tile bank */
 			bg_attrs&0xf /* color bank */
@@ -407,12 +407,12 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	{
 		static int kd = 0;
 		int i;
-		if( osd_key_pressed( OSD_KEY_J ) ){
-			while( osd_key_pressed( OSD_KEY_J ) ){}
+		if( keyboard_key_pressed( KEYCODE_J ) ){
+			while( keyboard_key_pressed( KEYCODE_J ) ){}
 			kd--;
 		}
-		if( osd_key_pressed( OSD_KEY_K ) ){
-			while( osd_key_pressed( OSD_KEY_K ) ){}
+		if( keyboard_key_pressed( KEYCODE_K ) ){
+			while( keyboard_key_pressed( KEYCODE_K ) ){}
 			kd++;
 		}
 		print( bitmap, kd, 2 );

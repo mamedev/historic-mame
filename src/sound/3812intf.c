@@ -1,3 +1,5 @@
+#define NEW_OPLEMU 1
+
 /*$DEADSERIOUSCLAN$*********************************************************************
 * FILE
 *	Yamaha 3812 emulator interface - MAME VERSION
@@ -20,23 +22,26 @@
 
 #define OPL3CONVERTFREQUENCY
 
+static char *chipname;
 
+#if NEW_OPLEMU
+static int chiptype;
+#else
 /* Emulated YM3812 variables and defines */
 static ym3812* ym = 0;
 static int ym_channel = 0;
 static int sample_bits;
 static FMSAMPLE *buffer;
-
+#endif
 
 /* Non-Emulated YM3812 variables and defines */
-#define MASTER_CLOCK_BASE 3600000
 static int pending_register;
 static int register_0xbd;
 static unsigned char status_register;
 static unsigned char timer_register;
 static unsigned int timer1_val;
 static unsigned int timer2_val;
-static double timer_scale;
+static double timer_step;
 static int aOPLFreqArray[16];		// Up to 9 channels..
 
 /* These ones are used by both */
@@ -45,7 +50,7 @@ static void *timer1;
 static void *timer2;
 
 /* Function procs to access the selected YM type */
-static int ( *sh_start )( const struct MachineSound *msound );
+/* static int ( *sh_start )( const struct MachineSound *msound ); */
 static void ( *sh_stop )( void );
 static int ( *status_port_0_r )( int offset );
 static void ( *control_port_0_w )( int offset, int data );
@@ -67,7 +72,7 @@ void timer1_callback (int param)
 	}
 
 	/* next! */
-	timer1 = timer_set (TIME_IN_USEC (timer1_val * 80) * timer_scale, 0, timer1_callback);
+	timer1 = timer_set ((double)timer1_val*4*timer_step, 0, timer1_callback);
 }
 
 void timer2_callback (int param)
@@ -81,7 +86,7 @@ void timer2_callback (int param)
 	}
 
 	/* next! */
-	timer2 = timer_set (TIME_IN_USEC (timer2_val * 320) * timer_scale, 0, timer2_callback);
+	timer2 = timer_set ((double)timer2_val*16*timer_step, 0, timer2_callback);
 }
 
 int nonemu_YM3812_sh_start(const struct MachineSound *msound)
@@ -93,16 +98,13 @@ int nonemu_YM3812_sh_start(const struct MachineSound *msound)
 	timer1_val = timer2_val = 256;
 	intf = msound->sound_interface;
 
-	timer_scale = (double)MASTER_CLOCK_BASE / (double)intf->baseclock;
-
+	timer_step = TIME_IN_HZ((double)intf->baseclock / 72.0);
 	return 0;
 }
 
 void nonemu_YM3812_sh_stop(void)
 {
 }
-
-
 
 int nonemu_YM3812_status_port_0_r(int offset)
 {
@@ -193,7 +195,7 @@ void nonemu_YM3812_write_port_0_w(int offset,int data)
 					if (data & 0x01)
 					{
 						if (!timer1)
-							timer1 = timer_set (TIME_IN_USEC (timer1_val * 80) * timer_scale, 0, timer1_callback);
+							timer1 = timer_set ((double)timer1_val*4*timer_step, 0, timer1_callback);
 					}
 					else if (timer1)
 					{
@@ -205,7 +207,7 @@ void nonemu_YM3812_write_port_0_w(int offset,int data)
 					if (data & 0x02)
 					{
 						if (!timer2)
-							timer2 = timer_set (TIME_IN_USEC (timer2_val * 320) * timer_scale, 0, timer2_callback);
+							timer2 = timer_set ((double)timer2_val*16*timer_step, 0, timer2_callback);
 					}
 					else if (timer2)
 					{
@@ -230,7 +232,134 @@ int nonemu_YM3812_read_port_0_r( int offset ) {
 	End of non-emulated YM3812 interface block
  **********************************************************************************************/
 
+#if NEW_OPLEMU
 
+#include "sound/fmopl.h"
+
+typedef void (*STREAM_HANDLER)(int param,void *buffer,int length);
+
+static int stream[MAX_3812];
+static FM_OPL *F3812[MAX_3812];
+static void *Timer[MAX_3812*2];
+
+/* IRQ Handler */
+static void IRQHandler(int n,int irq)
+{
+	if(irq)
+	{	/* Eddge sense */
+		if(intf->handler) intf->handler();
+	}
+}
+
+#if 0
+static void UpdateHandler(int n, void *buf, int length)
+{
+	YM3812UpdateOne(F3812[n],buf,length);
+}
+#endif
+
+/* Timer overflow callback from timer.c */
+static void timer_callback_3812(int param)
+{
+	int n=param>>1;
+	int c=param&1;
+	Timer[param] = 0;
+	OPLTimerOver(F3812[n],c);
+}
+
+/* TimerHandler from fm.c */
+static void TimerHandler(int c,double period)
+{
+	if( period == 0 )
+	{	/* Reset FM Timer */
+		if( Timer[c] )
+		{
+	 		timer_remove (Timer[c]);
+			Timer[c] = 0;
+		}
+	}
+	else
+	{	/* Start FM Timer */
+		Timer[c] = timer_set(period, c, timer_callback_3812 );
+	}
+}
+
+/************************************************/
+/* Sound Hardware Start							*/
+/************************************************/
+static int emu_YM3812_sh_start(const struct MachineSound *msound)
+{
+	int i,j;
+	int rate = Machine->sample_rate;
+
+	intf = msound->sound_interface;
+	if( intf->num > MAX_3812 ) return 1;
+
+	/* Timer state clear */
+	memset(Timer,0,sizeof(Timer));
+
+	/* stream system initialize */
+	for (i = 0;i < intf->num;i++)
+	{
+		/* stream setup */
+		char name[40];
+		int vol = intf->mixing_level[i];
+		/* emulator create */
+		F3812[i] = OPLCreate(chiptype,intf->baseclock,rate);
+		if(F3812[i] == NULL) return 1;
+		/* stream setup */
+		sprintf(name,"%s #%d",chipname,i);
+		//stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,i,UpdateHandler);
+		stream[i] = stream_init(name,vol,rate,FM_OUTPUT_BIT,(int)F3812[i],(STREAM_HANDLER)YM3812UpdateOne);
+		/* YM3812 setup */
+		OPLSetTimerHandler(F3812[i],TimerHandler,i*2);
+		OPLSetIRQHandler(F3812[i]  ,IRQHandler,i);
+		OPLSetUpdateHandler(F3812[i],stream_update,stream[i]);
+	}
+	return 0;
+}
+
+/************************************************/
+/* Sound Hardware Stop							*/
+/************************************************/
+void emu_YM3812_sh_stop(void)
+{
+	int i;
+
+	for (i = 0;i < intf->num;i++)
+	{
+		OPLDestroy(F3812[i]);
+	}
+}
+
+/* reset */
+void emu_YM3812_sh_reset(void)
+{
+	int i;
+
+	for (i = 0;i < intf->num;i++)
+		OPLResetChip(F3812[i]);
+}
+
+int emu_YM3812_status_port_0_r(int offset)
+{
+	return OPLRead(F3812[0],0);
+}
+void emu_YM3812_control_port_0_w(int offset,int data)
+{
+	OPLWrite(F3812[0],0,data);
+}
+void emu_YM3812_write_port_0_w(int offset,int data)
+{
+	OPLWrite(F3812[0],1,data);
+}
+
+int emu_YM3812_read_port_0_r( int offset )
+{
+	return OPLRead(F3812[0],1);
+}
+
+#else /* NEW_OPLEMU */
 /**********************************************************************************************
 	Begin of emulated YM3812 interface block
  **********************************************************************************************/
@@ -292,7 +421,7 @@ int emu_YM3812_sh_start(const struct MachineSound *msound)
 	timer1 = timer2 = 0;
 	ym->SetTimer = timer_handler;
 
-   ym_channel = stream_init("OPL 1/2/L",intf->volume[0],rate,sample_bits,
+   ym_channel = stream_init("%s #%d",chipname,intf->mixing_level[0],rate,sample_bits,
 			0,emu_ym3812_fixed_pointer_problem_update);
 	return 0;
 }
@@ -338,33 +467,38 @@ int emu_YM3812_read_port_0_r( int offset ) {
 /**********************************************************************************************
 	End of emulated YM3812 interface block
  **********************************************************************************************/
-
+#endif /* NEW_OPLEMU */
 
 /**********************************************************************************************
 	Begin of YM3812 interface stubs block
  **********************************************************************************************/
 
-int YM3812_sh_start(const struct MachineSound *msound)
+static int OPL_sh_start(const struct MachineSound *msound)
 {
-
 	if ( options.use_emulated_ym3812 ) {
-		sh_start = emu_YM3812_sh_start;
 		sh_stop = emu_YM3812_sh_stop;
 		status_port_0_r = emu_YM3812_status_port_0_r;
 		control_port_0_w = emu_YM3812_control_port_0_w;
 		write_port_0_w = emu_YM3812_write_port_0_w;
 		read_port_0_r = emu_YM3812_read_port_0_r;
+		return emu_YM3812_sh_start(msound);
 	} else {
-		sh_start = nonemu_YM3812_sh_start;
 		sh_stop = nonemu_YM3812_sh_stop;
 		status_port_0_r = nonemu_YM3812_status_port_0_r;
 		control_port_0_w = nonemu_YM3812_control_port_0_w;
 		write_port_0_w = nonemu_YM3812_write_port_0_w;
 		read_port_0_r = nonemu_YM3812_read_port_0_r;
+		return nonemu_YM3812_sh_start(msound);
 	}
+}
 
-   /* now call the proper handler */
-	return (*sh_start)(msound);
+int YM3812_sh_start(const struct MachineSound *msound)
+{
+	chipname = "YM3812";
+#if NEW_OPLEMU
+	chiptype = OPL_TYPE_YM3812;
+#endif
+	return OPL_sh_start(msound);
 }
 
 void YM3812_sh_stop( void ) {
@@ -389,4 +523,39 @@ int YM3812_read_port_0_r( int offset ) {
 
 /**********************************************************************************************
 	End of YM3812 interface stubs block
+ **********************************************************************************************/
+
+/**********************************************************************************************
+	Begin of YM3526 interface stubs block
+ **********************************************************************************************/
+int YM3526_sh_start(const struct MachineSound *msound)
+{
+	chipname = "YM3526";
+#if NEW_OPLEMU
+	chiptype = OPL_TYPE_YM3526;
+#endif
+	return OPL_sh_start(msound);
+}
+
+/**********************************************************************************************
+	End of YM3526 interface stubs block
+ **********************************************************************************************/
+
+/**********************************************************************************************
+	Begin of Y8950 interface stubs block
+ **********************************************************************************************/
+int Y8950_sh_start(const struct MachineSound *msound)
+{
+	chipname = "Y8950";
+	if( OPL_sh_start(msound) ) return 1;
+#if NEW_OPLEMU
+	chiptype = OPL_TYPE_Y8950;
+#endif
+	/* !!!!! port handler set !!!!! */
+	/* !!!!! delta-t memory address set !!!!! */
+	return 0;
+}
+
+/**********************************************************************************************
+	End of Y8950 interface stubs block
  **********************************************************************************************/

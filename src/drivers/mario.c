@@ -223,8 +223,9 @@ static struct IOWritePort writeport_sound[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
 
+
+INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -233,7 +234,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
@@ -266,6 +267,52 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mariojp_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )	/* doesn't work in game, but does in service mode */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x20, 0x20, "2 Players Game" )
+	PORT_DIPSETTING(    0x00, "1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Credits" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x40, "30000" )
+	PORT_DIPSETTING(    0x80, "40000" )
+	PORT_DIPSETTING(    0xc0, "None" )
 INPUT_PORTS_END
 
 
@@ -453,6 +500,8 @@ static struct MachineDriver masao_machine_driver =
 
 static const char *sample_names[] =
 {
+	"*mario",
+
 	/* 7f01 - 7f07 sounds */
 	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
 	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
@@ -490,7 +539,31 @@ ROM_START( mario_rom )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
 	ROM_REGION(0x1000)	/* sound */
-	ROM_LOAD( "mario.6k",     0x0000, 0x1000, 0x06b9ff85 )
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
+ROM_END
+
+ROM_START( mariojp_rom )
+	ROM_REGION(0x10000) /* 64k for code */
+	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, 0xb64b6330 )
+	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, 0x290c4977 )
+	ROM_LOAD( "tma1c-a1.7d",  0x4000, 0x2000, 0xf8575f31 )
+	ROM_LOAD( "tma1c-a2.7c",  0xf000, 0x1000, 0xa3c11e9e )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tma1v-a.3f",   0x0000, 0x1000, 0xadf49ee0 )
+	ROM_LOAD( "tma1v-a.3j",   0x1000, 0x1000, 0xa5318f2d )
+	ROM_LOAD( "tma1v-a.7m",   0x2000, 0x1000, 0x186762f8 )
+	ROM_LOAD( "tma1v-a.7n",   0x3000, 0x1000, 0xe0e08bba )
+	ROM_LOAD( "tma1v-a.7p",   0x4000, 0x1000, 0x7b27c8c1 )
+	ROM_LOAD( "tma1v-a.7s",   0x5000, 0x1000, 0x912ba80a )
+	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
+	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
+
+	ROM_REGION(0x0200)	/* color prom */
+	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
+
+	ROM_REGION(0x1000)	/* sound */
+	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
 ROM_START( masao_rom )
@@ -503,12 +576,12 @@ ROM_START( masao_rom )
 	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "masao-6.rom",  0x0000, 0x1000, 0x1c9e0be2 )
 	ROM_LOAD( "masao-7.rom",  0x1000, 0x1000, 0x747c1349 )
-	ROM_LOAD( "masao-8.rom",  0x2000, 0x1000, 0x186762f8 )
+	ROM_LOAD( "tma1v-a.7m",   0x2000, 0x1000, 0x186762f8 )
 	ROM_LOAD( "masao-9.rom",  0x3000, 0x1000, 0x50be3918 )
 	ROM_LOAD( "mario.7p",     0x4000, 0x1000, 0x56be6ccd )
-	ROM_LOAD( "masao-11.rom", 0x5000, 0x1000, 0x912ba80a )
-	ROM_LOAD( "masao-12.rom", 0x6000, 0x1000, 0x5cbb92a5 )
-	ROM_LOAD( "masao-13.rom", 0x7000, 0x1000, 0x13afb9ed )
+	ROM_LOAD( "tma1v-a.7s",   0x5000, 0x1000, 0x912ba80a )
+	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
+	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
 
 	ROM_REGION(0x0200)	/* color prom */
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
@@ -516,6 +589,8 @@ ROM_START( masao_rom )
 	ROM_REGION(0x10000) /* 64k for sound */
 	ROM_LOAD( "masao-5.rom",  0x0000, 0x1000, 0xbd437198 )
 ROM_END
+
+
 
 static int hiload(void)
 {
@@ -567,7 +642,7 @@ struct GameDriver mario_driver =
 	__FILE__,
 	0,
 	"mario",
-	"Mario Bros.",
+	"Mario Bros. (US)",
 	"1983",
 	"Nintendo of America",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
@@ -581,6 +656,32 @@ struct GameDriver mario_driver =
 	0,	/* sound_prom */
 
 	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_180,
+
+	hiload, hisave
+};
+
+struct GameDriver mariojp_driver =
+{
+	__FILE__,
+	&mario_driver,
+	"mariojp",
+	"Mario Bros. (Japan)",
+	"1983",
+	"Nintendo",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	mariojp_rom,
+	0, 0,
+	sample_names,
+	0,	/* sound_prom */
+
+	mariojp_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_180,

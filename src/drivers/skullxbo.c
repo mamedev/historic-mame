@@ -3,7 +3,7 @@
 Skull & Crossbones Memory Map
 -----------------------------
 
-SKULL & CROSSBONES 68010 MEMORY MAP
+SKULL & CROSSBONES 68000 MEMORY MAP
 
 Function                           Address        R/W  DATA
 -------------------------------------------------------------
@@ -51,7 +51,7 @@ RAM                                FF4000-FFFFFF  R/W
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
@@ -69,8 +69,6 @@ void skullxbo_scanline_update(int param);
 
 
 
-static int irq_state = 0;
-
 
 /*************************************
  *
@@ -78,15 +76,15 @@ static int irq_state = 0;
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (irq_state && !vblank)
+	if (atarigen_scanline_int_state)
 		newstate = 1;
-	if (vblank)
+	if (atarigen_video_int_state)
 		newstate = 2;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate = 4;
 
 	if (newstate)
@@ -98,8 +96,8 @@ static void update_interrupts(int vblank, int sound)
 
 static void irq_gen(int param)
 {
-	irq_state = 1;
-	atarigen_update_interrupts();
+	(void)param;
+	atarigen_scanline_int_gen();
 }
 
 
@@ -119,33 +117,10 @@ static void alpha_row_update(int scanline)
 
 static void init_machine(void)
 {
-	irq_state = 0;
-
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, alpha_row_update);
-	ataraud2_init(1, 2, 1, 0x0080);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-	
-	/* display messages */
-	atarigen_show_sound_message();
-}
-
-
-
-/*************************************
- *
- *		Interrupt handling
- *
- *************************************/
-
-static void irq_ack_w(int offset, int data)
-{
-	irq_state = 0;
-	atarigen_update_interrupts();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(alpha_row_update, 8);
+	atarijsa_reset();
 }
 
 
@@ -207,16 +182,16 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xff0000, 0xff07ff, skullxbo_mobmsb_w },
 	{ 0xff0800, 0xff0bff, atarigen_halt_until_hblank_0_w },
 	{ 0xff0c00, 0xff0fff, atarigen_eeprom_enable_w },
-	{ 0xff1000, 0xff13ff, atarigen_vblank_ack_w },
+	{ 0xff1000, 0xff13ff, atarigen_video_int_ack_w },
 	{ 0xff1400, 0xff17ff, atarigen_sound_w },
 	{ 0xff1800, 0xff1bff, atarigen_sound_reset_w },
 	{ 0xff1c00, 0xff1c7f, skullxbo_playfieldlatch_w },
 	{ 0xff1c80, 0xff1cff, skullxbo_hscroll_w },
-	{ 0xff1d00, 0xff1d7f, irq_ack_w },
+	{ 0xff1d00, 0xff1d7f, atarigen_scanline_int_ack_w },
 	{ 0xff1d80, 0xff1dff, watchdog_reset_w },
 	{ 0xff1e00, 0xff1e7f, skullxbo_playfieldlatch_w },
 	{ 0xff1e80, 0xff1eff, skullxbo_hscroll_w },
-	{ 0xff1f00, 0xff1f7f, irq_ack_w },
+	{ 0xff1f00, 0xff1f7f, atarigen_scanline_int_ack_w },
 	{ 0xff1f80, 0xff1fff, watchdog_reset_w },
 	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w },
 	{ 0xff4000, 0xff47ff, skullxbo_vscroll_w },
@@ -238,7 +213,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( skullxbo_ports )
-	PORT_START      /* IN0 */
+	PORT_START      /* ff5800 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -249,12 +224,12 @@ INPUT_PORTS_START( skullxbo_ports )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* ff5802 */
 	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )	/* HBLANK */
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )	/* /AUDBUSY */
-	PORT_BITX(  0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0080, "Off")
 	PORT_DIPSETTING(    0x0000, "On")
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -266,7 +241,7 @@ INPUT_PORTS_START( skullxbo_ports )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 
-	ATARI_AUDIO_2_PORT	/* audio board port */
+	JSA_II_PORT		/* audio board port */
 INPUT_PORTS_END
 
 
@@ -335,14 +310,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			JSA_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -363,11 +338,7 @@ static struct MachineDriver machine_driver =
 	skullxbo_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151_MONO,
-		ATARI_AUDIO_2_OKIM6295(2)
-	}
+	JSA_II_MONO(2)
 };
 
 
@@ -530,6 +501,27 @@ static void rom_decode(void)
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void skullxbo_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	atarijsa_init(1, 2, 1, 0x0080);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -545,7 +537,7 @@ struct GameDriver skullxbo_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (Hardware Info)",
 	0,
 	&machine_driver,
-	0,
+	skullxbo_init,
 
 	skullxbo_rom,
 	rom_decode,
@@ -572,7 +564,7 @@ struct GameDriver skullxb2_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (Hardware Info)",
 	0,
 	&machine_driver,
-	0,
+	skullxbo_init,
 
 	skullxb2_rom,
 	rom_decode,

@@ -62,7 +62,7 @@ Working RAM             FFD000-FFFFFF  R/W   D15-D0
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
@@ -106,13 +106,13 @@ static void shared_ram_4_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (vblank)
+	if (atarigen_video_int_state)
 		newstate |= 4;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate |= 6;
 
 	if (newstate)
@@ -124,17 +124,10 @@ static void update_interrupts(int vblank, int sound)
 
 static void init_machine(void)
 {
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, vindictr_scanline_update);
-	ataraud2_init(1, 5, 1, 0x0002);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4150, 0x4168);
-	
-	/* display messages */
-	atarigen_show_sound_message();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(vindictr_scanline_update, 8);
+	atarijsa_reset();
 }
 
 
@@ -232,7 +225,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
-	{ 0x360000, 0x360001, atarigen_vblank_ack_w },
+	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, MWA_NOP },
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
@@ -257,7 +250,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( vindictr_ports )
-	PORT_START		/* 0x26000 */
+	PORT_START		/* 26000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
@@ -268,9 +261,9 @@ INPUT_PORTS_START( vindictr_ports )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER1 | IPF_2WAY )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 | IPF_2WAY )
 
-	PORT_START		/* 0x26010 */
+	PORT_START		/* 26010 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BITX(    0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0002, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -286,25 +279,25 @@ INPUT_PORTS_START( vindictr_ports )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER2 | IPF_2WAY )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER2 | IPF_2WAY )
 
-	PORT_START	/* 0x26020 */
+	PORT_START		/* 26020 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* single joystick */
+	PORT_START		/* single joystick */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER1 )
 
-	PORT_START	/* single joystick */
+	PORT_START		/* single joystick */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT | IPF_PLAYER2 )
 
-	ATARI_AUDIO_2_PORT	/* audio port */
+	JSA_I_PORT		/* audio port */
 INPUT_PORTS_END
 
 
@@ -359,14 +352,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68010,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			JSA_CPU(1)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -386,11 +379,7 @@ static struct MachineDriver machine_driver =
 	vindictr_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151,
-		ATARI_AUDIO_2_POKEY
-	}
+	JSA_I_STEREO_WITH_POKEY
 };
 
 
@@ -451,6 +440,27 @@ ROM_END
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void vindictr_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	atarijsa_init(1, 5, 1, 0x0002);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4150, 0x4168);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -466,7 +476,7 @@ struct GameDriver vindictr_driver =
 	"Aaron Giles (MAME driver)\nNeil Bradley (hardware information)",
 	0,
 	&machine_driver,
-	0,
+	vindictr_init,
 
 	vindictr_rom,
 	rom_decode,

@@ -1,6 +1,4 @@
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 #include "unzip.h"
 #include <sys/stat.h>

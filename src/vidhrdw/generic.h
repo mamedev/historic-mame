@@ -27,3 +27,5 @@ void videoram_w(int offset,int data);
 void colorram_w(int offset,int data);
 int spriteram_r(int offset);
 void spriteram_w(int offset,int data);
+int spriteram_2_r(int offset);
+void spriteram_2_w(int offset,int data);

@@ -96,18 +96,18 @@ int klax_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 32				/* number of tiles in each direction */
 	};
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -192,7 +192,7 @@ void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* remap if necessary */
 	if (update_palette())
 		memset(atarigen_pf_dirty, 1, atarigen_playfieldram_size / 4);
-	
+
 	/* update playfield */
 	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
 
@@ -266,7 +266,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 31)
@@ -301,7 +301,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 31)
 		{
 			int offs = x * 32 + y;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
@@ -310,7 +310,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				int color = (data2 >> 8) & 15;
 				int hflip = data1 & 0x8000;
 				int code = data1 & 0x1fff;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
 			}
@@ -341,14 +341,14 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int offs = x * 32 + y;
 			int data2 = READ_WORD(&atarigen_playfieldram[offs * 2 + 0x1000]);
 			int color = (data2 >> 8) & 15;
-			
+
 			/* overdraw if the color is 15 */
 			if (color == 15)
 			{
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int hflip = data1 & 0x8000;
 				int code = data1 & 0x1fff;
-				
+
 				drawgfx(bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, clip, TRANSPARENCY_NONE, 0);
 			}
 		}
@@ -361,7 +361,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
@@ -401,7 +401,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int hsize = ((data[3] >> 4) & 7) + 1;
 	int hflip = data[3] & 0x0008;
 	int vsize = (data[3] & 7) + 1;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 
@@ -433,14 +433,14 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 static void debug(void)
 {
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

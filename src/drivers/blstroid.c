@@ -64,13 +64,10 @@ RAM                                FFE000-FFFFFF  R/W
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
-int blstroid_irq_state;
-
-void blstroid_irq_ack_w(int offset, int data);
 void blstroid_priorityram_w(int offset, int data);
 void blstroid_playfieldram_w(int offset, int data);
 
@@ -88,15 +85,15 @@ void blstroid_scanline_update(int scanline);
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (blstroid_irq_state)
+	if (atarigen_scanline_int_state)
 		newstate = 1;
-	if (vblank)
+	if (atarigen_video_int_state)
 		newstate = 2;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate = 4;
 
 	if (newstate)
@@ -108,19 +105,10 @@ static void update_interrupts(int vblank, int sound)
 
 static void init_machine(void)
 {
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, blstroid_scanline_update);
-	ataraud2_init(1, 4, 2, 0x80);
-
-	blstroid_irq_state = 0;
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
-
-	/* display messages */
-	atarigen_show_sound_message();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(blstroid_scanline_update, 8);
+	atarijsa_reset();
 }
 
 
@@ -168,8 +156,8 @@ static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0xff8000, 0xff8001, watchdog_reset_w },
-	{ 0xff8200, 0xff8201, blstroid_irq_ack_w },
-	{ 0xff8400, 0xff8401, atarigen_vblank_ack_w },
+	{ 0xff8200, 0xff8201, atarigen_scanline_int_ack_w },
+	{ 0xff8400, 0xff8401, atarigen_video_int_ack_w },
 	{ 0xff8600, 0xff8601, atarigen_eeprom_enable_w },
 	{ 0xff8800, 0xff89ff, blstroid_priorityram_w },
 	{ 0xff8a00, 0xff8a01, atarigen_sound_w },
@@ -192,15 +180,15 @@ static struct MemoryWriteAddress main_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( blstroid_ports )
-	PORT_START      /* IN0 */
+	PORT_START      /* ff9800 */
 	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 60, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* IN1 */
+	PORT_START      /* ff9804 */
 	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 60, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* DSW */
+	PORT_START		/* ff9c00 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
@@ -208,19 +196,19 @@ INPUT_PORTS_START( blstroid_ports )
 	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX( 0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX( 0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0080, DEF_STR( Off ))
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ))
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
+	PORT_START		/* ff9c02 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT( 0xfff0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	ATARI_AUDIO_2_PORT	/* audio board port */
+	JSA_I_PORT	/* audio board port */
 INPUT_PORTS_END
 
 
@@ -276,14 +264,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			JSA_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -304,10 +292,7 @@ static struct MachineDriver machine_driver =
 	blstroid_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151
-	}
+	JSA_I_STEREO
 };
 
 
@@ -391,6 +376,26 @@ ROM_END
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void blstroid_init(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x80);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -406,7 +411,7 @@ struct GameDriver blstroid_driver =
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
 	0,
 	&machine_driver,
-	0,
+	blstroid_init,
 
 	blstroid_rom,
 	0,
@@ -433,7 +438,7 @@ struct GameDriver blstroi2_driver =
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
 	0,
 	&machine_driver,
-	0,
+	blstroid_init,
 
 	blstroi2_rom,
 	0,

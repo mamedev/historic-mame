@@ -29,7 +29,7 @@
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
 #endif
-#if (HAS_I86)
+#if (HAS_I86 || HAS_V30)
 #include "cpu/i86/i86intrf.h"
 #endif
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
@@ -567,6 +567,40 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
         i86_info,                           /* Get formatted string for a specific register */
+		i86_dasm,							/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&i86_ICount,						/* Pointer to the instruction count */
+		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1000,
+		I86_NMI_INT,
+		cpu_readmem20,						/* Memory read */
+		cpu_writemem20, 					/* Memory write */
+		cpu_setOPbase20,					/* Update CPU opcode base */
+		0,20,CPU_IS_LE,1,5, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
+    },
+#endif
+#if (HAS_V30)
+    {
+		CPU_V30,							/* CPU number and family cores sharing resources */
+        v30_reset,                          /* Reset CPU */
+		i86_exit,							/* Shut down the CPU */
+		i86_execute,						/* Execute a number of cycles */
+		i86_get_context,					/* Get the contents of the registers */
+		i86_set_context,					/* Set the contents of the registers */
+		i86_get_pc,							/* Return the current program counter */
+		i86_set_pc,							/* Set the current program counter */
+		i86_get_sp,							/* Return the current stack pointer */
+		i86_set_sp,							/* Set the current stack pointer */
+		i86_get_reg, 						/* Get a specific register value */
+		i86_set_reg, 						/* Set a specific register value */
+        i86_set_nmi_line,                   /* Set state of the NMI line */
+		i86_set_irq_line,					/* Set state of the IRQ line */
+		i86_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        v30_info,                           /* Get formatted string for a specific register */
 		i86_dasm,							/* Disassemble one instruction */
 		1,0,								/* Number of IRQ lines, default IRQ vector */
 		&i86_ICount,						/* Pointer to the instruction count */
@@ -1644,13 +1678,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
 #if SAVE_STATE_TEST
         {
-            static int pressed_s = 0;
-            static int pressed_l = 0;
-
-            if( osd_key_pressed(OSD_KEY_S) && !pressed_s )
+            if( keyboard_key_pressed_memory(KEYCODE_S) )
             {
                 void *s = state_create(Machine->gamedrv->name);
-                pressed_s = 1;
                 if( s )
                 {
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
@@ -1666,12 +1696,10 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
                     state_close(s);
                 }
             }
-            else pressed_s = 0;
 
-            if( osd_key_pressed(OSD_KEY_L) && !pressed_l )
+            if( keyboard_key_pressed_memory(KEYCODE_L) )
             {
                 void *s = state_open(Machine->gamedrv->name);
-                pressed_l = 1;
                 if( s )
                 {
 					for( cpunum = 0; cpunum < totalcpu; cpunum++ )
@@ -1689,7 +1717,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
                     }
                     state_close(s);
                 }
-            } else pressed_l = 0;
+            }
         }
 #endif
         /* ask the timer system to schedule */

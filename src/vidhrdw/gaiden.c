@@ -1,135 +1,11 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
-
-172: title
-182: ice cream hang
+	Ninja Gaiden / Tecmo Knights Video Hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-/* blit contains parameters for drawing a sprite */
-static struct {
-	int x,y,w,h;
-	int clip_left, clip_right, clip_top, clip_bottom;
-
-	int flags;
-	unsigned short *pal_data;
-	int transparent_pen;
-
-	unsigned char *mask_baseaddr;
-	int mask_rowsize;
-
-	unsigned char *source_baseaddr;
-	int source_rowsize;
-
-	unsigned char *dest_baseaddr;
-	int dest_rowsize;
-} blit;
-
-#define SPRITE_FLIPX					0x01
-#define SPRITE_FLIPY					0x02
-#define SPRITE_TRANSPARENCY_THROUGH		0x04
-
-#define DRAWSPRITE \
-if( blit.flags&SPRITE_FLIPX ){ \
-	source += blit.x + blit.w-1; \
-	for( y=y1; y<y2; y++ ){ \
-		for( x=x1; x<x2; x++ ){ \
-			if( OPAQUE(-x) ) dest[x] = COLOR(-x); \
-		} \
-		NEXTLINE \
-		source += source_offset; \
-		dest += blit.dest_rowsize; \
-	} \
-} \
-else { \
-	source -= blit.x; \
-	for( y=y1; y<y2; y++ ){ \
-		for( x=x1; x<x2; x++ ){ \
-			if( OPAQUE(x) ) dest[x] = COLOR(x); \
-		} \
-		NEXTLINE \
-		source += source_offset; \
-		dest += blit.dest_rowsize; \
-	} \
-}
-
-/* sprite_draw is a general-purpose drawing utility, similar to draw_gfx */
-
-static void sprite_draw( void ){
-	int x1 = blit.x;
-	int y1 = blit.y;
-	int x2 = blit.w + blit.x;
-	int y2 = blit.h + blit.y;
-
-	if( x1<blit.clip_left ) x1 = blit.clip_left;
-	if( y1<blit.clip_top ) y1 = blit.clip_top;
-	if( x2>blit.clip_right ) x2 = blit.clip_right;
-	if( y2>blit.clip_bottom ) y2 = blit.clip_bottom;
-
-	if( x1<x2 && y1<y2 ){
-		unsigned char *dest = blit.dest_baseaddr + y1*blit.dest_rowsize;
-		unsigned char *source = blit.source_baseaddr;
-		unsigned short *pal_data = blit.pal_data;
-		int transparent_pen = blit.transparent_pen;
-		int x,y,source_offset;
-
-		if( blit.flags&SPRITE_FLIPY ){
-			source_offset = -blit.source_rowsize;
-			source += (y2-1-blit.y)*blit.source_rowsize;
-		}
-		else {
-			source_offset = blit.source_rowsize;
-			source += (y1-blit.y)*blit.source_rowsize;
-		}
-
-		if( blit.mask_baseaddr ){ /* draw a masked sprite */
-			unsigned char *mask = blit.mask_baseaddr + (y1-blit.y)*blit.mask_rowsize-blit.x;
-			#define OPAQUE(X) (mask[x]==0 && source[X]!=transparent_pen)
-			#define COLOR(X) (pal_data[source[X]])
-			#define NEXTLINE mask+=blit.mask_rowsize;
-			DRAWSPRITE
-			#undef OPAQUE
-			#undef COLOR
-			#undef NEXTLINE
-		}
-		else if( blit.flags&SPRITE_TRANSPARENCY_THROUGH ){
-			int color = Machine->pens[palette_transparent_color];
-			#define OPAQUE(X) (dest[x]==color && source[X]!=transparent_pen)
-			#define COLOR(X) (pal_data[source[X]])
-			#define NEXTLINE
-			DRAWSPRITE
-			#undef OPAQUE
-			#undef COLOR
-			#undef NEXTLINE
-		}
-		else if( pal_data ){
-			#define OPAQUE(X) (source[X]!=transparent_pen)
-			#define COLOR(X) (pal_data[source[X]])
-			#define NEXTLINE
-			DRAWSPRITE
-			#undef OPAQUE
-			#undef COLOR
-			#undef NEXTLINE
-		}
-		else {
-			#define OPAQUE(X) (source[X]!=transparent_pen)
-			#define COLOR(X) 0xff
-			#define NEXTLINE
-			DRAWSPRITE
-			#undef OPAQUE
-			#undef COLOR
-			#undef NEXTLINE
-		}
-	}
-}
-
-/***************************************************************************/
 
 unsigned char *gaiden_videoram;
 unsigned char *gaiden_videoram2;
@@ -138,6 +14,7 @@ unsigned char *gaiden_videoram3;
 void gaiden_vh_stop (void);
 
 static struct tilemap *text_layer,*foreground,*background;
+static struct sprite_list *sprite_list;
 
 static const UINT16 *videoram1, *videoram2;
 static int gfxbank;
@@ -159,31 +36,6 @@ static void get_bg_tile_info( int col, int row ){
 /********************************************************************************/
 
 #define NUMSPRITES 128
-#define MAXSPRITESIZE 64
-static struct sprite_info {
-	unsigned char *pen_data;
-	unsigned short *pal_data;
-	int pen_usage;
-	int x, y, w, h;
-
-	/* to be packed */
-	int visible;
-	int priority;
-	int flipx, flipy;
-
-	/*
-		The following bit of mechanism is used so that one sprite can force the
-		pixels of another sprite to be hidden.
-	*/
-	int masked;
-	/*
-		"masked" flags the sprites which are overlaped and need special treatment.
-		This way, the performance impact is limited only to the sprites which are
-		covered and need masking.
-	*/
-	unsigned char hidepixel[MAXSPRITESIZE*MAXSPRITESIZE];
-	/* this currently eats a lot of memory */
-} *sprite_info;
 
 /* sprite format:
  *
@@ -202,186 +54,71 @@ static struct sprite_info {
  *    5,6,7|                  | unused
  */
 
-/* get_sprite_info is the only routine to inspect spriteram.  It's needed as a
-preprocessing step so we can do palette management and sprite layering effects */
+/* get_sprite_info is the only routine to inspect spriteram */
 
 static void get_sprite_info( void ){
-	static int flicker = 0;
 	const struct GfxElement *gfx = Machine->gfx[3];
-	const unsigned short *source = (const unsigned short *)spriteram;
-	const unsigned short *finish = source+0x400;
-	struct sprite_info *sprite = sprite_info;
+	const unsigned short *source = (const UINT16 *)spriteram;
+	struct sprite *sprite = sprite_list->sprite;
+	int count = NUMSPRITES;
 
-	flicker = 1-flicker;
+	int attributes, flags, number, color, span;
 
-	while( source<finish ){
-		int attributes = source[0];
-		sprite->visible = attributes&0x04;
-		if( (attributes&0x20) && flicker ) sprite->visible = 0;
+	while( count-- ){
+		attributes = source[0];
+		flags = 0;
 
-		if( sprite->visible ){
+		if( attributes&0x04 ){ /* visible */
+			number = source[1]&0x7fff;
+			color = source[2];
+			flags |= SPRITE_VISIBLE;
+			if( attributes&0x20 ) flags |= SPRITE_FLICKER;
+
 			sprite->priority = (attributes>>6)&3;
+			if( sprite->priority==3 ){
+				flags |= SPRITE_TRANSPARENCY_THROUGH;
+			//	sprite->priority = 2;
+			}
+
+			span = 8 << (color & 0x03);
+
+			color = (color>>4)&0xf;
+
 			sprite->y = source[3] & 0x1ff;
 			sprite->x = source[4] & 0x1ff;
+			/* wraparound - could be handled by Sprite Manager?*/
 			if( sprite->x >= 256) sprite->x -= 512;
 			if( sprite->y >= 256) sprite->y -= 512;
 
-			if( sprite->x <= -64 || sprite->x >= 256 ||
-				sprite->y <= -64 || sprite->y >= 256 ){
-				sprite->visible = 0; /* offscreen */
-			}
-			else {
-				int number = source[1]&0x7fff;
-				int color = source[2];
-				int span = 0;
+			sprite->total_width = sprite->total_height = span;
+			sprite->tile_width = sprite->tile_height = 64;
+			if( attributes&1 ) flags |= SPRITE_FLIPX;
+			if( attributes&2 ) flags |= SPRITE_FLIPY;
 
-				switch( color&0x3 ){
-					case 0: span = 8; break;
-					case 1: span = 16; break;//number = (number/4)*4; break;
-					case 2: span = 32; break;//number = (number/16)*16; break;
-					case 3: span = 64; break;//number = (number/64)*64; break;
-				}
+			sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
+			sprite->pen_usage = gfx->pen_usage[number/64];
 
-				color = (color>>4)&0xf;
+			sprite->pen_data = gfx->gfxdata->line[(number/64)*64];
+			sprite->x_offset = 0;
+			sprite->y_offset = 0;
+			if( number&0x01 ) sprite->x_offset += 8;
+			if( number&0x02 ) sprite->y_offset += 8;
+			if( number&0x04 ) sprite->x_offset += 16;
+			if( number&0x08 ) sprite->y_offset += 16;
+			if( number&0x10 ) sprite->x_offset += 32;
+			if( number&0x20 ) sprite->y_offset += 32;
 
-				sprite->masked = 0;
-				sprite->w = sprite->h = span;
-				sprite->flipx = attributes&1;
-				sprite->flipy = attributes&2;
-				sprite->pal_data = &gfx->colortable[gfx->color_granularity * color];
-				sprite->pen_usage = gfx->pen_usage[number/64];
-
-				sprite->pen_data = gfx->gfxdata->line[(number/64)*64];
-				if( number&0x01 ) sprite->pen_data += 8;
-				if( number&0x02 ) sprite->pen_data += 8*64;
-				if( number&0x04 ) sprite->pen_data += 16;
-				if( number&0x08 ) sprite->pen_data += 16*64;
-				if( number&0x10 ) sprite->pen_data += 32;
-				if( number&0x20 ) sprite->pen_data += 32*64;
-			}
+//			if( number&0x01 ) sprite->pen_data += 8;
+//			if( number&0x02 ) sprite->pen_data += 8*64;
+//			if( number&0x04 ) sprite->pen_data += 16;
+//			if( number&0x08 ) sprite->pen_data += 16*64;
+//			if( number&0x10 ) sprite->pen_data += 32;
+//			if( number&0x20 ) sprite->pen_data += 32*64;
+			sprite->line_offset = 64;
 		}
+		sprite->flags = flags;
 		sprite++;
 		source += 8;
-	}
-}
-
-static void mark_sprite_colors( void ){
-	int i,j;
-
-	unsigned int colmask[16];
-	memset( colmask, 0, 16*sizeof(unsigned int) );
-
-	get_sprite_info();
-
-	blit.clip_left = 0;
-	blit.clip_top = 0;
-	blit.dest_rowsize = 64;
-	blit.transparent_pen = 0;
-	blit.mask_baseaddr = 0;
-	blit.pal_data = 0;
-	blit.source_rowsize = 64;
-
-	/*
-		The following loop ensures that even though we are drawing all priority 3
-		sprites before drawing the priority 2 sprites, and priority 2 sprites before the
-		priority 1 sprites, that the sprite order as a whole still dictates
-		sprite-to-sprite priority when sprite pixels overlap and aren't obscured by a
-		background.  Checks are done to avoid special handling for the cases where
-		masking isn't needed.
-	*/
-	for( i=0; i<NUMSPRITES; i++ ){
-		struct sprite_info *sprite = &sprite_info[i];
-		if( sprite->visible ){
-			int priority = sprite->priority;
-
-			colmask[(sprite->pal_data - Machine->colortable)/16]
-				|= sprite->pen_usage;
-
-			if( priority<3 ){
-				/*
-					priority 3 sprites are always drawn first, so we
-					don't need to do anything special to cause them to
-					be obscured by other sprites
-				*/
-				blit.clip_right = sprite->w;
-				blit.clip_bottom = sprite->h;
-				blit.dest_baseaddr = sprite->hidepixel;
-
-				for( j=i+1; j<NUMSPRITES; j++ ){
-					struct sprite_info *front = &sprite_info[j];
-					if( front->visible && front->priority>priority ){
-						blit.x = front->x - sprite->x;
-						blit.y = front->y - sprite->y;
-						blit.w = front->w;
-						blit.h = front->h;
-						if( blit.x<blit.clip_right &&
-							blit.y<blit.clip_bottom &&
-							blit.x+blit.w>blit.clip_left &&
-							blit.y+blit.h>blit.clip_top ){
-
-							blit.flags = 0;
-							if( front->flipx ) blit.flags |= SPRITE_FLIPX;
-							if( front->flipy ) blit.flags |= SPRITE_FLIPY;
-
-							if( !sprite->masked ){
-								memset( sprite->hidepixel, 0, 64*64 );
-								sprite->masked = 1;
-							}
-							blit.source_baseaddr = front->pen_data;
-							sprite_draw();
-						}
-					}
-				}
-			}
-		}
-	}
-
-	{
-		unsigned char *pen_used = &palette_used_colors[Machine->drv->gfxdecodeinfo[3].color_codes_start];
-		for( i = 0; i<16; i++ ){
-			int bit;
-			for( bit = 1; bit<16; bit++ ){
-				if( colmask[i] & (1 << bit) ) pen_used[bit] |= PALETTE_COLOR_VISIBLE;
-			}
-			pen_used += 16;
-		}
-	}
-}
-
-static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
-	int base_flags = (priority==3)?SPRITE_TRANSPARENCY_THROUGH:0;
-	/* priority 3 sprites are drawn behind the background layer */
-
-	int i;
-
-	{ /* set constants */
-		const struct rectangle *clip = &Machine->drv->visible_area;
-		blit.clip_left = clip->min_x;
-		blit.clip_right = clip->max_x+1;
-		blit.clip_top = clip->min_y;
-		blit.clip_bottom = clip->max_y+1;
-		blit.dest_baseaddr = bitmap->line[0];
-		blit.dest_rowsize = bitmap->line[1]-bitmap->line[0];
-		blit.transparent_pen = 0;
-		blit.mask_rowsize = 64;
-		blit.source_rowsize = 64;
-	}
-
-	for( i=0; i<NUMSPRITES; i++ ){
-		struct sprite_info *sprite = &sprite_info[i];
-		if( sprite->visible && (sprite->priority==priority) ){
-			blit.pal_data = sprite->pal_data;
-			blit.source_baseaddr = sprite->pen_data;
-			blit.mask_baseaddr = sprite->masked?sprite->hidepixel:0;
-			blit.x = sprite->x;
-			blit.y = sprite->y;
-			blit.w = sprite->w;
-			blit.h = sprite->h;
-			blit.flags = base_flags;
-			if( sprite->flipx ) blit.flags |= SPRITE_FLIPX;
-			if( sprite->flipy ) blit.flags |= SPRITE_FLIPY;
-			sprite_draw();
-		}
 	}
 }
 
@@ -389,6 +126,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority ){
 
 int gaiden_vh_start(void)
 {
+	sprite_list = sprite_list_create( NUMSPRITES, SPRITE_LIST_BACK_TO_FRONT );
+
 	text_layer = tilemap_create(
 		get_fg_tile_info,
 		TILEMAP_TRANSPARENT,
@@ -410,23 +149,19 @@ int gaiden_vh_start(void)
 		64,32
 	);
 
-	if( text_layer && foreground && background )
-	{
-		sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
-		if( sprite_info )
-		{
-			text_layer->transparent_pen = 0;
-			foreground->transparent_pen = 0;
-			palette_transparent_color = 0x200; /* background color */
-			return 0;
-		}
+	if( sprite_list && text_layer && foreground && background ){
+		sprite_list->sprite_type = SPRITE_TYPE_UNPACK;
+		sprite_list->max_priority = 3;
+		text_layer->transparent_pen = 0;
+		foreground->transparent_pen = 0;
+		palette_transparent_color = 0x200; /* background color */
+		return 0;
 	}
 
 	return 1;
 }
 
 void gaiden_vh_stop(void){
-	free( sprite_info );
 }
 
 /* scroll write handlers */
@@ -537,8 +272,10 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	videoram2 = (const unsigned short *)gaiden_videoram;
 	tilemap_update(text_layer);
 
+	get_sprite_info();
+
 	palette_init_used_colors();
-	mark_sprite_colors();
+	sprite_update();
 	{
 		/* the following is required to make the colored background work */
 		int i;
@@ -550,12 +287,11 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,background,0);
-	draw_sprites(bitmap,3); /* behind bg */
-	draw_sprites(bitmap,2); /* behind fg */
+	sprite_draw( sprite_list, 3); /* behind background (drawn with transparency_through) */
+	sprite_draw( sprite_list, 2); /* between background and foreground */
 	tilemap_draw(bitmap,foreground,0);
-	draw_sprites(bitmap,1); /* in front of fg */
+	sprite_draw( sprite_list, 1); /* ? */
 	tilemap_draw(bitmap,text_layer,0);
-	draw_sprites(bitmap,0); /* highest priority */
+	sprite_draw( sprite_list, 0); /* ? */
 }

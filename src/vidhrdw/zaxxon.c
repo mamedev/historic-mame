@@ -122,6 +122,7 @@ static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dx, int dy,
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int zaxxon_vh_start(void)
 {
 	int offs;
@@ -269,6 +270,59 @@ int zaxxon_vh_start(void)
 	return 0;
 }
 
+int razmataz_vh_start(void)
+{
+	int offs;
+	int sx,sy;
+
+
+	if (generic_vh_start() != 0)
+		return 1;
+
+	/* large bitmap for the precalculated background */
+	if ((backgroundbitmap1 = osd_create_bitmap(256,4096)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+
+	if ((backgroundbitmap2 = osd_create_bitmap(256,4096)) == 0)
+	{
+		osd_free_bitmap(backgroundbitmap1);
+		generic_vh_stop();
+		return 1;
+	}
+
+
+	/* prepare the background */
+	for (offs = 0;offs < 0x4000;offs++)
+	{
+		sy = 8 * (offs / 32);
+		sx = 8 * (offs % 32);
+
+		drawgfx(backgroundbitmap1,Machine->gfx[1],
+				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
+				Machine->memory_region[2][0x4000 + offs] >> 4,
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
+
+		drawgfx(backgroundbitmap2,Machine->gfx[1],
+				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
+				16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* free the graphics ROMs, they are no longer needed */
+	free(Machine->memory_region[2]);
+	Machine->memory_region[2] = 0;
+
+	return 0;
+}
+
 
 
 /***************************************************************************
@@ -292,6 +346,79 @@ void zaxxon_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+	if (zaxxon_vid_type == CONGO_VID)
+	{
+		int i;
+		static unsigned int sprpri[0x100]; /* this really should not be more
+		                             * than 0x1e, but I did not want to check
+		                             * for 0xff which is set when sprite is off
+		                             * -V-
+		                             */
+
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
+		/* The number of active sprites is stored at 0xc032 */
+
+		for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
+			sprpri[ spriteram[offs+1] ] = offs;
+
+		for (i=0x1e ; i>=0; i--)
+		{
+			offs = sprpri[i];
+
+			if (spriteram[offs+2] != 0xff)
+			{
+				drawgfx(bitmap,Machine->gfx[2],
+						spriteram[offs+2+1]& 0x7f,
+						spriteram[offs+2+2],
+						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
+						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+	else if (zaxxon_vid_type == FUTSPY_VID)
+	{
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			if (spriteram[offs] != 0xff)
+			{
+					drawgfx(bitmap,Machine->gfx[2],
+						spriteram[offs+1] & 0x7f,
+						spriteram[offs+2] & 0x3f,
+						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
+						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+	else
+	{
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			if (spriteram[offs] != 0xff)
+			{
+					drawgfx(bitmap,Machine->gfx[2],
+						spriteram[offs+1] & 0x3f,
+						spriteram[offs+2] & 0x3f,
+						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
+						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+}
+
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
@@ -368,72 +495,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 
-	if (zaxxon_vid_type == CONGO_VID)
-	{
-		int i;
-		static unsigned int sprpri[0x100]; /* this really should not be more
-		                             * than 0x1e, but I did not want to check
-		                             * for 0xff which is set when sprite is off
-		                             * -V-
-		                             */
-
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
-		/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
-		/* The number of active sprites is stored at 0xc032 */
-
-		for (offs = 0x1e * 0x20 ;offs >= 0x00 ;offs -= 0x20)
-			sprpri[ spriteram[offs+1] ] = offs;
-
-		for (i=0x1e ; i>=0; i--)
-		{
-			offs = sprpri[i];
-
-			if (spriteram[offs+2] != 0xff)
-			{
-				drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+2+1]& 0x7f,
-						spriteram[offs+2+2],
-						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
-						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-	else if (zaxxon_vid_type == FUTSPY_VID)
-	{
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-		{
-			if (spriteram[offs] != 0xff)
-			{
-					drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+1] & 0x7f,
-						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
-						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-	else
-	{
-		/* Draw the sprites. Note that it is important to draw them exactly in this */
-		/* order, to have the correct priorities. */
-		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-		{
-			if (spriteram[offs] != 0xff)
-			{
-					drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+1] & 0x3f,
-						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
-						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
+	draw_sprites(bitmap);
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -454,6 +516,51 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
+				color,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
+void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* copy the background */
+	if (*zaxxon_background_enable)
+	{
+		int scroll;
+
+		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+
+		if (*zaxxon_background_color_bank & 1)
+			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		else
+			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+
+	draw_sprites(bitmap);
+
+
+	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+		int code,color;
+
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		code = videoram[offs];
+		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
+
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
 				color,
 				0,0,
 				8*sx,8*sy,

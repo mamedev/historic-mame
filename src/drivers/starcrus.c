@@ -123,15 +123,16 @@ INPUT_PORTS_END
 
 static struct GfxLayout spritelayout1 =
 {
-	8,8,	/* 8x8 sprites */
-	4, 	    /* 4 sprites */
-    1,      /* 1 bits per pixel */
-	{ 0 },	/* 1 chip */
-    { 0*8+4,  1*8+4,  2*8+4,  3*8+4, 4*8+4, 5*8+4, 6*8+4, 7*8+4 },
-	{ 0, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	16,16,    /* 16x16 sprites */
+	4,          /* 4 sprites */
+	1,      /* 1 bits per pixel */
+	{ 0 },  /* 1 chip */
+	{ 0*8+4,  0*8+4,  1*8+4,  1*8+4, 2*8+4, 2*8+4, 3*8+4, 3*8+4,
+	  4*8+4,  4*8+4,  5*8+4,  5*8+4, 6*8+4, 6*8+4, 7*8+4, 7*8+4 },
+	{ 0, 0, 1*64, 1*64, 2*64, 2*64, 3*64, 3*64,
+	  4*64, 4*64, 5*64, 5*64, 6*64, 6*64, 7*64, 7*64 },
 	1  /* every sprite takes 1 consecutive bit */
 };
-
 static struct GfxLayout spritelayout2 =
 {
     16,16,   /* 16x16 sprites */
@@ -213,7 +214,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( starcrus_rom )
-    ROM_REGION(0x1000)  /* code */
+    ROM_REGION(0x10000)  /* code */
 	ROM_LOAD( "starcrus.j1",   0x0000, 0x0200, 0x0ee60a50 )
 	ROM_LOAD( "starcrus.k1",   0x0200, 0x0200, 0xa7bc3bc4 )
 	ROM_LOAD( "starcrus.l1",   0x0400, 0x0200, 0x10d233ec )

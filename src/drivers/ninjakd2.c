@@ -243,17 +243,10 @@ extern int 	ninjakd2_spriteram_size;
 extern int	ninjakd2_backgroundram_size;
 extern int 	ninjakd2_foregroundram_size;
 
-static int ninjakd2_bank_latch = 255, main_cpu_num;
+static int ninjakd2_bank_latch = 255;
+static void *ninjakd2_fm_timer = NULL;
 
-void ninjakd2_init_machine(void)
-{
-	main_cpu_num = 0;
-}
 
-void ninjak2a_init_machine(void)
-{
-	main_cpu_num = 1;
-}
 
 int ninjakd2_init_samples(void)
 {
@@ -275,13 +268,13 @@ int ninjakd2_init_samples(void)
 			return 1;
 
 		samples->sample[i]->length = sample_info[i][1];
-		samples->sample[i]->smpfreq = 11025;	/* 11 kHz ?? */
+		samples->sample[i]->smpfreq = 16000;	/* 16 kHz */
 		samples->sample[i]->resolution = 8;
 		for (n=0; n<sample_info[i][1]; n++)
 			samples->sample[i]->data[n] = source[sample_info[i][0]+n] ^ 0x80;
 	}
 
-	/*	The samples are now ready to be used.  They are a 8 bit, 11 khz samples. 	 */
+	/*	The samples are now ready to be used.  They are a 8 bit, 16 khz samples. 	 */
 
 	return 0;
 }
@@ -299,7 +292,7 @@ int ninjakd2_bankselect_r(int offset)
 
 void ninjakd2_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	int bankaddress;
 
 	if (data != ninjakd2_bank_latch)
@@ -451,7 +444,7 @@ INPUT_PORTS_START( input_ports )
     PORT_DIPSETTING(    0x80, "Japanese" )
 
     PORT_START  /* dsw1 */
-    PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+    PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
     PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
@@ -516,16 +509,23 @@ static struct Samplesinterface samples_interface =
 	25	/* volume */
 };
 
+/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
 static struct YM2203interface ym2203_interface =
 {
 	2, 	 /* 2 chips */
-	1250000, /* 5000000/4 MHz ???? */
+	1500000, /* 12000000/8 MHz */
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
-	{ 0 }
+	{ 0 },
+	{ irqhandler }
 };
 
 
@@ -542,7 +542,7 @@ static struct MachineDriver ninjakd2_machine_driver =
 	},
 	60, 10000,			/* frames per second, vblank duration */
 	10,				/* single CPU, no need for interleaving */
-	ninjakd2_init_machine,
+	0,
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
@@ -566,27 +566,24 @@ static struct MachineDriver ninjakd2_machine_driver =
 static struct MachineDriver ninjak2a_machine_driver =
 {
 	{
-/* TODO: currently I have to put the sound CPU first because the main core supports */
-/* opcode decryption only on the first CPU */
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			0,
-			snd_readmem,snd_writemem,
-			0,snd_writeport,
-			interrupt,2
-		},
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			2,			/* & vbl duration since sprites are */
+			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,		/* 12000000/3 ??? */
+			2,
+			snd_readmem,snd_writemem,0,snd_writeport,
+			ignore_interrupt,0,
 		}
 	},
 	60, 10000,	/* frames per second, vblank duration */
 	10,
-	ninjak2a_init_machine,
+	0,
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
@@ -654,31 +651,6 @@ ROM_START( ninjakd2_rom )
 ROM_END
 
 ROM_START( ninjak2a_rom )
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
-
-	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
-	ROM_CONTINUE(	        0x10000, 0x4000)
-	ROM_CONTINUE(	        0x04000, 0x4000)
-	ROM_CONTINUE(	        0x14000, 0x4000)
-	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
-	ROM_CONTINUE(	        0x18000, 0x4000)
-	ROM_CONTINUE(	        0x0C000, 0x4000)
-	ROM_CONTINUE(	        0x1C000, 0x4000)
-	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
-	ROM_CONTINUE(	        0x30000, 0x4000)
-	ROM_CONTINUE(	        0x24000, 0x4000)
-	ROM_CONTINUE(	        0x34000, 0x4000)
-	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
-	ROM_CONTINUE(	        0x38000, 0x4000)
-	ROM_CONTINUE(	        0x2C000, 0x4000)
-	ROM_CONTINUE(	        0x3C000, 0x4000)
-	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
-	ROM_CONTINUE(	        0x44000, 0x02000)
-	ROM_CONTINUE(	        0x42000, 0x02000)
-	ROM_CONTINUE(	        0x46000, 0x02000)
-
 	ROM_REGION(0x30000)
 	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
 	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
@@ -686,13 +658,42 @@ ROM_START( ninjak2a_rom )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
 	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
 
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
+	ROM_CONTINUE(	        0x10000, 0x4000)
+	ROM_CONTINUE(	        0x04000, 0x4000)
+	ROM_CONTINUE(	        0x14000, 0x4000)
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_CONTINUE(	        0x18000, 0x4000)
+	ROM_CONTINUE(	        0x0C000, 0x4000)
+	ROM_CONTINUE(	        0x1C000, 0x4000)
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
+	ROM_CONTINUE(	        0x30000, 0x4000)
+	ROM_CONTINUE(	        0x24000, 0x4000)
+	ROM_CONTINUE(	        0x34000, 0x4000)
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
+	ROM_CONTINUE(	        0x38000, 0x4000)
+	ROM_CONTINUE(	        0x2C000, 0x4000)
+	ROM_CONTINUE(	        0x3C000, 0x4000)
+	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
+	ROM_CONTINUE(	        0x44000, 0x02000)
+	ROM_CONTINUE(	        0x42000, 0x02000)
+	ROM_CONTINUE(	        0x46000, 0x02000)
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
 ROM_START( ninjak2b_rom )
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
+	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
@@ -716,20 +717,20 @@ ROM_START( ninjak2b_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x30000)
-	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
-	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
 ROM_START( rdaction_rom )
-	ROM_REGION(0x10000)
-	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
+	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
@@ -753,21 +754,19 @@ ROM_START( rdaction_rom )
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x30000)
-	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
-	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
-	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
-	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
-	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
+
+
 static int hiload(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xe0f4],"\x00\x30\x00",3) == 0 )
@@ -787,7 +786,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -800,7 +799,10 @@ static void hisave(void)
 void ninjak2a_sound_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	extern int encrypted_cpu;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	encrypted_cpu = 1;
 
 	memcpy(ROM,RAM,0xffff);
 

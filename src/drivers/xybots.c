@@ -3,7 +3,7 @@
 Xybots Memory Map
 -----------------------------------
 
-XYBOTS 68010 MEMORY MAP
+XYBOTS 68000 MEMORY MAP
 
 Function                           Address        R/W  DATA
 -------------------------------------------------------------
@@ -23,7 +23,7 @@ XYBOTS 6502 MEMORY MAP
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
@@ -43,13 +43,13 @@ void xybots_scanline_update(int scanline);
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (vblank)
+	if (atarigen_video_int_state)
 		newstate = 1;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate = 2;
 
 	if (newstate)
@@ -61,22 +61,11 @@ static void update_interrupts(int vblank, int sound)
 
 static void init_machine(void)
 {
-	atarigen_slapstic_num = 107;
-	atarigen_slapstic_reset();
-
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, xybots_scanline_update);
-
-	ataraud2_init(1, 2, 1, 0x0100);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
-
-	/* display messages */
-/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
-	atarigen_show_sound_message();
+	atarigen_slapstic_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(xybots_scanline_update, 8);
+	atarijsa_reset();
 }
 
 
@@ -87,7 +76,7 @@ static void init_machine(void)
  *
  *************************************/
 
-int special_port1_r(int offset)
+static int special_port1_r(int offset)
 {
 	static int h256 = 0x0400;
 
@@ -108,7 +97,6 @@ int special_port1_r(int offset)
 
 static struct MemoryReadAddress main_readmem[] =
 {
-	{ 0x008000, 0x00ffff, atarigen_slapstic_r },
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0xff8000, 0xff8fff, MRA_BANK3 },
 	{ 0xff9000, 0xffadff, MRA_BANK2 },
@@ -125,7 +113,6 @@ static struct MemoryReadAddress main_readmem[] =
 
 static struct MemoryWriteAddress main_writemem[] =
 {
-	{ 0x008000, 0x00ffff, atarigen_slapstic_w, &atarigen_slapstic },
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0xff8000, 0xff8fff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xff9000, 0xffadff, MWA_BANK2 },
@@ -136,7 +123,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
 	{ 0xffe900, 0xffe9ff, atarigen_sound_w },
 	{ 0xffea00, 0xffeaff, watchdog_reset_w },
-	{ 0xffeb00, 0xffebff, atarigen_vblank_ack_w },
+	{ 0xffeb00, 0xffebff, atarigen_video_int_ack_w },
 	{ 0xffee00, 0xffeeff, atarigen_sound_reset_w },
 	{ -1 }  /* end of table */
 };
@@ -150,27 +137,27 @@ static struct MemoryWriteAddress main_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( xybots_ports )
-	PORT_START	/* /SW */
+	PORT_START	/* ffe100 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "P2 Twist Right", OSD_KEY_W, IP_JOY_DEFAULT )
-	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "P2 Twist Left", OSD_KEY_Q, IP_JOY_DEFAULT )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "P2 Twist Right", KEYCODE_W, IP_JOY_DEFAULT )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "P2 Twist Left", KEYCODE_Q, IP_JOY_DEFAULT )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BITX(0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "P1 Twist Right", OSD_KEY_X, IP_JOY_DEFAULT )
-	PORT_BITX(0x0800, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "P1 Twist Left", OSD_KEY_Z, IP_JOY_DEFAULT )
+	PORT_BITX(0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "P1 Twist Right", KEYCODE_X, IP_JOY_DEFAULT )
+	PORT_BITX(0x0800, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "P1 Twist Left", KEYCODE_Z, IP_JOY_DEFAULT )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 
-	PORT_START	/* /SYSIN */
+	PORT_START	/* ffe200 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x0100, 0x0100, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x0100, 0x0100, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x0100, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED ) 	/* /AUDBUSY */
@@ -178,7 +165,7 @@ INPUT_PORTS_START( xybots_ports )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_VBLANK )	/* VBLANK */
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	ATARI_AUDIO_2_PORT_SWAPPED	/* audio port */
+	JSA_I_PORT_SWAPPED	/* audio port */
 INPUT_PORTS_END
 
 
@@ -246,14 +233,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68000,		/* verified */
 			7159160,
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			JSA_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -273,10 +260,7 @@ static struct MachineDriver machine_driver =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151
-	}
+	JSA_I_STEREO
 };
 
 
@@ -317,6 +301,29 @@ ROM_END
 
 /*************************************
  *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void xybots_init(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x008000, 107);
+
+	atarijsa_init(1, 2, 1, 0x0100);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
  *		Game driver(s)
  *
  *************************************/
@@ -332,7 +339,7 @@ struct GameDriver xybots_driver =
 	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&machine_driver,
-	0,
+	xybots_init,
 
 	xybots_rom,
 	0,

@@ -133,18 +133,18 @@ int shuuz_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -175,11 +175,16 @@ void shuuz_playfieldram_w(int offset, int data)
 	int oldword = READ_WORD(&atarigen_playfieldram[offset]);
 	int newword = COMBINE_WORD(oldword, data);
 
+	/* update the data if different */
 	if (oldword != newword)
 	{
 		WRITE_WORD(&atarigen_playfieldram[offset], newword);
 		atarigen_pf_dirty[(offset & 0x1fff) / 2] = 1;
 	}
+
+	/* handle the latch, but only write the upper byte */
+	if (offset < 0x2000 && atarigen_video_control_latch1 != -1)
+		shuuz_playfieldram_w(offset + 0x2000, atarigen_video_control_latch1 | 0x00ff0000);
 }
 
 
@@ -198,6 +203,22 @@ void shuuz_scanline_update(int scanline)
 		int link = READ_WORD(&atarigen_playfieldram[0x1f80 + 2 * (scanline / 8)]) & 0xff;
 		atarigen_mo_update(atarigen_spriteram, link, scanline);
 	}
+
+#if DEBUG_VIDEO
+	if (scanline == 0)
+		if (keyboard_key_pressed(KEYCODE_8))
+		{
+			static FILE *out;
+			if (!out) out = fopen("scroll.log", "w");
+			if (out)
+			{
+				int i;
+				for (i = 0; i < 64; i++)
+					fprintf(out, "%04X ", READ_WORD(&atarigen_playfieldram[0x1f00 + 2 * i]));
+				fprintf(out, "\n");
+			}
+		}
+#endif
 }
 
 
@@ -217,7 +238,7 @@ void shuuz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* remap if necessary */
 	if (update_palette())
 		memset(atarigen_pf_dirty, 1, atarigen_playfieldram_size / 4);
-	
+
 	/* update playfield */
 	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
 
@@ -274,7 +295,7 @@ static const unsigned char *update_palette(void)
 					palette_used_colors[0x000 + i * 16 + j] = PALETTE_COLOR_USED;
 		}
 	}
-	
+
 	/* special case color 15 of motion object palette 15 */
 	palette_used_colors[0x000 + 15 * 16 + 15] = PALETTE_COLOR_TRANSPARENT;
 
@@ -294,7 +315,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
@@ -329,7 +350,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		{
 			int offs = x * 64 + y;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
@@ -379,14 +400,14 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int offs = x * 64 + y;
 			int data2 = READ_WORD(&atarigen_playfieldram[offs * 2 + 0x2000]);
 			int color = (data2 >> 8) & 15;
-			
+
 			/* overdraw if the color is 15 */
 			if (((color & 8) && color >= overrender_data->color) || overrender_data->type == OVERRENDER_PRIORITY)
 			{
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int hflip = data1 & 0x8000;
 				int code = data1 & 0x3fff;
-				
+
 				drawgfx(bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, clip, TRANSPARENCY_NONE, 0);
 
 #if DEBUG_VIDEO
@@ -408,7 +429,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
@@ -449,7 +470,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int ypos = YDIM - (data[3] >> 7);
 	int hsize = ((data[3] >> 4) & 7) + 1;
 	int vsize = (data[3] & 7) + 1;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 
@@ -461,7 +482,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 	/* determine the bounding box */
 	atarigen_mo_compute_clip_8x8(pf_clip, xpos, ypos, hsize, vsize, clip);
-		
+
 	/* draw the motion object */
 	atarigen_mo_draw_8x8(bitmap, gfx, code, color, hflip, 0, xpos, ypos, hsize, vsize, clip, TRANSPARENCY_PEN, 0);
 
@@ -474,7 +495,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		overrender_data.color = color;
 		atarigen_pf_process(pf_overrender_callback, &overrender_data, &pf_clip);
 	}
-	
+
 	/* high priority case? */
 	else
 	{
@@ -515,7 +536,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 static void mo_print_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	FILE *file = param;
-	
+
 	/* extract data from the various words */
 	int hflip = data[1] & 0x8000;
 	int code = data[1] & 0x7fff;
@@ -532,40 +553,40 @@ static void debug(void)
 {
 	int new_show_colors;
 	int new_special;
-	
-	new_show_colors = osd_key_pressed(OSD_KEY_CAPSLOCK);
+
+	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
 	if (new_show_colors != show_colors)
 	{
 		show_colors = new_show_colors;
 		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 4);
 	}
 
-	if (osd_key_pressed(OSD_KEY_Q)) new_special = 0;
-	if (osd_key_pressed(OSD_KEY_W)) new_special = 1;
-	if (osd_key_pressed(OSD_KEY_E)) new_special = 2;
-	if (osd_key_pressed(OSD_KEY_R)) new_special = 3;
-	if (osd_key_pressed(OSD_KEY_T)) new_special = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) new_special = 5;
-	if (osd_key_pressed(OSD_KEY_U)) new_special = 6;
-	if (osd_key_pressed(OSD_KEY_I)) new_special = 7;
+	if (keyboard_key_pressed(KEYCODE_Q)) new_special = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) new_special = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) new_special = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) new_special = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) new_special = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) new_special = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) new_special = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) new_special = 7;
 
-	if (osd_key_pressed(OSD_KEY_A)) new_special = 8;
-	if (osd_key_pressed(OSD_KEY_S)) new_special = 9;
-	if (osd_key_pressed(OSD_KEY_D)) new_special = 10;
-	if (osd_key_pressed(OSD_KEY_F)) new_special = 11;
-	if (osd_key_pressed(OSD_KEY_G)) new_special = 12;
-	if (osd_key_pressed(OSD_KEY_H)) new_special = 13;
-	if (osd_key_pressed(OSD_KEY_J)) new_special = 14;
-	if (osd_key_pressed(OSD_KEY_K)) new_special = 15;
-	
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_A)) new_special = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) new_special = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) new_special = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) new_special = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) new_special = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) new_special = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) new_special = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) new_special = 15;
+
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

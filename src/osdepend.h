@@ -2,6 +2,8 @@
 #define OSDEPEND_H
 
 #include "osd_cpu.h"
+#include "inptport.h"
+
 
 /* The Win32 port requires this constant for variable arg routines. */
 #ifndef CLIB_DECL
@@ -20,6 +22,17 @@
 #define FPTR int
 #endif
 
+
+int osd_init(void);
+void osd_exit(void);
+
+
+/******************************************************************************
+
+  Display
+
+******************************************************************************/
+
 struct osd_bitmap
 {
 	int width,height;       /* width and height of the bitmap */
@@ -28,161 +41,100 @@ struct osd_bitmap
 	unsigned char **line; /* pointers to the start of each line */
 };
 
+/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
+/* around the bitmap. This is required because, for performance reasons, some graphic */
+/* routines don't clip at boundaries of the bitmap. */
+struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
+#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
+void osd_clearbitmap(struct osd_bitmap *bitmap);
+void osd_free_bitmap(struct osd_bitmap *bitmap);
+/* Create a display screen, or window, large enough to accomodate a bitmap */
+/* of the given dimensions. Attributes are the ones defined in driver.h. */
+/* Return a osd_bitmap pointer or 0 in case of error. */
+struct osd_bitmap *osd_create_display(int width,int height,int attributes);
+int osd_set_display(int width,int height,int attributes);
+void osd_close_display(void);
+/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
+/* in *pens the pen values corresponding to the requested colors. */
+/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
+/* with pen values corresponding to a 5-5-5 15-bit palette */
+void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens);
+void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
+void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
+void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+int osd_skip_this_frame(void);
+void osd_update_video_and_audio(void);
+void osd_set_gamma(float _gamma);
+float osd_get_gamma(void);
+void osd_set_brightness(int brightness);
+int osd_get_brightness(void);
+void osd_save_snapshot(void);
 
-#define OSD_KEY_NONE		0
-#define OSD_KEY_ESC         1        /* keyboard scan codes */
-#define OSD_KEY_1           2        /* (courtesy of allegro.h) */
-#define OSD_KEY_2           3
-#define OSD_KEY_3           4
-#define OSD_KEY_4           5
-#define OSD_KEY_5           6
-#define OSD_KEY_6           7
-#define OSD_KEY_7           8
-#define OSD_KEY_8           9
-#define OSD_KEY_9           10
-#define OSD_KEY_0           11
-#define OSD_KEY_MINUS       12
-#define OSD_KEY_EQUALS      13
-#define OSD_KEY_BACKSPACE   14
-#define OSD_KEY_TAB         15
-#define OSD_KEY_Q           16
-#define OSD_KEY_W           17
-#define OSD_KEY_E           18
-#define OSD_KEY_R           19
-#define OSD_KEY_T           20
-#define OSD_KEY_Y           21
-#define OSD_KEY_U           22
-#define OSD_KEY_I           23
-#define OSD_KEY_O           24
-#define OSD_KEY_P           25
-#define OSD_KEY_OPENBRACE   26
-#define OSD_KEY_CLOSEBRACE  27
-#define OSD_KEY_ENTER       28
-#define OSD_KEY_LCONTROL    29
-#define OSD_KEY_A           30
-#define OSD_KEY_S           31
-#define OSD_KEY_D           32
-#define OSD_KEY_F           33
-#define OSD_KEY_G           34
-#define OSD_KEY_H           35
-#define OSD_KEY_J           36
-#define OSD_KEY_K           37
-#define OSD_KEY_L           38
-#define OSD_KEY_COLON       39
-#define OSD_KEY_QUOTE       40
-#define OSD_KEY_TILDE       41
-#define OSD_KEY_LSHIFT      42
-/* 43 */
-#define OSD_KEY_Z           44
-#define OSD_KEY_X           45
-#define OSD_KEY_C           46
-#define OSD_KEY_V           47
-#define OSD_KEY_B           48
-#define OSD_KEY_N           49
-#define OSD_KEY_M           50
-#define OSD_KEY_COMMA       51
-#define OSD_KEY_STOP        52
-#define OSD_KEY_SLASH       53
-#define OSD_KEY_RSHIFT      54
-#define OSD_KEY_ASTERISK    55
-#define OSD_KEY_ALT         56
-#define OSD_KEY_SPACE       57
-#define OSD_KEY_CAPSLOCK    58
-#define OSD_KEY_F1          59
-#define OSD_KEY_F2          60
-#define OSD_KEY_F3          61
-#define OSD_KEY_F4          62
-#define OSD_KEY_F5          63
-#define OSD_KEY_F6          64
-#define OSD_KEY_F7          65
-#define OSD_KEY_F8          66
-#define OSD_KEY_F9          67
-#define OSD_KEY_F10         68
-#define OSD_KEY_NUMLOCK     69
-#define OSD_KEY_SCRLOCK     70
-#define OSD_KEY_HOME        71
-#define OSD_KEY_UP          72
-#define OSD_KEY_PGUP        73
-#define OSD_KEY_MINUS_PAD   74
-#define OSD_KEY_LEFT        75
-#define OSD_KEY_5_PAD       76
-#define OSD_KEY_RIGHT       77
-#define OSD_KEY_PLUS_PAD    78
-#define OSD_KEY_END         79
-#define OSD_KEY_DOWN        80
-#define OSD_KEY_PGDN        81
-#define OSD_KEY_INSERT      82
-#define OSD_KEY_DEL         83
-#define OSD_KEY_PRTSCR      84
-/* 85 - 86 */
-#define OSD_KEY_F11         87
-#define OSD_KEY_F12         88
-#define OSD_KEY_COMMAND     89
-#define OSD_KEY_OPTION      90
-#define OSD_KEY_LWIN        91
-#define OSD_KEY_RWIN        92
-#define OSD_KEY_MENU        93
-#define OSD_KEY_RCONTROL    94  /* different from Allegro */
-#define OSD_KEY_ALTGR       95  /* different from Allegro */
-#define OSD_KEY_PAUSE       96  /* different from Allegro */
-/* 97 - 100 */
-/* The following are all undefined in Allegro */
-#define OSD_KEY_1_PAD		101
-#define OSD_KEY_2_PAD		102
-#define OSD_KEY_3_PAD		103
-#define OSD_KEY_4_PAD		104
-/* 105 */
-#define OSD_KEY_6_PAD		106
-#define OSD_KEY_7_PAD		107
-#define OSD_KEY_8_PAD		108
-#define OSD_KEY_9_PAD		109
-#define OSD_KEY_0_PAD		110
-#define OSD_KEY_STOP_PAD	111
-#define OSD_KEY_EQUALS_PAD	112
-#define OSD_KEY_SLASH_PAD	113
-#define OSD_KEY_ASTER_PAD	114
-#define OSD_KEY_ENTER_PAD	115
 
-#define OSD_MAX_KEY         115
+/******************************************************************************
 
-/* 116 - 119 */
+  Sound
 
-/* The following are defined in Allegro */
-/* 120 KEY_RCONTROL */
-/* 121 KEY_ALTGR */
-/* 122 KEY_SLASH2 */
-/* 123 KEY_PAUSE */
+******************************************************************************/
+
+void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
+void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
+void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
+void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
+void osd_set_sample_freq(int channel,int freq);
+void osd_set_sample_volume(int channel,int volume);
+void osd_stop_sample(int channel);
+void osd_restart_sample(int channel);
+int osd_get_sample_status(int channel);
+void osd_ym3812_control(int reg);
+void osd_ym3812_write(int data);
+void osd_set_mastervolume(int attenuation);
+int osd_get_mastervolume(void);
+void osd_sound_enable(int enable);
+
+
+/******************************************************************************
+
+  Keyboard
+
+******************************************************************************/
 
 /*
- * ASG 980730: these are pseudo-keys that the os-dependent code can
- * map to whatever they see fit
- * HJB 980812: added some more names and used higher values because
- * there were some clashes with Allegro's scancodes (see above)
- */
-#define OSD_KEY_FAST_EXIT			128
-#define OSD_KEY_CANCEL				129
-#define OSD_KEY_RESET_MACHINE		130
-#define OSD_KEY_CONFIGURE			133
-#define OSD_KEY_ON_SCREEN_DISPLAY	134
-#define OSD_KEY_SHOW_GFX			135
-#define OSD_KEY_FRAMESKIP_INC		136
-#define OSD_KEY_FRAMESKIP_DEC		137
-#define OSD_KEY_THROTTLE			138
-#define OSD_KEY_SHOW_FPS			139
-#define OSD_KEY_SHOW_PROFILE		140
-#define OSD_KEY_SHOW_TOTAL_COLORS	141
-#define OSD_KEY_SNAPSHOT			142
-#define OSD_KEY_CHEAT_TOGGLE		143
-#define OSD_KEY_DEBUGGER			144
-#define OSD_KEY_UI_LEFT				145
-#define OSD_KEY_UI_RIGHT			146
-#define OSD_KEY_UI_UP				147
-#define OSD_KEY_UI_DOWN				148
-#define OSD_KEY_UI_SELECT			149
-#define OSD_KEY_ANY					150
-#define OSD_KEY_CHAT_ENABLE         151
+  return a list of all available keys (see input.h)
+*/
+const struct KeyboardKey *osd_get_key_list(void);
 
-#define OSD_MAX_PSEUDO				151
+/*
+  inptport.c defines some general purpose defaults for key bindings. They may be
+  further adjusted by the OS dependant code to better match the available keyboard,
+  e.g. one could map pause to the Pause key instead of P, or snapshot to PrtScr
+  instead of F12. Of course the user can further change the settings to anything
+  he/she likes.
+  This function is called on startup, before reading the configuration from disk.
+  Scan the list, and change the keys you want.
+*/
+void osd_customize_inputport_defaults(struct ipd *defaults);
+
+/*
+  tell whether the specified key is pressed or not. keycode is the OS dependant
+  code specified in the list returned by osd_customize_inputport_defaults().
+*/
+int osd_is_key_pressed(int keycode);
+
+/*
+  wait for the user to press a key. This function is not required to do anything,
+  it is only here so we can avoid bogging down multitasking systems while using
+  the debugger. If you don't want to or can't support this function you can just
+  return immediately.
+*/
+void osd_wait_keypress(void);
+
+
+/******************************************************************************
+
+  Joystick & Mouse/Trackball
+
+******************************************************************************/
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -251,61 +203,7 @@ struct osd_bitmap
 #define X_AXIS          1
 #define Y_AXIS          2
 
-int osd_init(void);
-void osd_exit(void);
-/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
-/* around the bitmap. This is required because, for performance reasons, some graphic */
-/* routines don't clip at boundaries of the bitmap. */
-struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
-#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
-void osd_clearbitmap(struct osd_bitmap *bitmap);
-void osd_free_bitmap(struct osd_bitmap *bitmap);
-/* Create a display screen, or window, large enough to accomodate a bitmap */
-/* of the given dimensions. Attributes are the ones defined in driver.h. */
-/* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes);
-int osd_set_display(int width,int height,int attributes);
-void osd_close_display(void);
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
-/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
-/* with pen values corresponding to a 5-5-5 15-bit palette */
-void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens);
-void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
-void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
-void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
-int osd_skip_this_frame(void);
-void osd_update_video_and_audio(void);
-void osd_set_gamma(float _gamma);
-float osd_get_gamma(void);
-void osd_set_brightness(int brightness);
-int osd_get_brightness(void);
-void osd_save_snapshot(void);
-
-void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
-void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
-void osd_set_sample_freq(int channel,int freq);
-void osd_set_sample_volume(int channel,int volume);
-void osd_stop_sample(int channel);
-void osd_restart_sample(int channel);
-int osd_get_sample_status(int channel);
-void osd_ym3812_control(int reg);
-void osd_ym3812_write(int data);
-void osd_set_mastervolume(int attenuation);
-int osd_get_mastervolume(void);
-void osd_sound_enable(int enable);
-
-int osd_key_pressed(int keycode);
-int osd_key_pressed_memory(int keycode);
-int osd_key_pressed_memory_repeat(int keycode,int speed);
-int osd_read_key_immediate(void);
-/* the following two should return pseudo key codes if translate != 0 */
-int osd_read_keyrepeat(void);
-int osd_key_invalid(int keycode);
 const char *osd_joy_name(int joycode);
-const char *osd_key_name(int keycode);
 void osd_poll_joysticks(void);
 int osd_joy_pressed(int joycode);
 
@@ -322,12 +220,17 @@ void osd_joystick_calibrate (void);
 /* Postprocessing (e.g. saving joystick data to config) */
 void osd_joystick_end_calibration (void);
 
-
 void osd_trak_read(int player,int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
 void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
 
+
+/******************************************************************************
+
+  File I/O
+
+******************************************************************************/
 
 /* inp header */
 typedef struct {
@@ -353,7 +256,7 @@ typedef struct {
 /* it is opened for read. */
 
 int osd_faccess(const char *filename, int filetype);
-void *osd_fopen(const char *gamename,const char *filename,int filetype,int write);
+void *osd_fopen(const char *gamename,const char *filename,int filetype,int read_or_write);
 int osd_fread(void *file,void *buffer,int length);
 int osd_fwrite(void *file,const void *buffer,int length);
 int osd_fread_swap(void *file,void *buffer,int length);
@@ -375,6 +278,13 @@ void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
 unsigned int osd_fcrc(void *file);
+
+
+/******************************************************************************
+
+  Miscellaneous
+
+******************************************************************************/
 
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */

@@ -44,30 +44,35 @@ extern unsigned char *grobda_customio_1, *grobda_customio_2;
 extern unsigned char *mappy_soundregs;
 
 /* memory functions */
-extern int grobda_spriteram_r(int offset);
-extern int grobda_snd_sharedram_r(int offset);
-extern void grobda_spriteram_w(int offset,int data);
-extern void grobda_snd_sharedram_w(int offset,int data);
+int grobda_spriteram_r(int offset);
+int grobda_snd_sharedram_r(int offset);
+void grobda_spriteram_w(int offset,int data);
+void grobda_snd_sharedram_w(int offset,int data);
 
 /* custom IO chips functions */
-extern void grobda_customio_w_1(int offset,int data);
-extern void grobda_customio_w_2(int offset,int data);
-extern int grobda_customio_r_1(int offset);
-extern int grobda_customio_r_2(int offset);
+void grobda_customio_w_1(int offset,int data);
+void grobda_customio_w_2(int offset,int data);
+int grobda_customio_r_1(int offset);
+int grobda_customio_r_2(int offset);
 
-extern int grobda_interrupt_1(void);
-extern int grobda_interrupt_2(void);
-extern void grobda_cpu2_enable_w(int offset,int data);
-extern void grobda_interrupt_ctrl_1_w(int offset,int data);
-extern void grobda_interrupt_ctrl_2_w(int offset,int data);
-extern void grobda_init_machine(void);
+int grobda_interrupt_1(void);
+int grobda_interrupt_2(void);
+void grobda_cpu2_enable_w(int offset,int data);
+void grobda_interrupt_ctrl_1_w(int offset,int data);
+void grobda_interrupt_ctrl_2_w(int offset,int data);
+void grobda_init_machine(void);
 
 /* video functions */
-extern int grobda_vh_start( void );
-extern void grobda_vh_stop( void );
-extern void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int grobda_vh_start( void );
+void grobda_vh_stop( void );
+void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+
+static void grobda_DAC_w(int offset, int data)
+{
+	DAC_data_w(0, (data << 4) | data);
+}
 	/* CPU 1 (MAIN CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
@@ -91,7 +96,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x4040, 0x43ff, grobda_snd_sharedram_w }, /* shared RAM with CPU #2 */
 	{ 0x4800, 0x480f, grobda_customio_w_1 },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, grobda_customio_w_2 },	/* custom I/O chip #2 interface */
-	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },/* interrupt enable? */
+	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },
 //	{ 0x5008, 0x5009, MWA_NOP },				/* ??? */
 	{ 0x500a, 0x500b, grobda_cpu2_enable_w },	/* sound CPU enable? */
 	{ 0x8000, 0x8000, watchdog_reset_w },	 	/* watchdog reset */
@@ -110,9 +115,10 @@ static struct MemoryReadAddress readmem_cpu2[] =
 	/* CPU 2 (SOUND CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
+	{ 0x0002, 0x0002, grobda_DAC_w },	 /* $12, $22 and $32 are DAC locations as well */
 	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound registers */
 	{ 0x0040, 0x03ff, grobda_snd_sharedram_w },			/* shared RAM with the main CPU */
-	{ 0x2000, 0x2001, grobda_interrupt_ctrl_2_w },		/* interrupt enable? */
+	{ 0x2000, 0x2001, grobda_interrupt_ctrl_2_w },
 	{ 0x2006, 0x2007, mappy_sound_enable_w },			/* sound enable? */
 	{ 0xe000, 0xffff, MWA_ROM },						/* ROM */
 	{ -1 }												/* end of table */
@@ -154,7 +160,7 @@ INPUT_PORTS_START( grobda_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, "Select Mode" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
@@ -233,20 +239,26 @@ static struct namco_interface namco_interface =
 	4		/* memory region */
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 55 }
+};
+
 static struct MachineDriver grobda_machine_driver =
 {
 	/* basic machine hardware  */
 	{
 		{
 			CPU_M6809,			/* MAIN CPU */
-			2000000,			/* 2 MHz? */
+			1500000,			/* 1.5 MHz? */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
 			grobda_interrupt_1,1
 		},
 		{
 			CPU_M6809,			/* SOUND CPU */
-			2000000,			/* 2 MHz? */
+			1500000,			/* 1.5 MHz? */
 			2,
 			readmem_cpu2,writemem_cpu2,0,0,
 			grobda_interrupt_2,1
@@ -274,6 +286,10 @@ static struct MachineDriver grobda_machine_driver =
 		{
 			SOUND_NAMCO,
 			&namco_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
 		}
 	}
 };

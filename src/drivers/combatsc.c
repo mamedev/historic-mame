@@ -65,8 +65,9 @@ To Do:
 ****************************
 
 0000-005f	Video Registers (banked)
-0400-0404	input ports
-0410-0410	bankswitch control
+0400-0407	input ports
+0408		coin counters
+0410		bankswitch control
 0600-06ff	palette
 0800-1fff	RAM
 2000-2fff	Video RAM (banked)
@@ -99,6 +100,7 @@ extern void combatsc_bankselect_w( int offset, int data );
 extern void combatsc_init_machine( void );
 extern int combatsc_workram_r( int offset );
 extern void combatsc_workram_w( int offset, int data );
+extern void combatsc_coin_counter_w( int offset, int data );
 
 /* from vidhrdw/combatsc.c */
 extern void combatsc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
@@ -215,7 +217,10 @@ static struct MemoryReadAddress combatsc_readmem[] =
 	{ 0x0401, 0x0401, input_port_1_r },			/* DSW #3 */
 	{ 0x0402, 0x0402, input_port_2_r },			/* DSW #1 */
 	{ 0x0403, 0x0403, input_port_3_r },			/* DSW #2 */
-	{ 0x0404, 0x0404, input_port_4_r },			/* 1P & 2P controls */
+	{ 0x0404, 0x0404, input_port_4_r },			/* 1P & 2P controls / 1P trackball V */
+	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
+	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
+	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
 	{ 0x0600, 0x06ff, MRA_RAM, &paletteram },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_r },
@@ -230,7 +235,7 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	{ 0x0060, 0x00ff, MWA_RAM },					/* RAM */
 	{ 0x0200, 0x0201, MWA_RAM },					/* ??? */
 	{ 0x0206, 0x0206, MWA_RAM },					/* ??? */
-	{ 0x0408, 0x0408, MWA_NOP },					/* ??? */
+	{ 0x0408, 0x0408, combatsc_coin_counter_w },	/* coin counters */
 	{ 0x040c, 0x040c, combatsc_vreg_w },
 	{ 0x0410, 0x0410, combatsc_bankselect_w },
 	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
@@ -244,42 +249,41 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	{ -1 }
 };
 
-
 #define COMBATSC_COINAGE \
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR(Coin_A) ) \
-	PORT_DIPSETTING(    0x02, DEF_STR(4C_1C) ) \
-	PORT_DIPSETTING(    0x05, DEF_STR(3C_1C) ) \
-	PORT_DIPSETTING(    0x08, DEF_STR(2C_1C) ) \
-	PORT_DIPSETTING(    0x04, DEF_STR(3C_2C) ) \
-	PORT_DIPSETTING(    0x01, DEF_STR(4C_3C) ) \
-	PORT_DIPSETTING(    0x0f, DEF_STR(1C_1C) ) \
-	PORT_DIPSETTING(    0x03, DEF_STR(3C_4C) ) \
-	PORT_DIPSETTING(    0x07, DEF_STR(2C_3C) ) \
-	PORT_DIPSETTING(    0x0e, DEF_STR(1C_2C) ) \
-	PORT_DIPSETTING(    0x06, DEF_STR(2C_5C) ) \
-	PORT_DIPSETTING(    0x0d, DEF_STR(1C_3C) ) \
-	PORT_DIPSETTING(    0x0c, DEF_STR(1C_4C) ) \
-	PORT_DIPSETTING(    0x0b, DEF_STR(1C_5C) ) \
-	PORT_DIPSETTING(    0x0a, DEF_STR(1C_6C) ) \
-	PORT_DIPSETTING(    0x09, DEF_STR(1C_7C) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR(Free_Play) ) \
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR(Coin_B) ) \
-	PORT_DIPSETTING(    0x20, DEF_STR(4C_1C) ) \
-	PORT_DIPSETTING(    0x50, DEF_STR(3C_1C) ) \
-	PORT_DIPSETTING(    0x80, DEF_STR(2C_1C) ) \
-	PORT_DIPSETTING(    0x40, DEF_STR(3C_2C) ) \
-	PORT_DIPSETTING(    0x10, DEF_STR(4C_3C) ) \
-	PORT_DIPSETTING(    0xf0, DEF_STR(1C_1C) ) \
-	PORT_DIPSETTING(    0x30, DEF_STR(3C_4C) ) \
-	PORT_DIPSETTING(    0x70, DEF_STR(2C_3C) ) \
-	PORT_DIPSETTING(    0xe0, DEF_STR(1C_2C) ) \
-	PORT_DIPSETTING(    0x60, DEF_STR(2C_5C) ) \
-	PORT_DIPSETTING(    0xd0, DEF_STR(1C_3C) ) \
-	PORT_DIPSETTING(    0xc0, DEF_STR(1C_4C) ) \
-	PORT_DIPSETTING(    0xb0, DEF_STR(1C_5C) ) \
-	PORT_DIPSETTING(    0xa0, DEF_STR(1C_6C) ) \
-	PORT_DIPSETTING(    0x90, DEF_STR(1C_7C) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR(Unused) )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) ) \
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) ) \
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) ) \
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) \
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) ) \
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) ) \
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) ) \
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) ) \
+	PORT_DIPSETTING(    0x00, "coin 2 invalidity" )
 
 INPUT_PORTS_START( cmbatscb_input_ports )
 	PORT_START
@@ -320,16 +324,16 @@ INPUT_PORTS_START( cmbatscb_input_ports )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING( 0x10, DEF_STR(No) )
-	PORT_DIPSETTING( 0x00, DEF_STR(Yes) )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR(Difficulty) )
+	PORT_DIPSETTING( 0x10, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING( 0x60, "Easy" )
 	PORT_DIPSETTING( 0x40, "Normal" )
 	PORT_DIPSETTING( 0x20, "Difficult" )
 	PORT_DIPSETTING( 0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR(Demo_Sounds) )
-	PORT_DIPSETTING( 0x80, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( combatsc_input_ports )
@@ -339,17 +343,18 @@ INPUT_PORTS_START( combatsc_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR(Service_Mode) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "Service Button", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW #3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR(Flip_Screen) )
-	PORT_DIPSETTING(	0x10, DEF_STR(No) )
-	PORT_DIPSETTING(	0x00, DEF_STR(Yes)  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes )  )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -370,23 +375,23 @@ INPUT_PORTS_START( combatsc_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR(Cabinet) )
-	PORT_DIPSETTING(	0x00, DEF_STR(Upright) )
-	PORT_DIPSETTING(	0x04, DEF_STR(Cocktail) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR(Difficulty) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING( 0x60, "Easy" )
 	PORT_DIPSETTING( 0x40, "Normal" )
 	PORT_DIPSETTING( 0x20, "Difficult" )
 	PORT_DIPSETTING( 0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR(Demo_Sounds) )
-	PORT_DIPSETTING( 0x80, DEF_STR(Off) )
-	PORT_DIPSETTING( 0x00, DEF_STR(On) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
@@ -397,6 +402,106 @@ INPUT_PORTS_START( combatsc_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* only used in trackball version */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( combatsct_input_ports )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, 0, "Service Button", KEYCODE_F1, IP_JOY_NONE )
+
+	PORT_START	/* DSW #3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes )  )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Mode" )
+	PORT_DIPSETTING(	0x40, "Game Mode" )
+	PORT_DIPSETTING(	0x00, "Test Mode" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW # 1 */
+	COMBATSC_COINAGE
+
+	PORT_START	/* DSW #2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING( 0x60, "Easy" )
+	PORT_DIPSETTING( 0x40, "Normal" )
+	PORT_DIPSETTING( 0x20, "Difficult" )
+	PORT_DIPSETTING( 0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+
+	/* trackball 1P */
+	PORT_START
+	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
+
+	PORT_START
+	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
+
+	/* trackball 2P (not implemented yet) */
+	PORT_START
+	//PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
+
+	PORT_START
+	//PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE  )
 
 INPUT_PORTS_END
 
@@ -457,6 +562,7 @@ static struct UPD7759_interface upd7759_interface =
 	{0}
 };
 
+/* combat school (bootleg on different hardware) */
 static struct MachineDriver cmbatscb_machine_driver =
 {
 	{
@@ -503,6 +609,7 @@ static struct MachineDriver cmbatscb_machine_driver =
 	}
 };
 
+/* combat school (original) */
 static struct MachineDriver combatsc_machine_driver =
 {
 	{
@@ -600,26 +707,11 @@ ROM_START( combatsc_rom )
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
-	ROM_REGION_DISPOSE( 0x100000 ) /* graphics - from bootleg set! (they may or may not be the same) */
-	ROM_LOAD( "combat.006",	0x00000, 0x10000, 0x8dc29a1f ) /* tiles, bank 0 */
-	ROM_LOAD( "combat.008",	0x10000, 0x10000, 0x61599f46 )
-	ROM_LOAD( "combat.010",	0x20000, 0x10000, 0xd5cda7cd )
-	ROM_LOAD( "combat.012",	0x30000, 0x10000, 0xca0a9f57 )
-
-	ROM_LOAD( "combat.005",	0x40000, 0x10000, 0x0803a223 ) /* tiles, bank 1 */
-	ROM_LOAD( "combat.007",	0x50000, 0x10000, 0x23caad0c )
-	ROM_LOAD( "combat.009",	0x60000, 0x10000, 0x5ac80383 )
-	ROM_LOAD( "combat.011",	0x70000, 0x10000, 0xcda83114 )
-
-	ROM_LOAD( "combat.013",	0x80000, 0x10000, 0x4bed2293 ) /* sprites, bank 0 */
-	ROM_LOAD( "combat.015",	0x90000, 0x10000, 0x26c41f31 )
-	ROM_LOAD( "combat.017",	0xa0000, 0x10000, 0x6071e6da )
-	ROM_LOAD( "combat.019",	0xb0000, 0x10000, 0x3b1cf1b8 )
-
-	ROM_LOAD( "combat.014",	0xc0000, 0x10000, 0x82ea9555 ) /* sprites, bank 1 */
-	ROM_LOAD( "combat.016",	0xd0000, 0x10000, 0x2e39bb70 )
-	ROM_LOAD( "combat.018",	0xe0000, 0x10000, 0x575db729 )
-	ROM_LOAD( "combat.020",	0xf0000, 0x10000, 0x8d748a1a )
+	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
+	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
+	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
+	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
+	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
 
 	ROM_REGION( 0x400 ) /* color lookup table */
 	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
@@ -632,6 +724,57 @@ ROM_START( combatsc_rom )
 
 ROM_END
 
+ROM_START( combatsct_rom )
+	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
+	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
+	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
+	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
+	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
+	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
+
+	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
+	ROM_RELOAD(				0x100, 0x100 )
+	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
+	ROM_RELOAD(				0x300, 0x100 )
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+
+ROM_END
+
+ROM_START( bootcamp_rom )
+	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
+	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
+	ROM_LOAD( "611g06.rom",	0x00000, 0x40000, 0x00000000 ) /* tiles, bank 0 */
+	ROM_LOAD( "611g05.rom",	0x40000, 0x40000, 0x00000000 ) /* tiles, bank 1 */
+	ROM_LOAD( "611g07.rom",	0x80000, 0x40000, 0x00000000 ) /* sprites, bank 0 */
+	ROM_LOAD( "611g08.rom",	0xc0000, 0x40000, 0x00000000 ) /* sprites, bank 1 */
+
+	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_LOAD( "611g10.h6",	0x000, 0x100, 0xf916129a ) /* player sprites */
+	ROM_RELOAD(				0x100, 0x100 )
+	ROM_LOAD( "611g09.h7",	0x200, 0x100, 0x207a7b07 ) /* tilemap clut */
+	ROM_RELOAD(				0x300, 0x100 )
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
+
+ROM_END
 
 static void gfx_untangle( void ){
 	unsigned char *gfx = Machine->memory_region[2];
@@ -680,7 +823,7 @@ struct GameDriver combasc_driver =
 	__FILE__,
 	0,
 	"combasc",
-	"Combat School",
+	"Combat School (joystick version)",
 	"1988",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
@@ -695,6 +838,32 @@ struct GameDriver combasc_driver =
 	0, /* sound_prom */
 
 	combatsc_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
+	ORIENTATION_DEFAULT,
+	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
+};
+
+struct GameDriver combasct_driver =
+{
+	__FILE__,
+	&combasc_driver,
+	"combasct",
+	"Combat School (trackball version)",
+	"1988",
+	"Konami",
+	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
+	GAME_NOT_WORKING,
+	&combatsc_machine_driver,
+	0,
+
+	combatsct_rom,
+	gfx_untangle,
+	0,
+	0,
+	0, /* sound_prom */
+
+	combatsct_input_ports,
 
 	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
 	ORIENTATION_DEFAULT,
@@ -720,6 +889,32 @@ struct GameDriver combascb_driver =  {
 	0,	/* sound_prom */
 
 	cmbatscb_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
+	ORIENTATION_DEFAULT,
+	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
+};
+
+struct GameDriver bootcamp_driver =
+{
+	__FILE__,
+	&combasc_driver,
+	"bootcamp",
+	"Boot Camp",
+	"1988",
+	"Konami",
+	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
+	GAME_NOT_WORKING,
+	&combatsc_machine_driver,
+	0,
+
+	bootcamp_rom,
+	gfx_untangle,
+	0,
+	0,
+	0, /* sound_prom */
+
+	combatsct_input_ports,
 
 	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
 	ORIENTATION_DEFAULT,

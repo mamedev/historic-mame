@@ -620,7 +620,7 @@ INPUT_PORTS_START( btime_input_ports )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Cross Hatch Pattern" )
@@ -780,7 +780,7 @@ INPUT_PORTS_START( zoar_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	/* Service mode doesn't work because of missing ROMs */
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
@@ -1084,7 +1084,7 @@ INPUT_PORTS_START( mmonkey_input_ports )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )   /* almost certainly unused */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1131,7 +1131,7 @@ INPUT_PORTS_START( bnj_input_ports )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
@@ -1474,7 +1474,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	GAMENAME##_init_machine,		                               	\
 																	\
 	/* video hardware */                                        	\
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },                   	\
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },                   	\
 	GFX,                                                        	\
 	COLOR,COLOR,                                                	\
 	GAMENAME##_vh_convert_color_prom,                           	\
@@ -1514,7 +1514,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	0,						                                    	\
 																	\
 	/* video hardware */                                        	\
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },                   	\
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },                   	\
 	GFX,                                                        	\
 	COLOR,COLOR,                                                	\
 	GAMENAME##_vh_convert_color_prom,                           	\
@@ -2797,7 +2797,7 @@ ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU
 	0,//GAMENAME##_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	decocass_gfxdecodeinfo,
 	32,32,//COLOR,COLOR,
 	0,//GAMENAME##_vh_convert_color_prom,

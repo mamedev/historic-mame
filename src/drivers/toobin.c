@@ -57,7 +57,7 @@ Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "sndhrdw/ataraud2.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
 
 
@@ -65,8 +65,6 @@ extern unsigned char *toobin_intensity;
 extern unsigned char *toobin_moslip;
 
 static unsigned char *interrupt_scan;
-static int scanline_int_state;
-static void *interrupt_timer;
 
 
 void toobin_moslip_w(int offset, int data);
@@ -87,13 +85,13 @@ void toobin_scanline_update(int scanline);
  *
  *************************************/
 
-static void update_interrupts(int vblank, int sound)
+static void update_interrupts(void)
 {
 	int newstate = 0;
 
-	if (scanline_int_state)
+	if (atarigen_scanline_int_state)
 		newstate |= 1;
-	if (sound)
+	if (atarigen_sound_int_state)
 		newstate |= 2;
 
 	if (newstate)
@@ -105,20 +103,10 @@ static void update_interrupts(int vblank, int sound)
 
 static void init_machine(void)
 {
-	atarigen_eeprom_default = NULL;
 	atarigen_eeprom_reset();
-
-	atarigen_interrupt_init(update_interrupts, toobin_scanline_update);
-	ataraud2_init(1, 2, 1, 0x1000);
-
-	scanline_int_state = 0;
-	interrupt_timer = 0;
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(1, 0x414e, 0x4166);
-	
-	/* display messages */
-	atarigen_show_sound_message();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(toobin_scanline_update, 8);
+	atarijsa_reset();
 }
 
 
@@ -129,17 +117,6 @@ static void init_machine(void)
  *
  *************************************/
 
-static void interrupt_callback(int param)
-{
-	/* generate the interrupt */
-	scanline_int_state = 1;
-	atarigen_update_interrupts();
-
-	/* set a new timer to go off at the same scan line next frame */
-	interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, interrupt_callback);
-}
-
-
 static void interrupt_scan_w(int offset, int data)
 {
 	int oldword = READ_WORD(&interrupt_scan[offset]);
@@ -149,19 +126,8 @@ static void interrupt_scan_w(int offset, int data)
 	if (oldword != newword)
 	{
 		WRITE_WORD(&interrupt_scan[offset], newword);
-
-		/* remove any previous timer and set a new one */
-		if (interrupt_timer)
-			timer_remove(interrupt_timer);
-		interrupt_timer = timer_set(cpu_getscanlinetime(newword & 0x1ff), 0, interrupt_callback);
+		atarigen_scanline_int_set(newword & 0x1ff);
 	}
-}
-
-
-static void interrupt_ack_w(int offset, int data)
-{
-	scanline_int_state = 0;
-	atarigen_update_interrupts();
 }
 
 
@@ -172,7 +138,7 @@ static void interrupt_ack_w(int offset, int data)
  *
  *************************************/
 
-static int special_io_r(int offset)
+static int special_port1_r(int offset)
 {
 	int result = input_port_1_r(offset);
 	if (atarigen_get_hblank()) result ^= 0x8000;
@@ -197,7 +163,7 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xc10000, 0xc107ff, paletteram_word_r },
 	{ 0xff6000, 0xff6001, MRA_NOP },		/* who knows? read at controls time */
 	{ 0xff8800, 0xff8801, input_port_0_r },
-	{ 0xff9000, 0xff9001, special_io_r },
+	{ 0xff9000, 0xff9001, special_port1_r },
 	{ 0xff9800, 0xff9801, atarigen_sound_r },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_r },
 	{ 0xffc000, 0xffffff, MRA_BANK7 },
@@ -217,7 +183,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xff8300, 0xff8301, MWA_BANK4, &toobin_intensity },
 	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
 	{ 0xff8380, 0xff8381, toobin_moslip_w, &toobin_moslip },
-	{ 0xff83c0, 0xff83c1, interrupt_ack_w },
+	{ 0xff83c0, 0xff83c1, atarigen_scanline_int_ack_w },
 	{ 0xff8400, 0xff8401, atarigen_sound_reset_w },
 	{ 0xff8500, 0xff8501, atarigen_eeprom_enable_w },
 	{ 0xff8600, 0xff8601, MWA_BANK5, &atarigen_hscroll },
@@ -236,33 +202,33 @@ static struct MemoryWriteAddress main_writemem[] =
  *************************************/
 
 INPUT_PORTS_START( toobin_ports )
-	PORT_START	/* IN0 */
-	PORT_BITX(0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", OSD_KEY_L, IP_JOY_DEFAULT )
-	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 Left Foot", OSD_KEY_J, IP_JOY_DEFAULT )
-	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 Left Hand", OSD_KEY_U, IP_JOY_DEFAULT )
-	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right Hand", OSD_KEY_O, IP_JOY_DEFAULT )
-	PORT_BITX(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 Right Foot", OSD_KEY_D, IP_JOY_DEFAULT )
-	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", OSD_KEY_A, IP_JOY_DEFAULT )
-	PORT_BITX(0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", OSD_KEY_Q, IP_JOY_DEFAULT )
-	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", OSD_KEY_E, IP_JOY_DEFAULT )
+	PORT_START	/* ff8800 */
+	PORT_BITX(0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", KEYCODE_L, IP_JOY_DEFAULT )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 Left Foot", KEYCODE_J, IP_JOY_DEFAULT )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 Left Hand", KEYCODE_U, IP_JOY_DEFAULT )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right Hand", KEYCODE_O, IP_JOY_DEFAULT )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 Right Foot", KEYCODE_D, IP_JOY_DEFAULT )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", KEYCODE_A, IP_JOY_DEFAULT )
+	PORT_BITX(0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", KEYCODE_Q, IP_JOY_DEFAULT )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", KEYCODE_E, IP_JOY_DEFAULT )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BITX(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", OSD_KEY_LCONTROL, IP_JOY_DEFAULT )
+	PORT_BITX(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", KEYCODE_LCONTROL, IP_JOY_DEFAULT )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", OSD_KEY_COMMA, IP_JOY_DEFAULT )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", KEYCODE_RCONTROL, IP_JOY_DEFAULT )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* DSW */
+	PORT_START	/* ff9000 */
 	PORT_BIT( 0x03ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(  0x1000, 0x1000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(  0x1000, 0x1000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x1000, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x0000, DEF_STR( On ))
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	ATARI_AUDIO_2_PORT	/* audio board port */
+	JSA_I_PORT	/* audio board port */
 INPUT_PORTS_END
 
 
@@ -330,14 +296,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68010,
+			CPU_M68010,		/* verified */
 			7159160,
 			0,
 			main_readmem,main_writemem,0,0,
-			atarigen_vblank_gen,1
+			ignore_interrupt,1
 		},
 		{
-			ATARI_AUDIO_2_CPU(1)
+			JSA_CPU(1)
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -357,11 +323,7 @@ static struct MachineDriver machine_driver =
 	toobin_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		ATARI_AUDIO_2_YM2151,
-		ATARI_AUDIO_2_POKEY
-	}
+	JSA_I_STEREO_WITH_POKEY
 };
 
 
@@ -424,6 +386,131 @@ ROM_START( toobin_rom )
 ROM_END
 
 
+ROM_START( toobin2_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "061-2133.1j",  0x00000, 0x10000, 0x2c3382e4 )
+	ROM_LOAD_ODD ( "061-2137.1f",  0x00000, 0x10000, 0x891c74b1 )
+	ROM_LOAD_EVEN( "061-2134.2j",  0x20000, 0x10000, 0x2b8164c8 )
+	ROM_LOAD_ODD ( "061-2138.2f",  0x20000, 0x10000, 0xc09cadbd )
+	ROM_LOAD_EVEN( "061-2135.4j",  0x40000, 0x10000, 0x90477c4a )
+	ROM_LOAD_ODD ( "061-2139.4f",  0x40000, 0x10000, 0x47936958 )
+	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
+	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
+	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
+	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xfa05aee6 )
+	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0xab1c5578 )
+	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
+	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
+	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
+	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x140000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x150000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x160000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x170000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x240000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x250000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x260000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x270000, 0x10000 )
+	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+ROM_END
+
+
+ROM_START( toobinp_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "pg-0-up.1j",   0x00000, 0x10000, 0xcaeb5d1b )
+	ROM_LOAD_ODD ( "pg-0-lo.1f",   0x00000, 0x10000, 0x9713d9d3 )
+	ROM_LOAD_EVEN( "pg-20-up.2j",  0x20000, 0x10000, 0x119f5d7b )
+	ROM_LOAD_ODD ( "pg-20-lo.2f",  0x20000, 0x10000, 0x89664841 )
+	ROM_LOAD_EVEN( "061-2135.4j",  0x40000, 0x10000, 0x90477c4a )
+	ROM_LOAD_ODD ( "pg-40-lo.4f",  0x40000, 0x10000, 0xa9f082a9 )
+	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
+	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
+	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
+	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xfa05aee6 )
+	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0xab1c5578 )
+	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
+	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
+	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
+	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x140000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x150000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x160000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x170000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x240000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x250000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x260000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x270000, 0x10000 )
+	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+ROM_END
+
+
+
+/*************************************
+ *
+ *		Driver initialization
+ *
+ *************************************/
+
+static void toobin_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	atarijsa_init(1, 2, 1, 0x1000);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x414e, 0x4166);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
 
 /*************************************
  *
@@ -436,15 +523,67 @@ struct GameDriver toobin_driver =
 	__FILE__,
 	0,
 	"toobin",
-	"Toobin'",
+	"Toobin' (version 3)",
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
 	0,
 	&machine_driver,
-	0,
+	toobin_init,
 
 	toobin_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	toobin_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	atarigen_hiload, atarigen_hisave
+};
+
+struct GameDriver toobin2_driver =
+{
+	__FILE__,
+	&toobin_driver,
+	"toobin2",
+	"Toobin' (version 2)",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
+	0,
+	&machine_driver,
+	toobin_init,
+
+	toobin2_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	toobin_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	atarigen_hiload, atarigen_hisave
+};
+
+struct GameDriver toobinp_driver =
+{
+	__FILE__,
+	&toobin_driver,
+	"toobinp",
+	"Toobin' (prototype)",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
+	0,
+	&machine_driver,
+	toobin_init,
+
+	toobinp_rom,
 	0,
 	0,
 	0,

@@ -14,7 +14,18 @@ extern int spriteram_size;
 unsigned char *timeplt_videoram,*timeplt_colorram;
 static struct tilemap *bg_tilemap;
 static int flipscreen;
+static int sprite_multiplex_hack;
 
+
+void timeplt_init(void)
+{
+	sprite_multiplex_hack = 1;
+}
+
+void psurge_init(void)
+{
+	sprite_multiplex_hack = 0;
+}
 
 
 /***************************************************************************
@@ -204,19 +215,22 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				sx,sy,
 				clip,TRANSPARENCY_PEN,0);
 
-		if (sy < 240)
+		if (sprite_multiplex_hack)
 		{
-			/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
-			/* this is done by the program, multiplexing the sprites; we don't emulate */
-			/* that, we just reproduce the behaviour. */
-			if (offs <= 2*2 || offs >= 19*2)
+			if (sy < 240)
 			{
-				drawgfx(bitmap,gfx,
-						code,
-						color,
-						flipx,flipy,
-						(sx + 128) & 0xff,(sy + 128) & 0xff,
-						clip,TRANSPARENCY_PEN,0);
+				/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
+				/* this is done by the program, multiplexing the sprites; we don't emulate */
+				/* that, we just reproduce the behaviour. */
+				if (offs <= 2*2 || offs >= 19*2)
+				{
+					drawgfx(bitmap,gfx,
+							code,
+							color,
+							flipx,flipy,
+							(sx + 128) & 0xff,(sy + 128) & 0xff,
+							clip,TRANSPARENCY_PEN,0);
+				}
 			}
 		}
 	}

@@ -24,10 +24,14 @@ static int flipscreen;
 
 void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
+	/* sprite lookup table is not original but it is almost 98% correct */
+
+	int sprite_lookup_table[16] = { 0x00,0x02,0x05,0x8C,0x49,0xDD,0xB7,0x06,
+					0xD5,0x7A,0x85,0x8D,0x27,0x1A,0x03,0x0F };
 	int i;
+
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -61,7 +65,7 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	/* sprites */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong! */
+		COLOR(1,i) = sprite_lookup_table[*(color_prom++)];
 }
 
 
@@ -94,24 +98,23 @@ void gs_charbank_w(int offset, int data)
 
 void gs_videoctrl_w(int offset, int data)
 {
-if (data & 0x8f)
-{
-	char baf[40];
-	sprintf(baf,"videoctrl %02x",data);
-	usrintf_showmessage(baf);
-}
+	if (data & 0x8f)
+	{
+		char baf[40];
+		sprintf(baf,"videoctrl %02x",data);
+		usrintf_showmessage(baf);
+	}
 	/* bits 5-6 are char palette bank */
 	if (charpalbank != ((data & 0x60) >> 5))
 	{
 		charpalbank = (data & 0x60) >> 5;
 		memset(dirtybuffer,1,gs_videoram_size);
 	}
-
 	/* bit 4 is flip screen */
 	if (flipscreen != (data & 0x10))
 	{
 		flipscreen = data & 0x10;
-        memset(dirtybuffer,1,gs_videoram_size);
+	        memset(dirtybuffer,1,gs_videoram_size);
 	}
 
 	/* bit 0 could be used but unknown */
@@ -131,7 +134,6 @@ void gs_videoram_w(int offset,int data)
 void render_background(struct osd_bitmap *bitmap)
 {
 	int offs;
-
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -202,10 +204,10 @@ void render_sprites(struct osd_bitmap *bitmap)
 			}
 			drawgfx(bitmap,Machine->gfx[1+spritebank],
 					tile,
-					gs_spritetile_ram[offs+1] & 0x3f,	/* ?? */
+					gs_spritetile_ram[offs+1] & 0x3f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,15);
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR, 15);
 		}
 	}
 }

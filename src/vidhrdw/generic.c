@@ -148,3 +148,13 @@ void spriteram_w(int offset,int data)
 {
 	spriteram[offset] = data;
 }
+
+int spriteram_2_r(int offset)
+{
+	return spriteram_2[offset];
+}
+
+void spriteram_2_w(int offset,int data)
+{
+	spriteram_2[offset] = data;
+}

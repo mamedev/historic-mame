@@ -313,6 +313,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x8000, 0x87ff, work_ram_r },
 	{ 0x8800, 0x8fff, work_ram_r },
 	{ 0xe000, 0xe000, soundlatch_r },
+	{ 0xffff, 0xffff, soundlatch_r },	/* 4D warriors reads also from here - bug? */
 	{ -1 } /* end of table */
 };
 
@@ -330,7 +331,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #define IN0_PORT \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE ) \
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", KEYCODE_F2, IP_JOY_NONE ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \
@@ -3018,6 +3019,116 @@ ROM_START( tokisens_rom )
 	ROM_LOAD( "bprom.8",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
 ROM_END
 
+ROM_START( wbml_rom )
+	ROM_REGION(0x40000)	/* 256k for code */
+	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
+	ROM_LOAD( "wbml.02",      0x30000, 0x8000, 0x48746bb6 )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x10000, 0x8000 )
+	ROM_LOAD( "wbml.03",      0x38000, 0x8000, 0xd57ba8aa )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x18000, 0x8000 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "wbml.08",      0x00000, 0x8000, 0xbbea6afe )
+	ROM_LOAD( "wbml.09",      0x08000, 0x8000, 0x77567d41 )
+	ROM_LOAD( "wbml.10",      0x10000, 0x8000, 0xa52ffbdd )
+
+	ROM_REGION(0x20000)	/* 128k for sprites data */
+	ROM_LOAD( "epr11028.87",  0x00000, 0x8000, 0xaf0b3972 )
+	ROM_LOAD( "epr11027.86",  0x08000, 0x8000, 0x277d8f1d )
+	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
+	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
+
+	ROM_REGION(0x0300)	/* color proms */
+	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
+	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
+	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+ROM_END
+
+ROM_START( wbmlj_rom )
+	ROM_REGION(0x20000)	/* 256k for code */
+	ROM_LOAD( "epr11031.90",  0x00000, 0x8000, 0x497ebfb4 )	/* encrypted */
+	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
+	ROM_LOAD( "epr11033.92",  0x18000, 0x8000, 0x7076905c )	/* encrypted */
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr11034.4",   0x00000, 0x8000, 0x37a2077d )
+	ROM_LOAD( "epr11035.5",   0x08000, 0x8000, 0xcdf2a21b )
+	ROM_LOAD( "epr11036.6",   0x10000, 0x8000, 0x644687fa )
+
+	ROM_REGION(0x20000)	/* 128k for sprites data */
+	ROM_LOAD( "epr11028.87",  0x00000, 0x8000, 0xaf0b3972 )
+	ROM_LOAD( "epr11027.86",  0x08000, 0x8000, 0x277d8f1d )
+	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
+	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
+
+	ROM_REGION(0x0300)	/* color proms */
+	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
+	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
+	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+ROM_END
+
+ROM_START( wbmlj2_rom )
+	ROM_REGION(0x20000)	/* 256k for code */
+	ROM_LOAD( "ep11031a.90",  0x00000, 0x8000, 0xbd3349e5 )	/* encrypted */
+	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
+	ROM_LOAD( "epr11033.92",  0x18000, 0x8000, 0x7076905c )	/* encrypted */
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr11034.4",   0x00000, 0x8000, 0x37a2077d )
+	ROM_LOAD( "epr11035.5",   0x08000, 0x8000, 0xcdf2a21b )
+	ROM_LOAD( "epr11036.6",   0x10000, 0x8000, 0x644687fa )
+
+	ROM_REGION(0x20000)	/* 128k for sprites data */
+	ROM_LOAD( "epr11028.87",  0x00000, 0x8000, 0xaf0b3972 )
+	ROM_LOAD( "epr11027.86",  0x08000, 0x8000, 0x277d8f1d )
+	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
+	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
+
+	ROM_REGION(0x0300)	/* color proms */
+	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
+	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
+	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+ROM_END
+
+ROM_START( wbmlju_rom )
+	ROM_REGION(0x40000)	/* 256k for code */
+	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
+	ROM_LOAD( "m-6.bin",      0x30000, 0x8000, 0x8c08cd11 )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x10000, 0x8000 )
+	ROM_LOAD( "m-7.bin",      0x38000, 0x8000, 0x11881703 )	/* Unencrypted opcodes */
+	ROM_CONTINUE(             0x18000, 0x8000 )
+
+	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr11034.4",   0x00000, 0x8000, 0x37a2077d )
+	ROM_LOAD( "epr11035.5",   0x08000, 0x8000, 0xcdf2a21b )
+	ROM_LOAD( "epr11036.6",   0x10000, 0x8000, 0x644687fa )
+
+	ROM_REGION(0x20000)	/* 128k for sprites data */
+	ROM_LOAD( "epr11028.87",  0x00000, 0x8000, 0xaf0b3972 )
+	ROM_LOAD( "epr11027.86",  0x08000, 0x8000, 0x277d8f1d )
+	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
+	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
+
+	ROM_REGION(0x0300)	/* color proms */
+	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
+	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
+	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+ROM_END
+
 ROM_START( dakkochn_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr11224.90",  0x00000, 0x8000, 0x9fb1972b )	/* encrypted */
@@ -3068,35 +3179,6 @@ ROM_START( ufosensi_rom )
 	ROM_LOAD( "pr11656.20",   0x0000, 0x0100, 0x640740eb ) /* palette red component */
 	ROM_LOAD( "pr11655.14",   0x0100, 0x0100, 0xa0c3fa77 ) /* palette green component */
 	ROM_LOAD( "pr11654.8",    0x0200, 0x0100, 0xba624305 ) /* palette blue component */
-ROM_END
-
-ROM_START( wbml_rom )
-	ROM_REGION(0x40000)	/* 256k for code */
-	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
-	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
-	ROM_LOAD( "wbml.02",      0x30000, 0x8000, 0x48746bb6 )	/* Unencrypted opcodes */
-	ROM_CONTINUE(             0x10000, 0x8000 )
-	ROM_LOAD( "wbml.03",      0x38000, 0x8000, 0xd57ba8aa )	/* Unencrypted opcodes */
-	ROM_CONTINUE(             0x18000, 0x8000 )
-
-	ROM_REGION_DISPOSE(0x18000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "wbml.08",      0x00000, 0x8000, 0xbbea6afe )
-	ROM_LOAD( "wbml.09",      0x08000, 0x8000, 0x77567d41 )
-	ROM_LOAD( "wbml.10",      0x10000, 0x8000, 0xa52ffbdd )
-
-	ROM_REGION(0x20000)	/* 128k for sprites data */
-	ROM_LOAD( "wbml.05",      0x00000, 0x8000, 0xaf0b3972 )
-	ROM_LOAD( "wbml.04",      0x08000, 0x8000, 0x277d8f1d )
-	ROM_LOAD( "wbml.07",      0x10000, 0x8000, 0xf05ffc76 )
-	ROM_LOAD( "wbml.06",      0x18000, 0x8000, 0xcedc9c61 )
-
-	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "wbml.11",      0x0000, 0x8000, 0x7a4ee585 )
-
-	ROM_REGION(0x0300)	/* color proms */
-	ROM_LOAD( "prom3.bin",    0x0000, 0x0100, 0x27057298 )
-	ROM_LOAD( "prom2.bin",    0x0100, 0x0100, 0x41e4d86b )
-	ROM_LOAD( "prom1.bin",    0x0200, 0x0100, 0xbad2bda1 )
 ROM_END
 
 
@@ -4920,6 +5002,106 @@ struct GameDriver tokisens_driver =
 	tokisens_hiload,tokisens_hisave
 };
 
+struct GameDriver wbml_driver =
+{
+	__FILE__,
+	0,
+	"wbml",
+	"Wonder Boy in Monster Land",
+	"1987",
+	"bootleg",
+	BASE_CREDITS,
+	0,
+	&wbml_machine_driver,
+	0,
+
+	wbml_rom,
+	0, wbml_decode,
+	0,
+	0,
+
+	wbml_input_ports,
+
+	PROM_MEMORY_REGION(4), 0, 0,
+	ORIENTATION_DEFAULT,
+	wbml_hiload, wbml_hisave
+};
+
+struct GameDriver wbmlj_driver =
+{
+	__FILE__,
+	&wbml_driver,
+	"wbmlj",
+	"Wonder Boy in Monster Land (Japan set 1)",
+	"1987",
+	"Sega / Westone",
+	BASE_CREDITS,
+	GAME_NOT_WORKING,
+	&wbml_machine_driver,
+	0,
+
+	wbmlj_rom,
+	0, 0,
+	0,
+	0,
+
+	wbml_input_ports,
+
+	PROM_MEMORY_REGION(4), 0, 0,
+	ORIENTATION_DEFAULT,
+	wbml_hiload, wbml_hisave
+};
+
+struct GameDriver wbmlj2_driver =
+{
+	__FILE__,
+	&wbml_driver,
+	"wbmlj2",
+	"Wonder Boy in Monster Land (Japan set 2)",
+	"1987",
+	"Sega / Westone",
+	BASE_CREDITS,
+	GAME_NOT_WORKING,
+	&wbml_machine_driver,
+	0,
+
+	wbmlj2_rom,
+	0, 0,
+	0,
+	0,
+
+	wbml_input_ports,
+
+	PROM_MEMORY_REGION(4), 0, 0,
+	ORIENTATION_DEFAULT,
+	wbml_hiload, wbml_hisave
+};
+
+struct GameDriver wbmlju_driver =
+{
+	__FILE__,
+	&wbml_driver,
+	"wbmlju",
+	"Wonder Boy in Monster Land (Japan not encrypted)",
+	"1987",
+	"Sega / Westone",
+	BASE_CREDITS,
+	0,
+	&wbml_machine_driver,
+	0,
+
+	wbmlju_rom,
+	0, wbml_decode,
+	0,
+	0,
+
+	wbml_input_ports,
+
+	PROM_MEMORY_REGION(4), 0, 0,
+	ORIENTATION_DEFAULT,
+	wbml_hiload, wbml_hisave
+};
+
 struct GameDriver dakkochn_driver =
 {
 	__FILE__,
@@ -4968,29 +5150,4 @@ struct GameDriver ufosensi_driver =
 	PROM_MEMORY_REGION(4),0,0,
 	ORIENTATION_DEFAULT,
 	0, 0
-};
-
-struct GameDriver wbml_driver =
-{
-	__FILE__,
-	0,
-	"wbml",
-	"Wonder Boy in Monster Land",
-	"1987",
-	"bootleg",
-	BASE_CREDITS,
-	0,
-	&wbml_machine_driver,
-	0,
-
-	wbml_rom,
-	0, wbml_decode,
-	0,
-	0,
-
-	wbml_input_ports,
-
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
-	wbml_hiload, wbml_hisave
 };

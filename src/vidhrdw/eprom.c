@@ -146,21 +146,21 @@ int eprom_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	/* reset statics */
 	memset(&pf_state, 0, sizeof(pf_state));
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -264,7 +264,7 @@ void eprom_scanline_update(int scanline)
 void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
-	
+
 #if DEBUG_VIDEO
 	debug();
 #endif
@@ -295,7 +295,7 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int code = data & 0x3ff;
 				int opaque = data & 0x8000;
-	
+
 				if (code || opaque)
 				{
 					int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
@@ -327,7 +327,7 @@ static const unsigned char *update_palette(void)
 	memset(pf_map, 0, sizeof(pf_map));
 	memset(al_map, 0, sizeof(al_map));
 	palette_init_used_colors();
-	
+
 	/* update color usage for the playfield */
 	atarigen_pf_process(pf_color_callback, pf_map, &Machine->drv->visible_area);
 
@@ -345,7 +345,7 @@ static const unsigned char *update_palette(void)
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int color = ((data >> 10) & 0xf) | ((data >> 9) & 0x20);
 				int code = data & 0x3ff;
-	
+
 				al_map[color] |= usage[code];
 			}
 	}
@@ -399,7 +399,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
@@ -412,7 +412,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 			/* mark the colors used by this tile */
 			colormap[color] |= usage[code];
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 1;
 		}
@@ -437,7 +437,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		{
 			int offs = x * 64 + y;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
@@ -446,7 +446,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				int color = (data2 >> 8) & 15;
 				int code = data1 & 0x7fff;
 				int hflip = data1 & 0x8000;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, 0x10 + color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
 
@@ -459,7 +459,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				}
 #endif
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -498,14 +498,14 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int color = (data2 >> 8) & 15;
 			int sy = (8 * y - state->vscroll) & 0x1ff;
 			if (sy >= YDIM) sy -= 0x200;
-			
+
 			/* update only if dirty */
 			if (color >= 13 + overrender_data->mo_priority)
 			{
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int code = data1 & 0x7fff;
 				int hflip = data1 & 0x8000;
-				
+
 				drawgfx(bitmap, gfx, code, 0x10 + color, hflip, 0, sx, sy, clip, TRANSPARENCY_PENS, 0xff00);
 
 #if DEBUG_VIDEO
@@ -528,7 +528,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
  *		Motion object palette
  *
  *************************************/
- 
+
 static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
@@ -582,20 +582,20 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 	/* determine the bounding box */
 	atarigen_mo_compute_clip_8x8(pf_clip, xpos, ypos, hsize, vsize, clip);
-	
+
 	/* simple case? */
 	if (priority == 3)
 	{
 		/* just draw -- we have dominion over all */
 		atarigen_mo_draw_8x8(bitmap, gfx, code, color, hflip, 0, xpos, ypos, hsize, vsize, clip, TRANSPARENCY_PEN, 0);
 	}
-	
+
 	/* otherwise, it gets a smidge trickier */
 	else
 	{
 		/* draw an instance of the object in all transparent pens */
 		atarigen_mo_draw_transparent_8x8(bitmap, gfx, code, hflip, 0, xpos, ypos, hsize, vsize, clip, TRANSPARENCY_PEN, 0);
-		
+
 		/* and then draw it normally on the temp bitmap */
 		atarigen_mo_draw_8x8(atarigen_pf_overrender_bitmap, gfx, code, color, hflip, 0, xpos, ypos, hsize, vsize, clip, TRANSPARENCY_NONE, 0);
 
@@ -629,14 +629,14 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
  *		Debugging
  *
  *************************************/
- 
+
 #if DEBUG_VIDEO
 
 static void debug(void)
 {
 	int new_show_colors;
-	
-	new_show_colors = osd_key_pressed(OSD_KEY_CAPSLOCK);
+
+	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
 	if (new_show_colors != show_colors)
 	{
 		show_colors = new_show_colors;
@@ -644,32 +644,32 @@ static void debug(void)
 	}
 
 	special_pen = -1;
-	if (osd_key_pressed(OSD_KEY_Q)) special_pen = 0;
-	if (osd_key_pressed(OSD_KEY_W)) special_pen = 1;
-	if (osd_key_pressed(OSD_KEY_E)) special_pen = 2;
-	if (osd_key_pressed(OSD_KEY_R)) special_pen = 3;
-	if (osd_key_pressed(OSD_KEY_T)) special_pen = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) special_pen = 5;
-	if (osd_key_pressed(OSD_KEY_U)) special_pen = 6;
-	if (osd_key_pressed(OSD_KEY_I)) special_pen = 7;
+	if (keyboard_key_pressed(KEYCODE_Q)) special_pen = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) special_pen = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) special_pen = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) special_pen = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) special_pen = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) special_pen = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) special_pen = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) special_pen = 7;
 
-	if (osd_key_pressed(OSD_KEY_A)) special_pen = 8;
-	if (osd_key_pressed(OSD_KEY_S)) special_pen = 9;
-	if (osd_key_pressed(OSD_KEY_D)) special_pen = 10;
-	if (osd_key_pressed(OSD_KEY_F)) special_pen = 11;
-	if (osd_key_pressed(OSD_KEY_G)) special_pen = 12;
-	if (osd_key_pressed(OSD_KEY_H)) special_pen = 13;
-	if (osd_key_pressed(OSD_KEY_J)) special_pen = 14;
-	if (osd_key_pressed(OSD_KEY_K)) special_pen = 15;
-	
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_A)) special_pen = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) special_pen = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) special_pen = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) special_pen = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) special_pen = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) special_pen = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) special_pen = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) special_pen = 15;
+
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

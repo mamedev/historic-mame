@@ -638,7 +638,7 @@ void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 static int drawbg2 = 1;
 
-if (osd_key_pressed_memory(OSD_KEY_SPACE))
+if (keyboard_key_pressed_memory(KEYCODE_SPACE))
 	drawbg2 = !drawbg2;
 
 	palette_init_used_colors();

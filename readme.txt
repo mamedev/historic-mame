@@ -353,31 +353,38 @@ options:
               some external drum samples.
 
 -joy n (default: none) allows joystick input, n can be:
-              0/none       - no joystick
-              1/standard   - normal 2 button joystick
-              2/dual       - dual joysticks
-              3/4button    - Stick/Pad with 4 buttons
-              4/6button    - Stick/Pad with 6 buttons
-              5/8button    - Stick/Pad with 8 buttons
-              6/fspro      - CH Flightstick Pro
-              7/wingex     - Wingman Extreme
-                           - Wingman Warrior without spinner
-              8/sidewinder - Microsoft Sidewinder (up to 4)
-              9/gamepadpro - Gravis GamePad Pro
+              none         - no joystick
+              auto         - attempts auto detection
+              standard     - normal 2 button joystick
+              dual         - dual joysticks
+              4button      - Stick/Pad with 4 buttons
+              6button      - Stick/Pad with 6 buttons
+              8button      - Stick/Pad with 8 buttons
+              fspro        - CH Flightstick Pro
+              wingex       - Wingman Extreme
+              wingwarrior  - Wingman Warrior
+              sidewinder   - Microsoft Sidewinder (up to 4)
+              gamepadpro   - Gravis GamePad Pro
               sneslpt1     - SNES pad on LPT1 (needs special hardware)
               sneslpt2     - SNES pad on LPT2 (needs special hardware)
               sneslpt3     - SNES pad on LPT3 (needs special hardware)
+              psxlpt1      - PSX pad on LPT1 (needs special hardware)
+              psxlpt2      - PSX pad on LPT2 (needs special hardware)
+              psxlpt3      - PSX pad on LPT3 (needs special hardware)
+              n64lpt1      - N64 pad on LPT1 (needs special hardware)
+              n64lpt2      - N64 pad on LPT2 (needs special hardware)
+              n64lpt3      - N64 pad on LPT3 (needs special hardware)
 
               Notes:
               1) Use the TAB menu to calibrate analog joysticks. Calibration
               data will be saved in mame.cfg. If you're using different
               joytypes for different games, you may need to recalibrate your
               joystick every time.
-              2) Joystick description by number may not be supported by
-              future versions of MAME. Use the symbolic name instead.
-              3) Extra buttons of noname joysticks may not work.
-			  4) the "official" Snespad-Support site is
+              2) Extra buttons of noname joysticks may not work.
+			  3) the "official" Snespad-Support site is
               http://snespad.emulationworld.com
+              4) http://www.debaser.force9.co.uk/ccmame has info on how to
+              connect PSX and N64 pads.
 
 -log          create a log of illegal memory accesses in ERROR.LOG
 -help, -?     display current MAME version and copyright notice

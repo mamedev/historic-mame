@@ -119,9 +119,9 @@ int battlane_cpu1_interrupt(void)
 	s1++;
 
 #if 1
-	if (osd_key_pressed(OSD_KEY_N))
+	if (keyboard_key_pressed(KEYCODE_N))
 	{
-		while (osd_key_pressed(OSD_KEY_F)) ;
+		while (keyboard_key_pressed(KEYCODE_F)) ;
 		nmipending=1;
 	}
 #else
@@ -163,10 +163,10 @@ int battlane_cpu2_interrupt(void)
 	s1++;
 
 #ifdef MAME_DEBUG
-	if (osd_key_pressed(OSD_KEY_F))
+	if (keyboard_key_pressed(KEYCODE_F))
 	{
 		FILE *fp;
-		while (osd_key_pressed(OSD_KEY_F)) ;
+		while (keyboard_key_pressed(KEYCODE_F)) ;
 		fp=fopen("RAM.DMP", "w+b");
 		if (fp)
 		{

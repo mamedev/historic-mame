@@ -1,10 +1,10 @@
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 #include <sys/farptr.h>
 #include <go32.h>
 #include "dirty.h"
+/* for VGA triple buffer - we need the register structure */
+#include "TwkUser.h"
 
 /* from video.c (required for 15.75KHz Arcade Monitor Modes) */
 extern int half_yres;
@@ -29,10 +29,11 @@ unsigned int doublepixel[256];
 unsigned int quadpixel[256]; /* for quadring pixels */
 
 
-/*memsize of 'video page' for unchained blits (req. for 15.75KHz Arcade Monitor Modes) */
-#define XPAGE_SIZE      0x8000
 /* current 'page' for unchained modes */
-static int xpage=-1;
+static int xpage = -1;
+/*default page sizes for non-triple buffering */
+int xpage_size = 0x8000;
+int no_xpages = 2;
 
 /* this function lifted from Allegro */
 static int vesa_scroll_async(int x, int y)
@@ -146,47 +147,64 @@ void blitscreen_dirty0_vga(void)
 	}
 }
 
-/* for flipping between the 2 unchained VGA pages */
+/* for flipping between the unchained VGA pages */
 INLINE void unchained_flip(void)
 {
-	int	flip_value;
-/* memory address of non-visible page */
-	flip_value = ((XPAGE_SIZE * xpage)|0x0c);
-/* flip the page var */
-	xpage = !xpage;
+	int	flip_value1,flip_value2;
+	int	temp;
 
+/* memory address of non-visible page */
+	temp = xpage_size * xpage;
+
+	flip_value1 = ((temp & 0xff00) | 0x0c);
+	flip_value2 = (((temp << 8) & 0xff00) | 0x0d);
+
+/* flip the page var */
+	xpage ++;
+	if (xpage == no_xpages)
+		xpage = 0;
 /* need to change the offset address during the active display interval */
 /* as the value is read during the vertical retrace */
 	__asm__ __volatile__ (
-	"movw	$0x3da,%%dx \n"
+
+	"movw   $0x3da,%%dx \n"
+	"cli \n"
+	".align 4                \n"
 /* check for active display interval */
 	"0:\n"
-	"inb	%%dx,%%al \n"
-	"testb	$1,%%al \n"
-	"jnz 	0b \n"
+	"inb    %%dx,%%al \n"
+	"testb  $1,%%al \n"
+	"jz		0b \n"
 /* change the offset address */
-	"movw	$0x3d4,%%dx \n"
-	"mov	%%cx,%%ax \n"
-	"outw	%%ax,%%dx \n"
+	"movw   $0x3d4,%%dx \n"
+	"movw   %%cx,%%ax \n"
+	"outw   %%ax,%%dx \n"
+	"movw   %%bx,%%ax \n"
+	"outw   %%ax,%%dx \n"
+	"sti \n"
+
+
 /* outputs  (none)*/
 	:
 /* inputs -
- ecx = flip_value */
-	:"c" (flip_value)
+ ecx = flip_value1 , ebx = flip_value2 */
+	:"c" (flip_value1),
+	"b" (flip_value2)
 /* registers modified */
-	:"ax", "cx", "dx", "cc", "memory"
+	:"ax", "bx", "cx", "dx", "cc", "memory"
 	);
 }
+
 
 
 /* unchained dirty modes */
 void blitscreen_dirty1_unchained_vga(void)
 {
-	int x, y, i, outval, dirty_page;
+	int x, y, i, outval, dirty_page, triple_page, write_triple;
 	int plane, planeval, iloop, page;
-	unsigned long *lb, address;
+	unsigned long *lb, address, triple_address;
 	unsigned char *lbsave;
-	unsigned long asave;
+	unsigned long asave, triple_save;
 	static int width4, word_blit, dirty_height;
 	static int source_width, source_line_width, dest_width, dest_line_width;
 
@@ -208,14 +226,22 @@ void blitscreen_dirty1_unchained_vga(void)
 	_farsetsel(screen->seg);
 
 	dirty_page = xpage;
-	/* need to update both 'pages', but only update each page while it isn't visible */
+	/* non visible page, if we're triple buffering */
+	triple_page = xpage + 1;
+	if (triple_page == no_xpages)
+		triple_page = 0;
+
+	/* need to update all 'pages', but only update each page while it isn't visible */
 	for (page = 0; page < 2; page ++)
 	{
 		planeval=0x0100;
+		write_triple = (!page | (no_xpages == 3));
+
 		/* go through each bit plane */
 		for (plane = 0; plane < 4 ;plane ++)
 		{
-			address = 0xa0000 + (XPAGE_SIZE * dirty_page)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
+			address = 0xa0000 + (xpage_size * dirty_page)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
+			triple_address = 0xa0000 + (xpage_size * triple_page)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
 			lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns + plane);
 			/*set the bit plane */
 			outportw(0x3c4, planeval|0x02);
@@ -228,31 +254,44 @@ void blitscreen_dirty1_unchained_vga(void)
 					{
 						unsigned long *lb0 = lb + (x >> 2);
 						unsigned long address0 = address + (x >> 2);
+						unsigned long address1 = triple_address + (x >> 2);
 						int h;
 						while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
-                    	w += 16;
+							w += 16;
 						if (x + w > gfx_display_columns)
-                    		w = gfx_display_columns - x;
-
-
+							w = gfx_display_columns - x;
 						if(word_blit)
 						{
 							iloop = w >> 3;
 							for (h = 0; h < dirty_height && (y + (h << half_yres)) < gfx_display_lines; h++)
 							{
 								asave = address0;
+								triple_save = address1;
 								lbsave = (unsigned char *)lb0;
 								for(i = 0; i < iloop; i++)
 								{
 									outval = *lbsave | (lbsave[4] << 8);
 									_farnspokew(asave, outval);
+									/* write 2 pages on first pass if triple buffering */
+									if (write_triple)
+									{
+										_farnspokew(triple_save, outval);
+										triple_save += 2;
+									}
 									lbsave += 8;
 									asave += 2;
 								}
 								if (w&4)
+								{
 									_farnspokeb(asave, *lbsave);
+		   							if (write_triple)
+										_farnspokeb(triple_save, *lbsave);
+								}
+
+
 								lb0 += source_width;
 								address0 += dest_width;
+								address1 += dest_width;
 							}
 						}
 						else
@@ -261,23 +300,32 @@ void blitscreen_dirty1_unchained_vga(void)
 							for (h = 0; h < dirty_height && (y + (h << half_yres)) < gfx_display_lines; h++)
 							{
 								asave = address0;
+								triple_save = address1;
 								lbsave = (unsigned char *)lb0;
 								for(i = 0; i < iloop; i++)
 								{
 									outval = *lbsave | (lbsave[4] << 8) | (lbsave[8] << 16) | (lbsave[12] << 24);
 									_farnspokel(asave, outval);
+									/* write 2 pages on first pass if triple buffering */
+									if (page == 0 && no_xpages == 3)
+									{
+										_farnspokel(triple_save, outval);
+										triple_save += 4;
+									}
 									lbsave += 16;
 									asave += 4;
 								}
 								lb0 += source_width;
 								address0 += dest_width;
+								address1 += dest_width;
 							}
 						}
 					}
 					x += w;
-        		}
+				}
 				lb += source_line_width;
 				address += dest_line_width;
+				triple_address += dest_line_width;
 			}
 			/* move onto the next bit plane */
 			planeval <<= 1;
@@ -286,13 +334,15 @@ void blitscreen_dirty1_unchained_vga(void)
 		if(!page)
 			unchained_flip();
 		/* move onto next 'page' */
-		dirty_page = !dirty_page;
+		dirty_page += (no_xpages - 1);
+		if (dirty_page >= no_xpages)
+			dirty_page -= no_xpages;
 	}
 }
 
 /* Macros for non dirty unchained blits */
 #define UNCHAIN_BLIT_START \
-        __asm__ __volatile__ ( \
+		__asm__ __volatile__ ( \
 /* save es and set it to our video selector */ \
         "pushw  %%es \n" \
         "movw   %%dx,%%es \n" \
@@ -434,11 +484,11 @@ void blitscreen_dirty0_unchained_vga(void)
    /* only calculate our statics the first time around */
 	if(xpage==-1)
 	{
-      	/* vars for normal chained blit */
+
 		width4 = (scrbitmap->line[1] - scrbitmap->line[0]) >> 2;
 		columns4 = gfx_display_columns >> 2;
 		disp_height = gfx_display_lines >> half_yres;
-		/*vars for unchained blit */
+
 		xpage = 1;
 		memwidth = (scrbitmap->line[1] - scrbitmap->line[0]) << half_yres;
 		scrwidth = gfx_width >> 2;
@@ -454,7 +504,7 @@ void blitscreen_dirty0_unchained_vga(void)
 	/* get the start of the screen bitmap */
 	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
 	/* and the start address in video memory */
-	address = 0xa0000 + (XPAGE_SIZE * xpage)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
+	address = 0xa0000 + (xpage_size * xpage)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
 	if (word_blit)
 	{
 		if (byte_blit)
@@ -468,6 +518,16 @@ void blitscreen_dirty0_unchained_vga(void)
 	unchained_flip();
 }
 
+/* setup register array to be unchained */
+void unchain_vga(Register *pReg)
+{
+/* setup registers for an unchained mode */
+	pReg[15].value = 0x00;
+	pReg[18].value = 0xe3;
+	pReg[20].value = 0x06;
+/* flag the fact it's unchained */
+	unchained = 1;
+}
 
 
 INLINE void copyline_1x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)

@@ -1,15 +1,16 @@
 /***************************************************************************
 
-	POW - Prisoners Of War (USA)		A7008	SNK 1988
+	POW - Prisoners Of War (US)			A7008	SNK 1988
 	POW - Prisoners Of War (Japan)		A7008	SNK 1988
-	SAR - Search And Rescue	(USA)		A8007	SNK 1989
-	Street Smart (USA version 1)		A8007	SNK 1989
+	SAR - Search And Rescue	(US)		A8007	SNK 1989
+	Street Smart (US version 1)			A8007	SNK 1989
+	Street Smart (US version 2)			A7008	SNK 1989
 	Street Smart (Japan version 1)		A8007	SNK 1989
-	Street Smart (USA version 2)		A7008	SNK 1989
+	Ikari III	- The Rescue (US)		A7007	SNK 1989
 
 	For some strange reason version 2 of Street Smart runs on Pow hardware!
 
- 	Emulation by Bryan McPhail, mish@tendril.force9.net
+	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
 
@@ -139,8 +140,10 @@ static struct MemoryWriteAddress searchar_writemem[] =
 	{ 0x080000, 0x080001, sound_w },
 	{ 0x080006, 0x080007, MWA_NOP }, /* Watchdog? */
 	{ 0x0c0000, 0x0c0001, pow_flipscreen_w },
+	{ 0x0f0000, 0x0f0001, MWA_NOP },
 	{ 0x100000, 0x107fff, MWA_BANK3, &spriteram },
 	{ 0x200000, 0x200fff, pow_video_w, &videoram },
+	{ 0x201000, 0x201fff, pow_video_w }, /* Mirror used by Ikari 3 */
 	{ 0x400000, 0x400fff, pow_paletteram_w, &paletteram },
 	{ -1 }  /* end of table */
 };
@@ -185,6 +188,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 /******************************************************************************/
+
 
 INPUT_PORTS_START( pow_input_ports )
 	PORT_START	/* Player 1 controls */
@@ -242,7 +246,7 @@ INPUT_PORTS_START( pow_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2, all active high */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
@@ -264,6 +268,7 @@ INPUT_PORTS_START( pow_input_ports )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
+
 
 /* Identical to pow, but the Language dip switch has no effect */
 INPUT_PORTS_START( powj_input_ports )
@@ -322,7 +327,7 @@ INPUT_PORTS_START( powj_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2, all active high */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
@@ -344,6 +349,7 @@ INPUT_PORTS_START( powj_input_ports )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( searchar_input_ports )
 	PORT_START	/* Player 1 controls */
@@ -395,13 +401,13 @@ INPUT_PORTS_START( searchar_input_ports )
 	PORT_DIPSETTING(    0x30, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x40, 0x00, "Bonus Occurrence" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
-	PORT_DIPSETTING(    0x40, "1s3 & every 2nd" )
+	PORT_DIPSETTING(    0x40, "1st & every 2nd" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START /* Dip switches (Active high) */
-	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
@@ -424,11 +430,12 @@ INPUT_PORTS_START( searchar_input_ports )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, OSD_KEY_N, OSD_KEY_M, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( streetsm_input_ports )
 	PORT_START	/* Player 1 controls */
@@ -486,7 +493,7 @@ INPUT_PORTS_START( streetsm_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START /* Dip switches (Active high) */
-	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
@@ -515,6 +522,7 @@ INPUT_PORTS_START( streetsm_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 /* Same as streetsm, but Coinage is different */
 INPUT_PORTS_START( streetsj_input_ports )
 	PORT_START	/* Player 1 controls */
@@ -523,8 +531,8 @@ INPUT_PORTS_START( streetsj_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
@@ -533,8 +541,8 @@ INPUT_PORTS_START( streetsj_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2  )
 
 	PORT_START	/* coin */
@@ -572,7 +580,7 @@ INPUT_PORTS_START( streetsj_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START /* Dip switches (Active high) */
-	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
@@ -599,6 +607,92 @@ INPUT_PORTS_START( streetsj_input_ports )
 
 	PORT_START	/* player 2 12-way rotary control - not used in this game */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( ikari3_input_ports )
+	PORT_START	/* Player 1 controls, maybe all are active_high? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2  )
+
+	PORT_START	/* coin */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switches (Active high) */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coin A & B" )
+	PORT_DIPSETTING(    0x08, "First 2 Coins/1 Credit then 1/1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, "First 1 Coin/2 Credits then 1/1" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Bonus Occurrence" )
+	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
+	PORT_DIPSETTING(    0x20, "1st & every 2nd" )
+	PORT_DIPNAME( 0x40, 0x00, "Blood" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START /* Dip switches (Active high) */
+	PORT_BITX(0x01,     0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20k 50k" )
+	PORT_DIPSETTING(    0x08, "40k 100k" )
+	PORT_DIPSETTING(    0x04, "60k 150k" )
+	PORT_DIPSETTING(    0x0c, "None" )
+	PORT_DIPNAME( 0x30, 0x00, "Game Mode" )
+	PORT_DIPSETTING(    0x20, "Demo Sounds Off" )
+	PORT_DIPSETTING(    0x00, "Demo Sounds On" )
+	PORT_DIPSETTING(    0x30, "Freeze" )
+	PORT_BITX( 0,       0x10, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x80, "Normal" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
+
+	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+
+	PORT_START	/* player 2 12-way rotary control - converted in controls_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -642,6 +736,19 @@ static struct GfxLayout spritelayout2 =
 	64*8
 };
 
+static struct GfxLayout spritelayout3 =
+{
+	16,16,	/* 16*16 sprites */
+	4096*5,
+	4,		/* 4 bits per pixel */
+	{ 0x140000*8, 0, 0xa0000*8, 0x1e0000*8 },
+	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+	  7, 6, 5, 4, 3, 2, 1, 0 },
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	8*32	/* every sprite takes 32 consecutive bytes */
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &charlayout,   0, 128 },
@@ -653,6 +760,13 @@ static struct GfxDecodeInfo searchar_gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &charlayout,   0,  16 },
 	{ 1, 0x010000, &spritelayout2,0, 128 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
+{
+	{ 1, 0x000000, &charlayout,   0,  16 },
+	{ 1, 0x010000, &spritelayout3,0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -676,6 +790,57 @@ static struct UPD7759_interface upd7759_interface =
 };
 
 /******************************************************************************/
+
+static struct MachineDriver ikari3_machine_driver =
+{
+	/* basic machine hardware */
+	{
+ 		{
+			CPU_M68000,
+			10000000,	/* Accurate */
+			0,
+			searchar_readmem,searchar_writemem,0,0,
+			m68_level1_irq,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* Accurate */
+			2,
+			sound_readmem,sound_writemem,
+			sound_readport,sound_writeport,
+			interrupt,3	/* ?? hand tuned */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+ 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+
+	ikari3_gfxdecodeinfo,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	pow_vh_start,
+	0,
+	searchar_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+		{
+			SOUND_UPD7759,
+			&upd7759_interface
+		}
+	}
+};
 
 static struct MachineDriver pow_machine_driver =
 {
@@ -779,7 +944,6 @@ static struct MachineDriver searchar_machine_driver =
 	}
 };
 
-
 static struct MachineDriver streets2_machine_driver =
 {
 	/* basic machine hardware */
@@ -833,6 +997,7 @@ static struct MachineDriver streets2_machine_driver =
 
 /******************************************************************************/
 
+
 ROM_START( pow_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
@@ -864,6 +1029,7 @@ ROM_START( pow_rom )
 	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
+
 
 ROM_START( powj_rom )
 	ROM_REGION(0x40000)
@@ -897,6 +1063,7 @@ ROM_START( powj_rom )
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
+
 ROM_START( searchar_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
@@ -924,6 +1091,7 @@ ROM_START( searchar_rom )
 	ROM_LOAD_ODD ( "bh.4",  0x000000, 0x20000, 0xeabc5ddf )
 ROM_END
 
+
 ROM_START( streetsm_rom )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
@@ -941,34 +1109,12 @@ ROM_START( streetsm_rom )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "s2-5.16c",   0x000000, 0x10000, 0xca4b171e )
+	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "s2-6.18d",   0x000000, 0x20000, 0x47db1605 )
+	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
-ROM_START( streetsj_rom )
-	ROM_REGION(0x40000)
-	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
-	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
-
-	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s2-7.15l",    0x000000, 0x08000, 0x22bedfe5 )
-	ROM_LOAD( "s2-8.15m",    0x008000, 0x08000, 0x6a1c70ab )
-
-	ROM_LOAD( "stsmart.900", 0x010000, 0x80000, 0xa8279a7e )
-	ROM_LOAD( "stsmart.902", 0x090000, 0x80000, 0x2f021aa1 )
-	ROM_LOAD( "stsmart.904", 0x110000, 0x80000, 0x167346f7 )
-	ROM_LOAD( "stsmart.901", 0x190000, 0x80000, 0xc305af12 )
-	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
-	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
-
-	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "s2-5.16c",   0x000000, 0x10000, 0xca4b171e )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "s2-6.18d",   0x000000, 0x20000, 0x47db1605 )
-ROM_END
 
 ROM_START( streets2_rom )
 	ROM_REGION(0x40000)
@@ -987,10 +1133,79 @@ ROM_START( streets2_rom )
 	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "s2-5.16c",   0x000000, 0x10000, 0xca4b171e )
+	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "s2-6.18d",   0x000000, 0x20000, 0x47db1605 )
+	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
+ROM_END
+
+
+ROM_START( streetsj_rom )
+	ROM_REGION(0x40000)
+	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
+	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
+
+	ROM_REGION_DISPOSE(0x310000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s2-7.15l",    0x000000, 0x08000, 0x22bedfe5 )
+	ROM_LOAD( "s2-8.15m",    0x008000, 0x08000, 0x6a1c70ab )
+
+	ROM_LOAD( "stsmart.900", 0x010000, 0x80000, 0xa8279a7e )
+	ROM_LOAD( "stsmart.902", 0x090000, 0x80000, 0x2f021aa1 )
+	ROM_LOAD( "stsmart.904", 0x110000, 0x80000, 0x167346f7 )
+	ROM_LOAD( "stsmart.901", 0x190000, 0x80000, 0xc305af12 )
+	ROM_LOAD( "stsmart.903", 0x210000, 0x80000, 0x73c16d35 )
+	ROM_LOAD( "stsmart.905", 0x290000, 0x80000, 0xa5beb4e2 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "s2-5.16c",    0x000000, 0x10000, 0xca4b171e )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
+ROM_END
+
+
+ROM_START( ikari3_rom )
+	ROM_REGION(0x40000)
+	ROM_LOAD_EVEN( "ik3-2.bin", 0x000000, 0x20000, 0xa7b34dcd )
+	ROM_LOAD_ODD ( "ik3-3.bin", 0x000000, 0x20000, 0x50f2b83d )
+
+	ROM_REGION_DISPOSE(0x290000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ik3-7.bin",  0x000000, 0x08000, 0x0b4804df )
+	ROM_LOAD( "ik3-8.bin",  0x008000, 0x08000, 0x10ab4e50 )
+
+	ROM_LOAD( "ik3-13.bin", 0x010000, 0x20000, 0x9a56bd32 )
+	ROM_LOAD( "ik3-12.bin", 0x030000, 0x20000, 0x0ce6a10a )
+	ROM_LOAD( "ik3-11.bin", 0x050000, 0x20000, 0xe4e2be43 )
+	ROM_LOAD( "ik3-10.bin", 0x070000, 0x20000, 0xac222372 )
+	ROM_LOAD( "ik3-9.bin",  0x090000, 0x20000, 0xc33971c2 )
+
+	ROM_LOAD( "ik3-14.bin", 0x0b0000, 0x20000, 0x453bea77 )
+	ROM_LOAD( "ik3-15.bin", 0x0d0000, 0x20000, 0x781a81fc )
+	ROM_LOAD( "ik3-16.bin", 0x0f0000, 0x20000, 0x80ba400b )
+	ROM_LOAD( "ik3-17.bin", 0x110000, 0x20000, 0x0cc3ce4a )
+	ROM_LOAD( "ik3-18.bin", 0x130000, 0x20000, 0xba106245 )
+
+	ROM_LOAD( "ik3-23.bin", 0x150000, 0x20000, 0xd0fd5c77 )
+	ROM_LOAD( "ik3-22.bin", 0x170000, 0x20000, 0x4878d883 )
+	ROM_LOAD( "ik3-21.bin", 0x190000, 0x20000, 0x50d0fbf0 )
+	ROM_LOAD( "ik3-20.bin", 0x1b0000, 0x20000, 0x9a851efc )
+	ROM_LOAD( "ik3-19.bin", 0x1d0000, 0x20000, 0x4ebdba89 )
+
+	ROM_LOAD( "ik3-24.bin", 0x1f0000, 0x20000, 0xe9b26d68 )
+	ROM_LOAD( "ik3-25.bin", 0x210000, 0x20000, 0x073b03f1 )
+	ROM_LOAD( "ik3-26.bin", 0x230000, 0x20000, 0x9c613561 )
+	ROM_LOAD( "ik3-27.bin", 0x250000, 0x20000, 0x16dd227e )
+	ROM_LOAD( "ik3-28.bin", 0x270000, 0x20000, 0x711715ae )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "ik3-5.bin",  0x000000, 0x10000, 0xce6706fc )
+
+	ROM_REGION(0x20000)	/* UPD7759 samples */
+	ROM_LOAD( "ik3-6.bin",  0x000000, 0x20000, 0x59d256a4 )
+
+	ROM_REGION(0x40000) /* Extra code bank */
+	ROM_LOAD_EVEN( "ik3-1.bin",  0x000000, 0x10000, 0x47e4d256 )
+	ROM_LOAD_ODD ( "ik3-4.bin",  0x000000, 0x10000, 0xa43af6b5 )
 ROM_END
 
 /******************************************************************************/
@@ -999,6 +1214,13 @@ static int pow_cycle_r(int offset)
 {
 	int c=READ_WORD(&pow_ram[0x3e7c]);
 	if (cpu_get_pc()==0x628 && (c&0xff)!=0xf) { cpu_spinuntil_int(); return 0xf; }
+	return c;
+}
+
+static int ikari3_cycle_r(int offset)
+{
+	int c=READ_WORD(&pow_ram[0x0]);
+	if (cpu_get_pc()==0x107a && (c&0xff00)==0) { cpu_spinuntil_int(); return 0xf; }
 	return c;
 }
 
@@ -1023,6 +1245,8 @@ static void custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"powj")) install_mem_read_handler(0, 0x43e7c, 0x43e7d, pow_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"searchar")) install_mem_read_handler(0, 0x40002, 0x40003, sar_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"streetsm")) install_mem_read_handler(0, 0x43e02, 0x43e03, streetsm_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"ikari3")) install_mem_read_handler(0, 0x40000, 0x40001, ikari3_cycle_r);
+
 }
 
 static void searchar_memory(void)
@@ -1147,6 +1371,31 @@ struct GameDriver streetsm_driver =
 	0, 0
 };
 
+struct GameDriver streets2_driver =
+{
+	__FILE__,
+	&streetsm_driver,
+	"streets2",
+	"Street Smart (US version 2)",
+	"1989",
+	"SNK",
+	"Bryan McPhail",
+	0,
+	&streets2_machine_driver,
+	custom_memory,
+
+	streets2_rom,
+	0, 0,
+	0,
+	0,
+
+	streetsm_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
 struct GameDriver streetsj_driver =
 {
 	__FILE__,
@@ -1172,25 +1421,26 @@ struct GameDriver streetsj_driver =
 	0, 0
 };
 
-struct GameDriver streets2_driver =
+
+struct GameDriver ikari3_driver =
 {
 	__FILE__,
-	&streetsm_driver,
-	"streets2",
-	"Street Smart (US version 2)",
+	0,
+	"ikari3",
+	"Ikari III - The Rescue",
 	"1989",
 	"SNK",
 	"Bryan McPhail",
 	0,
-	&streets2_machine_driver,
-	custom_memory,
+	&ikari3_machine_driver,
+	searchar_memory,
 
-	streets2_rom,
+	ikari3_rom,
 	0, 0,
 	0,
-	0,
+	0,	/* sound_prom */
 
-	streetsm_input_ports,
+	ikari3_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

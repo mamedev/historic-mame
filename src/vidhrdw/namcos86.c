@@ -418,7 +418,7 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #if 0
 {
 	char buf[80];
-int b=osd_key_pressed(OSD_KEY_Y)?8:0;
+int b=keyboard_key_pressed(KEYCODE_Y)?8:0;
 	sprintf(buf,"%02x %02x %02x %02x %02x %02x %02x %02x",
 			spriteram[0x1bf0+b],
 			spriteram[0x1bf1+b],

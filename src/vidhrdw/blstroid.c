@@ -68,8 +68,6 @@ static unsigned long priority[8];
  *
  *************************************/
 
-extern int blstroid_irq_state;
-
 static const unsigned char *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
@@ -110,21 +108,21 @@ int blstroid_vh_start(void)
 		16, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	/* reset statics */
 	memset(priority, 0, sizeof(priority));
-	
+
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
 		atarigen_pf_free();
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -153,7 +151,7 @@ void blstroid_vh_stop(void)
 void blstroid_scanline_update(int scanline)
 {
 	int offset = (scanline / 8) * 0x80 + 0x50;
-	
+
 	/* update motion objects */
 	if (scanline == 0)
 		atarigen_mo_update(atarigen_spriteram, 0, scanline);
@@ -163,26 +161,12 @@ void blstroid_scanline_update(int scanline)
 		if (READ_WORD(&atarigen_playfieldram[offset]) & 0x8000)
 		{
 			/* generate the interrupt */
-			blstroid_irq_state = 1;
+			atarigen_scanline_int_gen();
 			atarigen_update_interrupts();
-		
+
 			/* also set a timer to turn ourself off */
 			timer_set(cpu_getscanlineperiod(), 0, irq_off);
 		}
-}
-
-
-
-/*************************************
- *
- *		IRQ acknowledge write handler
- *
- *************************************/
-
-void blstroid_irq_ack_w(int offset, int data)
-{
-	blstroid_irq_state = 0;
-	atarigen_update_interrupts();
 }
 
 
@@ -315,7 +299,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
@@ -324,7 +308,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int code = data & 0x1fff;
 			int color = data >> 13;
-			
+
 			/* mark the colors used by this tile */
 			colormap[color] |= usage[code];
 		}
@@ -349,14 +333,14 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
 			int offs = y * 64 + x;
-			
+
 			/* update only if dirty */
 			if (atarigen_pf_dirty[offs])
 			{
 				int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 				int code = data & 0x1fff;
 				int color = data >> 13;
-				
+
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, 0, 0, 16 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
 			}
@@ -387,7 +371,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int offs = y * 64 + x;
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = data >> 13;
-			
+
 			/* overrender if there is a non-zero priority for this color */
 			/* not perfect, but works for the most obvious cases */
 			if (!priority[color])
@@ -443,7 +427,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int code = data[1] & 0x3fff;
 	int xpos = (data[3] >> 7) << 1;
 	int color = data[3] & 0x000f;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 
@@ -462,7 +446,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 	/* draw the motion object */
 	atarigen_mo_draw_16x8_strip(bitmap, gfx, code, color, hflip, vflip, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
-	
+
 	/* overrender the playfield */
 	atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
 }
@@ -477,8 +461,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 static void irq_off(int param)
 {
-	blstroid_irq_state = 0;
-	atarigen_update_interrupts();
+	atarigen_scanline_int_ack_w(0, 0);
 }
 
 
@@ -507,32 +490,32 @@ static int debug(void)
 		memcpy(oldpri, priority, sizeof(oldpri));
 	}
 
-	if (osd_key_pressed(OSD_KEY_Q)) hidebank = 0;
-	if (osd_key_pressed(OSD_KEY_W)) hidebank = 1;
-	if (osd_key_pressed(OSD_KEY_E)) hidebank = 2;
-	if (osd_key_pressed(OSD_KEY_R)) hidebank = 3;
-	if (osd_key_pressed(OSD_KEY_T)) hidebank = 4;
-	if (osd_key_pressed(OSD_KEY_Y)) hidebank = 5;
-	if (osd_key_pressed(OSD_KEY_U)) hidebank = 6;
-	if (osd_key_pressed(OSD_KEY_I)) hidebank = 7;
+	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (osd_key_pressed(OSD_KEY_A)) hidebank = 8;
-	if (osd_key_pressed(OSD_KEY_S)) hidebank = 9;
-	if (osd_key_pressed(OSD_KEY_D)) hidebank = 10;
-	if (osd_key_pressed(OSD_KEY_F)) hidebank = 11;
-	if (osd_key_pressed(OSD_KEY_G)) hidebank = 12;
-	if (osd_key_pressed(OSD_KEY_H)) hidebank = 13;
-	if (osd_key_pressed(OSD_KEY_J)) hidebank = 14;
-	if (osd_key_pressed(OSD_KEY_K)) hidebank = 15;
+	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
 
-	if (osd_key_pressed(OSD_KEY_9))
+	if (keyboard_key_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (osd_key_pressed(OSD_KEY_9)) { }
+		while (keyboard_key_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

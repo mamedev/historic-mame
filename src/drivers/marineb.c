@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Marine Boy/Changes/Springer/Hoccer memory map (preliminary)
+Marine Boy hardware memory map (preliminary)
 
 MAIN CPU:
 
@@ -51,6 +51,7 @@ void marineb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void changes_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void hoccer_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static void marineb_init_machine(void)
@@ -458,6 +459,7 @@ static struct AY8910interface wanted_ay8910_interface =
 
 #define springer_gfxdecodeinfo  marineb_gfxdecodeinfo
 #define wanted_gfxdecodeinfo    marineb_gfxdecodeinfo
+#define hopprobo_gfxdecodeinfo  marineb_gfxdecodeinfo
 
 #define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
@@ -474,7 +476,7 @@ static struct MachineDriver NAME##_machine_driver =					\
 			INTERRUPT,1	 	                                        \
 		}															\
 	},																\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	60, 5000,	/* frames per second, vblank duration */			\
 	1,	/* single CPU game */										\
 	INITMACHINE##_init_machine,										\
 																	\
@@ -507,6 +509,7 @@ DRIVER(changes,  marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom)
 DRIVER(springer, springer, marineb, nmi_interrupt, espial_vh_convert_color_prom);
 DRIVER(hoccer,   marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
 DRIVER(wanted,   marineb,  wanted,  interrupt,     0);
+DRIVER(hopprobo, marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
 
 
 /***************************************************************************
@@ -624,6 +627,26 @@ ROM_START( wanted_rom )
 	ROM_REGION(0x0200)  /* color proms - missing */
 	ROM_LOAD( "wanted.1b",	   0x0000, 0x0100, 0x00000000 )
 	ROM_LOAD( "wanted.1c",	   0x0100, 0x0100, 0x00000000 )
+ROM_END
+
+ROM_START( hopprobo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
+	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, 0xdf1a479a )
+	ROM_LOAD( "hopper03.3n",   0x2000, 0x1000, 0x097ac2a7 )
+	ROM_LOAD( "hopper04.3p",   0x3000, 0x1000, 0x0f4f3ca8 )
+	ROM_LOAD( "hopper05.3r",   0x4000, 0x1000, 0x9d77a37b )
+
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hopper06.5c",   0x0000, 0x2000, 0x68f79bc8 )
+	ROM_LOAD( "hopper07.5d",   0x2000, 0x1000, 0x33d82411 )
+	ROM_RELOAD(				   0x3000, 0x1000 )
+	ROM_LOAD( "hopper08.6f",   0x4000, 0x2000, 0x06d37e64 )
+	ROM_LOAD( "hopper09.6k",   0x6000, 0x2000, 0x047921c7 )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, 0x94450775 ) /* palette low 4 bits */
+	ROM_LOAD( "7052hop.1c",    0x0100, 0x0100, 0xa76bbd51 ) /* palette high 4 bits */
 ROM_END
 
 
@@ -822,5 +845,31 @@ struct GameDriver wanted_driver =
 	ORIENTATION_ROTATE_90,
 
 	wanted_hiload, wanted_hisave
+};
+
+struct GameDriver hopprobo_driver =
+{
+	__FILE__,
+	0,
+	"hopprobo",
+	"Hopper Robo",
+	"1983",
+	"Sega",
+	"Zsolt Vasvari",
+	0,
+	&hopprobo_machine_driver,
+	0,
+
+	hopprobo_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	marineb_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };
 

@@ -44,6 +44,8 @@ same as Pooyan
 
 extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
+void timeplt_init(void);
+void psurge_init(void);
 int timeplt_scanline_r(int offset);
 void timeplt_videoram_w(int offset,int data);
 void timeplt_colorram_w(int offset,int data);
@@ -65,10 +67,17 @@ static void timeplt_coin_counter_w(int offset, int data)
 	coin_counter_w(offset >> 1, data);
 }
 
+static int psurge_protection_r(int offset)
+{
+	return 0x80;
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x6004, 0x6004, psurge_protection_r },	/* psurge only */
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xc000, timeplt_scanline_r },
 	{ 0xc200, 0xc200, input_port_4_r },	/* DSW2 */
@@ -187,6 +196,87 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( psurge_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Initial Energy" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x08, "6" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_BITX(0x10,     0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Shots", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Stop at Junctions" )
+	PORT_DIPSETTING(    0x80, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
 
 
@@ -340,6 +430,28 @@ ROM_START( spaceplt_rom )
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
+ROM_START( psurge_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "p1",           0x0000, 0x2000, 0x05f9ba12 )
+	ROM_LOAD( "p2",           0x2000, 0x2000, 0x3ff41576 )
+	ROM_LOAD( "p3",           0x4000, 0x2000, 0xe8fe120a )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "p4",           0x0000, 0x2000, 0x26fd7f81 )
+	ROM_LOAD( "p5",           0x2000, 0x2000, 0x6066ec8e )
+	ROM_LOAD( "tm5",          0x4000, 0x2000, 0xe8ca87b9 )
+
+	ROM_REGION(0x0240)	/* color proms */
+	ROM_LOAD( "timeplt.b4",   0x0000, 0x0020, 0x00000000 ) /* palette */
+	ROM_LOAD( "timeplt.b5",   0x0020, 0x0020, 0x00000000 ) /* palette */
+	ROM_LOAD( "timeplt.e9",   0x0040, 0x0100, 0x00000000 ) /* sprite lookup table */
+	ROM_LOAD( "timeplt.e12",  0x0140, 0x0100, 0x00000000 ) /* char lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "p6",           0x0000, 0x1000, 0xb52d01fa )
+	ROM_LOAD( "p7",           0x1000, 0x1000, 0x9db5c0ce )
+ROM_END
+
 
 
 static int hiload(void)
@@ -396,7 +508,7 @@ struct GameDriver timeplt_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	timeplt_init,
 
 	timeplt_rom,
 	0, 0,
@@ -422,7 +534,7 @@ struct GameDriver timepltc_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	timeplt_init,
 
 	timepltc_rom,
 	0, 0,
@@ -448,7 +560,7 @@ struct GameDriver spaceplt_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
 	0,
 	&machine_driver,
-	0,
+	timeplt_init,
 
 	spaceplt_rom,
 	0, 0,
@@ -461,4 +573,30 @@ struct GameDriver spaceplt_driver =
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
+};
+
+struct GameDriver psurge_driver =
+{
+	__FILE__,
+	0,
+	"psurge",
+	"Power Surge",
+	"1988",
+	"?????",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	psurge_init,
+
+	psurge_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	psurge_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

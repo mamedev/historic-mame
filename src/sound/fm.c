@@ -87,7 +87,7 @@
 #include "fm.h"
 
 #ifndef PI
-#define PI 3.14159265357989
+#define PI 3.14159265358979323846
 #endif
 
 /***** shared function building option ****/

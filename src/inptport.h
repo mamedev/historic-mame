@@ -58,7 +58,22 @@ enum { IPT_END=1,IPT_PORT,
 					/* It is used to store additional parameters for analog inputs */
 
 	/* the following are special codes for user interface handling - not to be used by drivers! */
-	IPT_UI_PAUSE
+	IPT_UI_CONFIGURE,
+	IPT_UI_ON_SCREEN_DISPLAY,
+	IPT_UI_PAUSE,
+	IPT_UI_RESET_MACHINE,
+	IPT_UI_SHOW_GFX,
+	IPT_UI_FRAMESKIP_DEC,
+	IPT_UI_FRAMESKIP_INC,
+	IPT_UI_THROTTLE,
+	IPT_UI_SHOW_FPS,
+	IPT_UI_SNAPSHOT,
+	IPT_UI_UP,
+	IPT_UI_DOWN,
+	IPT_UI_LEFT,
+	IPT_UI_RIGHT,
+	IPT_UI_SELECT,
+	IPT_UI_CANCEL
 };
 
 #define IPT_UNUSED     IPF_UNUSED

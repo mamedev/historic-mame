@@ -1,15 +1,17 @@
-#define __INLINE__ static __inline__	/* keep allegro.h happy */
-#include <allegro.h>
-#undef __INLINE__
+#include "mamalleg.h"
 #include "driver.h"
 #include <dos.h>
 #include <conio.h>
 #include <time.h>
 #include <audio.h>
 
-/* cut down Allegro size */
-DECLARE_DIGI_DRIVER_LIST()
-DECLARE_MIDI_DRIVER_LIST()
+/* this is supposed to cut down Allegro size, but it actually gets *bigger*... */
+#if 0
+BEGIN_DIGI_DRIVER_LIST
+END_DIGI_DRIVER_LIST
+BEGIN_MIDI_DRIVER_LIST
+END_MIDI_DRIVER_LIST
+#endif
 
 
 /* audio related stuff */

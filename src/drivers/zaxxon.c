@@ -66,14 +66,17 @@ extern unsigned char *zaxxon_background_color_bank;
 extern unsigned char *zaxxon_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  zaxxon_vh_start(void);
+int  razmataz_vh_start(void);
 void zaxxon_vh_stop(void);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int zaxxon_vid_type;
 
 void zaxxon_sound_w(int offset, int data);
 
 /* in machine/segacrpt.c */
 void szaxxon_decode(void);
+void nprinces_decode(void);
 void futspy_decode(void);
 
 
@@ -88,6 +91,45 @@ void futspy_init_machine(void)
 	zaxxon_vid_type = 2;
 }
 
+static int razmataz_unknown_r(int offset)
+{
+	return rand() & 0xff;
+}
+
+static int razmataz_dial_r(int num)
+{
+	static unsigned char pos[2];
+	int delta,res;
+
+	delta = readinputport(num);
+
+	if (delta < 0x80)
+	{
+		/* right */
+		pos[num] -= delta;
+		res = (pos[num] << 1) | 1;
+	}
+	else
+	{
+		/* left */
+		pos[num] += delta;
+		res = (pos[num] << 1);
+	}
+
+	return res;
+}
+
+static int razmataz_dial_0_r(int offset)
+{
+	return razmataz_dial_r(0);
+}
+
+static int razmataz_dial_1_r(int offset)
+{
+	return razmataz_dial_r(1);
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -97,9 +139,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xa000, 0xa0ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },	/* IN0 */
 	{ 0xc001, 0xc001, input_port_1_r },	/* IN1 */
-	{ 0xc100, 0xc100, input_port_2_r },	/* IN2 */
 	{ 0xc002, 0xc002, input_port_3_r },	/* DSW0 */
 	{ 0xc003, 0xc003, input_port_4_r },	/* DSW1 */
+	{ 0xc100, 0xc100, input_port_2_r },	/* IN2 */
 	{ -1 }  /* end of table */
 };
 
@@ -137,12 +179,49 @@ static struct MemoryWriteAddress futspy_writemem[] =
 };
 
 
+static struct MemoryReadAddress razmataz_readmem[] =
+{
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x6000, 0x6fff, MRA_RAM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0xa000, 0xa0ff, MRA_RAM },
+	{ 0xc000, 0xc000, razmataz_dial_0_r },	/* dial pl 1 */
+	{ 0xc002, 0xc002, input_port_3_r },	/* DSW0 */
+	{ 0xc003, 0xc003, input_port_4_r },	/* DSW1 */
+	{ 0xc004, 0xc004, input_port_6_r },	/* fire/start pl 1 */
+	{ 0xc008, 0xc008, razmataz_dial_1_r },	/* dial pl 2 */
+	{ 0xc00c, 0xc00c, input_port_7_r },	/* fire/start pl 2 */
+	{ 0xc100, 0xc100, input_port_2_r },	/* coin */
+	{ 0xc80a, 0xc80a, razmataz_unknown_r },	/* needed, otherwise the game hangs */
+//	{ 0xff3c, 0xff3c,  }, sound?
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress razmataz_writemem[] =
+{
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
+	{ 0xc003, 0xc004, coin_counter_w },
+	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
+	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
+	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
+	{ 0xe0fa, 0xe0fa, MWA_RAM, &zaxxon_background_color_bank },
+	{ 0xe0fb, 0xe0fb, MWA_RAM, &zaxxon_background_enable },
+//	{ 0xff3c, 0xff3c, }, sound
+	{ -1 }  /* end of table */
+};
+
+
 /***************************************************************************
 
   Zaxxon uses NMI to trigger the self test. We use a fake input port to
   tie that event to a keypress.
 
 ***************************************************************************/
+
 static int zaxxon_interrupt(void)
 {
 	if (readinputport(5) & 1)	/* get status of the F2 key */
@@ -246,7 +325,7 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( futspy_input_ports )
@@ -345,7 +424,103 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( razmataz_input_ports )
+	PORT_START	/* IN0 */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER1, 30, 15, 0, 0, 0)
+
+	PORT_START	/* IN1 */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER2 | IPF_REVERSE, 30, 15, 0, 0, 0)
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -450,7 +625,7 @@ static struct MachineDriver zaxxon_machine_driver =
 	zaxxon_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
@@ -488,7 +663,7 @@ static struct MachineDriver futspy_machine_driver =
 	futspy_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1,2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	futspy_gfxdecodeinfo,
 	256,32*8,
 	zaxxon_vh_convert_color_prom,
@@ -507,6 +682,38 @@ static struct MachineDriver futspy_machine_driver =
 			&zaxxon_samples_interface
 		}
 	}
+};
+
+static struct MachineDriver razmataz_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz ?? */
+			0,
+			razmataz_readmem,razmataz_writemem,0,0,
+			zaxxon_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	zaxxon_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	256,32*8,
+	zaxxon_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	razmataz_vh_start,
+	zaxxon_vh_stop,
+	razmataz_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
 };
 
 
@@ -675,6 +882,38 @@ ROM_START( futspy_rom )
 	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0xf9e26790 ) /* char lookup table */
 ROM_END
 
+ROM_START( razmataz_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u27",           0x0000, 0x2000, 0x254f350f )
+	ROM_LOAD( "u28",           0x2000, 0x2000, 0x3a1eaa99 )
+	ROM_LOAD( "u29",           0x4000, 0x2000, 0x0ee67e78 )
+
+	ROM_REGION_DISPOSE(0xd800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1921.u68",      0x0000, 0x0800, 0x77f8ff5a )  /* characters */
+	ROM_LOAD( "1922.u69",      0x0800, 0x0800, 0xcf63621e )
+	/* 1000-17ff empty space to convert the characters as 3bpp instead of 2 */
+	ROM_LOAD( "1934.113",      0x1800, 0x2000, 0x39bb679c )  /* background tiles */
+	ROM_LOAD( "1933.112",      0x3800, 0x2000, 0x1022185e )
+	ROM_LOAD( "1932.111",      0x5800, 0x2000, 0xc7a715eb )
+	ROM_LOAD( "1925.u77",      0x7800, 0x2000, 0xa7965437 )  /* sprites */
+	ROM_LOAD( "1926.u78",      0x9800, 0x2000, 0x9a3af434 )
+	ROM_LOAD( "1927.u79",      0xb800, 0x2000, 0x0323de2b )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "1929.u91",      0x0000, 0x2000, 0x55c7c757 )
+	ROM_LOAD( "1928.u90",      0x2000, 0x2000, 0xe58b155b )
+	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
+	ROM_LOAD( "1930.u92",      0x6000, 0x2000, 0xf355f105 )
+
+	ROM_REGION(0x0200)	/* color proms */
+	ROM_LOAD( "clr.u98",       0x0000, 0x0100, 0x0fd671af )	/* palette */
+	ROM_LOAD( "clr.u72",       0x0100, 0x0100, 0x03233bc5 ) /* char lookup table */
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "1923.u50",      0x0000, 0x0800, 0x59994a51 )
+	ROM_LOAD( "1924.u51",      0x0800, 0x0800, 0xa75e0011 )
+ROM_END
+
 
 
 static void zaxxonb_decode(void)
@@ -835,6 +1074,45 @@ static void futspy_hisave(void)
 	}
 }
 
+/****  Razzmatazz high score save routine - RJF (July 11, 1999)  ****/
+static int razmataz_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	/* high score values are intialized to all 0 */
+	/* but no need to dirty it to be cleared again */
+
+        if ((memcmp(&RAM[0x66a4],"\x00\x00\x00",3) == 0) &&
+              (memcmp(&RAM[0x6739],"\x25\x1e\x26",3) == 0))
+	{
+              	void *f;
+              	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+              	{
+                        osd_fread(f,&RAM[0x66a4], 3*10);   /* HS values */
+                        osd_fread(f,&RAM[0x6739], 6*10);   /* HS initials */
+                        osd_fclose(f);
+              	}
+
+		return 1;
+
+	}
+      	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void razmataz_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x66a4], 30);		/* HS values */
+                osd_fwrite(f,&RAM[0x6739], 60);       	/* HS initials */
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver zaxxon_driver =
@@ -965,4 +1243,30 @@ struct GameDriver futspy_driver =
 	ORIENTATION_ROTATE_270,
 
 	futspy_hiload, futspy_hisave
+};
+
+struct GameDriver razmataz_driver =
+{
+	__FILE__,
+	0,
+	"razmataz",
+	"Razzmatazz",
+	"1983",
+	"Sega",
+	"Nicola Salmoria",
+	0,
+	&razmataz_machine_driver,
+	0,
+
+	razmataz_rom,
+	0, nprinces_decode,
+	0,
+	0,	/* sound_prom */
+
+	razmataz_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	razmataz_hiload, razmataz_hisave
 };

@@ -170,7 +170,7 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* To emulate that, we set Machine->drv->color_table_len to 0, so when we */
 	/* draw the graphics using drawgfx() we'll just copy the pen values 0-15, */
 	/* without doing a palette lookup. After drawing into three temporary */
-	/* bitmap, we do a final composition step mapping the 10-bit combined value */
+	/* bitmaps, we do a final composition step mapping the 10-bit combined value */
 	/* to the correct palette entry. */
 
     /* foreground */

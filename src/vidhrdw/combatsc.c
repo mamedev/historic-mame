@@ -103,7 +103,7 @@ static void get_tile_info1( int col, int row ){
 	pal = (bank == 0 || bank >= 0x1c || (attributes & 0x40)) ? 5 : 7;
 	color = pal*16 + (attributes & 0x0f);
 	number = combatsc_page1[tile_index + 0x400] + 256*bank;
-	if (number >= 0x40 && number <= 0x5f) number &= 0xff;
+
 	SET_TILE_INFO(1, number, color)
 }
 

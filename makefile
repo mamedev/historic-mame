@@ -10,7 +10,7 @@ ASMFLAGS = -f coff
 VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to include the debugger
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
@@ -43,6 +43,7 @@ CPUS+=M65C02@
 CPUS+=M6510@
 CPUS+=H6280@
 CPUS+=I86@
+CPUS+=V30@
 CPUS+=I8035@
 CPUS+=I8039@
 CPUS+=I8048@
@@ -184,6 +185,13 @@ endif
 CPU=$(strip $(findstring I86@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I86=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring V30@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_V30=1
 CPUOBJS += obj/cpu/i86/i86.o
 DBGOBJS += obj/cpu/i86/i86dasm.o
 endif
@@ -467,19 +475,19 @@ endif
 SOUND=$(strip $(findstring YM2413@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2413=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym2413.o obj/sound/ym3812.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym2413.o obj/sound/ym3812.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring YM3812@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3812=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring YM3526@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM3526=1
-SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o
+SOUNDOBJS += obj/sound/3812intf.o obj/sound/ym3812.o obj/sound/fmopl.o
 endif
 
 SOUND=$(strip $(findstring SN76496@,$(SOUNDS)))
@@ -607,9 +615,10 @@ endif
 
 LIBS   = -lalleg -laudio -lz \
 
-COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
+COREOBJS = obj/version.o obj/driver.o obj/mame.o \
+         obj/drawgfx.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
-         obj/inptport.o obj/cheat.o obj/unzip.o \
+         obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/state.o obj/datafile.o \
          $(sort $(CPUOBJS)) \
@@ -628,8 +637,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/cclimber.a obj/nichibut.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
          obj/midw8080.a obj/midwz80.a obj/meadows.a obj/astrocde.a \
-         obj/mcr.a obj/irem.a obj/gottlieb.a obj/oldtaito.a \
-         obj/qixtaito.a obj/taito.a obj/taito2.a obj/toaplan.a \
+         obj/mcr.a obj/irem.a obj/gottlieb.a obj/taito.a obj/toaplan.a \
 		 obj/williams.a obj/gremlin.a obj/vicdual.a \
          obj/capcom.a obj/capbowl.a obj/leland.a \
          obj/segav.a obj/segar.a obj/zaxxon.a obj/system1.a \
@@ -637,7 +645,7 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/dec0.a obj/tehkan.a obj/konami.a obj/nemesis.a \
          obj/tmnt.a obj/exidy.a obj/atarivg.a obj/centiped.a \
          obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarimsc.a \
-         obj/atarisy1.a obj/atarisy2.a obj/atari.a obj/rockola.a \
+         obj/atari.a obj/rockola.a \
          obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
@@ -814,16 +822,10 @@ obj/irem.a: \
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
 
-obj/oldtaito.a: \
-         obj/vidhrdw/crbaloon.o obj/drivers/crbaloon.o \
-
-obj/qixtaito.a: \
-         obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
-
 obj/taito.a: \
-         obj/machine/taito.o obj/vidhrdw/taito.o obj/drivers/taito.o \
-
-obj/taito2.a: \
+         obj/vidhrdw/crbaloon.o obj/drivers/crbaloon.o \
+         obj/machine/qix.o obj/vidhrdw/qix.o obj/drivers/qix.o \
+         obj/machine/taitosj.o obj/vidhrdw/taitosj.o obj/drivers/taitosj.o \
          obj/vidhrdw/bking2.o obj/drivers/bking2.o \
          obj/vidhrdw/gsword.o obj/drivers/gsword.o obj/machine/tait8741.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
@@ -928,6 +930,7 @@ obj/dec8.a: \
 obj/dec0.a: \
          obj/vidhrdw/karnov.o obj/drivers/karnov.o \
          obj/machine/dec0.o obj/vidhrdw/dec0.o obj/drivers/dec0.o \
+         obj/vidhrdw/vaportra.o obj/drivers/vaportra.o \
          obj/vidhrdw/darkseal.o obj/drivers/darkseal.o \
          obj/vidhrdw/cninja.o obj/drivers/cninja.o \
          obj/vidhrdw/supbtime.o obj/drivers/supbtime.o \
@@ -1033,16 +1036,12 @@ obj/atarimsc.a: \
          obj/vidhrdw/cloud9.o obj/drivers/cloud9.o \
          obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
 
-obj/atarisy1.a: \
-         obj/machine/atarisy1.o obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
-
-obj/atarisy2.a: \
-         obj/machine/atarisy2.o obj/vidhrdw/atarisy2.o obj/drivers/atarisy2.o \
-
 obj/atari.a: \
-         obj/machine/atarigen.o obj/sndhrdw/ataraud2.o \
+         obj/machine/atarigen.o obj/sndhrdw/atarijsa.o \
          obj/machine/slapstic.o \
-         obj/machine/gauntlet.o obj/vidhrdw/gauntlet.o obj/drivers/gauntlet.o \
+         obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
+         obj/vidhrdw/atarisy2.o obj/drivers/atarisy2.o \
+         obj/vidhrdw/gauntlet.o obj/drivers/gauntlet.o \
          obj/vidhrdw/atetris.o obj/drivers/atetris.o \
          obj/vidhrdw/toobin.o obj/drivers/toobin.o \
          obj/vidhrdw/vindictr.o obj/drivers/vindictr.o \
@@ -1055,15 +1054,19 @@ obj/atari.a: \
          obj/vidhrdw/cyberbal.o obj/drivers/cyberbal.o \
          obj/vidhrdw/rampart.o obj/drivers/rampart.o \
          obj/vidhrdw/shuuz.o obj/drivers/shuuz.o \
+         obj/vidhrdw/hydra.o obj/drivers/hydra.o \
 
 obj/rockola.a: \
          obj/vidhrdw/rockola.o obj/sndhrdw/rockola.o obj/drivers/rockola.o \
          obj/vidhrdw/warpwarp.o obj/drivers/warpwarp.o \
 
 obj/snk.a: \
+         obj/drivers/munchmo.o \
+         obj/vidhrdw/marvins.o obj/drivers/marvins.o \
          obj/vidhrdw/snk.o obj/drivers/snk.o \
-         obj/vidhrdw/pow.o obj/drivers/pow.o \
+         obj/vidhrdw/snk68.o obj/drivers/snk68.o \
          obj/vidhrdw/prehisle.o obj/drivers/prehisle.o \
+         obj/vidhrdw/alpha68k.o obj/drivers/alpha68k.o \
 
 obj/technos.a: \
          obj/vidhrdw/mystston.o obj/drivers/mystston.o \
@@ -1100,7 +1103,8 @@ obj/cinemar.a: \
          obj/vidhrdw/jack.o obj/drivers/jack.o \
 
 obj/cinemav.a: \
-         obj/drivers/cinemat.o obj/sndhrdw/cinemat.o \
+         obj/sndhrdw/cinemat.o obj/drivers/cinemat.o \
+         obj/machine/cchasm.o obj/vidhrdw/cchasm.o obj/sndhrdw/cchasm.o obj/drivers/cchasm.o \
 
 obj/thepit.a: \
          obj/vidhrdw/thepit.o obj/drivers/thepit.o \
@@ -1110,6 +1114,7 @@ obj/valadon.a: \
 
 obj/seibu.a: \
          obj/vidhrdw/wiz.o obj/drivers/wiz.o \
+         obj/vidhrdw/raiden.o obj/drivers/raiden.o \
 
 obj/jaleco.a: \
          obj/vidhrdw/exerion.o obj/drivers/exerion.o \
@@ -1127,6 +1132,7 @@ obj/leland.a: \
 obj/tad.a: \
          obj/vidhrdw/cabal.o obj/drivers/cabal.o \
          obj/vidhrdw/toki.o obj/drivers/toki.o \
+         obj/vidhrdw/bloodbro.o obj/drivers/bloodbro.o \
 
 obj/orca.a: \
          obj/vidhrdw/marineb.o obj/drivers/marineb.o \
@@ -1154,7 +1160,6 @@ obj/other.a: \
          obj/machine/irobot.o obj/vidhrdw/irobot.o obj/drivers/irobot.o \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
-         obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
          obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
@@ -1169,8 +1174,12 @@ obj/other.a: \
          obj/drivers/shanghai.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
          obj/drivers/dlair.o \
+         obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
+         obj/vidhrdw/csk.o obj/drivers/csk.o \
+         obj/vidhrdw/meteor.o obj/drivers/meteor.o \
 
 # dependencies
+obj/drawgfx.o: drawgfx.c drawgfxl.c
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
 obj/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 obj/cpu/m6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
