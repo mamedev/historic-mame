@@ -52,12 +52,6 @@ extern  FILE* errorlog;
 */
 
 
-#ifdef MAME_DEBUG
-extern int mame_debug;
-extern void MAME_Debug(void);
-#endif /* MAME_DEBUG */
-
-
 extern int previouspc;
 extern int m68k_clks_left;
 

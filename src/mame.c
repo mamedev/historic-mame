@@ -1,8 +1,6 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.35 BETA 5 ("__DATE__")";
-
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
@@ -48,6 +46,7 @@ int run_game(int game, struct GameOptions *options)
 
 	/* get orientation right */
 	Machine->orientation = gamedrv->orientation;
+	Machine->ui_orientation = ORIENTATION_DEFAULT;
 	if (options->norotate)
 		Machine->orientation = ORIENTATION_DEFAULT;
 	if (options->ror)
@@ -58,6 +57,13 @@ int run_game(int game, struct GameOptions *options)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_90;
+
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->ui_orientation ^= ORIENTATION_ROTATE_90;
 	}
 	if (options->rol)
 	{
@@ -67,11 +73,24 @@ int run_game(int game, struct GameOptions *options)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_270;
+
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->ui_orientation ^= ORIENTATION_ROTATE_270;
 	}
 	if (options->flipx)
+	{
 		Machine->orientation ^= ORIENTATION_FLIP_X;
+		Machine->ui_orientation ^= ORIENTATION_FLIP_X;
+	}
 	if (options->flipy)
+	{
 		Machine->orientation ^= ORIENTATION_FLIP_Y;
+		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
+	}
 
 
 	/* Do the work*/

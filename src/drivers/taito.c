@@ -2372,7 +2372,7 @@ struct GameDriver bioatack_driver =
 	"1983",
 	"Taito (Fox Video Games license)",
 	"Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)",
-	0,
+	GAME_NOT_WORKING,
 	&machine_driver,
 	0,
 

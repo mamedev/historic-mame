@@ -165,44 +165,58 @@ struct MachineCPU
 {
 	int cpu_type;	/* see #defines below. */
 	int cpu_clock;	/* in Hertz */
-	int memory_region;	/* number of the memory region (allocated by loadroms()) where */
-						/* this CPU resides */
+/* number of the memory region (allocated by loadroms()) */
+/* where this CPU resides */
+	int memory_region;
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
 	const struct IOReadPort *port_read;
 	const struct IOWritePort *port_write;
 	int (*vblank_interrupt)(void);
-	int vblank_interrupts_per_frame;	/* usually 1 */
-	int (*timed_interrupt)(void);	/* use this for interrupts which are not tied to vblank */
-	int timed_interrupts_per_second;	/* usually frequency in Hz, but if you need */
-								/* greater precision you can give the period in nanoseconds */
+    int vblank_interrupts_per_frame;    /* usually 1 */
+/* use this for interrupts which are not tied to vblank 	*/
+/* usually frequency in Hz, but if you need 				*/
+/* greater precision you can give the period in nanoseconds */
+	int (*timed_interrupt)(void);
+	int timed_interrupts_per_second;
+/* pointer to a parameter to pass to the CPU cores reset function */
+	void *reset_param;
 };
 
-#define CPU_Z80        1
-#define CPU_8085A      2
-#define CPU_8080      CPU_8085A
-#define CPU_M6502      3
-#define CPU_H6280      4
-#define CPU_I86        5
-#define CPU_I8039      6
-#define CPU_I8035     CPU_I8039
-#define CPU_I8048     CPU_I8039
-#define CPU_N7751     CPU_I8048
-#define CPU_M6803      7
-#define CPU_M6802     CPU_M6803
-#define CPU_M6808     CPU_M6803
-#define CPU_HD63701   CPU_M6803	/* 6808 with some additional opcodes */
-#define CPU_M6805      8
-#define CPU_M68705    CPU_M6805
-#define CPU_M6809      9
-#define CPU_M6309     CPU_M6809	/* actually it's not 100% compatible */
-#define CPU_M68000    10
-#define CPU_T11       11
-#define CPU_S2650     12
-#define CPU_TMS34010  13
-#define CPU_TMS9900   14
-#define CPU_Z8000     15
-#define CPU_TMS320C10 16
+#define CPU_Z80 		1
+#define CPU_8080		2	/* emulated by CPU_8085A */
+#define CPU_8085A		3
+#define CPU_M6502		4
+#define CPU_M65C02		5
+#define CPU_M6510		6
+#define CPU_H6280		7
+#define CPU_I86 		8
+#define CPU_I8035		9	/* emulated by CPU_I8039 */
+#define CPU_I8039		10
+#define CPU_I8048		11	/* emulated by CPU_I8039 */
+#define CPU_N7751		12	/* emulated by CPU_I8039 */
+#define CPU_M6800		13	/* emulated by CPU_M6808 */
+#define CPU_M6802		14	/* emulated by CPU_M6808 */
+#define CPU_M6803		15	/* emulated by CPU_M6808 */
+#define CPU_M6808		16
+#define CPU_HD63701 	17	/* emulated by CPU_M6808 6808 with some additional opcodes */
+#define CPU_M6805		18
+#define CPU_M68705		19	/* emulated by CPU_M6805 */
+#define CPU_M6309		20	/* emulated by CPU_M6809 actually it's not 100% compatible */
+#define CPU_M6809		21
+#define CPU_M68000		22
+#define CPU_M68010		23
+#define CPU_M68020		24
+#define CPU_T11 		25
+#define CPU_S2650		26
+#define CPU_TMS34010	27
+#define CPU_TMS9900 	28
+#define CPU_Z8000		29
+#define CPU_TMS320C10	30
+#define CPU_CCPU		31
+#ifdef MESS
+#define CPU_PDP1		32
+#endif
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -269,8 +283,11 @@ struct MachineDriver
 								/* However, an higher setting also means slower */
 								/* performance. */
 	void (*init_machine)(void);
+#ifdef MESS
+	void (*stop_machine)(void); /* needed for MESS */
+#endif
 
-	/* video hardware */
+    /* video hardware */
 	int screen_width,screen_height;
 	struct rectangle visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;

@@ -21,14 +21,14 @@ extern int translucency;
 /* from video.c */
 extern int frameskip,autoframeskip;
 extern int scanlines, use_vesa, video_sync, antialias, ntsc;
-extern int use_double, use_triple, use_quadra;
+extern int stretch, use_double;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
 extern float gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
 /* from sound.c */
-extern int soundcard, usestereo;
+extern int soundcard, usestereo,attenuation;
 extern int use_emulated_ym3812;
 
 /* from input.c */
@@ -276,9 +276,9 @@ void init_inpdir(void)
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
 {
 	static float f_beam, f_flicker;
-	static char *resolution;
-	static char *vesamode;
-	static char *joyname;
+	char *resolution;
+	char *vesamode;
+	char *joyname;
 	char tmpres[10];
 	int i;
 	char *tmpstr;
@@ -288,9 +288,20 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
+	tmpstr		= get_string ("config", "stretch",		NULL,  "off");
+	if (!stricmp(tmpstr,"800x600"))
+	{
+		stretch = 1;
+	}
+	else if (!stricmp(tmpstr,"1024x768"))
+	{
+		stretch = 2;
+	}
+	else
+	{
+		stretch = 0;
+	}
 	use_double  = get_bool   ("config", "double",       NULL, -1);
-	use_triple  = get_bool   ("config", "triple",       NULL,  0);
-	use_quadra  = get_bool   ("config", "quadra",       NULL,  0);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
@@ -329,6 +340,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
 	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
 	usestereo           = get_bool ("config", "stereo",  NULL,  1);
+	attenuation         = get_int  ("config", "volume",  NULL,  0);
 
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
@@ -391,7 +403,10 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	{
 		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
 	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
-				(i == 1 || (stricmp(argv[i-1],"-skiplines") && stricmp(argv[i-1],"-skipcolumns"))))
+	/* and to -volume */
+				(i == 1 || (stricmp(argv[i-1],"-skiplines") &&
+							stricmp(argv[i-1],"-skipcolumns") &&
+							stricmp(argv[i-1],"-volume"))))
 			resolution = &argv[i][1];
 	}
 

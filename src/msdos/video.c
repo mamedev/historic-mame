@@ -108,6 +108,7 @@ int color_depth;
 int skiplines;
 int skipcolumns;
 int scanlines;
+int stretch;
 int use_double;
 int use_triple;
 int use_quadra;
@@ -331,7 +332,7 @@ static void select_display_mode(void)
 	auto_resolution = 0;
 
 	/* initialise quadring table [useful for *all* doubling modes */
-	for (i = 0; i < 255; i++)
+	for (i = 0; i < 256; i++)
 	{
 		doublepixel[i] = i | (i<<8);
 		quadpixel[i] = i | (i<<8) | (i << 16) | (i << 24);
@@ -346,7 +347,15 @@ static void select_display_mode(void)
 	{
 		width = Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1;
 		height = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1;
+
+		if (stretch && width <= 256 && height <= 256 &&
+				!(Machine->orientation & ORIENTATION_SWAP_XY))
+		{
+			if (stretch == 1) use_triple = 1;
+			else if (stretch == 2) use_quadra = 1;
+		}
 	}
+
 
 	doubling = use_double;
 	tripling = use_triple;
@@ -1385,27 +1394,6 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 	}
 }
 
-/* Writes messages on the screen. */
-void my_textout(char *buf,int x,int y)
-{
-	int trueorientation,l,i;
-
-
-	/* hack: force the display into standard orientation to avoid */
-	/* rotating the text */
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-	l = strlen(buf);
-	for (i = 0;i < l;i++)
-		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
-				x + i*Machine->uifont->width + skipcolumns,
-				y + skiplines, 0,TRANSPARENCY_NONE,0);
-
-	Machine->orientation = trueorientation;
-}
-
-
 
 
 void update_screen_dummy(void)
@@ -1613,14 +1601,30 @@ void osd_update_video_and_audio(void)
 	static int showfps,showfpstemp,showprofile;
 	uclock_t curr;
 	static uclock_t prev_frames[FRAMESKIP_LEVELS],prev;
-	int speed=0;
+	static int speed=0;
 	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
-	static int frameskipadjust;
 	int already_synced;
 
 
-	already_synced = msdos_update_audio();
+	if (throttle)
+	{
+		static uclock_t last;
+
+		/* if too much time has passed since last sound update, disable throttling */
+		/* temporarily - we wouldn't be able to keep synch anyway. */
+		curr = uclock();
+		if ((curr - last) > 2*UCLOCKS_PER_SEC / Machine->drv->frames_per_second)
+			throttle = 0;
+		last = curr;
+
+		already_synced = msdos_update_audio();
+
+		throttle = 1;
+	}
+	else
+		already_synced = msdos_update_audio();
+
 
 	if (osd_skip_this_frame() == 0)
 	{
@@ -1685,21 +1689,22 @@ void osd_update_video_and_audio(void)
 
 				curr = uclock();
 
-				/* wait until enough time has passed since last frame... */
-				target = prev +
-						waittable[frameskip][frameskip_counter] * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
-
-				/* ... OR since FRAMESKIP_LEVELS frames ago. This way, if a frame takes */
-				/* longer than the allotted time, we can compensate in the following frames. */
-				target2 = prev_frames[frameskip_counter] +
-						FRAMESKIP_LEVELS * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
-
-				if (target - target2 > 0) target = target2;
-
-				if (curr - target < 0)
+				if (already_synced == 0)
 				{
-					/* wait only if the audio update hasn't synced us already */
-					if (already_synced == 0)
+				/* wait only if the audio update hasn't synced us already */
+
+					/* wait until enough time has passed since last frame... */
+					target = prev +
+							waittable[frameskip][frameskip_counter] * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
+
+					/* ... OR since FRAMESKIP_LEVELS frames ago. This way, if a frame takes */
+					/* longer than the allotted time, we can compensate in the following frames. */
+					target2 = prev_frames[frameskip_counter] +
+							FRAMESKIP_LEVELS * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
+
+					if (target - target2 > 0) target = target2;
+
+					if (curr - target < 0)
 					{
 						do
 						{
@@ -1708,16 +1713,6 @@ void osd_update_video_and_audio(void)
 					}
 				}
 
-				if (curr - target > UCLOCKS_PER_SEC/4/Machine->drv->frames_per_second)
-				{
-					/* we are behind, we need to increase frameskip */
-					frameskipadjust++;
-				}
-				else if (curr - target < UCLOCKS_PER_SEC/8/Machine->drv->frames_per_second)
-				{
-					/* we are on time, we might try decreasing frameskip */
-					frameskipadjust--;
-				}
 			}
 			osd_profiler(OSD_PROFILE_END);
 		}
@@ -1731,7 +1726,7 @@ void osd_update_video_and_audio(void)
 			end_time = curr;
 
 
-		if (curr - prev_frames[frameskip_counter])
+		if (frameskip_counter == 0 && curr - prev_frames[frameskip_counter])
 		{
 			int divdr;
 
@@ -1757,32 +1752,20 @@ void osd_update_video_and_audio(void)
 
 		if (showfps || showfpstemp)
 		{
-			int trueorientation;
-			int fps,l;
+			int fps;
 			char buf[30];
 			int divdr;
 
 
-			/* hack: force the display into standard orientation to avoid */
-			/* rotating the text */
-			trueorientation = Machine->orientation;
-			Machine->orientation = ORIENTATION_DEFAULT;
-
 			divdr = 100 * FRAMESKIP_LEVELS;
 			fps = (Machine->drv->frames_per_second * (FRAMESKIP_LEVELS - frameskip) * speed + (divdr / 2)) / divdr;
 			sprintf(buf,"fskp%2d %3d%%(%3d/%d fps)",frameskip,speed,fps,Machine->drv->frames_per_second);
-			l = strlen(buf);
-			for (i = 0;i < l;i++)
-				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines,0,TRANSPARENCY_NONE,0);
+			ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,0);
 			if (vector_game)
 			{
 				sprintf(buf," %d vector updates",vups);
-				l = strlen(buf);
-				for (i = 0;i < l;i++)
-					drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines+Machine->uifont->height,0,TRANSPARENCY_NONE,0);
+				ui_text(buf,Machine->uiwidth-strlen(buf)*Machine->uifontwidth,Machine->uifontheight);
 			}
-
-			Machine->orientation = trueorientation;
 		}
 
 
@@ -1838,20 +1821,37 @@ void osd_update_video_and_audio(void)
 			osd_clearbitmap(scrbitmap);
 
 
-		if (autoframeskip)
+		if (throttle && autoframeskip && frameskip_counter == 0)
 		{
-			/* decrease frameskip slowly, increase it quickly */
-			if (frameskipadjust <= -8)
+			static int frameskipadjust;
+
+			if (speed < 60)
 			{
 				frameskipadjust = 0;
-				if (frameskip > 0) frameskip--;
+				frameskip += 3;
+				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
 			}
-			else if (frameskipadjust >= 2)
+			else if (speed < 80)
 			{
 				frameskipadjust = 0;
-//				if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
-				/* don't go above frameskip 8 */
+				frameskip += 2;
+				if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
+			}
+			else if (speed < 100)
+			{
+				frameskipadjust = 0;
+				/* don't push frameskip too far if we are close to 100% speed */
 				if (frameskip < 8) frameskip++;
+			}
+			else if (speed >= 100)
+			{
+				/* increase frameskip quickly, decrease it slowly */
+				frameskipadjust++;
+				if (frameskipadjust >= 3)
+				{
+					frameskipadjust = 0;
+					if (frameskip > 0) frameskip--;
+				}
 			}
 		}
 	}

@@ -101,17 +101,16 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/s2650/s2650.h"
 
 /*************************************************************/
 /*                                                           */
 /* Externals                                                 */
 /*                                                           */
 /*************************************************************/
-int     meadows_vh_start(void);
+int 	deadeye_vh_start(void);
+int 	gypsyjug_vh_start(void);
 void    meadows_vh_stop(void);
-void    deadeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void    gypsyjug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void	meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void    meadows_videoram_w(int offset, int data);
 void    meadows_sprite_w(int offset, int data);
 
@@ -156,10 +155,9 @@ static	int cycles_at_vsync = 0;
 /* Hardware read/write from the main CPU                     */
 /*                                                           */
 /*************************************************************/
-int 	meadows_hardware_r(int offset)
+int meadows_hardware_r(int offset)
 {
-    switch (offset)
-    {
+	switch( offset ) {
         case 0: /* buttons */
             return input_port_0_r(0);
         case 1: /* AD stick */
@@ -172,10 +170,9 @@ int 	meadows_hardware_r(int offset)
     return 0;
 }
 
-void    meadows_hardware_w(int offset, int data)
+void meadows_hardware_w(int offset, int data)
 {
-    switch (offset)
-	{
+	switch( offset ) {
 		case 0:
 			if (meadows_0c00 == data)
 				break;
@@ -207,17 +204,17 @@ static	int coin1_state = 0;
     cycles_at_vsync = cycles_currently_ran();
     /* fake something toggling the sense input line of the S2650 */
 	sense_state ^= 1;
-	S2650_set_sense(sense_state);
-	if (input_port_3_r(0) & 0x01)
-	{
-		if (!coin1_state)
-		{
+	cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE);
+	if( input_port_3_r(0) & 0x01 ) {
+		if( !coin1_state ) {
 			coin1_state = 1;
-			return 0x82;			/* S2650 interrupt vector */
+			/* S2650 interrupt vector */
+			cpu_irq_line_vector_w(0,0,0x82);
+			cpu_set_irq_line(0,0,PULSE_LINE);
 		}
 	}
 	coin1_state = 0;
-	return S2650_INT_NONE;
+	return ignore_interrupt();
 }
 
 /*************************************************************/
@@ -225,59 +222,56 @@ static	int coin1_state = 0;
 /* Hardware read/write for the sound CPU                     */
 /*                                                           */
 /*************************************************************/
-void    meadows_sound_hardware_w(int offset, int data)
+static void sound_hardware_w(int offset, int data)
 {
-    switch (offset & 3)
-	{
+	switch( offset & 3 ) {
 		case 0: /* DAC */
 			meadows_sh_dac_w(data ^ 0xff);
             break;
 		case 1: /* counter clk 5 MHz / 256 */
 			if (data == meadows_0c01)
 				break;
-			if (errorlog) fprintf(errorlog, "meadows_sound_w ctr1 preset $%x amp %d\n", data & 15, data >> 4);
+			if (errorlog) fprintf(errorlog, "sound_w ctr1 preset $%x amp %d\n", data & 15, data >> 4);
 			meadows_0c01 = data;
 			meadows_sh_update();
 			break;
 		case 2: /* counter clk 5 MHz / 32 (/ 2 or / 4) */
 			if (data == meadows_0c02)
                 break;
-			if (errorlog) fprintf(errorlog, "meadows_sound_w ctr2 preset $%02x\n", data);
+			if (errorlog) fprintf(errorlog, "sound_w ctr2 preset $%02x\n", data);
 			meadows_0c02 = data;
 			meadows_sh_update();
             break;
 		case 3: /* sound enable */
 			if (data == meadows_0c03)
                 break;
-			if (errorlog) fprintf(errorlog, "meadows_sound_w enable ctr2/2:%d ctr2:%d dac:%d ctr1:%d\n", data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1);
+			if (errorlog) fprintf(errorlog, "sound_w enable ctr2/2:%d ctr2:%d dac:%d ctr1:%d\n", data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1);
 			meadows_0c03 = data;
 			meadows_sh_update();
             break;
 	}
 }
 
-int meadows_sound_hardware_r(int offset)
+static int sound_hardware_r(int offset)
 {
-int data = 0;
-	switch (offset)
-	{
+	int data = 0;
+
+	switch( offset ) {
 		case 0:
 			data = meadows_0c00;
-{
-static int last_data = 0;
-			if (data != last_data)
-			{
-				last_data = data;
-				if (errorlog) fprintf(errorlog, "meadows_sound_r %d $%02x\n", offset, data);
+#if VERBOSE
+            {
+				static int last_data = 0;
+				if (data != last_data) {
+					last_data = data;
+					if (errorlog) fprintf(errorlog, "sound_r %d $%02x\n", offset, data);
+				}
 			}
-}
+#endif
             break;
-		case 1:
-			break;
-        case 2:
-			break;
-        case 3:
-			break;
+		case 1: break;
+		case 2: break;
+		case 3: break;
 	}
     return data;
 }
@@ -287,13 +281,14 @@ static int last_data = 0;
 /* Interrupt for the sound cpu                               */
 /*                                                           */
 /*************************************************************/
-int     meadows_sound_interrupt(void)
+static int sound_interrupt(void)
 {
-static	int sense_state = 0;
+	static	int sense_state = 0;
+
     /* fake something toggling the sense input line of the S2650 */
 	sense_state ^= 1;
-    S2650_set_sense(sense_state);
-    return S2650_INT_NONE;
+	cpu_set_irq_line( 1, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
+	return ignore_interrupt();
 }
 
 /*************************************************************/
@@ -301,18 +296,18 @@ static	int sense_state = 0;
 /* Memory layout                                             */
 /*                                                           */
 /*************************************************************/
-static struct MemoryWriteAddress meadows_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_w },
 	{ 0x0d00, 0x0d0f, meadows_sprite_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
 	{ 0x1000, 0x1bff, MWA_ROM },
-	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram },
+	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram, &videoram_size },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress meadows_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_r },
@@ -322,18 +317,18 @@ static struct MemoryReadAddress meadows_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress meadows_sound_writemem[] =
+static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0bff, MWA_ROM },
-	{ 0x0c00, 0x0c03, meadows_sound_hardware_w },
+	{ 0x0c00, 0x0c03, sound_hardware_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress meadows_sound_readmem[] =
+static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0bff, MRA_ROM },
-	{ 0x0c00, 0x0c03, meadows_sound_hardware_r },
+	{ 0x0c00, 0x0c03, sound_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -412,30 +407,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char deadeye_palette[16*3] = {
-	  0,  0,  0,
-	192,  0,  0,
-	  0,192,  0,
-	192,192,  0,
-	  0,  0,192,
-	192,  0,192,
-	  0,192,192,
-	192,192,192,
-	  5,  5,  5,	/* very dark */
-	192,192,192,	/* white */
-	  1, 10,  3,	/* very dark green */
-	 32,192, 64,	/* green */
-	  3,  3, 10,	/* very dark pale blue */
-	 64, 64,192,	/* pale blue */
-	 10,  8,  1,	/* very dark yellow orange */
-	192,160, 32,	/* yellow orange */
+static unsigned char palette[] =
+{
+	0x00,0x00,0x00, /* BLACK */
+	0xff,0xff,0xff, /* WHITE */
 };
 
-static unsigned short deadeye_colortable[4*2] = {
-	8, 9,		/* white on black */
-	10,11,		/* green on very dark */
-	12,13,		/* pale blue on very dark */
-	14,15,		/* yellow orange on very dark */
+#define ARTWORK_COLORS 254
+
+static unsigned short colortable[ARTWORK_COLORS] =
+{
+	0,0,
+	0,1,
 };
 
 static struct DACinterface dac_interface =
@@ -452,35 +435,34 @@ static struct MachineDriver deadeye_machine_driver =
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			0,
-			meadows_readmem,meadows_writemem,
-			0,0,
+			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			2,
-			meadows_sound_readmem,meadows_sound_writemem,
+			sound_readmem,sound_writemem,
 			0,0,
 			0,0,
-			meadows_sound_interrupt,38	/* 5000000/131072 interrupts per frame */
+			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
         }
     },
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	240,									/* dual CPU; interleave them */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, 									/* dual CPU; interleave them */
 	0,
 
 	/* video hardware */
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	16, 4*2,
-	0,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
     0,
-	meadows_vh_start,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+    0,
+	deadeye_vh_start,
 	meadows_vh_stop,
-	deadeye_vh_screenrefresh,
+	meadows_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -503,35 +485,34 @@ static struct MachineDriver gypsyjug_machine_driver =
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			0,
-			meadows_readmem,meadows_writemem,
-			0,0,
+			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			2,
-			meadows_sound_readmem,meadows_sound_writemem,
+			sound_readmem,sound_writemem,
 			0,0,
 			0,0,
-			meadows_sound_interrupt,38	/* 5000000/131072 interrupts per frame */
+			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	240,									/* dual CPU; interleave them */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10, 									/* dual CPU; interleave them */
 	0,
 
 	/* video hardware */
 	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	16, 4*2,
-	0,
+	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
+    0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	meadows_vh_start,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+    0,
+	gypsyjug_vh_start,
 	meadows_vh_stop,
-	gypsyjug_vh_screenrefresh,
+	meadows_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -675,8 +656,8 @@ struct GameDriver deadeye_driver =
 	meadows_input_ports,
 
 	0,		/* color_prom */
-	deadeye_palette,
-	deadeye_colortable,
+	palette,
+	colortable,
 	ORIENTATION_DEFAULT,
 
 	deadeye_hiload,deadeye_hisave
@@ -704,8 +685,8 @@ struct GameDriver gypsyjug_driver =
 	meadows_input_ports,
 
 	0,		/* color_prom */
-	deadeye_palette,
-	deadeye_colortable,
+	palette,
+	colortable,
 	ORIENTATION_DEFAULT,
 
     deadeye_hiload,deadeye_hisave

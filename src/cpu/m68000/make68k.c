@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------
  * Motorola 68000 32 Bit emulator
  *
- * Copyright 1998, Mike Coates, 	All rights reserved
- *                 Darren Olafson
+ * Copyright 1998,99 Mike Coates, 	All rights reserved
+ *                   Darren Olafson
  *---------------------------------------------------------------
  *
  * Thanks to ...
@@ -14,23 +14,29 @@
  *---------------------------------------------------------------
  * History (so we know what bugs have been fixed)
  *
- * 02.11.98 MJC - cmpm bug, overwriting first value
+ * 02.11.98 MJC - CMPM bug, overwriting first value
  * 04.11.98 MJC - Debug timing - same as C core
  *                save PC on calls to C memory routines
  * 05.11.98 NS  - Re-insert changes to make work on OS/2
  * 06.11.98 MJC - Flags saved on ADDA commands
  *                X set on ADD commands
- * 23.11.98 MJC - Alternate Memory Read/Write for non DOS
+ * 23.11.98 MJC - Alternate Memory Read/Write for non DOS ports
  * 24.11.98 CK  - Add WIN32 specific stuff
- * 25.11.98 DEO - abcd Size not initialised
+ * 25.11.98 DEO - ABCD Size not initialised
  * 21.12.98 MJC - Change register saving on Memory Banking
  * 13.01.99 M/D - Change to new C core disassembler
  * 19.01.99 MJC - Proper? support for new Interrupt System
+ * 17.02.99 MJC - TRACE68K define added
+ *                ABCD,SBCD not keeping Z flag
+ *                JMP, JSR for some EA combo's damaging flags
+ *                DIVU - Overflow not being set correctly
+ *                ASL/ASR - Flag Handling now correct
+ *                some minor optimisations
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
  * 68000
- * Rotate instructions, flags not totally correct.
+ * Some Rotate instructions, flags not totally correct.
  *
  * 68010
  * Instructions that are supervisor only as per 68000 spec.
@@ -62,11 +68,11 @@
 
 /* New Disassembler */
 
-static char mybuffer[128];
-char *codebuf = mybuffer;
+char 		*codebuf;
+int 		DisOp;
 
-#define cpu_readmem24(addr) 		(codebuf[addr])
-#define cpu_readmem24_word(addr)	((codebuf[addr] << 8) + codebuf[(addr)+1])
+#define cpu_readmem24(addr) 		(0)
+#define cpu_readmem24_word(addr)	(DisOp)
 #define cpu_readmem24_dword(addr) 	(0x123456)	/* Only used for Addresses */
 
 #define MEMORY_H	/* so memory.h will not be included... */
@@ -77,7 +83,7 @@ char *codebuf = mybuffer;
 #undef cpu_readmem24_dword
 
 /* needed for NEW_INTERRUPT_SYSTEM */
-#include "../cpuintrf.h"
+#include "cpuintrf.h"
 
 #define VERSION 	"0.10"
 
@@ -256,8 +262,8 @@ char *GenerateLabel(int ID,int Type)
 {
 	static int LabID,LabNum;
 
-    static char disasm[80];
-    char *dis = disasm;
+	static char disasm[80];
+	char   *dis = disasm;
 
     if (Type == 0)
     {
@@ -265,17 +271,11 @@ char *GenerateLabel(int ID,int Type)
 		TimingCycles=0;				/* No timing info for this command */
 		Opcount++;					/* for screen display */
 
-		memset(codebuf,0,sizeof(codebuf));	/* Get code example */
-        codebuf[0] = ID & 0xff;
-        codebuf[1] = ID >> 8;
-		disasm[0] = '\0';
-#if 0
-        m68000_disassemble(dis,0);
-		printf("%04x %s\n",ID, dis);
+		DisOp = ID;
+
+        m68k_disassemble(dis,0);
 		sprintf(codebuf, "OP_%4.4x:\t\t\t\t; %s", ID, dis);
-#else
-		sprintf(codebuf, "OP_%4.4x", ID);
-#endif
+
         LabID  = ID;
         LabNum = 0;
     }
@@ -432,14 +432,14 @@ void Completed(void)
 		fprintf(fp, "\t\t pop   EDX\n");
 
         if (FlagProcess == 2)
-			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 
         FlagProcess = 0;
     }
 
     /* Perform fetch cycle here */
 
-	#ifndef MAME_DEBUG
+	#ifndef TRACE68K
 
 	/* Use assembler timing routines */
 
@@ -455,29 +455,24 @@ void Completed(void)
 		fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
 	}
 
-	fprintf(fp, "\t\t js    near MainExit\n\n");
-
 	#else
 
-	/* Just check the count */
+	/* Always use 12 cycles */
 
-	fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
-	fprintf(fp, "\t\t jle   near MainExit\n\n");
+	fprintf(fp, "\t\t sub   dword [%s],byte 12\n",ICOUNT);
 
 	#endif
 
 	fprintf(fp, "\t\t js    near MainExit\n\n");
-
 
 	#ifdef MAME_DEBUG
 
     	/* Check for Debug Active */
 
-	    fprintf(fp, "\n\t\t or  dword [_mame_debug],0\n");
+	    fprintf(fp, "\n\t\t or    dword [_mame_debug],0\n");
     	fprintf(fp, "\t\t jnz   near MainExit\n\n");
 
 	#endif
-
 
     if (CheckInterrupt)
     {
@@ -489,18 +484,8 @@ void Completed(void)
 	fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall (P2)\n");
     fprintf(fp, "\t\t mov   cx,[esi+ebp]\n\n");
 
-	#ifdef MAME_DEBUG
-
-    	/* C timing system */
-
-        fprintf(fp, "\t\t xor   eax,eax\n");
-        fprintf(fp, "\t\t mov   al,byte [_cycletbl+ecx]\n");
-        fprintf(fp, "\t\t sub   dword [%s],eax\n",ICOUNT);
-
-    #endif
-
    	fprintf(fp, "\t\t add   esi,byte 2\n\n");
-	fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");
+	fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n\n");
 }
 
 /*
@@ -552,7 +537,7 @@ void SetFlags(char Size,int Sreg,int Testreg,int SetX,int Delayed)
    	{
 		fprintf(fp, "\t\t pop   EDX\n");
 
-	    if (SetX) fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+	    if (SetX) fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
    	}
 }
 
@@ -672,8 +657,6 @@ void ReadCCR(char Size, int Wreg)
 
     if (Size == 'W')
 	    fprintf(fp, "\t\t mov   ah,byte [%s] \t; T, S & I\n\n",REG_SRH);
-    else
-    	fprintf(fp, "\t\t and   eax,byte 1Fh\n");
 }
 
 /*
@@ -704,6 +687,12 @@ void WriteCCR(char Size)
 
         fprintf(fp, "%s:\n",Label);
 		fprintf(fp, "\t\t mov   byte [%s],ah \t;T, S & I\n",REG_SRH);
+
+        /* Mask may now allow Interrupt */
+
+        #ifndef TRACE68K
+  		CheckInterrupt += 1;
+        #endif
     }
 
     /* Flags */
@@ -738,8 +727,6 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 {
 	int Count;
     int SavedReg = -1;
-
-	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
 
     /* Save PC */
 
@@ -827,6 +814,14 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 				else
 	   				fprintf(fp, "\t\t pop   %s\n",regnameslong[Count]);
             }
+
+    /* Test! */
+
+#if 0
+    fprintf(fp, "%s_X%d:\n",codebuf,CheckInterrupt);
+#endif
+
+	CheckInterrupt += 1;			/* Interrupt flag can now be changed */
 }
 
 /*
@@ -844,7 +839,7 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 	int Count;
     int SavedReg = -1;
 
-	CheckInterrupt = 1;			/* Interrupt flag can now be changed */
+	CheckInterrupt += 1;			/* Interrupt flag can now be changed */
 
     /* Save PC */
 
@@ -1252,13 +1247,13 @@ void ExtensionDecode(int SaveEDX)
     fprintf(fp, "\t\t shr   eax,10\n");
     fprintf(fp, "\t\t and   eax,byte 3Ch\n");
     fprintf(fp, "\t\t mov   eax,[%s+eax]\n",REG_DAT);
-  	fprintf(fp, "\t\t test  dx,800H\n");
+  	fprintf(fp, "\t\t test  dh,8H\n");
 	fprintf(fp, "\t\t jnz   short %s\n",Label);
     fprintf(fp, "\t\t cwde\n");
     fprintf(fp, "%s:\n",Label);
     fprintf(fp, "\t\t add   edi,eax\n");
-    fprintf(fp, "\t\t movsx eax,dl\n");
-    fprintf(fp, "\t\t add   edi,eax\n");
+    fprintf(fp, "\t\t movsx edx,dl\n");
+    fprintf(fp, "\t\t add   edi,edx\n");
     if (SaveEDX) fprintf(fp, "\t\t pop   edx\n");
 }
 
@@ -1814,7 +1809,8 @@ char *ConditionDecode(int mode, int Condition)
            break;
 
       case 8:   /* VC */
-		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+//		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+		   fprintf(fp, "\t\t test  dh,8H\t\t;Check Overflow\n");
            if (Condition)
            {
 			   fprintf(fp, "\t\t jz    short %s\n", Label);
@@ -1826,7 +1822,8 @@ char *ConditionDecode(int mode, int Condition)
            break;
 
       case 9:   /* VS */
-		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+//		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+		   fprintf(fp, "\t\t test  dh,8H\t\t;Check Overflow\n");
            if (Condition)
            {
 			   fprintf(fp, "\t\t jnz   short %s\n", Label);
@@ -1862,7 +1859,7 @@ char *ConditionDecode(int mode, int Condition)
            break;
 
       case 12:   /* GE */
-               fprintf(fp, "\t\t or    edx,200h\n");
+           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
            if (Condition)
@@ -1987,13 +1984,15 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 8:   /* VC */
-		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+//		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+		   fprintf(fp, "\t\t test  dh,8H\t\t;Check Overflow\n");
 		   fprintf(fp, "\t\t setz  %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
       case 9:   /* VS */
-		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+//		   fprintf(fp, "\t\t test  dx,800H\t\t;Check Overflow\n");
+		   fprintf(fp, "\t\t test  dh,8H\t\t;Check Overflow\n");
 		   fprintf(fp, "\t\t setnz %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
@@ -2011,6 +2010,7 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 12:   /* GE */
+           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setge %s\n",SetWhat);
@@ -2018,6 +2018,7 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 13:   /* LT */
+           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setl  %s\n",SetWhat);
@@ -2025,6 +2026,7 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 14:   /* GT */
+           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setg  %s\n",SetWhat);
@@ -2032,6 +2034,7 @@ void ConditionCheck(int mode, char *SetWhat)
            break;
 
       case 15:   /* LE */
+           fprintf(fp, "\t\t or    edx,200h\n");
       	   fprintf(fp, "\t\t push  edx\n");
       	   fprintf(fp, "\t\t popf\n");
    	       fprintf(fp, "\t\t setle %s\n",SetWhat);
@@ -2287,7 +2290,7 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 			fprintf(fp,"\t\t and   dl,0BFH\t;Clear Zero Flag\n");
 			fprintf(fp,"\t\t test  %s,%s\n",EAXReg,ECXReg);
             fprintf(fp,"\t\t jnz   short %s\n",Label);
-            fprintf(fp,"\t\t or    dl,40h\n");
+            fprintf(fp,"\t\t or    edx,byte 40h\n");
             fprintf(fp,"%s:\n",Label);
 
             /* Some then modify the data */
@@ -2410,7 +2413,7 @@ void dump_bit_static(int type, int mode, int dreg )
 			fprintf(fp,"\t\t and   dl,0BFH\t;Clear Zero Flag\n");
 			fprintf(fp,"\t\t test  %s,%s\n",EAXReg,ECXReg);
             fprintf(fp,"\t\t jnz   short %s\n",Label);
-            fprintf(fp,"\t\t or    dl,40h\n");
+            fprintf(fp,"\t\t or    edx,byte 40h\n");
             fprintf(fp,"%s:\n",Label);
 
             /* Some then modify the data */
@@ -4195,10 +4198,12 @@ void movem_reg_ea(void)
 
                 /* Update Cycle Count */
 
+                #ifndef TRACE68K
 				if ( Size == 'W' )
 					fprintf(fp, "\t\t sub   dword [%s],byte 4\n",ICOUNT);
 				else
 					fprintf(fp, "\t\t sub   dword [%s],byte 8\n",ICOUNT);
+                #endif
 
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 
@@ -4303,10 +4308,12 @@ void movem_ea_reg(void)
 
                 /* Update Cycle Count */
 
+                #ifndef TRACE68K
 				if ( Size == 'W' )
 					fprintf(fp, "\t\t sub   dword [%s],byte 4\n",ICOUNT);
 				else
 					fprintf(fp, "\t\t sub   dword [%s],byte 8\n",ICOUNT);
+                #endif
 
 				fprintf(fp, "OP_%4.4x_Skip:\n",BaseCode);
 				fprintf(fp, "\t\t add   ecx,byte 4\n");			/* adjust pointer to next reg */
@@ -4689,7 +4696,7 @@ void jmp_jsr(void)
 				{
 					fprintf(fp, "\t\t and   ecx,byte 7\n");
 				}
-				EffectiveAddressCalculate(Dest,'L',ECX,FALSE);
+				EffectiveAddressCalculate(Dest,'L',ECX,TRUE);
 
 				if ( type == 0 ) /* jsr needs to push PC onto stack */
 				{
@@ -5039,6 +5046,7 @@ void abcd_sbcd(void)
 	int	regx,type,rm,regy,mode ;
 	char * Regname ;
 	char * RegnameECX ;
+	char *Label;
 
 	for ( type = 0 ; type < 2 ; type ++ ) /* 0=sbcd, 1=abcd */
 	for ( regx = 0 ; regx < 8 ; regx++ )
@@ -5081,9 +5089,23 @@ void abcd_sbcd(void)
 				fprintf(fp, "\t\t daa\n");
 			}
 
-			SetFlags('B',EAX,FALSE,TRUE,TRUE);
+            /* Should only clear Zero flag if not zero */
 
-  			EffectiveAddressWrite(mode,'B',ECX,EAX,"----S-B",FALSE);
+			Label = GenerateLabel(0,1);
+
+			fprintf(fp, "\t\t mov   ebx,edx\n");
+            fprintf(fp, "\t\t setc  dl\n");
+
+			fprintf(fp, "\t\t jnz   short %s\n\n",Label);
+
+            /* Keep original Zero flag */
+		    fprintf(fp, "\t\t and   bl,40h        ; Mask out Old Z\n");
+		    fprintf(fp, "\t\t or    dl,bl         ; Copy across\n\n");
+
+		    fprintf(fp, "%s:\n",Label);
+			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+
+  			EffectiveAddressWrite(mode,'B',ECX,EAX,"---DS-B",TRUE);
 			Completed();
 		}
 
@@ -5327,7 +5349,7 @@ void lsl_lsr(void)
 			fprintf(fp, "\t\t or    cl,cl\n");
 			fprintf(fp, "\t\t jz    %s\n",Label);
 
-			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 			Completed();
 
 			Align();
@@ -5480,7 +5502,7 @@ void roxl_roxr(void)
 			Label = GenerateLabel(0,1);
 			fprintf(fp, "\t\t or    cl,cl\n");
 			fprintf(fp, "\t\t jz    %s\n",Label);
-			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+			fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 			Completed();
 
 			Align();
@@ -5489,9 +5511,9 @@ void roxl_roxr(void)
 			/* copy X onto C when shift is zero */
 
 			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-			fprintf(fp, "\t\t mov   cl,byte [%s]\n",REG_X);
-			fprintf(fp, "\t\t and   cl,1\n");
-			fprintf(fp, "\t\t or    dl,cl\n");
+			fprintf(fp, "\t\t mov   ecx,[%s]\n",REG_X);
+			fprintf(fp, "\t\t and   ecx,byte 1\n");
+			fprintf(fp, "\t\t or    edx,ecx\n");
 			Completed();
 		}
 
@@ -5550,7 +5572,7 @@ void roxl_roxr_ea(void)
 
 				EffectiveAddressWrite(Dest&0xf,'W',ECX,EAX,"---DS-B",TRUE);
 
-				fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+				fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
 				Completed();
 			}
 
@@ -5570,9 +5592,13 @@ void asl_asr(void)
 	int dreg, dr, leng, mode, ir, sreg ;
 	int Dest ;
 	char Size=' ';
+    char * Sizename="" ;
 	char * Regname="" ;
 	char * RegnameECX="" ;
+	char * RegnameEDX="" ;
 	char * Label ;
+
+    /* Normal routines for codes */
 
 	for ( dreg = 0 ; dreg < 8 ; dreg++ )
 	for ( dr = 0 ; dr < 2 ; dr++ )
@@ -5589,16 +5615,19 @@ void asl_asr(void)
            		Size = 'B';
           		Regname = regnamesshort[0];
            		RegnameECX = regnamesshort[ECX];
+           		RegnameEDX = regnamesshort[EDX];
            		break;
           	case 1:
            		Size = 'W';
            		Regname = regnamesword[0];
            		RegnameECX = regnamesword[ECX];
+           		RegnameEDX = regnamesword[EDX];
            		break;
            	case 2:
            		Size = 'L';
            		Regname = regnameslong[0];
            		RegnameECX = regnameslong[ECX];
+           		RegnameEDX = regnameslong[EDX];
           		break;
         }
 
@@ -5607,11 +5636,15 @@ void asl_asr(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
+			Label = GenerateLabel(0,1);
+
             Timing(BaseCode);
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx,byte 7\n");
 			fprintf(fp, "\t\t shr   ecx,byte 9\n");
+
+			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
 			if ( ir == 0 )
 			{
@@ -5622,35 +5655,130 @@ void asl_asr(void)
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
 				EffectiveAddressRead(0,'L',ECX,ECX,"-B--S-B",FALSE);
 				fprintf(fp, "\t\t and   ecx,byte 63\n");
+                fprintf(fp, "\t\t jz	short %s\n",Label);
 			}
 
-			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
 			if ( dr == 0 )
+            {
+	            /* ASR */
+
 				fprintf(fp, "\t\t sar   %s,cl\n",Regname);
-			else
+
+                /* Mode 0 write does not affect Flags */
+				EffectiveAddressWrite(0,Size,EBX,EAX,"---DS-B",TRUE);
+
+                /* Update Flags */
+                fprintf(fp, "\t\t lahf\n");
+                fprintf(fp, "\t\t xor   edx,edx\n");
+                fprintf(fp, "\t\t mov   dl,ah\n");
+				fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+            }
+            else
+            {
+            	/* ASL */
+
+                /* Check to see if Overflow should be set */
+
+                fprintf(fp,"\t\t mov   edi,eax\t\t; Save It\n");
+
+                fprintf(fp,"\t\t xor   edx,edx\n");
+				fprintf(fp,"\t\t stc\n");
+                fprintf(fp,"\t\t rcr   %s,1\t\t; d=1xxxx\n",RegnameEDX);
+                fprintf(fp,"\t\t sar   %s,cl\t\t; d=1CCxx\n",RegnameEDX);
+                fprintf(fp,"\t\t and   eax,edx\n");
+                fprintf(fp,"\t\t jz    short %s_V\t\t; No Overflow\n",Label);
+                fprintf(fp,"\t\t cmp   eax,edx\n");
+                fprintf(fp,"\t\t je    short %s_V\t\t; No Overflow\n",Label);
+
+                /* Set Overflow */
+                fprintf(fp,"\t\t mov   edx,0x800\n");
+                fprintf(fp,"\t\t jmp   short %s_OV\n",Label);
+
+                fprintf(fp,"%s_V:\n",Label);
+                fprintf(fp,"\t\t xor   edx,edx\n");
+
+                fprintf(fp,"%s_OV:\n",Label);
+                fprintf(fp,"\t\t mov   eax,edi\t\t; Restore It\n");
+
 				fprintf(fp, "\t\t sal   %s,cl\n",Regname);
-
-			SetFlags(Size,EAX,FALSE,FALSE,FALSE);
-
-			EffectiveAddressWrite(0,Size,EBX,EAX,"--CDS-B",TRUE);
-
-			/* if shift count is zero clear carry */
-
-			Label = GenerateLabel(0,1);
-			fprintf(fp, "\t\t or    cl,cl\n");
-			fprintf(fp, "\t\t jz    %s\n",Label);
-			fprintf(fp, "\t\t mov   [%s],dl\n",REG_X);
+                EffectiveAddressWrite(0,Size,EBX,EAX,"---DS-B",TRUE);
+                fprintf(fp, "\t\t lahf\n");
+                fprintf(fp, "\t\t mov   dl,ah\n");
+				fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
+            }
 			Completed();
 
-			Align();
-			fprintf(fp, "%s:\n",Label);
-			fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
-			Completed();
+            if ( ir != 0 )
+            {
+				Align();
+				fprintf(fp, "%s:\n",Label);
+
+
+	            if (dr == 0)
+	            {
+    	        	/* ASR - Test clears V and C */
+                    SetFlags(Size,EAX,TRUE,FALSE,FALSE);
+	            }
+    	        else
+        	    {
+                	/* ASL - Keep existing Carry flag, Clear V */
+                	fprintf(fp, "\t\t mov   ebx,edx\n");
+                    fprintf(fp, "\t\t and   ebx,byte 1\n");
+                    SetFlags(Size,EAX,TRUE,FALSE,FALSE);
+                    fprintf(fp, "\t\t or    edx,ebx\n");
+            	}
+
+				Completed();
+            }
 		}
 
 		OpcodeArray[Opcode] = BaseCode ;
 	}
+
+    /* End with special routines for ASL.x #1,Dx  */
+    /* To do correct V setting, ASL needs quite a */
+    /* bit of additional code. A Shift of one has */
+    /* correct flags on Intel, and is very common */
+    /* in 68000 programs.                         */
+
+	for ( leng = 0 ; leng < 3 ; leng++ )
+	for ( sreg = 0 ; sreg < 8 ; sreg++ )
+    {
+		Opcode = 0xe300 | (leng<<6) | sreg ;
+		BaseCode = Opcode & 0xe3c8 ;
+
+      	switch (leng)
+		{
+          	case 0:
+                Sizename = "byte";
+           		break;
+          	case 1:
+                Sizename = "word";
+           		break;
+           	case 2:
+                Sizename = "long";
+          		break;
+        }
+
+		if ( sreg == 0 )
+		{
+			Align();
+			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
+
+			Label = GenerateLabel(0,1);
+
+            Timing(BaseCode);
+
+			fprintf(fp, "\t\t and   ecx,byte 7\n");
+			fprintf(fp, "\t\t sal   %s [%s+ecx*4],1\n",Sizename,REG_DAT);
+            SetFlags('L',EAX,FALSE,TRUE,FALSE);
+            Completed();
+
+        }
+
+		OpcodeArray[Opcode] = BaseCode ;
+    }
 }
 
 void asl_asr_ea(void)
@@ -5747,10 +5875,12 @@ void divides(void)
 
                 Cycles = divide_cycles[Dest & 0x0f] + 95 + (type * 17);
 
+                #ifndef TRACE68K
 		    	if (Cycles > 127)
 				    fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,Cycles);
 		        else
 				    fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,Cycles);
+                #endif
 
 				if ( mode < 7 )
 				{
@@ -5797,7 +5927,7 @@ void divides(void)
 				fprintf(fp, "\t\t xor   ebx,ebx\n");
 				fprintf(fp, "\t\t test  eax, 0FFFF0000H\n");
 				fprintf(fp, "\t\t setnz bl\n");
-				fprintf(fp, "\t\t shl   ebx,10\n"); /* set bit 11 */
+				fprintf(fp, "\t\t shl   ebx,byte 11\n"); /* set bit 11 */
 
 				fprintf(fp, "\t\t shl   edx, byte 16\n");
 				fprintf(fp, "\t\t mov   dx,ax\n");
@@ -5894,14 +6024,6 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t EXTERN _OP_ROM\n");
     fprintf(fp, "\t\t EXTERN _OP_RAM\n");
 
-	#ifdef MAME_DEBUG
-
-    	/* C timing table */
-
-        fprintf(fp, "\t\t EXTERN _cycletbl\n");
-
-    #endif
-
     fprintf(fp, "\t\t EXTERN _previouspc\n");
     fprintf(fp, "\t\t EXTERN _ophw\n");
     fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
@@ -5954,16 +6076,6 @@ void CodeSegmentBegin(void)
 
     fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall (P2)\n");
     fprintf(fp, "\t\t mov   cx,[esi+ebp]\n\n");
-
-	#ifdef MAME_DEBUG
-
-    	/* C timing system */
-
-        fprintf(fp, "\t\t xor   eax,eax\n");
-        fprintf(fp, "\t\t mov   al,byte [_cycletbl+ecx]\n");
-        fprintf(fp, "\t\t sub   dword [%s],eax\n",ICOUNT);
-
-    #endif
 
     fprintf(fp, "\t\t add   esi,byte 2\n\n");
     fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");
@@ -6111,8 +6223,17 @@ void CodeSegmentBegin(void)
 
 	/*  Update Cycle Count */
 
+	#ifdef TRACE68K
+
+	/* Always use 12 cycles */
+	fprintf(fp, "\t\t sub   dword [%s],byte 12\n",ICOUNT);
+
+	#else
+
 	fprintf(fp, "\t\t mov   al,[exception_cycles+eax]\t\t; Get Cycles\n");
   	fprintf(fp, "\t\t sub   [%s],eax\t\t; Decrement ICount\n",ICOUNT);
+
+	#endif
 
    	ReadCCR('W',ECX);
 
@@ -6310,6 +6431,11 @@ int main(int argc, char **argv)
 {
 	int dwLoop = 0;
 
+	printf("Make68K - V%s - Copyright 1998, Mike Coates (mcoates@mame.freeserve.co.uk)\n", VERSION);
+    printf("                                & Darren Olafson (deo@mail.island.net)\n");
+
+
+
     for(dwLoop=0;dwLoop<65536;)	OpcodeArray[dwLoop++] = -2;
 
  	codebuf=malloc(64);
@@ -6318,9 +6444,6 @@ int main(int argc, char **argv)
   		printf ("Memory allocation error\n");
   		exit(3);
  	}
-
-	printf("Make68K - V%s - Copyright 1998, Mike Coates (mcoates@mame.freeserve.co.uk)\n", VERSION);
-    printf("                                & Darren Olafson (deo@mail.island.net)\n");
 
 	if (argc < 1)
 	{

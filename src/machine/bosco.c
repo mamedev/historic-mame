@@ -239,8 +239,8 @@ void bosco_customio_w_1 (int offset,int data)
 			return;
 
 		case 0x48:
-			Z80_GetRegs(&regs);
-			switch(regs.HL2.D)
+			z80_getregs(&regs);
+			switch(regs.HL2.d)
 			{
 				case 0x16F0:	 //		Mid Bang
 					sample_start (0, 0, 0);
@@ -255,8 +255,8 @@ void bosco_customio_w_1 (int offset,int data)
 			break;
 
 		case 0x64:
-			Z80_GetRegs(&regs);
-			switch(cpu_readmem16(regs.HL2.D))	/* ASG 971005 */
+			z80_getregs(&regs);
+			switch(cpu_readmem16(regs.HL2.d))	/* ASG 971005 */
 			{
 				case 0x01:	/*	??	*/
 					break;
@@ -321,7 +321,7 @@ void bosco_customio_w_1 (int offset,int data)
 				default:
 					if (errorlog)
 						fprintf(errorlog,"unknown score: %02x\n",
-								cpu_readmem16(regs.HL2.D));	/* ASG 971005 */
+								cpu_readmem16(regs.HL2.d)); /* ASG 971005 */
 					break;
 			}
 			break;
@@ -412,8 +412,8 @@ void bosco_customio_w_2 (int offset,int data)
 			return;
 
 		case 0x82:
-			Z80_GetRegs(&regs);
-			switch (regs.HL2.D)
+			z80_getregs(&regs);
+			switch (regs.HL2.d)
 			{
 				case 0x1BEE:	// Blast Off
 					bosco_sample_play(0x0020 * 2, 0x08D7 * 2);

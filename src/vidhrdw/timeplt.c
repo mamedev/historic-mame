@@ -7,24 +7,14 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "tilemap.h"
 
+extern unsigned char *spriteram,*spriteram_2;
+extern int spriteram_size;
 
-
+unsigned char *timeplt_videoram,*timeplt_colorram;
+static struct tilemap *bg_tilemap;
 static int flipscreen;
-
-
-
-static struct rectangle spritevisiblearea =
-{
-	4*8, 31*8-1,
-	2*8, 30*8-1
-};
-static struct rectangle spritevisibleareaflip =
-{
-	1*8, 28*8-1,
-	2*8, 30*8-1
-};
 
 
 
@@ -104,16 +94,88 @@ void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-void timeplt_flipscreen_w(int offset,int data)
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int col,int row)
 {
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	int tile_index = 32*row+col;
+	unsigned char attr = timeplt_colorram[tile_index];
+	SET_TILE_INFO(0,timeplt_videoram[tile_index] + ((attr & 0x20) << 3),attr & 0x1f)
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	tile_info.priority = (attr & 0x10) >> 4;
 }
 
 
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+void timeplt_vh_stop(void)
+{
+	tilemap_dispose(bg_tilemap);
+	tilemap_stop();
+}
+
+int timeplt_vh_start(void)
+{
+	if (tilemap_start() == 0)
+	{
+		bg_tilemap = tilemap_create(TILEMAP_SPLIT,8,8,32,32,0,0);
+
+		if (bg_tilemap)
+		{
+			bg_tilemap->tile_get_info = get_bg_tile_info;
+
+			return 0;
+		}
+
+		timeplt_vh_stop();
+	}
+
+	return 1;
+}
+
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+void timeplt_videoram_w(int offset,int data)
+{
+	if (timeplt_videoram[offset] != data)
+	{
+		timeplt_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%32,offset/32);
+	}
+}
+
+void timeplt_colorram_w(int offset,int data)
+{
+	if (timeplt_colorram[offset] != data)
+	{
+		timeplt_colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%32,offset/32);
+	}
+}
+
+void timeplt_flipscreen_w(int offset,int data)
+{
+	int attributes;
+
+	flipscreen = data & 1;
+	attributes = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
+	tilemap_set_attributes(bg_tilemap,attributes);
+}
 
 /* Return the current video scan line */
 int timeplt_scanline_r(int offset)
@@ -125,85 +187,60 @@ int timeplt_scanline_r(int offset)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
+	const struct GfxElement *gfx = Machine->gfx[1];
+	const struct rectangle *clip = &Machine->drv->visible_area;
 	int offs;
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x40;
-			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 8 * (colorram[offs] & 0x20),
-					colorram[offs] & 0x1f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* In Time Pilot, the characters can appear either behind or in front of the */
-	/* sprites. The priority is selected by bit 4 of the color attribute of the */
-	/* character. This feature is used to limit the sprite visibility area, and */
-	/* as a sort of copyright notice protection ("KONAMI" on the title screen */
-	/* alternates between characters and sprites, but they are both white so you */
-	/* can't see it). To speed up video refresh, we do the sprite clipping ourselves. */
-
-	/* Draw the sprites. Note that it is important to draw them exactly in this */
-	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
-		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 1],
-				spriteram_2[offs] & 0x3f,
-				spriteram_2[offs] & 0x40,!(spriteram_2[offs] & 0x80),
-				240-spriteram[offs],spriteram_2[offs + 1]-1,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
+		int code,color,sx,sy,flipx,flipy;
 
-		if (spriteram_2[offs + 1] < 240)
+		code = spriteram[offs + 1];
+		color = spriteram_2[offs] & 0x3f;
+		sx = 240 - spriteram[offs];
+		sy = spriteram_2[offs + 1]-1;
+		flipx = spriteram_2[offs] & 0x40;
+		flipy = !(spriteram_2[offs] & 0x80);
+
+		drawgfx(bitmap,gfx,
+				code,
+				color,
+				flipx,flipy,
+				sx,sy,
+				clip,TRANSPARENCY_PEN,0);
+
+		if (sy < 240)
 		{
 			/* clouds are drawn twice, offset by 128 pixels horizontally and vertically */
 			/* this is done by the program, multiplexing the sprites; we don't emulate */
 			/* that, we just reproduce the behaviour. */
 			if (offs <= 2*2 || offs >= 19*2)
 			{
-				drawgfx(bitmap,Machine->gfx[1],
-						spriteram[offs + 1],
-						spriteram_2[offs] & 0x3f,
-						spriteram_2[offs] & 0x40,~spriteram_2[offs] & 0x80,
-						(240-spriteram[offs]+128) & 0xff,(spriteram_2[offs + 1]-1+128) & 0xff,
-						flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,
+						code,
+						color,
+						flipx,flipy,
+						(sx + 128) & 0xff,(sy + 128) & 0xff,
+						clip,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
+}
+
+void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(bg_tilemap);
+
+	tilemap_render(bg_tilemap);
+
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,1);
 }

@@ -1641,8 +1641,8 @@ static void mk_take_irq( int opcode )
 	I(0,cmpb,	vector_h,		X(0xcd),			"opcode <CALL imm16>?");
 	I(0,jne,	LN(symbol[10]),0,					"no, skip");
 	I(0,call,	"z80_push_pc",  0,                  0);
-//	The C core doesn't count cycles for <CALL imm16> vector
-//  I(0,addl,   zIEXTRN,        B(17),              "subtract cycles for CALL opcode");
+/*	The C core doesn't count cycles for <CALL imm16> vector */
+/*  I(0,addl,   zIEXTRN,        B(17),              "subtract cycles for CALL opcode"); */
 	I(0,movzwl, PC32,			vector_w,			"get vector bits 0..15");
 	I(0,jmp,	LS(symbol[12]), 0,					"change PC and exit");
 
@@ -1650,8 +1650,8 @@ static void mk_take_irq( int opcode )
 	S(symbol[10],0);
 	I(0,cmpb,	vector_h,		X(0xc3),			"opcode <JP imm16>?");
 	I(0,jne,	LS(symbol[11]), 0,					"no, skip");
-//	The C core doesn't count cycles for <JP   imm16> vector
-//	I(0,addl,	zIEXTRN,		B(10),				"subtract cycles for JP opcode");
+/*	The C core doesn't count cycles for <JP   imm16> vector */
+/*	I(0,addl,	zIEXTRN,		B(10),				"subtract cycles for JP opcode"); */
 	I(0,movzwl, PC32,			vector_w,			"get vector bits 0..15");
 	I(0,jmp,	LS(symbol[12]), 0,					"change PC and exit");
 

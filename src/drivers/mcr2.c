@@ -43,6 +43,7 @@ Known issues:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/z80fmly.h"
 
 int journey_vh_start(void);
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -519,6 +520,12 @@ static struct AY8910interface ay8910_interface =
 };
 
 
+static Z80_DaisyChain daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,-1} 		/* end mark */
+};
+
 /***************************************************************************
 
   Machine drivers
@@ -534,8 +541,9 @@ static struct MachineDriver mcr2_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -579,8 +587,9 @@ static struct MachineDriver wacko_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -624,8 +633,9 @@ static struct MachineDriver kroozr_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,kroozr_readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -669,8 +679,9 @@ static struct MachineDriver journey_machine_driver =
 			7500000,	/* Looks like it runs at 7.5 Mhz rather than 5 or 2.5 */
 			0,
 			journey_readmem,journey_writemem,readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */

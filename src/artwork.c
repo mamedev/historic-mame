@@ -9,8 +9,7 @@
   Added some overlay and backdrop functions
   for vector games. Mathis Rosenhauer - 10/09/1998
 
-  Please don't use the artwork functions in your own drivers yet.
-  They are very likely to change in the near future.
+  MAB - 09 MAR 1999 - made some changes to artwork_create
 *********************************************************************/
 
 #include "driver.h"
@@ -760,6 +759,10 @@ void overlay_remap(struct artwork *a)
 		osd_get_pen (i, &r, &g, &b);
 		a->brightness[i]=(222*r+707*g+71*b)/1000;
 	}
+
+	/* Erase vector bitmap same way as in vector.c */
+	if (a->vector_bitmap)
+		fillbitmap(a->vector_bitmap,Machine->pens[0],0);
 }
 
 /*********************************************************************
@@ -895,19 +898,16 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 
   This works similar to artwork_load but generates artwork from
   an array of artwork_element. This is useful for very simple artwork
-  like the overlay in the Space invaders series of games. The first
-  entry determines the size of the temp bitmap which is used to create
-  the artwork. All following entries should stay in these bounds. The
-  temp bitmap is then scaled to the final size of the artwork (screen).
+  like the overlay in the Space invaders series of games.  The overlay
+  is defined to be the same size as the screen.
   The end of the array is marked by an entry with negative coordinates.
   If there are transparent and opaque overlay elements, the opaque ones
   have to be at the end of the list to stay compatible with the PNG
   artwork.
  *********************************************************************/
-struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
+struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, int max_pens)
 {
 	struct artwork *a;
-	struct osd_bitmap *tmpbitmap=NULL;
 	int pen;
 
 	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
@@ -955,36 +955,20 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
 			}
 		}
 
-		if (!tmpbitmap)
-		{
-			/* create the bitmap with size of the first overlay element */
-			if ((tmpbitmap = osd_create_bitmap(ae->box.max_x+1, ae->box.max_y+1))
-			    == NULL)
-			{
-				if (errorlog) fprintf(errorlog,"Not enough memory for artwork!\n");
-				return NULL;
-			}
-			fillbitmap(tmpbitmap,0,0);
-		}
-		else
-			fillbitmap (tmpbitmap, pen, &ae->box);
+		fillbitmap (a->orig_artwork, pen, &ae->box);
 
 		ae++;
 	}
 
-	/* Scale the original picture to be the same size as the visible area */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		copybitmapzoom(a->orig_artwork,tmpbitmap,0,0,0,0,
-					   0, TRANSPARENCY_PEN, 0,
-					   (a->orig_artwork->height<<16)/tmpbitmap->height,
-					   (a->orig_artwork->width<<16)/tmpbitmap->width);
-	else
-		copybitmapzoom(a->orig_artwork,tmpbitmap,0,0,0,0,
-					   0, TRANSPARENCY_PEN, 0,
-					   (a->orig_artwork->width<<16)/tmpbitmap->width,
-					   (a->orig_artwork->height<<16)/tmpbitmap->height);
-
-	osd_free_bitmap(tmpbitmap);
+	/* Make sure we don't have too many colors */
+	if (a->num_pens_used > max_pens)
+	{
+		if (errorlog) fprintf(errorlog,"Too many colors in overlay.\n");
+		if (errorlog) fprintf(errorlog,"Colors found: %d  Max Allowed: %d\n",
+				      a->num_pens_used,max_pens);
+		artwork_free(a);
+		return NULL;
+	}
 
 	/* If the game uses dynamic colors, we assume that it's safe
 	   to init the palette and remap the colors now */

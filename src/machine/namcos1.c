@@ -7,6 +7,7 @@
 extern int namcos1_videoram_r( int offs );
 extern void namcos1_videoram_w( int offs, int data );
 extern void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative );
+extern void namcos1_set_sprite_offsets( int x, int y );
 
 static int (*key_r)( int offset );
 static void (*key_w)( int offset, int data );
@@ -19,10 +20,8 @@ static unsigned char key[0x2000];
 *	                                                                                  *
 **************************************************************************************/
 
-static unsigned char key_table[10][8];
 static int key_id;
 static int key_id_query;
-static int key_security_done;
 
 static int rev1_key_r( int offset ) {
 	return key[offset];
@@ -30,38 +29,57 @@ static int rev1_key_r( int offset ) {
 
 static void rev1_key_w( int offset, int data ) {
 	int i;
+	static unsigned short divider, divide_32 = 0;
 
 	key[offset] = data;
 
 	switch ( offset ) {
+
+		case 0x01:
+			divider = ( key[0] << 8 ) + key[1];
+		break;
+
 		case 0x03:
-			if ( !key_security_done ) {
-				/* process our key table based on the query */
-				for ( i = 0; i < 10; i++ ) {
-					if ( key_table[i][0] == key[0] &&
-						 key_table[i][1] == key[1] &&
-						 key_table[i][2] == key[2] &&
-						 key_table[i][3] == key[3] ) {
+			{
+				static unsigned short d;
+				unsigned short	v1, v2;
+				unsigned long	l=0;
 
-						 if ( i == 9 )
-						 	key_security_done = 1;
+				if ( divide_32 )
+					l = d << 16;
 
-						 key[0] = key_table[i][4];
-						 key[1] = key_table[i][5];
-						 key[2] = key_table[i][6];
-						 key[3] = key_table[i][7];
-						 return;
+				d = ( key[2] << 8 ) + key[3];
+
+				if ( divider == 0 ) {
+					v1 = 0xffff;
+					v2 = 0;
+				} else {
+					if ( divide_32 ) {
+						l |= d;
+
+						v1 = l / divider;
+						v2 = l % divider;
+					} else {
+						v1 = d / divider;
+						v2 = d % divider;
 					}
 				}
-			}
 
-			/* if we got here, its not a security queue, its a palette conversion */
-			key[3] = key[2] + 0xe8; /* ( ? ) */
+				key[2] = v1 >> 8;
+				key[3] = v1;
+				key[0] = v2 >> 8;
+				key[1] = v2;
+			}
 		break;
 
 		case 0x04:
 			if ( key[4] == key_id_query ) /* get key number */
 				key[4] = key_id;
+
+			if ( key[4] == 0x0c )
+				divide_32 = 1;
+			else
+				divide_32 = 0;
 		break;
 	}
 }
@@ -667,9 +685,6 @@ void namcos1_machine_init( void ) {
 	/* Init MCU checks */
 	mcu_first_time = 1;
 
-	/* Init key checks */
-	key_security_done = 0;
-
 	/* In case we had some cpu's suspended, resume them now */
 	cpu_halt( 1, 1 );
 	cpu_halt( 3, 1 );
@@ -684,8 +699,6 @@ void namcos1_machine_init( void ) {
 **************************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
-/* The game currently doesnt work because of that */
-/* Notice that the current scrolling offsets are correct */
 
 void blazer_driver_init( void ) {
 
@@ -701,6 +714,9 @@ void blazer_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 1 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -120, 232 );
 }
 
 /**************************************************************************************
@@ -710,8 +726,6 @@ void blazer_driver_init( void ) {
 **************************************************************************************/
 
 /* Theres is an id check followed by some key nightmare */
-/* The game currently doesnt work because of that */
-/* Notice that the current scrolling offsets are correct */
 
 void dspirits_driver_init( void ) {
 
@@ -727,6 +741,9 @@ void dspirits_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 1 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -120, 232 );
 }
 
 /**************************************************************************************
@@ -738,22 +755,6 @@ void dspirits_driver_init( void ) {
 void galaga88_driver_init( void ) {
 	int galaga88_key_id = 0x31;
 	int galaga88_key_id_query = 0x2d;
-	/* Key table format: 1st 4 bytes = query, 2nd 4 bytes = answer */
-	unsigned char galaga88_key_table[10][8] = {
-		{ 0x02, 0x14, 0x2c, 0x78, 0x00, 0xd4, 0x00, 0x15 },
-		{ 0x01, 0x37, 0xb5, 0xbc, 0x00, 0xb9, 0x00, 0x95 },
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff },
-		{ 0xff, 0xff, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00 },
-		{ 0x7d, 0x6f, 0xcc, 0xf3, 0x4f, 0x84, 0x00, 0x01 },
-		{ 0x00, 0x01, 0xf2, 0xc9, 0x00, 0x00, 0xf2, 0xc9 },
-		{ 0x00, 0x02, 0x08, 0x67, 0x00, 0x01, 0x04, 0x33 },
-		{ 0x00, 0x04, 0x22, 0xb8, 0x00, 0x00, 0x08, 0xae },
-		{ 0x00, 0x2d, 0x4e, 0x22, 0x00, 0x16, 0x01, 0xbc },
-		{ 0x00, 0x6a, 0x4c, 0xe3, 0x00, 0x49, 0x00, 0xb9 }
-	};
-
-	/* Set Galaga 88's key table */
-	memcpy( key_table, galaga88_key_table, 10*8 );
 
 	/* Set Galaga 88's key id query */
 	key_id_query = galaga88_key_id_query;
@@ -771,6 +772,9 @@ void galaga88_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 1 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -120, 232 );
 }
 
 /**************************************************************************************
@@ -782,22 +786,6 @@ void galaga88_driver_init( void ) {
 void pacmania_driver_init( void ) {
 	int pacmania_key_id = 0x12;
 	int pacmania_key_id_query = 0x4b;
-	/* Key table format: 1st 4 bytes = query, 2nd 4 bytes = answer */
-	unsigned char pacmania_key_table[10][8] = {
-		{ 0x02, 0x14, 0x2c, 0x78, 0x00, 0xd4, 0x00, 0x15 },
-		{ 0x01, 0x37, 0xb5, 0xb9, 0x00, 0xb6, 0x00, 0x95 },
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff },
-		{ 0xff, 0xff, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00 },
-		{ 0x7d, 0x6f, 0xcc, 0xf5, 0x4f, 0x86, 0x00, 0x01 },
-		{ 0x00, 0x01, 0xf2, 0xc9, 0x00, 0x00, 0xf2, 0xc9 },
-		{ 0x00, 0x02, 0x08, 0x67, 0x00, 0x01, 0x04, 0x33 },
-		{ 0x00, 0x04, 0x22, 0xb8, 0x00, 0x00, 0x08, 0xae },
-		{ 0x00, 0x2d, 0x4e, 0x21, 0x00, 0x15, 0x01, 0xbc },
-		{ 0x00, 0x6a, 0x4c, 0xe4, 0x00, 0x4a, 0x00, 0xb9 }
-	};
-
-	/* Set Pacmania's key table */
-	memcpy( key_table, pacmania_key_table, 10*8 );
 
 	/* Set Pacmania's key id query */
 	key_id_query = pacmania_key_id_query;
@@ -815,6 +803,9 @@ void pacmania_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 0 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -56, 240 );
 }
 
 /**************************************************************************************
@@ -841,6 +832,9 @@ void splatter_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 0 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -56, 240 );
 }
 
 /**************************************************************************************
@@ -853,8 +847,8 @@ void splatter_driver_init( void ) {
 
 void ws90_driver_init( void ) {
 
-	key_r = rev2_key_r;
-	key_w = rev2_key_w;
+	key_r = rev1_key_r;
+	key_w = rev1_key_w;
 
 	/* set scrolling offsets for this game */
 	{
@@ -863,4 +857,7 @@ void ws90_driver_init( void ) {
 
 		namcos1_set_scroll_offsets( bgx, bgy, 0 );
 	}
+
+	/* set sprite offsets for this game */
+	namcos1_set_sprite_offsets( -56, 240 );
 }

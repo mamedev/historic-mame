@@ -85,7 +85,7 @@ INLINE UINT32 POPL(UINT8 src)
 #define CHK_XXXL_ZS if (!result) SET_Z; else if ((INT32)result < 0) SET_S
 #define CHK_XXXQ_ZS if (!result) SET_Z; else if ((INT64)result < 0) SET_S
 
-#define CHK_XXXB_ZSP FCW |= Z8000_zsp[result]
+#define CHK_XXXB_ZSP FCW |= z8000_zsp[result]
 
 /* check carry for addition and subtraction */
 #define CHK_ADDX_C  if (~dest < value) SET_C
@@ -4342,7 +4342,7 @@ static void Z79_ssN0_0000_addr(void)
 static void Z7A_0000_0000(void)
 {
 	IRQ_REQ |= Z8000_HALT;
-	if (Z8000_ICount > 0) Z8000_ICount = 0;
+	if (z8000_ICount > 0) z8000_ICount = 0;
 }
 
 /******************************************

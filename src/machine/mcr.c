@@ -177,15 +177,6 @@ void mcr_init_machine(void)
    ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
    z80ctc_init (&ctc_intf);
 
-   /* daisy chain set */
-	{
-		static Z80_DaisyChain daisy_chain[] =
-		{
-			{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-			{ 0,0,0,-1}         /* end mark */
-		};
-		cpu_setdaisychain (0,daisy_chain );
-	}
 
    /* can't load NVRAM right away */
    mcr_loadnvram = 0;
@@ -290,10 +281,10 @@ void mcr_writeport(int port,int value)
 			if (value == 5)
 			{
 				Z80_Regs temp;
-				Z80_GetRegs (&temp);
-				if (temp.IX.D == 0)
-					temp.IX.D += 1;
-				Z80_SetRegs (&temp);
+				z80_getregs (&temp);
+				if (temp.IX.d == 0)
+					temp.IX.d += 1;
+				z80_setregs (&temp);
 			}
 			return;
 

@@ -226,12 +226,14 @@ int  xevious_interrupt_2(void);
 int  xevious_interrupt_3(void);
 void xevious_init_machine(void);
 
-extern unsigned char *xevious_vlatches;
 void xevious_vh_latch_w(int offset, int data);
 
-extern unsigned char *xevious_videoram2,*xevious_colorram2;
-void xevious_videoram2_w(int offset,int data);
-void xevious_colorram2_w(int offset,int data);
+extern unsigned char *xevious_fg_videoram,*xevious_fg_colorram;
+extern unsigned char *xevious_bg_videoram,*xevious_bg_colorram;
+void xevious_fg_videoram_w(int offset,int data);
+void xevious_fg_colorram_w(int offset,int data);
+void xevious_bg_videoram_w(int offset,int data);
+void xevious_bg_colorram_w(int offset,int data);
 int  xevious_vh_start( void );
 void xevious_vh_stop( void );
 void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -280,11 +282,11 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x7000, 0x700f, xevious_customio_data_w },
 	{ 0x7100, 0x7100, xevious_customio_w },
 	{ 0x7800, 0xafff, xevious_sharedram_w, &xevious_sharedram },
-	{ 0xb000, 0xb7ff, colorram_w, &colorram },
-	{ 0xb800, 0xbfff, xevious_colorram2_w, &xevious_colorram2 },
-	{ 0xc000, 0xc7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xc800, 0xcfff, xevious_videoram2_w, &xevious_videoram2 },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w, &xevious_vlatches }, /* ?? */
+	{ 0xb000, 0xb7ff, xevious_fg_colorram_w, &xevious_fg_colorram },
+	{ 0xb800, 0xbfff, xevious_bg_colorram_w, &xevious_bg_colorram },
+	{ 0xc000, 0xc7ff, xevious_fg_videoram_w, &xevious_fg_videoram },
+	{ 0xc800, 0xcfff, xevious_bg_videoram_w, &xevious_bg_videoram },
+	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
 	{ 0xf000, 0xffff, xevious_bs_w },
 	{ 0x8780, 0x87ff, MWA_RAM, &spriteram_2 },	/* here only */
 	{ 0x9780, 0x97ff, MWA_RAM, &spriteram_3 },	/* to initialize */
@@ -298,11 +300,11 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x6823, 0x6823, xevious_halt_w },			/* reset control */
 	{ 0x6830, 0x683f, MWA_NOP },				/* watch dog reset */
 	{ 0x7800, 0xafff, xevious_sharedram_w },
-	{ 0xb000, 0xb7ff, colorram_w },
-	{ 0xb800, 0xbfff, xevious_colorram2_w },
-	{ 0xc000, 0xc7ff, videoram_w },
-	{ 0xc800, 0xcfff, xevious_videoram2_w },
-	{ 0xd000, 0xd07f, xevious_vh_latch_w, &xevious_vlatches }, /* ?? */
+	{ 0xb000, 0xb7ff, xevious_fg_colorram_w },
+	{ 0xb800, 0xbfff, xevious_bg_colorram_w },
+	{ 0xc000, 0xc7ff, xevious_fg_videoram_w },
+	{ 0xc800, 0xcfff, xevious_bg_videoram_w },
+	{ 0xd000, 0xd07f, xevious_vh_latch_w }, /* ?? */
 	{ 0xf000, 0xffff, xevious_bs_w },
 	{ -1 }	/* end of table */
 };

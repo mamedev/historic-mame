@@ -1,7 +1,7 @@
 //========================================
 //  emulate.c
 //
-//  C/PPC file for TMS9900 emulation
+//	C/PPC file for TMS9900 emulation
 //
 //  by R NABET, based on work by Edward Swartz.
 //
@@ -14,20 +14,20 @@
 #include "tms9900.h"
 #include "9900stat.h"
 
-INLINE void execute(u16 opcode);
+INLINE void execute(UINT16 opcode);
 
-u16 fetch(void);
-u16 decipheraddr(u16 opcode);
-u16 decipheraddrbyte(u16 opcode);
-void contextswitch(u16 addr);
+UINT16 fetch(void);
+UINT16 decipheraddr(UINT16 opcode);
+UINT16 decipheraddrbyte(UINT16 opcode);
+void contextswitch(UINT16 addr);
 
-void h0000(u16 opcode);
-void h0200(u16 opcode);
-void h0400(u16 opcode);
-void h0800(u16 opcode);
-void h1000(u16 opcode);
-void h2000(u16 opcode);
-void h4000(u16 opcode);
+void h0000(UINT16 opcode);
+void h0200(UINT16 opcode);
+void h0400(UINT16 opcode);
+void h0800(UINT16 opcode);
+void h1000(UINT16 opcode);
+void h2000(UINT16 opcode);
+void h4000(UINT16 opcode);
 
 /***************************/
 /* Mame Interface Routines */
@@ -36,8 +36,8 @@ void h4000(u16 opcode);
 extern  FILE *errorlog;
 
 TMS9900_Regs 	I;
-int     		TMS9900_ICount = 0;
-u8      		lastparity = 0;
+int 	TMS9900_ICount = 0;
+UINT8	lastparity = 0;
 
 #define readword(addr)			((cpu_readmem16((addr)) << 8) + cpu_readmem16((addr)+1))
 #define writeword(addr,data)	{ cpu_writemem16((addr), ((data)>>8) );cpu_writemem16(((addr)+1),((data) & 0xff));}
@@ -52,14 +52,19 @@ u8      		lastparity = 0;
 
 //**************************************************************************
 
-void TMS9900_Reset(void)
+void TMS9900_reset(void *param)
 {
 	I.STATUS = 0;
 	I.WP=readword(0);
 	I.PC=readword(2);
 }
 
-int TMS9900_Execute(int cycles)
+void TMS9900_exit(void)
+{
+	/* nothing to do ? */
+}
+
+int TMS9900_execute(int cycles)
 {
 	TMS9900_ICount = cycles;
 
@@ -115,28 +120,85 @@ int TMS9900_Execute(int cycles)
     return cycles - TMS9900_ICount;
 }
 
-void TMS9900_GetRegs(TMS9900_Regs * regs)
+void TMS9900_getregs(TMS9900_Regs * regs)
 {
 	setstat();
     *regs = I;
 }
 
-void TMS9900_SetRegs(TMS9900_Regs * regs)
+void TMS9900_setregs(TMS9900_Regs * regs)
 {
     I = *regs;
     getstat();
 }
 
-int  TMS9900_GetPC(void)
+unsigned TMS9900_getpc(void)
 {
 	return I.PC;
+}
+
+unsigned TMS9900_getreg(int regnum)
+{
+	switch( regnum )
+	{
+		case  0: return I.PC;
+		case  1: return I.IR;
+		case  2: return I.WP;
+		case  3: return I.STATUS;
+#ifdef MAME_DEBUG
+		case  4: return I.FR0;
+		case  5: return I.FR1;
+		case  6: return I.FR2;
+		case  7: return I.FR3;
+		case  8: return I.FR4;
+		case  9: return I.FR5;
+		case 10: return I.FR6;
+		case 11: return I.FR7;
+		case 12: return I.FR8;
+		case 13: return I.FR9;
+		case 14: return I.FR10;
+		case 15: return I.FR11;
+		case 16: return I.FR12;
+		case 17: return I.FR13;
+		case 18: return I.FR14;
+		case 19: return I.FR15;
+#endif
+	}
+	return 0;
+}
+
+void TMS9900_setreg(int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+		case  0: I.PC = val; break;
+		case  1: I.IR = val; break;
+		case  2: I.WP = val; break;
+		case  3: I.STATUS = val; break;
+#ifdef MAME_DEBUG
+		case  4: I.FR0 = val; break;
+		case  5: I.FR1 = val; break;
+		case  6: I.FR2 = val; break;
+		case  7: I.FR3 = val; break;
+		case  8: I.FR4 = val; break;
+		case  9: I.FR5 = val; break;
+		case 10: I.FR6 = val; break;
+		case 11: I.FR7 = val; break;
+		case 12: I.FR8 = val; break;
+		case 13: I.FR9 = val; break;
+		case 14: I.FR10 = val; break;
+		case 15: I.FR11 = val; break;
+		case 16: I.FR12 = val; break;
+		case 17: I.FR13 = val; break;
+		case 18: I.FR14 = val; break;
+		case 19: I.FR15 = val; break;
+#endif
+	}
 }
 
 /*
  *  These are just hacked to compile and need properly sorting out!
  */
-
-#if NEW_INTERRUPT_SYSTEM
 
 void TMS9900_set_nmi_line(int state)
 {
@@ -146,13 +208,16 @@ void TMS9900_set_nmi_line(int state)
 void TMS9900_set_irq_line(int irqline, int state)
 {
 	I.irq_state = state;
-	if (state == CLEAR_LINE) {
+	if (state == CLEAR_LINE)
+	{
 		if (errorlog) fprintf(errorlog, "TMS9900.C: set_irq_line(CLEAR): Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
-    } else {
+	}
+	else
+	{
 		int intlevel = (*I.irq_callback)(irqline);
 		if (intlevel <= IMASK)
 		{
-			u16 oldwp;
+			UINT16 oldwp;
 
 			oldwp=I.WP;
 			setstat();					/* Make sure status us uptodate before we store it */
@@ -171,36 +236,81 @@ void TMS9900_set_irq_callback(int (*callback)(int irqline))
 	I.irq_callback = callback;
 }
 
-#else
-
-void    TMS9900_Cause_Interrupt(int intlevel)
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *TMS9900_info(void *context, int regnum)
 {
-	if (intlevel <= IMASK)
+	static char buffer[32][47+1];
+	static int which = 0;
+	TMS9900_Regs *r = (TMS9900_Regs *)context;
+
+	which = ++which % 32;
+	buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+    switch( regnum )
 	{
-
-		u16 oldwp;
-
-		oldwp=I.WP;
-        setstat();
-		I.WP=readword(intlevel*4);	/* get new workspace */
-		WRITEREG(R13,oldwp);        	/* store old WP in new R13 */
-		WRITEREG(R14,I.PC);			/* store old PC in new R14 */
-		WRITEREG(R15,I.STATUS);		/* store old STATUS in R15 */
-
-		I.PC=readword((intlevel*4)+2);	/* get new PC */
-	}
-}
-
-void    TMS9900_Clear_Pending_Interrupts(void)
-{
-	if (errorlog) fprintf(errorlog, "TMS9900.C: Clear_Pending_Interrupts : Status = %04x, WP = %04x, PC = %04x\n", I.STATUS, I.WP, I.PC) ;
-}
-
+		case CPU_INFO_NAME: return "TMS9900";
+		case CPU_INFO_FAMILY: return "Texas Instruments 9900";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Converted for Mame by M.Coates (C/PPC file for TMS9900 emulation by R NABET, based on work by Edward Swartz)";
+		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->WP); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_DASM: r->PC += Dasm9900(buffer[which], r->PC); break;
+#else
+		case CPU_INFO_DASM: sprintf(buffer[which], "$%04x", READ_WORD(&ROM[r->PC<<1])); r->PC++; break;
 #endif
-
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->WP & 0x8000 ? 'L':'.',
+				r->WP & 0x4000 ? 'A':'.',
+				r->WP & 0x2000 ? 'E':'.',
+				r->WP & 0x1000 ? 'C':'.',
+				r->WP & 0x0800 ? 'V':'.',
+				r->WP & 0x0400 ? 'P':'.',
+				r->WP & 0x0200 ? 'X':'.',
+				r->WP & 0x0100 ? '?':'.',
+				r->WP & 0x0080 ? '?':'.',
+				r->WP & 0x0040 ? '?':'.',
+				r->WP & 0x0020 ? '?':'.',
+				r->WP & 0x0010 ? '?':'.',
+				r->WP & 0x0008 ? 'I':'.',
+				r->WP & 0x0004 ? 'I':'.',
+				r->WP & 0x0002 ? 'I':'.',
+				r->WP & 0x0001 ? 'I':'.');
+            break;
+		case CPU_INFO_REG+ 0: sprintf(buffer[which], "PC:%04X",  r->PC); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "IR:%04X",  r->IR); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "WP:%04X",  r->WP); break;
+		case CPU_INFO_REG+ 3: sprintf(buffer[which], "ST:%04X",  r->STATUS); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_REG+ 4: sprintf(buffer[which], "R0 :%04X",  r->FR0); break;
+		case CPU_INFO_REG+ 5: sprintf(buffer[which], "R1 :%04X",  r->FR1); break;
+		case CPU_INFO_REG+ 6: sprintf(buffer[which], "R2 :%04X",  r->FR2); break;
+		case CPU_INFO_REG+ 7: sprintf(buffer[which], "R3 :%04X",  r->FR3); break;
+		case CPU_INFO_REG+ 8: sprintf(buffer[which], "R4 :%04X",  r->FR4); break;
+		case CPU_INFO_REG+ 9: sprintf(buffer[which], "R5 :%04X",  r->FR5); break;
+		case CPU_INFO_REG+10: sprintf(buffer[which], "R6 :%04X",  r->FR6); break;
+		case CPU_INFO_REG+11: sprintf(buffer[which], "R7 :%04X",  r->FR7); break;
+		case CPU_INFO_REG+12: sprintf(buffer[which], "R8 :%04X",  r->FR8); break;
+		case CPU_INFO_REG+13: sprintf(buffer[which], "R9 :%04X",  r->FR9); break;
+		case CPU_INFO_REG+14: sprintf(buffer[which], "R10:%04X",  r->FR10); break;
+		case CPU_INFO_REG+15: sprintf(buffer[which], "R11:%04X",  r->FR11); break;
+		case CPU_INFO_REG+16: sprintf(buffer[which], "R12:%04X",  r->FR12); break;
+		case CPU_INFO_REG+17: sprintf(buffer[which], "R13:%04X",  r->FR13); break;
+		case CPU_INFO_REG+18: sprintf(buffer[which], "R14:%04X",  r->FR14); break;
+		case CPU_INFO_REG+19: sprintf(buffer[which], "R15:%04X",  r->FR15); break;
+#endif
+    }
+	return buffer[which];
+}
 //**************************************************************************
 
-void writeCRU(int CRUAddr, int Number, u16 Value)
+void writeCRU(int CRUAddr, int Number, UINT16 Value)
 {
 	int count;
 
@@ -215,7 +325,7 @@ void writeCRU(int CRUAddr, int Number, u16 Value)
     }
 }
 
-u16 readCRU(int CRUAddr, int Number)
+UINT16 readCRU(int CRUAddr, int Number)
 {
 	static int BitMask[] =
     {
@@ -267,17 +377,17 @@ u16 readCRU(int CRUAddr, int Number)
 
 // fetch : read one word at * PC, and increment PC.
 
-u16 fetch(void)
+UINT16 fetch(void)
 {
-  register u16 value = readword(I.PC);
+  register UINT16 value = readword(I.PC);
   I.PC += 2;
   return value;
 }
 
 // contextswitch : performs a BLWP, ie change I.PC, I.WP, and save I.PC, I.WP and STAT...
-void contextswitch(u16 addr)
+void contextswitch(UINT16 addr)
 {
-  u16 oldWP,oldpc;
+  UINT16 oldWP,oldpc;
 
   oldWP = I.WP;
   oldpc = I.PC;
@@ -295,10 +405,10 @@ void contextswitch(u16 addr)
 //
 // NOTA : the LSB is always ignored in word adresses,
 // but we do not set to 0 because of XOP...
-u16 decipheraddr(u16 opcode)
+UINT16 decipheraddr(UINT16 opcode)
 {
-  register u16 ts = opcode & 0x30;
-  register u16 reg = opcode & 0xF;
+  register UINT16 ts = opcode & 0x30;
+  register UINT16 reg = opcode & 0xF;
 
   reg += reg;
 
@@ -308,7 +418,7 @@ u16 decipheraddr(u16 opcode)
     return(readword(reg + I.WP));
   else if (ts == 0x20)
   {
-    register u16 imm;
+	register UINT16 imm;
 
     imm = fetch();
     if (reg)
@@ -320,7 +430,7 @@ u16 decipheraddr(u16 opcode)
   }
   else /*if (ts == 0x30)*/
   {
-    register u16 reponse;
+	register UINT16 reponse;
 
     reg += I.WP;      // reg now contains effective address
 
@@ -331,10 +441,10 @@ u16 decipheraddr(u16 opcode)
 }
 
 // decipheraddrbyte : compute and return the effective adress in byte instructions.
-u16 decipheraddrbyte(u16 opcode)
+UINT16 decipheraddrbyte(UINT16 opcode)
 {
-  register u16 ts = opcode & 0x30;
-  register u16 reg = opcode & 0xF;
+  register UINT16 ts = opcode & 0x30;
+  register UINT16 reg = opcode & 0xF;
 
   reg += reg;
 
@@ -344,7 +454,7 @@ u16 decipheraddrbyte(u16 opcode)
     return(readword(reg + I.WP));
   else if (ts == 0x20)
   {
-    register u16 imm;
+	register UINT16 imm;
 
     imm = fetch();
     if (reg)
@@ -356,7 +466,7 @@ u16 decipheraddrbyte(u16 opcode)
   }
   else /*if (ts == 0x30)*/
   {
-    register u16 reponse;
+	register UINT16 reponse;
 
     reg += I.WP;      // reg now contains effective address
 
@@ -373,7 +483,7 @@ u16 decipheraddrbyte(u16 opcode)
 //==========================================================================
 //       Data instructions,                                      >0000->01FF
 //==========================================================================
-void h0000(u16 opcode)
+void h0000(UINT16 opcode)
 {
   #pragma unused (opcode)
 }
@@ -389,10 +499,10 @@ void h0000(u16 opcode)
 //       ----------------------------------              RSET, RTI.WP, CKON,
 //                                                       CKOF, LREX
 //==========================================================================
-void h0200(u16 opcode)
+void h0200(UINT16 opcode)
 {
-  register u16 addr;
-  register u16 value;    // used for anything
+  register UINT16 addr;
+  register UINT16 value;	// used for anything
 
   addr = opcode & 0xF;
   addr = ((addr + addr) + I.WP) & ~1;
@@ -479,10 +589,10 @@ void h0200(u16 opcode)
 //       ----------------------------------              SETO, ABS
 //
 //==========================================================================
-void h0400(u16 opcode)
+void h0400(UINT16 opcode)
 {
-  register u16 addr = decipheraddr(opcode) & ~1;
-  register u16 value;    // used for anything
+  register UINT16 addr = decipheraddr(opcode) & ~1;
+  register UINT16 value;	// used for anything
 
   switch ((opcode &0x3C0) >> 6)
   {
@@ -510,7 +620,7 @@ void h0400(u16 opcode)
     case 4: // NEG
       // NEG --       NEGate
       // *S = -*S
-      value = - (s16) readword(addr);
+	  value = - (INT16) readword(addr);
       if (value)
         I.STATUS &= ~ ST_C;
       else
@@ -570,14 +680,14 @@ void h0400(u16 opcode)
       I.STATUS &= ~ (ST_L | ST_A | ST_E | ST_C | ST_O);
       value = readword(addr);
 
-      if (((s16) value) > 0)
+	  if (((INT16) value) > 0)
         I.STATUS |=  ST_L | ST_A;
-      else if (((s16) value) < 0)
+	  else if (((INT16) value) < 0)
       {
         I.STATUS |= ST_L;
         if (value == 0x8000)
           I.STATUS |= ST_O;
-        writeword(addr, - ((s16) value));
+		writeword(addr, - ((INT16) value));
       }
       else
         I.STATUS |= ST_E;
@@ -599,11 +709,11 @@ void h0400(u16 opcode)
 //                                                       TIDSR, KEYSLOW,
 //                                                       SCREEN
 //==========================================================================
-void h0800(u16 opcode)
+void h0800(UINT16 opcode)
 {
-  register u16 addr;
-  register u16 cnt = (opcode & 0xF0) >> 4;
-  register u16 value;
+  register UINT16 addr;
+  register UINT16 cnt = (opcode & 0xF0) >> 4;
+  register UINT16 value;
 
   addr = (opcode & 0xF);
   addr = ((addr+addr) + I.WP) & ~1;
@@ -653,10 +763,10 @@ void h0800(u16 opcode)
 //                                                       SBO, SBZ, TB
 //
 //==========================================================================
-void h1000(u16 opcode)
+void h1000(UINT16 opcode)
 {
   // we convert 8 bit signed word offset to a 16 bit effective word offset.
-  register s16 offset = ((s8) opcode);
+  register INT16 offset = ((INT8) opcode);
 
 
   switch ((opcode & 0xF00) >> 8)
@@ -738,7 +848,7 @@ void h1000(u16 opcode)
       {
         // let's set ST_P
         int i;
-        u8 a;
+		UINT8 a;
 
         a = lastparity;
 
@@ -785,11 +895,11 @@ void h1000(u16 opcode)
 //       ----------------------------------
 //
 //==========================================================================
-void h2000(u16 opcode)
+void h2000(UINT16 opcode)
 {
-  register u16 dest = (opcode & 0x3C0) >> 6;
-  register u16 src;
-  register u16 value;
+  register UINT16 dest = (opcode & 0x3C0) >> 6;
+  register UINT16 src;
+  register UINT16 value;
 
   if (opcode < 0x3000 || opcode >= 0x3800)  // not LDCR and STCR
   {
@@ -842,7 +952,7 @@ void h2000(u16 opcode)
         dest = ((dest+dest) + I.WP) & ~1;
         src &= ~1;
         {
-          u32 prod = readword(dest) * readword(src);
+		  UINT32 prod = readword(dest) * readword(src);
           writeword(dest, prod >> 16);
           writeword(dest+2, prod);
         }
@@ -853,9 +963,9 @@ void h2000(u16 opcode)
         dest = ((dest+dest) + I.WP) & ~1;
         src &= ~1;
         {
-          u16 d = readword(src);
-          u16 hi = readword(dest);
-          u32 divq = (((u32) hi) << 16) | readword(dest+2);
+		  UINT16 d = readword(src);
+		  UINT16 hi = readword(dest);
+		  UINT32 divq = (((UINT32) hi) << 16) | readword(dest+2);
 
           if (d <= hi)
             I.STATUS |= ST_O;
@@ -926,11 +1036,11 @@ void h2000(u16 opcode)
 //       ----------------------------------
 //
 //==========================================================================
-void h4000(u16 opcode)
+void h4000(UINT16 opcode)
 {
-  register u16 src;
-  register u16 dest;
-  register u16 value;
+  register UINT16 src;
+  register UINT16 dest;
+  register UINT16 value;
 
   if (opcode & 0x1000)
   {   // byte instruction
@@ -1027,9 +1137,9 @@ void h4000(u16 opcode)
 }
 
 
-INLINE void execute(u16 opcode)
+INLINE void execute(UINT16 opcode)
 {
-  static void (* jumptable[128])(u16) =
+  static void (* jumptable[128])(UINT16) =
   {
     &h0000,&h0200,&h0400,&h0400,&h0800,&h0800,&h0800,&h0800,
     &h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,

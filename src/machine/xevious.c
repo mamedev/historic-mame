@@ -12,7 +12,6 @@
 #include "cpu/z80/z80.h"
 
 unsigned char *xevious_sharedram;
-unsigned char *xevious_vlatches;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 /* static int    HiScore; */
 

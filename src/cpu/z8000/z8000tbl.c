@@ -541,23 +541,26 @@ void z8000_init(void)
 	Z8000_init *init;
 
 	/* already initialized? */
-	if (z8000_exec) return;
+	if( z8000_exec )
+		return;
 
 	/* allocate the opcode execution and disassembler array */
 	z8000_exec = (Z8000_exec *)malloc(0x10000 * sizeof(Z8000_exec));
-	if (!z8000_exec) {
+	if( !z8000_exec )
+	{
 		if (errorlog) fprintf (errorlog, "cannot allocate Z8000 execution table\n");
 		return;
 	}
 
 	/* set up the zero, sign, parity lookup table */
     for (i = 0; i < 256; i++)
-        Z8000_zsp[i] = ((i == 0) ? F_Z : 0) |
+		z8000_zsp[i] = ((i == 0) ? F_Z : 0) |
                        ((i & 128) ? F_S : 0) |
                        (((i>>7)^(i>>6)^(i>>5)^(i>>4)^(i>>3)^(i>>2)^(i>>1)^i) & 1) ? F_PV : 0;
 
     /* first set all 64K opcodes to invalid */
-    for (i = 0; i < 0x10000; i++) {
+	for (i = 0; i < 0x10000; i++)
+	{
 		z8000_exec[i].opcode = zinvalid;
 		z8000_exec[i].cycles = 4;
 		z8000_exec[i].size	 = 1;
@@ -565,8 +568,10 @@ void z8000_init(void)
 	}
 
     /* now decompose the initialization table */
-    for (init = table; init->size; init++) {
-		for (i = init->beg; i <= init->end; i += init->step) {
+	for (init = table; init->size; init++)
+	{
+		for (i = init->beg; i <= init->end; i += init->step)
+		{
 			if (z8000_exec[i].opcode != zinvalid)
 				if (errorlog) fprintf(errorlog, "Z8000 opcode %04x clash '%s'\n", i, z8000_exec[i].dasm);
 
@@ -577,3 +582,12 @@ void z8000_init(void)
 		}
 	}
 }
+
+void z8000_deinit(void)
+{
+	if( !z8000_exec )
+		return;
+	free( z8000_exec );
+	z8000_exec = 0;
+}
+

@@ -32,7 +32,6 @@ static const char* copyright_notice =
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mem.h>
 #include "m68kcpu.h"
 #include "m68kops.h"
 
@@ -403,7 +402,11 @@ int m68k_execute(int num_clks)
 
             /* MAME */
 #ifdef MAME_DEBUG
+			{
+            extern int mame_debug;
+			extern void MAME_Debug(void);
             if(mame_debug) MAME_Debug();
+			}
 #endif /* MAME_DEBUG */
             previouspc = CPU_PC;
             /* MAME */
@@ -447,7 +450,7 @@ void m68k_clear_irq(int int_line)
 
 
 /* Reset the M68K */
-void m68k_pulse_reset(void)
+void m68k_pulse_reset(void *param)
 {
    CPU_HALTED = 0;
    CPU_STOPPED = 0;

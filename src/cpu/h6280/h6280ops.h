@@ -25,7 +25,7 @@
 #define X	h6280.x
 #define Y	h6280.y
 #define P	h6280.p
-#define S	h6280.SP.B.l
+#define S	h6280.sp.b.l
 
 #if LAZY_FLAGS
 
@@ -43,24 +43,24 @@
 
 #endif
 
-#define EAL h6280.EA.B.l
-#define EAH h6280.EA.B.h
-#define EAW h6280.EA.W.l
-#define EAD h6280.EA.D
+#define EAL h6280.ea.b.l
+#define EAH h6280.ea.b.h
+#define EAW h6280.ea.w.l
+#define EAD h6280.ea.d
 
-#define ZPL h6280.ZP.B.l
-#define ZPH h6280.ZP.B.h
-#define ZPW h6280.ZP.W.l
-#define ZPD h6280.ZP.D
+#define ZPL h6280.zp.b.l
+#define ZPH h6280.zp.b.h
+#define ZPW h6280.zp.w.l
+#define ZPD h6280.zp.d
 
-#define PCL h6280.PC.B.l
-#define PCH h6280.PC.B.h
-#define PCW h6280.PC.W.l
-#define PCD h6280.PC.D
+#define PCL h6280.pc.b.l
+#define PCH h6280.pc.b.h
+#define PCW h6280.pc.w.l
+#define PCD h6280.pc.d
 
 #define DO_INTERRUPT(clear,vector) 								\
 	h6280.pending_interrupt &= ~clear;							\
-	H6280_ICount -= 7; 		/* 7 cycles for an int */			\
+	h6280_ICount -= 7;		/* 7 cycles for an int */			\
 	PCW--;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
@@ -128,18 +128,18 @@
  * push a register onto the stack
  ***************************************************************/
 #ifdef FAST_ZERO_PAGE
-#define PUSH(Rg) ZEROPAGE[h6280.SP.D]=Rg; S--
+#define PUSH(Rg) ZEROPAGE[h6280.sp.d]=Rg; S--
 #else
-#define PUSH(Rg) cpu_writemem21( (h6280.mmr[1] << 13) | h6280.SP.D,Rg); S--
+#define PUSH(Rg) cpu_writemem21( (h6280.mmr[1] << 13) | h6280.sp.d,Rg); S--
 #endif
 
 /***************************************************************
  * pull a register from the stack
  ***************************************************************/
 #ifdef FAST_ZERO_PAGE
-#define PULL(Rg) S++; Rg = ZEROPAGE[h6280.SP.D];
+#define PULL(Rg) S++; Rg = ZEROPAGE[h6280.sp.d];
 #else
-#define PULL(Rg) S++; Rg = cpu_readmem21( (h6280.mmr[1] << 13) | h6280.SP.D)
+#define PULL(Rg) S++; Rg = cpu_readmem21( (h6280.mmr[1] << 13) | h6280.sp.d)
 #endif
 
 /***************************************************************
@@ -160,7 +160,7 @@
 #define BRA(cond)												\
 	if (cond)													\
 	{															\
-		H6280_ICount -= 4;										\
+		h6280_ICount -= 4;										\
 		tmp = RDOPARG();										\
 		PCW++;													\
 		EAW = PCW + (signed char)tmp;							\
@@ -169,7 +169,7 @@
 	else														\
 	{															\
 		PCW++;													\
-		H6280_ICount -= 2;										\
+		h6280_ICount -= 2;										\
 	}
 
 /***************************************************************
@@ -292,7 +292,7 @@
 #define WR_IDY	EA_IDY; WRMEM(EAD, tmp)
 
 /* write back a value from tmp to the last EA */
-#define WB_ACC	A = (byte)tmp;
+#define WB_ACC	A = (UINT8)tmp;
 #define WB_EA	WRMEM(EAD, tmp)
 #define WB_EAZ	WRMEMZ(EAD, tmp)
 
@@ -354,7 +354,7 @@
 			P |= _fV;											\
 		if (sum & 0xff00)										\
 			P |= _fC;											\
-		A = (byte) sum; 										\
+		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
@@ -362,7 +362,7 @@
  *	AND Logical and
  ***************************************************************/
 #define AND 													\
-	A = (byte)(A & tmp);										\
+	A = (UINT8)(A & tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
@@ -370,7 +370,7 @@
  ***************************************************************/
 #define ASL 													\
 	P = (P & ~_fC) | ((tmp >> 7) & _fC);						\
-	tmp = (byte)(tmp << 1); 									\
+	tmp = (UINT8)(tmp << 1);									\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
@@ -473,7 +473,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 #define BSR 													\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
-	H6280_ICount -= 4; /* 4 cycles here, 4 in BRA */			\
+	h6280_ICount -= 4; /* 4 cycles here, 4 in BRA */			\
 	BRA(1)
 
 /* 6280 ********************************************************
@@ -535,7 +535,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 	P &= ~_fC;													\
 	if (A >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(A - tmp))
+	SET_NZ((UINT8)(A - tmp))
 
 /* 6280 ********************************************************
  *	CPX Compare index X
@@ -544,7 +544,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 	P &= ~_fC;													\
 	if (X >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(X - tmp))
+	SET_NZ((UINT8)(X - tmp))
 
 /* 6280 ********************************************************
  *	CPY Compare index Y
@@ -553,76 +553,76 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 	P &= ~_fC;													\
 	if (Y >= tmp)												\
 		P |= _fC;												\
-	SET_NZ((byte)(Y - tmp))
+	SET_NZ((UINT8)(Y - tmp))
 
 /* 6280 ********************************************************
  *  DEA Decrement accumulator
  ***************************************************************/
 #define DEA                                                     \
-    A = (byte)--A;                                              \
+	A = (UINT8)--A; 											\
     SET_NZ(A)
 
 /* 6280 ********************************************************
  *	DEC Decrement memory
  ***************************************************************/
 #define DEC 													\
-	tmp = (byte)--tmp;											\
+	tmp = (UINT8)--tmp; 										\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
  *	DEX Decrement index X
  ***************************************************************/
 #define DEX 													\
-	X = (byte)--X;												\
+	X = (UINT8)--X; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
  *	DEY Decrement index Y
  ***************************************************************/
 #define DEY 													\
-	Y = (byte)--Y;												\
+	Y = (UINT8)--Y; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
  *	EOR Logical exclusive or
  ***************************************************************/
 #define EOR 													\
-	A = (byte)(A ^ tmp);										\
+	A = (UINT8)(A ^ tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
  *	ILL Illegal opcode
  ***************************************************************/
 #define ILL 													\
-	H6280_ICount -= 2; /* (assumed) */							\
+	h6280_ICount -= 2; /* (assumed) */							\
 	if (errorlog) fprintf(errorlog,"%04x: WARNING - h6280 illegal opcode\n",cpu_getpc())
 
 /* 6280 ********************************************************
  *  INA Increment accumulator
  ***************************************************************/
 #define INA                                                     \
-    A = (byte)++A;                                              \
+	A = (UINT8)++A; 											\
     SET_NZ(A)
 
 /* 6280 ********************************************************
  *	INC Increment memory
  ***************************************************************/
 #define INC 													\
-	tmp = (byte)++tmp;											\
+	tmp = (UINT8)++tmp; 										\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
  *	INX Increment index X
  ***************************************************************/
 #define INX 													\
-	X = (byte)++X;												\
+	X = (UINT8)++X; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
  *	INY Increment index Y
  ***************************************************************/
 #define INY 													\
-	Y = (byte)++Y;												\
+	Y = (UINT8)++Y; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
@@ -647,21 +647,21 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
  *	LDA Load accumulator
  ***************************************************************/
 #define LDA 													\
-	A = (byte)tmp;												\
+	A = (UINT8)tmp; 											\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
  *	LDX Load index X
  ***************************************************************/
 #define LDX 													\
-	X = (byte)tmp;												\
+	X = (UINT8)tmp; 											\
 	SET_NZ(X)
 
 /* 6280 ********************************************************
  *	LDY Load index Y
  ***************************************************************/
 #define LDY 													\
-	Y = (byte)tmp;												\
+	Y = (UINT8)tmp; 											\
 	SET_NZ(Y)
 
 /* 6280 ********************************************************
@@ -670,7 +670,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
  ***************************************************************/
 #define LSR 													\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)tmp >> 1;										\
+	tmp = (UINT8)tmp >> 1;										\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
@@ -682,7 +682,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
  *	ORA Logical inclusive or
  ***************************************************************/
 #define ORA 													\
-	A = (byte)(A | tmp);										\
+	A = (UINT8)(A | tmp);										\
 	SET_NZ(A)
 
 /* 6280 ********************************************************
@@ -758,7 +758,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 #define ROL 													\
 	tmp = (tmp << 1) | (P & _fC);								\
 	P = (P & ~_fC) | ((tmp >> 8) & _fC);						\
-	tmp = (byte)tmp;											\
+	tmp = (UINT8)tmp;											\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
@@ -768,7 +768,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 #define ROR 													\
 	tmp |= (P & _fC) << 8;										\
 	P = (P & ~_fC) | (tmp & _fC);								\
-	tmp = (byte)(tmp >> 1); 									\
+	tmp = (UINT8)(tmp >> 1);									\
 	SET_NZ(tmp)
 
 /* 6280 ********************************************************
@@ -850,7 +850,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 			P |= _fV;											\
 		if ((sum & 0xff00) == 0)								\
 			P |= _fC;											\
-		A = (byte) sum; 										\
+		A = (UINT8) sum;										\
 	}															\
 	SET_NZ(A)
 
@@ -949,7 +949,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 		to++; 													\
 		alternate ^= 1; 										\
 	}		 													\
-	H6280_ICount-=(6 * length) + 17;
+	h6280_ICount-=(6 * length) + 17;
 
 /* H6280 *******************************************************
  *  TAM Transfer accumulator to memory mapper register(s)
@@ -991,7 +991,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 		to--; 													\
 		from--;													\
 	}		 													\
-	H6280_ICount-=(6 * length) + 17;
+	h6280_ICount-=(6 * length) + 17;
 
 /* 6280 ********************************************************
  *  TIA
@@ -1007,7 +1007,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 		from++; 												\
 		alternate ^= 1; 										\
 	}		 													\
-	H6280_ICount-=(6 * length) + 17;
+	h6280_ICount-=(6 * length) + 17;
 
 /* 6280 ********************************************************
  *  TII
@@ -1022,7 +1022,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 		to++; 													\
 		from++;													\
 	}		 													\
-	H6280_ICount-=(6 * length) + 17;
+	h6280_ICount-=(6 * length) + 17;
 
 /* 6280 ********************************************************
  *  TIN Transfer block, source increments every loop
@@ -1036,7 +1036,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_getpc()); \
 		WRMEM(to,RDMEM(from)); 									\
 		from++;													\
 	}		 													\
-	H6280_ICount-=(6 * length) + 17;
+	h6280_ICount-=(6 * length) + 17;
 
 /* 6280 ********************************************************
  *  TMA Transfer memory mapper register(s) to accumulator

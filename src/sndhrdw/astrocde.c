@@ -320,8 +320,8 @@ void astrocade_sound_w(int num, int offset, int data)
 
 		case 8:  /* Sound Block Transfer */
 
-			Z80_GetRegs(&regs);
-			bvalue = regs.BC.B.h & 0x0F;
+			z80_getregs(&regs);
+			bvalue = regs.BC.b.h & 0x0F;
 
 			astrocade_sound_w(num, bvalue-1, data);
 

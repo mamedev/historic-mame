@@ -150,6 +150,7 @@ M68000 emulator Copyright 1999 Karl Stenerud.  All rights reserved.
 T-11 emulator Copyright (C) Aaron Giles 1998
 TMS34010 emulator by Alex Pasadyn and Zsolt Vasvari.
 TMS9900 emulator by Andy Jones, based on original code by Ton Brouwer.
+Cinematronics CPU emulator by Jeff Mitchell, Zonn Moore, Neil Bradley.
 
 TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
@@ -231,6 +232,21 @@ options:
               but smaller picture). Use double to force pixel doubling when
               the image doesn't fit in the screen (you'll have to use PGUP and
               PGDN to scroll).
+-stretch XxY  (default: off) stretch low resolution games to fill the screen.
+              -stretch=1024x768 quadruples pixels horizontally and triples
+              vertically, -stretch=800x600 triples horizontally and doubles
+              vertically. 1024x768 will be perfect (for 256x256 games) or
+              almost perfect (for 256x240 and 256x224 games) without monitor
+              adjustment, so it is indicated for LCD displays. However, it is
+              slower than 800x600. 800x600 is faster but the games are
+              stretched to resolutions varying from 768x448 to 768x512, so they
+              don't fill the screen and are squashed vertically.
+              Here's the tip: if your monitor is good enough, you can use the
+              controls to expand the picture and make it fit perfectly in the
+              screen. Note that this tip applies not only to stretched modes,
+              but also to higher resolution games like Lode Runner (384x256)
+              and the CPS1 games (384x224). The CPS1 games in particular are
+              unbearably squashed if you don't adjust the monitor.
 -depth n      (default: 16)
               Some games need 65k color modes to get accurate graphics. To
               improve speed, you can turn that off using -depth 8, which limits
@@ -304,6 +320,9 @@ options:
               always be used in 16 bit mode, if possible.
 -stereo/-nostereo (default: -stereo)
               enables stereo output for games supporting it.
+-volume n     (default: 0) set the startup volume. It can later be changed
+              using the On Screen Display. The volume is an attenuation in dB,
+              e.g. "-volume -12" will start with a -12dB attenuation.
 -joy n (default: none) allows joystick input, n can be:
               0/none       - no joystick
               1/standard   - normal 2 button joystick

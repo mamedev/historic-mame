@@ -2,36 +2,86 @@
 
    Dark Seal Video emulation - Bryan McPhail, mish@tendril.force9.net
 
-*********************************************************************
+****************************************************************************
 
- Playfield 1 - 8*8 tiles
- Playfield 2 - 16*16 tiles
- Playfield 3 - 16*16 tiles
+Data East custom chip 55:  Generates two playfields, playfield 1 is underneath
+playfield 2.  Dark Seal uses two of these chips.  1 playfield is _always_ off
+in this game.
 
-	Playfield control registers:
-	Bank 0:
-	0: Bit 0 clear = Flip screen
-    2: (scroll?)
-    4: (scroll?)
-    6: Playfield 3 X scroll
-    8: Playfield 3 Y scroll
-   10:
-   12:
-   14:
+	16 bytes of control registers per chip.
 
-   	Bank 1:
-    0:
-    2: Playfield 2 X scroll
-    4: Playfield 2 Y scroll
-    6: Playfield 1 X scroll
-    8: Playfield 1 Y scroll
-   10:
-   12:
-   14:
+	Word 0:
+		Mask 0x0080: Flip screen
+		Mask 0x007f: ?
+	Word 2:
+		Mask 0xffff: Playfield 2 X scroll (top playfield)
+	Word 4:
+		Mask 0xffff: Playfield 2 Y scroll (top playfield)
+	Word 6:
+		Mask 0xffff: Playfield 1 X scroll (bottom playfield)
+	Word 8:
+		Mask 0xffff: Playfield 1 Y scroll (bottom playfield)
+	Word 0xa:
+		Mask 0xc000: Playfield 1 shape??
+		Mask 0x3000: Playfield 1 rowscroll style (maybe mask 0x3800??)
+		Mask 0x0300: Playfield 1 colscroll style (maybe mask 0x0700??)?
 
- All unknown registers do not change at any point in the game, except for
-Bank 0, byte 12 which changes to 0x4000 at the character profiles page
-in attract mode.
+		Mask 0x00c0: Playfield 2 shape??
+		Mask 0x0030: Playfield 2 rowscroll style (maybe mask 0x0038??)
+		Mask 0x0003: Playfield 2 colscroll style (maybe mask 0x0007??)?
+	Word 0xc:
+		Mask 0x8000: Playfield 1 is 8*8 tiles else 16*16
+		Mask 0x4000: Playfield 1 rowscroll enabled
+		Mask 0x2000: Playfield 1 colscroll enabled
+		Mask 0x1f00: ?
+
+		Mask 0x0080: Playfield 2 is 8*8 tiles else 16*16
+		Mask 0x0040: Playfield 2 rowscroll enabled
+		Mask 0x0020: Playfield 2 colscroll enabled
+		Mask 0x001f: ?
+	Word 0xe:
+		??
+
+Locations 0 & 0xe are mostly unknown:
+
+							 0		14
+Caveman Ninja (bottom):		0053	1100 (changes to 1111 later)
+Caveman Ninja (top):		0010	0081
+Two Crude (bottom):			0053	0000
+Two Crude (top):			0010	0041
+Dark Seal (bottom):			0010	0000
+Dark Seal (top):			0053	4101
+Tumblepop:					0010	0000
+Super Burger Time:			0010	0000
+
+Location 0xe looks like it could be a mirror of another byte..
+
+**************************************************************************
+
+Sprites - Data East custom chip 52
+
+	8 bytes per sprite, unknowns bits seem unused.
+
+	Word 0:
+		Mask 0x8000 - ?
+		Mask 0x4000 - Y flip
+		Mask 0x2000 - X flip
+		Mask 0x1000 - Sprite flash
+		Mask 0x0800 - ?
+		Mask 0x0600 - Sprite height (1x, 2x, 4x, 8x)
+		Mask 0x01ff - Y coordinate
+
+	Word 2:
+		Mask 0xffff - Sprite number
+
+	Word 4:
+		Mask 0x8000 - ?
+		Mask 0x4000 - Sprite is drawn beneath top 8 pens of playfield 4
+		Mask 0x3e00 - Colour (32 palettes, most games only use 16)
+		Mask 0x01ff - X coordinate
+
+	Word 6:
+		Always unused.
 
 ***************************************************************************/
 
@@ -41,7 +91,7 @@ in attract mode.
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x2000	/* Size of background and foreground */
 
-unsigned char *darkseal_sprite;
+unsigned char *darkseal_sprite, *darkseal_pf12_row, *darkseal_pf34_row;
 static unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 static unsigned char *darkseal_pf1_dirty,*darkseal_pf3_dirty,*darkseal_pf2_dirty;
 static struct osd_bitmap *darkseal_pf1_bitmap;
@@ -53,7 +103,6 @@ static unsigned char darkseal_control_1[16];
 
 static int darkseal_pf1_static,darkseal_pf2_static,darkseal_pf3_static;
 static int offsetx[4],offsety[4];
-
 
 /******************************************************************************/
 
@@ -130,9 +179,7 @@ static void darkseal_update_palette(void)
 
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
 	{
 		code = READ_WORD(&darkseal_pf2_data[offs]);
@@ -153,9 +200,7 @@ static void darkseal_update_palette(void)
 	}
 
 	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
 	for (color = 0;color < 16;color++) colmask[color] = 0;
-
 	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
 	{
 		code = READ_WORD(&darkseal_pf3_data[offs]);
@@ -175,20 +220,24 @@ static void darkseal_update_palette(void)
 		}
 	}
 
-  /* Sprites */
+	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 32;color++) colmask[color] = 0;
-
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
 		int x,y,sprite,multi;
 
-    sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
-    if (!sprite) continue;
+		sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
+		if (!sprite) continue;
 
 		y = READ_WORD(&darkseal_sprite[offs]);
 		x = READ_WORD(&darkseal_sprite[offs+4]);
-		color = (x & 0x1e00) >> 9;
+		color = (x >> 9) &0x1f;
+
+		x = x & 0x01ff;
+		if (x >= 256) x -= 512;
+		x = 240 - x;
+		if (x>256) continue; /* Speedup */
 
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
 
@@ -215,9 +264,9 @@ static void darkseal_update_palette(void)
 		memset(darkseal_pf1_dirty,1,TEXTRAM_SIZE);
 		memset(darkseal_pf2_dirty,1,TILERAM_SIZE);
 		memset(darkseal_pf3_dirty,1,TILERAM_SIZE);
-    darkseal_pf1_static=1;
-    darkseal_pf2_static=1;
-    darkseal_pf3_static=1;
+		darkseal_pf1_static=1;
+		darkseal_pf2_static=1;
+		darkseal_pf3_static=1;
 	}
 }
 
@@ -227,15 +276,22 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash;
 
-    sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
-    if (!sprite) continue;
+		sprite = READ_WORD (&darkseal_sprite[offs+2]) & 0x1fff;
+		if (!sprite) continue;
 
 		y = READ_WORD(&darkseal_sprite[offs]);
 		x = READ_WORD(&darkseal_sprite[offs+4]);
 
-		colour = (x & 0x3e00) >> 9;
+		flash=y&0x1000;
+		if (flash && (cpu_getcurrentframe() & 1)) continue;
+
+		colour = (x >> 9) &0x1f;
+
+//if (errorlog && x&0x8000) fprintf(errorlog,"New sprite pri 08\n");
+//if (errorlog && x&0x2000) fprintf(errorlog,"New sprite pri 02\n");
+//if (errorlog && x&0x4000) fprintf(errorlog,"Sprite went behind background!!!\n");
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -247,6 +303,8 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 		if (y >= 256) y -= 512;
 		x = 240 - x;
 		y = 240 - y;
+
+		if (x>256) continue; /* Speedup */
 
 		sprite &= ~multi;
 		if (fy)
@@ -275,7 +333,7 @@ static void darkseal_pf2_update(void)
 {
 	int offs,mx,my,color,tile,quarter;
 
-  darkseal_pf2_static=0;
+	darkseal_pf2_static=0;
 	for (quarter = 0;quarter < 4;quarter++)
 	{
 		mx = -1;
@@ -311,7 +369,7 @@ static void darkseal_pf3_update(void)
 {
 	int offs,mx,my,color,tile,quarter;
 
-  darkseal_pf3_static=0;
+	darkseal_pf3_static=0;
 	for (quarter = 0;quarter < 4;quarter++)
 	{
 		mx = -1;
@@ -347,21 +405,10 @@ static void darkseal_pf3_update(void)
 
 void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-  int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
 	int scrollx,scrolly;
 	int mx,my,offs,tile,color;
 
 	darkseal_update_palette();
-
-  /* Scroll positions */
-  xscroll_f=READ_WORD (&darkseal_control_1[2]);
-  yscroll_f=READ_WORD (&darkseal_control_1[4]);
-
-  xscroll_b=READ_WORD (&darkseal_control_0[6]);
-  yscroll_b=READ_WORD (&darkseal_control_0[8]);
-
-  /* Hmm, kludge? See attract sequence */
-  if ((READ_WORD(&darkseal_control_0[12])>>8)==0x40) xscroll_b+=256;
 
 	/* Draw playfields if needed */
 	if (darkseal_pf2_static)
@@ -370,16 +417,25 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		darkseal_pf3_update();
 
 	/* Background */
-	scrollx=-xscroll_b;
-	scrolly=-yscroll_b;
-	copyscrollbitmap(bitmap,darkseal_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	scrollx=-READ_WORD (&darkseal_control_0[6]);
+	scrolly=-READ_WORD (&darkseal_control_0[8]);
+	if (READ_WORD(&darkseal_control_0[0xc])&0x4000) { /* Rowscroll enable */
+		int rscrollx[512];
+
+		/* Bitmap height is 512 */
+		for (offs = 0;offs < 512;offs++)
+			rscrollx[offs] = scrollx - READ_WORD(&darkseal_pf34_row[(offs<<1)+0x80]);
+		copyscrollbitmap(bitmap,darkseal_pf3_bitmap,512,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else
+		copyscrollbitmap(bitmap,darkseal_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Foreground */
-	scrollx=-xscroll_f;
-	scrolly=-yscroll_f;
+	scrollx=-READ_WORD (&darkseal_control_1[2]);
+	scrolly=-READ_WORD (&darkseal_control_1[4]);
 	copyscrollbitmap(bitmap,darkseal_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-  /* Sprites */
+	/* Sprites */
 	darkseal_drawsprites(bitmap);
 
 	/* Playfield 1 - 8 * 8 Text */
@@ -393,7 +449,7 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		mx++;
 		if (mx == 64)
-    {
+		{
 			mx = 0;
 			my++;
 		}
@@ -411,7 +467,7 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					8*mx,8*my,
 					0,TRANSPARENCY_NONE,0);
 		}
-  }
+	}
 
   PF1_STATIC:
 
@@ -431,7 +487,7 @@ void darkseal_pf1_data_w(int offset,int data)
 	{
 		WRITE_WORD(&darkseal_pf1_data[offset],newword);
 		darkseal_pf1_dirty[offset] = 1;
-    darkseal_pf1_static=1;
+		darkseal_pf1_static=1;
 	}
 }
 
@@ -444,7 +500,7 @@ void darkseal_pf2_data_w(int offset,int data)
 	{
 		WRITE_WORD(&darkseal_pf2_data[offset],newword);
 		darkseal_pf2_dirty[offset] = 1;
-    darkseal_pf2_static=1;
+		darkseal_pf2_static=1;
 	}
 }
 
@@ -457,7 +513,7 @@ void darkseal_pf3_data_w(int offset,int data)
 	{
 		WRITE_WORD(&darkseal_pf3_data[offset],newword);
 		darkseal_pf3_dirty[offset] = 1;
-    darkseal_pf3_static=1;
+		darkseal_pf3_static=1;
 	}
 }
 
@@ -470,7 +526,7 @@ void darkseal_pf3b_data_w(int offset,int data)
 	{
 		WRITE_WORD(&darkseal_pf3_data[offset+0x1000],newword);
 		darkseal_pf3_dirty[offset+0x1000] = 1;
-    darkseal_pf3_static=1;
+		darkseal_pf3_static=1;
 	}
 }
 
@@ -524,15 +580,15 @@ int darkseal_vh_start(void)
 	darkseal_pf2_data = malloc(TILERAM_SIZE);
 	darkseal_pf2_dirty = malloc(TILERAM_SIZE);
 
-  darkseal_pf1_static=1;
-  darkseal_pf2_static=1;
-  darkseal_pf3_static=1;
+	darkseal_pf1_static=1;
+	darkseal_pf2_static=1;
+	darkseal_pf3_static=1;
 
 	memset(darkseal_pf1_dirty,1,TEXTRAM_SIZE);
 	memset(darkseal_pf2_dirty,1,TILERAM_SIZE);
 	memset(darkseal_pf3_dirty,1,TILERAM_SIZE);
 
-  offsetx[0] = 0;
+	offsetx[0] = 0;
 	offsetx[1] = 512;
 	offsetx[2] = 0;
 	offsetx[3] = 512;
@@ -545,4 +601,3 @@ int darkseal_vh_start(void)
 }
 
 /******************************************************************************/
-

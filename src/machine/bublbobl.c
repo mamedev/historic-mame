@@ -84,7 +84,7 @@ void bublbobl_sh_nmi_disable_w(int offset,int data)
 void bublbobl_sh_nmi_enable_w(int offset,int data)
 {
 	sound_nmi_enable = 1;
-	if (pending_nmi)
+	if (pending_nmi)	/* probably wrong but commands go lost otherwise */
 	{
 		cpu_cause_interrupt(2,Z80_NMI_INT);
 		pending_nmi = 0;

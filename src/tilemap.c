@@ -80,9 +80,11 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
 }
 
+extern unsigned short *game_colortable;	/* in palette.c */
+
 static void use_color( int base_pen, unsigned int pen_usage ){
 	while( pen_usage ){
-		if( pen_usage&1 ) pen_refcount[base_pen]++;
+		if( pen_usage&1 ) pen_refcount[game_colortable[base_pen]]++;
 		base_pen++;
 		pen_usage >>= 1;
 	}
@@ -90,7 +92,7 @@ static void use_color( int base_pen, unsigned int pen_usage ){
 
 static void unuse_color( int base_pen, unsigned int pen_usage ){
 	while( pen_usage ){
-		if( pen_usage&1 ) pen_refcount[base_pen]--;
+		if( pen_usage&1 ) pen_refcount[game_colortable[base_pen]]--;
 		base_pen++;
 		pen_usage >>= 1;
 	}
@@ -1132,8 +1134,6 @@ void tilemap_update( struct tilemap *tilemap ){
 		char *visible = tilemap->visible;
 		char *dirty_vram = tilemap->dirty_vram;
 		char *dirty_pixels = tilemap->dirty_pixels;
-
-		int tile_height = tilemap->tile_height;
 
 		unsigned char **pendata = tilemap->pendata;
 		unsigned short **paldata = tilemap->paldata;

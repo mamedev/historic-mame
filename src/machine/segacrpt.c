@@ -124,7 +124,7 @@
   315-5061 Future Spy
   315-5065 Bull Fight
   315-5093 Pitfall II
-  315-5098 Ninja Princess         used Sega Ninja for k.p.a.
+  315-5098 Ninja Princess         unencrypted version available
   315-5102 Sega Ninja             unencrypted version available
   315-5110 I'm Sorry              used My Hero for k.p.a.
   315-5115 TeddyBoy Blues

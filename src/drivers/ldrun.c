@@ -82,9 +82,9 @@ void ldrun2_bankswitch_w(int offset,int data)
 	static int bankcontrol[2];
 	int banks[30] =
 	{
-		0,0,0,0,0,1,0,0,0,0,
+		0,0,0,0,0,1,0,1,0,0,
 		0,1,1,1,1,1,0,0,0,0,
-		1,0,1,1,1,1,1,0,1,1
+		1,0,1,1,1,1,1,1,1,1
 	};
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -1077,8 +1077,8 @@ ROM_START( ldrun2_rom )
 
 	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "lr2-h-1e",     0x00000, 0x2000, 0x9d63a8ff )	/* characters */
-	ROM_LOAD( "lr2-h-1h",     0x02000, 0x2000, 0x9404727d )
-	ROM_LOAD( "lr2-h-1j",     0x04000, 0x2000, 0x40332bbd )
+	ROM_LOAD( "lr2-h-1j",     0x02000, 0x2000, 0x40332bbd )
+	ROM_LOAD( "lr2-h-1h",     0x04000, 0x2000, 0x9404727d )
 	ROM_LOAD( "lr2-b-4k",     0x06000, 0x2000, 0x79909871 )	/* sprites */
 	ROM_LOAD( "lr2-b-4e",     0x08000, 0x2000, 0x75172d1f )
 	ROM_LOAD( "lr2-b-3n",     0x0a000, 0x2000, 0x3cc5893f )

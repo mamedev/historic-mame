@@ -112,4 +112,24 @@ __extension__	typedef unsigned long long	UINT64;
 
 /***************************** OS/2 Section ***********************************/
 
+/***************************** Common types ***********************************/
+
+/******************************************************************************
+ * Union of UINT8, UINT16 and UINT32 in native endianess of the target
+ * This is used to access bytes and words in a machine independent manner.
+ * The upper bytes h2 and h3 normally contain zero (16 bit CPU cores)
+ * thus PAIR.d can be used to pass arguments to the memory system
+ * which expects 'int' really.
+ ******************************************************************************/
+typedef union {
+#ifdef LSB_FIRST
+	struct { UINT8 l,h,h2,h3; } b;
+	struct { UINT16 l,h; } w;
+#else
+	struct { UINT8 h3,h2,h,l; } b;
+	struct { UINT16 h,l; } w;
+#endif
+	UINT32 d;
+}	PAIR;
+
 #endif	/* defined OSD_CPU_H */

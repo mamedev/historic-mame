@@ -12,6 +12,7 @@
 
 extern unsigned char *williams_bank_select;
 extern unsigned char *blaster_bank_ram;
+extern int williams2_bank;
 
 extern int sinistar_clip;
 extern int williams_cocktail;
@@ -22,11 +23,16 @@ extern void williams_vram_select_w (int offset, int data);
 unsigned char *williams_blitterram;
 unsigned char *williams_videoram;
 unsigned char *williams_remap_select;
+unsigned char *williams2_paletteram;
+
 
 unsigned char *blaster_video_bits;
 unsigned char *blaster_color_zero_table;
 unsigned char *blaster_color_zero_flags;
 
+unsigned char *DMA_WRINH;
+unsigned char *CK_SCL;
+unsigned char *CK_SCH;
 
 static const unsigned char *williams_remap;
 static unsigned char *williams_remap_lookup;
@@ -37,6 +43,11 @@ static int blitter_solid;
 
 static int blaster_erase_screen;
 
+static int CK_FG; /* IC90 */
+static int CK_BG; /* IC89 */
+static int* row_to_palette; /* take care of IC79 and J1/J2 */
+static int M7_flip;
+static int videoshift;
 
 /* pixel plotters */
 
@@ -54,8 +65,25 @@ static void put_pix_swap_fx (int offset, int pix);
 static void put_pix_swap_fy (int offset, int pix);
 static void put_pix_swap_fx_fy (int offset, int pix);
 
+typedef void (*update_bg_color_func)(unsigned int offset);
+static update_bg_color_func update_bg_color;
+
+int  williams2_vh_start(void);
+void williams2_vh_stop(void);
+
+static int	williams2_blitter_dest_r(int offset);
+static void williams2_blitter_dest_w(int offset, int data);
+static void williams2_update_bg_color(unsigned int offset);
+static void mysticm_update_bg_color(unsigned int offset);
 
 /* blitter functions */
+
+typedef int  (*blitter_dest_r_func) (int offset);
+typedef void (*blitter_dest_w_func) (int offset, int data);
+static blitter_dest_r_func blitter_dest_r;
+static blitter_dest_w_func blitter_dest_w;
+static int  williams_blitter_dest_r(int offset);
+static void williams_blitter_dest_w(int offset, int data);
 
 typedef void (*blitter_func)(int, int, int);
 
@@ -114,6 +142,10 @@ int williams_vh_start (void)
 
 	/* By default xor with 4 (SC1 chip) */
 	blitter_xor = 4;
+
+	/* Set up blitter routines for blitter destination read/write access */
+	blitter_dest_r = williams_blitter_dest_r;
+	blitter_dest_w = williams_blitter_dest_w;
 
 	/* Set up the standard blitters */
 	transparent_blitter_w = williams_remap_lookup ? remap_transparent_blitter_w : williams_transparent_blitter_w;
@@ -178,6 +210,47 @@ int williams_vh_start_sc2 (void)
 	return result;
 }
 
+int williams2_vh_start(void)
+{
+	if (williams_vh_start_sc2() != 0)
+		return 1;
+
+	/* allocate a buffer for palette RAM */
+	williams2_paletteram = malloc(4 * 1024 * 4 / 8);
+	if (!williams2_paletteram)
+	{
+		williams2_vh_stop();
+		return 1;
+	}
+
+	/* clear it */
+	memset(williams2_paletteram, 0, 4 * 1024 * 4 / 8);
+
+	/* allocate an array to map from rows to palette/colors */
+	row_to_palette = malloc(16 * sizeof(int));
+	if (!row_to_palette)
+	{
+		williams2_vh_stop();
+		return 1;
+	}
+
+	/* clear it */
+	memset(row_to_palette, 0, 16 * sizeof(int));
+
+	CK_FG = 0;
+	CK_BG = 0;
+
+	M7_flip    = 0;
+	videoshift = 0;
+
+	update_bg_color = williams2_update_bg_color;
+
+	/* Set up blitter routines for blitter destination read/write access */
+	blitter_dest_r = williams2_blitter_dest_r;
+	blitter_dest_w = williams2_blitter_dest_w;
+
+	return 0;
+}
 
 /*
  *  Stop the video hardware emulation
@@ -193,6 +266,21 @@ void williams_vh_stop (void)
 	/* free other stuff */
 	free (williams_videoram);
 	osd_free_bitmap (williams_bitmap);
+}
+
+void williams2_vh_stop(void)
+{
+	/* free palette RAM */
+	if (williams2_paletteram)
+		free(williams2_paletteram);
+	williams2_paletteram = NULL;
+
+	/* free row_to_palette */
+	if (row_to_palette)
+		free(row_to_palette);
+	row_to_palette = NULL;
+
+	williams_vh_stop();
 }
 
 
@@ -245,6 +333,87 @@ void williams_vh_update (int counter)
 	}
 }
 
+static void williams2_update(int counter)
+{
+	int startline = counter - 16;
+	int flipx;
+	int col1;
+	int col2;
+	int xoffset;
+	unsigned int col, row;
+	unsigned char *mem = &(Machine->memory_region[Machine->drv->cpu[0].memory_region])[0xC000];
+
+	col1 = (0x80 & *CK_SCL) >> 7;
+	col2 = (0x01 & *CK_SCH);
+	xoffset = ((col2 << 1 ) | col1) * 6;
+
+	xoffset += (*CK_SCL & 0x07) + videoshift;
+
+	row = startline / 16;
+	mem += row;
+
+	/* 12 columns wide, each block is 24 pixels wide, 288 pixel lines. */
+	for (col = 0; col <= 12; col++)
+	{
+		unsigned int map;
+
+		map = mem[((col + (*CK_SCH >> 1)) << 4) & 0x07FF];
+
+		if (0x80 & map)
+			flipx = M7_flip;
+		else
+			flipx = 0;
+
+		drawgfx(Machine->scrbitmap,
+				Machine->gfx[0],
+				map,
+				row_to_palette[row],
+				flipx,
+				0,
+				col * 24 - xoffset,
+				startline,
+				&Machine->drv->visible_area,
+				TRANSPARENCY_NONE,
+				0);
+	}
+}
+
+
+/*
+ *	Update part of the screen (note that we go directly to the scrbitmap here!)
+ */
+
+void williams2_vh_update(int counter)
+{
+	struct rectangle clip;
+
+	/* we only update every 16 scan lines to keep things moving reasonably */
+	if (counter & 0x0f) return;
+
+	/* wrap around at the bottom */
+	if (counter == 0) counter = 256;
+
+	/* determine the clip rect */
+	clip.min_x = 0;
+	clip.max_x = Machine->drv->screen_width - 1;
+	clip.min_y = counter - 16;
+	clip.max_y = clip.min_y + 15;
+
+	/* combine the clip rect with the visible rect */
+	if (Machine->drv->visible_area.min_x > clip.min_x)
+		clip.min_x = Machine->drv->visible_area.min_x;
+	if (Machine->drv->visible_area.max_x < clip.max_x)
+		clip.max_x = Machine->drv->visible_area.max_x;
+	if (Machine->drv->visible_area.min_y > clip.min_y)
+		clip.min_y = Machine->drv->visible_area.min_y;
+	if (Machine->drv->visible_area.max_y < clip.max_y)
+		clip.max_y = Machine->drv->visible_area.max_y;
+
+	williams2_update(counter);
+
+	/* copy */
+	copybitmap(Machine->scrbitmap, williams_bitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_PEN, Machine->pens[0]);
+}
 
 /*
  *  Video update - not needed, the video is updated in chunks
@@ -340,12 +509,66 @@ void williams_remap_select_w (int offset, int data)
 
 
 /*
- *  Macros for blitter destination read/write access
+ *  blitter destination read/write access
  */
 
-#define williams_blitter_dest_r(o) (((o) < videoram_size) ? williams_videoram[o] : cpu_readmem16 (o))
-#define williams_blitter_dest_w(o,v) if ((o) < videoram_size) { williams_videoram[o] = (v); (*put_pix)((o), (v)); } else cpu_writemem16 ((o), (v))
+static int williams_blitter_dest_r(int offset)
+{
+	if (offset < videoram_size)
+		return williams_videoram[offset];
+	else
+		return cpu_readmem16(offset);
+}
 
+static void williams_blitter_dest_w(int offset, int data)
+{
+	if (offset < videoram_size)
+	{
+		williams_videoram[offset] = data;
+		(*put_pix)(offset, data);
+	}
+	else
+	{
+		cpu_writemem16(offset, data);
+	}
+}
+
+static int williams2_blitter_dest_r(int offset)
+{
+	if (offset < videoram_size)
+	{
+		if ((williams2_bank & 0x03) == 0x03)
+		{
+			return cpu_readmem16(offset);
+		}
+
+		return williams_videoram[offset];
+	}
+	else
+	{
+		return cpu_readmem16(offset);
+	}
+}
+
+static void williams2_blitter_dest_w(int offset, int data)
+{
+	extern int williams2_memory_w(int, int);
+
+	if (offset < videoram_size)
+	{
+		williams2_memory_w(offset, data);
+	}
+	else
+	if (offset < 0xC000)
+	{
+		if (*DMA_WRINH == 0)
+			cpu_writemem16(offset, data);
+	}
+	else
+	{
+		cpu_writemem16(offset, data);
+	}
+}
 
 /*
  *  Handler for the actual writes to the blitter
@@ -485,13 +708,13 @@ static void williams_transparent_blitter_w (int offset, int data, int keepmask)
 {
 	if (data)
 	{
-		int pix = williams_blitter_dest_r (offset);
+		int pix = blitter_dest_r (offset);
 
 		if (!(data & 0xf0)) keepmask |= 0xf0;
 		if (!(data & 0x0f)) keepmask |= 0x0f;
 
 		pix = (pix & keepmask) | (data & ~keepmask);
-		williams_blitter_dest_w (offset, pix);
+		blitter_dest_w (offset, pix);
 	}
 }
 
@@ -499,28 +722,28 @@ static void williams_transparent_solid_blitter_w (int offset, int data, int keep
 {
 	if (data)
 	{
-		int pix = williams_blitter_dest_r (offset);
+		int pix = blitter_dest_r (offset);
 
 		if (!(data & 0xf0)) keepmask |= 0xf0;
 		if (!(data & 0x0f)) keepmask |= 0x0f;
 
 		pix = (pix & keepmask) | (blitter_solid & ~keepmask);
-		williams_blitter_dest_w (offset, pix);
+		blitter_dest_w (offset, pix);
 	}
 }
 
 static void williams_opaque_blitter_w (int offset, int data, int keepmask)
 {
-	int pix = williams_blitter_dest_r (offset);
+	int pix = blitter_dest_r (offset);
 	pix = (pix & keepmask) | (data & ~keepmask);
-	williams_blitter_dest_w (offset, pix);
+	blitter_dest_w (offset, pix);
 }
 
 static void williams_opaque_solid_blitter_w (int offset, int data, int keepmask)
 {
-	int pix = williams_blitter_dest_r (offset);
+	int pix = blitter_dest_r (offset);
 	pix = (pix & keepmask) | (blitter_solid & ~keepmask);
-	williams_blitter_dest_w (offset, pix);
+	blitter_dest_w (offset, pix);
 }
 
 
@@ -651,6 +874,226 @@ static void put_pix_swap_fx_fy (int offset, int pix)
 }
 
 
+/***************************************************************************
+
+	color and palette methods
+
+***************************************************************************/
+
+static void changecolor_IIIIBBBBGGGGRRRR(int color, UINT16 data)
+{
+	unsigned char i, r, g, b;
+
+	static const unsigned char ztable[16] = {0x0, 0x3, 0x4,  0x5,
+											 0x6, 0x7, 0x8,  0x9,
+											 0xa, 0xb, 0xc,  0xd,
+											 0xe, 0xf, 0x10, 0x11 };
+
+#ifndef LSB_FIRST
+data = ((UINT16) data >> 8) | ((UINT16) data << 8);
+#endif
+	i = ztable[(data >> 12) & 0x0F];
+	b = ((data >> 8) & 0x0F) * i;
+	g = ((data >> 4) & 0x0F) * i;
+	r = ((data >> 0) & 0x0F) * i;
+
+	palette_change_color(color, r, g, b);
+}
+
+static void update_fg_color(unsigned int offset)
+{
+	unsigned int page_offset;
+
+	page_offset = (CK_FG << 4);
+
+	if (page_offset <= offset && offset < page_offset + 16)
+	{
+		UINT16* palette = (UINT16*)williams2_paletteram + offset;
+		changecolor_IIIIBBBBGGGGRRRR(offset - page_offset, *palette);
+	}
+}
+
+static void williams2_update_bg_color(unsigned int offset)
+{
+	unsigned int page_offset;
+
+	page_offset = (CK_BG << 4);
+	if (page_offset <= offset && offset < page_offset + Machine->drv->total_colors - 16)
+	{
+		UINT16* palette = (UINT16*)williams2_paletteram + offset;
+		changecolor_IIIIBBBBGGGGRRRR(offset - page_offset + 16, *palette);
+	}
+}
+
+void williams2_fg_select_w(int offset, int data)
+{
+	unsigned int i;
+	UINT16* palette;
+
+	if (CK_FG == data)
+		return;
+
+	CK_FG = data & 0x3F;
+
+	palette = (UINT16*)williams2_paletteram + (CK_FG << 4);
+	for (i = 0; i < 16; i++)
+		changecolor_IIIIBBBBGGGGRRRR(i, *palette++);
+}
+
+void williams2_bg_select_w(int offset, int data)
+{
+	unsigned int i;
+	UINT16* palette;
+
+	if (CK_BG == data)
+		return;
+
+	CK_BG = data & 0x3F;
+
+	palette = (UINT16*)williams2_paletteram + (CK_BG << 4);
+	for (i = 16; i < Machine->drv->total_colors; i++)
+		changecolor_IIIIBBBBGGGGRRRR(i, *palette++);
+}
+
+void williams2_palette_w(int offset, int data)
+{
+	williams2_paletteram[offset] = data;
+
+	/* update the palette value if necessary */
+	offset >>= 1;
+	update_fg_color(offset);
+	update_bg_color(offset);
+}
+
+/***************************************************************************
+
+	Mystic Marathon specific routines
+
+***************************************************************************/
+
+int mysticm_vh_start(void)
+{
+	int i;
+
+	if (williams2_vh_start() != 0)
+		return 1;
+
+	/* set up array to map from row to palette */
+	for (i = 0; i < 6; i++)
+		row_to_palette[i] = 1;
+	for (i = 6; i < 16; i++)
+		row_to_palette[i] = 0;
+
+	M7_flip	   = 1;
+	videoshift = 0;
+
+	update_bg_color = mysticm_update_bg_color;
+
+	return 0;
+}
+
+void mysticm_bg_select_w(int offset, int data)
+{
+	unsigned int i;
+	UINT16* palette;
+
+	if (CK_BG == data)
+		return;
+
+	CK_BG = data & 0x3F;
+
+	palette = (UINT16*)williams2_paletteram + (CK_BG << 4);
+	for (i = 16; i < 32; i++)
+		changecolor_IIIIBBBBGGGGRRRR(i, *palette++);
+
+	palette = (UINT16*)williams2_paletteram + ((CK_BG | 0x01) << 4);
+	for (i = 32; i < 48; i++)
+		changecolor_IIIIBBBBGGGGRRRR(i, *palette++);
+}
+
+static void mysticm_update_bg_color(unsigned int offset)
+{
+	unsigned int bgcolor_page_offset;
+
+	bgcolor_page_offset = (CK_BG << 4);
+
+	if (bgcolor_page_offset <= offset && offset < bgcolor_page_offset + 16)
+	{
+		UINT16* palette = (UINT16*)williams2_paletteram + offset;
+		changecolor_IIIIBBBBGGGGRRRR(offset - bgcolor_page_offset + 16, *palette);
+	}
+
+	bgcolor_page_offset = ((CK_BG | 0x01) << 4);
+
+	if (bgcolor_page_offset <= offset && offset < bgcolor_page_offset + 16)
+	{
+		UINT16* palette = (UINT16*)williams2_paletteram + offset;
+		changecolor_IIIIBBBBGGGGRRRR(offset - bgcolor_page_offset + 32, *palette);
+	}
+}
+
+/***************************************************************************
+
+	Turkey Shoot specific routines
+
+***************************************************************************/
+
+int tshoot_vh_start(void)
+{
+	int i;
+
+	if (williams2_vh_start() != 0)
+		return 1;
+
+	/* set up array to map from row to palette */
+	for (i = 0; i < 16; i++)
+		row_to_palette[i] = i / 2;
+
+	M7_flip    = 1;
+	videoshift = 0;
+
+	return 0;
+}
+
+/***************************************************************************
+
+	Inferno specific routines
+
+***************************************************************************/
+
+int inferno_vh_start(void)
+{
+	if (williams2_vh_start() != 0)
+		return 1;
+
+	/* set up array to map from row to palette */
+	memset(row_to_palette, 0, 16 * sizeof(int));
+
+	M7_flip    = 1;
+	videoshift = - 2;
+
+	return 0;
+}
+
+/***************************************************************************
+
+	Inferno specific routines
+
+***************************************************************************/
+
+int joust2_vh_start(void)
+{
+	if (williams2_vh_start() != 0)
+		return 1;
+
+	/* set up array to map from row to palette */
+	memset(row_to_palette, 0, 16 * sizeof(int));
+
+	M7_flip    = 0;
+	videoshift = - 2;
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -878,3 +1321,4 @@ int blaster_vh_start(void)
 
 	return williams_vh_start_sc2();
 }
+

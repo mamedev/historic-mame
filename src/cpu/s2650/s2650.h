@@ -25,36 +25,35 @@ typedef struct {
 	UINT8	reg[7]; /* 7 general purpose registers */
 	UINT8	halt;	/* 1 if cpu is halted */
 	UINT8	ir; 	/* instruction register */
-	int 	irq;	/* interrupt request vector */
-	UINT16 ras[8];	/* 8 return address stack entries */
-#if NEW_INTERRUPT_SYSTEM
-	int 	irq_state;
+	UINT16	ras[8]; /* 8 return address stack entries */
+	INT8	irq_state;
 	int 	(*irq_callback)(int irqline);
-#endif
-}	S2650_Regs;
+}	s2650_Regs;
 
-extern void S2650_SetRegs(S2650_Regs * rgs);
-extern void S2650_GetRegs(S2650_Regs * rgs);
-extern int	S2650_GetPC(void);
-extern void S2650_set_flag(int state);
-extern int	S2650_get_flag(void);
-extern void S2650_set_sense(int state);
-extern int	S2650_get_sense(void);
-extern void S2650_Reset(void);
-extern int	S2650_Execute(int cycles);
-#if NEW_INTERRUPT_SYSTEM
-extern void S2650_set_nmi_line(int state);
-extern void S2650_set_irq_line(int irqline, int state);
-extern void S2650_set_irq_callback(int (*callback)(int irqline));
-#else
-extern void S2650_Cause_Interrupt(int type);
-extern void S2650_Clear_Pending_Interrupts(void);
-#endif
+extern int s2650_ICount;
 
-extern int S2650_ICount;
+extern void s2650_reset(void *param);
+extern void s2650_exit(void);
+extern int s2650_execute(int cycles);
+extern void s2650_getregs(s2650_Regs *rgs);
+extern void s2650_setregs(s2650_Regs *rgs);
+extern unsigned s2650_getpc(void);
+extern unsigned s2650_getreg(int regnum);
+extern void s2650_setreg(int regnum, unsigned val);
+extern void s2650_set_nmi_line(int state);
+extern void s2650_set_irq_line(int irqline, int state);
+extern void s2650_set_irq_callback(int (*callback)(int irqline));
+extern const char *s2650_info(void *context, int regnum);
+
+extern void s2650_set_flag(int state);
+extern int s2650_get_flag(void);
+extern void s2650_set_sense(int state);
+extern int s2650_get_sense(void);
 
 #ifdef  MAME_DEBUG
-extern  int     Dasm2650(char * buff, int PC);
+extern int mame_debug;
+extern void MAME_Debug(void);
+extern int Dasm2650(char * buff, int PC);
 #endif
 
 #endif

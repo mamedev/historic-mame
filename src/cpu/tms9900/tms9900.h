@@ -9,17 +9,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "types.h"
-
-/* Storage Classes */
-
-#define u32 unsigned int
-#define s32 int
-#define u16 unsigned short
-#define s16 signed short
-#define u8  unsigned char
-#define s8  signed char
-
+#include "osd_cpu.h"
 
 #define TMS9900_NONE  -1
 
@@ -62,54 +52,54 @@
 
 typedef struct
 {
-	word	WP;
-	word	PC;
-	word	STATUS;
-	word	IR;
-
-#if NEW_INTERRUPT_SYSTEM
+	UINT16	WP;
+	UINT16	PC;
+	UINT16	STATUS;
+	UINT16	IR;
 	int irq_state;
 	int (*irq_callback)(int irq_line);
-#endif
 
 #if MAME_DEBUG
-    word	FR0;
-    word	FR1;
-    word	FR2;
-    word	FR3;
-    word	FR4;
-    word	FR5;
-    word	FR6;
-    word	FR7;
-    word	FR8;
-    word	FR9;
-    word	FR10;
-    word	FR11;
-    word	FR12;
-    word	FR13;
-    word	FR14;
-    word	FR15;
+	UINT16	FR0;
+	UINT16	FR1;
+	UINT16	FR2;
+	UINT16	FR3;
+	UINT16	FR4;
+	UINT16	FR5;
+	UINT16	FR6;
+	UINT16	FR7;
+	UINT16	FR8;
+	UINT16	FR9;
+	UINT16	FR10;
+	UINT16	FR11;
+	UINT16	FR12;
+	UINT16	FR13;
+	UINT16	FR14;
+	UINT16	FR15;
 #endif
 }
 TMS9900_Regs ;
 
 extern  TMS9900_Regs I;
 extern  int TMS9900_ICount;
-extern  u8  lastparity;
+extern	UINT8 lastparity;
 
-void    TMS9900_Reset(void);
-int     TMS9900_Execute(int cycles);
-void    TMS9900_GetRegs(TMS9900_Regs *Regs);
-void    TMS9900_SetRegs(TMS9900_Regs *Regs);
-int     TMS9900_GetPC(void);
+extern void TMS9900_reset(void *param);
+extern int TMS9900_execute(int cycles);
+extern void TMS9900_exit(void);
+extern void TMS9900_getregs(TMS9900_Regs *Regs);
+extern void TMS9900_setregs(TMS9900_Regs *Regs);
+extern unsigned TMS9900_getpc(void);
+extern unsigned TMS9900_getreg(int regnum);
+extern void TMS9900_setreg(int regnum, unsigned val);
+extern void TMS9900_set_nmi_line(int state);
+extern void TMS9900_set_irq_line(int irqline, int state);
+extern void TMS9900_set_irq_callback(int (*callback)(int irqline));
+extern const char *TMS9900_info(void *context, int regnum);
 
-#if NEW_INTERRUPT_SYSTEM
-void TMS9900_set_nmi_line(int state);
-void TMS9900_set_irq_line(int irqline, int state);
-void TMS9900_set_irq_callback(int (*callback)(int irqline));
-#else
-void TMS9900_Cause_Interrupt(int type);
-void TMS9900_Clear_Pending_Interrupts(void);
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern int Dasm9900 (char *buffer, int pc);
 #endif
 
 #endif

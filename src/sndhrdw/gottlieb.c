@@ -89,6 +89,7 @@ if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >
 
 	if ((data & 0x3f) == 0x3f)
 	{
+#ifdef MAME_DEBUG
 		if (pos > 1)
 		{
 			int i;
@@ -103,6 +104,7 @@ if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >
 
 			usrintf_showmessage(buf);
 		}
+#endif
 
 		pos = 0;
 	}

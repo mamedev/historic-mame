@@ -5,35 +5,52 @@ Rolling Thunder Video Hardware
 *******************************************************************/
 
 #include "driver.h"
+#include "tilemap.h"
 
 void rt_stop_mcu_timer( void );
 
 
-#define GFX_TILES		0
-#define GFX_SPRITES	1
+#define GFX_TILES1	0
+#define GFX_TILES2	1
+#define GFX_SPRITES	2
 
-extern unsigned char *videoram;
+unsigned char *rthunder_videoram;
 extern unsigned char *spriteram;
-extern unsigned char *dirtybuffer;
 
 static int tilebank;
 static int xscroll[4], yscroll[4];
 
-static struct osd_bitmap *pixmap[4];
-#define LAYER_SIZE (32*64)
+static struct tilemap *tilemap[4];
+
 
 void rthunder_tilebank_w( int offset, int data ){
 	if( tilebank!=data ){
 		tilebank = data;
-		memset( dirtybuffer, 1, LAYER_SIZE*2 );
+		tilemap_mark_all_tiles_dirty(tilemap[0]);
+		tilemap_mark_all_tiles_dirty(tilemap[1]);
 	}
 }
 
-void rthunder_scroll_w( int layer, int offset, int data ){
-	switch( offset ){
-		case 0: xscroll[layer] = (xscroll[layer]&0xff)|(data<<8); break;
-		case 1: xscroll[layer] = (xscroll[layer]&0xff00)|data; break;
-		case 2: yscroll[layer] = data; break;
+void rthunder_scroll_w( int layer, int offset, int data )
+{
+	int xdisp[4] = { 20,18,21,19 };
+	switch( offset )
+	{
+		case 0:
+			xscroll[layer] = (xscroll[layer]&0xff)|(data<<8);
+			tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]);
+//tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]-224);
+			break;
+		case 1:
+			xscroll[layer] = (xscroll[layer]&0xff00)|data;
+			tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]);
+//tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]-224);
+			break;
+		case 2:
+			yscroll[layer] = data;
+			tilemap_set_scrolly(tilemap[layer],0,-yscroll[layer]-25);
+//tilemap_set_scrolly(tilemap[layer],0,yscroll[layer]-7);
+			break;
 	}
 }
 
@@ -45,13 +62,9 @@ void rthunder_vh_convert_color_prom( unsigned char *palette,
 
 	int i;
 
-	for( i=0; i<4096; i++ ){
-		colortable[i] = *color_prom++;
-	}
-
 	for( i = 0; i<256; i++ ){
 		unsigned char byte0 = color_prom[i];
-		unsigned char byte1 = color_prom[i+256];
+		unsigned char byte1 = color_prom[i+512];
 
 		unsigned char red = byte0&0x0f;
 		unsigned char blue = byte1;
@@ -61,42 +74,139 @@ void rthunder_vh_convert_color_prom( unsigned char *palette,
 		*(palette++) = green | (green<<4);
 		*(palette++) = blue | (blue<<4);
 	}
-}
 
-int rthunder_vh_start( void ){
-	pixmap[0] = osd_create_bitmap(64*8,32*8);
-	if( pixmap[0] ){
-		pixmap[1] = osd_create_bitmap(64*8,32*8);
-		if( pixmap[1] ){
-			pixmap[2] = osd_create_bitmap(64*8,32*8);
-			if( pixmap[2] ){
-				pixmap[3] = osd_create_bitmap(64*8,32*8);
-				if( pixmap[3] ){
-					dirtybuffer = malloc(LAYER_SIZE*4);
-					if( dirtybuffer ){
-						memset( dirtybuffer, 1, LAYER_SIZE*4 );
-						return 0;
-					}
-					osd_free_bitmap( pixmap[3] );
-				}
-				osd_free_bitmap( pixmap[2] );
-			}
-			osd_free_bitmap( pixmap[1] );
-		}
-		osd_free_bitmap( pixmap[0] );
+	color_prom += 0x400;
+
+	for( i=0; i<4096; i++ ){
+		colortable[i] = *color_prom++;
 	}
-	return 1;
+
 }
 
-void rthunder_vh_stop( void ){
-	free( dirtybuffer );
-	osd_free_bitmap( pixmap[0] );
-	osd_free_bitmap( pixmap[1] );
-	osd_free_bitmap( pixmap[2] );
-	osd_free_bitmap( pixmap[3] );
+
+
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static unsigned char *videoram;
+static int gfx_num,tile_offset;
+
+static void tilemap0_preupdate(void)
+{
+	videoram = &rthunder_videoram[0x0000];
+	gfx_num = GFX_TILES1;
+	tile_offset = 0*0x400 + tilebank * 0x800;
+}
+
+static void tilemap1_preupdate(void)
+{
+	videoram = &rthunder_videoram[0x1000];
+	gfx_num = GFX_TILES1;
+	tile_offset = 1*0x400 + tilebank * 0x800;
+}
+
+static void tilemap2_preupdate(void)
+{
+	videoram = &rthunder_videoram[0x2000];
+	gfx_num = GFX_TILES2;
+	tile_offset = 0*0x400;
+}
+
+static void tilemap3_preupdate(void)
+{
+	videoram = &rthunder_videoram[0x3000];
+	gfx_num = GFX_TILES2;
+	tile_offset = 1*0x400;
+}
+
+static void get_tile_info(int col,int row)
+{
+	int tile_index = 2*(64*row+col);
+	unsigned char attr = videoram[tile_index + 1];
+	SET_TILE_INFO(gfx_num,tile_offset + videoram[tile_index] + ((attr & 0x03) << 8),attr)
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+void rthunder_vh_stop(void)
+{
+	tilemap_dispose(tilemap[0]);
+	tilemap_dispose(tilemap[1]);
+	tilemap_dispose(tilemap[2]);
+	tilemap_dispose(tilemap[3]);
+	tilemap_stop();
 
 	rt_stop_mcu_timer();
 }
+
+int rthunder_vh_start(void)
+{
+	if (tilemap_start() == 0)
+	{
+		tilemap[0] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+		tilemap[1] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+		tilemap[2] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+		tilemap[3] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+
+		if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
+		{
+			tilemap[0]->tile_get_info = get_tile_info;
+			tilemap[1]->tile_get_info = get_tile_info;
+			tilemap[2]->tile_get_info = get_tile_info;
+			tilemap[3]->tile_get_info = get_tile_info;
+			tilemap[0]->transparent_pen = 7;
+			tilemap[1]->transparent_pen = 7;
+			tilemap[2]->transparent_pen = 7;
+			tilemap[3]->transparent_pen = 7;
+
+			return 0;
+		}
+
+		rthunder_vh_stop();
+	}
+
+	return 1;
+}
+
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+int rthunder_videoram_r(int offset)
+{
+	return rthunder_videoram[offset];
+}
+
+void rthunder_videoram_w(int offset,int data)
+{
+	if (rthunder_videoram[offset] != data)
+	{
+		rthunder_videoram[offset] = data;
+		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset/2)%64,((offset%0x1000)/2)/64);
+	}
+}
+
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
 
 static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority ){
 	/* note: sprites don't yet clip at the top of the screen properly */
@@ -154,79 +264,26 @@ static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority ){
 	}
 }
 
-static void update_layer( struct osd_bitmap *bitmap, unsigned char *source,
-	unsigned char *dirty, int tile_offset, int opaque ){
+void rthunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap0_preupdate(); tilemap_update(tilemap[0]);
+	tilemap1_preupdate(); tilemap_update(tilemap[1]);
+	tilemap2_preupdate(); tilemap_update(tilemap[2]);
+	tilemap3_preupdate(); tilemap_update(tilemap[3]);
 
-	struct GfxElement *gfx = Machine->gfx[GFX_TILES];
+	tilemap_render(tilemap[0]);
+	tilemap_render(tilemap[1]);
+	tilemap_render(tilemap[2]);
+	tilemap_render(tilemap[3]);
 
-	int offs;
-	for( offs=0; offs<LAYER_SIZE; offs++ ){
-		if( dirty[offs] ){
-			int sx = (offs%64)*8;
-			int sy = (offs/64)*8;
-			unsigned char tile_number = source[offs*2];
-			unsigned char color = source[(offs*2) | 1];
-
-			dirty[offs] = 0;
-
-			if( !opaque ){
-				int x,y;
-				for( y=sy; y<sy+8; y++ )
-				for( x=sx; x<sx+8; x++ )
-					bitmap->line[y][x] = 0;//palette_transparent_pen;
-			}
-			drawgfx( bitmap, gfx,
-				tile_number + tile_offset + (color&0x03)*256,					color,
-				0,0, // no flip
-				sx,sy,
-				0,
-				opaque?TRANSPARENCY_NONE:TRANSPARENCY_PEN, 0x7 );
-		}
-	}
-}
-
-void rthunder_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
-
-	{
-		int scrollx = -xscroll[0]-20;
-		int scrolly = -yscroll[0]-25;
-		update_layer( pixmap[0], &videoram[0x0000], &dirtybuffer[LAYER_SIZE*0], 0*0x400+tilebank*0x800, 1 );
-		copyscrollbitmap(bitmap,pixmap[0],
-			1,&scrollx, 1,&scrolly,
-			clip,TRANSPARENCY_NONE,0);
-	}
-
-	draw_sprites( bitmap, 1 );
-
-	{
-		int scrollx = -xscroll[0]-20;
-		int scrolly = -yscroll[0]-25;
-		update_layer( pixmap[1], &videoram[0x1000], &dirtybuffer[LAYER_SIZE*1], 1*0x400+tilebank*0x800, 0 );
-		copyscrollbitmap(bitmap,pixmap[1],
-			1,&scrollx, 1,&scrolly,
-			clip,TRANSPARENCY_PEN,0);//palette_transparent_pen);
-	}
-
-	draw_sprites( bitmap, 2 );
-
-	{
-		int scrollx = -xscroll[0]-20;
-		int scrolly = -yscroll[0]-25;
-		update_layer( pixmap[2], &videoram[0x2000], &dirtybuffer[LAYER_SIZE*2], 4*0x400, 0 );
-		copyscrollbitmap(bitmap,pixmap[2],
-			1,&scrollx, 1,&scrolly,
-			clip,TRANSPARENCY_PEN,0);//palette_transparent_pen);
-	}
-
-	draw_sprites( bitmap, 3 );
-
-	{
-		int scrollx = -xscroll[3]-20;
-		int scrolly = -yscroll[3]-25;
-		update_layer( pixmap[3], &videoram[0x3000], &dirtybuffer[LAYER_SIZE*3], 5*0x400, 0 );
-		copyscrollbitmap(bitmap,pixmap[3],
-			1,&scrollx, 1,&scrolly,
-			clip,TRANSPARENCY_PEN,0);//palette_transparent_pen);
-	}
+	/* the background color can be changed but I don't know to which address it's mapped */
+	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	draw_sprites(bitmap,0);
+	tilemap_draw(bitmap,tilemap[0],0);
+	draw_sprites(bitmap,1);
+	tilemap_draw(bitmap,tilemap[1],0);
+	draw_sprites(bitmap,2);
+	tilemap_draw(bitmap,tilemap[2],0);
+	draw_sprites(bitmap,3);
+	tilemap_draw(bitmap,tilemap[3],0);
 }

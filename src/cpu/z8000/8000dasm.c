@@ -64,7 +64,8 @@ int DasmZ8000(char *buff, int pc)
 
     GET_OP(0, &OP_ROM[new_pc]);
 	new_pc += 2;
-	switch (pc) {
+	switch (pc)
+	{
 		case 0x0000:
 			dst += sprintf(dst, ".word   #$%04x ;RST", w[0]);
 			break;

@@ -61,6 +61,7 @@ To Do:
 
 - Mariner seems to have discrete sound circuits connected to the 8910's
   output ports
+- Sound in scramblb doesn't work.
 
 
 Notes:
@@ -73,10 +74,6 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-int scramble_IN2_r(int offset);
-int scramble_protection_r(int offset);
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
@@ -101,27 +98,23 @@ void scramble_sh_irqtrigger_w(int offset,int data);
 
 int frogger_portB_r(int offset);
 
+/* proection stuff. in machine\scramble.c */
+int scramble_input_port_2_r(int offset);
+int scramble_protection_r(int offset);
+int scramblk_protection_r(int offset);
+int scramblb_protection_1_r(int offset);
+int scramblb_protection_2_r(int offset);
+int mariner_protection_1_r(int offset);
+int mariner_protection_2_r(int offset);
+int mariner_pip(int offset);
+int mariner_pap(int offset);
 
-
-
-static struct MemoryReadAddress scramble_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x7800, 0x7800, watchdog_reset_r },
-	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
-	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
-	{ 0x8102, 0x8102, scramble_IN2_r },	/* IN2 with protection check */
-	{ 0x8202, 0x8202, scramble_protection_r },
-	{ -1 }	/* end of table */
-};
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
 	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x7000, 0x7000, watchdog_reset_r },
 	{ 0x7800, 0x7800, watchdog_reset_r },
@@ -130,6 +123,37 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
 	{ -1 }	/* end of table */
 };
+
+static struct MemoryReadAddress scramblb_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
+	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
+	{ 0x7000, 0x7000, input_port_2_r },	/* IN2 */
+	{ 0x7800, 0x7800, watchdog_reset_r },
+	{ -1 }	/* end of table */
+};
+
+/* Extra ROM and protection locations */
+static struct MemoryReadAddress mariner_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x5800, 0x67ff, MRA_ROM },
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
+	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
+	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
+	{ 0x9008, 0x9008, mariner_protection_2_r },
+	{ 0xb401, 0xb401, mariner_protection_1_r },
+	{ -1 }	/* end of table */
+};
+
 
 static struct MemoryWriteAddress writemem[] =
 {
@@ -147,6 +171,58 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6807, 0x6807, galaxian_flipy_w },
 	{ 0x8200, 0x8200, soundlatch_w },
 	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress scramblb_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7002, 0x7002, coin_counter_w },
+	{ 0x7003, 0x7003, scramble_background_w },
+	{ 0x7004, 0x7004, galaxian_stars_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x8200, 0x8200, soundlatch_w },
+	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress triplep_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address */
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x6801, 0x6801, interrupt_enable_w },
+	{ 0x6802, 0x6802, coin_counter_w },
+	{ 0x6803, 0x6803, MWA_NOP },   /* ??? (it's NOT a background enable) */
+	{ 0x6804, 0x6804, galaxian_stars_w },
+	{ 0x6806, 0x6806, galaxian_flipx_w },
+	{ 0x6807, 0x6807, galaxian_flipy_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort triplep_readport[] =
+{
+	{ 0x01, 0x01, AY8910_read_port_0_r },
+	{ 0x02, 0x02, mariner_pip },
+	{ 0x03, 0x03, mariner_pap },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort triplep_writeport[] =
+{
+	{ 0x01, 0x01, AY8910_control_port_0_w },
+	{ 0x00, 0x00, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -183,8 +259,6 @@ static struct MemoryWriteAddress froggers_sound_writemem[] =
 							  	            /* but it can't possibly be the same */
 	{ -1 }	/* end of table */				/* as the one in Scramble. One 8910 only */
 };
-
-
 
 
 static struct IOReadPort sound_readport[] =
@@ -234,7 +308,7 @@ INPUT_PORTS_START( scramble_input_ports )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -256,6 +330,54 @@ INPUT_PORTS_START( scramble_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( scramblb_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/4 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 1", IP_KEY_NONE )   /* probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( atlantis_input_ports )
@@ -423,6 +545,50 @@ INPUT_PORTS_START( amidars_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( triplep_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -566,6 +732,16 @@ static struct AY8910interface frogger_ay8910_interface =
 	{ 0 }
 };
 
+static struct AY8910interface triplep_ay8910_interface =
+{
+	1,	/* 1 chip */
+	14318000/8,	/* 1.78975 MHz */
+	{ 0x30ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
 
 
 static struct MachineDriver scramble_machine_driver =
@@ -576,7 +752,7 @@ static struct MachineDriver scramble_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 MHz */
 			0,
-			scramble_readmem,writemem,0,0,
+			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -613,7 +789,52 @@ static struct MachineDriver scramble_machine_driver =
 	}
 };
 
-/* same as Scramble, the only differences are gfxdecodeinfo and readmem */
+static struct MachineDriver scramblb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 MHz */
+			0,
+			scramblb_readmem,scramblb_writemem,0,0,
+			scramble_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318000/8,	/* 1.78975 MHz */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	scramble_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&scramble_ay8910_interface
+		}
+	}
+};
+
+/* same as Scramble, the only difference is gfxdecodeinfo */
 static struct MachineDriver theend_machine_driver =
 {
 	/* basic machine hardware */
@@ -704,6 +925,82 @@ static struct MachineDriver froggers_machine_driver =
 	}
 };
 
+/* Triple Punch and Mariner are different - only one CPU, one 8910 */
+static struct MachineDriver triplep_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz ? */
+			0,
+			readmem,triplep_writemem,triplep_readport,triplep_writeport,
+			scramble_vh_interrupt,1
+		}
+	},
+	60, 2500,/* ? */	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	scramble_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	scramble_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&triplep_ay8910_interface
+		}
+	}
+};
+
+static struct MachineDriver mariner_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 MHz */
+			0,
+			mariner_readmem,triplep_writemem,triplep_readport,triplep_writeport,
+			mariner_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	mariner_gfxdecodeinfo,
+	32+64+10,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 10 for background */
+	mariner_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	mariner_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&triplep_ay8910_interface
+		}
+	}
+};
 
 
 /***************************************************************************
@@ -723,12 +1020,60 @@ ROM_START( scramble_rom )
 	ROM_LOAD( "2m",           0x3000, 0x0800, 0xea26c35c )
 	ROM_LOAD( "2p",           0x3800, 0x0800, 0x94d8f5e3 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x5f30311a )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0x516e029e )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "scramble.clr", 0x0000, 0x0020, 0x4e3caeab )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
+	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
+ROM_END
+
+ROM_START( scramblk_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2d.k",         0x0000, 0x0800, 0xea35ccaa )
+	ROM_LOAD( "2e.k",         0x0800, 0x0800, 0xe7bba1b3 )
+	ROM_LOAD( "2f.k",         0x1000, 0x0800, 0x12d7fc3e )
+	ROM_LOAD( "2h.k",         0x1800, 0x0800, 0xb59360eb )
+	ROM_LOAD( "2j.k",         0x2000, 0x0800, 0x4919a91c )
+	ROM_LOAD( "2l.k",         0x2800, 0x0800, 0x26a4547b )
+	ROM_LOAD( "2m.k",         0x3000, 0x0800, 0x0bb49470 )
+	ROM_LOAD( "2p.k",         0x3800, 0x0800, 0x6a5740e5 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
+	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
+	ROM_LOAD( "5d",           0x0800, 0x0800, 0xde7912da )
+	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
+ROM_END
+
+ROM_START( scramblb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
+	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
+	ROM_LOAD( "scramble.3k",  0x1000, 0x0800, 0x0500b701 )
+	ROM_LOAD( "scramble.4k",  0x1800, 0x0800, 0xdd380a22 )
+	ROM_LOAD( "scramble.5k",  0x2000, 0x0800, 0xdf0b9648 )
+	ROM_LOAD( "scramble.1j",  0x2800, 0x0800, 0xb8c07b3c )
+	ROM_LOAD( "scramble.2j",  0x3000, 0x0800, 0x88ac07a0 )
+	ROM_LOAD( "scramble.3j",  0x3800, 0x0800, 0xc67d57ca )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
+	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
@@ -745,12 +1090,13 @@ ROM_START( atlantis_rom )
 	ROM_LOAD( "2j",           0x2000, 0x0800, 0x45f7cf34 )
 	ROM_LOAD( "2l",           0x2800, 0x0800, 0xf335b96b )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x57f9c6b9 )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xe989f325 )
 
 	ROM_REGION(0x0020)	/* color prom */
 	/* missing in action */
+	ROM_LOAD( "atlantis.clr", 0x0000, 0x0020, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "5c",           0x0000, 0x0800, 0xbcd297f0 )
@@ -767,7 +1113,7 @@ ROM_START( theend_rom )
 	ROM_LOAD( "ic17",         0x2000, 0x0800, 0xaf067b7f )
 	ROM_LOAD( "ic18",         0x2800, 0x0800, 0xa0411b93 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
 	ROM_LOAD( "ic30",         0x0000, 0x0800, 0x527fd384 )
 	ROM_LOAD( "ic31",         0x0800, 0x0800, 0xaf6d09b6 )
 
@@ -788,17 +1134,17 @@ ROM_START( froggers_rom )
 	ROM_LOAD( "vid_j2.bin",   0x2000, 0x0800, 0xfbdfbe74 )
 	ROM_LOAD( "vid_l2.bin",   0x2800, 0x0800, 0x8a4389e1 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "vid_f5.bin",   0x0000, 0x0800, 0x658745f8 )
-	ROM_LOAD( "vid_h5.bin",   0x0800, 0x0800, 0x05f7d883 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
 	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_c5.bin",   0x0000, 0x0800, 0xe8ab0256 )
-	ROM_LOAD( "snd_d5.bin",   0x0800, 0x0800, 0x7380a48f )
-	ROM_LOAD( "snd_e5.bin",   0x1000, 0x0800, 0x31d7eb27 )
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( amidars_rom )
@@ -812,7 +1158,7 @@ ROM_START( amidars_rom )
 	ROM_LOAD( "am2m",         0x3000, 0x0800, 0x1d7109e9 )
 	ROM_LOAD( "am2p",         0x3800, 0x0800, 0xc9163ac6 )
 
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
 	ROM_LOAD( "2716.a6",      0x0000, 0x0800, 0x2082ad0a )   /* Same graphics ROMs as Amigo */
 	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
 
@@ -823,6 +1169,56 @@ ROM_START( amidars_rom )
 	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
+
+ROM_START( triplep_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "triplep.2g",   0x0000, 0x1000, 0xc583a93d )
+	ROM_LOAD( "triplep.2h",   0x1000, 0x1000, 0xc03ddc49 )
+	ROM_LOAD( "triplep.2k",   0x2000, 0x1000, 0xe83ca6b5 )
+	ROM_LOAD( "triplep.2l",   0x3000, 0x1000, 0x982cc3b9 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics */
+	ROM_LOAD( "triplep.5f",   0x0000, 0x0800, 0xd51cbd6f )
+	ROM_LOAD( "triplep.5h",   0x0800, 0x0800, 0xf21c0059 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
+ROM_END
+
+ROM_START( mariner_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
+	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
+	ROM_LOAD( "tm3",          0x2000, 0x1000, 0x027881a6 )
+	ROM_LOAD( "tm4",          0x3000, 0x1000, 0xa0fde7dc )
+	ROM_LOAD( "tm5",          0x6000, 0x0800, 0xd7ebcb8e )
+	ROM_CONTINUE(             0x5800, 0x0800             )
+
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics */
+	ROM_LOAD( "tm8",          0x0000, 0x1000, 0x70ae611f )
+	ROM_LOAD( "tm9",          0x1000, 0x1000, 0x8e4e999e )
+
+	ROM_REGION(0x0020)      /* Color PROM */
+	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
+ROM_END
+
+
+static void scramble_driver_init(void)
+{
+	install_mem_read_handler(0, 0x8102, 0x8102, scramble_input_port_2_r);
+	install_mem_read_handler(0, 0x8202, 0x8202, scramble_protection_r);
+}
+
+static void scramblk_driver_init(void)
+{
+	install_mem_read_handler(0, 0x8202, 0x8202, scramblk_protection_r);
+}
+
+static void scramblb_driver_init(void)
+{
+	install_mem_read_handler(0, 0x8102, 0x8102, scramblb_protection_1_r);
+	install_mem_read_handler(0, 0x8202, 0x8202, scramblb_protection_2_r);
+}
 
 
 static void froggers_decode(void)
@@ -1018,13 +1414,13 @@ struct GameDriver scramble_driver =
 	__FILE__,
 	0,
 	"scramble",
-	"Scramble",
+	"Scramble (Stern)",
 	"1981",
 	"Stern",
 	"Nicola Salmoria",
 	0,
 	&scramble_machine_driver,
-	0,
+	scramble_driver_init,
 
 	scramble_rom,
 	0, 0,
@@ -1032,6 +1428,58 @@ struct GameDriver scramble_driver =
 	0,	/* sound_prom */
 
 	scramble_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	scramble_hiload, scramble_hisave
+};
+
+struct GameDriver scramblk_driver =
+{
+	__FILE__,
+	&scramble_driver,
+	"scramblk",
+	"Scramble (Konami)",
+	"1981",
+	"Konami",
+	"Nicola Salmoria",
+	0,
+	&scramble_machine_driver,
+	scramblk_driver_init,
+
+	scramblk_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	scramble_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	scramble_hiload, scramble_hisave
+};
+
+struct GameDriver scramblb_driver =
+{
+	__FILE__,
+	&scramble_driver,
+	"scramblb",
+	"Scramble (bootleg)",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
+	&scramblb_machine_driver,
+	scramblb_driver_init,
+
+	scramblb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	scramblb_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1144,269 +1592,6 @@ struct GameDriver amidars_driver =
 
 	0,0
 };
-
-
-
-
-
-
-
-
-
-static int mariner_protection_1_r(int offset)
-{
-	return 7;
-}
-static int mariner_protection_2_r(int offset)
-{
-	return 3;
-}
-
-
-static struct MemoryReadAddress triplep_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
-	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
-	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
-	{ -1 }	/* end of table */
-};
-
-/* Extra ROM and protection locations */
-static struct MemoryReadAddress mariner_readmem[] =
-{
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
-	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x5800, 0x67ff, MRA_ROM },
-	{ 0x7000, 0x7000, watchdog_reset_r },
-	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
-	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
-	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
-	{ 0x9008, 0x9008, mariner_protection_2_r },
-	{ 0xb401, 0xb401, mariner_protection_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress triplep_writemem[] =
-{
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
-	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address */
-	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
-	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x6801, 0x6801, interrupt_enable_w },
-	{ 0x6802, 0x6802, coin_counter_w },
-	{ 0x6803, 0x6803, MWA_NOP },   /* ??? (it's NOT a background enable) */
-	{ 0x6804, 0x6804, galaxian_stars_w },
-	{ 0x6806, 0x6806, galaxian_flipx_w },
-	{ 0x6807, 0x6807, galaxian_flipy_w },
-	{ -1 }	/* end of table */
-};
-
-static int pip(int offset)
-{
-if (errorlog) fprintf(errorlog,"PC %04x: read port 2\n",cpu_getpc());
-	if (cpu_getpc() == 0x015a) return 0xff;
-	else if (cpu_getpc() == 0x0886) return 0x05;
-	else return 0;
-}
-static int pap(int offset)
-{
-if (errorlog) fprintf(errorlog,"PC %04x: read port 3\n",cpu_getpc());
-	if (cpu_getpc() == 0x015d) return 0x04;
-	else return 0;
-}
-
-static struct IOReadPort triplep_readport[] =
-{
-	{ 0x01, 0x01, AY8910_read_port_0_r },
-	{ 0x02, 0x02, pip },
-	{ 0x03, 0x03, pap },
-	{ -1 }	/* end of table */
-};
-
-static struct IOWritePort triplep_writeport[] =
-{
-	{ 0x01, 0x01, AY8910_control_port_0_w },
-	{ 0x00, 0x00, AY8910_write_port_0_w },
-	{ -1 }	/* end of table */
-};
-
-INPUT_PORTS_START( triplep_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
-	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
-	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
-	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BITX(    0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
-INPUT_PORTS_END
-
-
-
-static struct AY8910interface triplep_ay8910_interface =
-{
-	1,	/* 1 chip */
-	1789750,	/* 1.78975 MHz? */
-	{ 255 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-/* Triple Punch and Mariner are different - only one CPU, one 8910 */
-static struct MachineDriver triplep_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
-			0,
-			triplep_readmem,triplep_writemem,triplep_readport,triplep_writeport,
-			scramble_vh_interrupt,1
-		}
-	},
-	60, 2500,/* ? */	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&triplep_ay8910_interface
-		}
-	}
-};
-
-static struct MachineDriver mariner_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			0,
-			mariner_readmem,triplep_writemem,triplep_readport,triplep_writeport,
-			mariner_vh_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	mariner_gfxdecodeinfo,
-	32+64+10,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 10 for background */
-	mariner_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	mariner_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&triplep_ay8910_interface
-		}
-	}
-};
-
-ROM_START( triplep_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "triplep.2g",   0x0000, 0x1000, 0xc583a93d )
-	ROM_LOAD( "triplep.2h",   0x1000, 0x1000, 0xc03ddc49 )
-	ROM_LOAD( "triplep.2k",   0x2000, 0x1000, 0xe83ca6b5 )
-	ROM_LOAD( "triplep.2l",   0x3000, 0x1000, 0x982cc3b9 )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "triplep.5f",   0x0000, 0x0800, 0xd51cbd6f )
-	ROM_LOAD( "triplep.5h",   0x0800, 0x0800, 0xf21c0059 )
-
-	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
-ROM_END
-
-ROM_START( mariner_rom )
-	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
-	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
-	ROM_LOAD( "tm3",          0x2000, 0x1000, 0x027881a6 )
-	ROM_LOAD( "tm4",          0x3000, 0x1000, 0xa0fde7dc )
-	ROM_LOAD( "tm5",          0x6000, 0x0800, 0xd7ebcb8e )
-	ROM_CONTINUE(             0x5800, 0x0800             )
-
-	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tm8",          0x0000, 0x1000, 0x70ae611f )
-	ROM_LOAD( "tm9",          0x1000, 0x1000, 0x8e4e999e )
-
-	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
-ROM_END
 
 struct GameDriver triplep_driver =
 {

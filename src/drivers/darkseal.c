@@ -1,19 +1,17 @@
 /***************************************************************************
 
-  Dark Seal            (c) 1990 Data East Corporation (Japanese version)
-  Gate Of Doom         (c) 1990 Data East Corporation (USA version)
-  Gate of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
+  Dark Seal (Rev 3)    (c) 1990 Data East Corporation (Japanese version)
+  Dark Seal (Rev 1)    (c) 1990 Data East Corporation (Japanese version)
+  Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
+  Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
 
-  Basically an improved version of Midnight Resistance hardware:
-    More sprites,
-    More colours,
-    Bigger playfields,
-    Better sound,
-    Encrypted roms.
+  PCB number: DE-0332
 
 Driver notes:
   Gate of Doom has no tile or sprite roms dumped as they were soldered to the
   board, it seems quite safe to use the ones from Dark Seal.
+
+  The higher program revisions have better attract modes.
 
   Sound works correctly only with YM2151_ALT, not with YM2151. You will hear
   the difference on the music that plays as the game starts, the lead
@@ -41,11 +39,8 @@ void darkseal_palette_24bit_rg(int offset,int data);
 void darkseal_palette_24bit_b(int offset,int data);
 int darkseal_palette_24bit_rg_r(int offset);
 int darkseal_palette_24bit_b_r(int offset);
-extern unsigned char *darkseal_sprite;
+extern unsigned char *darkseal_sprite, *darkseal_pf12_row, *darkseal_pf34_row;
 static unsigned char *darkseal_ram;
-
-/* System prototypes - from machine/dec0.c */
-int slyspy_controls_read(int offset);
 
 /******************************************************************************/
 
@@ -64,6 +59,24 @@ static void darkseal_control_w(int offset,int data)
 	if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
+static int darkseal_control_r(int offset)
+{
+	switch (offset)
+	{
+		case 0: /* Dip Switches */
+			return (readinputport(3) + (readinputport(4) << 8));
+
+		case 2: /* Player 1 & Player 2 joysticks & fire buttons */
+			return (readinputport(0) + (readinputport(1) << 8));
+
+		case 4: /* Credits */
+			return readinputport(2);
+	}
+
+	if (errorlog) fprintf(errorlog,"Unknown control read at %d\n",offset);
+	return 0xffff;
+}
+
 /******************************************************************************/
 
 static struct MemoryReadAddress darkseal_readmem[] =
@@ -73,9 +86,9 @@ static struct MemoryReadAddress darkseal_readmem[] =
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_r },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_r },
-	{ 0x180000, 0x18000f, slyspy_controls_read },
-	{ 0x220000, 0x220fff, MRA_BANK3 }, /* Palette gets moved here at colour fades */
-	{ 0x222000, 0x222fff, MRA_BANK4 }, /* Palette gets moved here at colour fades */
+	{ 0x180000, 0x18000f, darkseal_control_r },
+	{ 0x220000, 0x220fff, MRA_BANK3 },
+	{ 0x222000, 0x222fff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
@@ -89,8 +102,8 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 	{ 0x180000, 0x18000f, darkseal_control_w },
  	{ 0x200000, 0x200fff, darkseal_pf3b_data_w }, /* 2nd half of pf3, only used on last level */
 	{ 0x202000, 0x202fff, darkseal_pf3_data_w },
-	{ 0x220000, 0x220fff, MWA_BANK3 }, /* Palette gets moved here at colour fades */
-	{ 0x222000, 0x222fff, MWA_BANK4 }, /* Palette gets moved here at colour fades */
+	{ 0x220000, 0x220fff, MWA_BANK3, &darkseal_pf12_row },
+	{ 0x222000, 0x222fff, MWA_BANK4, &darkseal_pf34_row },
 	{ 0x240000, 0x24000f, darkseal_control_0_w },
 	{ 0x260000, 0x261fff, darkseal_pf2_data_w },
 	{ 0x262000, 0x263fff, darkseal_pf1_data_w },
@@ -160,7 +173,7 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
@@ -170,7 +183,7 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* Credits */
@@ -220,15 +233,15 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, "Energy", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x10, "2.5" )
+  	PORT_DIPSETTING(    0x10, "2.5" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
+  	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -284,16 +297,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chips */
-	8000,           /* 8000Hz frequency */
+	8000,           /* 8000Hz frequency (Not quite correct) */
 	{ 3, 4 },       /* memory regions 3 & 5 */
-	{ 42, 12 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 40, 10 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	1500000,	/* 1.50 MHz */
-	{ YM2203_VOL(30,40) },
+	32220000/8,	/* Audio section crystal is 32.220 MHz */
+	{ YM2203_VOL(25,40) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -308,7 +321,7 @@ static void sound_irq(void)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	3800000,
+	32220000/8, /* Audio section crystal is 32.220 MHz */
 	{ YM3012_VOL(35,OSD_PAN_LEFT,35,OSD_PAN_RIGHT) },
 	{ sound_irq }
 };
@@ -318,15 +331,15 @@ static struct MachineDriver darkseal_machine_driver =
 	/* basic machine hardware */
 	{
 	 	{
-			CPU_M68000,
+			CPU_M68000, /* Custom chip 59 */
 			12000000,
 			0,
 			darkseal_readmem,darkseal_writemem,0,0,
 			m68_level6_irq,1 /* VBL */
 		},
 		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			4000000,
+			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
+			32220000/8, /* Audio section crystal is 32.220 MHz */
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
@@ -371,8 +384,60 @@ static struct MachineDriver darkseal_machine_driver =
 
 ROM_START( darkseal_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
-	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
+  	ROM_LOAD_EVEN( "ga04-3.rom",   0x00000, 0x20000, 0xbafad556 )
+  	ROM_LOAD_ODD ( "ga01-3.rom",   0x00000, 0x20000, 0xf409050e )
+	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
+ 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
+
+	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+  	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+  	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
+ROM_END
+
+ROM_START( darksea1_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+  	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
+  	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
+	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
+ 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
+
+	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
+
+  	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+  	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
+ROM_END
+
+ROM_START( gatedoom_rom )
+	ROM_REGION(0x80000) /* 68000 code */
+	ROM_LOAD_EVEN( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd )
+	ROM_LOAD_ODD ( "gb01-4",       0x00000, 0x20000, 0x8d0fd383 )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
@@ -395,59 +460,34 @@ ROM_START( darkseal_rom )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-ROM_START( gatedoom_rom )
+ROM_START( gatedom1_rom )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04.bin",     0x00000, 0x20000, 0x4c3bbd2b )
 	ROM_LOAD_ODD ( "gb01.bin",     0x00000, 0x20000, 0x59e367f4 )
-	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
-	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
+	ROM_LOAD_EVEN( "gb00.bin",     0x40000, 0x20000, 0xa88c16a1 )
+	ROM_LOAD_ODD ( "gb05.bin",     0x40000, 0x20000, 0x252d7e14 )
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
 	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
-	/* the following four have not been verified on a real Gate of Doom */
+  	/* the following four have not been verified on a real Gate of Doom */
 	/* board - might be different from Dark Seal! */
 	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+  	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+ 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-ROM_START( gatedoma_rom )
-	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd )
-	ROM_LOAD_ODD ( "gb01-4",       0x00000, 0x20000, 0x8d0fd383 )
-	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
-	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
-
-	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
-
-	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
-
-	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
-
-	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
-ROM_END
 
 /******************************************************************************/
 
@@ -503,7 +543,7 @@ struct GameDriver darkseal_driver =
 	__FILE__,
 	0,
 	"darkseal",
-	"Dark Seal",
+	"Dark Seal (revision 3)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -523,12 +563,37 @@ struct GameDriver darkseal_driver =
 	hiload , hisave  /* hsc 12/02/98 */
 };
 
+struct GameDriver darksea1_driver =
+{
+	__FILE__,
+	&darkseal_driver,
+	"darksea1",
+	"Dark Seal (revision 1)",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&darkseal_machine_driver,
+	0,
+
+	darksea1_rom,
+	darkseal_decrypt, 0,
+	0,
+	0,
+
+	darkseal_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	hiload , hisave  /* hsc 12/02/98 */
+};
+
 struct GameDriver gatedoom_driver =
 {
 	__FILE__,
 	&darkseal_driver,
 	"gatedoom",
-	"Gate Of Doom (set 1)",
+	"Gate Of Doom (revision 4)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -545,15 +610,15 @@ struct GameDriver gatedoom_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	hiload , hisave /* hsc 12/02/98 */
+	0, 0
 };
 
-struct GameDriver gatedoma_driver =
+struct GameDriver gatedom1_driver =
 {
 	__FILE__,
 	&darkseal_driver,
-	"gatedoma",
-	"Gate Of Doom (revision 4)",
+	"gatedom1",
+	"Gate Of Doom (revision 1)",
 	"1990",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -561,7 +626,7 @@ struct GameDriver gatedoma_driver =
 	&darkseal_machine_driver,
 	0,
 
-	gatedoma_rom,
+	gatedom1_rom,
 	darkseal_decrypt, 0,
 	0,
 	0,
@@ -570,5 +635,5 @@ struct GameDriver gatedoma_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0, 0
+	hiload , hisave /* hsc 12/02/98 */
 };

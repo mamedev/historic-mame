@@ -34,34 +34,34 @@
 #define ADDR_RST75      0x003c
 #define ADDR_INTR       0x0038
 
-#define M_INR(R) ++R; I.AF.B.l=(I.AF.B.l&CF)|ZS[R]|((R==0x80)?VF:0)|((R&0x0F)?0:HF)
-#define M_DCR(R) I.AF.B.l=(I.AF.B.l&CF)|NF|((R==0x80)?VF:0)|((R&0x0F)?0:HF); I.AF.B.l|=ZS[--R]
+#define M_INR(R) ++R; I.AF.b.l=(I.AF.b.l&CF)|ZS[R]|((R==0x80)?VF:0)|((R&0x0F)?0:HF)
+#define M_DCR(R) I.AF.b.l=(I.AF.b.l&CF)|NF|((R==0x80)?VF:0)|((R&0x0F)?0:HF); I.AF.b.l|=ZS[--R]
 #define M_MVI(R) R=ARG()
 
-#define M_ANA(R) I.AF.B.h&=R; I.AF.B.l=ZSP[I.AF.B.h]|HF
-#define M_ORA(R) I.AF.B.h|=R; I.AF.B.l=ZSP[I.AF.B.h]
-#define M_XRA(R) I.AF.B.h^=R; I.AF.B.l=ZSP[I.AF.B.h]
+#define M_ANA(R) I.AF.b.h&=R; I.AF.b.l=ZSP[I.AF.b.h]|HF
+#define M_ORA(R) I.AF.b.h|=R; I.AF.b.l=ZSP[I.AF.b.h]
+#define M_XRA(R) I.AF.b.h^=R; I.AF.b.l=ZSP[I.AF.b.h]
 
 #define M_RLC { 												\
-	I.AF.B.h = (I.AF.B.h << 1) | (I.AF.B.h >> 7);				\
-	I.AF.B.l = (I.AF.B.l & ~(HF+NF+CF)) | (I.AF.B.h & CF);		\
+	I.AF.b.h = (I.AF.b.h << 1) | (I.AF.b.h >> 7);				\
+	I.AF.b.l = (I.AF.b.l & ~(HF+NF+CF)) | (I.AF.b.h & CF);		\
 }
 
 #define M_RRC { 												\
-	I.AF.B.l = (I.AF.B.l & ~(HF+NF+CF)) | (I.AF.B.h & CF);		\
-	I.AF.B.h = (I.AF.B.h >> 1) | (I.AF.B.h << 7);				\
+	I.AF.b.l = (I.AF.b.l & ~(HF+NF+CF)) | (I.AF.b.h & CF);		\
+	I.AF.b.h = (I.AF.b.h >> 1) | (I.AF.b.h << 7);				\
 }
 
 #define M_RAL { 												\
-	int c = I.AF.B.l&CF;										\
-	I.AF.B.l = (I.AF.B.l & ~(HF+NF+CF)) | (I.AF.B.h >> 7);		\
-	I.AF.B.h = (I.AF.B.h << 1) | c; 							\
+	int c = I.AF.b.l&CF;										\
+	I.AF.b.l = (I.AF.b.l & ~(HF+NF+CF)) | (I.AF.b.h >> 7);		\
+	I.AF.b.h = (I.AF.b.h << 1) | c; 							\
 }
 
 #define M_RAR { 												\
-	int c = (I.AF.B.l&CF) << 7; 								\
-	I.AF.B.l = (I.AF.B.l & ~(HF+NF+CF)) | (I.AF.B.h & CF);		\
-	I.AF.B.h = (I.AF.B.h >> 1) | c; 							\
+	int c = (I.AF.b.l&CF) << 7; 								\
+	I.AF.b.l = (I.AF.b.l & ~(HF+NF+CF)) | (I.AF.b.h & CF);		\
+	I.AF.b.h = (I.AF.b.h >> 1) | c; 							\
 }
 
 #ifdef X86_ASM
@@ -73,16 +73,16 @@
  " shlb $2,%%al         \n" /* shift to P/V bit position */     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%%al        \n"                                     \
- :"=g" (I.AF.B.h), "=a" (I.AF.B.l)                              \
- :"r" (R), "0" (I.AF.B.h)                                       \
+ :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"r" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_ADD(R) {												\
-int q = I.AF.B.h+R; 											\
-	I.AF.B.l=ZS[q&255]|((q>>8)&CF)| 							\
-		((I.AF.B.h^q^R)&HF)|									\
-		(((R^I.AF.B.h^SF)&(R^q)&SF)>>5);						\
-	I.AF.B.h=q; 												\
+int q = I.AF.b.h+R; 											\
+	I.AF.b.l=ZS[q&255]|((q>>8)&CF)| 							\
+		((I.AF.b.h^q^R)&HF)|									\
+		(((R^I.AF.b.h^SF)&(R^q)&SF)>>5);						\
+	I.AF.b.h=q; 												\
 }
 #endif
 
@@ -96,16 +96,16 @@ int q = I.AF.B.h+R; 											\
  " shlb $2,%%al         \n" /* shift to P/V bit position */     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.B.h), "=a" (I.AF.B.l)                              \
- :"r" (R), "a" (I.AF.B.l), "0" (I.AF.B.h)                       \
+ :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"r" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
  )
 #else
 #define M_ADC(R) {												\
-	int q = I.AF.B.h+R+(I.AF.B.l&CF);							\
-	I.AF.B.l=ZS[q&255]|((q>>8)&CF)| 							\
-		((I.AF.B.h^q^R)&HF)|									\
-		(((R^I.AF.B.h^SF)&(R^q)&SF)>>5);						\
-	I.AF.B.h=q; 												\
+	int q = I.AF.b.h+R+(I.AF.b.l&CF);							\
+	I.AF.b.l=ZS[q&255]|((q>>8)&CF)| 							\
+		((I.AF.b.h^q^R)&HF)|									\
+		(((R^I.AF.b.h^SF)&(R^q)&SF)>>5);						\
+	I.AF.b.h=q; 												\
 }
 #endif
 
@@ -119,16 +119,16 @@ int q = I.AF.B.h+R; 											\
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb $2,%%al          \n" /* set N flag */                    \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.B.h), "=a" (I.AF.B.l)                              \
- :"r" (R), "0" (I.AF.B.h)                                       \
+ :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"r" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_SUB(R) {												\
-	int q = I.AF.B.h-R; 										\
-	I.AF.B.l=ZS[q&255]|((q>>8)&CF)|NF|							\
-		((I.AF.B.h^q^R)&HF)|									\
-		(((R^I.AF.B.h)&(I.AF.B.h^q)&SF)>>5);					\
-	I.AF.B.h=q; 												\
+	int q = I.AF.b.h-R; 										\
+	I.AF.b.l=ZS[q&255]|((q>>8)&CF)|NF|							\
+		((I.AF.b.h^q^R)&HF)|									\
+		(((R^I.AF.b.h)&(I.AF.b.h^q)&SF)>>5);					\
+	I.AF.b.h=q; 												\
 }
 #endif
 
@@ -143,16 +143,16 @@ int q = I.AF.B.h+R; 											\
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb $2,%%al          \n" /* set N flag */                    \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.B.h), "=a" (I.AF.B.l)                              \
- :"r" (R), "a" (I.AF.B.l), "0" (I.AF.B.h)                       \
+ :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"r" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
  )
 #else
 #define M_SBB(R) {                                              \
-	int q = I.AF.B.h-R-(I.AF.B.l&CF);							\
-	I.AF.B.l=ZS[q&255]|((q>>8)&CF)|NF|							\
-		((I.AF.B.h^q^R)&HF)|									\
-		(((R^I.AF.B.h)&(I.AF.B.h^q)&SF)>>5);					\
-	I.AF.B.h=q; 												\
+	int q = I.AF.b.h-R-(I.AF.b.l&CF);							\
+	I.AF.b.l=ZS[q&255]|((q>>8)&CF)|NF|							\
+		((I.AF.b.h^q^R)&HF)|									\
+		(((R^I.AF.b.h)&(I.AF.b.h^q)&SF)>>5);					\
+	I.AF.b.h=q; 												\
 }
 #endif
 
@@ -166,26 +166,26 @@ int q = I.AF.B.h+R; 											\
  " andb $0xd1,%%ah     \n" /* sign, zero, half carry, carry */  \
  " orb $2,%%al         \n" /* set N flag */                     \
  " orb %%ah,%%al       \n" /* combine with P/V */               \
- :"=g" (I.AF.B.h), "=a" (I.AF.B.l)                              \
- :"r" (R), "0" (I.AF.B.h)                                       \
+ :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"r" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_CMP(R) {                                              \
-	int q = I.AF.B.h-R; 										\
-	I.AF.B.l=ZS[q&255]|((q>>8)&CF)|NF|							\
-		((I.AF.B.h^q^R)&HF)|									\
-		(((R^I.AF.B.h)&(I.AF.B.h^q)&SF)>>5);					\
+	int q = I.AF.b.h-R; 										\
+	I.AF.b.l=ZS[q&255]|((q>>8)&CF)|NF|							\
+		((I.AF.b.h^q^R)&HF)|									\
+		(((R^I.AF.b.h)&(I.AF.b.h^q)&SF)>>5);					\
 }
 #endif
 
 #define M_IN													\
-	I.XX.D=ARG();												\
-	I.AF.B.h=cpu_readport(I.XX.D);								\
-	I.AF.B.l=(I.AF.B.l&CF)|ZSP[I.AF.B.h]
+	I.XX.d=ARG();												\
+	I.AF.b.h=cpu_readport(I.XX.d);								\
+	I.AF.b.l=(I.AF.b.l&CF)|ZSP[I.AF.b.h]
 
 #define M_OUT													\
-	I.XX.D=ARG();												\
-	cpu_writeport(I.XX.D,I.AF.B.h)
+	I.XX.d=ARG();												\
+	cpu_writeport(I.XX.d,I.AF.b.h)
 
 #ifdef	X86_ASM
 #define M_DAD(R)												\
@@ -196,58 +196,62 @@ int q = I.AF.B.h+R; 											\
  " lahf                 \n"                                     \
  " andb $0x11,%%ah      \n"                                     \
  " orb %%ah,%1          \n"                                     \
- :"=c" (I.HL.D), "=g" (I.AF.B.l)                                \
- :"0" (I.HL.D), "1" (I.AF.B.l), "a" (I.R.D)                     \
+ :"=c" (I.HL.d), "=g" (I.AF.b.l)                                \
+ :"0" (I.HL.d), "1" (I.AF.b.l), "a" (I.R.d)                     \
  )
 #else
 #define M_DAD(R) {                                              \
-int q = I.HL.D + I.R.D; 										\
-	I.AF.B.l = ( I.AF.B.l & ~(HF+CF) ) |						\
-		( ((I.HL.D^q^I.R.D) >> 8) & HF ) |						\
+	int q = I.HL.d + I.R.d; 									\
+	I.AF.b.l = ( I.AF.b.l & ~(HF+CF) ) |						\
+		( ((I.HL.d^q^I.R.d) >> 8) & HF ) |						\
 		( (q>>16) & CF );										\
-	I.HL.W.l = q;												\
+	I.HL.w.l = q;												\
 }
 #endif
 
 #define M_PUSH(R) {                                             \
-	WM(--I.SP.W.l, I.R.B.h);									\
-	WM(--I.SP.W.l, I.R.B.l);									\
+	WM(--I.SP.w.l, I.R.b.h);									\
+	WM(--I.SP.w.l, I.R.b.l);									\
 }
 
 #define M_POP(R) {												\
-	I.R.B.l = RM(I.SP.W.l++);									\
-	I.R.B.h = RM(I.SP.W.l++);									\
+	I.R.b.l = RM(I.SP.w.l++);									\
+	I.R.b.h = RM(I.SP.w.l++);									\
 }
 
-#define M_RET(cc) { 											\
-	if (cc) {													\
-		I8085_ICount -= 6;										\
+#define M_RET(cc)												\
+{																\
+	if (cc) 													\
+	{															\
+		i8085_ICount -= 6;										\
 		M_POP(PC);												\
-		change_pc16(I.PC.D);									\
+		change_pc16(I.PC.d);									\
 	}															\
 }
 
 #define M_JMP(cc) { 											\
 	if (cc) {													\
-		I.PC.W.l = ARG16(); 									\
-		change_pc16(I.PC.D);									\
-	} else I.PC.W.l += 2;										\
+		I.PC.w.l = ARG16(); 									\
+		change_pc16(I.PC.d);									\
+	} else I.PC.w.l += 2;										\
 }
 
-#define M_CALL(cc) {											\
-	if (cc) {													\
+#define M_CALL(cc)												\
+{																\
+	if (cc) 													\
+	{															\
 		UINT16 a = ARG16(); 									\
-		I8085_ICount -= 7;										\
+		i8085_ICount -= 7;										\
 		M_PUSH(PC); 											\
-		I.PC.D = a; 											\
-		change_pc16(I.PC.D);									\
-	} else I.PC.W.l += 2;										\
+		I.PC.d = a; 											\
+		change_pc16(I.PC.d);									\
+	} else I.PC.w.l += 2;										\
 }
 
 #define M_RST(nn) { 											\
 	M_PUSH(PC); 												\
-	I.PC.D = 8 * nn;											\
-	change_pc16(I.PC.D);										\
+	I.PC.d = 8 * nn;											\
+	change_pc16(I.PC.d);										\
 }
 
 

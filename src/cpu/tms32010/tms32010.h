@@ -32,11 +32,8 @@ typedef struct
 		UINT16	Treg;
 		UINT16	AR[2], STACK[4], STR;
 		int		pending_irq, BIO_pending_irq;
-#if NEW_INTERRUPT_SYSTEM
 		int		irq_state;
 		int		(*irq_callback)(int irqline);
-#endif
-
 } TMS320C10_Regs;
 
 
@@ -54,22 +51,19 @@ extern	int TMS320C10_ICount;		/* T-state count */
 										/* can address up to 0xffff (incase  */
 										/* their support is ever added).	 */
 
-unsigned TMS320C10_GetPC  (void);				  /* Get program counter	*/
-void	 TMS320C10_GetRegs(TMS320C10_Regs *Regs); /* Get registers			*/
-void	 TMS320C10_SetRegs(TMS320C10_Regs *Regs); /* Set registers			*/
-void	 TMS320C10_Reset  (void);			/* Reset processor & registers	*/
-int		 TMS320C10_Execute(int cycles);		/* Execute cycles T-States - 	*/
-											/* returns number of cycles actually run */
-
-#if NEW_INTERRUPT_SYSTEM
+void TMS320C10_reset  (void *param);			/* Reset processor & registers	*/
+void TMS320C10_exit(void);						/* Shutdown CPU core			*/
+int TMS320C10_execute(int cycles);				/* Execute cycles T-States -	*/
+												/* returns number of cycles actually run */
+void TMS320C10_getregs(TMS320C10_Regs *Regs);	/* Get registers		  */
+void TMS320C10_setregs(TMS320C10_Regs *Regs);	/* Set registers		  */
+unsigned TMS320C10_getpc(void);					/* Get program counter	  */
+unsigned TMS320C10_getreg(int regnum);			/* Get a specific register*/
+void TMS320C10_setreg(int regnum, unsigned val);/* Set a specific register*/
 void TMS320C10_set_nmi_line(int state);
 void TMS320C10_set_irq_line(int irqline, int state);
 void TMS320C10_set_irq_callback(int (*callback)(int irqline));
-#else
-void	TMS320C10_Cause_Interrupts(int type);
-void	TMS320C10_Clear_Pending_Interrupts(void);
-#endif
-
+const char *TMS320C10_info(void *context, int regnum);
 
 #include "memory.h"
 
@@ -146,7 +140,8 @@ void	TMS320C10_Clear_Pending_Interrupts(void);
 #endif
 
 #ifdef	MAME_DEBUG
-int		Dasm32010(char * dst, unsigned char* addr);
+extern int mame_debug;
+extern int Dasm32010(char * dst, UINT8 *addr);
 #endif
 
-#endif	/* _TMS320C10_H */
+#endif  /* _TMS320C10_H */

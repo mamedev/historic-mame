@@ -26,12 +26,14 @@ Emulating this is not trivial.
 
 
 stubs for driver.c:
-struct GameDriver blazer_driver;
-struct GameDriver ws90_driver;
-struct GameDriver dspirits_driver;
-struct GameDriver splatter_driver;
-struct GameDriver galaga88_driver;
-struct GameDriver pacmania_driver;
+------------------
+
+extern struct GameDriver blazer_driver;
+extern struct GameDriver ws90_driver;
+extern struct GameDriver dspirits_driver;
+extern struct GameDriver splatter_driver;
+extern struct GameDriver galaga88_driver;
+extern struct GameDriver pacmania_driver;
 
 ***************************************************************************/
 
@@ -220,7 +222,29 @@ static struct GfxLayout tilelayout =
     64*8     /* every char takes 64 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout spritelayout0 =
+{
+	8,8,  /* 8*8 sprites */
+	2*8192,	/* 2*8192 sprites */
+	4,      /* 4 bits per pixel */
+	{ 0, 1, 2, 3 },        /* the bitplanes are packed */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	64*8    /* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout1 =
+{
+	8,8,  /* 8*8 sprites */
+	2*8192,	/* 2*8192 sprites */
+	4,      /* 4 bits per pixel */
+	{ 0, 1, 2, 3 },        /* the bitplanes are packed */
+	{ 8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	64*8    /* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout spritelayout16 =
 {
 	16,16,  /* 32*32 sprites */
 	8192,	/* 8192 sprites */
@@ -237,7 +261,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, 	&charlayout,   0, 1 }, /* character's mask */
 	{ 1, 0x20000, 	&tilelayout,   256*8, 16 }, /* characters */
-	{ 1, 0x120000,	&spritelayout, 0, 128 }, /* sprites */
+	{ 1, 0x120000,	&spritelayout16, 0, 128 }, /* sprites */
+	{ 1, 0x120000,	&spritelayout0, 0, 128 }, /* sprites */
+	{ 1, 0x120000,	&spritelayout1, 0, 128 }, /* sprites */
 	{ -1 } /* end of array */
 };
 
@@ -249,7 +275,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ */
-	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) },
+	{ 50 },
 	{ namcos1_sound_interrupt },
 	{ 0 }
 };
@@ -259,7 +285,7 @@ static struct namco_interface namco_interface =
 	23920/2,/* sample rate (approximate value) */
 	8,		/* number of voices */
 	16,		/* gain adjustment */
-	25,		/* playback volume */
+	50,		/* playback volume */
 	8,		/* memory region */
 	1		/* stereo */
 };
@@ -274,28 +300,28 @@ static struct MachineDriver machine_driver =
 	{
 		{
 		    CPU_M6809,
-		    3500000,        /* 3 Mhz ??? */
+		    2000000,        /* 2 Mhz ??? */
 		    0,
 		    main_readmem,main_writemem,0,0,
 		    interrupt,1,
 		},
 		{
 		    CPU_M6809,
-		    3500000,        /* 3 Mhz ??? */
+		    2000000,        /* 2 Mhz ??? */
 		    2,
 		    sub_readmem,sub_writemem,0,0,
 		    interrupt,1,
 		},
 		{
 		    CPU_M6809,
-		    3500000,        /* 3 Mhz ??? */
+		    2000000,        /* 2 Mhz ??? */
 		    3,
 		    sound_readmem,sound_writemem,0,0,
 		    interrupt,1
 		},
 		{
 		    CPU_HD63701,	/* or compatible 6808 with extra instructions */
-		    3500000,        /* 3 Mhz ??? */
+		    3000000,        /* 3 Mhz ??? */
 		    7,
 		    mcu_readmem,mcu_writemem,0,0,
 		    interrupt,1
@@ -311,7 +337,7 @@ static struct MachineDriver machine_driver =
 	3*256*8,3*256*8,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	namcos1_vh_start,
 	namcos1_vh_stop,
@@ -380,31 +406,6 @@ ROM_START( pacmania_rom )
 	ROM_CONTINUE(				0xb000, 0x1000 ) /* This bank has the 63701 code */
 ROM_END
 
-struct GameDriver pacmania_driver =
-{
-	__FILE__,
-	0,
-    "pacmania",
-    "Pacmania",
-	"1987",
-	"Namco",
-    "Ernesto Corvi\n",
-	0,
-    &machine_driver,
-	pacmania_driver_init,
-    pacmania_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
-
-    input_ports,
-
-    0, 0, 0,
-    ORIENTATION_ROTATE_90,
-
-    0, 0
-};
-
 /* Galaga 88 */
 ROM_START( galaga88_rom )
     ROM_REGION(0x10000)     /* 64k for the main cpu */
@@ -463,31 +464,6 @@ ROM_START( galaga88_rom )
 	ROM_LOAD( "G88_VCE4.ROM",   0x50000, 0x10000, 0xac0279a7 )	/* 16 * 4k banks */
 	ROM_LOAD( "G88_VCE5.ROM",   0x60000, 0x10000, 0x014ddba1 )	/* 16 * 4k banks */
 ROM_END
-
-struct GameDriver galaga88_driver =
-{
-	__FILE__,
-	0,
-    "galaga88",
-    "Galaga 88",
-	"1987",
-	"Namco",
-    "Ernesto Corvi\n",
-	0,
-    &machine_driver,
-	galaga88_driver_init,
-    galaga88_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
-
-    input_ports,
-
-    0, 0, 0,
-    ORIENTATION_ROTATE_90,
-
-    0, 0
-};
 
 /* Splatter House */
 ROM_START( splatter_rom )
@@ -557,31 +533,6 @@ ROM_START( splatter_rom )
 	ROM_LOAD( "voice3",			0x70000, 0x20000, 0x5eebcdb4 )	/* 32 * 4k banks */
 ROM_END
 
-struct GameDriver splatter_driver =
-{
-	__FILE__,
-	0,
-    "splatter",
-    "Splatter House",
-	"1987",
-	"Namco",
-    "Ernesto Corvi\n",
-	GAME_NOT_WORKING,
-    &machine_driver,
-	splatter_driver_init,
-    splatter_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
-
-    input_ports,
-
-    0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-    0, 0
-};
-
 /* Dragon Spirits */
 ROM_START( dspirits_rom )
     ROM_REGION(0x10000)     /* 64k for the main cpu */
@@ -649,31 +600,6 @@ ROM_START( dspirits_rom )
 	ROM_LOAD( "DSVOI-4.BIN",	0x80000, 0x20000, 0x34fbb8cd )	/* 32 * 4k banks */
 ROM_END
 
-struct GameDriver dspirits_driver =
-{
-	__FILE__,
-	0,
-    "dspirits",
-    "Dragon Spirits",
-	"1987",
-	"Namco",
-    "Ernesto Corvi\n",
-	GAME_NOT_WORKING,
-    &machine_driver,
-	dspirits_driver_init,
-    dspirits_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
-
-    input_ports,
-
-    0, 0, 0,
-    ORIENTATION_ROTATE_90,
-
-    0, 0
-};
-
 /* World Stadium 90 */
 ROM_START( ws90_rom )
     ROM_REGION(0x10000)     /* 64k for the main cpu */
@@ -726,31 +652,6 @@ ROM_START( ws90_rom )
 	ROM_CONTINUE(				0xb000, 0x1000 ) /* This bank has the 63701 code */
 	ROM_LOAD( "WSVOI-1.BIN",	0x20000, 0x20000, 0x210e2af9 )	/* 32 * 4k banks */
 ROM_END
-
-struct GameDriver ws90_driver =
-{
-	__FILE__,
-	0,
-    "ws90",
-    "World Stadium 90",
-	"1990",
-	"Namco",
-    "Ernesto Corvi\n",
-	GAME_NOT_WORKING,
-    &machine_driver,
-	ws90_driver_init,
-    ws90_rom,
-    0, 0,
-    0,
-    0,      /* sound_prom */
-
-    input_ports,
-
-    0, 0, 0,
-    ORIENTATION_DEFAULT,
-
-    0, 0
-};
 
 /* Blazer */
 ROM_START( blazer_rom )
@@ -814,6 +715,131 @@ ROM_START( blazer_rom )
 	ROM_LOAD( "voice3.rom",		0x60000, 0x20000, 0x7d22ac3f )	/* 32 * 4k banks */
 ROM_END
 
+struct GameDriver pacmania_driver =
+{
+	__FILE__,
+	0,
+    "pacmania",
+    "Pacmania",
+	"1987",
+	"Namco",
+    "Ernesto Corvi\nJROK",
+	0,
+    &machine_driver,
+	pacmania_driver_init,
+    pacmania_rom,
+    0, 0,
+    0,
+    0,      /* sound_prom */
+
+    input_ports,
+
+    0, 0, 0,
+    ORIENTATION_ROTATE_90,
+
+    0, 0
+};
+
+struct GameDriver galaga88_driver =
+{
+	__FILE__,
+	0,
+    "galaga88",
+    "Galaga 88",
+	"1987",
+	"Namco",
+    "Ernesto Corvi\nJROK",
+	0,
+    &machine_driver,
+	galaga88_driver_init,
+    galaga88_rom,
+    0, 0,
+    0,
+    0,      /* sound_prom */
+
+    input_ports,
+
+    0, 0, 0,
+    ORIENTATION_ROTATE_90,
+
+    0, 0
+};
+
+struct GameDriver splatter_driver =
+{
+	__FILE__,
+	0,
+    "splatter",
+    "Splatter House",
+	"1987",
+	"Namco",
+    "Ernesto Corvi\nJROK",
+	GAME_NOT_WORKING,
+    &machine_driver,
+	splatter_driver_init,
+    splatter_rom,
+    0, 0,
+    0,
+    0,      /* sound_prom */
+
+    input_ports,
+
+    0, 0, 0,
+    ORIENTATION_DEFAULT,
+
+    0, 0
+};
+
+struct GameDriver dspirits_driver =
+{
+	__FILE__,
+	0,
+    "dspirits",
+    "Dragon Spirits",
+	"1987",
+	"Namco",
+    "Ernesto Corvi\nJROK",
+	GAME_NOT_WORKING,
+    &machine_driver,
+	dspirits_driver_init,
+    dspirits_rom,
+    0, 0,
+    0,
+    0,      /* sound_prom */
+
+    input_ports,
+
+    0, 0, 0,
+    ORIENTATION_ROTATE_90,
+
+    0, 0
+};
+
+struct GameDriver ws90_driver =
+{
+	__FILE__,
+	0,
+    "ws90",
+    "World Stadium 90",
+	"1990",
+	"Namco",
+    "Ernesto Corvi\nJROK",
+	GAME_NOT_WORKING,
+    &machine_driver,
+	ws90_driver_init,
+    ws90_rom,
+    0, 0,
+    0,
+    0,      /* sound_prom */
+
+    input_ports,
+
+    0, 0, 0,
+    ORIENTATION_DEFAULT,
+
+    0, 0
+};
+
 struct GameDriver blazer_driver =
 {
 	__FILE__,
@@ -822,7 +848,7 @@ struct GameDriver blazer_driver =
     "Blazer",
 	"????",
 	"Namco",
-    "Ernesto Corvi\n",
+    "Ernesto Corvi\nJROK",
 	GAME_NOT_WORKING,
     &machine_driver,
 	blazer_driver_init,

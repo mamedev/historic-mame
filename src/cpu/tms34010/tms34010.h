@@ -57,9 +57,7 @@ typedef struct
     void (*from_shiftreg)(UINT32 address, UINT16* shiftreg);
 	UINT8* stackbase;
 	UINT32 stackoffs;
-#if NEW_INTERRUPT_SYSTEM
 	int (*irq_callback)(int irqline);
-#endif
 } TMS34010_Regs;
 
 /* average instruction time in cycles */
@@ -71,20 +69,19 @@ typedef struct
 #define TMS34010_INT2		0x0004	/* External Interrupt 2 */
 
 /* PUBLIC FUNCTIONS */
-extern unsigned TMS34010_GetPC(void);
-extern void TMS34010_SetRegs(TMS34010_Regs *Regs);
-extern void TMS34010_GetRegs(TMS34010_Regs *Regs);
-extern void TMS34010_Reset(void);
-extern int	TMS34010_Execute(int cycles);
-#if NEW_INTERRUPT_SYSTEM
+extern void TMS34010_reset(void *param);
+extern void TMS34010_exit(void);
+extern int	TMS34010_execute(int cycles);
+extern void TMS34010_setregs(TMS34010_Regs *Regs);
+extern void TMS34010_getregs(TMS34010_Regs *Regs);
+extern unsigned TMS34010_getpc(void);
+extern unsigned TMS34010_getreg(int regnum);
+extern void TMS34010_setreg(int regnum, unsigned val);
 extern void TMS34010_set_nmi_line(int linestate);
 extern void TMS34010_set_irq_line(int irqline, int linestate);
 extern void TMS34010_set_irq_callback(int (*callback)(int irqline));
 extern void TMS34010_internal_interrupt(int type);
-#else
-extern void TMS34010_Cause_Interrupt(int type);
-extern void TMS34010_Clear_Pending_Interrupts(void);
-#endif
+extern const char *TMS34010_info(void *context, int regnum);
 
 extern void TMS34010_State_Save(int cpunum, void *f);
 extern void TMS34010_State_Load(int cpunum, void *f);
@@ -121,5 +118,9 @@ extern int TMS34010_ICount;
 /* Use this macro in the memory definitions to specify bit-based addresses */
 #define TOBYTE(bitaddr) ((UINT32) (bitaddr)>>3)
 
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern int Dasm34010 (unsigned char *pBase, char *buff, int _pc);
+#endif
 
 #endif /* _TMS34010_H */

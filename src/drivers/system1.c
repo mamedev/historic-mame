@@ -148,6 +148,8 @@ void system1_soundport_w(int offset, int data)
 {
 	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,Z80_NMI_INT);
+	/* spin for a while to let the Z80 read the command (fixes hanging sound in Regulus) */
+	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
 
 
@@ -2265,11 +2267,11 @@ ROM_START( seganinj_rom )
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6593.62",      0x0000, 0x2000, 0x2af9eaeb )
+	ROM_LOAD( "6558.82",      0x0000, 0x2000, 0x2af9eaeb )
 	ROM_LOAD( "6592.61",      0x2000, 0x2000, 0x7804db86 )
-	ROM_LOAD( "6591.64",      0x4000, 0x2000, 0x79fd26f7 )
+	ROM_LOAD( "6556.81",      0x4000, 0x2000, 0x79fd26f7 )
 	ROM_LOAD( "6590.63",      0x6000, 0x2000, 0xbf858cad )
-	ROM_LOAD( "6589.66",      0x8000, 0x2000, 0x5ac9d205 )
+	ROM_LOAD( "6554.80",      0x8000, 0x2000, 0x5ac9d205 )
 	ROM_LOAD( "6588.65",      0xA000, 0x2000, 0xdc931dbb )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
@@ -2289,11 +2291,11 @@ ROM_START( seganinu_rom )
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6593.62",      0x0000, 0x2000, 0x2af9eaeb )
+	ROM_LOAD( "6558.82",      0x0000, 0x2000, 0x2af9eaeb )
 	ROM_LOAD( "6592.61",      0x2000, 0x2000, 0x7804db86 )
-	ROM_LOAD( "6591.64",      0x4000, 0x2000, 0x79fd26f7 )
+	ROM_LOAD( "6556.81",      0x4000, 0x2000, 0x79fd26f7 )
 	ROM_LOAD( "6590.63",      0x6000, 0x2000, 0xbf858cad )
-	ROM_LOAD( "6589.66",      0x8000, 0x2000, 0x5ac9d205 )
+	ROM_LOAD( "6554.80",      0x8000, 0x2000, 0x5ac9d205 )
 	ROM_LOAD( "6588.65",      0xA000, 0x2000, 0xdc931dbb )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
@@ -2313,12 +2315,12 @@ ROM_START( nprinces_rom )
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6593.62",      0x0000, 0x2000, 0x2af9eaeb )
-	ROM_LOAD( "epr6557.61",   0x2000, 0x2000, 0x6eb131d0 )
-	ROM_LOAD( "6591.64",      0x4000, 0x2000, 0x79fd26f7 )
-	ROM_LOAD( "epr6555.63",   0x6000, 0x2000, 0x7f669aac )
-	ROM_LOAD( "6589.66",      0x8000, 0x2000, 0x5ac9d205 )
-	ROM_LOAD( "epr6553.65",   0xA000, 0x2000, 0xeb82a8fe )
+	ROM_LOAD( "6558.82",      0x0000, 0x2000, 0x2af9eaeb )
+	ROM_LOAD( "6557.65",      0x2000, 0x2000, 0x6eb131d0 )
+	ROM_LOAD( "6556.81",      0x4000, 0x2000, 0x79fd26f7 )
+	ROM_LOAD( "6555.64",      0x6000, 0x2000, 0x7f669aac )
+	ROM_LOAD( "6554.80",      0x8000, 0x2000, 0x5ac9d205 )
+	ROM_LOAD( "6553.63",      0xA000, 0x2000, 0xeb82a8fe )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
 	ROM_LOAD( "6546.117",     0x0000, 0x4000, 0xa4785692 )
@@ -2330,19 +2332,46 @@ ROM_START( nprinces_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( nprinceb_rom )
+ROM_START( nprincsu_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6573.129",     0x0000, 0x2000, 0xd2919c7d )
+	ROM_LOAD( "6574.130",     0x2000, 0x2000, 0x5a132833 )
+	ROM_LOAD( "6575.131",     0x4000, 0x2000, 0xa94b0bd4 )
+	ROM_LOAD( "6576.132",     0x6000, 0x2000, 0x27d3bbdb )
+	ROM_LOAD( "6577.133",     0x8000, 0x2000, 0x73616e03 )
+	ROM_LOAD( "6578.134",     0xa000, 0x2000, 0xab68499f )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6558.82",      0x0000, 0x2000, 0x2af9eaeb )
+	ROM_LOAD( "6557.65",      0x2000, 0x2000, 0x6eb131d0 )
+	ROM_LOAD( "6556.81",      0x4000, 0x2000, 0x79fd26f7 )
+	ROM_LOAD( "6555.64",      0x6000, 0x2000, 0x7f669aac )
+	ROM_LOAD( "6554.80",      0x8000, 0x2000, 0x5ac9d205 )
+	ROM_LOAD( "6553.63",      0xA000, 0x2000, 0xeb82a8fe )
+
+	ROM_REGION(0x10000)	/* 64k for sprites data */
+	ROM_LOAD( "6546.117",     0x0000, 0x4000, 0xa4785692 )
+	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
+	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
+	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
+ROM_END
+
+ROM_START( nprincsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "nprinces.001", 0x0000, 0x4000, 0xe0de073c )	/* encrypted */
 	ROM_LOAD( "nprinces.002", 0x4000, 0x4000, 0x27219c7f )	/* encrypted */
 	ROM_LOAD( "7151.96",      0x8000, 0x4000, 0xf2eeb0d8 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "6593.62",      0x0000, 0x2000, 0x2af9eaeb )
-	ROM_LOAD( "epr6557.61",   0x2000, 0x2000, 0x6eb131d0 )
-	ROM_LOAD( "6591.64",      0x4000, 0x2000, 0x79fd26f7 )
-	ROM_LOAD( "epr6555.63",   0x6000, 0x2000, 0x7f669aac )
-	ROM_LOAD( "6589.66",      0x8000, 0x2000, 0x5ac9d205 )
-	ROM_LOAD( "epr6553.65",   0xA000, 0x2000, 0xeb82a8fe )
+	ROM_LOAD( "6558.82",      0x0000, 0x2000, 0x2af9eaeb )
+	ROM_LOAD( "6557.65",      0x2000, 0x2000, 0x6eb131d0 )
+	ROM_LOAD( "6556.81",      0x4000, 0x2000, 0x79fd26f7 )
+	ROM_LOAD( "6555.64",      0x6000, 0x2000, 0x7f669aac )
+	ROM_LOAD( "6554.80",      0x8000, 0x2000, 0x5ac9d205 )
+	ROM_LOAD( "6553.63",      0xA000, 0x2000, 0xeb82a8fe )
 
 	ROM_REGION(0x10000)	/* 64k for sprites data */
 	ROM_LOAD( "6546.117",     0x0000, 0x4000, 0xa4785692 )
@@ -4154,12 +4183,37 @@ struct GameDriver nprinces_driver =
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver nprinceb_driver =
+struct GameDriver nprincsu_driver =
 {
 	__FILE__,
 	&seganinj_driver,
-	"nprinceb",
-	"Ninja Princess (bootleg)",
+	"nprincsu",
+	"Ninja Princess (not encrypted)",
+	"1985",
+	"Sega",
+	BASE_CREDITS,
+	0,
+	&system1_machine_driver,
+	0,
+
+	nprincsu_rom,
+	0, 0,   				/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	seganinj_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	seganinj_hiload, seganinj_hisave
+};
+
+struct GameDriver nprincsb_driver =
+{
+	__FILE__,
+	&seganinj_driver,
+	"nprincsb",
+	"Ninja Princess (bootleg?)",
 	"1985",
 	"bootleg?",
 	BASE_CREDITS,
@@ -4167,7 +4221,7 @@ struct GameDriver nprinceb_driver =
 	&system1_machine_driver,
 	0,
 
-	nprinceb_rom,
+	nprincsb_rom,
 	0, flicky_decode,		/* ROM decode and opcode decode functions */
 	0,      				/* Sample names */
 	0,

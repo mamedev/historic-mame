@@ -38,15 +38,15 @@ static struct MemoryReadAddress berzerk_readmem[] =
         { 0x0000, 0x07ff, MRA_ROM},
         { 0x0800, 0x09ff, MRA_RAM},
         { 0x1000, 0x3fff, MRA_ROM},
-        { 0x4000, 0x5fff, MRA_RAM},
-        { 0x6000, 0x7fff, MRA_RAM, &berzerk_magicram},
-        { 0x8000, 0x87ff, colorram_r},
+        { 0x4000, 0x87ff, MRA_RAM},
         { -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress berzerk_writemem[] =
 {
+		{ 0x0000, 0x07ff, MWA_ROM},
         { 0x0800, 0x09ff, MWA_RAM},
+        { 0x1000, 0x3fff, MWA_ROM},
         { 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
         { 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
         { 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
@@ -57,9 +57,7 @@ static struct MemoryWriteAddress berzerk_writemem[] =
 static struct MemoryReadAddress frenzy_readmem[] =
 {
         { 0x0000, 0x3fff, MRA_ROM },
-        { 0x4000, 0x5fff, MRA_RAM },
-        { 0x6000, 0x7fff, MRA_RAM, &berzerk_magicram },
-        { 0x8000, 0x87ff, colorram_r },
+        { 0x4000, 0x87ff, MRA_RAM },
         { 0xc000, 0xcfff, MRA_ROM },
         { 0xf800, 0xf9ff, MRA_RAM },
         { -1 }  /* end of table */
@@ -67,9 +65,11 @@ static struct MemoryReadAddress frenzy_readmem[] =
 
 static struct MemoryWriteAddress frenzy_writemem[] =
 {
+		{ 0x0000, 0x3fff, MWA_ROM },
         { 0x4000, 0x5fff, berzerk_videoram_w, &videoram, &videoram_size},
         { 0x6000, 0x7fff, berzerk_magicram_w, &berzerk_magicram},
         { 0x8000, 0x87ff, berzerk_colorram_w, &colorram},
+        { 0xc000, 0xcfff, MWA_ROM },
         { 0xf800, 0xf9ff, MWA_RAM },
         { -1 }  /* end of table */
 };
@@ -153,9 +153,9 @@ INPUT_PORTS_START( berzerk_input_ports )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
         PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
-        PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "Upright" )
+        PORT_DIPSETTING(    0x00, "Cocktail" )
 
         PORT_START      /* IN3 */
 		PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Input Test Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
@@ -223,9 +223,9 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
         PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNUSED )
-        PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x80, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "Upright" )
+        PORT_DIPSETTING(    0x00, "Cocktail" )
 
         PORT_START      /* IN3 */
         PORT_DIPNAME( 0x0f, 0x03, "Bonus Life", IP_KEY_NONE )
@@ -325,7 +325,7 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_BIT( 0xf0, IP_ACTIVE_HIGH,  IPT_UNUSED )
 
         PORT_START      /* IN8 */
-        PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )	/* Some kind of freeze screen? */
+        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
         PORT_BIT( 0x7e, IP_ACTIVE_LOW,  IPT_UNUSED )
         PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", OSD_KEY_F1, IP_JOY_NONE, 0 )
 INPUT_PORTS_END

@@ -75,8 +75,8 @@ int mpatrol_protection_r(int offset)
 
 
 //if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_getpc());
-	Z80_GetRegs(&regs);
-	return regs.DE.B.l;
+	z80_getregs(&regs);
+	return regs.DE.b.l;
 }
 
 

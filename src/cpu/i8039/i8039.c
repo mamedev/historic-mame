@@ -1,8 +1,8 @@
 /**************************************************************************
  *                      Intel 8039 Portable Emulator                      *
  *                                                                        *
- *                   Copyright (C) 1997 by Mirko Buffoni                  *
- *  Based on the original work (C) 1997 by Dan Boris, an 8048 emulator    *
+ *					 Copyright (C) 1997 by Mirko Buffoni				  *
+ *	Based on the original work (C) 1997 by Dan Boris, an 8048 emulator	  *
  *     You are not allowed to distribute this software commercially       *
  *        Please, notify me, if you make any changes to this file         *
  **************************************************************************/
@@ -44,7 +44,7 @@ extern FILE *errorlog;
 #define B_FLAG          0x10
 
 static I8039_Regs R;
-int    I8039_ICount;
+int    i8039_ICount;
 static UINT8 Old_T1;
 
 typedef void (*opcode_fn) (void);
@@ -82,8 +82,8 @@ INLINE void SET (UINT8 flag) { R.PSW |= flag;  }
 INLINE unsigned M_RDMEM_OPCODE (void)
 {
         unsigned retval;
-        retval=M_RDOP_ARG(R.PC.W);
-        R.PC.W++;
+		retval=M_RDOP_ARG(R.PC.w.l);
+		R.PC.w.l++;
         return retval;
 }
 
@@ -138,9 +138,9 @@ INLINE void M_ADDC(UINT8 dat)
 
 INLINE void M_CALL(UINT16 addr)
 {
-	push(R.PC.B.l);
-	push((R.PC.B.h & 0x0f) | (R.PSW & 0xf0));
-	R.PC.W = addr;
+	push(R.PC.b.l);
+	push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
+	R.PC.w.l = addr;
 	/*change_pc(addr);*/
 }
 
@@ -157,13 +157,13 @@ INLINE void M_XCHD(UINT8 addr)
 INLINE void M_ILLEGAL(void)
 {
 	if (errorlog)
-	  fprintf(errorlog, "I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.W-1, M_RDMEM(R.PC.W-1));
+	  fprintf(errorlog, "I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
 }
 
 INLINE void M_UNDEFINED(void)
 {
 	if (errorlog)
-	  fprintf(errorlog, "I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.W-1, M_RDMEM(R.PC.W-1));
+	  fprintf(errorlog, "I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
 }
 
 
@@ -247,14 +247,14 @@ static void dec_r6(void)     { R6--; }
 static void dec_r7(void)     { R7--; }
 static void dis_i(void)      { R.xirq_en = 0; }
 static void dis_tcnti(void)  { R.tirq_en = 0; }
-static void djnz_r0(void)	 { UINT8 i=M_RDMEM_OPCODE(); R0--; if (R0 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r1(void)	 { UINT8 i=M_RDMEM_OPCODE(); R1--; if (R1 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r2(void)	 { UINT8 i=M_RDMEM_OPCODE(); R2--; if (R2 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r3(void)	 { UINT8 i=M_RDMEM_OPCODE(); R3--; if (R3 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r4(void)	 { UINT8 i=M_RDMEM_OPCODE(); R4--; if (R4 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r5(void)	 { UINT8 i=M_RDMEM_OPCODE(); R5--; if (R5 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r6(void)	 { UINT8 i=M_RDMEM_OPCODE(); R6--; if (R6 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void djnz_r7(void)	 { UINT8 i=M_RDMEM_OPCODE(); R7--; if (R7 != 0) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
+static void djnz_r0(void)	 { UINT8 i=M_RDMEM_OPCODE(); R0--; if (R0 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r1(void)	 { UINT8 i=M_RDMEM_OPCODE(); R1--; if (R1 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r2(void)	 { UINT8 i=M_RDMEM_OPCODE(); R2--; if (R2 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r3(void)	 { UINT8 i=M_RDMEM_OPCODE(); R3--; if (R3 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r4(void)	 { UINT8 i=M_RDMEM_OPCODE(); R4--; if (R4 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r5(void)	 { UINT8 i=M_RDMEM_OPCODE(); R5--; if (R5 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r6(void)	 { UINT8 i=M_RDMEM_OPCODE(); R6--; if (R6 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void djnz_r7(void)	 { UINT8 i=M_RDMEM_OPCODE(); R7--; if (R7 != 0) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
 static void en_i(void)       { R.xirq_en = 1; if (R.irq_state != CLEAR_LINE) R.pending_irq |= I8039_EXT_INT; }
 static void en_tcnti(void)   { R.tirq_en = 1; }
 static void ento_clk(void)   { M_UNDEFINED(); }
@@ -273,49 +273,49 @@ static void inc_r7(void)     { R7++; }
 static void inc_xr0(void)    { intRAM[R0 & 0x7F]++; }
 static void inc_xr1(void)    { intRAM[R1 & 0x7F]++; }
 
-/* static void jmp(void)		{ UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | R.A11; }
+/* static void jmp(void)		{ UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | R.A11; }
  */
 
 static void jmp(void)
 {
-  UINT8 i=M_RDOP(R.PC.W);
+  UINT8 i=M_RDOP(R.PC.w.l);
   UINT16 oldpc,newpc;
 
-  oldpc = R.PC.W-1;
- R.PC.W = i | R.A11;         /*change_pc(R.PC.W);*/
-  newpc = R.PC.W;
-  if (newpc == oldpc) { if (I8039_ICount > 0) I8039_ICount = 0; } /* speed up busy loop */
+  oldpc = R.PC.w.l-1;
+  R.PC.w.l = i | R.A11; 		/*change_pc(R.PC.w.l);*/
+  newpc = R.PC.w.l;
+  if (newpc == oldpc) { if (i8039_ICount > 0) i8039_ICount = 0; } /* speed up busy loop */
   else if (newpc == oldpc-1 && M_RDOP(newpc) == 0x00)	/* NOP - Gyruss */
-	  { if (I8039_ICount > 0) I8039_ICount = 0; }
+	  { if (i8039_ICount > 0) i8039_ICount = 0; }
 }
-static void jmp_1(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x100 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_2(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x200 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_3(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x300 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_4(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x400 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_5(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x500 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_6(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x600 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmp_7(void) 	 { UINT8 i=M_RDOP(R.PC.W); R.PC.W = i | 0x700 | R.A11; /*change_pc(R.PC.W);*/ }
-static void jmpp_xa(void)	 { UINT16 addr = (R.PC.W & 0xf00) | R.A; R.PC.W = (R.PC.W & 0xf00) | M_RDMEM(addr); /*change_pc(R.PC.W);*/ }
-static void jb_0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x01) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x02) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_2(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x04) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_3(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x08) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_4(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x10) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_5(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x20) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_6(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x40) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jb_7(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x80) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jf0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_F0y) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jf_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.f1)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jnc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cn)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cy)	{ R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jni(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.irq_state != CLEAR_LINE) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jnt_0(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(0)) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jt_0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (test_r(0))  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jnt_1(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(1)) { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jt_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (test_r(1))  { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jnz(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A != 0)	 { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jz(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A == 0)	 { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ } }
-static void jtf(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.t_flag)	 { R.PC.W = (R.PC.W & 0xf00) | i; /*change_pc(R.PC.W);*/ R.t_flag = 0; } }
+static void jmp_1(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x100 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_2(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x200 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_3(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x300 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_4(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x400 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_5(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x500 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_6(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x600 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmp_7(void) 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x700 | R.A11; /*change_pc(R.PC.w.l);*/ }
+static void jmpp_xa(void)	 { UINT16 addr = (R.PC.w.l & 0xf00) | R.A; R.PC.w.l = (R.PC.w.l & 0xf00) | M_RDMEM(addr); /*change_pc(R.PC.w.l);*/ }
+static void jb_0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x01) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x02) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_2(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x04) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_3(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x08) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_4(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x10) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_5(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x20) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_6(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x40) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jb_7(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x80) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jf0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_F0y) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jf_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.f1)	{ R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jnc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cn)	{ R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jc(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (M_Cy)	{ R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jni(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.irq_state != CLEAR_LINE) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jnt_0(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(0)) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jt_0(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (test_r(0))  { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jnt_1(void) 	 { UINT8 i=M_RDMEM_OPCODE(); if (!test_r(1)) { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jt_1(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (test_r(1))  { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jnz(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A != 0)	 { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jz(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.A == 0)	 { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ } }
+static void jtf(void)		 { UINT8 i=M_RDMEM_OPCODE(); if (R.t_flag)	 { R.PC.w.l = (R.PC.w.l & 0xf00) | i; /*change_pc(R.PC.w.l);*/ R.t_flag = 0; } }
 static void mov_a_n(void)    { R.A = M_RDMEM_OPCODE(); }
 static void mov_a_r0(void)   { R.A = R0; }
 static void mov_a_r1(void)   { R.A = R1; }
@@ -359,7 +359,7 @@ static void movd_p4_a(void)  { port_w(4, R.A); }
 static void movd_p5_a(void)  { port_w(5, R.A); }
 static void movd_p6_a(void)  { port_w(6, R.A); }
 static void movd_p7_a(void)  { port_w(7, R.A); }
-static void movp_a_xa(void)  { R.A = M_RDMEM((R.PC.W & 0x0f00) | R.A); }
+static void movp_a_xa(void)  { R.A = M_RDMEM((R.PC.w.l & 0x0f00) | R.A); }
 static void movp3_a_xa(void) { R.A = M_RDMEM(0x300 | R.A); }
 static void movx_a_xr0(void) { R.A = M_IN(R0); }
 static void movx_a_xr1(void) { R.A = M_IN(R1); }
@@ -387,11 +387,11 @@ static void orld_p7_a(void)  { port_w(7, port_r(7) | R.A ); }
 static void outl_bus_a(void) { bus_w(R.A); }
 static void outl_p1_a(void)  { port_w(1, R.A ); }
 static void outl_p2_a(void)  { port_w(2, R.A ); }
-static void ret(void)        { R.PC.W = ((pull() & 0x0f) << 8); R.PC.W |= pull(); /*change_pc(R.PC.W);*/ }
+static void ret(void)		 { R.PC.w.l = ((pull() & 0x0f) << 8); R.PC.w.l |= pull(); /*change_pc(R.PC.w.l);*/ }
 static void retr(void)
 {
 	UINT8 i=pull();
-	R.PC.W = ((i & 0x0f) << 8) | pull(); /*change_pc(R.PC.W);*/
+	R.PC.w.l = ((i & 0x0f) << 8) | pull(); /*change_pc(R.PC.w.l);*/
 	R.irq_executing = I8039_IGNORE_INT;
 //	R.A11 = R.A11ff;	/* NS990113 */
 	R.PSW = (R.PSW & 0x0f) | (i & 0xf0);   /* Stack is already changed by pull */
@@ -492,35 +492,49 @@ static opcode_fn opcode_main[256]=
 };
 
 
-
-
-
 /****************************************************************************/
-/* Set all registers to given values                                        */
+/* Issue an interrupt if necessary                                          */
 /****************************************************************************/
-void I8039_SetRegs (I8039_Regs *Regs)
+static int Timer_IRQ(void)
 {
-	R=*Regs;
-	regPTR = ((M_By) ? 24 : 0);
-	R.SP = (R.PSW << 1) & 0x0f;
-	/*change_pc(R.PC.W);*/
+    if (R.tirq_en && !R.irq_executing)
+    {
+        if (errorlog) fprintf(errorlog, "I8039:  TIMER INTERRUPT\n");
+        R.irq_executing = I8039_TIMER_INT;
+        push(R.PC.b.l);
+        push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
+        R.PC.w.l = 0x07;
+        /*change_pc(0x07);*/
+        R.A11ff = R.A11;
+        R.A11   = 0;
+        return 2;       /* 2 clock cycles used */
+    }
+    return 0;
 }
 
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void I8039_GetRegs (I8039_Regs *Regs)
+static int Ext_IRQ(void)
 {
-	*Regs=R;
+    if (R.xirq_en) {
+//if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
+        R.irq_executing = I8039_EXT_INT;
+        push(R.PC.b.l);
+        push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
+        R.PC.w.l = 0x03;
+        R.A11ff = R.A11;
+        R.A11   = 0;
+        return 2;       /* 2 clock cycles used */
+    }
+    return 0;
 }
+
 
 
 /****************************************************************************/
 /* Reset registers to their initial values                                  */
 /****************************************************************************/
-void I8039_Reset (void)
+void i8039_reset (void *param)
 {
-	R.PC.W  = 0;
+	R.PC.w.l  = 0;
 	R.SP  = 0;
 	R.A   = 0;
 	R.PSW = 0x08;		/* Start with Carry SET, Bit 4 is always SET */
@@ -539,144 +553,160 @@ void I8039_Reset (void)
 
 
 /****************************************************************************/
-/* Return program counter                                                   */
+/* Shut down CPU emulation													*/
 /****************************************************************************/
-unsigned I8039_GetPC (void)
+void i8039_exit (void)
 {
-	return R.PC.W;
+	/* nothing to do ? */
 }
 
-
 /****************************************************************************/
-/* Issue an interrupt if necessary                                          */
+/* Execute cycles CPU cycles. Return number of cycles really executed		*/
 /****************************************************************************/
-static int Timer_IRQ(void)
+int i8039_execute(int cycles)
 {
-	if (R.tirq_en && !R.irq_executing)
-	{
-		if (errorlog) fprintf(errorlog, "I8039:  TIMER INTERRUPT\n");
-		R.irq_executing = I8039_TIMER_INT;
-		push(R.PC.B.l);
-		push((R.PC.B.h & 0x0f) | (R.PSW & 0xf0));
-		R.PC.W = 0x07;
-		/*change_pc(0x07);*/
-		R.A11ff = R.A11;
-		R.A11   = 0;
-		return 2;		/* 2 clock cycles used */
-	}
-	return 0;
-}
+    unsigned opcode, T1;
+    int count;
 
-static int Ext_IRQ(void)
-{
-	if (R.xirq_en) {
-//if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
-		R.irq_executing = I8039_EXT_INT;
-		push(R.PC.B.l);
-		push((R.PC.B.h & 0x0f) | (R.PSW & 0xf0));
-		R.PC.W = 0x03;
-		R.A11ff = R.A11;
-		R.A11   = 0;
-		return 2;		/* 2 clock cycles used */
-	}
-	return 0;
-}
+	i8039_ICount=cycles;
 
-
-
-
-/****************************************************************************/
-/* Execute IPeriod T-States. Return 0 if emulation should be stopped        */
-/****************************************************************************/
-int I8039_Execute(int cycles)
-{
-	unsigned opcode, T1;
-	int count;
-
-	I8039_ICount=cycles;
-
-	do {
+    do {
         switch (R.pending_irq)
-		{
-			case I8039_COUNT_INT:
-			case I8039_TIMER_INT:
-				count = Timer_IRQ();
-				I8039_ICount -= count;
-				if (R.timerON)	/* NS990113 */
-					R.masterClock += count;
-				R.t_flag = 1;
-				break;
-			case I8039_EXT_INT:
-				if (R.irq_callback) (*R.irq_callback)(0);
-				count = Ext_IRQ();
-				I8039_ICount -= count;
-				if (R.timerON)	/* NS990113 */
-					R.masterClock += count;
-				break;
-		}
+        {
+            case I8039_COUNT_INT:
+            case I8039_TIMER_INT:
+                count = Timer_IRQ();
+				i8039_ICount -= count;
+                if (R.timerON)  /* NS990113 */
+                    R.masterClock += count;
+                R.t_flag = 1;
+                break;
+            case I8039_EXT_INT:
+                if (R.irq_callback) (*R.irq_callback)(0);
+                count = Ext_IRQ();
+				i8039_ICount -= count;
+                if (R.timerON)  /* NS990113 */
+                    R.masterClock += count;
+                break;
+        }
         R.pending_irq = I8039_IGNORE_INT;
 
-		#ifdef MAME_DEBUG
-		{
-			extern int mame_debug;
-			if (mame_debug) MAME_Debug();
-		}
-		#endif
+        #ifdef MAME_DEBUG
+        {
+            extern int mame_debug;
+            if (mame_debug) MAME_Debug();
+        }
+        #endif
 
-		opcode=M_RDOP(R.PC.W);
+        opcode=M_RDOP(R.PC.w.l);
 
-/*		if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.W, opcode); */
+/*      if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
 
-		{	/* NS 971024 */
-			extern int previouspc;
-			previouspc = R.PC.W;
-		}
+        {   /* NS 971024 */
+            extern int previouspc;
+            previouspc = R.PC.w.l;
+        }
 
-		R.PC.W++;
-		I8039_ICount-=cycles_main[opcode];
-		(*(opcode_main[opcode]))();
+        R.PC.w.l++;
+		i8039_ICount-=cycles_main[opcode];
+        (*(opcode_main[opcode]))();
 
-		if (R.countON)	/* NS990113 */
-		{
-	        T1 = test_r(1);
-			if (POSITIVE_EDGE_T1)
-			{	/* Handle COUNTER IRQs */
-				R.timer++;
-#if NEW_INTERRUPT_SYSTEM
-				if (R.timer == 0) R.pending_irq = I8039_COUNT_INT;
-#else
-				if (R.timer == 0) I8039_Cause_Interrupt(I8039_COUNT_INT);
-#endif
+        if (R.countON)  /* NS990113 */
+        {
+            T1 = test_r(1);
+            if (POSITIVE_EDGE_T1)
+            {   /* Handle COUNTER IRQs */
+                R.timer++;
+                if (R.timer == 0) R.pending_irq = I8039_COUNT_INT;
 
-		        Old_T1 = T1;
-			}
-		}
+                Old_T1 = T1;
+            }
+        }
 
-		if (R.timerON) {						/* Handle TIMER IRQs */
-			R.masterClock += cycles_main[opcode];
-			if (R.masterClock >= 32) {	/* NS990113 */
-				R.masterClock -= 32;
-				R.timer++;
-#if NEW_INTERRUPT_SYSTEM
-				if (R.timer == 0) R.pending_irq = I8039_TIMER_INT;
-#else
-				if (R.timer == 0) I8039_Cause_Interrupt(I8039_TIMER_INT);
-#endif
-			}
-		}
-   } while (I8039_ICount>0);
+        if (R.timerON) {                        /* Handle TIMER IRQs */
+            R.masterClock += cycles_main[opcode];
+            if (R.masterClock >= 32) {  /* NS990113 */
+                R.masterClock -= 32;
+                R.timer++;
+                if (R.timer == 0) R.pending_irq = I8039_TIMER_INT;
+            }
+        }
+   } while (i8039_ICount>0);
 
-   return cycles - I8039_ICount;
+   return cycles - i8039_ICount;
 }
 
-#if NEW_INTERRUPT_SYSTEM
+/****************************************************************************/
+/* Set all registers to given values                                        */
+/****************************************************************************/
+void i8039_setregs (I8039_Regs *Regs)
+{
+    R=*Regs;
+    regPTR = ((M_By) ? 24 : 0);
+    R.SP = (R.PSW << 1) & 0x0f;
+    /*change_pc(R.PC.w.l);*/
+}
 
-void I8039_set_nmi_line(int state)
+
+/****************************************************************************/
+/* Get all registers in given buffer                                        */
+/****************************************************************************/
+void i8039_getregs (I8039_Regs *Regs)
+{
+    *Regs=R;
+}
+
+
+/****************************************************************************/
+/* Return program counter                                                   */
+/****************************************************************************/
+unsigned i8039_getpc (void)
+{
+	return R.PC.w.l;
+}
+
+
+/****************************************************************************/
+/* Get a specific register                                                  */
+/****************************************************************************/
+unsigned i8039_getreg (int regnum)
+{
+	switch( regnum )
+	{
+		case 0: return R.PC.w.l;
+		case 1: return R.A;
+		case 2: return R.SP;
+	}
+	return 0;
+}
+
+
+/****************************************************************************/
+/* Set a specific register                                                  */
+/****************************************************************************/
+void i8039_setreg (int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+		case 0: R.PC.w.l = val; break;
+		case 1: R.A = val; break;
+		case 2: R.SP = val; break;
+	}
+}
+
+
+/****************************************************************************/
+/* Set NMI line state														*/
+/****************************************************************************/
+void i8039_set_nmi_line(int state)
 {
 	/* I8039 does not have a NMI line */
 }
 
-void I8039_set_irq_line(int irqline, int state)
+/****************************************************************************/
+/* Set IRQ line state														*/
+/****************************************************************************/
+void i8039_set_irq_line(int irqline, int state)
 {
 	R.irq_state = state;
 	if (state == CLEAR_LINE)
@@ -685,22 +715,88 @@ void I8039_set_irq_line(int irqline, int state)
 		R.pending_irq |= I8039_EXT_INT;
 }
 
-void I8039_set_irq_callback(int (*callback)(int irqline))
+/****************************************************************************/
+/* Set IRQ callback (interrupt acknowledge) 								*/
+/****************************************************************************/
+void i8039_set_irq_callback(int (*callback)(int irqline))
 {
 	R.irq_callback = callback;
 }
 
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *i8039_info(void *context, int regnum)
+{
+	static char buffer[8][47+1];
+	static int which = 0;
+    I8039_Regs *r = (I8039_Regs *)context;
+
+	which = ++which % 8;
+	buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+    switch( regnum )
+    {
+		case CPU_INFO_NAME: return "I8039";
+		case CPU_INFO_FAMILY: return "Intel 8039";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris";
+
+		case CPU_INFO_PC: sprintf(buffer[which], "%03X:", r->PC.w.l & 0x7ff); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->SP); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_DASM: r->PC.w.l++; /* TODO: disassemble an instruction */ break;
 #else
-
-void I8039_Cause_Interrupt(int type)
-{
-	if (type != I8039_IGNORE_INT)
-		R.pending_irq = type;
-}
-
-void I8039_Clear_Pending_Interrupts(void)
-{
-	R.pending_irq = I8039_IGNORE_INT;
-}
-
+		case CPU_INFO_DASM: r->PC.w.l++; /* TODO: dump memory byte at PC */ break;
 #endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+                r->PSW & 0x80 ? 'x':'.',
+                r->PSW & 0x40 ? 'x':'.',
+                r->PSW & 0x20 ? 'x':'.',
+                r->PSW & 0x10 ? 'x':'.',
+                r->PSW & 0x08 ? 'x':'.',
+                r->PSW & 0x04 ? 'x':'.',
+                r->PSW & 0x02 ? 'x':'.',
+                r->PSW & 0x01 ? 'x':'.');
+			break;
+		case CPU_INFO_REG+ 0: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "A:%02X", r->A); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "SP:%02X", r->SP); break;
+    }
+    return buffer[which];
+}
+
+const char *i8035_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "I8035";
+		case CPU_INFO_VERSION: return "1.0";
+	}
+	return i8039_info(context,regnum);
+}
+
+const char *i8048_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "I8048";
+		case CPU_INFO_VERSION: return "1.0";
+	}
+	return i8039_info(context,regnum);
+}
+
+const char *n7751_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "N7751";
+		case CPU_INFO_VERSION: return "1.0";
+	}
+	return i8039_info(context,regnum);
+}
+

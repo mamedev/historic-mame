@@ -196,24 +196,24 @@ static const unsigned char op6510[512]=
  *****************************************************************************/
 int Dasm6502(char *buffer, int pc)
 {
-extern int M6502_Type;
-int PC, OP, opc, arg;
+	extern int m6502_type;
+	int PC, OP, opc, arg;
 
 	PC = pc;
 	OP = RDOP(PC++) << 1;
 
-	switch (M6502_Type)
+	switch (m6502_type)
 	{
 		case 1:
-			opc =op65c02[OP];
+			opc = op65c02[OP];
             arg = op65c02[OP+1];
 			break;
 		case 2:
-			opc =op6510[OP];
+			opc = op6510[OP];
             arg = op6510[OP+1];
             break;
 		default:
-			opc =op6502[OP];
+			opc = op6502[OP];
             arg = op6502[OP+1];
             break;
 	}

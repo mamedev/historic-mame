@@ -52,7 +52,7 @@ to list them.
 | Battle Lane Vol. 5   |   No   |   No   |  Yes   |   No   |   No   | battlane |
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 | Battle of Atlantis   |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | atlantis |
-| Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | berzerk  |
+| Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
 | Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bionicc  |
 | Birdie King 2        |  Yes   |   No   |  Yes   |   No   |   No   | bking2   |
@@ -175,7 +175,7 @@ to list them.
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
 | Food Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | foodf    |
 | Formation Z          |   No   |   No   |  Yes   |   No   |   No   | formatz  |
-| Frenzy               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | frenzy   |
+| Frenzy               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | frenzy   |
 | Frisky Tom           |  Yes   |  Yes   |  Yes   |   No   |   No   | friskyt  |
 | Frogger              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | frogger  |
 | Frogs                |  Yes   |  b/w   |   No   |   No   |   No   | frogs    |
@@ -228,6 +228,7 @@ to list them.
 | I, Robot             |   No   |   No   |   No   |   No   |   No   | irobot   |
 | Ikari Warriors       |  Yes   |  Yes   |Partial |  Yes   |   No   | ikari    |
 | Indiana Jones        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | indytemp |
+| Inferno              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | inferno  |
 | Intrepid             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | intrepid |
 | Invinco              |  Yes   |  Yes?  |   No   |   No   |   No   | invinco  |
 | Invinco / Deep Scan  |  Yes   |  Yes   |   No   |   No   |   No   | invds    |
@@ -239,6 +240,7 @@ to list them.
 | Jail Break           |  Yes   |  Yes?  |Partial |  Yes   |   No   | jailbrek |
 | Journey              |  Yes   |  Yes   |Partial |  Yes   |   No   | journey  |
 | Joust                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | joust    |
+| Joust 2              |  Yes   |  Yes   |Partial |  Yes   |   No   | joust2   |
 | Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
 | Jump Bug             |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | jumpbug  |
 | Jump Coaster         |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | jumpcoas |
@@ -333,6 +335,7 @@ to list them.
 | Ms Pac Man           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 | My Hero              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | myhero   |
 | Mysterious Stones    |  Yes   | Close  |  Yes   |  Yes   |  Yes   | mystston |
+| Mystic Marathon      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mysticm  |
 | Narc                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | narc     |
 | Naughty Boy          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | naughtyb |
 | NBA Jam              |   No   |  Yes   |  Yes   |  Yes   |   No   | nbajam   |
@@ -371,6 +374,7 @@ to list them.
 | Pocket Gal           |  Yes   |  Yes   |  Yes   |   No   |   No   | pcktgal  |
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
+| Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
 | Pooyan               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pooyan   |
 | P.O.W.               |  Yes   |  Yes   |Partial |   No   |   No   | pow      |
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
@@ -558,6 +562,7 @@ to list them.
 | Tropical Angel       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | troangel |
 | Turbo                |   No   |   No   |   No   |   No   |   No   | turbo    |
 | Turbo Force          |  Yes   |  Yes   |  Yes   |   No   |   No   | turbofrc |
+| Turkey Shoot         |   No   |  Yes   |  Yes   |  Yes   |   No   | tshoot   |
 | Turtle Ship          |  Yes   |  Yes   |  Yes   |   No   |   NO   | turtship |
 | Turtles              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | turtles  |
 | Tutankham            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tutankhm |
@@ -887,7 +892,8 @@ Known issues:
 - The original version is the only one where wizards throw stones.
 - The protection feature which randomizes the EXTEND letters in the original
   version is not emulated properly.
-- Service mode works only if Language is set to Japanese.
+- Service mode works only if Language is set to Japanese. This is not a bug,
+  the original board does the same.
 
 
 
@@ -1496,6 +1502,16 @@ Known issues:
 
 
 
+Inferno ("inferno")
+===================
+The first time you run the game, it will say "factory settings restored".
+Press F2 to proceed.
+
+F2 tests
+F1+F2 bookkeeping/setup
+
+
+
 Invinco ("invinco")
 =================
 Known issues:
@@ -1572,6 +1588,18 @@ Clones supported:
   red label version ("joustr")
 All of the alternate versions are older, and have the pterodactyl bug. The
 order, from older to newer, is: white/red - red - white/green
+
+
+
+Joust 2 ("joust2")
+==================
+The first time you run the game, it will say "factory settings restored".
+Press F2 to proceed.
+
+F2 tests
+F1+F2 bookkeeping/setup
+
+The transform button is the start button.
 
 
 
@@ -2012,6 +2040,16 @@ Clones supported:
 
 
 
+Mystic Marathon ("mysticm")
+===========================
+The first time you run the game, it will say "factory settings restored".
+Press F2 to proceed.
+
+F2 tests
+F1+F2 bookkeeping/setup
+
+
+
 Naughty Boy ("naughtyb")
 ========================
 Known issues:
@@ -2132,6 +2170,21 @@ Pitfall II ("pitfall2")
 Clones supported:
   not encrypted version. This version allows you to select the starting stage
     using the dip switches. ("pitfallu")
+
+
+
+Pontoon ("pontoon")
+===================
+The first time you run the game, push 'Reset All' (F5) after the game displays
+'Battery Error' for the 3rd time.  This will initialize the battery backed RAM.
+
+Enter switch test mode by holding down the Hit key, and when the
+crosshatch pattern comes up, release it and push it again.
+
+After you get into Check Mode (F2), press the Hit key to switch pages.
+
+Known issues:
+- The game hangs after you win because the hopper is not emualted.
 
 
 
@@ -2369,7 +2422,8 @@ Encrypted version
 Clones supported:
   not encrypted version ("seganinu")
   Ninja Princess, which uses a different encryption ("nprinces")
-  Ninja Princess, probably bootleg, using the Flicky encryption ("nprinceb")
+  Ninja Princess, not encrypted ("nprincsu")
+  Ninja Princess, bootleg?, using the Flicky encryption ("nprinceb")
 
 
 
@@ -2896,6 +2950,16 @@ Known issues:
   only explanation I have for this is a missing gfx ROM.
   To toggle the front layer off and on, press the space bar. You'll need to
   in later levels otherwise you won't see the background and some enemies.
+
+
+
+Turkey Shoot ("tshoot")
+=======================
+The first time you run the game, it will say "factory settings restored".
+Press F2 to proceed.
+
+F2 tests
+F1+F2 bookkeeping/setup
 
 
 

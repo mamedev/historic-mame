@@ -43,12 +43,13 @@
   All games
   * Sprite lag.
   * Large sprites don't exit smoothly on the left side of the screen (e.g. Car
-    in Mega Man attract mode)
+    in Mega Man attract mode, cadillac in Cadillacs and Dinosaurs)
 
   Magic Sword.
   * In several places (starting from floor 3, I think) you can see high priority
     scroll 3 tiles sticking up in front of scroll2.
-  * Rogue scroll 2 character at end of level 1
+  * Rogue scroll 2 character at end of level 1 - fixed with kludge 4
+    (code e7ff attr 027f, code 3c36 attr 005f)
   * during attract mode, characters are shown with a black background. There is
     a background, but the layers are disabled. I think this IS the correct
 	behaviour.
@@ -201,9 +202,9 @@ static struct CPS1config cps1_config_table[]=
 	{"mercsj",  0x60,0x0402, 0x00,0x00,0x00,0x00, 0x6c,0x00,0x00,0x00,0x00,0x62, 0x02,0x04,0x08, 0,0,0 },	/* (uses port 74) */
 	{"mtwins",  0x5e,0x0404, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x58,0x5a,0x5c, 0x38,0x38,0x38, 0,0,0 },
 	{"chikij",  0x5e,0x0404, 0x00,0x00,0x00,0x00, 0x52,0x54,0x56,0x58,0x5a,0x5c, 0x38,0x38,0x38, 0,0,0 },
-	{"msword",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 },
-	{"mswordu", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 },
-	{"mswordj", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 },
+	{"msword",  0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 , 4},
+	{"mswordu", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 , 4},
+	{"mswordj", 0x00,0x0000, 0x00,0x00,0x00,0x00, 0x62,0x64,0x66,0x68,0x6a,0x6c, 0x20,0x06,0x06, 0,0,0 , 4},
 	{"cawing",  0x40,0x0406, 0x00,0x00,0x00,0x00, 0x4c,0x4a,0x48,0x46,0x44,0x42, 0x10,0x0a,0x0a, 0,0,0 },	/* row scroll used at the beginning of mission 8, put 07 at ff8501 to jump there */
 	{"cawingj", 0x40,0x0406, 0x00,0x00,0x00,0x00, 0x4c,0x4a,0x48,0x46,0x44,0x42, 0x10,0x0a,0x0a, 0,0,0 },	/* row scroll used at the beginning of mission 8, put 07 at ff8501 to jump there */
 	{"nemo",    0x4e,0x0405, 0x00,0x00,0x00,0x00, 0x42,0x44,0x46,0x48,0x4a,0x4c, 0x04,0x22,0x22, 0,0,0 },
@@ -1463,7 +1464,6 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 void cps1_palette_sprites(unsigned short *base)
 {
 	int i;
-	int gng_obj_kludge=cps1_game_config->kludge;
 
 	for (i=cps1_last_sprite_offset; i>=0; i-=8)
 	{
@@ -1474,11 +1474,11 @@ void cps1_palette_sprites(unsigned short *base)
 	    int colour=READ_WORD(&cps1_obj[i+6]);
 	    int col=colour&0x1f;
 			unsigned int code=READ_WORD(&cps1_obj[i+4]);
-			if (gng_obj_kludge == 1 && code >= 0x01000)
+			if (cps1_game_config->kludge == 1 && code >= 0x01000)
 			{
 			       code += 0x4000;
 			}
-			if (gng_obj_kludge == 2 && code >= 0x02a00)
+			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
 			{
 			       code += 0x4000;
 			}
@@ -1563,7 +1563,6 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
 	int i;
 	int base_obj=0;
-	int gng_obj_kludge=cps1_game_config->kludge;
 
 	/* Draw the sprites */
 	for (i=cps1_last_sprite_offset; i>=0; i-=8)
@@ -1587,11 +1586,11 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 			x-=0x20;
 			y+=0x20;
 
-			if (gng_obj_kludge == 1 && code >= 0x01000)
+			if (cps1_game_config->kludge == 1 && code >= 0x01000)
 			{
 			       code += 0x4000;
 			}
-			if (gng_obj_kludge == 2 && code >= 0x02a00)
+			if (cps1_game_config->kludge == 2 && code >= 0x02a00)
 			{
 			       code += 0x4000;
 			}
@@ -1737,10 +1736,12 @@ void cps1_palette_scroll2(unsigned short *base)
 	int offs, code, colour;
 	for (offs=cps1_scroll2_size-4; offs>=0; offs-=4)
 	{
-	     code=READ_WORD(&cps1_scroll2[offs]);
-	     colour=READ_WORD(&cps1_scroll2[offs+2])&0x1f;
-	     code+=cps1_game_config->bank_scroll2*0x04000;
-	     base[colour] |= cps1_tile16_pen_usage[code % cps1_max_tile16];
+		code=READ_WORD(&cps1_scroll2[offs]);
+		colour=READ_WORD(&cps1_scroll2[offs+2])&0x1f;
+		code+=cps1_game_config->bank_scroll2*0x04000;
+		if (cps1_game_config->kludge == 4 && (code < 0x2800 || code > 0x37ff))
+			code = 0x2800;
+		base[colour] |= cps1_tile16_pen_usage[code % cps1_max_tile16];
 	}
 }
 
@@ -1770,6 +1771,8 @@ void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap, int priority)
 				*(long*)(&cps1_scroll2_old[offs])=newvalue;
 				code=READ_WORD(&cps1_scroll2[offs]);
 				code+=cps1_game_config->bank_scroll2*0x04000;
+				if (cps1_game_config->kludge == 4 && (code < 0x2800 || code > 0x37ff))
+					code = 0x2800;
 				/* Draw entire tile */
 				cps1_draw_tile16(bitmap,
 						Machine->gfx[2],
@@ -1816,6 +1819,8 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap, int priority)
 				int transp;
 				transp=cps1_transparency_scroll[(mask>>7)&3];
 				code+=cps1_game_config->bank_scroll2*0x04000;
+				if (cps1_game_config->kludge == 4 && (code < 0x2800 || code > 0x37ff))
+					code = 0x2800;
 				cps1_draw_tile16(bitmap,
 							Machine->gfx[2],
 							code,
@@ -1907,7 +1912,6 @@ void cps1_palette_scroll3(unsigned short *base)
 	int sx,sy;
 	int nx=(scroll3x>>5)+1;
 	int ny=(scroll3y>>5)-1;
-	int gng_obj_kludge=cps1_game_config->kludge;
 
 	int elements = Machine->gfx[3]->total_elements;
 
@@ -1924,7 +1928,7 @@ void cps1_palette_scroll3(unsigned short *base)
 			offs &= 0x3fff;
 			code=READ_WORD(&cps1_scroll3[offs]);
 			code+=cps1_game_config->bank_scroll3*0x01000;
-			if (gng_obj_kludge == 2 && code >= 0x01500)
+			if (cps1_game_config->kludge == 2 && code >= 0x01500)
 			{
 			       code -= 0x1000;
 			}
@@ -1943,7 +1947,6 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 	int nyoffset=(scroll3y&0x1f); //+0x10;
 	int nx=(scroll3x>>5)+1;
 	int ny=(scroll3y>>5)-1;  /* -1 */
-	int gng_obj_kludge=cps1_game_config->kludge;
 
 	for (sx=1; sx<0x32/4+2; sx++)
 	{
@@ -1957,10 +1960,8 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 			offs=offsy+offsx;
 			offs &= 0x3fff;
 			code=READ_WORD(&cps1_scroll3[offs]);
-			if (code)
-			{
 			code+=cps1_game_config->bank_scroll3*0x01000;
-			if (gng_obj_kludge == 2 && code >= 0x01500)
+			if (cps1_game_config->kludge == 2 && code >= 0x01500)
 			{
 			       code -= 0x1000;
 			}
@@ -1991,7 +1992,6 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 						32*sx-nxoffset,32*sy-nyoffset,
 						0x8000);
 
-			 }
 			 }
 		}
 	}

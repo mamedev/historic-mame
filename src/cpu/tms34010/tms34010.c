@@ -639,7 +639,7 @@ static INT32 raster_op_21(INT32 newpix, INT32 oldpix)
 /****************************************************************************/
 /* Set all registers to given values                                        */
 /****************************************************************************/
-void TMS34010_SetRegs(TMS34010_Regs *Regs)
+void TMS34010_setregs(TMS34010_Regs *Regs)
 {
 	state = *Regs;
 	change_pc29(PC)
@@ -649,7 +649,7 @@ void TMS34010_SetRegs(TMS34010_Regs *Regs)
 /****************************************************************************/
 /* Get all registers in given buffer                                        */
 /****************************************************************************/
-void TMS34010_GetRegs(TMS34010_Regs *Regs)
+void TMS34010_getregs(TMS34010_Regs *Regs)
 {
 	*Regs = state;
 }
@@ -657,9 +657,96 @@ void TMS34010_GetRegs(TMS34010_Regs *Regs)
 /****************************************************************************/
 /* Return program counter                                                   */
 /****************************************************************************/
-unsigned TMS34010_GetPC(void)
+unsigned TMS34010_getpc(void)
 {
 	return PC;
+}
+
+
+/****************************************************************************/
+/* Return a specific register                                               */
+/****************************************************************************/
+unsigned TMS34010_getreg(int regnum)
+{
+	switch( regnum )
+	{
+		case  0: return state.pc;
+		case  1: return state.regs.a.Aregs[15];
+		case  2: return state.regs.a.Aregs[ 0];
+		case  3: return state.regs.a.Aregs[ 1];
+		case  4: return state.regs.a.Aregs[ 2];
+		case  5: return state.regs.a.Aregs[ 3];
+		case  6: return state.regs.a.Aregs[ 4];
+		case  7: return state.regs.a.Aregs[ 5];
+		case  8: return state.regs.a.Aregs[ 6];
+		case  9: return state.regs.a.Aregs[ 7];
+		case 10: return state.regs.a.Aregs[ 8];
+		case 11: return state.regs.a.Aregs[ 9];
+		case 12: return state.regs.a.Aregs[10];
+		case 13: return state.regs.a.Aregs[11];
+		case 14: return state.regs.a.Aregs[12];
+		case 15: return state.regs.a.Aregs[13];
+		case 16: return state.regs.a.Aregs[14];
+		case 17: return state.regs.Bregs[ 0<<4];
+		case 18: return state.regs.Bregs[ 1<<4];
+		case 19: return state.regs.Bregs[ 2<<4];
+		case 20: return state.regs.Bregs[ 3<<4];
+		case 21: return state.regs.Bregs[ 4<<4];
+		case 22: return state.regs.Bregs[ 5<<4];
+		case 23: return state.regs.Bregs[ 6<<4];
+		case 24: return state.regs.Bregs[ 7<<4];
+		case 25: return state.regs.Bregs[ 8<<4];
+		case 26: return state.regs.Bregs[ 9<<4];
+		case 27: return state.regs.Bregs[10<<4];
+		case 28: return state.regs.Bregs[11<<4];
+		case 29: return state.regs.Bregs[12<<4];
+		case 30: return state.regs.Bregs[13<<4];
+		case 31: return state.regs.Bregs[14<<4];
+	}
+	return 0;
+}
+
+
+/****************************************************************************/
+/* Set a specific register                                                  */
+/****************************************************************************/
+void TMS34010_setreg(int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+		case  0: state.pc = val; break;
+		case  1: state.regs.a.Aregs[15] = val; break;
+		case  2: state.regs.a.Aregs[ 0] = val; break;
+		case  3: state.regs.a.Aregs[ 1] = val; break;
+		case  4: state.regs.a.Aregs[ 2] = val; break;
+		case  5: state.regs.a.Aregs[ 3] = val; break;
+		case  6: state.regs.a.Aregs[ 4] = val; break;
+		case  7: state.regs.a.Aregs[ 5] = val; break;
+		case  8: state.regs.a.Aregs[ 6] = val; break;
+		case  9: state.regs.a.Aregs[ 7] = val; break;
+		case 10: state.regs.a.Aregs[ 8] = val; break;
+		case 11: state.regs.a.Aregs[ 9] = val; break;
+		case 12: state.regs.a.Aregs[10] = val; break;
+		case 13: state.regs.a.Aregs[11] = val; break;
+		case 14: state.regs.a.Aregs[12] = val; break;
+		case 15: state.regs.a.Aregs[13] = val; break;
+		case 16: state.regs.a.Aregs[14] = val; break;
+		case 17: state.regs.Bregs[ 0<<4] = val; break;
+		case 18: state.regs.Bregs[ 1<<4] = val; break;
+		case 19: state.regs.Bregs[ 2<<4] = val; break;
+		case 20: state.regs.Bregs[ 3<<4] = val; break;
+		case 21: state.regs.Bregs[ 4<<4] = val; break;
+		case 22: state.regs.Bregs[ 5<<4] = val; break;
+		case 23: state.regs.Bregs[ 6<<4] = val; break;
+		case 24: state.regs.Bregs[ 7<<4] = val; break;
+		case 25: state.regs.Bregs[ 8<<4] = val; break;
+		case 26: state.regs.Bregs[ 9<<4] = val; break;
+		case 27: state.regs.Bregs[10<<4] = val; break;
+		case 28: state.regs.Bregs[11<<4] = val; break;
+		case 29: state.regs.Bregs[12<<4] = val; break;
+		case 30: state.regs.Bregs[13<<4] = val; break;
+		case 31: state.regs.Bregs[14<<4] = val; break;
+	}
 }
 
 
@@ -669,7 +756,7 @@ TMS34010_Regs* TMS34010_GetState(void)
 }
 
 
-void TMS34010_Reset(void)
+void TMS34010_reset(void *param)
 {
 	int i;
 
@@ -704,8 +791,10 @@ void TMS34010_Reset(void)
 	state.from_shiftreg = from_shiftreg[cpu_getactivecpu()];
 }
 
-
-#if NEW_INTERRUPT_SYSTEM
+void TMS34010_exit(void)
+{
+	/* nothing to do ? */
+}
 
 void TMS34010_set_nmi_line(int linestate)
 {
@@ -744,32 +833,12 @@ void TMS34010_internal_interrupt(int type)
 	check_interrupt();
 }
 
-#else
-
-void TMS34010_Cause_Interrupt(int type)
-{
-	/* NONE = 0 */
-	IOREG(REG_INTPEND) |= type;
-	check_interrupt();
-}
-
-
-void TMS34010_Clear_Pending_Interrupts(void)
-{
-	/* This doesn't apply */
-}
-
-#endif
-
-
 /* Generate pending interrupts. Do NOT inline this function on DJGPP,
    it causes a slowdown */
 static void check_interrupt(void)
 {
 	int vector=0;
-#if NEW_INTERRUPT_SYSTEM
 	int irqline = -1;
-#endif
 
 	if (!IOREG(REG_INTPEND))
 	{
@@ -825,9 +894,7 @@ static void check_interrupt(void)
 		{
 			LOG((errorlog, "TMS34010#%d takes INT1\n", cpu_getactivecpu()));
             vector = 0xffffffc0;
-#if NEW_INTERRUPT_SYSTEM
 			irqline = 0;
-#endif
         }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT2) &&
@@ -835,9 +902,7 @@ static void check_interrupt(void)
 		{
 			LOG((errorlog, "TMS34010#%d takes INT2\n", cpu_getactivecpu()));
             vector = 0xffffffa0;
-#if NEW_INTERRUPT_SYSTEM
 			irqline = 1;
-#endif
         }
 
 		if (vector)
@@ -848,12 +913,8 @@ static void check_interrupt(void)
 			PC = RLONG(vector);
             change_pc29(PC);
 
-#if NEW_INTERRUPT_SYSTEM
 			if (irqline >= 0)
-			{
 				(void)(*state.irq_callback)(irqline);
-			}
-#endif
         }
 	}
 }
@@ -864,7 +925,7 @@ extern int mame_debug;
 #endif
 
 /* execute instructions on this CPU until icount expires */
-int TMS34010_Execute(int cycles)
+int TMS34010_execute(int cycles)
 {
 	/* Get out if CPU is halted. Absolutely no interrupts must be taken!!! */
 	if (IOREG(REG_HSTCTLH) & 0x8000)
@@ -905,6 +966,111 @@ int TMS34010_Execute(int cycles)
 	} while (TMS34010_ICount > 0);
 
 	return cycles - TMS34010_ICount;
+}
+
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *TMS34010_info(void *context, int regnum)
+{
+	static char buffer[32][47+1];
+	static int which = 0;
+	TMS34010_Regs *r = (TMS34010_Regs *)context;
+
+	which = ++which % 32;
+	buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "TMS34010";
+		case CPU_INFO_FAMILY: return "Texas Instruments 34010";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998\nParts based on code by Aaron Giles";
+
+		case CPU_INFO_PC: sprintf(buffer[which], "%08X:", r->pc); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->regs.a.Aregs[15]); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_DASM:
+			r->pc += Dasm34010(&ROM[r->pc>>3], buffer[which], r->pc);
+			break;
+#else
+		case CPU_INFO_DASM:
+			sprintf(buffer[which], "$%02x", ROM[r->pc >> 3]);
+			r->pc += 8;
+			break;
+#endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->st & 0x80000000 ? 'N':'.',
+				r->st & 0x40000000 ? 'C':'.',
+				r->st & 0x20000000 ? 'Z':'.',
+				r->st & 0x10000000 ? 'V':'.',
+				r->st & 0x08000000 ? '?':'.',
+				r->st & 0x04000000 ? '?':'.',
+				r->st & 0x02000000 ? 'P':'.',
+				r->st & 0x01000000 ? '?':'.',
+				r->st & 0x00800000 ? '?':'.',
+				r->st & 0x00400000 ? '?':'.',
+				r->st & 0x00200000 ? 'I':'.',
+				r->st & 0x00100000 ? '?':'.',
+				r->st & 0x00080000 ? '?':'.',
+				r->st & 0x00040000 ? '?':'.',
+				r->st & 0x00020000 ? '?':'.',
+				r->st & 0x00010000 ? '?':'.',
+				r->st & 0x00008000 ? '?':'.',
+				r->st & 0x00004000 ? '?':'.',
+				r->st & 0x00002000 ? '?':'.',
+				r->st & 0x00001000 ? '?':'.',
+				r->st & 0x00000800 ? 'E':'.',
+				r->st & 0x00000400 ? 'F':'.',
+				r->st & 0x00000200 ? 'F':'.',
+				r->st & 0x00000100 ? 'F':'.',
+				r->st & 0x00000080 ? 'F':'.',
+				r->st & 0x00000040 ? 'F':'.',
+				r->st & 0x00000020 ? 'E':'.',
+				r->st & 0x00000010 ? 'F':'.',
+				r->st & 0x00000008 ? 'F':'.',
+				r->st & 0x00000004 ? 'F':'.',
+				r->st & 0x00000002 ? 'F':'.',
+				r->st & 0x00000001 ? 'F':'.');
+            break;
+		case CPU_INFO_REG+ 0: sprintf(buffer[which], "PC:%08X", r->pc); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "SP:%08X", r->regs.a.Aregs[15]); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "A0 :%08X", r->regs.a.Aregs[ 0]); break;
+		case CPU_INFO_REG+ 3: sprintf(buffer[which], "A1 :%08X", r->regs.a.Aregs[ 1]); break;
+		case CPU_INFO_REG+ 4: sprintf(buffer[which], "A2 :%08X", r->regs.a.Aregs[ 2]); break;
+		case CPU_INFO_REG+ 5: sprintf(buffer[which], "A3 :%08X", r->regs.a.Aregs[ 3]); break;
+		case CPU_INFO_REG+ 6: sprintf(buffer[which], "A4 :%08X", r->regs.a.Aregs[ 4]); break;
+		case CPU_INFO_REG+ 7: sprintf(buffer[which], "A5 :%08X", r->regs.a.Aregs[ 5]); break;
+		case CPU_INFO_REG+ 8: sprintf(buffer[which], "A6 :%08X", r->regs.a.Aregs[ 6]); break;
+		case CPU_INFO_REG+ 9: sprintf(buffer[which], "A7 :%08X", r->regs.a.Aregs[ 7]); break;
+		case CPU_INFO_REG+10: sprintf(buffer[which], "A8 :%08X", r->regs.a.Aregs[ 8]); break;
+		case CPU_INFO_REG+11: sprintf(buffer[which], "A9 :%08X", r->regs.a.Aregs[ 9]); break;
+		case CPU_INFO_REG+12: sprintf(buffer[which], "A10:%08X", r->regs.a.Aregs[10]); break;
+		case CPU_INFO_REG+13: sprintf(buffer[which], "A11:%08X", r->regs.a.Aregs[11]); break;
+		case CPU_INFO_REG+14: sprintf(buffer[which], "A12:%08X", r->regs.a.Aregs[12]); break;
+		case CPU_INFO_REG+15: sprintf(buffer[which], "A13:%08X", r->regs.a.Aregs[13]); break;
+		case CPU_INFO_REG+16: sprintf(buffer[which], "A14:%08X", r->regs.a.Aregs[14]); break;
+		case CPU_INFO_REG+17: sprintf(buffer[which], "B0 :%08X", r->regs.Bregs[ 0<<4]); break;
+		case CPU_INFO_REG+18: sprintf(buffer[which], "B1 :%08X", r->regs.Bregs[ 1<<4]); break;
+		case CPU_INFO_REG+19: sprintf(buffer[which], "B2 :%08X", r->regs.Bregs[ 2<<4]); break;
+		case CPU_INFO_REG+20: sprintf(buffer[which], "B3 :%08X", r->regs.Bregs[ 3<<4]); break;
+		case CPU_INFO_REG+21: sprintf(buffer[which], "B4 :%08X", r->regs.Bregs[ 4<<4]); break;
+		case CPU_INFO_REG+22: sprintf(buffer[which], "B5 :%08X", r->regs.Bregs[ 5<<4]); break;
+		case CPU_INFO_REG+23: sprintf(buffer[which], "B6 :%08X", r->regs.Bregs[ 6<<4]); break;
+		case CPU_INFO_REG+24: sprintf(buffer[which], "B7 :%08X", r->regs.Bregs[ 7<<4]); break;
+		case CPU_INFO_REG+25: sprintf(buffer[which], "B8 :%08X", r->regs.Bregs[ 8<<4]); break;
+		case CPU_INFO_REG+26: sprintf(buffer[which], "B9 :%08X", r->regs.Bregs[ 9<<4]); break;
+		case CPU_INFO_REG+27: sprintf(buffer[which], "B10:%08X", r->regs.Bregs[10<<4]); break;
+		case CPU_INFO_REG+28: sprintf(buffer[which], "B11:%08X", r->regs.Bregs[11<<4]); break;
+		case CPU_INFO_REG+29: sprintf(buffer[which], "B12:%08X", r->regs.Bregs[12<<4]); break;
+		case CPU_INFO_REG+30: sprintf(buffer[which], "B13:%08X", r->regs.Bregs[13<<4]); break;
+		case CPU_INFO_REG+31: sprintf(buffer[which], "B14:%08X", r->regs.Bregs[14<<4]); break;
+	}                                       
+	return buffer[which];
 }
 
 
@@ -1049,11 +1215,7 @@ void TMS34010_io_register_w(int reg, int data)
 		if (data & 0x0100)
 		{
 			/* NMI issued */
-#if NEW_INTERRUPT_SYSTEM
             cpu_generate_internal_interrupt(cpu_getactivecpu(), TMS34010_NMI);
-#else
-			cpu_cause_interrupt(cpu_getactivecpu(), TMS34010_NMI);
-#endif
         }
 		break;
 
@@ -1132,11 +1294,7 @@ static void TMS34010_io_intcallback(int param)
     /* Reset timer for next frame */
 	double interval = TIME_IN_HZ (Machine->drv->frames_per_second);
 	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);
-#if NEW_INTERRUPT_SYSTEM
     cpu_generate_internal_interrupt(param, TMS34010_DI);
-#else
-	cpu_cause_interrupt(param, TMS34010_DI);
-#endif
 }
 
 
@@ -1250,10 +1408,6 @@ void TMS34010_HSTCTLH_w (int offset, int data)
     if (data & 0x0100)
 	{
 		/* Issue NMI */
-#if NEW_INTERRUPT_SYSTEM
         cpu_generate_internal_interrupt(CPU_SLAVE, TMS34010_NMI);
-#else
-		cpu_cause_interrupt(CPU_SLAVE, TMS34010_NMI);
-#endif
     }
 }

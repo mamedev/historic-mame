@@ -4,25 +4,60 @@
 
   Functions to emulate the video hardware of the machine.
 
+  CHANGES:
+  MAB 05 MAR 99 - changed overlay support to use artwork functions
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "artwork.h"
 
-#define MAPIDXTOCOL(idx) Machine->gfx[0]->colortable[idx * 2 + 1]
+static int Clown_X=0,Clown_Y=0,Clown_Z=0;
 
-#define SCREEN_COL    4
-#define OVERLAY1_COL  3
-#define OVERLAY2_COL  2
-#define OVERLAY3_COL  1
+static struct artwork *overlay;
 
-/* These four values are just guesses */
-#define OVERLAY1_Y    20
-#define OVERLAY2_Y    OVERLAY1_Y + 16
-#define OVERLAY3_Y    OVERLAY2_Y + 16
-#define OVERLAY_END_Y OVERLAY3_Y + 16
+/* The first entry defines the color with which the bitmap is filled initially */
+/* The array is terminated with an entry with negative coordinates. */
+/* At least two entries are needed. */
+static const struct artwork_element circus_ol[]={
+	{{	0, 256,   0, 256}, 0xFF, 0xFF, 0xFF,   0xFF},	/* white */
+	{{  0, 256,  20,  36}, 0x20, 0x20, 0xFF,   0xFF},	/* blue */
+	{{  0, 256,  36,  48}, 0x20, 0xFF, 0x20,   0xFF},	/* green */
+	{{  0, 256,  48,  64}, 0xFF, 0xFF, 0x20,   0xFF},	/* yellow */
+	{{-1,-1,-1,-1},0,0,0,0}
+};
 
-int Clown_X,Clown_Y,Clown_Z=0;
+
+/***************************************************************************
+***************************************************************************/
+
+int circus_vh_start(void)
+{
+	int start_pen = 2;
+
+	if (generic_vh_start()!=0)
+		return 1;
+
+	if ((overlay = artwork_create(circus_ol, start_pen, Machine->drv->total_colors-start_pen))==NULL)
+		return 1;
+
+	return 0;
+}
+
+/***************************************************************************
+***************************************************************************/
+
+void circus_vh_stop(void)
+{
+	if (overlay)
+		artwork_free(overlay);
+
+	generic_vh_stop();
+}
+
+/***************************************************************************
+***************************************************************************/
 
 void circus_clown_x_w(int offset, int data)
 {
@@ -79,10 +114,10 @@ void circus_clown_z_w(int offset, int data)
 //	if(errorlog) fprintf(errorlog,"clown Z = %02x\n",data);
 }
 
-void DrawLine(int x1, int y1, int x2, int y2, int dotted)
+static void DrawLine(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
 {
 	/* Draws horizontal and Vertical lines only! */
-    int col = MAPIDXTOCOL(SCREEN_COL);
+    int col = Machine->pens[1];
 
     int ex1,ex2,ey1,ey2;
     int count, skip;
@@ -131,19 +166,19 @@ void DrawLine(int x1, int y1, int x2, int y2, int dotted)
 	{
 		for (count=ey2;count>=ey1;count -= skip)
 		{
-			Machine->scrbitmap->line[ex1][count] = tmpbitmap->line[ex1][count] = col;
+			bitmap->line[ex1][count] = col;
 		}
 	}
 	else
 	{
 		for (count=ex2;count>=ex1;count -= skip)
 		{
-			Machine->scrbitmap->line[count][ey1] = tmpbitmap->line[count][ey1] = col;
+			bitmap->line[count][ey1] = col;
 		}
 	}
 }
 
-void RobotBox (int top, int left)
+static void RobotBox (struct osd_bitmap *bitmap, int top, int left)
 {
 	int right,bottom;
 
@@ -152,17 +187,17 @@ void RobotBox (int top, int left)
 	right  = left + 24;
 	bottom = top + 26;
 
-	DrawLine(top,left,top,right,0);				/* Top */
-	DrawLine(bottom,left,bottom,right,0);		/* Bottom */
-	DrawLine(top,left,bottom,left,0);			/* Left */
-	DrawLine(top,right,bottom,right,0);			/* Right */
+	DrawLine(bitmap,top,left,top,right,0);				/* Top */
+	DrawLine(bitmap,bottom,left,bottom,right,0);		/* Bottom */
+	DrawLine(bitmap,top,left,bottom,left,0);			/* Left */
+	DrawLine(bitmap,top,right,bottom,right,0);			/* Right */
 
 	/* Score Grid */
 
 	bottom = top + 10;
-	DrawLine(bottom,left+8,bottom,right,0);     /* Horizontal Divide Line */
-	DrawLine(top,left+8,bottom,left+8,0);
-	DrawLine(top,left+16,bottom,left+16,0);
+	DrawLine(bitmap,bottom,left+8,bottom,right,0);     /* Horizontal Divide Line */
+	DrawLine(bitmap,top,left+8,bottom,left+8,0);
+	DrawLine(bitmap,top,left+16,bottom,left+16,0);
 }
 
 
@@ -174,8 +209,6 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (full_refresh)
 	{
 		memset (dirtybuffer, 1, videoram_size);
-		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* for every character in the Video RAM,        */
@@ -186,36 +219,14 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			col=SCREEN_COL;
-
 			dirtybuffer[offs] = 0;
 
 			sy = offs / 32;
 			sx = offs % 32;
 
-			/* Sort out colour overlay */
-
-			switch (sy)
-			{
-				case 2 :
-				case 3 :
-					col = OVERLAY1_COL;
-					break;
-
-				case 4 :
-				case 5 :
-					col = OVERLAY2_COL;
-					break;
-
-				case 6 :
-				case 7 :
-					col = OVERLAY3_COL;
-					break;
-			}
-
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					col,
+					1,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -225,66 +236,20 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* The sync generator hardware is used to   */
     /* draw the border and diving boards        */
 
-    DrawLine (18,0,18,255,0);
-    DrawLine (249,0,249,255,1);
-    DrawLine (18,0,248,0,0);
-    DrawLine (18,247,248,247,0);
+    DrawLine (bitmap,18,0,18,255,0);
+    DrawLine (bitmap,249,0,249,255,1);
+    DrawLine (bitmap,18,0,248,0,0);
+    DrawLine (bitmap,18,247,248,247,0);
 
-    DrawLine (137,0,137,17,0);
-    DrawLine (137,231,137,248,0);
-    DrawLine (193,0,193,17,0);
-    DrawLine (193,231,193,248,0);
-
-	/* Redraw portions that fall under the overlay */
-	col = MAPIDXTOCOL(OVERLAY1_COL);
-
-	for (y = OVERLAY1_Y; y < OVERLAY_END_Y; y++)
-	{
-		int y1 = y;
-		int y2 = y;
-		int x1 = 0;
-		int x2 = 247;
-
-		if (y == OVERLAY2_Y)
-			col = MAPIDXTOCOL(OVERLAY2_COL);
-
-		if (y == OVERLAY3_Y)
-			col = MAPIDXTOCOL(OVERLAY3_COL);
-
-    	/* Allow flips & rotates */
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			int temp;
-
-			temp = x1;
-			x1 = y1;
-			y1 = temp;
-			temp = x2;
-			x2 = y2;
-			y2 = temp;
-		}
-
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			x1 = 255 - x1;
-			x2 = 255 - x2;
-		}
-
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			y1 = 255 - y1;
-			y2 = 255 - y2;
-		}
-
-		osd_mark_dirty (x1,y1,x2,y2,0);
-		bitmap->line[y1][x1] = tmpbitmap->line[y1][x1] = col;
-		bitmap->line[y2][x2] = tmpbitmap->line[y2][x2] = col;
-	}
+    DrawLine (bitmap,137,0,137,17,0);
+    DrawLine (bitmap,137,231,137,248,0);
+    DrawLine (bitmap,193,0,193,17,0);
+    DrawLine (bitmap,193,231,193,248,0);
 
     /* Draw the clown in white and afterwards compensate for the overlay */
 	drawgfx(bitmap,Machine->gfx[1],
 			Clown_Z,
-			SCREEN_COL,
+			1,
 			0,0,
 			Clown_Y,Clown_X,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -311,45 +276,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-    /* ZV980110 */
-	/* The variable names Clown_X and Clown_Y are backwards! */
-
-	for (y = Clown_X; y < Clown_X + 16; y++)
-	{
-		int currentcolidx, currentcol;
-		int basecol = MAPIDXTOCOL(SCREEN_COL);
-
-		if (y >= OVERLAY_END_Y) break;
-		else if (y >= OVERLAY3_Y) currentcolidx = OVERLAY3_COL;
-		else if (y >= OVERLAY2_Y) currentcolidx = OVERLAY2_COL;
-		else if (y >= OVERLAY1_Y) currentcolidx = OVERLAY1_COL;
-		else continue;
-
-		currentcol = MAPIDXTOCOL(currentcolidx);
-
-		for (x = Clown_Y; x < Clown_Y + 16; x++ )
-		{
-			int x2, y2;
-
-			y2 = y; x2 = x;
-
-    		/* Allow flips & rotates */
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				y2 = x; x2 = y;
-			}
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x2 = 255 - x2;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				y2 = 255 - y2;
-
-			/* Remap to overlay color */
-			if (bitmap->line[y2][x2] == basecol)
-			{
-				bitmap->line[y2][x2] = tmpbitmap->line[y2][x2] = currentcol;
-			}
-		}
-	}
+	overlay_draw(bitmap,overlay);
 }
 
 
@@ -361,8 +288,6 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (full_refresh)
 	{
 		memset (dirtybuffer, 1, videoram_size);
-		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* for every character in the Video RAM,  */
@@ -373,8 +298,6 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int col=SCREEN_COL;
-
 			dirtybuffer[offs] = 0;
 
 			sx = offs % 32;
@@ -382,7 +305,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					col,
+					1,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -396,33 +319,33 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     for(offs=15;offs<=63;offs+=24)
     {
-        RobotBox(31, offs);
-        RobotBox(63, offs);
-        RobotBox(95, offs);
+        RobotBox(bitmap, 31, offs);
+        RobotBox(bitmap, 63, offs);
+        RobotBox(bitmap, 95, offs);
 
-        RobotBox(31, offs+152);
-        RobotBox(63, offs+152);
-        RobotBox(95, offs+152);
+        RobotBox(bitmap, 31, offs+152);
+        RobotBox(bitmap, 63, offs+152);
+        RobotBox(bitmap, 95, offs+152);
     }
 
-    RobotBox(127, 39);                  /* 10th Frame */
-    DrawLine(137,39,137,47,0);          /* Extra digit box */
+    RobotBox(bitmap, 127, 39);                  /* 10th Frame */
+    DrawLine(bitmap, 137,39,137,47,0);          /* Extra digit box */
 
-    RobotBox(127, 39+152);
-    DrawLine(137,39+152,137,47+152,0);
+    RobotBox(bitmap, 127, 39+152);
+    DrawLine(bitmap, 137,39+152,137,47+152,0);
 
     /* Bowling Alley */
 
-    DrawLine(17,103,205,103,0);
-    DrawLine(17,111,203,111,1);
-    DrawLine(17,152,205,152,0);
-    DrawLine(17,144,203,144,1);
+    DrawLine(bitmap, 17,103,205,103,0);
+    DrawLine(bitmap, 17,111,203,111,1);
+    DrawLine(bitmap, 17,152,205,152,0);
+    DrawLine(bitmap, 17,144,203,144,1);
 
 	/* Draw the Ball */
 
 	drawgfx(bitmap,Machine->gfx[1],
 			Clown_Z,
-			SCREEN_COL,
+			1,
 			0,0,
 			Clown_Y+8,Clown_X+8, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -459,8 +382,6 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (full_refresh)
 	{
 		memset (dirtybuffer, 1, videoram_size);
-		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* for every character in the Video RAM,	*/
@@ -480,7 +401,7 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],
-					col,
+					1,
 					0,0,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -490,7 +411,7 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw the Car */
     drawgfx(bitmap,Machine->gfx[1],
 			Clown_Z,
-			4,
+			1,
 			0,0,
 			Clown_Y,Clown_X, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

@@ -271,6 +271,82 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ -1 }	/* end of table */
 };
+
+static int hunchy_scanline_r(int offset)
+{
+	int data = cpu_getscanline() / 4;
+	if (data > 63)
+		data = 0;
+	if (errorlog) fprintf(errorlog, "hunchy_scanline_r %2d\n", data);
+	data |= 0xc0;
+	return data;
+}
+
+static struct MemoryReadAddress hunchy_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },	/* 0000-0fff */
+	{ 0x1000, 0x13ff, MRA_RAM },
+	{ 0x1400, 0x17ff, MRA_RAM },	/* video RAM */
+    { 0x1800, 0x1800, hunchy_scanline_r }, /* scanline counter? */
+	{ 0x1900, 0x1bff, MRA_RAM },	/* including sprites RAM */
+	{ 0x1c00, 0x1c00, input_port_0_r }, /* IN0 */
+    { 0x1c80, 0x1c80, input_port_1_r }, /* IN1 */
+    { 0x1d00, 0x1d00, input_port_2_r }, /* IN2/DSW2 */
+    { 0x1d80, 0x1d80, input_port_3_r }, /* DSW1 */
+	{ 0x2000, 0x6fff, MRA_ROM },	/* 2000-6fff */
+	{ -1 }	/* end of table */
+};
+
+static UINT8 *hunchy_hw1;
+static UINT8 *hunchy_hw2;
+
+static void hunchy_hw1_w(int offset, int data)
+{
+	hunchy_hw1[offset] = data;
+	if (errorlog)
+		fprintf(errorlog, "hunchy hw1 %d <- $%02x hw1:%02x hw2:[%02x %02x %02x %02x %02x %02x %02x %02x]\n",
+			offset, data,
+			hunchy_hw1[0],
+            hunchy_hw2[0],hunchy_hw2[1],hunchy_hw2[2],hunchy_hw2[3],
+            hunchy_hw2[4],hunchy_hw2[5],hunchy_hw2[6],hunchy_hw2[7]);
+
+}
+
+static void hunchy_hw2_w(int offset, int data)
+{
+	hunchy_hw2[offset] = data;
+	if (errorlog)
+		fprintf(errorlog, "hunchy hw2 %d <- $%02x hw1:%02x hw2:[%02x %02x %02x %02x %02x %02x %02x %02x]\n",
+			offset, data,
+			hunchy_hw1[0],
+			hunchy_hw2[0],hunchy_hw2[1],hunchy_hw2[2],hunchy_hw2[3],
+			hunchy_hw2[4],hunchy_hw2[5],hunchy_hw2[6],hunchy_hw2[7]);
+}
+
+static struct MemoryWriteAddress hunchy_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x1000, 0x13ff, MWA_RAM },
+	{ 0x1400, 0x17ff, videoram_w, &videoram, &videoram_size },
+    { 0x1840, 0x1840, hunchy_hw1_w, &hunchy_hw1 },    /* ???? */
+	{ 0x1880, 0x1887, hunchy_hw2_w, &hunchy_hw2 },	  /* ???? */
+	{ 0x1900, 0x1a7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x1a80, 0x1bff, MWA_RAM },
+	{ 0x1c80, 0x1c80, dkongjr_gfxbank_w },
+	{ 0x1c00, 0x1c00, dkong_sh_tuneselect },
+	{ 0x1d00, 0x1d02, dkong_sh1_w },	/* walk/jump/boom sample trigger */
+	{ 0x1d03, 0x1d03, dkong_sh_spring },
+	{ 0x1d04, 0x1d04, dkong_sh_gorilla },
+	{ 0x1d05, 0x1d05, dkong_sh_barrell },
+	{ 0x1d80, 0x1d80, dkong_sh_w },
+	{ 0x1d81, 0x1d83, MWA_RAM },	/* ???? */
+	{ 0x1d84, 0x1d84, interrupt_enable_w },
+	{ 0x1d85, 0x1d85, MWA_RAM },
+	{ 0x1d86, 0x1d87, dkong_palettebank_w },
+	{ 0x2000, 0x6fff, MWA_ROM },
+    { -1 }  /* end of table */
+};
+
 static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
@@ -741,6 +817,62 @@ static struct MachineDriver dkong_machine_driver =
 	}
 };
 
+static int hunchy_interrupt(void)
+{
+	return 0x03;	/* hunchy S2650 interrupt vector */
+}
+
+static struct MachineDriver hunchy_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_S2650,
+			2000000,	/* 2.00 Mhz (?) */
+			0,
+			hunchy_readmem,hunchy_writemem,0,0,
+			hunchy_interrupt,256/4
+		},
+#if 0
+        {
+			CPU_I8035 | CPU_AUDIO_CPU,
+			6000000/15,	/* 6Mhz crystal */
+			3,
+			readmem_sound,writemem_sound,readport_sound,writeport_sound,
+			ignore_interrupt,1
+		}
+#endif
+    },
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	dkong_gfxdecodeinfo,
+	256, 64*4,
+	dkong_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	dkong_vh_start,
+	generic_vh_stop,
+	dkong_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dkong_dac_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&dkong_samples_interface
+		}
+	}
+};
+
 static struct MachineDriver dkongjr_machine_driver =
 {
 	/* basic machine hardware */
@@ -1110,29 +1242,29 @@ ROM_START( dkong3_rom )
 ROM_END
 
 ROM_START( hunchy_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_REGION(0x08000) 	/* 32k for code */
 	/* the following is all wrong. Hunchback runs on a modified Donkey */
 	/* Kong Jr. board, but with a twist: it uses a Signetics 2650 CPU */
 	/* The chip is chip labeled MAB2650A CRG3243MOY.  */
 	/* The db also has various 74LS chips and a couple proms (soldered), */
 	/* and a VERY strange looking flat chip. */
-	ROM_LOAD( "1b.bin",       0x0000, 0x1000, 0x0 )
-	ROM_LOAD( "2a.bin",       0x1000, 0x1000, 0x0 )
-	ROM_LOAD( "3a.bin",       0x2000, 0x1000, 0x0 )
-	ROM_LOAD( "4c.bin",       0x3000, 0x1000, 0x0 )
-	ROM_LOAD( "5a.bin",       0x4000, 0x1000, 0x0 )
-	ROM_LOAD( "6c.bin",       0x5000, 0x1000, 0x0 )
-	ROM_LOAD( "8a.bin",       0x8000, 0x0800, 0x0 )
+	ROM_LOAD( "6c.bin",       0x0000, 0x1000, 0xf9ba2854 )
+	ROM_LOAD( "1b.bin",       0x2000, 0x1000, 0xc816860b )
+	ROM_LOAD( "3a.bin",       0x3000, 0x1000, 0xb2adcfeb )
+	ROM_LOAD( "2a.bin",       0x4000, 0x1000, 0xcab1e524 )
+	ROM_LOAD( "4c.bin",       0x5000, 0x1000, 0x229a8b71 )
+	ROM_LOAD( "5a.bin",       0x6000, 0x1000, 0xcb4f0313 )
 
-	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11a.bin",      0x0000, 0x0800, 0x0 )
-	ROM_LOAD( "9b.bin",       0x0800, 0x0800, 0x0 )
+    ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11a.bin",      0x0000, 0x0800, 0xf256b047 )
+	ROM_LOAD( "9b.bin",       0x0800, 0x0800, 0x9a7dab88 )
 	/* 1000-17ff empty */
-	ROM_LOAD( "10b.bin",      0x1800, 0x0800, 0x0 )
+	ROM_LOAD( "10b.bin",      0x1800, 0x0800, 0xb870c64f )
 	/* 2000-3fff empty */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "5b_snd.bin",   0x0000, 0x0800, 0x0 )
+	ROM_LOAD( "5b_snd.bin",   0x0000, 0x0800, 0xf055a624 )
+	ROM_LOAD( "8a.bin",       0x1000, 0x0800, 0xed1cd201 )
 ROM_END
 
 ROM_START( herocast_rom )
@@ -1617,8 +1749,8 @@ struct GameDriver hunchy_driver =
 	"????",
 	"?????",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)",
-	GAME_NOT_WORKING,
-	&dkongjr_machine_driver,
+	0,	//GAME_NOT_WORKING,
+	&hunchy_machine_driver,
 	0,
 
 	hunchy_rom,

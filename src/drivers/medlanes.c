@@ -83,15 +83,15 @@ void medlanes_marker_dirty(int marker);
  *
  *************************************************************/
 
-static int medlanes_interrupt(void)
-{
-static int medlanes_sense_state = 0;
 /************************************************************
  * fake something toggling the sense input line of the S2650
  * the rate should be at about 1,5 Hz
  ************************************************************/
-	medlanes_sense_state ^= 1;
-    S2650_set_sense(medlanes_sense_state);
+static int medlanes_interrupt(void)
+{
+	static int sense_state = 0;
+	sense_state ^= 1;
+	cpu_set_irq_line(0, 1, sense_state ? ASSERT_LINE : CLEAR_LINE);
 	return S2650_INT_NONE;
 }
 

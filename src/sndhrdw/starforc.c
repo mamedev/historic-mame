@@ -60,7 +60,7 @@ static struct SN76496interface interface =
 
 int starforc_sh_start(void)
 {
-	int i;
+    int i;
 
 
 	if (SN76496_sh_start(&interface) != 0)
@@ -72,41 +72,6 @@ int starforc_sh_start(void)
 
 	/* z80 pio init */
 	z80pio_init (&pio_intf);
-
-	/* setup daisy chain connection */
-	{
-		static Z80_DaisyChain daisy_chain[] =
-		{
-			{ z80pio_reset , z80pio_interrupt, z80pio_reti , 0 }, /* device 0 = PIO_0 , low  priority */
-			{ z80ctc_reset , z80ctc_interrupt, z80ctc_reti , 0 }, /* device 1 = CTC_0 , high priority */
-			{ 0,0,0,-1}        /* end mark */
-		};
-		cpu_setdaisychain (1,daisy_chain );
-/*
-	daisy_chain is connect link for Z80 daisy-chain .
-	paramater is
-	{ pointer of reset , pointer of interrupt entry,pointer of RETI handler , device paramater }
-
-	reset           : This function is called when z80 cpu reset
-	interrupt entry : This function is called when z80 interrupt entry for this device
-	                  It shoud be change interrupt status and
-	                  set new status with cpu_cause_interrupt function
-	                  return value is interrupt vector
-
-	RETI handler    : This function is called when z80 reti operation for this device
-	                  It shoud be change interrupt status and
-	                  set new status with cpu_cause_interrupt function
-
-	handler shoud be allocate static.
-	Because this pointers is used when reset cpu.
-
-	The daisy chain link is build by this pointers.
-
-	daisy chain priority:
-		As for Priority , the top side is lower , bottom side is higher
-
-*/
-	}
 
 	if ((_single = (signed char *)malloc(SINGLE_LENGTH)) == 0)
 	{

@@ -1006,6 +1006,24 @@ ROM_START( elim2_rom )
 	ROM_LOAD( "1345",         0x6800, 0x0800, 0x40597a92 )
 ROM_END
 
+ROM_START( elim2a_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
+	ROM_LOAD( "1158",         0x0800, 0x0800, 0xa40ac3a5 )
+	ROM_LOAD( "1159",         0x1000, 0x0800, 0xff100604 )
+	ROM_LOAD( "1160a",        0x1800, 0x0800, 0xebfe33bd )
+	ROM_LOAD( "1161a",        0x2000, 0x0800, 0x03d41db3 )
+	ROM_LOAD( "1162a",        0x2800, 0x0800, 0xf2c7ece3 )
+	ROM_LOAD( "1163a",        0x3000, 0x0800, 0x1fc58b00 )
+	ROM_LOAD( "1164a",        0x3800, 0x0800, 0xf37480d1 )
+	ROM_LOAD( "1165a",        0x4000, 0x0800, 0x328819f8 )
+	ROM_LOAD( "1166a",        0x4800, 0x0800, 0x1b8e8380 )
+	ROM_LOAD( "1167a",        0x5000, 0x0800, 0x16aa3156 )
+	ROM_LOAD( "1168a",        0x5800, 0x0800, 0x3c7c893a )
+	ROM_LOAD( "1169a",        0x6000, 0x0800, 0x5cee23b1 )
+	ROM_LOAD( "1170a",        0x6800, 0x0800, 0x8cdacd35 )
+ROM_END
+
 ROM_START( elim4_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1390_cpu.u25", 0x0000, 0x0800, 0x97010c3e )
@@ -1744,7 +1762,7 @@ struct GameDriver elim2_driver =
 	__FILE__,
 	0,
 	"elim2",
-	"Eliminator (2 Players)",
+	"Eliminator (2 Players, set 1)",
 	"1981",
 	"Gremlin",
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
@@ -1764,6 +1782,33 @@ struct GameDriver elim2_driver =
 
 	elim2_hiload, elim2_hisave
 };
+
+struct GameDriver elim2a_driver =
+{
+	__FILE__,
+	&elim2_driver,
+	"elim2a",
+	"Eliminator (2 Players, set 2)",
+	"1981",
+	"Gremlin",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
+	&elim2_machine_driver,
+	0,
+
+	elim2a_rom,
+	elim2_decode, 0,
+	elim_sample_names,
+	0,
+
+	elim2_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	elim2_hiload, elim2_hisave
+};
+
 
 static struct MachineDriver elim4_machine_driver =
 {

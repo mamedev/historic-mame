@@ -114,8 +114,8 @@ int gorf_speech_r(int offset)
 
     totalword_ptr = totalword;
 
-	 Z80_GetRegs(&regs);
-    data = regs.BC.B.h;
+	z80_getregs(&regs);
+	data = regs.BC.b.h;
 
     Phoneme = data & 0x3F;
     Intonation = data >> 6;

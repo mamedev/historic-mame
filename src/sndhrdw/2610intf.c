@@ -29,9 +29,6 @@ static FMSAMPLE *Buf[YM2610_NUMBUF];
 static struct YM2610interface *intf;
 
 static void *Timer[MAX_2610][2];
-static double lastfired[MAX_2610][2];
-
-static int FMpan[4];
 
 /*------------------------- TM2610 -------------------------------*/
 /* Timer overflow callback from timer.c */
@@ -42,7 +39,6 @@ static void timer_callback_2610(int param)
 
 //	if(errorlog) fprintf(errorlog,"2610 TimerOver %d\n",c);
 	Timer[n][c] = 0;
-	lastfired[n][c] = timer_get_time();
 	if( YM2610TimerOver(n,c) )
 	{	/* IRQ is active */;
 		/* User Interrupt call */
@@ -68,16 +64,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 
 		if( Timer[n][c] == 0 )
 		{
-			double slack;
-
-			slack = timer_get_time() - lastfired[n][c];
-			/* hackish way to make bstars intro sync without */
-			/* breaking sonicwi2 command 0x35 */
-			if (slack < 0.000050) slack = 0;
-
-//			if(errorlog) fprintf(errorlog,"2610 TimerSet %d %f slack %f\n",c,timeSec,slack);
-
-			Timer[n][c] = timer_set (timeSec - slack, (c<<7)|n, timer_callback_2610 );
+			Timer[n][c] = timer_set (timeSec , (c<<7)|n, timer_callback_2610 );
 		}
 	}
 }
@@ -117,11 +104,6 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 	/* Timer Handler set */
 	FMTimerInit();
 
-	FMpan[0] = 0x00;		/* left pan */
-	FMpan[1] = 0xff;		/* right pan */
-	FMpan[2] = 0x00;		/* left pan */
-	FMpan[3] = 0xff;		/* right pan */
-
 	/* stream system initialize */
 	for (i = 0;i < intf->num;i++)
 	{
@@ -144,6 +126,66 @@ int YM2610_sh_start(struct YM2610interface *interface ){
 			sprintf(buf[j],"YM2610 #%d Ch%d(%s)",i,j+1,chname);
 		}
 		stream[i] = stream_init_multi(YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610UpdateOne);
+		/* volume setup */
+		for (j = 0 ; j < YM2610_NUMBUF ; j++)
+		{
+			stream_set_volume(stream[i]+j,vol[j]);
+			stream_set_pan(stream[i]+j,pan[j]);
+		}
+	}
+
+	/**** initialize YM2610 ****/
+	if (YM2610Init(intf->num,intf->baseclock,rate, intf->pcmroma, intf->pcmromb,TimerHandler,0) == 0)
+		return 0;
+
+	/* error */
+	AY8910_sh_stop();
+	return 1;
+}
+
+int YM2610B_sh_start(struct YM2610interface *interface ){
+	int i,j;
+	int rate = Machine->sample_rate;
+	char buf[YM2610_NUMBUF][40];
+	const char *name[YM2610_NUMBUF];
+	int mixed_vol,vol[YM2610_NUMBUF],pan[YM2610_NUMBUF];
+
+	intf = interface;
+	if( intf->num > MAX_2610 ) return 1;
+
+	if( AY8910_sh_start((struct AY8910interface *)interface,"YM2610(SSG)") ) return 1;
+
+	/* FM init */
+#if 0
+	if( No_FM ) FMMode = CHIP_YM2610_DAC;
+	else        FMMode = CHIP_YM2610_OPL;
+#endif
+
+	/* Timer Handler set */
+	FMTimerInit();
+
+	/* stream system initialize */
+	for (i = 0;i < intf->num;i++)
+	{
+		/* stream setup */
+		mixed_vol = intf->volumeFM[i];
+		/* stream setup */
+		for (j = 0 ; j < YM2610_NUMBUF ; j++)
+		{
+			char *chname;
+			name[j]=buf[j];
+			vol[j] = mixed_vol & 0xff;
+			pan[j] = (mixed_vol>>8) & 0xff;
+			mixed_vol>>=16;
+			switch( pan[j] ){
+			case OSD_PAN_CENTER:chname="Ct";break;
+			case OSD_PAN_LEFT:  chname="Lt";break;
+			case OSD_PAN_RIGHT: chname="Rt";break;
+			default:            chname="??";break;
+			}
+			sprintf(buf[j],"YM2610 #%d Ch%d(%s)",i,j+1,chname);
+		}
+		stream[i] = stream_init_multi(YM2610_NUMBUF,name,rate,FM_OUTPUT_BIT,i,YM2610BUpdateOne);
 		/* volume setup */
 		for (j = 0 ; j < YM2610_NUMBUF ; j++)
 		{
@@ -270,13 +312,6 @@ void YM2610_data_port_1_B_w(int offset,int data){
 /************************************************/
 void YM2610_sh_update(void)
 {
-}
-
-/**************************************************/
-/*   YM2610 left/right position change (TAITO)    */
-/**************************************************/
-void YM2610_pan( int lr, int v ){
-	FMpan[lr] = v;
 }
 
 /**************** end of file ****************/

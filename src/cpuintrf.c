@@ -10,21 +10,25 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "cpu/i8039/i8039.h"
 #include "cpu/i8085/i8085.h"
 #include "cpu/m6502/m6502.h"
-#include "cpu/m6809/m6809.h"
+#include "cpu/h6280/h6280.h"
+#include "cpu/i86/i86intrf.h"
+#include "cpu/i8039/i8039.h"
 #include "cpu/m6808/m6808.h"
 #include "cpu/m6805/m6805.h"
+#include "cpu/m6809/m6809.h"
 #include "cpu/m68000/m68000.h"
-#include "cpu/s2650/s2650.h"
 #include "cpu/t11/t11.h"
+#include "cpu/s2650/s2650.h"
 #include "cpu/tms34010/tms34010.h"
-#include "cpu/i86/i86intrf.h"
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
 #include "cpu/tms32010/tms32010.h"
-#include "cpu/h6280/h6280.h"
+#include "cpu/ccpu/ccpu.h"
+#ifdef MESS
+#include "cpu/pdp1/pdp1.h"
+#endif
 #include "timer.h"
 
 
@@ -34,7 +38,7 @@
 #define TRIGGER_YIELDTIME       -3000
 #define TRIGGER_SUSPENDTIME     -4000
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -78,10 +82,8 @@ int previouspc;
 static int interrupt_enable[MAX_CPU];
 static int interrupt_vector[MAX_CPU];
 
-#if NEW_INTERRUPT_SYSTEM
 static int irq_line_state[MAX_CPU * MAX_IRQ_LINES];
 static int irq_line_vector[MAX_CPU * MAX_IRQ_LINES];
-#endif
 
 static int watchdog_counter;
 
@@ -107,12 +109,10 @@ static int current_frame;
 static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num);
 static void cpu_vblankintcallback (int param);
 static void cpu_timedintcallback (int param);
-#if NEW_INTERRUPT_SYSTEM
 static void cpu_internal_interrupt(int cpunum, int type);
 static void cpu_manualnmicallback(int param);
 static void cpu_manualirqcallback(int param);
 static void cpu_internalintcallback(int param);
-#endif
 static void cpu_manualintcallback (int param);
 static void cpu_clearintcallback (int param);
 static void cpu_resetcallback (int param);
@@ -123,8 +123,6 @@ static void cpu_updatecallback (int param);
 static double cpu_computerate (int value);
 static void cpu_inittimers (void);
 
-
-#if NEW_INTERRUPT_SYSTEM
 
 /* default irq callback handlers */
 static int cpu_0_irq_callback(int irqline);
@@ -140,44 +138,37 @@ static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
     cpu_3_irq_callback
 };
 
-#endif
-
-/* dummy interfaces for non-CPUs */
-static int dummy_icount;
-static void Dummy_SetRegs(void *Regs);
-static void Dummy_GetRegs(void *Regs);
-static unsigned Dummy_GetPC(void);
-static void Dummy_Reset(void);
-static int Dummy_Execute(int cycles);
-#if NEW_INTERRUPT_SYSTEM
+/* Dummy interfaces for non-CPUs */
+static void Dummy_reset(void *param);
+static void Dummy_exit(void);
+static int Dummy_execute(int cycles);
+static void Dummy_setregs(void *Regs);
+static void Dummy_getregs(void *Regs);
+static unsigned Dummy_getpc(void);
+static unsigned Dummy_getreg(int regnum);
+static void Dummy_setreg(int regnum, unsigned val);
 static void Dummy_set_nmi_line(int state);
 static void Dummy_set_irq_line(int irqline, int state);
 static void Dummy_set_irq_callback(int (*callback)(int irqline));
-#else
-static void Dummy_Cause_Interrupt(int type);
-static void Dummy_Clear_Pending_Interrupts(void);
-#endif
+static int dummy_icount;
+static const char *Dummy_info(void *context, int regnum);
 
-/* reset function wrapper */
-static void Z80_Reset_with_daisychain(void);
 /* pointers of daisy chain link */
 static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
-#define RESET(index)                    ((*cpu[index].intf->reset)())
+#define RESET(index)					((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
 #define EXECUTE(index,cycles)           ((*cpu[index].intf->execute)(cycles))
 #define SETREGS(index,regs)             ((*cpu[index].intf->set_regs)(regs))
 #define GETREGS(index,regs)             ((*cpu[index].intf->get_regs)(regs))
 #define GETPC(index)                    ((*cpu[index].intf->get_pc)())
-#if NEW_INTERRUPT_SYSTEM
+#define GETREG(index,regnum)			((*cpu[index].intf->get_reg)(regnum))
+#define SETREG(index,regnum,value)		((*cpu[index].intf->get_reg)(regnum,value))
 #define SET_NMI_LINE(index,state)       ((*cpu[index].intf->set_nmi_line)(state))
 #define SET_IRQ_LINE(index,line,state)	((*cpu[index].intf->set_irq_line)(line,state))
 #define SET_IRQ_CALLBACK(index,callback) ((*cpu[index].intf->set_irq_callback)(callback))
 #define INTERNAL_INTERRUPT(index,type)	if( cpu[index].intf->internal_interrupt ) ((*cpu[index].intf->internal_interrupt)(type))
-#else
-#define CAUSE_INTERRUPT(index,type)     ((*cpu[index].intf->cause_interrupt)(type))
-#define CLEAR_PENDING_INTERRUPTS(index) ((*cpu[index].intf->clear_pending_interrupts)())
-#endif
+#define CPU_INFO(index,context,regnum)	((*cpu[index].intf->cpu_info)(context,regnum))
 #define ICOUNT(index)                   (*cpu[index].intf->icount)
 #define INT_TYPE_NONE(index)            (cpu[index].intf->no_int)
 #define INT_TYPE_IRQ(index) 			(cpu[index].intf->irq_int)
@@ -187,378 +178,819 @@ static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 #define CPU_TYPE(index) 				(Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK)
 #define CPU_AUDIO(index)				(Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU)
 
+#define IFC_INFO(cpu,context,regnum)	((cpuintf[cpu].cpu_info)(context,regnum))
+
+#define MAX_CPU_TYPE	(sizeof(cpuintf)/sizeof(cpuintf[0]))
+
 /* warning these must match the defines in driver.h! */
 struct cpu_interface cpuintf[] =
 {
 	/* Dummy CPU -- placeholder for type 0 */
 	{
-		Dummy_Reset,						/* Reset CPU */
-		Dummy_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))Dummy_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))Dummy_GetRegs,	/* Get the contents of the registers */
-		Dummy_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
+		Dummy_reset,						/* Reset CPU */
+		Dummy_exit, 						/* Shut down the CPU */
+		Dummy_execute,						/* Execute a number of cycles */
+		(void (*)(void *))Dummy_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))Dummy_getregs,	/* Get the contents of the registers */
+		Dummy_getpc,						/* Return the current PC */
+        Dummy_getreg,                       /* Get a specific register value */
+        Dummy_setreg,                       /* Set a specific register value */
 		Dummy_set_nmi_line, 				/* Set state of the NMI line */
 		Dummy_set_irq_line, 				/* Set state of the IRQ line */
 		Dummy_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        Dummy_info,                         /* Get formatted string for a specific register */
 		1,									/* Number of IRQ lines */
-#else
-		Dummy_Cause_Interrupt,				/* Generate an interrupt */
-		Dummy_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
 		&dummy_icount,						/* Pointer to the instruction count */
-		0,-1,-1,							/* Interrupt types: none, IRQ, NMI */
+		0,									/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_Z80    1 */
+	/* 1 CPU_Z80 */
 	{
-		Z80_Reset_with_daisychain,			/* Reset CPU */
-		Z80_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))Z80_SetRegs,		/* Set the contents of the registers */
-		(void (*)(void *))Z80_GetRegs,		/* Get the contents of the registers */
-		Z80_GetPC,							/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		Z80_set_nmi_line,					/* Set state of the NMI line */
-		Z80_set_irq_line,					/* Set state of the IRQ line */
-		Z80_set_irq_callback,				/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		z80_reset,							/* Reset CPU */
+		z80_exit,							/* Shut down the CPU */
+		z80_execute,						/* Execute a number of cycles */
+		(void (*)(void *))z80_setregs,		/* Set the contents of the registers */
+		(void (*)(void *))z80_getregs,		/* Get the contents of the registers */
+		z80_getpc,							/* Return the current PC */
+        z80_getreg,                         /* Get a specific register value */
+		z80_setreg, 						/* Set a specific register value */
+        z80_set_nmi_line,                   /* Set state of the NMI line */
+		z80_set_irq_line,					/* Set state of the IRQ line */
+		z80_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		z80_state_save, 					/* Save CPU state */
+		z80_state_load, 					/* Load CPU state */
+        z80_info,                           /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		Z80_Cause_Interrupt,				/* Generate an interrupt */
-		Z80_Clear_Pending_Interrupts,		/* Clear pending interrupts */
-#endif
-		&Z80_ICount,						/* Pointer to the instruction count */
-		Z80_IGNORE_INT,Z80_IRQ_INT,Z80_NMI_INT, /* Interrupt types: none, IRQ, NMI */
+		&z80_ICount,						/* Pointer to the instruction count */
+		Z80_IGNORE_INT, 					/* Interrupt types: none, IRQ, NMI */
+		Z80_IRQ_INT,
+		Z80_NMI_INT,
         cpu_readmem16,                      /* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_8085A 2 */
+	/* 2 CPU_8080 */
 	{
-		I8085_Reset,                        /* Reset CPU */
-		I8085_Execute,                      /* Execute a number of cycles */
-		(void (*)(void *))I8085_SetRegs,    /* Set the contents of the registers */
-		(void (*)(void *))I8085_GetRegs,    /* Get the contents of the registers */
-		(unsigned int (*)(void))I8085_GetPC,/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		I8085_set_nmi_line, 				/* Set state of the NMI line */
-		I8085_set_irq_line, 				/* Set state of the IRQ line */
-		I8085_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		i8080_reset,						/* Reset CPU */
+		i8080_exit, 						/* Shut down the CPU */
+		i8080_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i8080_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))i8080_getregs,	/* Get the contents of the registers */
+		i8080_getpc,						/* Return the current PC */
+        i8080_getreg,                       /* Get a specific register value */
+		i8080_setreg,						/* Set a specific register value */
+        i8080_set_nmi_line,                 /* Set state of the NMI line */
+		i8080_set_irq_line, 				/* Set state of the IRQ line */
+		i8080_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		i8080_state_save,					/* Save CPU state */
+		i8080_state_load,					/* Load CPU state */
+        i8080_info,                         /* Get formatted string for a specific register */
         4,                                  /* Number of IRQ lines */
-#else
-        I8085_Cause_Interrupt,              /* Generate an interrupt */
-		I8085_Clear_Pending_Interrupts,     /* Clear pending interrupts */
-#endif
-        &I8085_ICount,                      /* Pointer to the instruction count */
-		I8085_NONE,I8085_INTR,I8085_TRAP,   /* Interrupt types: none, IRQ, NMI */
+		&i8080_ICount,						/* Pointer to the instruction count */
+		I8080_NONE, 						/* Interrupt types: none, IRQ, NMI */
+		I8080_INTR,
+		I8080_TRAP,
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		16,                                 /* CPU address bits */
-		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
-	},
-    /* #define CPU_M6502  3 */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 3 CPU_8085A */
 	{
-		m6502_Reset,						/* Reset CPU */
-		m6502_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6502_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))m6502_GetRegs,	/* Get the contents of the registers */
-		m6502_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		m6502_set_nmi_line, 				/* Set state of the NMI line */
+		i8085_reset,						/* Reset CPU */
+		i8085_exit, 						/* Shut down the CPU */
+		i8085_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i8085_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))i8085_getregs,	/* Get the contents of the registers */
+		i8085_getpc,						/* Return the current PC */
+        i8085_getreg,                       /* Get a specific register value */
+		i8085_setreg,						/* Set a specific register value */
+        i8085_set_nmi_line,                 /* Set state of the NMI line */
+		i8085_set_irq_line, 				/* Set state of the IRQ line */
+		i8085_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		i8085_state_save,					/* Save CPU state */
+		i8085_state_load,					/* Load CPU state */
+        i8085_info,                         /* Get formatted string for a specific register */
+        4,                                  /* Number of IRQ lines */
+		&i8085_ICount,						/* Pointer to the instruction count */
+		I8085_NONE, 						/* Interrupt types: none, IRQ, NMI */
+		I8085_INTR,
+		I8085_TRAP,
+		cpu_readmem16,                      /* Memory read */
+		cpu_writemem16,                     /* Memory write */
+		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16,                                 /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+	},
+	/* 4 CPU_M6502 */
+	{
+		m6502_reset,						/* Reset CPU */
+		m6502_exit, 						/* Shut down the CPU */
+		m6502_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6502_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6502_getregs,	/* Get the contents of the registers */
+		m6502_getpc,						/* Return the current PC */
+        m6502_getreg,                       /* Get a specific register value */
+		m6502_setreg,						/* Set a specific register value */
+        m6502_set_nmi_line,                 /* Set state of the NMI line */
 		m6502_set_irq_line, 				/* Set state of the IRQ line */
 		m6502_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		m6502_state_save,					/* Save CPU state */
+		m6502_state_load,					/* Load CPU state */
+        m6502_info,                         /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		m6502_Cause_Interrupt,				/* Generate an interrupt */
-		m6502_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
 		&m6502_ICount,						/* Pointer to the instruction count */
-		M6502_INT_NONE,M6502_INT_IRQ,M6502_INT_NMI, /* Interrupt types: none, IRQ, NMI */
+		M6502_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6502_INT_IRQ,
+		M6502_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_H6280 4 */
+	/* 5 CPU_M65C02 */
 	{
- 		H6280_Reset,					   /* Reset CPU */
- 		H6280_Execute,					   /* Execute a number of cycles */
- 		(void (*)(void *))H6280_SetRegs,   /* Set the contents of the registers */
- 		(void (*)(void *))H6280_GetRegs,   /* Get the contents of the registers */
- 		H6280_GetPC,					   /* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		H6280_set_nmi_line, 			    /* Set state of the NMI line */
-		H6280_set_irq_line, 			    /* Set state of the IRQ line */
-		H6280_set_irq_callback, 		    /* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		m65c02_reset,						/* Reset CPU */
+		m65c02_exit,						/* Shut down the CPU */
+		m65c02_execute, 					/* Execute a number of cycles */
+		(void (*)(void *))m6502_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6502_getregs,	/* Get the contents of the registers */
+		m65c02_getpc,						/* Return the current PC */
+        m65c02_getreg,                      /* Get a specific register value */
+		m65c02_setreg,						/* Set a specific register value */
+        m65c02_set_nmi_line,                /* Set state of the NMI line */
+		m65c02_set_irq_line,				/* Set state of the IRQ line */
+		m65c02_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		m65c02_state_save,					/* Save CPU state */
+		m65c02_state_load,					/* Load CPU state */
+        m65c02_info,                        /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&m65c02_ICount, 					/* Pointer to the instruction count */
+		M65C02_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		M65C02_INT_IRQ,
+		M65C02_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 6 CPU_M6510 */
+	{
+		m6510_reset,						/* Reset CPU */
+		m6510_exit, 						/* Shut down the CPU */
+		m6510_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6510_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6510_getregs,	/* Get the contents of the registers */
+		m6510_getpc,						/* Return the current PC */
+        m6510_getreg,                       /* Get a specific register value */
+		m6510_setreg,						/* Set a specific register value */
+        m6510_set_nmi_line,                 /* Set state of the NMI line */
+		m6510_set_irq_line, 				/* Set state of the IRQ line */
+		m6510_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		m6510_state_save,					/* Save CPU state */
+		m6510_state_load,					/* Load CPU state */
+        m6510_info,                         /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&m6510_ICount,						/* Pointer to the instruction count */
+		M6510_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6510_INT_IRQ,
+		M6510_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 7 CPU_H6280 */
+	{
+		h6280_reset,						/* Reset CPU */
+		h6280_exit, 						/* Shut down the CPU */
+		h6280_execute,						/* Execute a number of cycles */
+		(void (*)(void *))h6280_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))h6280_getregs,	/* Get the contents of the registers */
+		h6280_getpc,						/* Return the current PC */
+        h6280_getreg,                       /* Get a specific register value */
+		h6280_setreg,						/* Set a specific register value */
+        h6280_set_nmi_line,                 /* Set state of the NMI line */
+		h6280_set_irq_line, 				/* Set state of the IRQ line */
+		h6280_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        h6280_info,                         /* Get formatted string for a specific register */
 		3,									/* Number of IRQ lines */
-#else
- 		H6280_Cause_Interrupt,			   /* Generate an interrupt */
- 		H6280_Clear_Pending_Interrupts,    /* Clear pending interrupts */
-#endif
- 		&H6280_ICount,					   /* Pointer to the instruction count */
- 		0,-1,H6280_INT_NMI,                /* Interrupt types: none, IRQ, NMI */
-		cpu_readmem21,                     /* Memory read */
-		cpu_writemem21,                    /* Memory write */
-		cpu_setOPbase21,                   /* Update CPU opcode base */
-		21,                                /* CPU address bits */
-		ABITS1_21,ABITS2_21,ABITS_MIN_21   /* Address bits, for the memory system */
-	},
-    /* #define CPU_I86    5 */
+		&h6280_ICount,						/* Pointer to the instruction count */
+		H6280_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		-1,
+		H6280_INT_NMI,
+		cpu_readmem21,						/* Memory read */
+		cpu_writemem21, 					/* Memory write */
+		cpu_setOPbase21,					/* Update CPU opcode base */
+		21, 								/* CPU address bits */
+		ABITS1_21,ABITS2_21,ABITS_MIN_21	/* Address bits, for the memory system */
+    },
+	/* 8 CPU_I86 */
 	{
-		i86_Reset,							/* Reset CPU */
-		i86_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))i86_SetRegs,		/* Set the contents of the registers */
-		(void (*)(void *))i86_GetRegs,		/* Get the contents of the registers */
-		i86_GetPC,							/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		i86_set_nmi_line,					/* Set state of the NMI line */
+		i86_reset,							/* Reset CPU */
+		i86_exit,							/* Shut down the CPU */
+		i86_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i86_setregs,		/* Set the contents of the registers */
+		(void (*)(void *))i86_getregs,		/* Get the contents of the registers */
+		i86_getpc,							/* Return the current PC */
+        i86_getreg,                         /* Get a specific register value */
+		i86_setreg, 						/* Set a specific register value */
+        i86_set_nmi_line,                   /* Set state of the NMI line */
 		i86_set_irq_line,					/* Set state of the IRQ line */
 		i86_set_irq_callback,				/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        i86_info,                           /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		i86_Cause_Interrupt,				/* Generate an interrupt */
-		i86_Clear_Pending_Interrupts,		/* Clear pending interrupts */
-#endif
 		&i86_ICount,						/* Pointer to the instruction count */
-		I86_INT_NONE,-1000,I86_NMI_INT, 	/* Interrupt types: none, IRQ, NMI */
+		I86_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1000,
+		I86_NMI_INT,
 		cpu_readmem20,						/* Memory read */
 		cpu_writemem20, 					/* Memory write */
 		cpu_setOPbase20,					/* Update CPU opcode base */
 		20, 								/* CPU address bits */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
-	},
-	/* #define CPU_I8039  6 */
-	{
-		I8039_Reset,						/* Reset CPU */
-		I8039_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))I8039_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))I8039_GetRegs,	/* Get the contents of the registers */
-		I8039_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		I8039_set_nmi_line, 				/* Set state of the NMI line */
-		I8039_set_irq_line, 				/* Set state of the IRQ line */
-		I8039_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+    },
+	/*	9 CPU_I8035 */
+    {
+		i8035_reset,						/* Reset CPU */
+		i8035_exit, 						/* Shut down the CPU */
+		i8035_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i8035_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))i8035_getregs,	/* Get the contents of the registers */
+		i8035_getpc,						/* Return the current PC */
+        i8035_getreg,                       /* Get a specific register value */
+		i8035_setreg,						/* Set a specific register value */
+        i8035_set_nmi_line,                 /* Set state of the NMI line */
+		i8035_set_irq_line, 				/* Set state of the IRQ line */
+		i8035_set_irq_callback, 			/* Set IRQ enable/vector callback */
+        NULL,                               /* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        i8035_info,                         /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		I8039_Cause_Interrupt,				/* Generate an interrupt */
-		I8039_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
-		&I8039_ICount,						/* Pointer to the instruction count */
-		I8039_IGNORE_INT,I8039_EXT_INT,-1,	/* Interrupt types: none, IRQ, NMI */
+		&i8035_ICount,						/* Pointer to the instruction count */
+		I8035_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		I8035_EXT_INT,
+        -1,
+        cpu_readmem16,                      /* Memory read */
+        cpu_writemem16,                     /* Memory write */
+        cpu_setOPbase16,                    /* Update CPU opcode base */
+        16,                                 /* CPU address bits */
+        ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
+    },
+	/* 10 CPU_I8039 */
+	{
+		i8039_reset,						/* Reset CPU */
+		i8039_exit, 						/* Shut down the CPU */
+		i8039_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i8039_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))i8039_getregs,	/* Get the contents of the registers */
+		i8039_getpc,						/* Return the current PC */
+        i8039_getreg,                       /* Get a specific register value */
+		i8039_setreg,						/* Set a specific register value */
+        i8039_set_nmi_line,                 /* Set state of the NMI line */
+		i8039_set_irq_line, 				/* Set state of the IRQ line */
+		i8039_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        i8039_info,                         /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&i8039_ICount,						/* Pointer to the instruction count */
+		I8039_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		I8039_EXT_INT,
+		-1,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-	},
-	/* #define CPU_M6808  7 */
+    },
+	/* 11 CPU_I8048 */
+	{
+		i8048_reset,						/* Reset CPU */
+		i8048_exit, 						/* Shut down the CPU */
+		i8048_execute,						/* Execute a number of cycles */
+		(void (*)(void *))i8048_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))i8048_getregs,	/* Get the contents of the registers */
+		i8048_getpc,						/* Return the current PC */
+        i8048_getreg,                       /* Get a specific register value */
+		i8048_setreg,						/* Set a specific register value */
+        i8048_set_nmi_line,                 /* Set state of the NMI line */
+		i8048_set_irq_line, 				/* Set state of the IRQ line */
+		i8048_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        i8048_info,                         /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&i8048_ICount,						/* Pointer to the instruction count */
+		I8048_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		I8048_EXT_INT,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 12 CPU_N7751 */
+	{
+		n7751_reset,						/* Reset CPU */
+		n7751_exit, 						/* Shut down the CPU */
+		n7751_execute,						/* Execute a number of cycles */
+		(void (*)(void *))n7751_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))n7751_getregs,	/* Get the contents of the registers */
+		n7751_getpc,						/* Return the current PC */
+        n7751_getreg,                       /* Get a specific register value */
+		n7751_setreg,						/* Set a specific register value */
+        n7751_set_nmi_line,                 /* Set state of the NMI line */
+		n7751_set_irq_line, 				/* Set state of the IRQ line */
+		n7751_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        n7751_info,                         /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&n7751_ICount,						/* Pointer to the instruction count */
+		N7751_IGNORE_INT,					/* Interrupt types: none, IRQ, NMI */
+		N7751_EXT_INT,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 13 CPU_M6800 */
+	{
+		m6800_reset,						/* Reset CPU */
+		m6800_exit, 						/* Shut down the CPU */
+		m6800_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6800_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6800_getregs,	/* Get the contents of the registers */
+		m6800_getpc,						/* Return the current PC */
+		m6800_getreg,						/* Get a specific register value */
+		m6800_setreg,						/* Set a specific register value */
+		m6800_set_nmi_line, 				/* Set state of the NMI line */
+		m6800_set_irq_line, 				/* Set state of the IRQ line */
+		m6800_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		m6800_info, 						/* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
+		&m6800_ICount,						/* Pointer to the instruction count */
+		M6800_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6800_INT_IRQ,
+		M6800_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 14 CPU_M6802 */
+	{
+		m6802_reset,						/* Reset CPU */
+		m6802_exit, 						/* Shut down the CPU */
+		m6802_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6802_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6802_getregs,	/* Get the contents of the registers */
+		m6802_getpc,						/* Return the current PC */
+        m6802_getreg,                       /* Get a specific register value */
+		m6802_setreg,						/* Set a specific register value */
+        m6802_set_nmi_line,                 /* Set state of the NMI line */
+		m6802_set_irq_line, 				/* Set state of the IRQ line */
+		m6802_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6802_info,                         /* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
+		&m6802_ICount,						/* Pointer to the instruction count */
+		M6802_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6802_INT_IRQ,
+		M6802_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 15 CPU_M6803 */
+	{
+		m6803_reset,						/* Reset CPU */
+		m6803_exit, 						/* Shut down the CPU */
+		m6803_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6803_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6803_getregs,	/* Get the contents of the registers */
+		m6803_getpc,						/* Return the current PC */
+        m6803_getreg,                       /* Get a specific register value */
+		m6803_setreg,						/* Set a specific register value */
+        m6803_set_nmi_line,                 /* Set state of the NMI line */
+		m6803_set_irq_line, 				/* Set state of the IRQ line */
+		m6803_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6803_info,                         /* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
+		&m6803_ICount,						/* Pointer to the instruction count */
+		M6803_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6803_INT_IRQ,
+		M6803_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 16 CPU_M6808 */
 	{
 		m6808_reset,						/* Reset CPU */
-		m6808_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6808_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))m6808_GetRegs,	/* Get the contents of the registers */
-		m6808_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		m6808_set_nmi_line, 				/* Set state of the NMI line */
+		m6808_exit, 						/* Shut down the CPU */
+        m6808_execute,                      /* Execute a number of cycles */
+		(void (*)(void *))m6808_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6808_getregs,	/* Get the contents of the registers */
+		m6808_getpc,						/* Return the current PC */
+        m6808_getreg,                       /* Get a specific register value */
+		m6808_setreg,						/* Set a specific register value */
+        m6808_set_nmi_line,                 /* Set state of the NMI line */
 		m6808_set_irq_line, 				/* Set state of the IRQ line */
 		m6808_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
-        1,                                  /* Number of IRQ lines */
-#else
-		m6808_Cause_Interrupt,				/* Generate an interrupt */
-		m6808_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6808_info,                         /* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
 		&m6808_ICount,						/* Pointer to the instruction count */
-		M6808_INT_NONE,M6808_INT_IRQ,M6808_INT_NMI, /* Interrupt types: none, IRQ, NMI */
+		M6808_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6808_INT_IRQ,
+		M6808_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-	},
-	/* #define CPU_M6805  8 */
+    },
+	/* 17 CPU_HD63701 */
+	{
+		hd63701_reset,						/* Reset CPU */
+		hd63701_exit,						/* Shut down the CPU */
+		hd63701_execute,					/* Execute a number of cycles */
+		(void (*)(void *))hd63701_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))hd63701_getregs,	/* Get the contents of the registers */
+		hd63701_getpc,						/* Return the current PC */
+        hd63701_getreg,                     /* Get a specific register value */
+		hd63701_setreg, 					/* Set a specific register value */
+        hd63701_set_nmi_line,               /* Set state of the NMI line */
+		hd63701_set_irq_line,				/* Set state of the IRQ line */
+		hd63701_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        hd63701_info,                       /* Get formatted string for a specific register */
+		2,									/* Number of IRQ lines */
+		&hd63701_ICount,					/* Pointer to the instruction count */
+		HD63701_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		HD63701_INT_IRQ,
+		HD63701_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 18 CPU_M6805 */
 	{
 		m6805_reset,						/* Reset CPU */
-		m6805_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6805_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))m6805_GetRegs,	/* Get the contents of the registers */
-		m6805_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		m6805_set_nmi_line, 				/* Set state of the NMI line */
+		m6805_exit, 						/* Shut down the CPU */
+        m6805_execute,                      /* Execute a number of cycles */
+		(void (*)(void *))m6805_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6805_getregs,	/* Get the contents of the registers */
+		m6805_getpc,						/* Return the current PC */
+        m6805_getreg,                       /* Get a specific register value */
+		m6805_setreg,						/* Set a specific register value */
+        m6805_set_nmi_line,                 /* Set state of the NMI line */
 		m6805_set_irq_line, 				/* Set state of the IRQ line */
 		m6805_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6805_info,                         /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		m6805_Cause_Interrupt,				/* Generate an interrupt */
-		m6805_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
 		&m6805_ICount,						/* Pointer to the instruction count */
-		M6805_INT_NONE,M6805_INT_IRQ,-1,	/* Interrupt types: none, IRQ, NMI */
+		M6805_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6805_INT_IRQ,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 19 CPU_M68705 */
+	{
+		m68705_reset,						/* Reset CPU */
+		m68705_exit,						/* Shut down the CPU */
+		m68705_execute, 					/* Execute a number of cycles */
+		(void (*)(void *))m68705_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m68705_getregs,	/* Get the contents of the registers */
+		m68705_getpc,						/* Return the current PC */
+        m68705_getreg,                      /* Get a specific register value */
+		m68705_setreg,						/* Set a specific register value */
+        m68705_set_nmi_line,                /* Set state of the NMI line */
+		m68705_set_irq_line,				/* Set state of the IRQ line */
+		m68705_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m68705_info,                        /* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&m68705_ICount, 					/* Pointer to the instruction count */
+		M68705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		M68705_INT_IRQ,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* 20 CPU_M6309 */
+	{
+		m6309_reset,						/* Reset CPU */
+		m6309_exit, 						/* Shut down the CPU */
+		m6309_execute,						/* Execute a number of cycles */
+		(void (*)(void *))m6309_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6309_getregs,	/* Get the contents of the registers */
+		m6309_getpc,						/* Return the current PC */
+        m6309_getreg,                       /* Get a specific register value */
+		m6309_setreg,						/* Set a specific register value */
+        m6309_set_nmi_line,                 /* Set state of the NMI line */
+		m6309_set_irq_line, 				/* Set state of the IRQ line */
+		m6309_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6309_info,                         /* Get formatted string for a specific register */
+        2,                                  /* Number of IRQ lines */
+		&m6309_ICount,						/* Pointer to the instruction count */
+		M6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6309_INT_IRQ,
+		M6309_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_M6809  9 */
+	/* 21 CPU_M6809 */
 	{
 		m6809_reset,						/* Reset CPU */
-		m6809_execute,						/* Execute a number of cycles */
-		(void (*)(void *))m6809_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))m6809_GetRegs,	/* Get the contents of the registers */
-		m6809_GetPC,						/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		m6809_set_nmi_line, 				/* Set state of the NMI line */
+		m6809_exit, 						/* Shut down the CPU */
+        m6809_execute,                      /* Execute a number of cycles */
+		(void (*)(void *))m6809_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))m6809_getregs,	/* Get the contents of the registers */
+		m6809_getpc,						/* Return the current PC */
+        m6809_getreg,                       /* Get a specific register value */
+		m6809_setreg,						/* Set a specific register value */
+        m6809_set_nmi_line,                 /* Set state of the NMI line */
 		m6809_set_irq_line, 				/* Set state of the IRQ line */
 		m6809_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        m6809_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
-#else
-		m6809_Cause_Interrupt,				/* Generate an interrupt */
-		m6809_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
 		&m6809_ICount,						/* Pointer to the instruction count */
-		M6809_INT_NONE,M6809_INT_IRQ,M6809_INT_NMI, /* Interrupt types: none, IRQ, NMI */
+		M6809_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		M6809_INT_IRQ,
+		M6809_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
-	},
-	/* #define CPU_M68000 10 */
+    },
+	/* 22 CPU_M68000 */
 	{
-		MC68000_Reset,						/* Reset CPU */
-		MC68000_Execute,					/* Execute a number of cycles */
-		(void (*)(void *))MC68000_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))MC68000_GetRegs,	/* Get the contents of the registers */
-		(unsigned int (*)(void))MC68000_GetPC,/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		MC68000_set_nmi_line,				/* Set state of the NMI line */
+		MC68000_reset,						/* Reset CPU */
+		MC68000_exit,						/* Shut down the CPU */
+		MC68000_execute,					/* Execute a number of cycles */
+		(void (*)(void *))MC68000_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))MC68000_getregs,	/* Get the contents of the registers */
+		MC68000_getpc,						/* Return the current PC */
+        MC68000_getreg,                     /* Get a specific register value */
+		MC68000_setreg, 					/* Set a specific register value */
+        MC68000_set_nmi_line,               /* Set state of the NMI line */
 		MC68000_set_irq_line,				/* Set state of the IRQ line */
 		MC68000_set_irq_callback,			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        MC68000_info,                       /* Get formatted string for a specific register */
         8,                                  /* Number of IRQ lines */
-#else
-		MC68000_Cause_Interrupt,			/* Generate an interrupt */
-		MC68000_Clear_Pending_Interrupts,	/* Clear pending interrupts */
-#endif
 		&MC68000_ICount,					/* Pointer to the instruction count */
-		MC68000_INT_NONE,-1,-1, 			/* Interrupt types: none, IRQ, NMI */
+		MC68000_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
 		24, 								/* CPU address bits */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
-        },
-    /* #define CPU_T11  11 */
+	},
+	/* 23 CPU_M68010 */
+	{
+		MC68010_reset,						/* Reset CPU */
+		MC68010_exit,						/* Shut down the CPU */
+		MC68010_execute,					/* Execute a number of cycles */
+		(void (*)(void *))MC68010_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))MC68010_getregs,	/* Get the contents of the registers */
+		MC68010_getpc,						/* Return the current PC */
+        MC68010_getreg,                     /* Get a specific register value */
+		MC68010_setreg, 					/* Set a specific register value */
+        MC68010_set_nmi_line,               /* Set state of the NMI line */
+		MC68010_set_irq_line,				/* Set state of the IRQ line */
+		MC68010_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        MC68010_info,                       /* Get formatted string for a specific register */
+        8,                                  /* Number of IRQ lines */
+		&MC68010_ICount,					/* Pointer to the instruction count */
+		MC68010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem24,						/* Memory read */
+		cpu_writemem24, 					/* Memory write */
+		cpu_setOPbase24,					/* Update CPU opcode base */
+		24, 								/* CPU address bits */
+		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
+    },
+	/* 24 CPU_M68020 */
+	{
+		MC68020_reset,						/* Reset CPU */
+		MC68020_exit,						/* Shut down the CPU */
+		MC68020_execute,					/* Execute a number of cycles */
+		(void (*)(void *))MC68020_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))MC68020_getregs,	/* Get the contents of the registers */
+		MC68020_getpc,						/* Return the current PC */
+        MC68020_getreg,                     /* Get a specific register value */
+		MC68020_setreg, 					/* Set a specific register value */
+        MC68020_set_nmi_line,               /* Set state of the NMI line */
+		MC68020_set_irq_line,				/* Set state of the IRQ line */
+		MC68020_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        MC68020_info,                       /* Get formatted string for a specific register */
+        8,                                  /* Number of IRQ lines */
+		&MC68020_ICount,					/* Pointer to the instruction count */
+		MC68020_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
+		cpu_readmem24,						/* Memory read */
+		cpu_writemem24, 					/* Memory write */
+		cpu_setOPbase24,					/* Update CPU opcode base */
+		24, 								/* CPU address bits */
+		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
+    },
+	/* 25 CPU_T11 */
 	{
 		t11_reset,							/* Reset CPU */
-		t11_execute,						/* Execute a number of cycles */
-		(void (*)(void *))t11_SetRegs,		/* Set the contents of the registers */
-		(void (*)(void *))t11_GetRegs,		/* Get the contents of the registers */
-		t11_GetPC,							/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		t11_set_nmi_line,					/* Set state of the NMI line */
+		t11_exit,							/* Shut down the CPU */
+        t11_execute,                        /* Execute a number of cycles */
+		(void (*)(void *))t11_setregs,		/* Set the contents of the registers */
+		(void (*)(void *))t11_getregs,		/* Get the contents of the registers */
+		t11_getpc,							/* Return the current PC */
+        t11_getreg,                         /* Get a specific register value */
+		t11_setreg, 						/* Set a specific register value */
+        t11_set_nmi_line,                   /* Set state of the NMI line */
 		t11_set_irq_line,					/* Set state of the IRQ line */
 		t11_set_irq_callback,				/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        t11_info,                           /* Get formatted string for a specific register */
         4,                                  /* Number of IRQ lines */
-#else
-		t11_Cause_Interrupt,				/* Generate an interrupt */
-		t11_Clear_Pending_Interrupts,		/* Clear pending interrupts */
-#endif
 		&t11_ICount,						/* Pointer to the instruction count */
-		T11_INT_NONE,-1,-1, 				/* Interrupt types: none, IRQ, NMI */
+		T11_INT_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem16lew,					/* Memory read */
 		cpu_writemem16lew,					/* Memory write */
 		cpu_setOPbase16lew, 				/* Update CPU opcode base */
 		16, 								/* CPU address bits */
-		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW /* Address bits, for the memory system */
+		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW  /* Address bits, for the memory system */
 	},
-	/* #define CPU_S2650 12 */
+	/* 26 CPU_S2650 */
 	{
-		S2650_Reset,						/* Reset CPU */
-		S2650_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))S2650_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))S2650_GetRegs,	/* Get the contents of the registers */
-		(unsigned int (*)(void))S2650_GetPC,/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		S2650_set_nmi_line, 				/* Set state of the NMI line */
-		S2650_set_irq_line, 				/* Set state of the IRQ line */
-		S2650_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		s2650_reset,						/* Reset CPU */
+		s2650_exit, 						/* Shut down the CPU */
+		s2650_execute,						/* Execute a number of cycles */
+		(void (*)(void *))s2650_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))s2650_getregs,	/* Get the contents of the registers */
+		s2650_getpc,						/* Return the current PC */
+        s2650_getreg,                       /* Get a specific register value */
+		s2650_setreg,						/* Set a specific register value */
+        s2650_set_nmi_line,                 /* Set state of the NMI line */
+		s2650_set_irq_line, 				/* Set state of the IRQ line */
+		s2650_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        s2650_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
-#else
-        S2650_Cause_Interrupt,              /* Generate an interrupt */
-		S2650_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
-        &S2650_ICount,                      /* Pointer to the instruction count */
-		S2650_INT_NONE,-1,-1,				/* Interrupt types: none, IRQ, NMI */
+		&s2650_ICount,						/* Pointer to the instruction count */
+		S2650_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	/* #define CPU_TMS34010 13 */
+	/* 27 CPU_TMS34010 */
 	{
-		TMS34010_Reset,                     /* Reset CPU */
-		TMS34010_Execute,                   /* Execute a number of cycles */
-		(void (*)(void *))TMS34010_SetRegs, /* Set the contents of the registers */
-		(void (*)(void *))TMS34010_GetRegs, /* Get the contents of the registers */
-		(unsigned int (*)(void))TMS34010_GetPC, /* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		TMS34010_set_nmi_line,				/* Set state of the NMI line */
+		TMS34010_reset, 					/* Reset CPU */
+		TMS34010_exit,						/* Shut down the CPU */
+		TMS34010_execute,					/* Execute a number of cycles */
+		(void (*)(void *))TMS34010_setregs, /* Set the contents of the registers */
+		(void (*)(void *))TMS34010_getregs, /* Get the contents of the registers */
+		TMS34010_getpc, 					/* Return the current PC */
+        TMS34010_getreg,                    /* Get a specific register value */
+		TMS34010_setreg,					/* Set a specific register value */
+        TMS34010_set_nmi_line,              /* Set state of the NMI line */
 		TMS34010_set_irq_line,				/* Set state of the IRQ line */
 		TMS34010_set_irq_callback,			/* Set IRQ enable/vector callback */
 		TMS34010_internal_interrupt,		/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        TMS34010_info,                      /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
-#else
-        TMS34010_Cause_Interrupt,           /* Generate an interrupt */
-		TMS34010_Clear_Pending_Interrupts,  /* Clear pending interrupts */
-#endif
         &TMS34010_ICount,                   /* Pointer to the instruction count */
-		TMS34010_INT_NONE,TMS34010_INT1,-1, /* Interrupt types: none, IRQ, NMI */
+		TMS34010_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		TMS34010_INT1,
+		-1,
 		cpu_readmem29,						/* Memory read */
 		cpu_writemem29, 					/* Memory write */
 		cpu_setOPbase29,					/* Update CPU opcode base */
 		29, 								/* CPU address bits */
 		ABITS1_29,ABITS2_29,ABITS_MIN_29	/* Address bits, for the memory system */
 	},
-	/* #define CPU_TMS9900 14 */
+	/* 28 CPU_TMS9900 */
 	{
-		TMS9900_Reset,						/* Reset CPU */
-		TMS9900_Execute,					/* Execute a number of cycles */
-		(void (*)(void *))TMS9900_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))TMS9900_GetRegs,	/* Get the contents of the registers */
-		(unsigned int (*)(void))TMS9900_GetPC,  /* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		TMS9900_set_nmi_line,				/* Set state of the NMI line */
+		TMS9900_reset,						/* Reset CPU */
+		TMS9900_exit,						/* Shut down the CPU */
+		TMS9900_execute,					/* Execute a number of cycles */
+		(void (*)(void *))TMS9900_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))TMS9900_getregs,	/* Get the contents of the registers */
+		TMS9900_getpc,						/* Return the current PC */
+        TMS9900_getreg,                     /* Get a specific register value */
+		TMS9900_setreg, 					/* Set a specific register value */
+        TMS9900_set_nmi_line,               /* Set state of the NMI line */
 		TMS9900_set_irq_line,				/* Set state of the IRQ line */
 		TMS9900_set_irq_callback,			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        TMS9900_info,                       /* Get formatted string for a specific register */
         1,                                  /* Number of IRQ lines */
-#else
-		TMS9900_Cause_Interrupt,			/* Generate an interrupt */
-		TMS9900_Clear_Pending_Interrupts,	/* Clear pending interrupts */
-#endif
 		&TMS9900_ICount,					/* Pointer to the instruction count */
-		TMS9900_NONE,-1,-1, 				/* Interrupt types: none, IRQ, NMI */
+		TMS9900_NONE,						/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
@@ -566,56 +998,116 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
         /* Were all ...LEW */
 	},
-	/* #define CPU_Z8000 15 */
+	/* 29 CPU_Z8000 */
 	{
-		Z8000_Reset,						/* Reset CPU */
-		Z8000_Execute,						/* Execute a number of cycles */
-		(void (*)(void *))Z8000_SetRegs,	/* Set the contents of the registers */
-		(void (*)(void *))Z8000_GetRegs,	/* Get the contents of the registers */
-		(unsigned int (*)(void))Z8000_GetPC,/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		Z8000_set_nmi_line, 				/* Set state of the NMI line */
-		Z8000_set_irq_line, 				/* Set state of the IRQ line */
-		Z8000_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		z8000_reset,						/* Reset CPU */
+		z8000_exit, 						/* Shut down the CPU */
+		z8000_execute,						/* Execute a number of cycles */
+		(void (*)(void *))z8000_setregs,	/* Set the contents of the registers */
+		(void (*)(void *))z8000_getregs,	/* Get the contents of the registers */
+		z8000_getpc,						/* Return the current PC */
+        z8000_getreg,                       /* Get a specific register value */
+		z8000_setreg,						/* Set a specific register value */
+        z8000_set_nmi_line,                 /* Set state of the NMI line */
+		z8000_set_irq_line, 				/* Set state of the IRQ line */
+		z8000_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        z8000_info,                         /* Get formatted string for a specific register */
         2,                                  /* Number of IRQ lines */
-#else
-		Z8000_Cause_Interrupt,				/* Generate an interrupt */
-		Z8000_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
-#endif
-		&Z8000_ICount,						/* Pointer to the instruction count */
-		Z8000_INT_NONE,Z8000_NVI,Z8000_NMI, /* Interrupt types: none, IRQ, NMI */
+		&z8000_ICount,						/* Pointer to the instruction count */
+		Z8000_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		Z8000_NVI,
+		Z8000_NMI,
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	/* #define CPU_TMS320C10 16 */
+	/* 30 CPU_TMS320C10 */
 	{
-		TMS320C10_Reset,					/* Reset CPU */
-		TMS320C10_Execute,					/* Execute a number of cycles */
-		(void (*)(void *))TMS320C10_SetRegs,/* Set the contents of the registers */
-		(void (*)(void *))TMS320C10_GetRegs,/* Get the contents of the registers */
-		TMS320C10_GetPC,					/* Return the current PC */
-#if NEW_INTERRUPT_SYSTEM
-		TMS320C10_set_nmi_line, 			/* Set state of the NMI line */
+		TMS320C10_reset,					/* Reset CPU */
+		TMS320C10_exit, 					/* Shut down the CPU */
+		TMS320C10_execute,					/* Execute a number of cycles */
+		(void (*)(void *))TMS320C10_setregs,/* Set the contents of the registers */
+		(void (*)(void *))TMS320C10_getregs,/* Get the contents of the registers */
+		TMS320C10_getpc,					/* Return the current PC */
+        TMS320C10_getreg,                   /* Get a specific register value */
+		TMS320C10_setreg,					/* Set a specific register value */
+        TMS320C10_set_nmi_line,             /* Set state of the NMI line */
 		TMS320C10_set_irq_line, 			/* Set state of the IRQ line */
 		TMS320C10_set_irq_callback, 		/* Set IRQ enable/vector callback */
-		0,									/* Cause internal interrupt */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+        TMS320C10_info,                     /* Get formatted string for a specific register */
 		2,									/* Number of IRQ lines */
-#else
-		TMS320C10_Cause_Interrupts, 		/* Generate an interrupt */
-		TMS320C10_Clear_Pending_Interrupts, /* Clear pending interrupts */
-#endif
 		&TMS320C10_ICount,					/* Pointer to the instruction count */
-		TMS320C10_INT_NONE,-1,-1,			/* Interrupt types: none, IRQ, NMI */
+		TMS320C10_INT_NONE, 				/* Interrupt types: none, IRQ, NMI */
+		-1,
+		-1,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
+	/* 31 CPU_CCPU */
+    {
+		ccpu_reset, 						/* Reset CPU  */
+		ccpu_exit,							/* Shut down CPU  */
+		ccpu_execute,						/* Execute a number of cycles  */
+		(void (*)(void *))ccpu_setregs, 	/* Set the contents of the registers  */
+		(void (*)(void *))ccpu_getregs, 	/* Get the contents of the registers  */
+		ccpu_getpc, 						/* Return the current PC  */
+        ccpu_getreg,                        /* Get a specific register value */
+		ccpu_setreg,						/* Set a specific register value */
+        ccpu_set_nmi_line,                  /* Set state of the NMI line */
+		ccpu_set_irq_line,					/* Set state of the IRQ line */
+		ccpu_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		ccpu_info,							/* Get formatted string for a specific register */
+        2,                                  /* Number of IRQ lines */
+		&ccpu_ICount,						/* Pointer to the instruction count  */
+		0,-1,-1,							/* Interrupt types: none, IRQ, NMI	*/
+		cpu_readmem16,						/* Memory read	*/
+		cpu_writemem16, 					/* Memory write  */
+		cpu_setOPbase16,					/* Update CPU opcode base  */
+		16, 								/* CPU address bits  */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
+	},
+#ifdef MESS
+	/* 32 CPU_PDP1 */
+    {
+		pdp1_reset, 						/* Reset CPU  */
+		pdp1_exit,							/* Shut down CPU  */
+		pdp1_execute,						/* Execute a number of cycles  */
+		(void (*)(void *))pdp1_setregs, 	/* Set the contents of the registers  */
+		(void (*)(void *))pdp1_getregs, 	/* Get the contents of the registers  */
+		pdp1_getpc, 						/* Return the current PC  */
+        pdp1_getreg,                        /* Get a specific register value */
+		pdp1_setreg,						/* Set a specific register value */
+        pdp1_set_nmi_line,                  /* Set state of the NMI line */
+		pdp1_set_irq_line,					/* Set state of the IRQ line */
+		pdp1_set_irq_callback,				/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		NULL,								/* Save CPU state */
+		NULL,								/* Load CPU state */
+		pdp1_info,							/* Get formatted string for a specific register */
+        2,                                  /* Number of IRQ lines */
+		&pdp1_ICount,						/* Pointer to the instruction count  */
+		0,-1,-1,							/* Interrupt types: none, IRQ, NMI	*/
+		cpu_readmem16,						/* Memory read	*/
+		cpu_writemem16, 					/* Memory write  */
+		cpu_setOPbase16,					/* Update CPU opcode base  */
+		16, 								/* CPU address bits  */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
+    },
+#endif
 };
 
 void cpu_init(void)
@@ -658,7 +1150,7 @@ void cpu_run(void)
 		cpu[i].save_context = 0;
 
 		for (j = 0; j < totalcpu; j++)
-			if ( i != j && CPU_TYPE(i) == CPU_TYPE(j) )
+			if ( i != j && !strcmp(cpu_core_file(CPU_TYPE(i)),cpu_core_file(CPU_TYPE(j))) )
 				cpu[i].save_context = 1;
 
 		#ifdef MAME_DEBUG
@@ -708,10 +1200,10 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		if (cpu[i].save_context) SETREGS (i, cpu[i].context);
 		activecpu = i;
 		RESET (i);
-#if NEW_INTERRUPT_SYSTEM
-		/* Set the irq callback for the cpu */
+
+        /* Set the irq callback for the cpu */
 		SET_IRQ_CALLBACK(i,cpu_irq_callbacks[i]);
-#endif
+
         /* save the CPU context if necessary */
 		if (cpu[i].save_context) GETREGS (i, cpu[i].context);
 
@@ -730,9 +1222,14 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		int cpunum;
 
 		/* was machine_reset() called? */
-		if (have_to_reset) goto reset;
-
-		osd_profiler(OSD_PROFILE_EXTRA);
+		if (have_to_reset)
+		{
+#ifdef MESS
+            if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
+#endif
+            goto reset;
+		}
+        osd_profiler(OSD_PROFILE_EXTRA);
 
 		/* ask the timer system to schedule */
 		if (timer_schedule_cpu (&cpunum, &running))
@@ -771,6 +1268,17 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	/* write hi scores to disk - No scores saving if cheat */
 	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
 		(*Machine->gamedrv->hiscore_save)();
+
+#ifdef MESS
+    if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
+#endif
+
+	/* shut down the CPU cores */
+	for (i = 0; i < totalcpu; i++)
+	{
+		if( cpu[i].intf->exit )
+			(*cpu[i].intf->exit)();
+	}
 }
 
 
@@ -877,7 +1385,7 @@ int cpu_gettotalcpu(void)
 
 
 
-int cpu_getpc(void)
+unsigned cpu_getpc(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	return GETPC (cpunum);
@@ -940,13 +1448,14 @@ int cpu_getreturnpc(void)
 				Z80_Regs _regs;
 				extern unsigned char *RAM;
 
-				Z80_GetRegs(&_regs);
-				return RAM[_regs.SP.D] + (RAM[_regs.SP.D+1] << 8);
+				GETREGS(cpunum,&_regs);
+				return RAM[_regs.SP.d] + (RAM[_regs.SP.d+1] << 8);
 			}
 			break;
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",CPU_TYPE(cpunum));
+			if (errorlog)
+				fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x [%s]\n",CPU_TYPE(cpunum),CPU_INFO(CPU_TYPE(cpunum),0,0));
 			return -1;
 			break;
 	}
@@ -1143,8 +1652,6 @@ int cpu_getiloops(void)
 
 ***************************************************************************/
 
-#if NEW_INTERRUPT_SYSTEM
-
 /***************************************************************************
 
   These functions are called when a cpu calls the callback sent to it's
@@ -1154,7 +1661,8 @@ int cpu_getiloops(void)
 ***************************************************************************/
 static int cpu_0_irq_callback(int irqline)
 {
-	if (irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+	if( irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
+	{
         SET_IRQ_LINE(0, irqline, CLEAR_LINE);
 		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
     }
@@ -1164,7 +1672,8 @@ static int cpu_0_irq_callback(int irqline)
 
 static int cpu_1_irq_callback(int irqline)
 {
-	if (irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+	if( irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
+	{
         SET_IRQ_LINE(1, irqline, CLEAR_LINE);
 		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
     }
@@ -1174,7 +1683,8 @@ static int cpu_1_irq_callback(int irqline)
 
 static int cpu_2_irq_callback(int irqline)
 {
-	if (irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+	if( irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
+	{
         SET_IRQ_LINE(2, irqline, CLEAR_LINE);
 		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
@@ -1184,7 +1694,8 @@ static int cpu_2_irq_callback(int irqline)
 
 static int cpu_3_irq_callback(int irqline)
 {
-	if (irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE) {
+	if( irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
+	{
         SET_IRQ_LINE(3, irqline, CLEAR_LINE);
 		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
@@ -1212,7 +1723,8 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
 {
 	cpunum &= (MAX_CPU - 1);
 	irqline &= (MAX_IRQ_LINES - 1);
-	if (irqline < cpu[cpunum].intf->num_irqs) {
+	if( irqline < cpu[cpunum].intf->num_irqs )
+	{
 		LOG((errorlog,"cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
 		irq_line_vector[cpunum * MAX_IRQ_LINES + irqline] = vector;
 		return;
@@ -1253,8 +1765,6 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 	LOG((errorlog,"cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
 	timer_set (TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
 }
-
-#endif
 
 /***************************************************************************
 
@@ -1486,8 +1996,6 @@ int cpu_getcurrentframe(void)
 
 ***************************************************************************/
 
-#if NEW_INTERRUPT_SYSTEM
-
 static void cpu_manualnmicallback(int param)
 {
 	int cpunum, state, oldactive;
@@ -1500,9 +2008,10 @@ static void cpu_manualnmicallback(int param)
     memorycontextswap (activecpu);
     if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
 
-    LOG((errorlog,"cpu_manunalnmicallback %d,%d\n",cpunum,state));
+	LOG((errorlog,"cpu_manualnmicallback %d,%d\n",cpunum,state));
 
-    switch (state) {
+	switch (state)
+	{
         case PULSE_LINE:
 			SET_NMI_LINE(cpunum,ASSERT_LINE);
 			SET_NMI_LINE(cpunum,CLEAR_LINE);
@@ -1541,10 +2050,11 @@ static void cpu_manualirqcallback(int param)
     memorycontextswap (activecpu);
     if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
 
-    LOG((errorlog,"cpu_manunalirqcallback %d,%d,%d\n",cpunum,irqline,state));
+	LOG((errorlog,"cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
 	irq_line_state[cpunum * MAX_IRQ_LINES + irqline] = state;
-    switch (state) {
+	switch (state)
+	{
         case PULSE_LINE:
 			SET_IRQ_LINE(cpunum,irqline,ASSERT_LINE);
 			SET_IRQ_LINE(cpunum,irqline,CLEAR_LINE);
@@ -1600,8 +2110,6 @@ static void cpu_internalintcallback (int param)
 	cpu_internal_interrupt(cpunum, type);
 }
 
-#endif
-
 static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 {
 	int oldactive = activecpu;
@@ -1614,246 +2122,185 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 	/* cause the interrupt, calling the function if it exists */
 	if (func) num = (*func)();
 
-#if NEW_INTERRUPT_SYSTEM
-	/* wrapper for the new system */
-	if (num != INT_TYPE_NONE(cpunum)) {
+	/* wrapper for the new interrupt system */
+	if (num != INT_TYPE_NONE(cpunum))
+	{
 		LOG((errorlog,"CPU#%d interrupt type $%04x: ", cpunum, num));
 		/* is it the NMI type interrupt of that CPU? */
-		if (num == INT_TYPE_NMI(cpunum)) {
+		if (num == INT_TYPE_NMI(cpunum))
+		{
 
             LOG((errorlog,"NMI\n"));
 			cpu_manualnmicallback (cpunum | (PULSE_LINE << 3) );
 
-        } else {
+		}
+		else
+		{
 			int irq_line;
 
-			switch (CPU_TYPE(cpunum)) {
+			switch (CPU_TYPE(cpunum))
+			{
+			case CPU_Z80:				irq_line = 0; LOG((errorlog,"Z80 IRQ\n")); break;
 
-			case CPU_Z80: LOG((errorlog,"Z80 IRQ\n"));
-				irq_line = 0;
-				break;
-
+			case CPU_8080:
+				switch (num)
+				{
+				case I8080_INTR:		irq_line = 0; LOG((errorlog,"I8080 INTR\n")); break;
+				case I8080_RST55:		irq_line = 1; LOG((errorlog,"I8080 RST55\n")); break;
+				case I8080_RST65:		irq_line = 2; LOG((errorlog,"I8080 RST65\n")); break;
+				case I8080_RST75:		irq_line = 3; LOG((errorlog,"I8080 RST75\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"I8080 unknown\n"));
+				}
+                break;
             case CPU_8085A:
-				switch (num) {
-				case I8085_INTR:
-					LOG((errorlog,"I8085 INTR\n"));
-					irq_line = 0;
-					break;
-				case I8085_RST55:
-					LOG((errorlog,"I8085 RST55\n"));
-					irq_line = 1;
-					break;
-				case I8085_RST65:
-					LOG((errorlog,"I8085 RST65\n"));
-					irq_line = 2;
-					break;
-				case I8085_RST75:
-					LOG((errorlog,"I8085 RST75\n"));
-					irq_line = 3;
-					break;
-				default:
-					LOG((errorlog,"I8085 unknown\n"));
-					irq_line = 0;
+				switch (num)
+				{
+				case I8085_INTR:		irq_line = 0; LOG((errorlog,"I8085 INTR\n")); break;
+				case I8085_RST55:		irq_line = 1; LOG((errorlog,"I8085 RST55\n")); break;
+				case I8085_RST65:		irq_line = 2; LOG((errorlog,"I8085 RST65\n")); break;
+				case I8085_RST75:		irq_line = 3; LOG((errorlog,"I8085 RST75\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"I8085 unknown\n"));
 				}
 				break;
 
-            case CPU_M6502:
-				LOG((errorlog,"M6502 IRQ\n"));
-				irq_line = 0;
-				break;
+			case CPU_M6502: 			irq_line = 0; LOG((errorlog,"M6502 IRQ\n")); break;
+			case CPU_M65C02:			irq_line = 0; LOG((errorlog,"M65C02 IRQ\n")); break;
+			case CPU_M6510: 			irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;
 
-            case CPU_I86:
-				LOG((errorlog,"I86 IRQ\n"));
-				irq_line = 0;
-				break;
+			case CPU_H6280:
+                switch (num)
+                {
+				case H6280_INT_IRQ1:	irq_line = 0; LOG((errorlog,"H6280 INT 1\n")); break;
+				case H6280_INT_IRQ2:	irq_line = 1; LOG((errorlog,"H6280 INT 2\n")); break;
+				case H6280_INT_TIMER:	irq_line = 2; LOG((errorlog,"H6280 TIMER INT\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"H6280 unknown\n"));
+                }
+                break;
 
-            case CPU_I8039:
-				LOG((errorlog,"I8039 IRQ\n"));
-				irq_line = 0;
-				break;
+			case CPU_I86:				irq_line = 0; LOG((errorlog,"I86 IRQ\n")); break;
 
-			case CPU_M6808:
-				switch (num) {
-				case M6808_INT_IRQ:
-					LOG((errorlog,"M6808 IRQ\n"));
-					irq_line = 0;
-					break;
-				case M6808_INT_OCI:
-					LOG((errorlog,"M6808 OCI\n"));
-					irq_line = 1;
-					break;
-				default:
-					LOG((errorlog,"M6808 unknown\n"));
-					irq_line = 0;
-                    break;
+			case CPU_I8035: 			irq_line = 0; LOG((errorlog,"I8035 IRQ\n")); break;
+            case CPU_I8039:             irq_line = 0; LOG((errorlog,"I8039 IRQ\n")); break;
+			case CPU_I8048: 			irq_line = 0; LOG((errorlog,"I8048 IRQ\n")); break;
+			case CPU_N7751: 			irq_line = 0; LOG((errorlog,"N7751 IRQ\n")); break;
+
+			case CPU_M6802:
+				switch (num)
+				{
+				case M6802_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6802 IRQ\n")); break;
+				case M6802_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6802 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6802 unknown\n"));
+                }
+                break;
+			case CPU_M6803:
+				switch (num)
+				{
+				case M6803_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6803 IRQ\n")); break;
+				case M6803_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6803 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6803 unknown\n"));
+                }
+                break;
+            case CPU_M6808:
+				switch (num)
+				{
+				case M6808_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6808 IRQ\n")); break;
+				case M6808_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6808 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6808 unknown\n"));
                 }
 				break;
+			case CPU_HD63701:
+				switch (num)
+				{
+				case HD63701_INT_IRQ:	irq_line = 0; LOG((errorlog,"HD63701 IRQ\n")); break;
+				case HD63701_INT_OCI:	irq_line = 1; LOG((errorlog,"HD63701 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"HD63701 unknown\n"));
+                }
+                break;
 
-            case CPU_M6805:
-				LOG((errorlog,"M6805 IRQ\n"));
-				irq_line = 0;
-				break;
+			case CPU_M6805: 			irq_line = 0; LOG((errorlog,"M6805 IRQ\n")); break;
+			case CPU_M68705:			irq_line = 0; LOG((errorlog,"M68705 IRQ\n")); break;
 
+			case CPU_M6309:
+				switch (num)
+				{
+				case M6309_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
+				case M6309_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6309 FIRQ\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6309 unknown\n"));
+				}
+                break;
             case CPU_M6809:
-				switch (num) {
-				case M6809_INT_IRQ:
-					LOG((errorlog,"M6809 IRQ\n"));
-					irq_line = 0;
-					break;
-				case M6809_INT_FIRQ:
-					LOG((errorlog,"M6809 FIRQ\n"));
-					irq_line = 1;
-					break;
-				default:
-					LOG((errorlog,"M6809 unknown\n"));
-					irq_line = 0;
+				switch (num)
+				{
+				case M6809_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6809 IRQ\n")); break;
+				case M6809_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6809 FIRQ\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6809 unknown\n"));
 				}
 				break;
 
             case CPU_M68000:
-				switch (num) {
-					case MC68000_IRQ_1:
-						LOG((errorlog,"M68000 IRQ1\n"));
-						irq_line = 1;
-						break;
-					case MC68000_IRQ_2:
-						LOG((errorlog,"M68000 IRQ2\n"));
-						irq_line = 2;
-                        break;
-					case MC68000_IRQ_3:
-						LOG((errorlog,"M68000 IRQ3\n"));
-						irq_line = 3;
-                        break;
-					case MC68000_IRQ_4:
-						LOG((errorlog,"M68000 IRQ4\n"));
-						irq_line = 4;
-                        break;
-					case MC68000_IRQ_5:
-						LOG((errorlog,"M68000 IRQ5\n"));
-						irq_line = 5;
-                        break;
-					case MC68000_IRQ_6:
-						LOG((errorlog,"M68000 IRQ6\n"));
-						irq_line = 6;
-                        break;
-					case MC68000_IRQ_7:
-						LOG((errorlog,"M68000 IRQ7\n"));
-						irq_line = 7;
-                        break;
-					default:
-						LOG((errorlog,"M68000 unknown\n"));
-						irq_line = 0;
+			case CPU_M68010:
+			case CPU_M68020:
+				switch (num)
+				{
+				case MC68000_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68K IRQ1\n")); break;
+				case MC68000_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68K IRQ2\n")); break;
+				case MC68000_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68K IRQ3\n")); break;
+				case MC68000_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68K IRQ4\n")); break;
+				case MC68000_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68K IRQ5\n")); break;
+				case MC68000_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68K IRQ6\n")); break;
+				case MC68000_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68K IRQ7\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M68K unknown\n"));
                 }
 				/* until now only auto vector interrupts supported */
                 num = MC68000_INT_ACK_AUTOVECTOR;
 				break;
 
             case CPU_T11:
-				switch (num) {
-					case T11_IRQ0:
-						LOG((errorlog,"T11 IRQ0\n"));
-						irq_line = 0;
-						break;
-					case T11_IRQ1:
-						LOG((errorlog,"T11 IRQ1\n"));
-						irq_line = 1;
-                        break;
-					case T11_IRQ2:
-						LOG((errorlog,"T11 IRQ2\n"));
-						irq_line = 2;
-                        break;
-					case T11_IRQ3:
-						LOG((errorlog,"T11 IRQ3\n"));
-						irq_line = 3;
-                        break;
-					default:
-						LOG((errorlog,"T11 unknown\n"));
-						irq_line = 0;
+				switch (num)
+				{
+				case T11_IRQ0:			irq_line = 0; LOG((errorlog,"T11 IRQ0\n")); break;
+				case T11_IRQ1:			irq_line = 1; LOG((errorlog,"T11 IRQ1\n")); break;
+				case T11_IRQ2:			irq_line = 2; LOG((errorlog,"T11 IRQ2\n")); break;
+				case T11_IRQ3:			irq_line = 3; LOG((errorlog,"T11 IRQ3\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"T11 unknown\n"));
                 }
                 break;
 
-            case CPU_S2650:
-				LOG((errorlog,"S2650 IRQ\n"));
-				irq_line = 0;
-                break;
+			case CPU_S2650: 			irq_line = 0; LOG((errorlog,"S2650 IRQ\n")); break;
 
             case CPU_TMS34010:
-				switch (num) {
-					case TMS34010_INT1:
-						LOG((errorlog,"TMS34010 INT1\n"));
-						irq_line = 0;
-                        break;
-					case TMS34010_INT2:
-						LOG((errorlog,"TMS34010 INT2\n"));
-						irq_line = 1;
-                        break;
-                    default:
-						LOG((errorlog,"TMS34010 unknown\n"));
-						irq_line = 0;
+				switch (num)
+				{
+				case TMS34010_INT1: 	irq_line = 0; LOG((errorlog,"TMS34010 INT1\n")); break;
+				case TMS34010_INT2: 	irq_line = 1; LOG((errorlog,"TMS34010 INT2\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"TMS34010 unknown\n"));
                 }
                 break;
 
-            case CPU_TMS9900:
-				LOG((errorlog,"TMS9900 IRQ\n"));
-				irq_line = 0;
-                break;
+			case CPU_TMS9900:			irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
 
             case CPU_Z8000:
-				switch (num) {
-					case Z8000_NVI:
-						LOG((errorlog,"Z8000 NVI\n"));
-						irq_line = 0;
-                        break;
-					case Z8000_VI:
-						LOG((errorlog,"Z8000 VI\n"));
-						irq_line = 1;
-                        break;
-					default:
-						LOG((errorlog,"Z8000 unknown\n"));
-						irq_line = 0;
+				switch (num)
+				{
+				case Z8000_NVI: 		irq_line = 0; LOG((errorlog,"Z8000 NVI\n")); break;
+				case Z8000_VI:			irq_line = 1; LOG((errorlog,"Z8000 VI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"Z8000 unknown\n"));
                 }
                 break;
 
             case CPU_TMS320C10:
-				switch (num) {
-					case TMS320C10_ACTIVE_INT:
-						LOG((errorlog,"TMS32010 INT\n"));
-						irq_line = 0;
-                        break;
-					case TMS320C10_ACTIVE_BIO:
-						LOG((errorlog,"TMS32010 BIO\n"));
-						irq_line = 1;
-                        break;
-                    default:
-						LOG((errorlog,"TMS32010 unknown\n"));
-						irq_line = 0;
+				switch (num)
+				{
+				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG((errorlog,"TMS32010 INT\n")); break;
+				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG((errorlog,"TMS32010 BIO\n")); break;
+				default:					irq_line = 0; LOG((errorlog,"TMS32010 unknown\n"));
                 }
                 break;
 
-            case CPU_H6280:
-				switch (num) {
-					case H6280_INT_IRQ1:
-						LOG((errorlog,"H6280 INT 1\n"));
-						irq_line = 0;
-                        break;
-					case H6280_INT_IRQ2:
-						LOG((errorlog,"H6280 INT 2\n"));
-						irq_line = 1;
-                        break;
-					case H6280_INT_TIMER:
-						LOG((errorlog,"H6280 TIMER INT\n"));
-						irq_line = 2;
-                        break;
-                    default:
-						LOG((errorlog,"H6280 unknown\n"));
-						irq_line = 0;
-                }
-                break;
-
-            default:
+			default:
+				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
 				LOG((errorlog,"unknown IRQ\n"));
-				irq_line = 0;
             }
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
 			cpu_manualirqcallback (irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
@@ -1866,19 +2313,6 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
     if (activecpu >= 0) memorycontextswap (activecpu);
 
 	/* trigger already generated by cpu_manualirqcallback or cpu_manualnmicallback */
-#else
-
-    CAUSE_INTERRUPT (cpunum, num);
-
-    /* update the CPU's context */
-    if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
-    activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
-
-	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-    if (num != INT_TYPE_NONE (cpunum))
-        timer_trigger (TRIGGER_INT + cpunum);
-#endif
 }
 
 static void cpu_clear_interrupts (int cpunum)
@@ -1891,14 +2325,12 @@ static void cpu_clear_interrupts (int cpunum)
 	memorycontextswap (activecpu);
 	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
 
-#if NEW_INTERRUPT_SYSTEM
-	SET_NMI_LINE(activecpu,CLEAR_LINE);
-	for (i = 0; i < cpu[activecpu].intf->num_irqs; i++)
+	/* clear NMI line */
+    SET_NMI_LINE(activecpu,CLEAR_LINE);
+
+    /* clear all IRQ lines */
+    for (i = 0; i < cpu[activecpu].intf->num_irqs; i++)
 		SET_IRQ_LINE(activecpu,i,CLEAR_LINE);
-#else
-	/* clear pending interrupts, calling the function if it exists */
-    CLEAR_PENDING_INTERRUPTS (cpunum);
-#endif
 
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
@@ -1918,10 +2350,9 @@ static void cpu_reset_cpu (int cpunum)
 
 	/* reset the CPU */
 	RESET (cpunum);
-#if NEW_INTERRUPT_SYSTEM
-	/* Set the irq callback for the cpu */
+
+    /* Set the irq callback for the cpu */
 	SET_IRQ_CALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
-#endif
 
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
@@ -2081,7 +2512,7 @@ static void cpu_updatecallback (int param)
 	{
 		if (--watchdog_counter == 0)
 		{
-if (errorlog) fprintf(errorlog,"Reset caused by the watchdog\n");
+if (errorlog) fprintf(errorlog,"reset caused by the watchdog\n");
 			machine_reset ();
 		}
 	}
@@ -2255,29 +2686,454 @@ void* cpu_getcontext (int _activecpu)
 }
 
 
-/* Reset Z80 with set daisychain link */
-static void Z80_Reset_with_daisychain(void)
+/*
+ * This function is obsolete. Put the daisy_chain pointer into the
+ * reset_param of your machine driver instead.
+ */
+#if 0
+void cpu_setdaisychain(int cpunum, Z80_DaisyChain *daisy_chain)
 {
-	Z80_Reset( Z80_daisychain[activecpu] );
+	if( CPU_TYPE(cpunum) != CPU_Z80 )
+	{
+		if( errorlog ) fprintf(errorlog,"cpu_setdaisychain called for CPU #%d [%s]!\n", cpunum, CPU_INFO(CPU_TYPE(cpunum),0,0));
+		return;
+	}
+	z80_reset(daisy_chain);
+}
+#endif
+
+/***************************************************************************
+
+  Retrieve or set the value of a specific register
+
+***************************************************************************/
+
+unsigned cur_cpu_getreg(int regnum)
+{
+	return (*cpu[activecpu].intf->get_reg)(regnum);
 }
 
-/* Set Z80 daisy chain link (upload when after reset ) */
-void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain )
+void cur_cpu_setreg(int regnum, unsigned val)
 {
-	Z80_daisychain[cpunum] = daisy_chain;
+	(*cpu[activecpu].intf->set_reg)(regnum,val);
 }
 
-/* dummy interfaces for non-CPUs */
-static void Dummy_SetRegs(void *Regs) { }
-static void Dummy_GetRegs(void *Regs) { }
-static unsigned Dummy_GetPC(void) { return 0; }
-static void Dummy_Reset(void) { }
-static int Dummy_Execute(int cycles) { return cycles; }
-#if NEW_INTERRUPT_SYSTEM
+unsigned cpu_getreg(int cpunum, int regnum)
+{
+	int oldactive;
+	unsigned val = 0;
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	val = (*cpu[activecpu].intf->get_reg)(regnum);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+	return val;
+}
+
+void cpu_setreg(int cpunum, int regnum, unsigned val)
+{
+	int oldactive;
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	(*cpu[activecpu].intf->set_reg)(regnum,val);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+}
+
+/***************************************************************************
+
+  Get various CPU information
+
+***************************************************************************/
+
+/***************************************************************************
+  Return the name for the current CPU
+***************************************************************************/
+const char *cur_cpu_name(void)
+{
+	if( activecpu >= 0 )
+		return CPU_INFO(activecpu,NULL,CPU_INFO_NAME);
+	return "";
+}
+
+/***************************************************************************
+  Return the family name for the current CPU
+***************************************************************************/
+const char *cur_cpu_core_family(void)
+{
+	if( activecpu >= 0 )
+		return CPU_INFO(activecpu,NULL,CPU_INFO_FAMILY);
+    return "";
+}
+
+/***************************************************************************
+  Return the version number for the current CPU
+***************************************************************************/
+const char *cur_cpu_core_version(void)
+{
+	if( activecpu >= 0 )
+		return CPU_INFO(activecpu,NULL,CPU_INFO_VERSION);
+    return "";
+}
+
+/***************************************************************************
+  Return the core filename for the current CPU
+***************************************************************************/
+const char *cur_cpu_core_file(void)
+{
+	if( activecpu >= 0 )
+		return CPU_INFO(activecpu,NULL,CPU_INFO_FILE);
+    return "";
+}
+
+/***************************************************************************
+  Return the credits for the current CPU
+***************************************************************************/
+const char *cur_cpu_core_credits(void)
+{
+	if( activecpu >= 0 )
+		return CPU_INFO(activecpu,NULL,CPU_INFO_CREDITS);
+    return "";
+}
+
+/***************************************************************************
+  Return the current program counter for the current CPU
+***************************************************************************/
+const char *cur_cpu_pc(void)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( activecpu >= 0 )
+	{
+		GETREGS (activecpu, temp_context);
+		return CPU_INFO(activecpu,temp_context,CPU_INFO_PC);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return the current stack pointer for the current CPU
+***************************************************************************/
+const char *cur_cpu_sp(void)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( activecpu >= 0 )
+	{
+		GETREGS (activecpu, temp_context);
+		return CPU_INFO(activecpu,temp_context,CPU_INFO_SP);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a dissassembled instruction for the current CPU
+***************************************************************************/
+const char *cur_cpu_dasm(void)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( activecpu >= 0 )
+	{
+		GETREGS (activecpu, temp_context);
+		return CPU_INFO(activecpu,temp_context,CPU_INFO_DASM);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a flags (state, condition codes) string for the current CPU
+***************************************************************************/
+const char *cur_cpu_flags(void)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( activecpu >= 0 )
+	{
+		GETREGS (activecpu, temp_context);
+		return CPU_INFO(activecpu,temp_context,CPU_INFO_FLAGS);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a specific register string for a specific CPU
+***************************************************************************/
+const char *cur_cpu_register(int regnum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( activecpu >= 0 )
+	{
+		GETREGS (activecpu, temp_context);
+		return CPU_INFO(activecpu,temp_context,CPU_INFO_REG+regnum);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a state dump for the current CPU
+***************************************************************************/
+const char *cur_cpu_dump_state(void)
+{
+	static char buffer[1024+1];
+	char *dst = buffer;
+	const char *src;
+	int regnum, width;
+
+	dst += sprintf(dst, "CPU #%d [%s]", activecpu, cpu_name(CPU_TYPE(activecpu)));
+	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(activecpu), cpu_dasm(activecpu));
+	regnum = 0;
+	width = 0;
+	src = cpu_register(activecpu,regnum);
+	while (*src)
+	{
+		if( width + strlen(src) + 1 >= 80 )
+		{
+			dst += sprintf(dst, "\n");
+			width = 0;
+		}
+		dst += sprintf(dst, "%s ", src);
+		width += strlen(src) + 1;
+		regnum++;
+		src = cpu_register(activecpu,regnum);
+	}
+
+    return buffer;
+}
+
+/***************************************************************************
+  Return the name for a CPU
+***************************************************************************/
+const char *cpu_name(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < MAX_CPU_TYPE )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_NAME);
+	return "";
+}
+
+/***************************************************************************
+  Return the family name for a CPU
+***************************************************************************/
+const char *cpu_core_family(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < MAX_CPU_TYPE )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_FAMILY);
+    return "";
+}
+
+/***************************************************************************
+  Return the version number for a CPU
+***************************************************************************/
+const char *cpu_core_version(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < MAX_CPU_TYPE )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_VERSION);
+    return "";
+}
+
+/***************************************************************************
+  Return the core filename for a CPU
+***************************************************************************/
+const char *cpu_core_file(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < MAX_CPU_TYPE )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_FILE);
+    return "";
+}
+
+/***************************************************************************
+  Return the credits for a CPU
+***************************************************************************/
+const char *cpu_core_credits(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < MAX_CPU_TYPE )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_CREDITS);
+    return "";
+}
+
+/***************************************************************************
+  Return the current program counter for a specific CPU
+***************************************************************************/
+const char *cpu_pc(int cpunum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( cpunum < MAX_CPU )
+    {
+		GETREGS (cpunum, temp_context);
+		return CPU_INFO(cpunum,temp_context,CPU_INFO_PC);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return the current stack pointer for a specific CPU
+***************************************************************************/
+const char *cpu_sp(int cpunum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( cpunum < MAX_CPU )
+	{
+		GETREGS (cpunum, temp_context);
+		return CPU_INFO(cpunum,temp_context,CPU_INFO_SP);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a dissassembled instruction for a specific CPU
+***************************************************************************/
+const char *cpu_dasm(int cpunum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( cpunum < MAX_CPU )
+	{
+		GETREGS (cpunum, temp_context);
+		return CPU_INFO(cpunum,temp_context,CPU_INFO_DASM);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a flags (state, condition codes) string for a specific CPU
+***************************************************************************/
+const char *cpu_flags(int cpunum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( cpunum < MAX_CPU )
+	{
+		GETREGS (cpunum, temp_context);
+		return CPU_INFO(cpunum,temp_context,CPU_INFO_FLAGS);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a specific register string for a specific CPU
+***************************************************************************/
+const char *cpu_register(int cpunum, int regnum)
+{
+	UINT8 temp_context[CPU_CONTEXT_SIZE];
+
+	if( cpunum < MAX_CPU )
+	{
+		GETREGS (cpunum, temp_context);
+		return CPU_INFO(cpunum,temp_context,CPU_INFO_REG+regnum);
+	}
+	return "";
+}
+
+/***************************************************************************
+  Return a state dump for a specific CPU
+***************************************************************************/
+const char *cpu_dump_state(int cpunum)
+{
+	static char buffer[1024+1];
+	char *dst = buffer;
+	const char *src;
+	int regnum, width;
+
+	dst += sprintf(dst, "CPU #%d [%s]", cpunum, cpu_name(CPU_TYPE(cpunum)));
+	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(cpunum), cpu_dasm(cpunum));
+	regnum = 0;
+	width = 0;
+	src = cpu_register(cpunum,regnum);
+	while (*src)
+	{
+		if( width + strlen(src) + 1 >= 80 )
+		{
+			dst += sprintf(dst, "\n");
+			width = 0;
+		}
+		dst += sprintf(dst, "%s ", src);
+        width += strlen(src) + 1;
+        width += strlen(src);
+		regnum++;
+		src = cpu_register(cpunum,regnum);
+	}
+
+    return buffer;
+}
+
+/***************************************************************************
+  Dump all CPU's state to stderr
+***************************************************************************/
+void cpu_dump_states(void)
+{
+	int i;
+	for( i = 0; i < MAX_CPU; i++ )
+	{
+		if( CPU_TYPE(i) != 0)
+			fprintf(stderr, "%s\n\n", cpu_dump_state(i));
+	}
+}
+
+/***************************************************************************
+
+  Dummy interfaces for non-CPUs
+
+***************************************************************************/
+static void Dummy_reset(void *param) { }
+static void Dummy_exit(void) { }
+static int Dummy_execute(int cycles) { return cycles; }
+static void Dummy_setregs(void *Regs) { }
+static void Dummy_getregs(void *Regs) { }
+static unsigned Dummy_getpc(void) { return 0; }
+static unsigned Dummy_getreg(int regnum) { return 0; }
+static void Dummy_setreg(int regnum, unsigned val) { }
 static void Dummy_set_nmi_line(int state) { }
 static void Dummy_set_irq_line(int irqline, int state) { }
 static void Dummy_set_irq_callback(int (*callback)(int irqline)) { }
-#else
-static void Dummy_Cause_Interrupt(int type) { }
-static void Dummy_Clear_Pending_Interrupts(void) { }
-#endif
+
+/****************************************************************************
+ * Return a formatted string for a register
+ * regnum	meaning
+ * 0		CPU name
+ * 1		Program counter
+ * 2		Disassemble
+ * 3		Flags
+ * 14...n	Registers in the order you wish them to be displayed
+ ****************************************************************************/
+static const char *Dummy_info(void *context, int regnum)
+{
+	static char buffer[32+1];
+
+	buffer[0] = '\0';
+	if( !context && regnum )
+		return buffer;
+
+    switch (regnum)
+	{
+		case 0: sprintf(buffer,"Dummy"); break;
+		case 1: sprintf(buffer,"%X", *(int*)context); break;
+		case 2: sprintf(buffer,"???"); break;
+		case 3: sprintf(buffer,"--------"); break;
+		default: buffer[0] = '\0';
+	}
+	return buffer;
+}
+

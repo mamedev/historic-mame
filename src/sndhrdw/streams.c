@@ -401,3 +401,37 @@ const char *stream_get_name(int channel)
 		return stream_name[channel];
 	else return 0;	/* unused channel */
 }
+
+void stream_set_name(int channel,const char *name)
+{
+	if (stream_buffer[channel])
+		strcpy(stream_name[channel],name);
+}
+
+int stream_get_sample_bits(int channel)
+{
+	if (stream_buffer[channel])
+		return stream_sample_bits[channel];
+	else return 0;
+}
+
+int stream_get_sample_rate(int channel)
+{
+	if (stream_buffer[channel])
+		return stream_sample_rate[channel];
+	else return 0;
+}
+
+void *stream_get_buffer(int channel)
+{
+	if (stream_buffer[channel])
+		return stream_buffer[channel];
+	else return 0;
+}
+
+int stream_get_buffer_len(int channel)
+{
+	if (stream_buffer[channel])
+		return stream_buffer_len[channel];
+	else return 0;
+}

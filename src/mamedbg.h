@@ -34,6 +34,7 @@
 #include "cpuintrf.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6502/m6502.h"
+#include "cpu/h6280/h6280.h"
 #include "cpu/i86/i86intrf.h"
 #include "cpu/i8039/i8039.h"
 #include "cpu/i8085/i8085.h"
@@ -47,21 +48,7 @@
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
 #include "cpu/tms32010/tms32010.h"
-#include "cpu/h6280/h6280.h"
 
-
-int DasmZ80(char *dest,int PC);
-int Dasm6502 (char *buf, int pc);
-int Dasm6808 (char *buf, int pc);
-int Dasm6805 (unsigned char *base, char *buf, int pc);	/* JB 980214 */
-int Dasm6809 (char *buffer, int pc);
-int Dasm68000 (char *buffer, int pc);
-int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
-int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
-int DasmI86 (unsigned char *pBase, char *buffer, int pc); /* AM 980925 */
-int Dasm9900 (char *buffer, int pc);
-int DasmZ8000 (char *buffer, int pc);
-int Dasm6280 (char *buf, int pc);
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -70,7 +57,11 @@ void asg_TraceKill(void);
 void asg_TraceSelect(int indx);
 void asg_Z80Trace(unsigned char *RAM, int PC);
 void asg_6809Trace(unsigned char *RAM, int PC);
+void asg_6800Trace(unsigned char *RAM, int PC);
+void asg_6802Trace(unsigned char *RAM, int PC);
+void asg_6803Trace(unsigned char *RAM, int PC);
 void asg_6808Trace(unsigned char *RAM, int PC);
+void asg_63701Trace(unsigned char *RAM, int PC);
 void asg_6805Trace(unsigned char *RAM, int PC);
 void asg_6502Trace(unsigned char *RAM, int PC);
 void asg_68000Trace(unsigned char *RAM, int PC);
@@ -125,7 +116,11 @@ int DummyCC = 0;
 void DummyTrace(int PC){;}	/* JB 980214 */
 
 /* Temporary wrappers around these functions at the moment */
+int TempDasm6800 (char *buffer, int pc) { return (Dasm6800 (buffer, pc)); }
+int TempDasm6802 (char *buffer, int pc) { return (Dasm6802 (buffer, pc)); }
+int TempDasm6803 (char *buffer, int pc) { return (Dasm6803 (buffer, pc)); }
 int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (buffer, pc)); }
+int TempDasm63701 (char *buffer, int pc) { return (Dasm63701 (buffer, pc)); }
 int TempDasm6805 (char *buffer, int pc) { return (Dasm6805 (&ROM[pc], buffer, pc)); }
 int TempDasm6809 (char *buffer, int pc) { return (Dasm6809 (buffer, pc)); }
 int TempDasm68000 (char *buffer, int pc){ change_pc24(pc); return (Dasm68000 (buffer, pc));}
@@ -143,7 +138,11 @@ int TempDasm32010 (char *buffer, int pc){ return (Dasm32010 (buffer, &ROM[(pc<<1
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
 void Temp6809Trace (int PC) { asg_6809Trace (ROM, PC); }
+void Temp6800Trace (int PC) { asg_6800Trace (ROM, PC); }
+void Temp6802Trace (int PC) { asg_6802Trace (ROM, PC); }
+void Temp6803Trace (int PC) { asg_6803Trace (ROM, PC); }
 void Temp6808Trace (int PC) { asg_6808Trace (ROM, PC); }
+void Temp63701Trace (int PC) { asg_63701Trace (ROM, PC); }
 void Temp6805Trace (int PC) { asg_6805Trace (ROM, PC); }
 void Temp6502Trace (int PC) { asg_6502Trace (ROM, PC); }
 void Temp68000Trace (int PC) { asg_68000Trace (ROM, PC); }
@@ -276,63 +275,98 @@ static tBackupReg BackupRegisters[] =
 	/* #define CPU_Z80    1 */
 	{
 		{
-			{ "AF", (int *)&((Z80_Regs *)bckrgs)->AF.W.l, 2, 2, 1 },
-			{ "HL", (int *)&((Z80_Regs *)bckrgs)->HL.W.l, 2, 10, 1 },
-			{ "DE", (int *)&((Z80_Regs *)bckrgs)->DE.W.l, 2, 18, 1 },
-			{ "BC", (int *)&((Z80_Regs *)bckrgs)->BC.W.l, 2, 26, 1 },
-			{ "PC", (int *)&((Z80_Regs *)bckrgs)->PC.W.l, 2, 34, 1 },
-			{ "SP", (int *)&((Z80_Regs *)bckrgs)->SP.W.l, 2, 42, 1 },
-			{ "IX", (int *)&((Z80_Regs *)bckrgs)->IX.W.l, 2, 50, 1 },
-			{ "IY", (int *)&((Z80_Regs *)bckrgs)->IY.W.l, 2, 58, 1 },
-			{ "I", (int *)&((Z80_Regs *)bckrgs)->I, 1, 66, 1 },
-			{ "R", (int *)&((Z80_Regs *)bckrgs)->R, 1, 71, 1 },
+			{ "A", (int *)&((Z80_Regs *)bckrgs)->AF.b.h, 1, 2, 1 },
+			{ "HL", (int *)&((Z80_Regs *)bckrgs)->HL.w.l, 2, 8, 1 },
+			{ "DE", (int *)&((Z80_Regs *)bckrgs)->DE.w.l, 2, 16, 1 },
+			{ "BC", (int *)&((Z80_Regs *)bckrgs)->BC.w.l, 2, 24, 1 },
+			{ "PC", (int *)&((Z80_Regs *)bckrgs)->PC.w.l, 2, 32, 1 },
+			{ "SP", (int *)&((Z80_Regs *)bckrgs)->SP.w.l, 2, 40, 1 },
+			{ "IX", (int *)&((Z80_Regs *)bckrgs)->IX.w.l, 2, 48, 1 },
+			{ "IY", (int *)&((Z80_Regs *)bckrgs)->IY.w.l, 2, 56, 1 },
+			{ "IFF1", (int *)&((Z80_Regs *)bckrgs)->IFF1, 1, 64, 1 },
+			{ "IFF2", (int *)&((Z80_Regs *)bckrgs)->IFF2, 1, 72, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_8085  2 */
+	/* #define CPU_8080  2 */
 	{
 			{
-					{ "AF", (int *)&((I8085_Regs *)bckrgs)->AF.W.l, 2, 2, 1 },
-					{ "HL", (int *)&((I8085_Regs *)bckrgs)->HL.W.l, 2, 10, 1 },
-					{ "DE", (int *)&((I8085_Regs *)bckrgs)->DE.W.l, 2, 18, 1 },
-					{ "BC", (int *)&((I8085_Regs *)bckrgs)->BC.W.l, 2, 26, 1 },
-					{ "PC", (int *)&((I8085_Regs *)bckrgs)->PC.W.l, 2, 34, 1 },
-					{ "SP", (int *)&((I8085_Regs *)bckrgs)->PC.W.l, 2, 42, 1 },
-					{ "IM", (int *)&((I8085_Regs *)bckrgs)->IM, 1, 50, 1 },
+					{ "AF", (int *)&((i8085_Regs *)bckrgs)->AF.w.l, 2, 2, 1 },
+					{ "HL", (int *)&((i8085_Regs *)bckrgs)->HL.w.l, 2, 10, 1 },
+					{ "DE", (int *)&((i8085_Regs *)bckrgs)->DE.w.l, 2, 18, 1 },
+					{ "BC", (int *)&((i8085_Regs *)bckrgs)->BC.w.l, 2, 26, 1 },
+					{ "PC", (int *)&((i8085_Regs *)bckrgs)->PC.w.l, 2, 34, 1 },
+					{ "SP", (int *)&((i8085_Regs *)bckrgs)->PC.w.l, 2, 42, 1 },
+					{ "IM", (int *)&((i8085_Regs *)bckrgs)->IM, 1, 50, 1 },
+					{ "", (int *)-1, -1, -1, -1 }
+			},
+    },
+	/* #define CPU_8085  3 */
+	{
+			{
+					{ "AF", (int *)&((i8085_Regs *)bckrgs)->AF.w.l, 2, 2, 1 },
+					{ "HL", (int *)&((i8085_Regs *)bckrgs)->HL.w.l, 2, 10, 1 },
+					{ "DE", (int *)&((i8085_Regs *)bckrgs)->DE.w.l, 2, 18, 1 },
+					{ "BC", (int *)&((i8085_Regs *)bckrgs)->BC.w.l, 2, 26, 1 },
+					{ "PC", (int *)&((i8085_Regs *)bckrgs)->PC.w.l, 2, 34, 1 },
+					{ "SP", (int *)&((i8085_Regs *)bckrgs)->PC.w.l, 2, 42, 1 },
+					{ "IM", (int *)&((i8085_Regs *)bckrgs)->IM, 1, 50, 1 },
 					{ "", (int *)-1, -1, -1, -1 }
 			},
 	},
-	/* #define CPU_M6502  3 */
+	/* #define CPU_M6502  4 */
 	{
 		{
-			{ "A", (int *)&((M6502_Regs *)bckrgs)->a, 1, 2, 1 },
-			{ "X", (int *)&((M6502_Regs *)bckrgs)->x, 1, 7, 1 },
-			{ "Y", (int *)&((M6502_Regs *)bckrgs)->y, 1, 12, 1 },
-			{ "S", (int *)&((M6502_Regs *)bckrgs)->sp.D, 1, 17, 1 },
-			{ "PC", (int *)&((M6502_Regs *)bckrgs)->pc.W.l, 2, 22, 1 },
+			{ "A", (int *)&((m6502_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((m6502_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((m6502_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((m6502_Regs *)bckrgs)->sp.d, 1, 17, 1 },
+			{ "PC", (int *)&((m6502_Regs *)bckrgs)->pc.w.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
     },
-	/* #define CPU_H6280  4 */
+	/* #define CPU_M65C02 5 */
 	{
 		{
-			{ "A", (int *)&((H6280_Regs *)bckrgs)->a, 1, 2, 1 },
-			{ "X", (int *)&((H6280_Regs *)bckrgs)->x, 1, 7, 1 },
-			{ "Y", (int *)&((H6280_Regs *)bckrgs)->y, 1, 12, 1 },
-			{ "S", (int *)&((H6280_Regs *)bckrgs)->SP.D, 1, 17, 1 },
-			{ "PC", (int *)&((H6280_Regs *)bckrgs)->PC.W.l, 2, 22, 1 },
-			{ "M1", (int *)&((H6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
-			{ "M2", (int *)&((H6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
-			{ "M3", (int *)&((H6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
-			{ "M4", (int *)&((H6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
-			{ "M5", (int *)&((H6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
-			{ "M6", (int *)&((H6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
-			{ "M7", (int *)&((H6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
-			{ "M8", (int *)&((H6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
+			{ "A", (int *)&((m6502_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((m6502_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((m6502_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((m6502_Regs *)bckrgs)->sp.d, 1, 17, 1 },
+			{ "PC", (int *)&((m6502_Regs *)bckrgs)->pc.w.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
     },
-    /* #define CPU_I86    5 */
+	/* #define CPU_M6510  6 */
+	{
+		{
+			{ "A", (int *)&((m6502_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((m6502_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((m6502_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((m6502_Regs *)bckrgs)->sp.d, 1, 17, 1 },
+			{ "PC", (int *)&((m6502_Regs *)bckrgs)->pc.w.l, 2, 22, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_H6280  7 */
+	{
+		{
+			{ "A", (int *)&((h6280_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((h6280_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((h6280_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((h6280_Regs *)bckrgs)->sp.b.l, 1, 17, 1 },
+			{ "PC", (int *)&((h6280_Regs *)bckrgs)->pc.w.l, 2, 22, 1 },
+			{ "M1", (int *)&((h6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
+			{ "M2", (int *)&((h6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
+			{ "M3", (int *)&((h6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
+			{ "M4", (int *)&((h6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
+			{ "M5", (int *)&((h6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
+			{ "M6", (int *)&((h6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
+			{ "M7", (int *)&((h6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
+			{ "M8", (int *)&((h6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_I86	  8 */
 	{
 		{
 			{ "IP", (int *)&((i86_Regs *)bckrgs)->ip, 4, 2, 1 },
@@ -351,7 +385,16 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  6 */
+	/* #define CPU_I8035  9 */
+	{
+		{
+			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)bckrgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)bckrgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_I8039 10 */
 	{
 		{
 			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -360,18 +403,80 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  7 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_I8048 11 */
 	{
 		{
-			{ "A", (int *)&((m6808_Regs *)bckrgs)->a, 1, 2, 1 },
-			{ "B", (int *)&((m6808_Regs *)bckrgs)->b, 1, 7, 1 },
+			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)bckrgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)bckrgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_N7751 12 */
+	{
+		{
+			{ "PC", (int *)&((I8039_Regs *)bckrgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)bckrgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)bckrgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6800 13 */
+	{
+		{
+			{ "A", (int *)&((m6802_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6802_Regs *)bckrgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6802_Regs *)bckrgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6802_Regs *)bckrgs)->s, 2, 20, 1 },
+			{ "X", (int *)&((m6802_Regs *)bckrgs)->x, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6802 14 */
+	{
+		{
+			{ "A", (int *)&((m6802_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6802_Regs *)bckrgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6802_Regs *)bckrgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6802_Regs *)bckrgs)->s, 2, 20, 1 },
+			{ "X", (int *)&((m6802_Regs *)bckrgs)->x, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6803 15 */
+	{
+		{
+			{ "A", (int *)&((m6803_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6803_Regs *)bckrgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6803_Regs *)bckrgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6803_Regs *)bckrgs)->s, 2, 20, 1 },
+			{ "X", (int *)&((m6803_Regs *)bckrgs)->x, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_M6808 16 */
+	{
+		{
+			{ "A", (int *)&((m6808_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6808_Regs *)bckrgs)->d.b.l, 1, 7, 1 },
 			{ "PC", (int *)&((m6808_Regs *)bckrgs)->pc, 2, 12, 1 },
 			{ "S", (int *)&((m6808_Regs *)bckrgs)->s, 2, 20, 1 },
 			{ "X", (int *)&((m6808_Regs *)bckrgs)->x, 2, 27, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	},
-	/* #define CPU_6805 8 */	/* JB 980214 */
+    },
+	/* #define CPU_HD63701 17 */
+	{
+		{
+			{ "A", (int *)&((hd63701_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((hd63701_Regs *)bckrgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((hd63701_Regs *)bckrgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((hd63701_Regs *)bckrgs)->s, 2, 20, 1 },
+			{ "X", (int *)&((hd63701_Regs *)bckrgs)->x, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_6805 18 */	 /* JB 980214 */
 	{
 		{
 			{ "A", (int *)&((m6805_Regs *)bckrgs)->a, 1, 2, 1 },
@@ -381,21 +486,45 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  9 */
+	/* #define CPU_68705 19 */	 /* JB 980214 */
 	{
 		{
-			{ "A", (int *)&((m6809_Regs *)bckrgs)->a, 1, 2, 1 },
-			{ "B", (int *)&((m6809_Regs *)bckrgs)->b, 1, 8, 1 },
+			{ "A", (int *)&((m6805_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "PC", (int *)&((m6805_Regs *)bckrgs)->pc, 2, 7, 1 },
+			{ "S", (int *)&((m6805_Regs *)bckrgs)->s, 2, 15, 1 },
+			{ "X", (int *)&((m6805_Regs *)bckrgs)->x, 1, 22, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6309 20 */
+	{
+		{
+			{ "A", (int *)&((m6809_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6809_Regs *)bckrgs)->d.b.l, 1, 8, 1 },
 			{ "PC", (int *)&((m6809_Regs *)bckrgs)->pc, 2, 14, 1 },
-			{ "S", (int *)&((m6809_Regs *)bckrgs)->s, 2, 23, 1 },
-			{ "U", (int *)&((m6809_Regs *)bckrgs)->u, 2, 31, 1 },
-			{ "X", (int *)&((m6809_Regs *)bckrgs)->x, 2, 39, 1 },
-			{ "Y", (int *)&((m6809_Regs *)bckrgs)->y, 2, 47, 1 },
+			{ "S", (int *)&((m6809_Regs *)bckrgs)->s.w.l, 2, 23, 1 },
+			{ "U", (int *)&((m6809_Regs *)bckrgs)->u.w.l, 2, 31, 1 },
+			{ "X", (int *)&((m6809_Regs *)bckrgs)->x.w.l, 2, 39, 1 },
+			{ "Y", (int *)&((m6809_Regs *)bckrgs)->y.w.l, 2, 47, 1 },
+			{ "DP", (int *)&((m6809_Regs *)bckrgs)->dp, 1, 55, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6809 21 */
+	{
+		{
+			{ "A", (int *)&((m6809_Regs *)bckrgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6809_Regs *)bckrgs)->d.b.l, 1, 8, 1 },
+			{ "PC", (int *)&((m6809_Regs *)bckrgs)->pc, 2, 14, 1 },
+			{ "S", (int *)&((m6809_Regs *)bckrgs)->s.w.l, 2, 23, 1 },
+			{ "U", (int *)&((m6809_Regs *)bckrgs)->u.w.l, 2, 31, 1 },
+			{ "X", (int *)&((m6809_Regs *)bckrgs)->x.w.l, 2, 39, 1 },
+			{ "Y", (int *)&((m6809_Regs *)bckrgs)->y.w.l, 2, 47, 1 },
 			{ "DP", (int *)&((m6809_Regs *)bckrgs)->dp, 1, 55, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 10 */
+	/* #define CPU_M68000 22 */
 	{
 		{
 			{ "PC", (int *)&((MC68000_Regs *)bckrgs)->regs.pc, 4, 2, 1 },
@@ -423,7 +552,63 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_T11    11 */
+	/* #define CPU_M68000 23 */
+	{
+		{
+			{ "PC", (int *)&((MC68000_Regs *)bckrgs)->regs.pc, 4, 2, 1 },
+			{ "VBR", (int *)&((MC68000_Regs *)bckrgs)->regs.vbr, 4, 14, 1 },
+			{ "ISP", (int *)&((MC68000_Regs *)bckrgs)->regs.isp, 4, 27, 1 },
+			{ "USP", (int *)&((MC68000_Regs *)bckrgs)->regs.usp, 4, 40, 1 },
+			{ "SFC", (int *)&((MC68000_Regs *)bckrgs)->regs.sfc, 4, 53, 1 },
+			{ "DFC", (int *)&((MC68000_Regs *)bckrgs)->regs.dfc, 4, 66, 1 },
+			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.d[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.d[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.d[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)bckrgs)->regs.d[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)bckrgs)->regs.d[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)bckrgs)->regs.d[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)bckrgs)->regs.d[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)bckrgs)->regs.d[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)bckrgs)->regs.a[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)bckrgs)->regs.a[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)bckrgs)->regs.a[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)bckrgs)->regs.a[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)bckrgs)->regs.a[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.a[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.a[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.a[7], 4, 67, 19 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M68000 24 */
+	{
+		{
+			{ "PC", (int *)&((MC68000_Regs *)bckrgs)->regs.pc, 4, 2, 1 },
+			{ "VBR", (int *)&((MC68000_Regs *)bckrgs)->regs.vbr, 4, 14, 1 },
+			{ "ISP", (int *)&((MC68000_Regs *)bckrgs)->regs.isp, 4, 27, 1 },
+			{ "USP", (int *)&((MC68000_Regs *)bckrgs)->regs.usp, 4, 40, 1 },
+			{ "SFC", (int *)&((MC68000_Regs *)bckrgs)->regs.sfc, 4, 53, 1 },
+			{ "DFC", (int *)&((MC68000_Regs *)bckrgs)->regs.dfc, 4, 66, 1 },
+			{ "D0", (int *)&((MC68000_Regs *)bckrgs)->regs.d[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)bckrgs)->regs.d[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)bckrgs)->regs.d[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)bckrgs)->regs.d[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)bckrgs)->regs.d[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)bckrgs)->regs.d[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)bckrgs)->regs.d[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)bckrgs)->regs.d[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)bckrgs)->regs.a[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)bckrgs)->regs.a[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)bckrgs)->regs.a[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)bckrgs)->regs.a[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)bckrgs)->regs.a[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)bckrgs)->regs.a[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)bckrgs)->regs.a[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)bckrgs)->regs.a[7], 4, 67, 19 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_T11 25 */
 	{
 		{
 			{ "R0", (int *)&((t11_Regs *)bckrgs)->reg[0], 2, 2, 1 },
@@ -438,25 +623,25 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_2650   12 */
+	/* #define CPU_2650 26 */
 	{
 		{
-			{ "R0", (int *)&((S2650_Regs *)bckrgs)->reg[0], 1, 2, 1 },
-			{ "R1", (int *)&((S2650_Regs *)bckrgs)->reg[1], 1, 8, 1 },
-			{ "R2", (int *)&((S2650_Regs *)bckrgs)->reg[2], 1, 14, 1 },
-			{ "R3", (int *)&((S2650_Regs *)bckrgs)->reg[3], 1, 20, 1 },
-			{ "IAR", (int *)&((S2650_Regs *)bckrgs)->iar, 2, 26, 1 },
-			{ " ", (int *)&((S2650_Regs *)bckrgs)->ir, 1, 34, 1 },
-			{ "PSL", (int *)&((S2650_Regs *)bckrgs)->psl, 1, 39, 1 },
-			{ "PSU", (int *)&((S2650_Regs *)bckrgs)->psu, 1, 46, 1 },
-			{ "EA", (int *)&((S2650_Regs *)bckrgs)->ea, 2, 53, 1 },
-			{ "r1", (int *)&((S2650_Regs *)bckrgs)->reg[4], 1, 61, 1 },
-			{ "r2", (int *)&((S2650_Regs *)bckrgs)->reg[5], 1, 67, 1 },
-			{ "r3", (int *)&((S2650_Regs *)bckrgs)->reg[6], 1, 73, 1 },
+			{ "R0", (int *)&((s2650_Regs *)bckrgs)->reg[0], 1, 2, 1 },
+			{ "R1", (int *)&((s2650_Regs *)bckrgs)->reg[1], 1, 8, 1 },
+			{ "R2", (int *)&((s2650_Regs *)bckrgs)->reg[2], 1, 14, 1 },
+			{ "R3", (int *)&((s2650_Regs *)bckrgs)->reg[3], 1, 20, 1 },
+			{ "IAR", (int *)&((s2650_Regs *)bckrgs)->iar, 2, 26, 1 },
+			{ " ", (int *)&((s2650_Regs *)bckrgs)->ir, 1, 34, 1 },
+			{ "PSL", (int *)&((s2650_Regs *)bckrgs)->psl, 1, 39, 1 },
+			{ "PSU", (int *)&((s2650_Regs *)bckrgs)->psu, 1, 46, 1 },
+			{ "EA", (int *)&((s2650_Regs *)bckrgs)->ea, 2, 53, 1 },
+			{ "r1", (int *)&((s2650_Regs *)bckrgs)->reg[4], 1, 61, 1 },
+			{ "r2", (int *)&((s2650_Regs *)bckrgs)->reg[5], 1, 67, 1 },
+			{ "r3", (int *)&((s2650_Regs *)bckrgs)->reg[6], 1, 73, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS34010 13 */
+	/* #define CPU_TMS34010 27 */
 	{
 		{
 			{ "PC", (int *)&((TMS34010_Regs *)bckrgs)->pc, 4, 2, 3 },
@@ -494,7 +679,7 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS9900   14 */
+	/* #define CPU_TMS9900 28 */
 	{
 		{
 			{ "PC", (int *)&((TMS9900_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -520,56 +705,42 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_Z8000 15 */
+	/* #define CPU_Z8000 29 */
 	{
 		{
-			{ "PC", (int *)&((Z8000_Regs *)bckrgs)->pc, 2, 2, 1 },
-			{ "PSAP", (int *)&((Z8000_Regs *)bckrgs)->psap, 2, 10, 1 },
-			{ "REFRESH", (int *)&((Z8000_Regs *)bckrgs)->refresh, 2, 20, 1 },
-			{ "NSP", (int *)&((Z8000_Regs *)bckrgs)->nsp, 2, 33, 1 },
-			{ "IRQ", (int *)&((Z8000_Regs *)bckrgs)->irq_req, 2, 43, 1 },
-			{ "OP", (int *)&((Z8000_Regs *)bckrgs)->op[0], 2, 53, 1 },
-			{ " ", (int *)&((Z8000_Regs *)bckrgs)->op[1], 2, 60, 1 },
-			{ " ", (int *)&((Z8000_Regs *)bckrgs)->op[2], 2, 63, 1 },
+			{ "PC", (int *)&((z8000_Regs *)bckrgs)->pc, 2, 2, 1 },
+			{ "PSAP", (int *)&((z8000_Regs *)bckrgs)->psap, 2, 10, 1 },
+			{ "REFRESH", (int *)&((z8000_Regs *)bckrgs)->refresh, 2, 20, 1 },
+			{ "NSP", (int *)&((z8000_Regs *)bckrgs)->nsp, 2, 33, 1 },
+			{ "IRQ", (int *)&((z8000_Regs *)bckrgs)->irq_req, 2, 43, 1 },
+			{ "OP", (int *)&((z8000_Regs *)bckrgs)->op[0], 2, 53, 1 },
+			{ " ", (int *)&((z8000_Regs *)bckrgs)->op[1], 2, 60, 1 },
+			{ " ", (int *)&((z8000_Regs *)bckrgs)->op[2], 2, 63, 1 },
 #ifdef	LSB_FIRST
-			{ "R 0", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 3], 2, 67, 3 },
-			{ "R 1", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 2], 2, 67, 4 },
-			{ "R 2", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 1], 2, 67, 5 },
-			{ "R 3", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 0], 2, 67, 6 },
-			{ "R 4", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 7], 2, 67, 7 },
-			{ "R 5", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 6], 2, 67, 8 },
-			{ "R 6", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 5], 2, 67, 9 },
-			{ "R 7", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 4], 2, 67, 10 },
-			{ "R 8", (int *)&((Z8000_Regs *)bckrgs)->regs.W[11], 2, 67, 12 },
-			{ "R 9", (int *)&((Z8000_Regs *)bckrgs)->regs.W[10], 2, 67, 13 },
-			{ "R10", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 9], 2, 67, 14 },
-			{ "R11", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 8], 2, 67, 15 },
-			{ "R12", (int *)&((Z8000_Regs *)bckrgs)->regs.W[15], 2, 67, 16 },
-			{ "R13", (int *)&((Z8000_Regs *)bckrgs)->regs.W[14], 2, 67, 17 },
-			{ "R14", (int *)&((Z8000_Regs *)bckrgs)->regs.W[13], 2, 67, 18 },
-			{ "R15", (int *)&((Z8000_Regs *)bckrgs)->regs.W[12], 2, 67, 19 },
+#define REGWXOR 3
 #else
-			{ "R 0", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 0], 2, 67, 3 },
-			{ "R 1", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 1], 2, 67, 4 },
-			{ "R 2", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 2], 2, 67, 5 },
-			{ "R 3", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 3], 2, 67, 6 },
-			{ "R 4", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 4], 2, 67, 7 },
-			{ "R 5", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 5], 2, 67, 8 },
-			{ "R 6", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 6], 2, 67, 9 },
-			{ "R 7", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 7], 2, 67, 10 },
-			{ "R 8", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 8], 2, 67, 12 },
-			{ "R 9", (int *)&((Z8000_Regs *)bckrgs)->regs.W[ 9], 2, 67, 13 },
-			{ "R10", (int *)&((Z8000_Regs *)bckrgs)->regs.W[10], 2, 67, 14 },
-			{ "R11", (int *)&((Z8000_Regs *)bckrgs)->regs.W[11], 2, 67, 15 },
-			{ "R12", (int *)&((Z8000_Regs *)bckrgs)->regs.W[12], 2, 67, 16 },
-			{ "R13", (int *)&((Z8000_Regs *)bckrgs)->regs.W[13], 2, 67, 17 },
-			{ "R14", (int *)&((Z8000_Regs *)bckrgs)->regs.W[14], 2, 67, 18 },
-			{ "R15", (int *)&((Z8000_Regs *)bckrgs)->regs.W[15], 2, 67, 19 },
+#define REGWXOR 0
 #endif
+            { "R 0", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 0^REGWXOR], 2, 67, 3 },
+			{ "R 1", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 1^REGWXOR], 2, 67, 4 },
+			{ "R 2", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 2^REGWXOR], 2, 67, 5 },
+			{ "R 3", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 3^REGWXOR], 2, 67, 6 },
+			{ "R 4", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 4^REGWXOR], 2, 67, 7 },
+			{ "R 5", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 5^REGWXOR], 2, 67, 8 },
+			{ "R 6", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 6^REGWXOR], 2, 67, 9 },
+			{ "R 7", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 7^REGWXOR], 2, 67, 10 },
+			{ "R 8", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 8^REGWXOR], 2, 67, 12 },
+			{ "R 9", (int *)&((z8000_Regs *)bckrgs)->regs.W[ 9^REGWXOR], 2, 67, 13 },
+			{ "R10", (int *)&((z8000_Regs *)bckrgs)->regs.W[10^REGWXOR], 2, 67, 14 },
+			{ "R11", (int *)&((z8000_Regs *)bckrgs)->regs.W[11^REGWXOR], 2, 67, 15 },
+			{ "R12", (int *)&((z8000_Regs *)bckrgs)->regs.W[12^REGWXOR], 2, 67, 16 },
+			{ "R13", (int *)&((z8000_Regs *)bckrgs)->regs.W[13^REGWXOR], 2, 67, 17 },
+			{ "R14", (int *)&((z8000_Regs *)bckrgs)->regs.W[14^REGWXOR], 2, 67, 18 },
+			{ "R15", (int *)&((z8000_Regs *)bckrgs)->regs.W[15^REGWXOR], 2, 67, 19 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-    /* #define CPU_TMS320C10  16 */
+	/* #define CPU_TMS320C10 30 */
 	{
 		{
 			{ "PC", (int *)&((TMS320C10_Regs *)bckrgs)->PC, 2, 2, 1 },
@@ -582,7 +753,13 @@ static tBackupReg BackupRegisters[] =
 			{ "STAK3", (int *)&((TMS320C10_Regs *)bckrgs)->STACK[3], 2, 68, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	}
+	},
+	/* Dummy CPU -- placeholder for CCPU */
+	{
+		{
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
 };
 
 
@@ -607,93 +784,152 @@ static tDebugCpuInfo DebugInfo[] =
 		"Z80", 14,
 		DrawDebugScreen8,
 		TempDasmZ80, TempZ80Trace, 15, 8,	/* JB 980103 */
-		"SZ.H.PNC", (int *)&((Z80_Regs *)rgs)->AF.B.l, 8,
+		"SZ.H.PNC", (int *)&((Z80_Regs *)rgs)->AF.b.l, 8,
 		"%04X:", 0xffff,
                 25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
-		(int *)&((Z80_Regs *)rgs)->SP.W.l, 2,
+		(int *)&((Z80_Regs *)rgs)->SP.w.l, 2,
 		{
-			{ "AF", (int *)&((Z80_Regs *)rgs)->AF.W.l, 2, 2, 1 },
-			{ "HL", (int *)&((Z80_Regs *)rgs)->HL.W.l, 2, 10, 1 },
-			{ "DE", (int *)&((Z80_Regs *)rgs)->DE.W.l, 2, 18, 1 },
-			{ "BC", (int *)&((Z80_Regs *)rgs)->BC.W.l, 2, 26, 1 },
-			{ "PC", (int *)&((Z80_Regs *)rgs)->PC.W.l, 2, 34, 1 },
-			{ "SP", (int *)&((Z80_Regs *)rgs)->SP.W.l, 2, 42, 1 },
-			{ "IX", (int *)&((Z80_Regs *)rgs)->IX.W.l, 2, 50, 1 },
-			{ "IY", (int *)&((Z80_Regs *)rgs)->IY.W.l, 2, 58, 1 },
-			{ "I", (int *)&((Z80_Regs *)rgs)->I, 1, 66, 1 },
-			{ "R", (int *)&((Z80_Regs *)rgs)->R, 1, 71, 1 },
+			{ "A", (int *)&((Z80_Regs *)rgs)->AF.b.h, 1, 2, 1 },
+			{ "HL", (int *)&((Z80_Regs *)rgs)->HL.w.l, 2, 8, 1 },
+			{ "DE", (int *)&((Z80_Regs *)rgs)->DE.w.l, 2, 16, 1 },
+			{ "BC", (int *)&((Z80_Regs *)rgs)->BC.w.l, 2, 24, 1 },
+			{ "PC", (int *)&((Z80_Regs *)rgs)->PC.w.l, 2, 32, 1 },
+			{ "SP", (int *)&((Z80_Regs *)rgs)->SP.w.l, 2, 40, 1 },
+			{ "IX", (int *)&((Z80_Regs *)rgs)->IX.w.l, 2, 48, 1 },
+			{ "IY", (int *)&((Z80_Regs *)rgs)->IY.w.l, 2, 56, 1 },
+			{ "IFF1", (int *)&((Z80_Regs *)rgs)->IFF1, 1, 64, 1 },
+			{ "IFF2", (int *)&((Z80_Regs *)rgs)->IFF1, 1, 72, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_8085  2 */
+	/* #define CPU_8080  2 */
+	{
+		"8080", 14,
+		DrawDebugScreen8,
+		TempDasm8085, Temp8085Trace, 15, 8,
+		"SZ.H.PNC", (int *)&((i8085_Regs *)rgs)->AF.b.l, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+				(int *)&((i8085_Regs *)rgs)->SP.w.l, 2,
+		{
+			{ "AF", (int *)&((i8085_Regs *)rgs)->AF.w.l, 2, 2, 1 },
+			{ "HL", (int *)&((i8085_Regs *)rgs)->HL.w.l, 2, 10, 1 },
+			{ "DE", (int *)&((i8085_Regs *)rgs)->DE.w.l, 2, 18, 1 },
+			{ "BC", (int *)&((i8085_Regs *)rgs)->BC.w.l, 2, 26, 1 },
+			{ "PC", (int *)&((i8085_Regs *)rgs)->PC.w.l, 2, 34, 1 },
+			{ "SP", (int *)&((i8085_Regs *)rgs)->SP.w.l, 2, 42, 1 },
+			{ "IM", (int *)&((i8085_Regs *)rgs)->IM, 1, 50, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_8085  3 */
 	{
 		"8085A", 14,
 		DrawDebugScreen8,
 		TempDasm8085, Temp8085Trace, 15, 8,
-		"SZ.H.PNC", (int *)&((I8085_Regs *)rgs)->AF.B.l, 8,
+		"SZ.H.PNC", (int *)&((i8085_Regs *)rgs)->AF.b.l, 8,
 		"%04X:", 0xffff,
                 25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
-                (int *)&((I8085_Regs *)rgs)->SP.W.l, 2,
+				(int *)&((i8085_Regs *)rgs)->SP.w.l, 2,
 		{
-			{ "AF", (int *)&((I8085_Regs *)rgs)->AF.W.l, 2, 2, 1 },
-			{ "HL", (int *)&((I8085_Regs *)rgs)->HL.W.l, 2, 10, 1 },
-			{ "DE", (int *)&((I8085_Regs *)rgs)->DE.W.l, 2, 18, 1 },
-			{ "BC", (int *)&((I8085_Regs *)rgs)->BC.W.l, 2, 26, 1 },
-			{ "PC", (int *)&((I8085_Regs *)rgs)->PC.W.l, 2, 34, 1 },
-			{ "SP", (int *)&((I8085_Regs *)rgs)->SP.W.l, 2, 42, 1 },
-			{ "IM", (int *)&((I8085_Regs *)rgs)->IM, 1, 50, 1 },
+			{ "AF", (int *)&((i8085_Regs *)rgs)->AF.w.l, 2, 2, 1 },
+			{ "HL", (int *)&((i8085_Regs *)rgs)->HL.w.l, 2, 10, 1 },
+			{ "DE", (int *)&((i8085_Regs *)rgs)->DE.w.l, 2, 18, 1 },
+			{ "BC", (int *)&((i8085_Regs *)rgs)->BC.w.l, 2, 26, 1 },
+			{ "PC", (int *)&((i8085_Regs *)rgs)->PC.w.l, 2, 34, 1 },
+			{ "SP", (int *)&((i8085_Regs *)rgs)->SP.w.l, 2, 42, 1 },
+			{ "IM", (int *)&((i8085_Regs *)rgs)->IM, 1, 50, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6502  3 */
+	/* #define CPU_M6502  4 */
 	{
 		"6502", 14,
 		DrawDebugScreen8,
 		Dasm6502, Temp6502Trace, 15, 8,
-		"NVRBDIZC", (int *)&((M6502_Regs *)rgs)->p, 8,
+		"NVRBDIZC", (int *)&((m6502_Regs *)rgs)->p, 8,
 		"%04X:", 0xffff,
                 25, 31, 77, 16, 3,
 		3, 1,
-		(int *)&((M6502_Regs *)rgs)->sp.B.l, 1,
+		(int *)&((m6502_Regs *)rgs)->sp.b.l, 1,
 		{
-			{ "A", (int *)&((M6502_Regs *)rgs)->a, 1, 2, 1 },
-			{ "X", (int *)&((M6502_Regs *)rgs)->x, 1, 7, 1 },
-			{ "Y", (int *)&((M6502_Regs *)rgs)->y, 1, 12, 1 },
-			{ "S", (int *)&((M6502_Regs *)rgs)->sp.B.l, 1, 17, 1 },
-			{ "PC", (int *)&((M6502_Regs *)rgs)->pc.W.l, 2, 22, 1 },
+			{ "A", (int *)&((m6502_Regs *)rgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((m6502_Regs *)rgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((m6502_Regs *)rgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((m6502_Regs *)rgs)->sp.b.l, 1, 17, 1 },
+			{ "PC", (int *)&((m6502_Regs *)rgs)->pc.w.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_H6280  4 */
+	/* #define CPU_M6502  5 */
+	{
+		"65C02", 14,
+		DrawDebugScreen8,
+		Dasm6502, Temp6502Trace, 15, 8,
+		"NVRBDIZC", (int *)&((m6502_Regs *)rgs)->p, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		3, 1,
+		(int *)&((m6502_Regs *)rgs)->sp.b.l, 1,
+		{
+			{ "A", (int *)&((m6502_Regs *)rgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((m6502_Regs *)rgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((m6502_Regs *)rgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((m6502_Regs *)rgs)->sp.b.l, 1, 17, 1 },
+			{ "PC", (int *)&((m6502_Regs *)rgs)->pc.w.l, 2, 22, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6502  6 */
+    {
+        "6510", 14,
+        DrawDebugScreen8,
+        Dasm6502, Temp6502Trace, 15, 8,
+        "NVRBDIZC", (int *)&((m6502_Regs *)rgs)->p, 8,
+        "%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+        3, 1,
+        (int *)&((m6502_Regs *)rgs)->sp.b.l, 1,
+        {
+            { "A", (int *)&((m6502_Regs *)rgs)->a, 1, 2, 1 },
+            { "X", (int *)&((m6502_Regs *)rgs)->x, 1, 7, 1 },
+            { "Y", (int *)&((m6502_Regs *)rgs)->y, 1, 12, 1 },
+            { "S", (int *)&((m6502_Regs *)rgs)->sp.b.l, 1, 17, 1 },
+            { "PC", (int *)&((m6502_Regs *)rgs)->pc.w.l, 2, 22, 1 },
+            { "", (int *)-1, -1, -1, -1 }
+        },
+    },
+    /* #define CPU_H6280  7 */
 	{
 		"6280", 14,
 		DrawDebugScreen8,
 		Dasm6280, Temp6280Trace, 15, 8,
-		"NVRBDIZC", (int *)&((H6280_Regs *)rgs)->p, 8,
+		"NVRBDIZC", (int *)&((h6280_Regs *)rgs)->p, 8,
 		"%04X:", 0x1fffff,
 		25, 31, 77, 16, 3,
 		3, 1,
-		(int *)&((H6280_Regs *)rgs)->SP.B.l, 1,
+		(int *)&((h6280_Regs *)rgs)->sp.b.l, 1,
 		{
-			{ "A", (int *)&((H6280_Regs *)rgs)->a, 1, 2, 1 },
-			{ "X", (int *)&((H6280_Regs *)rgs)->x, 1, 7, 1 },
-			{ "Y", (int *)&((H6280_Regs *)rgs)->y, 1, 12, 1 },
-			{ "S", (int *)&((H6280_Regs *)rgs)->SP.B.l, 1, 17, 1 },
-			{ "PC", (int *)&((H6280_Regs *)rgs)->PC.W.l, 2, 22, 1 },
-			{ "M1", (int *)&((H6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
-			{ "M2", (int *)&((H6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
-			{ "M3", (int *)&((H6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
-			{ "M4", (int *)&((H6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
-			{ "M5", (int *)&((H6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
-			{ "M6", (int *)&((H6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
-			{ "M7", (int *)&((H6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
-			{ "M8", (int *)&((H6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
+			{ "A", (int *)&((h6280_Regs *)rgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((h6280_Regs *)rgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((h6280_Regs *)rgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((h6280_Regs *)rgs)->sp.b.l, 1, 17, 1 },
+			{ "PC", (int *)&((h6280_Regs *)rgs)->pc.w.l, 2, 22, 1 },
+			{ "M1", (int *)&((h6280_Regs *)rgs)->mmr[0], 1, 30, 1 },
+			{ "M2", (int *)&((h6280_Regs *)rgs)->mmr[1], 1, 36, 1 },
+			{ "M3", (int *)&((h6280_Regs *)rgs)->mmr[2], 1, 42, 1 },
+			{ "M4", (int *)&((h6280_Regs *)rgs)->mmr[3], 1, 48, 1 },
+			{ "M5", (int *)&((h6280_Regs *)rgs)->mmr[4], 1, 54, 1 },
+			{ "M6", (int *)&((h6280_Regs *)rgs)->mmr[5], 1, 60, 1 },
+			{ "M7", (int *)&((h6280_Regs *)rgs)->mmr[6], 1, 66, 1 },
+			{ "M8", (int *)&((h6280_Regs *)rgs)->mmr[7], 1, 72, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-    /* #define CPU_I86    5 */
+	/* #define CPU_I86	  8 */
 	{
 		"I86", 21,
 		DrawDebugScreen16,
@@ -720,7 +956,24 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_I8039  6 */
+	/* #define CPU_I8035  9 */
+	{
+		"I8035", 14,
+		DrawDebugScreen8,
+		TempDasm8039, Temp8039Trace, 15, 8,
+		"........", (int *)&((I8039_Regs *)rgs)->PSW, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		1, 1,					/* CM 980428 */
+		(int *)&((I8039_Regs *)rgs)->SP, 1,
+		{
+			{ "PC", (int *)&((I8039_Regs *)rgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)rgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)rgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_I8039  10 */
 	{
 		"I8039", 14,
 		DrawDebugScreen8,
@@ -737,7 +990,98 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6803  7 */ /* CPU_6802, CPU_6808 */
+	/* #define CPU_I8048  11 */
+	{
+		"I8048", 14,
+		DrawDebugScreen8,
+		TempDasm8039, Temp8039Trace, 15, 8,
+		"........", (int *)&((I8039_Regs *)rgs)->PSW, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		1, 1,					/* CM 980428 */
+		(int *)&((I8039_Regs *)rgs)->SP, 1,
+		{
+			{ "PC", (int *)&((I8039_Regs *)rgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)rgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)rgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_N7751  12 */
+	{
+		"N7751", 14,
+		DrawDebugScreen8,
+		TempDasm8039, Temp8039Trace, 15, 8,
+		"........", (int *)&((I8039_Regs *)rgs)->PSW, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		1, 1,					/* CM 980428 */
+		(int *)&((I8039_Regs *)rgs)->SP, 1,
+		{
+			{ "PC", (int *)&((I8039_Regs *)rgs)->PC, 2, 2, 1 },
+			{ "A", (int *)&((I8039_Regs *)rgs)->A, 1, 10, 1 },
+			{ "SP", (int *)&((I8039_Regs *)rgs)->SP, 1, 15, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6800  13 */
+	{
+		"6800", 14,
+		DrawDebugScreen8,
+		TempDasm6800, Temp6800Trace, 15, 8,
+		"..HINZVC", (int *)&((m6802_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+		(int *)&((m6808_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((m6802_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6802_Regs *)rgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6802_Regs *)rgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6802_Regs *)rgs)->s.w.l, 2, 20, 1 },
+			{ "X", (int *)&((m6802_Regs *)rgs)->x.w.l, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6802  14 */
+	{
+		"6802", 14,
+		DrawDebugScreen8,
+		TempDasm6802, Temp6802Trace, 15, 8,
+		"..HINZVC", (int *)&((m6802_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+		(int *)&((m6808_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((m6802_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6802_Regs *)rgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6802_Regs *)rgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6802_Regs *)rgs)->s.w.l, 2, 20, 1 },
+			{ "X", (int *)&((m6802_Regs *)rgs)->x.w.l, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+	/* #define CPU_M6803  15 */
+	{
+		"6803", 14,
+		DrawDebugScreen8,
+		TempDasm6803, Temp6803Trace, 15, 8,
+		"..HINZVC", (int *)&((m6808_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+		(int *)&((m6803_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((m6803_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6803_Regs *)rgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((m6803_Regs *)rgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((m6803_Regs *)rgs)->s.w.l, 2, 20, 1 },
+			{ "X", (int *)&((m6803_Regs *)rgs)->x.w.l, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6808  16 */
 	{
 		"6808", 14,
 		DrawDebugScreen8,
@@ -748,15 +1092,34 @@ static tDebugCpuInfo DebugInfo[] =
 		4, 1,					/* CM 980428 */
 		(int *)&((m6808_Regs *)rgs)->s, 2,
 		{
-			{ "A", (int *)&((m6808_Regs *)rgs)->a, 1, 2, 1 },
-			{ "B", (int *)&((m6808_Regs *)rgs)->b, 1, 7, 1 },
+			{ "A", (int *)&((m6808_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6808_Regs *)rgs)->d.b.l, 1, 7, 1 },
 			{ "PC", (int *)&((m6808_Regs *)rgs)->pc, 2, 12, 1 },
-			{ "S", (int *)&((m6808_Regs *)rgs)->s, 2, 20, 1 },
-			{ "X", (int *)&((m6808_Regs *)rgs)->x, 2, 27, 1 },
+			{ "S", (int *)&((m6808_Regs *)rgs)->s.w.l, 2, 20, 1 },
+			{ "X", (int *)&((m6808_Regs *)rgs)->x.w.l, 2, 27, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
-	},
-	/* #define CPU_6805 8 */	/* JB 980214 */
+    },
+	/* #define CPU_HD63701 17 */
+	{
+		"63701", 14,
+		DrawDebugScreen8,
+		TempDasm63701, Temp63701Trace, 15, 8,
+		"..HINZVC", (int *)&((hd63701_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+		(int *)&((hd63701_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((hd63701_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((hd63701_Regs *)rgs)->d.b.l, 1, 7, 1 },
+			{ "PC", (int *)&((hd63701_Regs *)rgs)->pc, 2, 12, 1 },
+			{ "S", (int *)&((hd63701_Regs *)rgs)->s.w.l, 2, 20, 1 },
+			{ "X", (int *)&((hd63701_Regs *)rgs)->x.w.l, 2, 27, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_6805 18 */	 /* JB 980214 */
 	{
 		"6805", 14,
 		DrawDebugScreen8,
@@ -774,7 +1137,47 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M6809  9 */
+	/* #define CPU_68705 19 */	  /* JB 980214 */
+	{
+		"68705", 14,
+		DrawDebugScreen8,
+		TempDasm6805, Temp6805Trace, 15, 8,
+		"...HINZC",  (int *)&((m6805_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		4, 1,					/* CM 980428 */
+		(int *)&((m6805_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((m6805_Regs *)rgs)->a, 1, 2, 1 },
+			{ "PC", (int *)&((m6805_Regs *)rgs)->pc, 2, 7, 1 },
+			{ "S", (int *)&((m6805_Regs *)rgs)->s, 2, 15, 1 },
+			{ "X", (int *)&((m6805_Regs *)rgs)->x, 1, 22, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6309  20 */
+	{
+		"6309", 14,
+		DrawDebugScreen8,
+		TempDasm6809, Temp6809Trace, 15, 8,
+		"..H.NZVC", (int *)&((m6809_Regs *)rgs)->cc, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		5, 1,					/* CM 980428 */
+		(int *)&((m6809_Regs *)rgs)->s, 2,
+		{
+			{ "A", (int *)&((m6809_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6809_Regs *)rgs)->d.b.l, 1, 8, 1 },
+			{ "PC", (int *)&((m6809_Regs *)rgs)->pc.w.l, 2, 14, 1 },
+			{ "S", (int *)&((m6809_Regs *)rgs)->s.w.l, 2, 23, 1 },
+			{ "U", (int *)&((m6809_Regs *)rgs)->u.w.l, 2, 31, 1 },
+			{ "X", (int *)&((m6809_Regs *)rgs)->x.w.l, 2, 39, 1 },
+			{ "Y", (int *)&((m6809_Regs *)rgs)->y.w.l, 2, 47, 1 },
+			{ "DP", (int *)&((m6809_Regs *)rgs)->dp, 1, 55, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M6809  21 */
 	{
 		"6809", 14,
 		DrawDebugScreen8,
@@ -785,18 +1188,18 @@ static tDebugCpuInfo DebugInfo[] =
 		5, 1,					/* CM 980428 */
 		(int *)&((m6809_Regs *)rgs)->s, 2,
 		{
-			{ "A", (int *)&((m6809_Regs *)rgs)->a, 1, 2, 1 },
-			{ "B", (int *)&((m6809_Regs *)rgs)->b, 1, 8, 1 },
-			{ "PC", (int *)&((m6809_Regs *)rgs)->pc, 2, 14, 1 },
-			{ "S", (int *)&((m6809_Regs *)rgs)->s, 2, 23, 1 },
-			{ "U", (int *)&((m6809_Regs *)rgs)->u, 2, 31, 1 },
-			{ "X", (int *)&((m6809_Regs *)rgs)->x, 2, 39, 1 },
-			{ "Y", (int *)&((m6809_Regs *)rgs)->y, 2, 47, 1 },
+			{ "A", (int *)&((m6809_Regs *)rgs)->d.b.h, 1, 2, 1 },
+			{ "B", (int *)&((m6809_Regs *)rgs)->d.b.l, 1, 8, 1 },
+			{ "PC", (int *)&((m6809_Regs *)rgs)->pc.w.l, 2, 14, 1 },
+			{ "S", (int *)&((m6809_Regs *)rgs)->s.w.l, 2, 23, 1 },
+			{ "U", (int *)&((m6809_Regs *)rgs)->u.w.l, 2, 31, 1 },
+			{ "X", (int *)&((m6809_Regs *)rgs)->x.w.l, 2, 39, 1 },
+			{ "Y", (int *)&((m6809_Regs *)rgs)->y.w.l, 2, 47, 1 },
 			{ "DP", (int *)&((m6809_Regs *)rgs)->dp, 1, 55, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_M68000 10 */
+	/* #define CPU_M68000 22 */
 	{
 		"68K", 21,
 		DrawDebugScreen16,
@@ -833,7 +1236,81 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_T11    11 */
+	/* #define CPU_M68010 23 */
+	{
+		"68010", 21,
+		DrawDebugScreen16,
+		TempDasm68000, Temp68000Trace, 21, 10,
+		"T.S..III...XNZVC", (int *)&((MC68000_Regs *)rgs)->regs.sr, 16,
+		"%06.6X:     ", 0xffffff,
+                33, 41, 63, 8, 3,
+		10,						/* CM 980428; "MOVE.W $12345678,$87654321" is 10 bytes*/
+		2,						/* CM 980428; MC68000 instructions are evenly aligned */
+		(int *)&((MC68000_Regs *)rgs)->regs.isp, 4,
+		{
+			{ "PC", (int *)&((MC68000_Regs *)rgs)->regs.pc, 4, 2, 1 },
+			{ "VBR", (int *)&((MC68000_Regs *)rgs)->regs.vbr, 4, 14, 1 },
+			{ "ISP", (int *)&((MC68000_Regs *)rgs)->regs.isp, 4, 27, 1 },
+			{ "USP", (int *)&((MC68000_Regs *)rgs)->regs.usp, 4, 40, 1 },
+			{ "SFC", (int *)&((MC68000_Regs *)rgs)->regs.sfc, 4, 53, 1 },
+			{ "DFC", (int *)&((MC68000_Regs *)rgs)->regs.dfc, 4, 66, 1 },
+			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.d[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.d[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.d[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)rgs)->regs.d[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)rgs)->regs.d[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)rgs)->regs.d[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)rgs)->regs.d[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)rgs)->regs.d[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)rgs)->regs.a[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)rgs)->regs.a[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)rgs)->regs.a[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)rgs)->regs.a[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)rgs)->regs.a[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.a[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.a[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.a[7], 4, 67, 19 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_M68020 24 */
+	{
+		"68020", 21,
+		DrawDebugScreen16,
+		TempDasm68000, Temp68000Trace, 21, 10,
+		"T.S..III...XNZVC", (int *)&((MC68000_Regs *)rgs)->regs.sr, 16,
+		"%06.6X:     ", 0xffffff,
+                33, 41, 63, 8, 3,
+		10,						/* CM 980428; "MOVE.W $12345678,$87654321" is 10 bytes*/
+		2,						/* CM 980428; MC68000 instructions are evenly aligned */
+		(int *)&((MC68000_Regs *)rgs)->regs.isp, 4,
+		{
+			{ "PC", (int *)&((MC68000_Regs *)rgs)->regs.pc, 4, 2, 1 },
+			{ "VBR", (int *)&((MC68000_Regs *)rgs)->regs.vbr, 4, 14, 1 },
+			{ "ISP", (int *)&((MC68000_Regs *)rgs)->regs.isp, 4, 27, 1 },
+			{ "USP", (int *)&((MC68000_Regs *)rgs)->regs.usp, 4, 40, 1 },
+			{ "SFC", (int *)&((MC68000_Regs *)rgs)->regs.sfc, 4, 53, 1 },
+			{ "DFC", (int *)&((MC68000_Regs *)rgs)->regs.dfc, 4, 66, 1 },
+			{ "D0", (int *)&((MC68000_Regs *)rgs)->regs.d[0], 4, 67, 3 },
+			{ "D1", (int *)&((MC68000_Regs *)rgs)->regs.d[1], 4, 67, 4 },
+			{ "D2", (int *)&((MC68000_Regs *)rgs)->regs.d[2], 4, 67, 5 },
+			{ "D3", (int *)&((MC68000_Regs *)rgs)->regs.d[3], 4, 67, 6 },
+			{ "D4", (int *)&((MC68000_Regs *)rgs)->regs.d[4], 4, 67, 7 },
+			{ "D5", (int *)&((MC68000_Regs *)rgs)->regs.d[5], 4, 67, 8 },
+			{ "D6", (int *)&((MC68000_Regs *)rgs)->regs.d[6], 4, 67, 9 },
+			{ "D7", (int *)&((MC68000_Regs *)rgs)->regs.d[7], 4, 67, 10 },
+			{ "A0", (int *)&((MC68000_Regs *)rgs)->regs.a[0], 4, 67, 12 },
+			{ "A1", (int *)&((MC68000_Regs *)rgs)->regs.a[1], 4, 67, 13 },
+			{ "A2", (int *)&((MC68000_Regs *)rgs)->regs.a[2], 4, 67, 14 },
+			{ "A3", (int *)&((MC68000_Regs *)rgs)->regs.a[3], 4, 67, 15 },
+			{ "A4", (int *)&((MC68000_Regs *)rgs)->regs.a[4], 4, 67, 16 },
+			{ "A5", (int *)&((MC68000_Regs *)rgs)->regs.a[5], 4, 67, 17 },
+			{ "A6", (int *)&((MC68000_Regs *)rgs)->regs.a[6], 4, 67, 18 },
+			{ "A7", (int *)&((MC68000_Regs *)rgs)->regs.a[7], 4, 67, 19 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
+	/* #define CPU_T11	  25 */
 	{
 		"T11", 14,
 		DrawDebugScreen8,
@@ -855,33 +1332,32 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_2660   12 */
+	/* #define CPU_2650   26 */
 	{
 		"2650", 14,
 		DrawDebugScreen8,
 		TempDasm2650, Temp2650Trace, 15, 8, /* JB 980103 */
-		"MPHRWV?C", (int *)&((S2650_Regs *)rgs)->psl, 8,
+		"MPHRWV?C", (int *)&((s2650_Regs *)rgs)->psl, 8,
 		"%04X:", 0x7fff,
                 25, 31, 77, 16, 3,
 		6, 2,					/* CM 980428 */
-		(int *)&((S2650_Regs *)rgs)->psu, 1,
+		(int *)&((s2650_Regs *)rgs)->psu, 1,
 		{
-			{ "R0", (int *)&((S2650_Regs *)rgs)->reg[0], 1, 2, 1 },
-			{ "R1", (int *)&((S2650_Regs *)rgs)->reg[1], 1, 8, 1 },
-			{ "R2", (int *)&((S2650_Regs *)rgs)->reg[2], 1, 14, 1 },
-			{ "R3", (int *)&((S2650_Regs *)rgs)->reg[3], 1, 20, 1 },
-			{ "IAR", (int *)&((S2650_Regs *)rgs)->iar, 2, 26, 1 },
-			{ " ", (int *)&((S2650_Regs *)rgs)->ir, 1, 34, 1 },
-			{ "PSL", (int *)&((S2650_Regs *)rgs)->psl, 1, 39, 1 },
-			{ "PSU", (int *)&((S2650_Regs *)rgs)->psu, 1, 46, 1 },
-			{ "EA", (int *)&((S2650_Regs *)rgs)->ea, 2, 53, 1 },
-			{ "r1", (int *)&((S2650_Regs *)rgs)->reg[4], 1, 61, 1 },
-			{ "r2", (int *)&((S2650_Regs *)rgs)->reg[5], 1, 67, 1 },
-			{ "r3", (int *)&((S2650_Regs *)rgs)->reg[6], 1, 73, 1 },
+			{ "R0", (int *)&((s2650_Regs *)rgs)->reg[0], 1, 2, 1 },
+			{ "R1", (int *)&((s2650_Regs *)rgs)->reg[1], 1, 8, 1 },
+			{ "R2", (int *)&((s2650_Regs *)rgs)->reg[2], 1, 14, 1 },
+			{ "R3", (int *)&((s2650_Regs *)rgs)->reg[3], 1, 20, 1 },
+			{ "IAR", (int *)&((s2650_Regs *)rgs)->iar, 2, 26, 1 },
+			{ "PSL", (int *)&((s2650_Regs *)rgs)->psl, 1, 34, 1 },
+			{ "PSU", (int *)&((s2650_Regs *)rgs)->psu, 1, 41, 1 },
+			{ "EA", (int *)&((s2650_Regs *)rgs)->ea, 2, 48, 1 },
+			{ "R1'", (int *)&((s2650_Regs *)rgs)->reg[4], 1, 55, 1 },
+			{ "R2'", (int *)&((s2650_Regs *)rgs)->reg[5], 1, 63, 1 },
+			{ "R3'", (int *)&((s2650_Regs *)rgs)->reg[6], 1, 70, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS34010 13 */
+	/* #define CPU_TMS34010 27 */
 	{
 		"34010", 21,
 		DrawDebugScreen32,
@@ -928,7 +1404,7 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_TMS9900   14 */
+	/* #define CPU_TMS9900	 28 */
 	{
 		"9900", 21,
 		DrawDebugScreen16,
@@ -962,86 +1438,81 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-	/* #define CPU_Z8000 15 */
+	/* #define CPU_Z8000 29 */
 	{
 		"Z8000", 21,
 		DrawDebugScreen16,
 		TempDasmZ8000, TempZ8000Trace, 23, 8,
-		"sne21...CZSVDH..", (int *)&((Z8000_Regs *)rgs)->fcw, 16,
+		"sne21...CZSVDH..", (int *)&((z8000_Regs *)rgs)->fcw, 16,
 		"%04X:", 0xffff,
                 33, 39, 61, 8, 3,
 		6,			    /* max inst length */
 		1,			    /* instructions are evenly aligned */
-		(int *)&((Z8000_Regs *)rgs)->nsp, 2,
+		(int *)&((z8000_Regs *)rgs)->nsp, 2,
 		{
-			{ "PC", (int *)&((Z8000_Regs *)rgs)->pc, 2, 2, 1 },
-			{ "PSAP", (int *)&((Z8000_Regs *)rgs)->psap, 2, 10, 1 },
-			{ "REFRESH", (int *)&((Z8000_Regs *)rgs)->refresh, 2, 20, 1 },
-			{ "NSP", (int *)&((Z8000_Regs *)rgs)->nsp, 2, 33, 1 },
-			{ "IRQ", (int *)&((Z8000_Regs *)rgs)->irq_req, 2, 43, 1 },
-			{ "OP", (int *)&((Z8000_Regs *)rgs)->op[0], 2, 53, 1 },
-			{ " ", (int *)&((Z8000_Regs *)rgs)->op[1], 2, 60, 1 },
-			{ " ", (int *)&((Z8000_Regs *)rgs)->op[2], 2, 66, 1 },
-#ifdef	LSB_FIRST
-			{ "R 0", (int *)&((Z8000_Regs *)rgs)->regs.W[ 3], 2, 67, 3 },
-			{ "R 1", (int *)&((Z8000_Regs *)rgs)->regs.W[ 2], 2, 67, 4 },
-			{ "R 2", (int *)&((Z8000_Regs *)rgs)->regs.W[ 1], 2, 67, 5 },
-			{ "R 3", (int *)&((Z8000_Regs *)rgs)->regs.W[ 0], 2, 67, 6 },
-			{ "R 4", (int *)&((Z8000_Regs *)rgs)->regs.W[ 7], 2, 67, 7 },
-			{ "R 5", (int *)&((Z8000_Regs *)rgs)->regs.W[ 6], 2, 67, 8 },
-			{ "R 6", (int *)&((Z8000_Regs *)rgs)->regs.W[ 5], 2, 67, 9 },
-			{ "R 7", (int *)&((Z8000_Regs *)rgs)->regs.W[ 4], 2, 67, 10 },
-			{ "R 8", (int *)&((Z8000_Regs *)rgs)->regs.W[11], 2, 67, 12 },
-			{ "R 9", (int *)&((Z8000_Regs *)rgs)->regs.W[10], 2, 67, 13 },
-			{ "R10", (int *)&((Z8000_Regs *)rgs)->regs.W[ 9], 2, 67, 14 },
-			{ "R11", (int *)&((Z8000_Regs *)rgs)->regs.W[ 8], 2, 67, 15 },
-			{ "R12", (int *)&((Z8000_Regs *)rgs)->regs.W[15], 2, 67, 16 },
-			{ "R13", (int *)&((Z8000_Regs *)rgs)->regs.W[14], 2, 67, 17 },
-			{ "R14", (int *)&((Z8000_Regs *)rgs)->regs.W[13], 2, 67, 18 },
-			{ "R15", (int *)&((Z8000_Regs *)rgs)->regs.W[12], 2, 67, 19 },
-#else
-			{ "R 0", (int *)&((Z8000_Regs *)rgs)->regs.W[ 0], 2, 67, 3 },
-			{ "R 1", (int *)&((Z8000_Regs *)rgs)->regs.W[ 1], 2, 67, 4 },
-			{ "R 2", (int *)&((Z8000_Regs *)rgs)->regs.W[ 2], 2, 67, 5 },
-			{ "R 3", (int *)&((Z8000_Regs *)rgs)->regs.W[ 3], 2, 67, 6 },
-			{ "R 4", (int *)&((Z8000_Regs *)rgs)->regs.W[ 4], 2, 67, 7 },
-			{ "R 5", (int *)&((Z8000_Regs *)rgs)->regs.W[ 5], 2, 67, 8 },
-			{ "R 6", (int *)&((Z8000_Regs *)rgs)->regs.W[ 6], 2, 67, 9 },
-			{ "R 7", (int *)&((Z8000_Regs *)rgs)->regs.W[ 7], 2, 67, 10 },
-			{ "R 8", (int *)&((Z8000_Regs *)rgs)->regs.W[ 8], 2, 67, 12 },
-			{ "R 9", (int *)&((Z8000_Regs *)rgs)->regs.W[ 9], 2, 67, 13 },
-			{ "R10", (int *)&((Z8000_Regs *)rgs)->regs.W[10], 2, 67, 14 },
-			{ "R11", (int *)&((Z8000_Regs *)rgs)->regs.W[11], 2, 67, 15 },
-			{ "R12", (int *)&((Z8000_Regs *)rgs)->regs.W[12], 2, 67, 16 },
-			{ "R13", (int *)&((Z8000_Regs *)rgs)->regs.W[13], 2, 67, 17 },
-			{ "R14", (int *)&((Z8000_Regs *)rgs)->regs.W[14], 2, 67, 18 },
-			{ "R15", (int *)&((Z8000_Regs *)rgs)->regs.W[15], 2, 67, 19 },
-#endif
+			{ "PC", (int *)&((z8000_Regs *)rgs)->pc, 2, 2, 1 },
+			{ "PSAP", (int *)&((z8000_Regs *)rgs)->psap, 2, 10, 1 },
+			{ "REFRESH", (int *)&((z8000_Regs *)rgs)->refresh, 2, 20, 1 },
+			{ "NSP", (int *)&((z8000_Regs *)rgs)->nsp, 2, 33, 1 },
+			{ "IRQ", (int *)&((z8000_Regs *)rgs)->irq_req, 2, 43, 1 },
+			{ "OP", (int *)&((z8000_Regs *)rgs)->op[0], 2, 53, 1 },
+			{ " ", (int *)&((z8000_Regs *)rgs)->op[1], 2, 60, 1 },
+			{ " ", (int *)&((z8000_Regs *)rgs)->op[2], 2, 66, 1 },
+			{ "R 0", (int *)&((z8000_Regs *)rgs)->regs.W[ 0^REGWXOR], 2, 67, 3 },
+			{ "R 1", (int *)&((z8000_Regs *)rgs)->regs.W[ 1^REGWXOR], 2, 67, 4 },
+			{ "R 2", (int *)&((z8000_Regs *)rgs)->regs.W[ 2^REGWXOR], 2, 67, 5 },
+			{ "R 3", (int *)&((z8000_Regs *)rgs)->regs.W[ 3^REGWXOR], 2, 67, 6 },
+			{ "R 4", (int *)&((z8000_Regs *)rgs)->regs.W[ 4^REGWXOR], 2, 67, 7 },
+			{ "R 5", (int *)&((z8000_Regs *)rgs)->regs.W[ 5^REGWXOR], 2, 67, 8 },
+			{ "R 6", (int *)&((z8000_Regs *)rgs)->regs.W[ 6^REGWXOR], 2, 67, 9 },
+			{ "R 7", (int *)&((z8000_Regs *)rgs)->regs.W[ 7^REGWXOR], 2, 67, 10 },
+			{ "R 8", (int *)&((z8000_Regs *)rgs)->regs.W[ 8^REGWXOR], 2, 67, 12 },
+			{ "R 9", (int *)&((z8000_Regs *)rgs)->regs.W[ 9^REGWXOR], 2, 67, 13 },
+			{ "R10", (int *)&((z8000_Regs *)rgs)->regs.W[10^REGWXOR], 2, 67, 14 },
+			{ "R11", (int *)&((z8000_Regs *)rgs)->regs.W[11^REGWXOR], 2, 67, 15 },
+			{ "R12", (int *)&((z8000_Regs *)rgs)->regs.W[12^REGWXOR], 2, 67, 16 },
+			{ "R13", (int *)&((z8000_Regs *)rgs)->regs.W[13^REGWXOR], 2, 67, 17 },
+			{ "R14", (int *)&((z8000_Regs *)rgs)->regs.W[14^REGWXOR], 2, 67, 18 },
+			{ "R15", (int *)&((z8000_Regs *)rgs)->regs.W[15^REGWXOR], 2, 67, 19 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
-        /* #define CPU_TMS320C10  16 */
+	/* #define CPU_TMS320C10  30 */
 	{
-                "32010", 21,
-                DrawDebugScreen16word,
-                TempDasm32010, Temp32010Trace, 22, 8,
-                "OMI.arp1.....dp1", (int *)&((TMS320C10_Regs *)rgs)->STR, 16,
-                "%04X:", 0xffff,
-                33, 39, 77, 16, 5,
-                4, 1,
-                (int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2,
+		"32010", 21,
+		DrawDebugScreen16word,
+		TempDasm32010, Temp32010Trace, 22, 8,
+		"OMI.arp1.....dp1", (int *)&((TMS320C10_Regs *)rgs)->STR, 16,
+		"%04X:", 0xffff,
+		33, 39, 77, 16, 5,
+		4, 1,
+		(int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2,
 		{
-                        { "PC",  (int *)&((TMS320C10_Regs *)rgs)->PC, 2, 2, 1 },
-                        { "ACC", (int *)&((TMS320C10_Regs *)rgs)->ACC, 4, 10, 1 },
-                        { "P",   (int *)&((TMS320C10_Regs *)rgs)->Preg, 4, 23, 1 },
-                        { "T",   (int *)&((TMS320C10_Regs *)rgs)->Treg, 2, 34, 1 },
-                        { "AR0", (int *)&((TMS320C10_Regs *)rgs)->AR[0], 2, 41, 1 },
-                        { "AR1", (int *)&((TMS320C10_Regs *)rgs)->AR[1], 2, 50, 1 },
-                        { "STR", (int *)&((TMS320C10_Regs *)rgs)->STR, 2, 59, 1 },
-                        { "STAK3", (int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2, 68, 1 },
+			{ "PC",  (int *)&((TMS320C10_Regs *)rgs)->PC, 2, 2, 1 },
+			{ "ACC", (int *)&((TMS320C10_Regs *)rgs)->ACC, 4, 10, 1 },
+			{ "P",   (int *)&((TMS320C10_Regs *)rgs)->Preg, 4, 23, 1 },
+			{ "T",   (int *)&((TMS320C10_Regs *)rgs)->Treg, 2, 34, 1 },
+			{ "AR0", (int *)&((TMS320C10_Regs *)rgs)->AR[0], 2, 41, 1 },
+			{ "AR1", (int *)&((TMS320C10_Regs *)rgs)->AR[1], 2, 50, 1 },
+			{ "STR", (int *)&((TMS320C10_Regs *)rgs)->STR, 2, 59, 1 },
+			{ "STAK3", (int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2, 68, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
+	/* Dummy CPU -- placeholder CCPU */
+	{
+		"CCPU", 14,
+		DrawDebugScreen8,
+		DummyDasm, DummyTrace, 0, 8,
+		"........", (int *)&DummyCC, 8,
+		"%04X:", 0xffff,
+                25, 31, 77, 16, 3,
+		1, 1,
+		(int *)-1, -1,
+		{
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+    },
 };
 
 

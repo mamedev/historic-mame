@@ -43,7 +43,7 @@
 					D0 coin 1/2 (selected by 1f02 ?)
 					D1 start 'expert'
 					D2 start 'novice'
-					D3 vblank ?
+					D3 timer ?
 
   I/O ports:
 
@@ -55,9 +55,17 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/s2650/s2650.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/lazercmd.h"
+#include "cpu/s2650/s2650.h"
+
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x) if( errorlog ) fprintf x
+#else
+#define LOG(x)
+#endif
 
 int lazercmd_latches[32];
 
@@ -77,27 +85,25 @@ void lazercmd_marker_dirty(int marker);
  *
  *************************************************************/
 static int lazercmd_hw_1f02 = 0;
-static int lazercmd_sense_state = 0;
-static int lazercmd_vblank_state = 0;
+static int lazercmd_timer_state = 0;
 
 /*************************************************************
  * Interrupt for the cpu
+ * Fake something toggling the sense input line of the S2650
+ * The rate should be at about 1 Hz
  *************************************************************/
-static int lazercmd_vblank(void)
+static int lazercmd_timer(void)
 {
-	lazercmd_vblank_state &= ~8;
-	return S2650_INT_NONE;
-}
+	static int sense_state = 0;
+	static int timer_count = 0;
 
-static int lazercmd_interrupt(void)
-{
-/************************************************************
- * fake something toggling the sense input line of the S2650
- * the rate should be at about 1,5 Hz
- ************************************************************/
-	lazercmd_sense_state ^= 1;
-	S2650_set_sense(lazercmd_sense_state);
-	return S2650_INT_NONE;
+    lazercmd_timer_state &= ~8;
+	if( ++timer_count >= 5*60 ) {
+		timer_count = 0;
+		sense_state ^= 1;
+		cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
+	}
+    return ignore_interrupt();
 }
 
 /*************************************************************
@@ -109,35 +115,29 @@ static int lazercmd_interrupt(void)
 /* triggered by WRTC,r opcode */
 static void lazercmd_ctrl_port_w(int offset, int data)
 {
-	if (errorlog)
-		fprintf(errorlog, "lazercmd_ctrl_port_w %d <- $%02X\n", offset, data);
+	LOG((errorlog, "lazercmd_ctrl_port_w %d <- $%02X\n", offset, data));
 }
 
 /* triggered by REDC,r opcode */
 static int lazercmd_ctrl_port_r(int offset)
 {
-int data = 0;
-
-	if (errorlog)
-		fprintf(errorlog, "lazercmd_ctrl_port_r %d -> $%02X\n", offset, data);
+	int data = 0;
+	LOG((errorlog, "lazercmd_ctrl_port_r %d -> $%02X\n", offset, data));
 	return data;
 }
 
 /* triggered by WRTD,r opcode */
 static void lazercmd_data_port_w(int offset, int data)
 {
-	if (errorlog)
-		fprintf(errorlog, "lazercmd_data_port_w %d <- $%02X\n", offset, data);
+	LOG((errorlog, "lazercmd_data_port_w %d <- $%02X\n", offset, data));
 }
 
 /* triggered by REDD,r opcode */
 static int lazercmd_data_port_r(int offset)
 {
-int data = 0;
-
+	int data;
 	data = input_port_2_r(0) & 0x0f;
-	if (errorlog)
-		fprintf(errorlog, "lazercmd_data_port_r %d -> $%02X\n", offset, data);
+	LOG((errorlog, "lazercmd_data_port_r %d -> $%02X\n", offset, data));
 	return data;
 }
 
@@ -146,10 +146,10 @@ int data = 0;
  * Hardware read/write
  *
  *************************************************************/
-/* write to something like latches in memory range 0x1c00 - 0x1c1f */
+/* Write to something like latches in memory range 0x1c00 - 0x1c1f */
 static void lazercmd_latches_w(int offset, int data)
 {
-//	if (errorlog) fprintf(errorlog, "lazercmd_latches_w %d <- $%02X\n", offset, data);
+	LOG((errorlog, "lazercmd_latches_w %d <- $%02X\n", offset, data));
 	switch (offset)
 	{
 		case 0x03: /* left player marker activate */
@@ -174,45 +174,46 @@ static void lazercmd_latches_w(int offset, int data)
     lazercmd_latches[offset] = data;
 }
 
-/* read from something like latches in memory range 0x1c00 - 0x1c1f */
+/* Read from something like latches in memory range 0x1c00 - 0x1c1f */
 static int lazercmd_latches_r(int offset)
 {
-int data = lazercmd_latches[offset];
+	int data = lazercmd_latches[offset];
 
-//	if (errorlog) fprintf(errorlog, "lazercmd_latches_r %d -> $%02X\n", offset, data);
+	LOG((errorlog, "lazercmd_latches_r %d -> $%02X\n", offset, data));
 	return data;
 }
 
 static void lazercmd_hardware_w(int offset, int data)
 {
-static int DAC_data = 0;
+	static int DAC_data = 0;
 
 	switch (offset)
 	{
-		case 0:				   /* speaker ? */
-            if (errorlog) fprintf(errorlog, "lazercmd_hardware_w DAC $%02X\n", data);
+		case 0: /* speaker ? */
+			LOG((errorlog, "lazercmd_hardware_w DAC $%02X\n", data));
 			DAC_data = data & 0xf0;
 			DAC_data_w(0, DAC_data);
 			break;
-		case 1:				   /* ???? it writes 0x05 here... */
-			if (errorlog) fprintf(errorlog, "lazercmd_hardware_w hw1 $%02X\n", data);
+		case 1: /* ???? it writes 0x05 here... */
+			LOG((errorlog, "lazercmd_hardware_w hw1 $%02X\n", data));
             break;
-		case 2:				   /* ???? it writes 0x3c / 0xcc here ... */
-			if (errorlog) fprintf(errorlog, "lazercmd_hardware_w hw2 $%02X\n", data);
+		case 2: /* ???? it writes 0x3c / 0xcc here ... */
+			LOG((errorlog, "lazercmd_hardware_w hw2 $%02X\n", data));
             lazercmd_hw_1f02 = data;
 			break;
-		case 3:				   /* ???? it writes 0x62 here... */
-			if (errorlog) fprintf(errorlog, "lazercmd_hardware_w hw3 $%02X\n", data);
+		case 3: /* ???? it writes 0x62 here... */
+			LOG((errorlog, "lazercmd_hardware_w hw3 $%02X\n", data));
             break;
 	}
 }
 
 static int lazercmd_hardware_r(int offset)
 {
-static int last_offset = 0;
-static int last_data = 0;
-static int last_1f02 = 0;
-int data = 0;
+	static int last_offset = 0;
+	static int last_data = 0;
+	static int last_1f02 = 0;
+	static int old_port_3 = 0;
+	int data = 0;
 
 	switch (offset)
 	{
@@ -226,11 +227,21 @@ int data = 0;
 			data = input_port_4_r(0);
 			break;
 		case 3:				   /* coin slot + start buttons */
-			data = (input_port_3_r(0) & 7) | lazercmd_vblank_state;
-			lazercmd_vblank_state |= 8;
+			if( (input_port_3_r(0) & 7) != old_port_3 )
+			{
+				old_port_3 = input_port_3_r(0) & 7;
+				data = old_port_3 | lazercmd_timer_state;
+			}
+			else
+			{
+				/* do not return coin1/coin2 if they are held down */
+				data = (old_port_3 | 2 | 4) | lazercmd_timer_state;
+            }
+			lazercmd_timer_state |= 8;
 			break;
 	}
-	if (errorlog)
+#if VERBOSE
+    if (errorlog)
 	{
 		if (lazercmd_hw_1f02 != last_1f02 ||
 			offset != last_offset ||
@@ -239,10 +250,11 @@ int data = 0;
 			last_offset = offset;
 			last_data = data;
 			last_1f02 = lazercmd_hw_1f02;
-			fprintf(errorlog, "lazercmd_hardware_r (1f02:%02X) 1f0%d -> $%02x\n", last_1f02, last_offset, last_data);
+			LOG((errorlog,"lazercmd_hardware_r (1f02:%02X) 1f0%d -> $%02x\n", last_1f02, last_offset, last_data));
 		}
 	}
-	return data;
+#endif
+    return data;
 }
 
 static struct MemoryWriteAddress lazercmd_writemem[] =
@@ -351,8 +363,8 @@ static unsigned char palette[12 * 3] = {
 };
 
 static unsigned short colortable[6 * 2] = {
-	 8,  9, 	/* mustard yellow bright on very dark */
-	10, 11, 	/* jade green bright on very dark */
+	 8,  9, 	/* mustard yellow bright on very dark yellow */
+	10, 11, 	/* jade green bright on very dark green */
 	 7,  0, 	/* white on black */
 	 9,  8, 	/* above inverted */
 	11, 10,
@@ -372,15 +384,16 @@ static struct MachineDriver lazercmd_machine_driver =
 	{
 		{
 			CPU_S2650,
-			625000, 		/* 625 kHz? */
+			312500, 				/* 312,5 kHz? */
+//			625000, 				/* 625 kHz? */
 			0,
 			lazercmd_readmem, lazercmd_writemem,
 			lazercmd_readport, lazercmd_writeport,
-			lazercmd_vblank, 5,
-			lazercmd_interrupt, 1	/* one interrupt per second */
+			lazercmd_timer, 3		/* 180 times per second !? */
 		}
 	},
-	60, 2000,	/* frames per second, vblank duration (arbitrary values!) */
+	/* frames per second, vblank duration (arbitrary values!) */
+    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  
 	1,			/* single CPU, no need for interleaving */
 	0,
 
@@ -434,8 +447,10 @@ void lazercmd_rom_decode(void)
 {
 int i, y;
 
-/* The ROMs are 1K x 4 bit, so we have to mix */
-/* them into 8 bit bytes. They are inverted too */
+/******************************************************************
+ * The ROMs are 1K x 4 bit, so we have to mix
+ * them into 8 bit bytes. The data is also inverted.
+ ******************************************************************/
 	for (i = 0; i < 0x0c00; i++)
 	{
 		Machine->memory_region[0][i + 0x0000] =
@@ -453,15 +468,14 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &Machine->memory_region[1][0x0000 + i * VERT_CHR];
-unsigned char *s = &Machine->memory_region[1][0x0a00 + i * VERT_FNT];
+		UINT8 *d = &Machine->memory_region[1][0x0000 + i * VERT_CHR];
+		UINT8 *s = &Machine->memory_region[1][0x0a00 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{
 			*d = (y < VERT_FNT) ? *s++ : 0xff;
 			switch (i)
 			{
-
 				case 0x22:	   /* front of white tank going left */
 				case 0x2b:	   /* rear of white tank going right */
 					if (y == 2 || y == 6)

@@ -55,8 +55,8 @@ int mrdo_SECRE_r(int offset)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	Z80_GetRegs(&regs);
-	return RAM[regs.HL.D];
+	z80_getregs(&regs);
+	return RAM[regs.HL.d];
 }
 
 
@@ -607,9 +607,9 @@ struct GameDriver yankeedo_driver =
 	__FILE__,
 	&mrdo_driver,
 	"yankeedo",
-	"Yankee DO! (Two Bit Score)",
+	"Yankee DO!",
 	"1982",
-	"bootleg",
+	"hack",
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,

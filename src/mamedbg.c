@@ -306,7 +306,7 @@ static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* 
 	char    S[32];
 	unsigned char	value, oldValue;
         int     spacing  = DebugInfo[cputype].MemWindowDataSpace;
-        int     Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+		int 	Addshift = ((spacing+1)/3)-1;	 /* Mamory address shifting used for non-byte CPU's */
                                                  /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
         Base <<=Addshift;               /* Fix Mem Base depending on CPU mem unit size */
@@ -368,13 +368,13 @@ static unsigned long GetAddress(int _cputype, char *src)
 		switch (DebugInfo[_cputype].RegList[SrcREG].Size)
 		{
 			case 1:
-				rv = *(byte *)DebugInfo[_cputype].RegList[SrcREG].Val;
+				rv = *(UINT8 *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 			case 2:
-				rv = *(word *)DebugInfo[_cputype].RegList[SrcREG].Val;
+				rv = *(UINT16 *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 			case 4:
-				rv = *(dword *)DebugInfo[_cputype].RegList[SrcREG].Val;
+				rv = *(UINT32 *)DebugInfo[_cputype].RegList[SrcREG].Val;
 				break;
 		}
 	}
@@ -423,8 +423,8 @@ static int ModifyRegisters(char *param)
 		{
 			int TrgREG = IsRegister(cputype, s1);
 			unsigned long addr = GetAddress(cputype, s2);
-			byte b = addr & 0xff;
-			word w = addr & 0xffff;
+			UINT8 b = addr & 0xff;
+			UINT16 w = addr & 0xffff;
 
 			if (TrgREG != -1)
 			{
@@ -432,13 +432,13 @@ static int ModifyRegisters(char *param)
 				switch (DebugInfo[cputype].RegList[TrgREG].Size)
 				{
 					case 1:
-						*(byte *)DebugInfo[cputype].RegList[TrgREG].Val = b;
+						*(UINT8 *)DebugInfo[cputype].RegList[TrgREG].Val = b;
 						break;
 					case 2:
-						*(word *)DebugInfo[cputype].RegList[TrgREG].Val = w;
+						*(UINT16 *)DebugInfo[cputype].RegList[TrgREG].Val = w;
 						break;
 					case 4:
-						*(dword *)DebugInfo[cputype].RegList[TrgREG].Val = addr;
+						*(UINT32 *)DebugInfo[cputype].RegList[TrgREG].Val = addr;
 						break;
 				}
 				cpuintf[cputype].set_regs(rgs);
@@ -524,7 +524,7 @@ static int DumpToFile(char *param)
         int  b=0;
         int  tmp;
         int  spacing  = DebugInfo[cputype].MemWindowDataSpace;
-        int  Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+		int  Addshift = ((spacing+1)/3)-1;	  /* Mamory address shifting used for non-byte CPU's */
                                               /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
@@ -1003,7 +1003,7 @@ int FindString (int Add, int *Target)
         int  Start_Address;
         int  Offset;
         int  spacing  = DebugInfo[cputype].MemWindowDataSpace;
-        int  Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+		int  Addshift = ((spacing+1)/3)-1;	  /* Mamory address shifting used for non-byte CPU's */
                                               /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	ScreenPutString ("Searching...       ", INSTRUCTION_COLOUR, 2, 23);
@@ -1054,9 +1054,9 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 	static int	Last_Target[16] = {-1};
 	int		Loop;
 	char	info[80];
-	byte	b;
+	UINT8	b;
         int     spacing  = DebugInfo[cputype].MemWindowDataSpace;
-        int     Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+		int 	Addshift = ((spacing+1)/3)-1;	 /* Mamory address shifting used for non-byte CPU's */
                                                  /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	DrawMemWindow (Base, Col, YMin, *_DisplayASCII);
@@ -1330,13 +1330,13 @@ static void debug_draw_flags (void)
 
 	if (flag_size==8)		/* JB 971210 */
 	{
-		cc = *(byte *)DebugInfo[cputype].CC;	/* JB 980103 */
+		cc = *(UINT8 *)DebugInfo[cputype].CC;	 /* JB 980103 */
 		for (i=0; i<8; i++, cc <<= 1)
 			s[i] = cc & 0x80 ? Flags[i] : '.';
 	}
 	else if (flag_size==16)
 	{
-		cc = *(word *)DebugInfo[cputype].CC;	/* JB 980103 */
+		cc = *(UINT16 *)DebugInfo[cputype].CC;	  /* JB 980103 */
 		/* this is probably wrong for little endian machines */
 		for (i=0; i<16; i++, cc <<= 1)
 			s[i] = cc & 0x8000 ? Flags[i] : '.';
@@ -1364,22 +1364,22 @@ static void debug_draw_registers (void)
 		switch (DebugInfo[cputype].RegList[Num].Size)
 		{
 			case 1:
-				Value = *(byte *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
-				oldValue = *(byte *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				Value = *(UINT8 *)DebugInfo[cputype].RegList[Num].Val;	 /* MB 980221 */
+				oldValue = *(UINT8 *)BackupRegisters[cputype].RegList[Num].Val;  /* MB 980221 */
 				sprintf(s, "%s:%02X", DebugInfo[cputype].RegList[Num].Name, Value);
-//						*(byte *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+//						*(UINT8 *)DebugInfo[cputype].RegList[Num].Val);  /* JB 980103 */
 				break;
 			case 2:
-				Value = *(word *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
-				oldValue = *(word *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				Value = *(UINT16 *)DebugInfo[cputype].RegList[Num].Val;   /* MB 980221 */
+				oldValue = *(UINT16 *)BackupRegisters[cputype].RegList[Num].Val;  /* MB 980221 */
 				sprintf(s, "%s:%04X", DebugInfo[cputype].RegList[Num].Name, Value);
-//						*(word *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+//						*(UINT16 *)DebugInfo[cputype].RegList[Num].Val);  /* JB 980103 */
 				break;
 			case 4:
-				Value = *(dword *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
-				oldValue = *(dword *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				Value = *(UINT32 *)DebugInfo[cputype].RegList[Num].Val;  /* MB 980221 */
+				oldValue = *(UINT32 *)BackupRegisters[cputype].RegList[Num].Val; /* MB 980221 */
 				sprintf(s, "%s:%08X", DebugInfo[cputype].RegList[Num].Name, Value);
-//						*(dword *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+//						*(UINT32 *)DebugInfo[cputype].RegList[Num].Val); /* JB 980103 */
 				break;
 		}
 		ScreenPutString (s, ((Value == oldValue)?REGISTER_COLOUR:CHANGES_COLOUR),
@@ -1685,11 +1685,11 @@ static int GetSPValue(int _cputype)
 	int rv = 0;
 	switch (DebugInfo[_cputype].SPSize)
 	{
-		case 1: rv = *(byte *)DebugInfo[_cputype].SPReg;
+		case 1: rv = *(UINT8 *)DebugInfo[_cputype].SPReg;
 				break;
-		case 2: rv = *(word *)DebugInfo[_cputype].SPReg;
+		case 2: rv = *(UINT16 *)DebugInfo[_cputype].SPReg;
 				break;
-		case 4: rv = *(dword *)DebugInfo[_cputype].SPReg;
+		case 4: rv = *(UINT32 *)DebugInfo[_cputype].SPReg;
 				break;
 	}
 	return rv;
@@ -1781,10 +1781,10 @@ void MAME_Debug (void)
 	}
 
 	/* Check for breakpoint or tilde key to enter debugger */
-	if ((BreakPoint[activecpu] != -1 && cpu_getpc()==BreakPoint[activecpu]) ||
+	if (((BreakPoint[activecpu] != -1 && cpu_getpc()==BreakPoint[activecpu]) ||
 		(TempBreakPoint != -1 && cpu_getpc() == TempBreakPoint) ||/*MB 980103*/
 		( ( CPUWatchpoint[activecpu] >= 0 ) && ( cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] ) != CPUWatchdata[activecpu] ) ) || /* EHC 980506 */
-		debug_key_pressed /* JB 980505 */ || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint)))    /* MB 980121 */
+		  debug_key_pressed /* JB 980505 */ || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint))) && (~InDebug))	 /* MB 980121 */
 	{
 		uclock_t	curr = uclock();
 

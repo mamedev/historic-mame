@@ -28,42 +28,51 @@
 #include "m6805.h"
 #include "driver.h"
 
-/* 6805 registers */
-static UINT8 cc,areg,xreg,sreg;
-static UINT16 pcreg;
+/* irq detection can be either edge *only, or edge *and* level. It is a mask */
+/* option you can choose when you order the CPU. */
+#define IRQ_LEVEL_DETECT 0
 
-static UINT16 eaddr; /* effective address */
-static int pending_interrupts;
-static int irq_state;
-static int (*irq_callback)(int irqline);
+/* 6805 registers */
+static m6805_Regs m6805;
+#define PC	m6805.pc.w.l
+#define S	m6805.s
+#define X	m6805.x
+#define A   m6805.a
+#define CC	m6805.cc
+
+static PAIR ea; 		/* effective address */
+#define EAD ea.d
+#define EA  ea.w.l
 
 /* public globals */
 int m6805_ICount=50000;
 int m6805_Flags;	/* flags for speed optimization */
 
 /* handlers for speed optimization */
-static int (*rd_s_handler)(int);
-static int (*rd_s_handler_wd)(int);
-static void (*wr_s_handler)(int,int);
-static void (*wr_s_handler_wd)(int,int);
+static void (*rd_s_handler_b)(UINT8 *r);
+static void (*rd_s_handler_w)(PAIR *r);
+static void (*wr_s_handler_b)(UINT8 *r);
+static void (*wr_s_handler_w)(PAIR *r);
 
 /* DS -- THESE ARE RE-DEFINED IN m6805.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
-#define M_RDMEM(A)      M6805_RDMEM((A)&0x7ff)
-#define M_WRMEM(A,V)    M6805_WRMEM((A)&0x7ff,V)
-#define M_RDOP(A)       M6805_RDOP((A)&0x7ff)
-#define M_RDOP_ARG(A)   M6805_RDOP_ARG((A)&0x7ff)
+#define RM(Addr)			M6805_RDMEM((Addr)&0x7ff)
+#define WM(Addr,Value)		M6805_WRMEM((Addr)&0x7ff,Value)
+#define M_RDOP(Addr)		M6805_RDOP(Addr)
+#define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
 /* macros to tweak the PC and SP */
+#define SP_INC	if( ++m6805.s > 0x7f ) m6805.s = 0x60
+#define SP_DEC	if( --m6805.s < 0x60 ) m6805.s = 0x7f
 #define SP_ADJUST(s) ((s)=((s)&0x07f)|0x60)
 
 /* macros to access memory */
-#define IMMBYTE(b) {b=M_RDOP_ARG(pcreg++);}
-#define IMMWORD(w) {w = (M_RDOP_ARG(pcreg)<<8) + M_RDOP_ARG(pcreg+1); pcreg+=2;}
+#define IMMBYTE(b) {b = M_RDOP_ARG(PC++);}
+#define IMMWORD(w) {w.d = 0; w.b.h = M_RDOP_ARG(PC); w.b.l = M_RDOP_ARG(PC+1); PC+=2;}
 
-#define PUSHBYTE(b) {(*wr_s_handler)(sreg,b);sreg--;SP_ADJUST(sreg);}
-#define PUSHWORD(w) {sreg--;(*wr_s_handler_wd)(sreg,w);sreg--;SP_ADJUST(sreg);}
-#define PULLBYTE(b) {sreg++;SP_ADJUST(sreg);b=(*rd_s_handler)(sreg);}
-#define PULLWORD(w) {sreg++;SP_ADJUST(sreg);w=(*rd_s_handler_wd)(sreg);sreg++;}
+#define PUSHBYTE(b) (*wr_s_handler_b)(&b)
+#define PUSHWORD(w) (*wr_s_handler_w)(&w)
+#define PULLBYTE(b) (*rd_s_handler_b)(&b)
+#define PULLWORD(w) (*rd_s_handler_w)(&w)
 
 /* CC masks      H INZC
               7654 3210	*/
@@ -73,18 +82,18 @@ static void (*wr_s_handler_wd)(int,int);
 #define IFLAG 0x08
 #define HFLAG 0x10
 
-#define CLR_NZ    cc&=~(NFLAG|ZFLAG)
-#define CLR_HNZC  cc&=~(HFLAG|NFLAG|ZFLAG|CFLAG)
-#define CLR_Z     cc&=~(ZFLAG)
-#define CLR_NZC   cc&=~(NFLAG|ZFLAG|CFLAG)
-#define CLR_ZC    cc&=~(ZFLAG|CFLAG)
+#define CLR_NZ	  CC&=~(NFLAG|ZFLAG)
+#define CLR_HNZC  CC&=~(HFLAG|NFLAG|ZFLAG|CFLAG)
+#define CLR_Z	  CC&=~(ZFLAG)
+#define CLR_NZC   CC&=~(NFLAG|ZFLAG|CFLAG)
+#define CLR_ZC	  CC&=~(ZFLAG|CFLAG)
 
 /* macros for CC -- CC bits affected should be reset before calling */
 #define SET_Z(a)       if(!a)SEZ
 #define SET_Z8(a)	   SET_Z((UINT8)a)
-#define SET_N8(a)      cc|=((a&0x80)>>5)
-#define SET_H(a,b,r)   cc|=((a^b^r)&0x10)
-#define SET_C8(a)      cc|=((a&0x100)>>8)
+#define SET_N8(a)	   CC|=((a&0x80)>>5)
+#define SET_H(a,b,r)   CC|=((a^b^r)&0x10)
+#define SET_C8(a)	   CC|=((a&0x100)>>8)
 
 static UINT8 flags8i[256]=	 /* increment */
 {
@@ -124,8 +133,8 @@ static UINT8 flags8d[256]= /* decrement */
 0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,
 0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x04
 };
-#define SET_FLAGS8I(a)		{cc|=flags8i[(a)&0xff];}
-#define SET_FLAGS8D(a)		{cc|=flags8d[(a)&0xff];}
+#define SET_FLAGS8I(a)		{CC|=flags8i[(a)&0xff];}
+#define SET_FLAGS8D(a)		{CC|=flags8d[(a)&0xff];}
 
 /* combos */
 #define SET_NZ8(a)			{SET_N8(a);SET_Z(a);}
@@ -135,33 +144,33 @@ static UINT8 flags8d[256]= /* decrement */
 #define SIGNED(b) ((INT16)(b&0x80?b|0xff00:b))
 
 /* Macros for addressing modes */
-#define DIRECT IMMBYTE(eaddr)
-#define IMM8 eaddr=pcreg++
-#define EXTENDED IMMWORD(eaddr)
-#define INDEXED eaddr=xreg
-#define INDEXED1 {IMMBYTE(eaddr);eaddr+=xreg;}
-#define INDEXED2 {IMMWORD(eaddr);eaddr+=xreg;}
+#define DIRECT EAD=0;IMMBYTE(ea.b.l)
+#define IMM8 EA=PC++
+#define EXTENDED IMMWORD(ea)
+#define INDEXED EA=X
+#define INDEXED1 {EAD=0; IMMBYTE(ea.b.l); EA+=X;}
+#define INDEXED2 {IMMWORD(ea); EA+=X;}
 
 /* macros to set status flags */
-#define SEC cc|=CFLAG
-#define CLC cc&=~CFLAG
-#define SEZ cc|=ZFLAG
-#define CLZ cc&=~ZFLAG
-#define SEN cc|=NFLAG
-#define CLN cc&=~NFLAG
-#define SEH cc|=HFLAG
-#define CLH cc&=~HFLAG
-#define SEI cc|=IFLAG
-#define CLI cc&=~IFLAG
+#define SEC CC|=CFLAG
+#define CLC CC&=~CFLAG
+#define SEZ CC|=ZFLAG
+#define CLZ CC&=~ZFLAG
+#define SEN CC|=NFLAG
+#define CLN CC&=~NFLAG
+#define SEH CC|=HFLAG
+#define CLH CC&=~HFLAG
+#define SEI CC|=IFLAG
+#define CLI CC&=~IFLAG
 
 /* macros for convenience */
-#define DIRBYTE(b) {DIRECT;b=M_RDMEM(eaddr);}
-#define EXTBYTE(b) {EXTENDED;b=M_RDMEM(eaddr);}
-#define IDXBYTE(b) {INDEXED;b=M_RDMEM(eaddr);}
-#define IDX1BYTE(b) {INDEXED1;b=M_RDMEM(eaddr);}
-#define IDX2BYTE(b) {INDEXED2;b=M_RDMEM(eaddr);}
+#define DIRBYTE(b) {DIRECT;b=RM(EAD);}
+#define EXTBYTE(b) {EXTENDED;b=RM(EAD);}
+#define IDXBYTE(b) {INDEXED;b=RM(EAD);}
+#define IDX1BYTE(b) {INDEXED1;b=RM(EAD);}
+#define IDX2BYTE(b) {INDEXED2;b=RM(EAD);}
 /* Macros for branch instructions */
-#define BRANCH(f) {IMMBYTE(t);if(f){pcreg+=SIGNED(t);}}
+#define BRANCH(f) { UINT8 t; IMMBYTE(t); if(f) { PC+=SIGNED(t); } }
 
 /* what they say it is ... */
 static unsigned char cycles1[] =
@@ -186,118 +195,89 @@ static unsigned char cycles1[] =
 };
 
 
-static int rd_slow( int addr )
+/* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
+#define CLEAR_PAIR(p)   p->d = 0
+
+static void rd_s_slow_b( UINT8 *b )
 {
-    return M_RDMEM(addr);
+	*b = RM( m6805.s );
+	SP_INC;
 }
 
-static int rd_slow_wd( int addr )
+static void rd_s_slow_w( PAIR *p )
 {
-    return( (M_RDMEM(addr)<<8) | (M_RDMEM(addr+1)) );
+	CLEAR_PAIR(p);
+	p->b.h = RM( m6805.s );
+	SP_INC;
+	p->b.l = RM( m6805.s );
+	SP_INC;
 }
 
-static int rd_fast( int addr )
+static void rd_s_fast_b( UINT8 *b )
 {
-	extern unsigned char *RAM;
+	extern UINT8 *RAM;
 
-	return RAM[addr&0x7ff];
+	*b = RAM[ m6805.s ];
+	SP_INC;
 }
 
-static int rd_fast_wd( int addr )
+static void rd_s_fast_w( PAIR *p )
 {
-	extern unsigned char *RAM;
+	extern UINT8 *RAM;
 
-	return( (RAM[addr&0x7ff]<<8) | (RAM[(addr+1)&0x7ff]) );
+	CLEAR_PAIR(p);
+	p->b.h = RAM[ m6805.s ];
+	SP_INC;
+	p->b.l = RAM[ m6805.s ];
+	SP_INC;
 }
 
-static void wr_slow( int addr, int v )
+static void wr_s_slow_b( UINT8 *b )
 {
-	M_WRMEM(addr,v);
+	SP_DEC;
+	WM( m6805.s, *b );
 }
 
-static void wr_slow_wd( int addr, int v )
+static void wr_s_slow_w( PAIR *p )
 {
-	M_WRMEM(addr,v>>8);
-	M_WRMEM((addr)+1,v&255);
+    SP_DEC;
+	WM( m6805.s, p->b.l );
+    SP_DEC;
+	WM( m6805.s, p->b.h );
 }
 
-static void wr_fast( int addr, int v )
+static void wr_s_fast_b( UINT8 *b )
 {
-	extern unsigned char *RAM;
+	extern UINT8 *RAM;
 
-	RAM[addr&0x7ff] = v;
+    SP_DEC;
+	RAM[ m6805.s ] = *b;
 }
 
-static void wr_fast_wd( int addr, int v )
+static void wr_s_fast_w( PAIR *p )
 {
-	extern unsigned char *RAM;
+	extern UINT8 *RAM;
 
-	RAM[addr&0x7ff] = v>>8;
-	RAM[(addr+1)&0x7ff] = v&255;
+    SP_DEC;
+	RAM[ m6805.s ] = p->b.l;
+    SP_DEC;
+	RAM[ m6805.s ] = p->b.h;
 }
 
-INLINE unsigned M_RDMEM_WORD (UINT32 A)
+INLINE void RM16( UINT32 Addr, PAIR *p )
 {
-	int i;
-
-    i = M_RDMEM(A)<<8;
-    i |= M_RDMEM((A)+1);
-	return i;
+	CLEAR_PAIR(p);
+    p->b.h = RM(Addr);
+	if( ++Addr > 0x7ff ) Addr = 0;
+	p->b.l = RM(Addr);
 }
 
-INLINE void M_WRMEM_WORD (UINT32 A,UINT16 V)
+INLINE void WM16( UINT32 Addr, PAIR *p )
 {
-	M_WRMEM (A,V>>8);
-	M_WRMEM ((A)+1,V&255);
+	WM( Addr, p->b.h );
+	if( ++Addr > 0x7ff ) Addr = 0;
+	WM( Addr, p->b.l );
 }
-
-
-/****************************************************************************/
-/* Set all registers to given values                                        */
-/****************************************************************************/
-void m6805_SetRegs(m6805_Regs *Regs)
-{
-	pcreg = Regs->pc;
-	sreg = Regs->s;
-	xreg = Regs->x;
-	areg = Regs->a;
-	cc = Regs->cc;
-
-	pending_interrupts = Regs->pending_interrupts;
-#if NEW_INTERRUPT_SYSTEM
-	irq_state = Regs->irq_state;
-	irq_callback = Regs->irq_callback;
-#endif
-}
-
-
-/****************************************************************************/
-/* Get all registers in given buffer                                        */
-/****************************************************************************/
-void m6805_GetRegs(m6805_Regs *Regs)
-{
-	Regs->pc = pcreg;
-	Regs->s = sreg;
-	Regs->x = xreg;
-	Regs->a = areg;
-	Regs->cc = cc;
-
-	Regs->pending_interrupts = pending_interrupts;
-#if NEW_INTERRUPT_SYSTEM
-	Regs->irq_state = irq_state;
-	Regs->irq_callback = irq_callback;
-#endif
-}
-
-
-/****************************************************************************/
-/* Return program counter                                                   */
-/****************************************************************************/
-unsigned m6805_GetPC(void)
-{
-	return pcreg & 0x7ff;	/* NS 980731 */
-}
-
 
 /* Generate interrupts */
 static void Interrupt(void)
@@ -305,57 +285,115 @@ static void Interrupt(void)
 	/* the 6805 latches interrupt requests internally, so we don't clear */
 	/* pending_interrupts until the interrupt is taken, no matter what the */
 	/* external IRQ pin does. */
-	if ((pending_interrupts & M6805_INT_IRQ) != 0 && (cc & IFLAG) == 0)
+	if( (m6805.pending_interrupts & M6805_INT_IRQ) != 0 && (CC & IFLAG) == 0 )
 	{
         /* standard IRQ */
-		PUSHWORD(pcreg|0xf800)
-		PUSHBYTE(xreg)
-		PUSHBYTE(areg)
-		PUSHBYTE(cc)
+		PC |= 0xf800;
+		PUSHWORD(m6805.pc);
+		PUSHBYTE(m6805.x);
+		PUSHBYTE(m6805.a);
+		PUSHBYTE(m6805.cc);
         SEI;
-#if NEW_INTERRUPT_SYSTEM
 		/* no vectors supported, just do the callback to clear irq_state if needed */
-		if (irq_callback) (*irq_callback)(0);
-#endif
-        pending_interrupts &= ~M6805_INT_IRQ;
-		pcreg=M_RDMEM_WORD(0x07fa);
-		m6805_ICount -= 11;
+		if (m6805.irq_callback)
+			(*m6805.irq_callback)(0);
+		m6805.pending_interrupts &= ~M6805_INT_IRQ;
+		RM16( 0x07fa, &m6805.pc );
+		PC &= 0x7ff;
+        m6805_ICount -= 11;
 	}
 }
 
 
-void m6805_reset(void)
+void m6805_reset(void *param)
 {
-	pcreg = M_RDMEM_WORD(0x07fe);
-
-	cc = 0x00;    /* Clear all flags */
-	SEI;          /* IRQ disabled */
-	areg = 0x00;  /* clear a */
-	xreg = 0x00;  /* clear x */
-	sreg = 0x7f;  /* SP = 0x7f */
-#if NEW_INTERRUPT_SYSTEM
-	irq_state = CLEAR_LINE;
-	pending_interrupts = 0;
-#else
-    m6805_Clear_Pending_Interrupts();
-#endif
+	memset(&m6805, 0, sizeof(m6805));
+	RM16( 0x07fe, &m6805.pc );
+	PC &= 0x7ff;
+    SEI;            /* IRQ disabled */
+	S = 0x7f;		/* SP = 0x7f */
 
     /* default to unoptimized memory access */
-	rd_s_handler = rd_slow;
-	rd_s_handler_wd = rd_slow_wd;
-	wr_s_handler = wr_slow;
-	wr_s_handler_wd = wr_slow_wd;
+	rd_s_handler_b = rd_s_slow_b;
+	rd_s_handler_w = rd_s_slow_w;
+	wr_s_handler_b = wr_s_slow_b;
+	wr_s_handler_w = wr_s_slow_w;
 
 	/* optimize memory access according to flags */
 	if( m6805_Flags & M6805_FAST_S )
 	{
-		rd_s_handler=rd_fast; rd_s_handler_wd=rd_fast_wd;
-		wr_s_handler=wr_fast; wr_s_handler_wd=wr_fast_wd;
+		rd_s_handler_b = rd_s_fast_b;
+		rd_s_handler_w = rd_s_fast_w;
+		wr_s_handler_b = wr_s_fast_b;
+		wr_s_handler_w = wr_s_fast_w;
 	}
 }
 
+void m6805_exit(void)
+{
+	/* nothing to do */
+}
 
-#if NEW_INTERRUPT_SYSTEM
+/****************************************************************************/
+/* Set all registers to given values                                        */
+/****************************************************************************/
+void m6805_setregs(m6805_Regs *Regs)
+{
+	m6805 = *Regs;
+	m6805.s = SP_ADJUST(m6805.s);
+}
+
+
+/****************************************************************************/
+/* Get all registers in given buffer                                        */
+/****************************************************************************/
+void m6805_getregs(m6805_Regs *Regs)
+{
+	*Regs = m6805;
+}
+
+
+/****************************************************************************/
+/* Return program counter                                                   */
+/****************************************************************************/
+unsigned m6805_getpc(void)
+{
+	return PC & 0x7ff;	 /* NS 980731 */
+}
+
+
+/****************************************************************************/
+/* Return a specific register                                               */
+/****************************************************************************/
+unsigned m6805_getreg(int regnum)
+{
+	switch( regnum )
+	{
+        case 0: return m6805.a;
+		case 1: return m6805.pc.w.l;
+		case 2: return m6805.s;
+        case 3: return m6805.x;
+		case 4: return m6805.irq_state;
+	}
+	return 0;
+}
+
+
+/****************************************************************************/
+/* Set a specific register                                                  */
+/****************************************************************************/
+void m6805_setreg(int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+        case 0: m6805.a = val; break;
+		case 1: m6805.pc.w.l = val; break;
+		case 2: m6805.s = val; break;
+        case 3: m6805.x = val; break;
+		case 4: m6805.irq_state = val; break;
+	}
+}
+
 
 void m6805_set_nmi_line(int state)
 {
@@ -364,31 +402,18 @@ void m6805_set_nmi_line(int state)
 
 void m6805_set_irq_line(int irqline, int state)
 {
-	if (irq_state == state) return;
+	if (m6805.irq_state == state) return;
 
-	irq_state = state;
-	if (irq_state != CLEAR_LINE) pending_interrupts |= M6805_INT_IRQ;
+	m6805.irq_state = state;
+	if (state != CLEAR_LINE)
+		m6805.pending_interrupts |= M6805_INT_IRQ;
 }
 
 void m6805_set_irq_callback(int (*callback)(int irqline))
 {
-	irq_callback = callback;
+	m6805.irq_callback = callback;
 }
 
-#else
-
-void m6805_Cause_Interrupt(int type)
-{
-	pending_interrupts |= type;
-}
-
-
-void m6805_Clear_Pending_Interrupts(void)
-{
-	pending_interrupts &= ~M6805_INT_IRQ;
-}
-
-#endif
 
 #include "6805ops.c"
 
@@ -401,11 +426,11 @@ int m6805_execute(int cycles)
 
 	do
 	{
-		if (pending_interrupts != 0)
+		if (m6805.pending_interrupts != 0)
 			Interrupt();
 
 #if 0
-		asg_6805Trace(OP_ROM, pcreg);
+		asg_6805Trace(OP_ROM, PC);
 #endif
 
 #ifdef	MAME_DEBUG
@@ -414,7 +439,7 @@ int m6805_execute(int cycles)
 			if (mame_debug) MAME_Debug();
 		}
 #endif
-		ireg=M_RDOP(pcreg++);
+		ireg=M_RDOP(PC++);
 
 		switch( ireg )
 		{
@@ -573,7 +598,7 @@ int m6805_execute(int cycles)
 			case 0x98: CLC; break;
 			case 0x99: SEC; break;
 #if IRQ_LEVEL_DETECT
-			case 0x9a: CLI; if (irq_state != CLEAR_LINE) pending_interrupts |= M6805_INT_IRQ; break;
+			case 0x9a: CLI; if (m6805.irq_state != CLEAR_LINE) m6805.pending_interrupts |= M6805_INT_IRQ; break;
 #else
 			case 0x9a: CLI; break;
 #endif
@@ -684,3 +709,62 @@ int m6805_execute(int cycles)
 
 	return cycles - m6805_ICount;
 }
+
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *m6805_info(void *context, int regnum)
+{
+	static char buffer[8][47+1];
+	static int which = 0;
+	m6805_Regs *r = (m6805_Regs *)context;
+
+	which = ++which % 8;
+    buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M6805";
+		case CPU_INFO_FAMILY: return "Motorola 6805";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "????";
+		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->s); break;
+#if MAME_DEBUG
+		case CPU_INFO_DASM: r->pc.w.l += Dasm6805(&ROM[r->pc.w.l], buffer[which], r->pc.w.l); break;
+#else
+		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->pc.w.l]); r->pc.w.l++; break;
+#endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->cc & 0x80 ? '?':'.',
+                r->cc & 0x40 ? '?':'.',
+                r->cc & 0x20 ? '?':'.',
+                r->cc & 0x10 ? 'H':'.',
+                r->cc & 0x08 ? 'I':'.',
+                r->cc & 0x04 ? 'N':'.',
+                r->cc & 0x02 ? 'Z':'.',
+                r->cc & 0x01 ? 'C':'.');
+            break;
+        case CPU_INFO_REG+ 0: sprintf(buffer[which], "A:%02X", r->a); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "S:%02X", r->s); break;
+        case CPU_INFO_REG+ 3: sprintf(buffer[which], "X:%02X", r->x); break;
+		case CPU_INFO_REG+ 4: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+    }
+	return buffer[which];
+}
+
+const char *m68705_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M68705";
+		case CPU_INFO_VERSION: return "1.0";
+	}
+	return m6805_info(context,regnum);
+}
+

@@ -7,6 +7,7 @@
 ****************************************************************************/
 
 #include "vidhrdw/generic.h"
+#include "artwork.h"
 
 #define USE_OVERLAY
 
@@ -26,34 +27,70 @@ static  int sprite_horz[SPR_COUNT];     /* x position */
 static  int sprite_vert[SPR_COUNT];     /* y position */
 static  int sprite_index[SPR_COUNT];    /* index 0x00..0x0f, prom 0x10, flip horz 0x20 */
 
+static struct artwork *overlay;
+static struct artwork_element deadeye_artwork[] = {
+	{{0,			 SCR_HORZ*8,	 0, 	 SCR_VERT*8},	 255,255,255, 255},
+	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, 160},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, 160},
+	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, 160},
+	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, 160},
+	{{8,			 SCR_HORZ*8-8-1, 11*8,	 26*8-1},		 192,192,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},   64, 64,192, 160},
+	{{-1,-1,-1,-1},0,0,0,0},
+};
+
+static struct artwork_element gypsyjug_artwork[] = {
+	{{0,			 SCR_HORZ*8,	 0, 	 SCR_VERT*8},	 255,255,255, 255},
+	{{0,			 SCR_HORZ*8-1,	 0, 	 4*8-1},		  32,192, 64, 160},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 8*8-1},		  64, 64,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 4*8,	 5*8-1},		  32,192, 64, 160},
+	{{0,			 SCR_HORZ*8-1,	 5*8,	 8*8-1},		  64, 64,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 8*8,	 11*8-1},		 192,160, 32, 160},
+	{{0,			 1*8-1, 		 11*8,	 26*8-1},		 192,160, 32, 160},
+	{{SCR_HORZ*8-8,  SCR_HORZ*8-1,	 11*8,	 26*8-1},		 192,160, 32, 160},
+	{{8,			 SCR_HORZ*8-8-1, 11*8,	 26*8-1},		 192,192,192, 160},
+	{{0,			 SCR_HORZ*8-1,	 26*8,	 SCR_VERT*8-1},  192,160, 32, 160},
+	{{-1,-1,-1,-1},0,0,0,0},
+};
+
 /*************************************************************/
 /* video handler start                                       */
 /*************************************************************/
-int     meadows_vh_start(void)
+int deadeye_vh_start(void)
 {
-	videoram_size = 1024;
-	if (generic_vh_start())
-		return 1;
-	return 0;
+	if( generic_vh_start() ) return 1;
+	overlay = artwork_create(deadeye_artwork, 2, Machine->drv->total_colors - 2);
+    if( !overlay ) return 1;
+    return 0;
+}
+
+int gypsyjug_vh_start(void)
+{
+	if( generic_vh_start() ) return 1;
+	overlay = artwork_create(gypsyjug_artwork, 2, Machine->drv->total_colors - 2);
+    if( !overlay ) return 1;
+    return 0;
 }
 
 /*************************************************************/
 /* video handler stop                                        */
 /*************************************************************/
-void    meadows_vh_stop(void)
+void meadows_vh_stop(void)
 {
-	generic_vh_stop();
+	if( overlay )
+		artwork_free(overlay);
+    generic_vh_stop();
 }
 
 /*************************************************************/
 /* draw dirty sprites                                        */
 /*************************************************************/
-static  void    meadows_draw_sprites(void)
+static void meadows_draw_sprites(struct osd_bitmap *bitmap)
 {
-int     i;
-	for (i = 0; i < SPR_COUNT; i++)
-	{
-	int     x, y, n, p, f;
+	int 	i;
+	for( i = 0; i < SPR_COUNT; i++ ) {
+		int x, y, n, p, f;
 		if (!sprite_dirty[i])				/* sprite not dirty? */
 			continue;
 		sprite_dirty[i] = 0;
@@ -63,12 +100,10 @@ int     i;
 //		p = (sprite_index[i] >> 4) & 1; 	/* bit #4 selects prom ??? */
 		p = i;								/* that fixes it for now :-/ */
 		f = sprite_index[i] >> 5;			/* bit #5 flip vertical flag */
-		drawgfx(tmpbitmap,
-			Machine->gfx[p + 1],
-			n, 0, f, 0, x, y,
+		drawgfx(bitmap, Machine->gfx[p + 1],
+			n, 1, f, 0, x, y,
 			&Machine->drv->visible_area,
 			TRANSPARENCY_PEN,0);
-		osd_mark_dirty(x,y,x+15,y+15,1);
 	}
 }
 
@@ -76,10 +111,9 @@ int     i;
 /*************************************************************/
 /* mark character cell dirty                                 */
 /*************************************************************/
-static  void    meadows_char_dirty(int x, int y)
+static void meadows_char_dirty(int x, int y)
 {
 int     i;
-	osd_mark_dirty(x,y,x+7,y+7,1);
 	/* scan sprites */
 	for (i = 0; i < 4; i++)
 	{
@@ -91,163 +125,34 @@ int     i;
 }
 
 /*************************************************************/
-/* deadeye screen refresh                                    */
+/* Screen refresh											 */
 /*************************************************************/
-void deadeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-int     i;
-
-#define W 0
-#define G 1
-#define B 2
-#define Y 3
-static  int deadeye_color_overlay[30][32] =
-{
-	{G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G}, /* invisible */
-	{G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G}, /* invisible */
-	{G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G},
-	{G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-};
-
+	int 	i;
 
     /* the first two rows are invisible */
 	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)
 	{
 		if (dirtybuffer[i])
 		{
-		int     x, y, color;
-			x = (i % SCR_HORZ);
-			y = (i / SCR_HORZ);
-			dirtybuffer[i] = 0;
-#ifdef USE_OVERLAY
-			color = deadeye_color_overlay[y][x];
-#else
-			color = W;
-#endif
+			int x, y;
+            dirtybuffer[i] = 0;
 
-			x *= CHR_HORZ;
-			y *= CHR_VERT;
+			x = (i % SCR_HORZ) * CHR_HORZ;
+			y = (i / SCR_HORZ) * CHR_VERT;
 
-			drawgfx(tmpbitmap,
-				Machine->gfx[0],
-				videoram[i] & 0x7f,
-				color,
-				0,0,
-				x,y,
+			drawgfx(bitmap, Machine->gfx[0],
+				videoram[i] & 0x7f, 1, 0,0, x, y,
 				&Machine->drv->visible_area,
 				TRANSPARENCY_NONE,0);
 			meadows_char_dirty(x,y);
 		}
 	}
 	/* now draw the sprites */
-	meadows_draw_sprites();
+	meadows_draw_sprites(bitmap);
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,
-		   &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-}
-
-void gypsyjug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-int     i;
-
-#define W 0
-#define G 1
-#define B 2
-#define Y 3
-
-static  int gypsyjug_color_overlay[SCR_VERT][SCR_HORZ] =
-{
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y}, /* invisible */
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y}, /* invisible */
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G,G},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B,B},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-	{Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y},
-};
-
-    /* the first two are invisible */
-	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)
-	{
-		if (dirtybuffer[i])
-		{
-		int     x, y, color;
-			x = (i % SCR_HORZ);
-			y = (i / SCR_HORZ);
-			dirtybuffer[i] = 0;
-#ifdef USE_OVERLAY
-			color = gypsyjug_color_overlay[y][x];
-#else
-			color = W;
-#endif
-
-			x *= CHR_HORZ;
-			y *= CHR_VERT;
-
-			drawgfx(tmpbitmap,
-				Machine->gfx[0],
-				videoram[i] & 0x7f,
-				color, 0, 0, x, y,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_NONE,0);
-			meadows_char_dirty(x,y);
-		}
-	}
-
-	/* now draw the sprites */
-	meadows_draw_sprites();
-
-        copybitmap(bitmap,tmpbitmap, 0, 0, 0, 0,
-		   &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	overlay_draw(bitmap,overlay);
 }
 
 /*************************************************************/
@@ -257,8 +162,8 @@ static  int gypsyjug_color_overlay[SCR_VERT][SCR_HORZ] =
 /*************************************************************/
 void    meadows_videoram_w(int offset, int data)
 {
-	if (offset >= videoram_size)
-		return;
+    if (offset >= videoram_size)
+        return;
 	if (videoram[offset] == data)
 		return;
 	videoram[offset] = data;

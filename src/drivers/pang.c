@@ -21,6 +21,7 @@
 /* in machine/kabuki.c */
 void bbros_decode(void);
 void spang_decode(void);
+void sbbros_decode(void);
 void block_decode(void);
 
 
@@ -630,14 +631,32 @@ ROM_START( spang_rom )
 
 	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "spe_02.rom",   0x00000, 0x20000, 0x63c9dfd2 )
-	ROM_LOAD( "spe_03.rom",   0x20000, 0x20000, 0x3ae28bc1 )
+	ROM_LOAD( "03.f2",        0x20000, 0x20000, 0x3ae28bc1 )
 	ROM_LOAD( "spe_04.rom",   0x40000, 0x20000, 0x9d7b225b )
-	ROM_LOAD( "spe_05.rom",   0x60000, 0x20000, 0x4a060884 )
+	ROM_LOAD( "05.g2",        0x60000, 0x20000, 0x4a060884 )
 	ROM_LOAD( "spe_10.rom",   0x80000, 0x20000, 0xeedd0ade )
 	ROM_LOAD( "spe_09.rom",   0xa0000, 0x20000, 0x04b41b75 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "spe_01.rom",   0x0000, 0x20000, 0x2d19c133 )
+ROM_END
+
+ROM_START( sbbros_rom )
+	ROM_REGION(0x50000)     /* 64k for code */
+	ROM_LOAD( "06.j12",       0x00000, 0x08000, 0x292eee6a )
+	ROM_LOAD( "07.j13",       0x10000, 0x20000, 0xf46b698d )
+	ROM_LOAD( "08.j14",       0x30000, 0x20000, 0xa75e7fbe )
+
+	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "02.f1",        0x00000, 0x20000, 0x0c22ffc6 )
+	ROM_LOAD( "03.f2",        0x20000, 0x20000, 0x3ae28bc1 )
+	ROM_LOAD( "04.g2",        0x40000, 0x20000, 0xbb3dee5b )
+	ROM_LOAD( "05.g2",        0x60000, 0x20000, 0x4a060884 )
+	ROM_LOAD( "10.l2",        0x80000, 0x20000, 0xd6675d8f )
+	ROM_LOAD( "09.l1",        0xa0000, 0x20000, 0x8f678bc8 )
+
+	ROM_REGION(0x20000)     /* OKIM */
+	ROM_LOAD( "01.d1",        0x0000, 0x20000, 0xb96ea126 )
 ROM_END
 
 ROM_START( block_rom )
@@ -667,7 +686,7 @@ struct GameDriver pang_driver =
 	"pang",
 	"Pang (World)",
 	"1989",
-	"[Capcom] (Mitchell license)",
+	"Mitchell",
 	"Paul Leaman\nMario Silva",
 	0,
 	&machine_driver,
@@ -742,7 +761,7 @@ struct GameDriver spang_driver =
 	"spang",
 	"Super Pang (World)",
 	"1990",
-	"[Capcom] (Mitchell license)",
+	"Mitchell",
 	"Paul Leaman",
 	0,
 	&machine_driver,
@@ -750,6 +769,31 @@ struct GameDriver spang_driver =
 
 	spang_rom,
 	0, spang_decode,
+	0,
+	0,      /* sound_prom */
+
+	pang_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	spang_nvram_load, spang_nvram_save
+};
+
+struct GameDriver sbbros_driver =
+{
+	__FILE__,
+	&spang_driver,
+	"sbbros",
+	"Super Buster Bros (US)",
+	"1990",
+	"Mitchell + Capcom",
+	"Paul Leaman",
+	0,
+	&machine_driver,
+	0,
+
+	sbbros_rom,
+	0, sbbros_decode,
 	0,
 	0,      /* sound_prom */
 

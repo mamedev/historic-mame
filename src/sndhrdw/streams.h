@@ -20,4 +20,10 @@ void stream_set_pan(int channel,int pan);
 int stream_get_pan(int channel);
 const char *stream_get_name(int channel);
 
+void stream_set_name(int channel,const char *name);
+int stream_get_sample_bits(int channel);
+int stream_get_sample_rate(int channel);
+void *stream_get_buffer(int channel);
+int stream_get_buffer_len(int channel);
+
 #endif

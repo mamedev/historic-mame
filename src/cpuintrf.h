@@ -1,45 +1,45 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
-/* Maximum size that a CPU structre may be:
+/* Maximum size that a CPU structure can be:
  * HJB 01/02/98 changed to the next power of two
  * the real context size is evaluated by subtracting
  * the fixed part of struct cpuinfo
  */
 #define CPU_CONTEXT_SIZE    2048
 
-#define NEW_INTERRUPT_SYSTEM	1
+/* The old system is obsolete and no longer supported by the core */
+#define NEW_INTERRUPT_SYSTEM    1
 
-#if NEW_INTERRUPT_SYSTEM
-#define MAX_IRQ_LINES	8		/* maximum number of IRQ lines per CPU */
+#define MAX_IRQ_LINES   8       /* maximum number of IRQ lines per CPU */
 
 #define HOLD_LINE       -2      /* hold interrupt line until enable is true */
 #define ASSERT_LINE 	-1		/* assert an interrupt immediately */
 #define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
 #define PULSE_LINE		1		/* pulse interrupt line for one instruction */
 
-#endif
-
 #include "timer.h"
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
-	void (*reset)(void);
+	void (*reset)(void *param);
+	void (*exit)(void);
 	int (*execute)(int cycles);
 	void (*set_regs)(void *reg);
 	void (*get_regs)(void *reg);
-	unsigned int (*get_pc)(void);
-#if NEW_INTERRUPT_SYSTEM
-	void (*set_nmi_line)(int state);
-	void (*set_irq_line)(int _line, int state);
+    unsigned (*get_pc)(void);
+	unsigned (*get_reg)(int regnum);
+	void (*set_reg)(int regnum, unsigned val);
+    void (*set_nmi_line)(int linestate);
+	void (*set_irq_line)(int irqline, int linestate);
 	void (*set_irq_callback)(int(*callback)(int irqline));
 	void (*internal_interrupt)(int type);
-	int num_irqs;
-#else
-    void (*cause_interrupt)(int type);
-	void (*clear_pending_interrupts)(void);
-#endif
+	void (*cpu_state_save)(void *file);
+	void (*cpu_state_load)(void *file);
+	const char* (*cpu_info)(void *context,int regnum);
+
+    int num_irqs;
     int *icount;
 	int no_int, irq_int, nmi_int;
 
@@ -73,11 +73,27 @@ int cpu_gettotalcpu(void);
 int cpu_getactivecpu(void);
 void cpu_setactivecpu(int cpunum);
 
-int cpu_getpc(void);
+/* Returns the current program counter */
+unsigned cpu_getpc(void);
+
+/* Returns a specific register value (mamedbg) */
+unsigned cpu_getreg(int cpunum, int regnum);
+/* Sets a specific register value (mamedbg) */
+void cpu_setreg(int cpunum, int regnum, unsigned val);
+
+/* Returns a specific register value for the active CPU (mamedbg) */
+unsigned cur_cpu_getreg(int regnum);
+/* Sets a specific register value for the active CPU (mamedbg) */
+void cur_cpu_setreg(int regnum, unsigned val);
+
+/* Returns previous pc (start of opcode causing read/write) */
 int cpu_getpreviouspc(void);  /* -RAY- */
+
+/* Returns the return address from the top of the stack (Z80 only) */
 int cpu_getreturnpc(void);
 int cycles_currently_ran(void);
 int cycles_left_to_run(void);
+
 /* Returns the number of CPU cycles which take place in one video frame */
 int cpu_gettotalcycles(void);
 /* Returns the number of CPU cycles before the next interrupt handler call */
@@ -88,7 +104,6 @@ int cpu_getfcount(void);
 int cpu_getfperiod(void);
 /* Scales a given value by the ratio of fcount / fperiod */
 int cpu_scalebyfcount(int value);
-
 /* Returns the current scanline number */
 int cpu_getscanline(void);
 /* Returns the amount of time until a given scanline */
@@ -101,7 +116,6 @@ int cpu_getscanlinecycles(void);
 int cpu_getcurrentcycles(void);
 /* Returns the current horizontal beam position in pixels */
 int cpu_gethorzbeampos(void);
-
 /*
   Returns the number of times the interrupt handler will be called before
   the end of the current video frame. This is can be useful to interrupt
@@ -110,8 +124,10 @@ int cpu_gethorzbeampos(void);
   that the interrupt handler will be called once.
 */
 int cpu_getiloops(void);
+
 /* Returns the current VBLANK state */
 int cpu_getvblank(void);
+
 /* Returns the number of the video frame we are currently playing */
 int cpu_getcurrentframe(void);
 
@@ -139,6 +155,25 @@ void cpu_yield (void);
 /* yield our timeslice for a specific period of time */
 void cpu_yielduntil_time (double duration);
 
+/* set the NMI line state for a CPU, normally use PULSE_LINE */
+void cpu_set_nmi_line(int cpunum, int state);
+/* set the IRQ line state for a specific irq line of a CPU */
+/* normally use state HOLD_LINE, irqline 0 for first IRQ type of a cpu */
+void cpu_set_irq_line(int cpunum, int irqline, int state);
+/* this is to be called by CPU cores only! */
+void cpu_generate_internal_interrupt(int cpunum, int type);
+/* set the vector to be returned during a CPU's interrupt acknowledge cycle */
+void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
+
+/* use these in your write memory/port handles to set an IRQ vector */
+/* offset corresponds to the irq line number here */
+void cpu_0_irq_line_vector_w(int offset, int data);
+void cpu_1_irq_line_vector_w(int offset, int data);
+void cpu_2_irq_line_vector_w(int offset, int data);
+void cpu_3_irq_line_vector_w(int offset, int data);
+
+/* Obsolete functions: avoid to use them for new drivers if possible! */
+
 /* cause an interrupt on a CPU */
 void cpu_cause_interrupt(int cpu,int type);
 void cpu_clear_pending_interrupts(int cpu);
@@ -155,22 +190,54 @@ int m68_level6_irq(void);
 int m68_level7_irq(void);
 int ignore_interrupt(void);
 
-#if NEW_INTERRUPT_SYSTEM
-void cpu_set_nmi_line(int cpunum, int state);
-void cpu_set_irq_line(int cpunum, int irqline, int state);
-void cpu_generate_internal_interrupt(int cpunum, int type);
-void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
-/* use these in your write memory/port handles to set an IRQ vector */
-void cpu_0_irq_line_vector_w(int offset, int data);
-void cpu_1_irq_line_vector_w(int offset, int data);
-void cpu_2_irq_line_vector_w(int offset, int data);
-void cpu_3_irq_line_vector_w(int offset, int data);
-#endif
-
+/* CPU context access */
 void* cpu_getcontext (int _activecpu);
 int cpu_is_saving_context(int _activecpu);
 
+/* CPU info interface */
 
+/* get information for the active CPU */
+const char *cur_cpu_name(void);
+const char *cur_cpu_core_family(void);
+const char *cur_cpu_core_version(void);
+const char *cur_cpu_core_file(void);
+const char *cur_cpu_core_credits(void);
+
+const char *cur_cpu_program_counter(void);
+const char *cur_cpu_stack_pointer(void);
+const char *cur_cpu_flags(void);
+const char *cur_cpu_disassemble(void);
+const char *cur_cpu_register(int regnum);
+const char *cur_cpu_dump_state(void);
+
+/* get information for a specific CPU */
+const char *cpu_name(int cputype);
+const char *cpu_core_family(int cputype);
+const char *cpu_core_version(int cputype);
+const char *cpu_core_file(int cputype);
+const char *cpu_core_credits(int cputype);
+
+const char *cpu_pc(int cpunum);
+const char *cpu_sp(int cpunum);
+const char *cpu_dasm(int cpunum);
+const char *cpu_flags(int cpunum);
+const char *cpu_register(int cpunum, int regnum);
+const char *cpu_dump_state(int cpunum);
+
+/* this is the 'low level' interface call for the active cpu */
+#define CPU_INFO_NAME		0
+#define CPU_INFO_FAMILY     1
+#define CPU_INFO_VERSION    2
+#define CPU_INFO_FILE       3
+#define CPU_INFO_CREDITS    4
+#define CPU_INFO_PC 		10
+#define CPU_INFO_SP 		11
+#define CPU_INFO_DASM		12
+#define CPU_INFO_FLAGS		13
+#define CPU_INFO_REG		14
+const char *_cpu_info(void *context,int regnum);
+
+void cpu_dump_states(void);
 
 /* daisy-chain link */
 typedef struct {
@@ -187,6 +254,10 @@ typedef struct {
 
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
 
-void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain );
+/*
+ * This function is obsolete. Put the daisy_chain pointer into the
+ * reset_param of your machine driver instead.
+ */
+/* void cpu_setdaisychain(int cpunum, Z80_DaisyChain *daisy_chain); */
 
 #endif

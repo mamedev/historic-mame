@@ -29,9 +29,9 @@ static int c1943_protection_r(int offset)
 	Z80_Regs regs;
 
 
-	Z80_GetRegs(&regs);
-	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_getpc(),regs.BC.B.h);
-	return regs.BC.B.h;
+	z80_getregs(&regs);
+	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_getpc(),regs.BC.b.h);
+	return regs.BC.b.h;
 }
 
 

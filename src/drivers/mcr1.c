@@ -44,6 +44,7 @@ DSW1
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/z80fmly.h"
 
 void kick_init(void);
 void solarfox_init(void);
@@ -248,6 +249,11 @@ static struct AY8910interface ay8910_interface =
 };
 
 
+static Z80_DaisyChain daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,-1} 		/* end mark */
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -258,7 +264,8 @@ static struct MachineDriver machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr1_readmem,mcr1_writemem,readport,writeport,
-			mcr_interrupt,1
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,

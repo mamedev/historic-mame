@@ -52,12 +52,14 @@ Any comments/updates/bug reports to:
 
 */
 
+
 #include "driver.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
+#ifdef MAME_DEBUG
 #include "host.h"
 
 /* Little endian uint read */
@@ -1047,3 +1049,6 @@ unsigned DasmI86(unsigned char* data, char* buffer, unsigned pc) {
 
   	return instruction_offset - pc;
 }
+
+#endif	/* MAME_DEBUG */
+

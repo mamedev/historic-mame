@@ -233,7 +233,6 @@ int gameplan_video_r(int offset)
 
 void gameplan_video_w(int offset,int data)
 {
-	int cpu_getpc(void);
 	static int r0 = -1;
 	static unsigned char xpos, ypos, colour = 7;
 

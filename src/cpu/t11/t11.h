@@ -4,34 +4,19 @@
 #define _T11_H
 
 #include "memory.h"
-
-/****************************************************************************/
-/* sizeof(char)=1, sizeof(short)=2, sizeof(long)>=4                         */
-/****************************************************************************/
-
-typedef union {
-#ifdef LSB_FIRST
-	struct {unsigned char l,h,h2,h3;} b;
-	struct {unsigned short l,h; } w;
-	unsigned long d;
-#else
-	struct {unsigned char h3,h2,h,l;} b;
-	struct {unsigned short h,l;} w;
-	unsigned long d;
-#endif
-} t11_Register;
+#include "osd_cpu.h"
 
 /* T-11 Registers */
 typedef struct
 {
-	t11_Register reg[8];
-	t11_Register psw;
-	int op;
-	int pending_interrupts;
-	unsigned char *bank[8];
+	PAIR	reg[8];
+	PAIR	psw;
+	int 	op;
+	int 	pending_interrupts;
+	UINT8	*bank[8];
 #if NEW_INTERRUPT_SYSTEM
-	int irq_state[4];
-	int (*irq_callback)(int irqline);
+	INT8	irq_state[4];
+	int 	(*irq_callback)(int irqline);
 #endif
 } t11_Regs;
 
@@ -54,26 +39,25 @@ typedef struct
 #define T11_EMT         0x018   /* EMT instruction vector */
 #define T11_TRAP        0x01C   /* TRAP instruction vector */
 
-/* PUBLIC FUNCTIONS */
-void t11_SetRegs(t11_Regs *Regs);
-void t11_GetRegs(t11_Regs *Regs);
-unsigned t11_GetPC(void);
-void t11_reset(void);
-int t11_execute(int cycles);	/* NS 970908 */
-#if NEW_INTERRUPT_SYSTEM
-void t11_set_nmi_line(int state);
-void t11_set_irq_line(int irqline, int state);
-void t11_set_irq_callback(int (*callback)(int irqline));
-#else
-void t11_Cause_Interrupt(int type); /* NS 970908 */
-void t11_Clear_Pending_Interrupts(void);	/* NS 970908 */
-#endif
-
-void t11_SetBank(int banknum, unsigned char *address);
-
 /* PUBLIC GLOBALS */
-extern int	t11_ICount;
+extern int  t11_ICount;
 
+
+/* PUBLIC FUNCTIONS */
+extern void t11_reset(void *param);
+extern void t11_exit(void);
+extern int t11_execute(int cycles);    /* NS 970908 */
+extern void t11_setregs(t11_Regs *Regs);
+extern void t11_getregs(t11_Regs *Regs);
+extern unsigned t11_getpc(void);
+extern unsigned t11_getreg(int regnum);
+extern void t11_setreg(int regnum, unsigned val);
+extern void t11_set_nmi_line(int state);
+extern void t11_set_irq_line(int irqline, int state);
+extern void t11_set_irq_callback(int (*callback)(int irqline));
+extern const char *t11_info(void *context, int regnum);
+
+extern void t11_SetBank(int banknum, unsigned char *address);
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
@@ -86,5 +70,10 @@ extern int	t11_ICount;
 /****************************************************************************/
 #define T11_WRMEM(A,V) (cpu_writemem16lew(A,V))
 #define T11_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
+
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern int DasmT11(unsigned char *pBase, char *buffer, int pc);
+#endif
 
 #endif /* _T11_H */

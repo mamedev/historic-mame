@@ -7,17 +7,18 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "tilemap.h"
 
 
-unsigned char *xevious_videoram2,*xevious_colorram2;
+unsigned char *xevious_fg_videoram,*xevious_fg_colorram;
+unsigned char *xevious_bg_videoram,*xevious_bg_colorram;
 
-static struct osd_bitmap *tmpbitmap1,*tmpbitmap2;
-static unsigned char *dirtybuffer2;
+extern unsigned char *spriteram,*spriteram_2,*spriteram_3;
+extern int spriteram_size;
+
+static struct tilemap *fg_tilemap,*bg_tilemap;
 
 /* scroll position controller write (CUSTOM 13-1J on seet 7B) */
-static int bg_y_pos , bg_x_pos;
-static int fo_y_pos , fo_x_pos;
 static int flip;
 
 
@@ -104,6 +105,113 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int col,int row)
+{
+	int tile_index = 64*row+col;
+	unsigned char attr = xevious_fg_colorram[tile_index];
+	SET_TILE_INFO(0,xevious_fg_videoram[tile_index],
+			((attr & 0x03) << 4) | ((attr & 0x3c) >> 2))
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+}
+
+static void get_bg_tile_info(int col,int row)
+{
+	int tile_index = 64*row+col;
+	unsigned char code = xevious_bg_videoram[tile_index];
+	unsigned char attr = xevious_bg_colorram[tile_index];
+	SET_TILE_INFO(1,code + ((attr & 0x01) << 8),
+			((attr & 0x3c) >> 2) | ((code & 0x80) >> 3) | ((attr & 0x03) << 5))
+	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+void xevious_vh_stop(void)
+{
+	tilemap_dispose(fg_tilemap);
+	tilemap_dispose(bg_tilemap);
+	tilemap_stop();
+}
+
+int xevious_vh_start(void)
+{
+	if (tilemap_start() == 0)
+	{
+		fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+		bg_tilemap = tilemap_create(0,                  8,8,64,32,1,1);
+
+		if (fg_tilemap && bg_tilemap)
+		{
+			fg_tilemap->tile_get_info = get_fg_tile_info;
+			fg_tilemap->transparent_pen = 0;
+
+			bg_tilemap->tile_get_info = get_bg_tile_info;
+
+			return 0;
+		}
+
+		xevious_vh_stop();
+	}
+
+	return 1;
+}
+
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+void xevious_fg_videoram_w(int offset,int data)
+{
+	if (xevious_fg_videoram[offset] != data)
+	{
+		xevious_fg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset%64,offset/64);
+	}
+}
+
+void xevious_fg_colorram_w(int offset,int data)
+{
+	if (xevious_fg_colorram[offset] != data)
+	{
+		xevious_fg_colorram[offset] = data;
+		tilemap_mark_tile_dirty(fg_tilemap,offset%64,offset/64);
+	}
+}
+
+void xevious_bg_videoram_w(int offset,int data)
+{
+	if (xevious_bg_videoram[offset] != data)
+	{
+		xevious_bg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+	}
+}
+
+void xevious_bg_colorram_w(int offset,int data)
+{
+	if (xevious_bg_colorram[offset] != data)
+	{
+		xevious_bg_colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+	}
+}
+
 void xevious_vh_latch_w(int offset, int data)
 {
 	int reg;
@@ -113,17 +221,17 @@ void xevious_vh_latch_w(int offset, int data)
 
 	switch (reg)
 	{
-	case 0:		/* BG Y scroll position */
-		bg_x_pos = data;
+	case 0:
+		tilemap_set_scrollx(bg_tilemap,0,-data-20);
 		break;
-	case 2:		/* BG X scroll position ?? */
-		bg_y_pos = data;
+	case 1:
+		tilemap_set_scrollx(fg_tilemap,0,-data-32);
 		break;
-	case 1:		/* FONT Y scroll position ??*/
-		fo_x_pos = data;
+	case 2:
+		tilemap_set_scrolly(bg_tilemap,0,-data-16);
 		break;
-	case 3:		/* FONT X scroll position ?? */
-		fo_y_pos = data;
+	case 3:
+		tilemap_set_scrolly(fg_tilemap,0,-data-18);
 		break;
 	case 7:		/* DISPLAY XY FLIP ?? */
 		flip = data&1;
@@ -184,133 +292,20 @@ ROM 3M,3L color reprace table for sprite
 
 */
 
-int xevious_vh_start(void)
-{
-	if (generic_vh_start() != 0)
-		return 1;
-
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-	memset(dirtybuffer2,1,videoram_size);
-
-	if ((tmpbitmap1 = osd_create_bitmap(64*8,32*8)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-
-	if ((tmpbitmap2 = osd_create_bitmap(64*8,32*8)) == 0)
-	{
-		osd_free_bitmap(tmpbitmap1);
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-
-	return 0;
-}
-
-void xevious_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap1);
-	free(dirtybuffer2);
-	generic_vh_stop();
-}
-
-
-
-void xevious_videoram2_w(int offset,int data)
-{
-	if (xevious_videoram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		xevious_videoram2[offset] = data;
-	}
-}
-
-
-
-void xevious_colorram2_w(int offset,int data)
-{
-	if (xevious_colorram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		xevious_colorram2[offset] = data;
-	}
-}
 
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
-	int offs, sx,sy;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		/* foreground */
-		if (dirtybuffer[offs])
-		{
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap1,Machine->gfx[0],
-					videoram[offs],
-					((colorram[offs] & 0x03) << 4) + ((colorram[offs] >> 2) & 0x0f),
-					colorram[offs] & 0x40,colorram[offs] & 0x80,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		/* background */
-		if (dirtybuffer2[offs])
-		{
-			dirtybuffer2[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					xevious_videoram2[offs] + 256*(xevious_colorram2[offs] & 1),
-					((xevious_colorram2[offs] >> 2) & 0xf) +
-							((xevious_colorram2[offs] & 0x3) << 5) +
-							((xevious_videoram2[offs] & 0x80) >> 3),
-					xevious_colorram2[offs] & 0x40,xevious_colorram2[offs] & 0x80,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
+	int offs,sx,sy;
 
 
-	/* copy the background */
-	{
-		int scrollx,scrolly;
-
-		scrollx = -bg_x_pos - 20;
-		scrolly = -bg_y_pos - 16;
-
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* draw sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		if ((spriteram[offs + 1] & 0x40) == 0)	/* I'm not sure about this one */
@@ -324,7 +319,7 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx = spriteram_3[offs + 1] & 4;
 			flipy = spriteram_3[offs] & 4;
 			sx = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
-			sy = 28*8-spriteram_2[offs]+1;
+			sy = 28*8-spriteram_2[offs]-1;
 			if (spriteram_3[offs] & 2)	/* double height (?) */
 			{
 				if (spriteram_3[offs] & 1)	/* double width, double height */
@@ -369,16 +364,18 @@ void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
+}
 
 
-	/* copy the foreground  */
-	{
-		int scrollx,scrolly;
+void xevious_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(bg_tilemap);
+	tilemap_update(fg_tilemap);
 
+	tilemap_render(bg_tilemap);
+	tilemap_render(fg_tilemap);
 
-		scrollx = -fo_x_pos - 32;
-		scrolly = -fo_y_pos - 14;
-
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
-	}
+	tilemap_draw(bitmap,bg_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }

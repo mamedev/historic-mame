@@ -7,9 +7,11 @@
  *   This code written by Aaron Giles (agiles@sirius.com) for the MAME project
  *
  * History:
- * 99/03/02 HJB
+ * 990314 HJB
+ * Different Dasm functions for 6800/2/3/8 and 63701.
+ * 990302 HJB
  * Changed the string array into a table of opcode names (or tokens) and
- * argument types. This second try should give somewhat better results ;)
+ * argument types. This second try should give somewhat better results.
  * Named the undocumented HD63701YO opcodes $12 and $13 'asx1' and 'asx2',
  * since 'add contents of stack to x register' is what they do.
  *
@@ -70,71 +72,74 @@ static const char *op_name_str[] = {
 	"tstb",  "tsx",   "txs",   "asx1",  "asx2",  "xgdx"
 };
 
-static unsigned char disasm[0x100][2] = {
-	{illegal,_inh}, {nop,	 _inh}, {illegal,_inh}, {illegal,_inh}, /* 00 */
-	{lsrd,	 _inh}, {asld,	 _inh}, {tap,	 _inh}, {tpa,	 _inh},
-	{inx,	 _inh}, {dex,	 _inh}, {clv,	 _inh}, {sev,	 _inh},
-	{clc,	 _inh}, {sec,	 _inh}, {cli,	 _inh}, {sti,	 _inh},
-	{sba,	 _inh}, {cba,	 _inh}, {asx1,	 _sx1}, {asx2,	 _sx1}, /* 10 */
-	{illegal,_inh}, {illegal,_inh}, {tab,	 _inh}, {tba,	 _inh},
-	{xgdx,	 _inh}, {daa,	 _inh}, {illegal,_inh}, {aba,	 _inh},
-	{illegal,_inh}, {illegal,_inh}, {illegal,_inh}, {illegal,_inh},
-	{bra,	 _rel}, {brn,	 _rel}, {bhi,	 _rel}, {bls,	 _rel}, /* 20 */
-	{bcc,	 _rel}, {bcs,	 _rel}, {bne,	 _rel}, {beq,	 _rel},
-	{bvc,	 _rel}, {bvs,	 _rel}, {bpl,	 _rel}, {bmi,	 _rel},
-	{bge,	 _rel}, {blt,	 _rel}, {bgt,	 _rel}, {ble,	 _rel},
-	{tsx,	 _inh}, {ins,	 _inh}, {pula,	 _inh}, {pulb,	 _inh}, /* 30 */
-	{des,	 _inh}, {txs,	 _inh}, {psha,	 _inh}, {pshb,	 _inh},
-	{pulx,	 _inh}, {rts,	 _inh}, {abx,	 _inh}, {rti,	 _inh},
-	{pshx,	 _inh}, {mul,	 _inh}, {sync,	 _inh}, {swi,	 _inh},
-	{nega,	 _inh}, {illegal,_inh}, {illegal,_inh}, {coma,	 _inh}, /* 40 */
-	{lsra,	 _inh}, {illegal,_inh}, {rora,	 _inh}, {asra,	 _inh},
-	{asla,	 _inh}, {rola,	 _inh}, {deca,	 _inh}, {illegal,_inh},
-	{inca,	 _inh}, {tsta,	 _inh}, {illegal,_inh}, {clra,	 _inh},
-	{negb,	 _inh}, {illegal,_inh}, {illegal,_inh}, {comb,	 _inh}, /* 50 */
-	{lsrb,	 _inh}, {illegal,_inh}, {rorb,	 _inh}, {asrb,	 _inh},
-	{aslb,	 _inh}, {rolb,	 _inh}, {decb,	 _inh}, {illegal,_inh},
-	{incb,	 _inh}, {tstb,	 _inh}, {illegal,_inh}, {clrb,	 _inh},
-	{neg,	 _idx}, {aim,	 _imx}, {oim,	 _imx}, {com,	 _idx}, /* 60 */
-	{lsr,	 _idx}, {eim,	 _imx}, {ror,	 _idx}, {asr,	 _idx},
-	{asl,	 _idx}, {rol,	 _idx}, {dec,	 _idx}, {tim,	 _imx},
-	{inc,	 _idx}, {tst,	 _idx}, {jmp,	 _idx}, {clr,	 _idx},
-	{neg,	 _ext}, {aim,	 _imd}, {oim,	 _imd}, {com,	 _ext}, /* 70 */
-	{lsr,	 _ext}, {eim,	 _imd}, {ror,	 _ext}, {asr,	 _ext},
-	{asl,	 _ext}, {rol,	 _ext}, {dec,	 _ext}, {tim,	 _imd},
-	{inc,	 _ext}, {tst,	 _ext}, {jmp,	 _ext}, {clr,	 _ext},
-	{suba,	 _im1}, {cmpa,	 _im1}, {sbca,	 _im1}, {subd,	 _im2}, /* 80 */
-	{anda,	 _im1}, {bita,	 _im1}, {lda,	 _im1}, {sta,	 _im1},
-	{eora,	 _im1}, {adca,	 _im1}, {ora,	 _im1}, {adda,	 _im1},
-	{cmpx,	 _im2}, {bsr,	 _rel}, {lds,	 _im2}, {sts,	 _im2},
-	{suba,	 _dir}, {cmpa,	 _dir}, {sbca,	 _dir}, {subd,	 _dir}, /* 90 */
-	{anda,	 _dir}, {bita,	 _dir}, {lda,	 _dir}, {sta,	 _dir},
-	{eora,	 _dir}, {adca,	 _dir}, {ora,	 _dir}, {adda,	 _dir},
-	{cmpx,	 _dir}, {jsr,	 _dir}, {lds,	 _dir}, {sts,	 _dir},
-	{suba,	 _idx}, {cmpa,	 _idx}, {sbca,	 _idx}, {subd,	 _idx}, /* a0 */
-	{anda,	 _idx}, {bita,	 _idx}, {lda,	 _idx}, {sta,	 _idx},
-	{eora,	 _idx}, {adca,	 _idx}, {ora,	 _idx}, {adda,	 _idx},
-	{cmpx,	 _idx}, {jsr,	 _idx}, {lds,	 _idx}, {sts,	 _idx},
-	{suba,	 _ext}, {cmpa,	 _ext}, {sbca,	 _ext}, {subd,	 _ext}, /* b0 */
-	{anda,	 _ext}, {bita,	 _ext}, {lda,	 _ext}, {sta,	 _ext},
-	{eora,	 _ext}, {adca,	 _ext}, {ora,	 _ext}, {adda,	 _ext},
-	{cmpx,	 _ext}, {jsr,	 _ext}, {lds,	 _ext}, {sts,	 _ext},
-	{subb,	 _im1}, {cmpb,	 _im1}, {sbcb,	 _im1}, {addd,	 _im2}, /* c0 */
-	{andb,	 _im1}, {bitb,	 _im1}, {ldb,	 _im1}, {stb,	 _im1},
-	{eorb,	 _im1}, {adcb,	 _im1}, {orb,	 _im1}, {addb,	 _im1},
-	{ldd,	 _ext}, {std,	 _im2}, {ldx,	 _im2}, {stx,	 _im2},
-	{subb,	 _dir}, {cmpb,	 _dir}, {sbcb,	 _dir}, {addd,	 _dir}, /* d0 */
-	{andb,	 _dir}, {bitb,	 _dir}, {ldb,	 _dir}, {stb,	 _dir},
-	{eorb,	 _dir}, {adcb,	 _dir}, {orb,	 _dir}, {addb,	 _dir},
-	{ldd,	 _dir}, {std,	 _dir}, {ldx,	 _dir}, {stx,	 _dir},
-	{subb,	 _idx}, {cmpb,	 _idx}, {sbcb,	 _idx}, {addd,	 _idx}, /* e0 */
-	{andb,	 _idx}, {bitb,	 _idx}, {ldb,	 _idx}, {stb,	 _idx},
-	{eorb,	 _idx}, {adcb,	 _idx}, {orb,	 _idx}, {addb,	 _idx},
-	{ldd,	 _idx}, {std,	 _idx}, {ldx,	 _idx}, {stx,	 _idx},
-	{subb,	 _ext}, {cmpb,	 _ext}, {sbcb,	 _ext}, {addd,	 _ext}, /* f0 */
-	{andb,	 _ext}, {bitb,	 _ext}, {ldb,	 _ext}, {stb,	 _ext},
-	{eorb,	 _ext}, {adcb,	 _ext}, {orb,	 _ext}, {addb,	 _ext},
-	{ldd,	 _ext}, {std,	 _ext}, {ldx,	 _ext}, {stx,	 _ext}
+
+/* the third byte describes the if an opcode is invalid for a CPU */
+/* 1 6800/6802, 2 6803, 4 6808, 8 HD63701 */
+static UINT8 disasm[0x100][3] = {
+	{illegal,_inh, 0}, {nop,	_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, /* 00 */
+	{lsrd,	 _inh, 1}, {asld,	_inh, 1}, {tap,    _inh, 0}, {tpa,	  _inh, 0},
+	{inx,	 _inh, 0}, {dex,	_inh, 0}, {clv,    _inh, 0}, {sev,	  _inh, 0},
+	{clc,	 _inh, 0}, {sec,	_inh, 0}, {cli,    _inh, 0}, {sti,	  _inh, 0},
+	{sba,	 _inh, 0}, {cba,	_inh, 0}, {asx1,   _sx1, 0}, {asx2,   _sx1, 0}, /* 10 */
+	{illegal,_inh, 0}, {illegal,_inh, 0}, {tab,    _inh, 0}, {tba,	  _inh, 0},
+	{xgdx,	 _inh, 7}, {daa,	_inh, 0}, {illegal,_inh, 0}, {aba,	  _inh, 0},
+	{illegal,_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0},
+	{bra,	 _rel, 0}, {brn,	_rel, 0}, {bhi,    _rel, 0}, {bls,	  _rel, 0}, /* 20 */
+	{bcc,	 _rel, 0}, {bcs,	_rel, 0}, {bne,    _rel, 0}, {beq,	  _rel, 0},
+	{bvc,	 _rel, 0}, {bvs,	_rel, 0}, {bpl,    _rel, 0}, {bmi,	  _rel, 0},
+	{bge,	 _rel, 0}, {blt,	_rel, 0}, {bgt,    _rel, 0}, {ble,	  _rel, 0},
+	{tsx,	 _inh, 0}, {ins,	_inh, 0}, {pula,   _inh, 0}, {pulb,   _inh, 0}, /* 30 */
+	{des,	 _inh, 0}, {txs,	_inh, 0}, {psha,   _inh, 0}, {pshb,   _inh, 0},
+	{pulx,	 _inh, 1}, {rts,	_inh, 0}, {abx,    _inh, 1}, {rti,	  _inh, 0},
+	{pshx,	 _inh, 1}, {mul,	_inh, 1}, {sync,   _inh, 0}, {swi,	  _inh, 0},
+	{nega,	 _inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, {coma,   _inh, 0}, /* 40 */
+	{lsra,	 _inh, 0}, {illegal,_inh, 0}, {rora,   _inh, 0}, {asra,   _inh, 0},
+	{asla,	 _inh, 0}, {rola,	_inh, 0}, {deca,   _inh, 0}, {illegal,_inh, 0},
+	{inca,	 _inh, 0}, {tsta,	_inh, 0}, {illegal,_inh, 0}, {clra,   _inh, 0},
+	{negb,	 _inh, 0}, {illegal,_inh, 0}, {illegal,_inh, 0}, {comb,   _inh, 0}, /* 50 */
+	{lsrb,	 _inh, 0}, {illegal,_inh, 0}, {rorb,   _inh, 0}, {asrb,   _inh, 0},
+	{aslb,	 _inh, 0}, {rolb,	_inh, 0}, {decb,   _inh, 0}, {illegal,_inh, 0},
+	{incb,	 _inh, 0}, {tstb,	_inh, 0}, {illegal,_inh, 0}, {clrb,   _inh, 0},
+	{neg,	 _idx, 0}, {aim,	_imx, 7}, {oim,    _imx, 7}, {com,	  _idx, 0}, /* 60 */
+	{lsr,	 _idx, 0}, {eim,	_imx, 7}, {ror,    _idx, 0}, {asr,	  _idx, 0},
+	{asl,	 _idx, 0}, {rol,	_idx, 0}, {dec,    _idx, 0}, {tim,	  _imx, 7},
+	{inc,	 _idx, 0}, {tst,	_idx, 0}, {jmp,    _idx, 0}, {clr,	  _idx, 0},
+	{neg,	 _ext, 0}, {aim,	_imd, 7}, {oim,    _imd, 7}, {com,	  _ext, 0}, /* 70 */
+	{lsr,	 _ext, 0}, {eim,	_imd, 7}, {ror,    _ext, 0}, {asr,	  _ext, 0},
+	{asl,	 _ext, 0}, {rol,	_ext, 0}, {dec,    _ext, 0}, {tim,	  _imd, 7},
+	{inc,	 _ext, 0}, {tst,	_ext, 0}, {jmp,    _ext, 0}, {clr,	  _ext, 0},
+	{suba,	 _im1, 0}, {cmpa,	_im1, 0}, {sbca,   _im1, 0}, {subd,   _im2, 1}, /* 80 */
+	{anda,	 _im1, 0}, {bita,	_im1, 0}, {lda,    _im1, 0}, {sta,	  _im1, 0},
+	{eora,	 _im1, 0}, {adca,	_im1, 0}, {ora,    _im1, 0}, {adda,   _im1, 0},
+	{cmpx,	 _im2, 0}, {bsr,	_rel, 0}, {lds,    _im2, 0}, {sts,	  _im2, 0},
+	{suba,	 _dir, 0}, {cmpa,	_dir, 0}, {sbca,   _dir, 0}, {subd,   _dir, 1}, /* 90 */
+	{anda,	 _dir, 0}, {bita,	_dir, 0}, {lda,    _dir, 0}, {sta,	  _dir, 0},
+	{eora,	 _dir, 0}, {adca,	_dir, 0}, {ora,    _dir, 0}, {adda,   _dir, 0},
+	{cmpx,	 _dir, 0}, {jsr,	_dir, 0}, {lds,    _dir, 0}, {sts,	  _dir, 0},
+	{suba,	 _idx, 0}, {cmpa,	_idx, 0}, {sbca,   _idx, 0}, {subd,   _idx, 1}, /* a0 */
+	{anda,	 _idx, 0}, {bita,	_idx, 0}, {lda,    _idx, 0}, {sta,	  _idx, 0},
+	{eora,	 _idx, 0}, {adca,	_idx, 0}, {ora,    _idx, 0}, {adda,   _idx, 0},
+	{cmpx,	 _idx, 0}, {jsr,	_idx, 0}, {lds,    _idx, 0}, {sts,	  _idx, 0},
+	{suba,	 _ext, 0}, {cmpa,	_ext, 0}, {sbca,   _ext, 0}, {subd,   _ext, 1}, /* b0 */
+	{anda,	 _ext, 0}, {bita,	_ext, 0}, {lda,    _ext, 0}, {sta,	  _ext, 0},
+	{eora,	 _ext, 0}, {adca,	_ext, 0}, {ora,    _ext, 0}, {adda,   _ext, 0},
+	{cmpx,	 _ext, 0}, {jsr,	_ext, 0}, {lds,    _ext, 0}, {sts,	  _ext, 0},
+	{subb,	 _im1, 0}, {cmpb,	_im1, 0}, {sbcb,   _im1, 0}, {addd,   _im2, 1}, /* c0 */
+	{andb,	 _im1, 0}, {bitb,	_im1, 0}, {ldb,    _im1, 0}, {stb,	  _im1, 0},
+	{eorb,	 _im1, 0}, {adcb,	_im1, 0}, {orb,    _im1, 0}, {addb,   _im1, 0},
+	{ldd,	 _im2, 1}, {std,	_im2, 1}, {ldx,    _im2, 0}, {stx,	  _im2, 0},
+	{subb,	 _dir, 0}, {cmpb,	_dir, 0}, {sbcb,   _dir, 0}, {addd,   _dir, 1}, /* d0 */
+	{andb,	 _dir, 0}, {bitb,	_dir, 0}, {ldb,    _dir, 0}, {stb,	  _dir, 0},
+	{eorb,	 _dir, 0}, {adcb,	_dir, 0}, {orb,    _dir, 0}, {addb,   _dir, 0},
+	{ldd,	 _dir, 1}, {std,	_dir, 1}, {ldx,    _dir, 0}, {stx,	  _dir, 0},
+	{subb,	 _idx, 0}, {cmpb,	_idx, 0}, {sbcb,   _idx, 0}, {addd,   _idx, 1}, /* e0 */
+	{andb,	 _idx, 0}, {bitb,	_idx, 0}, {ldb,    _idx, 0}, {stb,	  _idx, 0},
+	{eorb,	 _idx, 0}, {adcb,	_idx, 0}, {orb,    _idx, 0}, {addb,   _idx, 0},
+	{ldd,	 _idx, 1}, {std,	_idx, 1}, {ldx,    _idx, 0}, {stx,	  _idx, 0},
+	{subb,	 _ext, 0}, {cmpb,	_ext, 0}, {sbcb,   _ext, 0}, {addd,   _ext, 1}, /* f0 */
+	{andb,	 _ext, 0}, {bitb,	_ext, 0}, {ldb,    _ext, 0}, {stb,	  _ext, 0},
+	{eorb,	 _ext, 0}, {adcb,	_ext, 0}, {orb,    _ext, 0}, {addb,   _ext, 0},
+	{ldd,	 _ext, 1}, {std,	_ext, 1}, {ldx,    _ext, 0}, {stx,	  _ext, 0}
 };
 
 /* some macros to keep things short */
@@ -143,12 +148,17 @@ static unsigned char disasm[0x100][2] = {
 #define ARG2    cpu_readop_arg(pc+2)
 #define ARGW	(cpu_readop_arg(pc+1)<<8) + cpu_readop_arg(pc+2)
 
-int Dasm6808 (char *buf, int pc)
+int Dasm680x (char *buf, int pc, int cputype)
 {
 	int code = cpu_readop(pc);
-	const char *opstr = op_name_str[disasm[code][0]];
+	const char *opstr;
 
-    switch( disasm[code][1] ) {
+	if ( disasm[code][2] & cputype )	/* invalid for this cpu type ? */
+		code = 0;						/* code 0 is illegal */
+	opstr = op_name_str[disasm[code][0]];
+
+    switch( disasm[code][1] )
+	{
         case _rel:  /* relative */
 			sprintf (buf, "%-5s$%04x", opstr, (pc + 2 + (signed char)ARG1) & 0xffff);
 			return 2;
@@ -181,3 +191,30 @@ int Dasm6808 (char *buf, int pc)
 			return 1;
 	}
 }
+
+int Dasm6800 (char *buf, int pc)
+{
+	return Dasm680x(buf,pc,1);
+}
+
+int Dasm6802 (char *buf, int pc)
+{
+	return Dasm680x(buf,pc,1);
+}
+
+int Dasm6803 (char *buf, int pc)
+{
+	return Dasm680x(buf,pc,2);
+}
+
+int Dasm6808 (char *buf, int pc)
+{
+	return Dasm680x(buf,pc,4);
+}
+
+int Dasm63701 (char *buf, int pc)
+{
+	return Dasm680x(buf,pc,8);
+}
+
+

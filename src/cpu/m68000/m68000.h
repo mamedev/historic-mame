@@ -78,44 +78,80 @@ typedef struct {
 extern m68k_cpu_context regs;
 */
 
-void MC68000_SetRegs(MC68000_Regs *src);
-void MC68000_GetRegs(MC68000_Regs *dst);
-void MC68000_Reset(void);
-int  MC68000_Execute(int cycles);
-int  MC68000_GetPC(void);
-
-extern int MC68000_ICount;
-
-#if NEW_INTERRUPT_SYSTEM
-
-void MC68000_set_nmi_line(int state);
-void MC68000_set_irq_line(int irqline, int state);
-void MC68000_set_irq_callback(int (*callback)(int irqline));
-
-#else
-
-void MC68000_Cause_Interrupt(int level)
-void MC68000_ClearPendingInterrupts(void);
-
-#endif /* NEW_INTERRUPT_SYSTEM */
-
-
-
-
 /* Massage the C core's names a bit for MAME.
  * The rest of the functions are in m68kmame.c
  */
 #ifndef A68KEM
 
-#define MC68000_Reset    m68k_pulse_reset
-#define MC68000_Execute  m68k_execute
-#define MC68000_GetPC    m68k_peek_pc
-
 #define MC68000_ICount   m68k_clks_left
+
+#define MC68000_reset	 m68k_pulse_reset
+#define MC68000_execute  m68k_execute
+#define MC68000_getpc	 m68k_peek_pc
 
 #define MC68000_set_irq_callback m68k_set_int_ack_callback
 
+#else
+
+extern int MC68000_ICount;
+
+extern void MC68000_reset(void *param);
+extern int  MC68000_execute(int cycles);
+extern void MC68000_set_irq_callback(int (*callback)(int irqline));
+
+extern unsigned MC68000_getpc(void);
+
 #endif /* A68KEM */
 
+extern void MC68000_exit(void);
+extern void MC68000_setregs(MC68000_Regs *src);
+extern void MC68000_getregs(MC68000_Regs *dst);
+extern unsigned MC68000_getreg(int regnum);
+extern void MC68000_setreg(int regnum, unsigned val);
+extern void MC68000_set_nmi_line(int state);
+extern void MC68000_set_irq_line(int irqline, int state);
+extern const char *MC68000_info(void *context, int regnum);
+
+/****************************************************************************
+ * For now define the MC68010 to use MC68000 variables and functions
+ ****************************************************************************/
+#define MC68010_INT_NONE                MC68000_INT_NONE
+#define MC68010_ICount                  MC68000_ICount
+#define MC68010_setregs                 MC68000_setregs
+#define MC68010_getregs                 MC68000_getregs
+#define MC68010_reset                   MC68000_reset
+#define MC68010_exit                    MC68000_exit
+#define MC68010_execute                 MC68000_execute
+#define MC68010_getpc                   MC68000_getpc
+#define MC68010_getreg					MC68000_getreg
+#define MC68010_setreg					MC68000_setreg
+#define MC68010_set_nmi_line            MC68000_set_nmi_line
+#define MC68010_set_irq_line            MC68000_set_irq_line
+#define MC68010_set_irq_callback        MC68000_set_irq_callback
+const char *MC68010_info(void *context, int regnum);
+
+/****************************************************************************
+ * For now define the MC68020 to use MC68000 variables and functions
+ ****************************************************************************/
+#define MC68020_INT_NONE				MC68000_INT_NONE
+#define MC68020_ICount					MC68000_ICount
+#define MC68020_setregs 				MC68000_setregs
+#define MC68020_getregs 				MC68000_getregs
+#define MC68020_reset					MC68000_reset
+#define MC68020_exit					MC68000_exit
+#define MC68020_execute 				MC68000_execute
+#define MC68020_getpc					MC68000_getpc
+#define MC68020_getreg					MC68000_getreg
+#define MC68020_setreg					MC68000_setreg
+#define MC68020_set_nmi_line            MC68000_set_nmi_line
+#define MC68020_set_irq_line			MC68000_set_irq_line
+#define MC68020_set_irq_callback		MC68000_set_irq_callback
+const char *MC68020_info(void *context, int regnum);
+
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern void MAME_Debug(void);
+extern int Dasm68000(char *buffer, int pc);
+#endif /* MAME_DEBUG */
 
 #endif /* M68000__HEADER */

@@ -9,15 +9,15 @@ ASM = nasmw
 ASMFLAGS = -f coff
 VPATH=src src/cpu/z80 src/cpu/m6502 src/cpu/h6280 src/cpu/i86 \
       src/cpu/m6809 src/cpu/m6808 src/cpu/m68000 src/cpu/tms34010 \
-      src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010
+      src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010 src/cpu/ccpu
 
 # uncomment next line to include the debugger
 # DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = lkage_driver
-TINY_OBJS = obj/drivers/lkage.o
+TINY_NAME = rthunder_driver
+TINY_OBJS = obj/drivers/rthunder.o obj/vidhrdw/rthunder.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -95,7 +95,7 @@ endif
 
 LIBS   = -lalleg $(DJDIR)/lib/libaudio.a \
 
-COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
+COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
@@ -104,7 +104,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/sndhrdw/ay8910.o obj/sndhrdw/2203intf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
          obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
-         obj/sndhrdw/2610intf.o \
+         obj/sndhrdw/2610intf.o obj/sndhrdw/2612intf.o \
          obj/sndhrdw/ym3812.o obj/sndhrdw/3812intf.o \
 		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
@@ -112,7 +112,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
 		 obj/sndhrdw/k007232.o obj/sndhrdw/upd7759.o obj/sndhrdw/cvsd.o \
          obj/sndhrdw/namco.o \
-		 obj/sndhrdw/streams.o \
+		 obj/sndhrdw/streams.o obj/sndhrdw/exvolume.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
@@ -126,6 +126,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
          obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o \
          obj/cpu/tms9900/tms9900.o obj/cpu/z8000/z8000.o \
+         obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o \
          obj/mamedbg.o obj/asg.o \
          obj/cpu/m68000/d68k.o \
          obj/cpu/z80/z80dasm.o obj/cpu/m6502/6502dasm.o obj/cpu/h6280/6280dasm.o \
@@ -148,9 +149,9 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarisy1.a \
          obj/atarisy2.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
-         obj/upl.a obj/tms.a obj/cinemar.a obj/thepit.a obj/valadon.a \
-         obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a obj/toaplan.a \
-         obj/other.a \
+         obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
+         obj/valadon.a obj/seibu.a obj/nichibut.a obj/jaleco.a obj/visco.a \
+         obj/toaplan.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -179,6 +180,8 @@ endif
 all: mame.exe romcmp.exe
 
 mame.exe:  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
+# always recompile the version string
+	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c src/version.c -o obj/version.o
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 
 romcmp.exe: obj/romcmp.o obj/inflate.o obj/unzip.o
@@ -403,6 +406,7 @@ obj/tehkan.a: \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/sndhrdw/starforc.o obj/vidhrdw/starforc.o obj/drivers/starforc.o \
          obj/vidhrdw/pbaction.o obj/drivers/pbaction.o \
+         obj/vidhrdw/pontoon.o obj/drivers/pontoon.o \
          obj/vidhrdw/tehkanwc.o obj/drivers/tehkanwc.o \
          obj/vidhrdw/solomon.o obj/drivers/solomon.o \
          obj/vidhrdw/tecmo.o obj/drivers/tecmo.o \
@@ -411,6 +415,8 @@ obj/tehkan.a: \
          obj/vidhrdw/wc90b.o obj/drivers/wc90b.o \
 
 obj/konami.a: \
+         obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
+         obj/drivers/junofrst.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/vidhrdw/rocnrope.o obj/drivers/rocnrope.o \
@@ -541,6 +547,9 @@ obj/tms.a: \
 obj/cinemar.a: \
          obj/vidhrdw/jack.o obj/drivers/jack.o \
 
+obj/cinemav.a: \
+         obj/drivers/cinemat.o \
+
 obj/thepit.a: \
          obj/vidhrdw/thepit.o obj/drivers/thepit.o \
 
@@ -569,13 +578,14 @@ obj/toaplan.a: \
          obj/vidhrdw/toaplan1.o obj/drivers/zerowing.o \
          obj/vidhrdw/snowbros.o obj/drivers/snowbros.o \
 
+obj/cinemat.a: \
+         obj/vidhrdw/cinemat.o obj/drivers/cinemat.o \
+
 obj/neogeo.a: \
          obj/machine/neogeo.o obj/machine/pd4990a.o obj/vidhrdw/neogeo.o obj/drivers/neogeo.o \
 
 obj/other.a: \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
-         obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
-         obj/drivers/junofrst.o \
          obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
@@ -622,6 +632,7 @@ obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
 obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
+obj/cpu/ccpu/ccpu.o: ccpu.h ccpudasm.c cinedbg.c
 
 
 makedir:
@@ -643,6 +654,7 @@ makedir:
 	md obj\cpu\tms9900
 	md obj\cpu\z8000
 	md obj\cpu\tms32010
+	md obj\cpu\ccpu
 	md obj\drivers
 	md obj\machine
 	md obj\vidhrdw
@@ -676,6 +688,7 @@ clean:
 	del obj\cpu\tms9900\*.o
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
+	del obj\cpu\ccpu\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
@@ -709,4 +722,5 @@ cleandebug:
 	del obj\cpu\tms9900\*.o
 	del obj\cpu\z8000\*.o
 	del obj\cpu\tms32010\*.o
+	del obj\cpu\ccpu\*.o
 	del mame.exe

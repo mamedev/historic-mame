@@ -16,8 +16,6 @@
 #include "driver.h"
 #include "crtc6845.h"
 
-int cpu_getpc(void);
-extern FILE *errorlog;
 
 extern int spiders_page_flip;
 

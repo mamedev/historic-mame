@@ -12,8 +12,7 @@ int namcos1_vh_start( void ) {
 
 	{
 		/* horrid kludge to get namco sound to use the proper wave data */
-		unsigned char *RAM = ( Machine->memory_region[NAMCO_S1_RAM_REGION] ) + 0xa000; /* Ram 1, bank 1, offset 0x0000 */
-		Machine->memory_region[8] = RAM;
+		namco_wavedata = ( Machine->memory_region[NAMCO_S1_RAM_REGION] ) + 0xa000; /* Ram 1, bank 1, offset 0x0000 */
 	}
 
 	return 0;
@@ -21,9 +20,6 @@ int namcos1_vh_start( void ) {
 
 void namcos1_vh_stop( void ) {
 	videoram = 0;
-
-	/* horrid kludge to get namco sound to use the proper wave data */
-	Machine->memory_region[8] = 0;
 }
 
 int namcos1_videoram_r( int offs ) {
@@ -198,35 +194,88 @@ static void namcos1_drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap ) {
+static int sprite_fixed_sx = 0;
+static int sprite_fixed_sy = 0;
+
+#define MAX_SPRITES		128
+
+static void draw_sprites( struct osd_bitmap *bitmap, int pri ) {
 	unsigned char *sprite_ram = ( Machine->memory_region[NAMCO_S1_RAM_REGION] + 0x8800 );
-	int	i, code, color;
+	int	i, code, color, flipx, row, col, priority, bank;
 	int sy, sx;
 
-	for ( i = 0; i < 128*16; i += 16, sprite_ram += 16 ) {
-		int row,col,wide,tall,flipx;
-		code = ( ( sprite_ram[4] & 7 ) * 0x400 ) + ( sprite_ram[5] * 4 );
-		code += ( sprite_ram[4] >> 4 ) & 1;
-		code += ( sprite_ram[8] >> 3 ) & 2;
-		color = ( sprite_ram[6] >> 1 ) & 0x7f;
-		sx = ( sprite_ram[7] + ( ( sprite_ram[6] & 1 ) << 8 ) ) - 64+8;
-		sy = 224 - sprite_ram[9];
-		flipx = ( sprite_ram[4] & 0x20 );
-		wide = ( sprite_ram[4] >> 7 ) & 1;
-		tall = ( sprite_ram[8] >> 2 ) & 1;
+	for ( i = 0; i < MAX_SPRITES*16; i += 16, sprite_ram += 16 ) {
+		priority = ( sprite_ram[8] >> 5 ) & 0x7;
 
-		if( !tall ) sy+=16;
-		if( flipx && !wide ) sx-=16;
+		if ( pri == priority ) {
 
-		for( row = 0; row <= tall; row++ ){
-			for( col=0; col <= wide; col++ ){
-				drawgfx( bitmap, Machine->gfx[2],
-					code + ( 2 * row ) + col,
-					color,
-					flipx, 0,
-					sx + 16 * ( flipx ? ( 1 - col ) : col ), sy + row * 16,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_PEN, 15 );
+			color = ( sprite_ram[6] >> 1 ) & 0x7f;
+			sx = sprite_ram[7] + ( ( sprite_ram[6] & 1 ) << 8 );
+			sy = sprite_fixed_sy - sprite_ram[9];
+
+			sx += sprite_fixed_sx;
+
+			flipx = ( sprite_ram[4] & 0x20 );
+
+			switch( ( sprite_ram[8] >> 1 ) & 3 ) {
+				case 0: /* 16x16 */
+					code = ( ( sprite_ram[4] & 7 ) * 0x400 ) + ( sprite_ram[5] * 4 );
+					code += ( sprite_ram[8] >> 3 ) & 2;
+					code += ( sprite_ram[4] >> 4 ) & 1;
+
+					drawgfx( bitmap, Machine->gfx[2],
+							 code,
+							 color,
+							 flipx, 0,
+							 sx, sy,
+							 &Machine->drv->visible_area,
+							 TRANSPARENCY_PEN, 15 );
+				break;
+
+				case 1: /* 8x8 */
+					code = ( ( sprite_ram[4] & 7 ) * 0x1000 ) + ( sprite_ram[5] * 16 );
+					code += ( sprite_ram[8] >> 1 ) & 8;
+					code += ( sprite_ram[4] >> 2 ) & 4;
+					code += ( sprite_ram[4] >> 2 ) & 2;
+					code += ( sprite_ram[8] >> 3 ) & 1;
+
+					if ( code & 1 )
+						bank = 4;
+					else
+						bank = 3;
+
+					code >>= 1;
+
+					sx += 4;
+					sy += 4;
+
+					drawgfx( bitmap, Machine->gfx[bank],
+							 code,
+							 color,
+							 flipx, 0,
+							 sx, sy,
+							 &Machine->drv->visible_area,
+							 TRANSPARENCY_PEN, 15 );
+				break;
+
+				case 2: /* 32x32 */
+					code = ( ( sprite_ram[4] & 7 ) * 0x400 ) + ( sprite_ram[5] * 4 );
+
+					sy -= 16;
+
+					for( row = 0; row <= 1; row++ ) {
+						for( col=0; col <= 1; col++ ) {
+							drawgfx( bitmap, Machine->gfx[2],
+								code + ( 2 * row ) + col,
+								color,
+								flipx, 0,
+								sx + 16 * ( flipx ? ( 1 - col ) : col ),
+								sy + 16 * row,
+								&Machine->drv->visible_area,
+								TRANSPARENCY_PEN, 15 );
+						}
+					}
+				break;
 			}
 		}
 	}
@@ -319,7 +368,7 @@ static void namcos1_calc_scroll( int layer, unsigned char *layer_control, int *s
 
 void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 	unsigned char *layer_control = ( Machine->memory_region[NAMCO_S1_RAM_REGION] + 0x9000 );
-	int i, color, scrollx, scrolly, pri, base, size;
+	int i, color, scrollx, scrolly, pri, base, size, src_pri;
 
 	palette_recalc();
 
@@ -327,7 +376,9 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 
 	for ( pri = 0x00; pri < 0x0f; pri++ ) { /* priority */
 		for( i = 0; i < 6; i++ ) {
-			if ( ( layer_control[i+0x10] & 0x0f ) == pri ) {
+			src_pri = layer_control[i+0x10];
+
+			if ( ( src_pri & 0x0f ) == pri ) {
 				color = layer_control[i+0x18];
 				if ( i < 4 ) { /* background */
 					SCROLL_SET( ( i << 2 ) )
@@ -340,9 +391,10 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 				}
 			}
 		}
-	}
 
-	draw_sprites( bitmap );
+		if ( pri < 8 )
+			draw_sprites( bitmap, pri );
+	}
 }
 
 void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative ) {
@@ -354,4 +406,9 @@ void namcos1_set_scroll_offsets( int *bgx, int*bgy, int negative ) {
 	}
 
 	scrollneg = negative;
+}
+
+void namcos1_set_sprite_offsets( int x, int y ) {
+	sprite_fixed_sx = x;
+	sprite_fixed_sy = y;
 }

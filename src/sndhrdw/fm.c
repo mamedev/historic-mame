@@ -6,7 +6,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.35d
+** Version 0.35e
 **
 */
 
@@ -217,6 +217,9 @@
 #define RY_TOM 4
 #define RY_RIM 5
 
+/* FM timer model */
+#define FM_TIMER_SINGLE (0)
+#define FM_TIMER_INTERVAL (1)
 
 /* ---------- OPN / OPM one channel  ---------- */
 typedef struct fm_slot {
@@ -269,6 +272,7 @@ typedef struct fm_chan {
 
 /* OPN/OPM common state */
 typedef struct fm_state {
+	unsigned char index;		/* chip index (number of chip) */
 	int clock;					/* master clock  (Hz)  */
 	int rate;					/* sampling rate (Hz)  */
 	int freqbase;				/* frequency base      */
@@ -295,6 +299,8 @@ typedef struct fm_state {
 	/* Extention Timer and IRQ handler */
 	FM_TIMERHANDLER Timer_Handler;
 	FM_IRQHANDLER   IRQ_Handler;
+	/* timer model single / interval */
+	unsigned char timermodel;
 }FM_ST;
 
 /* OPN 3slot struct */
@@ -329,7 +335,6 @@ typedef struct adpcm_state {
 /* OPN/A/B common state */
 typedef struct opn_f {
 	unsigned char type;		/* chip type         */
-	unsigned char index;	/* chip index (number of chip) */
 	FM_ST ST;				/* general state     */
 	FM_3SLOT SL3;			/* 3 slot mode state */
 	FM_CH *P_CH;			/* pointer of CH     */
@@ -575,6 +580,41 @@ INLINE int Limit( int val, int max, int min ) {
 		val = min;
 
 	return val;
+}
+
+/* status set and IRQ handling */
+INLINE void FM_STATUS_SET(FM_ST *ST,int flag)
+{
+	/* set status flag */
+	ST->status |= flag;
+	if ( !(ST->irq) && (ST->status & ST->irqmask) )
+	{
+		ST->irq = 1;
+		/* callback user interrupt handler (IRQ is OFF to ON) */
+		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->index,1);
+	}
+}
+
+/* status reset and IRQ handling */
+INLINE void FM_STATUS_RESET(FM_ST *ST,int flag)
+{
+	/* reset status flag */
+	ST->status &=~flag;
+	if ( (ST->irq) && !(ST->status & ST->irqmask) )
+	{
+		ST->irq = 0;
+		/* callback user interrupt handler (IRQ is ON to OFF) */
+		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->index,0);
+	}
+}
+
+/* IRQ mask set */
+INLINE void FM_IRQMASK_SET(FM_ST *ST,int flag)
+{
+	ST->irqmask = flag;
+	/* IRQ handling check */
+	FM_STATUS_SET(ST,0);
+	FM_STATUS_RESET(ST,0);
 }
 
 /* ----- key on  ----- */
@@ -969,7 +1009,7 @@ static void reset_channel( FM_ST *ST , FM_CH *CH , int chan )
 	int c,s;
 
 	ST->mode   = 0;	/* normal mode */
-	ST->status = 0;
+	FM_STATUS_RESET(ST,0xff);
 	ST->TA     = 0;
 	ST->TAC    = 0;
 	ST->TB     = 0;
@@ -1079,32 +1119,13 @@ INLINE void FMSetMode( FM_ST *ST ,int n,int v )
 	/* b0 = load a */
 	ST->mode = v;
 
+	/* reset Timer b flag */
 	if( v & 0x20 )
-	{
-		ST->status &=0xfd; /* reset TIMER B */
-		if ( ST->irq && !(ST->status & ST->irqmask) )
-		{
-			ST->irq = 0;
-			/* callback user interrupt handler */
-			if(ST->IRQ_Handler) (ST->IRQ_Handler)(n,0);
-		}
-		//ST->TBC = 0;		/* timer stop */
-		/* External timer handler */
-		//if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,0,0);
-	}
+		FM_STATUS_RESET(ST,0x02);
+	/* reset Timer a flag */
 	if( v & 0x10 )
-	{
-		ST->status &=0xfe; /* reset TIMER A */
-		if ( ST->irq && !(ST->status & ST->irqmask) )
-		{
-			ST->irq = 0;
-			/* callback user interrupt handler */
-			if(ST->IRQ_Handler) (ST->IRQ_Handler)(n,0);
-		}
-		//ST->TAC = 0;		/* timer stop */
-		/* External timer handler */
-		//if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,0,0);
-	}
+		FM_STATUS_RESET(ST,0x01);
+	/* load b */
 	if( v & 0x02 )
 	{
 		if( ST->TBC == 0 )
@@ -1113,7 +1134,15 @@ INLINE void FMSetMode( FM_ST *ST ,int n,int v )
 			/* External timer handler */
 			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,(double)ST->TBC,ST->TimerBase);
 		}
+	}else if (ST->timermodel == FM_TIMER_INTERVAL)
+	{	/* stop interbval timer */
+		if( ST->TBC != 0 )
+		{
+			ST->TBC = 0;
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,1,0,ST->TimerBase);
+		}
 	}
+	/* load a */
 	if( v & 0x01 )
 	{
 		if( ST->TAC == 0 )
@@ -1122,43 +1151,41 @@ INLINE void FMSetMode( FM_ST *ST ,int n,int v )
 			/* External timer handler */
 			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,(double)ST->TAC,ST->TimerBase);
 		}
+	}else if (ST->timermodel == FM_TIMER_INTERVAL)
+	{	/* stop interbval timer */
+		if( ST->TAC != 0 )
+		{
+			ST->TAC = 0;
+			if (ST->Timer_Handler) (ST->Timer_Handler)(n,0,0,ST->TimerBase);
+		}
 	}
 }
-
 
 /* Timer A Overflow */
-INLINE void TimerAOver(int n,FM_ST *ST)
+INLINE void TimerAOver(FM_ST *ST)
 {
-	if(ST->mode & 0x04)
+	/* status set if enabled */
+	if(ST->mode & 0x04) FM_STATUS_SET(ST,0x01);
+	/* clear or reload the counter */
+	if (ST->timermodel == FM_TIMER_INTERVAL)
 	{
-		/* set status flag */
-		ST->status |= 0x01;
-		if ( !ST->irq && (ST->status & ST->irqmask) )
-		{
-			ST->irq = 1;
-			/* callback user interrupt handler */
-			if(ST->IRQ_Handler) (ST->IRQ_Handler)(n,1);
-		}
+		ST->TAC = (1024-ST->TA);
+		if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,0,(double)ST->TAC,ST->TimerBase);
 	}
-	/* clear the counter */
-	ST->TAC = 0;
+	else ST->TAC = 0;
 }
 /* Timer B Overflow */
-INLINE void TimerBOver(int n,FM_ST *ST)
+INLINE void TimerBOver(FM_ST *ST)
 {
-	if(ST->mode & 0x08)
+	/* status set if enabled */
+	if(ST->mode & 0x08) FM_STATUS_SET(ST,0x02);
+	/* clear or reload the counter */
+	if (ST->timermodel == FM_TIMER_INTERVAL)
 	{
-		/* set status flag */
-		ST->status |= 0x02;
-		if ( !ST->irq && (ST->status & ST->irqmask) )
-		{
-			ST->irq = 1;
-			/* callback user interrupt handler */
-			if(ST->IRQ_Handler) (ST->IRQ_Handler)(n,1);
-		}
+		ST->TBC = ( 256-ST->TB)<<4;
+		if (ST->Timer_Handler) (ST->Timer_Handler)(ST->index,1,(double)ST->TBC,ST->TimerBase);
 	}
-	/* update the counter */
-	ST->TBC = 0;
+	else ST->TBC = 0;
 }
 /* CSM Key Controll */
 INLINE void CSMKeyControll(FM_CH *CH)
@@ -1183,10 +1210,10 @@ INLINE void CSMKeyControll(FM_CH *CH)
 
 #ifdef INTERNAL_TIMER
 /* ---------- calcrate timer A ---------- */
-INLINE void CALC_TIMER_A( int n, FM_ST *ST , FM_CH *CSM_CH ){
+INLINE void CALC_TIMER_A( FM_ST *ST , FM_CH *CSM_CH ){
   if( ST->TAC &&  (ST->Timer_Handler==0) )
     if( (ST->TAC -= ST->freqbase) <= 0 ){
-      TimerAOver( n,ST );
+      TimerAOver( ST );
       /* CSM mode key,TL controll */
       if( ST->mode & 0x80 ){	/* CSM mode total level latch and auto key on */
 	CSMKeyControll( CSM_CH );
@@ -1194,10 +1221,10 @@ INLINE void CALC_TIMER_A( int n, FM_ST *ST , FM_CH *CSM_CH ){
     }
 }
 /* ---------- calcrate timer B ---------- */
-INLINE void CALC_TIMER_B( int n, FM_ST *ST,int step){
+INLINE void CALC_TIMER_B( FM_ST *ST,int step){
   if( ST->TBC && (ST->Timer_Handler==0) )
     if( (ST->TBC -= ST->freqbase*step) <= 0 ){
-      TimerBOver( n,ST );
+      TimerBOver( ST );
     }
 }
 #endif /* INTERNAL_TIMER */
@@ -1213,7 +1240,7 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 	/* Timer base time */
 	OPN->ST.TimerBase = (OPN->ST.rate) ? 1.0/((double)OPN->ST.clock / (double)TimerPris) : 0;
 	/* SSG part  priscaler set */
-	if( SSGpris ) SSGClk( OPN->index, OPN->ST.clock * 2 / SSGpris );
+	if( SSGpris ) SSGClk( OPN->ST.index, OPN->ST.clock * 2 / SSGpris );
 	/* make time tables */
 	init_timetables( &OPN->ST , OPN_DTTABLE , OPN_ARRATE , OPN_DRRATE );
 	/* make fnumber -> increment counter table */
@@ -1223,7 +1250,7 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 		/* opn freq counter = 20bit */
 		OPN->FN_TABLE[fn] = (double)fn * OPN->ST.freqbase / 4096  * FREQ_RATE * (1<<7) / 2;
 	}
-/*	if(errorlog) fprintf(errorlog,"OPN %d set priscaler %d\n",OPN->index,pris);*/
+/*	if(errorlog) fprintf(errorlog,"OPN %d set priscaler %d\n",OPN->ST.index,pris);*/
 }
 
 /* ---------- write a OPN mode register 0x20-0x2f ---------- */
@@ -1249,7 +1276,7 @@ static void OPNWriteMode(FM_OPN *OPN, int r, int v)
 		OPN->ST.TB = v;
 		break;
 	case 0x27:	/* mode , timer controll */
-		FMSetMode( &(OPN->ST),OPN->index,v );
+		FMSetMode( &(OPN->ST),OPN->ST.index,v );
 		break;
 	case 0x28:	/* key on / off */
 		c = v&0x03;
@@ -1306,7 +1333,7 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 		break;
 	case 0x90:	/* SSG-EG */
 #ifndef SEG_SUPPORT
-		if(errorlog && (v&0x08)) fprintf(errorlog,"OPN %d,%d,%d :SSG-TYPE envelope selected (not supported )\n",OPN->index,c,OPN_SLOT(r) );
+		if(errorlog && (v&0x08)) fprintf(errorlog,"OPN %d,%d,%d :SSG-TYPE envelope selected (not supported )\n",OPN->ST.index,c,OPN_SLOT(r) );
 #endif
 		SLOT->SEG = v&0x0f;
 		break;
@@ -1429,11 +1456,11 @@ void YM2203UpdateOne(int num, void *buffer, int length)
 		buf[i] = data >> OPN_OUTSB;
 #ifdef INTERNAL_TIMER
 		/* timer controll */
-		CALC_TIMER_A( num, State , cch[2] );
+		CALC_TIMER_A( State , cch[2] );
 #endif
 	}
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -1446,9 +1473,9 @@ void YM2203ResetChip(int num)
 	/* Reset Priscaler */
 	OPNSetPris( OPN , 6*12 , 6*12 ,4); /* 1/6 , 1/4 */
 	/* reset SSG section */
-	SSGReset(OPN->index);
+	SSGReset(OPN->ST.index);
 	/* status clear */
-	OPN->ST.irqmask = 0x03;
+	FM_IRQMASK_SET(&OPN->ST,0x03);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 	reset_channel( &OPN->ST , FM2203[num].CH , 3 );
 	/* reset OPerator paramater */
@@ -1499,11 +1526,14 @@ int YM2203Init(int num, int clock, int rate,
 	}
 
 	for ( i = 0 ; i < FMNumChips; i++ ) {
-		FM2203[i].OPN.index = i;
+		FM2203[i].OPN.ST.index = i;
 		FM2203[i].OPN.type = TYPE_YM2203;
 		FM2203[i].OPN.P_CH = FM2203[i].CH;
 		FM2203[i].OPN.ST.clock = clock;
 		FM2203[i].OPN.ST.rate = rate;
+		/* FM2203[i].OPN.ST.irq = 0; */
+		/* FM2203[i].OPN.ST.satus = 0; */
+		FM2203[i].OPN.ST.timermodel = FM_TIMER_SINGLE;
 		/* Extend handler */
 		FM2203[i].OPN.ST.Timer_Handler = TimerHandler;
 		FM2203[i].OPN.ST.IRQ_Handler   = IRQHandler;
@@ -1591,13 +1621,13 @@ int YM2203TimerOver(int n,int c)
 
 	if( c )
 	{	/* Timer B */
-		TimerBOver( n,&(F2203->OPN.ST) );
+		TimerBOver( &(F2203->OPN.ST) );
 	}
 	else
 	{	/* Timer A */
 		YM2203UpdateReq(n);
 		/* timer update */
-		TimerAOver( n,&(F2203->OPN.ST) );
+		TimerAOver( &(F2203->OPN.ST) );
 		/* CSM mode key,TL controll */
 		if( F2203->OPN.ST.mode & 0x80 )
 		{	/* CSM mode total level latch and auto key on */
@@ -1630,13 +1660,7 @@ INLINE int YM2608ReadADPCM(int n)
 	}
 	else
 	{	/* from PCM data register */
-		F2608->OPN.ST.status |= 0x08;	/* BRDY = 1 */
-		if( !F2608->OPN.ST.irq && (F2608->OPN.ST.status & F2608->OPN.ST.irqmask) )
-		{
-			F2608->OPN.ST.irq = 1;
-			/* callback user interrupt handler */
-			if(EXIRQHandler) EXIRQHandler(n,1);
-		}
+		FM_STATUS_SET(F2608->OPN.ST,0x08); /* BRDY = 1 */
 		return F2608->ADData;
 	}
 }
@@ -1652,13 +1676,7 @@ INLINE void YM2608WriteADPCM(int n,int v)
 	else
 	{	/* for PCM data port */
 		F2608->ADData = v;
-		F2608->OPN.ST.status |= 0x08;	/* BRDY = 1 */
-		if( !F2608->OPN.ST.irq && (F2608->OPN.ST.status & F2608->OPN.ST.irqmask) )
-		{
-			F2608->OPN.ST.irq = 1;
-			/* callback user interrupt handler */
-			if(EXIRQHandler) EXIRQHandler(n,1);
-		}
+		FM_STATUS_SET(F2608->OPN.ST,0x08) /* BRDY = 1 */
 	}
 }
 
@@ -1727,13 +1745,7 @@ INLINE void YM2608ADPCMWrite(int n,int r,int v)
 		break;
 	case 0x0f:	/* PCM data port */
 		F2608->ADData = v;
-		F2608->OPN.ST.status &= ~0x08;
-		if( F2608->OPN.ST.irq && !(F2608->OPN.ST.status & F2608->OPN.ST.irqmask) )
-		{
-			F2608->OPN.ST.irq = 0;
-			/* callback user interrupt handler */
-			if(EXIRQHandler) EXIRQHandler(n,0);
-		}
+		FM_STATUS_RESET(F2608->OPN.ST,0x08);
 		break;
 	}
 }
@@ -1787,30 +1799,11 @@ INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
 {
 	if( v & 0x80 )
 	{	/* Reset IRQ flag */
-		ST->status = 0x00;
+		FM_STATUS_RESET(ST,0xff);
 	}
 	else
 	{	/* Set IRQ mask */
-		ST->irqmask = v & 0x1f;
-	}
-	/* IRQ handling */
-	if( ST->status & ST->irqmask )
-	{
-		if( !(ST->irq) )
-		{
-			ST->irq = 1;
-			/* callback user interrupt handler */
-			if(EXIRQHandler) EXIRQHandler(n,1);
-		}
-	}
-	else
-	{
-		if( ST->irq )
-		{
-			ST->irq = 0;
-			/* callback user interrupt handler */
-			if(EXIRQHandler) EXIRQHandler(n,0);
-		}
+		FM_IRQMASK_SET(ST,v & 0x1f);
 	}
 }
 
@@ -1879,11 +1872,11 @@ void YM2608UpdateOne(int num, void **buffer, int length)
 #endif
 #ifdef INTERNAL_TIMER
 		/* timer controll */
-		CALC_TIMER_A( num, State , cch[2] );
+		CALC_TIMER_A( State , cch[2] );
 #endif
 	}
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -1912,11 +1905,14 @@ int YM2608Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
 	}
 
 	for ( i = 0 ; i < FMNumChips; i++ ) {
-		FM2608[i].OPN.index = i;
+		FM2608[i].OPN.ST.index = i;
 		FM2608[i].OPN.type = TYPE_YM2608;
 		FM2608[i].OPN.P_CH = FM2608[i].CH;
 		FM2608[i].OPN.ST.clock = clock;
 		FM2608[i].OPN.ST.rate = rate;
+		/* FM2608[i].OPN.ST.irq = 0; */
+		/* FM2608[i].OPN.ST.status = 0; */
+		FM2608[i].OPN.ST.timermodel = FM_TIMER_SINGLE;
 		/* Extend handler */
 		FM2608[i].OPN.ST.Timer_Handler = TimerHandler;
 		FM2608[i].OPN.ST.IRQ_Handler   = IRQHandler;
@@ -1945,9 +1941,9 @@ void YM2608ResetChip(int num)
 	/* Reset Priscaler */
 	OPNSetPris( OPN, 6*24, 6*24,4*2); /* OPN 1/6 , SSG 1/4 */
 	/* reset SSG section */
-	SSGReset(OPN->index);
+	SSGReset(OPN->ST.index);
 	/* status clear */
-	OPN->ST.irqmask = 0x03;
+	FM_IRQMASK_SET(&OPN->ST,0x03);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	reset_channel( &OPN->ST , F2608->CH , 6 );
@@ -2070,13 +2066,13 @@ int YM2608TimerOver(int n,int c)
 
 	if( c )
 	{	/* Timer B */
-		TimerBOver( n,&(F2608->OPN.ST) );
+		TimerBOver( &(F2608->OPN.ST) );
 	}
 	else
 	{	/* Timer A */
 		YM2608UpdateReq(n);
 		/* timer update */
-		TimerAOver( n,&(F2608->OPN.ST) );
+		TimerAOver( &(F2608->OPN.ST) );
 		/* CSM mode key,TL controll */
 		if( F2608->OPN.ST.mode & 0x80 )
 		{	/* CSM mode total level latch and auto key on */
@@ -2111,6 +2107,7 @@ int YM2608SetBuffer(int n, FMSAMPLE **buf )
 
 #ifdef BUILD_YM2610
 
+//#define ADPCMA_DECODE_RANGE 1024
 #define ADPCMA_DECODE_RANGE 1024
 #define ADPCMA_DECODE_MIN (-(ADPCMA_DECODE_RANGE*ADPCMA_VOLUME_RATE))
 #define ADPCMA_DECODE_MAX ((ADPCMA_DECODE_RANGE*ADPCMA_VOLUME_RATE)-1)
@@ -2446,11 +2443,11 @@ void YM2610UpdateOne(int num, void **buffer, int length)
 #endif
 #ifdef INTERNAL_TIMER
 		/* timer controll */
-		CALC_TIMER_A( num, State , cch[2] );
+		CALC_TIMER_A( State , cch[2] );
 #endif
 	}
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -2542,11 +2539,11 @@ void YM2610BUpdateOne(int num, void **buffer, int length)
 #endif
 #ifdef INTERNAL_TIMER
 		/* timer controll */
-		CALC_TIMER_A( num, State , cch[2] );
+		CALC_TIMER_A( State , cch[2] );
 #endif
 	}
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -2575,11 +2572,14 @@ int YM2610Init(int num, int clock, int rate, int *pcmroma, int *pcmromb,
 
 	for ( i = 0 ; i < FMNumChips; i++ ) {
 		/* FM */
-		FM2610[i].OPN.index = i;
+		FM2610[i].OPN.ST.index = i;
 		FM2610[i].OPN.type = TYPE_YM2610;
 		FM2610[i].OPN.P_CH = FM2610[i].CH;
 		FM2610[i].OPN.ST.clock = clock;
 		FM2610[i].OPN.ST.rate = rate;
+		/* FM2610[i].OPN.ST.irq = 0; */
+		/* FM2610[i].OPN.ST.status = 0; */
+		FM2610[i].OPN.ST.timermodel = FM_TIMER_INTERVAL;
 		/* Extend handler */
 		FM2610[i].OPN.ST.Timer_Handler = TimerHandler;
 		FM2610[i].OPN.ST.IRQ_Handler   = IRQHandler;
@@ -2631,9 +2631,9 @@ void YM2610ResetChip(int num)
 	/* Reset Priscaler */
 	OPNSetPris( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
 	/* reset SSG section */
-	SSGReset(OPN->index);
+	SSGReset(OPN->ST.index);
 	/* status clear */
-	OPN->ST.irqmask = 0x03;
+	FM_IRQMASK_SET(&OPN->ST,0x03);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	reset_channel( &OPN->ST , F2610->CH , 6 );
@@ -2656,7 +2656,7 @@ void YM2610ResetChip(int num)
 		F2610->adpcm[i].step      = 0;
 		F2610->adpcm[i].start     = 0;
 		F2610->adpcm[i].end       = 0;
-		F2610->adpcm[i].delta     = 21866; /* default sampling rate */
+		/* F2610->adpcm[i].delta     = 21866; */
 		F2610->adpcm[i].volume    = 0;
 		F2610->adpcm[i].pan       = &outd[OPN_CENTER]; /* default center */
 		F2610->adpcm[i].flagMask  = (i == 6) ? 0x80 : (1<<i);
@@ -2691,7 +2691,6 @@ void YM2610ADPCMWrite1(int n,int r,int v)
 	  if( v&0x80 ){
 		F2610->port0state = v&0x90; /* start request & repeat flag copy */
 		/**** start ADPCM ****/
-		adpcm->step     = (unsigned int)(((float)(adpcm->delta<<(ADPCM_SHIFT)) / (float)F2610->OPN.ST.rate) * (18500.0 / 22050.0));
 		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
 		adpcm->now_addr = (adpcm->start)<<1;
 		adpcm->now_step = (1<<ADPCM_SHIFT)-adpcm->step;
@@ -2752,7 +2751,8 @@ void YM2610ADPCMWrite1(int n,int r,int v)
 	case 0x19:	/* DELTA-N L (ADPCM Playback Prescaler) */
 	case 0x1a:	/* DELTA-N H */
 		adpcm->delta  = (F2610->adpcmreg[0][0x1a]*0x0100 | F2610->adpcmreg[0][0x19]);
-		adpcm->step     = (unsigned int)(((float)(adpcm->delta<<(ADPCM_SHIFT)) / (float)F2610->OPN.ST.rate) * (18500.0 / 22050.0));
+		adpcm->step     = (unsigned int)((float)(adpcm->delta*(1<<(ADPCM_SHIFT-16)))*((float)F2610->OPN.ST.freqbase)/4096.0);
+		adpcm->volume_w_step = (double)adpcm->volume * adpcm->step / (1<<ADPCM_SHIFT);
 		break;
 	case 0x1b:	/* Level control (volume , voltage flat) */
 		{
@@ -2797,7 +2797,7 @@ void YM2610ADPCMWrite2(int n,int r,int v)
 	    for( c = 0; c < 6; c++ ){
 	      if( (1<<c)&v ){
 				/**** start adpcm ****/
-		adpcm[c].step     = (unsigned int)(((float)(adpcm[c].delta<<(ADPCM_SHIFT)) / (float)F2610->OPN.ST.rate) * (18500.0 / 22050.0));
+		adpcm[c].step     = (unsigned int)((float)(1<<ADPCM_SHIFT)*((float)F2610->OPN.ST.freqbase)/4096.0/3.0);
 		adpcm[c].now_addr = adpcm[c].start<<1;
 		adpcm[c].now_step = (1<<ADPCM_SHIFT)-adpcm[c].step;
 		/*adpcm[c].adpcmm   = 0;*/
@@ -2967,13 +2967,13 @@ int YM2610TimerOver(int n,int c)
 
 	if( c )
 	{	/* Timer B */
-		TimerBOver( n,&(F2610->OPN.ST) );
+		TimerBOver( &(F2610->OPN.ST) );
 	}
 	else
 	{	/* Timer A */
 		YM2610UpdateReq(n);
 		/* timer update */
-		TimerAOver( n,&(F2610->OPN.ST) );
+		TimerAOver( &(F2610->OPN.ST) );
 		/* CSM mode key,TL controll */
 		if( F2610->OPN.ST.mode & 0x80 )
 		{	/* CSM mode total level latch and auto key on */
@@ -3075,18 +3075,17 @@ void YM2612UpdateOne(int num, void **buffer, int length)
 		bufL[i] = dataL>>OPN_OUTSB;
 		bufR[i] = dataR>>OPN_OUTSB;
 #endif
-		}
 
 #ifdef LFO_SUPPORT
 		CALC_LOPM_LFO;
 #endif
 #ifdef INTERNAL_TIMER
 		/* timer controll */
-		CALC_TIMER_A( num, State , cch[2] );
+		CALC_TIMER_A( State , cch[2] );
 #endif
 	}
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -3114,11 +3113,14 @@ int YM2612Init(int num, int clock, int rate,
 	}
 
 	for ( i = 0 ; i < FMNumChips; i++ ) {
-		FM2612[i].OPN.index = i;
+		FM2612[i].OPN.ST.index = i;
 		FM2612[i].OPN.type = TYPE_YM2612;
 		FM2612[i].OPN.P_CH = FM2612[i].CH;
 		FM2612[i].OPN.ST.clock = clock;
 		FM2612[i].OPN.ST.rate = rate;
+		/* FM2612[i].OPN.ST.irq = 0; */
+		/* FM2612[i].OPN.ST.status = 0; */
+		FM2612[i].OPN.ST.timermodel = FM_TIMER_SINGLE;
 		/* Extend handler */
 		FM2612[i].OPN.ST.Timer_Handler = TimerHandler;
 		FM2612[i].OPN.ST.IRQ_Handler   = IRQHandler;
@@ -3144,9 +3146,9 @@ void YM2612ResetChip(int num)
 	YM2612 *F2612 = &(FM2612[num]);
 	FM_OPN *OPN   = &(FM2612[num].OPN);
 
-	OPNSetPris( OPN , 6*24, 6*24, 0);
+	OPNSetPris( OPN , 12*12, 12*12, 0);
 	/* status clear */
-	OPN->ST.irqmask = 0x03;
+	FM_IRQMASK_SET(&OPN->ST,0x03);
 	OPNWriteMode(OPN,0x27,0x30); /* mode 0 , timer reset */
 
 	reset_channel( &OPN->ST , &F2612->CH[0] , 6 );
@@ -3239,13 +3241,13 @@ int YM2612TimerOver(int n,int c)
 
 	if( c )
 	{	/* Timer B */
-		TimerBOver( n,&(F2612->OPN.ST) );
+		TimerBOver( &(F2612->OPN.ST) );
 	}
 	else
 	{	/* Timer A */
 		YM2612UpdateReq(n);
 		/* timer update */
-		TimerAOver( n,&(F2612->OPN.ST) );
+		TimerAOver( &(F2612->OPN.ST) );
 		/* CSM mode key,TL controll */
 		if( F2612->OPN.ST.mode & 0x80 )
 		{	/* CSM mode total level latch and auto key on */
@@ -3315,7 +3317,7 @@ void OPMResetChip(int num)
 	OPMInitTable( num );
 	reset_channel( &OPM->ST , &OPM->CH[0] , 8 );
 	/* status clear */
-	OPM->ST.irqmask = 0x03;
+	FM_IRQMASK_SET(&OPM->ST,0x03);
 	OPMWriteReg(num,0x1b,0x00);
 	/* reset OPerator paramater */
 	for(i = 0xff ; i >= 0x20 ; i-- ) OPMWriteReg(num,i,0);
@@ -3345,8 +3347,12 @@ int OPMInit(int num, int clock, int rate,
 		return (-1);
 	}
 	for ( i = 0 ; i < FMNumChips; i++ ) {
+		FMOPM[i].ST.index = i;
 		FMOPM[i].ST.clock = clock;
 		FMOPM[i].ST.rate = rate;
+		/* FMOPM[i].ST.irq  = 0; */
+		/* FMOPM[i].ST.status = 0; */
+		FMOPM[i].ST.timermodel = FM_TIMER_SINGLE;
 		FMOPM[i].ST.freqbase  = rate ? ((double)clock * 4096.0 / rate) / 64 : 0;
 		FMOPM[i].ST.TimerBase = rate ? 1.0/((double)clock / 64.0) : 0;
 		/*OPMSetBuffer(i,0,0);*/
@@ -3590,11 +3596,11 @@ void OPMUpdateOne(int num, void **buffer, int length)
 #endif
 
 #ifdef INTERNAL_TIMER
-		CALC_TIMER_A( num, State , cch[7] );
+		CALC_TIMER_A( State , cch[7] );
 #endif
     }
 #ifdef INTERNAL_TIMER
-	CALC_TIMER_B( num, State , length );
+	CALC_TIMER_B( State , length );
 #endif
 }
 
@@ -3627,13 +3633,13 @@ int YM2151TimerOver(int n,int c)
 
 	if( c )
 	{	/* Timer B */
-		TimerBOver( n,&(F2151->ST) );
+		TimerBOver( &(F2151->ST) );
 	}
 	else
 	{	/* Timer A */
 		YM2151UpdateReq(n);
 		/* timer update */
-		TimerAOver( n,&(F2151->ST) );
+		TimerAOver( &(F2151->ST) );
 		/* CSM mode key,TL controll */
 		if( F2151->ST.mode & 0x80 )
 		{	/* CSM mode total level latch and auto key on */

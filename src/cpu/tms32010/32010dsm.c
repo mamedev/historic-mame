@@ -217,7 +217,6 @@ int Dasm32010(char *str,byte *addr)
     int op;
     int cnt = 1;
     int code;
-    int codetemp = 0;
     int bit;
     char *strtmp;
     char *cp;              /* character pointer in OpFormats */

@@ -10,9 +10,6 @@ Changes:
 	* Rewrote the blitter routines
 	* Fixed interrupt timing finally!!!
 
-Do to:  Mystic Marathon
-Not sure of the board: Turkey shoot, Joust 2
-
 Note: the visible area (according to the service mode) seems to be
 	{ 6, 297-1, 7, 246-1 },
 however I use
@@ -375,6 +372,77 @@ d000 Select bank (c000-cfff)
   3 = BANK 3
   7 = BANK 4
 
+------------------------------------------------------------------------
+
+Mystic Marathon (1983)
+Turkey Shoot (1984)
+Inferno (1984)
+Joust2 Survival of the Fittest (1986)
+
+All have two boards, a large board with lots of RAM and
+three ROMs, and a smaller board with lots of ROMs,
+the CPU, the 6821 PIAs, and the two "Special Chip 2"
+custom BIT/BLT chips.
+Joust 2 has an additional music/speech board that has a
+68B09E CPU, 68B21 PIA, Harris 55564-5 CVSD, and a YM2151.
+
+Contact Michael Soderstrom (ichael@geocities.com) if you
+have any additional information or corrections.
+
+Memory Map:
+
+15 14 13 12  11 10  9  8   7  6  5  4   3  2  1  0
+--------------------------------------------------
+ x  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-BFFF	48K DRAM
+
+ 0  0  0  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-1FFF	8K ROM
+ 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	8K ROM
+ 0  1  0  x   x  x  x  x   x  x  x  x   x  x  x  x	4000-5FFF	8K ROM
+ 0  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	6000-7FFF	8K ROM
+
+ 1  0  0  0   x  x  x  x   x  x  x  x   x  x  x  x	8000-8FFF	EN_COLOR* (PAGE3 only)
+
+ 0  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-7FFF	OE_DRAM* (PAGE0 and read only) or:
+ 1  0  x  x   x  x  x  x   x  x  x  x   x  x  x  x	9000-BFFF	OE_DRAM* (!EN COLOR and read only)
+
+ 1  1  0  0   x  x  x  x   x  x  x  x   x  x  x  x	C000-CFFF	I/O:
+ 1  1  0  0   0  x  x  x   x  x  x  x   x  x  x  x	C000-C7FF	MAP_EN*
+ 1  1  0  0   1  0  0  0   0  x  x  x   x  x  x  x	C800-C87F	CS_PAGE
+ 1  1  0  0   1  0  0  0   1  x  x  x   x  x  x  x	C880-C87F	CS_INT* (blitter)
+ 1  1  0  0   1  0  0  1   0  x  x  x   x  x  x  x	C900-C97F	CS_WDOG* (data = 0x14)
+ 1  1  0  0   1  0  0  1   1  x  x  x   x  x  x  x	C980-C9FF	CS_PIA
+ 1  1  0  0   1  0  0  1   1  x  x  x   0  0  x  x	C980-C983	PIA IC5
+ 1  1  0  0   1  0  0  1   1  x  x  x   0  1  x  x	C984-C987	PIA IC6
+ 1  1  0  0   1  0  0  1   1  x  x  x   1  1  x  x	C98C		7 segment LED
+
+ 1  1  0  0   1  0  1  1   0  0  0  x   x  x  x  x	CB00-CB1F	CK_FG
+ 1  1  0  0   1  0  1  1   0  0  1  x   x  x  x  x	CB20-CB3F	CK_BG
+ 1  1  0  0   1  0  1  1   0  1  0  x   x  x  x  x	CB40-CB5F	CK_SCL
+ 1  1  0  0   1  0  1  1   0  1  1  x   x  x  x  x	CB60-CB7F	CK_SCH
+ 1  1  0  0   1  0  1  1   1  0  0  x   x  x  x  x	CB80-CB9F	FLIP clk
+ 1  1  0  0   1  0  1  1   1  0  1  x   x  x  x  x	CBA0-CBBF	DMA_WRINH clk
+
+ 1  1  0  0   1  0  1  1   1  1  1  0   x  x  x  x	CBE0-CBEF	EN VPOS*
+
+ 1  1  0  0   1  1  0  0   x  x  x  x   x  x  x  x	CC00-CCFF	1Kx4 CMOS RAM MEM_PROT protected
+ 1  1  0  0   1  1  x  x   x  x  x  x   x  x  x  x	CD00-CFFF	          not MEM_PROT protected
+
+ Mystic Marathon/Inferno:
+ 1  1  0  1   0  x  x  x   x  x  x  x   x  x  x  x	D000-D7FF	SRAM0*
+ 1  1  0  1   1  x  x  x   x  x  x  x   x  x  x  x	D800-DFFF	SRAM1*
+ 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
+ 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+
+ Turkey Shoot/Joust2:
+ 1  1  0  1   x  x  x  x   x  x  x  x   x  x  x  x	D000-DFFF	DXXX* 4K ROM
+ 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
+ 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+
+6802/6808 Sound
+
+ 0  0  0  x   x  x  x  x   0  x  x  x   x  x  x  x	0000-007F	128 bytes RAM
+ 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	CS PIA IC4
+ 1  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	E000-FFFF	8K ROM
 
 ***************************************************************************/
 
@@ -387,6 +455,10 @@ d000 Select bank (c000-cfff)
 extern unsigned char *williams_bank_base;
 extern unsigned char *williams_video_counter;
 
+extern unsigned char *DMA_WRINH;
+extern unsigned char *CK_SCL;
+extern unsigned char *CK_SCH;
+
 void robotron_init_machine(void);
 void joust_init_machine(void);
 void stargate_init_machine(void);
@@ -397,9 +469,22 @@ void splat_init_machine(void);
 void blaster_init_machine(void);
 void colony7_init_machine(void);
 void lottofun_init_machine(void);
+void mysticm_init_machine(void);
+void tshoot_init_machine(void);
+void inferno_init_machine(void);
+void joust2_init_machine(void);
 
 int williams_interrupt(void);
+int mysticm_interrupt(void);
+int tshoot_interrupt(void);
+int inferno_interrupt(void);
+int joust2_interrupt(void);
+
 void williams_vram_select_w(int offset,int data);
+void williams2_memory_w(int offset, int data);
+void williams2_bank_select(int offset, int data);
+void williams2_watchdog(int offset, int data);
+void williams2_7segment(int offset, int data);
 
 extern unsigned char *defender_bank_base;
 void defender_bank_select_w(int offset,int data);
@@ -412,6 +497,8 @@ extern unsigned char *blaster_bank2_base;
 void blaster_bank_select_w(int offset,int data);
 void blaster_vram_select_w(int offset,int data);
 
+void joust2_ym2151_int(void);
+void joust2_sound_bank_select_w(int offset, int data);
 
 /**** from vidhrdw/williams.h ****/
 extern unsigned char *williams_blitterram;
@@ -421,6 +508,11 @@ void williams_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 int williams_vh_start(void);
 int williams_vh_start_sc2(void);
 int blaster_vh_start(void);
+int mysticm_vh_start(void);
+int tshoot_vh_start(void);
+int inferno_vh_start(void);
+int joust2_vh_start(void);
+void williams2_vh_stop(void);
 void williams_vh_stop(void);
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void williams_videoram_w(int offset,int data);
@@ -438,6 +530,9 @@ int sinistar_vh_start(void);
 
 void defender_videoram_w(int offset,int data);
 
+void williams2_fg_select_w(int offset, int data);
+void williams2_bg_select_w(int offset, int data);
+void mysticm_bg_select_w(int offset, int data);
 
 static void defndjeu_decode(void);
 
@@ -723,6 +818,230 @@ static struct MemoryWriteAddress colony7_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+/*
+ *   Read/Write mem for Mystic Marathon
+ */
+
+static struct MemoryReadAddress mysticm_readmem[] =
+{
+	{ 0x0000, 0x7FFF, MRA_BANK1 },
+	{ 0x8000, 0x87FF, MRA_BANK2 },
+	{ 0x8800, 0x8FFF, MRA_BANK3 },
+	{ 0x9000, 0xBFFF, MRA_RAM },
+
+	{ 0xC000, 0xC7FF, MRA_RAM },
+	{ 0xC980, 0xC983, pia_1_r },
+	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
+	{ 0xCC00, 0xCFFF, MRA_RAM },
+	{ 0xD000, 0xDFFF, MRA_RAM },
+	{ 0xE000, 0xFFFF, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mysticm_writemem[] =
+{
+	{ 0x0000, 0x8FFF, williams2_memory_w, &videoram, &videoram_size },
+	{ 0x9000, 0xBFFF, MWA_RAM },
+
+	{ 0xC000, 0xC7FF, MWA_RAM },
+	{ 0xC800, 0xC800, williams2_bank_select },
+	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
+	{ 0xC900, 0xC900, williams2_watchdog },
+	{ 0xC980, 0xC983, pia_1_w },
+	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC98C, 0xC98C, williams2_7segment },
+	{ 0xCB00, 0xCB00, williams2_fg_select_w },
+	{ 0xCB20, 0xCB20, mysticm_bg_select_w },
+	{ 0xCB40, 0xCB40, MWA_RAM, &CK_SCL },
+	{ 0xCB60, 0xCB60, MWA_RAM, &CK_SCH },
+	{ 0xCB80, 0xCB80, MWA_RAM },
+	{ 0xCBA0, 0xCBA0, MWA_RAM, &DMA_WRINH },
+	{ 0xCC00, 0xCFFF, MWA_RAM },
+	{ 0xD000, 0xDFFF, MWA_RAM },
+	{ 0xE000, 0xFFFF, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/*
+ *   Read/Write mem for Turkey Shoot
+ */
+
+static struct MemoryReadAddress tshoot_readmem[] =
+{
+	{ 0x0000, 0x7FFF, MRA_BANK1 },
+	{ 0x8000, 0x87FF, MRA_BANK2 },
+	{ 0x8800, 0x8FFF, MRA_BANK3 },
+	{ 0x9000, 0xBFFF, MRA_RAM },
+
+	{ 0xC000, 0xC7FF, MRA_RAM },
+	{ 0xC980, 0xC983, pia_1_r },
+	{ 0xC984, 0xC987, pia_2_r },
+/* 	{ 0xC988, 0xC989,  },	??? */
+	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
+	{ 0xCC00, 0xCFFF, MRA_RAM },
+	{ 0xD000, 0xFFFF, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress tshoot_writemem[] =
+{
+	{ 0x0000, 0x8FFF, williams2_memory_w, &videoram, &videoram_size },
+	{ 0x9000, 0xBFFF, MWA_RAM },
+
+	{ 0xC000, 0xC7FF, MWA_RAM },
+	{ 0xC800, 0xC800, williams2_bank_select },
+	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
+	{ 0xC900, 0xC900, williams2_watchdog },
+	{ 0xC980, 0xC983, pia_1_w },
+	{ 0xC984, 0xC987, pia_2_w },
+/* 	{ 0xC988, 0xC989,  },	??? */
+	{ 0xC98C, 0xC98C, williams2_7segment },
+	{ 0xCB00, 0xCB00, williams2_fg_select_w },
+	{ 0xCB20, 0xCB20, williams2_bg_select_w },
+	{ 0xCB40, 0xCB40, MWA_RAM, &CK_SCL },
+	{ 0xCB60, 0xCB60, MWA_RAM, &CK_SCH },
+	{ 0xCB80, 0xCB80, MWA_RAM },
+	{ 0xCBA0, 0xCBA0, MWA_RAM, &DMA_WRINH },
+	{ 0xCC00, 0xCFFF, MWA_RAM },
+	{ 0xD000, 0xFFFF, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/*
+ *   Read/Write mem for Inferno
+ */
+
+static struct MemoryReadAddress inferno_readmem[] =
+{
+	{ 0x0000, 0x7FFF, MRA_BANK1 },
+	{ 0x8000, 0x87FF, MRA_BANK2 },
+	{ 0x8800, 0x8FFF, MRA_BANK3 },
+	{ 0x9000, 0xBFFF, MRA_RAM },
+
+	{ 0xC000, 0xC7FF, MRA_RAM },
+	{ 0xC980, 0xC983, pia_1_r },
+	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
+	{ 0xCC00, 0xCFFF, MRA_RAM },
+	{ 0xD000, 0xDFFF, MRA_RAM },
+	{ 0xE000, 0xFFFF, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress inferno_writemem[] =
+{
+	{ 0x0000, 0x8FFF, williams2_memory_w, &videoram, &videoram_size },
+	{ 0x9000, 0xBFFF, MWA_RAM },
+
+	{ 0xC000, 0xC7FF, MWA_RAM },
+	{ 0xC800, 0xC800, williams2_bank_select },
+	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
+	{ 0xC900, 0xC900, williams2_watchdog },
+	{ 0xC980, 0xC983, pia_1_w },
+	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC98C, 0xC98C, williams2_7segment },
+	{ 0xCB00, 0xCB00, &williams2_fg_select_w },
+	{ 0xCB20, 0xCB20, &williams2_bg_select_w },
+	{ 0xCB40, 0xCB40, MWA_RAM, &CK_SCL },
+	{ 0xCB60, 0xCB60, MWA_RAM, &CK_SCH },
+	{ 0xCB80, 0xCB80, MWA_RAM },
+	{ 0xCBA0, 0xCBA0, MWA_RAM, &DMA_WRINH },
+	{ 0xCC00, 0xCFFF, MWA_RAM },
+	{ 0xD000, 0xDFFF, MWA_RAM },
+	{ 0xE000, 0xFFFF, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/*
+ *   Read/Write mem for Joust2
+ */
+
+static struct MemoryReadAddress joust2_readmem[] =
+{
+	{ 0x0000, 0x7FFF, MRA_BANK1 },
+	{ 0x8000, 0x87FF, MRA_BANK2 },
+	{ 0x8800, 0x8FFF, MRA_BANK3 },
+	{ 0x9000, 0xBFFF, MRA_RAM },
+
+	{ 0xC000, 0xC7FF, MRA_RAM },
+	{ 0xC980, 0xC983, pia_1_r },
+	{ 0xC984, 0xC987, pia_2_r },
+	{ 0xCBE0, 0xCBE0, MRA_RAM, &williams_video_counter },
+	{ 0xCC00, 0xCFFF, MRA_RAM },
+	{ 0xD000, 0xFFFF, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress joust2_writemem[] =
+{
+	{ 0x0000, 0x8FFF, williams2_memory_w, &videoram, &videoram_size },
+	{ 0x9000, 0xBFFF, MWA_RAM },
+
+	{ 0xC000, 0xC7FF, MWA_RAM },
+	{ 0xC800, 0xC800, williams2_bank_select },
+	{ 0xC880, 0xC887, williams_blitter_w, &williams_blitterram },
+	{ 0xC900, 0xC900, williams2_watchdog },
+	{ 0xC980, 0xC983, pia_1_w },
+	{ 0xC984, 0xC987, pia_2_w },
+	{ 0xC98C, 0xC98C, williams2_7segment },
+	{ 0xCB00, 0xCB00, williams2_fg_select_w },
+	{ 0xCB20, 0xCB20, williams2_bg_select_w },
+	{ 0xCB40, 0xCB40, MWA_RAM, &CK_SCL },
+	{ 0xCB60, 0xCB60, MWA_RAM, &CK_SCH },
+	{ 0xCB80, 0xCB80, MWA_RAM },
+	{ 0xCBA0, 0xCBA0, MWA_RAM, &DMA_WRINH },
+	{ 0xCC00, 0xCFFF, MWA_RAM },
+	{ 0xD000, 0xFFFF, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+/*
+ *	 memory handlers for the Joust2 music/speech board.
+ */
+
+#if defined(JOUST2_SND)
+static struct MemoryReadAddress joust2_sound_readmem[] =
+{
+	{ 0x0000, 0x07FF, MRA_RAM },
+	{ 0x2001, 0x2001, YM2151_status_port_0_r },
+	{ 0x4000, 0x4003, pia_4_r },
+	{ 0x8000, 0xFFFF, MRA_BANK4},
+	{ -1 }
+};
+static struct MemoryWriteAddress joust2_sound_writemem[] =
+{
+	{ 0x0000, 0x07FF, MWA_RAM},
+	{ 0x2000, 0x2000, YM2151_register_port_0_w },
+	{ 0x2001, 0x2001, YM2151_data_port_0_w },
+	{ 0x4000, 0x4003, pia_4_w },
+	{ 0x6000, 0x6000, CVSD_dig_and_clk_w },
+	{ 0x6800, 0x6800, CVSD_clock_w },
+	{ 0x7800, 0x7800, joust2_sound_bank_select_w },
+	{ 0x8000, 0xFFFF, MWA_ROM},
+	{ -1 }
+};
+#endif
+
+/*
+ *	 memory handlers for the audio CPU on the CPU board.
+ */
+
+static struct MemoryReadAddress williams2_sound_readmem[] =
+{
+	{ 0x0000, 0x00FF, MRA_RAM },
+	{ 0x2000, 0x2003, pia_3_r },
+	{ 0xE000, 0xFFFF, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress williams2_sound_writemem[] =
+{
+	{ 0x0000, 0x00FF, MWA_RAM },
+	{ 0x2000, 0x2003, pia_3_w },
+	{ 0xE000, 0xFFFF, MWA_ROM },
+	{ -1 }	/* end of table */
+};
 
 /*
  *   memory handlers for the audio CPU
@@ -1108,6 +1427,212 @@ INPUT_PORTS_START( lottofun_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Sound board handshake
 INPUT_PORTS_END
 
+/*
+ *	 Mystic Marathon buttons
+ */
+
+INPUT_PORTS_START( mysticm_input_ports )
+
+	PORT_START	/* IN0 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Key */
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_BUTTON1, "Jump", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+INPUT_PORTS_END
+
+/*
+ *	 Turkey Shoot buttons
+ */
+
+INPUT_PORTS_START( tshoot_input_ports )
+
+	PORT_START	/* IN0 (muxed with IN3)*/
+	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 0, 0, 0x3F)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+	PORT_START	/* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON2, "Grenade", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON3, "Gobble", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x3C, IP_ACTIVE_HIGH, IPT_UNUSED ) /* 0011-1100 output */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN3 (muxed with IN0) */
+   	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_X, 25, 0, 0, 0x3F)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+INPUT_PORTS_END
+
+/*
+ *	 Inferno buttons
+ */
+
+INPUT_PORTS_START( inferno_input_ports )
+
+	PORT_START	/* IN0 (muxed with IN3) */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_UP,     "Run Up - Right 1",   IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_LEFT,   "Run Up - Left 1",    IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_RIGHT,  "Run Down - Right 1", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_DOWN,   "Run Down - Left 1",  IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKRIGHT_UP,    "Aim Up - Right 1",   IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKRIGHT_LEFT,  "Aim Up - Left 1",    IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKRIGHT_RIGHT, "Aim Down - Right 1", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKRIGHT_DOWN,  "Aim Down - Left 1",  IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+	PORT_START /* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPF_PLAYER1 | IPT_BUTTON1, "Trigger 1", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPF_PLAYER2 | IPT_BUTTON1, "Trigger 2", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x3C, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START	/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN3 (muxed with IN0) */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKLEFT_UP,     "Run Up - Right 2",   IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKLEFT_LEFT,   "Run Up - Left 2",    IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKLEFT_RIGHT,  "Run Down - Right 2", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKLEFT_DOWN,   "Run Down - Left 2",  IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKRIGHT_UP,    "Aim Up - Right 2",   IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKRIGHT_LEFT,  "Aim Up - Left 2",    IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKRIGHT_RIGHT, "Aim Down - Right 2", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPF_PLAYER2 | IPT_JOYSTICKRIGHT_DOWN,  "Aim Down - Left 2",  IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+INPUT_PORTS_END
+
+/*
+ *	 Joust2 buttons
+ */
+
+INPUT_PORTS_START( joust2_input_ports )
+
+	PORT_START      /* IN0 */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Player 1 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "Player 2 Start/Transform", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Player 1 Start/Transform", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START /* IN3 (muxed with IN0) */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "Player 2 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "Player 2 Start/Transform", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Player 1 Start/Transform", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+INPUT_PORTS_END
+
+/***************************************************************************
+
+  gfx
+
+***************************************************************************/
+
+static struct GfxLayout layout =
+{
+	24, 16,
+	128,
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0+0*8, 4+0*8, 0+0*8+0x2000*8, 4+0*8+0x2000*8, 0+0*8+0x4000*8, 4+0*8+0x4000*8,
+	  0+1*8, 4+1*8, 0+1*8+0x2000*8, 4+1*8+0x2000*8, 0+1*8+0x4000*8, 4+1*8+0x4000*8,
+	  0+2*8, 4+2*8, 0+2*8+0x2000*8, 4+2*8+0x2000*8, 0+2*8+0x4000*8, 4+2*8+0x4000*8,
+	  0+3*8, 4+3*8, 0+3*8+0x2000*8, 4+3*8+0x2000*8, 0+3*8+0x4000*8, 4+3*8+0x4000*8
+	},
+	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8, 32*8, 36*8, 40*8, 44*8, 48*8, 52*8, 56*8, 60*8 },
+	4*16*8
+};
+
+static struct GfxLayout joust2_layout =
+{
+	24, 16,
+	256,
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0+0*8, 4+0*8, 0+0*8+0x4000*8, 4+0*8+0x4000*8, 0+0*8+0x8000*8, 4+0*8+0x8000*8,
+	  0+1*8, 4+1*8, 0+1*8+0x4000*8, 4+1*8+0x4000*8, 0+1*8+0x8000*8, 4+1*8+0x8000*8,
+	  0+2*8, 4+2*8, 0+2*8+0x4000*8, 4+2*8+0x4000*8, 0+2*8+0x8000*8, 4+2*8+0x8000*8,
+	  0+3*8, 4+3*8, 0+3*8+0x4000*8, 4+3*8+0x4000*8, 0+3*8+0x8000*8, 4+3*8+0x8000*8
+	},
+	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8, 32*8, 36*8, 40*8, 44*8, 48*8, 52*8, 56*8, 60*8 },
+	4*16*8
+};
+
+static struct GfxDecodeInfo inferno_gfxdecodeinfo[] =
+{
+	{ 1, 0, &layout, 16, 1 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo mysticm_gfxdecodeinfo[] =
+{
+	{ 1, 0, &layout, 16, 2 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo tshoot_gfxdecodeinfo[] =
+{
+	{ 1, 0, &layout, 16, 8 },
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo joust2_gfxdecodeinfo[] =
+{
+	{ 1, 0, &joust2_layout, 16, 1 },
+	{ -1 } /* end of array */
+};
 
 /***************************************************************************
 
@@ -1123,6 +1648,21 @@ static struct DACinterface dac_interface =
 {
 	1,
 	{ 50 }
+};
+
+static struct CVSDinterface cvsd_interface =
+{
+	1,			/* 1 chip */
+	{ 40 }
+};
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	3579545,	/* 3.579545 MHz? */
+	{ 20 },
+	{ joust2_ym2151_int },
+	{ 0 }
 };
 
 
@@ -1804,6 +2344,261 @@ static struct MachineDriver mayday_machine_driver =
 			SOUND_DAC,
 			&dac_interface
 		}
+	}
+};
+
+/*
+ *   Mystic Marathon Driver
+ */
+
+static struct MachineDriver mysticm_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,				/* 1 Mhz */
+			0,						/* memory region */
+			mysticm_readmem,		/* MemoryReadAddress */
+			mysticm_writemem,		/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			mysticm_interrupt,		/* interrupt routine */
+			256 					/* interrupts per frame (256 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			2,						/* memory region #2 */
+			williams2_sound_readmem,/* MemoryReadAddress */
+			williams2_sound_writemem,/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			ignore_interrupt, 1 	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slices per frame - enough for the sound CPU to read all commands */
+	mysticm_init_machine,				/* init machine routine */
+
+	/* video hardware */
+	288, 256,							/* screen_width, screen_height */
+	{ 4, 288-1, 8, 248-1 }, 			/* struct rectangle visible_area */
+	mysticm_gfxdecodeinfo,				/* GfxDecodeInfo * */
+	16 + (2 * 16),						/* total colors (palette is 3*total_colors bytes long) */
+	16 + (2 * 16),						/* color table length (length in shorts of the color lookup table) */
+	williams_vh_convert_color_prom, 	/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,									/* vh_init routine */
+	mysticm_vh_start,					/* vh_start routine */
+	williams2_vh_stop,					/* vh_stop routine */
+	williams_vh_screenrefresh,			/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+/*
+ *   Turkey Shoot Driver
+ */
+
+static struct MachineDriver tshoot_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,				/* 1 Mhz */
+			0,						/* memory region */
+			tshoot_readmem, 		/* MemoryReadAddress */
+			tshoot_writemem,		/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			tshoot_interrupt,		/* interrupt routine */
+			256 					/* interrupts per frame (256 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			2,						/* memory region #2 */
+			williams2_sound_readmem,/* MemoryReadAddress */
+			williams2_sound_writemem,/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			ignore_interrupt, 1 	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slices per frame - enough for the sound CPU to read all commands */
+	tshoot_init_machine,				/* init machine routine */
+
+	/* video hardware */
+	288, 256,							/* screen_width, screen_height */
+	{ 4, 288-1, 8, 248-1 }, 			/* struct rectangle visible_area */
+	tshoot_gfxdecodeinfo,				/* GfxDecodeInfo * */
+	16 + (8 * 16),						/* total colors (palette is 3*total_colors bytes long) */
+	16 + (8 * 16),						/* color table length (length in shorts of the color lookup table) */
+	williams_vh_convert_color_prom, 	/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,									/* vh_init routine */
+	tshoot_vh_start,					/* vh_start routine */
+	williams2_vh_stop,					/* vh_stop routine */
+	williams_vh_screenrefresh,			/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+/*
+ *   Inferno Driver
+ */
+
+static struct MachineDriver inferno_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1100000,				/* 1 Mhz (1.1Mhz timing hack) */
+			0,						/* memory region */
+			inferno_readmem,		/* MemoryReadAddress */
+			inferno_writemem,		/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			inferno_interrupt,		/* interrupt routine */
+			256 					/* interrupts per frame (256 times/frame for video counter) */
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			2,						/* memory region #2 */
+			williams2_sound_readmem,/* MemoryReadAddress */
+			williams2_sound_writemem,/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			ignore_interrupt, 1 	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slices per frame - enough for the sound CPU to read all commands */
+	inferno_init_machine,				/* init machine routine */
+
+	/* video hardware */
+	288, 256,							/* screen_width, screen_height */
+	{ 4, 288-1, 8, 248-1 }, 			/* struct rectangle visible_area */
+	inferno_gfxdecodeinfo,				/* GfxDecodeInfo * */
+	16 + (1 * 16),						/* total colors (palette is 3*total_colors bytes long) */
+	16 + (1 * 16),						/* color table length (length in shorts of the color lookup table) */
+	williams_vh_convert_color_prom, 	/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,									/* vh_init routine */
+	inferno_vh_start, 					/* vh_start routine */
+	williams2_vh_stop,					/* vh_stop routine */
+	williams_vh_screenrefresh,			/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+/*
+ *   Joust2 Driver
+ */
+
+static struct MachineDriver joust2_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,				/* 1 Mhz */
+			0,						/* memory region */
+			joust2_readmem, 		/* MemoryReadAddress */
+			joust2_writemem,		/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			joust2_interrupt,		/* interrupt routine */
+			256 					/* interrupts per frame (256 times/frame for video counter) */
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			894750, 				/* 0.89475 Mhz (3.579 / 4) */
+			2,						/* memory region #2 */
+			williams2_sound_readmem,/* MemoryReadAddress */
+			williams2_sound_writemem,/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			ignore_interrupt, 1 	/* interrupts are triggered by the main CPU */
+		},
+#if defined(JOUST2_SND)
+		{
+			CPU_M6809 | CPU_AUDIO_CPU, /* 68B09EP */
+			2000000,				/* 2MHz? */
+			3,						/* memory region #3 */
+			joust2_sound_readmem,	/* MemoryReadAddress */
+			joust2_sound_writemem,	/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			ignore_interrupt, 0 	/* interrupts are triggered by the main CPU */
+		},
+#endif
+
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slices per frame - enough for the sound CPU to read all commands */
+	joust2_init_machine,				/* init machine routine */
+
+	/* video hardware */
+	288, 256,							/* screen_width, screen_height */
+	{ 4, 288-1, 8, 248-1 }, 			/* struct rectangle visible_area */
+	joust2_gfxdecodeinfo,				/* GfxDecodeInfo * */
+	16 + (1 * 16),						/* total colors (palette is 3*total_colors bytes long) */
+	16 + (1 * 16),						/* color table length (length in shorts of the color lookup table) */
+	williams_vh_convert_color_prom, 	/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,									/* vh_init routine */
+	joust2_vh_start, 					/* vh_start routine */
+	williams2_vh_stop,					/* vh_stop routine */
+	williams_vh_screenrefresh,			/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+#if defined(JOUST2_SND)
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_HC55516,
+			&cvsd_interface
+		}
+#endif
 	}
 };
 
@@ -3339,4 +4134,257 @@ struct GameDriver defence_driver =
 	ORIENTATION_DEFAULT,
 
 	defender_cmos_load, defender_cmos_save
+};
+
+ROM_START( mysticm_rom )
+
+	ROM_REGION(0x48000)
+
+	ROM_LOAD( "mm02_2.a09", 0x0E000, 0x1000, 0x3a776ea8 )	/* IC9	*/
+	ROM_LOAD( "mm03_2.a10", 0x0F000, 0x1000, 0x6e247c75 )	/* IC10 */
+
+	ROM_LOAD( "mm11_1.a18", 0x10000, 0x2000, 0xf537968e )	/* IC18 */
+	ROM_LOAD( "mm09_1.a16", 0x12000, 0x2000, 0x3bd12f6c )	/* IC16 */
+	ROM_LOAD( "mm07_1.a14", 0x14000, 0x2000, 0xea2a2a68 )	/* IC14 */
+	ROM_LOAD( "mm05_1.a12", 0x16000, 0x2000, 0xb514eef3 )	/* IC12 */
+
+	ROM_LOAD( "mm18_1.a26", 0x20000, 0x2000, 0x9b391a81 )	/* IC26 */
+	ROM_LOAD( "mm16_1.a24", 0x22000, 0x2000, 0x399e175d )	/* IC24 */
+	ROM_LOAD( "mm14_1.a22", 0x24000, 0x2000, 0x191153b1 )	/* IC22 */
+
+	ROM_LOAD( "mm10_1.a17", 0x30000, 0x2000, 0xd6a37509 )	/* IC17 */
+	ROM_LOAD( "mm08_1.a15", 0x32000, 0x2000, 0x6f1a64f2 )	/* IC15 */
+	ROM_LOAD( "mm06_1.a13", 0x34000, 0x2000, 0x2e6795d4 )	/* IC13 */
+	ROM_LOAD( "mm04_1.a11", 0x36000, 0x2000, 0xc222fb64 )	/* IC11 */
+
+	ROM_LOAD( "mm17_1.a25", 0x40000, 0x2000, 0xd36f0a96 )	/* IC25 */
+	ROM_LOAD( "mm15_1.a23", 0x42000, 0x2000, 0xcd5d99da )	/* IC23 */
+	ROM_LOAD( "mm13_1.a21", 0x44000, 0x2000, 0xef4b79db )	/* IC21 */
+	ROM_LOAD( "mm12_1.a19", 0x46000, 0x2000, 0xa1f04bf0 )	/* IC19 */
+
+	ROM_REGION_DISPOSE(0x6000)
+	ROM_LOAD( "mm20_1.b57", 0x00000, 0x2000, 0x5c0f4f46 )	/* IC57 */
+	ROM_LOAD( "mm21_1.b58", 0x02000, 0x2000, 0xcb90b3c5 )	/* IC58 */
+	ROM_LOAD( "mm19_1.b41", 0x04000, 0x2000, 0xe274df86 )	/* IC41 */
+
+	/* sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "mm01_1.a08", 0x0E000, 0x2000, 0x65339512 )	/* IC8	*/
+
+ROM_END
+
+ROM_START( tshoot_rom )
+
+	ROM_REGION(0x48000)
+	ROM_LOAD( "rom18.cpu", 0x0D000, 0x1000, 0xeffc33f1 )	/* IC55 */
+	ROM_LOAD( "rom2.cpu",  0x0E000, 0x1000, 0xfd982687 )	/* IC9	*/
+	ROM_LOAD( "rom3.cpu",  0x0F000, 0x1000, 0x9617054d )	/* IC10 */
+
+	ROM_LOAD( "rom11.cpu", 0x10000, 0x2000, 0x60d5fab8 )	/* IC18 */
+	ROM_LOAD( "rom9.cpu",  0x12000, 0x2000, 0xa4dd4a0e )	/* IC16 */
+	ROM_LOAD( "rom7.cpu",  0x14000, 0x2000, 0xf25505e6 )	/* IC14 */
+	ROM_LOAD( "rom5.cpu",  0x16000, 0x2000, 0x94a7c0ed )	/* IC12 */
+
+	ROM_LOAD( "rom17.cpu", 0x20000, 0x2000, 0xb02d1ccd )	/* IC26 */
+	ROM_LOAD( "rom15.cpu", 0x22000, 0x2000, 0x11709935 )	/* IC24 */
+
+	ROM_LOAD( "rom10.cpu", 0x30000, 0x2000, 0x0f32bad8 )	/* IC17 */
+	ROM_LOAD( "rom8.cpu",  0x32000, 0x2000, 0xe9b6cbf7 )	/* IC15 */
+	ROM_LOAD( "rom6.cpu",  0x34000, 0x2000, 0xa49f617f )	/* IC13 */
+	ROM_LOAD( "rom4.cpu",  0x36000, 0x2000, 0xb026dc00 )	/* IC11 */
+
+	ROM_LOAD( "rom16.cpu", 0x40000, 0x2000, 0x69ce38f8 )	/* IC25 */
+	ROM_LOAD( "rom14.cpu", 0x42000, 0x2000, 0x769a4ae5 )	/* IC23 */
+	ROM_LOAD( "rom13.cpu", 0x44000, 0x2000, 0xec016c9b )	/* IC21 */
+	ROM_LOAD( "rom12.cpu", 0x46000, 0x2000, 0x98ae7afa )	/* IC19 */
+
+	ROM_REGION_DISPOSE(0x6000)
+	ROM_LOAD( "rom20.cpu", 0x00000, 0x2000, 0xc6e1d253 )	/* IC57 */
+	ROM_LOAD( "rom21.cpu", 0x02000, 0x2000, 0x9874e90f )	/* IC58 */
+	ROM_LOAD( "rom19.cpu", 0x04000, 0x2000, 0xb9ce4d2a )	/* IC41 */
+
+	/* sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "rom1.cpu", 0xE000, 0x2000, 0x011a94a7 )		/* IC8	*/
+
+ROM_END
+
+ROM_START( inferno_rom )
+
+	ROM_REGION(0x48000)
+	ROM_LOAD( "ic9.inf", 0x0E000, 0x1000, 0x1a013185 )		/* IC9	*/
+	ROM_LOAD( "ic10.inf", 0x0F000, 0x1000, 0xdbf64a36 ) 	/* IC10 */
+
+	ROM_LOAD( "ic18.inf", 0x10000, 0x2000, 0x95bcf7b1 )		/* IC18 */
+	ROM_LOAD( "ic16.inf", 0x12000, 0x2000, 0x8bc4f935 )		/* IC16 */
+	ROM_LOAD( "ic14.inf", 0x14000, 0x2000, 0xa70508a7 )		/* IC14 */
+	ROM_LOAD( "ic12.inf", 0x16000, 0x2000, 0x7ffb87f9 )		/* IC12 */
+
+	ROM_LOAD( "ic17.inf", 0x30000, 0x2000, 0xb4684139 ) 	/* IC17 */
+	ROM_LOAD( "ic15.inf", 0x32000, 0x2000, 0x128a6ad6 ) 	/* IC15 */
+	ROM_LOAD( "ic13.inf", 0x34000, 0x2000, 0x83a9e4d6 ) 	/* IC13 */
+	ROM_LOAD( "ic11.inf", 0x36000, 0x2000, 0xc2e9c909 ) 	/* IC11 */
+
+	ROM_LOAD( "ic25.inf", 0x40000, 0x2000, 0x103a5951 ) 	/* IC25 */
+	ROM_LOAD( "ic23.inf", 0x42000, 0x2000, 0xc04749a0 ) 	/* IC23 */
+	ROM_LOAD( "ic21.inf", 0x44000, 0x2000, 0xc405f853 ) 	/* IC21 */
+	ROM_LOAD( "ic19.inf", 0x46000, 0x2000, 0xade7645a ) 	/* IC19 */
+
+	ROM_REGION_DISPOSE(0x6000)
+	ROM_LOAD( "ic57.inf", 0x00000, 0x2000, 0x65a4ef79 ) 	/* IC57 */
+	ROM_LOAD( "ic58.inf", 0x02000, 0x2000, 0x4bb1c2a0 ) 	/* IC58 */
+	ROM_LOAD( "ic41.inf", 0x04000, 0x2000, 0xf3f7238f ) 	/* IC41 */
+
+	/* sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "ic8.inf", 0x0E000, 0x2000, 0x4e3123b8 )		/* IC8	*/
+
+ROM_END
+
+ROM_START( joust2_rom )
+
+	ROM_REGION(0x48000)
+	ROM_LOAD( "ic55_r1.cpu", 0x0D000, 0x1000, 0x08b0d5bd )	/* IC55 ROM02 */
+	ROM_LOAD( "ic09_r2.cpu", 0x0E000, 0x1000, 0x951175ce )	/* IC09 ROM03 */
+	ROM_LOAD( "ic10_r2.cpu", 0x0F000, 0x1000, 0xba6e0f6c )	/* IC10 ROM04 */
+
+	ROM_LOAD( "ic18_r1.cpu", 0x10000, 0x2000, 0x9dc986f9 )	/* IC18 ROM11 */
+	ROM_LOAD( "ic16_r2.cpu", 0x12000, 0x2000, 0x56e2b550 )	/* IC16 ROM09 */
+	ROM_LOAD( "ic14_r2.cpu", 0x14000, 0x2000, 0xf3bce576 )	/* IC14 ROM07 */
+	ROM_LOAD( "ic12_r2.cpu", 0x16000, 0x2000, 0x5f8b4919 )	/* IC12 ROM05 */
+
+	ROM_LOAD( "ic26_r1.cpu", 0x20000, 0x2000, 0x4ef5e805 )	/* IC26 ROM19 */
+	ROM_LOAD( "ic24_r1.cpu", 0x22000, 0x2000, 0x4861f063 )	/* IC24 ROM17 */
+	ROM_LOAD( "ic22_r1.cpu", 0x24000, 0x2000, 0x421aafa8 )	/* IC22 ROM15 */
+	ROM_LOAD( "ic20_r1.cpu", 0x26000, 0x2000, 0x3432ff55 )	/* IC20 ROM13 */
+
+	ROM_LOAD( "ic17_r1.cpu", 0x30000, 0x2000, 0x3e01b597 )	/* IC17 ROM10 */
+	ROM_LOAD( "ic15_r1.cpu", 0x32000, 0x2000, 0xff26fb29 )	/* IC15 ROM08 */
+	ROM_LOAD( "ic13_r2.cpu", 0x34000, 0x2000, 0x5f107db5 )	/* IC13 ROM06 */
+
+	ROM_LOAD( "ic25_r1.cpu", 0x40000, 0x2000, 0x47580af5 )	/* IC25 ROM18 */
+	ROM_LOAD( "ic23_r1.cpu", 0x42000, 0x2000, 0x869b5942 )	/* IC23 ROM16 */
+	ROM_LOAD( "ic21_r1.cpu", 0x44000, 0x2000, 0x0bbd867c )	/* IC21 ROM14 */
+	ROM_LOAD( "ic19_r1.cpu", 0x46000, 0x2000, 0xb9221ed1 )	/* IC19 ROM12 */
+
+	ROM_REGION_DISPOSE(0xC000)
+	ROM_LOAD( "ic57_r1.vid", 0x00000, 0x4000, 0x572c6b01 )	/* IC57 ROM20 */
+	ROM_LOAD( "ic58_r1.vid", 0x04000, 0x4000, 0xaa94bf05 )	/* IC58 ROM21 */
+	ROM_LOAD( "ic41_r1.vid", 0x08000, 0x4000, 0xc41e3daa )	/* IC41 ROM22 */
+
+	/* sound CPU */
+	ROM_REGION(0x10000)
+	ROM_LOAD( "ic08_r1.cpu", 0x0E000, 0x2000, 0x84517c3c )	/* IC08 ROM08 */
+
+	/* sound board */
+	ROM_REGION(0x20000)
+	ROM_LOAD( "u04_r1.snd", 0x08000, 0x8000, 0x3af6b47d )	/* IC04 ROM23 */
+	ROM_LOAD( "u19_r1.snd", 0x10000, 0x8000, 0xe7f9ed2e )	/* IC19 ROM24 */
+	ROM_LOAD( "u20_r1.snd", 0x18000, 0x8000, 0xc85b29f7 )	/* IC20 ROM25 */
+
+ROM_END
+
+
+struct GameDriver mysticm_driver =
+{
+	__FILE__,
+	0,
+	"mysticm",
+	"Mystic Marathon",
+	"1983",
+	"Williams",
+	"Michael J. Soderstrom",
+	0,
+	&mysticm_machine_driver,
+	0,
+
+	mysticm_rom,
+	0, 0,
+	0,
+	0,
+
+	mysticm_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver tshoot_driver =
+{
+	__FILE__,
+	0,
+	"tshoot",
+	"Turkey Shoot",
+	"1984",
+	"Williams",
+	"Michael J. Soderstrom",
+	GAME_NOT_WORKING,
+	&tshoot_machine_driver,
+	0,
+
+	tshoot_rom,
+	0, 0,
+	0,
+	0,
+
+	tshoot_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver inferno_driver =
+{
+	__FILE__,
+	0,
+	"inferno",
+	"Inferno",
+	"1984",
+	"Williams",
+	"Michael J. Soderstrom",
+	0,
+	&inferno_machine_driver,
+	0,
+
+	inferno_rom,
+	0, 0,
+	0,
+	0,
+
+	inferno_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};
+
+struct GameDriver joust2_driver =
+{
+	__FILE__,
+	0,
+	"joust2",
+	"Joust2 Survival of the Fittest",
+	"1986",
+	"Williams",
+	"Michael J. Soderstrom",
+	0,
+	&joust2_machine_driver,
+	0,
+
+	joust2_rom,
+	0, 0,
+	0,
+	0,
+
+	joust2_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	cmos_load, cmos_save
 };

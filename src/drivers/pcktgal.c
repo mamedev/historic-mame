@@ -2,6 +2,11 @@
 
 	Pocket Gal						(c) 1987 Data East Corporation
 	Pocket Gal (Bootleg)			(c) 1989 Yada East Corporation(!!!)
+	Super Pool III					(c) 1989 Data East Corporation
+	Pocket Gal 2					(c) 1989 Data East Corporation
+	Super Pool III (I-Vics Inc)		(c) 1990 Data East Corporation
+
+	Pocket Gal (Bootleg) is often called 'Sexy Billiards'
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -84,6 +89,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x11ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1801, 0x1801, MWA_NOP },	/* bit 7 = flip screen, other bits unknown */
+	/* 1800 - 0x181f are unused BAC-06 registers, see vidhrdw/dec0.c */
 	{ 0x1a00, 0x1a00, pcktgal_sound_w },
 	{ 0x1c00, 0x1c00, pcktgal_bank_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -229,8 +235,8 @@ static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,      /* 1 chip */
-	1500000,        /* 1.5 MHz ??? */
-	{ YM2203_VOL(80,80) },
+	4000000,        /* 4.0 MHz ??? */
+	{ YM2203_VOL(60,60) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -241,7 +247,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3000000,        /* 3 MHz? (hand tuned) */
-	{ 80 }
+	{ 50 }
 };
 
 static struct MSM5205interface msm5205_interface =
@@ -249,7 +255,7 @@ static struct MSM5205interface msm5205_interface =
 	1,		/* 1 chip */
 	8000,	/* 8000Hz playback ? */
 	pcktgal_adpcm_int,		/* interrupt function */
-	{ 90 }
+	{ 70 }
 };
 
 /***************************************************************************/
@@ -368,45 +374,108 @@ static struct MachineDriver bootleg_machine_driver =
 
 ROM_START( pcktgal_rom )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
-    ROM_LOAD( "eb04.bin",     0x10000, 0x4000, 0x8215d60d )
+    ROM_LOAD( "eb04.rom",     0x10000, 0x4000, 0x8215d60d )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
     ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "eb01.bin",     0x00000, 0x10000, 0x63542c3d )
-    ROM_LOAD( "eb02.bin",     0x10000, 0x10000, 0xa9dcd339 )
-    ROM_LOAD( "ebb0.bin",     0x20000, 0x10000, 0x6c1a14a8 )
+    ROM_LOAD( "eb01.rom",     0x00000, 0x10000, 0x63542c3d )
+    ROM_LOAD( "eb02.rom",     0x10000, 0x10000, 0xa9dcd339 )
+    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
 
     ROM_REGION(0x18000)     /* audio cpu */
-	ROM_LOAD( "eb03.bin",     0x10000, 0x8000, 0xcb029b02 )
+	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
 	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
-	ROM_LOAD( "82s147.084",   0x0000, 0x0200, 0x3b6198cb )
-	ROM_LOAD( "82s131.101",   0x0200, 0x0200, 0x1fbd4b59 )
+	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 ROM_START( pcktgalb_rom )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
-    ROM_LOAD( "pcktgal.001", 0x10000, 0x4000, 0x4acb3e84 )
+    ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
 	ROM_CONTINUE(             0x04000, 0xc000)
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
     ROM_REGION_DISPOSE(0x30000)
-    ROM_LOAD( "pcktgal.005", 0x00000, 0x10000, 0x3128dc7b )
-    ROM_LOAD( "pcktgal.006", 0x10000, 0x10000, 0x0fc91eeb )
-    ROM_LOAD( "pcktgal.003", 0x20000, 0x08000, 0x58182daa )
-    ROM_LOAD( "pcktgal.004", 0x28000, 0x08000, 0x33a67af6 )
+    ROM_LOAD( "sexybill.005", 0x00000, 0x10000, 0x3128dc7b )
+    ROM_LOAD( "sexybill.006", 0x10000, 0x10000, 0x0fc91eeb )
+    ROM_LOAD( "sexybill.003", 0x20000, 0x08000, 0x58182daa )
+    ROM_LOAD( "sexybill.004", 0x28000, 0x08000, 0x33a67af6 )
 
     ROM_REGION(0x18000)     /* audio cpu */
-	ROM_LOAD( "eb03.bin",     0x10000, 0x8000, 0xcb029b02 )
+	ROM_LOAD( "eb03.rom",     0x10000, 0x8000, 0xcb029b02 )
 	ROM_CONTINUE(             0x08000, 0x8000)
 
 	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
-	ROM_LOAD( "82s147.084",   0x0000, 0x0200, 0x3b6198cb )
-	ROM_LOAD( "82s131.101",   0x0200, 0x0200, 0x1fbd4b59 )
+	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+ROM_END
+
+ROM_START( pcktgal2_rom )
+    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
+	ROM_CONTINUE(             0x04000, 0xc000)
+	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
+	/* I have to load the bank directly at 4000. */
+
+    ROM_REGION_DISPOSE(0x30000)
+    ROM_LOAD( "eb01-2.rom",   0x00000, 0x10000, 0xe52b1f97 )
+    ROM_LOAD( "eb02-2.rom",   0x10000, 0x10000, 0xf30d965d )
+    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
+
+    ROM_REGION(0x18000)     /* audio cpu */
+	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
+	ROM_CONTINUE(             0x08000, 0x8000)
+
+	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
+	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+ROM_END
+
+ROM_START( spool3_rom )
+    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
+	ROM_CONTINUE(             0x04000, 0xc000)
+	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
+	/* I have to load the bank directly at 4000. */
+
+    ROM_REGION_DISPOSE(0x30000)
+    ROM_LOAD( "deco2.bin",    0x00000, 0x10000, 0x0a23f0cf )
+    ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
+    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
+
+    ROM_REGION(0x18000)     /* audio cpu */
+	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
+	ROM_CONTINUE(             0x08000, 0x8000)
+
+	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
+	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
+ROM_END
+
+ROM_START( spool3i_rom )
+    ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
+    ROM_LOAD( "de1.bin",      0x10000, 0x4000, 0xa59980fe )
+	ROM_CONTINUE(             0x04000, 0xc000)
+	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
+	/* I have to load the bank directly at 4000. */
+
+    ROM_REGION_DISPOSE(0x30000)
+    ROM_LOAD( "deco2.bin",    0x00000, 0x10000, 0x0a23f0cf )
+    ROM_LOAD( "deco3.bin",    0x10000, 0x10000, 0x55ea7c45 )
+    ROM_LOAD( "eb00.rom",     0x20000, 0x10000, 0x6c1a14a8 )
+
+    ROM_REGION(0x18000)     /* audio cpu */
+	ROM_LOAD( "eb03-2.rom",   0x10000, 0x8000, 0x9408ffb4 )
+	ROM_CONTINUE(             0x08000, 0x8000)
+
+	ROM_REGION_DISPOSE(0x0400)	/* color PROMs */
+	ROM_LOAD( "eb05.rom",   0x0000, 0x0200, 0x3b6198cb ) /* 82s147.084 */
+	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
 /***************************************************************************/
@@ -424,12 +493,10 @@ static void deco222_decode(void)
 		ROM[A] = (RAM[A] & 0x9f) | ((RAM[A] & 0x20) << 1) | ((RAM[A] & 0x40) >> 1);
 }
 
-static void pcktgal_decode(void)
+static void graphics_decode(void)
 {
 	unsigned char *RAM = Machine->memory_region[1];
 	int i,j,temp[16];
-
-	deco222_decode();
 
 	/* Tile graphics roms have some swapped lines, original version only */
 	for (i=0x00000; i < 0x20000; i+=32)
@@ -441,6 +508,12 @@ static void pcktgal_decode(void)
 			RAM[i+j]=temp[j];
 		}
 	}
+}
+
+static void pcktgal_decode(void)
+{
+	deco222_decode();
+	graphics_decode();
 }
 
 /***************************************************************************/
@@ -488,6 +561,84 @@ struct GameDriver pcktgalb_driver =
 	0, deco222_decode,
 	0,
 	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver pcktgal2_driver =
+{
+	__FILE__,
+	&pcktgal_driver,
+	"pcktgal2",
+	"Pocket Gal 2",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	pcktgal2_rom,
+	graphics_decode, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver spool3_driver =
+{
+	__FILE__,
+	&pcktgal_driver,
+	"spool3",
+	"Super Pool III",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	spool3_rom,
+	graphics_decode, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver spool3i_driver =
+{
+	__FILE__,
+	&pcktgal_driver,
+	"spool3i",
+	"Super Pool III (I-Vics)",
+	"1990",
+	"Data East Corporation (I-Vics license)",
+	"Bryan McPhail\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	spool3i_rom,
+	graphics_decode, 0,
+	0,
+	0,      /* sound_prom */
 
 	input_ports,
 

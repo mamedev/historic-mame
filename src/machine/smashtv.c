@@ -1059,9 +1059,9 @@ int wms_01c00060_r(int offset) /* protection and more */
 	if (cpu_getpc() == wms_protect_s) /* protection */
 	{
 		TMS34010_Regs Regs;
-		TMS34010_GetRegs(&Regs);
+		TMS34010_getregs(&Regs);
 		Regs.pc = wms_protect_d; /* skip it! */
-		TMS34010_SetRegs(&Regs);
+		TMS34010_setregs(&Regs);
 		return 0xffffffff;
 	}
 	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - unhandled read from protection chip\n",cpu_getpc());

@@ -238,7 +238,7 @@ void m68k_set_cpu_mode(int cpu_mode);
 
 /* Reset the CPU as if you asserted RESET */
 /* You *MUST* call this at least once to initialize the emulation */
-void m68k_pulse_reset(void);
+void m68k_pulse_reset(void *param);
 
 /* execute num_clks worth of instructions.  returns number of clks used */
 int m68k_execute(int num_clks);

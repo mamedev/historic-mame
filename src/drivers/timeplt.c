@@ -37,15 +37,22 @@ standard NMI at 0x66
 SOUND BOARD:
 same as Pooyan
 
+TODO: support RC filters on the sound output (should be similar to Scramble)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 
+extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
+void timeplt_videoram_w(int offset,int data);
+void timeplt_colorram_w(int offset,int data);
 void timeplt_flipscreen_w(int offset,int data);
 int timeplt_scanline_r(int offset);
+int timeplt_vh_start(void);
+void timeplt_vh_stop(void);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -125,8 +132,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0xa000, 0xa3ff, colorram_w, &colorram },
-	{ 0xa400, 0xa7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa000, 0xa3ff, timeplt_colorram_w, &timeplt_colorram },
+	{ 0xa400, 0xa7ff, timeplt_videoram_w, &timeplt_videoram },
 	{ 0xa800, 0xafff, MWA_RAM },
 	{ 0xb010, 0xb03f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb410, 0xb43f, MWA_RAM, &spriteram_2 },
@@ -329,10 +336,10 @@ static struct MachineDriver machine_driver =
 	32,32*4+64*4,
 	timeplt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	timeplt_vh_start,
+	timeplt_vh_stop,
 	timeplt_vh_screenrefresh,
 
 	/* sound hardware */

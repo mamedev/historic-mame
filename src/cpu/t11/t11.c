@@ -111,7 +111,7 @@ INLINE int POP (void)
 /****************************************************************************/
 /* Set all registers to given values                                        */
 /****************************************************************************/
-void t11_SetRegs(t11_Regs *Regs)
+void t11_setregs(t11_Regs *Regs)
 {
 	t11 = *Regs;
 }
@@ -119,7 +119,7 @@ void t11_SetRegs(t11_Regs *Regs)
 /****************************************************************************/
 /* Get all registers in given buffer                                        */
 /****************************************************************************/
-void t11_GetRegs(t11_Regs *Regs)
+void t11_getregs(t11_Regs *Regs)
 {
 	*Regs = t11;
 }
@@ -127,9 +127,46 @@ void t11_GetRegs(t11_Regs *Regs)
 /****************************************************************************/
 /* Return program counter                                                   */
 /****************************************************************************/
-unsigned t11_GetPC(void)
+unsigned t11_getpc(void)
 {
 	return PCD;
+}
+
+/****************************************************************************/
+/* Return a specific register                                               */
+/****************************************************************************/
+unsigned t11_getreg(int regnum)
+{
+	switch( regnum )
+	{
+		case 0: return t11.reg[0].w.l;
+		case 1: return t11.reg[1].w.l;
+		case 2: return t11.reg[2].w.l;
+		case 3: return t11.reg[3].w.l;
+		case 4: return t11.reg[4].w.l;
+		case 5: return t11.reg[5].w.l;
+		case 6: return t11.reg[6].w.l;
+		case 7: return t11.reg[7].w.l;
+	}
+	return 0;
+}
+
+/****************************************************************************/
+/* Set a specific register                                                  */
+/****************************************************************************/
+void t11_setreg(int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+		case 0: t11.reg[0].w.l = val; break;
+		case 1: t11.reg[1].w.l = val; break;
+		case 2: t11.reg[2].w.l = val; break;
+		case 3: t11.reg[3].w.l = val; break;
+		case 4: t11.reg[4].w.l = val; break;
+		case 5: t11.reg[5].w.l = val; break;
+		case 6: t11.reg[6].w.l = val; break;
+		case 7: t11.reg[7].w.l = val; break;
+	}
 }
 
 /****************************************************************************/
@@ -141,7 +178,7 @@ void t11_SetBank(int offset, unsigned char *base)
 }
 
 
-void t11_reset(void)
+void t11_reset(void *param)
 {
 	int i;
 	extern unsigned char *RAM;
@@ -162,6 +199,10 @@ void t11_reset(void)
 #endif
 }
 
+void t11_exit(void)
+{
+	/* nothing to do */
+}
 
 #if NEW_INTERRUPT_SYSTEM
 
@@ -173,16 +214,21 @@ void t11_set_nmi_line(int state)
 void t11_set_irq_line(int irqline, int state)
 {
     t11.irq_state[irqline] = state;
-	if (state == CLEAR_LINE) {
-		switch (irqline) {
+	if( state == CLEAR_LINE )
+	{
+		switch( irqline )
+		{
 			case 0: t11.pending_interrupts &= ~T11_IRQ0_BIT; break;
 			case 1: t11.pending_interrupts &= ~T11_IRQ1_BIT; break;
 			case 2: t11.pending_interrupts &= ~T11_IRQ2_BIT; break;
 			case 3: t11.pending_interrupts &= ~T11_IRQ3_BIT; break;
 		}
-	} else {
+	}
+	else
+	{
         t11.pending_interrupts &= ~T11_WAIT;
-		switch (irqline) {
+		switch( irqline )
+		{
 			case 0: t11.pending_interrupts |= T11_IRQ0_BIT; break;
 			case 1: t11.pending_interrupts |= T11_IRQ1_BIT; break;
 			case 2: t11.pending_interrupts |= T11_IRQ2_BIT; break;
@@ -226,7 +272,8 @@ static void Interrupt(void)
 		PCD = RWORD (0x60);
 		PSW = RWORD (0x62);
 #if NEW_INTERRUPT_SYSTEM
-		(*t11.irq_callback)(3);
+		if( t11.irq_callback )
+			(*t11.irq_callback)(3);
 #else
         t11.pending_interrupts &= ~T11_IRQ3_BIT;
 #endif
@@ -238,7 +285,8 @@ static void Interrupt(void)
 		PCD = RWORD (0x50);
 		PSW = RWORD (0x52);
 #if NEW_INTERRUPT_SYSTEM
-		(*t11.irq_callback)(2);
+		if( t11.irq_callback )
+			(*t11.irq_callback)(2);
 #else
 		t11.pending_interrupts &= ~T11_IRQ2_BIT;
 #endif
@@ -250,7 +298,8 @@ static void Interrupt(void)
 		PCD = RWORD (0x40);
 		PSW = RWORD (0x42);
 #if NEW_INTERRUPT_SYSTEM
-		(*t11.irq_callback)(1);
+		if( t11.irq_callback )
+			(*t11.irq_callback)(1);
 #else
 		t11.pending_interrupts &= ~T11_IRQ1_BIT;
 #endif
@@ -262,7 +311,8 @@ static void Interrupt(void)
 		PCD = RWORD (0x38);
 		PSW = RWORD (0x3a);
 #if NEW_INTERRUPT_SYSTEM
-		(*t11.irq_callback)(0);
+		if( t11.irq_callback )
+			(*t11.irq_callback)(0);
 #else
 		t11.pending_interrupts &= ~T11_IRQ0_BIT;
 #endif
@@ -332,10 +382,7 @@ change_pc (0xffff);
 
 
 #ifdef	MAME_DEBUG
-{
-  extern int mame_debug;
-  if (mame_debug) MAME_Debug();
-}
+		if (mame_debug) MAME_Debug();
 #endif
 
 		t11.op = ROPCODE ();
@@ -347,4 +394,55 @@ change_pc (0xffff);
 
 getout:
 	return cycles - t11_ICount;
+}
+
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *t11_info( void *context, int regnum )
+{
+	static char buffer[16][47+1];
+	static int which = 0;
+	t11_Regs *r = (t11_Regs *)context;
+
+	which = ++which % 16;
+    buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+    switch( regnum )
+	{
+		case CPU_INFO_NAME: return "T11";
+		case CPU_INFO_FAMILY: return "DEC T-11";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 1998";
+		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->reg[7].w.l); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->reg[6].w.l); break;
+#ifdef MAME_DEBUG
+		case CPU_INFO_DASM: r->reg[7].w.l += DasmT11(&ROM[r->reg[7].w.l], buffer[which], r->reg[7].w.l); break;
+#else
+		case CPU_INFO_DASM: sprintf(buffer[which], "%06o", READ_WORD(&ROM[r->reg[7].w.l])); r->reg[7].w.l += 2; break;
+#endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+				r->psw.b.l & 0x80 ? '?':'.',
+				r->psw.b.l & 0x40 ? 'I':'.',
+				r->psw.b.l & 0x20 ? 'I':'.',
+				r->psw.b.l & 0x10 ? 'T':'.',
+				r->psw.b.l & 0x08 ? 'N':'.',
+				r->psw.b.l & 0x04 ? 'Z':'.',
+				r->psw.b.l & 0x02 ? 'V':'.',
+				r->psw.b.l & 0x01 ? 'C':'.');
+			break;
+		case CPU_INFO_REG+ 0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
+		case CPU_INFO_REG+ 3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
+		case CPU_INFO_REG+ 4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
+		case CPU_INFO_REG+ 5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
+		case CPU_INFO_REG+ 6: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
+		case CPU_INFO_REG+ 7: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
+	}
+	return buffer[which];
 }

@@ -11,6 +11,9 @@ the paddle value directly into $1F, which has the same net result.
 
 If you have any questions about how this driver works, don't hesitate to
 ask.  - Mike Balfour (mab22@po.cwru.edu)
+
+CHANGES:
+MAB 05 MAR 99 - changed overlay support to use artwork functions
 ***************************************************************************/
 
 #include "driver.h"
@@ -174,23 +177,21 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-/* I think the actual ball layout is 3x3, but we split it into 3 1x3 sprites
-   so that we can handle the color overlay on a line by line basis. */
 static struct GfxLayout balllayout =
 {
-	1,3,	/* 1*3 character? */
-	6,	   /* 6 characters */
+	3,3,	/* 3*3 character? */
+	2,	    /* 2 characters */
 	1,		/* 1 bit per pixel */
-	{ 0 },		  /* no separation in 1 bpp */
-	{ 0 },
+	{ 0 },	/* no separation in 1 bpp */
 	{ 0, 1, 2 },
-	1*8 /* every char takes 1 consecutive byte */
+	{ 0*8, 1*8, 2*8 },
+	3*8 /* every char takes 3 consecutive byte */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0x00, 0x06 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &balllayout, 0x00, 0x06 }, /* offset into colors, # of colors */
+	{ 1, 0x0000, &charlayout, 0, 2 }, /* offset into colors, # of colors */
+	{ 1, 0x0400, &balllayout, 0, 2 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -198,21 +199,14 @@ static unsigned char palette[] =
 {
 	0x00,0x00,0x00, /* BLACK  */
 	0xff,0xff,0xff, /* WHITE  */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x80,0x00, /* ORANGE */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0xff,0x00, /* YELLOW */
 };
 
-static unsigned short colortable[] =
-{
-	0x00, 0x00,  /* Don't draw */
-	0x00, 0x01,  /* Draw */
-	0x00, 0x02,  /* Draw */
-	0x00, 0x03,  /* Draw */
-	0x00, 0x04,  /* Draw */
-	0x00, 0x05,  /* Draw */
+#define ARTWORK_COLORS 254
 
+static unsigned short colortable[ARTWORK_COLORS] =
+{
+	0, 0,  /* Don't draw */
+	0, 1,  /* Draw */
 };
 
 
@@ -244,10 +238,12 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+//	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
 	0,
 
-	VIDEO_TYPE_RASTER,
+//	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	sbrkout_vh_start,
 	sbrkout_vh_stop,

@@ -323,7 +323,7 @@ void wow_pattern_board_w(int offset,int data)
 
 		        /* Cycle Steal (slow scroll down!) */
 
-		        Z80_ICount -= 65336;
+				z80_ICount -= 65336;
             }
         }
         else
@@ -419,8 +419,8 @@ int Gorf_IO_r(int offset)
 	Z80_Regs regs;
 	int data;
 
-	Z80_GetRegs(&regs);
-	data = regs.BC.B.h & 0x0F;
+	z80_getregs(&regs);
+	data = regs.BC.b.h & 0x0F;
 
     Latch[(offset << 3) + (data >> 1)] = (data & 0x01);
 

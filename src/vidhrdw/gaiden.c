@@ -415,9 +415,10 @@ int gaiden_vh_start(void){
 
 			return 0;
 		}
+
+		gaiden_vh_stop();
 	}
 
-	gaiden_vh_stop();
 	return 1;
 }
 

@@ -13,10 +13,7 @@
 #ifndef _H6280_H
 #define _H6280_H
 
-/****************************************************************************
- * sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4
- ****************************************************************************/
-#include "types.h"
+#include "osd_cpu.h"
 
 #ifndef INLINE
 #define INLINE static inline
@@ -25,56 +22,33 @@
 #define LAZY_FLAGS	1
 
 /****************************************************************************
- * Define a 6280 word. Upper bytes are always zero
- ****************************************************************************/
-typedef 	union {
- #ifdef LSB_FIRST
-   struct { byte l,h,h2,h3; } B;
-   struct { word l,h; } W;
-   dword D;
- #else
-   struct { byte h3,h2,h,l; } B;
-   struct { word h,l; } W;
-   dword D;
- #endif
-}	h6280_pair;
-
-/****************************************************************************
- *** End of machine dependent definitions								  ***
- ****************************************************************************/
-
-/****************************************************************************
  * The 6280 registers.
  ****************************************************************************/
 typedef struct
 {
-	h6280_pair PC;					/* program counter */
-	h6280_pair SP;					/* stack pointer (always 100 - 1FF) */
-	h6280_pair ZP;					/* zero page address */
-	h6280_pair EA;					/* effective address */
-    byte a;                         /* Accumulator */
-	byte x;							/* X index register */
-	byte y;							/* Y index register */
-	byte p;							/* Processor status */
-	byte mmr[8]; 					/* Hu6280 memory mapper registers */
-	byte irq_mask;					/* interrupt enable/disable */
-	byte timer_status;				/* timer status */
+	PAIR  pc;						/* program counter */
+	PAIR  sp;						/* stack pointer (always 100 - 1FF) */
+	PAIR  zp;						/* zero page address */
+	PAIR  ea;						/* effective address */
+	UINT8 a;						/* Accumulator */
+	UINT8 x;						/* X index register */
+	UINT8 y;						/* Y index register */
+	UINT8 p;						/* Processor status */
+	UINT8 mmr[8];					/* Hu6280 memory mapper registers */
+	UINT8 irq_mask; 				/* interrupt enable/disable */
+	UINT8 timer_status; 			/* timer status */
 	int timer_value;				/* timer interrupt */
-	byte timer_load;				/* reload value */
-
+	UINT8 timer_load;				/* reload value */
 	int pending_interrupt;			/* nonzero if an interrupt is pending */
-
-#if NEW_INTERRUPT_SYSTEM
 	int nmi_state;
 	int irq_state[3];
 	int (*irq_callback)(int irqline);
-#endif
 
 #if LAZY_FLAGS
 	int NZ; 						/* last value (lazy N and Z flag) */
 #endif
 
-}	H6280_Regs;
+}	h6280_Regs;
 
 #define H6280_INT_NONE	0
 #define H6280_INT_NMI	1
@@ -93,28 +67,30 @@ typedef struct
 #define H6280_IRQ1_VEC	0xfff8
 #define H6280_IRQ2_VEC	0xfff6			/* Aka BRK vector */
 
-extern int H6280_ICount;				/* cycle count */
+extern int h6280_ICount;				/* cycle count */
 
-unsigned H6280_GetPC (void);			/* Get program counter */
-void H6280_GetRegs (H6280_Regs *Regs);	/* Get registers */
-void H6280_SetRegs (H6280_Regs *Regs);	/* Set registers */
-void H6280_Reset (void);				/* Reset registers to the initial values */
-int  H6280_Execute(int cycles); 		/* Execute cycles - returns number of cycles actually run */
+extern void h6280_reset (void *param);		   /* Reset registers to the initial values */
+extern void h6280_exit	(void); 			   /* Shut down CPU */
+extern int	h6280_execute(int cycles);		   /* Execute cycles - returns number of cycles actually run */
+extern void h6280_getregs (h6280_Regs *Regs);  /* Get registers */
+extern void h6280_setregs (h6280_Regs *Regs);  /* Set registers */
+extern unsigned h6280_getpc (void); 		   /* Get program counter */
+extern unsigned h6280_getreg (int regnum);
+extern void h6280_setreg (int regnum, unsigned val);
+extern void h6280_set_nmi_line(int state);
+extern void h6280_set_irq_line(int irqline, int state);
+extern void h6280_set_irq_callback(int (*callback)(int irqline));
+extern const char *h6280_info(void *context, int regnum);
 
+extern int H6280_irq_status_r(int offset);
+extern void H6280_irq_status_w(int offset, int data);
 
-#if NEW_INTERRUPT_SYSTEM
-extern void H6280_set_nmi_line(int state);
-extern void H6280_set_irq_line(int irqline, int state);
-extern void H6280_set_irq_callback(int (*callback)(int irqline));
-#else
-void H6280_Cause_Interrupt(int type);
-void H6280_Clear_Pending_Interrupts(void);
+extern int H6280_timer_r(int offset);
+extern void H6280_timer_w(int offset, int data);
+
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern int Dasm6280(char *buffer, int pc);
 #endif
-
-int H6280_irq_status_r(int offset);
-void H6280_irq_status_w(int offset, int data);
-
-int H6280_timer_r(int offset);
-void H6280_timer_w(int offset, int data);
 
 #endif /* _H6280_H */

@@ -1,5 +1,3 @@
-#define NICK_BUBLBOBL_CHANGE
-
 #include <math.h>
 #include "driver.h"
 #include "ay8910.h"
@@ -67,23 +65,6 @@ static void timer_callback_2203(int param)
 		/* User Interrupt call */
 		if(intf->handler[n]) intf->handler[n]();
 	}
-#ifdef NICK_BUBLBOBL_CHANGE
-	/* Sync another timer */
-	c ^= 1;
-	if( Timer[n][c] )
-	{
-		if( timer_timeleft(Timer[n][c]) < 0.008 )
-		{
-			timer_remove (Timer[n][c]);
-			Timer[n][c] = 0;
-			if( YM2203TimerOver(n,c) )
-			{	/* IRQ is active */;
-				/* User Interrupt call */
-				if(intf->handler[n]) intf->handler[n]();
-			}
-		}
-	}
-#endif
 }
 /* update request from fm.c */
 void YM2203UpdateRequest(int chip)

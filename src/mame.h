@@ -36,10 +36,10 @@ struct RunningMachine
 								/* remove cheat commands, and so on) */
 	int orientation;	/* see #defines in driver.h */
 	struct GfxElement *uifont;	/* font used by DisplayText() */
-	int uiwidth;
-	int uiheight;
-	int uixmin;
-	int uiymin;
+	int uifontwidth,uifontheight;
+	int uixmin,uiymin;
+	int uiwidth,uiheight;
+	int ui_orientation;
 };
 
 struct GameOptions {

@@ -620,7 +620,7 @@ ROM_START( bosconm_rom )
 	ROM_LOAD( "5000.5m",      0x1000, 0x1000, 0xe571e959 )
 	ROM_LOAD( "5100.5l",      0x2000, 0x1000, 0x17ac9511 )
 
-	ROM_REGION(0x0100)	/* sound prom */
+	ROM_REGION(0x0200)	/* sound prom */
 	ROM_LOAD( "bosco.spr",    0x0000, 0x0100, 0xee8ca3a8 )
 	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END

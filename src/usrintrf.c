@@ -25,8 +25,40 @@ const char *default_name(const struct InputPort *in);
 int default_key(const struct InputPort *in);
 int default_joy(const struct InputPort *in);
 
+
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 {
+	int temp,w,h;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		w = Machine->drv->screen_height;
+		h = Machine->drv->screen_width;
+	}
+	else
+	{
+		w = Machine->drv->screen_width;
+		h = Machine->drv->screen_height;
+	}
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = xmin; xmin = ymin; ymin = temp;
+		temp = xmax; xmax = ymax; ymax = temp;
+		temp = w; w = h; h = temp;
+	}
+	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+	{
+		temp = w - xmin - 1;
+		xmin = w - xmax - 1;
+		xmax = temp;
+	}
+	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+	{
+		temp = h - ymin - 1;
+		ymin = h - ymax - 1;
+		ymax = temp;
+	}
+
 	Machine->uiwidth = xmax-xmin+1;
 	Machine->uiheight = ymax-ymin+1;
 	Machine->uixmin = xmin;
@@ -223,15 +255,27 @@ struct GfxElement *builduifont(void)
 	/* hack: force the display into standard orientation to avoid */
 	/* creating a rotated font */
 	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
+	Machine->orientation = Machine->ui_orientation;
 
 	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	{
 		font = decodegfx(fontdata6x8,&fontlayout12x8);
+		Machine->uifontwidth = 12;
+		Machine->uifontheight = 8;
+	}
 	else if (Machine->uiwidth >= 420 && Machine->uiheight >= 420)
+	{
 		font = decodegfx(fontdata6x8,&fontlayout12x16);
+		Machine->uifontwidth = 12;
+		Machine->uifontheight = 16;
+	}
 	else
+	{
 		font = decodegfx(fontdata6x8,&fontlayout6x8);
+		Machine->uifontwidth = 6;
+		Machine->uifontheight = 8;
+	}
 
 	if (font)
 	{
@@ -267,7 +311,7 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the user interface */
 	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
+	Machine->orientation = Machine->ui_orientation;
 
 	osd_mark_dirty (0,0,Machine->uiwidth-1,Machine->uiheight-1,1);	/* ASG 971011 */
 
@@ -291,7 +335,7 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 			if (*c == '\n')
 			{
 				x = dt->x;
-				y += Machine->uifont->height + 1;
+				y += Machine->uifontheight + 1;
 				wrapped = 1;
 			}
 			else if (*c == ' ')
@@ -307,15 +351,15 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 					nc = c+1;
 					while (*nc && *nc != ' ' && *nc != '\n')
 					{
-						nextlen += Machine->uifont->width;
+						nextlen += Machine->uifontwidth;
 						nc++;
 					}
 
 					/* word wrap */
-					if (x + Machine->uifont->width + nextlen > Machine->uiwidth)
+					if (x + Machine->uifontwidth + nextlen > Machine->uiwidth)
 					{
 						x = dt->x;
-						y += Machine->uifont->height + 1;
+						y += Machine->uifontheight + 1;
 						wrapped = 1;
 					}
 				}
@@ -324,7 +368,7 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 			if (!wrapped)
 			{
 				drawgfx(Machine->scrbitmap,Machine->uifont,*c,dt->color,0,0,x+Machine->uixmin,y+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-				x += Machine->uifont->width;
+				x += Machine->uifontwidth;
 			}
 
 			c++;
@@ -338,8 +382,40 @@ void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 	if (update_screen) osd_update_video_and_audio();
 }
 
+/* Writes messages on the screen. */
+void ui_text(char *buf,int x,int y)
+{
+	int trueorientation,l,i;
+
+
+	/* hack: force the display into standard orientation to avoid */
+	/* rotating the text */
+	trueorientation = Machine->orientation;
+	Machine->orientation = Machine->ui_orientation;
+
+	l = strlen(buf);
+	for (i = 0;i < l;i++)
+		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
+				x + i*Machine->uifontwidth + Machine->uixmin,
+				y + Machine->uiymin, 0,TRANSPARENCY_NONE,0);
+
+	Machine->orientation = trueorientation;
+}
+
+
 INLINE void drawpixel(int x, int y, unsigned short color)
 {
+	int temp;
+
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = x; x = y; y = temp;
+	}
+	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+		x = Machine->scrbitmap->width - x - 1;
+	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+		y = Machine->scrbitmap->height - y - 1;
+
 	if (Machine->scrbitmap->depth == 16)
 		*(unsigned short *)&Machine->scrbitmap->line[y][x*2] = color;
 	else
@@ -348,7 +424,7 @@ INLINE void drawpixel(int x, int y, unsigned short color)
 	osd_mark_dirty(x,y,x,y,1);
 }
 
-INLINE void drawhline(int x, int w, int y, unsigned short color)
+INLINE void drawhline_norotate(int x, int w, int y, unsigned short color)
 {
 	if (Machine->scrbitmap->depth == 16)
 	{
@@ -362,9 +438,10 @@ INLINE void drawhline(int x, int w, int y, unsigned short color)
 	osd_mark_dirty(x,y,x+w-1,y,1);
 }
 
-INLINE void drawvline(int x, int y, int h, unsigned short color)
+INLINE void drawvline_norotate(int x, int y, int h, unsigned short color)
 {
-int i;
+	int i;
+
 	if (Machine->scrbitmap->depth == 16)
 	{
 		for (i = y; i < y+h; i++)
@@ -377,6 +454,50 @@ int i;
 	}
 
 	osd_mark_dirty(x,y,x,y+h-1,1);
+}
+
+INLINE void drawhline(int x, int w, int y, unsigned short color)
+{
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+			y = Machine->scrbitmap->width - y - 1;
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+			x = Machine->scrbitmap->height - x - w;
+
+		drawvline_norotate(y,x,w,color);
+	}
+	else
+	{
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+			x = Machine->scrbitmap->width - x - w;
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+			y = Machine->scrbitmap->height - y - 1;
+
+		drawhline_norotate(x,w,y,color);
+	}
+}
+
+INLINE void drawvline(int x, int y, int h, unsigned short color)
+{
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+			y = Machine->scrbitmap->width - y - h;
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+			x = Machine->scrbitmap->height - x - 1;
+
+		drawhline_norotate(y,h,x,color);
+	}
+	else
+	{
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+			x = Machine->scrbitmap->width - x - 1;
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+			y = Machine->scrbitmap->height - y - h;
+
+		drawvline_norotate(x,y,h,color);
+	}
 }
 
 
@@ -403,8 +524,6 @@ static void drawbox(int leftx,int topy,int width,int height)
 	drawvline(leftx+width-1,topy,height,white);
     for (y = topy+1;y < topy+height-1;y++)
 		drawhline(leftx+1,width-2,y,black);
-
-	osd_mark_dirty(leftx,topy,leftx+width-1,topy+height-1,1);
 }
 
 
@@ -477,10 +596,10 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 	count = i;
 
 	maxlen += 3;
-	if (maxlen * Machine->uifont->width > Machine->uiwidth)
-		maxlen = Machine->uiwidth / Machine->uifont->width;
+	if (maxlen * Machine->uifontwidth > Machine->uiwidth)
+		maxlen = Machine->uiwidth / Machine->uifontwidth;
 
-	visible = Machine->uiheight / (3 * Machine->uifont->height / 2) - 1;
+	visible = Machine->uiheight / (3 * Machine->uifontheight / 2) - 1;
 	topitem = 0;
 	if (visible > count) visible = count;
 	else
@@ -490,11 +609,11 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 		if (topitem > count - visible) topitem = count - visible;
 	}
 
-	leftoffs = (Machine->uiwidth - maxlen * Machine->uifont->width) / 2;
-	topoffs = (Machine->uiheight - (3 * visible + 1) * Machine->uifont->height / 2) / 2;
+	leftoffs = (Machine->uiwidth - maxlen * Machine->uifontwidth) / 2;
+	topoffs = (Machine->uiheight - (3 * visible + 1) * Machine->uifontheight / 2) / 2;
 
 	/* black background */
-	drawbox(leftoffs,topoffs,maxlen * Machine->uifont->width,(3 * visible + 1) * Machine->uifont->height / 2);
+	drawbox(leftoffs,topoffs,maxlen * Machine->uifontwidth,(3 * visible + 1) * Machine->uifontheight / 2);
 
 	curr_dt = 0;
 	for (i = 0;i < visible;i++)
@@ -505,16 +624,16 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 		{
 			dt[curr_dt].text = uparrow;
 			dt[curr_dt].color = DT_COLOR_WHITE;
-			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(uparrow)) / 2;
-			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * strlen(uparrow)) / 2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 			curr_dt++;
 		}
 		else if (i == visible - 1 && item < count - 1)
 		{
 			dt[curr_dt].text = downarrow;
 			dt[curr_dt].color = DT_COLOR_WHITE;
-			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(downarrow)) / 2;
-			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * strlen(downarrow)) / 2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 			curr_dt++;
 		}
 		else
@@ -523,8 +642,8 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 			{
 				dt[curr_dt].text = items[item];
 				dt[curr_dt].color = DT_COLOR_WHITE;
-				dt[curr_dt].x = leftoffs + 3*Machine->uifont->width/2;
-				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				dt[curr_dt].x = leftoffs + 3*Machine->uifontwidth/2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 				curr_dt++;
 				dt[curr_dt].text = subitems[item];
 				/* If this item is flagged, draw it in inverse print */
@@ -532,16 +651,16 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 					dt[curr_dt].color = DT_COLOR_YELLOW;
 				else
 					dt[curr_dt].color = DT_COLOR_WHITE;
-				dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1 - strlen(dt[curr_dt].text)) - Machine->uifont->width/2;
-				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-1 - strlen(dt[curr_dt].text)) - Machine->uifontwidth/2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 				curr_dt++;
 			}
 			else
 			{
 				dt[curr_dt].text = items[item];
 				dt[curr_dt].color = DT_COLOR_WHITE;
-				dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(items[item])) / 2;
-				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * strlen(items[item])) / 2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 				curr_dt++;
 			}
 		}
@@ -554,16 +673,16 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 		{
 			dt[curr_dt].text = leftarrow;
 			dt[curr_dt].color = DT_COLOR_WHITE;
-			dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-2 - strlen(subitems[selected])) - Machine->uifont->width/2 - 1;
-			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-2 - strlen(subitems[selected])) - Machine->uifontwidth/2 - 1;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 			curr_dt++;
 		}
 		if (arrowize_subitem & 2)
 		{
 			dt[curr_dt].text = rightarrow;
 			dt[curr_dt].color = DT_COLOR_WHITE;
-			dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1) - Machine->uifont->width/2;
-			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-1) - Machine->uifontwidth/2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 			curr_dt++;
 		}
 	}
@@ -571,14 +690,14 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 	{
 		dt[curr_dt].text = righthilight;
 		dt[curr_dt].color = DT_COLOR_WHITE;
-		dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1) - Machine->uifont->width/2;
-		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+		dt[curr_dt].x = leftoffs + Machine->uifontwidth * (maxlen-1) - Machine->uifontwidth/2;
+		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 		curr_dt++;
 	}
 	dt[curr_dt].text = lefthilight;
 	dt[curr_dt].color = DT_COLOR_WHITE;
-	dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
-	dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+	dt[curr_dt].x = leftoffs + Machine->uifontwidth/2;
+	dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 	curr_dt++;
 
 	dt[curr_dt].text = 0;	/* terminate array */
@@ -597,8 +716,8 @@ static void displaymessagewindow(const char *text)
 	int leftoffs,topoffs;
 	int	maxcols,maxrows;
 
-	maxcols = (Machine->uiwidth / Machine->uifont->width) - 1;
-	maxrows = (2 * Machine->uiheight - Machine->uifont->height) / (3 * Machine->uifont->height);
+	maxcols = (Machine->uiwidth / Machine->uifontwidth) - 1;
+	maxrows = (2 * Machine->uiheight - Machine->uifontheight) / (3 * Machine->uifontheight);
 
 	/* copy text, calculate max len, count lines, wrap long lines and crop height to fit */
 	maxlen = 0;
@@ -646,12 +765,12 @@ static void displaymessagewindow(const char *text)
 
 	maxlen += 1;
 
-	leftoffs = (Machine->uiwidth - Machine->uifont->width * maxlen) / 2;
+	leftoffs = (Machine->uiwidth - Machine->uifontwidth * maxlen) / 2;
 	if (leftoffs < 0) leftoffs = 0;
-	topoffs = (Machine->uiheight - (3 * lines + 1) * Machine->uifont->height / 2) / 2;
+	topoffs = (Machine->uiheight - (3 * lines + 1) * Machine->uifontheight / 2) / 2;
 
 	/* black background */
-	drawbox(leftoffs,topoffs,maxlen * Machine->uifont->width,(3 * lines + 1) * Machine->uifont->height / 2);
+	drawbox(leftoffs,topoffs,maxlen * Machine->uifontwidth,(3 * lines + 1) * Machine->uifontheight / 2);
 
 	curr_dt = 0;
 	c = textcopy;
@@ -671,14 +790,14 @@ static void displaymessagewindow(const char *text)
 		if (*c2 == '\t')	/* center text */
 		{
 			c2++;
-			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * (c - c2)) / 2;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * (c - c2)) / 2;
 		}
 		else
-			dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
+			dt[curr_dt].x = leftoffs + Machine->uifontwidth/2;
 
 		dt[curr_dt].text = c2;
 		dt[curr_dt].color = DT_COLOR_WHITE;
-		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifontheight/2;
 		curr_dt++;
 
 		i++;
@@ -725,7 +844,7 @@ static void showcharset(void)
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the user interface */
 	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
+	Machine->orientation = Machine->ui_orientation;
 
 
 	bank = 0;
@@ -739,7 +858,7 @@ static void showcharset(void)
 		int cpx,cpy,skip_chars;
 
 		cpx = Machine->uiwidth / Machine->gfx[bank]->width;
-		cpy = (Machine->uiheight - Machine->uifont->height) / Machine->gfx[bank]->height;
+		cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
 		skip_chars = cpx * cpy;
 
 		if (changed)
@@ -763,7 +882,7 @@ static void showcharset(void)
 						i+firstdrawn,color,  /*sprite num, color*/
 						0,0,
 						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-						Machine->uifont->height + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
 						0,TRANSPARENCY_NONE,0);
 
 					lastdrawn = i+firstdrawn;
@@ -786,7 +905,7 @@ static void showcharset(void)
 						i+firstdrawn,color,  /*sprite num, color*/
 						0,0,
 						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-						Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
 						16,16,&clip);
 
 					lastdrawn = i+firstdrawn;
@@ -933,12 +1052,12 @@ static void showtotalcolors(void)
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the text */
 	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
+	Machine->orientation = Machine->ui_orientation;
 
 	sprintf(buf,"%5d colors",total);
 	l = strlen(buf);
 	for (i = 0;i < l;i++)
-		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],total>256?DT_COLOR_YELLOW:DT_COLOR_WHITE,0,0,Machine->uixmin+i*Machine->uifont->width,Machine->uiymin,0,TRANSPARENCY_NONE,0);
+		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],total>256?DT_COLOR_YELLOW:DT_COLOR_WHITE,0,0,Machine->uixmin+i*Machine->uifontwidth,Machine->uiymin,0,TRANSPARENCY_NONE,0);
 
 	Machine->orientation = trueorientation;
 }
@@ -2095,7 +2214,7 @@ static int displaygameinfo(int selected)
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
 		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-				info_cpu_name(&Machine->drv->cpu[i]),
+				cpu_name(Machine->drv->cpu[i].cpu_type),
 				Machine->drv->cpu[i].cpu_clock / 1000000,
 				Machine->drv->cpu[i].cpu_clock % 1000000);
 
@@ -2541,25 +2660,25 @@ static void displayosd(const char *text,int percentage)
 	int avail;
 
 
-	avail = (Machine->uiwidth / Machine->uifont->width) * 19 / 20;
+	avail = (Machine->uiwidth / Machine->uifontwidth) * 19 / 20;
 
-	drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
-			(Machine->uiheight - 7*Machine->uifont->height/2),
-			avail * Machine->uifont->width,
-			3*Machine->uifont->height);
+	drawbox((Machine->uiwidth - Machine->uifontwidth * avail) / 2,
+			(Machine->uiheight - 7*Machine->uifontheight/2),
+			avail * Machine->uifontwidth,
+			3*Machine->uifontheight);
 
 	avail--;
 
-	drawbar((Machine->uiwidth - Machine->uifont->width * avail) / 2,
-			(Machine->uiheight - 3*Machine->uifont->height),
-			avail * Machine->uifont->width,
-			Machine->uifont->height,
+	drawbar((Machine->uiwidth - Machine->uifontwidth * avail) / 2,
+			(Machine->uiheight - 3*Machine->uifontheight),
+			avail * Machine->uifontwidth,
+			Machine->uifontheight,
 			percentage);
 
 	dt[0].text = text;
 	dt[0].color = DT_COLOR_WHITE;
-	dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(text)) / 2;
-	dt[0].y = (Machine->uiheight - 2*Machine->uifont->height) + 2;
+	dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text)) / 2;
+	dt[0].y = (Machine->uiheight - 2*Machine->uifontheight) + 2;
 	dt[1].text = 0;	/* terminate array */
 	displaytext(dt,0,0);
 }
@@ -2796,15 +2915,15 @@ static void displaymessage(const char *text)
 
 	avail = strlen(text)+2;
 
-	drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
-			Machine->uiheight - 3*Machine->uifont->height,
-			avail * Machine->uifont->width,
-			2*Machine->uifont->height);
+	drawbox((Machine->uiwidth - Machine->uifontwidth * avail) / 2,
+			Machine->uiheight - 3*Machine->uifontheight,
+			avail * Machine->uifontwidth,
+			2*Machine->uifontheight);
 
 	dt[0].text = text;
 	dt[0].color = DT_COLOR_WHITE;
-	dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(text)) / 2;
-	dt[0].y = Machine->uiheight - 5*Machine->uifont->height/2;
+	dt[0].x = (Machine->uiwidth - Machine->uifontwidth * strlen(text)) / 2;
+	dt[0].y = Machine->uiheight - 5*Machine->uifontheight/2;
 	dt[1].text = 0;	/* terminate array */
 	displaytext(dt,0,0);
 }
@@ -2891,6 +3010,7 @@ int handle_user_interface(void)
 		watchdog_reset_w(0,0);
 		if (osd_key_pressed_memory(OSD_KEY_LCONTROL))
 		{
+#include "cpu/z80/z80.h"
 			soundlatch_w(0,jukebox_selected);
 			cpu_cause_interrupt(1,Z80_NMI_INT);
 		}

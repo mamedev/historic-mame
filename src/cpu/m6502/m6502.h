@@ -44,18 +44,6 @@
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 1
 
-typedef 	union {
- #ifdef LSB_FIRST
-   struct { UINT8 l,h,h2,h3; } B;
-   struct { UINT16 l,h; } W;
-   UINT32 D;
- #else
-   struct { UINT8 h3,h2,h,l; } B;
-   struct { UINT16 h,l; } W;
-   UINT32 D;
- #endif
-}	m6502_pair;
-
 /****************************************************************************
  *** End of machine dependent definitions								  ***
  ****************************************************************************/
@@ -65,22 +53,22 @@ typedef 	union {
  ****************************************************************************/
 typedef struct
 {
-	m6502_pair pc;					/* program counter */
-	m6502_pair sp;					/* stack pointer (always 100 - 1FF) */
-	m6502_pair zp;					/* zero page address */
-	m6502_pair ea;					/* effective address */
-	UINT8 a;						/* Accumulator */
-	UINT8 x;						/* X index register */
-	UINT8 y;						/* Y index register */
-	UINT8 p;						/* Processor status */
-	int pending_interrupt;			/* nonzero if a NMI or IRQ is pending */
-	int after_cli;					/* pending IRQ and last insn cleared I */
-#if NEW_INTERRUPT_SYSTEM
-	int nmi_state;
-    int irq_state;
-	int (*irq_callback)(int irqline);	/* IRQ callback */
-#endif
-}   M6502_Regs;
+	UINT8	cpu_type;		/* currently selected cpu sub type */
+	void	(**insn)(void); /* pointer to the function pointer table */
+	PAIR	pc; 			/* program counter */
+	PAIR	sp; 			/* stack pointer (always 100 - 1FF) */
+	PAIR	zp; 			/* zero page address */
+	PAIR	ea; 			/* effective address */
+	UINT8	a;				/* Accumulator */
+	UINT8	x;				/* X index register */
+	UINT8	y;				/* Y index register */
+	UINT8	p;				/* Processor status */
+	UINT8	pending_interrupt; /* nonzero if a NMI or IRQ is pending */
+	UINT8	after_cli;		/* pending IRQ and last insn cleared I */
+	INT8	nmi_state;
+	INT8	irq_state;
+	int 	(*irq_callback)(int irqline);	/* IRQ callback */
+}	m6502_Regs;
 
 #define M6502_INT_NONE	0
 #define M6502_INT_IRQ	1
@@ -91,20 +79,83 @@ typedef struct
 #define M6502_IRQ_VEC	0xfffe
 
 extern int m6502_ICount;				/* cycle count */
-extern int M6502_Type;					/* CPU subtype */
 
-extern unsigned m6502_GetPC (void); 		   /* Get program counter */
-extern void m6502_GetRegs (M6502_Regs *Regs);  /* Get registers */
-extern void m6502_SetRegs (M6502_Regs *Regs);  /* Set registers */
-extern void m6502_Reset (void); 			   /* Reset registers to the initial values */
-extern int	m6502_Execute(int cycles);		   /* Execute cycles - returns number of cycles actually run */
-#if NEW_INTERRUPT_SYSTEM
+extern void m6502_reset (void *param);			/* Reset registers to the initial values */
+extern void m6502_exit	(void); 				/* Shut down CPU core */
+extern int	m6502_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
+extern void m6502_getregs (m6502_Regs *Regs);	/* Get registers */
+extern void m6502_setregs (m6502_Regs *Regs);	/* Set registers */
+extern unsigned m6502_getpc (void); 			/* Get program counter */
+extern unsigned m6502_getreg (int regnum);
+extern void m6502_setreg (int regnum, unsigned val);
 extern void m6502_set_nmi_line(int state);
 extern void m6502_set_irq_line(int irqline, int state);
 extern void m6502_set_irq_callback(int (*callback)(int irqline));
-#else
-extern void m6502_Cause_Interrupt(int type);
-extern void m6502_Clear_Pending_Interrupts(void);
+extern void m6502_state_save(void *file);
+extern void m6502_state_load(void *file);
+extern const char *m6502_info(void *context, int regnum);
+
+/****************************************************************************
+ * The 65C02
+ ****************************************************************************/
+
+#define M65C02_INT_NONE 				M6502_INT_NONE
+#define M65C02_INT_IRQ					M6502_INT_IRQ
+#define M65C02_INT_NMI					M6502_INT_NMI
+
+#define M65C02_NMI_VEC					M6502_NMI_VEC
+#define M65C02_RST_VEC					M6502_RST_VEC
+#define M65C02_IRQ_VEC					M6502_IRQ_VEC
+
+#define m65c02_ICount					m6502_ICount
+
+extern void m65c02_reset (void *param);
+#define m65c02_exit                     m6502_exit
+#define m65c02_execute					m6502_execute
+#define m65c02_setregs                  m6502_setregs
+#define m65c02_getregs                  m6502_getregs
+#define m65c02_getpc                    m6502_getpc
+#define m65c02_getreg					m6502_getreg
+#define m65c02_setreg					m6502_setreg
+#define m65c02_set_nmi_line 			m6502_set_nmi_line
+#define m65c02_set_irq_line 			m6502_set_irq_line
+#define m65c02_set_irq_callback 		m6502_set_irq_callback
+#define m65c02_state_save				m6502_state_save
+#define m65c02_state_load				m6502_state_load
+extern const char *m65c02_info(void *context, int regnum);
+
+/****************************************************************************
+ * The 6510
+ ****************************************************************************/
+
+#define M6510_INT_NONE					M6502_INT_NONE
+#define M6510_INT_IRQ					M6502_INT_IRQ
+#define M6510_INT_NMI					M6502_INT_NMI
+
+#define M6510_NMI_VEC					M6502_NMI_VEC
+#define M6510_RST_VEC					M6502_RST_VEC
+#define M6510_IRQ_VEC					M6502_IRQ_VEC
+
+#define m6510_ICount					m6502_ICount
+
+extern void m6510_reset (void *param);
+#define m6510_exit						m6502_exit
+#define m6510_execute					m6502_execute
+#define m6510_setregs                   m6502_setregs
+#define m6510_getregs                   m6502_getregs
+#define m6510_getpc                     m6502_getpc
+#define m6510_getreg					m6502_getreg
+#define m6510_setreg					m6502_setreg
+#define m6510_set_nmi_line              m6502_set_nmi_line
+#define m6510_set_irq_line				m6502_set_irq_line
+#define m6510_set_irq_callback			m6502_set_irq_callback
+#define m6510_state_save				m6502_state_save
+#define m6510_state_load				m6502_state_load
+extern const char *m6510_info(void *context, int regnum);
+
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern int Dasm6502(char *buffer, int pc);
 #endif
 
 #endif /* _M6502_H */

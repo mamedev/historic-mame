@@ -1,18 +1,23 @@
-/*******************************************************
+/***************************************************************************
  *
- *      Portable Signetics 2650 disassembler
+ *	Portable Signetics 2650 disassembler
  *
- *      Written by Juergen Buchmueller for use with MAME
+ *	Written by J. Buchmueller (pullmoll@t-online.de)
+ *	for the MAME project
  *
- *******************************************************/
+ **************************************************************************/
 
 #include <stdio.h>
 #include "memory.h"
 
-#define MNEMONIC_EQUATES
+/* Set this to 1 to disassemble using Z80 style mnemonics */
+#define HJB     1
 
-/* handy table to build relative offsets from HR */
-static  int     rel[0x100] = {
+/* Set this to 1 to give names to condition codes and flag bits */
+#define MNEMO   1
+
+/* handy table to build relative offsets from HR (holding register) */
+static int rel[0x100] = {
 	  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
 	 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 	 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -34,92 +39,106 @@ static  int     rel[0x100] = {
 typedef char* (*callback) (int addr);
 static callback find_symbol = 0;
 
-char *SYM(int addr)
+static char *SYM(int addr)
 {
-static char buff[8+1];
-char * s = 0;
-	if (find_symbol)
-		s = (*find_symbol)(addr);
-	if (s)
-		return s;
-	sprintf(buff, "%04X", addr);
+	static char buff[8+1];
+	char * s = NULL;
+
+    if (find_symbol) s = (*find_symbol)(addr);
+	if (s) return s;
+
+    sprintf(buff, "$%04x", addr);
 	return buff;
 }
 
 /* format an immediate */
-char    *IMM(int pc)
+static char *IMM(int pc)
 {
-static  char    buff[32];
-	sprintf(buff, "%02X", cpu_readop_arg(pc));
+	static char buff[32];
+
+    sprintf(buff, "$%02x", cpu_readop_arg(pc));
 	return buff;
 }
 
-#ifdef  MNEMONIC_EQUATES
-static  char cc[4] = { 'Z', 'P', 'M', 'A' };
+#if MNEMO
+static	char cc[4] = { 'z', 'p', 'm', 'a' };
 
 /* format an immediate for PSL */
-char    *IMM_PSL(int pc)
+static char *IMM_PSL(int pc)
 {
-static  char    buff[32];
-char    *p = buff;
-int     v = cpu_readop_arg(pc);
-	switch (v & 0xc0)
-	{
-		case 0x40: p += sprintf(p, "P+"); break;
-		case 0x80: p += sprintf(p, "M+"); break;
-		case 0xc0: p += sprintf(p, "CC+"); break;
+	static char buff[32];
+	char *p = buff;
+	int v = cpu_readop_arg(pc);
+
+    if (v == 0xff) {
+        p += sprintf(p, "all");
+	} else {
+		switch (v & 0xc0)
+		{
+			case 0x40: p += sprintf(p, "p+"); break;
+			case 0x80: p += sprintf(p, "m+"); break;
+			case 0xc0: p += sprintf(p, "cc+"); break;
+		}
+		if (v & 0x20)	/* inter digit carry */
+			p += sprintf(p, "idc+");
+		if (v & 0x10)	/* register select */
+			p += sprintf(p, "rs+");
+		if (v & 0x08)	/* with carry */
+			p += sprintf(p, "wc+");
+		if (v & 0x04)	/* overflow */
+			p += sprintf(p, "ovf+");
+		if (v & 0x02)	/* 2's complement comparisons */
+			p += sprintf(p, "com+");
+		if (v & 0x01)	/* carry */
+			p += sprintf(p, "c+");
+		if (p > buff)
+			*--p = '\0';
 	}
-	if (v & 0x20)
-		p += sprintf(p, "IDC+");
-	if (v & 0x10)
-		p += sprintf(p, "RS+");
-	if (v & 0x08)
-		p += sprintf(p, "WC+");
-	if (v & 0x04)
-		p += sprintf(p, "OVF+");
-	if (v & 0x02)
-		p += sprintf(p, "COM+");
-	if (v & 0x01)
-		p += sprintf(p, "C+");
-	if (p > buff)
-		*--p = '\0';
 	return buff;
 }
 
-/* format an immediate for PSU */
-char    *IMM_PSU(int pc)
+/* format an immediate for PSU (processor status upper) */
+static char *IMM_PSU(int pc)
 {
-static  char    buff[32];
-char    *p = buff;
-int     v = cpu_readop_arg(pc);
-	if (v & 0x80)
-		p += sprintf(p, "S+");
-	if (v & 0x40)
-		p += sprintf(p, "F+");
-	if (v & 0x20)
-		p += sprintf(p, "II+");
-	if (v & 0x10)
-		p += sprintf(p, "4+");
-	if (v & 0x08)
-		p += sprintf(p, "3+");
-	if (v & 0x04)
-		p += sprintf(p, "SP2+");
-	if (v & 0x02)
-		p += sprintf(p, "SP1+");
-	if (v & 0x01)
-		p += sprintf(p, "SP0+");
-	if (p > buff)
-		*--p = '\0';
+	static char buff[32];
+	char *p = buff;
+	int v = cpu_readop_arg(pc);
+
+	if (v == 0xff) {
+
+        p += sprintf(p, "all");
+
+    } else {
+
+        if (v & 0x80)   /* sign */
+			p += sprintf(p, "m+");
+		if (v & 0x40)
+			p += sprintf(p, "p+");
+		if (v & 0x20)	/* interrupt inhibit */
+			p += sprintf(p, "ii+");
+		if (v & 0x10)	/* unused bit 4 */
+			p += sprintf(p, "4+");
+		if (v & 0x08)	/* unused bit 3 */
+			p += sprintf(p, "3+");
+		if (v & 0x04)	/* stack pointer bit 2 */
+			p += sprintf(p, "sp2+");
+		if (v & 0x02)	/* stack pointer bit 1 */
+			p += sprintf(p, "sp1+");
+		if (v & 0x01)	/* stack pointer bit 0 */
+			p += sprintf(p, "sp0+");
+		if (p > buff)
+			*--p = '\0';
+	}
 	return buff;
 }
 #else
-static  char cc[4] = { '0', '1', '2', '3' };
+static	char cc[4] = { '0', '1', '2', '3' };
 #define IMM_PSL IMM
 #define IMM_PSU IMM
 #endif
 
 /* format an relative address */
-char    *REL(int pc)
+static char *REL(int pc)
 {
 static char buff[32];
 int o = cpu_readop_arg(pc);
@@ -128,7 +147,7 @@ int o = cpu_readop_arg(pc);
 }
 
 /* format an relative address (implicit page 0) */
-char    *REL0(int pc)
+static char *REL0(int pc)
 {
 static char buff[32];
 int o = cpu_readop_arg(pc);
@@ -137,33 +156,59 @@ int o = cpu_readop_arg(pc);
 }
 
 /* format a destination register and an absolute address */
-char    *ABS(int r, int pc)
+static char *ABS(int load, int r, int pc)
 {
-static char buff[32];
-int h = cpu_readop_arg(pc);
-int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
-int a = (pc & 0x6000) + ((h & 0x1f) << 8) + l;
-	switch (h >> 5)
-	{
-		case 0: sprintf(buff, "%d %s", r, SYM(a));      break;
-		case 1: sprintf(buff, "0 %s,R%d+", SYM(a), r);  break;
-		case 2: sprintf(buff, "0 %s,R%d-", SYM(a), r);  break;
-		case 3: sprintf(buff, "0 %s,R%d", SYM(a), r);   break;
-		case 4: sprintf(buff, "%d *%s", r, SYM(a));     break;
-		case 5: sprintf(buff, "0 *%s,R%d+", SYM(a), r); break;
-		case 6: sprintf(buff, "0 *%s,R%d-", SYM(a), r); break;
-		case 7: sprintf(buff, "0 *%s,R%d", SYM(a), r);  break;
+	static char buff[32];
+	int h = cpu_readop_arg(pc);
+	int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
+	int a = (pc & 0x6000) + ((h & 0x1f) << 8) + l;
+
+#if HJB
+	if (load) {
+		switch (h >> 5) {
+			case 0: sprintf(buff, "r%d,(%s)",       r, SYM(a)); break;
+			case 1: sprintf(buff, "r0,(%s,r%d++)",  SYM(a), r); break;
+			case 2: sprintf(buff, "r0,(%s,r%d--)",  SYM(a), r); break;
+			case 3: sprintf(buff, "r0,(%s,r%d)",    SYM(a), r); break;
+			case 4: sprintf(buff, "r%d,*(%s)",      r, SYM(a)); break;
+			case 5: sprintf(buff, "r0,*(%s,r%d++)", SYM(a), r); break;
+			case 6: sprintf(buff, "r0,*(%s,r%d--)", SYM(a), r); break;
+			case 7: sprintf(buff, "r0,*(%s,r%d)",   SYM(a), r); break;
+		}
+	} else {
+		switch (h >> 5) {
+			case 0: sprintf(buff, "(%s),r%d",       SYM(a), r); break;
+			case 1: sprintf(buff, "(%s,r%d++),r0",  SYM(a), r); break;
+			case 2: sprintf(buff, "(%s,r%d--),r0",  SYM(a), r); break;
+			case 3: sprintf(buff, "(%s,r%d),r0",    SYM(a), r); break;
+			case 4: sprintf(buff, "*(%s),r%d",      SYM(a), r); break;
+			case 5: sprintf(buff, "*(%s,r%d++),r0", SYM(a), r); break;
+			case 6: sprintf(buff, "*(%s,r%d--),r0", SYM(a), r); break;
+			case 7: sprintf(buff, "*(%s,r%d),r0",   SYM(a), r); break;
+        }
+    }
+#else
+    switch (h >> 5) {
+		case 0: sprintf(buff, "%d %s",      r, SYM(a)); break;
+		case 1: sprintf(buff, "0 %s,r%d+",  SYM(a), r); break;
+		case 2: sprintf(buff, "0 %s,r%d-",  SYM(a), r); break;
+		case 3: sprintf(buff, "0 %s,r%d",   SYM(a), r); break;
+		case 4: sprintf(buff, "%d *%s",     r, SYM(a)); break;
+		case 5: sprintf(buff, "0 *%s,r%d+", SYM(a), r); break;
+		case 6: sprintf(buff, "0 *%s,r%d-", SYM(a), r); break;
+		case 7: sprintf(buff, "0 *%s,r%d",  SYM(a), r); break;
 	}
-	return buff;
+#endif
+    return buff;
 }
 
 /* format an (branch) absolute address */
-char    *ADR(int pc)
+static char *ADR(int pc)
 {
-static char buff[32];
-int h = cpu_readop_arg(pc);
-int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
-int a = ((h & 0x7f) << 8) + l;
+	static char buff[32];
+	int h = cpu_readop_arg(pc);
+	int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
+	int a = ((h & 0x7f) << 8) + l;
 	if (h & 0x80)
 		sprintf(buff, "*%s", SYM(a));
 	else
@@ -172,299 +217,613 @@ int a = ((h & 0x7f) << 8) + l;
 }
 
 /* disassemble one instruction at PC into buff. return byte size of instr */
-int     Dasm2650(char * buff, int PC)
+int Dasm2650(char * buff, int PC)
 {
-int pc = PC;
-int op = cpu_readop(pc);
-int rv = op & 3;
-	pc += 1;
+	int pc = PC;
+	int op = cpu_readop(pc);
+	int rv = op & 3;
+
+    pc += 1;
 	switch (op)
 	{
 		case 0x00: case 0x01: case 0x02: case 0x03:
-			sprintf(buff, "LODZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "ld   r0,r%d", rv);
+#else
+			sprintf(buff, "lodz,%d", rv);
+#endif
+            break;
 		case 0x04: case 0x05: case 0x06: case 0x07:
-			sprintf(buff, "LODI,%d %s", rv, IMM(pc)); pc+=1;
+#if HJB
+			sprintf(buff, "ld   r%d,%s", rv, IMM(pc));
+#else
+			sprintf(buff, "lodi,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x08: case 0x09: case 0x0a: case 0x0b:
-			sprintf(buff, "LODR,%d %s", rv, REL(pc)); pc+=1;
+#if HJB
+			sprintf(buff, "ld   r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "lodr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-			sprintf(buff, "LODA,%s", ABS(rv,pc)); pc+=2;
+#if HJB
+			sprintf(buff, "ld   %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "loda,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0x10: case 0x11:
 			sprintf(buff, "****   %02X",op);
 			break;
 		case 0x12:
-			sprintf(buff, "SPSU");
-			break;
+#if HJB
+			sprintf(buff, "ld   psu,r0");
+#else
+            sprintf(buff, "spsu");
+#endif
+            break;
 		case 0x13:
-			sprintf(buff, "SPSL");
-			break;
+#if HJB
+			sprintf(buff, "ld   psl,r0");
+#else
+            sprintf(buff, "spsl");
+#endif
+            break;
 		case 0x14: case 0x15: case 0x16: case 0x17:
-			sprintf(buff, "RETC   %c", cc[rv]);
-			break;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "ret");
+            else
+				sprintf(buff, "ret  %c", cc[rv]);
+#else
+            sprintf(buff, "retc   %c", cc[rv]);
+#endif
+            break;
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
-			sprintf(buff, "BCTR,%c %s", cc[rv], REL(pc));
-			pc+=1;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "jr   %s", REL(pc));
+			else
+				sprintf(buff, "jr   %c,%s", cc[rv], REL(pc));
+#else
+            sprintf(buff, "bctr,%c %s", cc[rv], REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-			sprintf(buff, "BCTA,%c %s", cc[rv], ADR(pc));
-			pc+=2;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "jp   %s", ADR(pc));
+			else
+				sprintf(buff, "jp   %c,%s", cc[rv], ADR(pc));
+#else
+            sprintf(buff, "bcta,%c %s", cc[rv], ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0x20: case 0x21: case 0x22: case 0x23:
-			sprintf(buff, "EORZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "xor  r0,r%d", rv);
+#else
+            sprintf(buff, "eorz,%d", rv);
+#endif
+            break;
 		case 0x24: case 0x25: case 0x26: case 0x27:
-			sprintf(buff, "EORI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "xor  r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "eori,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x28: case 0x29: case 0x2a: case 0x2b:
-			sprintf(buff, "EORR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "xor  r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "eorr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-			sprintf(buff, "EORA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "xor  %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "eora,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0x30: case 0x31: case 0x32: case 0x33:
-			sprintf(buff, "REDC,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "in   r%d,(ctl)", rv);
+#else
+            sprintf(buff, "redc,%d", rv);
+#endif
+            break;
 		case 0x34: case 0x35: case 0x36: case 0x37:
-			sprintf(buff, "RETE   %c", cc[rv]);
-			break;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "iret");
+            else
+				sprintf(buff, "iret %c", cc[rv]);
+#else
+            sprintf(buff, "rete   %c", cc[rv]);
+#endif
+            break;
 		case 0x38: case 0x39: case 0x3a: case 0x3b:
-			sprintf(buff, "BSTR,%c %s", cc[rv], REL(pc));
-			pc+=1;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "calr %s", REL(pc));
+			else
+				sprintf(buff, "calr %c,%s", cc[rv], REL(pc));
+#else
+            sprintf(buff, "bstr,%c %s", cc[rv], REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-			sprintf(buff, "BSTA,%c %s", cc[rv], ADR(pc));
-			pc+=2;
+#if HJB
+			if (rv == 3)
+				sprintf(buff, "call %s", ADR(pc));
+			else
+				sprintf(buff, "call %c,%s", cc[rv], ADR(pc));
+#else
+            sprintf(buff, "bsta,%c %s", cc[rv], ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0x40:
-			sprintf(buff, "HALT");
+			sprintf(buff, "halt");
 			break;
 		case 0x41: case 0x42: case 0x43:
-			sprintf(buff, "ANDZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "and  r0,r%d", rv);
+#else
+            sprintf(buff, "andz,%d", rv);
+#endif
+            break;
 		case 0x44: case 0x45: case 0x46: case 0x47:
-			sprintf(buff, "ANDI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "and  r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "andi,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x48: case 0x49: case 0x4a: case 0x4b:
-			sprintf(buff, "ANDR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "and  r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "andr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x4c: case 0x4d: case 0x4e: case 0x4f:
-			sprintf(buff, "ANDA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "and  %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "anda,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0x50: case 0x51: case 0x52: case 0x53:
-			sprintf(buff, "RRR,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "ror  r%d", rv);
+#else
+            sprintf(buff, "rrr,%d", rv);
+#endif
+            break;
 		case 0x54: case 0x55: case 0x56: case 0x57:
-			sprintf(buff, "REDE,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "in   r%d,(%s)", rv, IMM(pc));
+#else
+            sprintf(buff, "rede,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x58: case 0x59: case 0x5a: case 0x5b:
-			sprintf(buff, "BRNR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "jrnz r%d,%s", rv, REL(pc));
+#else
+            sprintf(buff, "brnr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x5c: case 0x5d: case 0x5e: case 0x5f:
-			sprintf(buff, "BRNA,%d %s", rv, ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "jpnz r%d,%s", rv, ADR(pc));
+#else
+            sprintf(buff, "brna,%d %s", rv, ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0x60: case 0x61: case 0x62: case 0x63:
-			sprintf(buff, "IORZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "or   r0,r%d", rv);
+#else
+            sprintf(buff, "iorz,%d", rv);
+#endif
+            break;
 		case 0x64: case 0x65: case 0x66: case 0x67:
-			sprintf(buff, "IORI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "or   r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "iori,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x68: case 0x69: case 0x6a: case 0x6b:
-			sprintf(buff, "IORR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "or   r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "iorr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x6c: case 0x6d: case 0x6e: case 0x6f:
-			sprintf(buff, "IORA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "or   %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "iora,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0x70: case 0x71: case 0x72: case 0x73:
-			sprintf(buff, "REDD,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "in   r%d,(data)", rv);
+#else
+            sprintf(buff, "redd,%d", rv);
+#endif
+            break;
 		case 0x74:
-			sprintf(buff, "CPSU   %s", IMM_PSU(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "res  psu,%s", IMM_PSU(pc));
+#else
+            sprintf(buff, "cpsu   %s", IMM_PSU(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x75:
-			sprintf(buff, "CPSL   %s", IMM_PSL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "res  psl,%s", IMM_PSL(pc));
+#else
+            sprintf(buff, "cpsl   %s", IMM_PSL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x76:
-			sprintf(buff, "PPSU   %s", IMM_PSU(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "set  psu,%s", IMM_PSU(pc));
+#else
+            sprintf(buff, "ppsu   %s", IMM_PSU(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x77:
-			sprintf(buff, "PPSL   %s", IMM_PSL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "set  psl,%s", IMM_PSL(pc));
+#else
+            sprintf(buff, "ppsl   %s", IMM_PSL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x78: case 0x79: case 0x7a: case 0x7b:
-			sprintf(buff, "BSNR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "call r%d-nz,%s", rv, REL(pc));
+#else
+            sprintf(buff, "bsnr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x7c: case 0x7d: case 0x7e: case 0x7f:
-			sprintf(buff, "BSNA,%d %s", rv, ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "call r%d-nz,%s", rv, ADR(pc));
+#else
+            sprintf(buff, "bsna,%d %s", rv, ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0x80: case 0x81: case 0x82: case 0x83:
-			sprintf(buff, "ADDZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "add  r0,r%d", rv);
+#else
+            sprintf(buff, "addz,%d", rv);
+#endif
+            break;
 		case 0x84: case 0x85: case 0x86: case 0x87:
-			sprintf(buff, "ADDI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "add  r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "addi,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x88: case 0x89: case 0x8a: case 0x8b:
-			sprintf(buff, "ADDR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "add  r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "addr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x8c: case 0x8d: case 0x8e: case 0x8f:
-			sprintf(buff, "ADDA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "add  %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "adda,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0x90: case 0x91:
 			sprintf(buff, "****   %02X",op);
 			break;
 		case 0x92:
-			sprintf(buff, "LPSU");
-			break;
+#if HJB
+			sprintf(buff, "ld   r0,psu");
+#else
+            sprintf(buff, "lpsu");
+#endif
+            break;
 		case 0x93:
-			sprintf(buff, "LPSL");
-			break;
+#if HJB
+			sprintf(buff, "ld   r0,psl");
+#else
+            sprintf(buff, "lpsl");
+#endif
+            break;
 		case 0x94: case 0x95: case 0x96: case 0x97:
-			sprintf(buff, "DAR,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "daa  r%d", rv);
+#else
+            sprintf(buff, "dar,%d", rv);
+#endif
+            break;
 		case 0x98: case 0x99: case 0x9a:
-			sprintf(buff, "BCFR,%c %s", cc[rv], REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "jr   n%c,%s", cc[rv], REL(pc));
+#else
+            sprintf(buff, "bcfr,%c %s", cc[rv], REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x9b:
-			sprintf(buff, "ZBRR   %s", REL0(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "jr0  %s", REL0(pc));
+#else
+			sprintf(buff, "zbrr   %s", REL0(pc));
+#endif
+            pc+=1;
 			break;
 		case 0x9c: case 0x9d: case 0x9e:
-			sprintf(buff, "BCFA,%c %s", cc[rv], ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "jp   n%c,%s", cc[rv], ADR(pc));
+#else
+            sprintf(buff, "bcfa,%c %s", cc[rv], ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0x9f:
-			sprintf(buff, "BXA    %s", ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "jp   %s+r3", ADR(pc));
+#else
+            sprintf(buff, "bxa    %s", ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0xa0: case 0xa1: case 0xa2: case 0xa3:
-			sprintf(buff, "SUBZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "sub  r0,r%d", rv);
+#else
+            sprintf(buff, "subz,%d", rv);
+#endif
+            break;
 		case 0xa4: case 0xa5: case 0xa6: case 0xa7:
-			sprintf(buff, "SUBI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "sub  r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "subi,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xa8: case 0xa9: case 0xaa: case 0xab:
-			sprintf(buff, "SUBR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "sub  r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "subr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xac: case 0xad: case 0xae: case 0xaf:
-			sprintf(buff, "SUBA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "sub  %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "suba,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0xb0: case 0xb1: case 0xb2: case 0xb3:
-			sprintf(buff, "WRTC,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "out  (ctrl),r%d", rv);
+#else
+            sprintf(buff, "wrtc,%d", rv);
+#endif
+            break;
 		case 0xb4:
-			sprintf(buff, "TPSU   %s", IMM_PSU(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "bit  psu,%s", IMM_PSU(pc));
+#else
+            sprintf(buff, "tpsu   %s", IMM_PSU(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xb5:
-			sprintf(buff, "TPSL   %s", IMM_PSL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "bit  psl,%s", IMM_PSU(pc));
+#else
+            sprintf(buff, "tpsl   %s", IMM_PSL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xb6: case 0xb7:
 			sprintf(buff, "****   %02X", op);
 			break;
 		case 0xb8: case 0xb9: case 0xba:
-			sprintf(buff, "BSFR,%c %s", cc[rv], REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "calr n%c,%s", cc[rv], REL(pc));
+#else
+            sprintf(buff, "bsfr,%c %s", cc[rv], REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xbb:
-			sprintf(buff, "ZBSR   %s", REL0(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "cal0 %s", REL0(pc));
+#else
+            sprintf(buff, "zbsr   %s", REL0(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xbc: case 0xbd: case 0xbe:
-			sprintf(buff, "BSFA,%c %s", cc[rv], ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "call n%c,%s", cc[rv], ADR(pc));
+#else
+            sprintf(buff, "bsfa,%c %s", cc[rv], ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0xbf:
-			sprintf(buff, "BSXA   %s", ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "call  %s+r3", ADR(pc));
+#else
+            sprintf(buff, "bsxa   %s", ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0xc0:
-			sprintf(buff, "NOP");
+			sprintf(buff, "nop");
 			break;
 		case 0xc1: case 0xc2: case 0xc3:
-			sprintf(buff, "STRZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "ld   r%d,r0", rv);
+#else
+            sprintf(buff, "strz,%d", rv);
+#endif
+            break;
 		case 0xc4: case 0xc5: case 0xc6: case 0xc7:
 			sprintf(buff, "****   %02X", op);
 			break;
 		case 0xc8: case 0xc9: case 0xca: case 0xcb:
-			sprintf(buff, "STRR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "ld   (%s),r%d", REL(pc), rv);
+#else
+            sprintf(buff, "strr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xcc: case 0xcd: case 0xce: case 0xcf:
-			sprintf(buff, "STRA,%s", ABS(rv,pc));
+#if HJB
+			sprintf(buff, "ld   %s", ABS(0,rv,pc));
+#else
+			sprintf(buff, "stra,%s", ABS(1,rv,pc));
+#endif
 			pc+=2;
 			break;
 		case 0xd0: case 0xd1: case 0xd2: case 0xd3:
-			sprintf(buff, "RRL,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "rol  r%d", rv);
+#else
+            sprintf(buff, "rrl,%d", rv);
+#endif
+            break;
 		case 0xd4: case 0xd5: case 0xd6: case 0xd7:
-			sprintf(buff, "WRTE,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "out r%d,(%s)", rv, IMM(pc));
+#else
+            sprintf(buff, "wrte,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xd8: case 0xd9: case 0xda: case 0xdb:
-			sprintf(buff, "BIRR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "ijnz r%d,%s", rv, REL(pc));
+#else
+            sprintf(buff, "birr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xdc: case 0xdd: case 0xde: case 0xdf:
-			sprintf(buff, "BIRA,%d %s", rv, ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "ijnz r%d,%s", rv, ADR(pc));
+#else
+            sprintf(buff, "bira,%d %s", rv, ADR(pc));
+#endif
+            pc+=2;
 			break;
 		case 0xe0: case 0xe1: case 0xe2: case 0xe3:
-			sprintf(buff, "COMZ,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "cp   r0,%d", rv);
+#else
+            sprintf(buff, "comz,%d", rv);
+#endif
+            break;
 		case 0xe4: case 0xe5: case 0xe6: case 0xe7:
-			sprintf(buff, "COMI,%d %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "cp   r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "comi,%d %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xe8: case 0xe9: case 0xea: case 0xeb:
-			sprintf(buff, "COMR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "cp   r%d,(%s)", rv, REL(pc));
+#else
+            sprintf(buff, "comr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xec: case 0xed: case 0xee: case 0xef:
-			sprintf(buff, "COMA,%s", ABS(rv,pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "cp   %s", ABS(1,rv,pc));
+#else
+			sprintf(buff, "coma,%s", ABS(1,rv,pc));
+#endif
+            pc+=2;
 			break;
 		case 0xf0: case 0xf1: case 0xf2: case 0xf3:
-			sprintf(buff, "WRTD,%d", rv);
-			break;
+#if HJB
+			sprintf(buff, "out  (data),r%d", rv);
+#else
+            sprintf(buff, "wrtd,%d", rv);
+#endif
+            break;
 		case 0xf4: case 0xf5: case 0xf6: case 0xf7:
-			sprintf(buff, "TMI,%d  %s", rv, IMM(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "test r%d,%s", rv, IMM(pc));
+#else
+            sprintf(buff, "tmi,%d  %s", rv, IMM(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xf8: case 0xf9: case 0xfa: case 0xfb:
-			sprintf(buff, "BDRR,%d %s", rv, REL(pc));
-			pc+=1;
+#if HJB
+			sprintf(buff, "djnz r%d,%s", rv, REL(pc));
+#else
+            sprintf(buff, "bdrr,%d %s", rv, REL(pc));
+#endif
+            pc+=1;
 			break;
 		case 0xfc: case 0xfd: case 0xfe: case 0xff:
-			sprintf(buff, "BDRA,%d %s", rv, ADR(pc));
-			pc+=2;
+#if HJB
+			sprintf(buff, "djnz r%d,%s", rv, ADR(pc));
+#else
+            sprintf(buff, "bdra,%d %s", rv, ADR(pc));
+#endif
+            pc+=2;
 			break;
 	}
 	return pc - PC;

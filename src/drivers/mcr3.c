@@ -54,6 +54,7 @@ Known issues:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
+#include "machine/z80fmly.h"
 
 void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -1119,6 +1120,12 @@ static struct TMS5220interface tms5220_interface =
 };
 
 
+static Z80_DaisyChain daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,-1} 		/* end mark */
+};
+
 
 /***************************************************************************
 
@@ -1135,8 +1142,9 @@ static struct MachineDriver tapper_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -1180,8 +1188,9 @@ static struct MachineDriver dotron_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			readmem,writemem,dt_readport,dt_writeport,
-			dotron_interrupt,1
-		},
+			dotron_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -1237,8 +1246,9 @@ static struct MachineDriver destderb_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			readmem,writemem,destderb_readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -1282,8 +1292,9 @@ static struct MachineDriver timber_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -1327,8 +1338,9 @@ static struct MachineDriver rampage_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			rampage_readmem,rampage_writemem,readport,rm_writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_M68000 | CPU_AUDIO_CPU,
 			7500000,	/* 7.5 Mhz */
@@ -1372,8 +1384,9 @@ static struct MachineDriver maxrpm_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			rampage_readmem,rampage_writemem,maxrpm_readport,mr_writeport,
-			mcr_interrupt,1
-		}
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        }
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - sound CPU synchronization is done via timers */
@@ -1410,8 +1423,9 @@ static struct MachineDriver sarge_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			rampage_readmem,rampage_writemem,sarge_readport,sa_writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			2250000,	/* 2.25 Mhz??? */
@@ -1455,8 +1469,9 @@ static struct MachineDriver spyhunt_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			spyhunt_readmem,spyhunt_writemem,spyhunt_readport,sh_writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */
@@ -1512,8 +1527,9 @@ static struct MachineDriver crater_machine_driver =
 			5000000,	/* 5 Mhz */
 			0,
 			spyhunt_readmem,spyhunt_writemem,readport,cr_writeport,
-			mcr_interrupt,1
-		},
+			mcr_interrupt,1,
+			0,0,daisy_chain 	/* HJB 990314 */
+        },
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,	/* 2 Mhz */

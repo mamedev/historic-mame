@@ -133,12 +133,12 @@ struct ipd inputport_defaults[] =
 	{ IPT_DIAL | IPF_PLAYER2,  "Dial 2",          IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_DIAL | IPF_PLAYER3,  "Dial 3",          IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_DIAL | IPF_PLAYER4,  "Dial 4",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Trak X",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
+	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Trak Y",          IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
+	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   IPF_DEC(OSD_KEY_UP)   | IPF_INC(OSD_KEY_DOWN)  | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_UP)   | IPF_INC(OSD_JOY_DOWN)  | IPF_DELTA(4) },
 	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", IPF_DELTA(4), IPF_DELTA(4) },

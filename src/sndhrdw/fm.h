@@ -12,6 +12,10 @@
 #define BUILD_YM2612 1		/* build YM2612 emurator */
 #endif
 
+#ifdef __MMSND__
+#define BUILD_YM2612 1		/* build YM2612 emurator */
+#endif
+
 #define BUILD_YM2151 1		/* build YM2151(OPM) emurator */
 
 /* stereo mixing / separate */
@@ -138,6 +142,7 @@ int YM2610Init(int num, int baseclock, int rate, int *pcmroma, int *pcmromb,
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);
 void YM2610UpdateOne(int num, void **buffer, int length);
+void YM2610BUpdateOne(int num, void **buffer, int length);
 
 int YM2610Write(int n, int a,int v);
 unsigned char YM2610Read(int n,int a);

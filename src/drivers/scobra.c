@@ -1,72 +1,62 @@
 /***************************************************************************
 
-Super Cobra memory map (preliminary)
+Super Cobra and Co. memory map (preliminary)
 
-0000-5fff ROM (Lost Tomb: 0000-6fff)
-8000-87ff RAM
-8800-8bff Video RAM
-9000-90ff Object RAM
-  9000-903f  screen attributes
-  9040-905f  sprites
-  9060-907f  bullets
-  9080-90ff  unused?
+Main CPU:
+--------
+
+There seems to be 2 main board types:
+
+Type 1      Type 2
+
+0000-7fff   0000-7fff	ROM (not all games use the entire range)
+8000-87ff   8000-87ff	RAM
+8800-8bff   9000-93ff	video RAM
+9000-903f   8800-883f	screen attributes
+9040-905f   8840-885f	sprites
+9060-907f   8860-887f	bullets
 
 read:
-b000      Watchdog Reset
-9800      IN0
-9801      IN1
-9802      IN2
-
-*
- * IN0 (all bits are inverted)
- * bit 7 : COIN 1
- * bit 6 : COIN 2
- * bit 5 : LEFT player 1
- * bit 4 : RIGHT player 1
- * bit 3 : SHOOT 1 player 1
- * bit 2 : CREDIT
- * bit 1 : SHOOT 2 player 1
- * bit 0 : UP player 2 (TABLE only)
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : START 1
- * bit 6 : START 2
- * bit 5 : LEFT player 2 (TABLE only)
- * bit 4 : RIGHT player 2 (TABLE only)
- * bit 3 : SHOOT 1 player 2 (TABLE only)
- * bit 2 : SHOOT 2 player 2 (TABLE only)
- * bit 1 : nr of lives  0 = 3  1 = 5
- * bit 0 : allow continue 0 = NO  1 = YES
-*
- * IN2 (all bits are inverted)
- * bit 7 : protection check?
- * bit 6 : DOWN player 1
- * bit 5 : protection check?
- * bit 4 : UP player 1
- * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 2 :\ coins per play
- * bit 1 :/ (00 = 99 credits!)
- * bit 0 : DOWN player 2 (TABLE only)
- *
+b000      	9800		watchdog reset
+9800      	a000		IN0
+9801      	a004		IN1
+9802		a008		IN2
 
 write:
-a801      interrupt enable
-a802      coin counter
-a803      ? (POUT1)
-a804      stars on
-a805      ? (POUT2)
-a806      screen vertical flip
-a807      screen horizontal flip
-a000      To AY-3-8910 port A (commands for the audio CPU)
-a001      bit 3 = trigger interrupt on audio CPU
+a801      	b004		interrupt enable
+a802      	b006		coin counter
+a803      	b002		? (POUT1)
+a804      	b000		stars on
+a805      	b00a		? (POUT2)
+a806      	b00e		screen vertical flip
+a807      	b00c		screen horizontal flip
+a000      	a800		To AY-3-8910 port A (commands for the audio CPU)
+a001      	a804		bit 3 = trigger interrupt on audio CPU
+
+
+Sound CPU:
+
+0000-1fff   ROM
+8000-83ff   RAM
+9000-9fff   R/C Filter (2 bits for each of the 6 channels)
+
+I/O:
+
+10  		AY8910 #0 control
+20			AY8910 #0 data port
+40			AY8910 #1 control port
+80			AY8910 #1 data port
+
 
 TODO:
+----
+
 	Need correct color PROMs for:
 		Super Bond
 		Anteater
 
 Notes:
+-----
 
 - Calipso was apperantly redesigned for two player simultanious play.
   There is code at $298a to flip the screen, but location $8669 has to be
@@ -83,26 +73,29 @@ Notes:
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
+
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void rescue_vh_convert_color_prom  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void minefld_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+
+int  scramble_vh_start(void);
+int  rescue_vh_start  (void);
+int  minefld_vh_start (void);
+int  calipso_vh_start (void);
+
+void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
-int scramble_vh_start(void);
-void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int scramble_vh_interrupt(void);
-void scramble_background_w(int offset, int data);	/* MJC 051297 */
+int  scramble_vh_interrupt(void);
+void scramble_background_w(int offset, int data);
 void scramble_filter_w(int offset, int data);
 
-int scramble_portB_r(int offset);
-int frogger_portB_r(int offset);
+int  scramble_portB_r(int offset);
+int  frogger_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
 
-int rescue_vh_start(void);							/* MJC */
-int minefld_vh_start(void);
-int calipso_vh_start(void);
 
 static void scobra_init_machine(void)
 {
@@ -130,9 +123,10 @@ static void stratgyx_coin_counter_w(int offset, int data)
 	coin_counter_w(offset >> 1, data);
 }
 
-static struct MemoryReadAddress readmem[] =
+
+static struct MemoryReadAddress type1_readmem[] =
 {
-	{ 0x0000, 0x6fff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x9800, 0x9800, input_port_0_r },	/* IN0 */
@@ -142,8 +136,9 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress type1_writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
 	{ 0x8c00, 0x8fff, MWA_NOP},
@@ -162,20 +157,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress stratgyx_readmem[] =
+static struct MemoryReadAddress type2_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0x9800, 0x9800, watchdog_reset_r},
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
-	{ 0xa004, 0xa004, input_port_2_r },	/* IN2 */
-	{ 0xa008, 0xa008, input_port_1_r },	/* IN1 */
+	{ 0xa004, 0xa004, input_port_1_r },	/* IN1 */
+	{ 0xa008, 0xa008, input_port_2_r },	/* IN2 */
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress stratgyx_writemem[] =
+static struct MemoryWriteAddress type2_writemem[] =
 {
+	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x883f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x8840, 0x885f, MWA_RAM, &spriteram, &spriteram_size },
@@ -184,8 +180,8 @@ static struct MemoryWriteAddress stratgyx_writemem[] =
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0xa800, 0xa800, soundlatch_w },
 	{ 0xa804, 0xa804, scramble_sh_irqtrigger_w },
-	{ 0xa80c, 0xa80c, scramble_background_w }, /* may be wrong! */
-/*	{ 0xb002, 0xb002, galaxian_stars_w },	*/
+	{ 0xb000, 0xb000, galaxian_stars_w },
+	{ 0xb002, 0xb002, scramble_background_w },
 	{ 0xb004, 0xb004, interrupt_enable_w },
 	{ 0xb006, 0xb008, stratgyx_coin_counter_w },
 	{ 0xb00c, 0xb00c, galaxian_flipy_w },
@@ -207,6 +203,7 @@ static struct MemoryReadAddress hustler_readmem[] =
 
 static struct MemoryWriteAddress hustler_writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8bff, videoram_w, &videoram, &videoram_size },
 	{ 0x9000, 0x903f, galaxian_attributes_w, &galaxian_attributesram },
@@ -221,19 +218,6 @@ static struct MemoryWriteAddress hustler_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress moonwar2_readmem[] =
-{
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x8000, 0x8bff, MRA_RAM },	/* RAM and Video RAM */
-	{ 0x9000, 0x907f, MRA_RAM },	/* screen attributes, sprites, bullets */
-	{ 0x9800, 0x9800, moonwar2_IN0_r },	/* IN0 */
-	{ 0x9801, 0x9801, input_port_1_r },	/* IN1 */
-	{ 0x9802, 0x9802, input_port_2_r },	/* IN2 */
-	{ 0xb000, 0xb000, watchdog_reset_r },
-	{ -1 }	/* end of table */
-};
-
-
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -244,6 +228,7 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x9fff, scramble_filter_w },
 	{ -1 }	/* end of table */
@@ -265,17 +250,17 @@ static struct MemoryWriteAddress hustler_sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x20, 0x20, AY8910_read_port_1_r },
-	{ 0x80, 0x80, AY8910_read_port_0_r },
+	{ 0x20, 0x20, AY8910_read_port_0_r },
+	{ 0x80, 0x80, AY8910_read_port_1_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x10, 0x10, AY8910_control_port_1_w },
-	{ 0x20, 0x20, AY8910_write_port_1_w },
-	{ 0x40, 0x40, AY8910_control_port_0_w },
-	{ 0x80, 0x80, AY8910_write_port_0_w },
+	{ 0x10, 0x10, AY8910_control_port_0_w },
+	{ 0x20, 0x20, AY8910_write_port_0_w },
+	{ 0x40, 0x40, AY8910_control_port_1_w },
+	{ 0x80, 0x80, AY8910_write_port_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -388,6 +373,25 @@ INPUT_PORTS_START( stratgyx_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "99" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2  )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* IN2 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
@@ -405,38 +409,6 @@ INPUT_PORTS_START( stratgyx_input_ports )
 	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x80, "On" )
-
-	PORT_START      /* IN2 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "99" )
-
-	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2  )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START      /* IN3 */
-	PORT_DIPNAME( 0xff, 0x00, "stuff", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x08, "8" )
-	PORT_DIPSETTING(    0x10, "10" )
-	PORT_DIPSETTING(    0x20, "20" )
-	PORT_DIPSETTING(    0x40, "40" )
-	PORT_DIPSETTING(    0x80, "80" )
-	PORT_DIPSETTING(    0xff, "ff" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( armorcar_input_ports )
@@ -510,9 +482,9 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, "Unknown 2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x06, 0x02, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1091,8 +1063,8 @@ static struct AY8910interface ay8910_interface =
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
 	{ 0x3010, 0x3010 },	/* Ant Eater clips if the volume is set higher */
-	{ soundlatch_r },
-	{ scramble_portB_r },
+	{ 0, soundlatch_r },
+	{ 0, scramble_portB_r },
 	{ 0 },
 	{ 0 }
 };
@@ -1110,7 +1082,7 @@ static struct AY8910interface hustler_ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver type1_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1118,7 +1090,7 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1164,7 +1136,7 @@ static struct MachineDriver armorcar_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1202,8 +1174,7 @@ static struct MachineDriver armorcar_machine_driver =
 };
 
 /* Rescue and Minefield have extra colours, and custom video initialise */
-/* routines to set up the graduated colour backgound they use     * MJC */
-
+/* routines to set up the graduated colour backgound they use */
 static struct MachineDriver rescue_machine_driver =
 {
 	/* basic machine hardware */
@@ -1212,7 +1183,7 @@ static struct MachineDriver rescue_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1257,7 +1228,7 @@ static struct MachineDriver minefld_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1294,10 +1265,7 @@ static struct MachineDriver minefld_machine_driver =
 	}
 };
 
-
-
-
-static struct MachineDriver stratgyx_machine_driver =
+static struct MachineDriver type2_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1305,7 +1273,7 @@ static struct MachineDriver stratgyx_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			stratgyx_readmem,stratgyx_writemem,0,0,
+			type2_readmem,type2_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1341,7 +1309,6 @@ static struct MachineDriver stratgyx_machine_driver =
 		}
 	}
 };
-
 
 static struct MachineDriver hustler_machine_driver =
 {
@@ -1396,7 +1363,7 @@ static struct MachineDriver calipso_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			type1_readmem,type1_writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
@@ -1433,51 +1400,6 @@ static struct MachineDriver calipso_machine_driver =
 	}
 };
 
-/* same as machine_driver, but with moonwar2_readmem for the spinner */
-static struct MachineDriver moonwar2_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 Mhz */
-			0,
-			moonwar2_readmem,writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 Mhz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scobra_init_machine,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
 /***************************************************************************
 
   Game driver(s)
@@ -1606,7 +1528,7 @@ ROM_START( armorcar_rom )
 	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "prom.6e",      0x0000, 0x0020, 0x9b87f90d )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
@@ -1626,7 +1548,7 @@ ROM_START( armorca2_rom )
 	ROM_LOAD( "cpu.5h",       0x0800, 0x0800, 0x85bdb113 )
 
 	ROM_REGION(0x0020)	/* color prom */
-	ROM_LOAD( "prom.6e",      0x0000, 0x0020, 0x9b87f90d )
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x9b87f90d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "sound.5c",     0x0000, 0x0800, 0x54ee7753 )
@@ -1644,8 +1566,8 @@ ROM_START( moonwar2_rom )
 	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
 	ROM_LOAD( "mw2.5h",       0x0800, 0x0800, 0xa6ccc652 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "mw2.clr",      0x0000, 0x20, 0x99614c6c )
+	ROM_REGION(0x0020)			/* color prom */
+	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
@@ -1663,8 +1585,8 @@ ROM_START( monwar2a_rom )
 	ROM_LOAD( "mw2.5f",       0x0000, 0x0800, 0xc5fa1aa0 )
 	ROM_LOAD( "mw2.5h",       0x0800, 0x0800, 0xa6ccc652 )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "mw2.clr",      0x0000, 0x20, 0x99614c6c )
+	ROM_REGION(0x0020)			/* color prom */
+	ROM_LOAD( "mw2.clr",      0x0000, 0x0020, 0x99614c6c )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "mw2.5c",       0x0000, 0x0800, 0xc26231eb )
@@ -1713,6 +1635,26 @@ ROM_START( tazmania_rom )
 	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
+ROM_START( tazmani2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2ck.cpu",      0x0000, 0x1000, 0xbf0492bf )
+	ROM_LOAD( "2ek.cpu",      0x1000, 0x1000, 0x6636c4d0 )
+	ROM_LOAD( "2fk.cpu",      0x2000, 0x1000, 0xce59a57b )
+	ROM_LOAD( "2hk.cpu",      0x3000, 0x1000, 0x8bda3380 )
+	ROM_LOAD( "2jk.cpu",      0x4000, 0x1000, 0xa4095e35 )
+	ROM_LOAD( "2kk.cpu",      0x5000, 0x1000, 0xf308ca36 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0x2c5b612b )
+	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x3f5ff3ac )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "colr6f.cpu",   0x0000, 0x0020, 0xfce333c7 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
+ROM_END
+
 ROM_START( calipso_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "calipso.2c",   0x0000, 0x1000, 0x0fcb703c )
@@ -1726,8 +1668,8 @@ ROM_START( calipso_rom )
 	ROM_LOAD( "calipso.5f",   0x0000, 0x2000, 0xfd4252e9 )
 	ROM_LOAD( "calipso.5h",   0x2000, 0x2000, 0x1663a73a )
 
-	ROM_REGION(0x20)	/* color prom */
-	ROM_LOAD( "calipso.clr",  0x0000, 0x20, 0x01165832 )
+	ROM_REGION(0x0020)			/* color prom */
+	ROM_LOAD( "calipso.clr",  0x0000, 0x0020, 0x01165832 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "calipso.5c",   0x0000, 0x0800, 0x9cbc65ab )
@@ -1745,7 +1687,8 @@ ROM_START( anteater_rom )
 	ROM_LOAD( "ra6-5f",       0x1000, 0x0800, 0x4c3f8a08 )	/* we load the roms at 0x1000-0x1fff, they */
 	ROM_LOAD( "ra6-5h",       0x1800, 0x0800, 0xb30c7c9f )	/* will be decrypted at 0x0000-0x0fff */
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGION(0x0020)	/* color prom. Missing */
+	ROM_LOAD( "anteater.clr", 0x0000, 0x0020, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "ra4-5c",       0x0000, 0x0800, 0x87300b4f )
@@ -1851,10 +1794,11 @@ ROM_START( superbon_rom )
 	ROM_LOAD( "5f.cpu",       0x0000, 0x0800, 0x5b9d4686 )
 	ROM_LOAD( "5h.cpu",       0x0800, 0x0800, 0x58c29927 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGION(0x0020)	/* color prom. Missing */
+	ROM_LOAD( "superbon.clr", 0x0000, 0x0020, 0x00000000 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5c.snd",       0x0000, 0x0800, 0xb899be2a )
+	ROM_LOAD( "5c",  	      0x0000, 0x0800, 0xb899be2a )
 	ROM_LOAD( "5d.snd",       0x0800, 0x0800, 0x80640a04 )
 ROM_END
 
@@ -1915,6 +1859,13 @@ ROM_START( billiard_rom )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
+
+
+static void moonwar2_driver_init(void)
+{
+	/* Install special handler for the spinner */
+	install_mem_read_handler(0, 0x9800, 0x9800, moonwar2_IN0_r);
+}
 
 
 static int bit(int i,int n)
@@ -2284,7 +2235,7 @@ struct GameDriver scobra_driver =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	scobra_rom,
@@ -2310,7 +2261,7 @@ struct GameDriver scobrak_driver =
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	scobrak_rom,
@@ -2336,7 +2287,7 @@ struct GameDriver scobrab_driver =
 	"bootleg",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	scobrab_rom,
@@ -2362,7 +2313,7 @@ struct GameDriver stratgyx_driver =
 	"Stern",
 	"Lee Taylor",
 	0,
-	&stratgyx_machine_driver,
+	&type2_machine_driver,
 	0,
 
 	stratgyx_rom,
@@ -2387,7 +2338,7 @@ struct GameDriver stratgyb_driver =
 	"bootleg",
 	"Lee Taylor",
 	0,
-	&stratgyx_machine_driver,
+	&type2_machine_driver,
 	0,
 
 	stratgyb_rom,
@@ -2464,8 +2415,8 @@ struct GameDriver moonwar2_driver =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&moonwar2_machine_driver,
-	0,
+	&type1_machine_driver,
+	moonwar2_driver_init,
 
 	moonwar2_rom,
 	0, 0,
@@ -2490,8 +2441,8 @@ struct GameDriver monwar2a_driver =
 	"Stern",
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
-	&moonwar2_machine_driver,
-	0,
+	&type1_machine_driver,
+	moonwar2_driver_init,
 
 	monwar2a_rom,
 	0, 0,
@@ -2516,7 +2467,7 @@ struct GameDriver darkplnt_driver =
 	"Stern",
 	"Mike Balfour",
 	GAME_NOT_WORKING,
-	&stratgyx_machine_driver,
+	&type2_machine_driver,
 	0,
 
 	darkplnt_rom,
@@ -2537,15 +2488,41 @@ struct GameDriver tazmania_driver =
 	__FILE__,
 	0,
 	"tazmania",
-	"Tazz-Mania",
+	"Tazz-Mania (Scramble hardware)",
 	"1982",
 	"Stern",
 	"Chris Hardy",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	tazmania_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	tazmania_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	anteater_hiload, anteater_hisave
+};
+
+struct GameDriver tazmani2_driver =
+{
+	__FILE__,
+	&tazmania_driver,
+	"tazmani2",
+	"Tazz-Mania (Strategy X hardware)",
+	"1982",
+	"Stern",
+	"Chris Hardy",
+	0,
+	&type2_machine_driver,
+	0,
+
+	tazmani2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -2594,7 +2571,7 @@ struct GameDriver anteater_driver =
 	"[Stern] (Tago license)",
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
 	GAME_WRONG_COLORS,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	anteater_rom,
@@ -2672,7 +2649,7 @@ struct GameDriver losttomb_driver =
 	"Stern",
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	losttomb_rom,
@@ -2698,7 +2675,7 @@ struct GameDriver losttmbh_driver =
 	"Stern",
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	losttmbh_rom,
@@ -2724,7 +2701,7 @@ struct GameDriver superbon_driver =
 	"bootleg",
 	"Chris Hardy",
 	GAME_WRONG_COLORS,
-	&machine_driver,
+	&type1_machine_driver,
 	0,
 
 	superbon_rom,

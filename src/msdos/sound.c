@@ -19,6 +19,7 @@ LPAUDIOWAVE lpWave[NUMVOICES];
 static int used_3812;
 int nominal_sample_rate;
 int soundcard,usestereo;
+int attenuation = 0;
 
 AUDIOINFO info;
 AUDIOCAPS caps;
@@ -200,7 +201,7 @@ int msdos_init_sound(void)
 #endif
 	used_3812 = 0;
 
-	osd_set_mastervolume(0);	/* start at maximum volume */
+	osd_set_mastervolume(attenuation);	/* set the startup volume */
 
 	return 0;
 }
@@ -518,7 +519,6 @@ int msdos_update_audio(void)
 
 
 
-static int attenuation = 0;
 static int master_volume = 256;
 
 /* attenuation in dB */

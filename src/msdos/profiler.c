@@ -3,7 +3,6 @@
 int use_profiler;
 unsigned int curr_cycles;
 
-void my_textout(char *buf,int x,int y);
 
 #define MEMORY 6
 
@@ -137,7 +136,7 @@ void osd_profiler_display(void)
 				sprintf(buf,"%s%3d%%%3d%%",names[i],(computed + total/200) / (total/100),(computed + normalize/200) / (normalize/100));
 			else
 				sprintf(buf,"%s%3d%%",names[i],(computed + total/200) / (total/100));
-			my_textout(buf,0,(line++)*Machine->uifont->height);
+			ui_text(buf,0,(line++)*Machine->uifontheight);
 		}
 	}
 
@@ -147,7 +146,7 @@ void osd_profiler_display(void)
 			computed += profile.cpu_context_switches[j];
 	}
 	sprintf(buf,"CPU switches%4d",computed / MEMORY);
-	my_textout(buf,0,(line++)*Machine->uifont->height);
+	ui_text(buf,0,(line++)*Machine->uifontheight);
 
 	/* reset the counters */
 	memory = (memory + 1) % MEMORY;

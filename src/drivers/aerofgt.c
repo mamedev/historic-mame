@@ -975,6 +975,31 @@ ROM_START( aerofgt_rom )
 	ROM_LOAD( "it1901.104",   0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
+ROM_START( sonicwi_rom )
+	/* all ROMs apart from V1, V2 and V3 were soldered, I'm using the ones from */
+	/* aerofgt which are very likely different! */
+	ROM_REGION(0x80000)	/* 68000 code */
+	ROM_LOAD_EVEN( "v2",                0x00000, 0x40000, 0x5c9de9f0 )
+	ROM_LOAD_ODD ( "v1",                0x00000, 0x40000, 0x89c1dcf4 )
+
+	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "538a54.124",   0x000000, 0x080000, 0x4d2c4df2 )
+	ROM_LOAD( "1538a54.124",  0x080000, 0x080000, 0x286d109e )
+	ROM_LOAD( "538a53.u9",    0x100000, 0x100000, 0x630d8e0b )
+	ROM_LOAD( "534g8f.u18",   0x200000, 0x080000, 0x76ce0926 )
+
+	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "v3",           0x00000, 0x20000, 0xcbb18cf4 )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+	ROM_REGION(0x100000) /* sound samples */
+	ROM_LOAD( "it1906.137",   0x000000, 0x80000, 0x748b7e9e )
+	ROM_LOAD( "1ti1906.137",  0x080000, 0x80000, 0xd39ced76 )
+
+	ROM_REGION(0x40000) /* sound samples */
+	ROM_LOAD( "it1901.104",   0x00000, 0x40000, 0x6d42723d )
+ROM_END
+
 ROM_START( unkvsys_rom )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
@@ -1068,6 +1093,32 @@ struct GameDriver aerofgt_driver =
 	0,
 
 	aerofgt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	aerofgt_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+/* TODO: this runs on different hardware from aerofgt */
+struct GameDriver sonicwi_driver =
+{
+	__FILE__,
+	&aerofgt_driver,
+	"sonicwi",
+	"Sonic Wings",
+	"1992",
+	"Video System Co.",
+	"Nicola Salmoria",
+	0,
+	&aerofgt_machine_driver,
+	0,
+
+	sonicwi_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

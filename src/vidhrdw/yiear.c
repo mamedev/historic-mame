@@ -8,11 +8,11 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "cpu/m6809/m6809.h"
 
 
 static int flipscreen;
-
+static int nmi_enable;
 
 
 /***************************************************************************
@@ -35,8 +35,6 @@ static int flipscreen;
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -63,20 +61,10 @@ void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 		color_prom++;
 	}
-
-
-	/* sprites lookup table */
-	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = i;
-
-	/* characters lookup table */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i + 16;
 }
 
 
-
-void yiear_4f00_w(int offset,int data)
+void yiear_control_w(int offset,int data)
 {
 	/* bit 0 flips screen */
 	if (flipscreen != (data & 1))
@@ -85,9 +73,23 @@ void yiear_4f00_w(int offset,int data)
 		memset(dirtybuffer,1,videoram_size);
 	}
 
-	/* bits 3 and 4 are for coin counters - we ignore them */
+	/* bit 1 is NMI enable */
+	nmi_enable = data & 0x02;
+
+	/* bit 2 is IRQ enable */
+	interrupt_enable_w(0, data & 0x04);
+
+	/* bits 3 and 4 are coin counters */
+	coin_counter_w(0, (data >> 3) & 0x01);
+	coin_counter_w(1, (data >> 4) & 0x01);
 }
 
+
+int yiear_nmi_interrupt(void)
+{
+	/* can't use nmi_interrupt() because interrupt_enable_w() effects it */
+	return nmi_enable ? M6809_INT_NMI : ignore_interrupt();
+}
 
 
 /***************************************************************************
@@ -126,7 +128,7 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-				videoram[offs + 1] + 0x10 * (videoram[offs] & 0x10),
+				videoram[offs + 1] | ((videoram[offs] & 0x10) << 4),
 				0,
 				flipx,flipy,
 				8*sx,8*sy,
@@ -140,33 +142,32 @@ void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* draw sprites */
-	for (offs = spriteram_size - 16;offs >= 0;offs -= 16)
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
 		int sx,sy,flipx,flipy;
 
 
-		sy = 240 - spriteram[offs + 6];
+		sy    =  240 - spriteram[offs + 1];
+		sx    =  spriteram_2[offs];
+		flipx = ~spriteram[offs] & 0x40;
+		flipy =  spriteram[offs] & 0x80;
 
-		if (sy < 240)
+		if (flipscreen)
 		{
-			sx = spriteram[offs + 4];
-			flipx = ~spriteram[offs + 15] & 0x40;
-			flipy = spriteram[offs + 15] & 0x80;
-
-			if (flipscreen)
-			{
-				sx = 240 - sx;
-				sy = 240 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 14] + 256 * (spriteram[offs + 15] & 1),
-				0,
-				flipx,flipy,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			sy = 240 - sy;
+			flipy = !flipy;
 		}
+
+		if (offs < 0x26)
+		{
+			sy++;	/* fix title screen & garbage at the bottom of the screen */
+		}
+
+		drawgfx(bitmap,Machine->gfx[1],
+			spriteram_2[offs + 1] + 256 * (spriteram[offs] & 1),
+			0,
+			flipx,flipy,
+			sx,sy,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -14,20 +14,20 @@
 /* Please send all bug reports, update ideas and data files to: */
 /* sriddle@ionet.net */
 #include <stdio.h>
-#include <strings.h>
-#include "M6809.h"
+#include <string.h>
+#include "memory.h"
 
 #ifndef TRUE
 #define TRUE         -1
 #define FALSE        0
 #endif
 
-typedef struct {                                       /* opcode structure */
-   int opcode;                                     /* 8-bit opcode value */
+typedef struct {				/* opcode structure */
+   int opcode;					/* 8-bit opcode value */
    int numoperands;
-   char name[6];                                            /* opcode name */
-   int mode;                                          /* addressing mode */
-   int numcycles;                         /* number of cycles - not used */
+   char name[6];				/* opcode name */
+   int mode;					/* addressing mode */
+   int numcycles;				/* number of cycles - not used */
 } opcodeinfo;
 
 /* 6809 ADDRESSING MODES */
@@ -38,8 +38,8 @@ typedef struct {                                       /* opcode structure */
 #define EXT 4
 #define IMM 5
 #define LREL 6
-#define PG2 7                                    /* PAGE SWITCHES - Page 2 */
-#define PG3 8                                                    /* Page 3 */
+#define PG2 7					/* PAGE SWITCHES -	Page 2 */
+#define PG3 8					/*					Page 3 */
 
 /* number of opcodes in each page */
 #define NUMPG1OPS 223
@@ -379,7 +379,7 @@ int Dasm6809 (char *buffer, int pc)
 	int p = 0;
 
 	buffer[0] = 0;
-	opcode = M6809_RDOP(pc+(p++));
+	opcode = cpu_readop(pc+(p++));
 	for (i = 0; i < numops[0]; i++)
 		if (pg1opcodes[i].opcode == opcode)
 			break;
@@ -388,7 +388,7 @@ int Dasm6809 (char *buffer, int pc)
 	{
 		if (pg1opcodes[i].mode >= PG2)
 		{
-			opcode = M6809_RDOP(pc+(p++));
+			opcode = cpu_readop(pc+(p++));
 			page = pg1opcodes[i].mode - PG2 + 1;          /* get page # */
 			for (k = 0; k < numops[page]; k++)
 				if (opcode == pgpointers[page][k].opcode)
@@ -398,7 +398,7 @@ int Dasm6809 (char *buffer, int pc)
 			{                 /* opcode found */
 				numoperands = pgpointers[page][k].numoperands - 1;
 				for (j = 0; j < numoperands; j++)
-					operandarray[j] = M6809_RDOP_ARG(pc+(p++));
+					operandarray[j] = cpu_readop_arg(pc+(p++));
 				mode = pgpointers[page][k].mode;
 				opname = pgpointers[page][k].name;
 				if (mode != IND)
@@ -415,7 +415,7 @@ int Dasm6809 (char *buffer, int pc)
 		{                                /* page 1 opcode */
 			numoperands = pg1opcodes[i].numoperands;
 			for (j = 0; j < numoperands; j++)
-				operandarray[j] = M6809_RDOP_ARG(pc+(p++));
+				operandarray[j] = cpu_readop_arg(pc+(p++));
 			mode = pg1opcodes[i].mode;
 			opname = pg1opcodes[i].name;
 			if (mode != IND)
@@ -474,9 +474,9 @@ printoperands:
 
             /* KW 11/05/98 Fix of indirect opcodes      */
 
-            /*  offset = M6809_RDOP_ARG(pc+(p++));      */
+			/*	offset = cpu_readop_arg(pc+(p++));		*/
 
-            offset = M6809_RDOP_ARG(pc);
+			offset = cpu_readop_arg(pc);
             p++;
 
             /* KW 11/05/98 Fix of indirect opcodes      */
@@ -502,11 +502,11 @@ printoperands:
 
             /* KW 11/05/98 Fix of indirect opcodes      */
 
-            /*  offset = M6809_RDOP_ARG(pc+(p++)) << 8; */
-            /*  offset += M6809_RDOP_ARG(pc+(p++));     */
+			/*	offset = cpu_readop_arg(pc+(p++)) << 8; */
+			/*	offset += cpu_readop_arg(pc+(p++)); 	*/
 
-            offset = M6809_RDOP_ARG(pc) << 8;
-            offset += M6809_RDOP_ARG(pc+1);
+			offset = cpu_readop_arg(pc) << 8;
+			offset += cpu_readop_arg(pc+1);
             p+=2;
 
             /* KW 11/05/98 Fix of indirect opcodes      */

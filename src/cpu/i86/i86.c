@@ -1,6 +1,6 @@
 /****************************************************************************
-*             real mode i286 emulator v1.4 by Fabrice Frances               *
-*               (initial work based on David Hedley's pcemu)                *
+*			  real mode i286 emulator v1.4 by Fabrice Frances				*
+*				(initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ static unsigned base[4];        /* and their base addresses */
 static unsigned prefix_base;    /* base address of the latest prefix segment */
 static char seg_prefix;         /* prefix segment indicator */
 
-static BYTE TF, IF, DF; /* 0 or 1 valued flags */
+static UINT8 TF, IF, DF; /* 0 or 1 valued flags */
 static int AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
 
 /* The interrupt number of a pending external interrupt pending NMI is 2.	*/
@@ -38,11 +38,9 @@ static int pending_irq;         /* pending interrupts (NMI/IRQ) flag mask */
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
 
-#if NEW_INTERRUPT_SYSTEM
 static int irq_state;
 static int nmi_state;
 static int (*irq_callback)(int) = 0;
-#endif
 
 /* ASG 971222 static unsigned char *Memory;   * fetching goes directly to memory instead of going through MAME's cpu_readmem() */
 
@@ -58,18 +56,16 @@ static UINT8 parity_table[256];
 
 
 /* ASG 971222 void I86_Reset(unsigned char *mem,int cycles)*/
-void i86_Reset (void)
+void i86_reset (void *param)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
 	int86_vector = 0;
 	pending_irq = 0;
-#if NEW_INTERRUPT_SYSTEM
 	nmi_state = 0;
 	irq_state = 0;
 	irq_callback = 0;
-#endif
     for (i = 0; i < 4; i++) sregs[i] = 0;
     sregs[CS]=0xFFFF;
 
@@ -109,6 +105,10 @@ void i86_Reset (void)
     }
 }
 
+void i86_exit (void)
+{
+	/* nothing to do ? */
+}
 
 static void I86_interrupt(unsigned int_num)
 {
@@ -116,10 +116,10 @@ static void I86_interrupt(unsigned int_num)
 
     i_pushf();
 	TF = IF = 0;
-#if NEW_INTERRUPT_SYSTEM
-	if (int_num == -1)
+
+    if (int_num == -1)
 		int_num = (*irq_callback)(0);
-#endif
+
     dest_off = ReadWord(int_num*4);
     dest_seg = ReadWord(int_num*4+2);
 
@@ -138,34 +138,21 @@ void trap(void)
 	I86_interrupt(1);
 }
 
-#if NEW_INTERRUPT_SYSTEM
-
 static void external_int(void)
 {
-	if( pending_irq & NMI_IRQ ) {
+	if( pending_irq & NMI_IRQ )
+	{
 		I86_interrupt(I86_NMI_INT);
 		pending_irq &= ~NMI_IRQ;
-    } else if( pending_irq ) {
+	}
+	else
+	if( pending_irq )
+	{
 		/* the actual vector is retrieved after pushing flags */
 		/* and clearing the IF */
 		I86_interrupt(-1);
 	}
 }
-
-#else
-
-static void external_int(void)
-{
-	if( pending_irq & NMI_IRQ ) {
-		I86_interrupt(I86_NMI_INT);
-		pending_irq &= ~NMI_IRQ;
-    } else if( pending_irq ) {
-		I86_interrupt(int86_vector);
-		pending_irq &= ~INT_IRQ;
-	}
-}
-
-#endif
 
 /****************************************************************************/
 
@@ -3078,7 +3065,7 @@ static void i_invalid(void)
 
 
 /* ASG 971222 -- added these interface functions */
-void i86_SetRegs(i86_Regs *Regs)
+void i86_setregs(i86_Regs *Regs)
 {
 	regs = Regs->regs;
 	ip = Regs->ip;
@@ -3089,11 +3076,9 @@ void i86_SetRegs(i86_Regs *Regs)
 	sregs[SS] = Regs->sregs[SS];
 	int86_vector = Regs->int_vector;
 	pending_irq = Regs->pending_irq;
-#if NEW_INTERRUPT_SYSTEM
     nmi_state = Regs->nmi_state;
 	irq_state = Regs->irq_state;
     irq_callback = Regs->irq_callback;
-#endif
 
 	base[CS] = SegBase(CS);
 	base[DS] = SegBase(DS);
@@ -3103,7 +3088,7 @@ void i86_SetRegs(i86_Regs *Regs)
 }
 
 
-void i86_GetRegs(i86_Regs *Regs)
+void i86_getregs(i86_Regs *Regs)
 {
 	Regs->regs = regs;
 	Regs->ip = ip;
@@ -3114,20 +3099,65 @@ void i86_GetRegs(i86_Regs *Regs)
 	Regs->sregs[SS] = sregs[SS];
 	Regs->int_vector = int86_vector;
 	Regs->pending_irq = pending_irq;
-#if NEW_INTERRUPT_SYSTEM
     Regs->nmi_state = nmi_state;
 	Regs->irq_state = irq_state;
 	Regs->irq_callback = irq_callback;
-#endif
 }
 
 
-unsigned i86_GetPC(void)
+unsigned i86_getpc(void)
 {
 	return (SegBase(CS)+(WORD)ip) & i86_AddrMask;
 }
 
-#if NEW_INTERRUPT_SYSTEM
+unsigned i86_getreg(int regnum)
+{
+	switch( regnum )
+	{
+		case  0: return ip;
+		case  1: return sregs[ES];
+		case  2: return sregs[CS];
+		case  3: return sregs[SS];
+		case  4: return sregs[DS];
+		case  5: return regs.w[0];
+		case  6: return regs.w[1];
+		case  7: return regs.w[2];
+		case  8: return regs.w[3];
+		case  9: return regs.w[4];
+		case 10: return regs.w[5];
+		case 11: return regs.w[6];
+		case 12: return regs.w[7];
+		case 13: return int86_vector;
+		case 14: return pending_irq;
+		case 15: return nmi_state;
+		case 16: return irq_state;
+	}
+	return 0;
+}
+
+void i86_setreg(int regnum, unsigned val)
+{
+	switch( regnum )
+	{
+		case  0: ip = val; break;
+		case  1: sregs[ES] = val; break;
+		case  2: sregs[CS] = val; break;
+		case  3: sregs[SS] = val; break;
+		case  4: sregs[DS] = val; break;
+		case  5: regs.w[0] = val; break;
+		case  6: regs.w[1] = val; break;
+		case  7: regs.w[2] = val; break;
+		case  8: regs.w[3] = val; break;
+		case  9: regs.w[4] = val; break;
+		case 10: regs.w[5] = val; break;
+		case 11: regs.w[6] = val; break;
+		case 12: regs.w[7] = val; break;
+		case 13: int86_vector = val; break;
+		case 14: pending_irq = val; break;
+		case 15: nmi_state = val; break;
+		case 16: irq_state = val; break;
+	}
+}
 
 void i86_set_nmi_line(int state)
 {
@@ -3154,29 +3184,7 @@ void i86_set_irq_callback(int (*callback)(int))
 	irq_callback = callback;
 }
 
-#else
-
-void i86_Cause_Interrupt(int type)
-{
-	if (type) {
-		if (type == I86_NMI_INT) {
-			pending_irq |= NMI_IRQ;
-		} else {
-			pending_irq |= INT_IRQ;
-			int86_vector = type;
-		}
-	}
-}
-
-
-void i86_Clear_Pending_Interrupts(void)
-{
-	pending_irq = 0;
-}
-
-#endif
-
-int i86_Execute(int cycles)
+int i86_execute(int cycles)
 {
     cycle_count=cycles;/* ASG 971222 cycles_per_run;*/
     while(cycle_count>0)
@@ -3465,3 +3473,73 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
     }
 	return cycles - cycle_count;
 }
+
+/****************************************************************************
+ * Return a formatted string for a register
+ ****************************************************************************/
+const char *i86_info(void *context, int regnum)
+{
+	static char buffer[32][47+1];
+	static int which = 0;
+	i86_Regs *r = (i86_Regs *)context;
+
+	which = ++which % 32;
+	buffer[which][0] = '\0';
+	if( !context && regnum >= CPU_INFO_PC )
+		return buffer[which];
+
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "I86";
+		case CPU_INFO_FAMILY: return "Intel 80x86";
+		case CPU_INFO_VERSION: return "1.4";
+		case CPU_INFO_FILE: return __FILE__;
+		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work based on David Hedley's pcemu)";
+		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", (r->sregs[CS] + r->ip) & 0xffffff); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%06X", (r->sregs[SS] + r->regs.w[4]) & 0xffffff); break;
+#ifdef	MAME_DEBUG
+		case CPU_INFO_DASM: r->ip += DasmI86(&ROM[r->ip],buffer[which],r->ip); break;
+#else
+		case CPU_INFO_DASM: sprintf(buffer[which],"$%02x",ROM[r->ip]); r->ip++; break;
+#endif
+		case CPU_INFO_FLAGS:
+			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+				r->flags & 0x8000 ? '?':'.',
+				r->flags & 0x4000 ? '?':'.',
+				r->flags & 0x2000 ? '?':'.',
+				r->flags & 0x1000 ? '?':'.',
+				r->flags & 0x0800 ? 'O':'.',
+				r->flags & 0x0400 ? 'D':'.',
+				r->flags & 0x0200 ? 'I':'.',
+				r->flags & 0x0100 ? 'T':'.',
+				r->flags & 0x0080 ? 'S':'.',
+				r->flags & 0x0040 ? 'Z':'.',
+				r->flags & 0x0020 ? '?':'.',
+				r->flags & 0x0010 ? 'A':'.',
+				r->flags & 0x0008 ? '?':'.',
+				r->flags & 0x0004 ? 'P':'.',
+				r->flags & 0x0002 ? 'N':'.',
+				r->flags & 0x0001 ? 'C':'.');
+			break;
+		case CPU_INFO_REG+ 0: sprintf(buffer[which], "IP:%04X", r->ip); break;
+		case CPU_INFO_REG+ 1: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+		case CPU_INFO_REG+ 2: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
+		case CPU_INFO_REG+ 3: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
+		case CPU_INFO_REG+ 4: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
+		case CPU_INFO_REG+ 5: sprintf(buffer[which], "AX:%04X", r->regs.w[0]); break;
+		case CPU_INFO_REG+ 6: sprintf(buffer[which], "CX:%04X", r->regs.w[1]); break;
+		case CPU_INFO_REG+ 7: sprintf(buffer[which], "DX:%04X", r->regs.w[2]); break;
+		case CPU_INFO_REG+ 8: sprintf(buffer[which], "BX:%04X", r->regs.w[3]); break;
+		case CPU_INFO_REG+ 9: sprintf(buffer[which], "SP:%04X", r->regs.w[4]); break;
+		case CPU_INFO_REG+10: sprintf(buffer[which], "BP:%04X", r->regs.w[5]); break;
+		case CPU_INFO_REG+11: sprintf(buffer[which], "SI:%04X", r->regs.w[6]); break;
+		case CPU_INFO_REG+12: sprintf(buffer[which], "DI:%04X", r->regs.w[7]); break;
+		case CPU_INFO_REG+13: sprintf(buffer[which], "vector:%02X", r->int_vector); break;
+		case CPU_INFO_REG+14: sprintf(buffer[which], "pending:%X", r->pending_irq); break;
+		case CPU_INFO_REG+15: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
+		case CPU_INFO_REG+16: sprintf(buffer[which], "IRQ:%d", r->irq_state); break;
+	}
+	return buffer[which];
+}
+
+

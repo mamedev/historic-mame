@@ -26,30 +26,34 @@ static int flipscreen;
 static const unsigned char *videoram1, *videoram2;
 static int gfxbank;
 
-static void fg_tilemap_preupdate(void){
+static void fg_tilemap_preupdate(void)
+{
 	gfxbank = 0;
 	videoram1 = gng_fgvideoram;
 	videoram2 = gng_fgcolorram;
 }
 
-static void get_fg_tile_info( int col, int row ){
+static void get_fg_tile_info( int col, int row )
+{
 	int tile_index = row*32+col;
-	unsigned char attributes = videoram2[tile_index];
-	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attributes & 0xc0) << 2),attributes & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attributes & 0x30) >> 4);
+	unsigned char attr = videoram2[tile_index];
+	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
+	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
 }
 
-static void bg_tilemap_preupdate(void){
+static void bg_tilemap_preupdate(void)
+{
 	gfxbank = 1;
 	videoram1 = gng_bgvideoram;
 	videoram2 = gng_bgcolorram;
 }
 
-static void get_bg_tile_info( int col, int row ){
+static void get_bg_tile_info( int col, int row )
+{
 	int tile_index = col*32+row;
-	unsigned char attributes = videoram2[tile_index];
-	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attributes & 0xc0) << 2),attributes & 0x07)
-	tile_info.flags = TILE_FLIPYX((attributes & 0x30) >> 4) | TILE_SPLIT((attributes & 0x08) >> 3);
+	unsigned char attr = videoram2[tile_index];
+	SET_TILE_INFO(gfxbank,videoram1[tile_index] + ((attr & 0xc0) << 2),attr & 0x07)
+	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x08) >> 3);
 }
 
 /***************************************************************************
@@ -84,8 +88,10 @@ int gng_vh_start(void){
 
 			return 0;
 		}
+
+		gng_vh_stop();
 	}
-	gng_vh_stop();
+
 	return 1;
 }
 

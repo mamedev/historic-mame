@@ -7,7 +7,8 @@ The "Kabuki" is a custom Z80 module which runs encrypted code. The encryption
 key is stored in some battery-backed RAM, therefore the chip has the annoying
 habit of stopping working every few years, when the battery dies.
 Check at the bottom of this text to see a list of all the known games which
-use this chip. They are only a handful, and there are probably no more.
+use this chip. They are only a handful, and there are probably no more (though
+other versions might use different keys, like Super Pang / Super Buster Bros).
 
 
 How it works:
@@ -44,9 +45,9 @@ Key space size:
 
 Weaknesses:
 - 0x00 and 0xff, having all the bits set to the same value, are not affected
-  by bit permuations after the XOR. Therefore, their encryption is the same
+  by bit permutations after the XOR. Therefore, their encryption is the same
   regardless of the high 8 bits of the address, and of the value of
-  swap_key2. If there is a long stream or 0x00 or 0xff in the original data,
+  swap_key2. If there is a long stream of 0x00 or 0xff in the original data,
   this can be used to find by brute force all the candidates for swap_key1,
   xor_key, and for the low 8 bits of addr_key. This is a serious weakness
   which dramatically reduces the security of the encrytion.
@@ -63,14 +64,15 @@ Weaknesses:
 
 
 Known games:
-                          swap_key1  swap_key2  addr_key  xor_key
-Pang / Buster Bros        32104567   76540123     6548      24
-Super Pang                76540123   45673210     5852      43
-Block Block               64201357   64201357     0002      01
-Warriors of Fate          32104567   54162703     5151      51
-Cadillacs and Dinosaurs   45673210   24607531     4343      43
-Punisher                  54762103   75314206     2222      22
-Slam Masters              23451076   65437012     3131      19
+                                swap_key1  swap_key2  addr_key  xor_key
+Pang / Buster Bros              32104567   76540123     6548      24
+Super Pang                      76540123   45673210     5852      43
+Super Buster Bros               76540123   45673210     2130      12
+Block Block                     64201357   64201357     0002      01
+Warriors of Fate                32104567   54162703     5151      51
+Cadillacs and Dinosaurs         45673210   24607531     4343      43
+Punisher                        54762103   75314206     2222      22
+Slam Masters                    23451076   65437012     3131      19
 
 ***************************************************************************/
 
@@ -142,6 +144,15 @@ void spang_decode(void)
 	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x5852,0x43);
 	for (i = 0x10000;i < 0x50000;i += 0x4000)
 		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x5852,0x43);
+}
+
+void sbbros_decode(void)
+{
+	int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x2130,0x12);
+	for (i = 0x10000;i < 0x50000;i += 0x4000)
+		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x2130,0x12);
 }
 
 void block_decode(void)

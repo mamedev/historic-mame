@@ -10,41 +10,15 @@
 #ifndef _I8039_H
 #define _I8039_H
 
-/**************************************************************************
- * If your compiler doesn't know about inlined functions, uncomment this  *
- **************************************************************************/
-
-/* #define INLINE static */
-
-#ifndef EMU_TYPES_8039
-#define EMU_TYPES_8039
-
-#include "osd_cpu.h"
-
-typedef union
-{
-#ifdef LSB_FIRST
-   struct { UINT8 l,h; } B;
-   UINT16 W;
-#else
-   struct { UINT8 h,l; } B;
-   UINT16 W;
-#endif
-} i8039_pair;
-
-#endif  /* EMUTYPES_8039 */
-
-/**************************************************************************
- * End of machine dependent definitions                                   *
- **************************************************************************/
-
 #ifndef INLINE
 #define INLINE static inline
 #endif
 
+#include "osd_cpu.h"
+
 typedef struct
 {
-	i8039_pair	PC; 		/* -NS- */
+	PAIR	PC; 			/* HJB */
 	UINT8	A, SP, PSW;
 	UINT8	RAM[128];
 	UINT8	bus, f1;		/* Bus data, and flag1 */
@@ -52,13 +26,11 @@ typedef struct
 	int 	pending_irq,irq_executing, masterClock, regPtr;
 	UINT8	t_flag, timer, timerON, countON, xirq_en, tirq_en;
 	UINT16	A11, A11ff;
-#if NEW_INTERRUPT_SYSTEM
 	int 	irq_state;
 	int 	(*irq_callback)(int irqline);
-#endif
 } I8039_Regs;
 
-extern   int I8039_ICount;      /* T-state count                          */
+extern int i8039_ICount;		/* T-state count						  */
 
 /* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
 #define I8039_IGNORE_INT    0   /* Ignore interrupt                     */
@@ -66,20 +38,18 @@ extern   int I8039_ICount;      /* T-state count                          */
 #define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
 #define I8039_COUNT_INT 	4	/* Execute a Counter interrupt			*/
 
-unsigned I8039_GetPC  (void);			/* Get program counter			*/
-void I8039_GetRegs(I8039_Regs *Regs);	/* Get registers				*/
-void I8039_SetRegs(I8039_Regs *Regs);	/* Set registers				*/
-void I8039_Reset  (void);				/* Reset processor & registers	*/
-int I8039_Execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
-
-#if NEW_INTERRUPT_SYSTEM
-void I8039_set_nmi_line(int state);
-void I8039_set_irq_line(int irqline, int state);
-void I8039_set_irq_callback(int (*callback)(int irqline));
-#else
-void I8039_Cause_Interrupt(int type);	/* NS 970904 */
-void I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
-#endif
+void i8039_reset(void *param);			/* Reset processor & registers	*/
+void i8039_exit(void);					/* Shut down CPU emulation		*/
+int i8039_execute(int cycles);			/* Execute cycles T-States - returns number of cycles actually run */
+void i8039_setregs(I8039_Regs *Regs);	/* Set registers				*/
+void i8039_getregs(I8039_Regs *Regs);	/* Get registers				*/
+unsigned i8039_getpc(void); 			/* Get program counter			*/
+unsigned i8039_getreg(int regnum);	   	/* Get a specific register      */
+void i8039_setreg(int regnum, unsigned val);	/* Set a specific register      */
+void i8039_set_nmi_line(int state);
+void i8039_set_irq_line(int irqline, int state);
+void i8039_set_irq_callback(int (*callback)(int irqline));
+const char *i8039_info(void *context, int regnum);
 
 /*   This handling of special I/O ports should be better for actual MAME
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
@@ -104,6 +74,69 @@ void I8039_Clear_Pending_Interrupts(void);	/* NS 970904 */
         #define  I8039_t1	0x111
         #define  I8039_bus	0x120
 #endif
+
+/**************************************************************************
+ *   For now make the I8035 using the I8039 variables and functions
+ **************************************************************************/
+#define I8035_IGNORE_INT		I8039_IGNORE_INT
+#define I8035_EXT_INT           I8039_EXT_INT
+#define I8035_TIMER_INT         I8039_TIMER_INT
+#define I8035_COUNT_INT         I8039_COUNT_INT
+#define i8035_ICount			i8039_ICount
+#define i8035_reset 			i8039_reset
+#define i8035_exit				i8039_exit
+#define i8035_execute			i8039_execute
+#define i8035_setregs			i8039_setregs
+#define i8035_getregs			i8039_getregs
+#define i8035_getpc 			i8039_getpc
+#define i8035_getreg 			i8039_getreg
+#define i8035_setreg 			i8039_setreg
+#define i8035_set_nmi_line		i8039_set_nmi_line
+#define i8035_set_irq_line		i8039_set_irq_line
+#define i8035_set_irq_callback	i8039_set_irq_callback
+const char *i8035_info(void *context, int regnum);
+
+/**************************************************************************
+ *   For now make the I8048 using the I8039 variables and functions
+ **************************************************************************/
+#define I8048_IGNORE_INT        I8039_IGNORE_INT
+#define I8048_EXT_INT           I8039_EXT_INT
+#define I8048_TIMER_INT         I8039_TIMER_INT
+#define I8048_COUNT_INT         I8039_COUNT_INT
+#define i8048_ICount			i8039_ICount
+#define i8048_reset 			i8039_reset
+#define i8048_exit				i8039_exit
+#define i8048_execute			i8039_execute
+#define i8048_setregs			i8039_setregs
+#define i8048_getregs			i8039_getregs
+#define i8048_getpc 			i8039_getpc
+#define i8048_getreg 			i8039_getreg
+#define i8048_setreg 			i8039_setreg
+#define i8048_set_nmi_line		i8039_set_nmi_line
+#define i8048_set_irq_line		i8039_set_irq_line
+#define i8048_set_irq_callback	i8039_set_irq_callback
+const char *i8048_info(void *context, int regnum);
+
+/**************************************************************************
+ *   For now make the N7751 using the I8039 variables and functions
+ **************************************************************************/
+#define N7751_IGNORE_INT        I8039_IGNORE_INT
+#define N7751_EXT_INT           I8039_EXT_INT
+#define N7751_TIMER_INT         I8039_TIMER_INT
+#define N7751_COUNT_INT         I8039_COUNT_INT
+#define n7751_ICount			i8039_ICount
+#define n7751_reset 			i8039_reset
+#define n7751_exit				i8039_exit
+#define n7751_execute			i8039_execute
+#define n7751_setregs			i8039_setregs
+#define n7751_getregs			i8039_getregs
+#define n7751_getpc 			i8039_getpc
+#define n7751_getreg 			i8039_getreg
+#define n7751_setreg 			i8039_setreg
+#define n7751_set_nmi_line		i8039_set_nmi_line
+#define n7751_set_irq_line		i8039_set_irq_line
+#define n7751_set_irq_callback	i8039_set_irq_callback
+const char *n7751_info(void *context, int regnum);
 
 #include "memory.h"
 

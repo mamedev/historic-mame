@@ -34,8 +34,8 @@
 #define X	m6502.x
 #define Y	m6502.y
 #define P	m6502.p
-#define S	m6502.sp.B.l
-#define SPD m6502.sp.D
+#define S	m6502.sp.b.l
+#define SPD m6502.sp.d
 
 #define NZ  m6502.nz
 
@@ -45,20 +45,20 @@
 #define SET_Z(n)                \
 	if ((n) == 0) P |= F_Z; else P &= ~F_Z
 
-#define EAL m6502.ea.B.l
-#define EAH m6502.ea.B.h
-#define EAW m6502.ea.W.l
-#define EAD m6502.ea.D
+#define EAL m6502.ea.b.l
+#define EAH m6502.ea.b.h
+#define EAW m6502.ea.w.l
+#define EAD m6502.ea.d
 
-#define ZPL m6502.zp.B.l
-#define ZPH m6502.zp.B.h
-#define ZPW m6502.zp.W.l
-#define ZPD m6502.zp.D
+#define ZPL m6502.zp.b.l
+#define ZPH m6502.zp.b.h
+#define ZPW m6502.zp.w.l
+#define ZPD m6502.zp.d
 
-#define PCL m6502.pc.B.l
-#define PCH m6502.pc.B.h
-#define PCW m6502.pc.W.l
-#define PCD m6502.pc.D
+#define PCL m6502.pc.b.l
+#define PCH m6502.pc.b.h
+#define PCW m6502.pc.w.l
+#define PCD m6502.pc.d
 
 #if FAST_MEMORY
 extern  MHELE   *cur_mwhard;

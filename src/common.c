@@ -37,9 +37,9 @@ unsigned int coinlockedout[COIN_COUNTERS];
 
 #ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
-INLINE int read_dword(int *address)
+INLINE int read_dword(void *address)
 {
-	if ((int)address & 3)
+	if ((long)address & 3)
 	{
 #ifdef LSB_FIRST  /* little endian version */
   		return ( *((unsigned char *)address) +
@@ -58,9 +58,9 @@ INLINE int read_dword(int *address)
 }
 
 
-INLINE void write_dword(int *address, int data)
+INLINE void write_dword(void *address, int data)
 {
-  	if ((int)address & 3)
+  	if ((long)address & 3)
 	{
 #ifdef LSB_FIRST
     		*((unsigned char *)address) =    data;
@@ -77,7 +77,6 @@ INLINE void write_dword(int *address, int data)
   	}
   	else
 		*(int *)address = data;
-
 }
 #else
 #define read_dword(address) *(int *)address
@@ -2005,6 +2004,12 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 {
 	int srcwidth,srcheight;
 
+
+	if (rows == 0 && cols == 0)
+	{
+		copybitmap(dest,src,0,0,0,0,clip,transparency,transparent_color);
+		return;
+	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

@@ -128,12 +128,12 @@ void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static void get_bg_tile_info(int col,int row)
 {
 	int tile_index = 2*(64*row+col);
-	unsigned char attributes = travrusa_videoram[tile_index+1];
-	SET_TILE_INFO(0,travrusa_videoram[tile_index] + ((attributes & 0xc0) << 2),attributes & 0x0f)
+	unsigned char attr = travrusa_videoram[tile_index+1];
+	SET_TILE_INFO(0,travrusa_videoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
 	tile_info.flags = 0;
-	if (attributes & 0x20) tile_info.flags |= TILE_FLIPX;
-	if (attributes & 0x10) tile_info.flags |= TILE_FLIPY;
-	if ((attributes & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* hack */
+	if (attr & 0x20) tile_info.flags |= TILE_FLIPX;
+	if (attr & 0x10) tile_info.flags |= TILE_FLIPY;
+	if ((attr & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* hack */
 }
 
 
@@ -163,9 +163,10 @@ int travrusa_vh_start(void)
 
 			return 0;
 		}
+
+		travrusa_vh_stop();
 	}
 
-	travrusa_vh_stop();
 	return 1;
 }
 
