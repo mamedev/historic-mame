@@ -129,7 +129,7 @@ struct MachineDriver
 
 /* bit 3 of the video attributes indicates that the game's palette has 6 or more bits */
 /*       per gun, and would therefore require a 24-bit display. This is entirely up to */
-/*       the OS dpeendant layer, the bitmap will still be 16-bit. */
+/*       the OS dependant layer, the bitmap will still be 16-bit. */
 #define VIDEO_NEEDS_6BITS_PER_GUN	0x0008
 
 /* ASG 980417 - added: */

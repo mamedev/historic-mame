@@ -566,7 +566,7 @@ static struct YM3526interface ym3526_interface =
 
 static void karnov_reset_init(void)
 {
-	memset(karnov_ram,0,0x4000); /* Chelnov likes ram clear on reset.. */
+	memset(karnov_ram,0,0x4000/2); /* Chelnov likes ram clear on reset.. */
 }
 
 static const struct MachineDriver machine_driver_karnov =

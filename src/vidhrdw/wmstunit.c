@@ -867,75 +867,6 @@ skipdma:
 
 /*************************************
  *
- *	Screen updater
- *
- *************************************/
-
-static void update_screen(struct osd_bitmap *bitmap)
-{
-	UINT16 *pens = Machine->pens;
-	int v, h, width, xoffs;
-	UINT32 offset;
-
-	/* determine the base of the videoram */
-	if (wms_using_34020)
-		offset = (tms34020_get_DPYSTRT(0) >> 5) & 0x3ffff;
-	else
-		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
-	logerror("Screen offset = %06X\n", offset);
-
-	/* determine how many pixels to copy */
-	xoffs = Machine->visible_area.min_x;
-	width = Machine->visible_area.max_x - xoffs + 1;
-
-	/* adjust the offset */
-	offset += xoffs;
-	offset += 512 * Machine->visible_area.min_y;
-	offset &= 0x3ffff;
-
-	/* 16-bit refresh case */
-	if (bitmap->depth == 16)
-	{
-		/* loop over rows */
-		for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
-		{
-			/* handle the refresh */
-			UINT16 *src = &local_videoram[offset];
-			UINT16 *dst = &((UINT16 *)bitmap->line[v])[xoffs];
-			UINT32 diff = dst - src;
-
-			/* copy one row */
-			for (h = 0; h < width; h++, src++)
-				*(src + diff) = pens[*src];
-
-			/* point to the next row */
-			offset = (offset + 512) & 0x3ffff;
-		}
-	}
-
-	/* 8-bit refresh case */
-	else
-	{
-		/* loop over rows */
-		for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
-		{
-			/* handle the refresh */
-			UINT16 *src = &local_videoram[offset];
-			UINT8 *dst = &bitmap->line[v][xoffs];
-
-			for (h = 0; h < width; h++)
-				*dst++ = pens[*src++];
-
-			/* point to the next row */
-			offset = (offset + 512) & 0x3ffff;
-		}
-	}
-}
-
-
-
-/*************************************
- *
  *	34010 display address callback
  *
  *************************************/
@@ -954,9 +885,32 @@ void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 
 void wms_tunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	int v, width, xoffs;
+	UINT32 offset;
+
 	// recompute the palette
 	palette_recalc();
 
-	// update the entire screen
-	update_screen(bitmap);
+	/* determine the base of the videoram */
+	if (wms_using_34020)
+		offset = (tms34020_get_DPYSTRT(0) >> 5) & 0x3ffff;
+	else
+		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
+	logerror("Screen offset = %06X\n", offset);
+
+	/* determine how many pixels to copy */
+	xoffs = Machine->visible_area.min_x;
+	width = Machine->visible_area.max_x - xoffs + 1;
+
+	/* adjust the offset */
+	offset += xoffs;
+	offset += 512 * Machine->visible_area.min_y;
+	offset &= 0x3ffff;
+
+	/* loop over rows */
+	for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
+	{
+		draw_scanline16(bitmap, xoffs, v, width, &local_videoram[offset], Machine->pens, -1);
+		offset = (offset + 512) & 0x3ffff;
+	}
 }

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #ifdef MESS
-#include "mess/mess.h"
+#include "mess.h"
 #endif
 
 extern char build_version[];

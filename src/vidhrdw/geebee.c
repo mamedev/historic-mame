@@ -150,7 +150,7 @@ INLINE void geebee_plot(struct osd_bitmap *bitmap, int x, int y)
 		plot_pixel(bitmap,x,y,Machine->pens[1]);
 }
 
-INLINE void mark_dirty(int x, int y)
+INLINE void geebee_mark_dirty(int x, int y)
 {
 	int cx, cy, offs;
 	cy = y / 8;
@@ -235,7 +235,7 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	{
 		int x, y;
 
-		mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
+		geebee_mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
 		for( y = 0; y < 4; y++ )
 			for( x = 0; x < 4; x++ )
 				geebee_plot(bitmap,geebee_ball_h+x+5,geebee_ball_v+y-2);

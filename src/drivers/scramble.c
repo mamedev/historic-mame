@@ -71,6 +71,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/s2650/s2650.h"
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
@@ -484,6 +485,9 @@ static PORT_WRITE_START( hotshock_sound_writeport )
 	{ 0x80, 0x80, AY8910_control_port_0_w },
 PORT_END
 
+static PORT_READ_START( hunchbks_readport )
+    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_3_r },
+PORT_END
 
 INPUT_PORTS_START( scramble )
 	PORT_START	/* IN0 */
@@ -1034,6 +1038,10 @@ INPUT_PORTS_START( hunchbks )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
+
+    PORT_START /* Sense */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cavelon )
@@ -1433,7 +1441,7 @@ static const struct MachineDriver machine_driver_hunchbks =
 		{
 			CPU_S2650,
 			18432000/6,
-			hunchbks_readmem,hunchbks_writemem,0,0,
+			hunchbks_readmem,hunchbks_writemem,hunchbks_readport,0,
 			hunchbks_vh_interrupt,1
 		},
 		{
@@ -1980,5 +1988,5 @@ GAME( 1981, mars,     0,        mars,     mars,     mars,     ROT90, "Artic", "M
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, mars,     ROT90, "Artic", "Devil Fish" )
 GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,     ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock, ROT90, "E.G. Felaco", "Hot Shocker" )
-GAME( 1983, hunchbks, hunchbkd, hunchbks, hunchbks, 0,        ROT90, "Century", "Hunchback (Scramble hardware)" )
+GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, 0,        ROT90, "Century", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,  ROT90, "Jetsoft", "Cavelon" )

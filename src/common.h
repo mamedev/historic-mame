@@ -177,7 +177,7 @@ enum
 #define		ROMREGION_ERASE			0x00000080
 
 #define ROMREGION_ERASEVALMASK		0x0000ff00			/* value to erase the region to */
-#define		ROMREGION_ERASEVAL(x)	(((x) & 0xff) << 8)
+#define		ROMREGION_ERASEVAL(x)	((((x) & 0xff) << 8) | ROMREGION_ERASE)
 #define		ROMREGION_ERASE00		ROMREGION_ERASEVAL(0)
 #define		ROMREGION_ERASEFF		ROMREGION_ERASEVAL(0xff)
 
@@ -275,7 +275,7 @@ enum
 #define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
 #define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)
 #define ROM_RELOAD(offset,length)					ROMX_LOAD(ROMENTRY_RELOAD, offset, length, 0, ROM_INHERITFLAGS)
-#define ROM_FILL(offset,length,value)				ROM_LOAD(ROMENTRY_FILL, offset, length, 0)
+#define ROM_FILL(offset,length,value)				ROM_LOAD(ROMENTRY_FILL, offset, length, value)
 #define ROM_COPY(rgn,srcoffset,offset,length)		ROMX_LOAD(ROMENTRY_COPY, offset, length, srcoffset, (rgn) << 24)
 
 /* ----- nibble loading macros ----- */

@@ -782,7 +782,7 @@ static struct {
 
 unsigned DasmARM(char *buffer, unsigned pc)
 {
-    UINT32 op = cpu_readmem26lew_dword(pc);
+    UINT32 op = cpu_readmem26ledw(pc);
 	int i;
 
 	buffer[0] = '\0';

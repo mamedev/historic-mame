@@ -540,7 +540,7 @@ static int parse_frame(int removeit)
 			if (DEBUG_5110) logerror("  (4-bit energy=%d STOP frame)\n",new_energy);
 			fifo_head = fifo_tail = fifo_count = 0;
 			removeit = 1;
-			speaking_now = 0;
+            speaking_now = talk_status = 0;
 		}
 		goto done;
 	}

@@ -474,6 +474,8 @@ memory map:
 053245/053244
 -------------
 Sprite generators. The 053245 has a 16-bit data bus to the main CPU.
+The sprites are buffered, a write to 006 activates to copy between the
+main ram and the buffer.
 
 053244 memory map (but the 053245 sees and processes them too):
 000-001 W  global X offset
@@ -484,10 +486,10 @@ Sprite generators. The 053245 has a 16-bit data bus to the main CPU.
            bit 2 = unknown, used by Parodius
            bit 4 = enable gfx ROM reading
            bit 5 = unknown, used by Rollergames
-006     W  unknown
+006     W  writing here copies the sprite ram to the internal buffer
 007     W  unknown
 008-009 W  low 16 bits of the ROM address to read
-00a-00b W  high 3 bits of the ROM address to read
+00a-00b W  high bits of the ROM address to read.  3 bits for most games, 1 for asterix
 00c-00f R  reads data from the gfx ROMs (32 bits in total). The address of the
            data is determined by the registers above; plus bank switch bits for
            larger ROMs.
@@ -2601,12 +2603,12 @@ static int K053245_memory_region=2;
 static struct GfxElement *K053245_gfx;
 static void (*K053245_callback)(int *code,int *color,int *priority);
 static int K053244_romoffset,K053244_rombank;
-static int K053244_readroms;
+static int K053244_readroms, K053245_ramsize;
 static int K053245_flipscreenX,K053245_flipscreenY;
 static int K053245_spriteoffsX,K053245_spriteoffsY;
-static data16_t *K053245_ram;
+static data16_t *K053245_ram, *K053245_buffer;
 
-int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
+int K053245_vh_start(int gfx_memory_region,int big,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority))
 {
 	int gfx_index;
@@ -2651,10 +2653,19 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K053245_gfx = Machine->gfx[gfx_index];
 	K053245_callback = callback;
 	K053244_rombank = 0;
-	K053245_ram = malloc(0x800);
+	K053245_ramsize = big ? 0x1000 : 0x800;
+	K053245_ram = malloc(K053245_ramsize);
 	if (!K053245_ram) return 1;
 
-	memset(K053245_ram,0,0x800);
+	K053245_buffer = malloc(K053245_ramsize);
+	if (!K053245_buffer) {
+		free(K053245_ram);
+		K053245_ram = 0;
+		return 1;
+	}
+
+	memset(K053245_ram,0,K053245_ramsize);
+	memset(K053245_buffer,0,K053245_ramsize);
 
 	return 0;
 }
@@ -2663,6 +2674,8 @@ void K053245_vh_stop(void)
 {
 	free(K053245_ram);
 	K053245_ram = 0;
+	free(K053245_buffer);
+	K053245_buffer = 0;
 }
 
 READ16_HANDLER( K053245_word_r )
@@ -2716,19 +2729,23 @@ logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
 
 WRITE_HANDLER( K053244_w )
 {
-	if (offset == 0x00)
+	switch(offset) {
+	case 0x00:
 		K053245_spriteoffsX = (K053245_spriteoffsX & 0x00ff) | (data << 8);
-	else if (offset == 0x01)
+		break;
+	case 0x01:
 		K053245_spriteoffsX = (K053245_spriteoffsX & 0xff00) | data;
-	else if (offset == 0x02)
+		break;
+	case 0x02:
 		K053245_spriteoffsY = (K053245_spriteoffsY & 0x00ff) | (data << 8);
-	else if (offset == 0x03)
+		break;
+	case 0x03:
 		K053245_spriteoffsY = (K053245_spriteoffsY & 0xff00) | data;
-	else if (offset == 0x05)
-	{
+		break;
+	case 0x05: {
 #ifdef MAME_DEBUG
-if (data & 0xc8)
-	usrintf_showmessage("053244 reg 05 = %02x",data);
+		if (data & 0xc8)
+			usrintf_showmessage("053244 reg 05 = %02x",data);
 #endif
 		/* bit 0/1 = flip screen */
 		K053245_flipscreenX = data & 0x01;
@@ -2741,17 +2758,24 @@ if (data & 0xc8)
 
 		/* bit 5 = unknown, Rollergames uses it */
 #if VERBOSE
-logerror("%04x: write %02x to 053244 address 5\n",cpu_get_pc(),data);
+		logerror("%04x: write %02x to 053244 address 5\n",cpu_get_pc(),data);
 #endif
+		break;
 	}
-	else if (offset >= 0x08 && offset < 0x0c)
-	{
+	case 0x06:
+		memcpy(K053245_buffer, K053245_ram, K053245_ramsize);
+		break;
+	case 0x08:
+	case 0x09:
+	case 0x0a:
+	case 0x0b:
 		offset = 8*((offset & 0x03) ^ 0x01);
 		K053244_romoffset = (K053244_romoffset & ~(0xff << offset)) | (data << offset);
-		return;
+		break;
+	default:
+		logerror("%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
+		break;
 	}
-	else
-logerror("%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
 }
 
 READ16_HANDLER( K053244_lsb_r )
@@ -2763,6 +2787,19 @@ WRITE16_HANDLER( K053244_lsb_w )
 {
 	if (ACCESSING_LSB)
 		K053244_w(offset, data & 0xff);
+}
+
+READ16_HANDLER( K053244_word_r )
+{
+	return (K053244_r(offset*2)<<8)|K053244_r(offset*2+1);
+}
+
+WRITE16_HANDLER( K053244_word_w )
+{
+	if (ACCESSING_MSB)
+		K053244_w(offset*2, (data >> 8) & 0xff);
+	if (ACCESSING_LSB)
+		K053244_w(offset*2+1, data & 0xff);
 }
 
 void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
@@ -2800,7 +2837,7 @@ void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
 
 void K053245_sprites_draw(struct osd_bitmap *bitmap)
 {
-#define NUM_SPRITES 128
+#define NUM_SPRITES 256
 	int offs,pri_code;
 	int sortedlist[NUM_SPRITES];
 
@@ -2808,15 +2845,15 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap)
 		sortedlist[offs] = -1;
 
 	/* prebuild a sorted table */
-	for (offs = 0;offs < 0x400;offs += 8)
+	for (offs = 0;offs < K053245_ramsize / 2;offs += 8)
 	{
-		if (K053245_ram[offs] & 0x8000)
+		if (K053245_buffer[offs] & 0x8000)
 		{
-			sortedlist[K053245_ram[offs] & 0x007f] = offs;
+			sortedlist[K053245_buffer[offs] & 0x007f] = offs;
 		}
 	}
 
-	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
+	for (pri_code = K053245_ramsize/16-1;pri_code >= 0;pri_code--)
 	{
 		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,zoomx,zoomy,pri;
 
@@ -2851,15 +2888,15 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap)
 		/* field to do bank switching. However this applies only to TMNT2, with its */
 		/* protection mcu creating the sprite table, so we don't know where to fetch */
 		/* the bits from. */
-		code = K053245_ram[offs+1];
+		code = K053245_buffer[offs+1];
 		code = ((code & 0xffe1) + ((code & 0x0010) >> 2) + ((code & 0x0008) << 1)
 				 + ((code & 0x0004) >> 1) + ((code & 0x0002) << 2));
-		color = K053245_ram[offs+6] & 0x00ff;
+		color = K053245_buffer[offs+6] & 0x00ff;
 		pri = 0;
 
 		(*K053245_callback)(&code,&color,&pri);
 
-		size = (K053245_ram[offs] & 0x0f00) >> 8;
+		size = (K053245_buffer[offs] & 0x0f00) >> 8;
 
 		w = 1 << (size & 0x03);
 		h = 1 << ((size >> 2) & 0x03);
@@ -2869,13 +2906,13 @@ void K053245_sprites_draw(struct osd_bitmap *bitmap)
 		  <0x40 enlarge (0x20 = double size)
 		  >0x40 reduce (0x80 = half size)
 		*/
-		zoomy = K053245_ram[offs+4];
+		zoomy = K053245_buffer[offs+4];
 		if (zoomy > 0x2000) continue;
 		if (zoomy) zoomy = (0x400000+zoomy/2) / zoomy;
 		else zoomy = 2 * 0x400000;
-		if ((K053245_ram[offs] & 0x4000) == 0)
+		if ((K053245_buffer[offs] & 0x4000) == 0)
 		{
-			zoomx = K053245_ram[offs+5];
+			zoomx = K053245_buffer[offs+5];
 			if (zoomx > 0x2000) continue;
 			if (zoomx) zoomx = (0x400000+zoomx/2) / zoomx;
 //			else zoomx = 2 * 0x400000;
@@ -2883,13 +2920,13 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 		}
 		else zoomx = zoomy;
 
-		ox = K053245_ram[offs+3] + K053245_spriteoffsX;
-		oy = K053245_ram[offs+2];
+		ox = K053245_buffer[offs+3] + K053245_spriteoffsX;
+		oy = K053245_buffer[offs+2];
 
-		flipx = K053245_ram[offs] & 0x1000;
-		flipy = K053245_ram[offs] & 0x2000;
-		mirrorx = K053245_ram[offs+6] & 0x0100;
-		mirrory = K053245_ram[offs+6] & 0x0200;
+		flipx = K053245_buffer[offs] & 0x1000;
+		flipy = K053245_buffer[offs] & 0x2000;
+		mirrorx = K053245_buffer[offs+6] & 0x0100;
+		mirrory = K053245_buffer[offs+6] & 0x0200;
 
 		if (K053245_flipscreenX)
 		{
@@ -2974,7 +3011,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 				if (zoomx == 0x10000 && zoomy == 0x10000)
 				{
 					/* hack to simulate shadow */
-					if (K053245_ram[offs+6] & 0x0080)
+					if (K053245_buffer[offs+6] & 0x0080)
 					{
 						int o = K053245_gfx->colortable[16*color+15];
 						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -2999,7 +3036,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 				else
 				{
 					/* hack to simulate shadow */
-					if (K053245_ram[offs+6] & 0x0080)
+					if (K053245_buffer[offs+6] & 0x0080)
 					{
 						int o = K053245_gfx->colortable[16*color+15];
 						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -3033,7 +3070,7 @@ if (keyboard_pressed(KEYCODE_D))
 	fp=fopen("SPRITE.DMP", "w+b");
 	if (fp)
 	{
-		fwrite(K053245_ram, 0x800, 1, fp);
+		fwrite(K053245_buffer, 0x800, 1, fp);
 		usrintf_showmessage("saved");
 		fclose(fp);
 	}
@@ -3053,14 +3090,14 @@ void K053245_mark_sprites_colors(void)
 	/* sprites */
 	for (offs = 0x400-8;offs >= 0;offs -= 8)
 	{
-		if (K053245_ram[offs] & 0x8000)
+		if (K053245_buffer[offs] & 0x8000)
 		{
 			int code,color,pri;
 
-			code = K053245_ram[offs+1];
+			code = K053245_buffer[offs+1];
 			code = ((code & 0xffe1) + ((code & 0x0010) >> 2) + ((code & 0x0008) << 1)
 					 + ((code & 0x0004) >> 1) + ((code & 0x0002) << 2));
-			color = K053245_ram[offs+6] & 0x00ff;
+			color = K053245_buffer[offs+6] & 0x00ff;
 			pri = 0;
 			(*K053245_callback)(&code,&color,&pri);
 			palette_map[color] |= 0xffff;
@@ -4347,6 +4384,11 @@ READ16_HANDLER( K054157_ram_word_r )
 	return K054157_cur_rambase[offset];
 }
 
+READ16_HANDLER( K054157_ram_t2_word_r )
+{
+	return K054157_cur_rambase[((offset << 1) & 0xffe) | ((offset >> 11) ^ 1)];
+}
+
 READ16_HANDLER( K054157_rom_word_r )
 {
 	return K054157_cur_rombase[offset];
@@ -4360,6 +4402,16 @@ WRITE16_HANDLER( K054157_ram_word_w )
 	COMBINE_DATA(adr);
 	if(data != old)
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, offset/2 + K054157_cur_offset);
+}
+
+WRITE16_HANDLER( K054157_ram_t2_word_w )
+{
+	data16_t *adr = K054157_cur_rambase + (((offset << 1) & 0xffe) | ((offset >> 11) ^ 1));
+	data16_t old = *adr;
+
+	COMBINE_DATA(adr);
+	if(data != old)
+		tilemap_mark_tile_dirty(K054157_cur_tilemap, (offset & 0x7ff) + K054157_cur_offset);
 }
 
 static void K054157_set_scrolly(int plane, int pos)

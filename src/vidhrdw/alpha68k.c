@@ -12,23 +12,23 @@ static struct tilemap *fix_tilemap;
 
 /******************************************************************************/
 
-WRITE_HANDLER( alpha68k_flipscreen_w )
+void alpha68k_flipscreen_w(int flip)
 {
-	flipscreen=data&1;
+	flipscreen = flip;
 }
 
-WRITE_HANDLER( alpha68k_V_video_bank_w )
+void alpha68k_V_video_bank_w(int bank)
 {
-	bank_base=data&0xf;
+	bank_base = bank&0xf;
 }
 
-WRITE_HANDLER( alpha68k_paletteram_w )
+WRITE16_HANDLER( alpha68k_paletteram_w )
 {
-	int oldword = READ_WORD (&paletteram[offset]);
-	int newword = COMBINE_WORD (oldword, data);
+	int newword;
 	int r,g,b;
 
-	WRITE_WORD (&paletteram[offset], newword);
+	COMBINE_DATA(paletteram16 + offset);
+	newword = paletteram16[offset];
 
 	r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
 	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
@@ -38,29 +38,33 @@ WRITE_HANDLER( alpha68k_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
 /******************************************************************************/
 
 static void get_tile_info(int tile_index)
 {
-	int tile=READ_WORD(&videoram[4*tile_index])&0xff;
-	int color=READ_WORD(&videoram[4*tile_index+2])&0xf;
+	int tile  = videoram16[2*tile_index]   &0xff;
+	int color = videoram16[2*tile_index+1] &0x0f;
 
 	tile=tile | (bank_base<<8);
 
 	SET_TILE_INFO(0,tile,color)
 }
 
-WRITE_HANDLER( alpha68k_videoram_w )
+WRITE16_HANDLER( alpha68k_videoram_w )
 {
-	if ((data>>16)==0xff)
-		WRITE_WORD(&videoram[offset],(data>>8)&0xff);
+	/* Doh. */
+	if(ACCESSING_LSB)
+		if(ACCESSING_MSB)
+			videoram16[offset] = data;
+		else
+			videoram16[offset] = data & 0xff;
 	else
-		WRITE_WORD(&videoram[offset],data);
+		videoram16[offset] = (data >> 8) & 0xff;
 
-	tilemap_mark_tile_dirty(fix_tilemap,offset/4);
+	tilemap_mark_tile_dirty(fix_tilemap,offset/2);
 }
 
 int alpha68k_vh_start(void)
@@ -81,10 +85,10 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
-	for (offs = pos; offs < pos+0x800; offs += 0x80 )
+	for (offs = pos; offs < pos+0x400; offs += 0x40 )
 	{
-		mx=READ_WORD(&spriteram[offs+4+(4*j)])<<1;
-		my=READ_WORD(&spriteram[offs+6+(4*j)]);
+		mx = spriteram16[offs+2+(2*j)]<<1;
+		my = spriteram16[offs+3+(2*j)];
 		if (my&0x8000) mx++;
 
 		mx=(mx+0x100)&0x1ff;
@@ -99,9 +103,9 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j, int pos)
 			my=240-my;
 		}
 
-		for (i=0; i<0x80; i+=4) {
-			tile=READ_WORD(&spriteram[offs+2+i+(0x1000*j)+0x1000]);
-			color=READ_WORD(&spriteram[offs+i+(0x1000*j)+0x1000])&0x7f;
+		for (i=0; i<0x40; i+=2) {
+			tile  = spriteram16[offs+1+i+(0x800*j)+0x800];
+			color = spriteram16[offs  +i+(0x800*j)+0x800]&0x7f;
 
 			fy=tile&0x8000;
 			fx=tile&0x4000;
@@ -146,11 +150,11 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_init_used_colors();
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 128;color++) colmask[color] = 0;
-	for (offs = 0x1000;offs <0x4000;offs += 4 )
+	for (offs = 0x800;offs <0x2000;offs += 2 )
 	{
-		color= READ_WORD(&spriteram[offs])&0x7f;
+		color= spriteram16[offs] & 0x7f;
 		if (!color) continue;
-		code = READ_WORD(&spriteram[offs+2])&0x3fff;
+		code = spriteram16[offs+1] &0x3fff;
 		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
 
@@ -168,11 +172,11 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
 
 	draw_sprites(bitmap,1,0x000);
-	draw_sprites(bitmap,1,0x800);
+	draw_sprites(bitmap,1,0x400);
 	draw_sprites(bitmap,0,0x000);
-	draw_sprites(bitmap,0,0x800);
+	draw_sprites(bitmap,0,0x400);
 	draw_sprites(bitmap,2,0x000);
-	draw_sprites(bitmap,2,0x800);
+	draw_sprites(bitmap,2,0x400);
 	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
 
@@ -196,36 +200,36 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 */
 
-WRITE_HANDLER( alpha68k_II_video_bank_w )
+WRITE16_HANDLER( alpha68k_II_video_bank_w )
 {
 	static int buffer_28,buffer_60,buffer_68;
 
 	switch (offset) {
-		case 0x20: /* Reset */
+		case 0x10: /* Reset */
 			bank_base=buffer_28=buffer_60=buffer_68=0;
 			return;
-		case 0x28:
+		case 0x14:
 			buffer_28=1;
 			return;
-		case 0x30:
+		case 0x18:
 			if (buffer_68) {if (buffer_60) bank_base=3; else bank_base=2; }
 			if (buffer_28) {if (buffer_60) bank_base=1; else bank_base=0; }
 			return;
-		case 0x60:
+		case 0x30:
 			bank_base=buffer_28=buffer_68=0;
 			buffer_60=1;
 			return;
-		case 0x68:
+		case 0x34:
 			buffer_68=1;
 			return;
-		case 0x70:
+		case 0x38:
 			if (buffer_68) {if (buffer_60) bank_base=7; else bank_base=6; }
 			if (buffer_28) {if (buffer_60) bank_base=5; else bank_base=4; }
 			return;
-		case 0x10: /* Graphics flags?  Not related to fix chars anyway */
-		case 0x18:
-		case 0x50:
-		case 0x58:
+		case 0x08: /* Graphics flags?  Not related to fix chars anyway */
+		case 0x0c:
+		case 0x28:
+		case 0x2c:
 			return;
 	}
 
@@ -234,13 +238,13 @@ WRITE_HANDLER( alpha68k_II_video_bank_w )
 
 /******************************************************************************/
 
-WRITE_HANDLER( alpha68k_V_video_control_w )
+WRITE16_HANDLER( alpha68k_V_video_control_w )
 {
 	switch (offset) {
-		case 0x10: /* Graphics flags?  Not related to fix chars anyway */
-		case 0x18:
-		case 0x50:
-		case 0x58:
+		case 0x08: /* Graphics flags?  Not related to fix chars anyway */
+		case 0x0c:
+		case 0x28:
+		case 0x2c:
 			return;
 	}
 }
@@ -249,10 +253,10 @@ static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int f
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
-	for (offs = s; offs < e; offs += 0x80 )
+	for (offs = s; offs < e; offs += 0x40 )
 	{
-		mx=READ_WORD(&spriteram[offs+4+(4*j)])<<1;
-		my=READ_WORD(&spriteram[offs+6+(4*j)]);
+		mx = spriteram16[offs+2+(2*j)]<<1;
+		my = spriteram16[offs+3+(2*j)];
 		if (my&0x8000) mx++;
 
 		mx=(mx+0x100)&0x1ff;
@@ -267,9 +271,9 @@ static void draw_sprites_V(struct osd_bitmap *bitmap, int j, int s, int e, int f
 			my=240-my;
 		}
 
-		for (i=0; i<0x80; i+=4) {
-			tile=READ_WORD(&spriteram[offs+2+i+(0x1000*j)+0x1000]);
-			color=READ_WORD(&spriteram[offs+i+(0x1000*j)+0x1000])&0xff;
+		for (i=0; i<0x40; i+=2) {
+			tile  = spriteram16[offs+1+i+(0x800*j)+0x800];
+			color = spriteram16[offs  +i+(0x800*j)+0x800]&0xff;
 
 			fx=tile&fx_mask;
 			fy=tile&fy_mask;
@@ -313,11 +317,11 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_init_used_colors();
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (offs = 0x1000;offs <0x4000;offs += 4 )
+	for (offs = 0x0800;offs <0x2000;offs += 2 )
 	{
-		color= READ_WORD(&spriteram[offs])&0xff;
+		color= spriteram16[offs]&0xff;
 		if (!color) continue;
-		code = READ_WORD(&spriteram[offs+2])&0x7fff;
+		code = spriteram16[offs+1]&0x7fff;
 		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
 
@@ -337,17 +341,17 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* This appears to be correct priority */
 	if (!strcmp(Machine->gamedrv->name,"skyadvnt") || !strcmp(Machine->gamedrv->name,"skyadvnu")) /* Todo */
 	{
-		draw_sprites_V(bitmap,0,0x0f80,0x1000,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,1,0x0000,0x1000,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,2,0x0000,0x1000,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,0,0x0000,0x0f80,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,0,0x07c0,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,1,0x0000,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,2,0x0000,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,0,0x0000,0x07c0,0,0x8000,0x7fff);
 	}
 	else	/* gangwars */
 	{
-		draw_sprites_V(bitmap,0,0x0f80,0x1000,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,1,0x0000,0x1000,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,2,0x0000,0x1000,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,0,0x0000,0x0f80,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,0,0x07c0,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,1,0x0000,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,2,0x0000,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,0,0x0000,0x07c0,0x8000,0,0x7fff);
 	}
 
 	tilemap_draw(bitmap,fix_tilemap,0,0);
@@ -372,11 +376,11 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* Tiles */
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	for (color = 0;color < 256;color++) colmask[color] = 0;
-	for (offs = 0x1000;offs <0x4000;offs += 4 )
+	for (offs = 0x0800;offs <0x2000;offs += 2 )
 	{
-		color= READ_WORD(&spriteram[offs])&0xff;
+		color= spriteram16[offs]&0xff;
 		if (!color) continue;
-		code = READ_WORD(&spriteram[offs+2])&0x7fff;
+		code = spriteram16[offs+1]&0x7fff;
 		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
 
@@ -394,10 +398,10 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
 
 	/* This appears to be correct priority */
-	draw_sprites_V(bitmap,0,0x0f80,0x1000,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,1,0x0000,0x1000,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,2,0x0000,0x1000,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,0,0x0000,0x0f80,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,0,0x07c0,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,1,0x0000,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,2,0x0000,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,0,0x0000,0x07c0,0x4000,0x8000,0x3fff);
 
 	tilemap_draw(bitmap,fix_tilemap,0,0);
 }
@@ -436,9 +440,9 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i;
 
-	for (offs = 0x0000; offs < 0x800; offs += 0x40 )
+	for (offs = 0x0000; offs < 0x400; offs += 0x20 )
 	{
-		mx=READ_WORD(&spriteram[offs+c]);
+		mx=spriteram16[offs+c];
 
 		my=mx>>8;
 		mx=mx&0xff;
@@ -450,8 +454,8 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int c,int d)
 		my=0x200 - my;
 		my-=0x200;
 
-		for (i=0; i<0x40; i+=2) {
-			tile=READ_WORD(&spriteram[offs+d+i]);
+		for (i=0; i<0x20; i++) {
+			tile=spriteram16[offs+d+i];
 			color=1;
 			tile&=0x3fff;
 
@@ -473,9 +477,9 @@ void alpha68k_I_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* This appears to be correct priority */
-draw_sprites2(bitmap,6,0x1800);
-draw_sprites2(bitmap,4,0x1000);
-draw_sprites2(bitmap,2,0x800);
+draw_sprites2(bitmap,3,0x0c00);
+draw_sprites2(bitmap,2,0x0800);
+draw_sprites2(bitmap,1,0x0400);
 //
 }
 
@@ -522,14 +526,14 @@ static void kyros_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fy;
 
-	for (offs = 0x0000; offs < 0x800; offs += 0x40 )
+	for (offs = 0x0000; offs < 0x400; offs += 0x20 )
 	{
-		mx=READ_WORD(&spriteram[offs+c]);
+		mx=spriteram16[offs+c];
 		my=0x100-(mx>>8);
 		mx=mx&0xff;
 
-		for (i=0; i<0x40; i+=2) {
-			tile=READ_WORD(&spriteram[offs+d+i]);
+		for (i=0; i<0x20; i++) {
+			tile=spriteram16[offs+d+i];
 			color=(tile&0x4000)>>14;
 			fy=tile&0x1000;
 			bank=((tile>>10)&0x3)+((tile&0x8000)?4:0);
@@ -551,9 +555,9 @@ void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-	kyros_draw_sprites(bitmap,4,0x1000);
-	kyros_draw_sprites(bitmap,6,0x1800);
-	kyros_draw_sprites(bitmap,2,0x800);
+	kyros_draw_sprites(bitmap,2,0x0800);
+	kyros_draw_sprites(bitmap,3,0x0c00);
+	kyros_draw_sprites(bitmap,1,0x0400);
 }
 
 /******************************************************************************/
@@ -562,14 +566,14 @@ static void sstingry_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fx,fy;
 
-	for (offs = 0x0000; offs < 0x800; offs += 0x40 )
+	for (offs = 0x0000; offs < 0x400; offs += 0x20 )
 	{
-		mx=READ_WORD(&spriteram[offs+c]);
+		mx=spriteram16[offs+c];
 		my=0x100-(mx>>8);
 		mx=mx&0xff;
 
-		for (i=0; i<0x40; i+=2) {
-			tile=READ_WORD(&spriteram[offs+d+i]);
+		for (i=0; i<0x20; i++) {
+			tile=spriteram16[offs+d+i];
 			color=0; //bit 0x4000
 			fy=tile&0x1000;
 			fx=0;
@@ -592,26 +596,26 @@ void sstingry_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
-	sstingry_draw_sprites(bitmap,4,0x1000);
-	sstingry_draw_sprites(bitmap,6,0x1800);
-	sstingry_draw_sprites(bitmap,2,0x800);
+	sstingry_draw_sprites(bitmap,2,0x0800);
+	sstingry_draw_sprites(bitmap,3,0x0c00);
+	sstingry_draw_sprites(bitmap,1,0x0400);
 }
 
 /******************************************************************************/
 
 static void get_kouyakyu_info( int tile_index )
 {
-	int offs=tile_index*4;
-	int tile=READ_WORD(&videoram[offs])&0xff;
-	int color=READ_WORD(&videoram[offs+2])&0xf;
+	int offs=tile_index*2;
+	int tile=videoram16[offs]&0xff;
+	int color=videoram16[offs+1]&0xf;
 
 	SET_TILE_INFO(0,tile,color)
 }
 
-WRITE_HANDLER( kouyakyu_video_w )
+WRITE16_HANDLER( kouyakyu_video_w )
 {
-	WRITE_WORD(&videoram[offset],data);
-	tilemap_mark_tile_dirty( fix_tilemap, offset/4 );
+	COMBINE_DATA(videoram16+offset);
+	tilemap_mark_tile_dirty( fix_tilemap, offset/2 );
 }
 
 int kouyakyu_vh_start(void)
@@ -630,9 +634,9 @@ void kouyakyu_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	fillbitmap(bitmap,1,&Machine->visible_area);
 
-sstingry_draw_sprites(bitmap,4,0x1000);
-sstingry_draw_sprites(bitmap,6,0x1800);
-sstingry_draw_sprites(bitmap,2,0x800);
+sstingry_draw_sprites(bitmap,2,0x0800);
+sstingry_draw_sprites(bitmap,3,0x0c00);
+sstingry_draw_sprites(bitmap,1,0x0400);
 
 	tilemap_update(ALL_TILEMAPS);
 	tilemap_draw(bitmap,fix_tilemap,0,0);

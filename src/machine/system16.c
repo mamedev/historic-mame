@@ -1,4 +1,113 @@
 #include "driver.h"
+#include "machine/system16.h"
+
+//int sys16_sh_shadowpal;
+//int sys16_MaxShadowColors;
+
+data16_t *sys16_workingram;
+data16_t *sys16_workingram2;
+data16_t *sys16_extraram;
+data16_t *sys16_extraram2;
+data16_t *sys16_extraram3;
+data16_t *sys16_extraram4;
+
+static void patch_codeX( int offset, int data, int cpu ){
+	int aligned_offset = offset&0xfffffe;
+	data16_t *mem = (data16_t *)memory_region(REGION_CPU1+cpu);
+	int old_word = mem[aligned_offset/2];
+
+	if( offset&1 )
+		data = (old_word&0xff00)|data;
+	else
+		data = (old_word&0x00ff)|(data<<8);
+
+	mem[aligned_offset/2] = data;
+}
+
+void sys16_patch_code( int offset, int data ){
+	patch_codeX(offset,data,0);
+}
+void sys16_patch_code2( int offset, int data ){
+	patch_codeX(offset,data,2);
+}
+void sys16_patch_z80code( int offset, int data ){
+	UINT8 *RAM = memory_region(REGION_CPU2);
+	RAM[offset] = data;
+}
+
+
+READ16_HANDLER( SYS16_MRA16_WORKINGRAM2_SHARE ){ return sys16_workingram2[offset]; }
+WRITE16_HANDLER( SYS16_MWA16_WORKINGRAM2_SHARE ){ COMBINE_DATA( &sys16_workingram2[offset] ); }
+READ16_HANDLER( SYS16_MRA16_ROADRAM_SHARE ){ return sys16_roadram[offset]; }
+WRITE16_HANDLER( SYS16_MWA16_ROADRAM_SHARE ){ COMBINE_DATA( &sys16_roadram[offset] ); }
+READ16_HANDLER( SYS16_CPU3ROM16_r ){
+	const data16_t *pMem = (data16_t *)memory_region(REGION_CPU3);
+	return pMem[offset];
+}
+READ16_HANDLER( SYS16_CPU2_RESET_HACK ){
+	cpu_set_reset_line(2,PULSE_LINE);
+	return 0;
+}
+
+void (*sys16_custom_irq)(void);
+
+void sys16_onetime_init_machine( void ){
+	sys16_bg1_trans=0;
+	sys16_rowscroll_scroll=0;
+	sys18_splittab_bg_x=0;
+	sys18_splittab_bg_y=0;
+	sys18_splittab_fg_x=0;
+	sys18_splittab_fg_y=0;
+
+	sys16_quartet_title_kludge=0;
+
+	sys16_custom_irq=NULL;
+
+//	sys16_MaxShadowColors = NumOfShadowColors;
+
+#ifdef SPACEHARRIER_OFFSETS
+	spaceharrier_patternoffsets=0;
+#endif
+}
+
+static struct GfxLayout charlayout =
+{
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+struct GfxDecodeInfo sys16_gfxdecodeinfo[] = {
+	{ REGION_GFX1, 0, &charlayout,	0, 1024 },
+	{ -1 } /* end of array */
+};
+
+void sys16_interleave_sprite_data( int bank_size )
+{
+	unsigned char *temp = malloc( bank_size );
+	bank_size/=4;
+	if( temp ){
+		unsigned char *base = memory_region(REGION_GFX2);
+		unsigned char *p1 = temp;
+		unsigned char *p2 = temp+bank_size;
+		unsigned char *p3 = temp+bank_size*2;
+		unsigned char *p4 = temp+bank_size*3;
+
+		memcpy (temp, base, bank_size*4 );
+
+		while( bank_size-- ){
+			*base++ = *p4++;
+			*base++ = *p3++;
+			*base++ = *p2++;
+			*base++ = *p1++;
+		}
+	}
+	free( temp );
+}
 
 void system16_decode(unsigned char *dest,unsigned char *source,int size,unsigned short *decrypt_data)
 {
@@ -2025,3 +2134,106 @@ void aurail_decode_opcode2(unsigned char *dest,unsigned char *source,int size)
 {
 	system16_decode(dest,source,size,(unsigned short *)aurail_decrypt_opcode2);
 }
+
+/* sound */
+
+static void sound_cause_nmi( int chip ){
+	/* upd7759 callback */
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+struct SEGAPCMinterface sys16_segapcm_interface_15k = {
+	SEGAPCM_SAMPLE15K,
+	BANK_256,
+	REGION_SOUND1,		// memory region
+	50
+};
+struct SEGAPCMinterface sys16_segapcm_interface_15k_512 = {
+	SEGAPCM_SAMPLE15K,
+	BANK_512,
+	REGION_SOUND1,		// memory region
+	50
+};
+struct SEGAPCMinterface sys16_segapcm_interface_32k = {
+	SEGAPCM_SAMPLE32K,
+	BANK_256,
+	REGION_SOUND1,
+	50
+};
+
+
+struct YM2151interface sys16_ym2151_interface = {
+	1,			/* 1 chip */
+	4096000,	/* 3.58 MHz ? */
+	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+struct YM2203interface sys16_ym2203_interface =
+{
+	1,	/* 1 chips */
+	4096000,	/* 3.58 MHz ? */
+	{ YM2203_VOL(50,50) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+struct YM2203interface sys16_3xym2203_interface =
+{
+	3,	/* number of chips */
+	4096000,	/* 3.58 MHz ? */
+	{ YM2203_VOL(50,50),YM2203_VOL(50,50),YM2203_VOL(50,50) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+struct DACinterface sys16_7751_dac_interface =
+{
+	1,
+	{ 100 }
+};
+
+struct UPD7759_interface sys16_upd7759_interface =
+{
+	1,			/* 1 chip */
+	UPD7759_STANDARD_CLOCK,
+	{ 60 }, 	/* volumes */
+	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
+    UPD7759_SLAVE_MODE,
+	{ sound_cause_nmi },
+};
+struct UPD7759_interface aliensyn_upd7759_interface =
+{
+	1,			/* 1 chip */
+	480000,
+	{ 60 }, 	/* volumes */
+	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
+    UPD7759_SLAVE_MODE,
+	{ sound_cause_nmi },
+};
+
+struct YM2413interface sys16_ym2413_interface= {
+    1,
+    8000000,	/* ??? */
+    { 30 },
+};
+
+struct RF5C68interface sys18_rf5c68_interface = {
+  //3580000 * 2,
+  3579545*2,
+  100
+};
+
+struct YM2612interface sys18_ym3438_interface =
+{
+	2,	/* 2 chips */
+	8000000,
+	{ 40,40 },
+	{ 0 },	{ 0 },	{ 0 },	{ 0 }
+};

@@ -32,12 +32,15 @@
 #include "cpu/m6502/m6502.h"
 
 /* externals: from vidhrdw */
-extern int shootout_vh_start( void );
-extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 unsigned char *shootout_textram;
+WRITE_HANDLER( shootout_videoram_w );
+WRITE_HANDLER( shootout_textram_w );
 
-extern void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int shootout_vh_start( void );
+void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /*******************************************************************************/
 
@@ -75,8 +78,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1003, low_input_r },
 	{ 0x2000, 0x27ff, MRA_RAM },	/* foreground */
-	{ 0x2800, 0x2bff, videoram_r }, /* background videoram */
-	{ 0x2c00, 0x2fff, colorram_r }, /* background colorram */
+	{ 0x2800, 0x2fff, MRA_RAM },	/* background */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -89,9 +91,8 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x1003, 0x1003, sound_cpu_command_w },
 	{ 0x1004, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x19ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x27ff, MWA_RAM, &shootout_textram },
-	{ 0x2800, 0x2bff, videoram_w, &videoram, &videoram_size },
-	{ 0x2c00, 0x2fff, colorram_w, &colorram },
+	{ 0x2000, 0x27ff, shootout_textram_w, &shootout_textram },
+	{ 0x2800, 0x2fff, shootout_videoram_w, &videoram },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -101,8 +102,7 @@ static MEMORY_READ_START( readmem_alt )
 	{ 0x2000, 0x21ff, MRA_RAM },
 	{ 0x2800, 0x2800, YM2203_status_port_0_r },
 	{ 0x3000, 0x37ff, MRA_RAM },	/* foreground */
-	{ 0x3800, 0x3bff, videoram_r }, /* background videoram */
-	{ 0x3c00, 0x3fff, colorram_r }, /* background colorram */
+	{ 0x3800, 0x3fff, MRA_RAM },	/* background */
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -113,9 +113,8 @@ static MEMORY_WRITE_START( writemem_alt )
 	{ 0x2000, 0x21ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x2800, 0x2800, YM2203_control_port_0_w },
 	{ 0x2801, 0x2801, YM2203_write_port_0_w },
-	{ 0x3000, 0x37ff, MWA_RAM, &shootout_textram },
-	{ 0x3800, 0x3bff, videoram_w, &videoram, &videoram_size },
-	{ 0x3c00, 0x3fff, colorram_w, &colorram },
+	{ 0x3000, 0x37ff, shootout_textram_w, &shootout_textram },
+	{ 0x3800, 0x3fff, shootout_videoram_w, &videoram },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 

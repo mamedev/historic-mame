@@ -129,6 +129,9 @@
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
+#if (HAS_ASAP)
+#include "cpu/asap/asap.h"
+#endif
 
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -614,6 +617,10 @@ struct cpu_interface cpuintf[] =
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
+#if (HAS_ASAP)
+	#define asap_ICount asap_icount
+	CPU0(ASAP,     asap,     1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
+#endif
 };
 
 void cpu_init(void)
@@ -728,7 +735,7 @@ reset:
 	{
 		if (!CPU_AUDIO(i) || Machine->sample_rate != 0)
 		{
-			timer_suspendcpu(i, 0, SUSPEND_REASON_RESET);
+			timer_suspendcpu(i, 0, SUSPEND_ANY_REASON);
 		}
 		else
 		{

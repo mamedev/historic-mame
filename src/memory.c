@@ -30,22 +30,22 @@
 /***************************************************************************
 
 	Basic theory of memory handling:
-	
-	An address with up to 32 bits is passed to a memory handler. First, 
+
+	An address with up to 32 bits is passed to a memory handler. First,
 	the non-significant bits are removed from the bottom; for example,
 	a 16-bit memory handler doesn't care about the low bit, so that is
 	removed.
-	
-	Next, the address is broken into two halves, an upper half and a 
-	lower half. The number of bits in each half varies based on the 
+
+	Next, the address is broken into two halves, an upper half and a
+	lower half. The number of bits in each half varies based on the
 	total number of address bits. The upper half is then used as an
 	index into the base_lookup table.
-	
+
 	If the value pulled from the table is within the range 192-255, then
 	the lower half of the address is needed to resolve the final handler.
 	The value from the table (192-255) is combined with the lower address
 	bits to form an index into a subtable.
-	
+
 	Table values in the range 0-31 are reserved for internal handling
 	(such as RAM, ROM, NOP, and banking). Table values between 32 and 192
 	are assigned dynamically at startup.
@@ -181,7 +181,7 @@ static void populate_table(struct memport_data *memport, int iswrite, offs_t sta
 static void *assign_dynamic_bank(int cpu, offs_t start);
 static void install_mem_handler(struct memport_data *memport, int iswrite, offs_t start, offs_t end, void *handler);
 static void install_port_handler(struct memport_data *memport, int iswrite, offs_t start, offs_t end, void *handler);
-static void set_static_handler(int idx, 
+static void set_static_handler(int idx,
 		read8_handler r8handler, read16_handler r16handler, read32_handler r32handler,
 		write8_handler w8handler, write16_handler w16handler, write32_handler w32handler);
 static int init_cpudata(void);
@@ -216,27 +216,27 @@ int memory_init(void)
 	/* init the static handlers */
 	if (!init_static())
 		return 0;
-	
+
 	/* init the CPUs */
 	if (!init_cpudata())
 		return 0;
-	
+
 	/* verify the memory handlers and check banks */
 	if (!verify_memory())
 		return 0;
 	if (!verify_ports())
 		return 0;
-	
+
 	/* allocate memory for sparse address spaces */
 	if (!allocate_memory())
 		return 0;
-	
+
 	/* then fill in the tables */
 	if (!populate_memory())
 		return 0;
 	if (!populate_ports())
 		return 0;
-	
+
 #ifdef MEM_DUMP
 	/* dump the final memory configuration */
 	mem_dump();
@@ -301,16 +301,16 @@ void memory_set_context(int activecpu)
 	writemem_lookup = cpudata[activecpu].mem.write.table;
 	readport_lookup = cpudata[activecpu].port.read.table;
 	writeport_lookup = cpudata[activecpu].port.write.table;
-	
+
 	memory_amask = cpudata[activecpu].mem.mask;
 	port_amask = cpudata[activecpu].port.mask;
-	
+
 	opbasefunc = cpudata[activecpu].opbase;
 }
 
 
 /*-------------------------------------------------
-	memory_set_bankhandler_r - set readmemory 
+	memory_set_bankhandler_r - set readmemory
 	handler for bank memory (8-bit only!)
 -------------------------------------------------*/
 
@@ -323,7 +323,7 @@ void memory_set_bankhandler_r(int bank, offs_t offset, mem_read_handler handler)
 		rmemhandler8[bank].offset = bankdata[HANDLER_TO_BANK(handler)].readoffset - offset;
 	else
 		rmemhandler8[bank].offset = bankdata[bank].readoffset - offset;
-	
+
 	/* set the new handler */
 	if (HANDLER_IS_STATIC(handler))
 		handler = rmemhandler8s[(FPTR)handler];
@@ -332,7 +332,7 @@ void memory_set_bankhandler_r(int bank, offs_t offset, mem_read_handler handler)
 
 
 /*-------------------------------------------------
-	memory_set_bankhandler_w - set writememory 
+	memory_set_bankhandler_w - set writememory
 	handler for bank memory (8-bit only!)
 -------------------------------------------------*/
 
@@ -345,7 +345,7 @@ void memory_set_bankhandler_w(int bank, offs_t offset, mem_write_handler handler
 		wmemhandler8[bank].offset = bankdata[HANDLER_TO_BANK(handler)].writeoffset - offset;
 	else
 		wmemhandler8[bank].offset = bankdata[bank].writeoffset - offset;
-	
+
 	/* set the new handler */
 	if (HANDLER_IS_STATIC(handler))
 		handler = wmemhandler8s[(FPTR)handler];
@@ -354,7 +354,7 @@ void memory_set_bankhandler_w(int bank, offs_t offset, mem_write_handler handler
 
 
 /*-------------------------------------------------
-	memory_set_opbase_handler - change op-code 
+	memory_set_opbase_handler - change op-code
 	memory base
 -------------------------------------------------*/
 
@@ -697,7 +697,7 @@ UINT8 get_handler_index(struct handler_data *table, void *handler, offs_t start)
 	/* all static handlers are hardcoded */
 	if (HANDLER_IS_STATIC(handler))
 		return (FPTR)handler;
-	
+
 	/* otherwise, we have to search */
 	for (i = STATIC_COUNT; i < SUBTABLE_BASE; i++)
 	{
@@ -735,10 +735,10 @@ UINT8 alloc_new_subtable(const struct memport_data *memport, struct table_data *
 		if (!tabledata->table)
 			fatalerror("error: ran out of memory allocating memory subtable\n");
 	}
-	
+
 	/* initialize the table entries */
 	memset(&tabledata->table[(1 << l1bits) + (tabledata->subtable_count << l2bits)], previous_value, 1 << l2bits);
-	
+
 	/* return the new index */
 	return SUBTABLE_BASE + tabledata->subtable_count++;
 }
@@ -765,7 +765,7 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 	/* sanity check */
 	if (start > stop)
 		return;
-	
+
 	/* set the base for non RAM/ROM cases */
 	if (handler != STATIC_RAM && handler != STATIC_ROM && handler != STATIC_RAMROM)
 		tabledata->handlers[handler].offset = start;
@@ -778,7 +778,7 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 		else
 			bankdata[handler].readoffset = start;
 	}
-	
+
 	/* handle the starting edge if it's not on a block boundary */
 	if (l2start != 0)
 	{
@@ -787,19 +787,19 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 		if (subindex < SUBTABLE_BASE)
 			subindex = tabledata->table[l1start] = alloc_new_subtable(memport, tabledata, subindex);
 		subindex &= SUBTABLE_MASK;
-		
+
 		/* if the start and stop end within the same block, handle that */
 		if (l1start == l1stop)
 		{
 			memset(&tabledata->table[(1 << l1bits) + (subindex << l2bits) + l2start], handler, l2stop - l2start + 1);
 			return;
 		}
-		
+
 		/* otherwise, fill until the end */
 		memset(&tabledata->table[(1 << l1bits) + (subindex << l2bits) + l2start], handler, (1 << l2bits) - l2start);
 		if (l1start != (offs_t)~0) l1start++;
 	}
-	
+
 	/* handle the trailing edge if it's not on a block boundary */
 	if (l2stop != l2mask)
 	{
@@ -808,7 +808,7 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 		if (subindex < SUBTABLE_BASE)
 			subindex = tabledata->table[l1stop] = alloc_new_subtable(memport, tabledata, subindex);
 		subindex &= SUBTABLE_MASK;
-		
+
 		/* fill from the beginning */
 		memset(&tabledata->table[(1 << l1bits) + (subindex << l2bits)], handler, l2stop + 1);
 
@@ -832,12 +832,12 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 void *assign_dynamic_bank(int cpu, offs_t start)
 {
 	int bank;
-	
+
 	/* special case: never assign a dynamic bank to an offset that */
 	/* intersects the CPU's region; always use RAM for that */
 	if (start < memory_region_length(REGION_CPU1 + cpu))
 		return (void *)STATIC_RAM;
-	
+
 	/* loop over banks, searching for an exact match or an empty */
 	for (bank = 1; bank <= MAX_BANKS; bank++)
 		if (!bankdata[bank].used || (bankdata[bank].cpu == cpu && bankdata[bank].base == start))
@@ -847,7 +847,7 @@ void *assign_dynamic_bank(int cpu, offs_t start)
 			bankdata[bank].base = start;
 			return BANK_TO_HANDLER(bank);
 		}
-	
+
 	/* if we got here, we failed */
 	fatalerror("cpu #%d: ran out of banks for sparse memory regions!\n", cpu);
 	return NULL;
@@ -868,11 +868,11 @@ void install_mem_handler(struct memport_data *memport, int iswrite, offs_t start
 	if (!iswrite)
 		if (HANDLER_IS_ROM(handler) || HANDLER_IS_RAMROM(handler))
 			handler = (void *)MRA_RAM;
-	
+
 	/* assign banks for sparse memory spaces */
 	if (IS_SPARSE(memport->abits) && HANDLER_IS_RAM(handler))
 		handler = (void *)assign_dynamic_bank(memport->cpu, start);
-	
+
 	/* set the handler */
 	idx = get_handler_index(tabledata->handlers, handler, start);
 	populate_table(memport, iswrite, start, end, idx);
@@ -901,7 +901,7 @@ void install_port_handler(struct memport_data *memport, int iswrite, offs_t star
 	setting all 6 handlers for a given index
 -------------------------------------------------*/
 
-static void set_static_handler(int idx, 
+static void set_static_handler(int idx,
 		read8_handler r8handler, read16_handler r16handler, read32_handler r32handler,
 		write8_handler w8handler, write16_handler w16handler, write32_handler w32handler)
 {
@@ -922,7 +922,7 @@ static void set_static_handler(int idx,
 	wporthandler16[idx].handler = (void *)w16handler;
 	wporthandler32[idx].handler = (void *)w32handler;
 }
-	
+
 
 /*-------------------------------------------------
 	init_cpudata - initialize the cpudata
@@ -932,7 +932,7 @@ static void set_static_handler(int idx,
 static int init_cpudata(void)
 {
 	int cpu;
-	
+
 	/* zap the cpudata structure */
 	memset(&cpudata, 0, sizeof(cpudata));
 
@@ -946,11 +946,11 @@ static int init_cpudata(void)
 		/* initialize the readmem and writemem tables */
 		if (!init_memport(cpu, &cpudata[cpu].mem, address_bits_of_cpu(cpu), cpunum_databus_width(cpu), 1))
 			return 0;
-			
-		/* initialize the readport and writeport tables */		
+
+		/* initialize the readport and writeport tables */
 		if (!init_memport(cpu, &cpudata[cpu].port, PORT_BITS, cpunum_databus_width(cpu), 0))
 			return 0;
-		
+
 #if HAS_Z80
 		/* Z80 port mask kludge */
 		if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80)
@@ -975,7 +975,7 @@ static int init_memport(int cpu, struct memport_data *data, int abits, int dbits
 	data->dbits = dbits;
 	data->ebits = abits - DATABITS_TO_SHIFT(dbits);
 	data->mask = 0xffffffffUL >> (32 - abits);
-	
+
 	/* allocate memory */
 	data->read.table = malloc(1 << LEVEL1_BITS(data->ebits));
 	data->write.table = malloc(1 << LEVEL1_BITS(data->ebits));
@@ -983,11 +983,11 @@ static int init_memport(int cpu, struct memport_data *data, int abits, int dbits
 		return fatalerror("cpu #%d couldn't allocate read table\n", cpu);
 	if (!data->write.table)
 		return fatalerror("cpu #%d couldn't allocate write table\n", cpu);
-	
+
 	/* initialize everything to unmapped */
 	memset(data->read.table, STATIC_UNMAP, 1 << LEVEL1_BITS(data->ebits));
 	memset(data->write.table, STATIC_UNMAP, 1 << LEVEL1_BITS(data->ebits));
-	
+
 	/* initialize the pointers to the handlers */
 	if (ismemory)
 	{
@@ -1011,7 +1011,7 @@ static int init_memport(int cpu, struct memport_data *data, int abits, int dbits
 static int verify_memory(void)
 {
 	int cpu;
-	
+
 	/* zap the bank data */
 	memset(&bankdata, 0, sizeof(bankdata));
 
@@ -1022,7 +1022,7 @@ static int verify_memory(void)
 		const struct Memory_WriteAddress *mwa = Machine->drv->cpu[cpu].memory_write;
 		UINT32 width;
 		int bank;
-		
+
 		/* determine the desired width */
 		switch (cpunum_databus_width(cpu))
 		{
@@ -1056,7 +1056,7 @@ static int verify_memory(void)
 					bankdata[bank].cpu = -1;
 				}
 		}
-		
+
 		/* verify the write handlers */
 		if (mwa)
 		{
@@ -1094,14 +1094,14 @@ static int verify_memory(void)
 static int verify_ports(void)
 {
 	int cpu;
-	
+
 	/* loop over CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu(); cpu++)
 	{
 		const struct IO_ReadPort *mra = Machine->drv->cpu[cpu].port_read;
 		const struct IO_WritePort *mwa = Machine->drv->cpu[cpu].port_write;
 		UINT32 width;
-		
+
 		/* determine the desired width */
 		switch (cpunum_databus_width(cpu))
 		{
@@ -1125,7 +1125,7 @@ static int verify_ports(void)
 					return fatalerror("cpu #%d uses wrong data width port handlers! (width = %d, memory = %08x)\n", cpu,cpunum_databus_width(cpu),mra->end);
 			}
 		}
-		
+
 		/* verify the write handlers */
 		if (mwa)
 		{
@@ -1155,11 +1155,11 @@ static int needs_ram(int cpu, void *handler)
 	/* RAM, ROM, and banks always need RAM */
 	if (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler) || HANDLER_IS_RAMROM(handler) || HANDLER_IS_BANK(handler))
 		return 1;
-	
+
 	/* NOPs never need RAM */
 	else if (HANDLER_IS_NOP(handler))
 		return 0;
-	
+
 	/* otherwise, we only need RAM for sparse memory spaces */
 	else
 		return IS_SPARSE(cpudata[cpu].mem.abits);
@@ -1240,7 +1240,7 @@ static int allocate_memory(void)
 
 			/* reset the memory */
 			memset(ext->data, 0, end+1 - lowest);
-			
+
 			/* prepare for the next loop */
 			size = ext->end + 1;
 			ext++;
@@ -1258,13 +1258,13 @@ static int allocate_memory(void)
 static int populate_memory(void)
 {
 	int cpu;
-	
+
 	/* loop over CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu(); cpu++)
 	{
 		const struct Memory_ReadAddress *mra, *mra_start = Machine->drv->cpu[cpu].memory_read;
 		const struct Memory_WriteAddress *mwa, *mwa_start = Machine->drv->cpu[cpu].memory_write;
-		
+
 		/* install the read handlers */
 		if (mra_start)
 		{
@@ -1272,13 +1272,13 @@ static int populate_memory(void)
 			for (mra = mra_start; !IS_MEMPORT_END(mra); mra++)
 				if (IS_MEMPORT_MARKER(mra) && (mra->end & MEMPORT_ABITS_MASK))
 					cpudata[cpu].mem.mask = 0xffffffffUL >> (32 - (mra->end & MEMPORT_ABITS_VAL_MASK));
-			
+
 			/* then work backwards */
 			for (mra--; mra >= mra_start; mra--)
 				if (!IS_MEMPORT_MARKER(mra))
 					install_mem_handler(&cpudata[cpu].mem, 0, mra->start, mra->end, (void *)mra->handler);
 		}
-		
+
 		/* install the write handlers */
 		if (mwa_start)
 		{
@@ -1286,7 +1286,7 @@ static int populate_memory(void)
 			for (mwa = mwa_start; !IS_MEMPORT_END(mwa); mwa++)
 				if (IS_MEMPORT_MARKER(mwa) && (mwa->end & MEMPORT_ABITS_MASK))
 					cpudata[cpu].mem.mask = 0xffffffffUL >> (32 - (mwa->end & MEMPORT_ABITS_VAL_MASK));
-			
+
 			/* then work backwards */
 			for (mwa--; mwa >= mwa_start; mwa--)
 				if (!IS_MEMPORT_MARKER(mwa))
@@ -1309,13 +1309,13 @@ static int populate_memory(void)
 static int populate_ports(void)
 {
 	int cpu;
-	
+
 	/* loop over CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu(); cpu++)
 	{
 		const struct IO_ReadPort *mra, *mra_start = Machine->drv->cpu[cpu].port_read;
 		const struct IO_WritePort *mwa, *mwa_start = Machine->drv->cpu[cpu].port_write;
-		
+
 		/* install the read handlers */
 		if (mra_start)
 		{
@@ -1323,13 +1323,13 @@ static int populate_ports(void)
 			for (mra = mra_start; !IS_MEMPORT_END(mra); mra++)
 				if (IS_MEMPORT_MARKER(mra) && (mra->end & MEMPORT_ABITS_MASK))
 					cpudata[cpu].port.mask = 0xffffffffUL >> (32 - (mra->end & MEMPORT_ABITS_VAL_MASK));
-			
+
 			/* then work backwards */
 			for (mra--; mra != mra_start; mra--)
 				if (!IS_MEMPORT_MARKER(mra))
 					install_port_handler(&cpudata[cpu].port, 0, mra->start, mra->end, (void *)mra->handler);
 		}
-		
+
 		/* install the write handlers */
 		if (mwa_start)
 		{
@@ -1337,7 +1337,7 @@ static int populate_ports(void)
 			for (mwa = mwa_start; !IS_MEMPORT_END(mwa); mwa++)
 				if (IS_MEMPORT_MARKER(mwa) && (mwa->end & MEMPORT_ABITS_MASK))
 					cpudata[cpu].port.mask = 0xffffffffUL >> (32 - (mwa->end & MEMPORT_ABITS_VAL_MASK));
-			
+
 			/* then work backwards */
 			for (mwa--; mwa != mwa_start; mwa--)
 				if (!IS_MEMPORT_MARKER(mwa))
@@ -1488,7 +1488,7 @@ data8_t name(offs_t address)															\
 
 
 /*-------------------------------------------------
-	READWORD - generic word-sized read handler 
+	READWORD - generic word-sized read handler
 	(16-bit and 32-bit aligned only!)
 -------------------------------------------------*/
 
@@ -1740,7 +1740,7 @@ void name(offs_t address, data8_t data)													\
 
 
 /*-------------------------------------------------
-	WRITEWORD - generic word-sized write handler 
+	WRITEWORD - generic word-sized write handler
 	(16-bit and 32-bit aligned only!)
 -------------------------------------------------*/
 
@@ -1823,7 +1823,7 @@ void name(offs_t address, data16_t data)												\
 
 
 /*-------------------------------------------------
-	WRITELONG - dword-sized write handler 
+	WRITELONG - dword-sized write handler
 	(32-bit aligned only!)
 -------------------------------------------------*/
 
@@ -1970,6 +1970,8 @@ GENERATE_HANDLERS_32BIT_LE(26)
 GENERATE_HANDLERS_32BIT_LE(29)
 GENERATE_HANDLERS_32BIT_LE(32)
 
+GENERATE_HANDLERS_32BIT_BE(18)	/* HACK -- used for pdp-1 */
+
 /* make sure you add an entry to this list whenever you add a set of handlers */
 static const struct memory_address_table readmem_to_bits[] =
 {
@@ -1986,14 +1988,16 @@ static const struct memory_address_table readmem_to_bits[] =
 	{ 17, cpu_readmem17lew },
 	{ 29, cpu_readmem29lew },
 	{ 32, cpu_readmem32lew },
-	
+
 	{ 24, cpu_readmem24bedw },
 	{ 29, cpu_readmem29bedw },
 	{ 32, cpu_readmem32bedw },
 
 	{ 26, cpu_readmem26ledw },
 	{ 29, cpu_readmem29ledw },
-	{ 32, cpu_readmem32ledw }
+	{ 32, cpu_readmem32ledw },
+
+	{ 18, cpu_readmem18bedw }
 };
 
 
@@ -2037,12 +2041,12 @@ int address_bits_of_cpu(int cpu)
 {
 	read8_handler handler = cpuintf[Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK].memory_read;
 	int	idx;
-	
+
 	/* scan the table */
 	for (idx = 0; idx < sizeof(readmem_to_bits) / sizeof(readmem_to_bits[0]); idx++)
 		if (readmem_to_bits[idx].handler == handler)
 			return readmem_to_bits[idx].bits;
-	
+
 	/* this is a fatal error */
 	fatalerror("CPU #%d memory handlers don't have a table entry in readmem_to_bits!\n");
 	exit(1);
@@ -2240,7 +2244,7 @@ static int init_static(void)
 	set_static_handler(STATIC_RAM,    mrh8_ram,    NULL,         NULL,         mwh8_ram,    NULL,         NULL);
 	set_static_handler(STATIC_ROM,    NULL,        NULL,         NULL,         mwh8_rom,    mwh16_rom,    mwh32_rom);
 	set_static_handler(STATIC_RAMROM, NULL,        NULL,         NULL,         mwh8_ramrom, mwh16_ramrom, mwh32_ramrom);
-	
+
 	/* override port unmapped handlers */
 	rporthandler8 [STATIC_UNMAP].handler = (void *)prh8_bad;
 	rporthandler16[STATIC_UNMAP].handler = (void *)prh16_bad;
@@ -2248,7 +2252,7 @@ static int init_static(void)
 	wporthandler8 [STATIC_UNMAP].handler = (void *)pwh8_bad;
 	wporthandler16[STATIC_UNMAP].handler = (void *)pwh16_bad;
 	wporthandler32[STATIC_UNMAP].handler = (void *)pwh32_bad;
-	
+
 	return 1;
 }
 
@@ -2279,7 +2283,7 @@ static void dump_map(FILE *file, const struct memport_data *memport, const struc
 	int l1count = 1 << l1bits;
 	int l2count = 1 << l2bits;
 	int i, j;
-	
+
 	fprintf(file, "  Address bits = %d\n", memport->abits);
 	fprintf(file, "     Data bits = %d\n", memport->dbits);
 	fprintf(file, "Effective bits = %d\n", memport->ebits);
@@ -2293,8 +2297,8 @@ static void dump_map(FILE *file, const struct memport_data *memport, const struc
 		UINT8 entry = table->table[i];
 		if (entry != STATIC_UNMAP)
 		{
-			fprintf(file, "%05X  %08X-%08X    = %02X: ", i, 
-					i << (l2bits + minbits), 
+			fprintf(file, "%05X  %08X-%08X    = %02X: ", i,
+					i << (l2bits + minbits),
 					((i+1) << (l2bits + minbits)) - 1, entry);
 			if (entry < STATIC_COUNT)
 				fprintf(file, "%s [offset=%08X]\n", strings[entry], table->handlers[entry].offset);
@@ -2304,14 +2308,14 @@ static void dump_map(FILE *file, const struct memport_data *memport, const struc
 			{
 				fprintf(file, "subtable %d\n", entry & SUBTABLE_MASK);
 				entry &= SUBTABLE_MASK;
-				
+
 				for (j = 0; j < l2count; j++)
 				{
 					UINT8 entry2 = table->table[(1 << l1bits) + (entry << l2bits) + j];
 					if (entry2 != STATIC_UNMAP)
 					{
-						fprintf(file, "   %05X  %08X-%08X = %02X: ", j, 
-								(i << (l2bits + minbits)) | (j << minbits), 
+						fprintf(file, "   %05X  %08X-%08X = %02X: ", j,
+								(i << (l2bits + minbits)) | (j << minbits),
 								((i << (l2bits + minbits)) | ((j+1) << minbits)) - 1, entry2);
 						if (entry2 < STATIC_COUNT)
 							fprintf(file, "%s [offset=%08X]\n", strings[entry2], table->handlers[entry2].offset);
@@ -2346,14 +2350,14 @@ static void mem_dump(void)
 			              "CPU %d read memory handler dump\n"
 			              "===============================\n", cpu);
 			dump_map(file, &cpudata[cpu].mem, &cpudata[cpu].mem.read);
-			
+
 			fprintf(file, "\n\n"
 			              "================================\n"
 			              "CPU %d write memory handler dump\n"
 			              "================================\n", cpu);
 			dump_map(file, &cpudata[cpu].mem, &cpudata[cpu].mem.write);
 		}
-		
+
 		/* port handlers */
 		if (cpudata[cpu].port.abits)
 		{
@@ -2362,7 +2366,7 @@ static void mem_dump(void)
 			              "CPU %d read port handler dump\n"
 			              "=============================\n", cpu);
 			dump_map(file, &cpudata[cpu].port, &cpudata[cpu].port.read);
-			
+
 			fprintf(file, "\n\n"
 			              "==============================\n"
 			              "CPU %d write port handler dump\n"
@@ -2393,7 +2397,7 @@ static int track_entry(void *entry, void *handler)
 static void verify_masks(void)
 {
 	int i, cpu;
-	
+
 	for (i = 0;drivers[i];i++)
 	{
 		const struct RomModule *romp = drivers[i]->rom;
@@ -2407,7 +2411,7 @@ static void verify_masks(void)
 					const struct Memory_WriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
 					const struct IO_ReadPort *iora = drivers[i]->drv->cpu[cpu].port_read;
 					const struct IO_WritePort *iowa = drivers[i]->drv->cpu[cpu].port_write;
-						
+
 					if (mra)
 						for ( ; !IS_MEMPORT_END(mra); mra++)
 							if (!IS_MEMPORT_MARKER(mra))
@@ -2461,7 +2465,7 @@ static void verify_masks(void)
 										printf("%s: %s cpu %d writemem inval end  { %08X, %08X }\n", drivers[i]->source_file, drivers[i]->name, cpu, mwa->start, mwa->end);
 								}
 							}
-							
+
 					if (iora)
 						for ( ; !IS_MEMPORT_END(iora); iora++)
 							if (!IS_MEMPORT_MARKER(iora))

@@ -119,6 +119,17 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
 #define LOG(x)
 #endif
 
+#ifdef RUNTIME_LOADER
+struct cpu_interface
+m4510_interface=
+CPU0(M4510,    m4510,    1,  0,1.00,M4510_INT_NONE,    M4510_INT_IRQ,  M4510_INT_NMI,  8, 20,     0,20,LE,1, 3);
+
+extern void m4510_runtime_loader_init(void)
+{
+	cpuintf[CPU_M4510]=m4510_interface;
+}
+#endif
+
 /* Layout of the registers in the debugger */
 static UINT8 m4510_reg_layout[] = {
 	M4510_A,M4510_X,M4510_Y,M4510_Z,M4510_S,M4510_PC,

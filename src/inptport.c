@@ -1099,9 +1099,9 @@ void update_analog_port(int port)
 	switch (type)
 	{
 		case IPT_PADDLE:
-			axis = X_AXIS; is_stick = 0; check_bounds = 1; break;
+			axis = X_AXIS; is_stick = 1; check_bounds = 1; break;
 		case IPT_PADDLE_V:
-			axis = Y_AXIS; is_stick = 0; check_bounds = 1; break;
+			axis = Y_AXIS; is_stick = 1; check_bounds = 1; break;
 		case IPT_DIAL:
 			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_DIAL_V:

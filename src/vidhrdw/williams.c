@@ -12,6 +12,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+#define VIDEORAM_WIDTH		304
+#define VIDEORAM_HEIGHT		256
+#define VIDEORAM_SIZE		(VIDEORAM_WIDTH * VIDEORAM_HEIGHT)
+
+
 /* globals from machine/williams.c */
 extern UINT8 williams2_bank;
 extern UINT16 sinistar_clip;
@@ -19,6 +25,7 @@ extern UINT8 williams_cocktail;
 
 /* RAM globals */
 UINT8 *williams_videoram;
+static UINT8 *williams_videoram_copy;
 UINT8 *williams2_paletteram;
 
 /* blitter variables */
@@ -29,12 +36,10 @@ UINT8 williams_blitter_clip;
 
 /* Blaster extra variables */
 UINT8 *blaster_video_bits;
-UINT8 *blaster_color_zero_table;
 UINT8 *blaster_color_zero_flags;
+UINT8 *blaster_color_zero_table;
 static const UINT8 *blaster_remap;
 static UINT8 *blaster_remap_lookup;
-static UINT8 blaster_erase_screen;
-static UINT16 blaster_back_color;
 
 /* tilemap variables */
 UINT8 williams2_tilemap_mask;
@@ -55,12 +60,6 @@ void williams2_vh_stop(void);
 
 /* pixel copiers */
 static UINT8 *scanline_dirty;
-static void copy_pixels_8(struct osd_bitmap *bitmap, const struct rectangle *clip);
-static void copy_pixels_remap_8(struct osd_bitmap *bitmap, const struct rectangle *clip);
-static void copy_pixels_transparent_8(struct osd_bitmap *bitmap, const struct rectangle *clip);
-static void copy_pixels_16(struct osd_bitmap *bitmap, const struct rectangle *clip);
-static void copy_pixels_remap_16(struct osd_bitmap *bitmap, const struct rectangle *clip);
-static void copy_pixels_transparent_16(struct osd_bitmap *bitmap, const struct rectangle *clip);
 
 /* blitter functions */
 static void williams_blit_opaque(int sstart, int dstart, int w, int h, int data);
@@ -119,41 +118,69 @@ static void (*williams2_blitters[])(int, int, int, int, int) =
 
 /*************************************
  *
- *	Dirty marking
+ *	Copy pixels from videoram to
+ *	the screen bitmap
  *
  *************************************/
 
-static void mark_dirty(int x1, int y1, int x2, int y2)
+static void copy_pixels(struct osd_bitmap *bitmap, const struct rectangle *clip, int transparent_pen)
 {
-	int temp;
+	int blaster_back_color = 0;
+	int pairs = (clip->max_x - clip->min_x + 1) / 2;
+	int xoffset = clip->min_x;
+	int x, y;
 
-	/* swap X/Y */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	/* loop over rows */
+	for (y = clip->min_y; y <= clip->max_y; y++)
 	{
-		temp = x1; x1 = y1; y1 = temp;
-		temp = x2; x2 = y2; y2 = temp;
-	}
+		const UINT8 *source = &williams_videoram_copy[y + 256 * (xoffset / 2)];
+		UINT8 scanline[400];
+		UINT8 *dest = scanline;
 
-	/* flip X */
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		temp = Machine->scrbitmap->width - 1;
-		x1 = temp - x1;
-		x2 = temp - x2;
-		temp = x1; x1 = x2; x2 = temp;
-	}
+		/* skip if not dirty (but only for non-transparent drawing) */
+		if (transparent_pen == -1 && !williams_blitter_remap)
+		{
+			if (!scanline_dirty[y])
+				continue;
+			scanline_dirty[y]--;
+		}
 
-	/* flip Y */
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = Machine->scrbitmap->height - 1;
-		y1 = temp - y1;
-		y2 = temp - y2;
-		temp = y1; y1 = y2; y2 = temp;
-	}
+		/* mark the pixels dirty */
+		mark_dirty(clip->min_x, y, clip->max_x, y);
 
-	/* mark it */
-	osd_mark_dirty(x1,y1,x2,y2);
+		/* draw all pairs */
+		for (x = 0; x < pairs; x++, source += 256)
+		{
+			int pix = *source;
+			*dest++ = pix >> 4;
+			*dest++ = pix & 0x0f;
+		}
+
+		/* handle general case */
+		if (!williams_blitter_remap)
+			draw_scanline8(bitmap, xoffset, y, pairs * 2, scanline, Machine->pens, transparent_pen);
+
+		/* handle Blaster special case */
+		else
+		{
+			UINT8 saved_pen0;
+
+			/* pick the background pen */
+			if (*blaster_video_bits & 1)
+			{
+				if (blaster_color_zero_flags[y] & 1)
+					blaster_back_color = 16 + y - Machine->visible_area.min_y;
+			}
+			else
+				blaster_back_color = 0;
+
+			/* draw the scanline, temporarily remapping pen 0 */
+			saved_pen0 = Machine->pens[0];
+			Machine->pens[0] = Machine->pens[blaster_back_color];
+			draw_scanline8(bitmap, xoffset, y, pairs * 2, scanline, Machine->pens, transparent_pen);
+			Machine->pens[0] = saved_pen0;
+		}
+	}
 }
 
 
@@ -167,12 +194,16 @@ static void mark_dirty(int x1, int y1, int x2, int y2)
 int williams_vh_start(void)
 {
 	/* allocate space for video RAM and dirty scanlines */
-	williams_videoram = malloc(videoram_size + 256);
+	williams_videoram = malloc(2 * VIDEORAM_SIZE + 256);
 	if (!williams_videoram)
 		return 1;
-	scanline_dirty = williams_videoram + videoram_size;
-	memset(williams_videoram, 0, videoram_size);
-	memset(scanline_dirty, 1, 256);
+	williams_videoram_copy = williams_videoram + VIDEORAM_SIZE;
+	scanline_dirty = williams_videoram_copy + VIDEORAM_SIZE;
+
+	/* reset everything */
+	memset(williams_videoram, 0, VIDEORAM_SIZE);
+	memset(williams_videoram_copy, 0, VIDEORAM_SIZE);
+	memset(scanline_dirty, 2, 256);
 
 	/* pick the blitters */
 	blitter_table = williams_blitters;
@@ -181,8 +212,6 @@ int williams_vh_start(void)
 
 	/* reset special-purpose flags */
 	blaster_remap_lookup = 0;
-	blaster_erase_screen = 0;
-	blaster_back_color = 0;
 	sinistar_clip = 0xffff;
 
 	return 0;
@@ -199,7 +228,7 @@ void williams_vh_stop(void)
 	/* free video RAM */
 	if (williams_videoram)
 		free(williams_videoram);
-	williams_videoram = NULL;
+	williams_videoram = williams_videoram_copy = NULL;
 	scanline_dirty = NULL;
 }
 
@@ -211,54 +240,39 @@ void williams_vh_stop(void)
  *
  *************************************/
 
-void williams_vh_update(int counter)
+void williams_vh_update(int scanline)
 {
-	struct rectangle clip;
+	int erase_behind = 0;
+	UINT32 *srcbase, *dstbase;
+	int x;
 
 	/* wrap around at the bottom */
-	if (counter == 0) counter = 256;
+	if (scanline == 0)
+		scanline = 256;
 
-	/* determine the clip rect */
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = counter - 16;
-	clip.max_y = clip.min_y + 15;
+	/* should we erase as we draw? */
+	if (williams_blitter_remap && scanline >= 32 && (*blaster_video_bits & 0x02))
+		erase_behind = 1;
 
-	/* combine the clip rect with the visible rect */
-	if (Machine->visible_area.min_y > clip.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (Machine->visible_area.max_y < clip.max_y)
-		clip.max_y = Machine->visible_area.max_y;
+	/* determine the source and destination */
+ 	srcbase = (UINT32 *)&williams_videoram[scanline - 8];
+ 	dstbase = (UINT32 *)&williams_videoram_copy[scanline - 8];
 
-	/* copy */
-	if (Machine->scrbitmap->depth == 8)
-	{
-		if (williams_blitter_remap)
-			copy_pixels_remap_8(Machine->scrbitmap, &clip);
-		else
-			copy_pixels_8(Machine->scrbitmap, &clip);
-	}
-	else
-	{
-		if (williams_blitter_remap)
-			copy_pixels_remap_16(Machine->scrbitmap, &clip);
-		else
-			copy_pixels_16(Machine->scrbitmap, &clip);
-	}
+ 	/* loop over columns and copy a 16-row chunk */
+ 	for (x = 0; x < VIDEORAM_WIDTH/2; x++)
+ 	{
+ 		/* copy 16 rows' worth of data */
+ 		dstbase[0] = srcbase[0];
+ 		dstbase[1] = srcbase[1];
 
-	/* optionally erase from lines 24 downward */
-	if (blaster_erase_screen && clip.max_y > 24)
-	{
-		int offset, count;
+		/* handle Blaster autoerase for scanlines 24 and up */
+		if (erase_behind)
+			srcbase[0] = srcbase[1] = 0;
 
-		/* don't erase above row 24 */
-		if (clip.min_y < 24) clip.min_y = 24;
-
-		/* erase the memory associated with this area */
-		count = clip.max_y - clip.min_y + 1;
-		for (offset = clip.min_y; offset < videoram_size; offset += 0x100)
-			memset(&williams_videoram[offset], 0, count);
-	}
+ 		/* advance to the next column */
+ 		srcbase += 256/4;
+ 		dstbase += 256/4;
+ 	}
 }
 
 
@@ -266,7 +280,10 @@ void williams_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* full refresh forces us to redraw everything */
 	if (palette_recalc() || full_refresh)
-		memset(scanline_dirty, 1, 256);
+		memset(scanline_dirty, 2, 256);
+
+	/* copy the pixels into the final result */
+	copy_pixels(bitmap, &Machine->visible_area, -1);
 }
 
 
@@ -284,7 +301,7 @@ WRITE_HANDLER( williams_videoram_w )
 	{
 		/* store to videoram and mark the scanline dirty */
 		williams_videoram[offset] = data;
-		scanline_dirty[offset % 256] = 1;
+		scanline_dirty[offset % 256] = 2;
 	}
 }
 
@@ -349,11 +366,15 @@ void williams2_vh_stop(void)
  *
  *************************************/
 
-static void williams2_update_tiles(int y, const struct rectangle *clip)
+void williams2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	UINT8 *tileram = &memory_region(REGION_CPU1)[0xc000];
 	int xpixeloffset, xtileoffset;
-	int color, col;
+	int color, col, y;
+
+	/* full refresh forces us to redraw everything */
+	if (palette_recalc() || full_refresh)
+		memset(scanline_dirty, 2, 256);
 
 	/* assemble the bits that describe the X scroll offset */
 	xpixeloffset = (*williams2_xscroll_high & 1) * 12 +
@@ -363,48 +384,23 @@ static void williams2_update_tiles(int y, const struct rectangle *clip)
 	xtileoffset = *williams2_xscroll_high >> 1;
 
 	/* adjust the offset for the row and compute the palette index */
-	tileram += y / 16;
-	color = williams2_row_to_palette[y / 16];
-
-	/* 12 columns wide, each block is 24 pixels wide, 288 pixel lines */
-	for (col = 0; col <= 12; col++)
+	for (y = 0; y < 256; y += 16, tileram++)
 	{
-		unsigned int map = tileram[((col + xtileoffset) * 16) & 0x07ff];
+		color = williams2_row_to_palette[y / 16];
 
-		drawgfx(Machine->scrbitmap, Machine->gfx[0], map & williams2_tilemap_mask,
-				color, map & williams2_M7_flip, 0, col * 24 - xpixeloffset, y,
-				&Machine->visible_area, TRANSPARENCY_NONE, 0);
+		/* 12 columns wide, each block is 24 pixels wide, 288 pixel lines */
+		for (col = 0; col <= 12; col++)
+		{
+			unsigned int map = tileram[((col + xtileoffset) * 16) & 0x07ff];
+
+			drawgfx(bitmap, Machine->gfx[0], map & williams2_tilemap_mask,
+					color, map & williams2_M7_flip, 0, col * 24 - xpixeloffset, y,
+					&Machine->visible_area, TRANSPARENCY_NONE, 0);
+		}
 	}
-}
-
-
-void williams2_vh_update(int counter)
-{
-	struct rectangle clip;
-
-	/* wrap around at the bottom */
-	if (counter == 0) counter = 256;
-
-	/* determine the clip rect */
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = counter - 16;
-	clip.max_y = clip.min_y + 15;
-
-	/* combine the clip rect with the visible rect */
-	if (Machine->visible_area.min_y > clip.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (Machine->visible_area.max_y < clip.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	/* redraw the tiles */
-	williams2_update_tiles(counter - 16, &clip);
 
 	/* copy the bitmap data on top of that */
-	if (Machine->scrbitmap->depth == 8)
-		copy_pixels_transparent_8(Machine->scrbitmap, &clip);
-	else
-		copy_pixels_transparent_16(Machine->scrbitmap, &clip);
+	copy_pixels(bitmap, &Machine->visible_area, 0);
 }
 
 
@@ -603,28 +599,6 @@ int blaster_vh_start(void)
 
 /*************************************
  *
- *	Blaster-specific video refresh
- *
- *************************************/
-
-void blaster_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	int j;
-
-	/* recalculate palette -- unfortunately, there is no recourse if a */
-	/* major change occurs; we'll just have to eat it for one frame    */
-	for (j = 0; j < 0x100; j++)
-		paletteram_BBGGGRRR_w(j + 16, blaster_color_zero_table[j] ^ 0xff);
-	palette_recalc();
-
-	/* reset the background color for the next frame */
-	blaster_back_color = 0;
-}
-
-
-
-/*************************************
- *
  *	Blaster-specific enhancements
  *
  *************************************/
@@ -635,10 +609,21 @@ WRITE_HANDLER( blaster_remap_select_w )
 }
 
 
-WRITE_HANDLER( blaster_video_bits_w )
+WRITE_HANDLER( blaster_palette_0_w )
 {
-	*blaster_video_bits = data;
-	blaster_erase_screen = data & 0x02;
+	blaster_color_zero_table[offset] = data;
+	data ^= 0xff;
+	if (offset >= Machine->visible_area.min_y && offset <= Machine->visible_area.max_y)
+	{
+		int r = data & 7;
+		int g = (data >> 3) & 7;
+		int b = (data >> 6) & 3;
+
+		r = (r << 5) | (r << 2) | (r >> 1);
+		g = (g << 5) | (g << 2) | (g >> 1);
+		b = (b << 6) | (b << 4) | (b << 2) | b;
+		palette_change_color(16 + offset - Machine->visible_area.min_y, r, g, b);
+	}
 }
 
 
@@ -745,7 +730,7 @@ WRITE_HANDLER( williams_blitter_w )
 	/* mark dirty */
 	w = dstart % 256;
 	while (count-- > 0)
-		scanline_dirty[w++ % 256] = 1;
+		scanline_dirty[w++ % 256] = 2;
 
 	/* Log blits */
 	logerror("---------- Blit %02X--------------PC: %04X\n",data,cpu_get_pc());
@@ -976,40 +961,7 @@ WRITE_HANDLER( williams_blitter_w )
 #undef BLITTER_DEST_READ
 
 
-
-/*************************************
- *
- *	Pixel copy macros
- *
- *************************************/
-
-/* define this so that we get the pixel copying code when we #include ourself */
-#define WILLIAMS_COPIES 				1
-
-#define COPY_NAME 						copy_pixels_8
-#define COPY_REMAP_NAME					copy_pixels_remap_8
-#define COPY_TRANSPARENT_NAME			copy_pixels_transparent_8
-#define TYPE							UINT8
-#include "williams.c"
-#undef TYPE
-#undef COPY_TRANSPARENT_NAME
-#undef COPY_REMAP_NAME
-#undef COPY_NAME
-
-#define COPY_NAME 						copy_pixels_16
-#define COPY_REMAP_NAME					copy_pixels_remap_16
-#define COPY_TRANSPARENT_NAME			copy_pixels_transparent_16
-#define TYPE							UINT16
-#include "williams.c"
-#undef TYPE
-#undef COPY_TRANSPARENT_NAME
-#undef COPY_REMAP_NAME
-#undef COPY_NAME
-
-
-
-#elif !defined(WILLIAMS_COPIES)
-
+#else
 
 
 /*************************************
@@ -1110,361 +1062,5 @@ static void BLITTER_NAME(int sstart, int dstart, int w, int h, int data)
 	}
 }
 
-
-#else
-
-
-/*************************************
- *
- *	Copy pixels from videoram to
- *	the screen bitmap
- *
- *************************************/
-
-static void COPY_NAME(struct osd_bitmap *bitmap, const struct rectangle *clip)
-{
-	const UINT16 *pens = Machine->pens;
-	int pairs = (clip->max_x - clip->min_x + 1) / 2;
-	int xoffset = clip->min_x;
-	int x, y;
-
-	/* standard case */
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-	{
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* skip if not dirty */
-			if (!scanline_dirty[y]) continue;
-			scanline_dirty[y] = 0;
-			mark_dirty(clip->min_x, y, clip->max_x, y);
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-				dest = &((TYPE *)bitmap->line[y])[0];
-			else
-				dest = &((TYPE *)bitmap->line[bitmap->height - 1 - y])[0];
-
-			/* non-X-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-			{
-				dest += xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest += 2)
-				{
-					int pix = *source;
-					dest[0] = pens[pix >> 4];
-					dest[1] = pens[pix & 0x0f];
-				}
-			}
-
-			/* X-flipped case */
-			else
-			{
-				dest += bitmap->width - xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest -= 2)
-				{
-					int pix = *source;
-					dest[-1] = pens[pix >> 4];
-					dest[-2] = pens[pix & 0x0f];
-				}
-			}
-		}
-	}
-
-	/* X/Y swapped case */
-	else
-	{
-		int dy = (bitmap->line[1] - bitmap->line[0]) / sizeof(TYPE);
-
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* skip if not dirty */
-			if (!scanline_dirty[y]) continue;
-			scanline_dirty[y] = 0;
-			mark_dirty(clip->min_x, y, clip->max_x, y);
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-				dest = &((TYPE *)bitmap->line[0])[y];
-			else
-				dest = &((TYPE *)bitmap->line[0])[bitmap->width - 1 - y];
-
-			/* non-Y-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-			{
-				dest += xoffset * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest += dy + dy)
-				{
-					int pix = *source;
-					dest[0] = pens[pix >> 4];
-					dest[dy] = pens[pix & 0x0f];
-				}
-			}
-
-			/* Y-flipped case */
-			else
-			{
-				dest += (bitmap->height - xoffset) * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest -= dy + dy)
-				{
-					int pix = *source;
-					dest[-dy] = pens[pix >> 4];
-					dest[-dy-dy] = pens[pix & 0x0f];
-				}
-			}
-		}
-	}
-}
-
-
-
-/*************************************
- *
- *	Copy pixels from videoram to
- *	the screen bitmap, handling
- *	Blaster's color 0 latching
- *
- *************************************/
-
-static void COPY_REMAP_NAME(struct osd_bitmap *bitmap, const struct rectangle *clip)
-{
-	int pairs = (clip->max_x - clip->min_x + 1) / 2;
-	int xoffset = clip->min_x;
-	UINT16 pens[16];
-	int x, y;
-
-	/* copy the pens to start */
-	memcpy(pens, Machine->pens, sizeof(pens));
-
-	/* standard case */
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-	{
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* pick the background pen */
-			if (*blaster_video_bits & 1)
-			{
-				if (blaster_color_zero_flags[y] & 1)
-					blaster_back_color = (blaster_color_zero_table[y] != 0xff) ? 16 + y : 0;
-			}
-			else
-				blaster_back_color = 0;
-			pens[0] = Machine->pens[blaster_back_color];
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-				dest = &((TYPE *)bitmap->line[y])[0];
-			else
-				dest = &((TYPE *)bitmap->line[bitmap->height - 1 - y])[0];
-
-			/* non-X-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-			{
-				dest += xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest += 2)
-				{
-					int pix = *source;
-					dest[0] = pens[pix >> 4];
-					dest[1] = pens[pix & 0x0f];
-				}
-			}
-
-			/* X-flipped case */
-			else
-			{
-				dest += bitmap->width - xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest -= 2)
-				{
-					int pix = *source;
-					dest[-1] = pens[pix >> 4];
-					dest[-2] = pens[pix & 0x0f];
-				}
-			}
-		}
-	}
-
-	/* X/Y swapped case */
-	else
-	{
-		int dy = (bitmap->line[1] - bitmap->line[0]) / sizeof(TYPE);
-
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* pick the background pen */
-			if (*blaster_video_bits & 1)
-			{
-				if (blaster_color_zero_flags[y] & 1)
-					blaster_back_color = (blaster_color_zero_table[y] != 0xff) ? 16 + y : 0;
-			}
-			else
-				blaster_back_color = 0;
-			pens[0] = Machine->pens[blaster_back_color];
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-				dest = &((TYPE *)bitmap->line[0])[y];
-			else
-				dest = &((TYPE *)bitmap->line[0])[bitmap->width - 1 - y];
-
-			/* non-Y-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-			{
-				dest += xoffset * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest += dy + dy)
-				{
-					int pix = *source;
-					dest[0] = pens[pix >> 4];
-					dest[dy] = pens[pix & 0x0f];
-				}
-			}
-
-			/* Y-flipped case */
-			else
-			{
-				dest += (bitmap->height - xoffset) * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest -= dy + dy)
-				{
-					int pix = *source;
-					dest[-dy] = pens[pix >> 4];
-					dest[-dy-dy] = pens[pix & 0x0f];
-				}
-			}
-		}
-	}
-}
-
-
-
-/*************************************
- *
- *	Copy pixels from videoram to
- *	the screen bitmap, treating
- *	color 0 pixels as transparent.
- *
- *************************************/
-
-static void COPY_TRANSPARENT_NAME(struct osd_bitmap *bitmap, const struct rectangle *clip)
-{
-	const UINT16 *pens = Machine->pens;
-	int pairs = (clip->max_x - clip->min_x + 1) / 2;
-	int xoffset = clip->min_x;
-	int x, y;
-
-	/* standard case */
-	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-	{
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-				dest = &((TYPE *)bitmap->line[y])[0];
-			else
-				dest = &((TYPE *)bitmap->line[bitmap->height - 1 - y])[0];
-
-			/* non-X-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-			{
-				dest += xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest += 2)
-				{
-					int pix = *source;
-					if (pix)
-					{
-						int p1 = pix >> 4, p2 = pix & 0x0f;
-						if (p1) dest[0] = pens[p1];
-						if (p2) dest[1] = pens[p2];
-					}
-				}
-			}
-
-			/* X-flipped case */
-			else
-			{
-				dest += bitmap->width - xoffset;
-				for (x = 0; x < pairs; x++, source += 256, dest -= 2)
-				{
-					int pix = *source;
-					if (pix)
-					{
-						int p1 = pix >> 4, p2 = pix & 0x0f;
-						if (p1) dest[-1] = pens[p1];
-						if (p2) dest[-2] = pens[p2];
-					}
-				}
-			}
-		}
-	}
-
-	/* X/Y swapped case */
-	else
-	{
-		int dy = (bitmap->line[1] - bitmap->line[0]) / sizeof(TYPE);
-
-		/* loop over rows */
-		for (y = clip->min_y; y <= clip->max_y; y++)
-		{
-			const UINT8 *source = williams_videoram + y + 256 * (xoffset / 2);
-			TYPE *dest;
-
-			/* compute starting destination pixel based on flip */
-			if (!(Machine->orientation & ORIENTATION_FLIP_X))
-				dest = &((TYPE *)bitmap->line[0])[y];
-			else
-				dest = &((TYPE *)bitmap->line[0])[bitmap->width - 1 - y];
-
-			/* non-Y-flipped case */
-			if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-			{
-				dest += xoffset * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest += dy + dy)
-				{
-					int pix = *source;
-					if (pix)
-					{
-						int p1 = pix >> 4, p2 = pix & 0x0f;
-						if (p1) dest[0] = pens[p1];
-						if (p2) dest[dy] = pens[p2];
-					}
-				}
-			}
-
-			/* Y-flipped case */
-			else
-			{
-				dest += (bitmap->height - xoffset) * dy;
-				for (x = 0; x < pairs; x++, source += 256, dest -= dy + dy)
-				{
-					int pix = *source;
-					if (pix)
-					{
-						int p1 = pix >> 4, p2 = pix & 0x0f;
-						if (p1) dest[-dy] = pens[p1];
-						if (p2) dest[-dy-dy] = pens[p2];
-					}
-				}
-			}
-		}
-	}
-}
-
-
 #endif
+

@@ -46,6 +46,7 @@ static int num_used_opl;
 int nominal_sample_rate;
 int soundcard,usestereo;
 int attenuation = 0;
+int sampleratedetect = 1;
 static int master_volume = 256;
 
 
@@ -153,7 +154,7 @@ int msdos_init_sound(void)
 	Machine->sample_rate = info.nSampleRate;
 
 	logerror("set sample rate: %d\n",Machine->sample_rate);
-
+	if (sampleratedetect)
 	{
 		TICKER a,b;
 		LONG start,end;
@@ -205,7 +206,6 @@ int msdos_init_sound(void)
 			b = ticker();
 		} while (b-a < TICKS_PER_SEC);
 		AGetVoicePosition(hVoice[0],&end);
-
 		nominal_sample_rate = Machine->sample_rate;
 		Machine->sample_rate = end - start;
 		logerror("actual sample rate: %d\n",Machine->sample_rate);
@@ -216,7 +216,8 @@ int msdos_init_sound(void)
 		lpWave[0] = 0;
 		ADestroyAudioVoice(hVoice[0]);
 	}
-
+	else
+		nominal_sample_rate = Machine->sample_rate;
 
 #if 0
 	{

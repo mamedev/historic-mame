@@ -5,31 +5,48 @@
 		Driver by: Quench and Yochizo
 
 
+   Raizing games and Truxton 2 are heavily dependent on the Raine source.
+   Many thanks to Richard Bush and the Raine team. [Yochizo]
+
+ * Battle Garegga and Armed Police Batrider have secret characters.   *
+ * Try to input the following commands to use them.                   *
+ * ----------------------------------------------------------------   *
+ * Battle Garegga                                                     *
+ *   After inserting a coin (pushing a credit button), input          *
+ *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START   *
+ *   then you can use Mahou Daisakusen characters.                    *
+ *                                                                    *
+ * Armed Police Batrider                                              *
+ *   After inserting a coin (pushing a credit button), input          *
+ *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START      *
+ *   then you can use Mahou Daisakusen and Battle Garegga characters. *
+
+
+
 Supported games:
 
-	Name		Board No		Maker		Game name
+	Name		Board No	Maker			Game name
 	----------------------------------------------------------------------------
-	tekipaki	TP-020			Toaplan		Teki Paki
-	ghox		TP-021			Toaplan		Ghox
-	dogyuun		TP-022			Toaplan		Dogyuun
-	kbash		TP-023			Toaplan		Knuckle Bash
-	tatsujn2	TP-024			Toaplan		Truxton 2 / Tatsujin 2
-	pipibibs	TP-025			Toaplan		Pipi & Bibis
-	whoopee		TP-025			Toaplan		Whoopee
-	pipibibi	bootleg?		Toaplan		Pipi & Bibis
-	fixeight	TP-026			Toaplan		FixEight
-	grindstm	TP-027			Toaplan		Grind Stormer  (1992)
-	vfive		TP-027			Toaplan		V-V  (V-Five)  (1993 - Japan only)
-	batsugun	TP-030			Toaplan		Batsugun
-	batugnsp	TP-030			Toaplan		Batsugun  (Special Version)
-	snowbro2	??????			Toaplan		Snow Bros. 2 - With New Elves
+	tekipaki	TP-020		Toaplan			Teki Paki
+	ghox		TP-021		Toaplan			Ghox
+	dogyuun		TP-022		Toaplan			Dogyuun
+	kbash		TP-023		Toaplan			Knuckle Bash
+	truxton2	TP-024		Toaplan			Truxton 2 / Tatsujin 2
+	pipibibs	TP-025		Toaplan			Pipi & Bibis
+	whoopee		TP-025		Toaplan			Whoopee
+	pipibibi	bootleg?	Toaplan			Pipi & Bibis
+	fixeight	TP-026		Toaplan			FixEight
+	grindstm	TP-027		Toaplan			Grind Stormer  (1992)
+	vfive		TP-027		Toaplan			V-V  (V-Five)  (1993 - Japan only)
+	batsugun	TP-030		Toaplan			Batsugun
+	batugnsp	TP-030		Toaplan			Batsugun  (Special Version)
+	snowbro2	??????		Toaplan			Snow Bros. 2 - With New Elves
 
-	mahoudai	??????			Raizing		Mahou Daisakusen (Japan only)
-	shippu		??????			Raizing		Shippu Mahou Daisakusen (Japan only)
-	battleg 	??????			Raizing		Battle Garegga (Japan only)
-    batridra    ??????          Raizing     Armed Police Batrider (Version. A, Japan)
-	batrider	??????			Raizing		Armed Police Batrider (Version. B, Japan)
-
+	mahoudai	??????		Raizing			Mahou Daisakusen
+	shippumd	??????		Raizing/8ing	Shippu Mahou Daisakusen
+	battleg 	RA9503		Raizing/8ing	Battle Garegga
+	batridra	??????		Raizing/8ing	Armed Police Batrider (Rev A)
+	batrider	??????		Raizing/8ing	Armed Police Batrider (Rev B)
 
 Game status:
 
@@ -37,11 +54,11 @@ Teki Paki                      Working, but no sound. Missing sound MCU dump
 Ghox                           Working, but no sound. Missing sound MCU dump
 Dogyuun                        Working, but no sound. MCU type unknown - its a Z?80 of some sort.
 Knuckle Bash                   Working, but no sound. MCU dump exists, its a Z?80 of some sort.
-Tatsujin 2                     Working.
+Truxton 2                      Working.
 Pipi & Bibis                   Working.
 Whoopee                        Working. Missing sound MCU dump. Using bootleg sound CPU dump for now
 Pipi & Bibis (Ryouta Kikaku)   Working.
-FixEight                       Not working.           MCU type unknown - its a Z?80 of some sort.
+FixEight                       Not working properly. Missing background GFX (controlled by MCU). MCU type unknown - its a Z?80 of some sort.
 Grind Stormer                  Working, but no sound. MCU type unknown - its a Z?80 of some sort.
 VFive                          Working, but no sound. MCU type unknown - its a Z?80 of some sort.
 Batsugun                       Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
@@ -53,11 +70,11 @@ Battle Garegga                 Working.
 Armed Police Batrider (Ver. A) Working.
 Armed Police Batrider (Ver. B) Working.
 
-
 Notes:
 	See Input Port definition header below, for instructions
 	  on how to enter pause/slow motion modes.
-
+	Code at $20A26 forces territory to Japan in V-Five. Some stuff
+	  NOP'd at reset vector, and Z?80 CPU post test is skipped (bootleg ?)
 
 To Do / Unknowns:
 	- Whoopee/Teki Paki sometimes tests bit 5 of the territory port
@@ -65,27 +82,9 @@ To Do / Unknowns:
 	- Whoppee is currently using the sound CPU ROM (Z80) from a differnt
 		(pirate ?) version of Pipi and Bibis (Ryouta Kikaku copyright).
 		It really has a HD647180 CPU, and its internal ROM needs to be dumped.
-	- Code at $20A26 forces territory to Japan in V-Five. Some stuff
-		NOP'd at reset vector, and Z?80 CPU post test is skipped (bootleg ?)
-    - Fixed top-character-layer.
-
-
- * Raizing games and Tatsujin 2 are heavily dependent on the Raine source.
- * Very thanks to Richard Bash and the Raine team. [Yochizo]
-
-
- * Battle Garegga and Armed Police Batrider have secret charecters.
- * Try to input following commands to use them.
- * ----------------------------------------------------------------
- * Battle Garegga
- *   After inserting a coin (pushing a credit button), input
- *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  C  START
- *   then you can use Mahou Daisakusen characters.
- *
- * Armed Police Batrider
- *   After inserting a coin (pushing a credit button), input
- *     UP  UP  DOWN  DOWN  LEFT  RIGHT  LEFT  RIGHT  A  B  START
- *   then you can use Mahou Daisakusen and Battle Garegga characters.
+	- Fix top character layer.
+	- Emulate the vcount hardware correctly to avoid the Truxton 2 ROM
+		bug patch. See below int truxton2_init
 
 
 *****************************************************************************/
@@ -106,72 +105,92 @@ To Do / Unknowns:
 #define CPU_2_HD647180	0xa5
 #define CPU_2_Zx80		0xff
 
-/************ RAM related values ************/
+/************ Machine RAM related values ************/
 static UINT8 *toaplan2_shared_ram;
-static UINT8 *raizing_shared_ram;					/* Shared ram for Raizing games */
-static UINT8 *Zx80_shared_ram;
-static data16_t battleg_commram[0x1000];			/* Comm ram used in Battle Garegga */
-extern data16_t *batrider_txdataram;
-extern data16_t *textvideoram16;	 				/* Video ram for extra-text layer */
+static UINT8 *raizing_shared_ram;		/* Shared ram used in Shippumd and Mahoudai */
+static data16_t *toaplan2_shared_ram16;	/* Really 8bit RAM connected to Z180 */
+static data16_t *Zx80_shared_ram;		/* Really 8bit RAM connected to Z180 */
+static data16_t *battleg_commram16;		/* Comm ram used in Battle Garegga */
+
+/************ Video RAM related values ************/
+extern data16_t *toaplan2_txvideoram16;
+extern data16_t *toaplan2_txvideoram16_offs;
+extern data16_t *toaplan2_txscrollram16;
+extern data16_t *toaplan2_tx_gfxram16;
+size_t toaplan2_tx_vram_size;
+size_t toaplan2_tx_offs_vram_size;
+size_t toaplan2_tx_scroll_vram_size;
+size_t paletteram_size;
 
 /********** Status related values **********/
-static int current_bank = 2;						/* Z80 bank used in Battle Garegga and Batrider */
-static int batrider_z80nmi_enabled = 0;
-static int batrider_sound_data[8];
-static data16_t mcu_data = 0;
-static data16_t old_p1_paddle_h;
-static data16_t old_p1_paddle_v;
-static data16_t old_p2_paddle_h;
-static data16_t old_p2_paddle_v;
-static data16_t video_status = 0;
 int toaplan2_sub_cpu = 0;
-
-
-/********* Video wrappers for PIPIBIBI *********/
-READ16_HANDLER ( pipibibi_videoram_r );
-READ16_HANDLER ( pipibibi_spriteram_r );
-WRITE16_HANDLER( pipibibi_scroll_w );
-WRITE16_HANDLER( pipibibi_videoram_w );
-WRITE16_HANDLER( pipibibi_spriteram_w );
+static int mcu_data = 0;
+static int video_status;
+static int prev_scanline;
+static int prev_beampos;
+static INT8 old_p1_paddle_h;				/* For Ghox */
+static INT8 old_p1_paddle_v;
+static INT8 old_p2_paddle_h;
+static INT8 old_p2_paddle_v;
+static int current_bank = 2;				/* Z80 bank used in Battle Garegga and Batrider */
+static int batrider_z80nmi_enabled = 0;		/* Z80 nmi enabled */
+static int batrider_sound_data[8];
 
 /**************** Video stuff ******************/
-READ16_HANDLER ( toaplan2_0_videoram_r );
-READ16_HANDLER ( toaplan2_1_videoram_r );
-WRITE16_HANDLER( toaplan2_0_videoram_w );
-WRITE16_HANDLER( toaplan2_1_videoram_w );
-
 WRITE16_HANDLER( toaplan2_0_voffs_w );
 WRITE16_HANDLER( toaplan2_1_voffs_w );
+
+READ16_HANDLER ( toaplan2_0_videoram16_r );
+READ16_HANDLER ( toaplan2_1_videoram16_r );
+WRITE16_HANDLER( toaplan2_0_videoram16_w );
+WRITE16_HANDLER( toaplan2_1_videoram16_w );
+
+READ16_HANDLER ( toaplan2_txvideoram16_r );
+WRITE16_HANDLER( toaplan2_txvideoram16_w );
+READ16_HANDLER ( toaplan2_txvideoram16_offs_r );
+WRITE16_HANDLER( toaplan2_txvideoram16_offs_w );
+READ16_HANDLER ( toaplan2_txscrollram16_r );
+WRITE16_HANDLER( toaplan2_txscrollram16_w );
+READ16_HANDLER ( toaplan2_tx_gfxram16_r );
+WRITE16_HANDLER( toaplan2_tx_gfxram16_w );
+READ16_HANDLER ( raizing_tx_gfxram16_r );
+WRITE16_HANDLER( raizing_tx_gfxram16_w );
 
 WRITE16_HANDLER( toaplan2_0_scroll_reg_select_w );
 WRITE16_HANDLER( toaplan2_1_scroll_reg_select_w );
 WRITE16_HANDLER( toaplan2_0_scroll_reg_data_w );
 WRITE16_HANDLER( toaplan2_1_scroll_reg_data_w );
 
-READ16_HANDLER ( raizing_textram_r );
-WRITE16_HANDLER( raizing_textram_w );
 WRITE16_HANDLER( batrider_objectbank_w );
 WRITE16_HANDLER( batrider_textdata_decode );
 
 void toaplan2_0_eof_callback(void);
 void toaplan2_1_eof_callback(void);
+void batrider_0_eof_callback(void);
 int  toaplan2_0_vh_start(void);
 int  toaplan2_1_vh_start(void);
-int  raizing_0_vh_start(void);
+int  truxton2_0_vh_start(void);
 int  batrider_0_vh_start(void);
 void toaplan2_0_vh_stop(void);
 void toaplan2_1_vh_stop(void);
 void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void toaplan2_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void truxton2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void dogyuun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void raizing_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void batrider_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+/********* Video wrappers for PIPIBIBI *********/
+READ16_HANDLER ( pipibibi_videoram16_r );
+WRITE16_HANDLER( pipibibi_videoram16_w );
+READ16_HANDLER ( pipibibi_spriteram16_r );
+WRITE16_HANDLER( pipibibi_spriteram16_w );
+WRITE16_HANDLER( pipibibi_scroll_w );
+
+
+
 /***************************************************************************
-
-  Initializing handler
-
+  Initialisation handlers
 ***************************************************************************/
 
 static void init_toaplan2(void)
@@ -190,9 +209,25 @@ static void init_toaplan3(void)
 	mcu_data = 0;
 }
 
+static void init_fixeight(void)
+{
+	install_mem_read16_handler(0, 0x28f002, 0x28fbff, MRA16_RAM );
+	install_mem_write16_handler(0, 0x28f002, 0x28fbff, MWA16_RAM );
+
+	toaplan2_sub_cpu = CPU_2_Zx80;
+	mcu_data = 0;
+}
+
+static void init_snowbro2(void)
+{
+	toaplan2_sub_cpu = CPU_2_NONE;
+	mcu_data = 0;	/* not used here actually */
+}
+
 static void init_pipibibs(void)
 {
 	toaplan2_sub_cpu = CPU_2_Z80;
+	mcu_data = 0;	/* not used here actually */
 }
 
 static void init_pipibibi(void)
@@ -200,16 +235,14 @@ static void init_pipibibi(void)
 	int A;
 	int oldword, newword;
 
-	unsigned char *pipibibi_68k_rom = memory_region(REGION_CPU1);
-
-	toaplan2_sub_cpu = CPU_2_Z80;
+	data16_t *pipibibi_68k_rom = (data16_t *)(memory_region(REGION_CPU1));
 
 	/* unscramble the 68K ROM data. */
 
-	for (A = 0; A < 0x040000; A+=8)
+	for (A = 0; A < (0x040000/2); A+=4)
 	{
 		newword = 0;
-		oldword = READ_WORD (&pipibibi_68k_rom[A]);
+		oldword = pipibibi_68k_rom[A];
 		newword |= ((oldword & 0x0001) << 9);
 		newword |= ((oldword & 0x0002) << 14);
 		newword |= ((oldword & 0x0004) << 8);
@@ -224,10 +257,10 @@ static void init_pipibibi(void)
 		newword |= ((oldword & 0x1000) >> 12);
 		newword |= ((oldword & 0x6000) >> 7);
 		newword |= ((oldword & 0x8000) >> 12);
-		WRITE_WORD (&pipibibi_68k_rom[A],newword);
+		pipibibi_68k_rom[A] = newword;
 
 		newword = 0;
-		oldword = READ_WORD (&pipibibi_68k_rom[A+2]);
+		oldword = pipibibi_68k_rom[A+1];
 		newword |= ((oldword & 0x0001) << 8);
 		newword |= ((oldword & 0x0002) << 12);
 		newword |= ((oldword & 0x0004) << 5);
@@ -244,10 +277,10 @@ static void init_pipibibi(void)
 		newword |= ((oldword & 0x2000) >> 2);
 		newword |= ((oldword & 0x4000) >> 13);
 		newword |= ((oldword & 0x8000) >> 3);
-		WRITE_WORD (&pipibibi_68k_rom[A+2],newword);
+		pipibibi_68k_rom[A+1] = newword;
 
 		newword = 0;
-		oldword = READ_WORD (&pipibibi_68k_rom[A+4]);
+		oldword = pipibibi_68k_rom[A+2];
 		newword |= ((oldword & 0x000f) << 4);
 		newword |= ((oldword & 0x00f0) >> 4);
 		newword |= ((oldword & 0x0100) << 3);
@@ -258,10 +291,10 @@ static void init_pipibibi(void)
 		newword |= ((oldword & 0x2000) << 1);
 		newword |= ((oldword & 0x4000) >> 1);
 		newword |= ((oldword & 0x8000) >> 3);
-		WRITE_WORD (&pipibibi_68k_rom[A+4],newword);
+		pipibibi_68k_rom[A+2] = newword;
 
 		newword = 0;
-		oldword = READ_WORD (&pipibibi_68k_rom[A+6]);
+		oldword = pipibibi_68k_rom[A+3];
 		newword |= ((oldword & 0x000f) << 4);
 		newword |= ((oldword & 0x00f0) >> 4);
 		newword |= ((oldword & 0x0100) << 7);
@@ -272,162 +305,64 @@ static void init_pipibibi(void)
 		newword |= ((oldword & 0x2000) >> 3);
 		newword |= ((oldword & 0x4000) >> 5);
 		newword |= ((oldword & 0x8000) >> 7);
-		WRITE_WORD (&pipibibi_68k_rom[A+6],newword);
+		pipibibi_68k_rom[A+3] = newword;
 	}
+
+	toaplan2_sub_cpu = CPU_2_Z80;
+	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_tatsujn2(void)
+static void init_truxton2(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	data16_t *truxton2_ROM = (data16_t *)memory_region(REGION_CPU1);
 
-	/* Fix checksum from the source of Raine. */
-	WRITE_WORD(&RAM[0x2EC10],0x4E71);		// NOP
+	/* The 68K ROM has a serious bug, which has shown up in emulation.
+	   A branch condition instruction at $12BA keeps jumping back to the code
+	   that subroutines to it. Sure enough the stack very quickly overflows
+	   from the subroutine that keeps calling itself, and the game crashes.
+	   By chance, the real hardware obviously never allows the branch
+	   condition to be true.  In any case, the correct version of this code
+	   is prevelant through-out the ROM, so the fix is obvious.
+	   Todo: Emulate the hardware correctly to avoid this bug patch
+	*/
 
-	/* Fix 60000 from the source of Raine. */
-	WRITE_WORD(&RAM[0x1F6E8],0x4E75);		// RTS
+	truxton2_ROM[0x012BA / 2] = 0x65EA;	 /* Patch the relative branch so it jumps to the right location */
+	truxton2_ROM[0x2ED58 / 2] = 0x0E92;	 /* Patch the checksum byte */
 
-	WRITE_WORD(&RAM[0x009FE],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x01276],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x012BA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x03150],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x031B4],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x0F20C],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EBFA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EC7A],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1ECE8],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1ED00],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1ED5E],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1ED9A],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EDB2],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EEA2],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EEBA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EEE6],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EF72],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1EFD0],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1F028],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1F05E],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1F670],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1F6C0],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FA08],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FAA4],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FADA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FBA2],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FBDC],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FC1C],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FC8A],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FD24],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x1FD7A],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2775A],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x277D8],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2788C],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x278BA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2EC54],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2EC90],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2ECAC],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2ECCA],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2ECE6],0x4E71);		// NOP
-	WRITE_WORD(&RAM[0x2ED1E],0x4E71);		// NOP
+	toaplan2_sub_cpu = CPU_2_NONE;
+	mcu_data = 0;	/* not used here actually */
+}
 
-	WRITE_WORD(&RAM[0x2EC26],0x4E71);		// NOP
-
+static void init_raizing(void)
+{
+	toaplan2_sub_cpu = CPU_2_Z80;
+	mcu_data = 0;	/* not used here actually */
 }
 
 static void init_battleg(void)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	unsigned char *Z80 = memory_region(REGION_CPU2);
-
-	/* Fix check sum from the source of Raine */
-	WRITE_WORD(&RAM[0x15B24],0x6100 - 0x1E);
-
-	/* Skip video count check */
-	WRITE_WORD(&RAM[0x021FA],0x4E71);
+	data8_t *Z80 = (data8_t *)memory_region(REGION_CPU2);
 
 	/* Set Z80 bank switch */
-	cpu_setbank(1, &Z80[0x10000]);			/* Default bank is 2 */
+	cpu_setbank(1, &Z80[0x10000]);		/* Default bank is 2 */
 
-	memset(battleg_commram, 0x00, 0x100);
+	toaplan2_sub_cpu = CPU_2_Z80;
+	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_batrider(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	unsigned char *Z80 = memory_region(REGION_CPU2);
-
-	/* Fix check sum */
-	WRITE_WORD(&RAM[0x177E4],0x6100 - 0x18);
-
-	/* Fix some comm timeouts */
-	WRITE_WORD(&RAM[0x16D2C],0x4E71);
-	WRITE_WORD(&RAM[0x16D2E],0x4E71);
-	WRITE_WORD(&RAM[0x170F0],0x4E71);
-	WRITE_WORD(&RAM[0x02EC8],0x4E71);
-	WRITE_WORD(&RAM[0x02ECA],0x4E71);
-	WRITE_WORD(&RAM[0x03118],0x6000);
-	WRITE_WORD(&RAM[0x0313E],0x6000);
-
-	/* Skip video count check */
-	WRITE_WORD(&RAM[0x021D2],0x4E71);
-	WRITE_WORD(&RAM[0x021D4],0x4E71);
-	WRITE_WORD(&RAM[0x021D8],0x4E71);
-	WRITE_WORD(&RAM[0x021DA],0x4E71);
-
-	/* Set Z80 bank switch */
-	cpu_setbank(1, &Z80[0x10000]);	/* Default bank is 2 */
-}
-
-static void init_batridra(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	unsigned char *Z80 = memory_region(REGION_CPU2);
-
-	/* Fix check sum */
-	WRITE_WORD(&RAM[0x177A4],0x6100 - 0x18);
-
-	/* Fix some comm timeouts */
-	WRITE_WORD(&RAM[0x16CEC],0x4E71);
-	WRITE_WORD(&RAM[0x16CEE],0x4E71);
-	WRITE_WORD(&RAM[0x170B0],0x4E71);
-	WRITE_WORD(&RAM[0x02EC8],0x4E71);
-	WRITE_WORD(&RAM[0x02ECA],0x4E71);
-	WRITE_WORD(&RAM[0x03118],0x6000);
-	WRITE_WORD(&RAM[0x0313E],0x6000);
-
-	/* Skip video count check */
-	WRITE_WORD(&RAM[0x021D2],0x4E71);
-	WRITE_WORD(&RAM[0x021D4],0x4E71);
-	WRITE_WORD(&RAM[0x021D8],0x4E71);
-	WRITE_WORD(&RAM[0x021DA],0x4E71);
-
-	/* Set Z80 bank switch */
-	cpu_setbank(1, &Z80[0x10000]);	/* Default bank is 2 */
-}
-
-static void init_snowbro2(void)
-{
-	toaplan2_sub_cpu = CPU_2_NONE;
-}
 
 
 /***************************************************************************
-
-  Interrupt handler
-
+  Interrupt handlers
 ***************************************************************************/
 
 static int toaplan2_interrupt(void)
 {
-	return MC68000_IRQ_4;					/* Most games use IRQ level 4 */
+	return MC68000_IRQ_4;
 }
 
-static int tatsujn2_interrupt(void)
+static int truxton2_interrupt(void)
 {
-	return MC68000_IRQ_2;					/* Tatsujin2 uses IRQ level 2 */
-}
-
-static int batrider_interrupt(void)
-{
-	cpu_cause_interrupt(0, MC68000_IRQ_4);	/* Batrider uses irq level 4 and 2 */
 	return MC68000_IRQ_2;
 }
 
@@ -442,73 +377,97 @@ static int batrider_sound_interrupt(void)	/* Batrider uses NMI for sound cpu */
 		return Z80_IGNORE_INT;
 }
 
+
 /***************************************************************************
-
   Toaplan games
-
 ***************************************************************************/
 
-static WRITE16_HANDLER( toaplan2_coin16_w )
+static READ16_HANDLER( video_count_r )
 {
-	switch (data & 0x0f)
-	{
-		case 0x00:	coin_lockout_global_w(1); break;	/* Lock all coin slots */
-		case 0x0c:	coin_lockout_global_w(0); break;	/* Unlock all coin slots */
-		case 0x0d:	coin_counter_w(0,1); coin_counter_w(0,0);	/* Count slot A */
-					logerror("Count coin slot A\n"); break;
-		case 0x0e:	coin_counter_w(1,1); coin_counter_w(1,0);	/* Count slot B */
-					logerror("Count coin slot B\n"); break;
-	/* The following are coin counts after coin-lock active (faulty coin-lock ?) */
-		case 0x01:	coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
-		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(1); break;
+	/* +---------+---------+--------+---------------------------+ */
+	/* | /H-Sync | /V-Sync | /Blank |           Count           | */
+	/* | Bit 15  | Bit 14  | Bit 8  |  Bit 7-0 (count from #EF) | */
+	/* +---------+---------+--------+---------------------------+ */
+	/*************** Control Signals are active low ***************/
+	/*                The following is still wrong                */
 
-		default:	logerror("Writing unknown command (%04x) to coin control\n",data);
-					break;
-	}
-	if (data > 0xf)
+	int current_scanline = cpu_getscanline();
+	int current_beampos = cpu_gethorzbeampos();
+
+///	logerror("Was VC=%04x  Vbl=%02x  VS=%04x  HS=%04x - ",video_status,cpu_getvblank(),cpu_getscanline(),cpu_gethorzbeampos() );
+
+	video_status |= 0x4100;
+
+	if (prev_beampos != current_beampos)
 	{
-		logerror("Writing unknown upper bits command (%04x) to coin control\n",data);
+		prev_beampos = current_beampos;
+		video_status += 0x8001;
+		video_status |= 0x0100;
+		video_status &= 0xc1ff;							/* H-Sync Clk ? */
+		if (prev_scanline != current_scanline)
+		{
+			prev_scanline = current_scanline;
+			video_status = 0x00ef;						/* V-Sync Clk ? */
+		}
 	}
+	video_status &= cpu_getvblank() ? 0xc1ff : 0xc0ff;	/* V-Blank ? */
+
+///	logerror("Now VC=%04x  Vbl=%02x  VS=%04x  HS=%04x\n",video_status,cpu_getvblank(),cpu_getscanline(),cpu_gethorzbeampos() );
+	return video_status;
 }
 
 static WRITE_HANDLER( toaplan2_coin_w )
 {
-	switch (data & 0x0f)
-	{
-		case 0x00:	coin_lockout_global_w(1); break;	/* Lock all coin slots */
-		case 0x0c:	coin_lockout_global_w(0); break;	/* Unlock all coin slots */
-		case 0x0d:	coin_counter_w(0,1); coin_counter_w(0,0);	/* Count slot A */
-					logerror("Count coin slot A\n"); break;
-		case 0x0e:	coin_counter_w(1,1); coin_counter_w(1,0);	/* Count slot B */
-					logerror("Count coin slot B\n"); break;
-	/* The following are coin counts after coin-lock active (faulty coin-lock ?) */
-		case 0x01:	coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
-		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(1); break;
+	/* +----------------+------ Bits 7-5 not used ------+--------------+ */
+	/* | Coin Lockout 2 | Coin Lockout 1 | Coin Count 2 | Coin Count 1 | */
+	/* |     Bit 3      |     Bit 2      |     Bit 1    |     Bit 0    | */
 
-		default:	logerror("Writing unknown command (%04x) to coin control\n",data);
-					break;
-	}
-	if (data > 0xf)
+	if (data & 0x0f)
 	{
-		logerror("Writing unknown upper bits command (%04x) to coin control\n",data);
+		coin_lockout_w( 0, ((data & 4) ? 0 : 1) );
+		coin_lockout_w( 1, ((data & 8) ? 0 : 1) );
+		coin_counter_w( 0, (data & 1) ); coin_counter_w( 0, 0 );
+		coin_counter_w( 1, (data & 2) ); coin_counter_w( 1, 0 );
+	}
+	else
+	{
+		coin_lockout_global_w(1); /* Lock all coin slots */
+	}
+	if (data & 0xe0)
+	{
+		logerror("Writing unknown upper bits (%02x) to coin control\n",data);
 	}
 }
-
-static WRITE16_HANDLER( oki_bankswitch_w )
+static WRITE16_HANDLER( toaplan2_coin_word_w )
 {
 	if (ACCESSING_LSB)
-		OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
+	{
+		toaplan2_coin_w(offset, data & 0xff);
+		if (toaplan2_sub_cpu == CPU_2_Z80)
+		{
+			if (Machine->drv->sound[1].sound_type == SOUND_OKIM6295)
+			{
+				OKIM6295_set_bank_base(0, (((data & 0x10) >> 4) * 0x40000));
+			}
+		}
+	}
+	if (ACCESSING_MSB && (data & 0xff00) )
+	{
+		logerror("Writing unknown upper MSB command (%04x) to coin control\n",data & 0xff00);
+	}
 }
 
 static READ16_HANDLER( toaplan2_shared_r )
 {
-	return toaplan2_shared_ram[offset];
+	return toaplan2_shared_ram[offset] & 0xff;
 }
 
 static WRITE16_HANDLER( toaplan2_shared_w )
 {
 	if (ACCESSING_LSB)
+	{
 		toaplan2_shared_ram[offset] = data & 0xff;
+	}
 }
 
 static WRITE16_HANDLER( toaplan2_hd647180_cpu_w )
@@ -518,13 +477,13 @@ static WRITE16_HANDLER( toaplan2_hd647180_cpu_w )
 
 	if (ACCESSING_LSB)
 	{
-		if (toaplan2_sub_cpu == CPU_2_Z80)		/* Whoopee */
+		if (toaplan2_sub_cpu == CPU_2_Z80)			/* Whoopee */
 		{
-			toaplan2_shared_ram[0] = data;
+			toaplan2_shared_ram[0] = data & 0xff;
 		}
-		else									/* Teki Paki */
+		else										/* Teki Paki */
 		{
-			mcu_data = data;
+			mcu_data = data & 0xff;
 			logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
 		}
 	}
@@ -532,48 +491,37 @@ static WRITE16_HANDLER( toaplan2_hd647180_cpu_w )
 
 static READ16_HANDLER( c2map_port_6_r )
 {
+	/* For Teki Paki hardware */
 	/* bit 4 high signifies secondary CPU is ready */
 	/* bit 5 is tested low before V-Blank bit ??? */
 	switch (toaplan2_sub_cpu)
 	{
-		case CPU_2_Z80:			mcu_data = toaplan2_shared_ram[0]; break;
-		case CPU_2_HD647180:	mcu_data = 0xff; break;
+		case CPU_2_Z80:			mcu_data = toaplan2_shared_ram[0]; break; /* Whoopee */
+		case CPU_2_HD647180:	mcu_data = 0xff; break;					  /* Teki Paki */
 		default:				mcu_data = 0x00; break;
 	}
-
 	if (mcu_data == 0xff) mcu_data = 0x10;
-	else                  mcu_data = 0x00;
-
+	else mcu_data = 0x00;
 	return ( mcu_data | input_port_6_r(0) );
 }
 
 static READ16_HANDLER( pipibibi_z80_status_r )
 {
-	return toaplan2_shared_ram[0];
+	return toaplan2_shared_ram[0] & 0xff;
 }
 
 static WRITE16_HANDLER( pipibibi_z80_task_w )
 {
 	if (ACCESSING_LSB)
+	{
 		toaplan2_shared_ram[0] = data & 0xff;
-}
-
-static READ16_HANDLER( video_count_r )
-{
-	/* Maybe this should return which scan line number is being drawn */
-	/* Raizing games wait until its between F0h (240) and FFh (255) ??? */
-	/* Video busy while bit 8 is low. Maybe once it clocks */
-	/* over to 100h (256) or higher, it means frame done ??? */
-
-	video_status += 0x50;	/* use a value to help prevent tight loop hangs */
-	video_status &= 0x1f0;
-	if ((video_status & 0xf0) == 0x40) video_status += 0x10;
-	return video_status;
+	}
 }
 
 static READ16_HANDLER( ghox_p1_h_analog_r )
 {
-	data16_t value, new_value;
+	INT8 value, new_value;
+
 	new_value = input_port_7_r(0);
 	if (new_value == old_p1_paddle_h) return 0;
 	value = new_value - old_p1_paddle_h;
@@ -583,7 +531,8 @@ static READ16_HANDLER( ghox_p1_h_analog_r )
 
 static READ16_HANDLER( ghox_p1_v_analog_r )
 {
-	data16_t new_value;
+	INT8 new_value;
+
 	new_value = input_port_9_r(0);		/* fake vertical movement */
 	if (new_value == old_p1_paddle_v) return input_port_1_r(0);
 	if (new_value >  old_p1_paddle_v)
@@ -597,7 +546,8 @@ static READ16_HANDLER( ghox_p1_v_analog_r )
 
 static READ16_HANDLER( ghox_p2_h_analog_r )
 {
-	data16_t value, new_value;
+	INT8 value, new_value;
+
 	new_value = input_port_8_r(0);
 	if (new_value == old_p2_paddle_h) return 0;
 	value = new_value - old_p2_paddle_h;
@@ -607,7 +557,8 @@ static READ16_HANDLER( ghox_p2_h_analog_r )
 
 static READ16_HANDLER( ghox_p2_v_analog_r )
 {
-	data16_t new_value;
+	INT8 new_value;
+
 	new_value = input_port_10_r(0);		/* fake vertical movement */
 	if (new_value == old_p2_paddle_v) return input_port_2_r(0);
 	if (new_value >  old_p2_paddle_v)
@@ -631,35 +582,35 @@ static WRITE16_HANDLER( ghox_mcu_w )
 		mcu_data = data;
 		if ((data >= 0xd0) && (data < 0xe0))
 		{
-			offset = ((data & 0x0f) * 4) + 0x38;
-			WRITE_WORD (&toaplan2_shared_ram[offset  ],0x05);	/* Return address for */
-			WRITE_WORD (&toaplan2_shared_ram[offset-2],0x56);	/*   RTS instruction */
+			offset = ((data & 0x0f) * 2) + (0x38 / 2);
+			toaplan2_shared_ram16[offset  ] = 0x0005;	/* Return address for */
+			toaplan2_shared_ram16[offset-1] = 0x0056;	/*   RTS instruction */
 		}
 		else
 		{
 			logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
 		}
-		WRITE_WORD (&toaplan2_shared_ram[0x56],0x4e);	/* Return a RTS instruction */
-		WRITE_WORD (&toaplan2_shared_ram[0x58],0x75);
+		toaplan2_shared_ram16[0x56 / 2] = 0x004e;	/* Return a RTS instruction */
+		toaplan2_shared_ram16[0x58 / 2] = 0x0075;
 
 		if (data == 0xd3)
 		{
-			WRITE_WORD (&toaplan2_shared_ram[0x56],0x3a);	//	move.w  d1,d5
-			WRITE_WORD (&toaplan2_shared_ram[0x58],0x01);
-			WRITE_WORD (&toaplan2_shared_ram[0x5a],0x08);	//	bclr.b  #0,d5
-			WRITE_WORD (&toaplan2_shared_ram[0x5c],0x85);
-			WRITE_WORD (&toaplan2_shared_ram[0x5e],0x00);
-			WRITE_WORD (&toaplan2_shared_ram[0x60],0x00);
-			WRITE_WORD (&toaplan2_shared_ram[0x62],0xcb);	//	muls.w  #3,d5
-			WRITE_WORD (&toaplan2_shared_ram[0x64],0xfc);
-			WRITE_WORD (&toaplan2_shared_ram[0x66],0x00);
-			WRITE_WORD (&toaplan2_shared_ram[0x68],0x03);
-			WRITE_WORD (&toaplan2_shared_ram[0x6a],0x90);	//	sub.w   d5,d0
-			WRITE_WORD (&toaplan2_shared_ram[0x6c],0x45);
-			WRITE_WORD (&toaplan2_shared_ram[0x6e],0xe5);   //  lsl.b   #2,d1
-			WRITE_WORD (&toaplan2_shared_ram[0x70],0x09);
-			WRITE_WORD (&toaplan2_shared_ram[0x72],0x4e);	//	rts
-			WRITE_WORD (&toaplan2_shared_ram[0x74],0x75);
+		toaplan2_shared_ram16[0x56 / 2] = 0x003a;	//	move.w  d1,d5
+		toaplan2_shared_ram16[0x58 / 2] = 0x0001;
+		toaplan2_shared_ram16[0x5a / 2] = 0x0008;	//	bclr.b  #0,d5
+		toaplan2_shared_ram16[0x5c / 2] = 0x0085;
+		toaplan2_shared_ram16[0x5e / 2] = 0x0000;
+		toaplan2_shared_ram16[0x60 / 2] = 0x0000;
+		toaplan2_shared_ram16[0x62 / 2] = 0x00cb;	//	muls.w  #3,d5
+		toaplan2_shared_ram16[0x64 / 2] = 0x00fc;
+		toaplan2_shared_ram16[0x66 / 2] = 0x0000;
+		toaplan2_shared_ram16[0x68 / 2] = 0x0003;
+		toaplan2_shared_ram16[0x6a / 2] = 0x0090;	//	sub.w   d5,d0
+		toaplan2_shared_ram16[0x6c / 2] = 0x0045;
+		toaplan2_shared_ram16[0x6e / 2] = 0x00e5;	//	lsl.b   #2,d1
+		toaplan2_shared_ram16[0x70 / 2] = 0x0009;
+		toaplan2_shared_ram16[0x72 / 2] = 0x004e;	//	rts
+		toaplan2_shared_ram16[0x74 / 2] = 0x0075;
 		}
 	}
 }
@@ -680,19 +631,15 @@ static READ16_HANDLER( ghox_shared_ram_r )
 	   Offset $48 and $46 is accessed from around PC:6776
 	*/
 
-	data16_t data;
-
-	data = READ_WORD (&toaplan2_shared_ram[offset << 1]);
-
-	return data;
+	return toaplan2_shared_ram16[offset] & 0xff;
 }
-
 static WRITE16_HANDLER( ghox_shared_ram_w )
 {
 	if (ACCESSING_LSB)
-		WRITE_WORD (&toaplan2_shared_ram[offset << 1],data);
+	{
+		toaplan2_shared_ram16[offset] = data & 0xff;
+	}
 }
-
 static READ16_HANDLER( kbash_sub_cpu_r )
 {
 /*	Knuckle Bash's  68000 reads secondary CPU status via an I/O port.
@@ -700,8 +647,7 @@ static READ16_HANDLER( kbash_sub_cpu_r )
 	Secondary CPU must report 0xff when no longer busy, to signify that it
 	has passed POST.
 */
-	mcu_data = 0xff;
-	return mcu_data;
+	return 0xff;
 }
 
 static WRITE16_HANDLER( kbash_sub_cpu_w )
@@ -715,26 +661,29 @@ static READ16_HANDLER( shared_ram_r )
 	the 68000 and the Zx80 CPU. The 68000 reads the status of the Zx80
 	via a location of the shared memory.
 */
-	return READ_WORD (&toaplan2_shared_ram[offset << 1]);
+	return toaplan2_shared_ram16[offset] & 0xff;
 }
 
 static WRITE16_HANDLER( shared_ram_w )
 {
 	if (ACCESSING_LSB)
 	{
-		offset <<= 1;
-
-		if (offset == 0x9e8)
+		data &= 0xff;
+		switch (offset * 2)
 		{
-			WRITE_WORD (&toaplan2_shared_ram[offset + 2],data);
+			case 0x6e8:
+			case 0x9e8:
+			case 0x9f0:
+			case 0xcf0:
+			case 0xcf8:
+			case 0xff8: toaplan2_shared_ram16[offset + 1] = data; /* Dogyuun */
+						toaplan2_shared_ram16[offset + 2] = data; /* FixEight */
+						logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
+						if (data == 0x81) data = 0x0001;
+						break;
+			default:	break;
 		}
-		if (offset == 0xff8)
-		{
-			WRITE_WORD (&toaplan2_shared_ram[offset + 2],data);
-			logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
-			if ((data & 0xffff) == 0x81) data = 0x01;
-		}
-		WRITE_WORD (&toaplan2_shared_ram[offset],data);
+		toaplan2_shared_ram16[offset] = data;
 	}
 }
 
@@ -743,20 +692,39 @@ static READ16_HANDLER( Zx80_status_port_r )
 /*** Status port includes Zx80 CPU POST codes. ************
  *** This is actually a part of the 68000/Zx80 Shared RAM */
 
-/** may be caused probelms **/
+	/*** Dogyuun mcu post data ***/
+	if (mcu_data == 0x800000aa) mcu_data = 0xff;
+	if (mcu_data == 0x00) mcu_data = 0x800000aa;
 
-	data16_t data;
+	/*** FixEight mcu post data ***/
+	if (mcu_data == 0x8000ffaa)
+	{
+#if 0 	/* check the 37B6 code */
+		/* copy nvram data to shared ram after post is complete */
+		fixeight_sharedram[0] = fixeight_nvram[0];	/* Dip Switch A */
+		fixeight_sharedram[1] = fixeight_nvram[1];	/* Dip Switch B */
+		fixeight_sharedram[2] = fixeight_nvram[2];	/* Territory */
+#endif
+		/* Hack Alert ! Fixeight does not have any DSW. The main CPU has a */
+		/* game keeping service mode. It writes/reads the settings to/from */
+		/* these shared RAM locations. The secondary CPU reads/writes them */
+		/* from/to nvram to store the settings (a 94C45 EEPROM) */
+		install_mem_read16_handler (0, 0x28f002, 0x28f003, MRA16_RAM);
+		install_mem_read16_handler (0, 0x28f004, 0x28f005, input_port_5_word_r);	/* Dip Switch A - Wrong !!! */
+		install_mem_read16_handler (0, 0x28f006, 0x28f007, input_port_6_word_r);	/* Dip Switch B - Wrong !!! */
+		install_mem_read16_handler (0, 0x28f008, 0x28f009, input_port_7_word_r);	/* Territory Jumper block - Wrong !!! */
+		install_mem_read16_handler (0, 0x28f00a, 0x28fbff, MRA16_RAM);
+		install_mem_write16_handler (0, 0x28f002, 0x28f003, MWA16_RAM);
+		install_mem_write16_handler (0, 0x28f004, 0x28f009, MWA16_NOP);
+		install_mem_write16_handler (0, 0x28f00a, 0x28fbff, MWA16_RAM);
 
-	if (mcu_data == 0xaa)	mcu_data = 0xff;		/* dogyuun */
-	if (mcu_data == 0x00)	mcu_data = 0xaa;		/* dogyuun */
-
-	if (mcu_data == 0xffaa)	mcu_data = 0xffff;		/* fixeight */
-	if (mcu_data == 0xffaa)	mcu_data = 0xffaa;		/* fixeight */
-	if (mcu_data == 0xff00)	mcu_data = 0xffaa;		/* fixeight */
+		mcu_data = 0xffff;
+	}
+	if (mcu_data == 0xffaa) mcu_data = 0x8000ffaa;
+	if (mcu_data == 0xff00) mcu_data = 0xffaa;
 
 	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
-	data = mcu_data;
-	return data;
+	return mcu_data & 0xff;
 }
 
 static WRITE16_HANDLER( Zx80_command_port_w )
@@ -764,538 +732,83 @@ static WRITE16_HANDLER( Zx80_command_port_w )
 	if (ACCESSING_LSB)
 	{
 		mcu_data = data;
-	}
 	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+}
 }
 
 static READ16_HANDLER( Zx80_sharedram_r )
 {
-	return Zx80_shared_ram[offset];
+	return Zx80_shared_ram[offset] & 0xff;
 }
 
 static WRITE16_HANDLER( Zx80_sharedram_w )
 {
 	if (ACCESSING_LSB)
+	{
 		Zx80_shared_ram[offset] = data & 0xff;
+	}
 }
 
-
-static MEMORY_READ16_START( tekipaki_readmem )
-	{ 0x000000, 0x01ffff, MRA16_ROM },
-	{ 0x020000, 0x03ffff, MRA16_ROM },				/* extra for Whoopee */
-	{ 0x080000, 0x082fff, MRA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
-	{ 0x140004, 0x140007, toaplan2_0_videoram_r },
-	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
-	{ 0x180000, 0x180001, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x180010, 0x180011, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x180020, 0x180021, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x180030, 0x180031, c2map_port_6_r },			/* CPU 2 busy and Territory Jumper block */
-	{ 0x180050, 0x180051, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x180060, 0x180061, input_port_2_word_r },	/* Player 2 controls */
-MEMORY_END
-
-static MEMORY_WRITE16_START( tekipaki_writemem )
-	{ 0x000000, 0x01ffff, MWA16_ROM },
-	{ 0x020000, 0x03ffff, MWA16_ROM },				/* extra for Whoopee */
-	{ 0x080000, 0x082fff, MWA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
-	{ 0x140004, 0x140007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
-	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x180040, 0x180041, toaplan2_coin16_w },		/* Coin count/lock */
-	{ 0x180070, 0x180071, toaplan2_hd647180_cpu_w },
-MEMORY_END
-
-static MEMORY_READ16_START( ghox_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x040000, 0x040001, ghox_p2_h_analog_r },		/* Paddle 2 */
-	{ 0x080000, 0x083fff, MRA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
-	{ 0x100000, 0x100001, ghox_p1_h_analog_r },		/* Paddle 1 */
-	{ 0x140004, 0x140007, toaplan2_0_videoram_r },
-	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
-	{ 0x180000, 0x180001, ghox_mcu_r },				/* really part of shared RAM */
-	{ 0x180006, 0x180007, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x180008, 0x180009, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x180010, 0x180011, input_port_3_word_r },	/* Coin/System inputs */
-//	{ 0x18000c, 0x18000d, input_port_1_word_r },	/* Player 1 controls (real) */
-//	{ 0x18000e, 0x18000f, input_port_2_word_r },	/* Player 2 controls (real) */
-	{ 0x18000c, 0x18000d, ghox_p1_v_analog_r },		/* Player 1 controls */
-	{ 0x18000e, 0x18000f, ghox_p2_v_analog_r },		/* Player 2 controls */
-	{ 0x180500, 0x180fff, ghox_shared_ram_r },
-	{ 0x18100c, 0x18100d, input_port_6_word_r },	/* Territory Jumper block */
-MEMORY_END
-
-static MEMORY_WRITE16_START ( ghox_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x083fff, MWA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
-	{ 0x140004, 0x140007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
-	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x180000, 0x180001, ghox_mcu_w },				/* really part of shared RAM */
-	{ 0x180500, 0x180fff, ghox_shared_ram_w },
-	{ 0x181000, 0x181001, toaplan2_coin16_w },
-MEMORY_END
-
-static MEMORY_READ16_START(  dogyuun_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_BANK1 },
-	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_r },
-	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
-	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	/***** The following in 0x30000x are for video controller 1 ******/
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
-	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	/***** The following in 0x50000x are for video controller 2 ******/
-	{ 0x500004, 0x500007, toaplan2_1_videoram_r },	/* tile layers 2 */
-	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-MEMORY_END
-
-static MEMORY_WRITE16_START ( dogyuun_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_BANK1 },
-	{ 0x200008, 0x200009, OKIM6295_data_0_lsb_w },
-	{ 0x20001c, 0x20001d, toaplan2_coin16_w },
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_w },	/* $21F000 */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_w },
-	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	/***** The following in 0x30000x are for video controller 1 ******/
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	/***** The following in 0x50000x are for video controller 2 ******/
-	{ 0x500000, 0x500001, toaplan2_1_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x500004, 0x500007, toaplan2_1_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x500008, 0x500009, toaplan2_1_scroll_reg_select_w },
-	{ 0x50000c, 0x50000d, toaplan2_1_scroll_reg_data_w },
-MEMORY_END
-
-static MEMORY_READ16_START( kbash_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_BANK1 },
-	{ 0x200000, 0x200001, kbash_sub_cpu_r },
-	{ 0x200004, 0x200005, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x200006, 0x200007, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x200008, 0x200009, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x208010, 0x208011, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x208014, 0x208015, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x208018, 0x208019, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
-	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-MEMORY_END
-
-static MEMORY_WRITE16_START( kbash_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_BANK1 },
-	{ 0x200000, 0x200003, kbash_sub_cpu_w },		/* sound number to play */
-//	{ 0x200002, 0x200003, kbash_sub_cpu_w2 },		/* ??? */
-	{ 0x20801c, 0x20801d, toaplan2_coin16_w },
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },
-	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
-
-static MEMORY_READ16_START( tatsujn2_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_RAM },
-	{ 0x200004, 0x200007, toaplan2_0_videoram_r },
-	{ 0x20000c, 0x20000d, input_port_0_word_r },	/* VBlank */
-	{ 0x300000, 0x300fff, paletteram16_word_r },
-	{ 0x400000, 0x403fff, raizing_textram_r },
-	{ 0x500000, 0x50ffff, MRA16_BANK1 },
-	{ 0x600000, 0x600001, video_count_r },
-	{ 0x700000, 0x700001, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x700002, 0x700003, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x700004, 0x700005, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x700006, 0x700007, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x700008, 0x700009, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x70000a, 0x70000b, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x700010, 0x700011, OKIM6295_status_0_lsb_r },
-	{ 0x700014, 0x700015, MRA16_NOP },
-	{ 0x700016, 0x700017, YM2151_status_port_0_lsb_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( tatsujn2_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_RAM },
-	{ 0x200000, 0x200001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x200004, 0x200007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x200008, 0x200009, toaplan2_0_scroll_reg_select_w },
-	{ 0x20000c, 0x20000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x300000, 0x300fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x400000, 0x403fff, raizing_textram_w, &textvideoram16 },
-	{ 0x500000, 0x50ffff, MWA16_BANK1 },
-	{ 0x700010, 0x700011, OKIM6295_data_0_lsb_w },
-	{ 0x700014, 0x700015, YM2151_register_port_0_lsb_w },
-	{ 0x700016, 0x700017, YM2151_data_port_0_lsb_w },
-	{ 0x70001e, 0x70001f, toaplan2_coin16_w },		/* Coin count/lock */
-MEMORY_END
-
-static MEMORY_READ16_START( pipibibs_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x082fff, MRA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
-	{ 0x140004, 0x140007, toaplan2_0_videoram_r },
-	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
-	{ 0x190000, 0x190fff, toaplan2_shared_r },
-	{ 0x19c020, 0x19c021, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x19c024, 0x19c025, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x19c028, 0x19c029, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x19c02c, 0x19c02d, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x19c030, 0x19c031, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x19c034, 0x19c035, input_port_2_word_r },	/* Player 2 controls */
-MEMORY_END
-
-static MEMORY_WRITE16_START( pipibibs_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x082fff, MWA16_BANK1 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
-	{ 0x140004, 0x140007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
-	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x190000, 0x190fff, toaplan2_shared_w },
-	{ 0x19c01c, 0x19c01d, toaplan2_coin16_w },		/* Coin count/lock */
-MEMORY_END
-
-static MEMORY_READ16_START( pipibibi_readmem )
-	{ 0x000000, 0x03ffff, MRA16_ROM },
-	{ 0x080000, 0x082fff, MRA16_BANK1 },
-	{ 0x083000, 0x0837ff, pipibibi_spriteram_r },
-	{ 0x083800, 0x087fff, MRA16_BANK2 },
-	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
-	{ 0x120000, 0x120fff, MRA16_BANK3 },
-	{ 0x180000, 0x182fff, pipibibi_videoram_r },
-	{ 0x190002, 0x190003, pipibibi_z80_status_r },	/* Z80 ready ? */
-	{ 0x19c020, 0x19c021, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x19c024, 0x19c025, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x19c028, 0x19c029, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x19c02c, 0x19c02d, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x19c030, 0x19c031, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x19c034, 0x19c035, input_port_2_word_r },	/* Player 2 controls */
-MEMORY_END
-
-static MEMORY_WRITE16_START( pipibibi_writemem )
-	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x080000, 0x082fff, MWA16_BANK1 },
-	{ 0x083000, 0x0837ff, pipibibi_spriteram_w },   /* SpriteRAM */
-	{ 0x083800, 0x087fff, MWA16_BANK2 },				/* SpriteRAM (unused) */
-	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x120000, 0x120fff, MWA16_BANK3 },				/* Copy of SpriteRAM ? */
-//	{ 0x13f000, 0x13f001, MWA16_NOP },				/* ??? */
-	{ 0x180000, 0x182fff, pipibibi_videoram_w },	/* TileRAM */
-	{ 0x188000, 0x18800f, pipibibi_scroll_w },
-	{ 0x190010, 0x190011, pipibibi_z80_task_w },	/* Z80 task to perform */
-	{ 0x19c01c, 0x19c01d, toaplan2_coin16_w },		/* Coin count/lock */
-MEMORY_END
-
-static MEMORY_READ16_START( fixeight_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_BANK1 },
-	{ 0x200008, 0x200009, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x20000c, 0x20000d, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x280000, 0x28dfff, MRA16_BANK2 },			/* part of shared ram ? */
-#if Zx80
-	{ 0x28e000, 0x28fbff, shared_ram_r },			/* $21f000 status port */
-	{ 0x28fc00, 0x28ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x28e000, 0x28efff, shared_ram_r },
-	{ 0x28f000, 0x28f001, Zx80_status_port_r },		/* Zx80 status port */
-	{ 0x28f002, 0x28fbff, MRA16_BANK3 },				/* part of shared ram ? */
-	{ 0x28fc00, 0x28ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },
-	{ 0x30000c, 0x30000d, input_port_0_word_r },
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x500000, 0x501fff, MRA16_BANK4 },
-	{ 0x502000, 0x5021ff, MRA16_BANK5 },
-	{ 0x503000, 0x5031ff, MRA16_BANK6 },
-	{ 0x600000, 0x60ffff, MRA16_BANK7 },
-	{ 0x800000, 0x800001, video_count_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( fixeight_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_BANK1 },
-	{ 0x20001c, 0x20001d, toaplan2_coin16_w },		/* Coin count/lock */
-	{ 0x280000, 0x28dfff, MWA16_BANK2 },				/* part of shared ram ? */
-#if Zx80
-	{ 0x28e000, 0x28fbff, shared_ram_w },	/* $21F000 */
-	{ 0x28fc00, 0x28ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x28e000, 0x28efff, shared_ram_w },
-	{ 0x28f000, 0x28f001, Zx80_command_port_w },	/* Zx80 command port */
-	{ 0x28f002, 0x28fbff, MWA16_BANK3 },				/* part of shared ram ? */
-	{ 0x28fc00, 0x28ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x500000, 0x501fff, MWA16_BANK4 },
-	{ 0x502000, 0x5021ff, MWA16_BANK5 },
-	{ 0x503000, 0x5031ff, MWA16_BANK6 },
-	{ 0x600000, 0x60ffff, MWA16_BANK7 },
-MEMORY_END
-
-static MEMORY_READ16_START( vfive_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x103fff, MRA16_BANK1 },
-//	{ 0x200000, 0x20ffff, MRA16_ROM },				/* Sound ROM is here ??? */
-	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_r },
-	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
-	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },
-	{ 0x30000c, 0x30000d, input_port_0_word_r },
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x700000, 0x700001, video_count_r },
-MEMORY_END
-
-static MEMORY_WRITE16_START( vfive_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x103fff, MWA16_BANK1 },
-//	{ 0x200000, 0x20ffff, MWA16_ROM },				/* Sound ROM is here ??? */
-	{ 0x20001c, 0x20001d, toaplan2_coin16_w },		/* Coin count/lock */
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_w },	/* $21F000 */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_w },
-	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-MEMORY_END
-
-static MEMORY_READ16_START( batsugun_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_BANK1 },
-	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
-	{ 0x210000, 0x21bbff, MRA16_BANK2 },
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_r },
-	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
-	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
-	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
-	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	/***** The following in 0x30000x are for video controller 2 ******/
-	{ 0x300004, 0x300007, toaplan2_1_videoram_r },	/* tile layers */
-	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	/***** The following in 0x50000x are for video controller 1 ******/
-	{ 0x500004, 0x500007, toaplan2_0_videoram_r },	/* tile layers 2 */
-	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
-MEMORY_END
-
-static MEMORY_WRITE16_START( batsugun_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_BANK1 },
-	{ 0x20001c, 0x20001d, toaplan2_coin16_w },		/* Coin count/lock */
-	{ 0x210000, 0x21bbff, MWA16_BANK2 },
-#if Zx80
-	{ 0x21e000, 0x21fbff, shared_ram_w },	/* $21F000 */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#else
-	{ 0x21e000, 0x21efff, shared_ram_w },
-	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
-	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
-#endif
-	/***** The following in 0x30000x are for video controller 2 ******/
-	{ 0x300000, 0x300001, toaplan2_1_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_1_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x300008, 0x300009, toaplan2_1_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_1_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	/***** The following in 0x50000x are for video controller 1 ******/
-	{ 0x500000, 0x500001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x500004, 0x500007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x500008, 0x500009, toaplan2_0_scroll_reg_select_w },
-	{ 0x50000c, 0x50000d, toaplan2_0_scroll_reg_data_w },
-MEMORY_END
-
-static MEMORY_READ16_START( snowbro2_readmem )
-	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_BANK1 },
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
-	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
-	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x500002, 0x500003, YM2151_status_port_0_lsb_r },
-	{ 0x600000, 0x600001, OKIM6295_status_0_lsb_r },
-	{ 0x700000, 0x700001, input_port_8_word_r },	/* Territory Jumper block */
-	{ 0x700004, 0x700005, input_port_6_word_r },	/* Dip Switch A */
-	{ 0x700008, 0x700009, input_port_7_word_r },	/* Dip Switch B */
-	{ 0x70000c, 0x70000d, input_port_1_word_r },	/* Player 1 controls */
-	{ 0x700010, 0x700011, input_port_2_word_r },	/* Player 2 controls */
-	{ 0x700014, 0x700015, input_port_3_word_r },	/* Player 3 controls */
-	{ 0x700018, 0x700019, input_port_4_word_r },	/* Player 4 controls */
-	{ 0x70001c, 0x70001d, input_port_5_word_r },	/* Coin/System inputs */
-MEMORY_END
-
-static MEMORY_WRITE16_START( snowbro2_writemem )
-	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_BANK1 },
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
-	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
-	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
-	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x500000, 0x500001, YM2151_register_port_0_lsb_w },
-	{ 0x500002, 0x500003, YM2151_data_port_0_lsb_w },
-	{ 0x600000, 0x600001, OKIM6295_data_0_lsb_w },
-	{ 0x700030, 0x700031, oki_bankswitch_w },		/* Sample bank switch */
-	{ 0x700034, 0x700035, toaplan2_coin16_w },		/* Coin count/lock */
-MEMORY_END
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
-	{ 0xe000, 0xe000, YM3812_status_port_0_r },
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x87ff, MWA_RAM, &toaplan2_shared_ram },
-	{ 0xe000, 0xe000, YM3812_control_port_0_w },
-	{ 0xe001, 0xe001, YM3812_write_port_0_w },
-MEMORY_END
-
-#if HD64x180
-static MEMORY_READ_START( hd647180_readmem )
-	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xfe00, 0xffff, MRA_RAM },			/* Internal 512 bytes of RAM */
-MEMORY_END
-
-static MEMORY_WRITE_START( hd647180_writemem )
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xfe00, 0xffff, MWA_RAM },			/* Internal 512 bytes of RAM */
-MEMORY_END
-#endif
-
-#if Zx80
-static MEMORY_READ_START( Zx80_readmem )
-	{ 0x0000, 0x7fff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( Zx80_writemem )
-	{ 0x0000, 0x07fff, MWA_RAM, &Zx80_sharedram },
-MEMORY_END
-#endif
+static WRITE16_HANDLER( oki_bankswitch_w )
+{
+	if (ACCESSING_LSB)
+	{
+		OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
+	}
+}
 
 
 
 /***************************************************************************
-
   Raizing games
-
 ***************************************************************************/
 
 static READ16_HANDLER( raizing_shared_ram_r )
 {
-	return raizing_shared_ram[offset];
+	return raizing_shared_ram[offset] & 0xff;
 }
 
 static WRITE16_HANDLER( raizing_shared_ram_w )
 {
 	if (ACCESSING_LSB)
+	{
 		raizing_shared_ram[offset] = data & 0xff;
+	}
 }
 
 static READ16_HANDLER( battleg_commram_r )
 {
-	data16_t ret;
-	int hioffs, looffs;
-
-	offset <<= 1;
-	hioffs = offset & 0xff;
-	looffs = (offset | 1) & 0xff;
-
-	ret = ( ( battleg_commram[hioffs] & 0xff ) << 8 ) |
-			( battleg_commram[looffs] & 0xff );
-
-	return ret;
+	return battleg_commram16[offset];
 }
 
 static WRITE16_HANDLER( battleg_commram_w )
 {
-	offset <<= 1;
-
-	battleg_commram[offset & 0xff] = (data >> 8) & 0xff;
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
-	battleg_commram[(offset | 1) & 0xff] = data & 0xff;
+	COMBINE_DATA(&battleg_commram16[offset]);
 	cpu_cause_interrupt(1, Z80_IRQ_INT);
 }
 
 static READ_HANDLER( battleg_commram_check_r0 )
 {
-	return battleg_commram[0x01];
+	data8_t *battleg_common_RAM = (data8_t *)battleg_commram16;
+
+	return battleg_common_RAM[offset * 2];
 }
 
 static WRITE_HANDLER( battleg_commram_check_w0 )
 {
-	battleg_commram[0x02] = data;
+	data8_t *battleg_common_RAM = (data8_t *)battleg_commram16;
+
+	battleg_common_RAM[1] = data;
 }
 
 static READ16_HANDLER( battleg_z80check_r )
 {
-	return raizing_shared_ram[0x10] & 0xff;
+	return raizing_shared_ram[offset + 0x10] & 0xff;
 }
 
 static WRITE_HANDLER( battleg_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
+	data8_t *RAM = (data8_t *)memory_region(REGION_CPU2);
 	int bankaddress;
 	int bank;
 
@@ -1311,10 +824,11 @@ static WRITE_HANDLER( battleg_bankswitch_w )
 
 static void raizing_oki6295_set_bankbase( int chip, int channel, int base )
 {
-	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-	   controlled. The sample table at the beginning of the addressing space is
-	   divided in four pages as well, banked together with the sample data. */
-	unsigned char *rom = memory_region(REGION_SOUND1 + chip);
+	/* The OKI6295 ROM space is divided in four banks, each one independantly */
+	/* controlled. The sample table at the beginning of the addressing space  */
+	/* is divided in four pages as well, banked together with the sample data */
+
+	data8_t *rom = (data8_t *)memory_region(REGION_SOUND1 + chip);
 
 	/* copy the samples */
 	memcpy(rom + channel * 0x10000, rom + 0x40000 + base, 0x10000);
@@ -1322,8 +836,8 @@ static void raizing_oki6295_set_bankbase( int chip, int channel, int base )
 	/* and also copy the samples address table */
 	rom += channel * 0x100;
 	memcpy(rom, rom + 0x40000 + base, 0x100);
-
 }
+
 
 static WRITE_HANDLER( raizing_okim6295_bankselect_0 )
 {
@@ -1349,45 +863,23 @@ static WRITE_HANDLER( raizing_okim6295_bankselect_3 )
 	raizing_oki6295_set_bankbase( 1, 3, ((data >> 4) & 0x0f) * 0x10000);
 }
 
-static READ16_HANDLER( batrider_input_port_r )
+static READ16_HANDLER( batrider_z80rom_r )
 {
-	switch(offset)
-	{
-		case 0x00:
-			return ((input_port_2_word_r(0)) << 8) | input_port_1_word_r(0);
-		case 0x01:
-			return ((input_port_6_word_r(0)) << 8) | input_port_3_word_r(0);
-		case 0x02:
-			return ((input_port_5_word_r(0)) << 8) | input_port_4_word_r(0);
-		case 0x03:
-			return video_count_r(0) | 0x8000;
-		default:
-			;
-	}
-
-	return 0;
-}
-
-static READ16_HANDLER( batrider_z80rom_read )
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
-	offset &= 0x3ffff;
+	data8_t *batrider_Z80_ROM = (data8_t *)memory_region(REGION_CPU2);
 
 	if (offset < 0x8000)
-		return RAM[offset];
+		return batrider_Z80_ROM[offset] & 0xff;
 
-	return RAM[offset + 0x8000];
+	return batrider_Z80_ROM[offset + 0x8000] & 0xff;
 }
 
 static WRITE_HANDLER( batrider_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
+	data8_t *RAM = (data8_t *)memory_region(REGION_CPU2);
 	int bankaddress;
 	int bank;
 
 	bank = data & 0x0f;
-
 
 	if (bank != current_bank)
 	{
@@ -1403,34 +895,38 @@ static WRITE_HANDLER( batrider_bankswitch_w )
 
 static READ16_HANDLER( batrider_sound_data_68000_r )
 {
-	logerror("Batrider sound data read from 68000 : offs; %02x\n", offset | 4);
-	return batrider_sound_data[offset | 4];
+	logerror("Batrider 68K sound data read %02x from offs:%02x\n", batrider_sound_data[(offset | 4)], (offset | 4));
+	return batrider_sound_data[(offset | 4)];
 }
 
 static WRITE16_HANDLER( batrider_sound_data_68000_w )
 {
 	if (ACCESSING_LSB)
 	{
-		logerror("Batrider sound data write from 68000 : offs; %02x, data; %02x\n", offset | 2, data);
+		logerror("Batrider 68K sound data write %02x to offs:%02x\n", data, offset);
 		batrider_sound_data[offset] = data;
 		if ( !(offset & 2) )
 			batrider_z80nmi_enabled = 1;
 	}
 }
 
+static WRITE16_HANDLER( batrider_sound_data6_68000_w )
+{
+	batrider_sound_data[6] = data;
+}
+
 static READ_HANDLER( batrider_sound_data_z80_r )
 {
+	offset /= 2;
 	switch( offset )
 	{
 		case 0x00:
-			logerror("Batrider sound data read from Z80 : offs; 02\n");
-			return batrider_sound_data[0];
-			break;
-		case 0x02:
-			logerror("Batrider sound data read from Z80 : offs; 03\n");
-			return batrider_sound_data[1];
+		case 0x01:
+			logerror("Batrider Z80 sound data read %02x from offs:%02x\n", batrider_sound_data[offset], offset);
+			return batrider_sound_data[offset];
 			break;
 		default:
+			logerror("Batrider Z80 sound data read %02x from offs:%02x  INVALID !!!\n", batrider_sound_data[offset], offset);
 			break;
 	}
 	return 0;
@@ -1438,24 +934,481 @@ static READ_HANDLER( batrider_sound_data_z80_r )
 
 static WRITE_HANDLER( batrider_sound_data_z80_w )
 {
+	offset /= 2;
 	switch( offset )
 	{
 		case 0x00:
-		case 0x02:
-		case 0x04:
-		case 0x06:
-			logerror("Batrider sound data read from Z80 : offs; %02x data; %02x\n", (offset >> 1) | 4, data);
-			batrider_sound_data[ (offset >> 1) | 4 ] = data;
+		case 0x01:
+/*		case 0x02:		Actually written from 68K */
+		case 0x03:
+			logerror("Batrider Z80 sound data write %02x to offs:%02x\n", data, (offset | 4));
+			batrider_sound_data[(offset | 4)] = data;
 			break;
 		default:
+			logerror("Batrider Z80 sound data write %02x to offs:%02x  INVALID !!!\n", data, (offset | 4));
 			break;
 	}
 }
 
 
+
+/******* This is temporary stuff for batrider to view the sound data ********/
+
+static READ16_HANDLER( batrider_sound_data_68000_r1 )
+{
+	return batrider_sound_data[offset];
+}
+static WRITE16_HANDLER( batrider_sound_data_68000_w1 )
+{
+	batrider_sound_data[offset] = data;
+}
+
+static READ_HANDLER( batrider_sound_data_z80_r1 )
+{
+	return batrider_sound_data[offset];
+}
+static WRITE_HANDLER( batrider_sound_data_z80_w1 )
+{
+	batrider_sound_data[offset] = data;
+}
+
+
+
+static MEMORY_READ16_START( tekipaki_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x020000, 0x03ffff, MRA16_ROM },				/* extra for Whoopee */
+	{ 0x080000, 0x082fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_r },
+	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
+	{ 0x180000, 0x180001, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x180010, 0x180011, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x180020, 0x180021, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x180030, 0x180031, c2map_port_6_r },			/* CPU 2 busy and Territory Jumper block */
+	{ 0x180050, 0x180051, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x180060, 0x180061, input_port_2_word_r },	/* Player 2 controls */
+MEMORY_END
+
+static MEMORY_WRITE16_START( tekipaki_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x020000, 0x03ffff, MWA16_ROM },				/* extra for Whoopee */
+	{ 0x080000, 0x082fff, MWA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
+	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x180040, 0x180041, toaplan2_coin_word_w },	/* Coin count/lock */
+	{ 0x180070, 0x180071, toaplan2_hd647180_cpu_w },
+MEMORY_END
+
+static MEMORY_READ16_START( ghox_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x040001, ghox_p2_h_analog_r },		/* Paddle 2 */
+	{ 0x080000, 0x083fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
+	{ 0x100000, 0x100001, ghox_p1_h_analog_r },		/* Paddle 1 */
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_r },
+	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
+	{ 0x180000, 0x180001, ghox_mcu_r },				/* really part of shared RAM */
+	{ 0x180006, 0x180007, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x180008, 0x180009, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x180010, 0x180011, input_port_3_word_r },	/* Coin/System inputs */
+//	{ 0x18000c, 0x18000d, input_port_1_word_r },	/* Player 1 controls (real) */
+//	{ 0x18000e, 0x18000f, input_port_2_word_r },	/* Player 2 controls (real) */
+	{ 0x18000c, 0x18000d, ghox_p1_v_analog_r },		/* Player 1 controls */
+	{ 0x18000e, 0x18000f, ghox_p2_v_analog_r },		/* Player 2 controls */
+	{ 0x180500, 0x180fff, ghox_shared_ram_r },
+	{ 0x18100c, 0x18100d, input_port_6_word_r },	/* Territory Jumper block */
+MEMORY_END
+
+static MEMORY_WRITE16_START( ghox_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080000, 0x083fff, MWA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
+	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x180000, 0x180001, ghox_mcu_w },				/* really part of shared RAM */
+	{ 0x180500, 0x180fff, ghox_shared_ram_w, &toaplan2_shared_ram16 },
+	{ 0x181000, 0x181001, toaplan2_coin_word_w },
+MEMORY_END
+
+static MEMORY_READ16_START( dogyuun_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_r },
+	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
+	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	/***** The following in 0x30000x are for video controller 1 ******/
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	/***** The following in 0x50000x are for video controller 2 ******/
+	{ 0x500004, 0x500007, toaplan2_1_videoram16_r },/* tile layers 2 */
+	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
+MEMORY_END
+
+static MEMORY_WRITE16_START( dogyuun_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x200008, 0x200009, OKIM6295_data_0_lsb_w },
+	{ 0x20001c, 0x20001d, toaplan2_coin_word_w },
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_w, &toaplan2_shared_ram16 },	/* $21F000 */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_w, &toaplan2_shared_ram16 },
+	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	/***** The following in 0x30000x are for video controller 1 ******/
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	/***** The following in 0x50000x are for video controller 2 ******/
+	{ 0x500000, 0x500001, toaplan2_1_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x500004, 0x500007, toaplan2_1_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x500008, 0x500009, toaplan2_1_scroll_reg_select_w },
+	{ 0x50000c, 0x50000d, toaplan2_1_scroll_reg_data_w },
+MEMORY_END
+
+static MEMORY_READ16_START( kbash_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x200000, 0x200001, kbash_sub_cpu_r },
+	{ 0x200004, 0x200005, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x200006, 0x200007, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x200008, 0x200009, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x208010, 0x208011, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x208014, 0x208015, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x208018, 0x208019, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	{ 0x700000, 0x700001, video_count_r },			/* test bit 8 */
+MEMORY_END
+
+static MEMORY_WRITE16_START( kbash_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x200000, 0x200003, kbash_sub_cpu_w },		/* sound number to play */
+//	{ 0x200002, 0x200003, kbash_sub_cpu_w2 },		/* ??? */
+	{ 0x20801c, 0x20801d, toaplan2_coin_word_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( truxton2_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200004, 0x200007, toaplan2_0_videoram16_r },
+	{ 0x20000c, 0x20000d, input_port_0_word_r },	/* VBlank */
+	{ 0x300000, 0x300fff, paletteram16_word_r },
+	{ 0x400000, 0x401fff, toaplan2_txvideoram16_r },
+	{ 0x402000, 0x4021ff, toaplan2_txvideoram16_offs_r },
+	{ 0x402200, 0x402fff, MRA16_RAM },
+	{ 0x403000, 0x4031ff, toaplan2_txscrollram16_r },
+	{ 0x403200, 0x403fff, MRA16_RAM },
+	{ 0x500000, 0x50ffff, toaplan2_tx_gfxram16_r },
+	{ 0x600000, 0x600001, video_count_r },
+	{ 0x700000, 0x700001, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x700002, 0x700003, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x700004, 0x700005, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x700006, 0x700007, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x700008, 0x700009, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x70000a, 0x70000b, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x700010, 0x700011, OKIM6295_status_0_lsb_r },
+	{ 0x700014, 0x700015, MRA16_NOP },
+	{ 0x700016, 0x700017, YM2151_status_port_0_lsb_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( truxton2_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x200000, 0x200001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x200004, 0x200007, toaplan2_0_videoram16_w },
+	{ 0x200008, 0x200009, toaplan2_0_scroll_reg_select_w },
+	{ 0x20000c, 0x20000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x300000, 0x300fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x400000, 0x401fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x402000, 0x4021ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x402200, 0x402fff, MWA16_RAM },
+	{ 0x403000, 0x4031ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x403200, 0x403fff, MWA16_RAM },
+	{ 0x500000, 0x50ffff, toaplan2_tx_gfxram16_w, &toaplan2_tx_gfxram16 },
+	{ 0x700010, 0x700011, OKIM6295_data_0_lsb_w },
+	{ 0x700014, 0x700015, YM2151_register_port_0_lsb_w },
+	{ 0x700016, 0x700017, YM2151_data_port_0_lsb_w },
+	{ 0x70001e, 0x70001f, toaplan2_coin_word_w },	/* Coin count/lock */
+MEMORY_END
+
+static MEMORY_READ16_START( pipibibs_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x082fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_r },
+	{ 0x14000c, 0x14000d, input_port_0_word_r },	/* VBlank */
+	{ 0x190000, 0x190fff, toaplan2_shared_r },
+	{ 0x19c020, 0x19c021, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x19c024, 0x19c025, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x19c028, 0x19c029, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x19c02c, 0x19c02d, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x19c030, 0x19c031, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x19c034, 0x19c035, input_port_2_word_r },	/* Player 2 controls */
+MEMORY_END
+
+static MEMORY_WRITE16_START( pipibibs_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080000, 0x082fff, MWA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x140000, 0x140001, toaplan2_0_voffs_w },
+	{ 0x140004, 0x140007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x140008, 0x140009, toaplan2_0_scroll_reg_select_w },
+	{ 0x14000c, 0x14000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x190000, 0x190fff, toaplan2_shared_w },
+	{ 0x19c01c, 0x19c01d, toaplan2_coin_word_w },	/* Coin count/lock */
+MEMORY_END
+
+static MEMORY_READ16_START( pipibibi_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x082fff, MRA16_RAM },
+	{ 0x083000, 0x0837ff, pipibibi_spriteram16_r },
+	{ 0x083800, 0x087fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, paletteram16_word_r },
+	{ 0x120000, 0x120fff, MRA16_RAM },
+	{ 0x180000, 0x182fff, pipibibi_videoram16_r },
+	{ 0x190002, 0x190003, pipibibi_z80_status_r },	/* Z80 ready ? */
+	{ 0x19c020, 0x19c021, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x19c024, 0x19c025, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x19c028, 0x19c029, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x19c02c, 0x19c02d, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x19c030, 0x19c031, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x19c034, 0x19c035, input_port_2_word_r },	/* Player 2 controls */
+MEMORY_END
+
+static MEMORY_WRITE16_START( pipibibi_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080000, 0x082fff, MWA16_RAM },
+	{ 0x083000, 0x0837ff, pipibibi_spriteram16_w },	/* SpriteRAM */
+	{ 0x083800, 0x087fff, MWA16_RAM },				/* SpriteRAM (unused) */
+	{ 0x0c0000, 0x0c0fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x120000, 0x120fff, MWA16_RAM },				/* Copy of SpriteRAM ? */
+//	{ 0x13f000, 0x13f001, MWA16_NOP },				/* ??? */
+	{ 0x180000, 0x182fff, pipibibi_videoram16_w },	/* TileRAM */
+	{ 0x188000, 0x18800f, pipibibi_scroll_w },
+	{ 0x190010, 0x190011, pipibibi_z80_task_w },	/* Z80 task to perform */
+	{ 0x19c01c, 0x19c01d, toaplan2_coin_word_w },	/* Coin count/lock */
+MEMORY_END
+
+static MEMORY_READ16_START( fixeight_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x200000, 0x200001, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x200004, 0x200005, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x200008, 0x200009, input_port_3_word_r },	/* Player 3 controls */
+	{ 0x200010, 0x200011, input_port_4_word_r },	/* Coin/System inputs */
+	{ 0x280000, 0x28dfff, MRA16_RAM },				/* part of shared ram ? */
+#if Zx80
+	{ 0x28e000, 0x28fbff, shared_ram_r },			/* $28f000 status port */
+	{ 0x28fc00, 0x28ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x28e000, 0x28efff, shared_ram_r },
+	{ 0x28f000, 0x28f001, Zx80_status_port_r },		/* Zx80 status port */
+//	{ 0x28f002, 0x28f003, MRA16_RAM },				/* part of shared ram */
+//	{ 0x28f004, 0x28f005, input_port_5_word_r },	/* Dip Switch A - Wrong !!! */
+//	{ 0x28f006, 0x28f007, input_port_6_word_r },	/* Dip Switch B - Wrong !!! */
+//	{ 0x28f008, 0x28f009, input_port_7_word_r },	/* Territory Jumper block - Wrong !!! */
+//	{ 0x28f002, 0x28fbff, MRA16_RAM },				/* part of shared ram */
+	{ 0x28fc00, 0x28ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },
+	{ 0x30000c, 0x30000d, input_port_0_word_r },
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_r },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_r },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_r },
+	{ 0x600000, 0x60ffff, toaplan2_tx_gfxram16_r },
+	{ 0x800000, 0x800001, video_count_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( fixeight_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x20001c, 0x20001d, toaplan2_coin_word_w },	/* Coin count/lock */
+	{ 0x280000, 0x28dfff, MWA16_RAM },				/* part of shared ram ? */
+#if Zx80
+	{ 0x28e000, 0x28fbff, shared_ram_w, &toaplan2_shared_ram16 },	/* $28F000 */
+	{ 0x28fc00, 0x28ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x28e000, 0x28efff, shared_ram_w, &toaplan2_shared_ram16 },
+	{ 0x28f000, 0x28f001, Zx80_command_port_w },	/* Zx80 command port */
+//	{ 0x28f002, 0x28f003, MWA16_RAM },				/* part of shared ram */
+//	{ 0x28f004, 0x28f009, MWA16_NOP },				/* part of shared ram */
+//	{ 0x28f002, 0x28fbff, MWA16_RAM },				/* part of shared ram */
+	{ 0x28fc00, 0x28ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x600000, 0x60ffff, toaplan2_tx_gfxram16_w, &toaplan2_tx_gfxram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( vfive_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+//	{ 0x200000, 0x20ffff, MRA16_ROM },				/* Sound ROM is here ??? */
+	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_r },
+	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
+	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },
+	{ 0x30000c, 0x30000d, input_port_0_word_r },
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	{ 0x700000, 0x700001, video_count_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( vfive_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+//	{ 0x200000, 0x20ffff, MWA16_ROM },				/* Sound ROM is here ??? */
+	{ 0x20001c, 0x20001d, toaplan2_coin_word_w },	/* Coin count/lock */
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_w, &toaplan2_shared_ram16 },	/* $21F000 */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_w, &toaplan2_shared_ram16 },
+	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+MEMORY_END
+
+static MEMORY_READ16_START( batsugun_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x200010, 0x200011, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x200014, 0x200015, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x200018, 0x200019, input_port_3_word_r },	/* Coin/System inputs */
+	{ 0x210000, 0x21bbff, MRA16_RAM },
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_r },			/* $21f000 status port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_r },
+	{ 0x21f000, 0x21f001, Zx80_status_port_r },		/* Zx80 status port */
+	{ 0x21f004, 0x21f005, input_port_4_word_r },	/* Dip Switch A */
+	{ 0x21f006, 0x21f007, input_port_5_word_r },	/* Dip Switch B */
+	{ 0x21f008, 0x21f009, input_port_6_word_r },	/* Territory Jumper block */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_r },		/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	/***** The following in 0x30000x are for video controller 2 ******/
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	/***** The following in 0x50000x are for video controller 1 ******/
+	{ 0x500004, 0x500007, toaplan2_1_videoram16_r },/* tile layers 2 */
+	{ 0x700000, 0x700001, video_count_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( batsugun_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x20001c, 0x20001d, toaplan2_coin_word_w },	/* Coin count/lock */
+	{ 0x210000, 0x21bbff, MWA16_RAM },
+#if Zx80
+	{ 0x21e000, 0x21fbff, shared_ram_w, &toaplan2_shared_ram16 },	/* $21F000 */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#else
+	{ 0x21e000, 0x21efff, shared_ram_w, &toaplan2_shared_ram16 },
+	{ 0x21f000, 0x21f001, Zx80_command_port_w },	/* Zx80 command port */
+	{ 0x21fc00, 0x21ffff, Zx80_sharedram_w, &Zx80_shared_ram },	/* 16-bit on 68000 side, 8-bit on Zx80 side */
+#endif
+	/***** The following in 0x30000x are for video controller 2 ******/
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	/***** The following in 0x50000x are for video controller 1 ******/
+	{ 0x500000, 0x500001, toaplan2_1_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x500004, 0x500007, toaplan2_1_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x500008, 0x500009, toaplan2_1_scroll_reg_select_w },
+	{ 0x50000c, 0x50000d, toaplan2_1_scroll_reg_data_w },
+MEMORY_END
+
+static MEMORY_READ16_START( snowbro2_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
+	{ 0x400000, 0x400fff, paletteram16_word_r },
+	{ 0x500002, 0x500003, YM2151_status_port_0_lsb_r },
+	{ 0x600000, 0x600001, OKIM6295_status_0_lsb_r },
+	{ 0x700000, 0x700001, input_port_8_word_r },	/* Territory Jumper block */
+	{ 0x700004, 0x700005, input_port_6_word_r },	/* Dip Switch A */
+	{ 0x700008, 0x700009, input_port_7_word_r },	/* Dip Switch B */
+	{ 0x70000c, 0x70000d, input_port_1_word_r },	/* Player 1 controls */
+	{ 0x700010, 0x700011, input_port_2_word_r },	/* Player 2 controls */
+	{ 0x700014, 0x700015, input_port_3_word_r },	/* Player 3 controls */
+	{ 0x700018, 0x700019, input_port_4_word_r },	/* Player 4 controls */
+	{ 0x70001c, 0x70001d, input_port_5_word_r },	/* Coin/System inputs */
+MEMORY_END
+
+static MEMORY_WRITE16_START( snowbro2_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x500000, 0x500001, YM2151_register_port_0_lsb_w },
+	{ 0x500002, 0x500003, YM2151_data_port_0_lsb_w },
+	{ 0x600000, 0x600001, OKIM6295_data_0_lsb_w },
+	{ 0x700030, 0x700031, oki_bankswitch_w },		/* Sample bank switch */
+	{ 0x700034, 0x700035, toaplan2_coin_word_w },	/* Coin count/lock */
+MEMORY_END
+
 static MEMORY_READ16_START( mahoudai_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_BANK1 },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
 	{ 0x21c002, 0x21c003, YM2151_status_port_0_lsb_r },
 	{ 0x21c008, 0x21c009, OKIM6295_status_0_lsb_r },
@@ -1466,31 +1419,41 @@ static MEMORY_READ16_START( mahoudai_readmem )
 	{ 0x21c030, 0x21c031, input_port_5_word_r },	/* Dip Switch B */
 	{ 0x21c034, 0x21c035, input_port_6_word_r },	/* Territory Jumper block */
 	{ 0x21c03c, 0x21c03d, video_count_r },
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* Tile/Sprite VideoRAM */
 	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
 	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ 0x401000, 0x4017ff, MRA16_RAM },				/* Unused PaletteRAM */
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_r },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_r },
+	{ 0x502200, 0x502fff, MRA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_r },
+	{ 0x503200, 0x503fff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( mahoudai_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_BANK1 },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_w },
 	{ 0x21c000, 0x21c001, YM2151_register_port_0_lsb_w },
 	{ 0x21c004, 0x21c005, YM2151_data_port_0_lsb_w },
 	{ 0x21c008, 0x21c009, OKIM6295_data_0_lsb_w },
-	{ 0x21c01c, 0x21c01d, toaplan2_coin16_w },
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_word_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },
 	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram16},	/* Text VideoRAM */
+	{ 0x401000, 0x4017ff, MWA16_RAM },
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x502200, 0x502fff, MWA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x503200, 0x503fff, MWA16_RAM },
 MEMORY_END
 
 static MEMORY_READ16_START( shippumd_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_BANK1 },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
 	{ 0x21c000, 0x21c001, MRA16_NOP },
 	{ 0x21c002, 0x21c003, YM2151_status_port_0_lsb_r },
@@ -1502,32 +1465,42 @@ static MEMORY_READ16_START( shippumd_readmem )
 	{ 0x21c030, 0x21c031, input_port_5_word_r },	/* Dip Switch B */
 	{ 0x21c034, 0x21c035, input_port_6_word_r },	/* Territory Jumper block */
 	{ 0x21c03c, 0x21c03d, video_count_r },
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* Tile/Sprite VideoRAM */
 	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
 	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ 0x401000, 0x4017ff, MRA16_RAM },				/* Unused PaletteRAM */
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_r },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_r },
+	{ 0x502200, 0x502fff, MRA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_r },
+	{ 0x503200, 0x503fff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( shippumd_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_BANK1 },
+	{ 0x100000, 0x10ffff, MWA16_RAM },
 	{ 0x218000, 0x21bfff, raizing_shared_ram_w },
 	{ 0x21c000, 0x21c001, YM2151_register_port_0_lsb_w },
 	{ 0x21c004, 0x21c005, YM2151_data_port_0_lsb_w },
 	{ 0x21c008, 0x21c009, OKIM6295_data_0_lsb_w },
-	{ 0x21c01c, 0x21c01d, toaplan2_coin16_w },
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_word_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },
 	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram16},	/* Text VideoRAM */
+	{ 0x401000, 0x4017ff, MWA16_RAM },
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x502200, 0x502fff, MWA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x503200, 0x503fff, MWA16_RAM },
 MEMORY_END
 
 static MEMORY_READ16_START( battleg_readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
-	{ 0x100000, 0x10ffff, MRA16_BANK2 },
-	{ 0x218020, 0x218021, battleg_z80check_r },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+	{ 0x218020, 0x218023, battleg_z80check_r },
 	{ 0x21c020, 0x21c021, input_port_1_word_r },	/* Player 1 controls */
 	{ 0x21c024, 0x21c025, input_port_2_word_r },	/* Player 2 controls */
 	{ 0x21c028, 0x21c029, input_port_3_word_r },	/* Coin/System inputs */
@@ -1535,53 +1508,84 @@ static MEMORY_READ16_START( battleg_readmem )
 	{ 0x21c030, 0x21c031, input_port_5_word_r },	/* Dip Switch B */
 	{ 0x21c034, 0x21c035, input_port_6_word_r },	/* Territory Jumper block */
 	{ 0x21c03c, 0x21c03d, video_count_r },
-	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_r },/* Tile/Sprite VideoRAM */
 	{ 0x30000c, 0x30000d, input_port_0_word_r },	/* VBlank */
 	{ 0x400000, 0x400fff, paletteram16_word_r },
-	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_r },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_r },
+	{ 0x502200, 0x502fff, MRA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_r },
+	{ 0x503200, 0x503fff, MRA16_RAM },
 	{ 0x600000, 0x600fff, battleg_commram_r },		/* CommRAM check */
 MEMORY_END
 
 static MEMORY_WRITE16_START( battleg_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM },
-	{ 0x100000, 0x10ffff, MWA16_BANK2 },
-	{ 0x21c01c, 0x21c01d, toaplan2_coin16_w },
-	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
-	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x100000, 0x10ffff, MWA16_RAM },
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_word_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },
+	{ 0x300004, 0x300007, toaplan2_0_videoram16_w },
 	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
 	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram16},		/* Text VideoRAM */
-	{ 0x600000, 0x600fff, battleg_commram_w },	/* CommRAM write */
+	{ 0x500000, 0x501fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x502000, 0x5021ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x502200, 0x502fff, MWA16_RAM },
+	{ 0x503000, 0x5031ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x503200, 0x503fff, MWA16_RAM },
+	{ 0x600000, 0x600fff, battleg_commram_w, &battleg_commram16 },
 MEMORY_END
 
 static MEMORY_READ16_START( batrider_readmem )
 	{ 0x000000, 0x1fffff, MRA16_ROM },
-	{ 0x200000, 0x201fff, raizing_textram_r },
+	{ 0x200000, 0x201fff, toaplan2_txvideoram16_r },/* Text VideoRAM */
 	{ 0x202000, 0x202fff, paletteram16_word_r },
-	{ 0x203000, 0x207fff, MRA16_BANK2 },
-	{ 0x208000, 0x20ffff, MRA16_BANK3 },
-	{ 0x300000, 0x37ffff, batrider_z80rom_read },
-	{ 0x400000, 0x400001, input_port_0_word_r },					/* VBlank */
-	{ 0x400008, 0x40000b, toaplan2_0_videoram_r },
-	{ 0x500000, 0x500007, batrider_input_port_r },
+	{ 0x203000, 0x2031ff, toaplan2_txvideoram16_offs_r },
+	{ 0x203200, 0x2033ff, toaplan2_txscrollram16_r },
+	{ 0x203400, 0x207fff, raizing_tx_gfxram16_r },	/* Main RAM actually */
+	{ 0x208000, 0x20ffff, MRA16_RAM },
+	{ 0x300000, 0x37ffff, batrider_z80rom_r },
+	{ 0x400000, 0x400001, input_port_0_word_r },	/* VBlank */
+	{ 0x400008, 0x40000b, toaplan2_0_videoram16_r },/* Tile/Sprite VideoRAM */
+	{ 0x500000, 0x500001, input_port_1_word_r },
+	{ 0x500002, 0x500003, input_port_2_word_r },
+	{ 0x500004, 0x500005, input_port_3_word_r },
+	{ 0x500006, 0x500007, video_count_r },
 	{ 0x500008, 0x50000f, batrider_sound_data_68000_r },
+	{ 0x600000, 0x60000f, batrider_sound_data_68000_r1 }, ///
 MEMORY_END
 
 static MEMORY_WRITE16_START( batrider_writemem )
 	{ 0x000000, 0x1fffff, MWA16_ROM },
-	{ 0x200000, 0x201fff, raizing_textram_w, &textvideoram16 },
-	{ 0x202000, 0x202fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x203000, 0x207fff, MWA16_BANK2, &batrider_txdataram },
-	{ 0x208000, 0x20ffff, MWA16_BANK3 },
+	{ 0x200000, 0x201fff, toaplan2_txvideoram16_w, &toaplan2_txvideoram16, &toaplan2_tx_vram_size },
+	{ 0x202000, 0x202fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 , &paletteram_size },
+	{ 0x203000, 0x2031ff, toaplan2_txvideoram16_offs_w, &toaplan2_txvideoram16_offs, &toaplan2_tx_offs_vram_size },
+	{ 0x203200, 0x2033ff, toaplan2_txscrollram16_w, &toaplan2_txscrollram16, &toaplan2_tx_scroll_vram_size },
+	{ 0x203400, 0x207fff, raizing_tx_gfxram16_w },
+	{ 0x208000, 0x20ffff, MWA16_RAM },
 	{ 0x400000, 0x400001, toaplan2_0_scroll_reg_data_w },
 	{ 0x400004, 0x400005, toaplan2_0_scroll_reg_select_w },
-	{ 0x400008, 0x40000b, toaplan2_0_videoram_w },
+	{ 0x400008, 0x40000b, toaplan2_0_videoram16_w },
 	{ 0x40000c, 0x40000d, toaplan2_0_voffs_w },
-	{ 0x500010, 0x500011, toaplan2_coin16_w },
-	{ 0x500020, 0x500027, batrider_sound_data_68000_w },
+	{ 0x500010, 0x500011, toaplan2_coin_word_w },
+	{ 0x500020, 0x50002f, batrider_sound_data_68000_w },
+	{ 0x500060, 0x500061, batrider_sound_data6_68000_w },
 	{ 0x500080, 0x500081, batrider_textdata_decode },
 	{ 0x5000c0, 0x5000cf, batrider_objectbank_w },
+	{ 0x600000, 0x60000f, batrider_sound_data_68000_w1 }, ///
+MEMORY_END
+
+static MEMORY_READ_START( sound_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xe000, 0xe000, YM3812_status_port_0_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( sound_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM, &toaplan2_shared_ram },
+	{ 0xe000, 0xe000, YM3812_control_port_0_w },
+	{ 0xe001, 0xe001, YM3812_write_port_0_w },
 MEMORY_END
 
 static MEMORY_READ_START( raizing_sound_readmem )
@@ -1613,7 +1617,7 @@ static MEMORY_READ_START( battleg_sound_readmem )
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe001, 0xe001, YM2151_status_port_0_r },
 	{ 0xe004, 0xe004, OKIM6295_status_0_r },
-	{ 0xe01c, 0xe01c, battleg_commram_check_r0 },
+	{ 0xe01c, 0xe01d, battleg_commram_check_r0 },
 MEMORY_END
 
 static MEMORY_WRITE_START( battleg_sound_writemem )
@@ -1631,12 +1635,14 @@ MEMORY_END
 static MEMORY_READ_START( batrider_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xc000, 0xdfff, MRA_BANK2 },
+	{ 0xf000, 0xf007, batrider_sound_data_z80_r1 }, ///
 MEMORY_END
 
 static MEMORY_WRITE_START( batrider_sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xc000, 0xdfff, MWA_BANK2 },
+	{ 0xf000, 0xf007, batrider_sound_data_z80_w1 }, ///
 MEMORY_END
 
 static PORT_READ_START( batrider_sound_readport )
@@ -1658,7 +1664,52 @@ static PORT_WRITE_START( batrider_sound_writeport )
 	{ 0xc2, 0xc2, raizing_okim6295_bankselect_1 },
 	{ 0xc4, 0xc4, raizing_okim6295_bankselect_2 },
 	{ 0xc6, 0xc6, raizing_okim6295_bankselect_3 },
+PORT_END
+
+#if HD64x180
+static MEMORY_READ_START( hd647180_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xfe00, 0xffff, MRA_RAM },			/* Internal 512 bytes of RAM */
 MEMORY_END
+
+static MEMORY_WRITE_START( hd647180_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0xfe00, 0xffff, MWA_RAM },			/* Internal 512 bytes of RAM */
+MEMORY_END
+#endif
+
+
+#if Zx80
+static MEMORY_READ_START( Zx80_readmem )
+	{ 0x00000, 0x03fff, MRA_ROM },
+//	{ 0x00000, 0x007ff, MRA_RAM },			/* External shared RAM (Banked) */
+	{ 0x04000, 0x04000, YM2151_status_port_0_r },
+	{ 0x04002, 0x04002, OKIM6295_status_0_r },
+	{ 0x04008, 0x04008, input_port_1_r },
+	{ 0x0400a, 0x0400a, input_port_2_r },
+	{ 0x0400c, 0x0400c, input_port_3_r },
+	{ 0x0fe00, 0x0ffff, MRA_RAM },			/* Internal 512 bytes of RAM */
+	{ 0x80000, 0x87fff, MRA_RAM },			/* External shared RAM (ROM for KBASH) */
+MEMORY_END
+
+static MEMORY_WRITE_START( Zx80_writemem )
+	{ 0x00000, 0x03fff, MWA_ROM, },
+//	{ 0x00000, 0x007ff, MWA_RAM, },			/* External shared RAM (Banked) */
+	{ 0x04000, 0x04000, YM2151_register_port_0_w },
+	{ 0x04001, 0x04001, YM2151_data_port_0_w },
+	{ 0x04002, 0x04002, OKIM6295_data_0_w },
+	{ 0x04004, 0x04004, oki_bankswitch_w },
+	{ 0x0400e, 0x0400e, toaplan2_coin_w },
+	{ 0x0fe00, 0x0ffff, MWA_RAM },			/* Internal 512 bytes of RAM */
+	{ 0x80000, 0x87fff, MWA_RAM, &Zx80_sharedram },	/* External shared RAM (ROM for KBASH) */
+MEMORY_END
+
+static PORT_READ_START( Zx80_readport )
+	{ 0x0060, 0x0060, input_port_4_r },		/* Directly mapped I/O ports */
+	{ 0x0061, 0x0061, input_port_5_r },		/* Directly mapped I/O ports */
+	{ 0x0062, 0x0062, input_port_6_r },		/* Directly mapped I/O ports */
+PORT_END
+#endif
 
 
 
@@ -1672,19 +1723,19 @@ MEMORY_END
 *****************************************************************************/
 
 #define  TOAPLAN2_PLAYER_INPUT( player, button3 )								\
-	PORT_START 																	\
+	PORT_START																	\
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | player )	\
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | player )	\
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | player )	\
 	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | player )	\
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 | player)						\
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 | player)						\
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 | player )					\
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 | player )					\
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, button3 )									\
 	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 #define  TOAPLAN2_SYSTEM_INPUTS						\
 	PORT_START										\
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 ) 	\
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )	\
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )	\
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE1 )\
 	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )	\
@@ -2027,8 +2078,7 @@ INPUT_PORTS_START( kbash )
 	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/* Added by Yochizo 2000/08/16 */
-INPUT_PORTS_START( tatsujn2 )
+INPUT_PORTS_START( truxton2 )
 	PORT_START		/* (0) VBlank */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -2043,9 +2093,7 @@ INPUT_PORTS_START( tatsujn2 )
 	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004,	0x0000, "Test Switch" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
 	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
@@ -2304,6 +2352,116 @@ INPUT_PORTS_START( pipibibi )
 	PORT_DIPSETTING(	0x06, "Spain & Portugal (APM Electronics SA)" )
 //	PORT_DIPSETTING(	0x03, "World" )
 	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( fixeight )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER3, IPT_START3 )
+
+	PORT_START		/* service input is a push-button marked 'Test SW' */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BITX(0x0004, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+#if 0
+	PORT_START		/* Fake input, to display message */
+	PORT_DIPNAME( 0x00,	0x00, "    Press service button" )
+	PORT_DIPSETTING(	0x00, "" )
+	PORT_DIPNAME( 0x00,	0x00, "  for game keeping options" )
+	PORT_DIPSETTING(	0x00, "" )
+	PORT_DIPNAME( 0x00,	0x00, "" )
+	PORT_DIPSETTING(	0x00, "" )
+#endif
+
+	PORT_START		/* (4) DSWA */
+	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )
+	PORT_DIPSETTING(		0x0000, "2" )
+	PORT_DIPSETTING(		0x0001, "3" )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )
+	PORT_DIPSETTING(		0x0004, "Semi-auto" )
+	PORT_DIPSETTING(		0x0000, "Fully-auto" )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(		0x0030, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 1C_6C ) )
+/*	Non-European territories coin setups
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x0030, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_2C ) )
+*/
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(		0x0001, "Easy" )
+	PORT_DIPSETTING(		0x0000, "Medium" )
+	PORT_DIPSETTING(		0x0002, "Hard" )
+	PORT_DIPSETTING(		0x0003, "Hardest" )
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "300K, then every 300K" )
+	PORT_DIPSETTING(		0x0008, "300K" )
+	PORT_DIPSETTING(		0x0000, "500K, then every 500K" )
+	PORT_DIPSETTING(		0x000c, "None" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_BITX(	  0x0040,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+
+	PORT_START		/* (6) Territory Jumper block */
+	PORT_DIPNAME( 0x0f,	0x09, "Territory" )
+	PORT_DIPSETTING(	0x09, "Europe" )
+	PORT_DIPSETTING(	0x08, "Europe (Taito Corp)" )
+	PORT_DIPSETTING(	0x0b, "USA" )
+	PORT_DIPSETTING(	0x0a, "USA (Taito America Corp)" )
+	PORT_DIPSETTING(	0x0e, "Japan" )
+	PORT_DIPSETTING(	0x0f, "Japan (Taito corp)" )
+	PORT_DIPSETTING(	0x01, "Korea" )
+	PORT_DIPSETTING(	0x00, "Korea (Taito Corp)" )
+	PORT_DIPSETTING(	0x03, "Hong Kong" )
+	PORT_DIPSETTING(	0x02, "Hong Kong (Taito Corp)" )
+	PORT_DIPSETTING(	0x05, "Taiwan" )
+	PORT_DIPSETTING(	0x04, "Taiwan (Taito corp)" )
+	PORT_DIPSETTING(	0x07, "South East Asia" )
+	PORT_DIPSETTING(	0x06, "South East Asia (Taito corp)" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( grindstm )
@@ -2761,7 +2919,8 @@ INPUT_PORTS_START( shippumd )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* (6) Territory Jumper block */
-	/* title screen is wrong when set to other countries */
+	/* Title screen is wrong when set to other countries */
+	/* It suggests text ROM may be different for other territories */
 	PORT_DIPNAME( 0x000e,	0x0000, "Territory" )
 	PORT_DIPSETTING(		0x0004, "Europe" )
 	PORT_DIPSETTING(		0x0002, "USA" )
@@ -2779,9 +2938,9 @@ INPUT_PORTS_START( battleg )
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 | IPF_PLAYER1 )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_BUTTON3 )
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_BUTTON3 | IPF_PLAYER2 )
 
 	TOAPLAN2_SYSTEM_INPUTS
 
@@ -2816,30 +2975,29 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPSETTING(		0x0000, "Medium" )
 	PORT_DIPSETTING(		0x0002, "Hard" )
 	PORT_DIPSETTING(		0x0003, "Hardest" )
-	PORT_DIPNAME( 0x000c,	0x0000, "Timer" )
-	PORT_DIPSETTING(		0x0004, "Easy" )
-	PORT_DIPSETTING(		0x0000, "Medium" )
-	PORT_DIPSETTING(		0x0008, "Hard" )
-	PORT_DIPSETTING(		0x000c, "Hardest" )
+	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(		0x0030, "1" )
 	PORT_DIPSETTING(		0x0020, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
 	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPNAME( 0x00c0,   0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0000, "Every 1500k" )
-	PORT_DIPSETTING(		0x0040, "Every 1000k" )
+	PORT_DIPNAME( 0x0080,   0x0080, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(		0x0080, "Every 2000k" )
-	PORT_DIPSETTING(		0x00c0, "None" )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPSETTING(		0x0000, "None" )
+//	PORT_DIPNAME( 0x00c0,   0x0000, DEF_STR( Bonus_Life ) )
+//	PORT_DIPSETTING(		0x0040, "Every 1000k" )		/* used for Japan *
+//	PORT_DIPSETTING(		0x0000, "Every 1500k" )		/* used for Japan *
+//	PORT_DIPSETTING(		0x0080, "Every 2000k" )		/* used for Japan *
+//	PORT_DIPSETTING(		0x00c0, "None" )			/* used for Japan *
+//	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START		/* (6) DSWC */
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_START		/* (6) DSWC / Territory Jumper block */
 	PORT_DIPNAME( 0x0004,	0x0000, "Allow Continue" )
 	PORT_DIPSETTING(		0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
@@ -2849,6 +3007,11 @@ INPUT_PORTS_START( battleg )
 	PORT_BITX(	  0x0010,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0003,	0x0000, "Territory" )
+	PORT_DIPSETTING(		0x0001, "Europe (German Tuning license)" )
+	PORT_DIPSETTING(		0x0002, "USA (Fabtek license)" )
+	PORT_DIPSETTING(		0x0000, "Japan" )
+	PORT_DIPSETTING(		0x0003, "Asia" )
 	PORT_BIT( 0xffe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -2857,13 +3020,49 @@ INPUT_PORTS_START( batrider )
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
+	PORT_START		/* (1) Player Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_BUTTON3 )
+	PORT_START		/* (2) Coin/System and DSWC */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x0100,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0100, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400,	0x0000, "Stage Edit" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_BITX(	  0x1000,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x1000, DEF_STR( On ) )
+	PORT_BIT( 0xe080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START		/* (4) DSWA */
+	PORT_START		/* (3) DSWA and DSWB */
 	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
 	PORT_DIPNAME( 0x0002,	0x0000, "Start Coin" )
 	PORT_DIPSETTING(		0x0000, "1 Credit" )
@@ -2886,48 +3085,26 @@ INPUT_PORTS_START( batrider )
 	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(		0x00e0, DEF_STR( Free_Play ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* (5) DSWB */
-	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(		0x0001, "Easy" )
+	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(		0x0100, "Easy" )
 	PORT_DIPSETTING(		0x0000, "Medium" )
-	PORT_DIPSETTING(		0x0002, "Hard" )
-	PORT_DIPSETTING(		0x0003, "Hardest" )
-	PORT_DIPNAME( 0x000c,	0x0000, "Timer" )
-	PORT_DIPSETTING(		0x0004, "Easy" )
+	PORT_DIPSETTING(		0x0200, "Hard" )
+	PORT_DIPSETTING(		0x0300, "Hardest" )
+	PORT_DIPNAME( 0x0c00,	0x0000, "Timer" )
+	PORT_DIPSETTING(		0x0400, "Easy" )
 	PORT_DIPSETTING(		0x0000, "Medium" )
-	PORT_DIPSETTING(		0x0008, "Hard" )
-	PORT_DIPSETTING(		0x000c, "Hardest" )
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(		0x0030, "1" )
-	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0800, "Hard" )
+	PORT_DIPSETTING(		0x0c00, "Hardest" )
+	PORT_DIPNAME( 0x3000,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x3000, "1" )
+	PORT_DIPSETTING(		0x2000, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
-	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPNAME( 0x00c0,   0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x1000, "4" )
+	PORT_DIPNAME( 0xc000,   0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x4000, "Every 1000k" )
 	PORT_DIPSETTING(		0x0000, "Every 1500k" )
-	PORT_DIPSETTING(		0x0040, "Every 1000k" )
-	PORT_DIPSETTING(		0x0080, "Every 2000k" )
-	PORT_DIPSETTING(		0x00c0, "None" )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* (6) DSWC */
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004,	0x0000, "Stage Edit" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008,	0x0000, "Allow Continue" )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_BITX(	  0x0010,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0010, DEF_STR( On ) )
-	PORT_BIT( 0xffe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPSETTING(		0x8000, "Every 2000k" )
+	PORT_DIPSETTING(		0xc000, "None" )
 INPUT_PORTS_END
 
 
@@ -2955,30 +3132,6 @@ static struct GfxLayout spritelayout =
 	8*16
 };
 
-
-#ifdef LSB_FIRST
-static struct GfxLayout tatsujn2_textlayout =
-{
-	8,8,	/* 8x8 characters */
-	1024,	/* 1024 characters */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 8, 12, 0, 4, 24, 28, 16, 20 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	8*32
-};
-#else
-static struct GfxLayout tatsujn2_textlayout =
-{
-	8,8,	/* 8x8 characters */
-	1024,	/* 1024 characters */
-	4,		/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	8*32
-};
-#endif
 static struct GfxLayout raizing_textlayout =
 {
 	8,8,	/* 8x8 characters */
@@ -2989,6 +3142,54 @@ static struct GfxLayout raizing_textlayout =
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
 	8*32
 };
+
+#ifdef LSB_FIRST
+static struct GfxLayout truxton2_tx_tilelayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 16, 20, 32, 36, 48, 52 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
+};
+#else
+static struct GfxLayout truxton2_tx_tilelayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 16, 20, 0, 4, 48, 52, 32, 36 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	8*64
+};
+#endif
+
+#ifdef LSB_FIRST
+static struct GfxLayout batrider_tx_tilelayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32
+};
+#else
+static struct GfxLayout batrider_tx_tilelayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 8, 12, 0, 4, 24, 28, 16, 20 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32
+};
+#endif
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -3006,11 +3207,13 @@ static struct GfxDecodeInfo gfxdecodeinfo_2[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo tatsujn2_gfxdecodeinfo[] =
+static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0,       &tilelayout         , 0, 128 },
-	{ REGION_GFX1, 0,       &spritelayout       , 0,  64 },
-	{ REGION_CPU1, 0x40000, &tatsujn2_textlayout, 0, 128 },	/* Text-data is in CPU rom */
+	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
+	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
+//	{ REGION_CPU1, 0x40000, &truxton2_tx_tilelayout, 0, 128 },	/* Truxton 2 */
+//	{ REGION_CPU1, 0x68000, &truxton2_tx_tilelayout, 0, 128 },	/* Fix Eight */
+	{ 0, 0, &truxton2_tx_tilelayout,  0, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -3022,11 +3225,12 @@ static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+/* This is wrong a bit. Text layer is dynamically changed. */
 static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,          0, 128 },
-	{ REGION_GFX1, 0, &spritelayout,        0,  64 },
-    { 0,           0, &tatsujn2_textlayout, 0,  16 },		/* Text-data is decoded after starting */
+	{ REGION_GFX1, 0, &tilelayout,              0, 128 },
+	{ REGION_GFX1, 0, &spritelayout,            0,  64 },
+	{ 0,           0, &batrider_tx_tilelayout,  0,  16 },
 	{ -1 } /* end of array */
 };
 
@@ -3052,10 +3256,10 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct YM2151interface battleg_ym2151_interface =
+static struct YM2151interface raizing_ym2151_interface =
 {
 	1,				/* 1 chip */
-	32000000/8,		/* Battle Garegga uses 4 MHz ? */
+	32000000/8,		/* 4.00MHz , 32MHz Oscillator */
 	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -3063,38 +3267,38 @@ static struct YM2151interface battleg_ym2151_interface =
 
 static struct OKIM6295interface okim6295_interface =
 {
-	1,					/* 1 chip */
-	{ 20000 },			/* frequency (Hz) - this is approximate value */
-	{ REGION_SOUND1 },	/* memory region */
+	1,						/* 1 chip */
+	{ 27000000/10/132 },	/* frequency (Hz). 2.7MHz to 6295 (using B mode) */
+	{ REGION_SOUND1 },		/* memory region */
 	{ 47 }
 };
 
 static struct OKIM6295interface raizing_okim6295_interface =
 {
-	1,					/* 1 chip */
-	{ 10000 },			/* frequency (Hz) - this is approximate value */
-	{ REGION_SOUND1 },	/* memory region */
+	1,						/* 1 chip */
+	{ 32000000/32/132 },	/* frequency (Hz) 1MHz to 6295 (using B mode) */
+	{ REGION_SOUND1 },		/* memory region */
 	{ 47 }
 };
 
 static struct OKIM6295interface battleg_okim6295_interface =
 {
-	1,					/* 1 chip */
-	{ 15000 },			/* frequency (Hz). M6295 has 1MHz on its clock input */
-	{ REGION_SOUND1 },	/* memory region */
+	1,						/* 1 chip */
+	{ 32000000/16/132 },	/* frequency (Hz). 2MHz to 6295 (using B mode) */
+	{ REGION_SOUND1 },		/* memory region */
 	{ 47 }
 };
 
 static struct OKIM6295interface batrider_okim6295_interface =
 {
-	2,					/* 2 chips */
-	{ 20000, 20000 },
-	{ REGION_SOUND1, REGION_SOUND2 },
+	2,										/* 2 chips */
+	{ 32000000/10/132, 32000000/10/165 },	/* frequency (Hz). 3.2MHz to two 6295 (using B mode / A mode) */
+	{ REGION_SOUND1, REGION_SOUND2 },		/* memory region */
 	{ 47, 47 }
 };
 
 
-static struct MachineDriver machine_driver_tekipaki =
+static const struct MachineDriver machine_driver_tekipaki =
 {
 	/* basic machine hardware */
 	{
@@ -3106,7 +3310,7 @@ static struct MachineDriver machine_driver_tekipaki =
 		},
 #if HD64x180
 		{
-			CPU_Z80,			/* HD647180 CPU actually */
+			CPU_Z180,			/* HD647180 CPU actually */
 			10000000,			/* 10MHz Oscillator */
 			hd647180_readmem,hd647180_writemem,0,0,
 			ignore_interrupt,0
@@ -3139,7 +3343,7 @@ static struct MachineDriver machine_driver_tekipaki =
 	}
 };
 
-static struct MachineDriver machine_driver_ghox =
+static const struct MachineDriver machine_driver_ghox =
 {
 	/* basic machine hardware */
 	{
@@ -3151,7 +3355,7 @@ static struct MachineDriver machine_driver_ghox =
 		},
 #if HD64x180
 		{
-			CPU_Z80,			/* HD647180 CPU actually */
+			CPU_Z180,			/* HD647180 CPU actually */
 			10000000,			/* 10MHz Oscillator */
 			hd647180_readmem,hd647180_writemem,0,0,
 			ignore_interrupt,0
@@ -3196,9 +3400,9 @@ static const struct MachineDriver machine_driver_dogyuun =
 		},
 #if Zx80
 		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
+			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
 			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
+			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
 			ignore_interrupt,0
 		}
 #endif
@@ -3217,7 +3421,7 @@ static const struct MachineDriver machine_driver_dogyuun =
 	toaplan2_1_eof_callback,
 	toaplan2_1_vh_start,
 	toaplan2_1_vh_stop,
-	toaplan2_1_vh_screenrefresh,
+	dogyuun_1_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -3245,9 +3449,9 @@ static const struct MachineDriver machine_driver_kbash =
 		},
 #if Zx80
 		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
+			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
 			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
+			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
 			ignore_interrupt,0
 		}
 #endif
@@ -3282,40 +3486,32 @@ static const struct MachineDriver machine_driver_kbash =
 	}
 };
 
-static const struct MachineDriver machine_driver_tatsujn2 =
+static const struct MachineDriver machine_driver_truxton2 =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
 			16000000,			/* 16MHz Oscillator */
-			tatsujn2_readmem,tatsujn2_writemem,0,0,
-			tatsujn2_interrupt,1
-		},
-#if Zx80
-		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
-			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
-			ignore_interrupt,0
+			truxton2_readmem,truxton2_writemem,0,0,
+			truxton2_interrupt,1
 		}
-#endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	init_tatsujn2,
+	init_truxton2,
 
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
-	tatsujn2_gfxdecodeinfo,
+	truxton2_gfxdecodeinfo,
 	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
-	raizing_0_vh_start,
+	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
-	raizing_0_vh_screenrefresh,
+	truxton2_0_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -3472,28 +3668,28 @@ static const struct MachineDriver machine_driver_fixeight =
 		},
 #if Zx80
 		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
+			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
 			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
+			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
 			ignore_interrupt,0
 		}
 #endif
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	init_toaplan3,
+	init_fixeight,
 
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
+	truxton2_gfxdecodeinfo,
 	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
+	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	truxton2_0_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -3501,8 +3697,13 @@ static const struct MachineDriver machine_driver_fixeight =
 		{
 			SOUND_YM2151,
 			&ym2151_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
 		}
 	}
+///	fixeight_nvram_handler		/* See 37B6 code */
 };
 
 static const struct MachineDriver machine_driver_vfive =
@@ -3517,9 +3718,9 @@ static const struct MachineDriver machine_driver_vfive =
 		},
 #if Zx80
 		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
+			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
 			10000000,			/* 10MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
+			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
 			ignore_interrupt,0
 		}
 #endif
@@ -3562,9 +3763,9 @@ static const struct MachineDriver machine_driver_batsugun =
 		},
 #if Zx80
 		{
-			CPU_Z80,			/* Z?80 type Toaplan marked CPU ??? */
+			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
 			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,0,0,
+			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
 			ignore_interrupt,0
 		}
 #endif
@@ -3646,13 +3847,13 @@ static const struct MachineDriver machine_driver_mahoudai =
 	{
 		{
 			CPU_M68000,
-			16000000,
+			32000000/2,			/* 16MHz , 32MHz Oscillator */
 			mahoudai_readmem,mahoudai_writemem,0,0,
 			toaplan2_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* ??? */
+			32000000/8,			/* 4MHz , 32MHz Oscillator */
 			raizing_sound_readmem,raizing_sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -3664,21 +3865,21 @@ static const struct MachineDriver machine_driver_mahoudai =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(128*16), (128*16),
+	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
-	raizing_0_vh_start,
+	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
-	raizing_0_vh_screenrefresh,
+	truxton2_0_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
-			&ym2151_interface
+			&raizing_ym2151_interface
 		},
 		{
 			SOUND_OKIM6295,
@@ -3693,13 +3894,13 @@ static const struct MachineDriver machine_driver_shippumd =
 	{
 		{
 			CPU_M68000,
-			16000000,
+			32000000/2,			/* 16MHz , 32MHz Oscillator */
 			shippumd_readmem,shippumd_writemem,0,0,
 			toaplan2_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* ??? */
+			32000000/8,			/* 4MHz , 32MHz Oscillator */
 			raizing_sound_readmem,raizing_sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -3711,21 +3912,21 @@ static const struct MachineDriver machine_driver_shippumd =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(128*16), (128*16),
+	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
-	raizing_0_vh_start,
+	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
-	raizing_0_vh_screenrefresh,
+	truxton2_0_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
-			&ym2151_interface
+			&raizing_ym2151_interface
 		},
 		{
 			SOUND_OKIM6295,
@@ -3740,13 +3941,13 @@ static const struct MachineDriver machine_driver_battleg =
 	{
 		{
 			CPU_M68000,
-			18000000,		/* ??? */
+			32000000/2,			/* 16MHz , 32MHz Oscillator */
 			battleg_readmem,battleg_writemem,0,0,
 			toaplan2_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* ??? */
+			32000000/8,			/* 4MHz , 32MHz Oscillator */
 			battleg_sound_readmem,battleg_sound_writemem,0,0,
 			ignore_interrupt,0
 		}
@@ -3758,21 +3959,21 @@ static const struct MachineDriver machine_driver_battleg =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	raizing_gfxdecodeinfo,
-	(128*16), (128*16),
+	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
-	raizing_0_vh_start,
+	truxton2_0_vh_start,
 	toaplan2_0_vh_stop,
-	raizing_0_vh_screenrefresh,
+	truxton2_0_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
-			&battleg_ym2151_interface
+			&raizing_ym2151_interface
 		},
 		{
 			SOUND_OKIM6295,
@@ -3781,19 +3982,19 @@ static const struct MachineDriver machine_driver_battleg =
 	}
 };
 
-static struct MachineDriver machine_driver_batrider =
+static const struct MachineDriver machine_driver_batrider =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			16000000,		/* ??? */
+			32000000/2,			/* 16MHz , 32MHz Oscillator */
 			batrider_readmem,batrider_writemem,0,0,
-			batrider_interrupt,1
+			truxton2_interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,		/* ??? */
+			32000000/8,			/* 4MHz , 32MHz Oscillator */
 			batrider_sound_readmem,batrider_sound_writemem,batrider_sound_readport,batrider_sound_writeport,
 			batrider_sound_interrupt,1
 		}
@@ -3805,11 +4006,11 @@ static struct MachineDriver machine_driver_batrider =
 	/* video hardware */
 	32*16, 32*16, { 0, 319, 0, 239 },
 	batrider_gfxdecodeinfo,
-	(128*16), (128*16),
+	(64*16)+(64*16), (64*16)+(64*16),
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
+	batrider_0_eof_callback,
 	batrider_0_vh_start,
 	toaplan2_0_vh_stop,
 	batrider_0_vh_screenrefresh,
@@ -3819,7 +4020,7 @@ static struct MachineDriver machine_driver_batrider =
 	{
 		{
 			SOUND_YM2151,
-			&battleg_ym2151_interface
+			&raizing_ym2151_interface
 		},
 		{
 			SOUND_OKIM6295,
@@ -3842,7 +4043,7 @@ ROM_START( tekipaki )
 	ROM_LOAD16_BYTE( "tp020-2.bin", 0x000001, 0x010000, 0x7222de8e )
 
 #if HD64x180
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound 647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.020", 0x00000, 0x08000, 0x00000000 )
 #endif
@@ -3858,7 +4059,7 @@ ROM_START( ghox )
 	ROM_LOAD16_BYTE( "tp021-02.u11", 0x000001, 0x020000, 0x15cac60f )
 
 #if HD64x180
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound 647180 code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound HD647180 code */
 	/* sound CPU is a HD647180 (Z180) with internal ROM - not yet supported */
 	ROM_LOAD( "hd647180.021", 0x00000, 0x08000, 0x00000000 )
 #endif
@@ -3897,12 +4098,13 @@ ROM_START( kbash )
 	/* Secondary CPU is a Toaplan marked chip, (TS-004-Dash  TOA PLAN) */
 	/* Its a Z?80 of some sort - 94 pin chip. */
 #if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound Z?80 code */
+	ROM_REGION( 0x88000, REGION_CPU2, 0 )			/* Sound Z?80 code */
+	ROM_LOAD( "kbash02.bin", 0x80000, 0x08000, 0x4cd882a1 )
 #else
-	ROM_REGION( 0x8000, REGION_USER1, 0 )
-#endif
+	ROM_REGION( 0x08000, REGION_USER1, 0 )
 	ROM_LOAD( "kbash02.bin", 0x00200, 0x07e00, 0x4cd882a1 )
 	ROM_CONTINUE(			 0x00000, 0x00200 )
+#endif
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "kbash03.bin", 0x000000, 0x200000, 0x32ad508b )
@@ -3914,22 +4116,16 @@ ROM_START( kbash )
 	ROM_LOAD( "kbash07.bin", 0x00000, 0x40000, 0x3732318f )
 ROM_END
 
-ROM_START( tatsujn2 )
+ROM_START( truxton2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
-	ROM_LOAD16_WORD( "tsj2rom1.bin", 0x000000, 0x080000, 0xf5cfe6ee )
-
-#if Zx80
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
-	/* Secondary CPU is a Toaplan marked chip ??? */
-//	ROM_LOAD( "tp024.mcu", 0x00000, 0x08000, 0x00000000 )
-#endif
+	ROM_LOAD16_WORD( "tp024_1.bin", 0x000000, 0x080000, 0xf5cfe6ee )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tsj2rom4.bin", 0x000000, 0x100000, 0x805c449e )
-	ROM_LOAD( "tsj2rom3.bin", 0x100000, 0x100000, 0x47587164 )
+	ROM_LOAD( "tp024_4.bin", 0x000000, 0x100000, 0x805c449e )
+	ROM_LOAD( "tp024_3.bin", 0x100000, 0x100000, 0x47587164 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Samples */
-	ROM_LOAD( "tsj2rom2.bin", 0x00000, 0x80000, 0xf2f6cae4 )
+	ROM_LOAD( "tp024_2.bin", 0x00000, 0x80000, 0xf2f6cae4 )
 ROM_END
 
 ROM_START( pipibibs )
@@ -3994,7 +4190,7 @@ ROM_START( fixeight )
 	ROM_LOAD( "tp-026-3", 0x000000, 0x200000, 0xe5578d98 )
 	ROM_LOAD( "tp-026-4", 0x200000, 0x200000, 0xb760cb53 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* ADPCM Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "tp-026-2", 0x00000, 0x40000, 0x85063f1f )
 
 	ROM_REGION( 0x80, REGION_USER1, 0 )
@@ -4045,17 +4241,17 @@ ROM_START( batsugun )
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, 0x00000000 )
 #endif
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tp030_5.bin",  0x000000, 0x100000, 0xbcf5ba05 )
-	ROM_LOAD( "tp030_6.bin",  0x100000, 0x100000, 0x0666fecd )
-
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp030_3l.bin", 0x000000, 0x100000, 0x3024b793 )
 	ROM_LOAD( "tp030_3h.bin", 0x100000, 0x100000, 0xed75730b )
 	ROM_LOAD( "tp030_4l.bin", 0x200000, 0x100000, 0xfedb9861 )
 	ROM_LOAD( "tp030_4h.bin", 0x300000, 0x100000, 0xd482948b )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* ADPCM Samples */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "tp030_5.bin",  0x000000, 0x100000, 0xbcf5ba05 )
+	ROM_LOAD( "tp030_6.bin",  0x100000, 0x100000, 0x0666fecd )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "tp030_2.bin", 0x00000, 0x40000, 0x276146f5 )
 ROM_END
 
@@ -4070,17 +4266,17 @@ ROM_START( batugnsp )
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, 0x00000000 )
 #endif
 
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tp030_5.bin",  0x000000, 0x100000, 0xbcf5ba05 )
-	ROM_LOAD( "tp030_6.bin",  0x100000, 0x100000, 0x0666fecd )
-
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tp030_3l.bin", 0x000000, 0x100000, 0x3024b793 )
 	ROM_LOAD( "tp030_3h.bin", 0x100000, 0x100000, 0xed75730b )
 	ROM_LOAD( "tp030_4l.bin", 0x200000, 0x100000, 0xfedb9861 )
 	ROM_LOAD( "tp030_4h.bin", 0x300000, 0x100000, 0xd482948b )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* ADPCM Samples */
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "tp030_5.bin",  0x000000, 0x100000, 0xbcf5ba05 )
+	ROM_LOAD( "tp030_6.bin",  0x100000, 0x100000, 0x0666fecd )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "tp030_2.bin", 0x00000, 0x40000, 0x276146f5 )
 ROM_END
 
@@ -4094,7 +4290,7 @@ ROM_START( snowbro2 )
 	ROM_LOAD( "rom3-l", 0x180000, 0x100000, 0xeb06e332 )
 	ROM_LOAD( "rom3-h", 0x280000, 0x080000, 0xdf4a952a )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )		/* ADPCM Samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "rom4", 0x00000, 0x80000, 0x638f341e )
 ROM_END
 
@@ -4216,18 +4412,18 @@ GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, toaplan2, ROT0,         "To
 GAMEX( 1991, ghox,     0,        ghox,     ghox,     toaplan2, ROT270,       "Toaplan", "Ghox", GAME_NO_SOUND )
 GAMEX( 1991, dogyuun,  0,        dogyuun,  dogyuun,  toaplan3, ROT270,       "Toaplan", "Dogyuun", GAME_NO_SOUND )
 GAMEX( 1993, kbash,    0,        kbash,    kbash,    toaplan2, ROT0_16BIT,   "Toaplan", "Knuckle Bash", GAME_NO_SOUND )
-GAME ( 1992, tatsujn2, 0,        tatsujn2, tatsujn2, tatsujn2, ROT270,       "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
+GAME ( 1992, truxton2, 0,        truxton2, truxton2, truxton2, ROT270,       "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
 GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, pipibibs, ROT0,         "Toaplan", "Pipi & Bibis / Whoopee (Japan)" )
 GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  pipibibs, ROT0,         "Toaplan", "Whoopee (Japan) / Pipi & Bibis (World)" )
 GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,         "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee (Japan) [bootleg ?]" )
-GAMEX( 1992, fixeight, 0,        fixeight, vfive,    toaplan3, ROT270,       "Toaplan", "FixEight", GAME_NOT_WORKING )
+GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270,       "Toaplan", "FixEight", GAME_NOT_WORKING )
 GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, toaplan3, ROT270,       "Toaplan", "Grind Stormer", GAME_NO_SOUND )
 GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270,       "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
 GAMEX( 1993, batsugun, 0,        batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun", GAME_NO_SOUND )
 GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun Special Ver.", GAME_NO_SOUND )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0_16BIT,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
-GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, 0,        ROT270_16BIT, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
-GAME ( 1994, shippumd, 0,        shippumd, shippumd, 0,        ROT270_16BIT, "Raizing", "Shippu Mahou Daisakusen (Japan)" )
-GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing", "Battle Garegga (Japan)" )
-GAME ( 1998, batrider, 0,        batrider, batrider, batrider, ROT270_16BIT, "Raizing", "Armed Police Batrider (Japan, version B)" )
-GAME ( 1997, batridra, batrider, batrider, batrider, batridra, ROT270_16BIT, "Raizing", "Armed Police Batrider (Japan, version A)" )
+GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, raizing,  ROT270_16BIT, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
+GAME ( 1994, shippumd, 0,        shippumd, shippumd, raizing,  ROT270_16BIT, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )
+GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing/8ing", "Battle Garegga (Japan)" )
+GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version B)" )
+GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270_16BIT, "Raizing/8ing", "Armed Police Batrider (Japan, version A)" )

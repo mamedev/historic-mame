@@ -14,5 +14,6 @@ WRITE_HANDLER( K051649_waveform_w );
 WRITE_HANDLER( K051649_volume_w );
 WRITE_HANDLER( K051649_frequency_w );
 WRITE_HANDLER( K051649_keyonoff_w );
+WRITE_HANDLER( K052539_waveform_w );
 
 #endif

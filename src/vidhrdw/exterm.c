@@ -98,7 +98,7 @@ void exterm_vh_stop(void)
 
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	data16_t *bgsrc, *fgsrc, *pens = Machine->pens;
+	data16_t *bgsrc, *fgsrc;
 	int x, y;
 
 	/* if the display is blanked, fill with black */
@@ -116,90 +116,45 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fgsrc = (tms34010_get_DPYSTRT(1) & 0x800) ? &exterm_slave_videoram[40*128] : &exterm_slave_videoram[296*128];
 
 	/* 16-bit case */
-	if (bitmap->depth == 16)
+	for (y = 0; y < 256; y++)
 	{
-		for (y = 0; y < 256; y++)
-		{
-			UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 scanline[256];
 
-			if (y < 40 || y > 238)
+		/* on the top/bottom of the screen, it's all background */
+		if (y < 40 || y > 238)
+			for (x = 0; x < 256; x++)
 			{
-				for (x = 0; x < 256; x++)
-				{
-					UINT16 bgdata = *bgsrc++;;
-					*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
-				}
+				UINT16 bgdata = *bgsrc++;
+				scanline[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 			}
-			else
+
+		/* elsewhere, we have to blend foreground and background */
+		else
+			for (x = 0; x < 256; x += 2)
 			{
-				for (x = 0; x < 256 / 2; x++)
+				UINT16 fgdata = *fgsrc++;
+				UINT16 bgdata;
+
+				if (fgdata & 0x00ff)
+					scanline[x] = fgdata & 0x00ff;
+				else
 				{
-					UINT16 fgdata = *fgsrc++;
-					UINT16 bgdata;
-
-					if (fgdata & 0x00ff)
-						*dst++ = pens[fgdata & 0x00ff];
-					else
-					{
-						bgdata = bgsrc[0];
-						*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
-					}
-
-					if (fgdata & 0xff00)
-						*dst++ = pens[fgdata >> 8];
-					else
-					{
-						bgdata = bgsrc[1];
-						*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
-					}
-
-					bgsrc += 2;
+					bgdata = bgsrc[0];
+					scanline[x] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 				}
-			}
-		}
-	}
 
-	/* 8-bit case */
-	else
-	{
-		for (y = 0; y < 256; y++)
-		{
-			UINT8 *dst = bitmap->line[y];
-
-			if (y < 40 || y > 238)
-			{
-				for (x = 0; x < 256; x++)
+				if (fgdata & 0xff00)
+					scanline[x+1] = fgdata >> 8;
+				else
 				{
-					UINT16 bgdata = *bgsrc++;;
-					*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
+					bgdata = bgsrc[1];
+					scanline[x+1] = (bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000);
 				}
+
+				bgsrc += 2;
 			}
-			else
-			{
-				for (x = 0; x < 256 / 2; x++)
-				{
-					UINT16 fgdata = *fgsrc++;
-					UINT16 bgdata;
 
-					if (fgdata & 0x00ff)
-						*dst++ = pens[fgdata & 0x00ff];
-					else
-					{
-						bgdata = bgsrc[0];
-						*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
-					}
-
-					if (fgdata & 0xff00)
-						*dst++ = pens[fgdata >> 8];
-					else
-					{
-						bgdata = bgsrc[1];
-						*dst++ = pens[(bgdata & 0x8000) ? (bgdata & 0xfff) : (bgdata + 0x1000)];
-					}
-
-					bgsrc += 2;
-				}
-			}
-		}
+		/* draw the scanline */
+		draw_scanline16(bitmap, 0, y, 256, scanline, Machine->pens, -1);
 	}
 }

@@ -14,7 +14,7 @@
 #include "ui_text.h"
 
 #ifdef MESS
-  #include "mess/mess.h"
+  #include "mess.h"
 #endif
 
 
@@ -1762,7 +1762,7 @@ static int setcodesettings(struct osd_bitmap *bitmap,int selected)
 static int calibratejoysticks(struct osd_bitmap *bitmap,int selected)
 {
 	char *msg;
-	char buf[2048];
+	static char buf[2048];
 	int sel;
 	static int calibration_started = 0;
 
@@ -2610,11 +2610,19 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 	if (!buf)
 	{
 		/* allocate a buffer for the text */
+		#ifndef MESS
 		buf = malloc (8192);
+		#else
+		buf = malloc (200*1024);
+		#endif
 		if (buf)
 		{
 			/* try to load entry */
+			#ifndef MESS
 			if (load_driver_history (Machine->gamedrv, buf, 8192) == 0)
+			#else
+			if (load_driver_history (Machine->gamedrv, buf, 200*1024) == 0)
+			#endif
 			{
 				scroll = 0;
 				wordwrap_text_buffer (buf, maxcols);

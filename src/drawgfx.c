@@ -25,6 +25,7 @@ UINT8 gfx_drawmode_table[256];
 plot_pixel_proc plot_pixel;
 read_pixel_proc read_pixel;
 plot_box_proc plot_box;
+mark_dirty_proc mark_dirty;
 
 static UINT8 is_raw[TRANSPARENCY_MODES];
 
@@ -423,22 +424,26 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx16(
 
 #define DATA_TYPE UINT8
 #define DECLARE(function,args,body) INLINE void function##8 args body
+#define DECLAREG(function,args,body) void function##8 args body
 #define BLOCKMOVE(function,flipx,args) \
 	if (flipx) blockmove_##function##_flipx##8 args ; \
 	else blockmove_##function##8 args
 #include "drawgfx.c"
 #undef DATA_TYPE
 #undef DECLARE
+#undef DECLAREG
 #undef BLOCKMOVE
 
 #define DATA_TYPE UINT16
 #define DECLARE(function,args,body) INLINE void function##16 args body
+#define DECLAREG(function,args,body) void function##16 args body
 #define BLOCKMOVE(function,flipx,args) \
 	if (flipx) blockmove_##function##_flipx##16 args ; \
 	else blockmove_##function##16 args
 #include "drawgfx.c"
 #undef DATA_TYPE
 #undef DECLARE
+#undef DECLAREG
 #undef BLOCKMOVE
 
 
@@ -2179,7 +2184,6 @@ void mdrawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-
 void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen)
 {
 	plot_pixel(bitmap1, x, y, pen);
@@ -2279,6 +2283,16 @@ static void pb_16_d_fy_s(struct osd_bitmap *b,int x,int y,int w,int h,int p)  { 
 static void pb_16_d_fxy_s(struct osd_bitmap *b,int x,int y,int w,int h,int p)  { int t=b->height-1-x; y = b->width-1-y; osd_mark_dirty(y-h+1,t-w+1,y,t); while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[x])[y] = p; x--; } y--; } }
 
 
+static void md(int sx,int sy,int ex,int ey)  { osd_mark_dirty(sx,sy,ex,ey); }
+static void md_fx(int sx,int sy,int ex,int ey)  { osd_mark_dirty(Machine->scrbitmap->width-1-ex,sy,Machine->scrbitmap->width-1-sx,ey); }
+static void md_fy(int sx,int sy,int ex,int ey)  { osd_mark_dirty(sx,Machine->scrbitmap->height-1-ey,ex,Machine->scrbitmap->height-1-sy); }
+static void md_fxy(int sx,int sy,int ex,int ey)  { osd_mark_dirty(Machine->scrbitmap->width-1-ex,Machine->scrbitmap->height-1-ey,Machine->scrbitmap->width-1-sx,Machine->scrbitmap->height-1-sy); }
+static void md_s(int sx,int sy,int ex,int ey)  { osd_mark_dirty(sy,sx,ey,ex); }
+static void md_fx_s(int sx,int sy,int ex,int ey)  { osd_mark_dirty(Machine->scrbitmap->width-1-ey,sx,Machine->scrbitmap->width-1-sy,ex); }
+static void md_fy_s(int sx,int sy,int ex,int ey)  { osd_mark_dirty(sy,Machine->scrbitmap->height-1-ex,ey,Machine->scrbitmap->height-1-sx); }
+static void md_fxy_s(int sx,int sy,int ex,int ey)  { osd_mark_dirty(Machine->scrbitmap->width-1-ey,Machine->scrbitmap->height-1-ex,Machine->scrbitmap->width-1-sy,Machine->scrbitmap->height-1-sx); }
+
+
 static plot_pixel_proc pps_8_nd[] =
 		{ pp_8_nd, 	 pp_8_nd_fx,   pp_8_nd_fy, 	 pp_8_nd_fxy,
 		  pp_8_nd_s, pp_8_nd_fx_s, pp_8_nd_fy_s, pp_8_nd_fxy_s };
@@ -2322,8 +2336,15 @@ static plot_box_proc pbs_16_d[] =
 		  pb_16_d_s, pb_16_d_fx_s, pb_16_d_fy_s, pb_16_d_fxy_s };
 
 
+static mark_dirty_proc mds[] =
+		{ md,   md_fx,   md_fy,   md_fxy,
+		  md_s, md_fx_s, md_fy_s, md_fxy_s };
+
+
 void set_pixel_functions(void)
 {
+	mark_dirty = mds[Machine->orientation];
+
 	if (Machine->color_depth == 8)
 	{
 		read_pixel = rps_8[Machine->orientation];
@@ -4852,5 +4873,277 @@ DECLARE(copyrozbitmap_core,(struct osd_bitmap *bitmap,struct osd_bitmap *srcbitm
 		}
 	}
 })
+
+#define ADJUST_FOR_ORIENTATION(type, orientation, bitmap, x, y)				\
+	type *dst = &((type *)bitmap->line[y])[x];								\
+	int xadv = 1;															\
+	if (orientation)														\
+	{																		\
+		int dy = bitmap->line[1] - bitmap->line[0];							\
+		int tx = x, ty = y, temp;											\
+		if (orientation & ORIENTATION_SWAP_XY)								\
+		{																	\
+			temp = tx; tx = ty; ty = temp;									\
+			xadv = dy / sizeof(type);										\
+		}																	\
+		if (orientation & ORIENTATION_FLIP_X)								\
+		{																	\
+			tx = bitmap->width - 1 - tx;									\
+			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;			\
+		}																	\
+		if (orientation & ORIENTATION_FLIP_Y)								\
+		{																	\
+			ty = bitmap->height - 1 - ty;									\
+			if (orientation & ORIENTATION_SWAP_XY) xadv = -xadv;			\
+		}																	\
+		/* can't lookup line because it may be negative! */					\
+		dst = (type *)(bitmap->line[0] + dy * ty) + tx;						\
+	}
+
+DECLAREG(draw_scanline, (
+		struct osd_bitmap *bitmap,int x,int y,int length,
+		DATA_TYPE *src,UINT16 *pens,int transparent_pen),
+{
+	/* 8bpp destination */
+	if (bitmap->depth == 8)
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT8, Machine->orientation, bitmap, x, y);
+
+		/* with pen lookups */
+		if (pens)
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dst = pens[*src++];
+					dst += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+						*dst = pens[spixel];
+					dst += xadv;
+				}
+		}
+
+		/* without pen lookups */
+		else
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dst = *src++;
+					dst += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+						*dst = spixel;
+					dst += xadv;
+				}
+		}
+	}
+
+	/* 16bpp destination */
+	else
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation, bitmap, x, y);
+
+		/* with pen lookups */
+		if (pens)
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dst = pens[*src++];
+					dst += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+						*dst = pens[spixel];
+					dst += xadv;
+				}
+		}
+
+		/* without pen lookups */
+		else
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dst = *src++;
+					dst += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+						*dst = spixel;
+					dst += xadv;
+				}
+		}
+	}
+})
+
+#undef ADJUST_FOR_ORIENTATION
+
+#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
+	type *dsti = &((type *)bitmapi->line[y])[x];							\
+	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
+	int xadv = 1;															\
+	if (orientation)														\
+	{																		\
+		int dy = bitmap->line[1] - bitmap->line[0];							\
+		int tx = x, ty = y, temp;											\
+		if ((orientation) & ORIENTATION_SWAP_XY)							\
+		{																	\
+			temp = tx; tx = ty; ty = temp;									\
+			xadv = dy / sizeof(type);										\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_X)								\
+		{																	\
+			tx = bitmap->width - 1 - tx;									\
+			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
+		}																	\
+		if ((orientation) & ORIENTATION_FLIP_Y)								\
+		{																	\
+			ty = bitmap->height - 1 - ty;									\
+			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
+		}																	\
+		/* can't lookup line because it may be negative! */					\
+		dsti = (type *)(bitmapi->line[0] + dy * ty) + tx;					\
+		dstp = (UINT8 *)(bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
+	}
+
+DECLAREG(pdraw_scanline, (
+		struct osd_bitmap *bitmap,int x,int y,int length,
+		DATA_TYPE *src,UINT16 *pens,int transparent_pen,UINT32 orient,int pri),
+{
+	/* 8bpp destination */
+	if (bitmap->depth == 8)
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT8, orient^Machine->orientation, bitmap, priority_bitmap, x, y);
+
+		/* with pen lookups */
+		if (pens)
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dsti = pens[*src++];
+					*dstp = pri;
+					dsti += xadv;
+					dstp += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+					{
+						*dsti = pens[spixel];
+						*dstp = pri;
+					}
+					dsti += xadv;
+					dstp += xadv;
+				}
+		}
+
+		/* without pen lookups */
+		else
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dsti = *src++;
+					*dstp = pri;
+					dsti += xadv;
+					dstp += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+					{
+						*dsti = spixel;
+						*dstp = pri;
+					}
+					dsti += xadv;
+					dstp += xadv;
+				}
+		}
+	}
+
+	/* 16bpp destination */
+	else
+	{
+		/* adjust in case we're oddly oriented */
+		ADJUST_FOR_ORIENTATION(UINT16, Machine->orientation ^ orient, bitmap, priority_bitmap, x, y);
+		/* with pen lookups */
+		if (pens)
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dsti = pens[*src++];
+					*dstp = pri;
+					dsti += xadv;
+					dstp += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+					{
+						*dsti = pens[spixel];
+						*dstp = pri;
+					}
+					dsti += xadv;
+					dstp += xadv;
+				}
+		}
+
+		/* without pen lookups */
+		else
+		{
+			if (transparent_pen == -1)
+				while (length--)
+				{
+					*dsti = *src++;
+					*dstp = pri;
+					dsti += xadv;
+					dstp += xadv;
+				}
+			else
+				while (length--)
+				{
+					int spixel = *src++;
+					if (spixel != transparent_pen)
+					{
+						*dsti = spixel;
+						*dstp = pri;
+					}
+					dsti += xadv;
+					dstp += xadv;
+				}
+		}
+	}
+}
+)
+
+#undef ADJUST_FOR_ORIENTATION
 
 #endif /* DECLARE */

@@ -30,6 +30,10 @@
 extern "C" {
 #endif
 
+#ifdef RUNTIME_LOADER
+	extern void m6509_runtime_loader_init(void);
+#endif
+
 enum {
 	M6509_PC=1, M6509_S, M6509_P, M6509_A, M6509_X, M6509_Y,
 	M6509_EA, M6509_ZP, M6509_NMI_STATE, M6509_IRQ_STATE, M6509_SO_STATE,

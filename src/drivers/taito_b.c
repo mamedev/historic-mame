@@ -3291,6 +3291,30 @@ ROM_START( silentd )
 	ROM_LOAD( "sd_m01.rom", 0x00000, 0x80000, 0xb41fff1a )
 ROM_END
 
+ROM_START( silentdj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
+	ROM_LOAD16_BYTE( "sr_12-1.rom", 0x00000, 0x20000, 0x5883d362 )
+	ROM_LOAD16_BYTE( "10-1.10",     0x00001, 0x20000, 0x584306fc )
+	ROM_LOAD16_BYTE( "sr_11.rom",   0x40000, 0x20000, 0x35da4428 )
+	ROM_LOAD16_BYTE( "sr_09.rom",   0x40001, 0x20000, 0x2f05b14a )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD(  "sr_13.rom", 0x00000, 0x04000, 0x651861ab )
+	ROM_CONTINUE(           0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sd_m04.rom", 0x000000, 0x100000, 0x53237217 )
+	ROM_LOAD( "sd_m06.rom", 0x100000, 0x100000, 0xe6e6dfa7 )
+	ROM_LOAD( "sd_m03.rom", 0x200000, 0x100000, 0x1b9b2846 )
+	ROM_LOAD( "sd_m05.rom", 0x300000, 0x100000, 0xe02472c5 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "sd_m02.rom", 0x00000, 0x80000, 0xe0de5c39 )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
+	ROM_LOAD( "sd_m01.rom", 0x00000, 0x80000, 0xb41fff1a )
+ROM_END
+
 ROM_START( selfeena )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "se-02.27", 0x00000, 0x20000, 0x08f0c8e3 )
@@ -3352,4 +3376,5 @@ GAMEX( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,        "Taito Corpo
 GAMEX( 1994, puzbobb,  pbobble, puzbobb,  puzbobb,  0, ROT0,        "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_NO_COCKTAIL )
 GAMEX( 1994, spacedx,  0,       spacedx,  puzbobb,  0, ROT0,        "Taito Corporation", "Space Invaders DX (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1992, silentd,  0,       silentd,  silentd,  0, ROT0_16BIT,  "Taito Corporation Japan", "Silent Dragon (World)", GAME_NO_COCKTAIL )
+GAMEX( 1992, silentdj, silentd, silentd,  silentd,  0, ROT0_16BIT,  "Taito Corporation", "Silent Dragon (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,        "East Technology", "Sel Feena", GAME_NO_COCKTAIL )

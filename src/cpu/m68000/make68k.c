@@ -215,23 +215,8 @@ int      DisOp;
 #define REG_SFC             "R_SFC"
 #define REG_DFC             "R_DFC"
 
-#define FASTCALL_CPU_READMEM24BEW         "@cpu_readmem24bew@4"
-#define FASTCALL_CPU_READMEM24BEW_WORD    "@cpu_readmem24bew_word@4"
-#define FASTCALL_CPU_READMEM24BEW_DWORD   "@m68_readmem24bew_dword@4"
-#define FASTCALL_CPU_WRITEMEM24BEW        "@cpu_writemem24bew@8"
-#define FASTCALL_CPU_WRITEMEM24BEW_WORD   "@cpu_writemem24bew_word@8"
-#define FASTCALL_CPU_WRITEMEM24BEW_DWORD  "@m68_writemem24bew_dword@8"
-#define FASTCALL_CPU_SETOPBASE24BEW       "@cpu_setopbase24bew@4"
 #define FASTCALL_FIRST_REG                "ecx"
 #define FASTCALL_SECOND_REG               "edx"
-
-#define CPU_READMEM24BEW                  "_cpu_readmem24bew"
-#define CPU_READMEM24BEW_WORD             "_cpu_readmem24bew_word"
-#define CPU_READMEM24BEW_DWORD            "_m68_readmem24bew_dword"
-#define CPU_WRITEMEM24BEW                 "_cpu_writemem24bew"
-#define CPU_WRITEMEM24BEW_WORD            "_cpu_writemem24bew_word"
-#define CPU_WRITEMEM24BEW_DWORD           "_m68_writemem24bew_dword"
-#define CPU_SETOPBASE24BEW                "_cpu_setopbase24bew"
 
 
 
@@ -292,23 +277,6 @@ static char* regnamesword[] =
 static char* regnamesshort[] =
 { "AL","BL","CL","DL"};
 
-#ifdef FASTCALL
-char *name_cpu_readmem24bew = FASTCALL_CPU_READMEM24BEW;
-char *name_cpu_readmem24bew_word = FASTCALL_CPU_READMEM24BEW_WORD;
-char *name_cpu_readmem24bew_dword = FASTCALL_CPU_READMEM24BEW_DWORD;
-char *name_cpu_writemem24bew = FASTCALL_CPU_WRITEMEM24BEW;
-char *name_cpu_writemem24bew_word = FASTCALL_CPU_WRITEMEM24BEW_WORD;
-char *name_cpu_writemem24bew_dword = FASTCALL_CPU_WRITEMEM24BEW_DWORD;
-char *name_cpu_setOPbase24bew = FASTCALL_CPU_SETOPBASE24BEW;
-#else
-char *name_cpu_readmem24bew = CPU_READMEM24BEW;
-char *name_cpu_readmem24bew_word = CPU_READMEM24BEW_WORD;
-char *name_cpu_readmem24bew_dword = CPU_READMEM24BEW_DWORD;
-char *name_cpu_writemem24bew = CPU_WRITEMEM24BEW;
-char *name_cpu_writemem24bew_word = CPU_WRITEMEM24BEW_WORD;
-char *name_cpu_writemem24bew_dword = CPU_WRITEMEM24BEW_DWORD;
-char *name_cpu_setOPbase24bew = CPU_SETOPBASE24BEW;
-#endif
 
 
 
@@ -482,6 +450,16 @@ void MemoryBanking(int BaseCode)
 
    fprintf(fp, "OP_%5.5x:\n",BaseCode);
 
+/* ASG - always call to the changepc subroutine now, since the number of */
+/* bits varies based on the memory model */
+#ifdef KEEPHIGHPC
+   fprintf(fp, "\t\t mov   [FullPC],ESI\n");
+#endif
+
+   /* Mask to n bits */
+   fprintf(fp, "\t\t and   esi,[_memory_amask]\n");
+
+#if 0
 #ifdef KEEPHIGHPC
    fprintf(fp, "\t\t mov   [FullPC],ESI\n");
 #endif
@@ -508,6 +486,7 @@ void MemoryBanking(int BaseCode)
    fprintf(fp, "\t\t cmp   al,[ecx+ebx]\n");
    fprintf(fp, "\t\t je    OP_%5.5x_Bank\n",BaseCode);
 #endif
+#endif
 
    /* Call Banking Routine */
 
@@ -527,7 +506,7 @@ void MemoryBanking(int BaseCode)
    fprintf(fp, "\t\t push  esi\n");
 #endif
 
-   fprintf(fp, "\t\t call  %s\n",name_cpu_setOPbase24bew);
+   fprintf(fp, "\t\t call  [_m68k_memory_intf+28]\n");
 
 #ifndef FASTCALL
    fprintf(fp, "\t\t add   esp,byte 4\n");
@@ -613,6 +592,7 @@ void Completed(void)
 
 #endif
 
+   fprintf(fp, "\t\t mov   eax,[_m68k_memory_intf+0]\n");	/* ASG */
    if (CheckInterrupt)
    {
       fprintf(fp,"; Check for Interrupt waiting\n\n");
@@ -620,11 +600,12 @@ void Completed(void)
       fprintf(fp,"\t\t jne   near interrupt\n\n");
    }
 
+   fprintf(fp, "\t\t xor   eax,esi\n");	/* ASG */
 #ifdef STALLCHECK
    fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-   fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+   fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
-   fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+   fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
 #endif
 
    fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n\n");
@@ -915,8 +896,9 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 
    /* Check for special mask condition */
 
-   if (Mask == 2)
-      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	/* ASG - no longer need to mask addresses here */
+/*   if (Mask == 2)
+      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);*/
 
    /* Check to see if registers need saving */
 
@@ -946,8 +928,9 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 
    fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 
-   if (Mask == 1)
-      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);
+	/* ASG - no longer need to mask addresses here */
+/*   if (Mask == 1)
+      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);*/
 
 #else
 
@@ -958,12 +941,14 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
          /* Don't trash a wanted safe register */
 
          fprintf(fp, "\t\t mov   EAX,%s\n",regnameslong[AReg]);
-         fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");
+	/* ASG - no longer need to mask addresses here */
+/*         fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");*/
          fprintf(fp, "\t\t push  EAX\n");
       }
       else
       {
-         fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	/* ASG - no longer need to mask addresses here */
+/*         fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);*/
          fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
       }
    }
@@ -976,18 +961,19 @@ void Memory_Read(char Size,int AReg,char *Flags,int Mask)
 
    /* Call Mame memory routine */
 
+	/* ASG - changed these to call through the function pointers */
    switch (Size)
    {
       case 66 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+4]\n");
          break;
 
       case 87 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew_word);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+8]\n");
          break;
 
       case 76 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_readmem24bew_dword);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+12]\n");
          break;
    }
 
@@ -1044,8 +1030,9 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 
    /* Check for special mask condition */
 
-   if (Mask == 2)
-      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	/* ASG - no longer need to mask addresses here */
+/*   if (Mask == 2)
+      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);*/
 
    /* Check to see if registers need saving */
 
@@ -1079,8 +1066,9 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
    fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_SECOND_REG,regnameslong[DReg]);
    fprintf(fp, "\t\t mov   %s,%s\n",FASTCALL_FIRST_REG,regnameslong[AReg]);
 
-   if (Mask == 1)
-      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);
+	/* ASG - no longer need to mask addresses here */
+/*   if (Mask == 1)
+      fprintf(fp, "\t\t and   %s,0FFFFFFh\n",FASTCALL_FIRST_REG);*/
 
 #else
 
@@ -1093,12 +1081,14 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
          /* Don't trash a wanted safe register */
 
          fprintf(fp, "\t\t mov   EAX,%s\n",regnameslong[AReg]);
-         fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");
+	/* ASG - no longer need to mask addresses here */
+/*         fprintf(fp, "\t\t and   EAX,0FFFFFFh\n");*/
          fprintf(fp, "\t\t push  EAX\n");
       }
       else
       {
-         fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);
+	/* ASG - no longer need to mask addresses here */
+/*         fprintf(fp, "\t\t and   %s,0FFFFFFh\n",regnameslong[AReg]);*/
          fprintf(fp, "\t\t push  %s\n",regnameslong[AReg]);
       }
    }
@@ -1111,18 +1101,19 @@ void Memory_Write(char Size,int AReg,int DReg,char *Flags,int Mask)
 
    /* Call Mame Routine */
 
+	/* ASG - changed these to call through the function pointers */
    switch (Size)
    {
       case 66 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+16]\n");
          break;
 
       case 87 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew_word);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+20]\n");
          break;
 
       case 76 :
-         fprintf(fp, "\t\t call  %s\n",name_cpu_writemem24bew_dword);
+         fprintf(fp, "\t\t call  [_m68k_memory_intf+24]\n");
          break;
    }
 
@@ -1188,31 +1179,73 @@ void Memory_Fetch(char Size,int Dreg,int Extend)
 
 #ifdef ENCRYPTED
 
-
-
    /* This version allows for OP_ROM <> OP_RAM */
 
    fprintf(fp, "\t\t mov   %s,dword [_OP_RAM]\n",regnameslong[Dreg]);
 
    if ((Extend == TRUE) & (Size == 'W'))
+   {
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
       fprintf(fp, "\t\t movsx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+   }
+   else if (Size == 'W')
+   {
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t movzx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+   }
    else
-      fprintf(fp, "\t\t mov   %s,dword [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+   {
+      /* ASG - fix me - this is going to be slow! */
+      int tempreg = (Dreg == EAX) ? EBX : EAX;
+      fprintf(fp, "\t\t push  %s\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t mov   %s,[esi+%s-2]\n",regnameslong[tempreg],regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t and   %s,0FFFF0000h\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t add   esi,byte 2\n");					/* ASG */
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t movzx %s,word [esi+%s]\n",regnameslong[Dreg],regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
+      fprintf(fp, "\t\t or    %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
+      fprintf(fp, "\t\t pop   %s\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t sub   esi,byte 2\n");					/* ASG */
+   }
+
 #else
-
-
 
    /* This version OP_ROM must be = OP_RAM */
 
    if ((Extend == TRUE) & (Size == 'W'))
-      fprintf(fp, "\t\t movsx %s,word [esi+ebp]\n",regnameslong[Dreg]);
+   {
+      fprintf(fp, "\t\t mov   %s,esi\n",regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   %s,[_m68k_memory_intf+0]\n",regnameslong[Dreg]);
+      fprintf(fp, "\t\t movsx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
+   }
+   else if (Size == 'W')
+   {
+      fprintf(fp, "\t\t mov   %s,esi\n",regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   %s,[_m68k_memory_intf+0]\n",regnameslong[Dreg]);
+      fprintf(fp, "\t\t movzx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
+   }
    else
-      fprintf(fp, "\t\t mov   %s,dword [esi+ebp]\n",regnameslong[Dreg]);
+   {
+      /* ASG - fix me - this is going to be slow! */
+      int tempreg = (Dreg == EAX) ? EBX : EAX;
+      fprintf(fp, "\t\t push  %s\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t mov   %s,[_m68k_memory_intf+0]\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t lea   %s,[esi+2]\n",regnameslong[Dreg]);
+      fprintf(fp, "\t\t xor   %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
+      fprintf(fp, "\t\t xor   %s,esi\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t mov   %s,[%s+ebp-2]\n",regnameslong[tempreg],regnameslong[tempreg]);
+      fprintf(fp, "\t\t movzx %s,word [%s+ebp]\n",regnameslong[Dreg],regnameslong[Dreg]);
+      fprintf(fp, "\t\t and   %s,0FFFF0000h\n",regnameslong[tempreg]);
+      fprintf(fp, "\t\t or    %s,%s\n",regnameslong[Dreg],regnameslong[tempreg]);
+      fprintf(fp, "\t\t pop   %s\n",regnameslong[tempreg]);
+   }
 
 #endif
-
-   if (Size == 'L')
-      fprintf(fp, "\t\t rol   %s,16\n",regnameslong[Dreg]);
 }
 
 
@@ -3106,7 +3139,8 @@ void opcode5(void)
                   if (Dest > 1)
                   {
                      EffectiveAddressCalculate(Dest,'B',ECX,TRUE);
-                     fprintf(fp,"\t\t and   edi,0FFFFFFh\n");
+	/* ASG - no longer need to mask addresses here */
+/*                     fprintf(fp,"\t\t and   edi,0FFFFFFh\n");*/
                   }
 
                   ConditionCheck((Opcode >> 8) & 0x0F,"AL");
@@ -5370,12 +5404,14 @@ void reset(void)
 
       /* Prefetch next instruction */
 
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
       fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
       fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
 #else
       fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
 #endif
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
 
       fprintf(fp, "\t\t mov   eax,dword [%s]\n", REG_RESET_CALLBACK);
       fprintf(fp, "\t\t or    eax,eax\n");
@@ -6352,6 +6388,7 @@ void lsl_lsr(void)
    char Size=' ';
    char * Regname="" ;
    char * RegnameECX="" ;
+   char * RegnameEDX="" ;
    char * Label ;
 
    for (dreg = 0 ; dreg < 8 ; dreg++)
@@ -6369,16 +6406,19 @@ void lsl_lsr(void)
                         Size = 'B';
                         Regname = regnamesshort[0];
                         RegnameECX = regnamesshort[ECX];
+                        RegnameEDX = regnamesshort[EDX];
                         break;
                      case 1:
                         Size = 'W';
                         Regname = regnamesword[0];
                         RegnameECX = regnamesword[ECX];
+                        RegnameEDX = regnamesword[EDX];
                         break;
                      case 2:
                         Size = 'L';
                         Regname = regnameslong[0];
                         RegnameECX = regnameslong[ECX];
+                        RegnameEDX = regnameslong[EDX];
                         break;
                   }
 
@@ -6416,6 +6456,14 @@ void lsl_lsr(void)
 
                      EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
+                     /* ASG: on the 68k, the shift count is mod 64; on the x86, the */
+                     /* shift count is mod 32; we need to check for shifts of 32-63 */
+                     /* and produce zero */
+                     Label = GenerateLabel(0,1);
+                     fprintf(fp, "\t\t test  cl,0x20\n");
+                     fprintf(fp, "\t\t jnz   %s_BigShift\n",Label);
+
+                     fprintf(fp, "%s_Continue:\n",Label);
                      if (dr == 0)
                         fprintf(fp, "\t\t shr   %s,cl\n",Regname);
                      else
@@ -6424,14 +6472,12 @@ void lsl_lsr(void)
                      SetFlags(Size,EAX,FALSE,FALSE,FALSE);
 
                      /* Clear Overflow flag */
-
                      fprintf(fp, "\t\t xor   dh,dh\n");
 
                      EffectiveAddressWrite(0,Size,EBX,EAX,"--CDS-B",TRUE);
 
                      /* if shift count is zero clear carry */
 
-                     Label = GenerateLabel(0,1);
                      fprintf(fp, "\t\t jecxz %s\n",Label);
 
                      fprintf(fp, "\t\t mov   [%s],edx\n",REG_X);
@@ -6441,6 +6487,19 @@ void lsl_lsr(void)
                      fprintf(fp, "%s:\n",Label);
                      fprintf(fp, "\t\t and   dl,254\t\t;clear C flag\n");
                      Completed();
+
+                     fprintf(fp, "%s_BigShift:\n",Label);
+                     if (dr == 0)
+                     {
+                        fprintf(fp, "\t\t shr   %s,16\n",Regname);
+                        fprintf(fp, "\t\t shr   %s,16\n",Regname);
+                     }
+                     else
+                     {
+                        fprintf(fp, "\t\t shl   %s,16\n",Regname);
+                        fprintf(fp, "\t\t shl   %s,16\n",Regname);
+                     }
+                     fprintf(fp, "\t\t jmp   %s_Continue\n",Label);
                   }
 
                   OpcodeArray[Opcode] = BaseCode ;
@@ -6775,6 +6834,14 @@ void asl_asr(void)
                      {
                         /* ASR */
 
+                        /* ASG: on the 68k, the shift count is mod 64; on the x86, the */
+                        /* shift count is mod 32; we need to check for shifts of 32-63 */
+                        /* and effectively shift 31 */
+                        fprintf(fp, "\t\t shrd  edx,ecx,6\n");
+                        fprintf(fp, "\t\t sar   edx,31\n");
+                        fprintf(fp, "\t\t and   edx,31\n");
+                        fprintf(fp, "\t\t or    ecx,edx\n");
+
                         fprintf(fp, "\t\t sar   %s,cl\n",Regname);
 
                         /* Mode 0 write does not affect Flags */
@@ -6822,13 +6889,14 @@ void asl_asr(void)
 
                         if ((ir==1) && (leng==2))
                         {
-                           fprintf(fp,"\t\t test  cl,0e0h\n");
+                           fprintf(fp,"\t\t test  cl,0x20\n");
                            fprintf(fp,"\t\t jnz   short %s_32\n\n",Label);
                         }
 
                         fprintf(fp,"\t\t mov   eax,edi\t\t; Restore It\n");
 
                         fprintf(fp, "\t\t sal   %s,cl\n",Regname);
+
                         EffectiveAddressWrite(0,Size,EBX,EAX,"---DS-B",TRUE);
                         fprintf(fp, "\t\t lahf\n");
                         fprintf(fp, "\t\t mov   dl,ah\n");
@@ -7190,14 +7258,17 @@ void MoveControlRegister(void)
       fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
       fprintf(fp, "\t\t jz    short OP_%4.4x_Trap\n",BaseCode+Direction);
 
+      fprintf(fp, "\t\t add   esi,byte 2\n");
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
 #ifdef STALLCHECK
       fprintf(fp, "\t\t xor   ebx,ebx\t\t; Avoid Stall\n");
-      fprintf(fp, "\t\t mov   bx,[esi+ebp+2]\n");
+      fprintf(fp, "\t\t mov   bx,[esi+ebp]\n");
 #else
-      fprintf(fp, "\t\t movzx ebx,word [esi+ebp+2]\n");
+      fprintf(fp, "\t\t movzx ebx,word [esi+ebp]\n");
 #endif
+      fprintf(fp, "\t\t xor   esi,[_m68k_memory_intf+0]\n");	/* ASG */
 
-      fprintf(fp, "\t\t add   esi,byte 4\n");
+      fprintf(fp, "\t\t add   esi,byte 2\n");
       fprintf(fp, "\t\t mov   eax,ebx\n");
       fprintf(fp, "\t\t mov   ecx,ebx\n");
 
@@ -7323,14 +7394,9 @@ void CodeSegmentBegin(void)
    fprintf(fp, "\t\t GLOBAL _regs\n");
 #endif
 
-   fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24bew);
-   fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24bew_word);
-   fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_readmem24bew_dword);
-
-   fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew);
-   fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew_word);
-   fprintf(fp, "\t\t EXTERN %s\n",name_cpu_writemem24bew_dword);
-   fprintf(fp, "\t\t EXTERN %s\n\n",name_cpu_setOPbase24bew);
+	/* ASG - only one interface to memory now */
+   fprintf(fp, "\t\t EXTERN _m68k_memory_intf\n");
+   fprintf(fp, "\t\t EXTERN _memory_amask\n");
 
    fprintf(fp, "; Vars Mame declares / needs access to\n\n");
 
@@ -7375,7 +7441,7 @@ void CodeSegmentBegin(void)
    fprintf(fp, "RESET0:\n");
    fprintf(fp, "\t\t mov   eax,[esi]\n");
    fprintf(fp, "\t\t mov   ecx,eax\n");
-   fprintf(fp, "\t\t and   eax,0ffffffh\n");
+   fprintf(fp, "\t\t and   eax,[_memory_amask]\n");	/* ASG - now mask against global */
    fprintf(fp, "\t\t add   eax,ebp\n");
    fprintf(fp, "\t\t add   esi,byte 4\n");
 
@@ -7428,14 +7494,16 @@ void CodeSegmentBegin(void)
 
    /* See if was only called to check for Interrupt */
 
-   fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
+   fprintf(fp, "\t\t test  dword [%s],-1\n",ICOUNT);
+   fprintf(fp, "\t\t mov   eax,[_m68k_memory_intf+0]\n");		/* ASG */
    fprintf(fp, "\t\t js    short MainExit\n\n");
 
+   fprintf(fp, "\t\t xor   eax,esi\n");							/* ASG */
 #ifdef STALLCHECK
    fprintf(fp, "\t\t xor   ecx,ecx\t\t; Avoid Stall\n");
-   fprintf(fp, "\t\t mov   cx,[esi+ebp]\n");
+   fprintf(fp, "\t\t mov   cx,[eax+ebp]\n");
 #else
-   fprintf(fp, "\t\t movzx ecx,word [esi+ebp]\n");
+   fprintf(fp, "\t\t movzx ecx,word [eax+ebp]\n");
 #endif
 
    fprintf(fp, "\t\t jmp   [OPCODETABLE+ecx*4]\n");

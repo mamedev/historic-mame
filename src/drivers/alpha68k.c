@@ -60,27 +60,23 @@ void alpha68k_I_vh_convert_color_prom(unsigned char *palette, unsigned short *co
 void kouyakyu_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-WRITE_HANDLER( alpha68k_II_video_bank_w );
+WRITE16_HANDLER( alpha68k_II_video_bank_w );
 void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-WRITE_HANDLER( alpha68k_V_video_bank_w );
-WRITE_HANDLER( alpha68k_V_video_control_w );
-WRITE_HANDLER( alpha68k_paletteram_w );
-WRITE_HANDLER( alpha68k_flipscreen_w );
-WRITE_HANDLER( alpha68k_videoram_w );
-WRITE_HANDLER( kouyakyu_video_w );
+void alpha68k_V_video_bank_w(int bank);
+void alpha68k_flipscreen_w(int flip);
+WRITE16_HANDLER( alpha68k_V_video_control_w );
+WRITE16_HANDLER( alpha68k_paletteram_w );
+WRITE16_HANDLER( alpha68k_videoram_w );
+WRITE16_HANDLER( kouyakyu_video_w );
 
-static unsigned char *shared_ram,*sound_ram;
+static data16_t *shared_ram;
+static unsigned char *sound_ram;
 static int invert_controls,microcontroller_id,coin_id;
 
 /******************************************************************************/
 
-static READ_HANDLER( alpha68k_II_video_r )
-{
-	return READ_WORD(&videoram[offset]);
-}
-
-static READ_HANDLER( control_1_r )
+static READ16_HANDLER( control_1_r )
 {
 	if (invert_controls)
 		return ~(readinputport(0) + (readinputport(1) << 8));
@@ -88,7 +84,7 @@ static READ_HANDLER( control_1_r )
 	return (readinputport(0) + (readinputport(1) << 8));
 }
 
-static READ_HANDLER( control_2_r )
+static READ16_HANDLER( control_2_r )
 {
 	if (invert_controls)
 		return ~(readinputport(3) + ((~(1 << (readinputport(5) * 12 / 256))) << 8));
@@ -97,17 +93,17 @@ static READ_HANDLER( control_2_r )
     	((~(1 << (readinputport(5) * 12 / 256))) << 8);
 }
 
-static READ_HANDLER( control_2_V_r )
+static READ16_HANDLER( control_2_V_r )
 {
 	return readinputport(3);
 }
 
-static READ_HANDLER( kyros_dip_r )
+static READ16_HANDLER( kyros_dip_r )
 {
 	return readinputport(1)<<8;
 }
 
-static READ_HANDLER( control_3_r )
+static READ16_HANDLER( control_3_r )
 {
 	if (invert_controls)
 		return ~((( ~(1 << (readinputport(6) * 12 / 256)) )<<8)&0xff00);
@@ -116,7 +112,7 @@ static READ_HANDLER( control_3_r )
 }
 
 /* High 4 bits of CN1 & CN2 */
-static READ_HANDLER( control_4_r )
+static READ16_HANDLER( control_4_r )
 {
 	if (invert_controls)
 		return ~(((( ~(1 << (readinputport(6) * 12 / 256))  ) <<4)&0xf000)
@@ -128,63 +124,64 @@ static READ_HANDLER( control_4_r )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( kyros_sound_w )
+static WRITE16_HANDLER( kyros_sound_w )
 {
-	soundlatch_w(0,(data>>8)&0xff);
+	if(ACCESSING_MSB)
+		soundlatch_w(0, (data>>8)&0xff);
 }
 
-static WRITE_HANDLER( alpha68k_II_sound_w )
+static WRITE16_HANDLER( alpha68k_II_sound_w )
 {
-	soundlatch_w(0,data&0xff);
+	if(ACCESSING_LSB)
+		soundlatch_w(0, data&0xff);
 }
 
-static WRITE_HANDLER( alpha68k_V_sound_w )
+static WRITE16_HANDLER( alpha68k_V_sound_w )
 {
 	/* Sound & fix bank select are in the same word */
-	if ((data>>16)!=0xff) {
+	if(ACCESSING_LSB)
 		soundlatch_w(0,data&0xff);
-	} else {
-		alpha68k_V_video_bank_w(0,(data>>8)&0xff);
-	}
+	if(ACCESSING_MSB)
+		alpha68k_V_video_bank_w((data>>8)&0xff);
 }
 
 /******************************************************************************/
 
 /* Time Soldiers, Sky Soldiers, Gold Medalist */
-static READ_HANDLER( alpha_II_trigger_r )
+static READ16_HANDLER( alpha_II_trigger_r )
 {
 	static int latch;
-	int source=READ_WORD(&shared_ram[offset]);
+	int source=shared_ram[offset];
 
 	switch (offset) {
 		case 0:	/* Dipswitch 2 */
-			WRITE_WORD(&shared_ram[0], (source&0xff00)| readinputport(4));
+			shared_ram[0] = (source&0xff00)| readinputport(4);
 			return 0;
 
-		case 0x44: /* Coin value */
-			WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x1);
+		case 0x22: /* Coin value */
+			shared_ram[0x22] = (source&0xff00)|0x1;
 			return 0;
 
-		case 0x52: /* Query microcontroller for coin insert */
+		case 0x29: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x22);
-				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
+				shared_ram[0x29] = (source&0xff00)|0x22;
+				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 			} else if ((readinputport(2)&0x2)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x22);
-				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
+				shared_ram[0x29] = (source&0xff00)|0x22;
+				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x00);
+				shared_ram[0x29] = (source&0xff00)|0x00;
 			return 0;
 
-		case 0x1fc:	/* Custom ID check, same for all games */
-			WRITE_WORD(&shared_ram[0x1fc], (source&0xff00)|0x87);
+		case 0xfe:	/* Custom ID check, same for all games */
+			shared_ram[0xfe] = (source&0xff00)|0x87;
 			break;
-		case 0x1fe:	/* Custom ID check, same for all games */
-			WRITE_WORD(&shared_ram[0x1fe], (source&0xff00)|0x13);
+		case 0xff:	/* Custom ID check, same for all games */
+			shared_ram[0xff] = (source&0xff00)|0x13;
 			break;
 	}
 
@@ -194,70 +191,70 @@ static READ_HANDLER( alpha_II_trigger_r )
 }
 
 /* Sky Adventure & Gang Wars */
-static READ_HANDLER( alpha_V_trigger_r )
+static READ16_HANDLER( alpha_V_trigger_r )
 {
 	static int latch;
-	int source=READ_WORD(&shared_ram[offset]);
+	int source=shared_ram[offset];
 
 	switch (offset) {
 		case 0:	/* Dipswitch 1 */
-			WRITE_WORD(&shared_ram[0], (source&0xff00)| readinputport(4));
+			shared_ram[0] = (source&0xff00)| readinputport(4);
 			return 0;
-		case 0x44: /* Coin value */
-			WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x1);
+		case 0x22: /* Coin value */
+			shared_ram[0x22] = (source&0xff00)|0x1;
 			return 0;
-		case 0x52: /* Query microcontroller for coin insert */
+		case 0x29: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id&0xff));
-				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
+				shared_ram[0x29] = (source&0xff00)|(coin_id&0xff);
+				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else if ((readinputport(2)&0x2)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|(coin_id>>8));
-				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
+				shared_ram[0x29] = (source&0xff00)|(coin_id>>8);
+				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x00);
+				shared_ram[0x29] = (source&0xff00)|0x00;
 			return 0;
-		case 0x1fc:	/* Custom ID check */
-			WRITE_WORD(&shared_ram[0x1fc], (source&0xff00)|(microcontroller_id>>8));
+		case 0xfe:	/* Custom ID check */
+			shared_ram[0xfe] = (source&0xff00)|(microcontroller_id>>8);
 			break;
-		case 0x1fe:	/* Custom ID check */
-			WRITE_WORD(&shared_ram[0x1fe], (source&0xff00)|(microcontroller_id&0xff));
+		case 0xff:	/* Custom ID check */
+			shared_ram[0xff] = (source&0xff00)|(microcontroller_id&0xff);
 			break;
 
-		case 0x3e00: /* Dipswitch 1 */
-			WRITE_WORD(&shared_ram[0x3e00], (source&0xff00)| readinputport(4));
+		case 0x1f00: /* Dipswitch 1 */
+			shared_ram[0x1f00] = (source&0xff00)| readinputport(4);
 			return 0;
-		case 0x3e52: /* Gang Wars - Query microcontroller for coin insert */
+		case 0x1f29: /* Gang Wars - Query microcontroller for coin insert */
 			if ((readinputport(2)&0x3)==3) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x3e52], (source&0xff00)|0x23);
-				WRITE_WORD(&shared_ram[0x3e44], (source&0xff00)|0x0);
+				shared_ram[0x1f29] = (source&0xff00)|0x23;
+				shared_ram[0x1f22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else if ((readinputport(2)&0x2)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x3e52], (source&0xff00)|0x24);
-				WRITE_WORD(&shared_ram[0x3e44], (source&0xff00)|0x0);
+				shared_ram[0x1f29] = (source&0xff00)|0x24;
+				shared_ram[0x1f22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else
-				WRITE_WORD(&shared_ram[0x3e52], (source&0xff00)|0x00);
+				shared_ram[0x1f29] = (source&0xff00)|0x00;
 
 			/* The game expects the first dip to appear in RAM at 0x2c6, presumably
 				the microcontroller supplies it (it does for all the other games, but
 				usually to 0x0 in RAM) */
-			source=READ_WORD(&shared_ram[0x2c6]);
-			WRITE_WORD(&shared_ram[0x2c6], (source&0x00ff)| (readinputport(4)<<8));
+			source=shared_ram[0x163];
+			shared_ram[0x163] = (source&0x00ff)| (readinputport(4)<<8);
 			return 0;
 
-		case 0x3ffc: /* Custom ID check, Gang Wars */
-			WRITE_WORD(&shared_ram[0x3ffc], (source&0xff00)|(microcontroller_id>>8));
+		case 0x1ffe: /* Custom ID check, Gang Wars */
+			shared_ram[0x1ffe] = (source&0xff00)|(microcontroller_id>>8);
 			break;
-		case 0x3ffe: /* Custom ID check, Gang Wars */
-			WRITE_WORD(&shared_ram[0x3ffe], (source&0xff00)|(microcontroller_id&0xff));
+		case 0x1fff: /* Custom ID check, Gang Wars */
+			shared_ram[0x1fff] = (source&0xff00)|(microcontroller_id&0xff);
 			break;
 	}
 
@@ -266,35 +263,36 @@ static READ_HANDLER( alpha_V_trigger_r )
 	return 0; /* Values returned don't matter */
 }
 
-static WRITE_HANDLER( alpha_microcontroller_w )
+static WRITE16_HANDLER( alpha_microcontroller_w )
 {
 	logerror("%04x:  Alpha write trigger at %04x (%04x)\n",cpu_get_pc(),offset,data);
 	/* 0x44 = coin clear signal to microcontroller? */
-	if (offset==0x5a) alpha68k_flipscreen_w(0,data);
+	if (offset==0x2d && ACCESSING_LSB)
+		alpha68k_flipscreen_w(data & 1);
 }
 
-static READ_HANDLER( kyros_alpha_trigger_r )
+static READ16_HANDLER( kyros_alpha_trigger_r )
 {
 	static int latch;
-	int source=READ_WORD(&shared_ram[offset]);
+	int source=shared_ram[offset];
 
 	switch (offset) {
-		case 0x44: /* Coin value */
-			WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x1);
+		case 0x22: /* Coin value */
+			shared_ram[0x22] = (source&0xff00)|0x1;
 			return 0;
-		case 0x52: /* Query microcontroller for coin insert */
+		case 0x29: /* Query microcontroller for coin insert */
 			if ((readinputport(2)&0x1)==1) latch=0;
 			if ((readinputport(2)&0x1)==0 && !latch) {
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x22);
-				WRITE_WORD(&shared_ram[0x44], (source&0xff00)|0x0);
+				shared_ram[0x29] = (source&0xff00)|0x22;
+				shared_ram[0x22] = (source&0xff00)|0x0;
 				latch=1;
 			}
 			else
-				WRITE_WORD(&shared_ram[0x52], (source&0xff00)|0x00);
+				shared_ram[0x29] = (source&0xff00)|0x00;
 			return 0;
 
-		case 0x1fe:	/* Custom check, only used at bootup */
-			WRITE_WORD(&shared_ram[0x1fe], (source&0xff00)|microcontroller_id);
+		case 0xff:	/* Custom check, only used at bootup */
+			shared_ram[0xff] = (source&0xff00)|microcontroller_id;
 			break;
 
 	}
@@ -306,113 +304,113 @@ static READ_HANDLER( kyros_alpha_trigger_r )
 
 /******************************************************************************/
 
-static MEMORY_READ_START( kouyakyu_readmem )
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x040000, 0x040fff, MRA_BANK1 },
-	{ 0x080000, 0x081fff, MRA_BANK2 },
-	{ 0x0c0000, 0x0c0fff, MRA_BANK3 },
-	{ 0x100000, 0x1007ff, MRA_BANK4 },
-	{ 0x140000, 0x1407ff, MRA_BANK5 },
+static MEMORY_READ16_START( kouyakyu_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x040000, 0x040fff, MRA16_RAM },
+	{ 0x080000, 0x081fff, MRA16_RAM },
+	{ 0x0c0000, 0x0c0fff, MRA16_RAM },
+	{ 0x100000, 0x1007ff, MRA16_RAM },
+	{ 0x140000, 0x1407ff, MRA16_RAM },
 MEMORY_END
 
-static MEMORY_WRITE_START( kouyakyu_writemem )
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
-	{ 0x080000, 0x080fff, kouyakyu_video_w, &videoram },
-	{ 0x0c0000, 0x0c0fff, MWA_BANK3, &spriteram },
-	{ 0x100000, 0x1007ff, MWA_BANK4 },
-	{ 0x140000, 0x1407ff, MWA_BANK5 },
-	{ 0x780000, 0x780001, MWA_NOP }, /* Watchdog? */
+static MEMORY_WRITE16_START( kouyakyu_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x040000, 0x040fff, MWA16_RAM, &shared_ram },
+	{ 0x080000, 0x080fff, kouyakyu_video_w, &videoram16 },
+	{ 0x0c0000, 0x0c0fff, MWA16_RAM, &spriteram16 },
+	{ 0x100000, 0x1007ff, MWA16_RAM },
+	{ 0x140000, 0x1407ff, MWA16_RAM },
+	{ 0x780000, 0x780001, MWA16_NOP }, /* Watchdog? */
 MEMORY_END
 
-static MEMORY_READ_START( kyros_readmem )
-	{ 0x000000, 0x01ffff, MRA_ROM },
-	{ 0x020000, 0x020fff, MRA_BANK1 },
-	{ 0x040000, 0x041fff, MRA_BANK2 },
-	{ 0x060000, 0x060001, MRA_NOP }, /* Watchdog? */
+static MEMORY_READ16_START( kyros_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x020000, 0x020fff, MRA16_RAM },
+	{ 0x040000, 0x041fff, MRA16_RAM },
+	{ 0x060000, 0x060001, MRA16_NOP }, /* Watchdog? */
 	{ 0x080000, 0x0801ff, kyros_alpha_trigger_r },
-	{ 0x0c0000, 0x0c0001, input_port_0_r },
+	{ 0x0c0000, 0x0c0001, input_port_0_word_r },
 	{ 0x0e0000, 0x0e0001, kyros_dip_r },
 MEMORY_END
 
-static MEMORY_WRITE_START( kyros_writemem )
-	{ 0x000000, 0x01ffff, MWA_ROM },
-	{ 0x020000, 0x020fff, MWA_BANK1, &shared_ram },
-	{ 0x040000, 0x041fff, MWA_BANK2, &spriteram },
+static MEMORY_WRITE16_START( kyros_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x020000, 0x020fff, MWA16_RAM, &shared_ram },
+	{ 0x040000, 0x041fff, MWA16_RAM, &spriteram16 },
 	{ 0x060000, 0x060001, alpha68k_II_sound_w }, /* Watchdog? */
 	{ 0x0e0000, 0x0e0001, kyros_sound_w },
 MEMORY_END
 
-static MEMORY_READ_START( alpha68k_I_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x080000, 0x083fff, MRA_BANK1 },
+static MEMORY_READ16_START( alpha68k_I_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080000, 0x083fff, MRA16_RAM },
 //	{ 0x180008, 0x180009, control_2_r }, /* 1 byte */
 	{ 0x300000, 0x300001, control_1_r }, /* 2  */
 	{ 0x340000, 0x340001, control_1_r }, /* 2  */
-	{ 0x100000, 0x103fff, MRA_BANK2 },
+	{ 0x100000, 0x103fff, MRA16_RAM },
 MEMORY_END
 
-static MEMORY_WRITE_START( alpha68k_I_writemem )
-	{ 0x000000, 0x03ffff, MWA_NOP },
-	{ 0x080000, 0x083fff, MWA_BANK1, &shared_ram },
-	{ 0x100000, 0x103fff, MWA_BANK2, &spriteram },
-	{ 0x180000, 0x180001, MWA_NOP }, /* Watchdog */
+static MEMORY_WRITE16_START( alpha68k_I_writemem )
+	{ 0x000000, 0x03ffff, MWA16_NOP },
+	{ 0x080000, 0x083fff, MWA16_RAM, &shared_ram },
+	{ 0x100000, 0x103fff, MWA16_RAM, &spriteram16 },
+	{ 0x180000, 0x180001, MWA16_NOP }, /* Watchdog */
 	{ 0x380000, 0x380001, alpha68k_II_sound_w },
 MEMORY_END
 
-static MEMORY_READ_START( alpha68k_II_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x040fff, MRA_BANK1 },
+static MEMORY_READ16_START( alpha68k_II_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x040fff, MRA16_RAM },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
 	{ 0x0c0000, 0x0c0001, control_2_r }, /* CN1 & Dip 1 */
 	{ 0x0c8000, 0x0c8001, control_3_r }, /* Bottom of CN2 */
 	{ 0x0d0000, 0x0d0001, control_4_r }, /* Top of CN1 & CN2 */
-	{ 0x0d8000, 0x0d8001, MRA_NOP }, /* IRQ ack? */
-	{ 0x0e0000, 0x0e0001, MRA_NOP }, /* IRQ ack? */
-	{ 0x0e8000, 0x0e8001, MRA_NOP }, /* watchdog? */
-	{ 0x100000, 0x100fff, alpha68k_II_video_r },
-	{ 0x200000, 0x207fff, MRA_BANK2 },
+	{ 0x0d8000, 0x0d8001, MRA16_NOP }, /* IRQ ack? */
+	{ 0x0e0000, 0x0e0001, MRA16_NOP }, /* IRQ ack? */
+	{ 0x0e8000, 0x0e8001, MRA16_NOP }, /* watchdog? */
+	{ 0x100000, 0x100fff, MRA16_RAM },
+	{ 0x200000, 0x207fff, MRA16_RAM },
 	{ 0x300000, 0x3001ff, alpha_II_trigger_r },
-	{ 0x400000, 0x400fff, paletteram_word_r },
-	{ 0x800000, 0x83ffff, MRA_BANK8 }, /* Extra code bank */
+	{ 0x400000, 0x400fff, MRA16_RAM },
+	{ 0x800000, 0x83ffff, MRA16_BANK8 }, /* Extra code bank */
 MEMORY_END
 
-static MEMORY_WRITE_START( alpha68k_II_writemem )
-	{ 0x000000, 0x03ffff, MWA_NOP },
-	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
+static MEMORY_WRITE16_START( alpha68k_II_writemem )
+	{ 0x000000, 0x03ffff, MWA16_NOP },
+	{ 0x040000, 0x040fff, MWA16_RAM, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_II_sound_w },
 	{ 0x0c0000, 0x0c00ff, alpha68k_II_video_bank_w },
-	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram },
-	{ 0x200000, 0x207fff, MWA_BANK2, &spriteram },
+	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram16 },
+	{ 0x200000, 0x207fff, MWA16_RAM, &spriteram16 },
 	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
-	{ 0x400000, 0x400fff, alpha68k_paletteram_w, &paletteram },
+	{ 0x400000, 0x400fff, alpha68k_paletteram_w, &paletteram16 },
 MEMORY_END
 
-static MEMORY_READ_START( alpha68k_V_readmem )
-	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x040000, 0x043fff, MRA_BANK1 },
+static MEMORY_READ16_START( alpha68k_V_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x040000, 0x043fff, MRA16_RAM },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
 	{ 0x0c0000, 0x0c0001, control_2_V_r }, /* Dip 2 */
-	{ 0x0d8000, 0x0d8001, MRA_NOP }, /* IRQ ack? */
-	{ 0x0e0000, 0x0e0001, MRA_NOP }, /* IRQ ack? */
-	{ 0x0e8000, 0x0e8001, MRA_NOP }, /* watchdog? */
-	{ 0x100000, 0x100fff, alpha68k_II_video_r },
-	{ 0x200000, 0x207fff, MRA_BANK3 },
+	{ 0x0d8000, 0x0d8001, MRA16_NOP }, /* IRQ ack? */
+	{ 0x0e0000, 0x0e0001, MRA16_NOP }, /* IRQ ack? */
+	{ 0x0e8000, 0x0e8001, MRA16_NOP }, /* watchdog? */
+	{ 0x100000, 0x100fff, MRA16_RAM },
+	{ 0x200000, 0x207fff, MRA16_RAM },
 	{ 0x300000, 0x303fff, alpha_V_trigger_r },
-	{ 0x400000, 0x401fff, paletteram_word_r },
-	{ 0x800000, 0x83ffff, MRA_BANK8 },
+	{ 0x400000, 0x401fff, MRA16_RAM },
+	{ 0x800000, 0x83ffff, MRA16_BANK8 },
 MEMORY_END
 
-static MEMORY_WRITE_START( alpha68k_V_writemem )
-	{ 0x000000, 0x03ffff, MWA_NOP },
-	{ 0x040000, 0x043fff, MWA_BANK1, &shared_ram },
+static MEMORY_WRITE16_START( alpha68k_V_writemem )
+	{ 0x000000, 0x03ffff, MWA16_NOP },
+	{ 0x040000, 0x043fff, MWA16_RAM, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_V_sound_w },
 	{ 0x0c0000, 0x0c00ff, alpha68k_V_video_control_w },
-	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram },
-	{ 0x200000, 0x207fff, MWA_BANK3, &spriteram },
+	{ 0x100000, 0x100fff, alpha68k_videoram_w, &videoram16 },
+	{ 0x200000, 0x207fff, MWA16_RAM, &spriteram16 },
 	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
 	{ 0x303e00, 0x303fff, alpha_microcontroller_w }, /* Gang Wars mirror */
-	{ 0x400000, 0x401fff, alpha68k_paletteram_w, &paletteram },
+	{ 0x400000, 0x401fff, alpha68k_paletteram_w, &paletteram16 },
 MEMORY_END
 
 /******************************************************************************/
@@ -2217,9 +2215,9 @@ ROM_END
 
 /******************************************************************************/
 
-static READ_HANDLER( timesold_cycle_r )
+static READ16_HANDLER( timesold_cycle_r )
 {
-	int ret=READ_WORD(&shared_ram[0x8]);
+	int ret=shared_ram[0x4];
 
 	if (cpu_get_pc()==0x9ea2 && (ret&0xff00)==0) {
 		cpu_spinuntil_int();
@@ -2229,9 +2227,9 @@ static READ_HANDLER( timesold_cycle_r )
 	return ret;
 }
 
-static READ_HANDLER( skysoldr_cycle_r )
+static READ16_HANDLER( skysoldr_cycle_r )
 {
-	int ret=READ_WORD(&shared_ram[0x8]);
+	int ret=shared_ram[0x4];
 
 	if (cpu_get_pc()==0x1f4e && (ret&0xff00)==0) {
 		cpu_spinuntil_int();
@@ -2241,9 +2239,9 @@ static READ_HANDLER( skysoldr_cycle_r )
 	return ret;
 }
 
-static READ_HANDLER( gangwars_cycle_r )
+static READ16_HANDLER( gangwars_cycle_r )
 {
-	int ret=READ_WORD(&shared_ram[0x206]);
+	int ret=shared_ram[0x103];
 
 	if (cpu_get_pc()==0xbbca || cpu_get_pc()==0xbbb6) {
 		cpu_spinuntil_int();
@@ -2255,13 +2253,13 @@ static READ_HANDLER( gangwars_cycle_r )
 
 static void init_timesold(void)
 {
-	install_mem_read_handler(0, 0x40008, 0x40009, timesold_cycle_r);
+	install_mem_read16_handler(0, 0x40008, 0x40009, timesold_cycle_r);
 	invert_controls=0;
 }
 
 static void init_skysoldr(void)
 {
-	install_mem_read_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
+	install_mem_read16_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
 	cpu_setbank(8, (memory_region(REGION_USER1))+0x40000);
 	invert_controls=0;
 }
@@ -2274,7 +2272,7 @@ static void init_goldmedb(void)
 
 static void init_gangwars(void)
 {
-	install_mem_read_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
+	install_mem_read16_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
 	cpu_setbank(8, memory_region(REGION_USER1));
 	invert_controls=0;
 	microcontroller_id=0x8512;

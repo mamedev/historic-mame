@@ -318,8 +318,9 @@
 #include "mamedbg.h"
 #include "pdp1.h"
 
-#define READ_PDP_18BIT(A) ((signed)cpu_readmem16(A))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem16(A,V))
+/* the 2 definitions below were redundant with pdp1.h */
+/*#define READ_PDP_18BIT(A) ((signed)cpu_readmem16_18_dword(A<<2))
+#define WRITE_PDP_18BIT(A,V) (cpu_writemem16_18_dword(A<<2,V))*/
 
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
@@ -979,4 +980,5 @@ int intern_iot (int *iio, int md)
 {
 	logerror("No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *iio);
 	exit (1);
+	return 1;
 }

@@ -12,14 +12,6 @@
 
 
 /*##########################################################################
-	CONSTANTS
-##########################################################################*/
-
-#define BASE_GRANULARITY		8
-
-
-
-/*##########################################################################
 	TYPES & STRUCTURES
 ##########################################################################*/
 
@@ -133,6 +125,8 @@ data16_t *ataripf_0_base;
 data16_t *ataripf_0_upper;
 
 data16_t *ataripf_1_base;
+
+data32_t *ataripf_0_base32;
 
 
 
@@ -355,7 +349,7 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 	pf->bitmapymask  = pf->bitmapheight - 1;
 
 	pf->palettebase  = desc->palettebase;
-	pf->maxcolors    = desc->maxcolors / BASE_GRANULARITY;
+	pf->maxcolors    = desc->maxcolors / ATARIPF_BASE_GRANULARITY;
 	pf->shadowxor    = desc->shadowxor;
 	pf->transpens    = desc->transpens;
 	pf->transpen     = desc->transpens ? compute_log(desc->transpens) : -1;
@@ -599,7 +593,7 @@ void ataripf_mark_palette(int map)
 			}
 
 			/* advance by the color granularity of the gfx */
-			used_colors += BASE_GRANULARITY;
+			used_colors += ATARIPF_BASE_GRANULARITY;
 		}
 
 		/* reset the visitation map now that we're done */
@@ -633,10 +627,8 @@ void ataripf_set_bankbits(int map, int bankbits, int scanline)
 void ataripf_set_xscroll(int map, int xscroll, int scanline)
 {
 	struct ataripf_data *pf = &ataripf[map];
-logerror("ataripf_set_xscroll(%d, %d, %d)\n", map, xscroll, scanline);
 	if (pf->initialized && pf->curstate.xscroll != xscroll)
 	{
-logerror("  (changed)\n");
 		pf->curstate.xscroll = xscroll;
 		pf_update_state(pf, scanline);
 	}
@@ -651,10 +643,8 @@ logerror("  (changed)\n");
 void ataripf_set_yscroll(int map, int yscroll, int scanline)
 {
 	struct ataripf_data *pf = &ataripf[map];
-logerror("ataripf_set_yscroll(%d, %d, %d)\n", map, yscroll, scanline);
 	if (pf->initialized && pf->curstate.yscroll != yscroll)
 	{
-logerror("  (changed)\n");
 		pf->curstate.yscroll = yscroll;
 		pf_update_state(pf, scanline);
 	}
@@ -1012,6 +1002,48 @@ WRITE16_HANDLER( ataripf_01_upper_lsb_msb_w )
 
 
 /*---------------------------------------------------------------
+	ataripf_0_split32_w: Simple write handler for split playfields.
+---------------------------------------------------------------*/
+
+WRITE32_HANDLER( ataripf_0_split32_w )
+{
+	if (ACCESSING_MSW32)
+	{
+		int adjusted = ((offset & 0x001f) | ((~offset & 0x0800) >> 6) | ((offset & 0x07e0) << 1)) * 2;
+		int oldword = LOWER_HALF(ataripf[0].vram[adjusted]);
+		int newword = oldword << 16;
+
+		COMBINE_DATA(&newword);
+		newword >>= 16;
+
+		if (oldword != newword)
+		{
+			LOWER_HALF(ataripf[0].vram[adjusted]) = newword;
+			ataripf[0].dirtymap[adjusted] = -1;
+		}
+	}
+
+	if (ACCESSING_LSW32)
+	{
+		int adjusted = ((offset & 0x001f) | ((~offset & 0x0800) >> 6) | ((offset & 0x07e0) << 1)) * 2 + 1;
+		int oldword = LOWER_HALF(ataripf[0].vram[adjusted]);
+		int newword = oldword;
+
+		COMBINE_DATA(&newword);
+		newword &= 0xffff;
+
+		if (oldword != newword)
+		{
+			LOWER_HALF(ataripf[0].vram[adjusted]) = newword;
+			ataripf[0].dirtymap[adjusted] = -1;
+		}
+	}
+
+	COMBINE_DATA(&ataripf_0_base32[offset]);
+}
+
+
+/*---------------------------------------------------------------
 	pf_process: Internal routine that loops over chunks of
 	the playfield with common parameters and processes them
 	via a callback.
@@ -1292,8 +1324,8 @@ static void pf_init_gfx(struct ataripf_data *pf, int gfxindex)
 	gfx->element = *Machine->gfx[gfxindex];
 
 	/* adjust the granularity */
-	gfx->colorshift = compute_log(gfx->element.color_granularity / BASE_GRANULARITY);
-	gfx->element.color_granularity = BASE_GRANULARITY;
+	gfx->colorshift = compute_log(gfx->element.color_granularity / ATARIPF_BASE_GRANULARITY);
+	gfx->element.color_granularity = ATARIPF_BASE_GRANULARITY;
 	gfx->element.total_colors = pf->maxcolors;
 	gfx->element.colortable = &Machine->remapped_colortable[pf->palettebase];
 

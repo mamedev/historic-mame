@@ -767,77 +767,6 @@ static void update_partial(int scanline)
 
 /*************************************
  *
- *	Screen updater
- *
- *************************************/
-
-static void update_screen(struct osd_bitmap *bitmap)
-{
-	UINT16 *pens = Machine->pens;
-	UINT16 *buffer;
-	int v, h, width, xoffs;
-	UINT32 offset;
-
-	/* determine the base of the videoram */
-	if (page_flipping)
-	{
-		buffer = local_videoram;
-		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
-	}
-	else
-	{
-		buffer = local_videoram_copy;
-		offset = Machine->visible_area.min_y * 512;
-	}
-
-	/* determine how many pixels to copy */
-	xoffs = Machine->visible_area.min_x;
-	width = Machine->visible_area.max_x - xoffs + 1;
-	offset += xoffs;
-
-	/* 16-bit refresh case */
-	if (bitmap->depth == 16)
-	{
-		/* loop over rows */
-		for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
-		{
-			/* handle the refresh */
-			UINT16 *src = &buffer[offset];
-			UINT16 *dst = &((UINT16 *)bitmap->line[v])[xoffs];
-			UINT32 diff = dst - src;
-
-			/* copy one row */
-			for (h = 0; h < width; h++, src++)
-				*(src + diff) = pens[*src];
-
-			/* point to the next row */
-			offset = (offset + 512) & 0x3ffff;
-		}
-	}
-
-	/* 8-bit refresh case */
-	else
-	{
-		/* loop over rows */
-		for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
-		{
-			/* handle the refresh */
-			UINT16 *src = &buffer[offset];
-			UINT8 *dst = &bitmap->line[v][xoffs];
-
-			for (h = 0; h < width; h++)
-				*dst++ = pens[*src++];
-
-			/* point to the next row */
-			offset = (offset + 512) & 0x3ffff;
-		}
-	}
-}
-
-
-
-/*************************************
- *
  *	34010 display address callback
  *
  *************************************/
@@ -915,6 +844,10 @@ void wms_zunit_vh_eof(void)
 
 void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	UINT16 *buffer;
+	int v, width, xoffs;
+	UINT32 offset;
+
 	/* adjust the visible area if we haven't yet */
 	if (wms_visible_area.max_x != 0)
 	{
@@ -922,10 +855,33 @@ void wms_yunit_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		wms_visible_area.max_x = 0;
 	}
 
+	/* finish updating */
+	update_partial(Machine->visible_area.max_y);
+
 	/* update the palette */
 	palette_recalc();
 
-	/* finish updating */
-	update_partial(Machine->visible_area.max_y);
-	update_screen(bitmap);
+	/* determine the base of the videoram */
+	if (page_flipping)
+	{
+		buffer = local_videoram;
+		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
+	}
+	else
+	{
+		buffer = local_videoram_copy;
+		offset = Machine->visible_area.min_y * 512;
+	}
+
+	/* determine how many pixels to copy */
+	xoffs = Machine->visible_area.min_x;
+	width = Machine->visible_area.max_x - xoffs + 1;
+	offset += xoffs;
+
+	/* loop over rows */
+	for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
+	{
+		draw_scanline16(bitmap, xoffs, v, width, &buffer[offset], Machine->pens, -1);
+		offset = (offset + 512) & 0x3ffff;
+	}
 }

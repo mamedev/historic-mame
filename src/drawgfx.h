@@ -107,12 +107,14 @@ enum
 typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);
 typedef int  (*read_pixel_proc)(struct osd_bitmap *bitmap,int x,int y);
 typedef void (*plot_box_proc)(struct osd_bitmap *bitmap,int x,int y,int width,int height,int pen);
+typedef void (*mark_dirty_proc)(int sx,int sy,int ex,int ey);
 
 /* pointers to pixel functions.  They're set based on orientation, depthness and weather
    dirty rectangle handling is enabled */
 extern plot_pixel_proc plot_pixel;
 extern read_pixel_proc read_pixel;
 extern plot_box_proc plot_box;
+extern mark_dirty_proc mark_dirty;
 
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
@@ -140,6 +142,10 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 void copyscrollbitmap_remap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
+void draw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT16 *pens,int transparent_pen);
+void draw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT16 *pens,int transparent_pen);
+void pdraw_scanline8(struct osd_bitmap *bitmap,int x,int y,int length,UINT8 *src,UINT16 *pens,int transparent_pen,UINT32 orient,int pri);
+void pdraw_scanline16(struct osd_bitmap *bitmap,int x,int y,int length,UINT16 *src,UINT16 *pens,int transparent_pen,UINT32 orient,int pri);
 
 /*
   Copy a bitmap applying rotation, zooming, and arbitrary distortion.

@@ -35,8 +35,8 @@ extern unsigned pdp1_dasm(char *buffer, unsigned pc);
 extern int pdp1_ICount;
 extern int (* extern_iot)(int *, int);
 
-#define READ_PDP_18BIT(A) ((signed)cpu_readmem16(A))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem16(A,V))
+#define READ_PDP_18BIT(A) ((signed)cpu_readmem18bedw_dword(A<<2))
+#define WRITE_PDP_18BIT(A,V) (cpu_writemem18bedw_dword(A<<2,V))
 
 #define AND 001
 #define IOR 002

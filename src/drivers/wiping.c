@@ -324,7 +324,7 @@ static const struct MachineDriver machine_driver_wiping =
 			18432000/6,	/* 3.072 MHz */
 			sound_readmem,sound_writemem,0,0,
 			0,0,
-			interrupt,140	/* periodic interrupt, don't know about the frequency */
+			interrupt,120	/* periodic interrupt, don't know about the frequency */
 		},
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,

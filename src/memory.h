@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	memory.h
-	
+
 	Functions which handle the CPU memory and I/O port access.
 
 ***************************************************************************/
@@ -34,7 +34,7 @@ extern "C" {
 /***************************************************************************
 
 	Basic type definitions
-	
+
 	These types are used for memory handlers.
 
 ***************************************************************************/
@@ -117,7 +117,7 @@ struct ExtMemory
 /***************************************************************************
 
 	Memory/port array constants
-	
+
 	These apply to values in the array of read/write handlers that is
 	declared within each driver.
 
@@ -193,7 +193,7 @@ struct ExtMemory
 
 	The first 32 entries in the memory lookup table are reserved for
 	"static" handlers. These are internal handlers for RAM, ROM, banks,
-	and unmapped memory areas. The following definitions are the 
+	and unmapped memory areas. The following definitions are the
 	properly-casted versions of the STATIC_ constants above.
 
 ***************************************************************************/
@@ -407,13 +407,13 @@ struct ExtMemory
 	Memory/port array type definitions
 
 	Note that the memory hooks are not passed the actual memory address
-	where the operation takes place, but the offset from the beginning 
-	of the block they are assigned to. This makes handling of mirror 
+	where the operation takes place, but the offset from the beginning
+	of the block they are assigned to. This makes handling of mirror
 	addresses easier, and makes the handlers a bit more "object oriented".
-	If you handler needs to read/write the main memory area, provide a 
-	"base" pointer: it will be initialized by the main engine to point to 
-	the beginning of the memory block assigned to the handler. You may 
-	also provided a pointer to "size": it will be set to the length of 
+	If you handler needs to read/write the main memory area, provide a
+	"base" pointer: it will be initialized by the main engine to point to
+	the beginning of the memory block assigned to the handler. You may
+	also provided a pointer to "size": it will be set to the length of
 	the memory area processed by the handler.
 
 ***************************************************************************/
@@ -546,7 +546,7 @@ struct IO_WritePort32
 /***************************************************************************
 
 	Memory/port lookup constants
-	
+
 	These apply to values in the internal lookup table.
 
 ***************************************************************************/
@@ -572,7 +572,7 @@ struct IO_WritePort32
 /***************************************************************************
 
 	Memory/port lookup macros
-	
+
 	These are used for accessing the internal lookup table.
 
 ***************************************************************************/
@@ -693,6 +693,10 @@ DECLARE_HANDLERS_32BIT_LE(32)
 #define change_pc32ledw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32ledw)
 
 
+/* ----- declare pdp1 handler ----- */
+DECLARE_HANDLERS_32BIT_BE(18)
+#define change_pc28bedw(pc)		change_pc_generic(pc, 18, 2, cpu_setopbase18bedw)
+
 
 /***************************************************************************
 
@@ -731,8 +735,6 @@ data16_t cpu_readport16bedw_word         (offs_t offset);
 void     cpu_writeport16bew_word         (offs_t offset, data16_t data);
 data32_t cpu_readport16bew_dword         (offs_t offset);
 void     cpu_writeport16bew_dword        (offs_t offset, data32_t data);
-
-
 
 /***************************************************************************
 

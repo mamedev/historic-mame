@@ -2407,6 +2407,21 @@ ROM_START( exodus )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( streakng )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sk1",          0x0000, 0x1000, 0xc8866ccb )
+	ROM_LOAD( "sk2",          0x1000, 0x1000, 0x7caea29b )
+	ROM_LOAD( "sk3",          0x2000, 0x1000, 0x7b4bfa76 )
+	ROM_LOAD( "sk4",          0x3000, 0x1000, 0x056fc921 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sk5",          0x0000, 0x1000, 0xd27f1e0c )
+	ROM_LOAD( "sk6",          0x1000, 0x1000, 0xa7089588 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "sk.bpr",       0x0000, 0x0020, 0xbce79607 )
+ROM_END
+
 ROM_START( pacmanbl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "blpac1b",      0x0000, 0x0800, 0x6718df42 )
@@ -2424,7 +2439,24 @@ ROM_START( pacmanbl )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
+	ROM_LOAD( "blpaccp",      0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
+ROM_END
+
+ROM_START( ghostmun )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pac1.bin",     0x0000, 0x1000, 0x19338c70 )
+	ROM_LOAD( "pac2.bin",     0x1000, 0x1000, 0x18db074d )
+	ROM_LOAD( "pac3.bin",     0x2000, 0x1000, 0xabb98b1d )
+	ROM_LOAD( "pac4.bin",     0x3000, 0x1000, 0x2403c78e )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "blpac12b",     0x0000, 0x0800, 0xb2ed320b )
+	ROM_LOAD( "blpac11b",     0x0800, 0x0800, 0xab88b2c4 )
+	ROM_LOAD( "blpac10b",     0x1000, 0x0800, 0x44a45b72 )
+	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "blpaccp",      0x0000, 0x0020, BADCRC( 0x24652bc4 ) ) /* who knows? */
 ROM_END
 
 ROM_START( devilfsg )
@@ -2666,21 +2698,6 @@ ROM_START( checkmaj )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound code */
 	ROM_LOAD( "cm_4.bin",     0x0000, 0x1000, 0x923cffa1 )
-ROM_END
-
-ROM_START( streakng )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "sk1",          0x0000, 0x1000, 0xc8866ccb )
-	ROM_LOAD( "sk2",          0x1000, 0x1000, 0x7caea29b )
-	ROM_LOAD( "sk3",          0x2000, 0x1000, 0x7b4bfa76 )
-	ROM_LOAD( "sk4",          0x3000, 0x1000, 0x056fc921 )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk5",          0x0000, 0x1000, 0xd27f1e0c )
-	ROM_LOAD( "sk6",          0x1000, 0x1000, 0xa7089588 )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "sk.bpr",       0x0000, 0x0020, 0xbce79607 )
 ROM_END
 
 ROM_START( blkhole )
@@ -3130,7 +3147,9 @@ GAME( 1980, spacbatt, uniwars,  pisces,   superg,   pisces,   ROT90,  "bootleg",
 GAME( 1981, warofbug, 0,        warofbug, warofbug, 0,        ROT90,  "Armenia", "War of the Bugs" )
 GAME( ????, redufo,   0,        warofbug, redufo,   0,        ROT90,  "bootleg", "Defend the Terra Attack on the Red UFO (bootleg)" )
 GAME( ????, exodus,   redufo,   warofbug, redufo,   0,        ROT90,  "Subelectro", "Exodus (bootleg?)" )
+GAME( 1980, streakng, 0,        pacmanbl, streakng, 0,        ROT90,  "Shoei", "Streaking" )
 GAME( 1981, pacmanbl, pacman,   pacmanbl, pacmanbl, 0,        ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
+GAME( 1981, ghostmun, pacman,   pacmanbl, streakng, 0,        ROT90,  "bootleg", "Ghost Muncher" )
 GAME( 1984, devilfsg, devilfsh, devilfsg, devilfsg, 0,        ROT270, "Vision / Artic", "Devil Fish (Galaxian hardware, bootleg?)" )
 GAME( 1982, zigzag,   0,        zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 1)" )
 GAME( 1982, zigzag2,  zigzag,   zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 2)" )
@@ -3142,7 +3161,6 @@ GAME( 1982, azurian,  0,        azurian,  azurian,  0,        ROT90,  "Rait Elec
 GAME( ????, orbitron, 0,        azurian,  orbitron, 0,        ROT270, "Signatron USA", "Orbitron" )
 GAME( 1982, checkman, 0,        checkman, checkman, checkman, ROT90,  "Zilec-Zenitone", "Checkman" )
 GAME( 1982, checkmaj, checkman, checkmaj, checkmaj, checkmaj, ROT90,  "Jaleco", "Checkman (Japan)" )
-GAME( 1980, streakng, 0,        pacmanbl, streakng, 0,        ROT90,  "Shoei", "Streaking" )
 GAME( ????, blkhole,  0,        galaxian, blkhole,  0,        ROT90,  "TDS", "Black Hole" )
 GAME( 1980, mooncrst, 0,        mooncrst, mooncrst, mooncrst, ROT90,  "Nichibutsu", "Moon Cresta (Nichibutsu)" )
 GAME( 1980, mooncrsg, mooncrst, mooncrst, mooncrst, 0,        ROT90,  "Gremlin", "Moon Cresta (Gremlin)" )

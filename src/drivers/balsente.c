@@ -20,6 +20,7 @@
 		* Snake Pit
 		* Spiker
 		* Stocker
+		* Stompin'
 		* Street Football
 		* Toggle
 		* Trivial Pursuit (Genus I)
@@ -30,7 +31,6 @@
 
 	Looking for ROMs for these:
 		* Euro Stocker
-		* Stompin'
 		* Strike Avenger
 		* Team Hat Trick
 		* Trick Shot
@@ -148,6 +148,8 @@
 #include "vidhrdw/generic.h"
 #include <math.h>
 
+
+#define LOG_CEM_WRITES		0
 
 
 /* video driver data & functions */
@@ -284,8 +286,8 @@ static void interrupt_timer(int param)
 		/* we latch the beam values on the first interrupt after VBLANK */
 		if (param == 64 && balsente_shooter)
 		{
-			balsente_shooter_x = input_port_8_r(0);
-			balsente_shooter_y = input_port_9_r(0);
+			balsente_shooter_x = readinputport(8);
+			balsente_shooter_y = readinputport(9);
 		}
 
 		/* which bits get returned depends on which scanline we're at */
@@ -448,8 +450,6 @@ static WRITE_HANDLER( rombank_select_w )
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
-logerror("%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
-
 	/* the bank number comes from bits 4-6 */
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
 	cpu_setbank(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
@@ -463,8 +463,6 @@ static WRITE_HANDLER( rombank2_select_w )
 
 	/* top bit controls which half of the ROMs to use (Name that Tune only) */
 	if (memory_region_length(REGION_CPU1) > 0x40000) bank |= (data >> 4) & 8;
-
-//logerror("%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
@@ -745,6 +743,13 @@ static void adc_finished(int which)
 	/* analog controls are read in two pieces; the lower port returns the sign */
 	/* and the upper port returns the absolute value of the magnitude */
 	int val = analog_input_data[which / 2] << adc_shift;
+
+	/* special case for Stompin' */
+	if (adc_shift == 32)
+	{
+		adc_value = analog_input_data[which];
+		return;
+	}
 
 	/* push everything out a little bit extra; most games seem to have a dead */
 	/* zone in the middle that feels unnatural with the mouse */
@@ -1144,7 +1149,7 @@ static WRITE_HANDLER( counter_control_w )
 
 static READ_HANDLER( nstocker_port2_r )
 {
-	return (input_port_2_r(offset) & 0xf0) | nstocker_bits;
+	return (readinputport(2) & 0xf0) | nstocker_bits;
 }
 
 
@@ -1204,18 +1209,6 @@ static WRITE_HANDLER( chip_select_w )
 		CEM3394_WAVE_SELECT
 	};
 
-	static const char *names[] =
-	{
-		"VCO_FREQUENCY",
-		"FINAL_GAIN",
-		"FILTER_RESONANCE",
-		"FILTER_FREQENCY",
-		"MIXER_BALANCE",
-		"MODULATION_AMOUNT",
-		"PULSE_WIDTH",
-		"WAVE_SELECT"
-	};
-
 	double voltage = (double)dac_value * (8.0 / 4096.0) - 4.0;
 	int diffchip = data ^ chip_select, i;
 	int reg = register_map[dac_register];
@@ -1236,8 +1229,23 @@ static WRITE_HANDLER( chip_select_w )
 			cem3394_set_voltage(i, reg, voltage);
 
 			/* only log changes */
+#if LOG_CEM_WRITES
 			if (temp != cem3394_get_parameter(i, reg))
+			{
+				static const char *names[] =
+				{
+					"VCO_FREQUENCY",
+					"FINAL_GAIN",
+					"FILTER_RESONANCE",
+					"FILTER_FREQENCY",
+					"MIXER_BALANCE",
+					"MODULATION_AMOUNT",
+					"PULSE_WIDTH",
+					"WAVE_SELECT"
+				};
 				logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
+			}
+#endif
 		}
 
 	/* if a timer for counter 0 is running, recompute */
@@ -1956,7 +1964,7 @@ INPUT_PORTS_START( minigolf )
 	PORT_DIPNAME( 0x01, 0x01, "Add-A-Coin" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -2010,7 +2018,7 @@ INPUT_PORTS_START( minigol2 )
 	PORT_DIPNAME( 0x01, 0x01, "Add-A-Coin" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ))
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
@@ -2314,6 +2322,95 @@ INPUT_PORTS_START( spiker )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( stompin )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x1c, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x04, "2 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x08, "3 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x0c, "4 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x10, "4 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x14, "5 Coins = 1 Bonus" )
+	PORT_DIPSETTING(    0x18, "5 Coins = 2 Bonus" )
+	PORT_DIPSETTING(    0x1c, "5 Coins = 3 Bonus" )
+	PORT_DIPNAME( 0x20, 0x00, "Left Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x20, "x2" )
+	PORT_DIPNAME( 0xc0, 0x00, "Right Coin Mech" )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x40, "x4" )
+	PORT_DIPSETTING(    0x80, "x5" )
+	PORT_DIPSETTING(    0xc0, "x6" )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x80, 0x00, "Bug Generation" )
+	PORT_DIPSETTING(    0x00, "Regular" )
+	PORT_DIPSETTING(    0x80, "None" )
+	PORT_DIPNAME( 0x40, 0x00, "Bee In Game?" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x20, DEF_STR( On ))
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x04, 0x04, "Kid on Left Located?" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
+	PORT_DIPNAME( 0x02, 0x02, "Kid on Right Located?" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
+	PORT_DIPNAME( 0x01, 0x01, "Display Kids?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ))
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	/* "analog" ports */
+	PORT_START
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Top-Right", KEYCODE_9_PAD, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Top",       KEYCODE_8_PAD, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Top-Left",  KEYCODE_7_PAD, IP_JOY_DEFAULT )
+
+	PORT_START
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Left",      KEYCODE_6_PAD, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Bot-Right", KEYCODE_4_PAD, IP_JOY_DEFAULT )
+
+	PORT_START
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Right",     KEYCODE_3_PAD, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1, "Bot-Left",  KEYCODE_2_PAD, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1, "Bottom",    KEYCODE_1_PAD, IP_JOY_DEFAULT )
+
+	UNUSED_ANALOG
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( rescraid )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
@@ -2348,7 +2445,7 @@ INPUT_PORTS_START( rescraid )
 	PORT_DIPSETTING(    0x04, "60" )
 	PORT_DIPSETTING(    0x00, "90" )
 	PORT_DIPSETTING(    0x0c, "120" )
-	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x40, 0x40, "Keep High Scores" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ))
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ))
@@ -2557,6 +2654,7 @@ static void init_spiker(void)
 	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; adc_shift = 1;
 }
+static void init_stompin(void)  { expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; adc_shift = 32; }
 static void init_rescraid(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
 
 
@@ -2987,6 +3085,26 @@ ROM_START( spiker )
 ROM_END
 
 
+ROM_START( stompin )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x46f428c6 )
+	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x0e13132f )
+	ROM_LOAD( "ab45.bin",  0x18000, 0x4000, 0x6ed26069 )
+	ROM_LOAD( "ab67.bin",  0x1c000, 0x4000, 0x7f63b516 )
+	ROM_LOAD( "cd23.bin",  0x24000, 0x4000, 0x52b29048 )
+	ROM_LOAD( "cd6ef.bin", 0x2c000, 0x4000, 0xb880961a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
+	ROM_LOAD( "gr01.u4c", 0x00000, 0x4000, 0x14ffdd1e )
+	ROM_LOAD( "gr23.u3c", 0x04000, 0x4000, 0x761abb80 )
+	ROM_LOAD( "gr45.u2c", 0x08000, 0x4000, 0x0d2cf2e6 )
+	ROM_LOAD( "gr67.u2c", 0x0c000, 0x4000, 0x2bab2784 )
+ROM_END
+
+
 ROM_START( rescraid )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab1.a10",   0x10000, 0x8000, 0x33a76b47 )
@@ -3047,5 +3165,6 @@ GAME( 1986, nametune, 0,        balsente, nametune, nametune, ROT0, "Bally/Sente
 GAME( 1986, nstocker, 0,        balsente, nstocker, nstocker, ROT0, "Bally/Sente", "Night Stocker" )
 GAME( 1986, sfootbal, 0,        balsente, sfootbal, sfootbal, ROT0, "Bally/Sente", "Street Football" )
 GAME( 1986, spiker,   0,        balsente, spiker,   spiker,   ROT0, "Bally/Sente", "Spiker" )
+GAME( 1986, stompin,  0,        balsente, stompin,  stompin,  ROT0, "Bally/Sente", "Stompin'" )
 GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider" )
 GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider (Stand-Alone)" )

@@ -1,7 +1,7 @@
 #ifndef YM2151INTF_H
 #define YM2151INTF_H
 
-#define MAX_2151 3
+#define MAX_2151 2
 
 #ifndef VOL_YM3012
 /* YM2151interface->volume optionaly macro */

@@ -30,7 +30,9 @@ enum {
 	CP1600_R4, CP1600_R5, CP1600_R6, CP1600_R7
 };
 
-#define CP1600_INT_NONE  0
+#define CP1600_INT_NONE		0
+#define CP1600_INT_INTRM	1	/* Maskable */
+#define CP1600_INT_INTR		2	/* Non-Maskable */
 
 extern int cp1600_icount;				 /* cycle count */
 

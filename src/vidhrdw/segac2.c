@@ -2,7 +2,7 @@
 
 	Sega System C/C2 Driver
 	-----------------------
-	Version 0.48 - 1 November 2000
+	Version 0.50 - 16 November 2000
 	(for changes see drivers\segac2.c)
 
 ***********************************************************************************************/
@@ -13,6 +13,9 @@
 /******************************************************************************
 	Macros
 ******************************************************************************/
+
+#define BITMAP_WIDTH		336
+#define BITMAP_HEIGHT		240
 
 #define VRAM_SIZE			0x10000
 #define VRAM_MASK			(VRAM_SIZE - 1)
@@ -37,9 +40,9 @@
 ******************************************************************************/
 
 static int  vdp_data_r(void);
-static void vdp_data_w(int data, int mem_mask);
+static void vdp_data_w(int data);
 static int  vdp_control_r(void);
-static void vdp_control_w(int data, int mem_mask);
+static void vdp_control_w(int data);
 static void vdp_register_w(int data);
 static void vdp_control_dma(int data);
 static void vdp_dma_68k(void);
@@ -71,7 +74,7 @@ static UINT8		display_enable;				/* is the display enabled? */
 
 /* updates */
 static int			last_update_scanline;		/* last scanline we drew */
-static struct osd_bitmap *cache_bitmap;			/* 16bpp bitmap with raw pen values */
+static UINT16 *		cache_bitmap;				/* 16bpp bitmap with raw pen values */
 static UINT8		internal_vblank;			/* state of the VBLANK line */
 static UINT8		color_usage[0x80];			/* color usage marking (16 colors/entry) */
 static UINT16 *		transparent_lookup;			/* fast transparent mapping table */
@@ -128,7 +131,7 @@ int segac2_vh_start(void)
 	vdp_vram			= malloc(VRAM_SIZE);
 	vdp_vsram			= malloc(VSRAM_SIZE);
 	transparent_lookup	= malloc(0x1000 * sizeof(UINT16));
-	cache_bitmap		= bitmap_alloc_depth(336, 224, 16);
+	cache_bitmap		= malloc(BITMAP_WIDTH * BITMAP_HEIGHT * sizeof(UINT16));
 
 	/* check for errors */
 	if (!vdp_vram || !vdp_vsram || !transparent_lookup || !cache_bitmap)
@@ -178,7 +181,7 @@ int segac2_vh_start(void)
 
 void segac2_vh_stop(void)
 {
-	bitmap_free(cache_bitmap);
+	free(cache_bitmap);
 	free(transparent_lookup);
 	free(vdp_vram);
 	free(vdp_vsram);
@@ -255,7 +258,7 @@ void segac2_update_display(int scanline)
 
 	/* update all relevant lines */
 	for (line = last_update_scanline; line < scanline; line++)
-		drawline((UINT16 *)cache_bitmap->line[line], line);
+		drawline(&cache_bitmap[line * BITMAP_WIDTH], line);
 	last_update_scanline = scanline;
 }
 
@@ -272,7 +275,7 @@ void segac2_enable_display(int enable)
 /* core refresh: computes the final screen */
 void segac2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int x, y, color;
+	int y, color;
 
 	/* finish updating the display */
 	segac2_update_display(224);
@@ -292,26 +295,7 @@ void segac2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* generate the final screen */
 	for (y = 0; y < 224; y++)
-	{
-		UINT16 *src = &((UINT16 *)cache_bitmap->line[y])[8];
-		UINT16 *pens = Machine->pens;
-
-		/* 8bpp cae */
-		if (bitmap->depth == 8)
-		{
-			UINT8 *dest = &bitmap->line[y][8];
-			for (x = 0; x < 320; x++)
-				*dest++ = pens[*src++];
-		}
-
-		/* 16bpp cae */
-		else
-		{
-			UINT16 *dest = &((UINT16 *)bitmap->line[y])[8];
-			for (x = 0; x < 320; x++)
-				*dest++ = pens[*src++];
-		}
-	}
+		draw_scanline16(bitmap, 8, y, 320, &cache_bitmap[y * BITMAP_WIDTH + 8], Machine->pens, -1);
 }
 
 
@@ -382,12 +366,28 @@ WRITE16_HANDLER( segac2_vdp_w )
 	{
 		case 0x00:	/* Write data */
 		case 0x01:
-			vdp_data_w(data, mem_mask);
+			if (mem_mask)
+			{
+				data &= ~mem_mask;
+				 if (ACCESSING_MSB)
+				 	data |= data >> 8;
+				 else
+				 	data |= data << 8;
+			}
+			vdp_data_w(data);
 			break;
 
 		case 0x02:	/* Control Write */
 		case 0x03:
-			vdp_control_w(data, mem_mask);
+			if (mem_mask)
+			{
+				data &= ~mem_mask;
+				 if (ACCESSING_MSB)
+				 	data |= data >> 8;
+				 else
+				 	data |= data << 8;
+			}
+			vdp_control_w(data);
 			break;
 	}
 }
@@ -437,7 +437,7 @@ static int vdp_data_r(void)
 }
 
 
-static void vdp_data_w(int data, int mem_mask)
+static void vdp_data_w(int data)
 {
 	/* kill 2nd write pending flag */
 	vdp_cmdpart = 0;
@@ -462,10 +462,10 @@ static void vdp_data_w(int data, int mem_mask)
 				segac2_update_display(cpu_getscanline());
 
 			/* write to VRAM */
-			if (ACCESSING_MSB)
-				VDP_VRAM_BYTE(vdp_address & ~1) = data >> 8;
-			if (ACCESSING_LSB)
-				VDP_VRAM_BYTE(vdp_address |  1) = data;
+			if (vdp_address & 1)
+				data = ((data & 0xff) << 8) | ((data >> 8) & 0xff);
+			VDP_VRAM_BYTE(vdp_address & ~1) = data >> 8;
+			VDP_VRAM_BYTE(vdp_address |  1) = data;
 			break;
 
 		case 0x05:		/* VSRAM write */
@@ -475,10 +475,10 @@ static void vdp_data_w(int data, int mem_mask)
 				segac2_update_display(cpu_getscanline());
 
 			/* write to VSRAM */
-			if (ACCESSING_MSB)
-				VDP_VSRAM_BYTE(vdp_address & ~1) = data >> 8;
-			if (ACCESSING_LSB)
-				VDP_VSRAM_BYTE(vdp_address |  1) = data;
+			if (vdp_address & 1)
+				data = ((data & 0xff) << 8) | ((data >> 8) & 0xff);
+			VDP_VSRAM_BYTE(vdp_address & ~1) = data >> 8;
+			VDP_VSRAM_BYTE(vdp_address |  1) = data;
 			break;
 
 		default:		/* Illegal write attempt */
@@ -546,7 +546,7 @@ static int vdp_control_r(void)
 }
 
 
-static void vdp_control_w(int data, int mem_mask)
+static void vdp_control_w(int data)
 {
 	/* case 1: we're not expecting the 2nd half of a command */
 	if (!vdp_cmdpart)
@@ -696,12 +696,12 @@ static void vdp_dma_68k(void)
 
 	/* length of 0 means 64k likely */
 	if (!length)
-		length = 0x10000;
+		length = 0xffff;
 
 	/* handle the DMA */
 	for (count = 0; count < length; count++)
 	{
-		vdp_data_w(cpu_readmem24bew_word(source), 0);
+		vdp_data_w(cpu_readmem24bew_word(source));
 		source += 2;
 	}
 }
@@ -715,7 +715,7 @@ static void vdp_dma_copy(void)
 
 	/* length of 0 means 64k likely */
 	if (!length)
-		length = 0x10000;
+		length = 0xffff;
 
 	/* handle the DMA */
 	for (count = 0; count < length; count++)
@@ -733,12 +733,12 @@ static void vdp_dma_fill(int data)
 
 	/* length of 0 means 64k likely */
 	if (!length)
-		length = 0x10000;
+		length = 0xffff;
 
 	/* handle the fill */
 	VDP_VRAM_BYTE(vdp_address) = data;
 	data >>= 8;
-	for(count = 0; count <= length; count++)
+	for(count = 0; count < length; count++)
 	{
 		VDP_VRAM_BYTE(vdp_address ^ 1) = data;
 		vdp_address += segac2_vdp_regs[15];

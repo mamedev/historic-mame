@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#ifndef INCLUDE_DRAW_CORE
 
 /*************************************
  *
@@ -32,6 +31,7 @@ extern UINT8 balsente_shooter_y;
 static UINT8 *local_videoram;
 static UINT8 *scanline_dirty;
 static UINT8 *scanline_palette;
+static UINT8 *sprite_data;
 
 static UINT8 last_scanline_palette;
 static UINT8 screen_refresh_counter;
@@ -47,8 +47,6 @@ static UINT8 palettebank_vis;
 
 void balsente_vh_stop(void);
 
-static void update_screen_8(struct osd_bitmap *bitmap, int full_refresh);
-static void update_screen_16(struct osd_bitmap *bitmap, int full_refresh);
 
 
 /*************************************
@@ -92,6 +90,8 @@ int balsente_vh_start(void)
 	/* reset the scanline palette */
 	memset(scanline_palette, 0, 256);
 	last_scanline_palette = 0;
+
+	sprite_data = memory_region(REGION_GFX1);
 
 	return 0;
 }
@@ -224,6 +224,92 @@ WRITE_HANDLER( balsente_paletteram_w )
 
 /*************************************
  *
+ *	Sprite drawing
+ *
+ *************************************/
+
+static void draw_one_sprite(struct osd_bitmap *bitmap, UINT8 *sprite)
+{
+	int flags = sprite[0];
+	int image = sprite[1] | ((flags & 3) << 8);
+	int ypos = sprite[2] + 17;
+	int xpos = sprite[3];
+	UINT8 *src;
+	int x, y;
+
+	/* get a pointer to the source image */
+	src = &sprite_data[64 * image];
+	if (flags & 0x80) src += 4 * 15;
+
+	/* loop over y */
+	for (y = 0; y < 16; y++, ypos = (ypos + 1) & 255)
+	{
+		if (ypos >= 16 && ypos < 240)
+		{
+			UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
+			UINT8 *old = &local_videoram[ypos * 256 + xpos];
+			int currx = xpos;
+
+			/* mark this scanline dirty */
+			scanline_dirty[ypos] = 1;
+
+			/* standard case */
+			if (!(flags & 0x40))
+			{
+				/* loop over x */
+				for (x = 0; x < 4; x++, old += 2)
+				{
+					int ipixel = *src++;
+					int left = ipixel & 0xf0;
+					int right = (ipixel << 4) & 0xf0;
+
+					/* left pixel, combine with the background */
+					if (left && currx >= 0 && currx < 256)
+						plot_pixel(bitmap, currx, ypos, pens[left | old[0]]);
+					currx++;
+
+					/* right pixel, combine with the background */
+					if (right && currx >= 0 && currx < 256)
+						plot_pixel(bitmap, currx, ypos, pens[right | old[1]]);
+					currx++;
+				}
+			}
+
+			/* hflip case */
+			else
+			{
+				src += 4;
+
+				/* loop over x */
+				for (x = 0; x < 4; x++, old += 2)
+				{
+					int ipixel = *--src;
+					int left = (ipixel << 4) & 0xf0;
+					int right = ipixel & 0xf0;
+
+					/* left pixel, combine with the background */
+					if (left && currx >= 0 && currx < 256)
+						plot_pixel(bitmap, currx, ypos, pens[left | old[0]]);
+					currx++;
+
+					/* right pixel, combine with the background */
+					if (right && currx >= 0 && currx < 256)
+						plot_pixel(bitmap, currx, ypos, pens[right | old[1]]);
+					currx++;
+				}
+				src += 4;
+			}
+		}
+		else
+			src += 4;
+		if (flags & 0x80) src -= 2 * 4;
+	}
+}
+
+
+
+/*************************************
+ *
  *		Main screen refresh
  *
  *************************************/
@@ -257,11 +343,18 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (palette_recalc())
 		memset(scanline_dirty, 1, 256);
 
-	/* do the core redraw */
-	if (bitmap->depth == 8)
-		update_screen_8(bitmap, full_refresh);
-	else
-		update_screen_16(bitmap, full_refresh);
+	/* draw any dirty scanlines from the VRAM directly */
+	for (y = 0; y < 240; y++)
+		if (scanline_dirty[y] || full_refresh)
+		{
+			UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
+			draw_scanline8(bitmap, 0, y, 256, &local_videoram[y * 256], pens, -1);
+			scanline_dirty[y] = 0;
+		}
+
+	/* draw the sprite images */
+	for (i = 0; i < 40; i++)
+		draw_one_sprite(bitmap, &spriteram[(0xe0 + i * 4) & 0xff]);
 
 	/* draw a crosshair */
 	if (balsente_shooter)
@@ -284,187 +377,3 @@ void balsente_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 	}
 }
-
-
-/*************************************
- *
- *		Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC update_screen_8
-#define TYPE UINT8
-#include "balsente.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC update_screen_16
-#define TYPE UINT16
-#include "balsente.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *		Core refresh routine
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap, int full_refresh)
-{
-	int orientation = Machine->orientation;
-	int x, y, i;
-
-	/* draw any dirty scanlines from the VRAM directly */
-	for (y = 0; y < 240; y++)
-	{
-		UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
-		if (scanline_dirty[y] || full_refresh)
-		{
-			UINT8 *src = &local_videoram[y * 256];
-			TYPE *dst = (TYPE *)bitmap->line[y];
-			int xadv = 1;
-
-			/* adjust in case we're oddly oriented */
-			ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
-
-			/* redraw the scanline */
-			for (x = 0; x < 256; x++, dst += xadv)
-				*dst = pens[*src++];
-			scanline_dirty[y] = 0;
-		}
-	}
-
-	/* draw the sprite images */
-	for (i = 0; i < 40; i++)
-	{
-		UINT8 *sprite = spriteram + ((0xe0 + i * 4) & 0xff);
-		UINT8 *src;
-		int flags = sprite[0];
-		int image = sprite[1] | ((flags & 3) << 8);
-		int ypos = sprite[2] + 17;
-		int xpos = sprite[3];
-
-		/* get a pointer to the source image */
-		src = &memory_region(REGION_GFX1)[64 * image];
-		if (flags & 0x80) src += 4 * 15;
-
-		/* loop over y */
-		for (y = 0; y < 16; y++, ypos = (ypos + 1) & 255)
-		{
-			if (ypos >= 16 && ypos < 240)
-			{
-				UINT16 *pens = &Machine->pens[scanline_palette[y] * 256];
-				UINT8 *old = &local_videoram[ypos * 256 + xpos];
-				TYPE *dst = &((TYPE *)bitmap->line[ypos])[xpos];
-				int currx = xpos, xadv = 1;
-
-				/* adjust in case we're oddly oriented */
-				ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xpos, ypos, xadv);
-
-				/* mark this scanline dirty */
-				scanline_dirty[ypos] = 1;
-
-				/* standard case */
-				if (!(flags & 0x40))
-				{
-					/* loop over x */
-					for (x = 0; x < 4; x++, dst += xadv * 2, old += 2)
-					{
-						int ipixel = *src++;
-						int left = ipixel & 0xf0;
-						int right = (ipixel << 4) & 0xf0;
-						int pen;
-
-						/* left pixel */
-						if (left && currx >= 0 && currx < 256)
-						{
-							/* combine with the background */
-							pen = left | old[0];
-							dst[0] = pens[pen];
-						}
-						currx++;
-
-						/* right pixel */
-						if (right && currx >= 0 && currx < 256)
-						{
-							/* combine with the background */
-							pen = right | old[1];
-							dst[xadv] = pens[pen];
-						}
-						currx++;
-					}
-				}
-
-				/* hflip case */
-				else
-				{
-					src += 4;
-
-					/* loop over x */
-					for (x = 0; x < 4; x++, dst += xadv * 2, old += 2)
-					{
-						int ipixel = *--src;
-						int left = (ipixel << 4) & 0xf0;
-						int right = ipixel & 0xf0;
-						int pen;
-
-						/* left pixel */
-						if (left && currx >= 0 && currx < 256)
-						{
-							/* combine with the background */
-							pen = left | old[0];
-							dst[0] = pens[pen];
-						}
-						currx++;
-
-						/* right pixel */
-						if (right && currx >= 0 && currx < 256)
-						{
-							/* combine with the background */
-							pen = right | old[1];
-							dst[xadv] = pens[pen];
-						}
-						currx++;
-					}
-					src += 4;
-				}
-			}
-			else
-				src += 4;
-			if (flags & 0x80) src -= 2 * 4;
-		}
-	}
-}
-
-#endif

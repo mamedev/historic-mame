@@ -35,6 +35,10 @@
 #define LATCHMASK_MSB		0xff00
 #define LATCHMASK_LSB		0x00ff
 
+/* base granularity for all playfield gfx */
+#define ATARIPF_BASE_GRANULARITY_SHIFT	3
+#define ATARIPF_BASE_GRANULARITY		(1 << ATARIPF_BASE_GRANULARITY_SHIFT)
+
 
 
 /*##########################################################################
@@ -169,11 +173,14 @@ WRITE16_HANDLER( ataripf_0_latched_w );
 WRITE16_HANDLER( ataripf_0_upper_msb_w );
 WRITE16_HANDLER( ataripf_0_upper_lsb_w );
 WRITE16_HANDLER( ataripf_0_large_w );
+WRITE16_HANDLER( ataripf_0_split_w );
 
 WRITE16_HANDLER( ataripf_1_simple_w );
 WRITE16_HANDLER( ataripf_1_latched_w );
 
 WRITE16_HANDLER( ataripf_01_upper_lsb_msb_w );
+
+WRITE32_HANDLER( ataripf_0_split32_w );
 
 
 
@@ -185,6 +192,8 @@ extern data16_t *ataripf_0_base;
 extern data16_t *ataripf_0_upper;
 extern data16_t *ataripf_1_base;
 extern data16_t *ataripf_1_upper;
+
+extern data32_t *ataripf_0_base32;
 
 
 #endif

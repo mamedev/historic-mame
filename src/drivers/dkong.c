@@ -334,12 +334,6 @@ static MEMORY_WRITE_START( dkong_writemem )
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 MEMORY_END
 
-READ_HANDLER( herbiedk_iack_r )
-{
-	s2650_set_sense(1);
-    return 0;
-}
-
 static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_ROM },
@@ -348,7 +342,7 @@ static MEMORY_READ_START( hunchbkd_readmem )
 	{ 0x1400, 0x1400, input_port_0_r },		/* IN0 */
 	{ 0x1480, 0x1480, input_port_1_r },		/* IN1 */
 	{ 0x1500, 0x1500, input_port_2_r },		/* IN2/DSW2 */
-    { 0x1507, 0x1507, herbiedk_iack_r },  	/* Clear Int */
+//  { 0x1507, 0x1507, herbiedk_iack_r },  	/* Clear Int */
 	{ 0x1580, 0x1580, input_port_3_r },		/* DSW1 */
 	{ 0x1600, 0x1bff, MRA_RAM },			/* video RAM */
 	{ 0x1c00, 0x1fff, MRA_RAM },
@@ -420,10 +414,12 @@ PORT_END
 static PORT_READ_START( hunchbkd_readport )
 	{ 0x00, 0x00, hunchbkd_port0_r },
 	{ 0x01, 0x01, hunchbkd_port1_r },
+    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
 PORT_END
 
 static PORT_READ_START( herbiedk_readport )
 	{ 0x01, 0x01, herbiedk_port1_r },
+    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
 PORT_END
 
 static MEMORY_READ_START( readmem_sound )
@@ -736,6 +732,9 @@ INPUT_PORTS_START( hunchbdk )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+    PORT_START /* Sense */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( herbiedk )
@@ -796,6 +795,9 @@ INPUT_PORTS_START( herbiedk )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+    PORT_START /* Sense */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
 
@@ -1051,12 +1053,6 @@ static const struct MachineDriver machine_driver_hunchbkd =
 	}
 };
 
-int herbiedk_interrupt(void)
-{
-	s2650_set_sense(0);
-	return ignore_interrupt();
-}
-
 static const struct MachineDriver machine_driver_herbiedk =
 {
 	/* basic machine hardware */
@@ -1065,7 +1061,7 @@ static const struct MachineDriver machine_driver_herbiedk =
 			CPU_S2650,
 			3072000,
 			hunchbkd_readmem,hunchbkd_writemem,herbiedk_readport,hunchbkd_writeport,
-			herbiedk_interrupt,1
+			ignore_interrupt,1
 		},
         {
 			CPU_I8035 | CPU_AUDIO_CPU,
@@ -1074,7 +1070,7 @@ static const struct MachineDriver machine_driver_herbiedk =
 			ignore_interrupt,1
 		}
     },
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 1000,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1598,7 +1594,6 @@ ROM_START( herocast )
 ROM_END
 
 
-
 static void init_herocast(void)
 {
 	int A;
@@ -1631,17 +1626,17 @@ static void init_radarscp(void)
 
 
 
-GAMEX(1980, radarscp, 0,       radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND )
-GAME( 1981, dkong,    0,       dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US)" )
-GAME( 1981, dkongjp,  dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)" )
-GAME( 1981, dkongjpo, dkong,   dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)" )
-GAME( 1982, dkongjr,  0,       dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (US)" )
-GAME( 1982, dkngjrjp, dkongjr, dkongjr,  dkong,    0,        ROT90, "bootleg?", "Donkey Kong Jr. (Original Japanese)" )
-GAME( 1982, dkjrjp,   dkongjr, dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Junior (Japan)" )
-GAME( 1982, dkjrbl,   dkongjr, dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (bootleg?)" )
-GAME( 1983, dkong3,   0,       dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
-GAME( 1983, dkong3j,  dkong3,  dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
+GAMEX(1980, radarscp, 0,        radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND )
+GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US)" )
+GAME( 1981, dkongjp,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)" )
+GAME( 1981, dkongjpo, dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)" )
+GAME( 1982, dkongjr,  0,        dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (US)" )
+GAME( 1982, dkngjrjp, dkongjr,  dkongjr,  dkong,    0,        ROT90, "bootleg?", "Donkey Kong Jr. (Original Japanese)" )
+GAME( 1982, dkjrjp,   dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Junior (Japan)" )
+GAME( 1982, dkjrbl,   dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (bootleg?)" )
+GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)" )
+GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)" )
+GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "Seatongrove Ltd", "Herbie at the Olympics (DK conversion)")
 
-GAMEX(1983, hunchbkd, 0,       hunchbkd, hunchbdk, 0,        ROT90, "Century", "Hunchback (Donkey Kong conversion)", GAME_WRONG_COLORS )
-GAMEX(1984, herbiedk, 0,       herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)", GAME_WRONG_COLORS )	/*"Seatongrove UK Ltd"*/
-GAMEX(1984, herocast, 0,       dkong,    dkong,    herocast, ROT90, "Seatongrove (Crown license)", "herocast", GAME_NOT_WORKING )
+GAMEX(1983, hunchbkd, hunchbak, hunchbkd, hunchbdk, 0,        ROT90, "Century Electronics", "Hunchback (DK conversion)", GAME_WRONG_COLORS )
+GAMEX(1984, herocast, 0,        dkong,    dkong,    herocast, ROT90, "Seatongrove Ltd (Crown license)", "herocast", GAME_NOT_WORKING )

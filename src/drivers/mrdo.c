@@ -1,32 +1,14 @@
 /***************************************************************************
 
-Mr Do! memory map (preliminary)
+Mr Do!
 
 driver by Nicola Salmoria
 
-0000-7fff ROM
-8000-83ff color RAM 1
-8400-87ff video RAM 1
-8800-8bff color RAM 2
-8c00-8fff video RAM 2
-e000-efff RAM
 
-memory mapped ports:
-
-read:
-9803      SECRE 1/6-J2-11
-a000      IN0
-a001      IN1
-a002      DSW1
-a003      DSW2
-
-write:
-9000-90ff sprites, 64 groups of 4 bytes.
-9800      flip (bit 0) playfield priority selector? (bits 1-3)
-9801      sound port 1
-9802      sound port 2
-f000      playfield 0 Y scroll position (not used by Mr. Do!)
-f800      playfield 0 X scroll position
+Video clock: XTAL = 20 MHz
+Horizontal video frequency: HSYNC = XTAL/4/312 = 16.02564103 kHz
+Video frequency: VSYNC = HSYNC/262 = 61.1665688 Hz
+VBlank duration: 1/VSYNC * (70/262) = 4368 us
 
 ***************************************************************************/
 
@@ -209,12 +191,12 @@ static const struct MachineDriver machine_driver_mrdo =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 MHz */
+			8000000/2,	/* 4 MHz */
 			readmem,writemem,0,0,
 			interrupt,1
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	5000000.0/312/262, 4368,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 

@@ -23,6 +23,17 @@
  *
  *****************************************************************************/
 
+/*
+  based on the nmos 6502
+  illegal opcodes NOT added yet!
+  (no program to test, all illegal opcodes not using adc/sbc should
+  be the same as in nmos6502/6510!?)
+
+  b flag handling might be changed, 
+  although only nmos series b-flag handling is quite sure
+*/
+
+
 #undef	OP
 #define OP(nn) INLINE void n2a03_##nn(void)
 
@@ -252,7 +263,7 @@ OP(f9) { int tmp; m6502_ICount -= 4; RD_ABY; SBC_NES;	  } /* 4 SBC ABY */
 #define n2a03_0c m6502_0c									/* 2 ILL */
 #define n2a03_2c m6502_2c									/* 4 BIT ABS */
 #define n2a03_4c m6502_4c									/* 3 JMP ABS */
-#define n2a03_6c m65c02_6c									/* 5 JMP IND */
+#define n2a03_6c m6502_6c									/* 5 JMP IND */
 #define n2a03_8c m6502_8c									/* 4 STY ABS */
 #define n2a03_ac m6502_ac									/* 4 LDY ABS */
 #define n2a03_cc m6502_cc									/* 4 CPY ABS */

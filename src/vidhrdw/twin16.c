@@ -13,18 +13,18 @@
 
 #include "vidhrdw/generic.h"
 
-extern UINT16 twin16_custom_vidhrdw;
-extern UINT16 *twin16_gfx_rom;
-extern unsigned char *twin16_fixram;
-extern unsigned char *twin16_sprite_gfx_ram;
-extern unsigned char *twin16_tile_gfx_ram;
+extern data16_t twin16_custom_vidhrdw;
+extern data16_t *twin16_gfx_rom;
+extern data16_t *twin16_fixram;
+extern data16_t *twin16_sprite_gfx_ram;
+extern data16_t *twin16_tile_gfx_ram;
 extern void twin16_gfx_decode( void );
 extern int twin16_spriteram_process_enable( void );
 
 static int need_process_spriteram;
-static UINT16 gfx_bank;
-static UINT16 scrollx[3], scrolly[3];
-static UINT16 video_register;
+static data16_t gfx_bank;
+static data16_t scrollx[3], scrolly[3];
+static data16_t video_register;
 
 enum {
 	TWIN16_SCREEN_FLIPY		= 0x01,	/* ? breaks devils world text layer */
@@ -43,22 +43,22 @@ void twin16_vh_stop( void ){
 
 /******************************************************************************************/
 
-WRITE_HANDLER( fround_gfx_bank_w ){
-	gfx_bank = COMBINE_WORD(gfx_bank,data);
+WRITE16_HANDLER( fround_gfx_bank_w ){
+	COMBINE_DATA(&gfx_bank);
 }
 
-WRITE_HANDLER( twin16_video_register_w ){
+WRITE16_HANDLER( twin16_video_register_w ){
 	switch( offset ){
-		case 0x0: COMBINE_WORD_MEM( &video_register, data ); break;
-		case 0x2: COMBINE_WORD_MEM( &scrollx[0], data ); break;
-		case 0x4: COMBINE_WORD_MEM( &scrolly[0], data ); break;
-		case 0x6: COMBINE_WORD_MEM( &scrollx[1], data ); break;
-		case 0x8: COMBINE_WORD_MEM( &scrolly[1], data ); break;
-		case 0xa: COMBINE_WORD_MEM( &scrollx[2], data ); break;
-		case 0xc: COMBINE_WORD_MEM( &scrolly[2], data ); break;
+		case 0x0: COMBINE_DATA( &video_register ); break;
+		case 0x1: COMBINE_DATA( &scrollx[0] ); break;
+		case 0x2: COMBINE_DATA( &scrolly[0] ); break;
+		case 0x3: COMBINE_DATA( &scrollx[1] ); break;
+		case 0x4: COMBINE_DATA( &scrolly[1] ); break;
+		case 0x5: COMBINE_DATA( &scrollx[2] ); break;
+		case 0x6: COMBINE_DATA( &scrolly[2] ); break;
 
-		case 0xe:
-		logerror("unknown video_register write:%d", data );
+		case 0x7:
+			logerror("unknown video_register write:%d", data );
 		break;
 	}
 }
@@ -67,7 +67,7 @@ WRITE_HANDLER( twin16_video_register_w ){
 
 static void draw_text( struct osd_bitmap *bitmap ){
 	const struct rectangle *clip = &Machine->visible_area;
-	const UINT16 *source = (UINT16 *)twin16_fixram;
+	const data16_t *source = twin16_fixram;
 	int i;
 
 	int tile_flipx = 0;
@@ -169,22 +169,22 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 }
 
 void twin16_spriteram_process( void ){
-	UINT16 dx = scrollx[0];
-	UINT16 dy = scrolly[0];
+	data16_t dx = scrollx[0];
+	data16_t dy = scrolly[0];
 
-	const UINT16 *source = (const UINT16 *)&spriteram[0x0000];
-	const UINT16 *finish = (const UINT16 *)&spriteram[0x3000];
+	const data16_t *source = &spriteram16[0x0000];
+	const data16_t *finish = &spriteram16[0x1800];
 
-	memset( &spriteram[0x3000], 0, 0x800 );
+	memset( &spriteram16[0x1800], 0, 0x800 );
 	while( source<finish ){
-		UINT16 priority = source[0];
+		data16_t priority = source[0];
 		if( priority & 0x8000 ){
-			UINT16 *dest = (UINT16 *)&spriteram[0x3000 + 8*(priority&0xff)];
+			data16_t *dest = &spriteram16[0x1800 + 4*(priority&0xff)];
 
 			INT32 xpos = (0x10000*source[4])|source[5];
 			INT32 ypos = (0x10000*source[6])|source[7];
 
-			UINT16 attributes = source[2]&0x03ff; /* scale,size,color */
+			data16_t attributes = source[2]&0x03ff; /* scale,size,color */
 			if( priority & 0x0200 ) attributes |= 0x4000;
 			attributes |= 0x8000;
 
@@ -221,17 +221,17 @@ void twin16_spriteram_process( void ){
 
 static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
 	int count = 0;
-	const UINT16 *source = 0x1800+(UINT16 *)spriteram;
-	const UINT16 *finish = source + 0x800;
+	const data16_t *source = 0x1800+spriteram16;
+	const data16_t *finish = source + 0x800;
 	pri = pri?0x4000:0x0000;
 
 	while( source<finish ){
-		UINT16 attributes = source[3];
-		UINT16 code = source[0];
+		data16_t attributes = source[3];
+		data16_t code = source[0];
 
 		if( code!=0xffff && (attributes&0x8000) && (attributes&0x4000)==pri ){
-			int xpos = (INT16)source[1];
-			int ypos = (INT16)source[2];
+			int xpos = source[1];
+			int ypos = source[2];
 
 			const UINT16 *pal_data = Machine->pens+((attributes&0xf)+0x10)*16;
 			int height	= 16<<((attributes>>6)&0x3);
@@ -259,7 +259,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
 					break;
 
 					case 3:
-					pen_data = (UINT16 *)twin16_sprite_gfx_ram;
+					pen_data = twin16_sprite_gfx_ram;
 					break;
 				}
 				code &= 0xfff;
@@ -298,8 +298,8 @@ static void show_video_register( struct osd_bitmap *bitmap ){
 }
 
 static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
-	const UINT16 *gfx_base;
-	const UINT16 *source = (UINT16 *)videoram;
+	const data16_t *gfx_base;
+	const data16_t *source = videoram16;
 	int i, y1, y2, yd;
 	int bank_table[4];
 	int dx, dy, palette;
@@ -327,7 +327,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 		bank_table[0] = (gfx_bank>>(4*0))&0xf;
 	}
 	else {
-		gfx_base = (UINT16 *)twin16_tile_gfx_ram;
+		gfx_base = twin16_tile_gfx_ram;
 		bank_table[0] = 0;
 		bank_table[1] = 1;
 		bank_table[2] = 2;
@@ -371,13 +371,13 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 				---xx-----------	tile bank
 				-----xxxxxxxxxxx	tile number
 			*/
-			const UINT16 *gfx_data = gfx_base + (code&0x7ff)*16 + bank_table[(code>>11)&0x3]*0x8000;
+			const data16_t *gfx_data = gfx_base + (code&0x7ff)*16 + bank_table[(code>>11)&0x3]*0x8000;
 			int color = (code>>13);
 			UINT16 *pal_data = Machine->pens + 16*(0x20+color+8*palette);
 
 			{
 				int y;
-				UINT16 data;
+				data16_t data;
 				int pen;
 
 				if( tile_flipx )
@@ -448,7 +448,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
 								data = *gfx_data++;
 								if( data )
 								{
@@ -477,7 +477,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
 								data = *gfx_data++;
 								*dest++ = pal_data[(data>>4*3)&0xf];
 								*dest++ = pal_data[(data>>4*2)&0xf];
@@ -514,7 +514,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+								data16_t *dest = ((data16_t *)bitmap->line[ypos+y])+xpos;
 								data = *gfx_data++;
 								if( data )
 								{
@@ -564,13 +564,13 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 }
 
 static void mark_used_colors( void ){
-	const UINT16 *source, *finish;
+	const data16_t *source, *finish;
 	unsigned char used[0x40], *used_ptr;
 	memset( used, 0, 0x40 );
 
 	/* text layer */
 	used_ptr = &used[0x00];
-	source = (UINT16 *)twin16_fixram;
+	source = twin16_fixram;
 	finish = source + 0x1000;
 	while( source<finish ){
 		int code = *source++;
@@ -579,18 +579,18 @@ static void mark_used_colors( void ){
 
 	/* sprites */
 	used_ptr = &used[0x10];
-	source = 0x1800+(UINT16 *)spriteram;
+	source = 0x1800+spriteram16;
 	finish = source + 0x800;
 	while( source<finish ){
-		UINT16 attributes = source[3];
-		UINT16 code = source[0];
+		data16_t attributes = source[3];
+		data16_t code = source[0];
 		if( code!=0xffff && (attributes&0x8000) ) used_ptr[attributes&0xf] = 1;
 		source++;
 	}
 
 	/* plane#0 */
 	used_ptr = &used[0x20];
-	source = (UINT16 *)videoram;
+	source = videoram16;
 	finish = source+0x1000;
 	while( source<finish ){
 		int code = *source++;
@@ -599,7 +599,7 @@ static void mark_used_colors( void ){
 
 	/* plane#1 */
 	used_ptr = &used[0x28];
-	source = 0x1000+(UINT16 *)videoram;
+	source = 0x1000+videoram16;
 	finish = source+0x1000;
 	while( source<finish ){
 		int code = *source++;

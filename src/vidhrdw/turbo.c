@@ -6,8 +6,6 @@
 
 *************************************************************************/
 
-#ifndef DRAW_CORE_INCLUDE
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -43,20 +41,10 @@ struct sprite_params_data
 static struct sprite_params_data sprite_params[16];
 static UINT32 *sprite_expanded_data;
 
-/* orientation */
-static const struct rectangle game_clip = { 0, VIEW_WIDTH - 1, 64, 64 + VIEW_HEIGHT - 1 };
-static struct rectangle adjusted_clip;
-static int startx, starty, deltax, deltay;
-
 /* misc other stuff */
 static UINT16 *back_expanded_data;
 static UINT16 *road_expanded_palette;
 static UINT8 drew_frame;
-
-/* prototypes */
-static void draw_everything_core_8(struct osd_bitmap *bitmap);
-static void draw_everything_core_16(struct osd_bitmap *bitmap);
-static void draw_minimal(struct osd_bitmap *bitmap);
 
 
 /***************************************************************************
@@ -227,37 +215,6 @@ int turbo_vh_start(void)
 	bdst = road_expanded_palette;
 	for (i = 0; i < 0x20; i++, src++)
 		*bdst++ = src[0] | (src[0x20] << 8);
-
-	/* set the default drawing parameters */
-	startx = game_clip.min_x;
-	starty = game_clip.min_y;
-	deltax = deltay = 1;
-	adjusted_clip = game_clip;
-
-	/* adjust our parameters for the specified orientation */
-	if (Machine->orientation)
-	{
-		int temp;
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			temp = startx; startx = starty; starty = temp;
-			temp = adjusted_clip.min_x; adjusted_clip.min_x = adjusted_clip.min_y; adjusted_clip.min_y = temp;
-			temp = adjusted_clip.max_x; adjusted_clip.max_x = adjusted_clip.max_y; adjusted_clip.max_y = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			startx = adjusted_clip.max_x;
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY)) deltax = -deltax;
-			else deltay = -deltay;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			starty = adjusted_clip.max_y;
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY)) deltay = -deltay;
-			else deltax = -deltax;
-		}
-	}
 
 	/* other stuff */
 	drew_frame = 0;
@@ -473,110 +430,29 @@ static void draw_scores(struct osd_bitmap *bitmap)
 
 /***************************************************************************
 
-  Master refresh routine
+	Core drawing routine
 
 ***************************************************************************/
 
-void turbo_vh_eof(void)
+static void draw_everything(struct osd_bitmap *bitmap, int yoffs)
 {
-	/* only do collision checking if we didn't draw */
-	if (!drew_frame)
-	{
-		update_sprite_info();
-		draw_minimal(Machine->scrbitmap);
-	}
-	drew_frame = 0;
-}
-
-void turbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	/* update the sprite data */
-	update_sprite_info();
-
-	/* perform the actual drawing */
-	if (bitmap->depth == 8)
-		draw_everything_core_8(bitmap);
-	else
-		draw_everything_core_16(bitmap);
-
-	/* draw the LEDs for the scores */
-	draw_scores(bitmap);
-
-	/* indicate that we drew this frame, so that the eof callback doesn't bother doing anything */
-	drew_frame = 1;
-}
-
-
-/***************************************************************************
-
-  Road drawing generators
-
-***************************************************************************/
-
-#define DRAW_CORE_INCLUDE
-
-#define FULL_DRAW	1
-
-#define DRAW_FUNC	draw_everything_core_8
-#define TYPE		UINT8
-#include "turbo.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC	draw_everything_core_16
-#define TYPE		UINT16
-#include "turbo.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#undef FULL_DRAW
-#define FULL_DRAW	0
-
-#define DRAW_FUNC	draw_minimal
-#define TYPE		UINT8
-#include "turbo.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#undef FULL_DRAW
-
-#else
-
-/***************************************************************************
-
-  Road drawing routine
-
-***************************************************************************/
-
-static void DRAW_FUNC(struct osd_bitmap *bitmap)
-{
-	TYPE *base = &((TYPE *)bitmap->line[starty])[startx];
-	UINT32 sprite_buffer[VIEW_WIDTH + 256];
-
 	UINT8 *overall_priority_base = &overall_priority[(turbo_fbpla & 8) << 6];
 	UINT8 *sprite_priority_base = &sprite_priority[(turbo_fbpla & 7) << 7];
 	UINT8 *road_gfxdata_base = &road_gfxdata[(turbo_opc << 5) & 0x7e0];
 	UINT16 *road_palette_base = &road_expanded_palette[(turbo_fbcol & 1) << 4];
-
-	int dx = deltax, dy = deltay, rowsize = (bitmap->line[1] - bitmap->line[0]) * 8 / bitmap->depth;
 	UINT16 *colortable;
 	int x, y, i;
-
-	/* expand the appropriate delta */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		dx *= rowsize;
-	else
-		dy *= rowsize;
 
 	/* determine the color offset */
 	colortable = &Machine->pens[(turbo_fbcol & 6) << 6];
 
 	/* loop over rows */
-	for (y = 4; y < VIEW_HEIGHT - 4; y++, base += dy)
+	for (y = 4; y < VIEW_HEIGHT - 4; y++)
 	{
 		int sel, coch, babit, slipar_acciar, area, area1, area2, area3, area4, area5, road = 0;
+		UINT32 sprite_buffer[VIEW_WIDTH + 256];
 		UINT32 *sprite_data = sprite_buffer;
-		TYPE *dest = base;
+		UINT8 scanline[VIEW_WIDTH];
 
 		/* compute the Y sum between opa and the current scanline (p. 141) */
 		int va = (y + turbo_opa) & 0xff;
@@ -589,7 +465,6 @@ static void DRAW_FUNC(struct osd_bitmap *bitmap)
 		draw_road_sprites(sprite_buffer, y);
 
 		/* loop over 8-pixel chunks */
-		dest += dx * 8;
 		sprite_data += 8;
 		for (x = 8; x < VIEW_WIDTH; x += 8)
 		{
@@ -598,7 +473,7 @@ static void DRAW_FUNC(struct osd_bitmap *bitmap)
 			UINT16 backbits_buffer = back_expanded_data[(back_data << 3) | (y & 7)];
 
 			/* loop over columns */
-			for (i = 0; i < 8; i++, dest += dx)
+			for (i = 0; i < 8; i++)
 			{
 				UINT32 sprite = *sprite_data++;
 
@@ -648,7 +523,7 @@ static void DRAW_FUNC(struct osd_bitmap *bitmap)
 				turbo_collision |= collision_map[((sprite >> 24) & 7) | (slipar_acciar >> 1)];
 
 				/* we only need to continue if we're actually drawing */
-				if (FULL_DRAW)
+				if (bitmap)
 				{
 					int bacol, red, grn, blu, priority, backbits, mx;
 
@@ -676,11 +551,46 @@ static void DRAW_FUNC(struct osd_bitmap *bitmap)
 					red = (red >> mx) & 0x10;
 					grn = (grn >> mx) & 0x20;
 					blu = (blu >> mx) & 0x40;
-					*dest = colortable[mx | red | grn | blu];
+					scanline[x + i] = mx | red | grn | blu;
 				}
 			}
 		}
+
+		/* render the scanline */
+		if (bitmap)
+			draw_scanline8(bitmap, 8, y + yoffs, VIEW_WIDTH - 8, &scanline[8], colortable, -1);
 	}
 }
 
-#endif
+
+/***************************************************************************
+
+  Master refresh routine
+
+***************************************************************************/
+
+void turbo_vh_eof(void)
+{
+	/* only do collision checking if we didn't draw */
+	if (!drew_frame)
+	{
+		update_sprite_info();
+		draw_everything(NULL, 0);
+	}
+	drew_frame = 0;
+}
+
+void turbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	/* update the sprite data */
+	update_sprite_info();
+
+	/* perform the actual drawing */
+	draw_everything(bitmap, 64);
+
+	/* draw the LEDs for the scores */
+	draw_scores(bitmap);
+
+	/* indicate that we drew this frame, so that the eof callback doesn't bother doing anything */
+	drew_frame = 1;
+}

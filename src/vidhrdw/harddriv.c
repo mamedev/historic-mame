@@ -93,14 +93,14 @@ int harddriv_vh_start(void)
 	shiftreg_enable = 0;
 	shiftreg_count = 512*8 >> hdgsp_multisync;
 	memset(&curr_state, 0, sizeof(curr_state));
-	
+
 	gfx_update_index = 0;
-	
+
 	/* allocate the mask table */
 	mask_table = malloc(sizeof(UINT32) * 4 * 65536);
 	if (!mask_table)
 		return 1;
-	
+
 	/* fill in the mask table */
 	destmask = mask_table;
 	for (i = 0; i < 65536; i++)
@@ -135,14 +135,14 @@ int harddriv_vh_start(void)
 			if (i & 0x0040) mask |= MASK(2);
 			if (i & 0x0080) mask |= MASK(3);
 			*destmask++ = mask;
-		
+
 			mask = 0;
 			if (i & 0x0100) mask |= MASK(0);
 			if (i & 0x0200) mask |= MASK(1);
 			if (i & 0x0400) mask |= MASK(2);
 			if (i & 0x0800) mask |= MASK(3);
 			*destmask++ = mask;
-		
+
 			mask = 0;
 			if (i & 0x1000) mask |= MASK(0);
 			if (i & 0x2000) mask |= MASK(1);
@@ -150,10 +150,10 @@ int harddriv_vh_start(void)
 			if (i & 0x8000) mask |= MASK(3);
 			*destmask++ = mask;
 		}
-	
+
 	/* init VRAM pointers */
 	vram_mask = hdgsp_vram_size - 1;
-	
+
 	return 0;
 }
 
@@ -182,7 +182,7 @@ INLINE struct gfx_update_entry *init_gfx_update(int scanline)
 		entry = &gfx_update_list[gfx_update_index - 1];
 	else
 		entry = &gfx_update_list[gfx_update_index++];
-	
+
 	/* set the scanline while we're here */
 	*entry = curr_state;
 	entry->scanline = scanline;
@@ -259,7 +259,7 @@ void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 {
 	struct gfx_update_entry *entry;
-	
+
 	/* update the screen to the current scanline */
 	entry = init_gfx_update(scanline);
 	entry->offset = curr_state.offset = offs >> hdgsp_multisync;
@@ -277,11 +277,11 @@ void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 static void update_palette_bank(int newbank)
 {
 	struct gfx_update_entry *entry;
-	
+
 	/* bail if nothing new */
 	if (newbank == curr_state.palettebank)
 		return;
-	
+
 	/* update with the current palette */
 	entry = init_gfx_update(cpu_getscanline());
 	entry->palettebank = curr_state.palettebank = newbank;
@@ -305,7 +305,7 @@ WRITE16_HANDLER( hdgsp_control_lo_w )
 {
 	int oldword = hdgsp_control_lo[offset];
 	int newword;
-	
+
 	COMBINE_DATA(&hdgsp_control_lo[offset]);
 	newword = hdgsp_control_lo[offset];
 
@@ -320,14 +320,14 @@ WRITE16_HANDLER( hdgsp_control_lo_w )
 			case 0xffc05700:
 				harddriv_fast_draw();
 				break;
-				
+
 			case 0xfff45360:
 				stunrun_fast_draw();
 				break;
 		}
 /*		logerror("Color @ %08X\n", cpu_get_pc());*/
 	}
-	
+
 	if (oldword != newword && offset != 0)
 		logerror("GSP:hdgsp_control_lo(%X)=%04X\n", offset, newword);
 }
@@ -353,7 +353,7 @@ WRITE16_HANDLER( hdgsp_control_hi_w )
 
 	int oldword = hdgsp_control_hi[offset];
 	int newword;
-	
+
 	COMBINE_DATA(&hdgsp_control_hi[offset]);
 	newword = hdgsp_control_hi[offset];
 
@@ -362,7 +362,7 @@ WRITE16_HANDLER( hdgsp_control_hi_w )
 		case 0x00:
 			shiftreg_enable = val;
 			break;
-		
+
 		case 0x01:
 			data &= 15;
 			if (curr_state.finescroll != data)
@@ -371,20 +371,20 @@ WRITE16_HANDLER( hdgsp_control_hi_w )
 				entry->finescroll = curr_state.finescroll = data;
 			}
 			break;
-			
+
 		case 0x02:
 			update_palette_bank((curr_state.palettebank & ~1) | val);
 			break;
-		
+
 		case 0x03:
 			update_palette_bank((curr_state.palettebank & ~2) | (val << 1));
 			break;
-		
+
 		case 0x04:
 			if (Machine->drv->total_colors >= 256 * 8)
 				update_palette_bank((curr_state.palettebank & ~4) | (val << 2));
 			break;
-		
+
 		default:
 			if (oldword != newword)
 				logerror("GSP:video_control_hi(%X)=%04X\n", offset / 2, newword);
@@ -417,23 +417,23 @@ WRITE16_HANDLER( hdgsp_vram_1bpp_w )
 		UINT32 *mask = &mask_table[newword * 4];
 		UINT32 color = hdgsp_control_lo[0] & 0xff;
 		UINT32 curmask;
-		
+
 		color |= color << 8;
 		color |= color << 16;
-		
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
-	
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
-	
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
-	
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
 	}
@@ -451,15 +451,15 @@ WRITE16_HANDLER( hdgsp_vram_2bpp_w )
 		UINT32 *mask = &mask_table[newword * 2];
 		UINT32 color = hdgsp_control_lo[0] & 0xff;
 		UINT32 curmask;
-		
+
 		color |= color << 8;
 		color |= color << 16;
-		
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
-	
-		curmask = *mask++;		
+
+		curmask = *mask++;
 		*dest = (*dest & ~curmask) | (color & curmask);
 		dest++;
 	}
@@ -565,7 +565,7 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	UINT8 palettes_used[8];
 	UINT32 curr_offset = 0;
 	int i;
-	
+
 	/* mark any pens used and recalc the palette */
 	palette_init_used_colors();
 	palettes_used[0] = palettes_used[1] = palettes_used[2] = palettes_used[3] = 0;
@@ -576,7 +576,7 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (palettes_used[i])
 			memset(&palette_used_colors[i * 256], PALETTE_COLOR_USED, 256);
 	palette_recalc();
-	
+
 	/* make a final entry in the list */
 	init_gfx_update(Machine->visible_area.max_y);
 
@@ -587,13 +587,13 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int x, y, width = Machine->drv->screen_width;
 		int sy = draw_state[0].scanline;
 		int ey = draw_state[1].scanline - 1;
-		
+
 		/* make sure things stay in bounds */
 		if (sy < Machine->visible_area.min_y)
 			sy = Machine->visible_area.min_y;
 		if (ey > Machine->visible_area.max_y)
 			ey = Machine->visible_area.max_y;
-		
+
 		/* check for disabled video */
 		if (draw_state->blank)
 		{
@@ -602,85 +602,51 @@ void harddriv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			clip.max_y = ey;
 			fillbitmap(bitmap, pens[0], &clip);
 		}
-		
+
 		/* copy video data */
 		else
 		{
+			UINT8 scanline[512];
+
 			/* loop over scanlines */
 			for (y = sy; y <= ey; y++)
 			{
 				UINT32 offset = draw_state->offset + curr_offset + ((draw_state->finescroll + 1) & 15);
 				UINT16 *source = (UINT16 *)&hdgsp_vram[offset & vram_mask & ~1];
-				
-				/* 16-bit case */
-				if (bitmap->depth == 16)
-				{
-					UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT8 *dest = scanline;
 
-					/* if we're on an even pixel boundary, it's easy */
-					if ((offset & 1) == 0)
-					{
-						for (x = 0; x < width; x += 2)
-						{
-							int temp = *source++;
-							*dest++ = pens[temp & 0xff];
-							*dest++ = pens[temp >> 8];
-						}
-					}
-					
-					/* if we're on an odd pixel boundary, handle the edge cases */
-					else
+				/* if we're on an even pixel boundary, it's easy */
+				if ((offset & 1) == 0)
+				{
+					for (x = 0; x < width; x += 2)
 					{
 						int temp = *source++;
-						*dest++ = pens[temp >> 8];
-						for (x = 2; x < width; x += 2)
-						{
-							temp = *source++;
-							*dest++ = pens[temp & 0xff];
-							*dest++ = pens[temp >> 8];
-						}
-						temp = *source++;
-						*dest++ = pens[temp & 0xff];
+						*dest++ = temp;
+						*dest++ = temp >> 8;
 					}
 				}
-				
-				/* 8-bit case */
+
+				/* if we're on an odd pixel boundary, handle the edge cases */
 				else
 				{
-					UINT8 *dest = bitmap->line[y];
-
-					/* if we're on an even pixel boundary, it's easy */
-					if ((offset & 1) == 0)
-					{
-						for (x = 0; x < width; x += 2)
-						{
-							int temp = *source++;
-							*dest++ = pens[temp & 0xff];
-							*dest++ = pens[temp >> 8];
-						}
-					}
-					
-					/* if we're on an odd pixel boundary, handle the edge cases */
-					else
+					*dest++ = *source++ >> 8;
+					for (x = 2; x < width; x += 2)
 					{
 						int temp = *source++;
-						*dest++ = pens[temp >> 8];
-						for (x = 2; x < width; x += 2)
-						{
-							temp = *source++;
-							*dest++ = pens[temp & 0xff];
-							*dest++ = pens[temp >> 8];
-						}
-						temp = *source++;
-						*dest++ = pens[temp & 0xff];
+						*dest++ = temp;
+						*dest++ = temp >> 8;
 					}
+					*dest++ = *source;
 				}
-				
+
+				/* draw the scanline */
+				draw_scanline8(bitmap, 0, y, width, scanline, pens, -1);
+
 				/* advance to the next row */
 				curr_offset = (curr_offset + draw_state->rowbytes) & vram_mask;
 			}
 		}
-				
+
 		/* if the base changed, reset the offset */
 		if (draw_state[1].offset != draw_state[0].offset)
 			curr_offset = 0;
@@ -742,11 +708,11 @@ static void harddriv_fast_draw(void)
 	int tclip = (INT32)b5 >> 16, bclip = (INT32)b6 >> 16;
 	int color = hdgsp_control_lo[0];
 	int sx,ex,x;
-	
+
 	if (offset < 0x01f80000 || offset >= 0x02080000)
 		return;
 	offset -= 0x02000000;
-	
+
 	lx = (INT16)READ_WORD(data); data += 2;
 	rx = (INT16)READ_WORD(data) + 1; data += 2;
 
@@ -757,7 +723,7 @@ static void harddriv_fast_draw(void)
 	offset += rowbytes * cury;
 
 	FILL_SCANLINE(1)
-	
+
 	/* handle wireframe case */
 	if (READ_WORD(&hdgsp_vram[TOBYTE(0xffc36e40) & vram_mask]) ||
 		(READ_WORD(&hdgsp_vram[TOBYTE(0xffc3d580) & vram_mask]) & 8))
@@ -776,23 +742,23 @@ static void harddriv_fast_draw(void)
 			}
 			ldelta = READ_WORD(data); ldelta |= READ_WORD(data + 2) << 16; data += 4;
 			count = READ_WORD(data); data += 2;
-	
+
 			while (--count)
 			{
 				cury++;
-				
+
 				lfrac += ldelta;
 				lx += (INT32)lfrac >> 16;
 				lfrac &= 0xffff;
-				
+
 				rfrac += rdelta;
 				rx += (INT32)rfrac >> 16;
 				rfrac &= 0xffff;
-				
+
 				if (offset >= 0 && offset < 0x80000 && cury >= tclip && cury <= bclip)
 				{
 					UINT8 *dst = &hdgsp_vram[offset];
-					
+
 					if (lx >= lclip && lx <= rclip)
 						if (pattern & (1 << (lx & 31)))
 							dst[lx] = color;
@@ -805,7 +771,7 @@ static void harddriv_fast_draw(void)
 			}
 		}
 	}
-	
+
 	/* handle non-wireframe case */
 	else
 	{
@@ -821,19 +787,19 @@ static void harddriv_fast_draw(void)
 			}
 			ldelta = READ_WORD(data); ldelta |= READ_WORD(data + 2) << 16; data += 4;
 			count = READ_WORD(data); data += 2;
-	
+
 			while (--count)
 			{
 				cury++;
-				
+
 				lfrac += ldelta;
 				lx += (INT32)lfrac >> 16;
 				lfrac &= 0xffff;
-				
+
 				rfrac += rdelta;
 				rx += (INT32)rfrac >> 16;
 				rfrac &= 0xffff;
-				
+
 				FILL_SCANLINE(1)
 
 				offset += rowbytes;
@@ -860,7 +826,7 @@ static void stunrun_fast_draw(void)
 	int tclip = (INT32)b5 >> 16, bclip = (INT32)b6 >> 16;
 	int color = hdgsp_control_lo[0];
 	int sx,ex,x;
-	
+
 	if (offset < 0x01f80000 || offset >= 0x02080000)
 		return;
 	offset = (INT32)(offset - 0x02000000) >> 1;
@@ -889,15 +855,15 @@ static void stunrun_fast_draw(void)
 		while (--count)
 		{
 			cury++;
-			
+
 			lfrac += ldelta;
 			lx += (INT32)lfrac >> 16;
 			lfrac &= 0xffff;
-			
+
 			rfrac += rdelta;
 			rx += (INT32)rfrac >> 16;
 			rfrac &= 0xffff;
-			
+
 			FILL_SCANLINE(2)
 
 			offset += rowbytes;

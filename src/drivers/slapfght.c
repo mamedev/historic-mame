@@ -189,7 +189,15 @@ extern unsigned char *slapfight_colorram;
 extern size_t slapfight_videoram_size;
 extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int slapfight_vh_start (void);
+int perfrman_vh_start (void);
+WRITE_HANDLER( slapfight_flipscreen_w );
+WRITE_HANDLER( slapfight_fixram_w );
+WRITE_HANDLER( slapfight_fixcol_w );
+WRITE_HANDLER( slapfight_videoram_w );
+WRITE_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
 
@@ -218,6 +226,26 @@ int getstar_interrupt(void);
 
 
 /* Driver structure definition */
+
+static MEMORY_READ_START( perfrman_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8800, 0x880f, slapfight_dpram_r },
+	{ 0x8810, 0x8fff, MRA_BANK1 },
+	{ 0x9000, 0x97ff, MRA_RAM },
+	{ 0x9800, 0x9fff, MRA_RAM },
+	{ 0xa000, 0xa7ff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( perfrman_writemem )
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0x8800, 0x880f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
+	{ 0x8810, 0x8fff, MWA_BANK1 },
+	{ 0x9000, 0x97ff, slapfight_videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x9fff, slapfight_colorram_w, &colorram },
+	{ 0xa000, 0xa7ff, MWA_RAM, &spriteram, &spriteram_size },
+MEMORY_END
 
 static MEMORY_READ_START( tigerh_readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -249,14 +277,14 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
 	{ 0xc810, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, slapfight_videoram_w, &videoram, &videoram_size },
+	{ 0xd800, 0xdfff, slapfight_colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_lo },
 	{ 0xe801, 0xe801, MWA_RAM, &slapfight_scrollx_hi },
 	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
-	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
-	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
+	{ 0xf000, 0xf7ff, slapfight_fixram_w, &slapfight_videoram, &slapfight_videoram_size },
+	{ 0xf800, 0xffff, slapfight_fixcol_w, &slapfight_colorram },
 MEMORY_END
 
 static MEMORY_WRITE_START( slapbtuk_writemem )
@@ -264,14 +292,14 @@ static MEMORY_WRITE_START( slapbtuk_writemem )
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xc80f, slapfight_dpram_w, &slapfight_dpram, &slapfight_dpram_size },
 	{ 0xc810, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd800, 0xdfff, colorram_w, &colorram },
+	{ 0xd000, 0xd7ff, slapfight_videoram_w, &videoram, &videoram_size },
+	{ 0xd800, 0xdfff, slapfight_colorram_w, &colorram },
 	{ 0xe000, 0xe7ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe800, 0xe800, MWA_RAM, &slapfight_scrollx_hi },
 	{ 0xe802, 0xe802, MWA_RAM, &slapfight_scrolly },
 	{ 0xe803, 0xe803, MWA_RAM, &slapfight_scrollx_lo },
-	{ 0xf000, 0xf7ff, MWA_RAM, &slapfight_videoram, &slapfight_videoram_size },
-	{ 0xf800, 0xffff, MWA_RAM, &slapfight_colorram },
+	{ 0xf000, 0xf7ff, slapfight_fixram_w, &slapfight_videoram, &slapfight_videoram_size },
+	{ 0xf800, 0xffff, slapfight_fixcol_w, &slapfight_colorram },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -281,6 +309,7 @@ PORT_END
 static PORT_WRITE_START( tigerh_writeport )
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
+	{ 0x02, 0x03, slapfight_flipscreen_w },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
 PORT_END
@@ -288,6 +317,7 @@ PORT_END
 static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, slapfight_port_00_w },
 	{ 0x01, 0x01, slapfight_port_01_w },
+	{ 0x02, 0x03, slapfight_flipscreen_w },
 //	{ 0x04, 0x04, getstar_port_04_w   },
 	{ 0x06, 0x06, slapfight_port_06_w },
 	{ 0x07, 0x07, slapfight_port_07_w },
@@ -295,6 +325,25 @@ static PORT_WRITE_START( writeport )
 	{ 0x09, 0x09, slapfight_port_09_w },	/* select bank 1 */
 PORT_END
 
+
+static MEMORY_READ_START( perfrman_sound_readmem )
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x8800, 0x880f, slapfight_dpram_r },
+	{ 0x8810, 0x8fff, MRA_BANK1 },
+	{ 0xa081, 0xa081, AY8910_read_port_0_r },
+	{ 0xa091, 0xa091, AY8910_read_port_1_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( perfrman_sound_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x8800, 0x880f, slapfight_dpram_w },
+	{ 0x8810, 0x8fff, MWA_BANK1 },
+	{ 0xa080, 0xa080, AY8910_control_port_0_w },
+	{ 0xa082, 0xa082, AY8910_write_port_0_w },
+	{ 0xa090, 0xa090, AY8910_control_port_1_w },
+	{ 0xa092, 0xa092, AY8910_write_port_1_w },
+	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
+MEMORY_END
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
@@ -317,6 +366,80 @@ MEMORY_END
 
 
 
+INPUT_PORTS_START( perfrman )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Dipswitch Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	/* Actually, the following DIPSW doesnt seem to do anything */
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Screen Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+//	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+
+	PORT_START  /* DSW2 */
+	PORT_DIPNAME( 0xf0, 0x70, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0xb0, "20k, then each 100k" )
+	PORT_DIPSETTING(    0xa0, "40k, then each 100k" )
+	PORT_DIPSETTING(    0x90, "60k, then each 100k" )
+	PORT_DIPSETTING(    0x70, "20k, then each 200k" )
+	PORT_DIPSETTING(    0x60, "40k, then each 200k" )
+	PORT_DIPSETTING(    0x50, "60k, then each 200k" )
+	PORT_DIPSETTING(    0x30, "20k, then each 300k" )
+	PORT_DIPSETTING(    0x20, "40k, then each 300k" )
+	PORT_DIPSETTING(    0x10, "60k, then each 300k" )
+	PORT_DIPSETTING(    0xf0, "20k" )
+	PORT_DIPSETTING(    0xe0, "40k" )
+	PORT_DIPSETTING(    0xd0, "60k" )
+	PORT_DIPSETTING(    0xc0, "None" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Game Level" )
+	PORT_DIPSETTING(    0x0c, "0" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "5" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( tigerh )
 	PORT_START      /* IN0 */
@@ -535,56 +658,32 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,   /* 8*8 characters */
-	1024,  /* 1024 characters */
-	2,     /* 2 bits per pixel */
-	{ 0, 1024*8*8 },
+	8,8,			/* 8*8 characters */
+	RGN_FRAC(1,2),	/* 1024 characters */
+	2,				/* 2 bits per pixel */
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout tigerh_tilelayout =
-{
-	8,8,    /* 8*8 tiles */
-	2048,   /* 2048 tiles */
-	4,      /* 4 bits per pixel */
-	{ 0, 2048*8*8, 2*2048*8*8, 3*2048*8*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8    /* every tile takes 8 consecutive bytes */
-};
-
 static struct GfxLayout tilelayout =
 {
-	8,8,    /* 8*8 tiles */
-	4096,   /* 4096 tiles */
-	4,      /* 4 bits per pixel */
-	{ 0, 4096*8*8, 2*4096*8*8, 3*4096*8*8 },
+	8,8,			/* 8*8 tiles */
+	RGN_FRAC(1,4),	/* 2048/4096 tiles */
+	4,				/* 4 bits per pixel */
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8    /* every tile takes 8 consecutive bytes */
-};
-
-static struct GfxLayout tigerh_spritelayout =
-{
-	16,16,   /* 16*16 sprites */
-	512,     /* 512 sprites */
-	4,       /* 4 bits per pixel */
-	{ 0, 512*32*8, 2*512*32*8, 3*512*32*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8,
-			9, 10 ,11, 12, 13, 14, 15 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	32*8    /* every sprite takes 64 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,   /* 16*16 sprites */
-	1024,    /* 1024 sprites */
-	4,       /* 4 bits per pixel */
-	{ 0, 1024*32*8, 2*1024*32*8, 3*1024*32*8 },
+	16,16,			/* 16*16 sprites */
+	RGN_FRAC(1,4),	/* 512/1024 sprites */
+	4,				/* 4 bits per pixel */
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8,
 			9, 10 ,11, 12, 13, 14, 15 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -592,12 +691,35 @@ static struct GfxLayout spritelayout =
 	32*8    /* every sprite takes 64 consecutive bytes */
 };
 
-
-static struct GfxDecodeInfo tigerh_gfxdecodeinfo[] =
+static struct GfxLayout perfrman_charlayout =
 {
-	{ REGION_GFX1, 0, &charlayout,          0,  64 },
-	{ REGION_GFX2, 0, &tigerh_tilelayout,   0,  16 },
-	{ REGION_GFX3, 0, &tigerh_spritelayout, 0,  16 },
+	8,8,			/* 8*8 characters */
+	RGN_FRAC(1,3),	/* 1024 characters */
+	3,				/* 3 bits per pixel */
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every char takes 8 consecutive bytes */
+};
+
+static struct GfxLayout perfrman_spritelayout =
+{
+	16,16,			/* 16*16 sprites */
+	RGN_FRAC(1,3),	/* 256 sprites */
+	3,				/* 3 bits per pixel */
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7, 8,
+			9, 10 ,11, 12, 13, 14, 15 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	32*8
+};
+
+
+static struct GfxDecodeInfo perfrman_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &perfrman_charlayout,   0,  32 },
+	{ REGION_GFX2, 0, &perfrman_spritelayout, 0,  32 },
 	{ -1 } /* end of array */
 };
 
@@ -623,6 +745,55 @@ static struct AY8910interface ay8910_interface =
 };
 
 
+static void eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
+}
+
+static struct MachineDriver machine_driver_perfrman =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			6000000,
+			perfrman_readmem,perfrman_writemem,readport,writeport,
+			interrupt,1
+		},
+		{
+			CPU_Z80,
+			6000000,
+			perfrman_sound_readmem,perfrman_sound_writemem,0,0,
+			getstar_interrupt, 6,	/* p'tit Seb 980926 this way it sound much better ! */
+			0,0						/* I think music is not so far from correct speed */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	slapfight_init_machine,
+
+	/* video hardware */
+	64*8, 32*8, { 1*8, 34*8-1, 2*8, 32*8-1 },
+	perfrman_gfxdecodeinfo,
+	256, 256,
+	slapfight_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	perfrman_vh_start,
+	0,
+	perfrman_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
 static const struct MachineDriver machine_driver_tigerh =
 {
 	/* basic machine hardware */
@@ -640,22 +811,20 @@ static const struct MachineDriver machine_driver_tigerh =
 			nmi_interrupt,6,    /* ??? */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
 	/* video hardware */
 	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
-	tigerh_gfxdecodeinfo,
+	gfxdecodeinfo,
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
@@ -688,9 +857,7 @@ static const struct MachineDriver machine_driver_slapfigh =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -700,10 +867,10 @@ static const struct MachineDriver machine_driver_slapfigh =
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
@@ -737,9 +904,7 @@ static const struct MachineDriver machine_driver_slapbtuk =
 			slapfight_sound_interrupt, 27306667 */
 		}
 	},
-	60,				/* fps - frames per second */
-//	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,	/* wrong, but fixes graphics glitches */
+	60,	DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	slapfight_init_machine,
 
@@ -749,10 +914,10 @@ static const struct MachineDriver machine_driver_slapbtuk =
 	256, 256,
 	slapfight_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
+	eof_callback,
+	slapfight_vh_start,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
 	slapfight_vh_screenrefresh,
 
 	/* sound hardware */
@@ -766,6 +931,35 @@ static const struct MachineDriver machine_driver_slapbtuk =
 };
 
 
+
+ROM_START( perfrman )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )				 /* Main CPU code */
+	ROM_LOAD( "ci07.0",    0x00000, 0x4000, 0x7ad32eea )
+	ROM_LOAD( "ci08.1",    0x04000, 0x4000, 0x90a02d5f )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )				 /* Sound CPU code */
+	ROM_LOAD( "ci06.4",    0x0000, 0x2000, 0xdf891ad0 )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles */
+	ROM_LOAD( "ci00.5",     0x4000, 0x2000, 0x79e191f8 )
+	ROM_LOAD( "ci01.6",     0x2000, 0x2000, 0x2e8e69df )
+	ROM_LOAD( "ci02.7",     0x0000, 0x2000, 0x8efa960a )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "ci03.8",     0x4000, 0x2000, 0x6410d9eb )
+	ROM_LOAD( "ci04.9",     0x2000, 0x2000, 0x026f27b3 )
+	ROM_LOAD( "ci05.10",    0x0000, 0x2000, 0x809a4ccc )
+
+	ROM_REGION( 0x300, REGION_PROMS, 0 )				 /* Color BPROMs */
+	ROM_LOAD( "ci12.14",    0x200, 0x0100, 0x67f86e3d )
+	ROM_LOAD( "ci13.15",    0x100, 0x0100, 0xa9a397eb )
+	ROM_LOAD( "ci14.16",    0x000, 0x0100, 0x515f8a3b )
+
+	ROM_REGION( 0x220, REGION_USER1, 0 )
+	ROM_LOAD( "ci11.11",    0x000, 0x0100, 0xd492e6c2 )
+	ROM_LOAD( "ci10.12",    0x100, 0x0100, 0x59490887 )
+	ROM_LOAD( "ci09.13",    0x200, 0x0020, 0xaa0ca5a5 )
+ROM_END
 
 ROM_START( tigerh )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -1158,7 +1352,7 @@ ROM_START( getstarb )
 ROM_END
 
 
-
+GAMEX( 1985, perfrman, 0,        perfrman, perfrman, 0, ROT270, "[Toaplan] Data East Corporation", "Performan", GAME_IMPERFECT_COLORS )
 GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
@@ -1171,3 +1365,4 @@ GAMEX( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0, ROT270, "<unknown>", "Al
 GAMEX( 1986, getstar,  0,        slapfigh, getstar,  0, ROT0,   "Taito", "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1986, getstarj, getstar,  slapfigh, getstar,  0, ROT0,   "Taito", "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1986, getstarb, getstar,  slapfigh, getstar,  0, ROT0,   "bootleg", "Get Star (bootleg)", GAME_NO_COCKTAIL )
+

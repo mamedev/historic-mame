@@ -80,7 +80,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/tms34061.h"
 #include "machine/ticket.h"
 #include "cpu/m6809/m6809.h"
 
@@ -100,7 +99,16 @@ READ_HANDLER( capbowl_pagedrom_r );
 WRITE_HANDLER( bowlrama_turbo_w );
 READ_HANDLER( bowlrama_turbo_r );
 
+WRITE_HANDLER( capbowl_tms34061_w );
+READ_HANDLER( capbowl_tms34061_r );
 
+
+
+/*************************************
+ *
+ *	NVRAM
+ *
+ *************************************/
 
 static unsigned char *nvram;
 static size_t nvram_size;
@@ -124,6 +132,13 @@ static void nvram_handler(void *file,int read_or_write)
 }
 
 
+
+/*************************************
+ *
+ *	Sound commands
+ *
+ *************************************/
+
 static WRITE_HANDLER( capbowl_sndcmd_w )
 {
 	cpu_cause_interrupt(1, M6809_INT_IRQ);
@@ -132,19 +147,29 @@ static WRITE_HANDLER( capbowl_sndcmd_w )
 }
 
 
-/* Handler called by the 2203 emulator when the internal timers cause an IRQ */
+
+/*************************************
+ *
+ *	Handler called by the 2203 emulator
+ *	when the internal timers cause an IRQ
+ *
+ *************************************/
+
 static void firqhandler(int irq)
 {
-	cpu_set_irq_line(1,1,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 1, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
-/***************************************************************************
 
-  NMI is to trigger the self test. We use a fake input port to tie that
-  event to a keypress.
+/*************************************
+ *
+ *	NMI is to trigger the self test.
+ *	We use a fake input port to tie
+ *	that event to a keypress
+ *
+ *************************************/
 
-***************************************************************************/
 static int capbowl_interrupt(void)
 {
 	if (readinputport(4) & 1)	/* get status of the F2 key */
@@ -153,6 +178,13 @@ static int capbowl_interrupt(void)
 	return ignore_interrupt();
 }
 
+
+
+/*************************************
+ *
+ *	Trackball input handlers
+ *
+ *************************************/
 
 static int track[2];
 
@@ -177,34 +209,49 @@ static WRITE_HANDLER( track_reset_w )
 
 
 
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_READ_START( capbowl_readmem )
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5fff, TMS34061_r },
+	{ 0x5800, 0x5fff, capbowl_tms34061_r },
 	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
 	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( bowlrama_readmem )
 	{ 0x0000, 0x001f, bowlrama_turbo_r },
 	{ 0x5000, 0x57ff, MRA_RAM },
-	{ 0x5800, 0x5fff, TMS34061_r },
+	{ 0x5800, 0x5fff, capbowl_tms34061_r },
 	{ 0x7000, 0x7000, track_0_r },	/* + other inputs */
 	{ 0x7800, 0x7800, track_1_r },	/* + other inputs */
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x001f, bowlrama_turbo_w },	/* Bowl-O-Rama only */
 	{ 0x4000, 0x4000, MWA_RAM, &capbowl_rowaddress },
 	{ 0x4800, 0x4800, capbowl_rom_select_w },
 	{ 0x5000, 0x57ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x5800, 0x5fff, TMS34061_w },
+	{ 0x5800, 0x5fff, capbowl_tms34061_w },
 	{ 0x6000, 0x6000, capbowl_sndcmd_w },
 	{ 0x6800, 0x6800, track_reset_w },	/* + watchdog */
 MEMORY_END
 
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -213,6 +260,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x7000, 0x7000, soundlatch_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM},
@@ -223,6 +271,12 @@ static MEMORY_WRITE_START( sound_writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( capbowl )
 	PORT_START	/* IN0 */
@@ -255,6 +309,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound definitions
+ *
+ *************************************/
+
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
@@ -267,6 +327,7 @@ static struct YM2203interface ym2203_interface =
 	{ firqhandler }
 };
 
+
 static struct DACinterface dac_interface =
 {
 	1,
@@ -274,27 +335,34 @@ static struct DACinterface dac_interface =
 };
 
 
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
 #define MACHINEDRIVER(NAME, VISIBLE_Y)						\
 															\
-static const struct MachineDriver machine_driver_##NAME =			\
+static const struct MachineDriver machine_driver_##NAME =	\
 {															\
 	/* basic machine hardware */   							\
 	{														\
 		{													\
 			CPU_M6809,										\
-			2000000,        /* 2 MHz */						\
+			2000000,										\
 			NAME##_readmem,writemem,0,0,					\
-			capbowl_interrupt, 1,       /* To check Service mode status */ \
+			capbowl_interrupt,1,							\
 		},													\
 		{													\
 			CPU_M6809 | CPU_AUDIO_CPU,						\
-			2000000,        /* 2 MHz */						\
+			2000000,										\
 			sound_readmem,sound_writemem,0,0,				\
-			ignore_interrupt,1	/* interrupts are generated by the sound hardware */ \
+			ignore_interrupt,1								\
 		}													\
 	},														\
-	57, 5000,	/* frames per second, vblank duration (guess) */ \
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
+	57, 5000,												\
+	1,														\
 	capbowl_init_machine,									\
 															\
 	/* video hardware */									\
@@ -331,57 +399,67 @@ MACHINEDRIVER(capbowl,  244)
 MACHINEDRIVER(bowlrama, 239)
 
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( capbowl )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )   /* 160k for code and graphics */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "u6",           0x08000, 0x8000, 0x14924c96 )
 	ROM_LOAD( "gr0",          0x10000, 0x8000, 0xef53ca7a )
 	ROM_LOAD( "gr1",          0x18000, 0x8000, 0x27ede6ce )
 	ROM_LOAD( "gr2",          0x20000, 0x8000, 0xe49238f4 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
 
+
 ROM_START( capbowl2 )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )   /* 160k for code and graphics */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "progrev3.u6",  0x08000, 0x8000, 0x9162934a )
 	ROM_LOAD( "gr0",          0x10000, 0x8000, 0xef53ca7a )
 	ROM_LOAD( "gr1",          0x18000, 0x8000, 0x27ede6ce )
 	ROM_LOAD( "gr2",          0x20000, 0x8000, 0xe49238f4 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
 
+
 ROM_START( clbowl )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )   /* 160k for code and graphics */
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "u6.cl",        0x08000, 0x8000, 0x91e06bc4 )
 	ROM_LOAD( "gr0.cl",       0x10000, 0x8000, 0x899c8f15 )
 	ROM_LOAD( "gr1.cl",       0x18000, 0x8000, 0x0ac0dc4c )
 	ROM_LOAD( "gr2.cl",       0x20000, 0x8000, 0x251f5da5 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )   /* 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sound.cl",     0x8000, 0x8000, 0x1eba501e )
 ROM_END
 
+
 ROM_START( bowlrama )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )      /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "u6",           0x08000, 0x08000, 0x7103ad55 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "u30",          0x8000, 0x8000, 0xf3168834 )
 
-	ROM_REGION( 0x40000, REGION_GFX1, 0 )     /* 256K for Graphics used at runtime */
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )
 	ROM_LOAD( "ux7",          0x00000, 0x40000, 0x8727432a )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 1)" )
 GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 2)" )

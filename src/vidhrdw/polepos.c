@@ -1,5 +1,3 @@
-#ifndef ROAD_CORE_INCLUDE
-
 #include "driver.h"
 
 data16_t *polepos_view16_memory;
@@ -25,9 +23,6 @@ static const UINT8 *road_bits2;
 static struct osd_bitmap *view_bitmap;
 static UINT8 *view_dirty;
 
-
-static void draw_road_core_8(struct osd_bitmap *bitmap, int sx, int sy, int dx, int dy);
-static void draw_road_core_16(struct osd_bitmap *bitmap, int sx, int sy, int dx, int dy);
 
 
 /***************************************************************************
@@ -339,36 +334,74 @@ static void draw_view(struct osd_bitmap *bitmap)
 
 static void draw_road(struct osd_bitmap *bitmap)
 {
-	int dx = 1, dy = (bitmap->line[1] - bitmap->line[0]) * 8 / bitmap->depth;
-	int sx = 0, sy = 128, temp;
+	int x, y, i;
 
-	/* adjust our parameters for the current orientation */
-	if (Machine->orientation)
+	/* loop over the lower half of the screen */
+	for (y = 128; y < 256; y++)
 	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			temp = sx; sx = sy; sy = temp;
-			temp = dx; dx = dy; dy = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			sx = bitmap->width - 1 - sx;
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY)) dx = -dx;
-			else dy = -dy;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			sy = bitmap->height - 1 - sy;
-			if (Machine->orientation & ORIENTATION_SWAP_XY) dx = -dx;
-			else dy = -dy;
-		}
-	}
+		int xoffs, yoffs, xscroll, roadpal;
+		UINT8 scanline[256 + 8];
+		UINT8 *dest = scanline;
+		UINT16 *colortable;
 
-	/* 8-bit case */
-	if (bitmap->depth == 8)
-		draw_road_core_8(bitmap, sx, sy, dx, dy);
-	else
-		draw_road_core_16(bitmap, sx, sy, dx, dy);
+		/* first add the vertical position modifier and the vertical scroll */
+		yoffs = ((polepos_vertical_position_modifier[y] + road16_vscroll) >> 3) & 0x1ff;
+
+		/* then use that as a lookup into the road memory */
+		roadpal = polepos_road16_memory[yoffs] & 15;
+
+		/* this becomes the palette base for the scanline */
+		colortable = &Machine->remapped_colortable[0x1000 + (roadpal << 6)];
+
+		/* now fetch the horizontal scroll offset for this scanline */
+		xoffs = polepos_road16_memory[0x380 + (y & 0x7f)] & 0x3ff;
+
+		/* the road is drawn in 8-pixel chunks, so round downward and adjust the base */
+		/* note that we assume there is at least 8 pixels of slop on the left/right */
+		xscroll = xoffs & 7;
+		xoffs &= ~7;
+
+		/* loop over 8-pixel chunks */
+		for (x = 0; x < 256 / 8 + 1; x++, xoffs += 8)
+		{
+			/* if the 0x200 bit of the xoffset is set, a special pin on the custom */
+			/* chip is set and the /CE and /OE for the road chips is disabled */
+			if (xoffs & 0x200)
+			{
+				/* in this case, it looks like we just fill with 0 */
+				for (i = 0; i < 8; i++)
+					*dest++ = 0;
+			}
+
+			/* otherwise, we clock in the bits and compute the road value */
+			else
+			{
+				/* the road ROM offset comes from the current scanline and the X offset */
+				int romoffs = ((y & 0x07f) << 6) + ((xoffs & 0x1ff) >> 3);
+
+				/* fetch the current data from the road ROMs */
+				int control = road_control[romoffs];
+				int bits1 = road_bits1[romoffs];
+				int bits2 = road_bits2[(romoffs & 0xfff) | ((romoffs >> 1) & 0x800)];
+
+				/* extract the road value and the carry-in bit */
+				int roadval = control & 0x3f;
+				int carin = control >> 7;
+
+				/* draw this 8-pixel chunk */
+				for (i = 0; i < 8; i++, bits1 <<= 1, bits2 <<= 1)
+				{
+					int bits = ((bits1 >> 7) & 1) + ((bits2 >> 6) & 2);
+					if (!carin && bits) bits++;
+					*dest++ = roadval & 0x3f;
+					roadval += bits;
+				}
+			}
+		}
+
+		/* draw the scanline */
+		draw_scanline8(bitmap, 0, y, 256, &scanline[xscroll], colortable, -1);
+	}
 }
 
 static void draw_sprites(struct osd_bitmap *bitmap)
@@ -452,104 +485,3 @@ void polepos_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	draw_sprites(bitmap);
 	draw_alpha(bitmap);
 }
-
-
-/***************************************************************************
-
-  Road drawing generators
-
-***************************************************************************/
-
-#define ROAD_CORE_INCLUDE
-
-#define NAME draw_road_core_8
-#define TYPE UINT8
-#include "polepos.c"
-#undef TYPE
-#undef NAME
-
-#define NAME draw_road_core_16
-#define TYPE UINT16
-#include "polepos.c"
-#undef TYPE
-#undef NAME
-
-#else
-
-/***************************************************************************
-
-  Road drawing routine
-
-***************************************************************************/
-
-static void NAME(struct osd_bitmap *bitmap, int sx, int sy, int dx, int dy)
-{
-	TYPE *base = &((TYPE *)bitmap->line[sy])[sx];
-	int x, y, i;
-
-	/* loop over the lower half of the screen */
-	for (y = 128; y < 256; y++, base += dy)
-	{
-		int xoffs, yoffs, roadpal;
-		UINT16 *colortable;
-		TYPE *dest;
-
-		/* first add the vertical position modifier and the vertical scroll */
-		yoffs = ((polepos_vertical_position_modifier[y] + road16_vscroll) >> 3) & 0x1ff;
-
-		/* then use that as a lookup into the road memory */
-		roadpal = polepos_road16_memory[yoffs] & 15;
-
-		/* this becomes the palette base for the scanline */
-		colortable = &Machine->remapped_colortable[0x1000 + (roadpal << 6)];
-
-		/* now fetch the horizontal scroll offset for this scanline */
-		xoffs = polepos_road16_memory[0x380 + (y & 0x7f)] & 0x3ff;
-
-		/* the road is drawn in 8-pixel chunks, so round downward and adjust the base */
-		/* note that we assume there is at least 8 pixels of slop on the left/right */
-		dest = base - (xoffs & 7) * dx;
-		xoffs &= ~7;
-
-		/* loop over 8-pixel chunks */
-		for (x = 0; x < 256 / 8 + 1; x++, xoffs += 8)
-		{
-			/* if the 0x200 bit of the xoffset is set, a special pin on the custom */
-			/* chip is set and the /CE and /OE for the road chips is disabled */
-			if (xoffs & 0x200)
-			{
-				/* in this case, it looks like we just fill with 0 */
-				for (i = 0; i < 8; i++, dest += dx)
-					*dest = colortable[0];
-			}
-
-			/* otherwise, we clock in the bits and compute the road value */
-			else
-			{
-				/* the road ROM offset comes from the current scanline and the X offset */
-				int romoffs = ((y & 0x07f) << 6) + ((xoffs & 0x1ff) >> 3);
-
-				/* fetch the current data from the road ROMs */
-				int control = road_control[romoffs];
-				int bits1 = road_bits1[romoffs];
-				int bits2 = road_bits2[(romoffs & 0xfff) | ((romoffs >> 1) & 0x800)];
-
-				/* extract the road value and the carry-in bit */
-				int roadval = control & 0x3f;
-				int carin = control >> 7;
-
-				/* draw this 8-pixel chunk */
-				for (i = 0; i < 8; i++, dest += dx, bits1 <<= 1, bits2 <<= 1)
-				{
-					int bits = ((bits1 >> 7) & 1) + ((bits2 >> 6) & 2);
-					if (!carin && bits) bits++;
-					*dest = colortable[roadval & 0x3f];
-					roadval += bits;
-				}
-			}
-		}
-	}
-}
-
-#endif
-

@@ -2,6 +2,34 @@
 
 Sega System 16 Video Hardware
 
+Known issues:
+- better abstraction of tilemap hardware is needed; a lot of this mess could and should
+	be consolidated further
+- many games have ROM patches - why?  let's emulate protection when possible
+- several games fail their RAM self-test because of hacks in the drivers
+- many registers are suspiciously plucked from working RAM
+- several games have nvram according to the self test, but we aren't yet saving it
+- many games suffer from sys16_refreshenable register not being mapped
+- hangon road isn't displayed(!) emulation bug?
+- road-rendering routines need to be cleaned up or at least better described
+- logical sprite height computation isn't quite right - garbage pixels are drawn
+- screen orientation support for sprite drawing
+- sprite drawing is unoptimized
+- end-of-sprite marker support will fix some glitches
+- shadow and partial shadow sprite support
+- to achieve sprite-tilemap orthogonality we must draw sprites from front to back;
+	this will also allow us to avoid processing the same shadowed pixel twice.
+
+The System16 video hardware consists of:
+
+- Road Layer (present only for certain games)
+
+- Two scrolling tilemap layers
+
+- Two alternate scrolling tilemap layers, normally invisible.
+
+- A fixed tilemap layer, normally used for score, lives display
+
 Each scrolling layer (foreground, background) is an arrangement
 of 4 pages selected from 16 available pages, laid out as follows:
 
@@ -10,40 +38,100 @@ of 4 pages selected from 16 available pages, laid out as follows:
 
 Each page is an arrangement of 8x8 tiles, 64 tiles wide, and 32 tiles high.
 
+Layers normally scroll as a whole, with xscroll and yscroll.
+
+However, layers can also be configured with screenwise rowscroll, if the most significant
+bit of xscroll is set.  When a layer is in this mode, the splittable is used.
+
+When rowscroll is in effect, the most significant bit of rowscroll selects between the
+default layer and an alternate layer associated with it.
+
+The foreground layer's tiles may be flagged as high-priority; this is used to mask
+sprites, i.e. the grass in Altered Beast.
+
+The background layer's tiles may also be flagged as high-priority.  In this case,
+it's really a transparency_pen effect rather.  Aurail uses this.
+
+Most games map Video Registers in textram as follows:
+
+type0:
+most games
+
+type1:
+alexkidd,fantzone,shinobl,hangon
+mjleague
+
+others:
+	shangon, shdancbl,
+	dduxbl,eswat,
+	passsht,passht4b
+	quartet,quartet2,
+	tetris,tturfbl,wb3bl
+
+sys16_textram:
+type1		type0			function
+---------------------------------------
+0x74f		0x740			sys16_fg_page
+0x74e		0x741			sys16_bg_page
+			0x742			sys16_fg2_page
+			0x743			sys16_bg2_page
+
+0x792		0x748			sys16_fg_scrolly
+0x793		0x749			sys16_bg_scrolly
+			0x74a			sys16_fg2_scrolly
+			0x74b			sys16_bg2_scrolly
+
+0x7fc		0x74c			sys16_fg_scrollx
+0x7fd		0x74d			sys16_bg_scrollx
+			0x74e			sys16_fg2_scrollx
+			0x74f			sys16_bg2_scrollx
+
+			0x7c0..0x7df	sys18_splittab_fg_x
+			0x7e0..0x7ff	sys18_splittab_bg_x
+
 ***************************************************************************/
 #include "driver.h"
+#include "machine/system16.h"
 
-#define SPR_FLIPX					0x01
-#define SPR_FLIPY					0x02
-#define SPR_FLICKER					0x04
-#define SPR_VISIBLE					0x08
-#define SPR_TRANSPARENCY_THROUGH	0x10
-#define SPR_SPECIAL					0x20
-#define SPR_SHADOW					0x40
-#define SPR_PARTIAL_SHADOW			0x80
+/*
+static void debug_draw( struct osd_bitmap *bitmap, int x, int y, unsigned int data ){
+	int digit;
+	for( digit=0; digit<4; digit++ ){
+		drawgfx( bitmap, Machine->uifont,
+			"0123456789abcdef"[data>>12],
+			0,
+			0,0,
+			x+digit*6,y,
+			&Machine->visible_area,TRANSPARENCY_NONE,0);
+		data = (data<<4)&0xffff;
+	}
+}
 
-extern data16_t *sys16_tileram;
-extern data16_t *sys16_textram;
-extern data16_t *sys16_spriteram;
-extern data16_t *sys16_roadram;
+static void debug_vreg( struct osd_bitmap *bitmap ){
+	int g = 0x740;
+	int i;
+
+	if( keyboard_pressed( KEYCODE_Q ) ) g+=0x10;
+	if( keyboard_pressed( KEYCODE_W ) ) g+=0x20;
+	if( keyboard_pressed( KEYCODE_E ) ) g+=0x40;
+	if( keyboard_pressed( KEYCODE_R ) ) g+=0x80;
+
+	for( i=0; i<16; i++ ){
+		debug_draw( bitmap, 8,8*i,sys16_textram[g+i] );
+	}
+}
+*/
+
+/* callback to poll video registers */
+void (* sys16_update_proc)( void );
+
+data16_t *sys16_tileram;
+data16_t *sys16_textram;
+data16_t *sys16_spriteram;
+data16_t *sys16_roadram;
 
 static int num_sprites;
 
-struct sprite_attributes {
-	int priority, flags;
-	int gfx, color;
-	int logical_width, logical_height;
-	int x,y,screen_width, screen_height;	/* in screen coordinates */
-	int shadow_pen;
-};
-static int get_sprite_attributes( struct sprite_attributes *sprite, const data16_t *source, int bJustGetColor );
-//#define SYS16_DEBUG
-//#define SPACEHARRIER_OFFSETS
-
-// an attempt at fudging correct gamma for sys16 games, but I'm not sure that it's
-// really worth using.
-//#define GAMMA_ADJUST
-//#define TRANSPARENT_SHADOWS
 #define MAXCOLOURS 0x2000 /* 8192 */
 
 #ifdef TRANSPARENT_SHADOWS
@@ -54,19 +142,13 @@ UINT16 shade_table[MAXCOLOURS];
 int sys16_sh_shadowpal;
 int sys16_MaxShadowColors;
 
-#if 0
-extern UINT8 *sys16_textram;
-extern UINT8 *sys16_spriteram;
-extern UINT8 *sys16_tileram; /* contains tilemaps for 16 pages */
-#endif
-
 /* video driver constants (potentially different for each game) */
 int sys16_gr_bitmap_width;
-int sys16_spritesystem;
+int (*sys16_spritesystem)( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
+int *sys16_obj_bank;
 int sys16_sprxoffset;
 int sys16_bgxoffset;
 int sys16_fgxoffset;
-int *sys16_obj_bank;
 int sys16_textmode;
 int sys16_textlayer_lo_min;
 int sys16_textlayer_lo_max;
@@ -84,32 +166,19 @@ int sys16_tilebank_switch;
 int sys16_rowscroll_scroll;
 int sys16_quartet_title_kludge;
 
-/* callback to poll video registers */
-extern void (* sys16_update_proc)( void );
-
-enum {
-	SYS16_BG,
-	SYS16_FG,
-	SYS16_BG2,
-	SYS16_FG2
-};
-struct {
-	struct tilemap *tilemap;
-	int scrollx,scrolly,page[4];
-} sys16_layer[4]; /* TBA */
-
 /* video registers */
 int sys16_tile_bank1;
 int sys16_tile_bank0;
 int sys16_refreshenable;
 
 int sys16_bg_scrollx, sys16_bg_scrolly;
-int sys16_bg_page[4];
-int sys16_fg_scrollx, sys16_fg_scrolly;
-int sys16_fg_page[4];
 int sys16_bg2_scrollx, sys16_bg2_scrolly;
-int sys16_bg2_page[4];
+int sys16_fg_scrollx, sys16_fg_scrolly;
 int sys16_fg2_scrollx, sys16_fg2_scrolly;
+
+int sys16_bg_page[4];
+int sys16_bg2_page[4];
+int sys16_fg_page[4];
 int sys16_fg2_page[4];
 
 int sys18_bg2_active;
@@ -118,10 +187,6 @@ data16_t *sys18_splittab_bg_x;
 data16_t *sys18_splittab_bg_y;
 data16_t *sys18_splittab_fg_x;
 data16_t *sys18_splittab_fg_y;
-
-#ifdef SPACEHARRIER_OFFSETS
-unsigned char *spaceharrier_patternoffsets;
-#endif
 
 data16_t *sys16_gr_ver;
 data16_t *sys16_gr_hor;
@@ -137,8 +202,6 @@ static struct tilemap *background2, *foreground2;
 static int old_bg_page[4],old_fg_page[4], old_tile_bank1, old_tile_bank0;
 static int old_bg2_page[4],old_fg2_page[4];
 
-//static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield );
-
 /***************************************************************************/
 
 READ16_HANDLER( sys16_textram_r ){
@@ -151,6 +214,17 @@ READ16_HANDLER( sys16_tileram_r ){
 
 /***************************************************************************/
 
+/*
+	We mark the priority buffer as follows:
+		text	(0xf)
+		fg (hi) (0x7)
+		fg (lo) (0x3)
+		bg (hi) (0x1)
+		bg (lo) (0x0)
+
+	Each sprite has 4 levels of priority, specifying where they are placed between bg(lo) and text.
+*/
+
 static void draw_sprite16(
 	struct osd_bitmap *bitmap,
 	const unsigned char *addr, int pitch,
@@ -161,6 +235,7 @@ static void draw_sprite16(
 	int priority )
 {
 	int dx,dy;
+	priority = 1<<priority;
 
 	if( flipy ){
 		dy = -1;
@@ -188,20 +263,26 @@ static void draw_sprite16(
 				if( sy>=0 && sy<bitmap->height ){
 					const UINT8 *source = addr;
 					UINT16 *dest = (UINT16 *)bitmap->line[sy];
+					UINT8 *pri = priority_bitmap->line[sy];
+
 					int sx = x0;
 					int x;
 					int xcount = 0;
 					for( x=0; x<width; x+=2 ){
 						UINT8 data = *source++; /* next 2 pixels */
 
-						// breaks outrun
+						// breaks outrun, since those sprites are drawn from right to left
 						//if( data==0x0f ) break;
 
 						xcount += screen_width;
 						while( xcount>=width )
 						{
 							int pen = data>>4;
-							if( pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ) dest[sx] = paldata[pen];
+							if( pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ){
+								if( (pri[sx]&priority)==0 ){
+									dest[sx] = paldata[pen];
+								}
+							}
 							xcount -= width;
 							sx+=dx;
 						}
@@ -209,7 +290,11 @@ static void draw_sprite16(
 						while( xcount>=width )
 						{
 							int pen = data&0xf;
-							if(  pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ) dest[sx] = paldata[pen];
+							if(  pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ){
+								if( (pri[sx]&priority)==0 ){
+									dest[sx] = paldata[pen];
+								}
+							}
 							xcount -= width;
 							sx+=dx;
 						}
@@ -233,6 +318,13 @@ static void draw_sprite8(
 	int priority )
 {
 	int dx,dy;
+/* test code */
+//	if( keyboard_pressed( KEYCODE_A ) && priority==0 ) return;
+//	if( keyboard_pressed( KEYCODE_S ) && priority==1 ) return;
+//	if( keyboard_pressed( KEYCODE_D ) && priority==2 ) return;
+//	if( keyboard_pressed( KEYCODE_F ) && priority==3 ) return;
+
+	priority = 1<<priority;
 
 	if( flipy ){
 		dy = -1;
@@ -260,6 +352,7 @@ static void draw_sprite8(
 				if( sy>=0 && sy<bitmap->height ){
 					const UINT8 *source = addr;
 					UINT8 *dest = bitmap->line[sy];
+					UINT8 *pri = priority_bitmap->line[sy];
 					int sx = x0;
 					int x;
 					int xcount = 0;
@@ -273,7 +366,11 @@ static void draw_sprite8(
 						while( xcount>=width )
 						{
 							int pen = data>>4;
-							if( pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ) dest[sx] = paldata[pen];
+							if( pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ){
+								if( (pri[sx]&priority)==0 ){
+									dest[sx] = paldata[pen];
+								}
+							}
 							xcount -= width;
 							sx+=dx;
 						}
@@ -281,7 +378,11 @@ static void draw_sprite8(
 						while( xcount>=width )
 						{
 							int pen = data&0xf;
-							if(  pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ) dest[sx] = paldata[pen];
+							if(  pen!=0x0 && pen!=0xf && sx>=0 && sx<bitmap->width ){
+								if( (pri[sx]&priority)==0 ){
+									dest[sx] = paldata[pen];
+								}
+							}
 							xcount -= width;
 							sx+=dx;
 						}
@@ -297,7 +398,7 @@ static void draw_sprite8(
 
 static void draw_sprite(
 	struct osd_bitmap *bitmap,
-	const unsigned char *addr, int pitch,
+	const UINT8 *addr, int pitch,
 	const UINT16 *paldata,
 	int x0, int y0, int screen_width, int screen_height,
 	int width, int height,
@@ -314,24 +415,72 @@ static void draw_sprite(
 	}
 }
 
-static void draw_sprites( struct osd_bitmap *bitmap ){
+static void draw_sprites( struct osd_bitmap *bitmap, int b3d ){
 	const unsigned short *base_pal = Machine->gfx[0]->colortable;
 	const unsigned char *base_gfx = memory_region(REGION_GFX2);
 
-	struct sprite_attributes sprite;
+	struct sys16_sprite_attributes sprite;
 	const data16_t *source = sys16_spriteram;
 	int i;
 	memset( &sprite, 0x00, sizeof(sprite) );
 	for( i=0; i<num_sprites; i++ ){
-		if( get_sprite_attributes( &sprite, source,0 ) ) return; /* end-of-spritelist */
-		if( sprite.flags & SPR_VISIBLE ){
+		sprite.flags = 0;
+		if( sys16_spritesystem( &sprite, source,0 ) ) return; /* end-of-spritelist */
+		if( sprite.flags & SYS16_SPR_VISIBLE ){
+			int xpos = sprite.x;
+			int ypos = sprite.y;
+			int gfx = sprite.gfx;
+			int screen_width;
+			int width;
+			int logical_height;
+			int pitch = sprite.pitch;
+			int flipy = pitch&0x80;
+			int flipx = sprite.flags&SYS16_SPR_FLIPX;
+
+			width = pitch&0x7f;
+			if( pitch&0x80 ) width = 0x80-width;
+			width *= 4;
+
+			if( sys16_spritesystem==sys16_sprite_sharrier ){
+				logical_height = ((sprite.screen_height)<<4|0xf)*(0x400+sprite.zoomy)/0x4000;
+			}
+			else if( b3d ){ // outrun/aburner
+				logical_height = ((sprite.screen_height<<4)|0xf)*sprite.zoomy/0x2000;
+			}
+			else {
+				logical_height = sprite.screen_height*(0x400+sprite.zoomy)/0x400;
+			}
+
+			if( flipx ) gfx += 2; else gfx += width/2;
+			if( flipy ) gfx -= logical_height*width/2;
+
+			pitch = width/2;
+			if( width==0 ){
+				width = 512;// used by fantasy zone for laser
+			}
+
+			if( b3d ){ /* outrun, afterburner, ... */
+				screen_width = width*0x200/sprite.zoomx;
+				if( sprite.flags & SYS16_SPR_DRAW_TO_TOP ){
+					ypos -= sprite.screen_height;
+					flipy = !flipy;
+				}
+				if( sprite.flags & SYS16_SPR_DRAW_TO_LEFT ){
+					xpos -= screen_width;
+					flipx = !flipx;
+				}
+			}
+			else {
+				screen_width = width*(0x800-sprite.zoomx)/0x800;
+			}
+
 			draw_sprite(
 				bitmap,
-				base_gfx + sprite.gfx, sprite.logical_width/2,
+				base_gfx + gfx, pitch,
 				base_pal + sprite.color*16,
-				sprite.x, sprite.y, sprite.screen_width, sprite.screen_height,
-				sprite.logical_width, sprite.logical_height,
-				sprite.flags&SPR_FLIPX, sprite.flags&SPR_FLIPY,
+				xpos, ypos, screen_width, sprite.screen_height,
+				width, logical_height,
+				flipx, flipy,
 				sprite.priority
 			);
 		}
@@ -365,8 +514,7 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 	data16_t newword;
 	COMBINE_DATA( &paletteram16[offset] );
 	newword = paletteram16[offset];
-	if( oldword!=newword ){
-		/* we can do this, because we initialize palette RAM to all black in vh_start */
+	if( oldword!=newword ){ /* we can do this, because we initialize palette RAM to all black in vh_start */
 		/*	   byte 0    byte 1 */
 		/*	GBGR BBBB GGGG RRRR */
 		/*	5444 3210 3210 3210 */
@@ -410,7 +558,6 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 			palette_change_color( offset,r,g,b);
 
 			/* shadow color */
-
 			r= r * 160 / 256;
 			g= g * 160 / 256;
 			b= b * 160 / 256;
@@ -662,14 +809,17 @@ void sys16_vh_stop( void ){
 		fclose( f );
 	}
 #endif
-
-#ifdef SPACEHARRIER_OFFSETS
-	if(spaceharrier_patternoffsets) free(spaceharrier_patternoffsets);
-	spaceharrier_patternoffsets=0;
-#endif
 }
 
 int sys16_vh_start( void ){
+	static int bank_default[16] = {
+		0x0,0x1,0x2,0x3,
+		0x4,0x5,0x6,0x7,
+		0x8,0x9,0xa,0xb,
+		0xc,0xd,0xe,0xf
+	};
+	sys16_obj_bank = bank_default;
+
 	if( !sys16_bg1_trans )
 		background = tilemap_create(
 			get_bg_tile_info,
@@ -699,13 +849,7 @@ int sys16_vh_start( void ){
 		8,8,
 		40,28 );
 
-	logerror( "sprite system: %d\n", sys16_spritesystem );
-//	if( sys16_spritesystem==9 ){
-		num_sprites = 128*2;
-//	}
-//	else {
-//		num_sprites = 128;
-//	}
+	num_sprites = 128*2; /* only 128 for most games; aburner uses 256 */
 
 #ifdef TRANSPARENT_SHADOWS
 	sprite_set_shade_table(shade_table);
@@ -736,9 +880,6 @@ int sys16_vh_start( void ){
 
 #endif
 
-		//sprite_list->max_priority = 3;
-		//sprite_list->sprite_type = SPRITE_TYPE_ZOOM;
-
 		if(sys16_bg1_trans) tilemap_set_transparent_pen( background, 0 );
 		tilemap_set_transparent_pen( foreground, 0 );
 		tilemap_set_transparent_pen( text_layer, 0 );
@@ -756,7 +897,7 @@ int sys16_vh_start( void ){
 
 		/* common defaults */
 		sys16_update_proc = 0;
-		sys16_spritesystem = 1;
+		sys16_spritesystem = sys16_sprite_shinobi;
 		sys16_sprxoffset = -0xb8;
 		sys16_textmode = 0;
 		sys16_bgxoffset = 0;
@@ -802,7 +943,7 @@ int sys16_vh_start( void ){
 	return 1;
 }
 
-int sys16_ho_vh_start( void ){
+int sys16_hangon_vh_start( void ){
 	int ret;
 	sys16_bg1_trans=1;
 	ret = sys16_vh_start();
@@ -818,27 +959,8 @@ int sys16_ho_vh_start( void ){
 	sys16_fg_priority_value=0x2000;
 	return 0;
 }
-
-int sys16_or_vh_start( void ){
-	int ret;
-	sys16_bg1_trans=1;
-	ret = sys16_vh_start();
-	if(ret) return 1;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0;
-	sys16_textlayer_hi_min=0;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_bg_priority_mode=-1;
-	sys16_bg_priority_value=0x1800;
-	sys16_fg_priority_value=0x2000;
-	return 0;
-}
-
 
 int sys18_vh_start( void ){
-	int ret;
 	sys16_bg1_trans=1;
 
 	background2 = tilemap_create(
@@ -855,898 +977,34 @@ int sys18_vh_start( void ){
 		8,8,
 		64*2,32*2 );
 
-	if( background2 && foreground2)
-	{
-		ret = sys16_vh_start();
-		if(ret) return 1;
+	if( background2 && foreground2 ){
+		if( sys16_vh_start()==0 ){
+			tilemap_set_transparent_pen( foreground2, 0 );
 
-		tilemap_set_transparent_pen( foreground2, 0 );
-
-		if(sys18_splittab_fg_x)
-		{
-			tilemap_set_scroll_rows( foreground , 64 );
-			tilemap_set_scroll_rows( foreground2 , 64 );
-		}
-		if(sys18_splittab_bg_x)
-		{
-			tilemap_set_scroll_rows( background , 64 );
-			tilemap_set_scroll_rows( background2 , 64 );
-		}
-
-		sys16_textlayer_lo_min=0;
-		sys16_textlayer_lo_max=0x1f;
-		sys16_textlayer_hi_min=0x20;
-		sys16_textlayer_hi_max=0xff;
-
-		sys16_18_mode=1;
-		sys16_bg_priority_mode=3;
-		sys16_fg_priority_mode=3;
-		sys16_bg_priority_value=0x1800;
-		sys16_fg_priority_value=0x2000;
-		return 0;
-	}
-	return 1;
-}
-
-
-/***************************************************************************/
-
-static int get_sprite_attributes( struct sprite_attributes *sprite, const UINT16 *source, int bJustGetColor ){
-	int passshot_y=0;
-	int passshot_width=0;
-
-	sprite->flags = 0;
-
-	switch( sys16_spritesystem  ){
-		case 1: /* standard sprite hardware (Shinobi, Altered Beast, Golden Axe, ...) */
-/*
-	0	YYYYYYYY	YYYYYYYY	top, bottom (screen coordinates)
-	1	-------X	XXXXXXXX	(screen coordinate)
-	2	-------F	FWWWWWWW	(flipx, flipy, logical width)
-	3	TTTTTTTT	TTTTTTTT	(pen data)
-	4	----BBBB	PPCCCCCC	(attributes: bank, priority, color)
-	5	------ZZ	ZZZZZZZZ	zoomx
-	6	------ZZ	ZZZZZZZZ	zoomy (defaults to zoomx)
-	7	?						"sprite offset"
-*/
-		{
-			UINT16 ypos = source[0];
-			UINT16 width = source[2];
-			int top = ypos&0xff;
-			int bottom = ypos>>8;
-			if( bottom == 0xff || width ==sys16_spritelist_end) return 1; /* end of spritelist */
-			if(bottom !=0 && bottom > top){
-				UINT16 attributes = source[4];
-				UINT16 zoomx = source[5]&0x3ff;
-				UINT16 zoomy = (source[6]&0x3ff);
-				int gfx = source[3]*4;
-				if( zoomy==0 || source[6]==0xffff ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
-				sprite->x = source[1] + sys16_sprxoffset;
-				sprite->y = top;
-				sprite->priority = 3-((attributes>>6)&0x3);
-				sprite->color = 1024/16 + (attributes&0x3f);
-
-				sprite->screen_height = bottom-top;
-				sprite->logical_height = sprite->screen_height*(0x400+zoomy)/0x400;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-				if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-				if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-
-#ifdef TRANSPARENT_SHADOWS
-				if ((attributes&0x3f)==0x3f) sprite->flags|= SPR_SHADOW;
-#endif
-
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->logical_width = 512-sprite->logical_width;
-					if( sprite->flags&SPR_FLIPX ){ /* flipy and flipx */
-						gfx += 4 - sprite->logical_width*(sprite->logical_height+1);
-					}
-					else { /* flipy only */
-						gfx -= sprite->logical_width*sprite->logical_height;
-					}
-				}
-				else {
-					if( sprite->flags&SPR_FLIPX ){ /* flipx only */
-						gfx += 4;
-					}
-					else { /* no flip */
-						gfx += sprite->logical_width;
-					}
-				}
-
-				sprite->screen_width = sprite->logical_width*(0x800-zoomx)/0x800;
-				{
-					int offs = (gfx &0x3ffff) + (sys16_obj_bank[(attributes>>8)&0xf] << 17);
-					sprite->gfx = offs/2;
-				}
+			if(sys18_splittab_fg_x){
+				tilemap_set_scroll_rows( foreground , 64 );
+				tilemap_set_scroll_rows( foreground2 , 64 );
 			}
-		}
-		break;
-
-		case 8: /* Passing shot 4p */
-			passshot_y=-0x23;
-			passshot_width=1;
-		case 0: /* Passing shot */
-/*
-	0	???????X	XXXXXXXX	(screen coordinate)
-	1	bottom--	top-----	(screen coordinates)
-	2	XTTTTTTT	YTTTTTTT	(pen data, flipx, flipy)
-	3	????????	?WWWWWWW	(logical width)
-	4	??????ZZ	ZZZZZZZZ	zoom
-	5	PPCCCCCC	BBBB????	(attributes: bank, priority, color)
-	6,7	(unused)
-*/
-		{
-			UINT16 attributes = source[5];
-			UINT16 ypos = source[1];
-			int bottom = (ypos>>8)+passshot_y;
-			int top = (ypos&0xff)+passshot_y;
-
-			if( bottom>top && ypos!=0xffff ){
-				int bank = (attributes>>4)&0xf;
-				UINT16 number = source[2];
-				UINT16 width = source[3];
-
-				int zoom = source[4]&0x3ff;
-				int xpos = source[0] + sys16_sprxoffset;
-
-				sprite->priority = 3-((attributes>>14)&0x3);
-				if(passshot_width) /* 4 player bootleg version */
-				{
-					width=-width;
-					number-=width*(bottom-top-1)-1;
-				}
-
-				if( number & 0x8000 ) sprite->flags |= SPR_FLIPX;
-				if( width  & 0x0080 ) sprite->flags |= SPR_FLIPY;
-				sprite->flags |= SPR_VISIBLE;
-				sprite->color = 1024/16+ ((attributes>>8)&0x3f);
-				sprite->screen_height = bottom - top;
-				sprite->logical_height = sprite->screen_height*(0x400+zoom)/0x400;
-
-#ifdef TRANSPARENT_SHADOWS
-				if (((attributes>>8)&0x3f)==0x3f)	// shadow sprite
-					sprite->flags|= SPR_SHADOW;
-#endif
-				width &= 0x7f;
-
-				if( sprite->flags&SPR_FLIPY ) width = 0x80-width;
-
-				sprite->logical_width = sprite->logical_width = width*4;
-
-				if( sprite->flags&SPR_FLIPX ){
-					bank = (bank-1) & 0xf;
-					if( sprite->flags&SPR_FLIPY ){
-						xpos += 4;
-					}
-					else {
-						number += 1-width;
-					}
-				}
-				sprite->gfx = (number*4 + (sys16_obj_bank[bank] << 17))/2;
-
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->gfx -= (sprite->logical_height*sprite->logical_width)/2;
-					if( sprite->flags&SPR_FLIPX ) sprite->gfx += 1;
-				}
-
-				sprite->x = xpos;
-				sprite->y = top+2;
-
-				if( sprite->flags&SPR_FLIPY ){
-					if( sprite->flags&SPR_FLIPX ){
-						sprite->logical_width-=4;
-						sprite->gfx+=2;
-					}
-					else {
-						sprite->gfx += sprite->logical_width/2;
-					}
-				}
-
-				sprite->screen_width = sprite->logical_width*(0x800-zoom)/0x800;
+			if(sys18_splittab_bg_x){
+				tilemap_set_scroll_rows( background , 64 );
+				tilemap_set_scroll_rows( background2 , 64 );
 			}
-		}
-		break;
 
-		case 4: // Aurail
-/*
-	0	bottom--	top-----	(screen coordinates)
-	1	???????X	XXXXXXXX	(screen coordinate)
-	2	???????F	FWWWWWWW	(flipx, flipy, logical width)
-	3	TTTTTTTT	TTTTTTTT	(pen data)
-	4	????BBBB	PPCCCCCC	(attributes: bank, priority, color)
-	5	??????ZZ	ZZZZZZZZ	zoomx
-	6	??????ZZ	ZZZZZZZZ	zoomy (defaults to zoomx)
-	7	?						"sprite offset"
-*/
-		{
-			UINT16 ypos = source[0];
-			UINT16 width = source[2];
-			UINT16 attributes = source[4];
-			int top = ypos&0xff;
-			int bottom = ypos>>8;
+			sys16_textlayer_lo_min=0;
+			sys16_textlayer_lo_max=0x1f;
+			sys16_textlayer_hi_min=0x20;
+			sys16_textlayer_hi_max=0xff;
 
-			if( width == sys16_spritelist_end) return 1;
-#ifdef TRANSPARENT_SHADOWS
-			if(bottom !=0 && bottom > top)
-#else
-			if(bottom !=0 && bottom > top && (attributes&0x3f) !=0x3f)
-#endif
-			{
-				UINT16 zoomx = source[5]&0x3ff;
-				UINT16 zoomy = (source[6]&0x3ff);
-				int gfx = source[3]*4;
+			sys16_18_mode=1;
+			sys16_bg_priority_mode=3;
+			sys16_fg_priority_mode=3;
+			sys16_bg_priority_value=0x1800;
+			sys16_fg_priority_value=0x2000;
 
-				if( zoomy==0 ) zoomy = zoomx; /* if zoomy is 0, use zoomx instead */
-				sprite->color = 1024/16 + (attributes&0x3f);
-
-				sprite->x = source[1] + sys16_sprxoffset;;
-				sprite->y = top;
-				sprite->priority = 3-((attributes>>6)&0x3);
-
-				sprite->screen_height = bottom-top;
-				sprite->logical_height = sprite->screen_height*(0x400+zoomy)/0x400;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-				if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-				if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-#ifdef TRANSPARENT_SHADOWS
-				if ((attributes&0x3f)==0x3f)	// shadow sprite
-					sprite->flags|= SPR_SHADOW;
-#endif
-
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->logical_width = 512-sprite->logical_width;
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4 - sprite->logical_width*(sprite->logical_height+1);
-					}
-					else {
-						gfx -= sprite->logical_width*sprite->logical_height;
-					}
-				}
-				else {
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4;
-					}
-					else {
-						gfx += sprite->logical_width;
-					}
-				}
-
-				sprite->screen_width = sprite->logical_width*(0x800-zoomx)/0x800;
-				sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[(attributes>>8)&0xf] << 17))/2;
-			}
-		}
-		break;
-
-		case 3:	// Fantzone
-			{
-//				int spr_no=0;
-				UINT16 ypos = source[0];
-				UINT16 pal=(source[4]>>8)&0x3f;
-				int top = ypos&0xff;
-				int bottom = ypos>>8;
-
-				if( bottom == 0xff ) return 1; /* end of spritelist marker */
-
-#ifdef TRANSPARENT_SHADOWS
-				if(bottom !=0 && bottom > top)
-#else
-				if(bottom !=0 && bottom > top && pal !=0x3f)
-#endif
-				{
-					UINT16 spr_pri=(source[4])&0xf;
-					UINT16 bank=(source[4]>>4) &0xf;
-					UINT16 tsource[4];
-					UINT16 width;
-					int gfx;
-
-//					if (spr_no==5 && (source[4]&0x00ff) == 0x0021 &&
-//						((source[3]&0xff00) == 0x5200 || (source[3]&0xff00) == 0x5300)) spr_pri=2; // tears fix for ending boss
-
-					tsource[2]=source[2];
-					tsource[3]=source[3];
-
-					if((tsource[3] & 0x7f80) == 0x7f80){
-						bank=(bank-1)&0xf;
-						tsource[3]^=0x8000;
-					}
-
-					tsource[2] &= 0x00ff;
-					if (tsource[3]&0x8000){ // reverse
-						tsource[2] |= 0x0100;
-						tsource[3] &= 0x7fff;
-					}
-
-					gfx = tsource[3]*4;
-					width = tsource[2];
-					top++;
-					bottom++;
-
-					sprite->x = source[1] + sys16_sprxoffset;
-					if(sprite->x > 0x140) sprite->x-=0x200;
-					sprite->y = top;
-					sprite->priority = 3-spr_pri;
-					sprite->color = 1024/16 + pal;
-
-					sprite->screen_height = bottom-top;
-					sprite->logical_height = sprite->screen_height;
-
-					sprite->logical_width = (width&0x7f)*4;
-
-					sprite->flags = SPR_VISIBLE;
-					if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-					if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-#ifdef TRANSPARENT_SHADOWS
-					if (pal==0x3f)	// shadow sprite
-						sprite->flags|= SPR_SHADOW;
-#endif
-
-					if( sprite->flags&SPR_FLIPY ){
-						sprite->logical_width = 512-sprite->logical_width;
-						if( sprite->flags&SPR_FLIPX ){
-							gfx += 4 - sprite->logical_width*(sprite->logical_height+1);
-						}
-						else {
-							gfx -= sprite->logical_width*sprite->logical_height;
-						}
-					}
-					else {
-						if( sprite->flags&SPR_FLIPX ){
-							gfx += 4;
-						}
-						else {
-							gfx += sprite->logical_width;
-						}
-					}
-
-					sprite->logical_width = sprite->logical_width;
-					if(width==0) sprite->logical_width=320;			// fixes laser
-					sprite->screen_width = sprite->logical_width;
-					sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
-				}
-			}
-			break;
-
-		case 2: // Quartet2 /Alexkidd + others
-		{
-			UINT16 ypos = source[0];
-			int top = ypos&0xff;
-			int bottom = ypos>>8;
-
-			if( bottom == 0xff ) return 1;
-
-			sprite->flags = 0;
-
-			if(bottom !=0 && bottom > top){
-				UINT16 spr_pri=(source[4])&0xf;
-				UINT16 bank=(source[4]>>4) &0xf;
-				UINT16 pal=(source[4]>>8)&0x3f;
-				UINT16 tsource[4];
-				UINT16 width;
-				int gfx;
-
-				tsource[2]=source[2];
-				tsource[3]=source[3];
-#ifndef TRANSPARENT_SHADOWS
-				if (pal==0x3f)	// shadow sprite
-					pal=(bank<<1);
-#endif
-
-				if((tsource[3] & 0x7f80) == 0x7f80){
-					bank=(bank-1)&0xf;
-					tsource[3]^=0x8000;
-				}
-
-				tsource[2] &= 0x00ff;
-				if (tsource[3]&0x8000){ // reverse
-					tsource[2] |= 0x0100;
-					tsource[3] &= 0x7fff;
-				}
-
-				gfx = tsource[3]*4;
-				width = tsource[2];
-				top++;
-				bottom++;
-
-				sprite->x = source[1] + sys16_sprxoffset;
-				if(sprite->x > 0x140) sprite->x-=0x200;
-				sprite->y = top;
-				sprite->priority = 3 - spr_pri;
-				sprite->color = 1024/16 + pal;
-
-				sprite->screen_height = bottom-top;
-				sprite->logical_height = sprite->screen_height;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-				if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-				if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-#ifdef TRANSPARENT_SHADOWS
-				if (pal==0x3f)	// shadow sprite
-					sprite->flags|= SPR_SHADOW;
-#endif
-
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->logical_width = 512-sprite->logical_width;
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4 - sprite->logical_width*(sprite->logical_height+1);
-					}
-					else {
-						gfx -= sprite->logical_width*sprite->logical_height;
-					}
-				}
-				else {
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4;
-					}
-					else {
-						gfx += sprite->logical_width;
-					}
-				}
-
-				sprite->screen_width = sprite->logical_width;
-				sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
-			}
-		}
-		break;
-
-		case 5: // Hang-On
-		{
-			UINT16 ypos = source[0];
-			int top = ypos&0xff;
-			int bottom = ypos>>8;
-
-			if( bottom == 0xff ) return 1; /* end of spritelist marker */
-			sprite->flags = 0;
-
-			if(bottom !=0 && bottom > top){
-				UINT16 bank=(source[1]>>12);
-				UINT16 pal=(source[4]>>8)&0x3f;
-				UINT16 tsource[4];
-				UINT16 width;
-				int gfx;
-				int zoomx,zoomy;
-
-				tsource[2]=source[2];
-				tsource[3]=source[3];
-
-				zoomx=((source[4]>>2) & 0x3f) *(1024/64);
-		        zoomy = (1060*zoomx)/(2048-zoomx);
-
-				if((tsource[3] & 0x7f80) == 0x7f80){
-					bank=(bank-1)&0xf;
-					tsource[3]^=0x8000;
-				}
-
-				if (tsource[3]&0x8000){ // reverse
-					tsource[2] |= 0x0100;
-					tsource[3] &= 0x7fff;
-				}
-
-				gfx = tsource[3]*4;
-				width = tsource[2];
-
-				sprite->x = ((source[1] & 0x3ff) + sys16_sprxoffset);
-				if(sprite->x >= 0x200) sprite->x-=0x200;
-				sprite->y = top;
-				sprite->priority = 0;
-				sprite->color = 1024/16 + pal;
-
-				sprite->screen_height = bottom-top;
-				sprite->logical_height = sprite->screen_height*(0x400+zoomy)/0x400;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-				if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-				if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-
-
-//				sprite->flags|= SPR_PARTIAL_SHADOW;
-//				sprite->shadow_pen=10;
-
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->logical_width = 512-sprite->logical_width;
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4 - sprite->logical_width*(sprite->logical_height+1);
-					}
-					else {
-						gfx -= sprite->logical_width*sprite->logical_height;
-					}
-				}
-				else {
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4;
-					}
-					else {
-						gfx += sprite->logical_width;
-					}
-				}
-
-				sprite->screen_width = sprite->logical_width*(0x0800 - zoomx)/0x800;
-				sprite->gfx = ((gfx &0x3ffff) + (sys16_obj_bank[bank] << 17))/2;
-			}
-		}
-		break;
-
-		case 6: // Space Harrier
-		{
-			UINT16 ypos = source[0];
-			int top = ypos&0xff;
-			int bottom = ypos>>8;
-
-			if( bottom == 0xff ) return 1; /* end of spritelist marker */
-
-			sprite->flags = 0;
-
-			if( bottom !=0 && bottom > top ){
-				UINT16 bank=(source[1]>>12);
-				UINT16 pal=(source[2]>>8)&0x3f;
-				UINT16 tsource[4];
-				UINT16 width;
-				int gfx;
-				int zoomx,zoomy;
-
-				tsource[2]=source[2]&0xff;
-				tsource[3]=source[3];
-
-				zoomx=(source[4] & 0x3f) *(1024/64);
-		        zoomy = (1024*zoomx)/(2048-zoomx);
-
-#ifndef TRANSPARENT_SHADOWS
-				if (pal==0x3f) pal=(bank<<1); // shadow sprite
-#endif
-
-				if((tsource[3] & 0x7f80) == 0x7f80){
-					bank=(bank-1)&0xf;
-					tsource[3]^=0x8000;
-				}
-
-				if (tsource[3]&0x8000){ // reverse
-					tsource[2] |= 0x0100;
-					tsource[3] &= 0x7fff;
-				}
-
-				gfx = tsource[3]*4;
-				width = tsource[2];
-
-				sprite->x = ((source[1] & 0x3ff) + sys16_sprxoffset);
-				if(sprite->x >= 0x200) sprite->x-=0x200;
-				sprite->y = top+1;
-				sprite->priority = 0;
-				sprite->color = 1024/16 + pal;
-
-				sprite->screen_height = bottom-top;
-//				sprite->logical_height = sprite->screen_height*(0x400+zoomy)/0x400;
-				sprite->logical_height = ((sprite->screen_height)<<4|0xf)*(0x400+zoomy)/0x4000;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-				if( width&0x100 ) sprite->flags |= SPR_FLIPX;
-				if( width&0x080 ) sprite->flags |= SPR_FLIPY;
-
-#ifdef TRANSPARENT_SHADOWS
-				if (sys16_sh_shadowpal == 0)		// space harrier
-				{
-					if (pal==sys16_sh_shadowpal)	// shadow sprite
-						sprite->flags|= SPR_SHADOW;
-					// I think this looks better, but I'm sure it's wrong.
-//					else if(READ_WORD(&paletteram[2048+pal*2+20]) == 0)
-//					{
-//						sprite->flags|= SPR_PARTIAL_SHADOW;
-//						sprite->shadow_pen=10;
-//					}
-				}
-				else								// enduro
-				{
-					sprite->flags|= SPR_PARTIAL_SHADOW;
-					sprite->shadow_pen=10;
-				}
-#endif
-				if( sprite->flags&SPR_FLIPY ){
-					sprite->logical_width = 512-sprite->logical_width;
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4 - sprite->logical_width*(sprite->logical_height+1) /*+4*/;
-					}
-					else {
-						gfx -= sprite->logical_width*sprite->logical_height;
-					}
-				}
-				else {
-					if( sprite->flags&SPR_FLIPX ){
-						gfx += 4 /*+ 4*/;		// +2 ???
-					}
-					else {
-						gfx += sprite->logical_width;
-					}
-				}
-
-				sprite->logical_width<<=1;
-				sprite->screen_width = sprite->logical_width*(0x0800 - zoomx)/0x800;
-
-				{
-					int offs = (gfx &0x3ffff) + (sys16_obj_bank[bank] << 17);
-					sprite->gfx = offs;
-				}
-
-#ifdef SPACEHARRIER_OFFSETS
-// doesn't seem to work properly and I'm not sure why it's needed.
-				if( !(width & 0x180) && (width & 0x7f))
-				{
-					unsigned addr=tsource[3];
-					unsigned offset_addr= (bank<<12) | (addr>>4);
-					char rebuild = 0;
-
-					if (spaceharrier_patternoffsets[offset_addr]!=0x7f)
-					{
-						offset = spaceharrier_patternoffsets[offset_addr];
-					}
-					else
-					{ // build pattern offset
-						unsigned width2=width&0x7f;
-						UINT8 *p,*p0;
-						unsigned height=sprite->logical_height;
-						unsigned width_bytes;
-						int len_pattern;
-						int i,j;
-
-						len_pattern = height*width2;
-						if (len_pattern >= 16)
-						{
-
-							len_pattern >>= 4;
-
-							// 32 bit sprite hardware ///////////////////////////////////////////
-							width_bytes = width2<<3;
-							p0 = (UINT8 *)sprite->pen_data;
-							/////////////////////////////////////////////////////////////////////
-
-							offset=0xe;
-							for (i=0, p=p0; i<height; i++, p+=width_bytes)
-							{
-								for (j=0; j<width_bytes && j<offset; j++)
-								{
-									if ((p[j]!=0xff && p[j]!=0x00) /*|| (p[j+1]!=0xff && p[j+1]!=0x00 )*/) break;
-								}
-								if (j<offset) offset = j;
-							}
-
-							//              printf("rebuild %02x:%04x = %d\n", bank, addr, offset);
-
-							p=&spaceharrier_patternoffsets[offset_addr];
-
-							offset/=2;
-							for (i=0; i<len_pattern; i++,p++) *p = offset;
-
-						    logerror("addr=%04x offset=%4x bank=%02x offset=%d height=%d zoomy=%04x len_pattern=%d width=%d offset_addr=%04x\n", addr, offset, bank, offset, height, zoomy,  len_pattern, width2, offset_addr);
-						}
-					}
-				}
-				sprite->pen_data += offset;
-#endif
-			}
-		}
-		break;
-
-		case 7: // Outrun
-/*
-	0	??---BBB	YYYYYYYY	0xffff = spritelist end marker
-	1	-TTTTTTT	TTTTTTTT
-	2	WWWWWWWX	XXXXXXXX
-	3	-1----ZZ	ZZZZZZZZ
-	4	-F?---ZZ	ZZZZZZZZ
-	5	HHHHHHHH	-CCCCCCC
-	6	--------	--------
-	7	--------	--------
-*/
-		{
-			if( source[0] == 0xffff ) return 1; /* end of spritelist marker */
-
-			if (!(source[0]&0x4000)){
-				UINT16 bank=(source[0]>>8)&7;
-				UINT16 pal=(source[5])&0x7f;
-				UINT16 width = source[2]>>9;
-				int gfx = (source[1]&0x7fff)*4;
-				int zoom = source[4]&0xfff;
-				int x = (source[2] & 0x1ff);
-
-//				if (zoom==0x32c) zoom=0x3cf;	//???
-				if(zoom==0) zoom=1;
-				if (source[1]&0x8000) bank=(bank+1)&0x7;
-				// patch misplaced sprite on map
-//				if(zoom == 0x3f0 && source[1]==0x142e && (source[0]&0xff)==0x19)
-//					x-=2;
-
-				sprite->y = source[0]&0xff;
-				sprite->priority = 0;
-				sprite->color = 0x80 + pal;
-
-				sprite->screen_height = (source[5]>>8)+1;
-				sprite->logical_height = ((sprite->screen_height<<4)| 0xf)*(zoom)/0x2000;
-
-				sprite->logical_width = (width&0x7f)*4;
-
-				sprite->flags = SPR_VISIBLE;
-#ifdef TRANSPARENT_SHADOWS
-				if( pal==0 ) sprite->flags|= SPR_SHADOW;
-				else if( source[3]&0x4000 )
-//				if(pal==0 || source[3]&0x4000)
-				{
-					sprite->flags|= SPR_PARTIAL_SHADOW;
-					sprite->shadow_pen=10;
-				}
-#endif
-				if(!(source[4]&0x2000))
-				{
-					if(!(source[4]&0x4000))
-					{
-						// Should be drawn right to left, but this should be ok.
-						x-=(sprite->logical_width*2)*0x200/zoom;
-						gfx+=4-sprite->logical_width;
-					}
-					else
-					{
-						int ofs=(sprite->logical_width*2)*0x200/zoom;
-						x-=ofs;
-						sprite->flags |= SPR_FLIPX;
-
-						// x position compensation for rocks in round2R and round4RRR
-/*						if((source[0]&0xff00)==0x0300)
-						{
-							if (source[1]==0xc027)
-							{
-								if ((source[2]>>8)==0x59) x += ofs/2;
-								else if ((source[2]>>8)>0x59) x += ofs;
-							}
-							else if (source[1]==0xcf73)
-							{
-								if ((source[2]>>8)==0x2d) x += ofs/2;
-								else if ((source[2]>>8)>0x2d) x += ofs;
-							}
-							else if (source[1]==0xd3046)
-							{
-								if ((source[2]>>8)==0x19) x += ofs/2;
-								else if ((source[2]>>8)>0x19) x += ofs;
-							}
-							else if (source[1]==0xd44e)
-							{
-								if ((source[2]>>8)==0x0d) x += ofs/2;
-								else if ((source[2]>>8)>0x0d) x += ofs;
-							}
-							else if (source[1]==0xd490)
-							{
-								if ((source[2]>>8)==0x09) x += ofs/2;
-								else if ((source[2]>>8)>0x09) x += ofs;
-							}
-						}
-*/
-					}
-				}
-				else
-				{
-					if(!(source[4]&0x4000))
-					{
-						gfx-=sprite->logical_width-4;
-						sprite->flags |= SPR_FLIPX;
-					}
-					else
-					{
-						if (source[4]&0x8000)
-						{ // patch for car shadow position
-							if (source[4]==0xe1a9 && source[1]==0x5817)
-								x-=2;
-						}
-					}
-				}
-
-				sprite->x = x + sys16_sprxoffset;
-
-				sprite->logical_width<<=1;
-				sprite->screen_width = sprite->logical_width*0x200/zoom;
-
-				bank = sys16_obj_bank[bank];
-				{
-					int offs = (gfx &0x3ffff) + (bank << 17);
-					sprite->gfx = offs;
-				}
-			}
-		}
-		break;
-
-		case 9: /* aburner */
-/*
-	0	EV--BBB1	YYYYYYYY	end-of-list, hide, bank, screen ypos
-	1	TTTTTTTT	TTTTTTTT	gfx dword offset
-	2	WWWWWWWX	XXXXXXXX	width (signed), screen xpos
-	3	---1--ZZ	ZZZZZZZZ	zoomx
-	4	D???--ZZ	ZZZZZZZZ	zoomy; draw-to-top
-	5	--------	HHHHHHHH	screen height
-	6	--------	CCCCCCCC
-	7	--------	--------
-*/
-		if( source[0]&0x8000 ){ /* end of spritelist */
-			return 1;
-		}
-		else if( source[0]&0x4000 ){ /* hidden sprite */
 			return 0;
 		}
-		else {
-			int zoomx = source[3];
-			int zoomy = source[4];
-			int flags = zoomy>>12;
-
-			int x = (source[2]&0x1ff);
-			/* gfx source is provided as a dword offset */
-			/* each dword encodes 8 pixels */
-			int bank = (source[0]>>9)&7;
-			int gfx = (source[1]+(bank<<16))*4;
-
-			sprite->flags = SPR_VISIBLE;
-
-			zoomx&=0x3ff;
-			zoomy&=0x3ff;
-			if(zoomx==0) zoomx=1;
-			if(zoomy==0) zoomy=1;
-
-			sprite->y = source[0]&0xff;
-			sprite->priority = 0;
-			sprite->color = source[6]&0xff;
-			sprite->screen_height = (source[5]&0xff)+1;
-			sprite->logical_height = ((sprite->screen_height<<4)|0xf)*zoomy/0x2000; /* round up, scale */
-
-			/* logical sprite width */
-			sprite->logical_width = source[2]>>9;
-			if( source[2]&0x8000 ){ /* negative width */
-				sprite->logical_width = 0x80 - sprite->logical_width;
-//				gfx -= sprite->logical_height*sprite->logical_width;
-			}
-			sprite->logical_width = sprite->logical_width*4;
-
-			{
-//If Word[4]&0x8000 then draw to top
-//If the width is negative do width=0x400-width and increment Y by  negative
-//amounts (i.e. draw the sprite above the base address flipped)
-
-				if( flags&0x8 ){ /* draw bottom to top */
-				}
-				if( flags&0x1 ){ /* reversed vertical scan direction */
-					gfx -= sprite->logical_width*sprite->logical_height;
-					sprite->y -= sprite->screen_height;
-				}
-
-				if( flags&0x2 ){
-					if( !(flags&0x4) ){
-						gfx -= sprite->logical_width-4;
-						sprite->flags |= SPR_FLIPX;
-					}
-				}
-				else if( flags&0x4 ){ /* draw right to left */
-					x -= (sprite->logical_width*2)*0x200/zoomy;
-					sprite->flags |= SPR_FLIPX;
-				}
-				else{
-					x -= (sprite->logical_width*2)*0x200/zoomy;
-					gfx += 4-sprite->logical_width;
-				}
-			}
-
-			sprite->x = x + sys16_sprxoffset;
-			sprite->logical_width*=2; /* line offset is raw pitch.  convert to pixel width */
-			sprite->screen_width = sprite->logical_width*0x200/zoomx;
-
-			sprite->gfx = gfx;
-		}
-		break;
 	}
-	return 0;
+	return 1;
 }
 
 /***************************************************************************/
@@ -1757,12 +1015,13 @@ static void mark_sprite_colors( void ){
 	memset( used, 0x00, sizeof(used) );
 
 	{
-		struct sprite_attributes sprite;
+		struct sys16_sprite_attributes sprite;
 		int i;
 		memset( &sprite, 0x00, sizeof(sprite) );
 		for( i=0; i<num_sprites; i++ ){
-			if( get_sprite_attributes( &sprite, source,1 ) ) break; /* end-of-spritelist */
-			if( sprite.flags & SPR_VISIBLE ){
+			sprite.flags = 0;
+			if( sys16_spritesystem( &sprite, source,1 ) ) break; /* end-of-spritelist */
+			if( sprite.flags & SYS16_SPR_VISIBLE ){
 				used[sprite.color] = 1;
 			}
 			source += 8;
@@ -1844,73 +1103,55 @@ static void build_shadow_table(void)
 #define build_shadow_table()
 #endif
 
-void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	if (!sys16_refreshenable) return;
-
-	if( sys16_update_proc ) sys16_update_proc();
-	update_page();
-
-	if(sys18_splittab_bg_x)
-	{
-		if((sys16_bg_scrollx&0xff00)  != sys16_rowscroll_scroll)
-		{
+static void sys16_vh_refresh_helper( void ){
+	if( sys18_splittab_bg_x ){
+		if( (sys16_bg_scrollx&0xff00)  != sys16_rowscroll_scroll ){
 			tilemap_set_scroll_rows( background , 1 );
 			tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
 		}
-		else
-		{
+		else {
 			int offset, scroll,i;
 
 			tilemap_set_scroll_rows( background , 64 );
 			offset = 32+((sys16_bg_scrolly&0x1f8) >> 3);
 
-			for(i=0;i<29;i++)
-			{
+			for( i=0; i<29; i++ ){
 				scroll = sys18_splittab_bg_x[i];
 				tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
 	}
 
-	if(sys18_splittab_bg_y)
-	{
-		if((sys16_bg_scrolly&0xff00)  != sys16_rowscroll_scroll)
-		{
+	if( sys18_splittab_bg_y ){
+		if( (sys16_bg_scrolly&0xff00)  != sys16_rowscroll_scroll ){
 			tilemap_set_scroll_cols( background , 1 );
 			tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 		}
-		else
-		{
+		else {
 			int offset, scroll,i;
 
 			tilemap_set_scroll_cols( background , 128 );
 			offset = 127-((sys16_bg_scrollx&0x3f8) >> 3)-40+2;
 
-			for(i=0;i<41;i++)
-			{
+			for( i=0;i<41;i++ ){
 				scroll = sys18_splittab_bg_y[(i+24)>>1];
 				tilemap_set_scrolly( background , (i+offset)&0x7f, -256+(scroll&0x3ff) );
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 	}
 
-	if(sys18_splittab_fg_x)
-	{
-		if((sys16_fg_scrollx&0xff00)  != sys16_rowscroll_scroll)
-		{
+	if( sys18_splittab_fg_x ){
+		if( (sys16_fg_scrollx&0xff00)  != sys16_rowscroll_scroll ){
 			tilemap_set_scroll_rows( foreground , 1 );
 			tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 		}
-		else
-		{
+		else {
 			int offset, scroll,i;
 
 			tilemap_set_scroll_rows( foreground , 64 );
@@ -1922,160 +1163,56 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 	}
 
-	if(sys18_splittab_fg_y)
-	{
-		if((sys16_fg_scrolly&0xff00)  != sys16_rowscroll_scroll)
-		{
+	if( sys18_splittab_fg_y ){
+		if( (sys16_fg_scrolly&0xff00)  != sys16_rowscroll_scroll ){
 			tilemap_set_scroll_cols( foreground , 1 );
 			tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 		}
-		else
-		{
+		else {
 			int offset, scroll,i;
 
 			tilemap_set_scroll_cols( foreground , 128 );
 			offset = 127-((sys16_fg_scrollx&0x3f8) >> 3)-40+2;
 
-			for(i=0;i<41;i++)
-			{
+			for( i=0; i<41; i++ ){
 				scroll = sys18_splittab_fg_y[(i+24)>>1];
 				tilemap_set_scrolly( foreground , (i+offset)&0x7f, -256+(scroll&0x3ff) );
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 	}
-
-/*	if(sys16_quartet_title_kludge)
-	{
-		int top,bottom,left,right;
-		int top2,bottom2,left2,right2;
-		struct rectangle clip;
-
-		left = background->clip_left;
-		right = background->clip_right;
-		top = background->clip_top;
-		bottom = background->clip_bottom;
-
-		left2 = foreground->clip_left;
-		right2 = foreground->clip_right;
-		top2 = foreground->clip_top;
-		bottom2 = foreground->clip_bottom;
-
-		clip.min_x=0;
-		clip.min_y=0;
-		clip.max_x=1024;
-		clip.max_y=512;
-
-		tilemap_set_clip( background, &clip );
-		tilemap_set_clip( foreground, &clip );
-
-		tilemap_update(  ALL_TILEMAPS  );
-
-		background->clip_left = left;
-		background->clip_right = right;
-		background->clip_top = top;
-		background->clip_bottom = bottom;
-
-		foreground->clip_left = left2;
-		foreground->clip_right = right2;
-		foreground->clip_top = top2;
-		foreground->clip_bottom = bottom2;
-
-	}
-	else {
-*/
-		tilemap_update(  ALL_TILEMAPS  );
-//	}
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
-	build_shadow_table();
-
-//	if(!sys16_quartet_title_kludge)
-//	{
-		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY,0 );
-		if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1,0 );
-//	}
-//	else
-//		draw_quartet_title_screen( bitmap, 0 );
-
-//	sprite_draw(sprite_list,3); // needed for Aurail
-	if(sys16_bg_priority_mode==2) tilemap_draw( bitmap, background, 1, 0 );		// body slam (& wrestwar??)
-//	sprite_draw(sprite_list,2);
-	if(sys16_bg_priority_mode==1) tilemap_draw( bitmap, background, 1, 0 );		// alien syndrome / aurail
-
-//	if(!sys16_quartet_title_kludge)
-//	{
-		tilemap_draw( bitmap, foreground, 0, 0 );
-//		sprite_draw(sprite_list,1);
-		tilemap_draw( bitmap, foreground, 1, 0 );
-//	}
-//	else
-//	{
-//		draw_quartet_title_screen( bitmap, 1 );
-//		sprite_draw(sprite_list,1);
-//	}
-
-	if(sys16_textlayer_lo_max!=0) tilemap_draw( bitmap, text_layer, 1, 0 ); // needed for Body Slam
-//	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0, 0 );
-
-	draw_sprites( bitmap );
-
-#ifdef SYS16_DEBUG
-	dump_tilemap();
-#endif
 }
 
-void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+static void sys18_vh_screenrefresh_helper( void ){
 	int i;
-
-	if (!sys16_refreshenable) return;
-
-	if( sys16_update_proc ) sys16_update_proc();
-	update_page();
-
-	if(sys18_splittab_bg_x)
-	{
+	if( sys18_splittab_bg_x ){ // screenwise rowscroll?
 		int offset,offset2, scroll,scroll2,orig_scroll;
 
-		offset = 32+((sys16_bg_scrolly&0x1f8) >> 3);
-		offset2 = 32+((sys16_bg2_scrolly&0x1f8) >> 3);
+		offset = 32+((sys16_bg_scrolly&0x1f8) >> 3); // 0x00..0x3f
+		offset2 = 32+((sys16_bg2_scrolly&0x1f8) >> 3); // 0x00..0x3f
 
-		for(i=0;i<29;i++)
-		{
+		for( i=0;i<29;i++ ){
 			orig_scroll = scroll2 = scroll = sys18_splittab_bg_x[i];
+			if((sys16_bg_scrollx  &0xff00) != 0x8000) scroll = sys16_bg_scrollx;
+			if((sys16_bg2_scrollx &0xff00) != 0x8000) scroll2 = sys16_bg2_scrollx;
 
-			if((sys16_bg_scrollx &0xff00) != 0x8000)
-				scroll = sys16_bg_scrollx;
-
-			if((sys16_bg2_scrollx &0xff00) != 0x8000)
-				scroll2 = sys16_bg2_scrollx;
-
-			if(orig_scroll&0x8000)
-			{
+			if(orig_scroll&0x8000){ // background2
 				tilemap_set_scrollx( background , (i+offset)&0x3f, TILE_LINE_DISABLED );
 				tilemap_set_scrollx( background2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_bgxoffset );
 			}
-			else
-			{
+			else{ // background
 				tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
-				tilemap_set_scrollx( background2 , (i+offset2)&0x3f, TILE_LINE_DISABLED );
+				tilemap_set_scrollx( background2, (i+offset2)&0x3f, TILE_LINE_DISABLED );
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrollx( background , 0, -320-(sys16_bg_scrollx&0x3ff)+sys16_bgxoffset );
 		tilemap_set_scrollx( background2, 0, -320-(sys16_bg2_scrollx&0x3ff)+sys16_bgxoffset );
 	}
@@ -2083,36 +1220,29 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_set_scrolly( background , 0, -256+sys16_bg_scrolly );
 	tilemap_set_scrolly( background2, 0, -256+sys16_bg2_scrolly );
 
-	if(sys18_splittab_fg_x)
-	{
+	if( sys18_splittab_fg_x ){
 		int offset,offset2, scroll,scroll2,orig_scroll;
 
 		offset = 32+((sys16_fg_scrolly&0x1f8) >> 3);
 		offset2 = 32+((sys16_fg2_scrolly&0x1f8) >> 3);
 
-		for(i=0;i<29;i++)
-		{
+		for( i=0;i<29;i++ ){
 			orig_scroll = scroll2 = scroll = sys18_splittab_fg_x[i];
-			if((sys16_fg_scrollx &0xff00) != 0x8000)
-				scroll = sys16_fg_scrollx;
+			if( (sys16_fg_scrollx &0xff00) != 0x8000 ) scroll = sys16_fg_scrollx;
 
-			if((sys16_fg2_scrollx &0xff00) != 0x8000)
-				scroll2 = sys16_fg2_scrollx;
+			if( (sys16_fg2_scrollx &0xff00) != 0x8000 ) scroll2 = sys16_fg2_scrollx;
 
-			if(orig_scroll&0x8000)
-			{
+			if( orig_scroll&0x8000 ){
 				tilemap_set_scrollx( foreground , (i+offset)&0x3f, TILE_LINE_DISABLED );
 				tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_fgxoffset );
 			}
-			else
-			{
+			else {
 				tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
 				tilemap_set_scrollx( foreground2 , (i+offset2)&0x3f, TILE_LINE_DISABLED );
 			}
 		}
 	}
-	else
-	{
+	else {
 		tilemap_set_scrollx( foreground , 0, -320-(sys16_fg_scrollx&0x3ff)+sys16_fgxoffset );
 		tilemap_set_scrollx( foreground2, 0, -320-(sys16_fg2_scrollx&0x3ff)+sys16_fgxoffset );
 	}
@@ -2123,6 +1253,45 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 	tilemap_set_enable( background2, sys18_bg2_active );
 	tilemap_set_enable( foreground2, sys18_fg2_active );
+}
+
+void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	if (!sys16_refreshenable) return;
+
+	if( sys16_update_proc ) sys16_update_proc();
+	update_page();
+	sys16_vh_refresh_helper(); /* set scroll registers */
+
+	tilemap_update(  ALL_TILEMAPS  );
+
+	palette_init_used_colors();
+	mark_sprite_colors();
+	palette_recalc();
+	fillbitmap(priority_bitmap,0,NULL);
+
+	build_shadow_table();
+
+	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY, 0x00 );
+	if(sys16_bg_priority_mode) tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1, 0x00 );
+//	sprite_draw(sprite_list,3); // needed for Aurail
+	if( sys16_bg_priority_mode==2 ) tilemap_draw( bitmap, background, 1, 0x01 );// body slam (& wrestwar??)
+//	sprite_draw(sprite_list,2);
+	else if( sys16_bg_priority_mode==1 ) tilemap_draw( bitmap, background, 1, 0x03 );// alien syndrome / aurail
+	tilemap_draw( bitmap, foreground, 0, 0x03 );
+//	sprite_draw(sprite_list,1);
+	tilemap_draw( bitmap, foreground, 1, 0x07 );
+	if( sys16_textlayer_lo_max!=0 ) tilemap_draw( bitmap, text_layer, 1, 7 );// needed for Body Slam
+//	sprite_draw(sprite_list,0);
+	tilemap_draw( bitmap, text_layer, 0, 0xf );
+
+	draw_sprites( bitmap,0 );
+}
+
+void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	if (!sys16_refreshenable) return;
+	if( sys16_update_proc ) sys16_update_proc();
+	update_page();
+	sys18_vh_screenrefresh_helper(); /* set scroll registers */
 
 	tilemap_update(  ALL_TILEMAPS  );
 
@@ -2142,21 +1311,21 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 2, 0 );	//??
 
 //	sprite_draw(sprite_list,3);
-	tilemap_draw( bitmap, background, 1, 0 );
+	tilemap_draw( bitmap, background, 1, 0x1 );
 //	sprite_draw(sprite_list,2);
-	tilemap_draw( bitmap, background, 2, 0 );
+	tilemap_draw( bitmap, background, 2, 0x3 );
 
-	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 0, 0 );
-	tilemap_draw( bitmap, foreground, 0, 0 );
+	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 0, 0x3 );
+	tilemap_draw( bitmap, foreground, 0, 0x3 );
 //	sprite_draw(sprite_list,1);
-	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 1, 0 );
-	tilemap_draw( bitmap, foreground, 1, 0 );
+	if(sys18_fg2_active) tilemap_draw( bitmap, foreground2, 1, 0x7 );
+	tilemap_draw( bitmap, foreground, 1, 0x7 );
 
-	tilemap_draw( bitmap, text_layer, 1, 0 );
+	tilemap_draw( bitmap, text_layer, 1, 0x7 );
 //	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0, 0 );
+	tilemap_draw( bitmap, text_layer, 0, 0xf );
 
-	draw_sprites( bitmap );
+	draw_sprites( bitmap, 0 );
 }
 
 
@@ -2198,6 +1367,27 @@ static void render_gr(struct osd_bitmap *bitmap,int priority){
 
 	UINT16 *paldata1 = Machine->gfx[0]->colortable + sys16_gr_palette;
 	UINT16 *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
+
+#if 0
+if( keyboard_pressed( KEYCODE_S ) ){
+	FILE *f;
+	int i;
+	char fname[64];
+	static int fcount = 0;
+	while( keyboard_pressed( KEYCODE_S ) ){}
+	sprintf( fname, "road%d.txt",fcount );
+	fcount++;
+	f = fopen( fname,"w" );
+	if( f ){
+		const UINT16 *source = sys16_gr_ver;
+		for( i=0; i<0x1000; i++ ){
+			if( (i&0x1f)==0 ) fprintf( f, "\n %04x: ", i );
+			fprintf( f, "%04x ", source[i] );
+		}
+		fclose( f );
+	}
+}
+#endif
 
 	priority=priority << 10;
 
@@ -2370,7 +1560,6 @@ static void render_gr(struct osd_bitmap *bitmap,int priority){
 						// copy line
 						ver_data=ver_data & 0x00ff;
 						colorflip = (sys16_gr_flip[ver_data] >> 3) & 1;
-
 						colors[1] = paldata2[ sys16_gr_colorflip[colorflip][0] ];
 						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
 						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
@@ -2471,19 +1660,13 @@ static void render_gr(struct osd_bitmap *bitmap,int priority){
 	}
 }
 
-
-
-
-// Refresh for hang-on, etc.
-void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if (!sys16_refreshenable) return;
-
 	if( sys16_update_proc ) sys16_update_proc();
 	update_page();
 
 	tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
 	tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-
 	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 
@@ -2493,40 +1676,27 @@ void sys16_ho_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	mark_sprite_colors();
 	gr_colors();
 	palette_recalc();
+	fillbitmap(priority_bitmap,0,NULL);
 
 	build_shadow_table();
 
-	render_gr(bitmap,0);
-
+	render_gr(bitmap,0); /* sky */
 	tilemap_draw( bitmap, background, 0, 0 );
 	tilemap_draw( bitmap, foreground, 0, 0 );
+	render_gr(bitmap,1); /* floor */
+	tilemap_draw( bitmap, text_layer, 0, 0xf );
 
-	render_gr(bitmap,1);
-
-//	sprite_draw(sprite_list,0);
-	tilemap_draw( bitmap, text_layer, 0, 0 );
-
-	draw_sprites( bitmap );
-
-#ifdef SYS16_DEBUG
-	dump_tilemap();
-#endif
+	draw_sprites( bitmap, 0 );
 }
 
-
-static void grv2_colors(void)
-{
+static void grv2_colors( void ){
 	int i;
 	UINT16 ver_data;
 	int colorflip,colorflip_info;
 	UINT16 *data_ver=sys16_gr_ver;
-
-	for(i=0;i<224;i++)
-	{
+	for( i=0;i<224;i++ ){
 		ver_data= *data_ver;
-
-		if(!(ver_data & 0x800))
-		{
+		if(!(ver_data & 0x800)){
 			ver_data=ver_data & 0x01ff;
 			colorflip_info = sys16_gr_flip[ver_data];
 
@@ -2538,8 +1708,7 @@ static void grv2_colors(void)
 			palette_used_colors[ sys16_gr_colorflip[colorflip][1] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
 			palette_used_colors[ sys16_gr_colorflip[colorflip][2] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
 		}
-		else
-		{
+		else {
 			palette_used_colors[(ver_data&0x3f) + sys16_gr_palette] = PALETTE_COLOR_USED;
 		}
 		data_ver++;
@@ -2614,7 +1783,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
 
 						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x400];
+						hor_pos2= sys16_gr_hor[ver_data+0x200];
 
 						ver_data=ver_data>>1;
 						if( ver_data != 0 )
@@ -2682,7 +1851,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						colors[2] = paldata2[ sys16_gr_colorflip[colorflip][1] ];
 						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
 						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x400];
+						hor_pos2= sys16_gr_hor[ver_data+0x200];
 						ver_data=ver_data>>1;
 						if( ver_data != 0 ){
 							ver_data = (ver_data-1) << sys16_gr_bitmap_width;
@@ -2751,7 +1920,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
 
 						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x400];
+						hor_pos2= sys16_gr_hor[ver_data+0x200];
 
 						ver_data=ver_data>>1;
 						if( ver_data != 0 )
@@ -2830,7 +1999,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						colors[3] = paldata2[ sys16_gr_colorflip[colorflip][2] ];
 
 						hor_pos = sys16_gr_hor[ver_data];
-						hor_pos2= sys16_gr_hor[ver_data+0x400];
+						hor_pos2= sys16_gr_hor[ver_data+0x200];
 
 						ver_data=ver_data>>1;
 						if( ver_data != 0 )
@@ -2868,116 +2037,55 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-// Refresh for Outrun
-void sys16_or_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	if (!sys16_refreshenable) return;
-	if( sys16_update_proc ) sys16_update_proc();
-	update_page();
 
-	tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-	tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
+int sys16_outrun_vh_start( void ){
+	int ret;
+	sys16_bg1_trans=1;
+	ret = sys16_vh_start();
+	if(ret) return 1;
 
-	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
+	sys16_textlayer_lo_min=0;
+	sys16_textlayer_lo_max=0;
+	sys16_textlayer_hi_min=0;
+	sys16_textlayer_hi_max=0xff;
 
-	tilemap_update(  ALL_TILEMAPS  );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	grv2_colors();
-	palette_recalc();
-
-	build_shadow_table();
-
-	render_grv2(bitmap,1);
-//if( keyboard_pressed( KEYCODE_Q ) ){
-	tilemap_draw( bitmap, background, 0, 0 );
-	tilemap_draw( bitmap, foreground, 0, 0 );
-//}
-	render_grv2(bitmap,0);
-
-//	sprite_draw(sprite_list,0);
-
-	tilemap_draw( bitmap, text_layer, 0, 0 );
-
-	draw_sprites( bitmap );
-
-#ifdef SYS16_DEBUG
-	dump_tilemap();
-#endif
+	sys16_bg_priority_mode=-1;
+	sys16_bg_priority_value=0x1800;
+	sys16_fg_priority_value=0x2000;
+	return 0;
 }
 
+void sys16_outrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+	if( sys16_refreshenable ){
+		if( sys16_update_proc ) sys16_update_proc();
+		update_page();
 
-#if 0
-// hideous kludge to display quartet title screen correctly
-static void draw_quartet_title_screen( struct osd_bitmap *bitmap,int playfield )
-{
-	unsigned char *xscroll,*yscroll;
-	int r,c,scroll;
-	struct tilemap *tilemap;
-	struct rectangle clip;
+		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
+		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
 
-	int top,bottom,left,right;
+		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
+		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 
+		tilemap_update(  ALL_TILEMAPS  );
 
-	if(playfield==0) // background
-	{
-		xscroll=&sys16_textram[0x0fc0];
-		yscroll=&sys16_textram[0x0f58];
-		tilemap=background;
+		palette_init_used_colors();
+		mark_sprite_colors();
+		grv2_colors();
+		palette_recalc();
+
+		build_shadow_table();
+
+		render_grv2(bitmap,1);
+		tilemap_draw( bitmap, background, 0, 0 );
+		tilemap_draw( bitmap, foreground, 0, 0 );
+		render_grv2(bitmap,0);
+		tilemap_draw( bitmap, text_layer, 0, 0 );
+
+		draw_sprites( bitmap, 1 );
 	}
-	else
-	{
-		xscroll=&sys16_textram[0x0f80];
-		yscroll=&sys16_textram[0x0f30];
-		tilemap=foreground;
-	}
-
-	left = tilemap->clip_left;
-	right = tilemap->clip_right;
-	top = tilemap->clip_top;
-	bottom = tilemap->clip_bottom;
-
-	for(r=0;r<14;r++)
-	{
-		clip.min_y=r*16;
-		clip.max_y=r*16+15;
-		for(c=0;c<10;c++)
-		{
-			clip.min_x=c*32;
-			clip.max_x=c*32+31;
-			tilemap_set_clip( tilemap, &clip );
-			scroll = READ_WORD(&xscroll[r*4])&0x3ff;
-			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
-			scroll = READ_WORD(&yscroll[c*4])&0x1ff;
-			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
-			tilemap_draw( bitmap, tilemap, 0, 0 );
-		}
-	}
-/*
-	for(r=0;r<28;r++)
-	{
-		clip.min_y=r*8;
-		clip.max_y=r*8+7;
-		for(c=0;c<20;c++)
-		{
-			clip.min_x=c*16;
-			clip.max_x=c*16+15;
-			tilemap_set_clip( tilemap, &clip );
-			scroll = READ_WORD(&xscroll[r*2])&0x3ff;
-			tilemap_set_scrollx( tilemap, 0, (-320-scroll+sys16_bgxoffset)&0x3ff );
-			scroll = READ_WORD(&yscroll[c*2])&0x1ff;
-			tilemap_set_scrolly( tilemap, 0, (-256+scroll)&0x1ff );
-			tilemap_draw( bitmap, tilemap, 0, 0 );
-		}
-	}
-*/
-	tilemap->clip_left = left;
-	tilemap->clip_right = right;
-	tilemap->clip_top = top;
-	tilemap->clip_bottom = bottom;
 }
-#endif
+
+/***************************************************************************/
 
 static UINT8 *aburner_backdrop;
 
@@ -3049,6 +2157,11 @@ int sys16_aburner_vh_start( void ){
 		tilemap_set_transparent_pen( foreground2, 0 );
 		sys16_18_mode = 1;
 
+		tilemap_set_scroll_rows( foreground , 64 );
+		tilemap_set_scroll_rows( foreground2 , 64 );
+		tilemap_set_scroll_rows( background , 64 );
+		tilemap_set_scroll_rows( background2 , 64 );
+
 		return 0;
 	}
 	return 1;
@@ -3058,21 +2171,6 @@ void sys16_aburner_vh_stop( void ){
 	free( aburner_backdrop );
 	sys16_vh_stop();
 }
-
-#if 0
-static void debug_draw( struct osd_bitmap *bitmap, int x, int y, unsigned int data ){
-	int digit;
-	for( digit=0; digit<4; digit++ ){
-		drawgfx( bitmap, Machine->uifont,
-			"0123456789abcdef"[data>>12],
-			0,
-			0,0,
-			x+digit*6,y,
-			&Machine->visible_area,TRANSPARENCY_NONE,0);
-		data = (data<<4)&0xffff;
-	}
-}
-#endif
 
 static void aburner_draw_road( struct osd_bitmap *bitmap ){
 	/*
@@ -3102,15 +2200,6 @@ static void aburner_draw_road( struct osd_bitmap *bitmap ){
 	*/
 	int page = sys16_roadram[0x1000];
 	int sy;
-
-//	if( keyboard_pressed( KEYCODE_K ) ){
-//		while( keyboard_pressed( KEYCODE_K ) ){}
-//		k = k+0x10;
-//	}
-//	if( keyboard_pressed( KEYCODE_J ) ){
-//		while( keyboard_pressed( KEYCODE_J ) ){}
-//		k = k-0x10;
-//	}
 
 	for( sy=0; sy<bitmap->height; sy++ ){
 		UINT16 *dest = (UINT16 *)bitmap->line[sy]; /* assume 16bpp */
@@ -3191,8 +2280,9 @@ static void aburner_draw_road( struct osd_bitmap *bitmap ){
 #endif
 }
 
-void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
+static void sys16_aburner_vh_screenrefresh_helper( void ){
 	const data16_t *vreg = &sys16_textram[0x740];
+	int i;
 
 	{
 		UINT16 data = vreg[0];
@@ -3224,62 +2314,99 @@ void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh
 		sys16_fg2_scrollx = vreg[12+2];
 	}
 
-	update_page();
+	{
+		UINT16 data = vreg[0+3];
+		sys16_bg2_page[0] = data>>12;
+		sys16_bg2_page[1] = (data>>8)&0xf;
+		sys16_bg2_page[2] = (data>>4)&0xf;
+		sys16_bg2_page[3] = data&0xf;
+		sys16_bg2_scrolly = vreg[8+3];
+		sys16_bg2_scrollx = vreg[12+3];
+	}
 
-	if( sys16_fg_scrollx == 0x8000 ){
-		const data16_t *row_scroll = &sys16_textram[0x0f80/2];
-		int i;
-		tilemap_set_scroll_rows( foreground, 0x20 );
-		for( i=0; i<0x20; i++ ){
-			tilemap_set_scrollx( foreground, i, -320-row_scroll[i]+sys16_fgxoffset );
+	sys18_splittab_fg_x = &sys16_textram[0x7c0];
+	sys18_splittab_bg_x = &sys16_textram[0x7e0];
+
+	{
+		int offset,offset2, scroll,scroll2,orig_scroll;
+		offset  = 32+((sys16_bg_scrolly >>3)&0x3f ); // screenwise rowscroll
+		offset2 = 32+((sys16_bg2_scrolly>>3)&0x3f ); // screenwise rowscroll
+
+		for( i=0;i<29;i++ ){
+			orig_scroll = scroll2 = scroll = sys18_splittab_bg_x[i];
+			if((sys16_bg_scrollx  &0xff00) != 0x8000) scroll = sys16_bg_scrollx;
+			if((sys16_bg2_scrollx &0xff00) != 0x8000) scroll2 = sys16_bg2_scrollx;
+
+			if( orig_scroll&0x8000 ){ // background2
+				tilemap_set_scrollx( background , (i+offset)&0x3f, TILE_LINE_DISABLED );
+				tilemap_set_scrollx( background2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_bgxoffset );
+			}
+			else{ // background1
+				tilemap_set_scrollx( background , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_bgxoffset );
+				tilemap_set_scrollx( background2, (i+offset2)&0x3f, TILE_LINE_DISABLED );
+			}
 		}
 	}
-	else {
-		tilemap_set_scroll_rows( foreground, 1 );
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
+
+	tilemap_set_scrolly( background , 0, -256+sys16_bg_scrolly );
+	tilemap_set_scrolly( background2, 0, -256+sys16_bg2_scrolly );
+
+	{
+		int offset,offset2, scroll,scroll2,orig_scroll;
+		offset  = 32+((sys16_fg_scrolly >>3)&0x3f ); // screenwise rowscroll
+		offset2 = 32+((sys16_fg2_scrolly>>3)&0x3f ); // screenwise rowscroll
+
+		for( i=0;i<29;i++ ){
+			orig_scroll = scroll2 = scroll = sys18_splittab_fg_x[i];
+			if( (sys16_fg_scrollx &0xff00) != 0x8000 ) scroll = sys16_fg_scrollx;
+
+			if( (sys16_fg2_scrollx &0xff00) != 0x8000 ) scroll2 = sys16_fg2_scrollx;
+
+			if( orig_scroll&0x8000 ){ // foreground2
+				tilemap_set_scrollx( foreground , (i+offset)&0x3f, TILE_LINE_DISABLED );
+				tilemap_set_scrollx( foreground2, (i+offset2)&0x3f, -320-(scroll2&0x3ff)+sys16_fgxoffset );
+			}
+			else { // foreground
+				tilemap_set_scrollx( foreground , (i+offset)&0x3f, -320-(scroll&0x3ff)+sys16_fgxoffset );
+				tilemap_set_scrollx( foreground2 , (i+offset2)&0x3f, TILE_LINE_DISABLED );
+			}
+		}
 	}
 
-	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-	tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-
-	tilemap_set_scrollx( foreground2, 0, -320+sys16_fg2_scrollx );
+	tilemap_set_scrolly( foreground , 0, -256+sys16_fg_scrolly );
 	tilemap_set_scrolly( foreground2, 0, -256+sys16_fg2_scrolly );
+}
 
+void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
+	sys16_aburner_vh_screenrefresh_helper();
+	update_page();
 	tilemap_update(  ALL_TILEMAPS  );
 
 	palette_init_used_colors();
 	mark_sprite_colors();
 //	mark_road_colors();
 	palette_recalc();
+	fillbitmap(priority_bitmap,0,NULL);
 
 	aburner_draw_road( bitmap );
-	if( keyboard_pressed( KEYCODE_E ) ) return;
 
-	draw_sprites( bitmap );
-
-	/* radar view */
-	tilemap_draw( bitmap, foreground2, 0, 0 );
-	tilemap_draw( bitmap, foreground2, 1, 0 );
+//	tilemap_draw( bitmap, background2, 0, 7 );
+//	tilemap_draw( bitmap, background2, 1, 7 );
 
 	/* speed indicator, high score header */
-	tilemap_draw( bitmap, background, 0, 0 );
-	tilemap_draw( bitmap, background, 1, 0 );
+	tilemap_draw( bitmap, background, 0, 7 );
+	tilemap_draw( bitmap, background, 1, 7 );
+
+	/* radar view */
+	tilemap_draw( bitmap, foreground2, 0, 7 );
+	tilemap_draw( bitmap, foreground2, 1, 7 );
 
 	/* hand, scores */
-	tilemap_draw( bitmap, foreground, 0, 0 );
-	tilemap_draw( bitmap, foreground, 1, 0 );
+	tilemap_draw( bitmap, foreground, 0, 7 );
+	tilemap_draw( bitmap, foreground, 1, 7 );
 
-	tilemap_draw( bitmap, text_layer, 0, 0 );
+	tilemap_draw( bitmap, text_layer, 0, 7 );
+	draw_sprites( bitmap, 1 );
 
 //	debug_draw( bitmap, 8,8,sys16_roadram[0x1000] );
-//	debug_draw( bitmap,0,0,k );
 }
-
-/* aburner to do:
-	nvmem
-	fix coinage dips
-	spriteram fixes
-	2nd runway has mangled palm tree sprites - bad rom load?
-*/

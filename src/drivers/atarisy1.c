@@ -141,8 +141,6 @@ int atarisys1_vh_start(void);
 void atarisys1_vh_stop(void);
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern UINT8 atarisys1_translucent;
-
 
 
 /*************************************
@@ -920,7 +918,7 @@ ROM_START( marble )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -932,6 +930,7 @@ ROM_START( marble )
 	ROM_LOAD( "136033.145",   0x20000, 0x04000, 0x9062be7f )  /* bank 1, plane 4 */
 	ROM_LOAD( "136033.146",   0x24000, 0x04000, 0x14566dca )
 
+	ROM_FILL(                 0x30000, 0x30000, 0xff )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
@@ -960,7 +959,7 @@ ROM_START( marble2 )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -972,6 +971,7 @@ ROM_START( marble2 )
 	ROM_LOAD( "136033.145",   0x20000, 0x04000, 0x9062be7f )  /* bank 1, plane 4 */
 	ROM_LOAD( "136033.146",   0x24000, 0x04000, 0x14566dca )
 
+	ROM_FILL(                 0x30000, 0x30000, 0xff )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
@@ -1004,7 +1004,7 @@ ROM_START( marblea )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136033.137",   0x00000, 0x04000, 0x7a45f5c1 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136033.138",   0x04000, 0x04000, 0x7e954a88 )
 	ROM_LOAD( "136033.139",   0x08000, 0x04000, 0x1eb1bb5f )  /* bank 1, plane 1 */
@@ -1016,6 +1016,7 @@ ROM_START( marblea )
 	ROM_LOAD( "136033.145",   0x20000, 0x04000, 0x9062be7f )  /* bank 1, plane 4 */
 	ROM_LOAD( "136033.146",   0x24000, 0x04000, 0x14566dca )
 
+	ROM_FILL(                 0x30000, 0x30000, 0xff )
 	ROM_LOAD( "136033.149",   0x34000, 0x04000, 0xb6658f06 )  /* bank 2, plane 0 */
 	ROM_LOAD( "136033.151",   0x3c000, 0x04000, 0x84ee1c80 )  /* bank 2, plane 1 */
 	ROM_LOAD( "136033.153",   0x44000, 0x04000, 0xdaa02926 )  /* bank 2, plane 2 */
@@ -1046,7 +1047,7 @@ ROM_START( peterpak )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x90000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x90000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136028.138",   0x00000, 0x08000, 0x53eaa018 )  /* bank 1, plane 0 */
 	ROM_LOAD( "136028.139",   0x08000, 0x08000, 0x354a19cb )  /* bank 1, plane 1 */
 	ROM_LOAD( "136028.140",   0x10000, 0x08000, 0x8d2c4717 )  /* bank 1, plane 2 */
@@ -1089,7 +1090,7 @@ ROM_START( indytemp )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1137,7 +1138,7 @@ ROM_START( indytem2 )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1185,7 +1186,7 @@ ROM_START( indytem3 )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1233,7 +1234,55 @@ ROM_START( indytem4 )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
+
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
+
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
+
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
+
+	ROM_REGION( 0x400, REGION_PROMS, 0 )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+ROM_END
+
+
+ROM_START( indytemd )
+	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
+	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
+	ROM_LOAD16_BYTE( "136036.462",   0x10000, 0x08000, 0x317dc430 )
+	ROM_LOAD16_BYTE( "136036.461",   0x10001, 0x08000, 0x8c73f974 )
+	ROM_LOAD16_BYTE( "136036.464",   0x20000, 0x08000, 0x3fcb199f )
+	ROM_LOAD16_BYTE( "136036.463",   0x20001, 0x08000, 0xd6bda19a )
+	ROM_LOAD16_BYTE( "136036.466",   0x30000, 0x04000, 0xfaa7f23a )
+	ROM_LOAD16_BYTE( "136036.467",   0x30001, 0x04000, 0xee9fd91a )
+	ROM_LOAD16_BYTE( "136036.358",   0x80000, 0x04000, 0xd9351106 )
+	ROM_LOAD16_BYTE( "136036.359",   0x80001, 0x04000, 0xe731caea )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for 6502 code */
+	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
+	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
+	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
 	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
@@ -1284,7 +1333,7 @@ ROM_START( roadrunn )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136040.101",   0x00000, 0x08000, 0x26d9f29c )  /* bank 1, plane 0 */
 	ROM_LOAD( "136040.107",   0x08000, 0x08000, 0x8aac0ba4 )  /* bank 1, plane 1 */
 	ROM_LOAD( "136040.113",   0x10000, 0x08000, 0x48b74c52 )  /* bank 1, plane 2 */
@@ -1325,10 +1374,14 @@ ROM_START( roadblst )
 	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, 0x3c79ef05 )
-	ROM_LOAD16_BYTE( "048-1139.rom", 0x10000, 0x10000, 0xb73c1bd5 )
-	ROM_LOAD16_BYTE( "048-1140.rom", 0x10001, 0x10000, 0x6305429b )
-	ROM_LOAD16_BYTE( "048-1155.rom", 0x50000, 0x10000, 0xe95fc7d2 )
-	ROM_LOAD16_BYTE( "048-1156.rom", 0x50001, 0x10000, 0x727510f9 )
+	ROM_LOAD16_BYTE( "048-1139.rom", 0x10000, 0x08000, 0xb73c1bd5 )
+	ROM_CONTINUE(                    0x50000, 0x08000 )
+	ROM_LOAD16_BYTE( "048-1140.rom", 0x10001, 0x08000, 0x6305429b )
+	ROM_CONTINUE(                    0x50001, 0x08000 )
+	ROM_LOAD16_BYTE( "048-1155.rom", 0x20000, 0x08000, 0xe95fc7d2 )
+	ROM_CONTINUE(                    0x60000, 0x08000 )
+	ROM_LOAD16_BYTE( "048-1156.rom", 0x20001, 0x08000, 0x727510f9 )
+	ROM_CONTINUE(                    0x60001, 0x08000 )
 	ROM_LOAD16_BYTE( "048-1167.rom", 0x70000, 0x08000, 0xc6d30d6f )
 	ROM_LOAD16_BYTE( "048-1168.rom", 0x70001, 0x08000, 0x16951020 )
 	ROM_LOAD16_BYTE( "048-2147.rom", 0x80000, 0x04000, 0x5c1adf67 )
@@ -1342,7 +1395,7 @@ ROM_START( roadblst )
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
 
-	ROM_REGION( 0x120000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x120000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "048-1101.rom", 0x000000, 0x08000, 0xfe342d27 )  /* bank 1, plane 0 */
 	ROM_LOAD( "048-1102.rom", 0x008000, 0x08000, 0x17c7e780 )  /* bank 1, plane 1 */
 	ROM_LOAD( "048-1103.rom", 0x010000, 0x08000, 0x39688e01 )  /* bank 1, plane 2 */
@@ -1390,38 +1443,14 @@ ROM_END
  *
  *************************************/
 
-static void invert_non_zero(int region)
-{
-	UINT32 *data = (UINT32 *)&memory_region(region)[0];
-	int chips = memory_region_length(region) / 0x8000;
-	int i, j;
-
-	/* invert the graphics bits on the playfield and motion objects */
-	for (i = 0; i < chips; i++, data += 0x2000)
-	{
-		/* but first... if this is all zeros, don't do it */
-		for (j = 0; j < 0x2000; j++)
-			if (data[j] != 0)
-				break;
-
-		if (j != 0x2000)
-			for (j = 0; j < 0x2000; j++)
-				data[j] ^= 0xffffffff;
-	}
-
-}
-
-
 static void init_marble(void)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 103);
 	atarigen_init_6502_speedup(1, 0x8108, 0x8120);
-	invert_non_zero(REGION_GFX2);
 
 	joystick_type = 0;	/* none */
 	trackball_type = 1;	/* rotated */
-	atarisys1_translucent = 0;
 }
 
 
@@ -1430,11 +1459,9 @@ static void init_peterpak(void)
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 107);
 	atarigen_init_6502_speedup(1, 0x8101, 0x8119);
-	invert_non_zero(REGION_GFX2);
 
 	joystick_type = 1;	/* digital */
 	trackball_type = 0;	/* none */
-	atarisys1_translucent = 1;
 }
 
 
@@ -1443,14 +1470,12 @@ static void init_indytemp(void)
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 105);
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
-	invert_non_zero(REGION_GFX2);
 
 	/* special case for the Indiana Jones slapstic */
 	memory_set_opbase_handler(0,indytemp_setopbase);
 
 	joystick_type = 1;	/* digital */
 	trackball_type = 0;	/* none */
-	atarisys1_translucent = 1;
 }
 
 
@@ -1459,11 +1484,9 @@ static void init_roadrunn(void)
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 108);
 	atarigen_init_6502_speedup(1, 0x8106, 0x811e);
-	invert_non_zero(REGION_GFX2);
 
 	joystick_type = 2;	/* analog */
 	trackball_type = 0;	/* none */
-	atarisys1_translucent = 1;
 }
 
 
@@ -1472,17 +1495,9 @@ static void init_roadblst(void)
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 110);
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
-	invert_non_zero(REGION_GFX2);
-
-	/* ROMs 39+40 load the lower half at 10000 and the upper half at 50000 */
-	/* ROMs 55+56 load the lower half at 20000 and the upper half at 60000 */
-	/* However, we load 39+40 into 10000 and 20000, and 55+56 into 50000+60000 */
-	/* We need to swap the memory at 20000 and 50000 */
-	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x20000, memory_region(REGION_CPU1) + 0x50000, 0x10000);
 
 	joystick_type = 3;	/* pedal */
 	trackball_type = 2;	/* steering wheel */
-	atarisys1_translucent = 1;
 }
 
 
@@ -1501,5 +1516,6 @@ GAME( 1985, indytemp, 0,        atarisy1, indytemp, indytemp, ROT0, "Atari Games
 GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 2)" )
 GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 3)" )
 GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)" )
+GAME( 1985, indytemd, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (German)" )
 GAME( 1985, roadrunn, 0,        atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner" )
 GAME( 1987, roadblst, 0,        atarisy1, roadblst, roadblst, ROT0, "Atari Games", "Road Blasters" )

@@ -23,13 +23,13 @@ int shuuz_vh_start(void)
 		0,			/* index to which gfx system */
 		64,64,		/* size of the playfield in tiles (x,y) */
 		64,1,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-	
+
 		0x100,		/* index of palette base */
 		0x100,		/* maximum number of colors */
 		0,			/* color XOR for shadow effect (if any) */
 		0xff00,		/* latch mask */
 		0,			/* transparent pen mask */
-	
+
 		0x03fff,	/* tile data index mask */
 		0xf0000,	/* tile data color mask */
 		0x08000,	/* tile data hflip mask */
@@ -67,7 +67,7 @@ int shuuz_vh_start(void)
 		{{ 0 }},			/* mask for the priority */
 		{{ 0 }},			/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
-		
+
 		{{ 0 }},			/* mask for the ignore value */
 		0,					/* resulting value to indicate "ignore" */
 		0					/* callback routine for ignored entries */
@@ -76,7 +76,7 @@ int shuuz_vh_start(void)
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
 		goto cant_create_pf;
-	
+
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
 		goto cant_create_mo;
@@ -115,15 +115,25 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 	/* we need to check tile-by-tile, so always return OVERRENDER_SOME */
 	if (state == OVERRENDER_BEGIN)
 	{
-		/* by default, draw anywhere the MO pen was non-0 */
+		/* draw the standard playfield */
 		data->drawmode = TRANSPARENCY_NONE;
 		data->drawpens = 0;
-		data->maskpens = 0x0001;
-		
-		/* only need to query if we are modifying the color */
-		return (data->mocolor == 15) ? OVERRENDER_ALL : OVERRENDER_SOME;
+
+		/* for colors other than 15, query each tile and draw everywhere */
+		if (data->mocolor != 15)
+		{
+			data->maskpens = 0;
+			return OVERRENDER_SOME;
+		}
+
+		/* otherwise, draw only on top of color 15 */
+		else
+		{
+			data->maskpens = ~0x8000;
+			return OVERRENDER_ALL;
+		}
 	}
-	
+
 	/* handle a query */
 	else if (state == OVERRENDER_QUERY)
 		return ((data->pfcolor & 8) && data->pfcolor >= data->mocolor) ? OVERRENDER_YES : OVERRENDER_NO;

@@ -1604,37 +1604,22 @@ ROM_END
 
 ROM_START( lbowling )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "n050001a.038",    0x000001, 0x040000, BADCRC ( 0x380e358d ) )
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x000000, 0x040000, 0 )
+	ROM_LOAD16_WORD_SWAP( "019-p1.bin", 0x000000, 0x080000, 0xa2de8445 )
 
-	NEO_SFIX_128K( "n050001a.378", BADCRC ( 0x5fcdc0ed ) )
+	NEO_SFIX_128K( "019-s1.bin", 0x5fcdc0ed )
 
-	NEO_BIOS_SOUND_64K( "n050001a.478", BADCRC ( 0x535ec016 ) )
+	NEO_BIOS_SOUND_128K( "019-m1.bin", 0x589d7f25 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n050001a.178", 0x000000, 0x080000, BADCRC ( 0x0fb74872 ) )
-	ROM_LOAD( "n050001a.17c", 0x080000, 0x080000, BADCRC ( 0x029faa57 ) )
+	ROM_LOAD( "019-v11.bin", 0x000000, 0x080000, 0x0fb74872 )
+	ROM_LOAD( "019-v12.bin", 0x080000, 0x080000, 0x029faa57 )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n050001a.278", 0x000000, 0x080000, BADCRC ( 0x2efd5ada ) )
+	ROM_LOAD( "019-v21.bin", 0x000000, 0x080000, 0x2efd5ada )
 
-	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "n050001a.538", 0x000000, 0x40000, BADCRC ( 0x17df7955 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x200000, 0x40000 )
-	ROM_LOAD( "n050001a.53c", 0x040000, 0x40000, BADCRC ( 0x67bf2d89 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x240000, 0x40000 )
-	ROM_LOAD( "n050001b.538", 0x080000, 0x40000, BADCRC ( 0x00d36f90 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x280000, 0x40000 )
-	ROM_LOAD( "n050001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x4e971be9 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x2c0000, 0x40000 )
-	ROM_LOAD( "n050001a.638", 0x100000, 0x40000, BADCRC ( 0x84fd2c90 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x300000, 0x40000 )
-	ROM_LOAD( "n050001a.63c", 0x140000, 0x40000, BADCRC ( 0xcb4fbeb0 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x340000, 0x40000 )
-	ROM_LOAD( "n050001b.638", 0x180000, 0x40000, BADCRC ( 0xc2ddf431 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x380000, 0x40000 )
-	ROM_LOAD( "n050001b.63c", 0x1c0000, 0x40000, BADCRC ( 0xe67f8c81 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x3c0000, 0x40000 )
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )
+	ROM_LOAD16_BYTE( "019-c1.bin", 0x000000, 0x080000, 0x4ccdef18 )
+	ROM_LOAD16_BYTE( "019-c2.bin", 0x000001, 0x080000, 0xd4dd0802 )
 ROM_END
 
 ROM_START( gpilots )
@@ -1762,38 +1747,23 @@ ROM_END
 
 ROM_START( minasan )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "n054001a.038",    0x000001, 0x040000, BADCRC ( 0x86805d5a ) )
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x000000, 0x040000, 0 )
+	ROM_LOAD16_WORD_SWAP( "027-p1.bin", 0x000000, 0x080000, 0xc8381327 )
 
-	NEO_SFIX_128K( "n054001a.378", BADCRC ( 0xe5824baa ) )
+	NEO_SFIX_128K( "027-s1.bin", 0xe5824baa )
 
-	NEO_BIOS_SOUND_64K( "n054001a.478", BADCRC ( 0x19ef88ea ) )
+	NEO_BIOS_SOUND_128K( "027-m1.bin", 0xadd5a226 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n054001a.178", 0x000000, 0x080000, BADCRC ( 0x79d65e8e ) )
-	ROM_LOAD( "n054001a.17c", 0x080000, 0x080000, BADCRC ( 0x0b3854d5 ) )
+	ROM_LOAD( "027-v11.bin", 0x000000, 0x100000, 0x59ad4459 )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n054001a.278", 0x000000, 0x080000, BADCRC ( 0x0100e548 ) )
-	ROM_LOAD( "n054001a.27c", 0x080000, 0x080000, BADCRC ( 0x0c31c5b0 ) )
+	ROM_LOAD( "027-v21.bin", 0x000000, 0x100000, 0xdf5b4eeb )
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, BADCRC ( 0x43f48265 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x200000, 0x40000 )
-	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, BADCRC ( 0xcbf9eef8 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x240000, 0x40000 )
-	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, BADCRC ( 0x3dae0a05 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x280000, 0x40000 )
-	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x6979368e ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x2c0000, 0x40000 )
-	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, BADCRC ( 0xf774d850 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x300000, 0x40000 )
-	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, BADCRC ( 0x14a81e58 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x340000, 0x40000 )
-	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, BADCRC ( 0x0fb30b5b ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x380000, 0x40000 )
-	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, BADCRC ( 0xcfa90d59 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x3c0000, 0x40000 )
+	ROM_LOAD16_BYTE( "027-c1.bin", 0x000000, 0x100000, 0xd0086f94 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "027-c2.bin", 0x000001, 0x100000, 0xda61f5a6 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "027-c3.bin", 0x200000, 0x100000, 0x08df1228 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "027-c4.bin", 0x200001, 0x100000, 0x54e87696 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( legendos )
@@ -1810,10 +1780,10 @@ ROM_START( legendos )
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "joe_c1.rom", 0x000000, 0x100000, 0x2f5ab875 )
-	ROM_LOAD16_BYTE( "joe_c2.rom", 0x000001, 0x100000, 0x318b2711 )
-	ROM_LOAD16_BYTE( "joe_c3.rom", 0x200000, 0x100000, 0x6bc52cb2 )
-	ROM_LOAD16_BYTE( "joe_c4.rom", 0x200001, 0x100000, 0x37ef298c )
+	ROM_LOAD16_BYTE( "joe_c1.rom", 0x000000, 0x100000, 0x2f5ab875 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "joe_c2.rom", 0x000001, 0x100000, 0x318b2711 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "joe_c3.rom", 0x200000, 0x100000, 0x6bc52cb2 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "joe_c4.rom", 0x200001, 0x100000, 0x37ef298c ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( 2020bb )
@@ -1949,40 +1919,23 @@ ROM_END
 
 ROM_START( bakatono )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "n058001a.038",    0x000001, 0x040000, BADCRC ( 0x083ca651 ) )
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x000000, 0x040000, 0 )
-	ROM_LOAD16_BYTE( "n058001a.03c",    0x080001, 0x040000, BADCRC ( 0xb3bc26ae ) )
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x080000, 0x040000, 0 )
+	ROM_LOAD16_WORD_SWAP( "036-p1.bin", 0x000000, 0x080000, 0x1c66b6fa )
 
-	NEO_SFIX_128K( "n058001a.378", BADCRC ( 0xf3ef4485))
+	NEO_SFIX_128K( "036-s1.bin", 0xf3ef4485 )
 
-	NEO_BIOS_SOUND_64K( "n058001a.4f8", BADCRC ( 0xa5e05789 ) )
+	NEO_BIOS_SOUND_128K( "036-m1.bin", 0xf1385b96 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n058001a.1f8", 0x000000, 0x080000, BADCRC ( 0xd3edbde6 ) )
-	ROM_LOAD( "n058001a.1fc", 0x080000, 0x080000, BADCRC ( 0xcc487705 ) )
-	ROM_LOAD( "n058001b.1f8", 0x100000, 0x080000, BADCRC ( 0xe28cf9b3 ) )
-	ROM_LOAD( "n058001b.1fc", 0x180000, 0x080000, BADCRC ( 0x96c3ece9 ) )
+	ROM_LOAD( "036-v1.bin", 0x000000, 0x100000, 0x1c335dce )
+	ROM_LOAD( "036-v2.bin", 0x100000, 0x100000, 0xbbf79342 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "n058001a.538", 0x000000, 0x40000, BADCRC ( 0xacb82025 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x200000, 0x40000 )
-	ROM_LOAD( "n058001a.53c", 0x040000, 0x40000, BADCRC ( 0xc6954f8e ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x240000, 0x40000 )
-	ROM_LOAD( "n058001b.538", 0x080000, 0x40000, BADCRC ( 0xeb751be8 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x280000, 0x40000 )
-	ROM_LOAD( "n058001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x1d39bad6 ) ) /* Plane 0,1 */
-	ROM_CONTINUE(			  0x2c0000, 0x40000 )
-	ROM_LOAD( "n058001a.638", 0x100000, 0x40000, BADCRC ( 0x647ba28f ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x300000, 0x40000 )
-	ROM_LOAD( "n058001a.63c", 0x140000, 0x40000, BADCRC ( 0xdffefa4f ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x340000, 0x40000 )
-	ROM_LOAD( "n058001b.638", 0x180000, 0x40000, BADCRC ( 0x6135247a ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x380000, 0x40000 )
-	ROM_LOAD( "n058001b.63c", 0x1c0000, 0x40000, BADCRC ( 0x0d40c953 ) ) /* Plane 2,3 */
-	ROM_CONTINUE(			  0x3c0000, 0x40000 )
+	ROM_LOAD16_BYTE( "036-c1.bin", 0x000000, 0x100000, 0xfe7f1010 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "036-c2.bin", 0x000001, 0x100000, 0xbbf003f5 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "036-c3.bin", 0x200000, 0x100000, 0x9ac0708e ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "036-c4.bin", 0x200001, 0x100000, 0xf2577d22 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( crsword )
@@ -2192,31 +2145,31 @@ ROM_START( samsho )
 ROM_END
 
 ROM_START( tophuntr )
-	ROM_REGION( 0x180000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "thunt_p1.rom", 0x000000, 0x100000, 0x69fa9e29 )
-	ROM_LOAD16_WORD_SWAP( "thunt_p2.rom", 0x100000, 0x080000, 0xdb71f269 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "046-p1.bin", 0x000000, 0x100000, 0x69fa9e29 )
+	ROM_LOAD16_WORD_SWAP( "046-p2.sp2", 0x100000, 0x100000, 0xf182cb3e )
 
-	NEO_SFIX_128K( "thunt_s1.rom", 0x6a454dd1 )
+	NEO_SFIX_128K( "046-s1.bin", 0x14b01d7b )
 
-	NEO_BIOS_SOUND_128K( "thunt_m1.rom", 0x3f84bb9f )
+	NEO_BIOS_SOUND_128K( "046-m1.bin", 0x3f84bb9f )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "thunt_v1.rom", 0x000000, 0x100000, 0xc1f9c2db )
-	ROM_LOAD( "thunt_v2.rom", 0x100000, 0x100000, 0x56254a64 )
-	ROM_LOAD( "thunt_v3.rom", 0x200000, 0x100000, 0x58113fb1 )
-	ROM_LOAD( "thunt_v4.rom", 0x300000, 0x100000, 0x4f54c187 )
+	ROM_LOAD( "046-v1.bin", 0x000000, 0x100000, 0xc1f9c2db )
+	ROM_LOAD( "046-v2.bin", 0x100000, 0x100000, 0x56254a64 )
+	ROM_LOAD( "046-v3.bin", 0x200000, 0x100000, 0x58113fb1 )
+	ROM_LOAD( "046-v4.bin", 0x300000, 0x100000, 0x4f54c187 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x800000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "thunt_c1.rom", 0x000000, 0x100000, 0xfa720a4a ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "thunt_c2.rom", 0x000001, 0x100000, 0xc900c205 ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "thunt_c3.rom", 0x200000, 0x100000, 0x880e3c25 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "thunt_c4.rom", 0x200001, 0x100000, 0x7a2248aa ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "thunt_c5.rom", 0x400000, 0x100000, 0x4b735e45 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "thunt_c6.rom", 0x400001, 0x100000, 0x273171df ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "thunt_c7.rom", 0x600000, 0x100000, 0x12829c4c ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "thunt_c8.rom", 0x600001, 0x100000, 0xc944e03d ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "046-c1.bin", 0x000000, 0x100000, 0xfa720a4a ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "046-c2.bin", 0x000001, 0x100000, 0xc900c205 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "046-c3.bin", 0x200000, 0x100000, 0x880e3c25 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "046-c4.bin", 0x200001, 0x100000, 0x7a2248aa ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "046-c5.bin", 0x400000, 0x100000, 0x4b735e45 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "046-c6.bin", 0x400001, 0x100000, 0x273171df ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "046-c7.bin", 0x600000, 0x100000, 0x12829c4c ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "046-c8.bin", 0x600001, 0x100000, 0xc944e03d ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( fatfury2 )
@@ -2287,39 +2240,23 @@ ROM_END
 
 ROM_START( ncommand )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "n054001a.038",    0x000001, 0x040000, BADCRC ( 0xfdaaca42))
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x000000, 0x040000, 0 )
-	ROM_LOAD16_BYTE( "n054001a.03c",    0x080001, 0x040000, BADCRC ( 0xb34e91fe))
-	ROM_LOAD16_BYTE( ROMENTRY_CONTINUE, 0x080000, 0x040000, 0 )
+	ROM_LOAD16_WORD_SWAP( "050-p1.bin", 0x000000, 0x100000, 0x4e097c40 )
 
-	NEO_SFIX_128K( "n054001a.378", BADCRC ( 0xdb8f9c8e))
+	NEO_SFIX_128K( "050-s1.bin", 0xdb8f9c8e )
 
-	NEO_BIOS_SOUND_64K( "n054001a.4f8", BADCRC ( 0x26e93026 ) )
+	NEO_BIOS_SOUND_128K( "050-m1.bin", 0x6fcf07d3 )
 
 	ROM_REGION( 0x180000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "n054001a.1f8", 0x000000, 0x080000, BADCRC ( 0x222e71c8 ) )
-	ROM_LOAD( "n054001a.1fc", 0x080000, 0x080000, BADCRC ( 0x12acd064 ) )
-	ROM_LOAD( "n054001b.1f8", 0x100000, 0x080000, BADCRC ( 0x80b8a984 ) )
+	ROM_LOAD( "050-v1.bin", 0x000000, 0x100000, 0x23c3ab42 )
+	ROM_LOAD( "050-v2.bin", 0x100000, 0x080000, 0x80b8a984 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "n054001a.538", 0x000000, 0x40000, BADCRC ( 0x73acaa79))  /* Plane 0,1 */
-	ROM_CONTINUE(			  0x200000, 0x40000 )
-	ROM_LOAD( "n054001a.53c", 0x040000, 0x40000, BADCRC ( 0xad56623d))  /* Plane 0,1 */
-	ROM_CONTINUE(			  0x240000, 0x40000 )
-	ROM_LOAD( "n054001b.538", 0x080000, 0x40000, BADCRC ( 0xc8d763cd))  /* Plane 0,1 */
-	ROM_CONTINUE(			  0x280000, 0x40000 )
-	ROM_LOAD( "n054001b.53c", 0x0c0000, 0x40000, BADCRC ( 0x63829529))  /* Plane 0,1 */
-	ROM_CONTINUE(			  0x2c0000, 0x40000 )
-	ROM_LOAD( "n054001a.638", 0x100000, 0x40000, BADCRC ( 0x7b24359f))  /* Plane 2,3 */
-	ROM_CONTINUE(			  0x300000, 0x40000 )
-	ROM_LOAD( "n054001a.63c", 0x140000, 0x40000, BADCRC ( 0x0913a784))  /* Plane 2,3 */
-	ROM_CONTINUE(			  0x340000, 0x40000 )
-	ROM_LOAD( "n054001b.638", 0x180000, 0x40000, BADCRC ( 0x574612ec))  /* Plane 2,3 */
-	ROM_CONTINUE(			  0x380000, 0x40000 )
-	ROM_LOAD( "n054001b.63c", 0x1c0000, 0x40000, BADCRC ( 0x990d302a))  /* Plane 2,3 */
-	ROM_CONTINUE(			  0x3c0000, 0x40000 )
+	ROM_LOAD16_BYTE( "050-c1.bin", 0x000000, 0x100000, 0x87421a0a ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "050-c2.bin", 0x000001, 0x100000, 0xc4cf5548 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "050-c3.bin", 0x200000, 0x100000, 0x03422c1e ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "050-c4.bin", 0x200001, 0x100000, 0x0845eadb ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( viewpoin )
@@ -2728,31 +2665,27 @@ ROM_END
 
 ROM_START( fatfury3 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "fury3_p1.rom", 0x000000, 0x100000, 0xa8bcfbbc )
-	ROM_LOAD16_WORD_SWAP( "fury3_p2.rom", 0x100000, 0x200000, 0xdbe963ed )
+	ROM_LOAD16_WORD_SWAP( "069-p1.bin", 0x000000, 0x100000, 0xa8bcfbbc )
+	ROM_LOAD16_WORD_SWAP( "069-p2.bin", 0x100000, 0x200000, 0xdbe963ed )
 
-	NEO_SFIX_128K( "fury3_s1.rom", 0x0b33a800 )
+	NEO_SFIX_128K( "069-s1.bin", 0x0b33a800 )
 
-	NEO_BIOS_SOUND_128K( "fury3_m1.rom", 0xfce72926 )
+	NEO_BIOS_SOUND_128K( "069-m1.bin", 0xfce72926 )
 
 	ROM_REGION( 0xa00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "fury3_v1.rom", 0x000000, 0x400000, 0x2bdbd4db )
-	ROM_LOAD( "fury3_v2.rom", 0x400000, 0x400000, 0xa698a487 )
-	ROM_LOAD( "fury3_v3.rom", 0x800000, 0x200000, 0x581c5304 )
+	ROM_LOAD( "069-v1.bin", 0x000000, 0x400000, 0x2bdbd4db )
+	ROM_LOAD( "069-v2.bin", 0x400000, 0x400000, 0xa698a487 )
+	ROM_LOAD( "069-v3.bin", 0x800000, 0x200000, 0x581c5304 )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x1400000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "fury3_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
-	ROM_CONTINUE(      			   0x0000000, 0x200000 )
-	ROM_LOAD16_BYTE( "fury3_c2.rom", 0x0400001, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
-	ROM_CONTINUE(      			   0x0000001, 0x200000 )
-	ROM_LOAD16_BYTE( "fury3_c3.rom", 0x0c00000, 0x200000, 0xf6738c87 ) /* Plane 0,1 */
-	ROM_CONTINUE(      			   0x0800000, 0x200000 )
-	ROM_LOAD16_BYTE( "fury3_c4.rom", 0x0c00001, 0x200000, 0x9c31e334 ) /* Plane 2,3 */
-	ROM_CONTINUE(      			   0x0800001, 0x200000 )
-	ROM_LOAD16_BYTE( "fury3_c5.rom", 0x1000000, 0x200000, 0xb3ec6fa6 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "fury3_c6.rom", 0x1000001, 0x200000, 0x69210441 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "069-c1.bin", 0x0000000, 0x400000, 0xe302f93c ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "069-c2.bin", 0x0000001, 0x400000, 0x1053a455 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "069-c3.bin", 0x0800000, 0x400000, 0x1c0fde2f ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "069-c4.bin", 0x0800001, 0x400000, 0xa25fc3d0 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "069-c5.bin", 0x1000000, 0x200000, 0xb3ec6fa6 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "069-c6.bin", 0x1000001, 0x200000, 0x69210441 ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( panicbom )
@@ -3238,35 +3171,29 @@ ROM_END
 
 ROM_START( rbff1 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "rbff1_p1.rom", 0x000000, 0x100000, 0x63b4d8ae )
-	ROM_LOAD16_WORD_SWAP( "rbff1_p2.rom", 0x100000, 0x200000, 0xcc15826e )
+	ROM_LOAD16_WORD_SWAP( "095-p1.bin", 0x000000, 0x100000, 0x63b4d8ae )
+	ROM_LOAD16_WORD_SWAP( "095-p2.bin", 0x100000, 0x200000, 0xcc15826e )
 
-	NEO_SFIX_128K( "rbff1_s1.rom", 0xb6bf5e08 )
+	NEO_SFIX_128K( "095-s1.bin", 0xb6bf5e08 )
 
-	NEO_BIOS_SOUND_128K( "rbff1_m1.rom", 0x653492a7 )
+	NEO_BIOS_SOUND_128K( "095-m1.bin", 0x653492a7 )
 
 	ROM_REGION( 0xc00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "rbff1_v1.rom", 0x000000, 0x400000, 0xb41cbaa2 )
-	ROM_LOAD( "rbff1_v2.rom", 0x400000, 0x400000, 0xa698a487 )
-	ROM_LOAD( "rbff1_v3.rom", 0x800000, 0x400000, 0x189d1c6c )
+	ROM_LOAD( "069-v1.bin", 0x000000, 0x400000, 0x2bdbd4db )
+	ROM_LOAD( "069-v2.bin", 0x400000, 0x400000, 0xa698a487 )
+	ROM_LOAD( "095-v3.bin", 0x800000, 0x400000, 0x189d1c6c )
 
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x1c00000, REGION_GFX2, 0 )
-	ROM_LOAD16_BYTE( "rbff1_c1.rom", 0x0400000, 0x200000, 0xc73e86e4 ) /* Plane 0,1 */
-	ROM_CONTINUE(      			   0x0000000, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c2.rom", 0x0400001, 0x200000, 0xbfaf3258 ) /* Plane 2,3 */
-	ROM_CONTINUE(      			   0x0000001, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c3.rom", 0x0c00000, 0x200000, 0xf6738c87 ) /* Plane 0,1 */
-	ROM_CONTINUE(      			   0x0800000, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c4.rom", 0x0c00001, 0x200000, 0x9c31e334 ) /* Plane 2,3 */
-	ROM_CONTINUE(      			   0x0800001, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c5.rom", 0x1400000, 0x200000, 0x248ff860 ) /* Plane 0,1 */
-	ROM_CONTINUE(      			   0x1000000, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c6.rom", 0x1400001, 0x200000, 0x0bfb2d1f ) /* Plane 2,3 */
-	ROM_CONTINUE(      			   0x1000001, 0x200000 )
-	ROM_LOAD16_BYTE( "rbff1_c7.rom", 0x1800000, 0x200000, 0xca605e12 ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "rbff1_c8.rom", 0x1800001, 0x200000, 0x4e6beb6c ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "069-c1.bin", 0x0000000, 0x400000, 0xe302f93c ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "069-c2.bin", 0x0000001, 0x400000, 0x1053a455 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "069-c3.bin", 0x0800000, 0x400000, 0x1c0fde2f ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "069-c4.bin", 0x0800001, 0x400000, 0xa25fc3d0 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "095-c5.bin", 0x1000000, 0x400000, 0x8b9b65df ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "095-c6.bin", 0x1000001, 0x400000, 0x3e164718 ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "095-c7.bin", 0x1800000, 0x200000, 0xca605e12 ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "095-c8.bin", 0x1800001, 0x200000, 0x4e6beb6c ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( aof3 )
@@ -4494,67 +4421,6 @@ ROM_END
 
 /******************************************************************************/
 
-/* For MGD-2 dumps */
-static void shuffle(unsigned char *buf,int len)
-{
-	int i;
-	unsigned char t;
-
-	if (len == 2) return;
-
-	if (len == 6)
-	{
-		unsigned char swp[6];
-
-		memcpy(swp,buf,6);
-		buf[0] = swp[0];
-		buf[1] = swp[3];
-		buf[2] = swp[1];
-		buf[3] = swp[4];
-		buf[4] = swp[2];
-		buf[5] = swp[5];
-		return;
-	}
-
-	if (len % 4) exit(1);	/* must not happen */
-
-	len /= 2;
-
-	for (i = 0;i < len/2;i++)
-	{
-		t = buf[len/2 + i];
-		buf[len/2 + i] = buf[len + i];
-		buf[len + i] = t;
-	}
-
-	shuffle(buf,len);
-	shuffle(buf + len,len);
-}
-
-void init_mgd2(void)
-{
-	unsigned char *gfxdata = memory_region(REGION_GFX2);
-	int len = memory_region_length(REGION_GFX2);
-
-
-	init_neogeo();
-
-	/*
-		data is now in the order 0 4 8 12... 1 5 9 13... 2 6 10 14... 3 7 11 15...
-		we must convert it to the MVS order 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15...
-		to do so we use a recursive function which doesn't use additional memory
-		(it could be easily converted into an iterative one).
-		It's called shuffle because it mimics the shuffling of a deck of cards.
-	*/
-	shuffle(gfxdata,len);
-	/* data is now in the order 0 2 4 8 10 12 14... 1 3 5 7 9 11 13 15... */
-	shuffle(gfxdata,len);
-	/* data is now in the order 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15... */
-}
-
-/******************************************************************************/
-
-
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the neo-geo.rom file, so that we do not have to include */
 /* it in every zip file */
@@ -4580,7 +4446,7 @@ GAME( 1991, sengoku,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sen
 GAME( 1991, sengokh,  sengoku,  neogeo, neogeo,  neogeo, ROT0,       "SNK", "Sengoku / Sengoku Denshou (set 2)" )
 GAME( 1991, burningf, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 1)" )
 GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo, ROT0,       "SNK", "Burning Fight (set 2)" )
-GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "SNK", "League Bowling" )
+GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "League Bowling" )
 GAME( 1991, gpilots,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Ghost Pilots" )
 GAME( 1990, joyjoy,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Puzzled / Joy Joy Kid" )
 GAME( 1991, quizdais, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Quiz Daisousa Sen - The Last Count Down" )
@@ -4639,7 +4505,7 @@ GAME( 1990, ncombat,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Dens
 GAME( 1990, bjourney, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Blue's Journey / Raguy" )
 GAME( 1991, crsword,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Crossed Swords" )
 GAME( 1991, trally,   neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Thrash Rally" )
-GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Alpha Denshi Co.", "Ninja Commando" )
+GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "Ninja Commando" )
 GAME( 1992, wh1,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Alpha Denshi Co.", "World Heroes" )
 GAME( 1993, wh2,      neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK",              "World Heroes 2" )
 GAME( 1994, wh2j,     neogeo,   neogeo, neogeo,  neogeo, ROT0,       "ADK / SNK",        "World Heroes 2 Jet" )
@@ -4672,8 +4538,8 @@ GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Hudson", "
 GAME( 1997, neobombe, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Hudson", "Neo Bomberman" )
 
 /* Monolith Corp. */
-GAME( 1990, minasan,  neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Minnasanno Okagesamadesu" )
-GAME( 1991, bakatono, neogeo,   neogeo, neogeo,  mgd2,   ROT0,       "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
+GAME( 1990, minasan,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Monolith Corp.", "Minnasanno Okagesamadesu" )
+GAME( 1991, bakatono, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Monolith Corp.", "Bakatonosama Mahjong Manyuki" )
 
 /* Nazca */
 GAME( 1996, turfmast, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Nazca", "Neo Turf Masters / Big Tournament Golf" )

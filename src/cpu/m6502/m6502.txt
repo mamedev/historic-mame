@@ -22,7 +22,11 @@ timer
 8 kbyte rom
 
 6502 (used in many designs)
+b-flag always 1! (only pushed as 0 when break executed!)
 memory changing opcodes accesses memory: read, write data, write modified data
+
+6504
+only 12 address pins a11..a0
 
 6508
 8 io pins (p0 bis p7)
@@ -52,7 +56,7 @@ n2a03 (some arcades, NES)
 NMOS based! 
 illegal opcodes
 $6c jump indirect low byte overrun problem as in 6502
-no without decimal mode
+no decimal mode
 integrated sound hardware
 
 65c02 (used in some designs)
@@ -60,6 +64,7 @@ fixed jmp ind,x opcodes
 memory changing opcodes accesses memory: read, read, write
 no illegal opcodes from the above series
 so not full compatible to 6502 series
+b flag always 1 as in NMOS Series is not known?
 additional commands
 
 several other CMOS variants

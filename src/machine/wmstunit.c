@@ -457,12 +457,6 @@ void init_mk2r14(void)
 	INSTALL_SPEEDUP_3(0x01068de0, 0xff80d960, 0x105d480, 0x105d4a0, 0x105d4c0);
 }
 
-void init_mk2r32(void)
-{
-	init_mk2_common();
-	INSTALL_SPEEDUP_3(0x01068e70, 0xff80db70, 0x105d480, 0x105d4a0, 0x105d4c0);
-}
-
 
 
 /*************************************

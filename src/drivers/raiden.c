@@ -49,6 +49,7 @@ WRITE_HANDLER( raiden_foreground_w );
 WRITE_HANDLER( raiden_text_w );
 WRITE_HANDLER( raidena_text_w );
 int raiden_vh_start(void);
+int raidena_vh_start(void);
 WRITE_HANDLER( raiden_control_w );
 void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -311,13 +312,13 @@ static const struct MachineDriver machine_driver_raiden =
 	{
 		{
 			CPU_V30, /* NEC V30 CPU */
-			19000000, /* 20MHz is correct, but glitched!? */
+			20000000, /* 20MHz */
 			readmem,writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
-			19000000, /* 20MHz is correct, but glitched!? */
+			20000000, /* 20MHz */
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
@@ -325,7 +326,7 @@ static const struct MachineDriver machine_driver_raiden =
 			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	70,	/* CPU interleave  */
 	seibu_sound_init_2,
 
@@ -354,13 +355,13 @@ static const struct MachineDriver machine_driver_raidena =
 	{
 		{
 			CPU_V30, /* NEC V30 CPU */
-			19000000, /* 20MHz is correct, but glitched!? */
+			20000000, /* 20MHz */
 			alt_readmem,alt_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
-			19000000, /* 20MHz is correct, but glitched!? */
+			20000000, /* 20MHz */
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
@@ -368,7 +369,7 @@ static const struct MachineDriver machine_driver_raidena =
 			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	60,	/* CPU interleave  */
 	seibu_sound_init_2,
 
@@ -380,7 +381,7 @@ static const struct MachineDriver machine_driver_raidena =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	raiden_eof_callback,
-	raiden_vh_start,
+	raidena_vh_start,
 	0,
 	raiden_vh_screenrefresh,
 
@@ -602,7 +603,6 @@ static void init_raidena(void)
 	common_decrypt();
 	seibu_sound_decrypt();
 }
-
 
 /***************************************************************************/
 

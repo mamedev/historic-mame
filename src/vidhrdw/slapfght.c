@@ -2,7 +2,7 @@
 
   vidhrdw.c
 
-  Functions to emulate the video hardware of the machine.
+  Functions to emulate the video hardware of early Toaplan hardware.
 
 ***************************************************************************/
 
@@ -13,6 +13,10 @@ unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;
 size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
+static int flipscreen;
+
+static struct tilemap *pf1_tilemap,*fix_tilemap;
+
 
 
 /***************************************************************************
@@ -29,7 +33,8 @@ unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
         -- 1  kohm resistor  -- RED/GREEN/BLUE
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
-***************************************************************************/
+*/
+
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -61,6 +66,108 @@ void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *col
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_pf_tile_info(int tile_index)	/* For Performan only */
+{
+	int tile,color;
+
+	tile=videoram[tile_index] + ((colorram[tile_index] & 0x03) << 8);
+	color=(colorram[tile_index] >> 3) & 0x1f;
+	SET_TILE_INFO(0,tile,color)
+}
+
+static void get_pf1_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=videoram[tile_index] + ((colorram[tile_index] & 0x0f) << 8);
+	color=(colorram[tile_index] & 0xf0) >> 4;
+
+	SET_TILE_INFO(1,tile,color)
+}
+
+static void get_fix_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=slapfight_videoram[tile_index] + ((slapfight_colorram[tile_index] & 0x03) << 8);
+	color=(slapfight_colorram[tile_index] & 0xfc) >> 2;
+
+	SET_TILE_INFO(0,tile,color)
+}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int perfrman_vh_start (void)
+{
+	pf1_tilemap = tilemap_create(get_pf_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+
+	if (!pf1_tilemap)
+		return 1;
+
+	return 0;
+}
+
+int slapfight_vh_start (void)
+{
+	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	fix_tilemap = tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+
+	if (!pf1_tilemap || !fix_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(fix_tilemap,0);
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( slapfight_videoram_w )
+{
+	videoram[offset]=data;
+	tilemap_mark_tile_dirty(pf1_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_colorram_w )
+{
+	colorram[offset]=data;
+	tilemap_mark_tile_dirty(pf1_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_fixram_w )
+{
+	slapfight_videoram[offset]=data;
+	tilemap_mark_tile_dirty(fix_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_fixcol_w )
+{
+	slapfight_colorram[offset]=data;
+	tilemap_mark_tile_dirty(fix_tilemap,offset);
+}
+
+WRITE_HANDLER( slapfight_flipscreen_w )
+{
+	logerror("Writing %02x to flipscreen\n",offset);
+	if (offset==0) flipscreen=1; /* Port 0x2 is flipscreen */
+	else flipscreen=0; /* Port 0x3 is normal */
+}
 
 
 /***************************************************************************
@@ -70,73 +177,96 @@ void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *col
   the main emulation engine.
 
 ***************************************************************************/
-void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+void perfrman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					videoram[offs] + ((colorram[offs] & 0x0f) << 8),
-					(colorram[offs] & 0xf0) >> 4,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+	tilemap_set_flip( pf1_tilemap, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	tilemap_set_scrolly( pf1_tilemap ,0 , 0 );
+	if (flipscreen) {
+		tilemap_set_scrollx( pf1_tilemap ,0 , 264 );
+	}
+	else {
+		tilemap_set_scrollx( pf1_tilemap ,0 , -16 );
 	}
 
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
-		scrolly = -*slapfight_scrolly+1;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
+	tilemap_update(pf1_tilemap);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 
 	/* Draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		drawgfx(bitmap,Machine->gfx[2],
-			spriteram[offs] + ((spriteram[offs+2] & 0xc0) << 2),
-			(spriteram[offs+2] & 0x1e) >>1,
-			0,0,
-		/* Mysterious fudge factor sprite offset */
-			(spriteram[offs+1] + ((spriteram[offs+2] & 0x01) << 8)) - 13,spriteram[offs+3],
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+		int sy;
+
+		if (flipscreen) {
+			sy = 239 - buffered_spriteram[offs+3];
+			if (sy < 0) sy &= 0xff;
+
+			drawgfx(bitmap,Machine->gfx[1],
+				buffered_spriteram[offs],
+				/* Bit x------- is definantly color related */
+				/* characters change this bit (and color) when digging */
+				(buffered_spriteram[offs+2] >> 3) & 0x1f,
+				1,1,
+				265 - buffered_spriteram[offs+1], sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+		else {
+			sy = buffered_spriteram[offs+3] - 1;
+
+			drawgfx(bitmap,Machine->gfx[1],
+				buffered_spriteram[offs],
+				/* Bit x------- is definantly color related */
+				/* characters change this bit (and color) when digging */
+				(buffered_spriteram[offs+2] >> 3) & 0x1f,
+				0,0,
+				buffered_spriteram[offs+1] + 3, sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
+
+void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) {
+		tilemap_set_scrollx( fix_tilemap,0,296);
+		tilemap_set_scrollx( pf1_tilemap,0,(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi)+296 );
+		tilemap_set_scrolly( pf1_tilemap,0, (*slapfight_scrolly)+15 );
+		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
+	}
+	else {
+		tilemap_set_scrollx( fix_tilemap,0,0);
+		tilemap_set_scrollx( pf1_tilemap,0,(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi) );
+		tilemap_set_scrolly( pf1_tilemap,0, (*slapfight_scrolly)-1 );
+		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
 	}
 
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = slapfight_videoram_size - 1;offs >= 0;offs--)
+	/* Draw the sprites */
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int sx,sy;
-
-
-		sx = offs % 64;
-		sy = offs / 64;
-
-		drawgfx(bitmap,Machine->gfx[0],
-			slapfight_videoram[offs] + ((slapfight_colorram[offs] & 0x03) << 8),
-			(slapfight_colorram[offs] & 0xfc) >> 2,
-			0,0,
-			8*sx,8*sy,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+		if (flipscreen)
+			drawgfx(bitmap,Machine->gfx[2],
+				buffered_spriteram[offs] + ((buffered_spriteram[offs+2] & 0xc0) << 2),
+				(buffered_spriteram[offs+2] & 0x1e) >> 1,
+				1,1,
+				288-(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) +18,240-buffered_spriteram[offs+3],
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+		else
+			drawgfx(bitmap,Machine->gfx[2],
+				buffered_spriteram[offs] + ((buffered_spriteram[offs+2] & 0xc0) << 2),
+				(buffered_spriteram[offs+2] & 0x1e) >> 1,
+				0,0,
+				(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) - 13,buffered_spriteram[offs+3],
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+	tilemap_draw(bitmap,fix_tilemap,0,0);
 }

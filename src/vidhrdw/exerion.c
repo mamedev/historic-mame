@@ -9,8 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#ifndef INCLUDE_DRAW_CORE
-
 //#define DEBUG_SPRITES
 
 #define BACKGROUND_X_START		32
@@ -38,9 +36,6 @@ static UINT8 current_latches[16];
 static int last_scanline_update;
 
 static UINT8 *background_mixer;
-
-static void draw_background_8(struct osd_bitmap *bitmap);
-static void draw_background_16(struct osd_bitmap *bitmap);
 
 
 /***************************************************************************
@@ -291,6 +286,123 @@ READ_HANDLER( exerion_video_timing_r )
 
 /*************************************
  *
+ *		Background rendering
+ *
+ *************************************/
+
+void draw_background(struct osd_bitmap *bitmap)
+{
+	UINT8 *latches = &background_latches[VISIBLE_Y_MIN * 16];
+	int x, y;
+
+	/* loop over all visible scanlines */
+	for (y = VISIBLE_Y_MIN; y < VISIBLE_Y_MAX; y++, latches += 16)
+	{
+		UINT16 *src0 = &background_gfx[0][latches[1] * 256];
+		UINT16 *src1 = &background_gfx[1][latches[3] * 256];
+		UINT16 *src2 = &background_gfx[2][latches[5] * 256];
+		UINT16 *src3 = &background_gfx[3][latches[7] * 256];
+		int xoffs0 = latches[0];
+		int xoffs1 = latches[2];
+		int xoffs2 = latches[4];
+		int xoffs3 = latches[6];
+		int start0 = latches[8] & 0x0f;
+		int start1 = latches[9] & 0x0f;
+		int start2 = latches[10] & 0x0f;
+		int start3 = latches[11] & 0x0f;
+		int stop0 = latches[8] >> 4;
+		int stop1 = latches[9] >> 4;
+		int stop2 = latches[10] >> 4;
+		int stop3 = latches[11] >> 4;
+		UINT8 *mixer = &background_mixer[(latches[12] << 4) & 0xf0];
+		UINT8 scanline[VISIBLE_X_MAX];
+		UINT16 *pens;
+
+		/* the cocktail flip flag controls whether we count up or down in X */
+		if (!exerion_cocktail_flip)
+		{
+			/* skip processing anything that's not visible */
+			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
+			{
+				if (!(++xoffs0 & 0x1f)) start0++, stop0++;
+				if (!(++xoffs1 & 0x1f)) start1++, stop1++;
+				if (!(++xoffs2 & 0x1f)) start2++, stop2++;
+				if (!(++xoffs3 & 0x1f)) start3++, stop3++;
+			}
+
+			/* draw the rest of the scanline fully */
+			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++)
+			{
+				UINT16 combined = 0;
+				UINT8 lookupval;
+
+				/* the output enable is controlled by the carries on the start/stop counters */
+				/* they are only active when the start has carried but the stop hasn't */
+				if ((start0 ^ stop0) & 0x10) combined |= src0[xoffs0 & 0xff];
+				if ((start1 ^ stop1) & 0x10) combined |= src1[xoffs1 & 0xff];
+				if ((start2 ^ stop2) & 0x10) combined |= src2[xoffs2 & 0xff];
+				if ((start3 ^ stop3) & 0x10) combined |= src3[xoffs3 & 0xff];
+
+				/* bits 8-11 of the combined value contains the lookup for the mixer PROM */
+				lookupval = mixer[combined >> 8] & 3;
+
+				/* the color index comes from the looked up value combined with the pixel data */
+				scanline[x] = (lookupval << 2) | ((combined >> (2 * lookupval)) & 3);
+
+				/* the start/stop counters are clocked when the low 5 bits of the X counter overflow */
+				if (!(++xoffs0 & 0x1f)) start0++, stop0++;
+				if (!(++xoffs1 & 0x1f)) start1++, stop1++;
+				if (!(++xoffs2 & 0x1f)) start2++, stop2++;
+				if (!(++xoffs3 & 0x1f)) start3++, stop3++;
+			}
+		}
+		else
+		{
+			/* skip processing anything that's not visible */
+			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
+			{
+				if (!(xoffs0-- & 0x1f)) start0++, stop0++;
+				if (!(xoffs1-- & 0x1f)) start1++, stop1++;
+				if (!(xoffs2-- & 0x1f)) start2++, stop2++;
+				if (!(xoffs3-- & 0x1f)) start3++, stop3++;
+			}
+
+			/* draw the rest of the scanline fully */
+			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++)
+			{
+				UINT16 combined = 0;
+				UINT8 lookupval;
+
+				/* the output enable is controlled by the carries on the start/stop counters */
+				/* they are only active when the start has carried but the stop hasn't */
+				if ((start0 ^ stop0) & 0x10) combined |= src0[xoffs0 & 0xff];
+				if ((start1 ^ stop1) & 0x10) combined |= src1[xoffs1 & 0xff];
+				if ((start2 ^ stop2) & 0x10) combined |= src2[xoffs2 & 0xff];
+				if ((start3 ^ stop3) & 0x10) combined |= src3[xoffs3 & 0xff];
+
+				/* bits 8-11 of the combined value contains the lookup for the mixer PROM */
+				lookupval = mixer[combined >> 8] & 3;
+
+				/* the color index comes from the looked up value combined with the pixel data */
+				scanline[x] = (lookupval << 2) | ((combined >> (2 * lookupval)) & 3);
+
+				/* the start/stop counters are clocked when the low 5 bits of the X counter overflow */
+				if (!(xoffs0-- & 0x1f)) start0++, stop0++;
+				if (!(xoffs1-- & 0x1f)) start1++, stop1++;
+				if (!(xoffs2-- & 0x1f)) start2++, stop2++;
+				if (!(xoffs3-- & 0x1f)) start3++, stop3++;
+			}
+		}
+
+		/* draw the scanline */
+		pens = &Machine->remapped_colortable[0x200 + (latches[12] >> 4) * 16];
+		draw_scanline8(bitmap, VISIBLE_X_MIN, y, VISIBLE_X_MAX - VISIBLE_X_MIN, &scanline[VISIBLE_X_MIN], pens, -1);
+	}
+}
+
+
+/*************************************
+ *
  *		Core refresh routine
  *
  *************************************/
@@ -303,10 +415,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	exerion_video_latch_w(-1, 0);
 
 	/* draw background */
-	if (bitmap->depth == 8)
-		draw_background_8(bitmap);
-	else
-		draw_background_16(bitmap);
+	draw_background(bitmap);
 
 #ifdef DEBUG_SPRITES
 	if (sprite_log)
@@ -381,173 +490,3 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				&Machine->visible_area, TRANSPARENCY_PEN, 0);
 		}
 }
-
-
-/*************************************
- *
- *		Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC draw_background_8
-#define TYPE UINT8
-#include "exerion.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC draw_background_16
-#define TYPE UINT16
-#include "exerion.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *		Background rendering
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap)
-{
-	UINT8 *latches = &background_latches[VISIBLE_Y_MIN * 16];
-	int orientation = Machine->orientation;
-	int x, y;
-
-	/* loop over all visible scanlines */
-	for (y = VISIBLE_Y_MIN; y < VISIBLE_Y_MAX; y++, latches += 16)
-	{
-		UINT16 *src0 = &background_gfx[0][latches[1] * 256];
-		UINT16 *src1 = &background_gfx[1][latches[3] * 256];
-		UINT16 *src2 = &background_gfx[2][latches[5] * 256];
-		UINT16 *src3 = &background_gfx[3][latches[7] * 256];
-		int xoffs0 = latches[0];
-		int xoffs1 = latches[2];
-		int xoffs2 = latches[4];
-		int xoffs3 = latches[6];
-		int start0 = latches[8] & 0x0f;
-		int start1 = latches[9] & 0x0f;
-		int start2 = latches[10] & 0x0f;
-		int start3 = latches[11] & 0x0f;
-		int stop0 = latches[8] >> 4;
-		int stop1 = latches[9] >> 4;
-		int stop2 = latches[10] >> 4;
-		int stop3 = latches[11] >> 4;
-		UINT16 *pens = &Machine->remapped_colortable[0x200 + (latches[12] >> 4) * 16];
-		UINT8 *mixer = &background_mixer[(latches[12] << 4) & 0xf0];
-		TYPE *dst = &((TYPE *)bitmap->line[y])[VISIBLE_X_MIN];
-		int xadv = 1;
-
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, VISIBLE_X_MIN, y, xadv);
-
-		/* the cocktail flip flag controls whether we could up or down in X */
-		if (!exerion_cocktail_flip)
-		{
-			/* skip processing anything that's not visible */
-			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
-			{
-				if (!(++xoffs0 & 0x1f)) start0++, stop0++;
-				if (!(++xoffs1 & 0x1f)) start1++, stop1++;
-				if (!(++xoffs2 & 0x1f)) start2++, stop2++;
-				if (!(++xoffs3 & 0x1f)) start3++, stop3++;
-			}
-
-			/* draw the rest of the scanline fully */
-			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++, dst += xadv)
-			{
-				UINT16 combined = 0;
-				UINT8 lookupval, colorindex;
-
-				/* the output enable is controlled by the carries on the start/stop counters */
-				/* they are only active when the start has carried but the stop hasn't */
-				if ((start0 ^ stop0) & 0x10) combined |= src0[xoffs0 & 0xff];
-				if ((start1 ^ stop1) & 0x10) combined |= src1[xoffs1 & 0xff];
-				if ((start2 ^ stop2) & 0x10) combined |= src2[xoffs2 & 0xff];
-				if ((start3 ^ stop3) & 0x10) combined |= src3[xoffs3 & 0xff];
-
-				/* bits 8-11 of the combined value contains the lookup for the mixer PROM */
-				lookupval = mixer[combined >> 8] & 3;
-
-				/* the color index comes from the looked up value combined with the pixel data */
-				colorindex = (lookupval << 2) | ((combined >> (2 * lookupval)) & 3);
-				*dst = pens[colorindex];
-
-				/* the start/stop counters are clocked when the low 5 bits of the X counter overflow */
-				if (!(++xoffs0 & 0x1f)) start0++, stop0++;
-				if (!(++xoffs1 & 0x1f)) start1++, stop1++;
-				if (!(++xoffs2 & 0x1f)) start2++, stop2++;
-				if (!(++xoffs3 & 0x1f)) start3++, stop3++;
-			}
-		}
-		else
-		{
-			/* skip processing anything that's not visible */
-			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
-			{
-				if (!(xoffs0-- & 0x1f)) start0++, stop0++;
-				if (!(xoffs1-- & 0x1f)) start1++, stop1++;
-				if (!(xoffs2-- & 0x1f)) start2++, stop2++;
-				if (!(xoffs3-- & 0x1f)) start3++, stop3++;
-			}
-
-			/* draw the rest of the scanline fully */
-			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++, dst += xadv)
-			{
-				UINT16 combined = 0;
-				UINT8 lookupval, colorindex;
-
-				/* the output enable is controlled by the carries on the start/stop counters */
-				/* they are only active when the start has carried but the stop hasn't */
-				if ((start0 ^ stop0) & 0x10) combined |= src0[xoffs0 & 0xff];
-				if ((start1 ^ stop1) & 0x10) combined |= src1[xoffs1 & 0xff];
-				if ((start2 ^ stop2) & 0x10) combined |= src2[xoffs2 & 0xff];
-				if ((start3 ^ stop3) & 0x10) combined |= src3[xoffs3 & 0xff];
-
-				/* bits 8-11 of the combined value contains the lookup for the mixer PROM */
-				lookupval = mixer[combined >> 8] & 3;
-
-				/* the color index comes from the looked up value combined with the pixel data */
-				colorindex = (lookupval << 2) | ((combined >> (2 * lookupval)) & 3);
-				*dst = pens[colorindex];
-
-				/* the start/stop counters are clocked when the low 5 bits of the X counter overflow */
-				if (!(xoffs0-- & 0x1f)) start0++, stop0++;
-				if (!(xoffs1-- & 0x1f)) start1++, stop1++;
-				if (!(xoffs2-- & 0x1f)) start2++, stop2++;
-				if (!(xoffs3-- & 0x1f)) start3++, stop3++;
-			}
-		}
-	}
-}
-
-#endif

@@ -174,11 +174,11 @@ ROM_START( beezer1 )
 
 	ROM_LOAD( "f1.64",   0x12000, 0x2000, 0xb8a78cca )
 	ROM_LOAD( "f3.32",   0x14000, 0x1000, 0xbfa023f5 )
-	ROM_LOAD( "e1.32",   0x16000, 0x1000, 0x21e4ca9b )
-	ROM_LOAD( "e3.32",   0x18000, 0x1000, 0xa4f735d7 )
-	ROM_LOAD( "e5.32",   0x1a000, 0x1000, 0x0485575b )
-	ROM_LOAD( "f5.32",   0x1c000, 0x1000, 0x4b11f572 )
-	ROM_LOAD( "f7.32",   0x1e000, 0x1000, 0xbef67473 )
+	ROM_LOAD( "e1",      0x16000, 0x1000, 0x21e4ca9b )
+	ROM_LOAD( "e3",      0x18000, 0x1000, 0xa4f735d7 )
+	ROM_LOAD( "e5",      0x1a000, 0x1000, 0x0485575b )
+	ROM_LOAD( "f5",      0x1c000, 0x1000, 0x4b11f572 )
+	ROM_LOAD( "f7",      0x1e000, 0x1000, 0xbef67473 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for sound CPU */
 	ROM_LOAD( "d7.32",   0xf000, 0x1000, 0xb11028b5 )

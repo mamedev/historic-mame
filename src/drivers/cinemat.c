@@ -1416,17 +1416,19 @@ ROM_END
 
 
 GAME( 1978, spacewar, 0,       spacewar, spacewar, 0,        ROT0,   "Cinematronics", "Space Wars" )
-GAME( 1979, barrier,  0,       barrier,  barrier,  barrier,  ROT270, "Vectorbeam", "Barrier" )
-GAME( 1981, starhawk, 0,       starhawk, starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk" )
+GAMEX(1979, barrier,  0,       barrier,  barrier,  barrier,  ROT270, "Vectorbeam", "Barrier", GAME_NO_SOUND )
+GAMEX(1981, starhawk, 0,       starhawk, starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk", GAME_NO_SOUND )
 GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (version 3)" )
 GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (older)" )
-GAME( 1979, tailg,    0,       tailg,    tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner" )
+GAMEX(1979, tailg,    0,       tailg,    tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
-GAME( 19??, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak" )
+GAMEX(19??, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
 GAMEX(1979, sundance, 0,       sundance, sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
-GAME( 1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack" )
+GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1982, demon,    0,       demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
-GAMEX(1981, wotw,     0,       wotw,     wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS )
-GAMEX(1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS )
+GAMEX(1981, wotw,     0,       wotw,     wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
+GAMEX(1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
+
+

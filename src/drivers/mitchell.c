@@ -1146,6 +1146,26 @@ ROM_START( pkladies )
 	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
 ROM_END
 
+ROM_START( pkladiel )
+	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_LOAD( "pk05.14f",     0x00000, 0x08000, 0xea1740a6 )
+	ROM_LOAD( "pk06.15f",     0x10000, 0x20000, 0x3078ff5e )	/* larger than pkladies - 2nd half unused? */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "pko-001.8h",   0x000000, 0x80000, 0x1ead5d9b )	/* chars */
+	ROM_LOAD16_BYTE( "pko-003.8j",   0x000001, 0x80000, 0x339ab4e6 )
+	ROM_LOAD16_BYTE( "pko-002.9h",   0x100000, 0x80000, 0x1cf02586 )
+	ROM_LOAD16_BYTE( "pko-004.9j",   0x100001, 0x80000, 0x09ccb442 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pko-chr1.2j",  0x000000, 0x20000, 0x31ce33cd )	/* sprites */
+	ROM_LOAD( "pko-chr2.3j",  0x020000, 0x20000, 0xad7e055f )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
+	ROM_LOAD( "pko-voi1.2d",  0x00000, 0x20000, 0x07e0f531 )
+	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
+ROM_END
+
 ROM_START( dokaben )
 	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "db06.11h",     0x00000, 0x08000, 0x413e0886 )
@@ -1589,21 +1609,22 @@ static void init_blockbl(void)
 
 
 
-GAME( 1988, mgakuen,  0,     mgakuen, mgakuen,  mgakuen,  ROT0,   "Yuga", "Mahjong Gakuen" )
-GAME( 1989, mgakuen2, 0,     marukin, marukin,  mgakuen2, ROT0,   "Face", "Mahjong Gakuen 2 Gakuen-chou no Fukushuu" )
-GAME( 1989, pkladies, 0,     marukin, pkladies, mgakuen2, ROT0,   "Mitchell", "Poker Ladies" )
-GAME( 1989, dokaben,  0,     pang,    pang,     dokaben,  ROT0,   "Capcom", "Dokaben (Japan)" )
-GAME( 1989, pang,     0,     pang,    pang,     pang,     ROT0,   "Mitchell", "Pang (World)" )
-GAME( 1989, pangb,    pang,  pang,    pang,     pangb,    ROT0,   "bootleg", "Pang (bootleg)" )
-GAME( 1989, bbros,    pang,  pang,    pang,     pang,     ROT0,   "Capcom", "Buster Bros (US)" )
-GAME( 1989, pompingw, pang,  pang,    pang,     pang,     ROT0,   "Mitchell", "Pomping World (Japan)" )
-GAME( 1989, cworld,   0,     pang,    qtono1,   cworld,   ROT0,   "Capcom", "Capcom World (Japan)" )
-GAME( 1990, hatena,   0,     pang,    qtono1,   hatena,   ROT0,   "Capcom", "Adventure Quiz 2 Hatena Hatena no Dai-Bouken (Japan)" )
-GAME( 1990, spang,    0,     pang,    pang,     spang,    ROT0,   "Mitchell", "Super Pang (World)" )
-GAME( 1990, sbbros,   spang, pang,    pang,     sbbros,   ROT0,   "Mitchell + Capcom", "Super Buster Bros (US)" )
-GAME( 1990, marukin,  0,     marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban" )
-GAME( 1991, qtono1,   0,     pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)" )
-GAME( 1991, qsangoku, 0,     pang,    qtono1,   qsangoku, ROT0,   "Capcom", "Quiz Sangokushi (Japan)" )
-GAME( 1991, block,    0,     pang,    block,    block,    ROT270, "Capcom", "Block Block (World)" )
-GAME( 1991, blockj,   block, pang,    block,    block,    ROT270, "Capcom", "Block Block (Japan)" )
-GAME( 1991, blockbl,  block, pang,    block,    blockbl,  ROT270, "bootleg", "Block Block (bootleg)" )
+GAME( 1988, mgakuen,  0,        mgakuen, mgakuen,  mgakuen,  ROT0,   "Yuga", "Mahjong Gakuen" )
+GAME( 1989, mgakuen2, 0,        marukin, marukin,  mgakuen2, ROT0,   "Face", "Mahjong Gakuen 2 Gakuen-chou no Fukushuu" )
+GAME( 1989, pkladies, 0,        marukin, pkladies, mgakuen2, ROT0,   "Mitchell", "Poker Ladies" )
+GAME( 1989, pkladiel, pkladies, marukin, pkladies, mgakuen2, ROT0,   "Leprechaun", "Poker Ladies (Leprechaun)" )
+GAME( 1989, dokaben,  0,        pang,    pang,     dokaben,  ROT0,   "Capcom", "Dokaben (Japan)" )
+GAME( 1989, pang,     0,        pang,    pang,     pang,     ROT0,   "Mitchell", "Pang (World)" )
+GAME( 1989, pangb,    pang,     pang,    pang,     pangb,    ROT0,   "bootleg", "Pang (bootleg)" )
+GAME( 1989, bbros,    pang,     pang,    pang,     pang,     ROT0,   "Capcom", "Buster Bros (US)" )
+GAME( 1989, pompingw, pang,     pang,    pang,     pang,     ROT0,   "Mitchell", "Pomping World (Japan)" )
+GAME( 1989, cworld,   0,        pang,    qtono1,   cworld,   ROT0,   "Capcom", "Capcom World (Japan)" )
+GAME( 1990, hatena,   0,        pang,    qtono1,   hatena,   ROT0,   "Capcom", "Adventure Quiz 2 Hatena Hatena no Dai-Bouken (Japan)" )
+GAME( 1990, spang,    0,        pang,    pang,     spang,    ROT0,   "Mitchell", "Super Pang (World)" )
+GAME( 1990, sbbros,   spang,    pang,    pang,     sbbros,   ROT0,   "Mitchell + Capcom", "Super Buster Bros (US)" )
+GAME( 1990, marukin,  0,        marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban" )
+GAME( 1991, qtono1,   0,        pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)" )
+GAME( 1991, qsangoku, 0,        pang,    qtono1,   qsangoku, ROT0,   "Capcom", "Quiz Sangokushi (Japan)" )
+GAME( 1991, block,    0,        pang,    block,    block,    ROT270, "Capcom", "Block Block (World)" )
+GAME( 1991, blockj,   block,    pang,    block,    block,    ROT270, "Capcom", "Block Block (Japan)" )
+GAME( 1991, blockbl,  block,    pang,    block,    blockbl,  ROT270, "bootleg", "Block Block (bootleg)" )

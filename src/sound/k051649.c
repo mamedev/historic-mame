@@ -9,7 +9,16 @@
 	The 051649 is a 5 channel sound generator, each channel gets it's
 	waveform from RAM (32 bytes per waveform, 8 bit signed data).
 
-	Frequency information for each channel appears to be 10 bits.
+	This sound chip is the same as the sound chip in some Konami
+	megaROM cartridges for the MSX. It is actually well researched
+	and documented:
+
+		http://www.msxnet.org/tech/scc.html
+
+	Thanks to Sean Young (sean@msxnet.org) for some bugfixes.
+
+	K052539 is equivalent to this chip except channel 5 does not share
+	waveforms with channel 4.
 
 ***************************************************************************/
 
@@ -24,7 +33,6 @@ typedef struct
 	int frequency;
 	int volume;
 	int key;
-	/*unsigned char waveform[32];*/
 	signed char waveform[32];		/* 19991207.CAB */
 } k051649_sound_channel;
 
@@ -82,7 +90,6 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 		k=voice[j].key;
 		if (v && f && k)
 		{
-			/*const unsigned char *w = voice[j].waveform;*/
 			const signed char *w = voice[j].waveform;			/* 19991207.CAB */
 			int c=voice[j].counter;
 
@@ -96,8 +103,7 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 				/* Amuse source:  Cab suggests this method gives greater resolution */
 				c+=(long)((((float)mclock / (float)(f * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
 				offs = (c >> 16) & 0x1f;
-				/* *mix++ += ((w[offs] - 0x80) * v)>>3; */
-				*mix++ += (w[offs] * v)>>3;						/* 19991207.CAB */
+				*mix++ += (w[offs] * v)>>3;
 			}
 
 			/* update the counter for this voice */
@@ -156,6 +162,16 @@ WRITE_HANDLER( K051649_waveform_w )
 {
 	stream_update(stream,0);
 	channel_list[offset>>5].waveform[offset&0x1f]=data;
+	/* SY 20001114: Channel 5 shares the waveform with channel 4 */
+    if (offset >= 0x60)
+		channel_list[4].waveform[offset&0x1f]=data;
+}
+
+/* SY 20001114: Channel 5 doesn't share the waveform with channel 4 on this chip */
+WRITE_HANDLER( K052539_waveform_w )
+{
+	stream_update(stream,0);
+	channel_list[offset>>5].waveform[offset&0x1f]=data;
 }
 
 WRITE_HANDLER( K051649_volume_w )
@@ -170,11 +186,7 @@ WRITE_HANDLER( K051649_frequency_w )
 	f[offset]=data;
 
 	stream_update(stream,0);
-	channel_list[offset>>1].frequency=(f[offset&0xe] + (f[offset|1]<<8))&0x3ff;
-
-	/* Channel 5 appears to share waveforms with channel 4 */
-	if ((offset>>1)==3)
-		channel_list[4].frequency=(f[6] + (f[7]<<8))&0x3ff;
+	channel_list[offset>>1].frequency=(f[offset&0xe] + (f[offset|1]<<8))&0xfff;
 }
 
 WRITE_HANDLER( K051649_keyonoff_w )

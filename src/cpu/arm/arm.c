@@ -62,12 +62,12 @@ int arm_ICount;
  ****************************************************************************/
 INLINE UINT32 ARM_RDMEM(UINT32 addr)
 {
-	return cpu_readmem26lew(addr & AMASK);
+	return cpu_readmem26ledw(addr & AMASK);
 }
 
 INLINE UINT32 ARM_RDMEM_32(UINT32 addr)
 {
-	UINT32 data = cpu_readmem26lew_dword(addr & AMASK);
+	UINT32 data = cpu_readmem26ledw(addr & AMASK);
 	logerror("ARM_RDMEM_32 (%08x) -> %08x\n", addr, data);
 	return data;
 }
@@ -77,12 +77,12 @@ INLINE UINT32 ARM_RDMEM_32(UINT32 addr)
  ****************************************************************************/
 INLINE void ARM_WRMEM(UINT32 addr, UINT32 val)
 {
-	cpu_writemem26lew(addr & AMASK, val & 0xff);
+	cpu_writemem26ledw(addr & AMASK, val & 0xff);
 }
 
 INLINE void ARM_WRMEM_32(UINT32 addr, UINT32 val)
 {
-	cpu_writemem26lew_dword(addr & AMASK, val);
+	cpu_writemem26ledw(addr & AMASK, val);
 }
 
 #define OP		arm.queue[0]
@@ -538,7 +538,7 @@ INLINE void swapregs(UINT32 *dst, UINT32 *src, int num_regs)
 
 INLINE void fill_queue(void)
 {
-	change_pc26lew(PC);
+	change_pc26ledw(PC);
 	/* pre-fetch the instruction queue */
 	arm.ppc = PC;
 	arm.queue[1] = ARM_RDMEM_32(PC);
@@ -2643,7 +2643,7 @@ void arm_exit(void)
 int arm_execute(int cycles)
 {
 	arm_ICount = cycles;
-	change_pc26lew(0);
+	change_pc26ledw(0);
 	do
 	{
 		int cond;

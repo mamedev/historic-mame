@@ -34,16 +34,6 @@
 
 /*************************************
  *
- *	Globals we own
- *
- *************************************/
-
-UINT8 atarisys1_translucent;
-
-
-
-/*************************************
- *
  *	Statics
  *
  *************************************/
@@ -51,6 +41,7 @@ UINT8 atarisys1_translucent;
 /* temporary bitmap */
 static struct osd_bitmap *trans_bitmap_pf;
 static struct osd_bitmap *trans_bitmap_mo;
+static struct osd_bitmap *priority_copy;
 
 /* playfield parameters */
 static data16_t priority_pens;
@@ -184,6 +175,11 @@ int atarisys1_vh_start(void)
 	if (!trans_bitmap_mo)
 		goto cant_alloc_bitmap_mo;
 
+	/* allocate the priority copy bitmap */
+	priority_copy = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	if (!priority_copy)
+		goto cant_alloc_bitmap_copy;
+
 	/* first decode the graphics */
 	if (!decode_gfx(pftable, motable))
 		goto cant_decode_gfx;
@@ -241,6 +237,8 @@ cant_create_pf:
 	atarian_free();
 cant_create_an:
 cant_decode_gfx:
+	bitmap_free(priority_copy);
+cant_alloc_bitmap_copy:
 	bitmap_free(trans_bitmap_mo);
 cant_alloc_bitmap_mo:
 	bitmap_free(trans_bitmap_pf);
@@ -261,6 +259,7 @@ void atarisys1_vh_stop(void)
 	atarian_free();
 	atarimo_free();
 	ataripf_free();
+	bitmap_free(priority_copy);
 	bitmap_free(trans_bitmap_mo);
 	bitmap_free(trans_bitmap_pf);
 }
@@ -502,13 +501,21 @@ static void update_timers(int scanline)
  *
  *************************************/
 
+enum
+{
+	OVER_PRIORITYPENS,	/* playfield pen priority (MO is low priority, priority pens is non-zero) */
+	OVER_SIMPLEPF,		/* simple playfield priority (MO is high priority, pens 0 or 1 only */
+	OVER_TRANSLUCENT	/* complex playfield priority (MO is high priority, pens 2-15 */
+};
+
 static int overrender_callback(struct ataripf_overrender_data *data, int state)
 {
 	static struct osd_bitmap *real_dest;
+	static UINT8 priority_type;
 
 	/* Rendering for the high-priority case here is tricky         */
 	/* If the priority bit is set for an MO, then the MO/playfield */
-	/* interaction is altered. Anywhere the MO pen is 0 or 1, the  */
+	/* interaction is altered. Anywhere the MO pen is 1, the       */
 	/* playfield gets priority. Anywhere the MO pen is 2-15, the   */
 	/* color is determined via the translucency color map at 0x300 */
 
@@ -526,6 +533,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 			data->drawmode = TRANSPARENCY_PENS;
 			data->drawpens = ~priority_pens;
 			data->maskpens = 0x0001;
+			priority_type = OVER_PRIORITYPENS;
 			return OVERRENDER_SOME;
 		}
 
@@ -542,7 +550,8 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 			{
 				data->drawmode = TRANSPARENCY_NONE;
 				data->drawpens = 0;
-				data->maskpens = 0x0001;
+				data->maskpens = ~0x0002;
+				priority_type = OVER_SIMPLEPF;
 				return OVERRENDER_ALL;
 			}
 
@@ -557,6 +566,7 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 			data->maskpens = 0;
 
 			/* and then handle it tile-by-tile */
+			priority_type = OVER_TRANSLUCENT;
 			return OVERRENDER_SOME;
 		}
 	}
@@ -564,12 +574,12 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 	/* handle queries */
 	else if (state == OVERRENDER_QUERY)
 	{
-		/* low priority case */
-		if (!data->mopriority)
+		/* priority pens case */
+		if (priority_type == OVER_PRIORITYPENS)
 			return data->pfcolor ? OVERRENDER_NO : OVERRENDER_YES;
 
 		/* translucent case */
-		data->pfcolor = 0;
+		data->pfcolor <<= ATARIPF_BASE_GRANULARITY_SHIFT;
 		return OVERRENDER_YES;
 	}
 
@@ -579,10 +589,14 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		struct GfxElement dummygfx;
 
 		/* bail if this isn't the translucent case */
-		if (!data->mopriority || !(data->mousage & ~3))
+		if (priority_type != OVER_TRANSLUCENT)
 			return 0;
 
-		/* first copy the raw pens from the priority map into our tranlucency bitmap */
+		/* if we require both translucency and simple PF priority, save a copy of the priority bitmap */
+		if (data->mousage & 0x0002)
+			copybitmap(priority_copy, priority_bitmap, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
+
+		/* first copy the raw pens from the priority map into our translucency bitmap */
 		copybitmap(trans_bitmap_mo, priority_bitmap, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
 
 		/* now blend in the playfield */
@@ -600,16 +614,17 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 		dummygfx.gfxdata = &trans_bitmap_mo->line[data->clip.min_y][data->clip.min_x];
 		dummygfx.line_modulo = trans_bitmap_mo->line[1] - trans_bitmap_mo->line[0];
 		dummygfx.char_modulo = 0;
-		pdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
+		mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
 				data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, 0x0003);
 
 		/* if we also need to handle straight playfield priority, do that */
 		if (data->mousage & 0x0002)
 		{
+			copybitmap(priority_bitmap, priority_copy, 0, 0, 0, 0, &data->clip, TRANSPARENCY_NONE, 0);
 			dummygfx.colortable = &Machine->remapped_colortable[0x200];
 			dummygfx.gfxdata = &trans_bitmap_pf->line[data->clip.min_y][data->clip.min_x];
 			dummygfx.line_modulo = trans_bitmap_pf->line[1] - trans_bitmap_pf->line[0];
-			pdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
+			mdrawgfx(real_dest, &dummygfx, 0, 0, 0, 0,
 					data->clip.min_x, data->clip.min_y, &data->clip, TRANSPARENCY_NONE, 0, ~0x0002);
 		}
 	}
@@ -626,12 +641,15 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
 
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	int i;
+
 	/* mark the used colors */
 	palette_init_used_colors();
 	ataripf_mark_palette(0);
 	atarimo_mark_palette(0);
 	atarian_mark_palette(0);
-	memset(&palette_used_colors[0x300], PALETTE_COLOR_USED, 256);
+	for (i = 0; i < 16; i++)
+		memset(&palette_used_colors[0x302 + i * 16], PALETTE_COLOR_USED, 0x0e);
 
 	/* update the palette, and mark things dirty if we need to */
 	if (palette_recalc())

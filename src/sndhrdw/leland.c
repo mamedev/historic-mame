@@ -163,22 +163,18 @@ void leland_sh_stop(void)
 }
 
 
-void leland_dac_update(int dacnum, UINT8 *base)
+void leland_dac_update(int dacnum, UINT8 sample)
 {
 	UINT8 *buffer = dac_buffer[dacnum];
 	int bufin = dac_bufin[dacnum];
-	int row;
 
 	/* skip if nothing */
 	if (!buffer)
 		return;
 
 	/* copy data from VRAM */
-	for (row = 0; row < 256; row++)
-	{
-		buffer[bufin] = base[row * 0x80];
-		bufin = (bufin + 1) & DAC_BUFFER_MASK;
-	}
+	buffer[bufin] = sample;
+	bufin = (bufin + 1) & DAC_BUFFER_MASK;
 
 	/* update the buffer */
 	dac_bufin[dacnum] = bufin;

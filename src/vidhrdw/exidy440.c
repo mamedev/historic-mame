@@ -7,10 +7,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-#ifndef INCLUDE_DRAW_CORE
-
-
 #define SPRITE_COUNT		40
 #define SPRITERAM_SIZE		(SPRITE_COUNT * 4)
 #define CHUNK_SIZE			8
@@ -50,9 +46,6 @@ void exidy440_update_firq(void);
 void exidy440_update_callback(int param);
 
 static void scanline_callback(int param);
-
-static void update_screen_8(struct osd_bitmap *bitmap, int scroll_offset);
-static void update_screen_16(struct osd_bitmap *bitmap, int scroll_offset);
 
 
 
@@ -408,6 +401,148 @@ double compute_pixel_time(int x, int y)
 
 /*************************************
  *
+ *	Sprite drawing
+ *
+ *************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap, int scroll_offset)
+{
+	int scanline, i;
+
+	/* get a pointer to the palette to look for collision flags */
+	UINT8 *palette = &local_paletteram[palettebank_vis * 512];
+
+	/* start the count high for topsecret, which doesn't use collision flags */
+	int count = exidy440_topsecret ? 128 : 0;
+
+	/* draw the sprite images, checking for collisions along the way */
+	for (scanline = 0; scanline < MAX_SCANLINE; scanline += CHUNK_SIZE)
+	{
+		UINT8 *sprite = spriteram_buffer + SPRITERAM_SIZE * (scanline / CHUNK_SIZE) + (SPRITE_COUNT - 1) * 4;
+		for (i = 0; i < SPRITE_COUNT; i++, sprite -= 4)
+		{
+			int image = (~sprite[3] & 0x3f);
+			int xoffs = (~((sprite[1] << 8) | sprite[2]) & 0x1ff);
+			int yoffs = (~sprite[0] & 0xff) + 1;
+			int x, y, sy;
+			UINT8 *src;
+
+			/* skip if out of range */
+			if (yoffs < scanline || yoffs >= scanline + 16 + CHUNK_SIZE - 1)
+				continue;
+
+			/* get a pointer to the source image */
+			src = &exidy440_imageram[image * 128];
+
+			/* account for large positive offsets meaning small negative values */
+			if (xoffs >= 0x1ff - 16)
+				xoffs -= 0x1ff;
+
+			/* loop over y */
+			sy = yoffs + scroll_offset;
+			for (y = 0; y < 16; y++, yoffs--, sy--)
+			{
+				/* wrap at the top and bottom of the screen */
+				if (sy >= 240)
+					sy -= 240;
+				else if (sy < 0)
+					sy += 240;
+
+				/* stop if we get before the current scanline */
+				if (yoffs < scanline)
+					break;
+
+				/* only draw scanlines that are in this chunk */
+				if (yoffs < scanline + CHUNK_SIZE)
+				{
+					UINT8 *old = &local_videoram[sy * 512 + xoffs];
+					int currx = xoffs;
+
+					/* mark this scanline dirty */
+					scanline_dirty[sy] = 1;
+
+					/* loop over x */
+					for (x = 0; x < 8; x++, old += 2)
+					{
+						int ipixel = *src++;
+						int left = ipixel & 0xf0;
+						int right = (ipixel << 4) & 0xf0;
+						int pen;
+
+						/* left pixel */
+						if (left && currx >= 0 && currx < 320)
+						{
+							/* combine with the background */
+							pen = left | old[0];
+							plot_pixel(bitmap, currx, yoffs, Machine->pens[pen]);
+
+							/* check the collisions bit */
+							if ((palette[2 * pen] & 0x80) && count++ < 128)
+								timer_set(compute_pixel_time(currx, yoffs), currx, collide_firq_callback);
+						}
+						currx++;
+
+						/* right pixel */
+						if (right && currx >= 0 && currx < 320)
+						{
+							/* combine with the background */
+							pen = right | old[1];
+							plot_pixel(bitmap, currx, yoffs, Machine->pens[pen]);
+
+							/* check the collisions bit */
+							if ((palette[2 * pen] & 0x80) && count++ < 128)
+								timer_set(compute_pixel_time(currx, yoffs), currx, collide_firq_callback);
+						}
+						currx++;
+					}
+				}
+				else
+					src += 8;
+			}
+		}
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Core refresh routine
+ *
+ *************************************/
+
+static void update_screen(struct osd_bitmap *bitmap, int scroll_offset)
+{
+	int y, sy;
+
+	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
+	if (palette_recalc())
+		memset(scanline_dirty, 1, 256);
+
+	/* draw any dirty scanlines from the VRAM directly */
+	sy = scroll_offset;
+	for (y = 0; y < 240; y++, sy++)
+	{
+		/* wrap at the bottom of the screen */
+		if (sy >= 240)
+			sy -= 240;
+
+		/* only redraw if dirty */
+		if (scanline_dirty[sy])
+		{
+			draw_scanline8(bitmap, 0, sy, 320, &local_videoram[sy * 512], Machine->pens, -1);
+			scanline_dirty[sy] = 0;
+		}
+	}
+
+	/* draw the sprites */
+	draw_sprites(bitmap, scroll_offset);
+}
+
+
+
+/*************************************
+ *
  *	Update handling for shooters
  *
  *************************************/
@@ -429,10 +564,7 @@ void exidy440_update_callback(int param)
 	palette_change_color(256, 0xff, 0xff, 0xff);
 
 	/* redraw the screen */
-	if (bitmap->depth == 8)
-		update_screen_8(bitmap, 0);
-	else
-		update_screen_16(bitmap, 0);
+	update_screen(bitmap, 0);
 
 	/* update the analog x,y values */
 	beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
@@ -489,200 +621,6 @@ void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 
 		/* redraw the screen */
-		if (bitmap->depth == 8)
-			update_screen_8(bitmap, topsecex_yscroll);
-		else
-			update_screen_16(bitmap, topsecex_yscroll);
+		update_screen(bitmap, topsecex_yscroll);
 	}
 }
-
-
-/*************************************
- *
- *		Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC update_screen_8
-#define TYPE UINT8
-#include "exidy440.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC update_screen_16
-#define TYPE UINT16
-#include "exidy440.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *		Core refresh routine
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap, int scroll_offset)
-{
-	int orientation = Machine->orientation;
-	int xoffs, yoffs, count, scanline;
-	int x, y, i, sy;
-	UINT8 *palette;
-	UINT8 *sprite;
-
-	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
-	if (palette_recalc())
-		memset(scanline_dirty, 1, 256);
-
-	/* draw any dirty scanlines from the VRAM directly */
-	sy = scroll_offset;
-	for (y = 0; y < 240; y++, sy++)
-	{
-		/* wrap at the bottom of the screen */
-		if (sy >= 240)
-			sy -= 240;
-
-		/* only redraw if dirty */
-		if (scanline_dirty[sy])
-		{
-			UINT8 *src = &local_videoram[sy * 512];
-			TYPE *dst = (TYPE *)bitmap->line[y];
-			int xadv = 1;
-
-			/* adjust if we're oriented oddly */
-			ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
-
-			/* redraw the scanline */
-			for (x = 0; x < 320; x++, dst += xadv)
-				*dst = Machine->pens[*src++];
-			scanline_dirty[sy] = 0;
-		}
-	}
-
-	/* get a pointer to the palette to look for collision flags */
-	palette = &local_paletteram[palettebank_vis * 512];
-
-	/* start the count high for topsecret, which doesn't use collision flags */
-	count = exidy440_topsecret ? 128 : 0;
-
-	/* draw the sprite images, checking for collisions along the way */
-	for (scanline = 0; scanline < MAX_SCANLINE; scanline += CHUNK_SIZE)
-	{
-		sprite = spriteram_buffer + SPRITERAM_SIZE * (scanline / CHUNK_SIZE) + (SPRITE_COUNT - 1) * 4;
-		for (i = 0; i < SPRITE_COUNT; i++, sprite -= 4)
-		{
-			UINT8 *src;
-			int image = (~sprite[3] & 0x3f);
-			xoffs = (~((sprite[1] << 8) | sprite[2]) & 0x1ff);
-			yoffs = (~sprite[0] & 0xff) + 1;
-
-			/* skip if out of range */
-			if (yoffs < scanline || yoffs >= scanline + 16 + CHUNK_SIZE - 1)
-				continue;
-
-			/* get a pointer to the source image */
-			src = &exidy440_imageram[image * 128];
-
-			/* account for large positive offsets meaning small negative values */
-			if (xoffs >= 0x1ff - 16)
-				xoffs -= 0x1ff;
-
-			/* loop over y */
-			sy = yoffs + scroll_offset;
-			for (y = 0; y < 16; y++, yoffs--, sy--)
-			{
-				/* wrap at the top and bottom of the screen */
-				if (sy >= 240)
-					sy -= 240;
-				else if (sy < 0)
-					sy += 240;
-
-				/* stop if we get before the current scanline */
-				if (yoffs < scanline)
-					break;
-
-				/* only draw scanlines that are in this chunk */
-				if (yoffs < scanline + CHUNK_SIZE)
-				{
-					UINT8 *old = &local_videoram[sy * 512 + xoffs];
-					TYPE *dst = &((TYPE *)bitmap->line[yoffs])[xoffs];
-					int currx = xoffs, xadv = 1;
-
-					/* adjust if we're oriented oddly */
-					ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, xoffs, yoffs, xadv);
-
-					/* mark this scanline dirty */
-					scanline_dirty[sy] = 1;
-
-					/* loop over x */
-					for (x = 0; x < 8; x++, dst += xadv * 2, old += 2)
-					{
-						int ipixel = *src++;
-						int left = ipixel & 0xf0;
-						int right = (ipixel << 4) & 0xf0;
-						int pen;
-
-						/* left pixel */
-						if (left && currx >= 0 && currx < 320)
-						{
-							/* combine with the background */
-							pen = left | old[0];
-							dst[0] = Machine->pens[pen];
-
-							/* check the collisions bit */
-							if ((palette[2 * pen] & 0x80) && count++ < 128)
-								timer_set(compute_pixel_time(currx, yoffs), currx, collide_firq_callback);
-						}
-						currx++;
-
-						/* right pixel */
-						if (right && currx >= 0 && currx < 320)
-						{
-							/* combine with the background */
-							pen = right | old[1];
-							dst[xadv] = Machine->pens[pen];
-
-							/* check the collisions bit */
-							if ((palette[2 * pen] & 0x80) && count++ < 128)
-								timer_set(compute_pixel_time(currx, yoffs), currx, collide_firq_callback);
-						}
-						currx++;
-					}
-				}
-				else
-					src += 8;
-			}
-		}
-	}
-}
-
-#endif

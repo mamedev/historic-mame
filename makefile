@@ -12,7 +12,7 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
-# X86_ASM_68K = 1
+X86_ASM_68K = 1
 
 # set this the operating system you're building for
 # (actually you'll probably need your own main makefile anyways)

@@ -226,3 +226,32 @@ void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	supbtime_drawsprites(bitmap);
 	tilemap_draw(bitmap,pf1_tilemap,0,0);
 }
+
+void chinatwn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	flipscreen=supbtime_control_0[0]&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	tilemap_set_scrollx( pf1_tilemap,0, supbtime_control_0[1] );
+	tilemap_set_scrolly( pf1_tilemap,0, supbtime_control_0[2] );
+	if (flipscreen)
+		tilemap_set_scrollx( pf2_tilemap,0, supbtime_control_0[3]+1 );
+	else
+		tilemap_set_scrollx( pf2_tilemap,0, supbtime_control_0[3]-1 );
+	tilemap_set_scrolly( pf2_tilemap,0, supbtime_control_0[4] );
+
+	tilemap_update(pf2_tilemap);
+	tilemap_update(pf1_tilemap);
+
+	supbtime_mark_sprite_colours();
+	palette_used_colors[768] = PALETTE_COLOR_USED;
+	palette_recalc();
+
+	/* The filled bitmap is unusual for Data East, but without this the title screen
+	background colour is incorrect.  This also explains why the game initialises
+	the previously unused palette ram to zero */
+	fillbitmap(bitmap,Machine->pens[768],&Machine->visible_area);
+	tilemap_draw(bitmap,pf2_tilemap,0,0);
+	supbtime_drawsprites(bitmap);
+	tilemap_draw(bitmap,pf1_tilemap,0,0);
+}

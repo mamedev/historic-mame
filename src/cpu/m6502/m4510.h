@@ -26,6 +26,15 @@
 #include "osd_cpu.h"
 #include "m6502.h"
 
+#ifdef RUNTIME_LOADER
+# ifdef __cplusplus
+	extern "C" void m4510_runtime_loader_init(void);
+# else
+	extern void m4510_runtime_loader_init(void);
+# endif
+#endif
+
+
 enum {
 	M4510_PC=1, M4510_S, M4510_P, M4510_A, M4510_X, M4510_Y,
 	M4510_Z, M4510_B, M4510_EA, M4510_ZP,

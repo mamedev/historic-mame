@@ -266,8 +266,8 @@ MEMORY_END
 static READ_HANDLER( dsw_r )
 {
 	int ret = readinputport(2);
-
-	return 0xf0 | ((ret >> (4-4*offset)) & 0x0f);
+	if(offset&2) ret>>=4;
+	return 0xf0 | ret;
 }
 
 static WRITE_HANDLER( namcos1_coin_w )
@@ -381,7 +381,7 @@ static MEMORY_READ_START( mcu_readmem )
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, input_port_0_r },
 	{ 0x1401, 0x1401, input_port_1_r },
-	{ 0x1000, 0x1001, dsw_r },
+	{ 0x1000, 0x1003, dsw_r },
 	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
 	{ 0xc000, 0xc7ff, MRA_BANK19 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
@@ -406,7 +406,7 @@ static MEMORY_READ_START( quester_mcu_readmem )
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, quester_in0_r },
 	{ 0x1401, 0x1401, quester_in1_r },
-	{ 0x1000, 0x1001, dsw_r },
+	{ 0x1000, 0x1003, dsw_r },
 	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
 	{ 0xc000, 0xc7ff, MRA_BANK19 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */
@@ -418,7 +418,7 @@ static MEMORY_READ_START( faceoff_mcu_readmem )
 	{ 0x0080, 0x00ff, MRA_RAM }, /* built in RAM */
 	{ 0x1400, 0x1400, faceoff_in0_r },
 	{ 0x1401, 0x1401, faceoff_in1_r },
-	{ 0x1000, 0x1001, dsw_r },
+	{ 0x1000, 0x1003, dsw_r },
 	{ 0x4000, 0xbfff, MRA_BANK20 }, /* banked ROM */
 	{ 0xc000, 0xc7ff, MRA_BANK19 },
 	{ 0xc800, 0xcfff, MRA_RAM }, /* EEPROM */

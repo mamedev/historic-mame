@@ -54,7 +54,7 @@ extern unsigned char tw640x480arc_h, tw640x480arc_v;
 
 
 /* from sound.c */
-extern int soundcard, usestereo,attenuation;
+extern int soundcard, usestereo, attenuation, sampleratedetect;
 
 /* from input.c */
 extern int use_mouse, joystick, use_hotrod;
@@ -367,7 +367,7 @@ void init_inpdir(void)
 void parse_cmdline (int argc, char **argv, int game_index, char *override_default_rompath)
 {
 	static float f_beam, f_flicker;
-	char *resolution;
+	char *resolution, *vectorres;
 	char *vesamode;
 	char *joyname;
 	char tmpres[10];
@@ -445,6 +445,7 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	attenuation 		= get_int  ("config", "volume",  NULL,  0);
 	if (attenuation < -32) attenuation = -32;
 	if (attenuation > 0) attenuation = 0;
+	sampleratedetect    = get_bool ("config", "sampleratedetect", NULL, 1);
 
 	/* read input configuration */
 	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
@@ -468,6 +469,7 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 
 	/* get resolution */
 	resolution	= get_string ("config", "resolution", NULL, "auto");
+	vectorres	= get_string ("config", "vectorres", NULL, "auto");
 
 	/* set default subdirectories */
 #ifndef MESS
@@ -595,7 +597,7 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	{
 		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
 				(strstr(argv[i],"x") || strstr(argv[i],"X")))
-			resolution = &argv[i][1];
+			vectorres = resolution = &argv[i][1];
 	}
 
 	/* break up resolution into gfx_width and gfx_height */
@@ -613,6 +615,22 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 		options.vector_width = gfx_width;
 		options.vector_height = gfx_height;
 	}
+
+	/* break up vector resolution into gfx_width and gfx_height */
+	if (drivers[game]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		if (stricmp (vectorres, "auto") != 0)
+		{
+			char *tmp;
+			strncpy (tmpres, vectorres, 10);
+			tmp = strtok (tmpres, "xX");
+			gfx_width = atoi (tmp);
+			tmp = strtok (0, "xX");
+			if (tmp)
+				gfx_height = atoi (tmp);
+
+			options.vector_width = gfx_width;
+			options.vector_height = gfx_height;
+		}
 
 	/* convert joystick name into an Allegro-compliant joystick signature */
 	joystick = -2; /* default to invalid value */

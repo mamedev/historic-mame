@@ -823,6 +823,17 @@ else
 CPUDEFS += -DHAS_SPC700=0
 endif
 
+CPU=$(strip $(findstring ASAP@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/asap
+CPUDEFS += -DHAS_ASAP=1
+CPUOBJS += $(OBJ)/cpu/asap/asap.o
+DBGOBJS += $(OBJ)/cpu/asap/asapdasm.o
+$(OBJ)/cpu/asap/asap.o: asap.c asap.h
+else
+CPUDEFS += -DHAS_ASAP=0
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)

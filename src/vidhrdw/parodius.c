@@ -48,7 +48,7 @@ int parodius_vh_start( void )
 	{
 		return 1;
 	}
-	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
+	if (K053245_vh_start(REGION_GFX2,0,NORMAL_PLANE_ORDER,sprite_callback))
 	{
 		K052109_vh_stop();
 		return 1;

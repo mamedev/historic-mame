@@ -23,7 +23,6 @@ extern UINT8 *williams2_paletteram;
 void williams_vh_update(int counter);
 WRITE_HANDLER( williams_videoram_w );
 READ_HANDLER( williams_video_counter_r );
-void williams2_vh_update(int counter);
 
 
 /* banking addresses set by the drivers */
@@ -267,7 +266,7 @@ static void williams_va11_callback(int scanline)
 	williams_vh_update(scanline);
 
 	/* set a timer for the next update */
-	scanline += 16;
+	scanline += 8;
 	if (scanline >= 256) scanline = 0;
 	timer_set(cpu_getscanlinetime(scanline), scanline, williams_va11_callback);
 }
@@ -466,10 +465,10 @@ static void williams2_va11_callback(int scanline)
 	pia_1_ca1_w(0, scanline & 0x20);
 
 	/* update the screen while we're here */
-	williams2_vh_update(scanline);
+	williams_vh_update(scanline);
 
 	/* set a timer for the next update */
-	scanline += 16;
+	scanline += 8;
 	if (scanline >= 256) scanline = 0;
 	timer_set(cpu_getscanlinetime(scanline), scanline, williams2_va11_callback);
 }

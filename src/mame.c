@@ -230,7 +230,7 @@ static int validitychecks(void)
 								if ((mra->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mra->end);
-//									error = 1;
+									error = 1;
 								}
 								break;
 							case 32:
@@ -284,7 +284,7 @@ static int validitychecks(void)
 								if ((mwa->end & MEMPORT_WIDTH_MASK) != MEMPORT_WIDTH_16)
 								{
 									printf("%s: %s cpu #%d uses wrong data width memory handlers! (width = %d, memory = %08x)\n",drivers[i]->source_file,drivers[i]->name,cpu,databus_width,mwa->end);
-//									error = 1;
+									error = 1;
 								}
 								break;
 							case 32:

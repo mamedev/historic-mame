@@ -7,8 +7,6 @@
 
 ***************************************************************************/
 
-#ifndef INCLUDE_DRAW_CORE
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -16,10 +14,7 @@
 
 
 /* constants */
-#define VRAM_LO 	0x00000
-#define VRAM_HI 	0x08000
 #define VRAM_SIZE	0x10000
-
 #define QRAM_SIZE	0x10000
 
 #define VIDEO_WIDTH  0x28
@@ -34,7 +29,6 @@
 struct vram_state_data
 {
 	UINT16	addr;
-	UINT8	plane;
 	UINT8	latch[2];
 };
 
@@ -47,7 +41,8 @@ struct scroll_position
 
 
 /* video RAM */
-UINT8 *leland_video_ram;
+static struct osd_bitmap *fgbitmap;
+static UINT8 *leland_video_ram;
 UINT8 *ataxx_qram;
 UINT8 leland_last_scanline_int;
 
@@ -56,7 +51,6 @@ static struct vram_state_data vram_state[2];
 static UINT8 sync_next_write;
 
 /* partial screen updating */
-static UINT8 *video_ram_copy;
 static int next_update_scanline;
 
 /* scroll background registers */
@@ -72,11 +66,7 @@ static UINT32 *ataxx_pen_usage;
 /* sound routines */
 extern UINT8 leland_dac_control;
 
-extern void leland_dac_update(int indx, UINT8 *base);
-
-/* bitmap blending routines */
-static void draw_bitmap_8(struct osd_bitmap *bitmap);
-static void draw_bitmap_16(struct osd_bitmap *bitmap);
+extern void leland_dac_update(int dacnum, UINT8 sample);
 
 
 
@@ -92,10 +82,10 @@ int leland_vh_start(void)
 
 	/* allocate memory */
     leland_video_ram = malloc(VRAM_SIZE);
-    video_ram_copy = malloc(VRAM_SIZE);
+    fgbitmap = bitmap_alloc(VIDEO_WIDTH * 8, VIDEO_HEIGHT * 8);
 
 	/* error cases */
-    if (!leland_video_ram || !video_ram_copy)
+    if (!leland_video_ram || !fgbitmap)
     {
     	leland_vh_stop();
 		return 1;
@@ -103,7 +93,6 @@ int leland_vh_start(void)
 
 	/* reset videoram */
     memset(leland_video_ram, 0, VRAM_SIZE);
-    memset(video_ram_copy, 0, VRAM_SIZE);
 
 	/* reset scrolling */
 	scroll_index = 0;
@@ -174,9 +163,9 @@ void leland_vh_stop(void)
 		free(leland_video_ram);
 	leland_video_ram = NULL;
 
-	if (video_ram_copy)
-		free(video_ram_copy);
-	video_ram_copy = NULL;
+	if (fgbitmap)
+		bitmap_free(fgbitmap);
+	fgbitmap = NULL;
 }
 
 
@@ -259,18 +248,12 @@ void leland_video_addr_w(int offset, int data, int num)
 	struct vram_state_data *state = vram_state + num;
 
 	if (!offset)
-    {
-		state->addr = (state->addr & 0x7f00) | (data & 0x00ff);
-		state->plane = 0;
-    }
+		state->addr = (state->addr & 0xfe00) | ((data << 1) & 0x01fe);
 	else
-	{
-		state->addr = ((data << 8) & 0x7f00) | (state->addr & 0x00ff);
-		state->plane = 0;
-	}
+		state->addr = ((data << 9) & 0xfe00) | (state->addr & 0x01fe);
 
 	if (num == 0)
-		sync_next_write = (state->addr >= 0x7800);
+		sync_next_write = (state->addr >= 0xf000);
 }
 
 
@@ -283,7 +266,7 @@ void leland_video_addr_w(int offset, int data, int num)
 
 static void update_for_scanline(int scanline)
 {
-	int i;
+	int i, j;
 
 	/* skip if we're behind the times */
 	if (scanline <= next_update_scanline)
@@ -291,9 +274,30 @@ static void update_for_scanline(int scanline)
 
 	/* update all scanlines */
 	for (i = next_update_scanline; i < scanline; i++)
+		if (i < VIDEO_HEIGHT * 8)
+		{
+			UINT8 scandata[VIDEO_WIDTH * 8];
+			UINT8 *dst = scandata;
+			UINT8 *src = &leland_video_ram[i * 256];
+
+			for (j = 0; j < VIDEO_WIDTH * 8 / 2; j++)
+			{
+				UINT8 pix = *src++;
+				*dst++ = pix >> 4;
+				*dst++ = pix & 15;
+			}
+			draw_scanline8(fgbitmap, 0, i, VIDEO_WIDTH * 8, scandata, NULL, -1);
+		}
+
+	/* also update the DACs */
+	if (scanline >= VIDEO_HEIGHT * 8)
+		scanline = 256;
+	for (i = next_update_scanline; i < scanline; i++)
 	{
-		memcpy(&video_ram_copy[i * 128 + VRAM_LO], &leland_video_ram[i * 128 + VRAM_LO], 0x51);
-		memcpy(&video_ram_copy[i * 128 + VRAM_HI], &leland_video_ram[i * 128 + VRAM_HI], 0x51);
+		if (!(leland_dac_control & 0x01))
+			leland_dac_update(0, leland_video_ram[i * 256 + 160]);
+		if (!(leland_dac_control & 0x02))
+			leland_dac_update(1, leland_video_ram[i * 256 + 161]);
 	}
 
 	/* set the new last update */
@@ -312,25 +316,24 @@ int leland_vram_port_r(int offset, int num)
 {
 	struct vram_state_data *state = vram_state + num;
 	int addr = state->addr;
-	int plane = state->plane;
-	int inc = (offset >> 3) & 1;
+	int inc = (offset >> 2) & 2;
     int ret;
 
     switch (offset & 7)
     {
         case 3:	/* read hi/lo (alternating) */
-        	ret = leland_video_ram[addr + plane * VRAM_HI];
-        	addr += inc & plane;
-        	plane ^= 1;
+        	ret = leland_video_ram[addr];
+        	addr += inc & (addr << 1);
+        	addr ^= 1;
             break;
 
         case 5:	/* read hi */
-		    ret = leland_video_ram[addr + VRAM_HI];
+		    ret = leland_video_ram[addr | 1];
 		    addr += inc;
             break;
 
         case 6:	/* read lo */
-		    ret = leland_video_ram[addr + VRAM_LO];
+		    ret = leland_video_ram[addr & ~1];
 		    addr += inc;
             break;
 
@@ -340,10 +343,9 @@ int leland_vram_port_r(int offset, int num)
             ret = 0;
             break;
     }
-    state->addr = addr & 0x7fff;
-    state->plane = plane;
+    state->addr = addr;
 
-	if (LOG_COMM && addr >= 0x7800)
+	if (LOG_COMM && addr >= 0xf000)
 		logerror("%04X:%s comm read %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, ret);
 
     return ret;
@@ -361,57 +363,56 @@ void leland_vram_port_w(int offset, int data, int num)
 {
 	struct vram_state_data *state = vram_state + num;
 	int addr = state->addr;
-	int plane = state->plane;
-	int inc = (offset >> 3) & 1;
+	int inc = (offset >> 2) & 2;
 	int trans = (offset >> 4) & num;
 
 	/* if we're writing "behind the beam", make sure we've cached what was there */
-	if (addr < 0x7800)
+	if (addr < 0xf000)
 	{
 		int cur_scanline = cpu_getscanline();
-		int mod_scanline = addr / 0x80;
+		int mod_scanline = addr / 256;
 
 		if (cur_scanline != next_update_scanline && mod_scanline < cur_scanline)
 			update_for_scanline(cur_scanline);
 	}
 
-	if (LOG_COMM && addr >= 0x7800)
+	if (LOG_COMM && addr >= 0xf000)
 		logerror("%04X:%s comm write %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, data);
 
 	/* based on the low 3 bits of the offset, update the destination */
     switch (offset & 7)
     {
         case 1:	/* write hi = data, lo = latch */
-        	leland_video_ram[addr + VRAM_HI] = data;
-        	leland_video_ram[addr + VRAM_LO] = state->latch[0];
+        	leland_video_ram[addr & ~1] = state->latch[0];
+        	leland_video_ram[addr |  1] = data;
         	addr += inc;
         	break;
 
         case 2:	/* write hi = latch, lo = data */
-        	leland_video_ram[addr + VRAM_HI] = state->latch[1];
-        	leland_video_ram[addr + VRAM_LO] = data;
+        	leland_video_ram[addr & ~1] = data;
+        	leland_video_ram[addr |  1] = state->latch[1];
         	addr += inc;
         	break;
 
         case 3:	/* write hi/lo = data (alternating) */
         	if (trans)
         	{
-        		if (!(data & 0xf0)) data |= leland_video_ram[addr + plane * VRAM_HI] & 0xf0;
-        		if (!(data & 0x0f)) data |= leland_video_ram[addr + plane * VRAM_HI] & 0x0f;
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr] & 0x0f;
         	}
-       		leland_video_ram[addr + plane * VRAM_HI] = data;
-        	addr += inc & plane;
-        	plane ^= 1;
+       		leland_video_ram[addr] = data;
+        	addr += inc & (addr << 1);
+        	addr ^= 1;
             break;
 
         case 5:	/* write hi = data */
         	state->latch[1] = data;
         	if (trans)
         	{
-        		if (!(data & 0xf0)) data |= leland_video_ram[addr + VRAM_HI] & 0xf0;
-        		if (!(data & 0x0f)) data |= leland_video_ram[addr + VRAM_HI] & 0x0f;
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr | 1] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr | 1] & 0x0f;
         	}
-		    leland_video_ram[addr + VRAM_HI] = data;
+		    leland_video_ram[addr | 1] = data;
 		    addr += inc;
             break;
 
@@ -419,10 +420,10 @@ void leland_vram_port_w(int offset, int data, int num)
         	state->latch[0] = data;
         	if (trans)
         	{
-        		if (!(data & 0xf0)) data |= leland_video_ram[addr + VRAM_LO] & 0xf0;
-        		if (!(data & 0x0f)) data |= leland_video_ram[addr + VRAM_LO] & 0x0f;
+        		if (!(data & 0xf0)) data |= leland_video_ram[addr & ~1] & 0xf0;
+        		if (!(data & 0x0f)) data |= leland_video_ram[addr & ~1] & 0x0f;
         	}
-		    leland_video_ram[addr + VRAM_LO] = data;
+		    leland_video_ram[addr & ~1] = data;
 		    addr += inc;
             break;
 
@@ -433,8 +434,7 @@ void leland_vram_port_w(int offset, int data, int num)
     }
 
     /* update the address and plane */
-    state->addr = addr & 0x7fff;
-    state->plane = plane;
+    state->addr = addr;
 }
 
 
@@ -559,14 +559,9 @@ READ_HANDLER( ataxx_svram_port_r )
 static void scanline_reset(int param)
 {
 	/* flush the remaining scanlines */
-	update_for_scanline(256);
 	next_update_scanline = 0;
 
-	/* update the DACs if they're on */
-	if (!(leland_dac_control & 0x01))
-		leland_dac_update(0, &video_ram_copy[VRAM_LO + 0x50]);
-	if (!(leland_dac_control & 0x02))
-		leland_dac_update(1, &video_ram_copy[VRAM_HI + 0x50]);
+	/* turn off the DACs at the start of the frame */
 	leland_dac_control = 3;
 }
 
@@ -673,10 +668,7 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_recalc();
 
 	/* Merge the two bitmaps together */
-	if (bitmap->depth == 8)
-		draw_bitmap_8(bitmap);
-	else
-		draw_bitmap_16(bitmap);
+	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);
 }
 
 
@@ -756,100 +748,5 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	palette_recalc();
 
 	/* Merge the two bitmaps together */
-	if (bitmap->depth == 8)
-		draw_bitmap_8(bitmap);
-	else
-		draw_bitmap_16(bitmap);
+	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);
 }
-
-
-
-/*************************************
- *
- *	Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC draw_bitmap_8
-#define TYPE UINT8
-#include "leland.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC draw_bitmap_16
-#define TYPE UINT16
-#include "leland.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *	Bitmap blending routine
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap)
-{
-	const UINT16 *pens = &Machine->pens[0];
-	int orientation = Machine->orientation;
-	int x, y;
-
-	/* draw any non-transparent scanlines from the VRAM directly */
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-	{
-		UINT8 *srclo = &video_ram_copy[y * 128 + VRAM_LO];
-		UINT8 *srchi = &video_ram_copy[y * 128 + VRAM_HI];
-		TYPE *dst = (TYPE *)bitmap->line[y];
-		int xadv = 1;
-
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
-
-		/* redraw the scanline */
-		for (x = 0; x < VIDEO_WIDTH*2; x++)
-		{
-			UINT16 data = (*srclo++ << 8) | *srchi++;
-
-			*dst = pens[*dst | ((data & 0xf000) >> 6)];
-			dst += xadv;
-			*dst = pens[*dst | ((data & 0x0f00) >> 2)];
-			dst += xadv;
-			*dst = pens[*dst | ((data & 0x00f0) << 2)];
-			dst += xadv;
-			*dst = pens[*dst | ((data & 0x000f) << 6)];
-			dst += xadv;
-		}
-	}
-}
-
-#endif

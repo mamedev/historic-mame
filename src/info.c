@@ -296,13 +296,13 @@ static void print_game_rom(FILE* out, const struct GameDriver* game)
 				length += ROM_GETLENGTH(chunk);
 
 			if (crc && game->clone_of)
-			{
-
 				for (pregion = rom_first_region(game->clone_of); pregion && !in_parent; pregion = rom_next_region(pregion))
 					for (prom = rom_first_file(pregion); prom && !in_parent; prom = rom_next_file(prom))
 						if (ROM_GETCRC(prom) == crc)
+						{
 							in_parent = 1;
-			}
+							break;
+						}
 
 			fprintf(out, L1P "rom" L2B);
 			if (*name)

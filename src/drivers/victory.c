@@ -363,32 +363,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *	Graphics layouts
- *
- *************************************/
-
-struct GfxLayout victory_charlayout =
-{
-	8,8,
-	256,
-	3,
-	{ 0x0000*8, 0x0800*8, 0x1000*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ REGION_CPU1, 0xc800, &victory_charlayout, 0, 1 },    /* the game dynamically modifies this */
-	{ -1 } /* end of array */
-};
-
-
-
-/*************************************
- *
  *	Sound definitions
  *
  *************************************/
@@ -439,7 +413,7 @@ static const struct MachineDriver machine_driver_victory =
 
 	/* video hardware */
 	256, 256, { 0, 255, 0, 255 },
-	gfxdecodeinfo,
+	0,
 	64,64,
 	0,
 

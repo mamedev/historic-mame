@@ -163,8 +163,8 @@ TODO Lists
   for a long list of observations on sprite glitches.
 
 - TC0480SCP emulation (footchmp, metalb, deadconx) is incomplete. Zoom is
-  imperfect, and row scrolling is flawed in MetalB. Column scrolling needs to
-  be implemented.
+  imperfect, and the row effects are wrong. Row horizontal and vertical
+  zoom need to be emulated.
 
 - Some DIPS are wrong [and many unknown in the Japanese quiz games].
 
@@ -175,14 +175,6 @@ Dondokod
 --------
 
 Roz layer is one pixel out vertically when screen flipped.
-
-
-Cameltru
---------
-
-Missing text layer; instead of using the normal TC0100SCN text layer,
-the program writes char data to 811000-811fff and tilemap to 812000-813fff.
-The tilemap is 128x32 instead of the usual 64x64.
 
 
 Qtorimon
@@ -216,20 +208,16 @@ attract should be 1 pixel left.
 Yesnoj
 ------
 
-Input mapping incomplete (there's a 0x01 one which only seems to be
-used in what is probably test mode).
-
-The end summary is black on black on half of the screen. Is there a
-bg color selector somewhere?
-
-Test mode (?) sounds some alarm and shows a few japanese chars (black
-on black again).
+Input mapping incomplete. There's a 0x01 one which only seems to be
+used in printer [printer test?] mode. It seems to be a printer status
+input. With the value currently returned, it sounds an alarm and says
+[Japanese trans.] "Error detected on the printer. Call machine operator."
 
 The timer stays at 00:00. Missing RTC emulation?
 
 Only first section of scr rom decodes properly at 1bpp: rest looked
 plausible at 4bpp (but pixel order not the standard layout). Could
-the rest be data for the 68000??
+the rest be data for the 68000?
 
 
 Quiz Crayon 2
@@ -251,6 +239,7 @@ Driveout
 --------
 
 No sound, I think it uses different hardware.
+[Jarek] driveout.020 might be samples?
 
 
 ***************************************************************************/
@@ -995,7 +984,7 @@ static MEMORY_READ16_START( cameltry_readmem )
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_r },	/* I/O */
 	{ 0x300018, 0x30001f, cameltry_paddle_r },
 	{ 0x320000, 0x320003, taitof2_msb_sound_r },
-	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
+	{ 0x800000, 0x813fff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
 	{ 0x900000, 0x90ffff, MRA16_RAM },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_r },
@@ -1008,7 +997,7 @@ static MEMORY_WRITE16_START( cameltry_writemem )
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x320000, 0x320001, taitosound_port16_msb_w },
 	{ 0x320002, 0x320003, taitosound_comm16_msb_w },
-	{ 0x800000, 0x80ffff, TC0100SCN_word_0_w },	/* tilemaps */
+	{ 0x800000, 0x813fff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x900000, 0x90ffff, MWA16_RAM, &spriteram16, &spriteram_size  },
 	{ 0xa00000, 0xa01fff, TC0280GRD_word_w },	/* ROZ tilemap */
@@ -4890,7 +4879,7 @@ INPUT_PORTS_START( mjnquest )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( yesnoj )   // want to get into test mode to be sure of this lot
+INPUT_PORTS_START( yesnoj )   // apparently has no test mode
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -4932,7 +4921,9 @@ INPUT_PORTS_START( yesnoj )   // want to get into test mode to be sure of this l
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* DSW B ? */
-	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )   // ??? makes strange siren sounds happen
+	PORT_DIPNAME( 0x01, 0x00, "Results Printer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
@@ -5057,7 +5048,7 @@ static struct GfxDecodeInfo thundfox_gfxdecodeinfo[] =
 static struct GfxLayout deadconx_charlayout =
 {
 	16,16,    /* 16*16 characters */
-	8192,     /* 8192 total characters */
+	RGN_FRAC(1,1),
 	4,        /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 1*4, 0*4, 5*4, 4*4, 3*4, 2*4, 7*4, 6*4, 9*4, 8*4, 13*4, 12*4, 11*4, 10*4, 15*4, 14*4 },
@@ -5350,7 +5341,7 @@ ROM_START( thundfox )		/* Thunder Fox */
 	ROM_LOAD16_BYTE( "c28objl.03", 0x000000, 0x080000, 0x51bdc7af )
 	ROM_LOAD16_BYTE( "c28objh.04", 0x000001, 0x080000, 0xba7ed535 )
 
-	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "c28scr2.01", 0x000000, 0x080000, 0x44552b25 )	/* TC0100SCN #2 */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */

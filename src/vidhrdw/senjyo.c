@@ -15,13 +15,14 @@ void suprloco_decode(void);
 extern unsigned char *spriteram;
 extern size_t spriteram_size;
 
-unsigned char *senjyo_fgscroll;
-unsigned char *senjyo_scrollx1,*senjyo_scrolly1;
-unsigned char *senjyo_scrollx2,*senjyo_scrolly2;
-unsigned char *senjyo_scrollx3,*senjyo_scrolly3;
-unsigned char *senjyo_fgvideoram,*senjyo_fgcolorram;
-unsigned char *senjyo_bg1videoram,*senjyo_bg2videoram,*senjyo_bg3videoram;
-unsigned char *senjyo_radarram;
+UINT8 *senjyo_fgscroll;
+UINT8 *senjyo_scrollx1,*senjyo_scrolly1;
+UINT8 *senjyo_scrollx2,*senjyo_scrolly2;
+UINT8 *senjyo_scrollx3,*senjyo_scrolly3;
+UINT8 *senjyo_fgvideoram,*senjyo_fgcolorram;
+UINT8 *senjyo_bg1videoram,*senjyo_bg2videoram,*senjyo_bg3videoram;
+UINT8 *senjyo_radarram;
+UINT8 *senjyo_bgstripesram;
 
 static struct tilemap *fg_tilemap,*bg1_tilemap,*bg2_tilemap,*bg3_tilemap;
 
@@ -197,6 +198,7 @@ WRITE_HANDLER( senjyo_bg3videoram_w )
 
 WRITE_HANDLER( senjyo_bgstripes_w )
 {
+	*senjyo_bgstripesram = data;
 	set_vh_global_attribute(&senjyo_bgstripes, data);
 }
 

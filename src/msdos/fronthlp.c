@@ -11,7 +11,7 @@
 #include <unzip.h>
 
 #ifdef MESS
-#include "mess/msdos.h"
+#include "msdos.h"
 #endif
 
 int silentident,knownstatus;
@@ -1047,15 +1047,21 @@ int frontend_help (int argc, char **argv)
 			break;
 
 
-		case LIST_WRONGMERGE: /* list duplicate crc-32 with different ROM name in clone sets */
+		case LIST_WRONGMERGE:	/* list duplicate crc-32 with different ROM name */
+								/* and different crc-32 with duplicate ROM name */
+								/* in clone sets */
 			for (i = 0; drivers[i]; i++)
 			{
 				const struct RomModule *region, *rom;
 
 				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+				{
 					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+					{
 						if (ROM_GETCRC(rom))
+						{
 							for (j = 0; drivers[j]; j++)
+							{
 								if (j != i &&
 									drivers[j]->clone_of &&
 									(drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 &&
@@ -1066,23 +1072,45 @@ int frontend_help (int argc, char **argv)
 									int match = 0;
 
 									for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+									{
 										for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+										{
 											if (!strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)))
 											{
-												match = 1;
-												break;
+												if (ROM_GETCRC(rom1) &&
+														ROM_GETCRC(rom) != ROM_GETCRC(rom1) &&
+														ROM_GETCRC(rom) != BADCRC(ROM_GETCRC(rom1)))
+												{
+													printf("%-12s %08x %-8s <-> %08x %-8s\n",ROM_GETNAME(rom),
+															ROM_GETCRC(rom),drivers[i]->name,
+															ROM_GETCRC(rom1),drivers[j]->name);
+												}
+												else
+													match = 1;
 											}
+										}
+									}
 
 									if (match == 0)
+									{
 										for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+										{
 											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+											{
 												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
 												{
 													printf("%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom),
 															ROM_GETNAME(rom),drivers[i]->name,
 															ROM_GETNAME(rom1),drivers[j]->name);
 												}
+											}
+										}
+									}
 								}
+							}
+						}
+					}
+				}
 			}
 			return 0;
 			break;

@@ -726,6 +726,34 @@ static const struct MachineDriver machine_driver_hatris =
 
 ROM_START( pipedrm )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "01.u12",	0x00000, 0x08000, 0x9fe261fb )
+	ROM_LOAD( "02.u11",	0x10000, 0x10000, 0xc8209b67 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "4",	0x00000, 0x08000, 0x497fad4c )
+	ROM_LOAD( "3",	0x10000, 0x10000, 0x4800322a )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "s73",    0x000000, 0x80000, 0x63f4e10c )
+	ROM_LOAD( "s72",    0x080000, 0x80000, 0x4e669e97 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "s71",    0x000000, 0x80000, 0x431485ee )
+	/* s72 will be copied here */
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "a30", 0x00000, 0x40000, 0x50bc5e98 )
+	ROM_LOAD16_BYTE( "a29", 0x00001, 0x40000, 0xa240a448 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "g72",     0x00000, 0x80000, 0xdc3d14be )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
+	ROM_LOAD( "g71",     0x00000, 0x80000, 0x488e2fd1 )
+ROM_END
+
+ROM_START( pipedrmj )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "1",	0x00000, 0x08000, 0xdbfac46b )
 	ROM_LOAD( "2",	0x10000, 0x10000, 0xb7adb99a )
 
@@ -751,7 +779,6 @@ ROM_START( pipedrm )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "g71",     0x00000, 0x80000, 0x488e2fd1 )
 ROM_END
-
 
 ROM_START( hatris )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -802,5 +829,6 @@ static void init_hatris(void)
  *
  *************************************/
 
-GAME( 1990, pipedrm, 0, pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (Japan)" )
-GAME( 1990, hatris,  0, hatris,  hatris,  hatris,  ROT0, "Video System Co.", "Hatris (Japan)" )
+GAME( 1990, pipedrm,  0,       pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (US)" )
+GAME( 1990, pipedrmj, pipedrm, pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (Japan)" )
+GAME( 1990, hatris,   0,       hatris,  hatris,  hatris,  ROT0, "Video System Co.", "Hatris (Japan)" )

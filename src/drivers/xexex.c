@@ -32,10 +32,14 @@ ca003		8046a		00
 int xexex_vh_start(void);
 void xexex_vh_stop(void);
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void xexex_set_alpha(int on);
 
 READ16_HANDLER( xexexbg_r );
 WRITE16_HANDLER( xexexbg_w );
+READ16_HANDLER( xexexbg_ram_r );
+WRITE16_HANDLER( xexexbg_ram_w );
 READ16_HANDLER( xexexbg_rom_r );
+WRITE16_HANDLER( xexex_alpha_level_w );
 
 static data16_t cur_control2;
 static int init_eeprom_count;
@@ -147,18 +151,21 @@ static WRITE16_HANDLER( control2_w )
 
 	/* bit 8 = enable sprite ROM reading */
 	K053246_set_OBJCHA_line((data & 0x0100) ? ASSERT_LINE : CLEAR_LINE);
+
+	/* bit 9 = disable alpha channel on K054157 plane 0 */
+	xexex_set_alpha(!(cur_control2 & 0x200));
 }
 
 static int xexex_interrupt(void)
 {
 	switch (cpu_getiloops())
 	{
-		case 0:
+		case 1:
 			if (K053246_is_IRQ_enabled())
 				return 4;
 			break;
 
-		case 1:
+		case 0:
 			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0040))
 				return 5;
 			break;
@@ -175,7 +182,6 @@ static WRITE16_HANDLER( sound_cmd1_w )
 {
 	if(ACCESSING_LSB) {
 		data &= 0xff;
-		logerror("Sound command1 write %x\n", data);
 		soundlatch_w(0, data);
 		if(!Machine->sample_rate)
 			if(data == 0xfc || data == 0xfe)
@@ -185,10 +191,8 @@ static WRITE16_HANDLER( sound_cmd1_w )
 
 static WRITE16_HANDLER( sound_cmd2_w )
 {
-	if(ACCESSING_LSB) {
-		logerror("Sound command2 write %x\n", data & 0xff);
+	if(ACCESSING_LSB)
 		soundlatch2_w(0, data & 0xff);
-	}
 }
 
 static WRITE16_HANDLER( sound_irq_w )
@@ -214,7 +218,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x080000, 0x08ffff, MRA16_RAM },			/* Work RAM */
 	{ 0x090000, 0x097fff, K053247_scattered_word_r },	/* Sprites */
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
-	{ 0x0c6000, 0x0c6fff, MRA16_RAM },			/* Background generator effects */
+	{ 0x0c6000, 0x0c6fff, xexexbg_ram_r },			/* Background generator effects */
 	{ 0x0c8000, 0x0c800f, xexexbg_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
 	{ 0x0da000, 0x0da001, input_port_2_word_r },
@@ -235,9 +239,10 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram16 },
 	{ 0x0c0000, 0x0c003f, K054157_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0c6000, 0x0c6fff, MWA16_RAM },
+	{ 0x0c6000, 0x0c6fff, xexexbg_ram_w },
 	{ 0x0c8000, 0x0c800f, xexexbg_w },
 	{ 0x0ca000, 0x0ca003, MWA16_NOP },
+	{ 0x0ca01a, 0x0ca01b, xexex_alpha_level_w },
 	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
 	{ 0x0d0000, 0x0d001d, MWA16_NOP },
 	{ 0x0d4000, 0x0d4001, sound_irq_w },
@@ -348,11 +353,12 @@ static const struct MachineDriver machine_driver_xexex =
 
 	/* video hardware */
 	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
+	//	64*8, 64*8, { 0*8, (64-0)*8-1, 0*8, 64*8-1 },
 	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN,
 	0,
 	xexex_vh_start,
 	xexex_vh_stop,
@@ -438,8 +444,14 @@ static void init_xexex(void)
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
+#if 0
+	if(0 && !strcmp(Machine->gamedrv->name, "xexex")) {
+		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
+		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
+	}
+#endif
 }
 
 
-GAMEX( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)",       GAME_NOT_WORKING )
-GAMEX( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)",       GAME_NOT_WORKING )
+GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0_16BIT, "Konami", "Xexex (World)" )
+GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0_16BIT, "Konami", "Xexex (Japan)" )

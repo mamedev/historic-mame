@@ -3,10 +3,14 @@
 	Sega System C/C2 Driver
 	driver by David Haywood and Aaron Giles
 	---------------------------------------
-	Version 0.48 - 1 November 2000
+	Version 0.50 - 16 November 2000
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
+	0.50 | Added some Columns/Puyo Puyo 2 dips from Gerardo. Fixed nasty crash bug for games
+		 | not using the UPD7759. Made some minor tweaks to the VDP register accesses. Added
+		 | counter/timer description. Attempted to hook up battery RAM.
+	0.49 | Fixed clock speeds on sound chips and CPU. Tweaked the highlight color a bit.
 	0.48 | Added a kludge to make Stack Columns high score work. Fixed several video-related
 		 | differences from c2emu which caused problems in Puyo Puyo.
 	0.47 | Fixed Thunder Force hanging problem. No longer calling the UPD7759 on the C-system
@@ -116,6 +120,13 @@
 #define LOG_PROTECTION		0
 #define LOG_PALETTE			0
 #define LOG_IOCHIP			0
+
+
+/******************************************************************************
+	Constants
+******************************************************************************/
+
+#define MASTER_CLOCK		53693100
 
 
 /******************************************************************************
@@ -289,9 +300,6 @@ static void init_machine(void)
 	/* set the first scanline 0 timer to go off */
 	timer_set(cpu_getscanlinetime(0) + cpu_getscanlineperiod() * (320. / 342.), 0, vdp_reload_counter);
 
-	/* set up the mirror of main RAM */
-	cpu_setbank(1, main_ram);
-
 	/* determine how many sound banks */
 	sound_banks = 0;
 	if (memory_region(REGION_SOUND1))
@@ -388,8 +396,8 @@ static WRITE16_HANDLER( sn76489_w )
 	to 0x8C0000 - 0x8C03FF at any given time by writes to 0x84000E (This same
 	address also looks to be used for things like Sample Banking)
 
-	Each Colour uses 12-bits (from a 16-bit word) in the Format
-		xxxxBBBB GGGGRRRR  (x = unused, B = Blue, G = Green, R = Red)
+	Each Colour uses 15-bits (from a 16-bit word) in the Format
+		xBGRBBBB GGGGRRRR  (x = unused, B = Blue, G = Green, R = Red)
 
 	As this works out the Palette RAM Stores 2048 from a Possible 4096 Colours
 	at any given time.
@@ -430,7 +438,9 @@ static WRITE16_HANDLER( palette_w )
 	palette_change_color(offset + 0x0800, r / 2, g / 2, b / 2);
 
 	/* set the double-bright color for highlight effects */
-	palette_change_color(offset + 0x1000, r | 0x80, g | 0x80, b | 0x80);
+	palette_change_color(offset + 0x1000, 	(r >= 0xc0) ? 0xff : r + 0x40,
+											(g >= 0xc0) ? 0xff : g + 0x40,
+											(b >= 0xc0) ? 0xff : b + 0x40);
 }
 
 
@@ -454,7 +464,10 @@ static READ16_HANDLER( iochip_r )
 	{
 		case 0x00:	return 0xff00 | readinputport(1);
 		case 0x01:	return 0xff00 | readinputport(2);
-		case 0x02:	return 0xff00 | (UPD7759_0_busy_r(0) << 6) | 0xbf; /* must return high bit on */
+		case 0x02:	if (sound_banks)
+						return 0xff00 | (UPD7759_0_busy_r(0) << 6) | 0xbf; /* must return high bit on */
+					else
+						return 0xffff;
 		case 0x04:	return 0xff00 | readinputport(0);
 		case 0x05:	return 0xff00 | readinputport(3);
 		case 0x06:	return 0xff00 | readinputport(4);
@@ -506,7 +519,9 @@ static WRITE16_HANDLER( iochip_w )
 			break;
 
 		case 0x0e:
-			/* Bit  1   = ??? (happens around UPD7759 accesses) */
+			/* Bit  1   = YM3438 reset? no - breaks poto poto */
+/*			if (!(data & 2))
+				YM2612_sh_reset();*/
 			break;
 
 		case 0x0f:
@@ -557,7 +572,7 @@ static WRITE16_HANDLER( control_w )
 	The protection chip is fairly simple. Writes to it control the palette
 	banking for the sprites and backgrounds. The low 4 bits are also
 	remembered in a 2-stage FIFO buffer. A read from this chip should
-	return a value for a 256x4-bit table. The index into this table is
+	return a value from a 256x4-bit table. The index into this table is
 	computed by taking the second-to-last value written in the upper 4 bits,
 	and the previously-fetched table value in the lower 4 bits.
 
@@ -620,6 +635,104 @@ static READ16_HANDLER( puyopuy2_prot_r )
 
 
 /******************************************************************************
+	Counter/timer I/O
+*******************************************************************************
+
+	There appears to be a chip that is used to count coins and track time
+	played, or at the very least the current status of the game. All games
+	except Puyo Puyo 2 and Poto Poto access this in a mostly consistent
+	manner.
+
+******************************************************************************/
+
+static WRITE16_HANDLER( counter_timer_w )
+{
+	/* only LSB matters */
+	if (ACCESSING_LSB)
+	{
+		/*int value = data & 1;*/
+		switch (data & 0x1e)
+		{
+			case 0x00:	/* player 1 start/stop */
+			case 0x02:	/* player 2 start/stop */
+			case 0x04:	/* ??? */
+			case 0x06:	/* ??? */
+			case 0x08:	/* player 1 game timer? */
+			case 0x0a:	/* player 2 game timer? */
+			case 0x0c:	/* ??? */
+			case 0x0e:	/* ??? */
+				break;
+
+			case 0x10:	/* coin counter */
+				coin_counter_w(0,1);
+				coin_counter_w(0,0);
+				break;
+
+			case 0x12:	/* set coinage info -- followed by two 4-bit values */
+				break;
+
+			case 0x14:	/* game timer? (see Tant-R) */
+			case 0x16:	/* intro timer? (see Tant-R) */
+			case 0x18:	/* ??? */
+			case 0x1a:	/* ??? */
+			case 0x1c:	/* ??? */
+				break;
+
+			case 0x1e:	/* reset */
+				break;
+		}
+	}
+}
+
+
+
+/******************************************************************************
+	NVRAM Handling
+*******************************************************************************
+
+	There is a battery on the board that keeps the high scores. However,
+	simply saving the RAM doesn't seem to be good enough. This is still
+	pending investigation.
+
+******************************************************************************/
+
+/*
+static void nvram_handler(void *file, int read_or_write)
+{
+	int i;
+
+	if (read_or_write)
+		osd_fwrite(file, main_ram, 0x10000);
+	else if (file)
+		osd_fread(file, main_ram, 0x10000);
+	else
+		for (i = 0; i < 0x10000/2; i++)
+			main_ram[i] = rand();
+}
+*/
+
+/**************
+
+Hiscores:
+
+Bloxeed  @ f400-????			[key = ???]
+Columns  @ fc00-ffff			[key = '(C) SEGA 1990.JAN BY.TAKOSUKEZOU' @ fc00,ffe0]
+Columns2 @ fc00-ffff			[key = '(C) SEGA 1990.SEP.COLUMNS2 JAPAN' @ fc00,fd00,fe00,ffe0]
+Borench  @ f400-f5ff			[key = 'EIJI' in last word]
+TForceAC @ 8100-817f/8180-81ff	[key = '(c)Tehcno soft90' @ 8070 and 80f0]
+TantR    @ fc00-fcff/fd00-fdff	[key = 0xd483 in last word]
+PuyoPuyo @ fc00-fdff/fe00-ffff	[key = 0x28e1 in first word]
+Ichidant @ fc00-fcff/fd00-fdff	[key = 0x85a9 in last word]
+StkClmns @ fc00-fc7f/fc80-fcff	[key = ???]
+PuyoPuy2
+PotoPoto
+ZunkYou
+
+***************/
+
+
+
+/******************************************************************************
 	Memory Maps
 *******************************************************************************
 
@@ -640,7 +753,6 @@ static MEMORY_READ16_START( readmem )
 	{ 0x840100, 0x840107, ym3438_r },					/* Ym3438 Sound Chip Status Register */
 	{ 0x8c0000, 0x8c0fff, palette_r },					/* Palette Ram */
 	{ 0xc00000, 0xc0001f, segac2_vdp_r },				/* VDP Access */
-	{ 0xfe0000, 0xfeffff, MRA16_BANK1 },				/* Main Ram (Mirror?) */
 	{ 0xff0000, 0xffffff, MRA16_RAM },					/* Main Ram */
 MEMORY_END
 
@@ -651,10 +763,11 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x840000, 0x84001f, iochip_w },					/* I/O Chip */
 	{ 0x840100, 0x840107, ym3438_w },					/* Ym3438 Sound Chip Writes */
 	{ 0x880000, 0x880001, upd7759_w },					/* UPD7751 Sound Writes */
+	{ 0x880134, 0x880135, counter_timer_w },			/* Bookkeeping */
+	{ 0x880334, 0x880335, counter_timer_w },			/* Bookkeeping (mirror) */
 	{ 0x8c0000, 0x8c0fff, palette_w, &paletteram16 },	/* Palette Ram */
 	{ 0xc00000, 0xc0000f, segac2_vdp_w },				/* VDP Access */
 	{ 0xc00010, 0xc00017, sn76489_w },					/* SN76489 Access */
-	{ 0xfe0000, 0xfeffff, MWA16_BANK1 },				/* Main Ram (Mirror?) */
 	{ 0xff0000, 0xffffff, MWA16_RAM, &main_ram },		/* Main Ram */
 MEMORY_END
 
@@ -741,16 +854,16 @@ INPUT_PORTS_START( columns ) /* Columns Input Ports */
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )							// Button 'Attack'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )     // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 2 Unused
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )				// Button 'Attack'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )    // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 2 Unused
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -771,12 +884,13 @@ INPUT_PORTS_START( columns ) /* Columns Input Ports */
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    /* The first level increase (from 0 to 1) is allways after destroying
+       35 jewels. Then, the leve gets 1 level more every : */
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+    PORT_DIPSETTING(    0x00, "Easy" )     // 50 jewels
+    PORT_DIPSETTING(    0x10, "Medium" )   // 40 jewels
+    PORT_DIPSETTING(    0x30, "Hard" )     // 35 jewels
+    PORT_DIPSETTING(    0x20, "Hardest" )  // 25 jewels
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -793,16 +907,16 @@ INPUT_PORTS_START( columns2 ) /* Columns 2 Input Ports */
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )     // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )     // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )     // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )     // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -824,11 +938,15 @@ INPUT_PORTS_START( columns2 ) /* Columns 2 Input Ports */
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x30, 0x30, "Flash Mode Difficulty" )
 	PORT_DIPSETTING(    0x20, "Easy" )
-	PORT_DIPSETTING(    0x30, "Normal" )
+    PORT_DIPSETTING(    0x30, "Medium" )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED  )                            // Button 3 Unused
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )                            // Button 3 Unused
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -839,16 +957,16 @@ INPUT_PORTS_START( borench ) /* Borench Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Set'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )							// Button 'Turbo'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )      // Button 'Set'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )      // Button 'Turbo'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Set'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )				// Button 'Turbo'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )       // Button 'Set'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )       // Button 'Turbo'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )       // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -875,7 +993,7 @@ INPUT_PORTS_START( borench ) /* Borench Input Ports */
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
+    PORT_DIPSETTING(    0xc0, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
@@ -888,16 +1006,16 @@ INPUT_PORTS_START( tfrceac ) /* ThunderForce AC Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )							// Button Speed Change
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button Shot
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )							// Button Weapon Select
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )      // Button Speed Change
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )      // Button Shot
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )      // Button Weapon Select
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )				// Button Speed Change
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button Shot
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )				// Button Weapon Select
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )      // Button Speed Change
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )      // Button Shot
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )      // Button Weapon Select
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -918,13 +1036,13 @@ INPUT_PORTS_START( tfrceac ) /* ThunderForce AC Input Ports */
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPNAME( 0x30, 0x30,  DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, "10000, 70000, 150000" )
-	PORT_DIPSETTING(    0x30, "20000, 100000, 200000" )
-	PORT_DIPSETTING(    0x20, "40000, 150000, 300000" )
-	PORT_DIPSETTING(    0x00, "No Bonus" )
+    PORT_DIPSETTING(    0x10, "10k, 70k, 150k" )
+    PORT_DIPSETTING(    0x30, "20k, 100k, 200k" )
+    PORT_DIPSETTING(    0x20, "40k, 150k, 300k" )
+    PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
+    PORT_DIPSETTING(    0xc0, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
@@ -937,16 +1055,16 @@ INPUT_PORTS_START( puyopuyo ) /* PuyoPuyo Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )        // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )        // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )      // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )      // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )      // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -955,7 +1073,9 @@ INPUT_PORTS_START( puyopuyo ) /* PuyoPuyo Input Ports */
     COIN_B
 
 	PORT_START		 /* Game Options */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -964,11 +1084,15 @@ INPUT_PORTS_START( puyopuyo ) /* PuyoPuyo Input Ports */
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPNAME( 0x18, 0x18, "1P Mode Difficulty" )
 	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
+    PORT_DIPSETTING(    0x18, "Medium" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Moving Seat" )
 	PORT_DIPSETTING(    0x80, "No Use" )
 	PORT_DIPSETTING(    0x00, "In Use" )
@@ -982,16 +1106,16 @@ INPUT_PORTS_START( stkclmns ) /* Stack Columns Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )							// Button 'Attack'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )      // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )      // Button 'Attack'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )				// Button 'Attack'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )      // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )      // Button 'Attack'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )      // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1000,10 +1124,12 @@ INPUT_PORTS_START( stkclmns ) /* Stack Columns Input Ports */
     COIN_B
 
 	PORT_START		 /* Game Options */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
+    PORT_DIPSETTING(    0x03, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
     PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1012,10 +1138,18 @@ INPUT_PORTS_START( stkclmns ) /* Stack Columns Input Ports */
 	PORT_DIPNAME( 0x08, 0x08, "Match Mode Price" )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1026,16 +1160,16 @@ INPUT_PORTS_START( potopoto ) /* PotoPoto Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Bomb'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )     // Button 'Bomb'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )     // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Bomb'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )    // Button 'Bomb'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1061,7 +1195,7 @@ INPUT_PORTS_START( potopoto ) /* PotoPoto Input Ports */
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
+    PORT_DIPSETTING(    0x60, "Medium" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x80, 0x80, "Moving Seat" )
@@ -1077,16 +1211,16 @@ INPUT_PORTS_START( zunkyou ) /* ZunkYou Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Shot'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )							// Button 'Bomb'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )       // Button 'Shot'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )       // Button 'Bomb'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )       // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Shot'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )				// Button 'Bomb'
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )      // Button 'Shot'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )      // Button 'Bomb'
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )      // Button 3 Unused
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1096,10 +1230,10 @@ INPUT_PORTS_START( zunkyou ) /* ZunkYou Input Ports */
 
 	PORT_START		 /* Game Options */
 	PORT_DIPNAME( 0x01, 0x01, "Game Difficulty 1" )
-	PORT_DIPSETTING(    0x01, "Normal" )
+    PORT_DIPSETTING(    0x01, "Medium" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x02, 0x02, "Game Difficulty 2" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+    PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x00, "Hard" )
     PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "1" )
@@ -1109,9 +1243,15 @@ INPUT_PORTS_START( zunkyou ) /* ZunkYou Input Ports */
     PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1122,16 +1262,16 @@ INPUT_PORTS_START( ichidant ) /*  Ichidant-R and Tant-R Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )      // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )    // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )    // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1145,14 +1285,24 @@ INPUT_PORTS_START( ichidant ) /*  Ichidant-R and Tant-R Input Ports */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x04, "Easy" )
-    PORT_DIPSETTING(    0x06, "Normal" )
+    PORT_DIPSETTING(    0x06, "Medium" )
     PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED  )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED  )
+    PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1163,16 +1313,16 @@ INPUT_PORTS_START( bloxeedc ) /*  Bloxeed Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )      // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )      // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )     // Button 'Rotate'
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )     // Button 2 Unused == Button 1
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )     // Button 3 Unused == Button 1
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1181,12 +1331,12 @@ INPUT_PORTS_START( bloxeedc ) /*  Bloxeed Input Ports */
     COIN_B
 
 	PORT_START		 /* Game Options */
-    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-    PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x01, 0x01, "VS Mode Price" )
+    PORT_DIPSETTING(    0x00, "Same as Ordinary" )
+    PORT_DIPSETTING(    0x01, "Double as Ordinary" )
+    PORT_DIPNAME( 0x02, 0x02, "Credits to Start" )
+    PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
     PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
     PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1215,16 +1365,16 @@ INPUT_PORTS_START( puyopuy2 ) /*  Puyo Puyo 2 Input Ports */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START		/* Player 1 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )							// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED  )							// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )   // Rotate clockwise
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )   // Rotate anti-clockwise. Can be inverted using the dips
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )   // Rannyu Button
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_1
 
 	PORT_START		/* Player 2 Controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )				// Button 'Rotate'
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 2 Unused == Button 1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED                )				// Button 3 Unused == Button 1
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
     JOYSTICK_2
 
@@ -1244,7 +1394,7 @@ INPUT_PORTS_START( puyopuy2 ) /*  Puyo Puyo 2 Input Ports */
     PORT_DIPSETTING(    0x00, "1:Left  2:Right")
     PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x10, "Easy" )
-    PORT_DIPSETTING(    0x18, "Normal" )
+    PORT_DIPSETTING(    0x18, "Medium" )
     PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
     PORT_DIPNAME( 0x60, 0x60, "VS Mode Match/1 Play" )
@@ -1266,7 +1416,7 @@ INPUT_PORTS_END
 static struct UPD7759_interface upd7759_intf =
 {
 	1,								/* One chip */
-	640000*6,						/* Clock (unsure) */
+	MASTER_CLOCK/14,				/* Clock (unsure) */
 	{ 50 },							/* Volume */
 	{ REGION_SOUND1 },				/* Memory pointer (gen.h) */
 	UPD7759_STANDALONE_MODE			/* Chip mode */
@@ -1275,7 +1425,7 @@ static struct UPD7759_interface upd7759_intf =
 static struct YM2612interface ym3438_intf =
 {
 	1,								/* One chip */
-	7670442,						/* Clock: 7.67 MHz (Maybe this should be 10MHz) */
+	MASTER_CLOCK/7,					/* Clock: 7.67 MHz */
 	{ MIXER(50,MIXER_PAN_CENTER) },	/* Volume */
 	{ 0 },							/* port I/O */
 	{ 0 },							/* port I/O */
@@ -1287,7 +1437,7 @@ static struct YM2612interface ym3438_intf =
 static struct SN76496interface sn76489_intf =
 {
 	1,								/* One chip */
-	{ 3579545 },					/* Clock: 3.58 MHz */
+	{ MASTER_CLOCK/15 },			/* Clock: 3.58 MHz */
 	{ 50 }							/* Volume */
 };
 
@@ -1307,10 +1457,11 @@ static struct SN76496interface sn76489_intf =
 
 static struct MachineDriver machine_driver_segac =
 {
+	/* machine hardware */
 	{
 		{
 			CPU_M68000,
-			10000000,
+			MASTER_CLOCK/7, 		/* yes, there is a divide-by-7 circuit */
 			readmem,writemem,0,0,
 			vblank_interrupt,1
 		},
@@ -1337,16 +1488,16 @@ static struct MachineDriver machine_driver_segac =
 		{ SOUND_YM2612, &ym3438_intf },
 		{ SOUND_SN76496, &sn76489_intf }
 	},
-
-	NULL
+	0
 };
 
 static struct MachineDriver machine_driver_segac2 =
 {
+	/* machine hardware */
 	{
 		{
 			CPU_M68000,
-			10000000,
+			MASTER_CLOCK/7, 		/* yes, there is a divide-by-7 circuit */
 			readmem,writemem,0,0,
 			vblank_interrupt,1
 		},
@@ -1374,8 +1525,7 @@ static struct MachineDriver machine_driver_segac2 =
 		{ SOUND_SN76496, &sn76489_intf },
 		{ SOUND_UPD7759, &upd7759_intf }
 	},
-
-	NULL
+	0
 };
 
 
@@ -1824,21 +1974,17 @@ static void init_stkclmns(void)
 		0x00442266, 0x44006622, 0x00552277, 0x44116633,
 		0xeeeedddd, 0x22221111, 0xeeffddcc, 0x22331100
 	};
-	static data16_t stkclmns_init[] =
-	{
-		0x0000, 0x0000, 0x4b55, 0x4200, 0x0000, 0x88b8, 0x494b, 0x4500,
-		0x0000, 0x7530, 0x4a49, 0x4e00, 0x0000, 0x61a8, 0x5441, 0x4b00,
-		0x0000, 0x4e20, 0x544e, 0x4d00, 0x0000, 0x3a98, 0x4149, 0x4b00,
-		0x0000, 0x2710, 0x4953, 0x4f00, 0x0000, 0x1388, 0x0000, 0x3cb1
-	};
 	prot_table = stkclmns_table;
 	bloxeed_sound = 0;
 
-	/* if we don't pre-initialize the high scores, we won't be */
-	/* allowed to enter a name; until we figure out how the    */
-	/* backup RAM really works, this is a temporary solution.  */
-	memcpy(&main_ram[0xfc20/2], stkclmns_init, sizeof(stkclmns_init));
-	memcpy(&main_ram[0xfc80/2], stkclmns_init, sizeof(stkclmns_init));
+	/* until the battery RAM is understood, we must fill RAM with */
+	/* random values so that the high scores are properly reset at */
+	/* startup */
+	{
+		int i;
+		for (i = 0; i < 0x10000/2; i++)
+			main_ram[i] = rand();
+	}
 }
 
 static void init_zunkyou(void)
@@ -1878,23 +2024,23 @@ static void init_zunkyou(void)
 ******************************************************************************/
 
 /* System C Games */
-GAME ( 1989, bloxeedc, bloxeed , segac,  bloxeedc, bloxeedc, ROT0, "Sega / Elorg"     , "Bloxeed (C System)" )
-GAME ( 1990, columns , 0       , segac,  columns , columns , ROT0, "Sega"             , "Columns (US)" )
-GAME ( 1990, columnsj, columns , segac,  columns , columns , ROT0, "Sega"             , "Columns (Japan)" )
-GAME ( 1990, columns2, 0       , segac,  columns2, columns2, ROT0, "Sega"             , "Columns II - The Voyage Through Time (Japan)" )
+GAME ( 1989, bloxeedc, bloxeed,  segac,  bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)" )
+GAME ( 1990, columns,  0,        segac,  columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
+GAME ( 1990, columnsj, columns,  segac,  columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
+GAME ( 1990, columns2, 0,        segac,  columns2, columns2, ROT0, "Sega",                   "Columns II - The Voyage Through Time (Japan)" )
 
 /* System C-2 Games */
-GAME ( 1990, borench , 0       , segac2, borench , borench , ROT0, "Sega"             , "Borench" )
-GAME ( 1990, tfrceac , 0       , segac2, tfrceac , tfrceac , ROT0, "Sega / Technosoft", "ThunderForce AC" )
-GAME ( 1990, tfrceacj, tfrceac , segac2, tfrceac , tfrceac , ROT0, "Sega / Technosoft", "ThunderForce AC (Japan)" )
-GAME ( 1990, tfrceacb, tfrceac , segac2, tfrceac , tfrceacb, ROT0, "Sega / Technosoft", "ThunderForce AC (Bootleg)" )
-GAME ( 1992, tantr   , 0       , segac2, ichidant, tantr   , ROT0, "Sega"             , "Tant-R (Puzzle & Action) (Japan)" )
-GAME ( 1992, tantrbl , tantr   , segac2, ichidant, segac2  , ROT0, "Sega"             , "Tant-R (Puzzle & Action) (Japan) (Bootleg)" )
-GAME ( 1992, puyopuyo, 0       , segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile"   , "Puyo Puyo (Japan)" )
-GAME ( 1992, puyopuya, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile"   , "Puyo Puyo (Japan) (Rev A)" )
-GAME ( 1994, ichidant, 0       , segac2, ichidant, ichidant, ROT0, "Sega"             , "Ichidant-R (Puzzle & Action 2) (Japan)" )
-GAME ( 1994, ichidnte, ichidant, segac2, ichidant, ichidnte, ROT0, "Sega"             , "Ichidant-R (Puzzle & Action 2) (English)" )
-GAME ( 1994, stkclmns, 0       , segac2, stkclmns, stkclmns, ROT0, "Sega"             , "Stack Columns (Japan)" )
-GAME ( 1994, puyopuy2, 0       , segac2, puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
-GAME ( 1994, potopoto, 0       , segac2, potopoto, potopoto, ROT0, "Sega"             , "Poto Poto (Japan)" )
-GAME ( 1994, zunkyou , 0       , segac2, zunkyou , zunkyou , ROT0, "Sega"             , "Zunzunkyou No Yabou (Japan)" )
+GAME ( 1990, borench,  0,        segac2, borench,  borench,  ROT0, "Sega",                   "Borench" )
+GAME ( 1990, tfrceac,  0,        segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
+GAME ( 1990, tfrceacj, tfrceac,  segac2, tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
+GAME ( 1990, tfrceacb, tfrceac,  segac2, tfrceac,  tfrceacb, ROT0, "Sega / Technosoft",      "ThunderForce AC (Bootleg)" )
+GAME ( 1992, tantr,    0,        segac2, ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
+GAME ( 1992, tantrbl,  tantr,    segac2, ichidant, segac2,   ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan) (Bootleg)" )
+GAME ( 1992, puyopuyo, 0,        segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
+GAME ( 1992, puyopuya, puyopuyo, segac2, puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
+GAME ( 1994, ichidant, 0,        segac2, ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
+GAME ( 1994, ichidnte, ichidant, segac2, ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
+GAME ( 1994, stkclmns, 0,        segac2, stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )
+GAME ( 1994, puyopuy2, 0,        segac2, puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
+GAME ( 1994, potopoto, 0,        segac2, potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)" )
+GAME ( 1994, zunkyou,  0,        segac2, zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)" )

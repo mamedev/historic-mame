@@ -87,78 +87,117 @@ static WRITE_HANDLER( thunderx_bankedram_w )
 		ram[offset] = data;
 }
 
-static void calculate_collisions( void ) {
-	unsigned char *ptr1 = &unknownram[0x10], *ptr2;
-	int i, j;
+// calculate_collisions
+//
+// the data format is:
+//
+// +0 : flags
+// +1 : width (4 pixel units)
+// +2 : height (4 pixel units)
+// +3 : x (2 pixel units) of center of object
+// +4 : y (2 pixel units) of center of object
+//
+// flags:
+//
+// 0x01 : ???? Always set 1 by program
+// 0x02 : ???? Always set 0 by program
+// 0x04 : 0 = player 1 object; 1 = player 2 object
+// 0x08 : ???? Always set 0 by program
+// 0x10 : set by this code to indicate a collision
+// 0x20 : set to indicate that the object is an enemy bullet
+//        (also used on some bosses - object damages players but affects nothing else)
+// 0x40 : set to indicate that the object needs colliding
+// 0x80 : set to indicate that the entry is valid
+//
+// entries 0 to 1 are the players
+// entries 2 to 41 are player objects, but sometimes enemy bullets appear in this area
+// entries 42 to 117 are enemy objects
 
-	/* each sprite is defined as: flags height width xpos ypos */
-	for( i = 0; i < 127; i++, ptr1 += 5 ) {
-		int w,h;
-		int	x,y;
+static void calculate_collisions( void )
+{
+	unsigned char* ptr1;
+	unsigned char* ptr2;
+	int	i,j;
 
-		if ( ( ptr1[0] & 0x80 ) == 0x00 )
-			continue;
+	// find out the range
+	// [0:1] point to the last byte to be examined
+	const int maxobj = 118;
 
-		ptr2 = ptr1 + 5;
-		w = 4; /* ? */
-		h = 4; /* ? */
-		x = ptr1[3];
-		y = ptr1[4];
+	// clear the flags
+	ptr1 = &unknownram[0x10];
+	for (i = 0; i < maxobj; i++, ptr1 += 5)
+	{
+		ptr1[0] &= 0xEF;
+	}
 
-		for( j = i+1; j < 128; j++, ptr2 += 5 ) {
-			int x1,y1;
+	// i covers all the player objects 0 to 41
+	ptr1 = &unknownram[0x10];
+	for (i = 0; i < 42; i++, ptr1 += 5)
+	{
+		int	l1,r1,t1,b1;
 
-			if ( ( ptr2[0] & 0x80 ) == 0x00 )
-				continue;
+		// check entry is valid and needs colliding
+		// want 0x80 (entry valid) and 0x40 (needs colliding)
+		if ((ptr1[0] & 0xC0) != 0xC0)	continue;
 
-			x1 = ptr2[3];
-			y1 = ptr2[4];
+		// check this is not an enemy bullet
+		// we don't collide enemy bullets against anything
+		// except the player
+		if (!(ptr1[0] & 0x20))			continue;
 
-			x1 -= x;
+		// get area of player object
+		l1 = ptr1[3] - ptr1[1];
+		r1 = ptr1[3] + ptr1[1];
+		t1 = ptr1[4] - ptr1[2];
+		b1 = ptr1[4] + ptr1[2];
 
-			if ( x1 < 0 )
-				x1 = -x1;
+		// j covers all the enemy objects 42 to 117
+		// if this is a player, j also covers the player
+		// objects so we can check for enemy bullets, which
+		// are sometimes placed there
+		j = (i < 2) ? 2 : 42;
+		ptr2 = &unknownram[0x10] + j * 5;
+		for (; j < maxobj; j++, ptr2 += 5)
+		{
+			int	l2,r2,t2,b2;
 
-			if ( x1 > w )
-				continue;
+			// check entry is valid and needs colliding
+			// want 0x80 (entry valid) and 0x40 (needs colliding)
+			if ((ptr2[0] & 0xC0) != 0xC0)		continue;
 
-			y1 -= y;
-
-			if ( y1 < 0 )
-				y1 = -y1;
-
-			if ( y1 > h )
-				continue;
-
-/*
-00 - 02 - our ships
-02 - 40 - our bullets
-42 - 16 - enemy bullets
-58 - 60 - enemy ships
-118 - ? - ?
-*/
-			if ( i > 117 )
-				continue;
-
-			if ( i < 42 ) { /* our ship & bullets */
-				if ( j < 42 ) /* our ship & bullets */
-					continue;
-			} else { /* enemy ships & bullets */
-				if ( j > 41 ) /* enemy ships & bullets */
-					continue;
+			// is this an enemy bullet?
+			if (ptr2[0] & 0x20)
+			{
+				// no: so skip if we're in the player area
+				if (j < 42)		continue;
+			}
+			else
+			{
+				// yes: so skip if we're not a player
+				if (i >= 2)		continue;
 			}
 
-			/* bullets dont collide eachother */
-			if ( i > 1 && i < 42 )
-				if ( j > 41 && j < 58 )
-					continue;
+			// get area of enemy object
+			l2 = ptr2[3] - ptr2[1];
+			r2 = ptr2[3] + ptr2[1];
+			t2 = ptr2[4] - ptr2[2];
+			b2 = ptr2[4] + ptr2[2];
 
-			/* collision */
-			if ( ptr1[0] & 0x20 )
-				ptr1[0] |= 0x10;
+			// area overlap check
+			if (l2 >= r1)	continue;
+			if (l1 >= r2)	continue;
+			if (t2 >= b1)	continue;
+			if (t1 >= b2)	continue;
 
-			if ( ptr2[0] & 0x20 )
+			// ok, they collide
+			// set the player object's hit flag
+			ptr1[0] |= 0x10;
+			// set the enemy object's hit flag
+			// unless it's a bullet
+			if (ptr2[0] & 0x20)
+			{
 				ptr2[0] |= 0x10;
+			}
 		}
 	}
 }

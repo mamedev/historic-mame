@@ -1029,9 +1029,9 @@ ROM_START( m660 )
 	ROM_LOAD( "660r.bin", 0x08000, 0x4000, 0x27b26905 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "660-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
-	ROM_LOAD( "660-ggg.bin", 0x100, 0x100, 0x22e8b22c )
-	ROM_LOAD( "660-bbb.bin", 0x200, 0x100, 0xb7d6fdb5 )
+	ROM_LOAD( "az-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
+	ROM_LOAD( "az-ggg.bin", 0x100, 0x100, 0x22e8b22c )
+	ROM_LOAD( "az-bbb.bin", 0x200, 0x100, 0xb7d6fdb5 )
 ROM_END
 
 ROM_START( m660b )
@@ -1065,9 +1065,9 @@ ROM_START( m660b )
 	ROM_LOAD( "660r.bin", 0x08000, 0x4000, 0x27b26905 )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
-	ROM_LOAD( "660-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
-	ROM_LOAD( "660-ggg.bin", 0x100, 0x100, 0x22e8b22c )
-	ROM_LOAD( "660-bbb.bin", 0x200, 0x100, 0xb7d6fdb5 )
+	ROM_LOAD( "az-rrr.bin", 0x000, 0x100, 0xcd16d0f1 )
+	ROM_LOAD( "az-ggg.bin", 0x100, 0x100, 0x22e8b22c )
+	ROM_LOAD( "az-bbb.bin", 0x200, 0x100, 0xb7d6fdb5 )
 ROM_END
 
 ROM_START( alphaxz )

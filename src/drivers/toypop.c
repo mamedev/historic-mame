@@ -44,25 +44,25 @@ READ16_HANDLER( toypop_merged_background_r );
 WRITE16_HANDLER( toypop_merged_background_w );
 WRITE_HANDLER( toypop_palettebank_w );
 WRITE16_HANDLER( toypop_flipscreen_w );
+WRITE16_HANDLER( liblrabl_flipscreen_w );
 void toypop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void liblrabl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 
 
-static MEMORY_READ_START( toypop_readmem_mainCPU )
-	{ 0x6000, 0x603f, toypop_customio_r },						/* custom I/O chip interface */
-	{ 0x8000, 0xffff, MRA_ROM },								/* ROM code */
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( readmem_mainCPU )
 	{ 0x0000, 0x7fff, MRA_RAM },								/* RAM everywhere else */
+	{ 0x8000, 0xffff, MRA_ROM },								/* ROM code */
 MEMORY_END
 
-static MEMORY_READ_START( liblrabl_readmem_mainCPU )
-	{ 0x6800, 0x683f, liblrabl_customio_r },					/* custom I/O chip interface */
-	{ 0x8000, 0xffff, MRA_ROM },								/* ROM code */
-	{ 0x0000, 0x7fff, MRA_RAM },								/* RAM everywhere else */
-MEMORY_END
 
-static MEMORY_WRITE_START( toypop_writemem_mainCPU )
+static MEMORY_WRITE_START( writemem_mainCPU )
 	{ 0x0000, 0x03ff, MWA_RAM, &videoram, &videoram_size },		/* video RAM */
 	{ 0x0400, 0x07ff, MWA_RAM, &colorram },						/* color RAM */
 	{ 0x0800, 0x0f7f, MWA_RAM },								/* general RAM, area 1 */
@@ -72,8 +72,6 @@ static MEMORY_WRITE_START( toypop_writemem_mainCPU )
 	{ 0x1800, 0x1f7f, MWA_RAM },								/* general RAM, area 3 */
 	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },					/* sprite RAM, area 3 */
 	{ 0x2800, 0x2fff, MWA_RAM, &toypop_m68000_sharedram },		/* shared RAM with the 68000 CPU */
-	{ 0x6000, 0x603f, MWA_RAM, &toypop_customio },				/* custom I/O chip interface */
-	{ 0x6840, 0x6bff, MWA_RAM, &toypop_sound_sharedram },		/* shared RAM with the sound CPU */
 	{ 0x7000, 0x7000, toypop_main_interrupt_enable_w },			/* enable interrupt ??? */
 	{ 0x7800, 0x7800, toypop_main_interrupt_disable_w },		/* disable interrupt ??? */
 	{ 0x8000, 0x8000, toypop_m68000_clear_w },					/* reset 68000 */
@@ -84,34 +82,21 @@ static MEMORY_WRITE_START( toypop_writemem_mainCPU )
 	{ 0x8000, 0xffff, MWA_ROM },								/* ROM code */
 MEMORY_END
 
-static MEMORY_WRITE_START( liblrabl_writemem_mainCPU )
-	{ 0x0000, 0x03ff, MWA_RAM, &videoram, &videoram_size },		/* video RAM */
-	{ 0x0400, 0x07ff, MWA_RAM, &colorram },						/* color RAM */
-	{ 0x0800, 0x0f7f, MWA_RAM },								/* general RAM, area 1 */
-	{ 0x0f80, 0x0fff, MWA_RAM, &spriteram, &spriteram_size },	/* sprite RAM, area 1 */
-	{ 0x1000, 0x177f, MWA_RAM },								/* general RAM, area 2 */
-	{ 0x1780, 0x17ff, MWA_RAM, &spriteram_2 },					/* sprite RAM, area 2 */
-	{ 0x1800, 0x1f7f, MWA_RAM },								/* general RAM, area 3 */
-	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },					/* sprite RAM, area 3 */
-	{ 0x2800, 0x2fff, MWA_RAM, &toypop_m68000_sharedram },		/* shared RAM with the 68000 CPU */
-	{ 0x6040, 0x63ff, MWA_RAM, &toypop_sound_sharedram },		/* shared RAM with the sound CPU */
-	{ 0x6800, 0x683f, MWA_RAM, &toypop_customio },				/* custom I/O chip interface */
-	{ 0x7000, 0x7000, toypop_main_interrupt_enable_w },			/* enable interrupt ??? */
-	{ 0x7800, 0x7800, toypop_main_interrupt_disable_w },		/* disable interrupt ??? */
-	{ 0x8000, 0x8000, toypop_m68000_clear_w },					/* reset 68000 */
-	{ 0x8800, 0x8800, toypop_m68000_assert_w },					/* reset 68000 */
-	{ 0x9000, 0x9000, toypop_sound_clear_w },					/* sound CPU reset */
-	{ 0x9800, 0x9800, toypop_sound_assert_w },					/* sound CPU reset */
-	{ 0xa000, 0xa001, toypop_palettebank_w },					/* background image palette */
-	{ 0x8000, 0xffff, MWA_ROM },								/* ROM code */
-MEMORY_END
 
-static MEMORY_READ_START( toypop_readmem_soundCPU )
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( readmem_soundCPU )
 	{ 0x0040, 0x03ff, toypop_sound_sharedram_r },		/* shared RAM with the main CPU */
 	{ 0xe000, 0xffff, MRA_ROM },				/* ROM code */
 MEMORY_END
 
-static MEMORY_WRITE_START( toypop_writemem_soundCPU )
+
+static MEMORY_WRITE_START( writemem_soundCPU )
 	{ 0x0000, 0x003f, mappy_sound_w, &namco_soundregs },	/* sound control registers */
 	{ 0x0040, 0x03ff, toypop_sound_sharedram_w },					/* shared RAM with the main CPU */
 	{ 0x2000, 0x2000, toypop_sound_interrupt_disable_w },			/* interrupt disable ??? */
@@ -120,7 +105,15 @@ static MEMORY_WRITE_START( toypop_writemem_soundCPU )
 	{ 0xe000, 0xffff, MWA_ROM },							/* ROM code */
 MEMORY_END
 
-static MEMORY_READ16_START( toypop_readmem_68k )
+
+
+/*************************************
+ *
+ *	68k CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ16_START( readmem_68k )
 	{ 0x000000, 0x007fff, MRA16_ROM },				// ROM code
 	{ 0x080000, 0x0bffff, MRA16_RAM },				// RAM
 	{ 0x100000, 0x100fff, toypop_m68000_sharedram_r },		// shared RAM with the main CPU
@@ -128,7 +121,7 @@ static MEMORY_READ16_START( toypop_readmem_68k )
 	{ 0x190000, 0x1dffff, MRA16_RAM },				// RAM containing the background image
 MEMORY_END
 
-static MEMORY_WRITE16_START( toypop_writemem_68k )
+static MEMORY_WRITE16_START( writemem_68k )
 	{ 0x000000, 0x007fff, MWA16_ROM },						/* ROM code */
 	{ 0x080000, 0x0bffff, MWA16_RAM },						/* RAM */
 	{ 0x100000, 0x100fff, toypop_m68000_sharedram_w },		/* shared RAM with the main CPU */
@@ -139,7 +132,13 @@ static MEMORY_WRITE16_START( toypop_writemem_68k )
 	{ 0x380000, 0x380001, toypop_m68000_interrupt_disable_w },		/* interrupt disable */
 MEMORY_END
 
-//////////////////////////////////////////////////////////////////////////////////
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( toypop )
 	// FAKE
@@ -210,6 +209,7 @@ INPUT_PORTS_START( toypop )
 	PORT_DIPSETTING(   0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x40, DEF_STR( 1C_2C ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( liblrabl )
 	// FAKE
@@ -301,40 +301,52 @@ INPUT_PORTS_START( liblrabl )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_COCKTAIL)
 INPUT_PORTS_END
 
-///////////////////////////////////////////////////////////////////////////////////
 
-static struct GfxLayout toypop_charlayout =
+
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
+static struct GfxLayout charlayout =
 {
-	8,8,             /* 8*8 characters */
-	512,             /* 512 characters */
-	2,             /* 2 bits per pixel */
-	{ 0, 4 },      /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },   /* v offset */
-	16*8           /* every char takes 16 bytes */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
+	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8
 };
 
-static struct GfxLayout toypop_spritelayout =
+static struct GfxLayout spritelayout =
 {
-	16,16,       /* 16*16 sprites */
-	256,            /* 256 sprites */
-	2,                 /* 2 bits per pixel */
-	{ 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
+	16,16,
+	RGN_FRAC(1,1),
+	2,
+	{ 0, 4 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 	24*8+0, 24*8+1, 24*8+2, 24*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 	32 * 8, 33 * 8, 34 * 8, 35 * 8, 36 * 8, 37 * 8, 38 * 8, 39 * 8 },
-	64*8    /* every sprite takes 64 bytes */
+	64*8
 };
 
-static struct GfxDecodeInfo toypop_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &toypop_charlayout,      0, 128 },
-	{ REGION_GFX2, 0, &toypop_spritelayout, 64*4, 256 },
+	{ REGION_GFX1, 0, &charlayout,      0, 128 },
+	{ REGION_GFX2, 0, &spritelayout, 64*4, 256 },
 	{ -1 } /* end of array */
 };
 
-/////////////////////////////////////////////////////////////////////////////////////
+
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct namco_interface namco_interface =
 {
@@ -344,25 +356,33 @@ static struct namco_interface namco_interface =
 	REGION_SOUND1	/* memory region */
 };
 
+
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
 static struct MachineDriver machine_driver_toypop =
 {
 	{
 		{
 			CPU_M6809,
 			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			toypop_readmem_mainCPU,toypop_writemem_mainCPU,0,0,
+			readmem_mainCPU,writemem_mainCPU,0,0,
 			toypop_main_interrupt,1
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			toypop_readmem_soundCPU,toypop_writemem_soundCPU,0,0,
+			readmem_soundCPU,writemem_soundCPU,0,0,
 			toypop_sound_interrupt,1
 		},
 		{
 			CPU_M68000,
 			6144000,	/* 6.144 MHz (measured on Libble Rabble board) */
-			toypop_readmem_68k,toypop_writemem_68k,0,0,
+			readmem_68k,writemem_68k,0,0,
 			toypop_m68000_interrupt,1
 		}
 	},
@@ -373,7 +393,7 @@ static struct MachineDriver machine_driver_toypop =
 
 	/* video hardware */
 	18*16, 14*16, { 0*16, 18*16-1, 0*16, 14*16-1 },
-	toypop_gfxdecodeinfo,
+	gfxdecodeinfo,
 	256,256+256,
 	toypop_vh_convert_color_prom,
 
@@ -393,56 +413,13 @@ static struct MachineDriver machine_driver_toypop =
 	}
 };
 
-static struct MachineDriver machine_driver_liblrabl =
-{
-	{
-		{
-			CPU_M6809,
-			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			liblrabl_readmem_mainCPU,liblrabl_writemem_mainCPU,0,0,
-			toypop_main_interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			toypop_readmem_soundCPU,toypop_writemem_soundCPU,0,0,
-			toypop_sound_interrupt,1
-		},
-		{
-			CPU_M68000,
-			6144000,	/* 6.144 MHz (measured on Libble Rabble board) */
-			toypop_readmem_68k,toypop_writemem_68k,0,0,
-			toypop_m68000_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	toypop_init_machine,
-
-	/* video hardware */
-	18*16, 14*16, { 0*16, 18*16-1, 0*16, 14*16-1 },
-	toypop_gfxdecodeinfo,
-	256,256+256,
-	toypop_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	liblrabl_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
 
 
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( liblrabl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
@@ -473,6 +450,7 @@ ROM_START( liblrabl )
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
 	ROM_LOAD( "lr1-4.3d", 0x0000, 0x0100, 0x16a9166a )
 ROM_END
+
 
 ROM_START( toypop )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
@@ -506,5 +484,44 @@ ROM_END
 
 
 
-GAME( 1983, liblrabl, 0, liblrabl, liblrabl, 0, ROT0, "Namco", "Libble Rabble" )
-GAME( 1986, toypop,   0, toypop,   toypop,   0, ROT0, "Namco", "Toypop" )
+/*************************************
+ *
+ *	Driver-specific init
+ *
+ *************************************/
+
+static void init_liblrabl(void)
+{
+	/* install the custom I/O chip */
+	install_mem_read_handler(0, 0x6800, 0x683f, liblrabl_customio_r);
+	toypop_customio = install_mem_write_handler(0, 0x6800, 0x683f, MWA_RAM);
+
+	/* install the shared sound RAM */
+	toypop_sound_sharedram = install_mem_write_handler(0, 0x6040, 0x63ff, MWA_RAM);
+
+	/* install the approprite flipscreen handler */
+}
+
+
+static void init_toypop(void)
+{
+	/* install the custom I/O chip */
+	install_mem_read_handler(0, 0x6000, 0x603f, toypop_customio_r);
+	toypop_customio = install_mem_write_handler(0, 0x6000, 0x603f, MWA_RAM);
+
+	/* install the shared sound RAM */
+	toypop_sound_sharedram = install_mem_write_handler(0, 0x6840, 0x6bff, MWA_RAM);
+
+	/* install the approprite flipscreen handler */
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1983, liblrabl, 0, toypop,   liblrabl, liblrabl, ROT0, "Namco", "Libble Rabble" )
+GAME( 1986, toypop,   0, toypop,   toypop,   toypop,   ROT0, "Namco", "Toypop" )

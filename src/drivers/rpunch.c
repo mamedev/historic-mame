@@ -258,7 +258,7 @@ static MEMORY_WRITE16_START( writemem )
 	MEMORY_ADDRESS_BITS(20)
 	{ 0x000000, 0x03ffff, MWA16_ROM },
 	{ 0x040000, 0x04ffff, rpunch_bitmap_w, &rpunch_bitmapram, &rpunch_bitmapram_size },
-	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x060000, 0x060fff, MWA16_RAM, &spriteram16 },
 	{ 0x080000, 0x083fff, rpunch_videoram_w, &videoram16, &videoram_size },
 	{ 0x0a0000, 0x0a07ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16 },
 	{ 0x0c0000, 0x0c0007, rpunch_scrollreg_w },
@@ -695,11 +695,13 @@ ROM_START( rpunch )
 	ROM_LOAD( "rl_c13.bin", 0x00000, 0x40000, 0x7c8403b0 )
 	ROM_LOAD( "rl_c10.bin", 0x40000, 0x08000, 0x312eb260 )
 	ROM_LOAD( "rl_c12.bin", 0x48000, 0x08000, 0xbea85219 )
+	ROM_FILL(               0x50000, 0x10000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "rl_a10.bin", 0x00000, 0x40000, 0xc2a77619 )
 	ROM_LOAD( "rl_a13.bin", 0x40000, 0x08000, 0xa39c2c16 )
 	ROM_LOAD( "rpunch.54",  0x48000, 0x08000, 0xe2969747 )
+	ROM_FILL(               0x50000, 0x10000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
@@ -729,11 +731,13 @@ ROM_START( rabiolep )
 	ROM_LOAD( "rl_c13.bin", 0x00000, 0x40000, 0x7c8403b0 )
 	ROM_LOAD( "rl_c10.bin", 0x40000, 0x08000, 0x312eb260 )
 	ROM_LOAD( "rl_c12.bin", 0x48000, 0x08000, 0xbea85219 )
+	ROM_FILL(               0x50000, 0x10000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "rl_a10.bin", 0x00000, 0x40000, 0xc2a77619 )
 	ROM_LOAD( "rl_a13.bin", 0x40000, 0x08000, 0xa39c2c16 )
 	ROM_LOAD( "rl_a12.bin", 0x48000, 0x08000, 0x970b0e32 )
+	ROM_FILL(               0x50000, 0x10000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "rl_4g.bin", 0x00000, 0x20000, 0xc5cb4b7a )
@@ -763,7 +767,9 @@ ROM_START( svolley )
 	ROM_LOAD( "sps_03.bin", 0x10000, 0x10000, 0x36279075 )
 	ROM_LOAD( "sps_04.bin", 0x20000, 0x10000, 0x7cede7d9 )
 	ROM_LOAD( "sps_01.bin", 0x30000, 0x08000, 0x6425e6d7 )
+	ROM_FILL(               0x38000, 0x08000, 0xff )
 	ROM_LOAD( "sps_10.bin", 0x40000, 0x08000, 0xa12b1589 )
+	ROM_FILL(               0x48000, 0x18000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "sps_05.bin", 0x00000, 0x10000, 0xb0671d12 )
@@ -771,6 +777,7 @@ ROM_START( svolley )
 	ROM_LOAD( "sps_07.bin", 0x20000, 0x10000, 0x904b7709 )
 	ROM_LOAD( "sps_08.bin", 0x30000, 0x10000, 0x5430ffac )
 	ROM_LOAD( "sps_09.bin", 0x40000, 0x10000, 0x414a6278 )
+	ROM_FILL(               0x50000, 0x10000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
@@ -801,7 +808,9 @@ ROM_START( svolleyk )
 	ROM_LOAD( "sps_03.bin", 0x10000, 0x10000, 0x36279075 )
 	ROM_LOAD( "sps_04.bin", 0x20000, 0x10000, 0x7cede7d9 )
 	ROM_LOAD( "sps_01.bin", 0x30000, 0x08000, 0x6425e6d7 )
+	ROM_FILL(               0x38000, 0x08000, 0xff )
 	ROM_LOAD( "sps_10.bin", 0x40000, 0x08000, 0xa12b1589 )
+	ROM_FILL(               0x48000, 0x18000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX2, 0 )
 	ROM_LOAD( "sps_05.bin", 0x00000, 0x10000, 0xb0671d12 )
@@ -810,6 +819,7 @@ ROM_START( svolleyk )
 	ROM_LOAD( "sps_08.bin", 0x30000, 0x10000, 0x5430ffac )
 	ROM_LOAD( "sps_09.bin", 0x40000, 0x10000, 0x414a6278 )
 	ROM_LOAD( "a09.bin",    0x50000, 0x08000, 0xdd92dfe1 )
+	ROM_FILL(               0x58000, 0x08000, 0xff )
 
 	ROM_REGION( 0x60000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "sps_20.bin", 0x00000, 0x10000, 0xc9e7206d )
@@ -835,42 +845,15 @@ ROM_END
 static void init_rabiolep(void)
 {
 	rpunch_sprite_palette = 0x300;
-
-	/* clear out any unused regions of background gfx */
-	memset(memory_region(REGION_GFX1) + 0x50000, 0xff, 0x10000);
-	memset(memory_region(REGION_GFX2) + 0x50000, 0xff, 0x10000);
 }
 
 
 static void init_svolley(void)
 {
 	/* the main differences between Super Volleyball and Rabbit Punch are */
-	/* the lack of direct-mapped bitmap, a smaller sprite range, and a */
-	/* different palette base for sprites */
+	/* the lack of direct-mapped bitmap and a different palette base for sprites */
 	rpunch_sprite_palette = 0x080;
 	rpunch_bitmapram = NULL;
-	spriteram_size = 0x1b0;
-
-	/* clear out any unused regions of background gfx */
-	memset(memory_region(REGION_GFX1) + 0x38000, 0xff, 0x08000);
-	memset(memory_region(REGION_GFX1) + 0x48000, 0xff, 0x18000);
-	memset(memory_region(REGION_GFX2) + 0x50000, 0xff, 0x10000);
-}
-
-
-static void init_svolleyk(void)
-{
-	/* the main differences between Super Volleyball and Rabbit Punch are */
-	/* the lack of direct-mapped bitmap, a smaller sprite range, and a */
-	/* different palette base for sprites */
-	rpunch_sprite_palette = 0x080;
-	rpunch_bitmapram = NULL;
-	spriteram_size = 0x1b0;
-
-	/* clear out any unused regions of background gfx */
-	memset(memory_region(REGION_GFX1) + 0x38000, 0xff, 0x08000);
-	memset(memory_region(REGION_GFX1) + 0x48000, 0xff, 0x18000);
-	memset(memory_region(REGION_GFX2) + 0x58000, 0xff, 0x08000);
 }
 
 
@@ -884,4 +867,4 @@ static void init_svolleyk(void)
 GAME( 1987, rabiolep, 0,        rpunch,   rabiolep, rabiolep, ROT0, "V-System Co.", "Rabio Lepus (Japan)" )
 GAME( 1987, rpunch,   rabiolep, rpunch,   rpunch,   rabiolep, ROT0, "V-System Co. (Bally/Midway/Sente license)", "Rabbit Punch (US)" )
 GAME( 1989, svolley,  0,        rpunch,   svolley,  svolley,  ROT0, "V-System Co.", "Super Volleyball (Japan)" )
-GAME( 1989, svolleyk, svolley,  rpunch,   svolley,  svolleyk, ROT0, "V-System Co.", "Super Volleyball (Korea)" )
+GAME( 1989, svolleyk, svolley,  rpunch,   svolley,  svolley,  ROT0, "V-System Co.", "Super Volleyball (Korea)" )

@@ -74,13 +74,14 @@ I/O read/write
 
 
 
-extern unsigned char *senjyo_fgscroll;
-extern unsigned char *senjyo_scrollx1,*senjyo_scrolly1;
-extern unsigned char *senjyo_scrollx2,*senjyo_scrolly2;
-extern unsigned char *senjyo_scrollx3,*senjyo_scrolly3;
-extern unsigned char *senjyo_fgvideoram,*senjyo_fgcolorram;
-extern unsigned char *senjyo_bg1videoram,*senjyo_bg2videoram,*senjyo_bg3videoram;
-extern unsigned char *senjyo_radarram;
+extern UINT8 *senjyo_fgscroll;
+extern UINT8 *senjyo_scrollx1,*senjyo_scrolly1;
+extern UINT8 *senjyo_scrollx2,*senjyo_scrolly2;
+extern UINT8 *senjyo_scrollx3,*senjyo_scrolly3;
+extern UINT8 *senjyo_fgvideoram,*senjyo_fgcolorram;
+extern UINT8 *senjyo_bg1videoram,*senjyo_bg2videoram,*senjyo_bg3videoram;
+extern UINT8 *senjyo_radarram;
+extern UINT8 *senjyo_bgstripesram;
 WRITE_HANDLER( senjyo_fgvideoram_w );
 WRITE_HANDLER( senjyo_fgcolorram_w );
 WRITE_HANDLER( senjyo_bg1videoram_w );
@@ -166,7 +167,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x9e20, 0x9e21, MWA_RAM, &senjyo_scrolly3 },
 /*	{ 0x9e22, 0x9e23, height of the layer (Senjyo only, fixed at 0x380) */
 	{ 0x9e25, 0x9e25, MWA_RAM, &senjyo_scrollx3 },
-	{ 0x9e27, 0x9e27, senjyo_bgstripes_w },	/* controls width of background stripes */
+	{ 0x9e27, 0x9e27, senjyo_bgstripes_w, &senjyo_bgstripesram },	/* controls width of background stripes */
 	{ 0x9e28, 0x9e29, MWA_RAM, &senjyo_scrolly2 },
 /*	{ 0x9e2a, 0x9e2b, height of the layer (Senjyo only, fixed at 0x200) */
 	{ 0x9e2d, 0x9e2d, MWA_RAM, &senjyo_scrollx2 },
@@ -267,17 +268,17 @@ INPUT_PORTS_START( senjyo )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPSETTING(    0x02, "None" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "100k only" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -290,12 +291,11 @@ INPUT_PORTS_START( senjyo )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Planes" )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x80, "Always come at you" )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( starforc )
@@ -355,18 +355,18 @@ INPUT_PORTS_START( starforc )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "50000 200000 500000" )
-	PORT_DIPSETTING(    0x01, "100000 300000 800000" )
-	PORT_DIPSETTING(    0x02, "50000 200000" )
-	PORT_DIPSETTING(    0x03, "100000 300000" )
-	PORT_DIPSETTING(    0x04, "50000" )
-	PORT_DIPSETTING(    0x05, "100000" )
-	PORT_DIPSETTING(    0x06, "200000" )
+	PORT_DIPSETTING(    0x00, "50k, 200k and 500k" )
+	PORT_DIPSETTING(    0x01, "100k, 300k and 800k" )
+	PORT_DIPSETTING(    0x02, "50k and 200k" )
+	PORT_DIPSETTING(    0x03, "100k and 300k" )
+	PORT_DIPSETTING(    0x04, "50k only" )
+	PORT_DIPSETTING(    0x05, "100k only" )
+	PORT_DIPSETTING(    0x06, "200k only" )
 	PORT_DIPSETTING(    0x07, "None" )
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easiest" )
 	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x10, "Medium" )
 	PORT_DIPSETTING(    0x18, "Difficult" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x28, "Hardest" )
@@ -436,13 +436,13 @@ INPUT_PORTS_START( baluba )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "30000 100000 200000" )
-	PORT_DIPSETTING(    0x01, "50000 200000 500000" )
-	PORT_DIPSETTING(    0x02, "30000 100000" )
-	PORT_DIPSETTING(    0x03, "50000 200000" )
-	PORT_DIPSETTING(    0x04, "30000" )
-	PORT_DIPSETTING(    0x05, "100000" )
-	PORT_DIPSETTING(    0x06, "200000" )
+	PORT_DIPSETTING(    0x00, "30k, 100k and 200k" )
+	PORT_DIPSETTING(    0x01, "50k, 200k and 500k" )
+	PORT_DIPSETTING(    0x02, "30k and 100k" )
+	PORT_DIPSETTING(    0x03, "50k and 200k" )
+	PORT_DIPSETTING(    0x04, "30k only" )
+	PORT_DIPSETTING(    0x05, "100k only" )
+	PORT_DIPSETTING(    0x06, "200k only" )
 	PORT_DIPSETTING(    0x07, "None" )
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "0" )

@@ -6,8 +6,6 @@
 
 ****************************************************************************/
 
-#ifndef INCLUDE_DRAW_CORE
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -50,9 +48,6 @@ static UINT16 callback_imagemask;
  *************************************/
 
 void rpunch_vh_stop(void);
-
-static void draw_bitmap_8(struct osd_bitmap *bitmap);
-static void draw_bitmap_16(struct osd_bitmap *bitmap);
 
 
 
@@ -137,11 +132,11 @@ void rpunch_vh_stop(void)
 
 /*************************************
  *
- *		Write handlers
+ *	Write handlers
  *
  *************************************/
 
-WRITE16_HANDLER(rpunch_bitmap_w)
+WRITE16_HANDLER( rpunch_bitmap_w )
 {
 	if (rpunch_bitmapram)
 	{
@@ -162,7 +157,7 @@ WRITE16_HANDLER(rpunch_bitmap_w)
 }
 
 
-WRITE16_HANDLER(rpunch_videoram_w)
+WRITE16_HANDLER( rpunch_videoram_w )
 {
 	int oldword = videoram16[offset];
 	int newword = oldword;
@@ -179,7 +174,7 @@ WRITE16_HANDLER(rpunch_videoram_w)
 }
 
 
-WRITE16_HANDLER(rpunch_videoreg_w)
+WRITE16_HANDLER( rpunch_videoreg_w )
 {
 	int oldword = videoflags;
 	COMBINE_DATA(&videoflags);
@@ -195,7 +190,7 @@ WRITE16_HANDLER(rpunch_videoreg_w)
 }
 
 
-WRITE16_HANDLER(rpunch_scrollreg_w)
+WRITE16_HANDLER( rpunch_scrollreg_w )
 {
 	if (ACCESSING_LSB && ACCESSING_MSB)
 		switch (offset)
@@ -219,7 +214,7 @@ WRITE16_HANDLER(rpunch_scrollreg_w)
 }
 
 
-WRITE16_HANDLER(rpunch_crtc_data_w)
+WRITE16_HANDLER( rpunch_crtc_data_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -241,14 +236,14 @@ WRITE16_HANDLER(rpunch_crtc_data_w)
 }
 
 
-WRITE16_HANDLER(rpunch_crtc_register_w)
+WRITE16_HANDLER( rpunch_crtc_register_w )
 {
 	if (ACCESSING_LSB)
 		crtc_register = data & 0xff;
 }
 
 
-WRITE16_HANDLER(rpunch_ins_w)
+WRITE16_HANDLER( rpunch_ins_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -268,17 +263,20 @@ WRITE16_HANDLER(rpunch_ins_w)
 
 /*************************************
  *
- *		Sprite routines
+ *	Sprite routines
  *
  *************************************/
 
-static void mark_sprite_palette(void)
+static void mark_sprite_palette(int start, int stop)
 {
 	UINT16 used_colors[16];
 	int offs, i, j;
 
+	start *= 4;
+	stop *= 4;
+
 	memset(used_colors, 0, sizeof(used_colors));
-	for (offs = 0; offs < spriteram_size / 2; offs += 4)
+	for (offs = start; offs < stop; offs += 4)
 	{
 		int data1 = spriteram16[offs + 1];
 		int code = data1 & 0x7ff;
@@ -313,30 +311,34 @@ static void mark_sprite_palette(void)
 }
 
 
-static void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap, int start, int stop)
 {
 	int offs;
 
+	start *= 4;
+	stop *= 4;
+
 	/* draw the sprites */
-	for (offs = 0; offs < spriteram_size / 2; offs += 4)
+	for (offs = start; offs < stop; offs += 4)
 	{
 		int data1 = spriteram16[offs + 1];
 		int code = data1 & 0x7ff;
 
-		if (code < 0x600)
+		if (code < 0x600 && code != 0)
 		{
 			int data0 = spriteram16[offs + 0];
 			int data2 = spriteram16[offs + 2];
 			int x = (data2 & 0x1ff) + 8;
 			int y = 513 - (data0 & 0x1ff);
 			int xflip = data1 & 0x1000;
+			int yflip = data1 & 0x0800;
 			int color = ((data1 >> 13) & 7) | ((videoflags & 0x0040) >> 3);
 
 			if (x >= BITMAP_WIDTH) x -= 512;
 			if (y >= BITMAP_HEIGHT) y -= 512;
 
 			drawgfx(bitmap, Machine->gfx[2],
-					code, color + (rpunch_sprite_palette / 16), xflip, 0, x, y, 0, TRANSPARENCY_PEN, 15);
+					code, color + (rpunch_sprite_palette / 16), xflip, yflip, x, y, 0, TRANSPARENCY_PEN, 15);
 		}
 	}
 }
@@ -344,13 +346,47 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 /*************************************
  *
- *		Main screen refresh
+ *	Bitmap routines
+ *
+ *************************************/
+
+static void draw_bitmap(struct osd_bitmap *bitmap)
+{
+	UINT16 *pens = &Machine->pens[512 + (videoflags & 15) * 16];
+	int x, y;
+
+	/* draw any non-transparent scanlines from the VRAM directly */
+	for (y = 0; y < BITMAP_HEIGHT; y++)
+		if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
+		{
+			data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
+			UINT8 scanline[BITMAP_WIDTH], *dst = scanline;
+
+			/* extract the scanline */
+			for (x = 0; x < BITMAP_WIDTH/4; x++)
+			{
+				int data = *src++;
+
+				dst[0] = data >> 12;
+				dst[1] = (data >> 8) & 15;
+				dst[2] = (data >> 4) & 15;
+				dst[3] = data & 15;
+				dst += 4;
+			}
+			draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, scanline, pens, 15);
+		}
+}
+
+
+/*************************************
+ *
+ *	Main screen refresh
  *
  *************************************/
 
 void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int x, penbase;
+	int x, penbase, effbins;
 
 	/* update background 0 */
 	callback_gfxbank = 0;
@@ -370,7 +406,7 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* update the palette usage */
 	palette_init_used_colors();
-	mark_sprite_palette();
+	mark_sprite_palette(0, gins);
 	if (rpunch_bitmapram)
 	{
 		penbase = 512 + (videoflags & 15);
@@ -378,127 +414,17 @@ void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			palette_used_colors[penbase + x] = PALETTE_COLOR_USED;
 		palette_used_colors[penbase + 15] = PALETTE_COLOR_TRANSPARENT;
 	}
-
 	palette_recalc();
 
-	/* build the result */
+	/* draw the background layer */
 	tilemap_draw(bitmap, background[0], 0,0);
 
-	/* if we have a bitmap layer, it goes on top */
+	/* this seems like the most plausible explanation */
+	effbins = (bins > gins) ? gins : bins;
+
+	draw_sprites(bitmap, 0, effbins);
+	tilemap_draw(bitmap, background[1], 0,0);
+	draw_sprites(bitmap, effbins, gins);
 	if (rpunch_bitmapram)
-	{
-		tilemap_draw(bitmap, background[1], 0,0);
-		draw_sprites(bitmap);
-		if (bitmap->depth == 8)
-			draw_bitmap_8(bitmap);
-		else
-			draw_bitmap_16(bitmap);
-	}
-
-	/* otherwise, the second background layer gets top billing */
-	else
-	{
-		draw_sprites(bitmap);
-		tilemap_draw(bitmap, background[1], 0,0);
-	}
+		draw_bitmap(bitmap);
 }
-
-
-
-/*************************************
- *
- *		Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC draw_bitmap_8
-#define TYPE UINT8
-#include "rpunch.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC draw_bitmap_16
-#define TYPE UINT16
-#include "rpunch.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *		Core refresh routine
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap)
-{
-	UINT16 *pens = &Machine->pens[512 + (videoflags & 15) * 16];
-	int orientation = Machine->orientation;
-	int x, y;
-
-	/* draw any non-transparent scanlines from the VRAM directly */
-	for (y = 0; y < BITMAP_HEIGHT; y++)
-		if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
-		{
-			data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
-			TYPE *dst = (TYPE *)bitmap->line[y];
-			int xadv = 1;
-
-			/* adjust in case we're oddly oriented */
-			ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, 0, y, xadv);
-
-			/* redraw the scanline */
-			for (x = 0; x < BITMAP_WIDTH/4; x++)
-			{
-				int data = *src++;
-				if (data != 0xffff)
-				{
-					if ((data & 0xf000) != 0xf000)
-						*dst = pens[data >> 12];
-					dst += xadv;
-					if ((data & 0x0f00) != 0x0f00)
-						*dst = pens[(data >> 8) & 15];
-					dst += xadv;
-					if ((data & 0x00f0) != 0x00f0)
-						*dst = pens[(data >> 4) & 15];
-					dst += xadv;
-					if ((data & 0x000f) != 0x000f)
-						*dst = pens[data & 15];
-					dst += xadv;
-				}
-				else
-					dst += 4 * xadv;
-			}
-		}
-}
-
-#endif

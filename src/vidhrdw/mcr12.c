@@ -14,16 +14,13 @@
 #include "vidhrdw/generic.h"
 
 
-#ifndef INCLUDE_DRAW_CORE
-
 static UINT8 last_cocktail_flip;
 static UINT8 *spritebitmap;
 static UINT32 spritebitmap_width;
 static UINT32 spritebitmap_height;
 
 static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip);
-static void render_sprite_tile_8(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy);
-static void render_sprite_tile_16(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy);
+static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy);
 
 INT8 mcr12_sprite_xoffs;
 INT8 mcr12_sprite_xoffs_flip;
@@ -212,13 +209,7 @@ static void mcr1_update_background(struct osd_bitmap *bitmap)
 
 			/* if there's live sprite data here, draw the sprite data */
 			if (dirty & 2)
-			{
-				/* draw the sprite */
-				if (bitmap->depth == 8)
-					render_sprite_tile_8(bitmap, &Machine->pens[16], sx, sy);
-				else
-					render_sprite_tile_16(bitmap, &Machine->pens[16], sx, sy);
-			}
+				render_sprite_tile(bitmap, &Machine->pens[16], sx, sy);
 
 			/* shift off the low bit of the dirty buffer */
 			dirtybuffer[offs] = dirty >> 1;
@@ -264,18 +255,84 @@ static void mcr2_update_background(struct osd_bitmap *bitmap, int check_sprites)
 
 			/* if there's live sprite data here, draw the sprite data */
 			if (check_sprites && (dirty & 2))
-			{
-				color = (attr & 0xc0) >> 6;
-
-				/* draw the sprite */
-				if (bitmap->depth == 8)
-					render_sprite_tile_8(bitmap, &Machine->pens[color * 16], sx, sy);
-				else
-					render_sprite_tile_16(bitmap, &Machine->pens[color * 16], sx, sy);
-			}
+				render_sprite_tile(bitmap, &Machine->pens[(attr & 0xc0) >> 2], sx, sy);
 
 			/* shift off the low bit of the dirty buffer */
 			dirtybuffer[offs] = dirty >> 1;
+		}
+	}
+}
+
+
+
+
+
+
+/*************************************
+ *
+ *	Sprite drawing
+ *
+ *************************************/
+
+static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
+{
+	const struct GfxElement *gfx = Machine->gfx[1];
+	UINT8 *src = gfx->gfxdata + gfx->char_modulo * code;
+	int y, x;
+
+	/* adjust for vflip */
+	if (vflip)
+		src += 31 * gfx->line_modulo;
+
+	/* loop over lines in the sprite */
+	for (y = 0; y < 32; y++, sy++)
+	{
+		UINT8 *dst = spritebitmap + spritebitmap_width * sy + sx;
+
+		/* redraw the line */
+		if (!hflip)
+		{
+			for (x = 0; x < 32; x++)
+				*dst++ |= *src++;
+		}
+		else
+		{
+			src += 32;
+			for (x = 0; x < 32; x++)
+				*dst++ |= *--src;
+			src += 32;
+		}
+
+		/* adjust for vflip */
+		if (vflip)
+			src -= 2 * gfx->line_modulo;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Sprite bitmap drawing
+ *
+ *************************************/
+
+static void render_sprite_tile(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy)
+{
+	int x, y;
+
+	/* draw any dirty scanlines from the VRAM directly */
+	for (y = 0; y < 16; y++, sy++)
+	{
+		UINT8 *src = &spritebitmap[(sy + 32) * spritebitmap_width + (sx + 32)];
+
+		/* redraw the sprite scanline, erasing as we go */
+		for (x = 0; x < 16; x++)
+		{
+			int pixel = *src;
+			if (pixel & 7)
+				plot_pixel(bitmap, sx + x, sy, pens[pixel]);
+			*src++ = 0;
 		}
 	}
 }
@@ -416,130 +473,3 @@ void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
 }
-
-
-
-/*************************************
- *
- *		Sprite drawing
- *
- *************************************/
-
-static void render_one_sprite(int code, int sx, int sy, int hflip, int vflip)
-{
-	const struct GfxElement *gfx = Machine->gfx[1];
-	UINT8 *src = gfx->gfxdata + gfx->char_modulo * code;
-	int y, x;
-
-	/* adjust for vflip */
-	if (vflip)
-		src += 31 * gfx->line_modulo;
-
-	/* loop over lines in the sprite */
-	for (y = 0; y < 32; y++, sy++)
-	{
-		UINT8 *dst = spritebitmap + spritebitmap_width * sy + sx;
-
-		/* redraw the line */
-		if (!hflip)
-		{
-			for (x = 0; x < 32; x++)
-				*dst++ |= *src++;
-		}
-		else
-		{
-			src += 32;
-			for (x = 0; x < 32; x++)
-				*dst++ |= *--src;
-			src += 32;
-		}
-
-		/* adjust for vflip */
-		if (vflip)
-			src -= 2 * gfx->line_modulo;
-	}
-}
-
-
-
-/*************************************
- *
- *		Depth-specific refresh
- *
- *************************************/
-
-#define ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, x, y, xadv)	\
-	if (orientation)													\
-	{																	\
-		int dy = bitmap->line[1] - bitmap->line[0];						\
-		int tx = x, ty = y, temp;										\
-		if (orientation & ORIENTATION_SWAP_XY)							\
-		{																\
-			temp = tx; tx = ty; ty = temp;								\
-			xadv = dy / (bitmap->depth / 8);							\
-		}																\
-		if (orientation & ORIENTATION_FLIP_X)							\
-		{																\
-			tx = bitmap->width - 1 - tx;								\
-			if (!(orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		if (orientation & ORIENTATION_FLIP_Y)							\
-		{																\
-			ty = bitmap->height - 1 - ty;								\
-			if ((orientation & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																\
-		/* can't lookup line because it may be negative! */				\
-		dst = (TYPE *)(bitmap->line[0] + dy * ty) + tx;					\
-	}
-
-#define INCLUDE_DRAW_CORE
-
-#define DRAW_FUNC render_sprite_tile_8
-#define TYPE UINT8
-#include "mcr12.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-#define DRAW_FUNC render_sprite_tile_16
-#define TYPE UINT16
-#include "mcr12.c"
-#undef TYPE
-#undef DRAW_FUNC
-
-
-#else
-
-
-/*************************************
- *
- *		Core refresh routine
- *
- *************************************/
-
-void DRAW_FUNC(struct osd_bitmap *bitmap, const UINT16 *pens, int sx, int sy)
-{
-	int orientation = Machine->orientation;
-	int x, y;
-
-	/* draw any dirty scanlines from the VRAM directly */
-	for (y = 0; y < 16; y++, sy++)
-	{
-		UINT8 *src = &spritebitmap[(sy + 32) * spritebitmap_width + (sx + 32)];
-		TYPE *dst = &((TYPE *)bitmap->line[sy])[sx];
-		int xadv = 1;
-
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(orientation, bitmap, dst, sx, sy, xadv);
-
-		/* redraw the sprite scanline, erasing as we go */
-		for (x = 0; x < 16; x++, dst += xadv)
-		{
-			int pixel = *src;
-			if (pixel & 7)
-				*dst = pens[pixel];
-			*src++ = 0;
-		}
-	}
-}
-
-#endif

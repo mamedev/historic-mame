@@ -1,6 +1,16 @@
 /*************************************************************************
 
-  Rainbow Island C-Chip Protection
+  Rainbow Islands C-Chip Protection
+
+
+  2000-Nov-25 changes by SJ
+
+    - removed all code that toggled between ROM addresses $0000
+	  and $4950 (see rainbow_chip_c)
+    - added a fix for the secret rooms (hopefully correct)
+    - removed a hack that queried a location in main RAM for the
+      current round number
+    - simplified the code a bit
 
 *************************************************************************/
 
@@ -25,7 +35,9 @@ int rainbow_interrupt(void)
  *
  *************************************/
 
-static int FrameBank, ChipOffset=0;
+static int bank = 0;
+static int round_A = 0;
+static int round_B = 0;
 
 /*************************************
  *
@@ -35,20 +47,18 @@ static int FrameBank, ChipOffset=0;
 
 WRITE16_HANDLER( rainbow_c_chip_w )
 {
-	offset *= 2;
-
-	switch(offset+1)
+	switch (offset)
 	{
-  		case 0x001:
-			if ((data & 0xff) == 1)	ChipOffset = 0x4950;
+		case 0x00d:
+			round_A = data;
 			break;
 
-		case 0x01b:
-			ChipOffset = 0;
+		case 0x141:
+			round_B = data;
 			break;
 
-		case 0xc01:
-			FrameBank = (data & 0xff) << 1;
+		case 0x600:
+			bank = data;
 			break;
 	}
 }
@@ -59,113 +69,77 @@ WRITE16_HANDLER( rainbow_c_chip_w )
  *
  *************************************/
 
-//DG: don't know what this was for...
-//extern int mrh_bank1(int address);
-
 READ16_HANDLER( rainbow_c_chip_r )
 {
-	int Address;
-	int Data1,Data2;
-	int ans;
-	unsigned char *CROM = memory_region(REGION_USER1);	/* C-Chip Dump */
-	offset *= 2;
+	int address;
 
-	/* Start with standard return from rom image */
+	unsigned char *CROM;
 
-	Address = ChipOffset
-		+ FrameBank
-		+ ((rainbow_mainram[0x824] & 0xff) << 4);
+	/* Check for input ports */
 
-	Data2   = (CROM[Address] << 8) + CROM[Address+1];
-	Data1   = ((CROM[Address+2] << 8) + CROM[Address+3]) - Data2;
-
-	if (Data1 == 0)
+	if (bank == 0)
 	{
-		ans = 0;
+		switch (offset)
+		{
+			case 0x003: return input_port_2_word_r(offset);
+			case 0x004: return input_port_3_word_r(offset);
+			case 0x005: return input_port_4_word_r(offset);
+			case 0x006: return input_port_5_word_r(offset);
+		}
+	}
+
+	/* Further non-standard offsets. Movement of GOAL IN letters
+	   is controlled by offsets $14a to $155; this data was taken
+	   from a look-up table in a bootleg set. Note that there is
+	   similar data hidden in the c-chip ROM at round 25, but the
+	   movement produced by the bootleg data looks more correct. */
+
+	switch (offset)
+	{
+		case 0x000: return 0xff;	/* data ready? */
+		case 0x100: return 0xff;	/* data ready? */
+		case 0x14a: return 0x00;	/* 'G' right */
+		case 0x14b: return 0x00;	/* 'G' below */
+		case 0x14c: return 0x10;	/* 'O' right */
+		case 0x14d: return 0x10;	/* 'O' below */
+		case 0x14e: return 0x20;	/* 'A' right */
+		case 0x14f: return 0x20;	/* 'A' below */
+		case 0x150: return 0x30;	/* 'L' right */
+		case 0x151: return 0x38;	/* 'L' below */
+		case 0x152: return 0x40;	/* 'I' right */
+		case 0x153: return 0x50;	/* 'I' below */
+		case 0x154: return 0x50;	/* 'N' right */
+		case 0x155: return 0x60;	/* 'N' below */
+		case 0x401: return 0x01;	/* c-chip check */
+	}
+
+	/* Data retrieval from c-chip ROM. The ROM is divided into
+	   two parts, starting at base addresses $0000 and $4950
+	   respectively. Only the second part is used. If you chose
+	   the first part instead, the game would play w/o enemies. */
+
+	address = 0x4950;
+
+	if (round_B >= 40 && offset < 0x148)
+	{
+		/* This should fix the secret rooms. Rainbow Islands has
+		   7 regular and 3 hidden islands with 4 rounds each
+		   which are numbered from 0 to 39 internally. Numbers
+		   from 40 onward indicate a secret room and require
+		   special processing. For some odd reason we need to
+		   exclude offset $148, because otherwise there would be
+		   no way out of the secret room. */
+
+		address += 16 * 40 + 4 * bank;
 	}
 	else
 	{
-		if (Data1 <= (offset >> 1))
-		{
-			ans = 0;
-		}
-		else
-		{
-			ans = CROM[(offset >> 1) + Data2];
-		}
+		address += 16 * round_A + 2 * bank;
 	}
 
-	/* Overrides for specific locations */
+	CROM = memory_region(REGION_USER1);
 
-	switch(offset+1)
-	{
-		/* Input Ports */
+	address = (CROM[address] << 8) + CROM[address + 1];
 
-		case 0x007: if (FrameBank==0) ans=input_port_2_word_r(offset);
-			break;
-
-		case 0x009: if (FrameBank==0) ans=input_port_3_word_r(offset);
-			break;
-
-		case 0x00b: if (FrameBank==0) ans=input_port_4_word_r(offset);
-			break;
-
-		case 0x00d: if (FrameBank==0) ans=input_port_5_word_r(offset);
-			break;
-
-
-		/* Program expects the following results */
-
-		/* Countdown Timer ? */
-		case 0x001: ans=0xff;					/* Won't draw screen until */
-			break;						/*   this is set to 0xff   */
-
-		case 0x201: ans=0xff;					/* Level Data Ready */
-			break;
-
-		case 0x803: ans=0x01;					/* C-Chip Check ? */
-			break;
-
-
-		/* These are taken from a lookup table */
-		/* in the bootleg, and not from C-Chip */
-
-		case 0x295: ans=0;					/* G Below */
-			break;
-
-		case 0x297: ans=0;					/* G Right */
-			break;
-
-		case 0x299: ans=0x10;					/* O below */
-			break;
-
-		case 0x29b: ans=0x10;					/* O Right */
-			break;
-
-		case 0x29d: ans=0x20;					/* A Below */
-			break;
-
-		case 0x29f: ans=0x20;					/* A Right */
-			break;
-
-		case 0x2a1: ans=0x30;					/* L Below */
-			break;
-
-		case 0x2a3: ans=0x38;					/* L Right */
-			break;
-
-		case 0x2a5: ans=0x40;					/* I Below */
-			break;
-
-		case 0x2a7: ans=0x50;					/* I Right */
-			break;
-
-		case 0x2a9: ans=0x50;					/* N Below */
-			break;
-
-		case 0x2ab: ans=0x60;					/* N Right */
-			break;
-	}
-
-	return ans;
+	return CROM[address + offset];
 }

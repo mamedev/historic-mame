@@ -12,8 +12,8 @@
 UINT8 *victory_charram;
 
 /* local allocated storage */
-static struct osd_bitmap *bgbitmap;
-static struct osd_bitmap *fgbitmap;
+static UINT8 *bgbitmap;
+static UINT8 *fgbitmap;
 static UINT8 *bgdirty;
 static UINT8 *chardirty;
 static UINT8 *scandirty;
@@ -78,8 +78,8 @@ int victory_vh_start(void)
 	bram = malloc(0x4000);
 
 	/* allocate bitmaps */
-	bgbitmap = bitmap_alloc(32 * 8, 32 * 8);
-	fgbitmap = bitmap_alloc(32 * 8, 32 * 8);
+	bgbitmap = malloc(256 * 256);
+	fgbitmap = malloc(256 * 256);
 
 	/* allocate dirty maps */
 	bgdirty = malloc(32 * 32);
@@ -133,10 +133,10 @@ void victory_vh_stop(void)
 
 	/* free bitmaps */
 	if (bgbitmap)
-		bitmap_free(bgbitmap);
+		free(bgbitmap);
 	bgbitmap = NULL;
 	if (fgbitmap)
-		bitmap_free(fgbitmap);
+		free(fgbitmap);
 	fgbitmap = NULL;
 
 	/* free bitmapram */
@@ -1118,7 +1118,7 @@ static int command7(void)
 
 static void update_background(void)
 {
-	int x, y, offs;
+	int x, y, row, offs;
 
 	/* update the background and any dirty characters in it */
 	for (y = offs = 0; y < 32; y++)
@@ -1126,25 +1126,31 @@ static void update_background(void)
 		{
 			int code = videoram[offs];
 
-			/* see if the character is dirty */
-			if (chardirty[code] == 1)
-			{
-				decodechar(Machine->gfx[0], code, victory_charram, Machine->drv->gfxdecodeinfo[0].gfxlayout);
-				chardirty[code] = 2;
-			}
-
-			/* see if the bitmap is dirty */
+			/* see if the videoram or character RAM has changed, redraw it */
 			if (bgdirty[offs] || chardirty[code])
 			{
-				drawgfx(bgbitmap, Machine->gfx[0], code, 0, 0, 0, x * 8, y * 8, NULL, TRANSPARENCY_NONE_RAW, 0);
+				for (row = 0; row < 8; row++)
+				{
+					UINT8 pix2 = victory_charram[0x0000 + 8 * code + row];
+					UINT8 pix1 = victory_charram[0x0800 + 8 * code + row];
+					UINT8 pix0 = victory_charram[0x1000 + 8 * code + row];
+					UINT8 *dst = &bgbitmap[(y * 8 + row) * 256 + x * 8];
+
+					*dst++ = ((pix2 & 0x80) >> 5) | ((pix1 & 0x80) >> 6) | ((pix0 & 0x80) >> 7);
+					*dst++ = ((pix2 & 0x40) >> 4) | ((pix1 & 0x40) >> 5) | ((pix0 & 0x40) >> 6);
+					*dst++ = ((pix2 & 0x20) >> 3) | ((pix1 & 0x20) >> 4) | ((pix0 & 0x20) >> 5);
+					*dst++ = ((pix2 & 0x10) >> 2) | ((pix1 & 0x10) >> 3) | ((pix0 & 0x10) >> 4);
+					*dst++ = ((pix2 & 0x08) >> 1) | ((pix1 & 0x08) >> 2) | ((pix0 & 0x08) >> 3);
+					*dst++ = ((pix2 & 0x04)     ) | ((pix1 & 0x04) >> 1) | ((pix0 & 0x04) >> 2);
+					*dst++ = ((pix2 & 0x02) << 1) | ((pix1 & 0x02)     ) | ((pix0 & 0x02) >> 1);
+					*dst++ = ((pix2 & 0x01) << 2) | ((pix1 & 0x01) << 1) | ((pix0 & 0x01)     );
+				}
 				bgdirty[offs] = 0;
 			}
 		}
 
 	/* reset the char dirty array */
-	for (y = 0; y < 256; y++)
-		if (chardirty[y] == 2)
-			chardirty[y] = 0;
+	memset(chardirty, 0, 256);
 }
 
 
@@ -1162,19 +1168,23 @@ static void update_foreground(void)
 	for (y = 0; y < 256; y++)
 		if (scandirty[y])
 		{
+			UINT8 *dst = &fgbitmap[y * 256];
+
+			/* assemble the RGB bits for each 8-pixel chunk */
 			for (x = 0; x < 256; x += 8)
 			{
 				UINT8 g = gram[y * 32 + x / 8];
 				UINT8 b = bram[y * 32 + x / 8];
 				UINT8 r = rram[y * 32 + x / 8];
-				plot_pixel(fgbitmap, x + 0, y, ((r & 0x80) >> 5) | ((b & 0x80) >> 6) | ((g & 0x80) >> 7));
-				plot_pixel(fgbitmap, x + 1, y, ((r & 0x40) >> 4) | ((b & 0x40) >> 5) | ((g & 0x40) >> 6));
-				plot_pixel(fgbitmap, x + 2, y, ((r & 0x20) >> 3) | ((b & 0x20) >> 4) | ((g & 0x20) >> 5));
-				plot_pixel(fgbitmap, x + 3, y, ((r & 0x10) >> 2) | ((b & 0x10) >> 3) | ((g & 0x10) >> 4));
-				plot_pixel(fgbitmap, x + 4, y, ((r & 0x08) >> 1) | ((b & 0x08) >> 2) | ((g & 0x08) >> 3));
-				plot_pixel(fgbitmap, x + 5, y, ((r & 0x04)     ) | ((b & 0x04) >> 1) | ((g & 0x04) >> 2));
-				plot_pixel(fgbitmap, x + 6, y, ((r & 0x02) << 1) | ((b & 0x02)     ) | ((g & 0x02) >> 1));
-				plot_pixel(fgbitmap, x + 7, y, ((r & 0x01) << 2) | ((b & 0x01) << 1) | ((g & 0x01)     ));
+
+				*dst++ = ((r & 0x80) >> 5) | ((b & 0x80) >> 6) | ((g & 0x80) >> 7);
+				*dst++ = ((r & 0x40) >> 4) | ((b & 0x40) >> 5) | ((g & 0x40) >> 6);
+				*dst++ = ((r & 0x20) >> 3) | ((b & 0x20) >> 4) | ((g & 0x20) >> 5);
+				*dst++ = ((r & 0x10) >> 2) | ((b & 0x10) >> 3) | ((g & 0x10) >> 4);
+				*dst++ = ((r & 0x08) >> 1) | ((b & 0x08) >> 2) | ((g & 0x08) >> 3);
+				*dst++ = ((r & 0x04)     ) | ((b & 0x04) >> 1) | ((g & 0x04) >> 2);
+				*dst++ = ((r & 0x02) << 1) | ((b & 0x02)     ) | ((g & 0x02) >> 1);
+				*dst++ = ((r & 0x01) << 2) | ((b & 0x01) << 1) | ((g & 0x01)     );
 			}
 			scandirty[y] = 0;
 		}
@@ -1234,31 +1244,16 @@ void victory_vh_eof(void)
 	for (y = 0; y < 256; y++)
 	{
 		int sy = (scrolly + y) & 255;
-		if (fgbitmap->depth == 8)
-		{
-			UINT8 *fg = &fgbitmap->line[sy][0];
-			UINT8 *bg = &bgbitmap->line[y][0];
+		UINT8 *fg = &fgbitmap[y * 256];
+		UINT8 *bg = &bgbitmap[sy * 256];
 
-			for (x = 0; x < 256; x++)
-			{
-				int fpix = *fg++;
-				int bpix = bg[(x + scrollx) & 255];
-				if (fpix && (bpix & bgcollmask) && count++ < 128)
-					timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
-			}
-		}
-		else
+		/* do the blending */
+		for (x = 0; x < 256; x++)
 		{
-			UINT16 *fg = &((UINT16 *)fgbitmap->line[sy])[0];
-			UINT16 *bg = &((UINT16 *)bgbitmap->line[y])[0];
-
-			for (x = 0; x < 256; x++)
-			{
-				int fpix = *fg++;
-				int bpix = bg[(x + scrollx) & 255];
-				if (fpix && (bpix & bgcollmask) && count++ < 128)
-					timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
-			}
+			int fpix = *fg++;
+			int bpix = bg[(x + scrollx) & 255];
+			if (fpix && (bpix & bgcollmask) && count++ < 128)
+				timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
 		}
 	}
 }
@@ -1288,36 +1283,22 @@ void victory_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (y = 0; y < 256; y++)
 	{
 		int sy = (scrolly + y) & 255;
-		if (bitmap->depth == 8)
-		{
-			UINT8 *fg = &fgbitmap->line[y][0];
-			UINT8 *bg = &bgbitmap->line[sy][0];
-			UINT8 *dst = &bitmap->line[y][0];
+		UINT8 *fg = &fgbitmap[y * 256];
+		UINT8 *bg = &bgbitmap[sy * 256];
+		UINT8 scanline[256];
 
-			for (x = 0; x < 256; x++)
-			{
-				int fpix = *fg++;
-				int bpix = bg[(x + scrollx) & 255];
-				*dst++ = Machine->pens[bpix | (fpix << 3)];
-				if (fpix && (bpix & bgcollmask) && count++ < 128)
-					timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
-			}
-		}
-		else
+		/* do the blending */
+		for (x = 0; x < 256; x++)
 		{
-			UINT16 *fg = &((UINT16 *)fgbitmap->line[y])[0];
-			UINT16 *bg = &((UINT16 *)bgbitmap->line[sy])[0];
-			UINT16 *dst = &((UINT16 *)bitmap->line[y])[0];
-
-			for (x = 0; x < 256; x++)
-			{
-				int fpix = *fg++;
-				int bpix = bg[(x + scrollx) & 255];
-				*dst++ = Machine->pens[bpix | (fpix << 3)];
-				if (fpix && (bpix & bgcollmask) && count++ < 128)
-					timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
-			}
+			int fpix = *fg++;
+			int bpix = bg[(x + scrollx) & 255];
+			scanline[x] = bpix | (fpix << 3);
+			if (fpix && (bpix & bgcollmask) && count++ < 128)
+				timer_set(pixel_time(x, y), x | (y << 8), bgcoll_irq_callback);
 		}
+
+		/* draw the scanline */
+		draw_scanline8(bitmap, 0, y, 256, scanline, Machine->pens, -1);
 	}
 
 	/* indicate that we already did collision detection */

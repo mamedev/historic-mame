@@ -3,6 +3,7 @@
  *	Functions to emulate the TMS34061 video controller						*
  *																			*
  *  Created by Zsolt Vasvari on 5/26/1998.									*
+ *	Updated by Aaron Giles on 11/21/2000.									*
  *																			*
  *  This is far from complete. See the TMS34061 User's Guide available on	*
  *  www.spies.com/arcade													*
@@ -10,290 +11,579 @@
  ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/tms34061.h"
-
-static void TMS34061_intcallback(int param);
-
-#define REG_HORENDSYNC   0
-#define REG_HORENDBLNK   1
-#define REG_HORSTARTBLNK 2
-#define REG_HORTOTAL     3
-#define REG_VERENDSYNC   4
-#define REG_VERENDBLNK   5
-#define REG_VERSTARTBLNK 6
-#define REG_VERTOTAL     7
-#define REG_DISPUPDATE   8
-#define REG_DISPSTART    9
-#define REG_VERINT       10
-#define REG_CONTROL1     11
-#define REG_CONTROL2     12
-#define REG_STATUS       13
-#define REG_XYOFFSET     14
-#define REG_XYADDRESS    15
-#define REG_DISPADDRESS  16
-#define REG_VERCOUNTER   17
-
-static int regs[REG_VERCOUNTER+1];
-
-static struct TMS34061interface *intf;
-
-static void* timer;
+#include "tms34061.h"
 
 
-int TMS34061_start(struct TMS34061interface *interface)
+
+/*************************************
+ *
+ *	Internal structure
+ *
+ *************************************/
+
+struct tms34061_data
 {
-	intf = interface;
+	UINT16			regs[TMS34061_REGCOUNT];
+	UINT16			xmask;
+	UINT8			yshift;
+	UINT32			vrammask;
+	UINT8 *			vram;
+	UINT8 *			latchram;
+	UINT8			latchdata;
+	UINT8 *			shiftreg;
+	UINT8 *			dirty;
+	UINT8			dirtyshift;
+	void *			timer;
+	struct tms34061_interface intf;
+};
 
-	// Initialize registers to their default values from the manual
-	regs[REG_HORENDSYNC]   = 0x10;
-	regs[REG_HORENDBLNK]   = 0x20;
-	regs[REG_HORSTARTBLNK] = 0x1f0;
-	regs[REG_HORTOTAL]     = 0x200;
-	regs[REG_VERENDSYNC]   = 0x04;
-	regs[REG_VERENDBLNK]   = 0x10;
-	regs[REG_VERSTARTBLNK] = 0xf0;
-	regs[REG_VERTOTAL]     = 0x100;
-	regs[REG_DISPUPDATE]   = 0x00;
-	regs[REG_DISPSTART]    = 0x00;
-	regs[REG_VERINT]       = 0x00;
-	regs[REG_CONTROL1]     = 0x7000;
-	regs[REG_CONTROL2]     = 0x600;
-	regs[REG_STATUS]       = 0x00;
-	regs[REG_XYOFFSET]     = 0x10;
-	regs[REG_XYADDRESS]    = 0x00;
-	regs[REG_DISPADDRESS]  = 0x00;
-	regs[REG_VERCOUNTER]   = 0x00;
 
-	// Start vertical interrupt timer.
-	timer = timer_pulse(TIME_IN_HZ (Machine->drv->frames_per_second),
-	                    intf->cpu, TMS34061_intcallback);
-	return !timer;
+
+/*************************************
+ *
+ *	Global variables
+ *
+ *************************************/
+
+static struct tms34061_data tms34061;
+
+
+
+/*************************************
+ *
+ *	Hardware startup
+ *
+ *************************************/
+
+int tms34061_start(struct tms34061_interface *interface)
+{
+	int temp;
+
+	/* reset the data */
+	memset(&tms34061, 0, sizeof(tms34061));
+	tms34061.intf = *interface;
+	tms34061.vrammask = tms34061.intf.vramsize - 1;
+
+	/* compute the dirty shift */
+	temp = tms34061.intf.dirtychunk;
+	while (!(temp & 1))
+		tms34061.dirtyshift++, temp >>= 1;
+
+	/* allocate memory for VRAM */
+	tms34061.vram = malloc(tms34061.intf.vramsize + 256 * 2);
+	if (!tms34061.vram)
+		return 1;
+	memset(tms34061.vram, 0, tms34061.intf.vramsize + 256 * 2);
+
+	/* allocate memory for latch RAM */
+	tms34061.latchram = malloc(tms34061.intf.vramsize + 256 * 2);
+	if (!tms34061.latchram)
+	{
+		free(tms34061.vram);
+		return 1;
+	}
+	memset(tms34061.latchram, 0, tms34061.intf.vramsize + 256 * 2);
+
+	/* allocate memory for dirty rows */
+	tms34061.dirty = malloc(1 << (20 - tms34061.dirtyshift));
+	if (!tms34061.dirty)
+	{
+		free(tms34061.latchram);
+		free(tms34061.vram);
+		return 1;
+	}
+	memset(tms34061.dirty, 1, 1 << (20 - tms34061.dirtyshift));
+
+	/* add some buffer space for VRAM and latch RAM */
+	tms34061.vram += 256;
+	tms34061.latchram += 256;
+
+	/* point the shift register to the base of VRAM for now */
+	tms34061.shiftreg = tms34061.vram;
+
+	/* initialize registers to their default values from the manual */
+	tms34061.regs[TMS34061_HORENDSYNC]   = 0x0010;
+	tms34061.regs[TMS34061_HORENDBLNK]   = 0x0020;
+	tms34061.regs[TMS34061_HORSTARTBLNK] = 0x01f0;
+	tms34061.regs[TMS34061_HORTOTAL]     = 0x0200;
+	tms34061.regs[TMS34061_VERENDSYNC]   = 0x0004;
+	tms34061.regs[TMS34061_VERENDBLNK]   = 0x0010;
+	tms34061.regs[TMS34061_VERSTARTBLNK] = 0x00f0;
+	tms34061.regs[TMS34061_VERTOTAL]     = 0x0100;
+	tms34061.regs[TMS34061_DISPUPDATE]   = 0x0000;
+	tms34061.regs[TMS34061_DISPSTART]    = 0x0000;
+	tms34061.regs[TMS34061_VERINT]       = 0x0000;
+	tms34061.regs[TMS34061_CONTROL1]     = 0x7000;
+	tms34061.regs[TMS34061_CONTROL2]     = 0x0600;
+	tms34061.regs[TMS34061_STATUS]       = 0x0000;
+	tms34061.regs[TMS34061_XYOFFSET]     = 0x0010;
+	tms34061.regs[TMS34061_XYADDRESS]    = 0x0000;
+	tms34061.regs[TMS34061_DISPADDRESS]  = 0x0000;
+	tms34061.regs[TMS34061_VERCOUNTER]   = 0x0000;
+
+	/* start vertical interrupt timer */
+	tms34061.timer = NULL;
+	return 0;
 }
 
 
-void TMS34061_stop(void)
+
+/*************************************
+ *
+ *	Hardware shutdown
+ *
+ *************************************/
+
+void tms34061_stop(void)
 {
-	timer_remove(timer);
+	/* remove buffer space for VRAM and latch RAM */
+	tms34061.vram -= 256;
+	tms34061.latchram -= 256;
+
+	free(tms34061.dirty);
+	free(tms34061.latchram);
+	free(tms34061.vram);
 }
 
 
-INLINE WRITE_HANDLER( TMS34061_register_w )
+
+/*************************************
+ *
+ *	Interrupt handling
+ *
+ *************************************/
+
+INLINE void update_interrupts(void)
 {
-	int status = 0;		// Unsupported
+	/* if we have a callback, process it */
+	if (tms34061.intf.interrupt)
+	{
+		/* if the status bit is set, and ints are enabled, turn it on */
+		if ((tms34061.regs[TMS34061_STATUS] & 0x0001) && (tms34061.regs[TMS34061_CONTROL1] & 0x0400))
+			(*tms34061.intf.interrupt)(ASSERT_LINE);
+		else
+			(*tms34061.intf.interrupt)(CLEAR_LINE);
+	}
+}
 
-	// Calculate which register and which half we're accessing
-	int reg = offset >> 2;
 
-	// Set register
+static void tms34061_interrupt(int param)
+{
+	/* set timer for next frame */
+	tms34061.timer = timer_set(cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, tms34061_interrupt);
+
+	/* set the interrupt bit in the status reg */
+	tms34061.regs[TMS34061_STATUS] |= 1;
+
+	/* update the interrupt state */
+	update_interrupts();
+}
+
+
+
+/*************************************
+ *
+ *	Register writes
+ *
+ *************************************/
+
+static WRITE_HANDLER( register_w )
+{
+	int regnum = offset >> 2;
+	UINT16 oldval = tms34061.regs[regnum];
+
+	/* store the hi/lo half */
 	if (offset & 0x02)
-	{
-		// Hi word
-		regs[reg] = ((regs[reg] & 0xff) | (data << 8));
-	}
+		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0x00ff) | (data << 8);
 	else
+		tms34061.regs[regnum] = (tms34061.regs[regnum] & 0xff00) | data;
+
+	/* update the state of things */
+	switch (regnum)
 	{
-		// Lo word
-		regs[reg] = ((regs[reg] & 0xff00) | data);
+		/* vertical interrupt: adjust the timer */
+		case TMS34061_VERINT:
+			if (tms34061.timer)
+				timer_remove(tms34061.timer);
+			tms34061.timer = timer_set(cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, tms34061_interrupt);
+			break;
+
+		/* XY offset: set the X and Y masks */
+		case TMS34061_XYOFFSET:
+			switch (tms34061.regs[TMS34061_XYOFFSET] & 0x00ff)
+			{
+				case 0x01:	tms34061.yshift = 2;	break;
+				case 0x02:	tms34061.yshift = 3;	break;
+				case 0x04:	tms34061.yshift = 4;	break;
+				case 0x08:	tms34061.yshift = 5;	break;
+				case 0x10:	tms34061.yshift = 6;	break;
+				case 0x20:	tms34061.yshift = 7;	break;
+				case 0x40:	tms34061.yshift = 8;	break;
+				case 0x80:	tms34061.yshift = 9;	break;
+				default:	logerror("Invalid value for XYOFFSET = %04x\n", tms34061.regs[TMS34061_XYOFFSET]);	break;
+			}
+			tms34061.xmask = (1 << tms34061.yshift) - 1;
+			break;
+
+		/* CONTROL1: they could have turned interrupts on */
+		case TMS34061_CONTROL1:
+			update_interrupts();
+			break;
+
+		/* CONTROL2: they could have blanked the display */
+		case TMS34061_CONTROL2:
+			if ((oldval ^ tms34061.regs[TMS34061_CONTROL2]) & 0x2000)
+				memset(tms34061.dirty, 1, 1 << (20 - tms34061.dirtyshift));
+			break;
+
+		/* other supported registers */
+		case TMS34061_XYADDRESS:
+			break;
+
+		/* report all others */
+		default:
+			logerror("Unsupported tms34061 write. Reg #%02X=%04X - PC: %04X\n",
+					regnum, tms34061.regs[regnum], cpu_getpreviouspc());
+			break;
 	}
-
-	switch (reg)
-	{
-	case REG_VERINT:
-		// Set vertical interrupt timer
-		timer_reset(timer, cpu_getscanlinetime(regs[reg]));
-
-		// Fall through
-
-	case REG_CONTROL1:
-	case REG_CONTROL2:
-	case REG_XYADDRESS:
-		status = 1;		// Ok
-		break;
-	}
-
-	if (!status)
-		logerror("Unsupported TMS34061 write. Reg #%02X=%04X - PC: %04X\n",
-				reg, regs[reg], cpu_get_pc());
 }
 
-static void TMS34061_intcallback(int param)
+
+
+/*************************************
+ *
+ *	Register reads
+ *
+ *************************************/
+
+static READ_HANDLER( register_r )
 {
-	// Reset timer for next frame
-//	timer_reset(timer, cpu_getscanlinetime(regs[REG_VERINT]));
+	int regnum = offset >> 2;
+	data8_t result;
 
-	// Get out if vertical interrupts are disabled
-    if (!(regs[REG_CONTROL1] & 0x400)) return;
-
-	regs[REG_STATUS] |= 0x0001;
-
-	cpu_cause_interrupt (param, intf->vertical_interrupt());
-}
-
-
-INLINE READ_HANDLER( TMS34061_register_r )
-{
-	int ret;
-
-	int status = 0;		// Unsupported
-
-	// Calculate which register and which half we're accessing
-	int reg = offset >> 2;
-
-	// Get register
+	/* extract the correct portion of the register */
 	if (offset & 0x02)
-	{
-		// Hi word
-		ret = (regs[reg] >> 8);
-	}
+		result = tms34061.regs[regnum] >> 8;
 	else
+		result = tms34061.regs[regnum];
+
+	/* special cases: */
+	switch (regnum)
 	{
-		// Lo word
-		ret = (regs[reg] & 0xff);
+		/* status register: a read here clears it */
+		case TMS34061_STATUS:
+			tms34061.regs[TMS34061_STATUS] = 0;
+			update_interrupts();
+			break;
+
+		/* vertical count register: return the current scanline */
+		case TMS34061_VERCOUNTER:
+			if (offset & 0x02)
+				result = cpu_getscanline() >> 8;
+			else
+				result = cpu_getscanline();
+			break;
+
+		/* report all others */
+		default:
+			logerror("Unsupported tms34061 read.  Reg #%02X      - PC: %04X\n",
+					regnum, cpu_getpreviouspc());
+			break;
 	}
-
-	switch (reg)
-	{
-	case REG_STATUS:
-		// Need to clear status register now
-		regs[reg] = 0;
-
-		// Fall through
-
-	case REG_CONTROL1:
-	case REG_CONTROL2:
-	case REG_XYADDRESS:
-		status = 1;		// Ok
-		break;
-	}
-
-	if (!status)
-		logerror("Unsupported TMS34061 read.  Reg #%02X      - PC: %04X\n",
-				reg, cpu_get_pc());
-
-	return ret;
+	return result;
 }
 
 
-INLINE void adjust_xyaddress(int offset, int x, int y)
+
+/*************************************
+ *
+ *	XY addressing
+ *
+ *************************************/
+
+INLINE void adjust_xyaddress(int offset)
 {
-	// This an implementation of table on Page 4-15 of the User's Guide
-	switch (offset & 0x06)
+	/* note that carries are allowed if the Y coordinate isn't being modified */
+	switch (offset & 0x1e)
 	{
-	case 0x00:      break;
-	case 0x02: x++; break;
-	case 0x04: x--; break;
-	case 0x06: x=0; break;
-	}
+		case 0x00:	/* no change */
+			break;
 
-	switch (offset & 0x18)
+		case 0x02:	/* X + 1 */
+			tms34061.regs[TMS34061_XYADDRESS]++;
+			break;
+
+		case 0x04:	/* X - 1 */
+			tms34061.regs[TMS34061_XYADDRESS]--;
+			break;
+
+		case 0x06:	/* X = 0 */
+			tms34061.regs[TMS34061_XYADDRESS] &= ~tms34061.xmask;
+			break;
+
+		case 0x08:	/* Y + 1 */
+			tms34061.regs[TMS34061_XYADDRESS] += 1 << tms34061.yshift;
+			break;
+
+		case 0x0a:	/* X + 1, Y + 1 */
+			tms34061.regs[TMS34061_XYADDRESS] = (tms34061.regs[TMS34061_XYADDRESS] & ~tms34061.xmask) |
+					((tms34061.regs[TMS34061_XYADDRESS] + 1) & tms34061.xmask);
+			tms34061.regs[TMS34061_XYADDRESS] += 1 << tms34061.yshift;
+			break;
+
+		case 0x0c:	/* X - 1, Y + 1 */
+			tms34061.regs[TMS34061_XYADDRESS] = (tms34061.regs[TMS34061_XYADDRESS] & ~tms34061.xmask) |
+					((tms34061.regs[TMS34061_XYADDRESS] - 1) & tms34061.xmask);
+			tms34061.regs[TMS34061_XYADDRESS] += 1 << tms34061.yshift;
+			break;
+
+		case 0x0e:	/* X = 0, Y + 1 */
+			tms34061.regs[TMS34061_XYADDRESS] &= ~tms34061.xmask;
+			tms34061.regs[TMS34061_XYADDRESS] += 1 << tms34061.yshift;
+			break;
+
+		case 0x10:	/* Y - 1 */
+			tms34061.regs[TMS34061_XYADDRESS] -= 1 << tms34061.yshift;
+			break;
+
+		case 0x12:	/* X + 1, Y - 1 */
+			tms34061.regs[TMS34061_XYADDRESS] = (tms34061.regs[TMS34061_XYADDRESS] & ~tms34061.xmask) |
+					((tms34061.regs[TMS34061_XYADDRESS] + 1) & tms34061.xmask);
+			tms34061.regs[TMS34061_XYADDRESS] -= 1 << tms34061.yshift;
+			break;
+
+		case 0x14:	/* X - 1, Y - 1 */
+			tms34061.regs[TMS34061_XYADDRESS] = (tms34061.regs[TMS34061_XYADDRESS] & ~tms34061.xmask) |
+					((tms34061.regs[TMS34061_XYADDRESS] - 1) & tms34061.xmask);
+			tms34061.regs[TMS34061_XYADDRESS] -= 1 << tms34061.yshift;
+			break;
+
+		case 0x16:	/* X = 0, Y - 1 */
+			tms34061.regs[TMS34061_XYADDRESS] &= ~tms34061.xmask;
+			tms34061.regs[TMS34061_XYADDRESS] -= 1 << tms34061.yshift;
+			break;
+
+		case 0x18:	/* Y = 0 */
+			tms34061.regs[TMS34061_XYADDRESS] &= tms34061.xmask;
+			break;
+
+		case 0x1a:	/* X + 1, Y = 0 */
+			tms34061.regs[TMS34061_XYADDRESS]++;
+			tms34061.regs[TMS34061_XYADDRESS] &= tms34061.xmask;
+			break;
+
+		case 0x1c:	/* X - 1, Y = 0 */
+			tms34061.regs[TMS34061_XYADDRESS]--;
+			tms34061.regs[TMS34061_XYADDRESS] &= tms34061.xmask;
+			break;
+
+		case 0x1e:	/* X = 0, Y = 0 */
+			tms34061.regs[TMS34061_XYADDRESS] = 0;
+			break;
+	}
+}
+
+
+static WRITE_HANDLER( xypixel_w )
+{
+	/* determine the offset, then adjust it */
+	offs_t pixeloffs = tms34061.regs[TMS34061_XYADDRESS];
+	if (offset)
+		adjust_xyaddress(offset);
+
+	/* adjust for the upper bits */
+	pixeloffs |= (tms34061.regs[TMS34061_XYOFFSET] & 0x0f00) << 8;
+
+	/* mask to the VRAM size */
+	pixeloffs &= tms34061.vrammask;
+
+	/* set the pixel data */
+	if (tms34061.vram[pixeloffs] != data || tms34061.latchram[pixeloffs] != tms34061.latchdata)
 	{
-	case 0x00:      break;
-	case 0x08: y++; break;
-	case 0x10: y--; break;
-	case 0x18: y=0; break;
+		tms34061.vram[pixeloffs] = data;
+		tms34061.latchram[pixeloffs] = tms34061.latchdata;
+		tms34061.dirty[pixeloffs >> tms34061.dirtyshift] = 1;
 	}
-
-	// Currently only implements when the X-Y addresses are 8 bits each
-	// Case #7 on Page 4-18 in User's Guide
-
-	regs[REG_XYADDRESS] = ((y & 0xff) << 8) | (x & 0xff);
-}
-
-INLINE WRITE_HANDLER( TMS34061_xypixel_w )
-{
-	// Currently only implements when the X-Y addresses are 8 bits each
-	// Case #7 on Page 4-18 in User's Guide
-
-	int x = regs[REG_XYADDRESS] & 0xff;
-	int y = regs[REG_XYADDRESS] >> 8;
-
-    intf->setpixel(x, y, data);
-
-	if (offset) adjust_xyaddress(offset, x, y);
 }
 
 
-INLINE READ_HANDLER( TMS34061_xypixel_r )
+static READ_HANDLER( xypixel_r )
 {
-	// Currently only implements when the X-Y addresses are 8 bits each
-	// Case #7 on Page 4-18 in User's Guide
+	/* determine the offset, then adjust it */
+	offs_t pixeloffs = tms34061.regs[TMS34061_XYADDRESS];
+	if (offset)
+		adjust_xyaddress(offset);
 
-	int x = regs[REG_XYADDRESS] & 0xff;
-	int y = regs[REG_XYADDRESS] >> 8;
+	/* adjust for the upper bits */
+	pixeloffs |= (tms34061.regs[TMS34061_XYOFFSET] & 0x0f00) << 8;
 
-    int ret = intf->getpixel(x, y);
+	/* mask to the VRAM size */
+	pixeloffs &= tms34061.vrammask;
 
-	if (offset) adjust_xyaddress(offset, x, y);
-
-	return ret;
+	/* return the result */
+	return tms34061.vram[pixeloffs];
 }
 
 
-WRITE_HANDLER( TMS34061_w )
-{
-	int col = intf->getcoladdress(offset);
-	int row = intf->getrowaddress(offset);
 
-	/* Get function code and call appropriate handler */
-	int func = intf->getfunction(offset);
+/*************************************
+ *
+ *	Core writes
+ *
+ *************************************/
+
+void tms34061_w(int col, int row, int func, data8_t data)
+{
+	offs_t offs;
+
+	/* the function code determines what to do */
 	switch (func)
 	{
-	case 0:
-	case 2:  /* Register access */
-		TMS34061_register_w(col, data);
-		break;
+		/* both 0 and 2 map to register access */
+		case 0:
+		case 2:
+			register_w(col, data);
+			break;
 
-	case 1:  /* XY access. Note: col is really the address adjustment function.
-			    The real col and row comes from the XY address registers */
-		TMS34061_xypixel_w(col, data);
-		break;
+		/* function 1 maps to XY access; col is the address adjustment */
+		case 1:
+			xypixel_w(col, data);
+			break;
 
-	case 3:  /* Direct access */
-		intf->setpixel(col, row, data);
-		break;
+		/* function 3 maps to direct access */
+		case 3:
+			offs = ((row << tms34061.intf.rowshift) | col) & tms34061.vrammask;
+			if (tms34061.vram[offs] != data || tms34061.latchram[offs] != tms34061.latchdata)
+			{
+				tms34061.vram[offs] = data;
+				tms34061.latchram[offs] = tms34061.latchdata;
+				tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
+			}
+			break;
 
-	default:
-		logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-				func, cpu_get_pc());
+		/* function 4 performs a shift reg transfer to VRAM */
+		case 4:
+			offs = col << tms34061.intf.rowshift;
+			if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
+			offs &= tms34061.vrammask;
+
+			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
+			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
+			tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
+			break;
+
+		/* function 5 performs a shift reg transfer from VRAM */
+		case 5:
+			offs = col << tms34061.intf.rowshift;
+			if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
+			offs &= tms34061.vrammask;
+
+			tms34061.shiftreg = &tms34061.vram[offs];
+			break;
+
+		/* log anything else */
+		default:
+			logerror("Unsupported TMS34061 function %d - PC: %04X\n",
+					func, cpu_get_pc());
+			break;
 	}
 }
 
-READ_HANDLER( TMS34061_r )
+
+data8_t tms34061_r(int col, int row, int func)
 {
-	int ret = 0;
+	int result = 0;
+	offs_t offs;
 
-	int col = intf->getcoladdress(offset);
-	int row = intf->getrowaddress(offset);
-
-	/* Get function code and call appropriate handler */
-	int func = intf->getfunction(offset);
+	/* the function code determines what to do */
 	switch (func)
 	{
-	case 0:
-	case 2:  /* Register access */
-		ret = TMS34061_register_r(col);
-		break;
+		/* both 0 and 2 map to register access */
+		case 0:
+		case 2:
+			result = register_r(col);
+			break;
 
-	case 1:  /* XY access. Note: col is really the address adjustment code.
-			    The real col and row comes from the XY address registers */
-		ret = TMS34061_xypixel_r(col);
-		break;
+		/* function 1 maps to XY access; col is the address adjustment */
+		case 1:
+			result = xypixel_r(col);
+			break;
 
-	case 3:  /* Direct access */
-		ret = intf->getpixel(col, row);
-		break;
+		/* funtion 3 maps to direct access */
+		case 3:
+			offs = ((row << tms34061.intf.rowshift) | col) & tms34061.vrammask;
+			result = tms34061.vram[offs];
+			break;
 
-	default:
-		logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-				func, cpu_get_pc());
+		/* function 4 performs a shift reg transfer to VRAM */
+		case 4:
+			offs = col << tms34061.intf.rowshift;
+			if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
+			offs &= tms34061.vrammask;
+
+			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
+			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
+			tms34061.dirty[offs >> tms34061.dirtyshift] = 1;
+			break;
+
+		/* function 5 performs a shift reg transfer from VRAM */
+		case 5:
+			offs = col << tms34061.intf.rowshift;
+			if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
+			offs &= tms34061.vrammask;
+
+			tms34061.shiftreg = &tms34061.vram[offs];
+			break;
+
+		/* log anything else */
+		default:
+			logerror("Unsupported TMS34061 function %d - PC: %04X\n",
+					func, cpu_get_pc());
+			break;
 	}
 
-	return ret;
+	return result;
 }
 
 
-int TMS34061_display_blanked(void)
+
+/*************************************
+ *
+ *	Misc functions
+ *
+ *************************************/
+
+READ_HANDLER( tms34061_latch_r )
 {
-	return (!(regs[REG_CONTROL2] & 0x2000));
+	return tms34061.latchdata;
 }
 
+
+WRITE_HANDLER( tms34061_latch_w )
+{
+	tms34061.latchdata = data;
+}
+
+
+void tms34061_get_display_state(struct tms34061_display *state)
+{
+	state->blanked = (~tms34061.regs[TMS34061_CONTROL2] >> 13) & 1;
+	state->vram = tms34061.vram;
+	state->latchram = tms34061.latchram;
+	state->dirty = tms34061.dirty;
+	state->regs = tms34061.regs;
+
+	/* compute the display start */
+	state->dispstart = tms34061.regs[TMS34061_DISPSTART];
+
+	/* if B6 of control reg 2 is set, upper bits of display start come from B0-B1 */
+	if (tms34061.regs[TMS34061_CONTROL2] & 0x0040)
+		state->dispstart |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
+
+	/* mask to actual VRAM size */
+	state->dispstart &= tms34061.vrammask;
+}

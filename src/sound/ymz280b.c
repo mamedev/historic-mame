@@ -40,7 +40,11 @@ struct YMZ280BVoice
 	UINT32 position;		/* current position, in nibbles */
 
 	INT32 signal;			/* current ADPCM signal */
-	UINT8 step;				/* current ADPCM step */
+	INT32 step;				/* current ADPCM step */
+
+	INT32 loop_signal;		/* signal at loop start */
+	INT32 loop_step;		/* step at loop start */
+	UINT32 loop_count;		/* number of loops so far */
 
 	INT32 output_left;		/* output volume (left) */
 	INT32 output_right;		/* output volume (right) */
@@ -74,9 +78,6 @@ static int index_scale[8] = { 0x0e6, 0x0e6, 0x0e6, 0x0e6, 0x133, 0x199, 0x200, 0
 
 /* lookup table for the precomputed difference */
 static int diff_lookup[16];
-
-/* volume lookup table */
-static UINT32 volume_table[256];
 
 
 
@@ -128,18 +129,18 @@ INLINE void update_volumes(struct YMZ280BVoice *voice)
 {
 	if (voice->pan == 8)
 	{
-		voice->output_left = volume_table[voice->level];
-		voice->output_right = volume_table[voice->level];
+		voice->output_left = voice->level;
+		voice->output_right = voice->level;
 	}
 	else if (voice->pan < 8)
 	{
-		voice->output_left = volume_table[voice->level];
-		voice->output_right = volume_table[voice->level] * voice->pan / 8;
+		voice->output_left = voice->level;
+		voice->output_right = voice->level * voice->pan / 8;
 	}
 	else
 	{
-		voice->output_left = volume_table[voice->level] * (15 - voice->pan) / 8;
-		voice->output_right = volume_table[voice->level];
+		voice->output_left = voice->level * (15 - voice->pan) / 8;
+		voice->output_right = voice->level;
 	}
 }
 
@@ -152,7 +153,7 @@ INLINE void update_volumes(struct YMZ280BVoice *voice)
 
 static void compute_tables(void)
 {
-	int step, nib;
+	int nib;
 
 	/* loop over all nibbles and compute the difference */
 	for (nib = 0; nib < 16; nib++)
@@ -160,10 +161,6 @@ static void compute_tables(void)
 		int value = (nib & 0x07) * 2 + 1;
 		diff_lookup[nib] = (nib & 0x08) ? -value : value;
 	}
-
-	/* generate the volume table (currently just a guess) */
-	for (step = 0; step < 256; step++)
-		volume_table[step] = step * 128 / 256;
 }
 
 
@@ -188,7 +185,7 @@ static int generate_adpcm(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 		while (samples)
 		{
 			/* compute the new amplitude and update the current step */
-			val = base[position / 2] >> (((position & 1) << 2) ^ 4);
+			val = base[position / 2] >> ((~position & 1) << 2);
 			signal += (step * diff_lookup[val & 15]) / 8;
 
 			/* clamp to the maximum */
@@ -222,7 +219,7 @@ static int generate_adpcm(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 		while (samples)
 		{
 			/* compute the new amplitude and update the current step */
-			val = base[position / 2] >> (((position & 1) << 2) ^ 4);
+			val = base[position / 2] >> ((~position & 1) << 2);
 			signal += (step * diff_lookup[val & 15]) / 8;
 
 			/* clamp to the maximum */
@@ -244,10 +241,20 @@ static int generate_adpcm(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 
 			/* next! */
 			position++;
+			if (position == voice->loop_start && voice->loop_count == 0)
+			{
+				voice->loop_signal = signal;
+				voice->loop_step = step;
+			}
 			if (position >= voice->loop_end)
 			{
 				if (voice->keyon)
+				{
 					position = voice->loop_start;
+					signal = voice->loop_signal;
+					step = voice->loop_step;
+					voice->loop_count++;
+				}
 			}
 			if (position >= voice->stop)
 				break;
@@ -645,8 +652,9 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 				{
 					voice->playing = 1;
 					voice->position = voice->start;
-					voice->signal = 0;
-					voice->step = 0x7f;
+					voice->signal = voice->loop_signal = 0;
+					voice->step = voice->loop_step = 0x7f;
+					voice->loop_count = 0;
 				}
 				if (voice->keyon && !(data & 0x80) && !voice->looping)
 					voice->playing = 0;

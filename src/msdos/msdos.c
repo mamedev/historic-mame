@@ -7,7 +7,7 @@
 #include "ticker.h"
 
 #ifdef MESS
-#include "mess/msdos.h"
+#include "msdos.h"
 /* from msdos/config.c */
 extern char *crcdir;
 static char crcfilename[256] = "";

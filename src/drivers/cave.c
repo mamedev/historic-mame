@@ -892,7 +892,7 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 static struct YMZ280Binterface ymz280b_intf =
 {
 	1,
-	{ 16000000 },
+	{ 16934400 },
 	{ REGION_SOUND1 },
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq_gen }

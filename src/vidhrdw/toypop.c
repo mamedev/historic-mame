@@ -102,28 +102,38 @@ INLINE void toypop_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigne
 void draw_background_and_characters(struct osd_bitmap *bitmap)
 {
 	register int offs, x, y;
+	UINT8 scanline[288];
 
 	// copy the background image from RAM (0x190200-0x19FDFF) to bitmap
-	if (flipscreen) {
+	if (flipscreen)
+	{
 		offs = 0xFDFE/2;
 		for (y = 0; y < 224; y++)
+		{
 			for (x = 0; x < 288; x+=2)
 			{
 				data16_t data = toypop_bg_image[offs];
-				bitmap->line[y][x] = Machine->pens[(data & 0xff) | palettebank];
-				bitmap->line[y][x+1] = Machine->pens[(data >> 8) | palettebank];
+				scanline[x]   = data;
+				scanline[x+1] = data >> 8;
 				offs--;
 			}
-	} else {
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+		}
+	}
+	else
+	{
 		offs = 0x200/2;
 		for (y = 0; y < 224; y++)
+		{
 			for (x = 0; x < 288; x+=2)
 			{
 				data16_t data = toypop_bg_image[offs];
-				bitmap->line[y][x+1] = Machine->pens[(data & 0xff) | palettebank];
-				bitmap->line[y][x] = Machine->pens[(data >> 8) | palettebank];
+				scanline[x]   = data >> 8;
+				scanline[x+1] = data;
 				offs++;
 			}
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+		}
 	}
 
 	// draw every character in the Video RAM (videoram_size = 1024)
@@ -164,88 +174,8 @@ void toypop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			int flipx = spriteram_3[offs] & 1;
 			int flipy = spriteram_3[offs] & 2;
 
-			x = 343 - (spriteram_2[offs+1] | ((spriteram_3[offs+1] & 1) << 8));
-			y = spriteram_2[offs] - 9;
-			if (flipscreen) {
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			switch (spriteram_3[offs] & 0x0c)
-			{
-				case 0:		/* normal size */
-					toypop_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-					break;
-				case 4:		/* 2x horizontal */
-					sprite &= ~1;
-					if (!flipx) {
-						toypop_draw_sprite(bitmap,1+sprite,color,0,flipy,x,y);
-						toypop_draw_sprite(bitmap,sprite,color,0,flipy,x-16,y);
-					} else {
-						toypop_draw_sprite(bitmap,sprite,color,1,flipy,x,y);
-						toypop_draw_sprite(bitmap,1+sprite,color,1,flipy,x-16,y);
-					}
-					break;
-				case 8:		/* 2x vertical */
-					sprite &= ~2;
-					if (!flipy) {
-						toypop_draw_sprite(bitmap,sprite,color,flipx,0,x,y);
-						toypop_draw_sprite(bitmap,2+sprite,color,flipx,0,x,16+y);
-					} else {
-						toypop_draw_sprite(bitmap,2+sprite,color,flipx,1,x,y);
-						toypop_draw_sprite(bitmap,sprite,color,flipx,1,x,16+y);
-					}
-					break;
-				case 12:		/* 2x both ways */
-					sprite &= ~3;
-					if (sprite == 0xec)
-						// there seems to be a bug in the explosion of the wizard and the witch,
-						// the explosion looks better this way
-						sprite = 0xc8;
-					if (!flipy && !flipx) {
-						toypop_draw_sprite(bitmap,2+sprite,color,0,0,x-16,y+16);
-						toypop_draw_sprite(bitmap,3+sprite,color,0,0,x,16+y);
-						toypop_draw_sprite(bitmap,sprite,color,0,0,x-16,y);
-						toypop_draw_sprite(bitmap,1+sprite,color,0,0,x,y);
-					} else if (flipy && flipx) {
-						toypop_draw_sprite(bitmap,1+sprite,color,1,1,x-16,y+16);
-						toypop_draw_sprite(bitmap,sprite,color,1,1,x,16+y);
-						toypop_draw_sprite(bitmap,3+sprite,color,1,1,x-16,y);
-						toypop_draw_sprite(bitmap,2+sprite,color,1,1,x,y);
-					} else if (flipx) {
-						toypop_draw_sprite(bitmap,3+sprite,color,1,0,x-16,y+16);
-						toypop_draw_sprite(bitmap,2+sprite,color,1,0,x,16+y);
-						toypop_draw_sprite(bitmap,1+sprite,color,1,0,x-16,y);
-						toypop_draw_sprite(bitmap,sprite,color,1,0,x,y);
-					} else {	// flipy
-						toypop_draw_sprite(bitmap,sprite,color,0,1,x-16,y+16);
-						toypop_draw_sprite(bitmap,1+sprite,color,0,1,x,16+y);
-						toypop_draw_sprite(bitmap,2+sprite,color,0,1,x-16,y);
-						toypop_draw_sprite(bitmap,3+sprite,color,0,1,x,y);
-					}
-					break;
-			}
-		}
-	}
-}
-
-void liblrabl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	register int offs, x, y;
-
-	draw_background_and_characters(bitmap);
-
-	// Draw the sprites
-	for (offs = 0;offs < spriteram_size;offs += 2) {
-		// is it on?
-		if ((spriteram_2[offs]) != 0xe9) {
-			int sprite = spriteram[offs];
-			int color = spriteram[offs+1];
-			int flipx = spriteram_3[offs] & 1;
-			int flipy = spriteram_3[offs] & 2;
-
 			x = (spriteram_2[offs+1] | ((spriteram_3[offs+1] & 1) << 8)) - 71;
-			y = 218 - spriteram_2[offs];
+			y = 217 - spriteram_2[offs];
 			if (flipscreen) {
 				flipx = !flipx;
 				flipy = !flipy;

@@ -196,7 +196,34 @@ ROM_START( 19xx )
 	ROM_LOAD16_WORD_SWAP( "19xu.04", 0x080000, 0x80000, 0x3111ab7f )
 	ROM_LOAD16_WORD_SWAP( "19xu.05", 0x100000, 0x80000, 0x38df4a63 )
 	ROM_LOAD16_WORD_SWAP( "19xu.06", 0x180000, 0x80000, 0x5c7e60d3 )
-	ROM_LOAD16_WORD_SWAP( "19xu.07", 0x200000, 0x80000, 0x61c0296c )
+	ROM_LOAD16_WORD_SWAP( "19x.07", 0x200000, 0x80000, 0x61c0296c )
+
+	ROM_REGION( 0x0a00000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "19x.18",   0x0000000, 0x200000, 0x2213e798 )
+	ROM_LOAD( "19x.17",   0x0200000, 0x080000, 0x2dfe18b5 )
+	ROM_LOAD( "19x.14",   0x0280000, 0x200000, 0xe916967c )
+	ROM_LOAD( "19x.13",   0x0480000, 0x080000, 0x427aeb18 )
+	ROM_LOAD( "19x.20",   0x0500000, 0x200000, 0xab9d5b96 )
+	ROM_LOAD( "19x.19",   0x0700000, 0x080000, 0xcbef9579 )
+	ROM_LOAD( "19x.16",   0x0780000, 0x200000, 0x6e75f3db )
+	ROM_LOAD( "19x.15",   0x0980000, 0x080000, 0x63bdbf54 )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "19x.01",   0x00000, 0x08000, 0xef55195e )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD( "19x.11",   0x000000, 0x200000, 0xd38beef3 )
+	ROM_LOAD( "19x.12",   0x200000, 0x200000, 0xd47c96e2 )
+ROM_END
+
+ROM_START( 19xxj )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "19xj.03", 0x000000, 0x80000, 0x26a381ed )
+	ROM_LOAD16_WORD_SWAP( "19xj.04", 0x080000, 0x80000, 0x30100cca )
+	ROM_LOAD16_WORD_SWAP( "19xj.05", 0x100000, 0x80000, 0xde67e938 )
+	ROM_LOAD16_WORD_SWAP( "19xj.06", 0x180000, 0x80000, 0x39f9a409 )
+	ROM_LOAD16_WORD_SWAP( "19x.07", 0x200000, 0x80000, 0x61c0296c )
 
 	ROM_REGION( 0x0a00000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "19x.18",   0x0000000, 0x200000, 0x2213e798 )
@@ -1853,7 +1880,8 @@ ROM_START( xmvsfj )
 	ROM_LOAD( "xvs.12",   0x200000, 0x200000, 0x7b11e460 )
 ROM_END
 
-GAME( 1995, 19xx,     0,       cps2, cps2, cps2, ROT0, "Capcom", "19XX: The Battle Against Destiny (USA 951207)" )
+GAME( 1995, 19xx,     0,       cps2, cps2, cps2, ROT0, "Capcom", "19XX: The War Against Destiny (USA 951207)" )
+GAME( 1995, 19xxj,    19xx,    cps2, cps2, cps2, ROT0, "Capcom", "19XX: The War Against Destiny (Japan 951207)" )
 GAME( 1994, armwar,   0,       cps2, cps2, cps2, ROT0, "Capcom", "Armoured Warriors (USA 941024)" )
 GAME( 1994, armwara,  armwar,  cps2, cps2, cps2, ROT0, "Capcom", "Armoured Warriors (Asia 940920)" )
 GAME( 1994, avsp,     0,       cps2, cps2, cps2, ROT0, "Capcom", "Aliens Vs. Predator (USA 940520)" )

@@ -561,8 +561,8 @@ extern UINT8 *williams2_xscroll_low;
 extern UINT8 *williams2_xscroll_high;
 
 /* Blaster extra variables */
-extern UINT8 *blaster_color_zero_table;
 extern UINT8 *blaster_color_zero_flags;
+extern UINT8 *blaster_color_zero_table;
 extern UINT8 *blaster_video_bits;
 
 
@@ -571,16 +571,16 @@ WRITE_HANDLER( williams_videoram_w );
 WRITE_HANDLER( williams2_videoram_w );
 WRITE_HANDLER( williams_blitter_w );
 WRITE_HANDLER( blaster_remap_select_w );
-WRITE_HANDLER( blaster_video_bits_w );
+WRITE_HANDLER( blaster_palette_0_w );
 READ_HANDLER( williams_video_counter_r );
 
 
 int williams_vh_start(void);
 void williams_vh_stop(void);
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void williams2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int blaster_vh_start(void);
-void blaster_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int williams2_vh_start(void);
 void williams2_vh_stop(void);
@@ -711,7 +711,7 @@ MEMORY_END
 static MEMORY_WRITE_START( blaster_writemem )
 	{ 0x0000, 0x96ff, williams_videoram_w, &williams_bank_base, &videoram_size },
 	{ 0x9700, 0xbaff, MWA_RAM },
-	{ 0xbb00, 0xbbff, MWA_RAM, &blaster_color_zero_table },
+	{ 0xbb00, 0xbbff, blaster_palette_0_w, &blaster_color_zero_table },
 	{ 0xbc00, 0xbcff, MWA_RAM, &blaster_color_zero_flags },
 	{ 0xbd00, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
@@ -720,7 +720,7 @@ static MEMORY_WRITE_START( blaster_writemem )
 	{ 0xc900, 0xc900, blaster_vram_select_w },
 	{ 0xc940, 0xc940, blaster_remap_select_w },
 	{ 0xc980, 0xc980, blaster_bank_select_w },
-	{ 0xc9C0, 0xc9c0, blaster_video_bits_w, &blaster_video_bits },
+	{ 0xc9c0, 0xc9c0, MWA_RAM, &blaster_video_bits },
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },
 	{ 0xcbff, 0xcbff, watchdog_reset_w },
 	{ 0xcc00, 0xcfff, MWA_RAM },
@@ -1474,14 +1474,14 @@ static const struct MachineDriver machine_driver_blaster =
 	304, 256,
 	{ 6, 298-1, 7, 247-1 },
 	0,
-	16+256,16+256,
+	16+240,16+240,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	blaster_vh_start,
 	williams_vh_stop,
-	blaster_vh_screenrefresh,
+	williams_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1528,7 +1528,7 @@ static const struct MachineDriver machine_driver_williams2 =
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,
-	williams_vh_screenrefresh,
+	williams2_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1576,7 +1576,7 @@ static const struct MachineDriver machine_driver_joust2 =
 	0,
 	williams2_vh_start,
 	williams2_vh_stop,
-	williams_vh_screenrefresh,
+	williams2_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
